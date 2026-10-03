@@ -268,6 +268,7 @@ var Frost = (() => {
   }
   function validateMap(raw) {
     if(!raw||raw.version!==1||!['skirmish','moba','td','rpg'].includes(raw.mode)||!Array.isArray(raw.terrain)||raw.terrain.length!==1024||raw.terrain.some(v=>!Number.isInteger(v)||v<0||v>2))throw Error('Invalid map terrain or mode');
+    if(raw.tileset!==undefined&&(!Number.isInteger(raw.tileset)||raw.tileset<0||raw.tileset>2))throw Error('Invalid terrain tileset');
     if(raw.cliffStyle!==undefined&&(!Number.isInteger(raw.cliffStyle)||raw.cliffStyle<0||raw.cliffStyle>2))throw Error('Invalid cliff style');
     for(const [key,max] of [['heights',3],['ramps',8],['surfaces',4],['cliffs',3]])if(raw[key]!==undefined&&(!Array.isArray(raw[key])||raw[key].length!==1024||raw[key].some(v=>!Number.isInteger(key==='heights'?v*2:v)||v<0||v>max)))throw Error('Invalid terrain '+key);
     if(raw.relief!==undefined&&(!Array.isArray(raw.relief)||raw.relief.length!==1089||Array.from(raw.relief).some(v=>!Number.isFinite(v)||Math.abs(v)>1||!Number.isInteger(v*16))))throw Error('Invalid terrain relief');
@@ -276,7 +277,7 @@ var Frost = (() => {
     if(!Array.isArray(raw.spawns)||raw.spawns.length!==2||!raw.spawns.every(point)||Math.hypot(raw.spawns[0][0]-raw.spawns[1][0],raw.spawns[0][1]-raw.spawns[1][1])<20)throw Error('Two separated spawn points are required');
     if(!Array.isArray(raw.props)||raw.props.length>100||raw.props.some(p=>!p||!['tree','mine','camp'].includes(p.kind)||!Number.isFinite(p.x)||!Number.isFinite(p.z)||Math.abs(p.x)>29||Math.abs(p.z)>29))throw Error('Invalid map objects');
     const map={version:1,name:Array.from(String(raw.name||'Custom battlefield')).slice(0,40).join(''),mode:raw.mode,startingHour:raw.startingHour??8,cliffStyle:raw.cliffStyle??0,terrain:[...raw.terrain],surfaces:raw.surfaces?[...raw.surfaces]:Array(1024).fill(0),heights:raw.heights?[...raw.heights]:Array(1024).fill(0),ramps:raw.ramps?[...raw.ramps]:Array(1024).fill(0),relief:raw.relief?raw.relief.map(v=>v||0):Array(1089).fill(0),spawns:raw.spawns.map(p=>[...p]),props:raw.props.map(p=>({kind:p.kind,x:p.x,z:p.z,amount:clamp(Number.isFinite(p.amount)?p.amount:1000,100,10000)})),startingGold:clamp(Number.isFinite(raw.startingGold)?Math.round(raw.startingGold):500,100,2000),startingWood:clamp(Number.isFinite(raw.startingWood)?Math.round(raw.startingWood):raw.mode==='skirmish'?150:250,0,2000),waveInterval:clamp(Number.isFinite(raw.waveInterval)?raw.waveInterval:raw.mode==='moba'?30:24,10,60),waves:clamp(Number.isFinite(raw.waves)?Math.round(raw.waves):12,3,30)};
-    if(raw.cliffs!==undefined)map.cliffs=[...raw.cliffs];
+    if(raw.cliffs!==undefined)map.cliffs=[...raw.cliffs];if(raw.tileset!==undefined)map.tileset=raw.tileset;
     const at=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(p.x)<=27&&Math.abs(p.z)<=27;
     if(raw.players!==undefined&&(!Array.isArray(raw.players)||raw.players.length!==2||raw.players.some(p=>!p||!Number.isInteger(p.faction)||p.faction<0||p.faction>3||typeof p.ai!=='boolean'||p.heroClass!==undefined&&!validHero(p.heroClass))))throw Error('Invalid player settings');
     map.players=clone(raw.players||[{faction:0,ai:false},{faction:1,ai:true}]);for(const p of map.players)p.heroClass??=0;

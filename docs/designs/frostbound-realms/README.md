@@ -1,6 +1,6 @@
 # Frostbound Realms 交付证据
 
-最新地形：[缓坡地表与崖沿材质](ramp-ground-surfaces.md)、[逐格绘制岩石、冰壁和砌石悬崖](cliff-tile-painting.md)、[双格缓坡与编辑切换](gentle-ramps.md)、[悬崖折线轮廓](terrain-fractures.md)、[五种地表画刷与 MOBA 草地、石质兵线](terrain-palette.md)。
+最新地形：[冬季、森林与荒地套件](terrain-tilesets.md)、[缓坡地表与崖沿材质](ramp-ground-surfaces.md)、[逐格绘制岩石、冰壁和砌石悬崖](cliff-tile-painting.md)、[双格缓坡与编辑切换](gentle-ramps.md)、[悬崖折线轮廓](terrain-fractures.md)、[五种地表画刷与 MOBA 草地、石质兵线](terrain-palette.md)。
 
 最新亡灵能力：[吞食尸体研究、进食动作与持续治疗](cannibalize.md)。
 

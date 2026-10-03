@@ -1,5 +1,5 @@
 /* MENGINE_PARAMETERS
-{"parameters":[{"name":"cells0","type":"vector4","default":[1,1,1,1]},{"name":"cells1","type":"vector4","default":[1,1,1,1]},{"name":"cells2","type":"vector4","default":[1,1,1,1]},{"name":"cells3","type":"vector4","default":[1,1,1,1]},{"name":"cells4","type":"vector4","default":[1,1,1,1]},{"name":"cells5","type":"vector4","default":[1,1,1,1]},{"name":"cells6","type":"vector4","default":[1,1,1,1]},{"name":"cells7","type":"vector4","default":[1,1,1,1]},{"name":"cells8","type":"vector4","default":[1,1,1,1]},{"name":"cliff_mapping","type":"vector4","default":[0.18,0.18,0.8,0]},{"name":"water_layer","type":"vector4","default":[0,0,0,0]},{"name":"water_time","type":"vector4","default":[0,0,0,0]}],"textures":[{"name":"soil","type":"color","default":"Assets/Textures/soil_grass_diff.png"},{"name":"snow","type":"color","default":"Assets/Textures/snow_02_diff_1k.jpg"},{"name":"stone","type":"color","default":"Assets/Textures/rocky_terrain_diff_1k.jpg"},{"name":"soil_nrh","type":"data","default":"Assets/Textures/soil_grass_nrh.png"},{"name":"snow_nrh","type":"data","default":"Assets/Textures/snow_02_nrh_1k.png"},{"name":"stone_nrh","type":"data","default":"Assets/Textures/rocky_terrain_nrh_1k.png"}]}
+{"parameters":[{"name":"cells0","type":"vector4","default":[1,1,1,1]},{"name":"cells1","type":"vector4","default":[1,1,1,1]},{"name":"cells2","type":"vector4","default":[1,1,1,1]},{"name":"cells3","type":"vector4","default":[1,1,1,1]},{"name":"cells4","type":"vector4","default":[1,1,1,1]},{"name":"cells5","type":"vector4","default":[1,1,1,1]},{"name":"cells6","type":"vector4","default":[1,1,1,1]},{"name":"cells7","type":"vector4","default":[1,1,1,1]},{"name":"cells8","type":"vector4","default":[1,1,1,1]},{"name":"cliff_mapping","type":"vector4","default":[0.18,0.18,0.8,0]},{"name":"tileset","type":"vector4","default":[0,0,0,0]},{"name":"water_layer","type":"vector4","default":[0,0,0,0]},{"name":"water_time","type":"vector4","default":[0,0,0,0]}],"textures":[{"name":"soil","type":"color","default":"Assets/Textures/soil_grass_diff.png"},{"name":"snow","type":"color","default":"Assets/Textures/snow_02_diff_1k.jpg"},{"name":"stone","type":"color","default":"Assets/Textures/rocky_terrain_diff_1k.jpg"},{"name":"soil_nrh","type":"data","default":"Assets/Textures/soil_grass_nrh.png"},{"name":"snow_nrh","type":"data","default":"Assets/Textures/snow_02_nrh_1k.png"},{"name":"stone_nrh","type":"data","default":"Assets/Textures/rocky_terrain_nrh_1k.png"}]}
 */
 // MiYu: 64 terrain chunks replace 1024 independently shaded cubes.
 struct FrostGround { materials: vec4<f32>, painted: vec2<f32>, fog: f32 }
@@ -58,7 +58,7 @@ fn frost_cliff_nrh(uv: vec2<f32>, layer: f32) -> vec4<f32> {
     return textureSampleGrad(metallic_roughness_texture,material_sampler,frost_cliff_uv(uv,layer),dpdx(uv)*scale,dpdy(uv)*scale);
 }
 fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
-    var s=surface;let p=world_position.xz;let geometric=normalize(surface.normal);
+    var s=surface;let p=world_position.xz;let geometric=normalize(surface.normal);let tileset=clamp(floor(mengine_param_tileset().x),0.0,2.0);
     let cliff_style=clamp(floor(uv.x/2.0),0.0,2.0);let contact=clamp(uv.x-cliff_style*2.0,0.0,1.0);
     // World-space offsets stay below the one-unit interpolation margin shared by adjacent chunks.
     let drift=vec2<f32>(frost_noise(p*0.42),frost_noise(p*0.42+vec2<f32>(37.0,19.0)))-vec2<f32>(0.5);
@@ -73,10 +73,15 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let soil_nrh=mix(soil_a,soil_b,soil_weight);let snow_nrh=mix(snow_a,snow_b,snow_weight);let stone_nrh=mengine_texture_stone_nrh(stone_uv);
     let grass_uv=p*0.36;let grass_a=frost_atlas_nrh(grass_uv,1.0);let grass_b=frost_atlas_nrh(grass_uv+offset,1.0);let grass_weight=frost_tile_weight(tile_amount,grass_a,grass_b);
     let grass_nrh=mix(grass_a,grass_b,grass_weight);let grass=mix(frost_atlas_color(grass_uv,1.0),frost_atlas_color(grass_uv+offset,1.0),grass_weight)*vec3<f32>(0.64,0.93,0.60);
-    let grass_cover=smoothstep(0.18,0.82,ground.painted.x+(grass_nrh.a-soil_nrh.a)*0.15);let rock_cover=smoothstep(0.18,0.82,ground.painted.y+(stone_nrh.a-soil_nrh.a)*0.15);
+    let painted_grass=smoothstep(0.18,0.82,ground.painted.x+(grass_nrh.a-soil_nrh.a)*0.15);let rock_cover=smoothstep(0.18,0.82,ground.painted.y+(stone_nrh.a-soil_nrh.a)*0.15);
     let broad=frost_noise(p*0.085+vec2<f32>(4.0,9.0));let medium=frost_noise(p*0.31+vec2<f32>(23.0,5.0));let fine=frost_noise(p*1.2);
     let natural_cover=smoothstep(0.3,0.7,broad*0.58+medium*0.3+fine*0.12);
-    let cover=natural_cover*(1.0-fields.z-fields.w-ground.painted.x-ground.painted.y)+fields.w;
+    // MiYu: the map tileset affects automatic ground; explicit soil, snow, grass and rock keep their authored weights.
+    let automatic=max(0.0,1.0-fields.z-fields.w-ground.painted.x-ground.painted.y);
+    let auto_snow=select(0.0,natural_cover,tileset==0.0);
+    let auto_grass=select(0.0,select(smoothstep(0.75,0.95,natural_cover)*0.45,smoothstep(0.20,0.75,natural_cover)*0.95,tileset==1.0),tileset>0.0);
+    let grass_cover=max(painted_grass,auto_grass*automatic*(1.0-fields.y));
+    let cover=auto_snow*automatic+fields.w;
     // MiYu: thin snow settles between raised litter; a narrow wet-soil band follows the melting edge.
     let wall=uv.y<0.0;let wall_depth=select(uv.y,-uv.y-1.0,wall);
     let shelf=smoothstep(0.65,0.95,abs(geometric.y))*select(1.0,0.0,wall);
@@ -88,7 +93,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let road=smoothstep(0.22,0.8,fields.y+(stone_nrh.a-0.5)*0.18)*(1.0-grass_cover)*(1.0-rock_cover);
     let shore=shore_fields.x+(frost_noise(p*2.3)-0.5)*0.065;
     let wet=smoothstep(0.18,0.51,shore);
-    let soil_tint=mix(vec3<f32>(0.64,0.69,0.59),vec3<f32>(0.84,0.79,0.67),medium);
+    let soil_tint=mix(mix(vec3<f32>(0.64,0.69,0.59),vec3<f32>(0.84,0.79,0.67),medium),vec3<f32>(0.98,0.83,0.62),select(0.0,0.75,tileset==2.0));
     let damp=mix(vec3<f32>(1.0),vec3<f32>(0.56,0.61,0.58),melt);
     let snow_color=snow*vec3<f32>(0.91,0.95,1.0);
     let soil=mix(litter*soil_tint*damp,snow_color,snow_cover);
