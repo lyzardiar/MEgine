@@ -7,6 +7,14 @@ globalThis.Frost=S;const T=createRequire(import.meta.url)('../samples/frostbound
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 const ridge=S.defaultMap();assert.ok(ridge.heights.filter(h=>h>0).length>=100);for(let i=0;i<1024;i++){assert.equal(ridge.heights[i],ridge.heights[1023-i]);}for(const spawn of ridge.spawns)assert.ok(S.flatSite(ridge,...spawn,3));assert.ok(S.traversable(ridge,-5,-7,-11,-7),'west ridge is reached over its ramp');assert.ok(S.traversable(ridge,5,7,11,7),'east ridge is reached over its mirrored ramp');assert.ok(!S.traversable(ridge,-19,-9,-17,-9),'cliff face blocks ground travel');
 const moba=S.defaultMap('moba');assert.ok(moba.surfaces.some(v=>v===3));assert.ok(moba.terrain.every((kind,i)=>moba.surfaces[i]===(kind===0?3:kind===2?4:0)),'MOBA retains stone lanes and water around grass');
+{
+  const map=S.validateMap(ridge);for(let z=0;z<8;z++)for(let x=0;x<8;x++){
+    const wet=T.chunk(map.terrain,x,z).flat().map(v=>v===1?'1':'0').join(''),key=T.waterMesh(map,x,z);
+    assert.equal(!!key,wet.includes('1'));if(key){assert.match(key,/^terrain4w:[0-7]{2}[0-6]{144}[0-9a-f]{98}[01]{36}0$/);assert.equal(key.slice(10,254),T.mesh(map,x,z).slice(10,254));assert.equal(key.slice(254,290),wet);assert.equal(T.waterMesh(map,x,z,true),key.slice(0,-1)+'1');assert.equal(T.waterMesh(S.restore(S.create('skirmish',{map})).map,x,z),key);}
+  }
+  for(const [x,z] of [[-3,-11],[1,-11],[-7,1],[5,5]])assert.equal(S.pickHeight(map,x,z),S.elevation(map,x,z)+(map.terrain[S.index(x,z)]===1?.04:0));
+  const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];const fly=S.spawn(s,'dragon',0,-4,-11);assert.equal(S.command(s,0,{type:'move',ids:[fly.id],x:4,z:-11}),null);step(s,40);assert.ok(fly.x>2);assert.equal(S.unitHeight(s,fly),S.elevation(map,fly.x,fly.z)+4);assert.equal(S.flatSite(map,1,-11,1),false);
+}
 const legacy=S.defaultMap();delete legacy.heights;delete legacy.ramps;delete legacy.surfaces;delete legacy.relief;
 delete legacy.cliffStyle;assert.equal(S.validateMap(legacy).cliffStyle,0);
 for(const cliffStyle of [-1,3,.5,null,'1'])assert.throws(()=>S.validateMap({...legacy,cliffStyle}));

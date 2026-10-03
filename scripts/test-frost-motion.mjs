@@ -28,4 +28,9 @@ send(3,-4);assert.equal(model()[0],-4,'rewound snapshots discard future position
 send(8,4);assert.equal(model()[0],4,'snapshot gaps snap to authoritative position');
 send(8,12);assert.equal(model()[0],12,'blink teleports snap even within the same authoritative tick');
 send(8,-12,undefined,true);assert.equal(model()[0],-12,'joining or resuming clears reused unit history');
+tick(.001,['Escape']);snapshot.map.terrain[10*32+16]=1;send(31,-12);tick(.09);
+const water=world.entities.filter(e=>e.name.startsWith('Water ')&&active.get(e.entity));assert.ok(water.length>0);
+for(const e of water){const mesh=current.get(e.entity+'/MeshRenderer'),block=current.get(e.entity+'/MaterialPropertyBlock');assert.match(mesh.mesh,/^terrain4w:/);assert.equal(mesh.cast_shadows,false);assert.equal(block.custom_parameter_values[block.custom_parameter_names.indexOf('water_layer')][0],2);assert.equal(block.custom_parameter_values[block.custom_parameter_names.indexOf('water_time')][0],3.1);assert.equal(active.get(entity(e.name.replace('Water ','Riverbed '))),true);}
+send(32,-12);tick(.09);assert.equal(value(water[0].name,'MaterialPropertyBlock').custom_parameter_values.at(-1)[0],3.2);
+snapshot.map.terrain.fill(0);send(33,-12);tick(.09);assert.ok(water.every(e=>active.get(e.entity)===false),'dry authoritative map removes water layers');
 console.log('PASS: per-frame movement, walking, picking, immediate HUD, pause, camera, new-game reset, network interpolation, hidden units, snapshot rewind/gap, blink and rejoin');

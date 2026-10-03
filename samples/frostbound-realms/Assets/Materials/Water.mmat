@@ -1,0 +1,1 @@
+{"version":8,"name":"Animated transparent river surface","shader":"custom","custom_shader":"Assets/Shaders/Ground.mshader","surface":"transparent","blend_mode":"alpha","base_color":[1,1,1,1],"roughness":0.16,"base_color_texture":"Assets/Textures/rock_face_03_diff_1k.jpg","metallic_roughness_texture":"Assets/Textures/rock_face_03_nrh_1k.png"}

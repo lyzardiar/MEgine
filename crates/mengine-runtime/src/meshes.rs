@@ -77,7 +77,7 @@ impl RuntimeMeshCache {
         let mut frame_keys = HashSet::new();
         for object in objects {
             let key = object.mesh_key.trim();
-            if key.starts_with("terrain4:") || key.starts_with("terrain4r:") || key.starts_with("terrain4h:") {
+            if key.starts_with("terrain4:") || key.starts_with("terrain4r:") || key.starts_with("terrain4h:") || key.starts_with("terrain4w:") {
                 self.pose_usage.insert(key.to_owned(), self.frame);
                 if should_attempt(&mut self.attempted, key, FileStamp::default()) {
                     match terrain_mesh(key) {

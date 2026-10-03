@@ -1,5 +1,5 @@
 /* MENGINE_PARAMETERS
-{"parameters":[{"name":"cells0","type":"vector4","default":[1,1,1,1]},{"name":"cells1","type":"vector4","default":[1,1,1,1]},{"name":"cells2","type":"vector4","default":[1,1,1,1]},{"name":"cells3","type":"vector4","default":[1,1,1,1]},{"name":"cells4","type":"vector4","default":[1,1,1,1]},{"name":"cells5","type":"vector4","default":[1,1,1,1]},{"name":"cells6","type":"vector4","default":[1,1,1,1]},{"name":"cells7","type":"vector4","default":[1,1,1,1]},{"name":"cells8","type":"vector4","default":[1,1,1,1]},{"name":"cliff_mapping","type":"vector4","default":[0.18,0.18,0.8,0]}],"textures":[{"name":"soil","type":"color","default":"Assets/Textures/soil_grass_diff.png"},{"name":"snow","type":"color","default":"Assets/Textures/snow_02_diff_1k.jpg"},{"name":"stone","type":"color","default":"Assets/Textures/rocky_terrain_diff_1k.jpg"},{"name":"soil_nrh","type":"data","default":"Assets/Textures/soil_grass_nrh.png"},{"name":"snow_nrh","type":"data","default":"Assets/Textures/snow_02_nrh_1k.png"},{"name":"stone_nrh","type":"data","default":"Assets/Textures/rocky_terrain_nrh_1k.png"}]}
+{"parameters":[{"name":"cells0","type":"vector4","default":[1,1,1,1]},{"name":"cells1","type":"vector4","default":[1,1,1,1]},{"name":"cells2","type":"vector4","default":[1,1,1,1]},{"name":"cells3","type":"vector4","default":[1,1,1,1]},{"name":"cells4","type":"vector4","default":[1,1,1,1]},{"name":"cells5","type":"vector4","default":[1,1,1,1]},{"name":"cells6","type":"vector4","default":[1,1,1,1]},{"name":"cells7","type":"vector4","default":[1,1,1,1]},{"name":"cells8","type":"vector4","default":[1,1,1,1]},{"name":"cliff_mapping","type":"vector4","default":[0.18,0.18,0.8,0]},{"name":"water_layer","type":"vector4","default":[0,0,0,0]},{"name":"water_time","type":"vector4","default":[0,0,0,0]}],"textures":[{"name":"soil","type":"color","default":"Assets/Textures/soil_grass_diff.png"},{"name":"snow","type":"color","default":"Assets/Textures/snow_02_diff_1k.jpg"},{"name":"stone","type":"color","default":"Assets/Textures/rocky_terrain_diff_1k.jpg"},{"name":"soil_nrh","type":"data","default":"Assets/Textures/soil_grass_nrh.png"},{"name":"snow_nrh","type":"data","default":"Assets/Textures/snow_02_nrh_1k.png"},{"name":"stone_nrh","type":"data","default":"Assets/Textures/rocky_terrain_nrh_1k.png"}]}
 */
 // MiYu: 64 terrain chunks replace 1024 independently shaded cubes.
 struct FrostGround { materials: vec4<f32>, painted: vec2<f32>, fog: f32 }
@@ -73,7 +73,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let melt=(1.0-snow_cover)*smoothstep(0.18,0.5,cover);
     let road=smoothstep(0.22,0.8,fields.y+(stone_nrh.a-0.5)*0.18)*(1.0-grass_cover)*(1.0-rock_cover);
     let shore=shore_fields.x+(frost_noise(p*2.3)-0.5)*0.065;
-    let water=smoothstep(0.46,0.6,shore);let wet=smoothstep(0.18,0.51,shore);let depth=smoothstep(0.57,0.96,shore);
+    let wet=smoothstep(0.18,0.51,shore);
     let soil_tint=mix(vec3<f32>(0.64,0.69,0.59),vec3<f32>(0.84,0.79,0.67),medium);
     let damp=mix(vec3<f32>(1.0),vec3<f32>(0.56,0.61,0.58),melt);
     let snow_color=snow*vec3<f32>(0.91,0.95,1.0);
@@ -84,19 +84,15 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let dry=mix(painted,mix(road_stone,snow_color,road_snow),road);
     let gravel_mix=0.45+frost_noise(p*1.6)*0.35;let gravel=mix(litter,stone,gravel_mix);
     let bank=mix(dry,gravel*vec3<f32>(0.31,0.34,0.3),wet);
-    let wave=sin(p.x*4.2+p.y*2.6+frost_noise(p*0.8)*5.0);
-    let ripples=wave*0.003+sin(p.y*8.3-p.x*1.1)*0.0015;
-    let shallow=mix(gravel*vec3<f32>(0.22,0.35,0.3),vec3<f32>(0.038,0.108,0.104),0.55);
-    s.base_color=mix(bank,mix(shallow,vec3<f32>(0.019,0.049,0.061),depth)+ripples,water);
-    let foam=(smoothstep(0.46,0.51,shore)-smoothstep(0.53,0.59,shore))*smoothstep(0.58,0.82,frost_noise(p*3.7));
-    s.base_color=mix(s.base_color,vec3<f32>(0.19,0.25,0.24),foam*0.34);
+    let phase=mengine_param_water_time().x;
+    let wave=sin(p.x*4.2+p.y*2.6+frost_noise(p*0.8)*5.0-phase*1.3);
+    s.base_color=bank;
     let painted_nrh=mix(mix(mix(soil_nrh,snow_nrh,snow_cover),grass_nrh,grass_cover),stone_nrh,rock_cover);
     let packed=mix(mix(painted_nrh,mix(stone_nrh,snow_nrh,road_snow),road),mix(soil_nrh,stone_nrh,gravel_mix),wet);
     let dry_roughness=mix(clamp(packed.b,0.48,1.0),0.52,melt*(1.0-road));
-    s.roughness=mix(mix(dry_roughness,0.4,wet),0.23,water);s.metallic=0.0;
+    s.roughness=mix(dry_roughness,0.4,wet);s.metallic=0.0;
     let ground_normal=frost_bump(packed,geometric,vec3<f32>(1,0,0),vec3<f32>(0,0,1),0.7);
-    let water_normal=normalize(geometric+vec3<f32>(wave*0.045,0.0,cos(p.y*8.3-p.x*1.1)*0.035));
-    s.normal=normalize(mix(ground_normal,water_normal,water));
+    s.normal=ground_normal;
     let cliff=select(1.0-smoothstep(0.3,0.85,abs(geometric.y)),1.0,wall);
     let mapping=mengine_param_cliff_mapping();
     let side_x=vec2<f32>(p.y,-world_position.y)*mapping.xy;let side_z=vec2<f32>(p.x,-world_position.y)*mapping.xy;
@@ -112,9 +108,26 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     s.base_color=mix(s.base_color,cliff_color,cliff);
     s.base_color*=1.0-0.3*clamp(uv.x,0.0,1.0)*shelf;
     s.normal=normalize(mix(s.normal,side_normal,cliff));s.roughness=mix(s.roughness,mix(side_nz.b,side_nx.b,side_weight),cliff);
+    // MiYu: opaque beds sit below a separate alpha water layer; land cliffs retain their geometry.
+    let layer=mengine_param_water_layer().x;
+    let shoreline=frost_ground(p+drift*0.55).materials.x;
+    let submerged=shoreline>0.5;
+    if layer<0.5 {if !wall&&submerged {discard;}}
+    else {
+        if !submerged {discard;}
+        s.base_color=gravel*vec3<f32>(0.72,0.76,0.68);s.normal=ground_normal;s.roughness=0.82;
+        if layer>1.5 {
+            let deep=smoothstep(0.5,0.96,shoreline);
+            let cross_wave=cos(p.y*6.1-p.x*1.7+phase*0.85);
+            let foam_line=(1.0-smoothstep(0.5,0.58,shoreline))*smoothstep(0.52,0.8,frost_noise(p*3.7+vec2<f32>(phase*0.06)));
+            s.base_color=mix(vec3<f32>(0.06,0.17,0.16),vec3<f32>(0.025,0.085,0.105),deep)+vec3<f32>(foam_line*0.12);
+            s.normal=normalize(geometric+vec3<f32>(wave*0.075,0.0,cross_wave*0.055));s.roughness=0.16;
+            s.alpha=mix(0.25,0.65,deep);s.emissive=vec3<f32>(0.004,0.012,0.014);
+        }
+    }
     return s;
 }
 fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, world_position: vec3<f32>, world_normal: vec3<f32>) -> vec4<f32> {
     let fog=frost_ground(world_position.xz).fog;
-    return vec4<f32>(mix(vec3<f32>(0.012,0.025,0.038),color.rgb,smoothstep(0.05,1.0,fog)),1.0);
+    return vec4<f32>(mix(vec3<f32>(0.012,0.025,0.038),color.rgb,smoothstep(0.05,1.0,fog)),color.a);
 }

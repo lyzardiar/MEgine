@@ -1,0 +1,71 @@
+{
+  "stage": "Independent submerged beds and transparent water",
+  "author": "MiYu",
+  "protocol": 26,
+  "tests": {
+    "terrain_mesh": {
+      "passed": 8,
+      "failed": 0
+    },
+    "ground_shader": {
+      "passed": 1,
+      "failed": 0,
+      "backends": [
+        "WebGPU",
+        "Vulkan",
+        "D3D12",
+        "Metal"
+      ]
+    },
+    "javascriptAndTCP": {
+      "passed": true
+    },
+    "clientMotion": {
+      "passed": true
+    }
+  },
+  "files": {
+    "crates/mengine-assets/src/terrain_mesh.rs": "f6c0eba85399833125955921fe97f92ddc635226f309d88f1180b1dab360fcb7",
+    "crates/mengine-runtime/src/meshes.rs": "d1aaf7cb046193a0d93760f508a964e3b3b9e10a7cfc978ad19a66bb6c846e6a",
+    "samples/frostbound-realms/game/terrain.js": "cd477438826806775cacd09c4538853a6a42f75e243e6e09db277bacd9711268",
+    "samples/frostbound-realms/game/client.js": "965a348c1bde3f3d4aa68f6e613d04cb30b60fe38898ffff0bc81f94a3b507d0",
+    "samples/frostbound-realms/game/simulation.js": "0567eeea2313823084498097f500454bcdae0e15ff0362846395c0f06cea4cef",
+    "samples/frostbound-realms/Assets/Shaders/Ground.mshader": "bc96f855c5e10c5dd3001a3febae9c554f3cae9b34ae7060aceef0a4b9cdf4d7",
+    "samples/frostbound-realms/Assets/Materials/Water.mmat": "decae81d7d84afea8f74263b27956bcb9430529c8f30c100aa454d1e8281b669",
+    "samples/frostbound-realms/Assets/Materials/Riverbed.mmat": "e940d7fb64d8a910d491698267ad33239fd9391c5d95e129662fe2fb07f5226b",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "e7aa95e80f85a7909a5a0214099597df4dd797534b634fb168c012075524e433",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "1d90c83a1ba89ca18b37d9b039307e63cc53eb30a017ea8f8afeccb519a8b0ca"
+  },
+  "native": {
+    "passed": true,
+    "tag": 1790989900004,
+    "report": "native-water-qa.json",
+    "debugBedCapture": "water-riverbed-depth.png",
+    "sourceShaderMaterialsSceneMatch": true,
+    "sourceScriptInPackageMatches": true,
+    "fixtureScript": "Authored hero and dragon, telemetry, and sample-only F12 surface visibility switch",
+    "screenshotsInspected": [
+      "water-ground-river.png",
+      "water-riverbed-depth.png",
+      "water-water-crossing.png",
+      "water-water-guest.png"
+    ]
+  },
+  "mainEditorPreserved": 84940,
+  "package": {
+    "files": 730,
+    "contentHash": "cb862fa5b0049dd458b8287aef48c9bbd2a107200ab3aaee5eb29062c551cf60",
+    "runtimeSha256": "b7d00ed18b0af7133c62260545ad680d45dbf483ca5d48af7d10295e988f3b2a",
+    "smoke": {
+      "seconds": 30,
+      "responding": true,
+      "loggedErrors": 0
+    }
+  },
+  "limitations": {
+    "physicalInput": false,
+    "audioListening": false,
+    "steadyFrameBudgetAccepted": false,
+    "completeWarcraftTilesets": false
+  }
+}

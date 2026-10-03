@@ -8,9 +8,14 @@ use crate::MeshData;
 /// for subdivided tops, connected rock faces and shelf/contact material weights in UVs.
 /// `terrain4h:` adds a seven-by-seven signed relief field encoded as 128 + height * 16.
 /// An optional final 0/1/2 selects rock, faceted ice or coursed masonry cliff geometry.
+/// `terrain4w:` adds 36 wet-cell flags and a final 0/1 for the water surface/riverbed.
 pub fn terrain_mesh(key: &str) -> Result<MeshData, &'static str> {
-    if let Some(data) = key.strip_prefix("terrain4h:") { return rocky_terrain(data,true); }
-    if let Some(data) = key.strip_prefix("terrain4r:") { return rocky_terrain(data,false); }
+    if let Some(data) = key.strip_prefix("terrain4w:") {
+        if data.len()!=281 || !data.is_ascii() || !data.as_bytes()[244..].iter().all(|v|*v==b'0'||*v==b'1') {return Err("invalid water terrain payload");}
+        return rocky_terrain(&data[..244],true,Some((&data.as_bytes()[244..280],data.as_bytes()[280]==b'1')));
+    }
+    if let Some(data) = key.strip_prefix("terrain4h:") { return rocky_terrain(data,true,None); }
+    if let Some(data) = key.strip_prefix("terrain4r:") { return rocky_terrain(data,false,None); }
     let data = key.strip_prefix("terrain4:").ok_or("invalid terrain prefix")?;
     if data.len() != 64 || !data.bytes().all(|v| v.is_ascii_hexdigit()) { return Err("terrain patch requires 64 hexadecimal heights"); }
     let heights: Vec<f32> = data.chars().map(|v| v.to_digit(16).unwrap() as f32).collect();
@@ -35,7 +40,8 @@ pub fn terrain_mesh(key: &str) -> Result<MeshData, &'static str> {
 }
 
 // MiYu: a one-tile halo exposes only height discontinuities; world coordinates weld chunk borders.
-fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
+fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<MeshData, &'static str> {
+    if !data.is_ascii() {return Err("invalid rock terrain height payload");}
     let style=if sculpted&&data.len()==245 {let digit=data.as_bytes()[244];if !(b'0'..=b'2').contains(&digit) {return Err("invalid cliff geometry style");}digit-b'0'}else{0};
     let data=if sculpted&&data.len()==245 {&data[..244]}else{data};
     if data.len()!=(if sculpted {244} else {146}) || !data.bytes().all(|v| v.is_ascii_hexdigit()) { return Err("invalid rock terrain height payload"); }
@@ -47,14 +53,21 @@ fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
         let u=((x+6.)/2.).clamp(0.,6.);let v=((z+6.)/2.).clamp(0.,6.);let ix=(u.floor() as usize).min(5);let iz=(v.floor() as usize).min(5);let fx=u-ix as f32;let fz=v-iz as f32;let i=iz*7+ix;
         (relief[i]*(1.-fx)+relief[i+1]*fx)*(1.-fz)+(relief[i+7]*(1.-fx)+relief[i+8]*fx)*fz
     };
+    // MiYu: the halo keeps submerged beds continuous at chunk borders and level at dry banks.
+    let water_offset=|x:f32,z:f32| {
+        let Some((wet,bed))=water else {return 0.;};if !bed {return 0.04;}
+        let mut distance=1_f32;for (i,flag) in wet.iter().enumerate() {if *flag==b'0' {let dx=(x-(i%6) as f32*2.+5.).abs()-1.;let dz=(z-(i/6) as f32*2.+5.).abs()-1.;distance=distance.min(glam::Vec2::new(dx.max(0.),dz.max(0.)).length());}}
+        let t=distance.clamp(0.,1.);-0.75*t*t*(3.-2.*t)
+    };
     let mut mesh=MeshData { positions:Vec::new(),normals:Vec::new(),uvs:Vec::new(),indices:Vec::new() };
     let mut triangle=|mut p:[[f32;3];3],uv:[[f32;2];3],top:bool| {
         let base=(glam::Vec3::from_array(p[1])-glam::Vec3::from_array(p[0])).cross(glam::Vec3::from_array(p[2])-glam::Vec3::from_array(p[0])).normalize_or_zero();
-        for vertex in &mut p {vertex[1]+=relief_height(vertex[0],vertex[2]);}
+        if water.is_some()&&!top {return;}
+        for vertex in &mut p {vertex[1]+=relief_height(vertex[0],vertex[2])+water_offset(vertex[0],vertex[2]);}
         let a=glam::Vec3::from_array(p[1])-glam::Vec3::from_array(p[0]);let b=glam::Vec3::from_array(p[2])-glam::Vec3::from_array(p[0]);let cross=a.cross(b);
         if cross.length_squared()<1e-10 { return; }
         debug_assert!(!top||cross.y>0.,"terrain top winding");
-        let normals=p.map(|v|if top&&sculpted&&base.y>0.01 {let dx=(relief_height(v[0]+0.25,v[2])-relief_height(v[0]-0.25,v[2]))*2.;let dz=(relief_height(v[0],v[2]+0.25)-relief_height(v[0],v[2]-0.25))*2.;glam::Vec3::new(base.x/base.y-dx,1.,base.z/base.y-dz).normalize().to_array()}else{cross.normalize().to_array()});
+        let normals=p.map(|v|if top&&sculpted&&base.y>0.01 {let height=|x,z|relief_height(x,z)+water_offset(x,z);let dx=(height(v[0]+0.25,v[2])-height(v[0]-0.25,v[2]))*2.;let dz=(height(v[0],v[2]+0.25)-height(v[0],v[2]-0.25))*2.;glam::Vec3::new(base.x/base.y-dx,1.,base.z/base.y-dz).normalize().to_array()}else{cross.normalize().to_array()});
         let first=mesh.positions.len() as u32;mesh.positions.extend(p);mesh.normals.extend(normals);mesh.uvs.extend(uv);mesh.indices.extend([first,first+1,first+2]);
     };
     let point=|x:f32,y:f32,z:f32| { let wx=x+origin[0];let wz=z+origin[1];[x+(wx*1.13+wz*0.71).sin()*0.12,y,z+(wz*1.07-wx*0.83).sin()*0.12] };
@@ -100,6 +113,7 @@ fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
             for t in steps {let u=lerp(vertices[a][0] as f32,vertices[b][0] as f32,t);let v=lerp(vertices[a][1] as f32,vertices[b][1] as f32,t);let outer=top(u-ix as f32,v-iz as f32);let p=std::array::from_fn(|axis|lerp(center.0[axis],outer.0[axis],0.5));let uv=top((u-ix as f32+0.5)*0.5,(v-iz as f32+0.5)*0.5).1;outline.push(outer);inner.push((p,uv));}
         }
         for i in 0..outline.len() {let j=(i+1)%outline.len();triangle([center.0,inner[i].0,inner[j].0],[center.1,inner[i].1,inner[j].1],true);triangle([inner[i].0,outline[i].0,outline[j].0],[inner[i].1,outline[i].1,outline[j].1],true);triangle([inner[i].0,outline[j].0,inner[j].0],[inner[i].1,outline[j].1,inner[j].1],true);}
+        if water.is_some() {continue;}
         for (neighbor,a,b,na,nb,outward) in edges {
             let nh=&heights[neighbor*4..neighbor*4+4];if h[a]<=nh[na] && h[b]<=nh[nb] { continue; }
             let da=h[a]-nh[na];let db=h[b]-nh[nb];let first=if da<=0. {da/(da-db)}else{0.};let last=if db<=0. {da/(da-db)}else{1.};
@@ -113,7 +127,7 @@ fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
                     2=>{let row=(depth*4.).floor();let course=(depth*4.).rem_euclid(1.);let block=(t*4.+row.rem_euclid(2.)*0.5).rem_euclid(1.);let bevel=|v:f32|(v*8.).min((1.-v)*8.).clamp(0.,1.);0.06*bevel(course)*bevel(block)*bevel(t)},
                     _=>taper*(0.12+0.07*((px+origin[0])*2.1+(pz+origin[1])*0.8+y*3.7).sin())
                 };
-                let bulge=bulge*if style==0 {1.}else{((upper-lower)*4.).clamp(0.,1.)};let mut p=boundary(vertices[a],lerp(h[a],nh[na],depth),vertices[b],lerp(h[b],nh[nb],depth),t);p[1]=y;p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,if style==0 {upper-y}else{-1.-(upper-y)}])
+                let bulge=bulge*if style==0 {1.}else{((upper-lower)*4.).clamp(0.,1.)};let mut p=boundary(vertices[a],lerp(h[a],nh[na],depth),vertices[b],lerp(h[b],nh[nb],depth),t);p[1]=y;p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,if sculpted {-1.-(upper-y)}else{upper-y}])
             };
             // MiYu: common height subdivisions weld vertical corners between different cliff levels.
             let depths=|upper:f32,lower:f32| {let mut cuts=Vec::new();if (upper-lower).abs()>0.001 {for level in (upper.min(lower)*4.).floor() as i32..=(upper.max(lower)*4.).ceil() as i32 {let d=(upper-level as f32/4.)/(upper-lower);if d>0.&&d<1. {cuts.push(d);}}cuts.sort_by(f32::total_cmp);}cuts};let ca=depths(h[a],nh[na]);let cb=depths(h[b],nh[nb]);
@@ -142,6 +156,26 @@ fn rocky_terrain(data: &str,sculpted:bool) -> Result<MeshData, &'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn water_layers_preserve_tops_and_lower_only_submerged_beds() {
+        let payload=format!("33{}{}","0000".repeat(36),"80".repeat(49));let ground=terrain_mesh(&format!("terrain4h:{payload}")).unwrap();
+        let surface=terrain_mesh(&format!("terrain4w:{payload}{}0","1".repeat(36))).unwrap();let bed=terrain_mesh(&format!("terrain4w:{payload}{}1","1".repeat(36))).unwrap();
+        assert_eq!(surface.indices,ground.indices);assert_eq!(bed.indices,ground.indices);
+        for ((g,w),b) in ground.positions.iter().zip(&surface.positions).zip(&bed.positions) {assert_eq!(g[0],w[0]);assert_eq!(g[2],w[2]);assert!((w[1]-g[1]-0.04).abs()<1e-6);assert!((b[1]-g[1]+0.75).abs()<1e-6);}
+        let wet:String=(0..36).map(|i|if i%6>=3 {'1'}else{'0'}).collect();let bank=terrain_mesh(&format!("terrain4w:{payload}{wet}1")).unwrap();
+        assert!(bank.positions.iter().any(|p|p[0]>1.&&p[1]< -0.74));for p in &bank.positions {if p[0]<=0. {assert_eq!(p[1],0.);}assert!((-0.75..=0.).contains(&p[1]));}
+        for mesh in [&surface,&bed,&bank] {assert!(mesh.normals.iter().all(|n|n[1]>0.&&n.iter().all(|v|v.is_finite())&&(glam::Vec3::from_array(*n).length()-1.).abs()<1e-5));for tri in mesh.indices.chunks_exact(3) {let a=glam::Vec3::from_array(mesh.positions[tri[0] as usize]);let b=glam::Vec3::from_array(mesh.positions[tri[1] as usize]);let c=glam::Vec3::from_array(mesh.positions[tri[2] as usize]);assert!((b-a).cross(c-a).y>0.);}}
+        for suffix in [format!("{}0","1".repeat(35)),format!("{}2","1".repeat(36)),format!("{}0","x".repeat(36))] {assert!(terrain_mesh(&format!("terrain4w:{payload}{suffix}")).is_err());}
+        assert!(terrain_mesh(&format!("terrain4w:{}{}0","é".repeat(122),"1".repeat(36))).is_err());assert!(terrain_mesh(&format!("terrain4h:{}0","é".repeat(122))).is_err());
+    }
+    #[test]
+    fn submerged_patch_seams_match_in_height_and_normal() {
+        let key=|cx:i32,layer:u32| {let mut data=format!("terrain4w:{cx}3{}{}","0000".repeat(36),"80".repeat(49));for z in -1..=4 {for x in -1..=4 {data.push(if (cx*4+x>=14&&cx*4+x<=18)&&z>=1 {'1'}else{'0'});}}data.push(char::from_digit(layer,10).unwrap());data};
+        for layer in [0,1] {let left=terrain_mesh(&key(3,layer)).unwrap();let right=terrain_mesh(&key(4,layer)).unwrap();let mut matched=0;
+            for (a,n) in left.positions.iter().zip(&left.normals).filter(|(p,_)|p[0]>3.8) {if let Some((b,m))=right.positions.iter().zip(&right.normals).find(|(b,_)|(a[0]-b[0]-8.).abs()<1e-5&&(a[2]-b[2]).abs()<1e-5) {matched+=1;assert!((a[1]-b[1]).abs()<1e-5);assert!((glam::Vec3::from_array(*n)-glam::Vec3::from_array(*m)).length()<1e-5);}}
+            assert!(matched>16);
+        }
+    }
     #[test]
     fn cliff_styles_change_wall_geometry_and_preserve_shelves() {
         let mut h=vec!['0';144];for i in 0..4 {h[(2*6+2)*4+i]='2';}let key=format!("terrain4h:00{}{}",h.into_iter().collect::<String>(),"80".repeat(49));

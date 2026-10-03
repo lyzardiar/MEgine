@@ -100,7 +100,7 @@ var FrostClient=(()=>{
     const [w,h]=input.viewport?.every(v=>v>1)?input.viewport:[1280,720],x=camera[0]+(input.pointer[0]/w*2-1)*zoom*w/h,base=camera[1]+(input.pointer[1]/h*2-1)*zoom/sin,map=mode==='editor'?editMap:state.map;
     // Orthographic ray marches down from above the highest authored terrain, finding the front surface.
     let y=9.01,z=base+y*Math.cos(pitch)/sin;
-    for(;y>=-1.05;y-=.04){z=base+y*Math.cos(pitch)/sin;if(y<=S.elevation(map,x,z)){let lo=y,hi=y+.04;for(let k=0;k<8;k++){const mid=(lo+hi)/2;if(mid<=S.elevation(map,x,base+mid*Math.cos(pitch)/sin))lo=mid;else hi=mid;}z=base+hi*Math.cos(pitch)/sin;break;}}
+    for(;y>=-1.05;y-=.04){z=base+y*Math.cos(pitch)/sin;if(y<=S.pickHeight(map,x,z)){let lo=y,hi=y+.04;for(let k=0;k<8;k++){const mid=(lo+hi)/2;if(mid<=S.pickHeight(map,x,base+mid*Math.cos(pitch)/sin))lo=mid;else hi=mid;}z=base+hi*Math.cos(pitch)/sin;break;}}
     if(y< -1.05)z=base;return {x:S.clamp(x,-30,30),z:S.clamp(z,-30,30)};
   }
   function screenWorld(u,input){const position=S.types[u.kind]&&unitPositions.get(u.id)||u;const [w,h]=input.viewport?.every(v=>v>1)?input.viewport:[1280,720],scale=Math.sqrt(w/1280*h/720);return {x:(position.x-camera[0])/zoom*h/2/scale,y:((position.z-camera[1])*sin-(u.y??position.y??S.unitHeight(state,u))*Math.cos(pitch))/zoom*h/2/scale};}
@@ -267,7 +267,9 @@ var FrostClient=(()=>{
 
     const map=editing?editMap:state.map;
     const ground=FrostTerrain.cells(state,team,allVisible);
-    for(let z=0;z<8;z++)for(let x=0;x<8;x++){const name='Ground '+(z*8+x);set(name,'MaterialPropertyBlock',{custom_parameter_names:FrostTerrain.names,custom_parameter_values:FrostTerrain.chunk(ground,x,z)});set(name,'MeshRenderer',{mesh:FrostTerrain.mesh(map,x,z),material:FrostTerrain.material(map)});}
+    for(let z=0;z<8;z++)for(let x=0;x<8;x++){const slot=z*8+x,name='Ground '+slot,values=FrostTerrain.chunk(ground,x,z);set(name,'MaterialPropertyBlock',{custom_parameter_names:FrostTerrain.names,custom_parameter_values:values});set(name,'MeshRenderer',{mesh:FrostTerrain.mesh(map,x,z),material:FrostTerrain.material(map)});
+      for(const bed of [true,false]){const layer=bed?'Riverbed':'Water',n=layer+' '+slot,key=FrostTerrain.waterMesh(map,x,z,bed);show(n,!!key);if(key){set(n,'MeshRenderer',{mesh:key,material:'Assets/Materials/'+layer+'.mmat',cast_shadows:false,receive_shadows:!bed});set(n,'MaterialPropertyBlock',{custom_parameter_names:[...FrostTerrain.names,'water_layer','water_time'],custom_parameter_values:[...values,[bed?1:2,0,0,0],[editing?time:state.frame*S.DT,0,0,0]]});}}
+    }
     for(let j=0;j<256;j++){const v=ground[Math.floor(j/16)*64+(j%16)*2],encoded=Math.floor(v/2),kind=encoded%3,surface=Math.floor(encoded/3),factor=v-encoded*2,c=kind===1?[.04,.2,.27,1]:kind===2?[.43,.37,.25,1]:surface===1?[.38,.31,.23,1]:surface===2?[.75,.8,.85,1]:surface===3?[.22,.40,.13,1]:surface===4?[.43,.46,.48,1]:[.49,.6,.61,1];show('Mini tile '+j,world);set('Mini tile '+j,'Image',{color:c.map((n,k)=>k===3?n:n*factor*(1+(map.heights[Math.floor(j/16)*64+(j%16)*2]||0)*.12)),raycast_target:false});}
     for(let i=0;i<140;i++){
       const edge=i<72,angle=i*2.399963,x=edge?Math.cos(angle)*(35+i%4*2):((i*17.71)%54)-27,z=edge?Math.sin(angle)*(35+i%4*2):((i*23.19)%54)-27,idx=S.index(x,z);
