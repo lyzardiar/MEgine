@@ -1,0 +1,108 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "cfc59c2b838112107d4e33ce59732a94eb2d83a0",
+  "protocol": 31,
+  "rules": {
+    "timedBranches": true,
+    "costsAndRefunds": true,
+    "supplyDuringAndAfter": true,
+    "preservedIdsAndHpFraction": true,
+    "repairUsesBaseAndUpgradeInvestment": true,
+    "invalidCommandsAndSaves": true,
+    "privateEnemyProgress": true,
+    "delayedProjectilesAndAntiAir": true,
+    "coldMovementCooldownExpiry": true,
+    "purgeAndRespawnCleanup": true,
+    "deathCancelsPending": true
+  },
+  "network": {
+    "realTcp": true,
+    "oldProtocol30Rejected": true,
+    "foreignCancelRejected": true,
+    "cancelRefund": true,
+    "midUpgradeReconnect": true,
+    "bothCompletions": true,
+    "projectileCold": true,
+    "completionTimersShortenedInFixture": true
+  },
+  "native": {
+    "passed": true,
+    "tag": "1791131400101",
+    "scope": "Native QuickJS and actual Agent button/key commands in an isolated map with AI disabled, two existing Ziggurats and stationary invulnerable enemies",
+    "physicalInput": false,
+    "audioListening": false,
+    "upgradeButtons": true,
+    "hotkeys": true,
+    "cancelWithoutPause": true,
+    "midUpgradeSaveRestore": true,
+    "completedSaveRestore": true,
+    "supply": 30,
+    "damagedHpFraction": true,
+    "nativeModelAndMaterial": true,
+    "coldTargets": [
+      {
+        "id": 19,
+        "kind": "soldier",
+        "cold": 1.7000000000000015
+      },
+      {
+        "id": 20,
+        "kind": "dragon",
+        "cold": 4.200000000000003
+      }
+    ],
+    "nativeAntiAir": true,
+    "shaderRejections": 0,
+    "originalModels": false
+  },
+  "package": {
+    "files": 757,
+    "contentHash": "e0eef65c7178527b239ebd6b3572836d318a63019b117dbcd8266b90399576ac",
+    "allHashesAndSizesVerified": true,
+    "scriptSha256": "d4648a1a7f43bf59f9a866e7b52fe242503359ce63b67b3221f14d1ca9f75bf1",
+    "startupSeconds": 30,
+    "responding": true,
+    "loggedErrors": 0
+  },
+  "preservation": {
+    "maps": 6,
+    "mapBytes": true,
+    "sceneAndEntityIds": true,
+    "groundShaderAndModelCatalog": true,
+    "sourceAssetManifests": true,
+    "noNewAssets": true
+  },
+  "sources": {
+    "spirit": {
+      "url": "https://classic.battle.net/war3/undead/buildings/spirittower.shtml",
+      "sha256": "8a629e80f99949d6af1139a6132462cac5642f83cce57aff47d6122a530b398f"
+    },
+    "nerubian": {
+      "url": "https://classic.battle.net/war3/undead/buildings/nerubiantower.shtml",
+      "sha256": "e3f81034f19b3ade3db5eb32245526950f657bb10bda2cefdcf90fc2b01911c1"
+    },
+    "ziggurat": {
+      "url": "https://classic.battle.net/war3/undead/buildings/ziggurat.shtml",
+      "sha256": "4b82362834c4b36c043ad100b21b4af6be9da89be880bbb6aa34838823aa3ec9"
+    }
+  },
+  "screenshots": {
+    "ziggurat-upgrade-choices.png": "51e66c3495e8dda4429906cec4fb49f6ccd14d1f976ab388280996ef2cff1439",
+    "ziggurat-upgrade-progress.png": "91dc34459c6d4339367822ded5775708331595ac03dd20f429f19f269620030a",
+    "ziggurat-upgrade-nerubian.png": "96be6eb1755c1ff9ce73534912c4f0b57610263a4db8e68e24ff54ae91a4441c",
+    "ziggurat-upgrade-spirit.png": "70317bc50739bd4a050139b96d432e0402bafdb0f6febecfa19a08d302eb1065"
+  },
+  "limitations": {
+    "fullRecreation": false,
+    "graveyardPrerequisiteImplemented": false,
+    "originalZigguratBaseStats": false,
+    "originalDedicatedTowerModels": false,
+    "originalArmorRangeDamageVariance": false,
+    "coldRatiosIndependentlyConfirmed": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "stablePlayerFrameRate": false
+  }
+}

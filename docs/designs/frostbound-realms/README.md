@@ -1,5 +1,7 @@
 # Frostbound Realms 交付证据
 
+最新玩法：[通灵塔防御升级](ziggurat-upgrades.md)。
+
 最新地形：[连续草皮与雪盖](coherent-ground.md)、[地表植被](ground-cover.md)、[贴地阴影](terrain-shadows.md)、[岩壁模块](cliff-modules.md)、[坡道侧壁分层](ramp-modules.md)、[冬季、森林与荒地套件](terrain-tilesets.md)、[缓坡地表与崖沿材质](ramp-ground-surfaces.md)、[逐格绘制岩石、冰壁和砌石悬崖](cliff-tile-painting.md)。
 
 最新亡灵能力：[吞食尸体研究、进食动作与持续治疗](cannibalize.md)。

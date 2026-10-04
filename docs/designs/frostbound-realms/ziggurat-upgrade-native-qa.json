@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "tag": "1791131400101",
+  "scope": "Native QuickJS and actual Agent button/key commands in an isolated map with AI disabled, two existing Ziggurats and stationary invulnerable enemies",
+  "physicalInput": false,
+  "audioListening": false,
+  "upgradeButtons": true,
+  "hotkeys": true,
+  "cancelWithoutPause": true,
+  "midUpgradeSaveRestore": true,
+  "completedSaveRestore": true,
+  "supply": 30,
+  "damagedHpFraction": true,
+  "nativeModelAndMaterial": true,
+  "coldTargets": [
+    {
+      "id": 19,
+      "kind": "soldier",
+      "cold": 1.7000000000000015
+    },
+    {
+      "id": 20,
+      "kind": "dragon",
+      "cold": 4.200000000000003
+    }
+  ],
+  "nativeAntiAir": true,
+  "shaderRejections": 0,
+  "originalModels": false
+}
