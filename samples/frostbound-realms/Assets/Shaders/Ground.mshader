@@ -26,11 +26,11 @@ fn frost_noise(p: vec2<f32>) -> f32 {
     let values=fract(sin(corners)*43758.5453);
     return mix(mix(values.x,values.y,blend.x),mix(values.z,values.w,blend.x),blend.y);
 }
-// MiYu: filled corner masks form two-unit grass tiles; scan height breaks the narrow transition edge.
+// MiYu: connected corner masks form broad grass tiles; scan height breaks the narrow transition edge.
 fn frost_tile_cover(p: vec2<f32>) -> f32 {
     let cell=floor(p);let blend=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract(p));
-    let corners=vec4<f32>(frost_noise(cell*0.34),frost_noise((cell+vec2<f32>(1.0,0.0))*0.34),frost_noise((cell+vec2<f32>(0.0,1.0))*0.34),frost_noise((cell+vec2<f32>(1.0,1.0))*0.34));
-    let values=select(vec4<f32>(0.0),vec4<f32>(1.0),corners>vec4<f32>(0.48));
+    let corners=vec4<f32>(frost_noise(cell*0.22),frost_noise((cell+vec2<f32>(1.0,0.0))*0.22),frost_noise((cell+vec2<f32>(0.0,1.0))*0.22),frost_noise((cell+vec2<f32>(1.0,1.0))*0.22));
+    let values=select(vec4<f32>(0.0),vec4<f32>(1.0),corners>vec4<f32>(0.40));
     return mix(mix(values.x,values.y,blend.x),mix(values.z,values.w,blend.x),blend.y);
 }
 // MiYu: shared weights keep color, normal, roughness and scan height registered across translated tiles.
@@ -81,16 +81,17 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let snow=mix(mengine_texture_snow(snow_uv).rgb,mengine_texture_snow(snow_uv+offset).rgb,snow_weight);let stone=mengine_texture_stone(stone_uv).rgb;
     let soil_nrh=mix(soil_a,soil_b,soil_weight);let snow_nrh=mix(snow_a,snow_b,snow_weight);let stone_nrh=mengine_texture_stone_nrh(stone_uv);
     let grass_uv=p*0.36;let grass_a=frost_atlas_nrh(grass_uv,1.0);let grass_b=frost_atlas_nrh(grass_uv+offset,1.0);let grass_weight=frost_tile_weight(tile_amount,grass_a,grass_b);
-    let grass_nrh=mix(grass_a,grass_b,grass_weight);let grass=mix(frost_atlas_color(grass_uv,1.0),frost_atlas_color(grass_uv+offset,1.0),grass_weight)*vec3<f32>(0.64,0.93,0.60);
+    let grass_nrh=mix(grass_a,grass_b,grass_weight);let grass=mix(frost_atlas_color(grass_uv,1.0),frost_atlas_color(grass_uv+offset,1.0),grass_weight)*vec3<f32>(0.74,1.02,0.68);
     let painted_grass=smoothstep(0.18,0.82,ground.painted.x+(grass_nrh.a-soil_nrh.a)*0.15);let rock_cover=smoothstep(0.18,0.82,ground.painted.y+(stone_nrh.a-soil_nrh.a)*0.15);
     let broad=frost_noise(p*0.085+vec2<f32>(4.0,9.0));let medium=frost_noise(p*0.31+vec2<f32>(23.0,5.0));let fine=frost_noise(p*1.2);
     let natural_cover=smoothstep(0.28,0.72,broad*0.25+tile_variant*0.65+fine*0.10);
     // MiYu: the map tileset affects automatic ground; explicit soil, snow, grass and rock keep their authored weights.
     let automatic=max(0.0,1.0-fields.z-fields.w-ground.painted.x-ground.painted.y);
-    let auto_snow=select(0.0,natural_cover,tileset==0.0);
+    // MiYu: winter shelves keep a continuous snow cap; painted soil, paths and cliff shoulders expose the ground.
+    let auto_snow=select(0.0,0.72+broad*0.20+tile_variant*0.08,tileset==0.0);
     let grass_tiles=frost_tile_cover((p+vec2<f32>(32.0))*0.5+vec2<f32>(11.0,7.0));
     let grass_edge=smoothstep(0.38,0.62,grass_tiles+(grass_nrh.a-soil_nrh.a)*0.22);
-    let auto_grass=select(0.0,select(smoothstep(0.75,0.95,natural_cover)*0.45,grass_edge,tileset==1.0),tileset>0.0);
+    let auto_grass=select(0.0,select(smoothstep(0.75,0.95,natural_cover)*0.45,mix(0.82,1.0,grass_edge),tileset==1.0),tileset>0.0);
     let grass_cover=max(painted_grass,auto_grass*automatic*(1.0-fields.y));
     let cover=auto_snow*automatic+fields.w;
     // MiYu: thin snow settles between raised litter; a narrow wet-soil band follows the melting edge.
@@ -98,7 +99,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let shelf=smoothstep(0.65,0.95,abs(geometric.y))*select(1.0,0.0,wall);
     // MiYu: gentle entrances retain their painted ground; steep faces expose rock beneath thin snow.
     let slope=1.0-smoothstep(0.60,0.85,geometric.y);
-    let rim=smoothstep(0.04,0.55,uv.y+(medium-0.5)*min(max(uv.y,0.0),0.3))*shelf;
+    let rim=smoothstep(0.18,0.75,uv.y+(medium-0.5)*min(max(uv.y,0.0),0.3))*shelf;
     let snow_cover=smoothstep(-0.09,0.09,cover-0.5+(snow_nrh.a-soil_nrh.a)*0.32)*(1.0-slope*0.85)*(1.0-rim*0.95);
     let melt=(1.0-snow_cover)*smoothstep(0.18,0.5,cover);
     let road=smoothstep(0.22,0.8,fields.y+(stone_nrh.a-0.5)*0.18)*(1.0-grass_cover)*(1.0-rock_cover);
@@ -121,7 +122,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let packed=mix(mix(mix(painted_nrh,stone_nrh,slope*(1.0-snow_cover)*0.65),mix(stone_nrh,snow_nrh,road_snow),road),mix(soil_nrh,stone_nrh,gravel_mix),wet);
     let dry_roughness=mix(clamp(packed.b,0.48,1.0),0.52,melt*(1.0-road));
     s.roughness=mix(dry_roughness,0.4,wet);s.metallic=0.0;
-    let ground_normal=frost_bump(packed,geometric,vec3<f32>(1,0,0),vec3<f32>(0,0,1),0.7);
+    let ground_normal=frost_bump(packed,geometric,vec3<f32>(1,0,0),vec3<f32>(0,0,1),0.38);
     s.normal=ground_normal;
     let cliff=select(1.0-smoothstep(0.3,0.6,abs(geometric.y)),1.0,wall);
     let mapping=select(select(mengine_param_cliff_mapping(),vec4<f32>(0.3,0.3,0.35,0),cliff_style==1.0),vec4<f32>(0.4,0.4,0.65,0),cliff_style==2.0);

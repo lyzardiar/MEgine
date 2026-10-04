@@ -1,0 +1,114 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "0df17e8ae1fea33755f81489b52b5cf424381f6f",
+  "productChange": "Ground surface shader: coherent snow and grass caps, narrower exposed cliff shoulders and reduced ground scan-normal strength",
+  "shaderSha256": "6a1f6d1d81026c55d69862225327996258bb86fba1eedd674bda42ce9f2287c1",
+  "native": {
+    "surfaceTag": 1791129000081,
+    "cliffTag": 1791129000101,
+    "tilesets": {
+      "names": [
+        "winter",
+        "forest",
+        "barrens"
+      ],
+      "keyboardAndButton": true,
+      "undo": true,
+      "mapSaveLoad": true,
+      "gameSaveRestore": true,
+      "playtest": true,
+      "terrainSurfacesAndCliffsPreserved": true,
+      "bedAndWaterParameters": true,
+      "biomeTrees": true,
+      "nearAndFarTreeBindings": true,
+      "groundCover": true,
+      "greenAndDryCover": true,
+      "coverGroundHeightAndSlope": true,
+      "nearAndFarCoverBindings": true,
+      "protocol": 30,
+      "twoClientMap": true,
+      "reconnect": true,
+      "shaderRejections": 0
+    },
+    "surface": {
+      "brushes": [
+        "auto",
+        "soil",
+        "snow",
+        "grass",
+        "rock"
+      ],
+      "brushSizes": [
+        1,
+        3,
+        5
+      ],
+      "counts": [
+        979,
+        10,
+        1,
+        25,
+        9
+      ],
+      "waterAndElevationPreserved": true,
+      "undo": true,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "newBrushUndo": true,
+      "defaultMobaGrass": true,
+      "twoClientMap": true,
+      "materialOverrides": true,
+      "reconnect": true
+    },
+    "cliffStyles": {
+      "styles": [
+        "rock",
+        "ice",
+        "masonry"
+      ],
+      "chunks": 64,
+      "sameTopSurface": true,
+      "distinctCliffGeometry": true,
+      "editorSelection": true,
+      "undo": true,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "gameSaveRestore": true,
+      "shaderRejections": 0
+    },
+    "shaderRejections": 0
+  },
+  "preservation": {
+    "entities": 3908,
+    "sceneAndEntityIds": true,
+    "terrainGeometry": true,
+    "maps": 6,
+    "deliveredScriptBundle": true,
+    "deliveredProtocol": 30,
+    "modelAndTextureCatalogs": true,
+    "otherPendingGameplayChangesExcludedFromPackage": true
+  },
+  "package": {
+    "files": 757,
+    "contentHash": "ef5d3c7c158837f294771a329d754405c598c6825af55d899ad8e3529e628a69",
+    "allHashesAndSizesVerified": true,
+    "startupSeconds": 30,
+    "responding": true,
+    "loggedErrors": 0
+  },
+  "screenshots": {
+    "coherent-ground-forest.png": "be4fb06607fb44bb4ec8cff0f893149de3d40c7c77b8b717cf99a911c07ea6a0",
+    "coherent-ground-winter.png": "4379a70b4e2674d51173b762ff867b721254bb9473711a08743e0d3bfada9107",
+    "coherent-ground-before-winter.png": "a9bb5194f35c80d1e4f4a12445aed5d458573b0da886c20d22c081a5d944f976",
+    "coherent-ground-ice.png": "013f5b526d572fe0592f21c454f631713142c08d8f09b3e50f19f2a529405138"
+  },
+  "limitations": {
+    "originalWarcraftTileArt": false,
+    "fullRecreation": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "stableFrameRate": false
+  }
+}
