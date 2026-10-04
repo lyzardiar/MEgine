@@ -15,7 +15,7 @@ const E=[],T=(position=[0,0,0],scale=[1,1,1],rotation=[0,0,0,1])=>({position,sca
 const entity=(name,components,parent=null)=>{const id=E.length+1;E.push({entity:id,name,parent,siblingIndex:id-1,active:true,components});return id;};
 const box=(name,p,size,color)=>entity(name,{Transform:T(p,size),MeshRenderer:{mesh:'cube',material:'default'},PbrMaterial:{base_color:color,roughness:.95}});
 entity('Strategy camera',{Transform:T([0,V.camera.height,V.camera.depth],[1,1,1],q(-Math.atan2(V.camera.height,V.camera.depth))),Camera3D:{primary:true,projection:'orthographic',orthographic_size:27,near:.1,far:220,capture_pointer:false},AudioListener:{primary:true}});
-entity('Winter sun',{Transform:T([0,0,0],[1,1,1],[-.45,-.25,-.12,.84]),DirectionalLight:{color:[1,.91,.78,1],intensity:2,cast_shadows:true,shadow_distance:90,shadow_strength:.5,shadow_bias:.005,shadow_normal_bias:.08}});
+entity('Winter sun',{Transform:T([0,0,0],[1,1,1],[-.45,-.25,-.12,.84]),DirectionalLight:{color:[1,.91,.78,1],intensity:2,cast_shadows:true,shadow_distance:90,shadow_strength:.65,shadow_bias:.0004,shadow_normal_bias:.025}});
 entity('Northern sky',{EnvironmentLight:{sky_color:[.09,.15,.24,1],equator_color:[.23,.32,.37,1],ground_color:[.13,.19,.18,1],diffuse_intensity:.85,specular_intensity:.4,background_enabled:true,tone_mapping:true,exposure:.1}});
 entity('Terrain bed',{Transform:T([0,-1.35,0],[22.5,1,22.5]),MeshRenderer:{mesh:'terrain4r:33'+'0000'.repeat(36),material:'Assets/Materials/Ground.mmat'}});
 for(let z=0;z<8;z++)for(let x=0;x<8;x++)entity('Ground '+(z*8+x),{Transform:T([x*8-28,0,z*8-28],[1,1,1]),MeshRenderer:{mesh:'terrain4:'+'0'.repeat(64),material:'Assets/Materials/Ground.mmat'}});

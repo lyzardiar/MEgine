@@ -76,9 +76,9 @@
             "intensity": 2,
             "cast_shadows": true,
             "shadow_distance": 90,
-            "shadow_strength": 0.5,
-            "shadow_bias": 0.005,
-            "shadow_normal_bias": 0.08
+            "shadow_strength": 0.65,
+            "shadow_bias": 0.0004,
+            "shadow_normal_bias": 0.025
           }
         }
       },

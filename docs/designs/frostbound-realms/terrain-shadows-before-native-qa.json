@@ -1,0 +1,51 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "ground": {
+    "chunks": 64,
+    "shaderRejections": 0,
+    "editorRendered": true,
+    "zoom": 12,
+    "profiler": {
+      "intervals": 20,
+      "averagePresentIntervalMs": 87.77000000476838,
+      "p95PresentIntervalMs": 155.10000002384186,
+      "presentedFps": 11.393414605738542,
+      "averageRequestMs": 76.60952379589989,
+      "averageRenderMs": 32.03434761904763,
+      "averageCommandMs": 61.05504761904761,
+      "averageUploadMs": 1.6095238072531564,
+      "averageSimulationMs": 45.91724761904762,
+      "averageSimulationRequestMs": 79.75238094443367
+    }
+  },
+  "terrainShadows": {
+    "shadowBias": 0.004999999888241291,
+    "normalBias": 0.07999999821186066,
+    "strength": 0.5,
+    "depthRange": 224.9,
+    "worldDepthOffset": 1.1244999748654665,
+    "terrainReceivesShadows": true,
+    "nativeShadowToggle": true,
+    "fixtureExcludedFromProduct": true,
+    "shaderRejections": 0
+  },
+  "cliffStyles": {
+    "styles": [
+      "rock",
+      "ice",
+      "masonry"
+    ],
+    "chunks": 64,
+    "sameTopSurface": true,
+    "distinctCliffGeometry": true,
+    "editorSelection": true,
+    "undo": true,
+    "mapSaveLoad": true,
+    "playtest": true,
+    "gameSaveRestore": true,
+    "shaderRejections": 0
+  }
+}

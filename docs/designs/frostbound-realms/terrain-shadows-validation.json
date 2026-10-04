@@ -1,0 +1,120 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "799c3743ee7e8d7fe64558c9d82c443a149a0be7",
+  "configuration": {
+    "shadowBias": 0.00039999998989515007,
+    "normalBias": 0.02500000037252903,
+    "strength": 0.6499999761581421,
+    "depthRange": 224.9,
+    "worldDepthOffset": 0.08995999772741925,
+    "terrainReceivesShadows": true,
+    "nativeShadowToggle": true,
+    "fixtureExcludedFromProduct": true,
+    "shaderRejections": 0
+  },
+  "native": {
+    "beforeTag": 1791082800021,
+    "afterTag": 1791082800031,
+    "identicalScriptsMapsAndModels": true,
+    "onlyShadowSettingsDiffer": true,
+    "styles": {
+      "styles": [
+        "rock",
+        "ice",
+        "masonry"
+      ],
+      "chunks": 64,
+      "sameTopSurface": true,
+      "distinctCliffGeometry": true,
+      "editorSelection": true,
+      "undo": true,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "gameSaveRestore": true,
+      "shaderRejections": 0
+    },
+    "shadowToggleChangesRenderedPixels": true,
+    "pixelComparison": {
+      "before": {
+        "cliffFoot": {
+          "pixelsDarkened": 0,
+          "meanRgbReduction": 0,
+          "brightnessIncreasePixels": 1
+        },
+        "treeRoot": {
+          "pixelsDarkened": 0,
+          "meanRgbReduction": 0,
+          "brightnessIncreasePixels": 0
+        },
+        "rampFoot": {
+          "pixelsDarkened": 3132,
+          "meanRgbReduction": 15.506704980842912,
+          "brightnessIncreasePixels": 70
+        },
+        "wholeWorld": {
+          "pixelsDarkened": 28741,
+          "meanRgbReduction": 16.120687055658003,
+          "brightnessIncreasePixels": 815
+        }
+      },
+      "after": {
+        "cliffFoot": {
+          "pixelsDarkened": 945,
+          "meanRgbReduction": 17.503350970017635,
+          "brightnessIncreasePixels": 25
+        },
+        "treeRoot": {
+          "pixelsDarkened": 0,
+          "meanRgbReduction": 0,
+          "brightnessIncreasePixels": 0
+        },
+        "rampFoot": {
+          "pixelsDarkened": 6724,
+          "meanRgbReduction": 16.89192940709895,
+          "brightnessIncreasePixels": 149
+        },
+        "wholeWorld": {
+          "pixelsDarkened": 55305,
+          "meanRgbReduction": 18.21952807160293,
+          "brightnessIncreasePixels": 1344
+        }
+      }
+    },
+    "pixelScope": "Fixed screen regions in native editor on/off captures; animated units can introduce a few changed pixels. This is visual evidence, not a gameplay or performance measurement."
+  },
+  "preservation": {
+    "entities": 3908,
+    "allEntityIdsAndOtherComponents": true,
+    "authoredMaps": 6,
+    "gameplayScripts": true,
+    "modelAndTextureBindings": true,
+    "engineUnchanged": true,
+    "protocol": 30,
+    "qaKeyExcludedFromProduct": true
+  },
+  "package": {
+    "files": 757,
+    "contentHash": "759499644840cb1b6b923fd1fc921fa802c6a42a6b3c3b516d988b0cc872967c",
+    "allHashesAndSizesVerified": true,
+    "runtimeSha256": "36b5c630a15ae211df55583da5b7d1f1573360b76d7e26a2d0bfb8e6e968c4d5",
+    "editorSha256": "c603eefc9bdbebf0c7cf20e0d2bfe25ab4a4199c60bd4db5677c015f786e2fb7",
+    "startupSeconds": 30,
+    "responding": true,
+    "loggedErrors": 0
+  },
+  "screenshots": {
+    "shadow-before-shadows-highland.png": "4dbe460a094d69975f5adbf80eed41d58cd27d49b1cb500da2c1bb8852b02015",
+    "shadow-after-shadows-highland.png": "2b11521a8b5ff6704106d2d2522b894dce2e1ef755e61f4c7b61da60970b5716",
+    "shadow-after-shadows-highland-disabled.png": "f5523709d7babf289527c16d9a168a90bccd1ea6e1ac267ced59c82d8bbdbd17",
+    "shadow-after-cliff-ice.png": "f42f0f884115786a77c0e4ffe1ec5c4863c6fd67823223e9b9996a2d3d21a2c6"
+  },
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "originalTerrainArtMatched": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformance": false
+  }
+}
