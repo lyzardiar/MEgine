@@ -4262,5 +4262,77 @@
       "Assets/Models/RealQuiver-far.glb"
     ],
     "realistic": true
+  },
+  "RealGrassA": {
+    "material": "Assets/Materials/Real_grass_medium_01.mmat",
+    "parts": [
+      {
+        "name": "RealGrassA",
+        "mesh": "Assets/Models/RealGrassA.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      0.18484,
+      0.140427,
+      0.162313
+    ],
+    "lods": [
+      "Assets/Models/RealGrassA.glb",
+      "Assets/Models/RealGrassA-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealGrassC": {
+    "material": "Assets/Materials/Real_grass_medium_01.mmat",
+    "parts": [
+      {
+        "name": "RealGrassC",
+        "mesh": "Assets/Models/RealGrassC.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      0.187789,
+      0.177722,
+      0.201029
+    ],
+    "lods": [
+      "Assets/Models/RealGrassC.glb",
+      "Assets/Models/RealGrassC-far.glb"
+    ],
+    "realistic": true
+  },
+  "RealGrassB": {
+    "material": "Assets/Materials/Real_grass_medium_01.mmat",
+    "parts": [
+      {
+        "name": "RealGrassB",
+        "mesh": "Assets/Models/RealGrassB.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      0.165957,
+      0.099895,
+      0.189892
+    ],
+    "lods": [
+      "Assets/Models/RealGrassB.glb",
+      "Assets/Models/RealGrassB-far.glb"
+    ],
+    "realistic": true
   }
 }

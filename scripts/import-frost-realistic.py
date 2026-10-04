@@ -114,11 +114,18 @@ def main():
         if alpha_masks:values.update(surface='cutout',alpha_cutoff=.3)
         if key!='rock_moss_set_01':values.update(occlusion_texture=maps['arm'],occlusion_strength=.7)
         (SAMPLE/material).write_bytes(json.dumps(values).encode());generated.add(material)
+        if asset.get('dry_base'):
+            if len(materials)!=1 or columns!=1 or rows!=1 or 0 not in alpha_masks:raise ValueError('Dry grass requires a single masked texture panel')
+            dry=pad_texture(Image.open(SAMPLE/asset['dry_base']).convert('RGB').resize((1024,1024),Image.Resampling.LANCZOS),alpha_masks[0]).convert('RGBA');dry.putalpha(alpha_masks[0])
+            dry_texture='Assets/Textures/Real_'+key+'_dry.png';dry.save(SAMPLE/dry_texture);generated.add(dry_texture)
+            dry_material='Assets/Materials/Real_'+key+'_dry.mmat';(SAMPLE/dry_material).write_bytes(json.dumps({**values,'name':'Real dry '+key,'base_color_texture':dry_texture}).encode());generated.add(dry_material)
         authored={node_name:(asset['names'][index],lod) for index,pair in enumerate(asset.get('lod_nodes',[])) for lod,node_name in enumerate(pair)}
         if authored and not set(authored).issubset({node.get('name') for node in doc['nodes']}):raise ValueError('Missing authored LOD node')
+        selected=asset.get('source_nodes');node_names={node.get('name') for node in doc['nodes'] if 'mesh' in node}
+        if selected and (len(selected)!=len(asset['names']) or not set(selected).issubset(node_names)):raise ValueError('Missing selected source node')
         for index,node in enumerate(doc['nodes']):
-            if 'mesh' not in node:continue
-            name,authored_lod=authored[node['name']] if authored else (asset['names'][index],None)
+            if 'mesh' not in node or selected and node['name'] not in selected:continue
+            name,authored_lod=authored[node['name']] if authored else (asset['names'][selected.index(node['name']) if selected else index],None)
             positions=[];normals=[];coords=[];indices=[];transform=adapter.matrix(node)
             for prim in doc['meshes'][node['mesh']]['primitives']:
                 if prim.get('mode',4)!=4:raise ValueError('Expected triangles')

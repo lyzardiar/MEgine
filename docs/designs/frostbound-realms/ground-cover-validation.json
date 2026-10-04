@@ -1,0 +1,127 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "8c81b88142bc50f7e10e984d6985e9f534cd9749",
+  "assets": {
+    "license": "CC0",
+    "page": "https://polyhaven.com/a/grass_medium_01",
+    "authors": [
+      "Rob Tuytel",
+      "Rico Cilliers"
+    ],
+    "pinnedSources": 7,
+    "sourceBytes": 5881647,
+    "triangles": [
+      833,
+      653,
+      1257
+    ],
+    "sourceGeometryPreserved": true,
+    "greenAndDryCutout": true,
+    "reproducibleReimport": true,
+    "previousGeneratedPreserved": 57,
+    "previousModelsPreserved": 140
+  },
+  "placement": {
+    "maxPatches": 192,
+    "deterministic": true,
+    "terrainHeight": true,
+    "slopeAlignment": true,
+    "waterRoadAndExplicitSurfaceExclusion": true,
+    "buildingClearance": true,
+    "explorationAndFog": true
+  },
+  "preservation": {
+    "existingEntities": 3716,
+    "entityIds": true,
+    "authoredMaps": 6,
+    "engineUnchanged": true,
+    "protocol": 30
+  },
+  "tests": {
+    "grassImport": true,
+    "groundPlacement": true,
+    "previousRealisticImport": true,
+    "biomeRules": true,
+    "fullRulesAndTcp": true
+  },
+  "native": {
+    "tag": 1791081000031,
+    "names": [
+      "winter",
+      "forest",
+      "barrens"
+    ],
+    "keyboardAndButton": true,
+    "undo": true,
+    "mapSaveLoad": true,
+    "gameSaveRestore": true,
+    "playtest": true,
+    "terrainSurfacesAndCliffsPreserved": true,
+    "bedAndWaterParameters": true,
+    "biomeTrees": true,
+    "nearAndFarTreeBindings": true,
+    "groundCover": true,
+    "greenAndDryCover": true,
+    "coverGroundHeightAndSlope": true,
+    "nearAndFarCoverBindings": true,
+    "protocol": 30,
+    "twoClientMap": true,
+    "reconnect": true,
+    "shaderRejections": 0,
+    "surfaces": {
+      "brushes": [
+        "auto",
+        "soil",
+        "snow",
+        "grass",
+        "rock"
+      ],
+      "brushSizes": [
+        1,
+        3,
+        5
+      ],
+      "counts": [
+        979,
+        10,
+        1,
+        25,
+        9
+      ],
+      "waterAndElevationPreserved": true,
+      "undo": true,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "newBrushUndo": true,
+      "defaultMobaGrass": true,
+      "twoClientMap": true,
+      "materialOverrides": true,
+      "reconnect": true
+    },
+    "physicalInput": false
+  },
+  "package": {
+    "files": 757,
+    "contentHash": "d379cb53a6e7c6a6bb794cadbc2f0e86b3ae0c908c225119c6b288cf06e135e7",
+    "runtimeSha256": "36b5c630a15ae211df55583da5b7d1f1573360b76d7e26a2d0bfb8e6e968c4d5",
+    "editorSha256": "c603eefc9bdbebf0c7cf20e0d2bfe25ab4a4199c60bd4db5677c015f786e2fb7",
+    "allHashesAndSizesVerified": true,
+    "startupSeconds": 30,
+    "responding": true,
+    "loggedErrors": 0
+  },
+  "screenshots": {
+    "cover-tileset-forest.png": "d4b8b971a96ff067f4b90f2823cfc4fdd084cff2cda546a0d47e8f8fa5fb2aa8",
+    "cover-tileset-winter.png": "ebd2608d3ee67a6c543441fe707ef092a3aad3d6dac9d92ed5d26b7ade64cc7c",
+    "cover-ground-highland.png": "e44df3511da4e093dcc6d86c187c88669792eef779f6d0061ca9d02ebcdb21f7"
+  },
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "originalCliffModelsMatched": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformance": false
+  }
+}

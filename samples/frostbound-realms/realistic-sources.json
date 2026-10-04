@@ -153,6 +153,34 @@
         "Dario Barresi": "Photography",
         "Rico Cilliers": "modeling"
       }
+    },
+    {
+      "id": "grass_medium_01",
+      "page": "https://polyhaven.com/a/grass_medium_01",
+      "authors": {
+        "Rob Tuytel": "Photography",
+        "Rico Cilliers": "Modeling"
+      },
+      "names": [
+        "RealGrassA",
+        "RealGrassB",
+        "RealGrassC"
+      ],
+      "source_nodes": [
+        "grass_medium_01_small_a_LOD0",
+        "grass_medium_01_small_b_LOD0",
+        "grass_medium_01_mid_b_LOD0"
+      ],
+      "triangles": [
+        1300,
+        1300
+      ],
+      "material_images": {
+        "grass_medium_01": {
+          "alpha": "SourceAssets/polyhaven/grass_medium_01/textures/grass_medium_01_alpha_1k.png"
+        }
+      },
+      "dry_base": "SourceAssets/polyhaven/grass_medium_01/textures/grass_medium_01_dry_diff_1k.png"
     }
   ],
   "sources": [
@@ -568,6 +596,55 @@
       "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/quiver_tree_01/quiver_tree_01_leaf_diff_1k.png",
       "sha256": "754c6ff9e543f0c88373de5b014d0d92e50a2c66dd362b72be4ce82526ab461d",
       "bytes": 5040209
+    },
+    {
+      "file": "SourceAssets/polyhaven/grass_medium_01/grass_medium_01_1k.gltf",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/grass_medium_01/grass_medium_01_1k.gltf",
+      "sha256": "3e5e2a314c94e16de54fd7c28e41709731fbd2b1613ab539f1544f622ddb6a85",
+      "size": 27110,
+      "asset": "grass_medium_01"
+    },
+    {
+      "file": "SourceAssets/polyhaven/grass_medium_01/textures/grass_medium_01_nor_gl_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/grass_medium_01/grass_medium_01_nor_gl_1k.jpg",
+      "sha256": "cae298d3d1d7ff7c7e210ad8ac772b96706e356f9315a6b04fde373ce01ccf1e",
+      "size": 956166,
+      "asset": "grass_medium_01"
+    },
+    {
+      "file": "SourceAssets/polyhaven/grass_medium_01/textures/grass_medium_01_diff_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/grass_medium_01/grass_medium_01_diff_1k.jpg",
+      "sha256": "71495bd6a11fddcab0aaff38246fea1a7b802a705483f1c7cbca53955daa8050",
+      "size": 395673,
+      "asset": "grass_medium_01"
+    },
+    {
+      "file": "SourceAssets/polyhaven/grass_medium_01/textures/grass_medium_01_arm_1k.jpg",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/grass_medium_01/grass_medium_01_arm_1k.jpg",
+      "sha256": "9a3a30f72bc02f4398967c5b08f2d20cce30bd423a2613b42a727034296fa3ae",
+      "size": 679518,
+      "asset": "grass_medium_01"
+    },
+    {
+      "file": "SourceAssets/polyhaven/grass_medium_01/grass_medium_01.bin",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/grass_medium_01/grass_medium_01.bin",
+      "sha256": "f4587cabdb96a2e96d8be644923dc954a248edfaaa717a0ff224cacb898bee1f",
+      "size": 1006632,
+      "asset": "grass_medium_01"
+    },
+    {
+      "file": "SourceAssets/polyhaven/grass_medium_01/textures/grass_medium_01_alpha_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/grass_medium_01/grass_medium_01_alpha_1k.png",
+      "sha256": "711a8e49af758d6a6ce1f610db858899a27be19da6d1866bd35c13bc7b8ffeff",
+      "size": 648718,
+      "asset": "grass_medium_01"
+    },
+    {
+      "file": "SourceAssets/polyhaven/grass_medium_01/textures/grass_medium_01_dry_diff_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/grass_medium_01/grass_medium_01_dry_diff_1k.png",
+      "sha256": "da85639d6eb8f029b50e7920aaf7e649940541bb24fe6ad239dbae7400af2eb2",
+      "size": 2167830,
+      "asset": "grass_medium_01"
     }
   ],
   "models": {
@@ -826,12 +903,74 @@
           "error": 0.005073987413197756
         }
       ]
+    },
+    "RealGrassA": {
+      "source": "grass_medium_01",
+      "node": 0,
+      "lods": [
+        {
+          "sourceTriangles": 833,
+          "triangles": 833,
+          "vertices": 888,
+          "error": 0
+        },
+        {
+          "sourceTriangles": 833,
+          "triangles": 833,
+          "vertices": 888,
+          "error": 0
+        }
+      ]
+    },
+    "RealGrassC": {
+      "source": "grass_medium_01",
+      "node": 2,
+      "lods": [
+        {
+          "sourceTriangles": 1257,
+          "triangles": 1257,
+          "vertices": 1386,
+          "error": 0
+        },
+        {
+          "sourceTriangles": 1257,
+          "triangles": 1257,
+          "vertices": 1386,
+          "error": 0
+        }
+      ]
+    },
+    "RealGrassB": {
+      "source": "grass_medium_01",
+      "node": 6,
+      "lods": [
+        {
+          "sourceTriangles": 653,
+          "triangles": 653,
+          "vertices": 700,
+          "error": 0
+        },
+        {
+          "sourceTriangles": 653,
+          "triangles": 653,
+          "vertices": 700,
+          "error": 0
+        }
+      ]
     }
   },
   "generated": [
     {
       "file": "Assets/Materials/Real_fir_sapling_medium.mmat",
       "sha256": "bac3f5a16a34bee1ec162e32af497a49f23a48d7ed573636721c3c8793663ea5"
+    },
+    {
+      "file": "Assets/Materials/Real_grass_medium_01.mmat",
+      "sha256": "b39739417ebbfc8aa1633f6949de01fcebad843f4a3558985e57f801ef1d85dd"
+    },
+    {
+      "file": "Assets/Materials/Real_grass_medium_01_dry.mmat",
+      "sha256": "72397701ef043a84d18b9d915b467295d95fb52676010af371c61a86831edadf"
     },
     {
       "file": "Assets/Materials/Real_quiver_tree_01.mmat",
@@ -872,6 +1011,30 @@
     {
       "file": "Assets/Models/RealFirePit.glb",
       "sha256": "0ad7c9b900767c0153f2fe71f04a121ea454c26d325775bc82f1a19e46b85e23"
+    },
+    {
+      "file": "Assets/Models/RealGrassA-far.glb",
+      "sha256": "d157514da3279d94a67697b93ad6fb6c5575e906205c5949c334fd646257a5c0"
+    },
+    {
+      "file": "Assets/Models/RealGrassA.glb",
+      "sha256": "d157514da3279d94a67697b93ad6fb6c5575e906205c5949c334fd646257a5c0"
+    },
+    {
+      "file": "Assets/Models/RealGrassB-far.glb",
+      "sha256": "1a14d30dd718f1ae92629eb0d8ec83cd763cbbd7c8adccc762b9007f1e76005c"
+    },
+    {
+      "file": "Assets/Models/RealGrassB.glb",
+      "sha256": "1a14d30dd718f1ae92629eb0d8ec83cd763cbbd7c8adccc762b9007f1e76005c"
+    },
+    {
+      "file": "Assets/Models/RealGrassC-far.glb",
+      "sha256": "78c20770fc4acd1edd54c3a13b41255e13f73590aa7ce2a62eb6aec0ac32a5f2"
+    },
+    {
+      "file": "Assets/Models/RealGrassC.glb",
+      "sha256": "78c20770fc4acd1edd54c3a13b41255e13f73590aa7ce2a62eb6aec0ac32a5f2"
     },
     {
       "file": "Assets/Models/RealMossRock1-far.glb",
@@ -980,6 +1143,22 @@
     {
       "file": "Assets/Textures/Real_fir_sapling_medium_normal.png",
       "sha256": "e3ea0f6d424780002b6b918be330c5195eaf2e3410c8fa256bb7fef946acea42"
+    },
+    {
+      "file": "Assets/Textures/Real_grass_medium_01_arm.png",
+      "sha256": "35de6ac7af7f10ed2bc22a83c47b1b0718839c7501cce5e71e55f6ba1742696a"
+    },
+    {
+      "file": "Assets/Textures/Real_grass_medium_01_base.png",
+      "sha256": "24aff750e8cc34ab162e8f593138621ec68c66505c3c9324dd657b46450aaeb0"
+    },
+    {
+      "file": "Assets/Textures/Real_grass_medium_01_dry.png",
+      "sha256": "ff92edcff271b1a2a06b326e53eb5f1bf6b4d368c0c5b7cb63330eb4ff85259c"
+    },
+    {
+      "file": "Assets/Textures/Real_grass_medium_01_normal.png",
+      "sha256": "9c84ae94fbbfb66ab91f16715cc4c5b77a650070e7dce53d1d8e4bf00b16d8da"
     },
     {
       "file": "Assets/Textures/Real_quiver_tree_01_arm.png",

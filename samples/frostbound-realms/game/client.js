@@ -281,6 +281,13 @@ var FrostClient=(()=>{
       const {asset,scale,mesh,yaw}=FrostVisual.scenery(i,edge,zoom,map.tileset??0);
       set('Scenery '+i,'MeshRenderer',{mesh,material:asset.material});transform('Scenery '+i,[x,S.elevation(map,x,z)-.02,z],[scale,scale,scale],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]);
     }
+    const details=FrostTerrain.details(map);
+    for(let i=0;i<FrostTerrain.detailCount;i++){
+      const p=details[i],seen=p&&(allVisible||state.explored[team]?.[p.tile]),clear=p&&Math.floor(ground[p.tile]/2)%3===0&&state.units.every(u=>(!allVisible&&!S.isVisible(state,team,u))||S.types[u.kind].speed||Math.hypot(p.x-u.x,p.z-u.z)>4);
+      if(!world||!seen||!clear){transform('Grass patch '+i,hidden);continue;}
+      const v=FrostVisual.groundDetail(i,zoom,map.tileset===1||map.surfaces?.[p.tile]===3,p.normal),fog=allVisible||state.visible[team]?.[p.tile]?1:.28;
+      set('Grass patch '+i,'MeshRenderer',{mesh:v.mesh,material:v.material});set('Grass patch '+i,'MaterialPropertyBlock',{override_base_color:true,base_color:[fog,fog,fog,1]});transform('Grass patch '+i,[p.x,p.y,p.z],[v.scale,v.scale,v.scale],v.rotation);
+    }
     if(commandMarker&&time<commandMarker.until)transform('Command marker',[commandMarker.x,S.elevation(map,commandMarker.x,commandMarker.z)+.055,commandMarker.z],[1.7+(commandMarker.until-time),.01,1.7+(commandMarker.until-time)]);else transform('Command marker',hidden);
     const sculptPointer=editing&&editorPage===7&&inBattlefield(hover)?worldPointer(input):null,sculptCenter=sculptPointer?[Math.round((sculptPointer.x+32)/2)*2-32,Math.round((sculptPointer.z+32)/2)*2-32]:null;
     for(let i=0;i<32;i++){if(!sculptCenter){transform('Sculpt outline '+i,hidden);continue;}const angle=i/32*Math.PI*2,x=sculptCenter[0]+Math.cos(angle)*sculptRadius,z=sculptCenter[1]-Math.sin(angle)*sculptRadius,yaw=angle+Math.PI/2;transform('Sculpt outline '+i,Math.abs(x)<=32&&Math.abs(z)<=32?[x,S.elevation(map,x,z)+.075,z]:hidden,[sculptRadius*.195,.04,.06],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]);set('Sculpt outline '+i,'MaterialPropertyBlock',{override_base_color:true,base_color:sculptTool==='lower'?[1,.35,.25,1]:sculptTool==='flatten'?[1,.8,.25,1]:[.25,.85,1,1]});}
