@@ -1,0 +1,107 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "c9985ddd34d1f8e9ff9617a953579bc305a53a69",
+  "source": "Poly Haven tree_small_02 CC0; existing pinned source unchanged",
+  "protocol": 31,
+  "canopy": {
+    "sourceLeafArea": 27.083057,
+    "models": {
+      "triangles": [
+        148519,
+        99012
+      ],
+      "nearBounds": [
+        2.925661563873291,
+        4.575717449188232,
+        4.301112174987793
+      ],
+      "farBounds": [
+        2.925661563873291,
+        4.577112197875977,
+        4.2723894119262695
+      ],
+      "leafAreas": [
+        19.75137710571289,
+        16.45972442626953
+      ]
+    },
+    "ratios": [
+      0.3,
+      0.2
+    ],
+    "minimumLeafAreaRetention": [
+      0.7,
+      0.6
+    ],
+    "selectedReimportIdentical": true,
+    "unchangedOtherDerivedAssets": 67,
+    "changedAssets": [
+      "Assets/Models/RealBroadleaf-far.glb",
+      "Assets/Models/RealBroadleaf.glb"
+    ]
+  },
+  "native": {
+    "names": [
+      "winter",
+      "forest",
+      "barrens"
+    ],
+    "keyboardAndButton": true,
+    "undo": true,
+    "mapSaveLoad": true,
+    "gameSaveRestore": true,
+    "playtest": true,
+    "terrainSurfacesAndCliffsPreserved": true,
+    "bedAndWaterParameters": true,
+    "biomeTrees": true,
+    "nearAndFarTreeBindings": true,
+    "groundCover": true,
+    "greenAndDryCover": true,
+    "coverGroundHeightAndSlope": true,
+    "nearAndFarCoverBindings": true,
+    "protocol": 31,
+    "twoClientMap": true,
+    "reconnect": true,
+    "shaderRejections": 0
+  },
+  "tests": {
+    "sourceAndDerivedHashes": true,
+    "exactLeafAlphaAndVisibleColor": true,
+    "biomeTreeBindingsAndGatherSaveRestore": true,
+    "previousRealisticImport": true,
+    "fullJavaScriptTcp": true,
+    "isolatedNativeSampleAssetsMatchProduct": true
+  },
+  "runtimeSha256": "206f96d311f92373052c9c882a9eb46b077201a9ebe2cf681870fd2b0a780295",
+  "editorSha256": "53bb59e2c1b4cbcb61f3fa95e93327dfa17ff3648806cd290f77baed2f8f969e",
+  "package": {
+    "contentHash": "84c0f0ce3baefd9988313afabdef54b178fa099c84218324488f82718b960cf3",
+    "files": 757,
+    "allHashesAndSizesVerified": true,
+    "smokeSeconds": 30,
+    "responsive": true,
+    "loggedErrors": 0
+  },
+  "screenshots": [
+    "crown-before-tileset-forest.png",
+    "crown-after-tileset-forest.png",
+    "crown-before-tileset-forest-far.png",
+    "crown-after-tileset-forest-far.png"
+  ],
+  "sourceHashes": {
+    "samples/frostbound-realms/model-catalog.json": "2b537dbd0b81be575ece98e9dc7108cf52f1296ec39263ff16c45071e0357c59",
+    "samples/frostbound-realms/realistic-sources.json": "4aa7d24c402d88fa5dc2ed7cfae44303e4a87758e8e5ca29342cab0f55de9994",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "e24d5b88a2191cd079945ef16259763000b52279302eeb4efa33126ebbed073f",
+    "scripts/test-frost-biome-import.py": "b40e7483c798120c696dc3b232eaf21759dc35b642d492a516124fe619f2f08d"
+  },
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "matureForestCanopy": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformance": false,
+    "playerPerformanceComparison": "Not accepted: old-model baseline onTick intervals about one second in the currently disconnected Windows user session; sample window counts 9/10/9 below the required minimum 10"
+  }
+}

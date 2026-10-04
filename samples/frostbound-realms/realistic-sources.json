@@ -105,8 +105,8 @@
         "RealBroadleaf"
       ],
       "triangles": [
-        55000,
-        42000
+        150000,
+        100000
       ],
       "blend": "SourceAssets/polyhaven/tree_small_02/tree_small_02_1k.blend",
       "material_images": {
@@ -128,8 +128,8 @@
       "decimate": {
         "source": "tree_small_02_LOD1",
         "ratios": [
-          0.1,
-          0.08
+          0.3,
+          0.2
         ]
       }
     },
@@ -871,13 +871,13 @@
       "source": "tree_small_02",
       "lods": [
         {
-          "triangles": 49506,
-          "vertices": 128750,
+          "triangles": 148519,
+          "vertices": 318359,
           "authored": false
         },
         {
-          "triangles": 39605,
-          "vertices": 103370,
+          "triangles": 99012,
+          "vertices": 237003,
           "authored": false
         }
       ],
@@ -998,11 +998,11 @@
     },
     {
       "file": "Assets/Models/RealBroadleaf-far.glb",
-      "sha256": "5e2ad37e7dc2206ec87141ab96c466aa8357511f03f51e6e70232c6f6d35bd18"
+      "sha256": "0ecc6d64571c0d4f0469b9cc22162344c1d9c943e83c77773ea6bc24e38adbb3"
     },
     {
       "file": "Assets/Models/RealBroadleaf.glb",
-      "sha256": "762dec337be65f4c812899ae538ccb0b539b3d014981313c588550032f11dc83"
+      "sha256": "d83e41d2e13c58ed3ad326c8036829a3b7453c4cd58ba159196628138e00bcb0"
     },
     {
       "file": "Assets/Models/RealFirePit-far.glb",

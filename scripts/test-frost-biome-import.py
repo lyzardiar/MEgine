@@ -14,7 +14,7 @@ for row in range(atlas.shape[0]//1024):
   panel=atlas[row*1024:(row+1)*1024,col*1024:(col+1)*1024];np.testing.assert_array_equal(panel[:,:,3],alpha);np.testing.assert_array_equal(panel[alpha>=128,:3],color[alpha>=128])
 assert alpha.min()==0 and alpha.max()==255
 report={}
-for name,limits in [('RealBroadleaf',[55000,42000]),('RealQuiver',[12000,4000])]:
+for name,limits in [('RealBroadleaf',[150000,100000]),('RealQuiver',[12000,4000])]:
  art=catalog[name];bounds=[];stats=[];leaf_areas=[]
  for index,path in enumerate(art['lods']):
   raw=(sample/path).read_bytes();assert raw[:4]==b'glTF';size=struct.unpack_from('<I',raw,12)[0];doc=json.loads(raw[20:20+size]);blob=raw[28+size:];primitive=doc['meshes'][0]['primitives'][0]
@@ -29,7 +29,8 @@ for name,limits in [('RealBroadleaf',[55000,42000]),('RealQuiver',[12000,4000])]
    leaf_areas.append(float(np.linalg.norm(np.cross(points[:,1]-points[:,0],points[:,2]-points[:,0]),axis=1).sum()/2));assert leaves.sum()>100,'LOD retains leaf geometry'
   assert triangles==manifest['models'][name]['lods'][index]['triangles'];stats.append(triangles)
  assert stats[1]<stats[0];assert (bounds[1]/bounds[0]>.85).all()
- if leaf_areas:assert min(leaf_areas)>8 and leaf_areas[1]/leaf_areas[0]>.75,('both LODs preserve crown area',leaf_areas)
+ # Authored LOD1 leaves cover 27.083057 square model units. Retain >=70% near / >=60% far.
+ if leaf_areas:assert leaf_areas[0]>=27.083057*.7 and leaf_areas[1]>=27.083057*.6 and leaf_areas[1]/leaf_areas[0]>.8,('both LODs preserve crown area',leaf_areas)
  report[name]={'triangles':stats,'nearBounds':bounds[0].tolist(),'farBounds':bounds[1].tolist(),'leafAreas':leaf_areas}
 material=json.loads((sample/'Assets/Materials/Real_tree_small_02.mmat').read_text());assert material['surface']=='cutout' and material['double_sided']
 print(json.dumps({'passed':True,'sourceHashes':len(manifest['sources']),'derivedHashes':len(manifest['generated']),'exactLeafAlphaAndVisibleColor':True,'models':report}))
