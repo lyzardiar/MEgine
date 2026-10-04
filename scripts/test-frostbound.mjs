@@ -40,6 +40,8 @@ import './test-frost-triggers.mjs';
 import './test-frost-tilesets.mjs';
 import './test-frost-tree-felling.mjs';
 import './test-frost-forest-pathing.mjs';
+import './test-frost-doodads.mjs';
+import './test-frost-doodads-client.mjs';
 import {createRequire} from 'node:module';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');

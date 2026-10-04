@@ -1,6 +1,7 @@
 /* Author: MiYu. Four-cell chunks share a one-cell border for continuous terrain and fog. */
 var FrostTerrain=(()=>{
   const meshes=new WeakMap(),waterMeshes=new WeakMap(),detailCache=new WeakMap(),detailCount=192;
+  const pathingCache=new WeakMap();
   const names=Array.from({length:9},(_,i)=>'cells'+i);
   const surfaceNames=['Auto terrain','Soil','Snow','Grass','Rock'];
   const tilesetNames=['Winter','Forest','Barrens'],tilesetColors=[[.49,.6,.61,1],[.26,.43,.14,1],[.62,.48,.29,1]];
@@ -15,6 +16,7 @@ var FrostTerrain=(()=>{
       return kind*2+(allVisible||state.visible[team]?.[i]?1:state.explored[team]?.[i]?.4:.07);
     });
   }
+  function pathing(state){let values=pathingCache.get(state);if(values)return values;values=state.map.terrain.map((_,i)=>{const x=i%32*2-31,z=Math.floor(i/32)*2-31;return Frost.solid(state,x,z,0,-1,.5)?2:Frost.buildingSite(state,x,z,1)?0:1;});pathingCache.set(state,values);return values;}
   function chunk(data,x,z){
     const packed=[];for(let dz=-1;dz<=4;dz++)for(let dx=-1;dx<=4;dx++)packed.push(data[Frost.clamp(z*4+dz,0,31)*32+Frost.clamp(x*4+dx,0,31)]);
     return Array.from({length:9},(_,i)=>packed.slice(i*4,i*4+4));
@@ -31,6 +33,6 @@ var FrostTerrain=(()=>{
       return {x,z,y:p.y-.02,tile,normal:[-dx/n,1/n,-dz/n]};
     });detailCache.set(map,{key,values});return values;
   }
-  return {names,surfaceNames,tilesetNames,tilesetColors,cliffNames,material,cliff,cells,chunk,mesh,waterMesh,detailCount,details};
+  return {pathing,names,surfaceNames,tilesetNames,tilesetColors,cliffNames,material,cliff,cells,chunk,mesh,waterMesh,detailCount,details};
 })();
 if(typeof module!=='undefined')module.exports=FrostTerrain;

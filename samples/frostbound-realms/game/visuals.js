@@ -75,6 +75,7 @@ var FrostVisual=(()=>{
     if(r.felled){const t=Frost.clamp(age/1.5,0,1),angle=Math.PI/2*t*t,fall=Math.sin(angle/2),x=Math.cos(r.felled.yaw)*fall,z=-Math.sin(r.felled.yaw)*fall,w=Math.cos(angle/2),s=Math.sin(v.yaw/2),c=Math.cos(v.yaw/2);v.rotation=[x*c-z*s,w*s,z*c+x*s,w*c];v.sink=Frost.clamp((age-4)/2,0,1)*Math.max(v.asset.size[0],v.asset.size[2])*v.scale;}
     return v;
   }
+  function doodad(d,zoom=27){const def=Frost.doodads[d.kind];return environment(d.kind==='rock'?'RealMossRock'+(d.variant+1):'RealShrub',def.height*d.scale,d.yaw,zoom>14,def.width*d.scale);}
   function scenery(i,edge,zoom=27,tileset=0){const variants=trees[tileset]||trees[0],tree=edge?i%4!==0:i%5===0,shrub=!tree&&i%3===0,key=tree?variants[i%variants.length]:shrub?'RealShrub':'RealMossRock'+(i%6+1);return environment(key,tree?(edge?7+i%4:3.8+i%3*.5):shrub?1.2:edge?2.1+i%3*.4:.35+i%4*.2,i*2.399963,edge||zoom>14,tree?(key==='RealJacaranda'?7.5:6):edge?4.5:1.7);}
   function groundDetail(i,zoom=27,green=true,normal=[0,1,0]){
     const v=environment(['RealGrassA','RealGrassB','RealGrassC'][i%3],.58+i%3*.12,i*2.399963,zoom>14,1.1),q=[normal[2],-normal[0],1+normal[1]],length=Math.hypot(...q),[x,z,w]=q.map(n=>n/length),s=Math.sin(v.yaw/2),c=Math.cos(v.yaw/2);
@@ -99,6 +100,6 @@ var FrostVisual=(()=>{
       return [...tracks.values()].map(v=>position(v,clock));
     }};
   }
-  return {camera:{height:32,depth:42},model,name,pose,corpse,heroPortrait,unitPortrait,heading,resource,scenery,environmentPartCount,groundDetail,projectile,projectileView,muzzle};
+  return {camera:{height:32,depth:42},model,name,pose,corpse,heroPortrait,unitPortrait,heading,resource,scenery,doodad,environmentPartCount,groundDetail,projectile,projectileView,muzzle};
 })();
 if(typeof module!=='undefined')module.exports=FrostVisual;

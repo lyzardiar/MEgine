@@ -1,0 +1,1 @@
+{"version":8,"name":"Editor ground pathing overlay","shader":"custom","custom_shader":"Assets/Shaders/Pathing.mshader","surface":"transparent","blend_mode":"alpha","base_color":[1,1,1,0.35],"roughness":1}

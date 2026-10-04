@@ -1,0 +1,41 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 34,
+  "tag": "1791255000104",
+  "scope": "Native Release QuickJS and actual editor/gameplay Agent input: authored doodads, transforms, map save/load/undo, terrain pathing shader, rock detour and build rejection",
+  "physicalInput": false,
+  "audioListening": false,
+  "lastCommand": "playback.input",
+  "stage": "gameplay",
+  "objectPlacementPreview": true,
+  "editor": {
+    "placement": true,
+    "selection": true,
+    "rotation": true,
+    "scale": true,
+    "move": true,
+    "deletion": true,
+    "undo": true,
+    "mapSaveLoad": true
+  },
+  "nativeBindings": {
+    "rockMesh": true,
+    "scaleAndRotation": true,
+    "pathingChunks": 64,
+    "allThreePathingKinds": true
+  },
+  "gameplay": {
+    "groundDetour": true,
+    "mapTransformsPreserved": true,
+    "overlayHidden": true,
+    "groundPlacementRejectedOverRock": true,
+    "redPreviewAndNoPayment": true
+  },
+  "template": {
+    "sixRockVariants": true,
+    "shrubs": true,
+    "all20Bindings": true
+  },
+  "shaderRejections": 0
+}

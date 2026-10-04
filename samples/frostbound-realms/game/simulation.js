@@ -1,6 +1,7 @@
 /* Author: MiYu. Shared fixed-step rules for the native client and authoritative server. */
 var Frost = (() => {
-  const PROTOCOL = 33, DT = 0.1, LIMIT = 160, PROJECTILE_LIMIT = 256, CORPSE_LIMIT = 64, CORPSE_LIFETIME = 20, TREE_FALL_LIFETIME = 6, TREE_RADIUS = .8, SIZE = 32;
+  const PROTOCOL = 34, DT = 0.1, LIMIT = 160, PROJECTILE_LIMIT = 256, CORPSE_LIMIT = 64, CORPSE_LIFETIME = 20, TREE_FALL_LIFETIME = 6, TREE_RADIUS = .8, SIZE = 32;
+  const DOODAD_LIMIT=128,doodads={rock:{label:'岩石',radius:1,height:1.6,width:1.8,variants:6},shrub:{label:'灌木',radius:0,height:1.2,width:1.8,variants:1}};
   const simulating = new WeakSet();
   const cannibalize={gold:75,time:30,duration:33,range:6,reach:1.7,healing:{ghoul:10,abomination:15}};
   const feeding=u=>u.order?.type==='cannibalize'&&u.order.active?u.order.left:u.feeding||0;
@@ -271,6 +272,7 @@ var Frost = (() => {
     }
     for(let i=0;i<1024;i++)if(map.ramps[i]>0&&map.ramps[i]<=4)gradeRamp(map,i);return map;
   }
+  function doodadMap(){const map=defaultMap();map.name='Rocky Crossing';map.tileset=1;map.doodads=[];for(let i=0;i<12;i++){const x=(i%2?1:-1)*(5+i%3*1.5),z=-8+Math.floor(i/2)*4;map.doodads.push({kind:'rock',x,z,variant:i%6,scale:.75+i%3*.25,yaw:(i*.8)%(Math.PI*2)});}for(let i=0;i<8;i++)map.doodads.push({kind:'shrub',x:i%2?9:-9,z:-9+Math.floor(i/2)*5,variant:0,scale:.75+i%3*.25,yaw:i*.7});return validateMap(map);}
   function validateMap(raw) {
     if(!raw||raw.version!==1||!['skirmish','moba','td','rpg'].includes(raw.mode)||!Array.isArray(raw.terrain)||raw.terrain.length!==1024||raw.terrain.some(v=>!Number.isInteger(v)||v<0||v>2))throw Error('Invalid map terrain or mode');
     if(raw.tileset!==undefined&&(!Number.isInteger(raw.tileset)||raw.tileset<0||raw.tileset>2))throw Error('Invalid terrain tileset');
@@ -282,6 +284,7 @@ var Frost = (() => {
     if(!Array.isArray(raw.spawns)||raw.spawns.length!==2||!raw.spawns.every(point)||Math.hypot(raw.spawns[0][0]-raw.spawns[1][0],raw.spawns[0][1]-raw.spawns[1][1])<20)throw Error('Two separated spawn points are required');
     if(!Array.isArray(raw.props)||raw.props.length>100||raw.props.some(p=>!p||!['tree','mine','camp'].includes(p.kind)||!Number.isFinite(p.x)||!Number.isFinite(p.z)||Math.abs(p.x)>29||Math.abs(p.z)>29))throw Error('Invalid map objects');
     const map={version:1,name:Array.from(String(raw.name||'Custom battlefield')).slice(0,40).join(''),mode:raw.mode,startingHour:raw.startingHour??8,cliffStyle:raw.cliffStyle??0,terrain:[...raw.terrain],surfaces:raw.surfaces?[...raw.surfaces]:Array(1024).fill(0),heights:raw.heights?[...raw.heights]:Array(1024).fill(0),ramps:raw.ramps?[...raw.ramps]:Array(1024).fill(0),relief:raw.relief?raw.relief.map(v=>v||0):Array(1089).fill(0),spawns:raw.spawns.map(p=>[...p]),props:raw.props.map(p=>({kind:p.kind,x:p.x,z:p.z,amount:clamp(Number.isFinite(p.amount)?p.amount:1000,100,10000)})),startingGold:clamp(Number.isFinite(raw.startingGold)?Math.round(raw.startingGold):500,100,2000),startingWood:clamp(Number.isFinite(raw.startingWood)?Math.round(raw.startingWood):raw.mode==='skirmish'?150:250,0,2000),waveInterval:clamp(Number.isFinite(raw.waveInterval)?raw.waveInterval:raw.mode==='moba'?30:24,10,60),waves:clamp(Number.isFinite(raw.waves)?Math.round(raw.waves):12,3,30)};
+    if(raw.doodads!==undefined){if(!Array.isArray(raw.doodads)||raw.doodads.length>DOODAD_LIMIT||Array.from(raw.doodads).some(d=>!d||!Object.hasOwn(doodads,d.kind)||!Number.isFinite(d.x)||!Number.isFinite(d.z)||Math.abs(d.x)>29||Math.abs(d.z)>29||!Number.isInteger(d.variant)||d.variant<0||d.variant>=doodads[d.kind].variants||!Number.isFinite(d.scale)||d.scale<.5||d.scale>3||!Number.isFinite(d.yaw)||d.yaw<0||d.yaw>=Math.PI*2))throw Error('Invalid map doodads');map.doodads=raw.doodads.map(({kind,x,z,variant,scale,yaw})=>({kind,x,z,variant,scale,yaw}));}
     if(raw.cliffs!==undefined)map.cliffs=[...raw.cliffs];if(raw.tileset!==undefined)map.tileset=raw.tileset;
     const at=p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.z)&&Math.abs(p.x)<=27&&Math.abs(p.z)<=27;
     if(raw.players!==undefined&&(!Array.isArray(raw.players)||raw.players.length!==2||raw.players.some(p=>!p||!Number.isInteger(p.faction)||p.faction<0||p.faction>3||typeof p.ai!=='boolean'||p.heroClass!==undefined&&!validHero(p.heroClass))))throw Error('Invalid player settings');
@@ -366,8 +369,10 @@ var Frost = (() => {
     const clear=r=>{const d=segmentDistance(r.x,r.z,[ax,az],[bx,bz]);if(d>=reach-1e-7)return true;const before=Math.hypot(ax-r.x,az-r.z),after=Math.hypot(bx-r.x,bz-r.z);return escape&&before<reach&&d>=before-1e-7&&after>before+.0001;};
     if((x1-x0+1)*(z1-z0+1)>32)return field.trees.every(clear);for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)if(!field.cells[z*32+x].every(clear))return false;return true;
   }
-  function buildingSite(s,x,z,radius,team=-1){return flatSite(s.map,x,z,radius)&&treeClear(s,x,z,x,z,radius,team);}
-  function solid(s,x,z,ignore=0,team=-1,radius=.35){if(Math.abs(x)+radius>30||Math.abs(z)+radius>30||!groundClear(s.map,x,z,x,z,radius,groundNavigation(s))||!treeClear(s,x,z,x,z,radius,team))return true;return s.units.some(u=>u.id!==ignore&&u.hp>0&&!types[u.kind].speed&&(team<0||isVisible(s,team,u))&&Math.hypot(u.x-x,u.z-z)<(types[u.kind].radius||1)+.35);}
+  function doodadClear(s,ax,az,bx,bz,radius=0,escape=false,ignore=-1){return (s.map.doodads||[]).every((d,i)=>{const size=doodads[d.kind].radius*d.scale;if(!size||i===ignore)return true;const reach=size+radius,dist=segmentDistance(d.x,d.z,[ax,az],[bx,bz]);if(dist>=reach-1e-7)return true;const before=Math.hypot(ax-d.x,az-d.z);return escape&&before<reach&&dist>=before-1e-7&&Math.hypot(bx-d.x,bz-d.z)>before+.0001;});}
+  function obstacleClear(s,ax,az,bx,bz,radius=0,team=-1,escape=false){return treeClear(s,ax,az,bx,bz,radius,team,escape)&&doodadClear(s,ax,az,bx,bz,radius,escape);}
+  function buildingSite(s,x,z,radius,team=-1){return flatSite(s.map,x,z,radius)&&obstacleClear(s,x,z,x,z,radius,team);}
+  function solid(s,x,z,ignore=0,team=-1,radius=.35){if(Math.abs(x)+radius>30||Math.abs(z)+radius>30||!groundClear(s.map,x,z,x,z,radius,groundNavigation(s))||!obstacleClear(s,x,z,x,z,radius,team))return true;return s.units.some(u=>u.id!==ignore&&u.hp>0&&!types[u.kind].speed&&(team<0||isVisible(s,team,u))&&Math.hypot(u.x-x,u.z-z)<(types[u.kind].radius||1)+.35);}
   const navigationCache=new WeakMap();
   function navigation(s,team=-1){
     let cache=navigationCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){cache={frame:s.frame,serial:s.serial,blocked:[]};navigationCache.set(s,cache);}if(cache.blocked[team+1])return cache.blocked[team+1];
@@ -378,7 +383,7 @@ var Frost = (() => {
   function routeSearch(s,u,goal=-1){
     const start=index(u.x,u.z),blocked=navigation(s,u.team),regions=groundNavigation(s),edgeCache=groundFrames.get(s).routeEdges,radius=movementRadius(u);let edges=edgeCache.get(radius);if(!edges){edges=new Uint8Array(4096);edgeCache.set(radius,edges);}const prev=new Int16Array(1024);prev.fill(-1);prev[start]=start;const cells=[start];
     for(let k=0;k<cells.length;k++){const n=cells[k],x=n%32,z=Math.floor(n/32);if(n===goal)break;
-      for(const [direction,[dx,dz]] of [[1,0],[-1,0],[0,1],[0,-1]].entries()){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j]||!terrainEdge(s.map,n,j))continue;const edge=n*4+direction;edges[edge]||=groundClear(s.map,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,regions)?1:2;if(edges[edge]===2||!treeClear(s,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,u.team,true))continue;prev[j]=n;cells.push(j);}}
+      for(const [direction,[dx,dz]] of [[1,0],[-1,0],[0,1],[0,-1]].entries()){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j]||!terrainEdge(s.map,n,j))continue;const edge=n*4+direction;edges[edge]||=groundClear(s.map,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,regions)?1:2;if(edges[edge]===2||!obstacleClear(s,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,u.team,true))continue;prev[j]=n;cells.push(j);}}
     return {start,prev,cells};
   }
   function path(s,u,tx,tz){
@@ -404,7 +409,7 @@ var Frost = (() => {
         let dest=null,best=Infinity;
         const consider=(px,pz)=>{const score=(px-ideal[0])**2+(pz-ideal[1])**2;if(score<best&&available(px,pz)){dest=[px,pz];best=score;}};
         const cellX=cell(...ideal)[0]*2-31,cellZ=cell(...ideal)[1]*2-31;
-        if(flying||search.prev[index(...ideal)]!==-1&&groundClear(s.map,cellX,cellZ,...ideal,r,groundNavigation(s))&&treeClear(s,cellX,cellZ,...ideal,r,u.team,true))consider(...ideal);
+        if(flying||search.prev[index(...ideal)]!==-1&&groundClear(s.map,cellX,cellZ,...ideal,r,groundNavigation(s))&&obstacleClear(s,cellX,cellZ,...ideal,r,u.team,true))consider(...ideal);
         for(const j of cells)consider(j%32*2-31,Math.floor(j/32)*2-31);
         if(!dest)return null;
         reserved.push({x:dest[0],z:dest[1],r});orders.set(u.id,dest);
@@ -414,7 +419,7 @@ var Frost = (() => {
   }
   function walkClear(s,u,x,z){
     const radius=movementRadius(u);if(Math.abs(x)+radius>30||Math.abs(z)+radius>30)return false;if(types[u.kind].flying)return true;
-    if(!groundClear(s.map,u.x,u.z,x,z,radius,groundNavigation(s))||!treeClear(s,u.x,u.z,x,z,radius,u.team,true))return false;
+    if(!groundClear(s.map,u.x,u.z,x,z,radius,groundNavigation(s))||!obstacleClear(s,u.x,u.z,x,z,radius,u.team,true))return false;
     return !s.units.some(v=>v.id!==u.id&&v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))&&(distance(u,v)<(types[v.kind].radius||1)+.35?Math.hypot(x-v.x,z-v.z)<=distance(u,v)+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])<(types[v.kind].radius||1)+.35));
   }
   function traffic(s,u){const flying=types[u.kind].flying,height=flying?0:unitHeight(s,u);return s.units.filter(v=>v.id!==u.id&&v.hp>0&&!v.inside&&types[v.kind].speed&&!!types[v.kind].flying===!!flying&&(u.team<0||v.team===u.team||isVisible(s,u.team,v))&&(flying||Math.abs(height-unitHeight(s,v))<1.5||traversable(s.map,u.x,u.z,v.x,v.z)));}
@@ -429,6 +434,7 @@ var Frost = (() => {
     const grid=flying?new Uint8Array(121*121):cache.water.slice();if(!flying){
       for(const v of s.units)if(v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))){const r=(types[v.kind].radius||1)+.4;for(let z=Math.max(0,Math.floor((v.z-r)*2)+60);z<=Math.min(120,Math.ceil((v.z+r)*2)+60);z++)for(let x=Math.max(0,Math.floor((v.x-r)*2)+60);x<=Math.min(120,Math.ceil((v.x+r)*2)+60);x++)if(Math.hypot(x/2-30-v.x,z/2-30-v.z)<r)grid[z*121+x]=1;}
       for(const v of treeField(s,u.team).trees)for(let z=Math.max(0,Math.floor((v.z-TREE_RADIUS)*2)+60);z<=Math.min(120,Math.ceil((v.z+TREE_RADIUS)*2)+60);z++)for(let x=Math.max(0,Math.floor((v.x-TREE_RADIUS)*2)+60);x<=Math.min(120,Math.ceil((v.x+TREE_RADIUS)*2)+60);x++)if(Math.hypot(x/2-30-v.x,z/2-30-v.z)<TREE_RADIUS)grid[z*121+x]=1;
+      for(const v of s.map.doodads||[]){const r=doodads[v.kind].radius*v.scale;if(!r)continue;for(let z=Math.max(0,Math.floor((v.z-r)*2)+60);z<=Math.min(120,Math.ceil((v.z+r)*2)+60);z++)for(let x=Math.max(0,Math.floor((v.x-r)*2)+60);x<=Math.min(120,Math.ceil((v.x+r)*2)+60);x++)if(Math.hypot(x/2-30-v.x,z/2-30-v.z)<r)grid[z*121+x]=1;}
     }
     return cache.teams[key]=grid;
   }
@@ -454,7 +460,7 @@ var Frost = (() => {
       const n=pop();if(blocked[n]===2)continue;blocked[n]=2;const cx=(n%size)/2-30,cz=Math.floor(n/size)/2-30,point=n===start?u:{id:u.id,kind:u.kind,team:u.team,x:cx,z:cz},d=Math.hypot(point.x-x,point.z-z);if(d<best){best=d;found=n;}if(d<=stop&&(types[u.kind].flying||traversable(s.map,point.x,point.z,x,z))||d<=.75&&walkClear(s,point,x,z)&&trafficClear(point,near,x,z)){found=n;break;}
       for(let direction=0;direction<8;direction++){
         const [dx,dz]=trafficDirections[direction],nx=cx+dx/2,nz=cz+dz/2,j=(nz*2+60)*size+nx*2+60,next=cost[n]+Math.hypot(dx,dz)/2;if(nx<-30||nz<-30||nx>30||nz>30||blocked[j]||field.counts[j]>(Math.hypot(nx-u.x,nz-u.z)<r*2-.0001?1:0)||next>=cost[j])continue;
-        if(n===start){if(!walkClear(s,point,nx,nz)||!trafficClear(point,near,nx,nz))continue;}else{if(!types[u.kind].flying){const edge=n*8+direction;edges[edge]||=groundClear(s.map,cx,cz,nx,nz,r,groundNavigation(s))?1:2;if(edges[edge]===2||!treeClear(s,cx,cz,nx,nz,r,u.team,true))continue;}if(!trafficClear(point,field.occupants[n]||[],nx,nz))continue;}prev[j]=n;cost[j]=next;push(j,next+Math.max(0,Math.hypot(nx-x,nz-z)-stop));
+        if(n===start){if(!walkClear(s,point,nx,nz)||!trafficClear(point,near,nx,nz))continue;}else{if(!types[u.kind].flying){const edge=n*8+direction;edges[edge]||=groundClear(s.map,cx,cz,nx,nz,r,groundNavigation(s))?1:2;if(edges[edge]===2||!obstacleClear(s,cx,cz,nx,nz,r,u.team,true))continue;}if(!trafficClear(point,field.occupants[n]||[],nx,nz))continue;}prev[j]=n;cost[j]=next;push(j,next+Math.max(0,Math.hypot(nx-x,nz-z)-stop));
       }
     }
     const result=[];for(let n=found;n!==start;n=prev[n])result.push([n%size/2-30,Math.floor(n/size)/2-30]);result.reverse();const last=result.at(-1),end=last?{...u,x:last[0],z:last[1]}:u;if(walkClear(s,end,x,z)&&trafficClear(end,near,x,z))result.push([x,z]);return result.slice(0,1024);
@@ -463,7 +469,7 @@ var Frost = (() => {
     if(u.root>0||u.stun>0)return false;
     if(!u.speed||Math.hypot(u.x-x,u.z-z)<=stop&&(types[u.kind].flying||traversable(s.map,u.x,u.z,x,z)))return true;
     const near=traffic(s,u);
-    if(near.some(v=>distance(u,v)<movementRadius(u)+movementRadius(v)-.0001)||!types[u.kind].flying&&(!treeClear(s,u.x,u.z,u.x,u.z,movementRadius(u),u.team)||s.units.some(v=>v.id!==u.id&&v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))&&distance(u,v)<(types[v.kind].radius||1)+.35))){
+    if(near.some(v=>distance(u,v)<movementRadius(u)+movementRadius(v)-.0001)||!types[u.kind].flying&&(!obstacleClear(s,u.x,u.z,u.x,u.z,movementRadius(u),u.team)||s.units.some(v=>v.id!==u.id&&v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))&&distance(u,v)<(types[v.kind].radius||1)+.35))){
       const angle=Math.atan2(z-u.z,x-u.x),step=u.speed*moveRate(u)*DT;let best=null,score=-Infinity;
       for(const turn of [0,Math.PI/4,-Math.PI/4,Math.PI/2,-Math.PI/2,Math.PI*3/4,-Math.PI*3/4,Math.PI]){const nx=u.x+Math.cos(angle+turn)*step,nz=u.z+Math.sin(angle+turn)*step;if(!walkClear(s,u,nx,nz)||!trafficClear(u,near,nx,nz))continue;const value=near.reduce((sum,v)=>sum+Math.min(0,Math.hypot(nx-v.x,nz-v.z)-movementRadius(u)-movementRadius(v)),0)-Math.hypot(x-nx,z-nz)*.01;if(value>score){score=value;best=[nx,nz];}}
       if(best){u.yaw=Math.atan2(best[0]-u.x,best[1]-u.z);[u.x,u.z]=best;u.path=[];}return false;
@@ -1017,6 +1023,6 @@ var Frost = (() => {
     s.events=[];s.pendingEvents=[];s.visible=[[],[]];if(!Array.isArray(s.explored)||s.explored.length!==2||s.explored.some(a=>!Array.isArray(a)||a.length!==1024))throw Error('Invalid saved fog');visibility(s);return s;
   }
   function publicState(s,team){const state=clone(s);for(const u of state.units){u.sleeping=asleep(s,u);u.feeding=feeding(u);u.portalLeft=portalLeft(u);delete u.frenzySource;delete u.lightningSource;}state.corpses=s.corpses.filter(c=>c.team===team||s.visible[team][index(c.x,c.z)]).map(({id,kind,heroClass,team,x,y,z,yaw,age,boss,large})=>({id,kind,heroClass,team,x,y,z,yaw,age,boss,large}));state.projectiles=s.projectiles.filter(p=>s.visible[team][index(p.x,p.z)]).map(({id,x,y,z,vx,vy,vz,team,art})=>({id,x,y,z,vx,vy,vz,team,art}));delete state.projectileSerial;delete state.pendingEvents;delete state.tdPending;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){const r=miningTarget(s,u);if(r)u.miningTarget={x:r.x,z:r.z};u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;delete u.casterResearch;delete u.cannibalizeResearch;delete u.zigguratUpgrade;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]&&(e.fromX===undefined||s.visible[team][index(e.fromX,e.fromZ)]));state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map((r,i)=>{if(!s.visible[team][index(r.x,r.z)]){r.amount=s.clearedResources?.[team]?.includes(i)?0:1;delete r.felled;}return r;});state.clearedResources=[team===0?(s.clearedResources?.[0]||[]):[],team===1?(s.clearedResources?.[1]||[]):[]].map(a=>[...a]);state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
-  return {PROTOCOL,zigguratUpgrades,gradeRamp,groundTile,groundSample,groundClear,walkClear,movementRadius,sculptRelief,reliefHeight,tierHeight,townPortal,portalLeft,heroRoster,heroQueued,heroRecruitment,heroRevival,cannibalize,feeding,acolyte,canGather,hauntedMine,mineWorkers,minePoint,miningTarget,skeletonResearch,casterSpells,casterTraining,attackRate,moveRate,raiseDead,maxMana,DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,TREE_FALL_LIFETIME,TREE_RADIUS,treeClear,buildingSite,resourceAvailable,resourceAt,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,timeOfDay,isNight,daylight,asleep,canAttack,canControl,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,pickHeight,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
+  return {PROTOCOL,DOODAD_LIMIT,doodads,doodadMap,doodadClear,obstacleClear,zigguratUpgrades,gradeRamp,groundTile,groundSample,groundClear,walkClear,movementRadius,sculptRelief,reliefHeight,tierHeight,townPortal,portalLeft,heroRoster,heroQueued,heroRecruitment,heroRevival,cannibalize,feeding,acolyte,canGather,hauntedMine,mineWorkers,minePoint,miningTarget,skeletonResearch,casterSpells,casterTraining,attackRate,moveRate,raiseDead,maxMana,DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,TREE_FALL_LIFETIME,TREE_RADIUS,treeClear,buildingSite,resourceAvailable,resourceAt,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,timeOfDay,isNight,daylight,asleep,canAttack,canControl,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,pickHeight,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
 })();
 if(typeof module!=='undefined')module.exports=Frost;

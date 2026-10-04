@@ -1,0 +1,106 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "b3295e5dd314105d7d1c9af0282350d152fddd2e",
+  "protocol": 34,
+  "behavior": {
+    "authoredDoodadLimit": 128,
+    "rockVariants": 6,
+    "shrubDecoration": true,
+    "scaledSweptRockFootprints": true,
+    "editorTransformUndoSavePlaytest": true,
+    "realModelPlacementPreview": true,
+    "ruleDerivedPathingChunks": 64,
+    "legacyMapsUnchanged": true,
+    "originalSceneEntitiesUnchanged": 4388,
+    "newSlotsStartInactive": true
+  },
+  "tests": {
+    "fullJavaScriptTcp": true,
+    "fullSuitePassLines": 63,
+    "fullSuiteOutputSha256": "80dc17ad4a7a6ea3fae5408cb9bff6dd65cec2ca4af7b664b3476ff3c0fc47e0",
+    "exitCode": 0,
+    "finalSceneClientInputTest": true
+  },
+  "native": {
+    "tag": "1791255000104",
+    "editor": {
+      "placement": true,
+      "selection": true,
+      "rotation": true,
+      "scale": true,
+      "move": true,
+      "deletion": true,
+      "undo": true,
+      "mapSaveLoad": true
+    },
+    "bindings": {
+      "rockMesh": true,
+      "scaleAndRotation": true,
+      "pathingChunks": 64,
+      "allThreePathingKinds": true
+    },
+    "gameplay": {
+      "groundDetour": true,
+      "mapTransformsPreserved": true,
+      "overlayHidden": true,
+      "groundPlacementRejectedOverRock": true,
+      "redPreviewAndNoPayment": true
+    },
+    "template": {
+      "sixRockVariants": true,
+      "shrubs": true,
+      "all20Bindings": true
+    },
+    "objectPlacementPreview": true,
+    "shaderRejections": 0,
+    "productCodeMatchesAfterQaTelemetryRemoved": true,
+    "assetsMatchProduct": true
+  },
+  "package": {
+    "files": 778,
+    "contentHash": "ebc5459f0b6ea8d4ca49b87353cd1beb9368e082b96a8688cb42f59d362e617d",
+    "allHashesAndSizesVerified": true,
+    "sourceScriptExact": true,
+    "responsiveStartupSeconds": 30,
+    "loggedErrors": 0,
+    "validatedShaderVariants": 10
+  },
+  "binaries": {
+    "runtimeSha256": "206f96d311f92373052c9c882a9eb46b077201a9ebe2cf681870fd2b0a780295",
+    "editorSha256": "53bb59e2c1b4cbcb61f3fa95e93327dfa17ff3648806cd290f77baed2f8f969e",
+    "rebuilt": false
+  },
+  "sourceHashes": {
+    "samples/frostbound-realms/game/simulation.js": "742f12a0ba29b8004802e11d0708317e73aba01b9c39dae6064aa19d460f98df",
+    "samples/frostbound-realms/game/client.js": "336ae79aaeb0ae6763af4d1b3378c1721ee7ea4de6beb8911f5e3ac7494e9fec",
+    "samples/frostbound-realms/game/terrain.js": "856fd6feb931ea73cae576301646b6aeb09256946c86f8c8caba990e23d2941f",
+    "samples/frostbound-realms/game/visuals.js": "dc3c7949d3650d4a3ee901d6e7004eb03192f5af338ca4fe4078857200111610",
+    "scripts/build-frostbound.mjs": "e8f440b8a54b20d0667ec6f41c24c9342fbeec1e4dcd3ce2a860173850a3e25b",
+    "scripts/test-frostbound.mjs": "3b51d8b9a86e10bdb145f310af2053014a55bbc56cbcdcbf8d8556f8bce3159a",
+    "scripts/test-frost-doodads.mjs": "e839542fd5fd0fbc33ecc11465939bea24ea69c2f6fac5c57d12a14344d8ed52",
+    "scripts/test-frost-doodads-client.mjs": "bdf67ccf383860adfe7c86f8a3ec98a920d2e9b3d7ea7a9ad225d9aa07e70e3c",
+    "scripts/qa-frost-doodads.mjs": "51e2b321028f49c002b0f654b4a7766c2421c48680e900a3141eb034458ebe5b",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "a2864f83e03268e4789934c4e884001c58a65f5a7897af83a560fb9e3d5e6ee9",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "4d197e5df4d6bafac489406886826772b6b8a44d5061b0829481cfa70da9efce",
+    "samples/frostbound-realms/Assets/Maps/rocky-crossing.json": "0a979d1cae1400fe4e8f24113ab581468d99268f0bdd2ee9f4572a03040e651f",
+    "samples/frostbound-realms/Assets/Shaders/Pathing.mshader": "64163cdcb5ad09394806b61d6029dd92aa3b22ac5beacc968535831e27d43595",
+    "samples/frostbound-realms/Assets/Materials/Pathing.mmat": "ae9f8d8b20ed807796929f0f49a0b02a198dd761a4413cdb5e001d9b88c3c783"
+  },
+  "screenshots": [
+    "doodads-editor-selected.png",
+    "doodads-rocky-crossing.png",
+    "doodads-rocky-crossing-pathing.png"
+  ],
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "automaticSceneryCollision": false,
+    "exactMeshCollision": false,
+    "destructibleDoodads": false,
+    "arbitraryModelImportPalette": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformance": false
+  }
+}

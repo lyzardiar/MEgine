@@ -1,0 +1,16 @@
+/* MENGINE_PARAMETERS
+{"parameters":[{"name":"cells0","type":"vector4","default":[0,0,0,0]},{"name":"cells1","type":"vector4","default":[0,0,0,0]},{"name":"cells2","type":"vector4","default":[0,0,0,0]},{"name":"cells3","type":"vector4","default":[0,0,0,0]},{"name":"cells4","type":"vector4","default":[0,0,0,0]},{"name":"cells5","type":"vector4","default":[0,0,0,0]},{"name":"cells6","type":"vector4","default":[0,0,0,0]},{"name":"cells7","type":"vector4","default":[0,0,0,0]},{"name":"cells8","type":"vector4","default":[0,0,0,0]}]}
+*/
+// Author: MiYu. Editor-only pathing follows actual terrain geometry and rule-derived cells.
+fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, world_position: vec3<f32>, world_normal: vec3<f32>) -> vec4<f32> {
+    if abs(world_normal.y)<0.7 {discard;}
+    let local=(world_position.xz-object.model[3].xz+vec2<f32>(4.0))/2.0;
+    let cell=vec2<i32>(floor(local))+vec2<i32>(1);
+    let i=u32(clamp(cell.y,0,5)*6+clamp(cell.x,0,5));
+    let data=array<vec4<f32>,9>(mengine_param_cells0(),mengine_param_cells1(),mengine_param_cells2(),mengine_param_cells3(),mengine_param_cells4(),mengine_param_cells5(),mengine_param_cells6(),mengine_param_cells7(),mengine_param_cells8());
+    let kind=data[i/4u][i%4u];
+    let rgb=select(select(vec3<f32>(0.12,0.85,0.28),vec3<f32>(0.12,0.48,1.0),kind>0.5),vec3<f32>(1.0,0.12,0.08),kind>1.5);
+    let edges=min(fract(local),vec2<f32>(1.0)-fract(local));
+    let line=1.0-smoothstep(0.015,0.04,min(edges.x,edges.y));
+    return vec4<f32>(mix(rgb,rgb*0.25,line),mix(0.28,0.65,line));
+}
