@@ -21,6 +21,12 @@ function arrived(s,goals){for(const p of goals){const u=s.units.find(u=>u.id===p
  const us=Array.from({length:8},(_,i)=>S.spawn(s,'soldier',0,-12-i%4*2,-1+Math.floor(i/4)*2,{damage:0}));const targets=order(s,us,12,1);advance(s,450);arrived(s,targets);
 }
 {
+ const s=game();for(let z=0;z<32;z++)s.map.terrain[z*32+16]=z===16?0:1;
+ const u=S.spawn(s,'soldier',0,-12,-4,{damage:0}),targets=order(s,[u],12,-4);advance(s,5);
+ s.map.terrain[16*32+16]=1;s.map.terrain[20*32+16]=0;advance(s,300);arrived(s,targets);
+ assert.ok(u.x>2,'a changed water crossing invalidates the retained raster');
+}
+{
  const s=game(),a=S.spawn(s,'dragon',0,-9,0,{damage:0}),b=S.spawn(s,'dragon',0,9,0,{damage:0}),ground=S.spawn(s,'soldier',0,0,0,{damage:0});S.command(s,0,{type:'hold',ids:[ground.id]});const goals=[...order(s,[a],9,0),...order(s,[b],-9,0)];advance(s,100);arrived(s,goals);assert.deepEqual([ground.x,ground.z],[0,0]);
 }
 {

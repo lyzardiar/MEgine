@@ -1,0 +1,118 @@
+{
+  "passed": true,
+  "kind": "td",
+  "sourceRevision": "553c6ee109cab2bde7309bbf70159839d8f788f6",
+  "scope": "Standalone native Player frame-loop intervals from onTick dt; successful render logs checked, physical display presentation is not measured.",
+  "physicalInput": false,
+  "audioListening": false,
+  "fixture": "Isolated source project; scripted F3, two Home presses, centered pointer; game source from 553c6ee109cab2bde7309bbf70159839d8f788f6 and current assets.",
+  "executable": "D:/MEngineNativeQA/tile-build-1790939800003/release/mengine-runtime.exe",
+  "executableSha256": "adf42f2cd82de5849ea4a73094429776333825e43bd8fd78a442b382e7ff465f",
+  "sourceSceneSha256": "d2901d62617feb37644ee280318edcca25c2db19faaae8ebd2583909e6fe7e32",
+  "sourceScriptSha256": "438b0910b83f17e0bda56c87d7f1db24d1c15f69913015f8abddd1d0f417c56c",
+  "fixtureScriptSha256": "716880d9abd5c33d823300577b73074e62478a4fa8db3909d66eb18a35aa1ccb",
+  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-td-1791119597245\\sample",
+  "processId": 47292,
+  "warmupSeconds": 5,
+  "sampleWindowSeconds": 5,
+  "loggedErrors": [],
+  "materialPipelineRejections": 0,
+  "runs": [
+    {
+      "samples": 157,
+      "durationMs": 5006.922729313374,
+      "frameLoopFps": 31.356585369459108,
+      "meanMs": 31.891227575244418,
+      "p95Ms": 35.457201302051544,
+      "maxMs": 40.910299867391586,
+      "state": {
+        "mode": "playing",
+        "kind": "td",
+        "frame": 105,
+        "camera": [
+          -19,
+          -14
+        ],
+        "zoom": 12,
+        "units": 4,
+        "gold": 650,
+        "selected": [
+          3
+        ],
+        "paused": false,
+        "online": false,
+        "winner": null,
+        "viewport": [
+          2560,
+          1440
+        ]
+      }
+    },
+    {
+      "samples": 140,
+      "durationMs": 4990.66870380193,
+      "frameLoopFps": 28.052352962909943,
+      "meanMs": 35.647633598585216,
+      "p95Ms": 59.851400554180145,
+      "maxMs": 124.65670704841614,
+      "state": {
+        "mode": "playing",
+        "kind": "td",
+        "frame": 155,
+        "camera": [
+          -19,
+          -14
+        ],
+        "zoom": 12,
+        "units": 11,
+        "gold": 650,
+        "selected": [
+          3
+        ],
+        "paused": false,
+        "online": false,
+        "winner": null,
+        "viewport": [
+          2560,
+          1440
+        ]
+      }
+    },
+    {
+      "samples": 141,
+      "durationMs": 5006.775700487196,
+      "frameLoopFps": 28.16183676578115,
+      "meanMs": 35.50904752118579,
+      "p95Ms": 62.4811016023159,
+      "maxMs": 92.8751975297928,
+      "state": {
+        "mode": "playing",
+        "kind": "td",
+        "frame": 205,
+        "camera": [
+          -19,
+          -14
+        ],
+        "zoom": 12,
+        "units": 10,
+        "gold": 675,
+        "selected": [
+          3
+        ],
+        "paused": false,
+        "online": false,
+        "winner": null,
+        "viewport": [
+          2560,
+          1440
+        ]
+      }
+    }
+  ],
+  "groundAssets": {
+    "ground-sources.json": "b0c4ecb16aac064e467c86be7574d92b1d4e458f2ff2196784e88f5e75fbffd7",
+    "Assets/Materials/Ground.mmat": "0eca0e5d3a6fd3ae58312ed000d1257a7273f0d315f6212e1437e4ec951b770d",
+    "Assets/Shaders/Ground.mshader": "ee95b4a53a07aa23acb82a5da4ba3fccd39f906711e9f135e1dc2aa7ca73747a"
+  },
+  "measuredAt": "2026-10-04T13:13:50.380Z"
+}

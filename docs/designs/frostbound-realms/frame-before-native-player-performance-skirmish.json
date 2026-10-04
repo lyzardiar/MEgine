@@ -1,0 +1,118 @@
+{
+  "passed": true,
+  "kind": "skirmish",
+  "scope": "Standalone native Player frame-loop intervals from onTick dt; successful render logs checked, physical display presentation is not measured.",
+  "physicalInput": false,
+  "audioListening": false,
+  "fixture": "Isolated source project; scripted F1, two Home presses, centered pointer; game rules and assets unchanged.",
+  "executable": "D:/MEngineNativeQA/tile-build-1790939800003/release/mengine-runtime.exe",
+  "executableSha256": "adf42f2cd82de5849ea4a73094429776333825e43bd8fd78a442b382e7ff465f",
+  "sourceSceneSha256": "d2901d62617feb37644ee280318edcca25c2db19faaae8ebd2583909e6fe7e32",
+  "sourceScriptSha256": "12d9b90956f1be3f4e5281165fb254407d4096f6526338f27ccd59864bb9b339",
+  "fixtureScriptSha256": "094ead3383f943dc0e7d32ffec6a12030466b3de343be62cb959733ef7229763",
+  "projectRoot": "D:\\MEngineNativeQA\\frost-player-qa-skirmish-1791114960355\\sample",
+  "processId": 130400,
+  "warmupSeconds": 5,
+  "sampleWindowSeconds": 5,
+  "loggedErrors": [],
+  "materialPipelineRejections": 0,
+  "runs": [
+    {
+      "samples": 148,
+      "durationMs": 4994.300734251738,
+      "frameLoopFps": 29.633778155366496,
+      "meanMs": 33.74527523143066,
+      "p95Ms": 37.28770092129707,
+      "maxMs": 50.77359825372696,
+      "state": {
+        "mode": "playing",
+        "kind": "skirmish",
+        "frame": 105,
+        "camera": [
+          -18,
+          18
+        ],
+        "zoom": 12,
+        "units": 16,
+        "gold": 500,
+        "selected": [
+          2
+        ],
+        "paused": false,
+        "online": false,
+        "winner": null,
+        "viewport": [
+          2560,
+          1440
+        ]
+      }
+    },
+    {
+      "samples": 149,
+      "durationMs": 5034.394107758999,
+      "frameLoopFps": 29.59641156626206,
+      "meanMs": 33.78787991784563,
+      "p95Ms": 38.3514016866684,
+      "maxMs": 55.91699853539467,
+      "state": {
+        "mode": "playing",
+        "kind": "skirmish",
+        "frame": 155,
+        "camera": [
+          -18,
+          18
+        ],
+        "zoom": 12,
+        "units": 16,
+        "gold": 500,
+        "selected": [
+          2
+        ],
+        "paused": false,
+        "online": false,
+        "winner": null,
+        "viewport": [
+          2560,
+          1440
+        ]
+      }
+    },
+    {
+      "samples": 147,
+      "durationMs": 4971.34821023792,
+      "frameLoopFps": 29.569443495684006,
+      "meanMs": 33.81869530774095,
+      "p95Ms": 37.74150088429451,
+      "maxMs": 74.67299699783325,
+      "state": {
+        "mode": "playing",
+        "kind": "skirmish",
+        "frame": 205,
+        "camera": [
+          -18,
+          18
+        ],
+        "zoom": 12,
+        "units": 16,
+        "gold": 500,
+        "selected": [
+          2
+        ],
+        "paused": false,
+        "online": false,
+        "winner": null,
+        "viewport": [
+          2560,
+          1440
+        ]
+      }
+    }
+  ],
+  "groundAssets": {
+    "ground-sources.json": "b0c4ecb16aac064e467c86be7574d92b1d4e458f2ff2196784e88f5e75fbffd7",
+    "Assets/Materials/Ground.mmat": "0eca0e5d3a6fd3ae58312ed000d1257a7273f0d315f6212e1437e4ec951b770d",
+    "Assets/Shaders/Ground.mshader": "ee95b4a53a07aa23acb82a5da4ba3fccd39f906711e9f135e1dc2aa7ca73747a"
+  },
+  "measuredAt": "2026-10-04T11:56:33.826Z",
+  "sourceRevision": "553c6ee109cab2bde7309bbf70159839d8f788f6"
+}

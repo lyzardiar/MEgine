@@ -1,0 +1,302 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "553c6ee109cab2bde7309bbf70159839d8f788f6",
+  "protocol": 31,
+  "mapVersion": 1,
+  "changes": {
+    "pointer": "One lazy terrain ray per input pass for operations requiring a ground position",
+    "waterRaster": "Retained across ticks; terrain array changes invalidate it; per-team visible building obstacles are freshly applied",
+    "trafficHeight": "Moving unit surface height computed once per neighbor query"
+  },
+  "measurement": {
+    "scope": "Standalone Release onTick frame-loop intervals; physical display presentation is not measured",
+    "viewport": [
+      2560,
+      1440
+    ],
+    "warmupSeconds": 5,
+    "windows": 3,
+    "windowSeconds": 5,
+    "modes": {
+      "skirmish": {
+        "beforeMedianFps": 29.59641156626206,
+        "afterMedianFps": 30.586115082714688,
+        "beforeP95Ms": [
+          37.28770092129707,
+          38.3514016866684,
+          37.74150088429451
+        ],
+        "afterP95Ms": [
+          36.890000104904175,
+          37.49750182032585,
+          36.98990121483803
+        ],
+        "executableSha256": "adf42f2cd82de5849ea4a73094429776333825e43bd8fd78a442b382e7ff465f",
+        "sceneSha256": "d2901d62617feb37644ee280318edcca25c2db19faaae8ebd2583909e6fe7e32",
+        "groundAssets": {
+          "ground-sources.json": "b0c4ecb16aac064e467c86be7574d92b1d4e458f2ff2196784e88f5e75fbffd7",
+          "Assets/Materials/Ground.mmat": "0eca0e5d3a6fd3ae58312ed000d1257a7273f0d315f6212e1437e4ec951b770d",
+          "Assets/Shaders/Ground.mshader": "ee95b4a53a07aa23acb82a5da4ba3fccd39f906711e9f135e1dc2aa7ca73747a"
+        },
+        "beforeSourceScriptSha256": "12d9b90956f1be3f4e5281165fb254407d4096f6526338f27ccd59864bb9b339",
+        "afterSourceScriptSha256": "d7fb0fd0241f55867390699be198291fb7f7b97d2ccd713878cb36060f9cd9c9"
+      },
+      "moba": {
+        "beforeMedianFps": 17.166521416752506,
+        "afterMedianFps": 24.307486245731553,
+        "beforeP95Ms": [
+          106.50710761547089,
+          154.62850034236908,
+          134.54720377922058
+        ],
+        "afterP95Ms": [
+          77.82889902591705,
+          141.79110527038574,
+          121.26179784536362
+        ],
+        "executableSha256": "adf42f2cd82de5849ea4a73094429776333825e43bd8fd78a442b382e7ff465f",
+        "sceneSha256": "d2901d62617feb37644ee280318edcca25c2db19faaae8ebd2583909e6fe7e32",
+        "groundAssets": {
+          "ground-sources.json": "b0c4ecb16aac064e467c86be7574d92b1d4e458f2ff2196784e88f5e75fbffd7",
+          "Assets/Materials/Ground.mmat": "0eca0e5d3a6fd3ae58312ed000d1257a7273f0d315f6212e1437e4ec951b770d",
+          "Assets/Shaders/Ground.mshader": "ee95b4a53a07aa23acb82a5da4ba3fccd39f906711e9f135e1dc2aa7ca73747a"
+        },
+        "beforeSourceScriptSha256": "12d9b90956f1be3f4e5281165fb254407d4096f6526338f27ccd59864bb9b339",
+        "afterSourceScriptSha256": "d7fb0fd0241f55867390699be198291fb7f7b97d2ccd713878cb36060f9cd9c9"
+      },
+      "td": {
+        "beforeMedianFps": 28.16183676578115,
+        "afterMedianFps": 31.31944650854225,
+        "beforeP95Ms": [
+          35.457201302051544,
+          59.851400554180145,
+          62.4811016023159
+        ],
+        "afterP95Ms": [
+          33.68740156292915,
+          62.40979954600334,
+          56.11579865217209
+        ],
+        "executableSha256": "adf42f2cd82de5849ea4a73094429776333825e43bd8fd78a442b382e7ff465f",
+        "sceneSha256": "d2901d62617feb37644ee280318edcca25c2db19faaae8ebd2583909e6fe7e32",
+        "groundAssets": {
+          "ground-sources.json": "b0c4ecb16aac064e467c86be7574d92b1d4e458f2ff2196784e88f5e75fbffd7",
+          "Assets/Materials/Ground.mmat": "0eca0e5d3a6fd3ae58312ed000d1257a7273f0d315f6212e1437e4ec951b770d",
+          "Assets/Shaders/Ground.mshader": "ee95b4a53a07aa23acb82a5da4ba3fccd39f906711e9f135e1dc2aa7ca73747a"
+        },
+        "beforeSourceScriptSha256": "438b0910b83f17e0bda56c87d7f1db24d1c15f69913015f8abddd1d0f417c56c",
+        "afterSourceScriptSha256": "d7fb0fd0241f55867390699be198291fb7f7b97d2ccd713878cb36060f9cd9c9"
+      }
+    }
+  },
+  "tests": {
+    "fullJavaScriptTcpPassed": true,
+    "idleAndSelectionAvoidTerrainRays": true,
+    "groundOrdersRetainTerrainRays": true,
+    "waterCrossingChangePassed": true,
+    "replay": {
+      "passed": true,
+      "sourceRevision": "553c6ee109cab2bde7309bbf70159839d8f788f6",
+      "modes": [
+        "skirmish",
+        "moba",
+        "td"
+      ],
+      "ticksPerMode": 1200,
+      "changedWaterCrossingTicks": 305,
+      "publicStateComparisons": 400,
+      "fullStateComparisons": 200,
+      "scope": "Exact serialized full states and both players authoritative snapshots, including positions, events, queues, visibility and saved state fields"
+    }
+  },
+  "native": {
+    "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+    "physicalInput": false,
+    "audioListening": false,
+    "terrain": {
+      "chunks": 64,
+      "raisedCells": 188,
+      "ramps": 22,
+      "brushUndoSaveLoad": true,
+      "groundUnitClimbed": true,
+      "hero": {
+        "id": 18,
+        "kind": "hero",
+        "team": 0,
+        "x": -5.000000000000002,
+        "z": 6.935400632006681,
+        "hp": 700,
+        "maxHp": 700,
+        "damage": 38,
+        "speed": 4.5,
+        "cd": 0,
+        "order": null,
+        "waypoints": [],
+        "path": [],
+        "pathAt": -100,
+        "built": 1,
+        "queue": [],
+        "level": 1,
+        "xp": 0,
+        "mana": 156.7999999999996,
+        "spell": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "inventory": [],
+        "cargo": 0,
+        "respawn": 0,
+        "heroClass": 0,
+        "skills": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "skillPoints": 1,
+        "itemCooldown": 0,
+        "shield": 0,
+        "slow": 0,
+        "yaw": 1.5761795554599372
+      },
+      "fixture": "Highland Pass with one authored friendly hero for ramp movement; default melee opening is unchanged",
+      "shaderRejections": 0,
+      "profile": {
+        "intervals": 212,
+        "averagePresentIntervalMs": 161.66792452785205,
+        "p95PresentIntervalMs": 318.10000002384186,
+        "presentedFps": 6.185518883355991,
+        "averageRequestMs": 128.45352112967083,
+        "averageRenderMs": 39.92579765258216,
+        "averageCommandMs": 84.2179244131456,
+        "averageUploadMs": 1.6399061025028498,
+        "averageSimulationMs": 96.4572530516432,
+        "averageSimulationRequestMs": 136.4169013880788
+      }
+    },
+    "avoidance": {
+      "units": 12,
+      "squads": 2,
+      "samples": 11,
+      "minDistance": 1,
+      "distinctArrival": true,
+      "goals": [
+        {
+          "id": 15,
+          "x": 1,
+          "z": 17
+        },
+        {
+          "id": 16,
+          "x": 1,
+          "z": 15
+        },
+        {
+          "id": 17,
+          "x": 1,
+          "z": 13
+        },
+        {
+          "id": 18,
+          "x": -5,
+          "z": 17
+        },
+        {
+          "id": 19,
+          "x": -5,
+          "z": 15
+        },
+        {
+          "id": 20,
+          "x": -5,
+          "z": 13
+        },
+        {
+          "id": 21,
+          "x": -12.8,
+          "z": 14.4
+        },
+        {
+          "id": 22,
+          "x": -12.8,
+          "z": 16
+        },
+        {
+          "id": 23,
+          "x": -12.8,
+          "z": 17.6
+        },
+        {
+          "id": 24,
+          "x": -11.2,
+          "z": 14.4
+        },
+        {
+          "id": 25,
+          "x": -11.2,
+          "z": 16
+        },
+        {
+          "id": 26,
+          "x": -11.2,
+          "z": 17.6
+        }
+      ],
+      "shaderRejections": 0,
+      "meleeSurround": 6,
+      "tdWaveReleased": 7,
+      "tdPositions": [
+        {
+          "x": -14.704000473022461,
+          "z": -24
+        },
+        {
+          "x": -16.175851821899414,
+          "z": -24.998794555664062
+        },
+        {
+          "x": -17.306211471557617,
+          "z": -23.041494369506836
+        },
+        {
+          "x": -19.332294464111328,
+          "z": -23.432693481445312
+        },
+        {
+          "x": -19.961994171142578,
+          "z": -25.525535583496094
+        },
+        {
+          "x": -21.73591423034668,
+          "z": -25.940719604492188
+        },
+        {
+          "x": -22.254528045654297,
+          "z": -24.37307357788086
+        }
+      ]
+    }
+  },
+  "package": {
+    "contentHash": "2b6929839a4b6c19649556ca610d48689b9d4e3a4efc722cfd0634db26809f8a",
+    "files": 757,
+    "runtimeSha256": "adf42f2cd82de5849ea4a73094429776333825e43bd8fd78a442b382e7ff465f",
+    "smoke": "frame-cost-player-smoke.json"
+  },
+  "sourceHashes": {
+    "samples/frostbound-realms/game/client.js": "b79d68e4dc910298d6c553b99f39f806dae94f331c115712a9c316914e74717b",
+    "samples/frostbound-realms/game/simulation.js": "c8f913d267f3b9672c3a63b28b519a55d2bcbe309b541607d0b3ff9ef14d7f03",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "d7fb0fd0241f55867390699be198291fb7f7b97d2ccd713878cb36060f9cd9c9",
+    "scripts/qa-frostbound.mjs": "9c60830362dca79070bcb426600b9ed19f1f4d86a55080b1ddb8a3d3a79b30e9",
+    "scripts/qa-frost-player.mjs": "3f46a0c70f5235ae3d6410f58f137f2542c98a62d9b09c12824dca0fbb129b4c"
+  },
+  "remaining": [
+    "Original terrain and vegetation fidelity is incomplete",
+    "Short samples do not establish stable long-match performance or 60 FPS",
+    "MOBA p95 frame intervals still have substantial spikes",
+    "Physical input, display presentation, audio and full original game scope remain unaccepted"
+  ]
+}

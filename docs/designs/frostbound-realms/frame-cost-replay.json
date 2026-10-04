@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "sourceRevision": "553c6ee109cab2bde7309bbf70159839d8f788f6",
+  "modes": [
+    "skirmish",
+    "moba",
+    "td"
+  ],
+  "ticksPerMode": 1200,
+  "changedWaterCrossingTicks": 305,
+  "publicStateComparisons": 400,
+  "fullStateComparisons": 200,
+  "scope": "Exact serialized full states and both players authoritative snapshots, including positions, events, queues, visibility and saved state fields"
+}

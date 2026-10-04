@@ -403,14 +403,16 @@ var Frost = (() => {
     if(!groundClear(s.map,u.x,u.z,x,z,radius,groundNavigation(s)))return false;
     return !s.units.some(v=>v.id!==u.id&&v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))&&(distance(u,v)<(types[v.kind].radius||1)+.35?Math.hypot(x-v.x,z-v.z)<=distance(u,v)+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])<(types[v.kind].radius||1)+.35));
   }
-  function traffic(s,u){return s.units.filter(v=>v.id!==u.id&&v.hp>0&&!v.inside&&types[v.kind].speed&&!!types[v.kind].flying===!!types[u.kind].flying&&(u.team<0||v.team===u.team||isVisible(s,u.team,v))&&(types[u.kind].flying||Math.abs(unitHeight(s,u)-unitHeight(s,v))<1.5||traversable(s.map,u.x,u.z,v.x,v.z)));}
+  function traffic(s,u){const flying=types[u.kind].flying,height=flying?0:unitHeight(s,u);return s.units.filter(v=>v.id!==u.id&&v.hp>0&&!v.inside&&types[v.kind].speed&&!!types[v.kind].flying===!!flying&&(u.team<0||v.team===u.team||isVisible(s,u.team,v))&&(flying||Math.abs(height-unitHeight(s,v))<1.5||traversable(s.map,u.x,u.z,v.x,v.z)));}
   function trafficClear(u,near,x,z){
     const r=movementRadius(u);return near.every(v=>{if(v.id===u.id)return true;const radius=r+movementRadius(v),before=distance(u,v),after=Math.hypot(x-v.x,z-v.z);return before<radius-.0001?after>before+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])>=radius-.0001;});
   }
   const trafficCache=new WeakMap();
   function trafficGrid(s,u){
-    let cache=trafficCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){cache={frame:s.frame,serial:s.serial,teams:[],edges:new Map()};trafficCache.set(s,cache);}const key=types[u.kind].flying?3:u.team+1;if(cache.teams[key])return cache.teams[key];
-    const grid=new Uint8Array(121*121);if(!types[u.kind].flying){for(let z=0;z<=120;z++)for(let x=0;x<=120;x++)if(s.map.terrain[Math.floor((z+4)/4)*32+Math.floor((x+4)/4)]===1)grid[z*121+x]=1;
+    let cache=trafficCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){const waterKey=s.map.terrain.join(',');cache={frame:s.frame,serial:s.serial,waterKey,water:cache?.waterKey===waterKey?cache.water:null,teams:[],edges:new Map()};trafficCache.set(s,cache);}const flying=types[u.kind].flying,key=flying?3:u.team+1;if(cache.teams[key])return cache.teams[key];
+    // MiYu: retain the water raster across ticks; visible buildings are applied to each team's fresh copy.
+    if(!flying&&!cache.water){cache.water=new Uint8Array(121*121);for(let z=0;z<=120;z++)for(let x=0;x<=120;x++)if(s.map.terrain[Math.floor((z+4)/4)*32+Math.floor((x+4)/4)]===1)cache.water[z*121+x]=1;}
+    const grid=flying?new Uint8Array(121*121):cache.water.slice();if(!flying){
       for(const v of s.units)if(v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))){const r=(types[v.kind].radius||1)+.4;for(let z=Math.max(0,Math.floor((v.z-r)*2)+60);z<=Math.min(120,Math.ceil((v.z+r)*2)+60);z++)for(let x=Math.max(0,Math.floor((v.x-r)*2)+60);x<=Math.min(120,Math.ceil((v.x+r)*2)+60);x++)if(Math.hypot(x/2-30-v.x,z/2-30-v.z)<r)grid[z*121+x]=1;}}
     return cache.teams[key]=grid;
   }
