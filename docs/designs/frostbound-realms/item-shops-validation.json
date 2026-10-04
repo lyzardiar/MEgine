@@ -1,0 +1,127 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "359ab6a607bfcd713d609b9b8ca01cc426d705ad",
+  "protocol": 35,
+  "tests": {
+    "fullRulesTcpExitCode": 0,
+    "passLines": 66,
+    "outputSha256": "9720d743bac4dee26a6387d74f27db890b6809edc42908d8d7db95b449861912",
+    "finalStockBadgeClientTest": true,
+    "finalDoodadsClientTest": true
+  },
+  "native": {
+    "tag": "1791153832540",
+    "factions": [
+      {
+        "faction": 0,
+        "name": "Kingdom",
+        "shopName": "Arcane Vault",
+        "actualMesh": "Assets/Models/RealKingdomWorkshop.glb",
+        "selectedShopPurchase": true,
+        "depletionNoPayment": true,
+        "buyerCycle": true,
+        "selectHero": true,
+        "heroPurchase": true,
+        "savedStockTimer": true,
+        "workerConstruction": true
+      },
+      {
+        "faction": 1,
+        "name": "Warclans",
+        "shopName": "Voodoo Lounge",
+        "actualMesh": "Assets/Models/RealWarclansWorkshop.glb",
+        "selectedShopPurchase": true,
+        "depletionNoPayment": true,
+        "buyerCycle": true,
+        "selectHero": true,
+        "heroPurchase": true,
+        "savedStockTimer": true,
+        "workerConstruction": true
+      },
+      {
+        "faction": 2,
+        "name": "Wildwood",
+        "shopName": "Ancient of Wonders",
+        "actualMesh": "Assets/Models/RealWildwoodWorkshop.glb",
+        "selectedShopPurchase": true,
+        "depletionNoPayment": true,
+        "buyerCycle": true,
+        "selectHero": true,
+        "heroPurchase": true,
+        "savedStockTimer": true,
+        "workerConstruction": true
+      },
+      {
+        "faction": 3,
+        "name": "Revenant",
+        "shopName": "Tomb of Relics",
+        "actualMesh": "Assets/Models/RevenantWorkshop.glb",
+        "selectedShopPurchase": true,
+        "depletionNoPayment": true,
+        "buyerCycle": true,
+        "selectHero": true,
+        "heroPurchase": true,
+        "savedStockTimer": true,
+        "workerConstruction": true
+      }
+    ],
+    "full60SimulationSecondRestock": true,
+    "pauseFreeze": true,
+    "visibleStockBadges": true,
+    "stockAndBuyerUi": true,
+    "saveLoadTimers": true,
+    "shaderRejections": 0,
+    "productCodeExactAfterTelemetryRemoved": true,
+    "assetsAndLicensesExact": true,
+    "fixtureSource": "Isolated project user-data map1.json, loaded using actual F6/F7 editor input"
+  },
+  "scene": {
+    "entities": 4837,
+    "unchangedFromBase": true
+  },
+  "package": {
+    "files": 778,
+    "contentHash": "f0b5c7d6d92b0b6698648f8783b7e489cc071e60833143748c146ab1a422b2f9",
+    "allSizesAndHashesVerified": true,
+    "sourceScriptExact": true,
+    "sceneExact": true,
+    "shaderVariants": 10,
+    "responsiveStartupSeconds": 30,
+    "loggedErrors": 0
+  },
+  "art": {
+    "existingFactionWorkshopModels": true,
+    "dedicatedShopModels": false,
+    "newDownloads": 0,
+    "sourceManifestSha256": "482964a456d6606f505ec4d3c2b6bbb870be73a32995b151aabd215e2bb98301"
+  },
+  "sourceHashes": {
+    "samples/frostbound-realms/game/simulation.js": "f0b3445f86177bdb80cf9efa8eff119203c3cf19f90fe0e6d6cba16e46e41adc",
+    "samples/frostbound-realms/game/client.js": "0abaf61c4e6c6bb7e5a0d27ee690940fba33c9fd01c2fff8630887ef6dda47c6",
+    "samples/frostbound-realms/game/visuals.js": "04771e3a4e400b4ea8629099d420c6002fae662bd4667197f6ff387bb4e364cc",
+    "scripts/test-frostbound.mjs": "c08284d94e971874cb64f39d0e01586931ac7925fdd0a1936e37e2a8400425c8",
+    "scripts/test-frost-item-shops.mjs": "8bb67d160504bc27b7cba9dfaf6fe5396500d90058567ca17b816cdae2ac76f6",
+    "scripts/test-frost-item-shops-network.mjs": "abb77860a9345cd89319c19564c804b9c6d03a0721bd89421a502a9535b4bccf",
+    "scripts/test-frost-item-shops-client.mjs": "2f6b2c6ab44a81d8a45ee735f04040a0c56878c9c20da494a4c05982437dd6e5",
+    "scripts/qa-frost-item-shops.mjs": "09d0e4fcc10bd5ded6f03d661d2cb056b0b4ecd3849c55abf760111cc33fe63e",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "f7604e347c9d64e9bbc4a6448353b381db0b8543038797222b7678d4f1386248"
+  },
+  "screenshots": {
+    "item-shops-shop-0.png": "ec6ddf9aa1ed0fd9b271a85d06c110046b56e1b7d072fc7987e69789a482b2c8",
+    "item-shops-shop-1.png": "c38dc94586dc0cfa8de2ec261a91a6b9c81b4900d28de55b6d1b178729c83fb9",
+    "item-shops-shop-2.png": "2a347b818cd91f01a0ab16b30f27039423a65d8a9a206426aabf05a8e2a9c984",
+    "item-shops-shop-3.png": "a08ca0a0cfb923b605ff6a43006ab49a1c3daf9a6ff1f33d473cf88f373d9951",
+    "item-shops-restocked.png": "bca97accd79a2cd193b46be4f9651e0d42090914d48b3194801824e565396cef"
+  },
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "canonicalRaceInventories": false,
+    "aiPurchasingAndItemUse": false,
+    "neutralShopsOrMercenaries": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformance": false
+  }
+}

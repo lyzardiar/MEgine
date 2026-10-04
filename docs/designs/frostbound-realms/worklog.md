@@ -124,3 +124,11 @@ CPU证据avoidance-cpu.json：Node密集出发首tick，3热身+10独立场景�
 native-work-queues-qa.json使用平坦无AI、单矿、工人初始驻守的隔离地图，通过实际Agent输入完成建筑热键、Shift放置、右键采矿、编号检查、保存恢复、顺序完工、交付金币与停止。native-network-qa.json两个原生Release客户端通过协议7、英雄选择、混合工人队列重连、移动队列/驻守/巡逻及重连视图恢复。证据图work-queue-planned、work-queue-second、work-queue-gather、multiplayer-work-queue。自动化不证明物理键鼠、音频听感或跨机LAN。
 
 独立包284文件，内容哈希30fb45115fec10f89bce96df2f8d1077c2af7e53a03c4f28b5a0580559c5998b；逐文件与Release exe哈希校验通过，30秒启动正常响应、零ERROR。本阶段复用已记录的许可资产与Release引擎，未新增Rust运行时改动。完整目标仍active：完整战役、四族全部兵种/美术、完整Dota/经典地图内容、战斗技能队列、持续密集行军性能、可视触发图、录像观战、重叠地形及5ms整体预算尚未完成。tmp和scripts/__pycache__保留不提交。
+
+## 2026-10-05：近战物品商店
+
+Author: MiYu。Ponytail 保持禁用。新增四族可建造商店（130 金币 / 30 木材 / 18 秒）、指定购入英雄、共享库存、逐件补货、数字余量及红色缺货标记。购买先验证后同时修改资源、物品和库存；存档与重连延续计时，敌方快照隐藏库存。Dota / TD / RPG 保留基地购物，旧单机近战存档兼容；新近战需要独立商店。AI 建造商店时继续处理生产。
+
+协议 35。全量规则与真实 TCP 回归 66 项 PASS、退出 0，最终客户端库存标记及 doodad 输入回归另行通过。原生 Release 编辑器四族实际建造、模型绑定、商品购买/缺货/切换英雄、保存恢复、完整 60 模拟秒补货、暂停冻结均通过；shader rejection 0。只有 qaMap/qaUnits 观察字段和隔离用户数据测试地图，产品脚本与资产逐项一致。最终 Player 778 文件、4837 场景实体、10 着色器变体，内容 SHA-256 f0b5c7d6d92b0b6698648f8783b7e489cc071e60833143748c146ab1a422b2f9；所有大小/hash 校验通过，30 秒存活/响应，日志错误 0。
+
+商店暂复用四族工坊资产，共用现有九件商品；专属模型、完整原作四族商品、AI 采购/用药、中立商店和雇佣兵未实现。原生输入为 Agent，不代表物理输入、试听、跨机器局域网或稳定 Player 帧性能。证据 item-shops.md、item-shops-native-qa.json、item-shops-validation.json、item-shops-player-smoke.json。完整复刻目标仍未完成。

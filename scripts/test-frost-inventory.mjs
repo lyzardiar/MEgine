@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {battleFixture} from './frost-battle-fixture.mjs';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
-function game(mode='skirmish'){const map=S.defaultMap(mode);map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];if(mode!=='rpg')map.units=[];map.triggers=[];const s=battleFixture(S,mode,{map,ai:[false,false],factions:[0,0]},['hero','barracks','farm','guard','harvest']);s.teams[0].gold=10000;return s;}
+function game(mode='moba'){const map=S.defaultMap(mode);map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];if(mode!=='rpg')map.units=[];map.triggers=[];const s=battleFixture(S,mode,{map,ai:[false,false],factions:[0,0]},['hero','barracks','farm','guard','harvest']);s.teams[0].gold=10000;if(mode==='moba'){s.nextWave=1e9;for(const u of s.units){u.damage=0;if(S.types[u.kind].speed)u.order={type:'hold'};}}return s;}
 const hero=s=>s.units.find(u=>u.kind==='hero'&&u.team===0),cmd=(s,u,type,extra={})=>S.command(s,u.team,{type,ids:[u.id],...extra}),buy=(s,u,item)=>assert.equal(cmd(s,u,'buy',{item}),null),slot=(s,u,type,index)=>cmd(s,u,type,{slot:index,item:u.inventory[index]}),tick=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 {
  const s=game(),u=hero(s),base={maxHp:u.maxHp,damage:u.damage,speed:u.speed};u.hp=u.maxHp*.4;buy(s,u,1);close(u.hp/u.maxHp,.4);

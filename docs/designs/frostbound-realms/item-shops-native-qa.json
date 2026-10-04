@@ -1,0 +1,68 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 35,
+  "tag": "1791153832540",
+  "scope": "Release QuickJS and Agent input: four faction shop construction/model binding, selected shop/buyer menus, finite stock, timed restock and saved game continuation",
+  "physicalInput": false,
+  "audioListening": false,
+  "factions": [
+    {
+      "faction": 0,
+      "name": "Kingdom",
+      "shopName": "Arcane Vault",
+      "actualMesh": "Assets/Models/RealKingdomWorkshop.glb",
+      "selectedShopPurchase": true,
+      "depletionNoPayment": true,
+      "buyerCycle": true,
+      "selectHero": true,
+      "heroPurchase": true,
+      "savedStockTimer": true,
+      "workerConstruction": true
+    },
+    {
+      "faction": 1,
+      "name": "Warclans",
+      "shopName": "Voodoo Lounge",
+      "actualMesh": "Assets/Models/RealWarclansWorkshop.glb",
+      "selectedShopPurchase": true,
+      "depletionNoPayment": true,
+      "buyerCycle": true,
+      "selectHero": true,
+      "heroPurchase": true,
+      "savedStockTimer": true,
+      "workerConstruction": true
+    },
+    {
+      "faction": 2,
+      "name": "Wildwood",
+      "shopName": "Ancient of Wonders",
+      "actualMesh": "Assets/Models/RealWildwoodWorkshop.glb",
+      "selectedShopPurchase": true,
+      "depletionNoPayment": true,
+      "buyerCycle": true,
+      "selectHero": true,
+      "heroPurchase": true,
+      "savedStockTimer": true,
+      "workerConstruction": true
+    },
+    {
+      "faction": 3,
+      "name": "Revenant",
+      "shopName": "Tomb of Relics",
+      "actualMesh": "Assets/Models/RevenantWorkshop.glb",
+      "selectedShopPurchase": true,
+      "depletionNoPayment": true,
+      "buyerCycle": true,
+      "selectHero": true,
+      "heroPurchase": true,
+      "savedStockTimer": true,
+      "workerConstruction": true
+    }
+  ],
+  "lastCommand": "playback.step",
+  "stage": "faction-3",
+  "pausedTimerFrozen": true,
+  "actualFull60SecondRefill": true,
+  "shaderRejections": 0
+}
