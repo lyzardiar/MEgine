@@ -1,6 +1,6 @@
 /* Author: MiYu. Shared fixed-step rules for the native client and authoritative server. */
 var Frost = (() => {
-  const PROTOCOL = 32, DT = 0.1, LIMIT = 160, PROJECTILE_LIMIT = 256, CORPSE_LIMIT = 64, CORPSE_LIFETIME = 20, TREE_FALL_LIFETIME = 6, SIZE = 32;
+  const PROTOCOL = 33, DT = 0.1, LIMIT = 160, PROJECTILE_LIMIT = 256, CORPSE_LIMIT = 64, CORPSE_LIFETIME = 20, TREE_FALL_LIFETIME = 6, TREE_RADIUS = .8, SIZE = 32;
   const simulating = new WeakSet();
   const cannibalize={gold:75,time:30,duration:33,range:6,reach:1.7,healing:{ghoul:10,abomination:15}};
   const feeding=u=>u.order?.type==='cannibalize'&&u.order.active?u.order.left:u.feeding||0;
@@ -258,6 +258,7 @@ var Frost = (() => {
     for(let i=0;i<24;i++){const x=((i*17)%50)-25,z=((i*29)%48)-24;if(Math.hypot(x,z)>12&&map.spawns.every(p=>Math.hypot(p[0]-x,p[1]-z)>12))map.props.push({kind:'tree',x,z,amount:600});}
     if(mode==='moba')map.surfaces=map.terrain.map(kind=>kind===0?3:kind===2?4:0);
     if(mode==='moba')map.props=map.props.filter(p=>p.kind!=='mine'&&[0,1,2].every(lane=>{const route=lanePath(0,lane);return route.slice(1).every((v,i)=>segmentDistance(p.x,p.z,route[i],v)>3.5);}));
+    if(mode==='td')map.props=map.props.filter(p=>p.kind!=='tree'||tdPath.slice(1).every((v,i)=>segmentDistance(p.x,p.z,tdPath[i],v)>3.5));
     map.players=[{faction:0,ai:false},{faction:1,ai:true}];map.units=[];map.triggers=[];map.regions=[];
     if(mode==='rpg'){
       map.name='The Shattered Covenant';map.startingGold=180;map.props=map.props.filter(p=>p.kind==='tree');
@@ -322,7 +323,7 @@ var Frost = (() => {
   }
   function create(mode='skirmish',options={}) {
     const map=validateMap(options.map||defaultMap(mode));mode=map.mode;if(options.heroes&&(!Array.isArray(options.heroes)||options.heroes.length!==2||!options.heroes.every(validHero)))throw Error('Invalid hero selection');
-    const s={version:1,heroLifecycleVersion:1,economyVersion:1,map,mode,frame:0,serial:0,units:[],corpses:[],resources:clone(map.props),teams:[0,1].map(i=>({gold:map.startingGold,wood:map.startingWood,faction:clamp(options.factions?.[i]??map.players[i].faction,0,3),ai:options.ai?.[i]??map.players[i].ai,upgrade:0,kills:0,tier:1,research:0,necromancy:0,shamanism:0,skeletalLongevity:0,skeletalMastery:0,cannibalize:0,portalGranted:false,heroClass:options.heroes?.[i]??map.players[i].heroClass})),events:[],pendingEvents:[],zones:[],winner:null,wave:0,tdPending:[],nextWave:40,lives:20,loot:[],quest:{stage:0,scouts:0,relic:false,boss:false},triggered:[],triggerState:map.triggers.map(()=>({count:0,last:-1,next:0})),announcement:'',announcements:['',''],explored:[Array(1024).fill(0),Array(1024).fill(0)],visible:[[],[]]};
+    const s={version:1,heroLifecycleVersion:1,economyVersion:1,map,mode,frame:0,serial:0,units:[],corpses:[],resources:clone(map.props),clearedResources:[[],[]],teams:[0,1].map(i=>({gold:map.startingGold,wood:map.startingWood,faction:clamp(options.factions?.[i]??map.players[i].faction,0,3),ai:options.ai?.[i]??map.players[i].ai,upgrade:0,kills:0,tier:1,research:0,necromancy:0,shamanism:0,skeletalLongevity:0,skeletalMastery:0,cannibalize:0,portalGranted:false,heroClass:options.heroes?.[i]??map.players[i].heroClass})),events:[],pendingEvents:[],zones:[],winner:null,wave:0,tdPending:[],nextWave:40,lives:20,loot:[],quest:{stage:0,scouts:0,relic:false,boss:false},triggered:[],triggerState:map.triggers.map(()=>({count:0,last:-1,next:0})),announcement:'',announcements:['',''],explored:[Array(1024).fill(0),Array(1024).fill(0)],visible:[[],[]]};
     for(const team of [0,1]){
       if((mode==='td'||mode==='rpg')&&team===1)continue;
       const [x,z]=map.spawns[team];spawn(s,'hall',team,x,z);
@@ -353,7 +354,20 @@ var Frost = (() => {
     for(const u of planned)spawn(s,u.kind,u.team,u.x,u.z,{route:u.route,waypoint:1,lane:u.lane});return true;
   }
   const tdPath=[[-25,-24],[23,-24],[23,-8],[-21,-8],[-21,7],[20,7],[20,20],[-23,23]];
-  function solid(s,x,z,ignore=0,team=-1,radius=.35){if(Math.abs(x)+radius>30||Math.abs(z)+radius>30||!groundClear(s.map,x,z,x,z,radius,groundNavigation(s)))return true;return s.units.some(u=>u.id!==ignore&&u.hp>0&&!types[u.kind].speed&&(team<0||isVisible(s,team,u))&&Math.hypot(u.x-x,u.z-z)<(types[u.kind].radius||1)+.35);}
+  function resourceAvailable(s,i,team=-1){const r=s.resources[i];return !!r&&(team<0||s.visible[team]?.[index(r.x,r.z)]?r.amount>0:!s.clearedResources?.[team]?.includes(i));}
+  function resourceAt(s,x,z,team=-1,radius=2.8){let found=-1,best=radius;for(let i=0;i<s.resources.length;i++){const r=s.resources[i],d=Math.hypot(r.x-x,r.z-z);if(r.kind!=='camp'&&resourceAvailable(s,i,team)&&d<best){best=d;found=i;}}return found;}
+  const treeFields=new WeakMap();
+  function treeField(s,team){
+    let cache=treeFields.get(s);if(!cache||cache.frame!==s.frame||cache.resources!==s.resources||cache.length!==s.resources.length){cache={frame:s.frame,resources:s.resources,length:s.resources.length,teams:[]};treeFields.set(s,cache);}if(cache.teams[team+1])return cache.teams[team+1];
+    const trees=[],cells=Array.from({length:1024},()=>[]);for(let i=0;i<s.resources.length;i++){const r=s.resources[i];if(r.kind!=='tree'||!resourceAvailable(s,i,team))continue;trees.push(r);cells[index(r.x,r.z)].push(r);}return cache.teams[team+1]={trees,cells};
+  }
+  function treeClear(s,ax,az,bx,bz,radius=0,team=-1,escape=false){
+    const field=treeField(s,team),reach=TREE_RADIUS+radius,[x0,z0]=cell(Math.min(ax,bx)-reach,Math.min(az,bz)-reach),[x1,z1]=cell(Math.max(ax,bx)+reach,Math.max(az,bz)+reach);
+    const clear=r=>{const d=segmentDistance(r.x,r.z,[ax,az],[bx,bz]);if(d>=reach-1e-7)return true;const before=Math.hypot(ax-r.x,az-r.z),after=Math.hypot(bx-r.x,bz-r.z);return escape&&before<reach&&d>=before-1e-7&&after>before+.0001;};
+    if((x1-x0+1)*(z1-z0+1)>32)return field.trees.every(clear);for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)if(!field.cells[z*32+x].every(clear))return false;return true;
+  }
+  function buildingSite(s,x,z,radius,team=-1){return flatSite(s.map,x,z,radius)&&treeClear(s,x,z,x,z,radius,team);}
+  function solid(s,x,z,ignore=0,team=-1,radius=.35){if(Math.abs(x)+radius>30||Math.abs(z)+radius>30||!groundClear(s.map,x,z,x,z,radius,groundNavigation(s))||!treeClear(s,x,z,x,z,radius,team))return true;return s.units.some(u=>u.id!==ignore&&u.hp>0&&!types[u.kind].speed&&(team<0||isVisible(s,team,u))&&Math.hypot(u.x-x,u.z-z)<(types[u.kind].radius||1)+.35);}
   const navigationCache=new WeakMap();
   function navigation(s,team=-1){
     let cache=navigationCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){cache={frame:s.frame,serial:s.serial,blocked:[]};navigationCache.set(s,cache);}if(cache.blocked[team+1])return cache.blocked[team+1];
@@ -364,7 +378,7 @@ var Frost = (() => {
   function routeSearch(s,u,goal=-1){
     const start=index(u.x,u.z),blocked=navigation(s,u.team),regions=groundNavigation(s),edgeCache=groundFrames.get(s).routeEdges,radius=movementRadius(u);let edges=edgeCache.get(radius);if(!edges){edges=new Uint8Array(4096);edgeCache.set(radius,edges);}const prev=new Int16Array(1024);prev.fill(-1);prev[start]=start;const cells=[start];
     for(let k=0;k<cells.length;k++){const n=cells[k],x=n%32,z=Math.floor(n/32);if(n===goal)break;
-      for(const [direction,[dx,dz]] of [[1,0],[-1,0],[0,1],[0,-1]].entries()){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j]||!terrainEdge(s.map,n,j))continue;const edge=n*4+direction;edges[edge]||=groundClear(s.map,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,regions)?1:2;if(edges[edge]===2)continue;prev[j]=n;cells.push(j);}}
+      for(const [direction,[dx,dz]] of [[1,0],[-1,0],[0,1],[0,-1]].entries()){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j]||!terrainEdge(s.map,n,j))continue;const edge=n*4+direction;edges[edge]||=groundClear(s.map,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,regions)?1:2;if(edges[edge]===2||!treeClear(s,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,u.team,true))continue;prev[j]=n;cells.push(j);}}
     return {start,prev,cells};
   }
   function path(s,u,tx,tz){
@@ -390,7 +404,7 @@ var Frost = (() => {
         let dest=null,best=Infinity;
         const consider=(px,pz)=>{const score=(px-ideal[0])**2+(pz-ideal[1])**2;if(score<best&&available(px,pz)){dest=[px,pz];best=score;}};
         const cellX=cell(...ideal)[0]*2-31,cellZ=cell(...ideal)[1]*2-31;
-        if(flying||search.prev[index(...ideal)]!==-1&&groundClear(s.map,cellX,cellZ,...ideal,r,groundNavigation(s)))consider(...ideal);
+        if(flying||search.prev[index(...ideal)]!==-1&&groundClear(s.map,cellX,cellZ,...ideal,r,groundNavigation(s))&&treeClear(s,cellX,cellZ,...ideal,r,u.team,true))consider(...ideal);
         for(const j of cells)consider(j%32*2-31,Math.floor(j/32)*2-31);
         if(!dest)return null;
         reserved.push({x:dest[0],z:dest[1],r});orders.set(u.id,dest);
@@ -400,7 +414,7 @@ var Frost = (() => {
   }
   function walkClear(s,u,x,z){
     const radius=movementRadius(u);if(Math.abs(x)+radius>30||Math.abs(z)+radius>30)return false;if(types[u.kind].flying)return true;
-    if(!groundClear(s.map,u.x,u.z,x,z,radius,groundNavigation(s)))return false;
+    if(!groundClear(s.map,u.x,u.z,x,z,radius,groundNavigation(s))||!treeClear(s,u.x,u.z,x,z,radius,u.team,true))return false;
     return !s.units.some(v=>v.id!==u.id&&v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))&&(distance(u,v)<(types[v.kind].radius||1)+.35?Math.hypot(x-v.x,z-v.z)<=distance(u,v)+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])<(types[v.kind].radius||1)+.35));
   }
   function traffic(s,u){const flying=types[u.kind].flying,height=flying?0:unitHeight(s,u);return s.units.filter(v=>v.id!==u.id&&v.hp>0&&!v.inside&&types[v.kind].speed&&!!types[v.kind].flying===!!flying&&(u.team<0||v.team===u.team||isVisible(s,u.team,v))&&(flying||Math.abs(height-unitHeight(s,v))<1.5||traversable(s.map,u.x,u.z,v.x,v.z)));}
@@ -413,7 +427,9 @@ var Frost = (() => {
     // MiYu: retain the water raster across ticks; visible buildings are applied to each team's fresh copy.
     if(!flying&&!cache.water){cache.water=new Uint8Array(121*121);for(let z=0;z<=120;z++)for(let x=0;x<=120;x++)if(s.map.terrain[Math.floor((z+4)/4)*32+Math.floor((x+4)/4)]===1)cache.water[z*121+x]=1;}
     const grid=flying?new Uint8Array(121*121):cache.water.slice();if(!flying){
-      for(const v of s.units)if(v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))){const r=(types[v.kind].radius||1)+.4;for(let z=Math.max(0,Math.floor((v.z-r)*2)+60);z<=Math.min(120,Math.ceil((v.z+r)*2)+60);z++)for(let x=Math.max(0,Math.floor((v.x-r)*2)+60);x<=Math.min(120,Math.ceil((v.x+r)*2)+60);x++)if(Math.hypot(x/2-30-v.x,z/2-30-v.z)<r)grid[z*121+x]=1;}}
+      for(const v of s.units)if(v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))){const r=(types[v.kind].radius||1)+.4;for(let z=Math.max(0,Math.floor((v.z-r)*2)+60);z<=Math.min(120,Math.ceil((v.z+r)*2)+60);z++)for(let x=Math.max(0,Math.floor((v.x-r)*2)+60);x<=Math.min(120,Math.ceil((v.x+r)*2)+60);x++)if(Math.hypot(x/2-30-v.x,z/2-30-v.z)<r)grid[z*121+x]=1;}
+      for(const v of treeField(s,u.team).trees)for(let z=Math.max(0,Math.floor((v.z-TREE_RADIUS)*2)+60);z<=Math.min(120,Math.ceil((v.z+TREE_RADIUS)*2)+60);z++)for(let x=Math.max(0,Math.floor((v.x-TREE_RADIUS)*2)+60);x<=Math.min(120,Math.ceil((v.x+TREE_RADIUS)*2)+60);x++)if(Math.hypot(x/2-30-v.x,z/2-30-v.z)<TREE_RADIUS)grid[z*121+x]=1;
+    }
     return cache.teams[key]=grid;
   }
   // Share only identical visible obstacle sets and radii; update moved members within the tick.
@@ -438,7 +454,7 @@ var Frost = (() => {
       const n=pop();if(blocked[n]===2)continue;blocked[n]=2;const cx=(n%size)/2-30,cz=Math.floor(n/size)/2-30,point=n===start?u:{id:u.id,kind:u.kind,team:u.team,x:cx,z:cz},d=Math.hypot(point.x-x,point.z-z);if(d<best){best=d;found=n;}if(d<=stop&&(types[u.kind].flying||traversable(s.map,point.x,point.z,x,z))||d<=.75&&walkClear(s,point,x,z)&&trafficClear(point,near,x,z)){found=n;break;}
       for(let direction=0;direction<8;direction++){
         const [dx,dz]=trafficDirections[direction],nx=cx+dx/2,nz=cz+dz/2,j=(nz*2+60)*size+nx*2+60,next=cost[n]+Math.hypot(dx,dz)/2;if(nx<-30||nz<-30||nx>30||nz>30||blocked[j]||field.counts[j]>(Math.hypot(nx-u.x,nz-u.z)<r*2-.0001?1:0)||next>=cost[j])continue;
-        if(n===start){if(!walkClear(s,point,nx,nz)||!trafficClear(point,near,nx,nz))continue;}else{if(!types[u.kind].flying){const edge=n*8+direction;edges[edge]||=groundClear(s.map,cx,cz,nx,nz,r,groundNavigation(s))?1:2;if(edges[edge]===2)continue;}if(!trafficClear(point,field.occupants[n]||[],nx,nz))continue;}prev[j]=n;cost[j]=next;push(j,next+Math.max(0,Math.hypot(nx-x,nz-z)-stop));
+        if(n===start){if(!walkClear(s,point,nx,nz)||!trafficClear(point,near,nx,nz))continue;}else{if(!types[u.kind].flying){const edge=n*8+direction;edges[edge]||=groundClear(s.map,cx,cz,nx,nz,r,groundNavigation(s))?1:2;if(edges[edge]===2||!treeClear(s,cx,cz,nx,nz,r,u.team,true))continue;}if(!trafficClear(point,field.occupants[n]||[],nx,nz))continue;}prev[j]=n;cost[j]=next;push(j,next+Math.max(0,Math.hypot(nx-x,nz-z)-stop));
       }
     }
     const result=[];for(let n=found;n!==start;n=prev[n])result.push([n%size/2-30,Math.floor(n/size)/2-30]);result.reverse();const last=result.at(-1),end=last?{...u,x:last[0],z:last[1]}:u;if(walkClear(s,end,x,z)&&trafficClear(end,near,x,z))result.push([x,z]);return result.slice(0,1024);
@@ -447,7 +463,7 @@ var Frost = (() => {
     if(u.root>0||u.stun>0)return false;
     if(!u.speed||Math.hypot(u.x-x,u.z-z)<=stop&&(types[u.kind].flying||traversable(s.map,u.x,u.z,x,z)))return true;
     const near=traffic(s,u);
-    if(near.some(v=>distance(u,v)<movementRadius(u)+movementRadius(v)-.0001)||!types[u.kind].flying&&s.units.some(v=>v.id!==u.id&&v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))&&distance(u,v)<(types[v.kind].radius||1)+.35)){
+    if(near.some(v=>distance(u,v)<movementRadius(u)+movementRadius(v)-.0001)||!types[u.kind].flying&&(!treeClear(s,u.x,u.z,u.x,u.z,movementRadius(u),u.team)||s.units.some(v=>v.id!==u.id&&v.hp>0&&!types[v.kind].speed&&(u.team<0||isVisible(s,u.team,v))&&distance(u,v)<(types[v.kind].radius||1)+.35))){
       const angle=Math.atan2(z-u.z,x-u.x),step=u.speed*moveRate(u)*DT;let best=null,score=-Infinity;
       for(const turn of [0,Math.PI/4,-Math.PI/4,Math.PI/2,-Math.PI/2,Math.PI*3/4,-Math.PI*3/4,Math.PI]){const nx=u.x+Math.cos(angle+turn)*step,nz=u.z+Math.sin(angle+turn)*step;if(!walkClear(s,u,nx,nz)||!trafficClear(u,near,nx,nz))continue;const value=near.reduce((sum,v)=>sum+Math.min(0,Math.hypot(nx-v.x,nz-v.z)-movementRadius(u)-movementRadius(v)),0)-Math.hypot(x-nx,z-nz)*.01;if(value>score){score=value;best=[nx,nz];}}
       if(best){u.yaw=Math.atan2(best[0]-u.x,best[1]-u.z);[u.x,u.z]=best;u.path=[];}return false;
@@ -531,7 +547,7 @@ var Frost = (() => {
       if(c.type==='gather'&&(!Number.isInteger(c.resource)||!s.resources[c.resource]||s.resources[c.resource].kind==='camp'))return 'Select a resource';
       const moving=['move','attackMove','patrol'].includes(c.type),eligible=(own.length>1?own.filter(v=>!feeding(v)):own),members=c.type==='gather'?eligible.filter(v=>canGather(s,v,s.resources[c.resource])):moving||c.type==='hold'?eligible.filter(v=>v.speed&&v.built===1):eligible;if(c.type==='gather'&&!members.length)return 'Acolytes mine gold; ghouls harvest lumber';
       if(c.type==='gather'){
-        const r=s.resources[c.resource],mine=hauntedMine(s,r);if(r.amount<=0)return 'Resource is depleted';
+        const r=s.resources[c.resource],mine=hauntedMine(s,r);if(!resourceAvailable(s,c.resource,team))return 'Resource is depleted';
         if(mine&&mine.team!==team||mine&&!members.some(v=>acolyte(s,v)))return 'Gold mine is haunted';
         if(members.some(v=>acolyte(s,v))){if(!mine||mine.team!==team)return 'Summon a Haunted Gold Mine first';if(!c.append&&mineWorkers(s,r).filter(w=>!members.includes(w)).length+members.length>5)return 'Haunted Gold Mine supports five acolytes';}
       }
@@ -556,10 +572,10 @@ var Frost = (() => {
         if([0,1,2,3,4].some(i=>{const p=minePoint(r,i);return solid(s,p.x,p.z)||!flatSite(s.map,p.x,p.z,.5);}))return 'Keep all five mining stations clear';
       }else if(s.resources.some(r=>r.kind==='mine'&&r.amount>0&&distance(r,c)<types[c.kind].radius+(hauntedMine(s,r)?2.9:2)))return 'Keep gold deposits clear';
       if(casterTraining[c.kind]&&(s.mode!=='skirmish'||s.teams[team].faction!==casterTraining[c.kind].faction||s.teams[team].tier<2))return types[c.kind].label+' requires its faction stronghold tier 2';
-      if(c.append){const error=queueError([u]);if(error)return error;if(!flatSite(s.map,c.x,c.z,types[c.kind].radius))return 'Building footprint requires flat dry ground';const next={type:'build',kind:c.kind,x:c.x,z:c.z};if(u.order)u.waypoints.push(next);else{u.order=next;u.path=[];u.pathAt=-100;}return null;}
+      if(c.append){const error=queueError([u]);if(error)return error;if(!buildingSite(s,c.x,c.z,types[c.kind].radius,team))return 'Building footprint requires clear flat dry ground';const next={type:'build',kind:c.kind,x:c.x,z:c.z};if(u.order)u.waypoints.push(next);else{u.order=next;u.path=[];u.pathAt=-100;}return null;}
       if(c.kind==='workshop'&&(s.mode!=='skirmish'||s.teams[team].tier<2))return 'Siege workshop requires stronghold tier 2';
       if(s.mode==='skirmish'&&s.teams[team].faction===3&&!['hall','hauntedmine'].includes(c.kind)&&!s.units.some(v=>v.team===team&&v.hp>0&&v.built===1&&['hall','altar'].includes(v.kind)&&distance(v,c)<=(v.kind==='hall'?18:12)))return 'Summon inside stronghold or altar territory';
-      const d=types[c.kind];if(!flatSite(s.map,c.x,c.z,d.radius))return 'Building footprint requires flat dry ground';if(distance(u,c)>15||solid(s,c.x,c.z)||s.units.some(v=>v.hp>0&&!types[v.kind].speed&&distance(v,c)<(types[v.kind].radius||1)+d.radius+.8))return 'Site blocked or too far from worker';
+      const d=types[c.kind];if(!buildingSite(s,c.x,c.z,d.radius,team))return 'Building footprint requires clear flat dry ground';if(distance(u,c)>15||solid(s,c.x,c.z)||s.units.some(v=>v.hp>0&&!types[v.kind].speed&&distance(v,c)<(types[v.kind].radius||1)+d.radius+.8))return 'Site blocked or too far from worker';
       if(s.mode==='td'&&(d.model!=='tower'||s.units.filter(v=>v.team===team&&types[v.kind].model==='tower'&&v.hp>0).length>=40))return 'Defense supports up to 40 towers';
       if(s.mode==='td'&&tdPath.slice(1).some((p,i)=>segmentDistance(c.x,c.z,tdPath[i],p)<2.5))return 'Keep the creep road clear';
       if(s.units.length>=LIMIT||!pay(s,team,d.gold,s.mode==='td'?0:d.wood))return 'Not enough resources or unit capacity';
@@ -744,8 +760,12 @@ var Frost = (() => {
       p.y=p.baseY+Math.sin(Math.PI*p.travel/(p.travel+d-step))*(ballistic?2.5:p.art==='arrow'?.6:.2);p.vx=dx/d*projectileSpeed(p);p.vy=(p.y-oldY)/DT;p.vz=dz/d*projectileSpeed(p);return true;
     });
   }
+  function learnResources(s){
+    s.clearedResources??=[[],[]];let changed=false;for(let t=0;t<2;t++)for(let i=0;i<s.resources.length;i++){const r=s.resources[i];if(r.amount<=0&&s.visible[t]?.[index(r.x,r.z)]&&!s.clearedResources[t].includes(i)){s.clearedResources[t].push(i);changed=true;}}
+    if(changed){treeFields.delete(s);trafficCache.delete(s);}
+  }
   function visibility(s){
-    for(let t=0;t<2;t++){const vis=Array(1024).fill(0);for(const u of s.units)if(u.team===t&&u.hp>0&&!u.inside){const [cx,cz]=cell(u.x,u.z),r=isNight(s)?(types[u.kind].model==='tower'?5:3):(u.kind==='tower'?7:6);for(let z=Math.max(0,cz-r);z<=Math.min(31,cz+r);z++)for(let x=Math.max(0,cx-r);x<=Math.min(31,cx+r);x++)if((x-cx)**2+(z-cz)**2<=r*r)vis[z*32+x]=1;}s.visible[t]=vis;for(let i=0;i<1024;i++)if(vis[i])s.explored[t][i]=1;}
+    for(let t=0;t<2;t++){const vis=Array(1024).fill(0);for(const u of s.units)if(u.team===t&&u.hp>0&&!u.inside){const [cx,cz]=cell(u.x,u.z),r=isNight(s)?(types[u.kind].model==='tower'?5:3):(u.kind==='tower'?7:6);for(let z=Math.max(0,cz-r);z<=Math.min(31,cz+r);z++)for(let x=Math.max(0,cx-r);x<=Math.min(31,cx+r);x++)if((x-cx)**2+(z-cz)**2<=r*r)vis[z*32+x]=1;}s.visible[t]=vis;for(let i=0;i<1024;i++)if(vis[i])s.explored[t][i]=1;}learnResources(s);
   }
   const acolyte=(s,u)=>s.economyVersion===1&&s.mode==='skirmish'&&u.kind==='worker'&&s.teams[u.team]?.faction===3;
   const canGather=(s,u,r)=>!!r&&(u.kind==='worker'?(acolyte(s,u)?r.kind==='mine':['mine','tree'].includes(r.kind)):u.kind==='ghoul'&&s.economyVersion===1&&s.mode==='skirmish'&&s.teams[u.team]?.faction===3&&r.kind==='tree');
@@ -758,24 +778,24 @@ var Frost = (() => {
     const occupied=mineWorkers(s,r).filter(w=>w.id!==u.id);let slot=u.order.mineSlot;
     if(!Number.isInteger(slot)||occupied.some(w=>w.order.mineSlot===slot)){slot=[0,1,2,3,4].find(i=>!occupied.some(w=>w.order.mineSlot===i));if(slot===undefined){advanceOrder(s,u);return;}u.order.mineSlot=slot;}
     const target=minePoint(r,slot);if(!move(s,u,target.x,target.z,.15)||mine.built<1)return;
-    if(u.gatherCd<=1e-6){const take=Math.min(10,r.amount);r.amount-=take;s.teams[u.team].gold+=take;u.gatherCd=5;if(u.waypoints.length)advanceOrder(s,u);}
+    if(u.gatherCd<=1e-6){const take=Math.min(10,r.amount);r.amount-=take;if(r.amount===0)learnResources(s);s.teams[u.team].gold+=take;u.gatherCd=5;if(u.waypoints.length)advanceOrder(s,u);}
   }
-  function gather(s,u){let r=s.resources[u.order.resource];if(!canGather(s,u,r)){advanceOrder(s,u);return;}if(acolyte(s,u)&&!u.cargo){mineGold(s,u,r);return;}if(!u.cargo&&hauntedMine(s,r)){advanceOrder(s,u);return;}if(r.amount<=0&&!u.cargo){const next=s.resources.filter(v=>v.kind===r.kind&&v.amount>0&&!hauntedMine(s,v)).sort((a,b)=>distance(u,a)-distance(u,b))[0];if(!next){advanceOrder(s,u);return;}u.order.resource=s.resources.indexOf(next);r=next;}const hall=s.units.filter(v=>v.team===u.team&&v.kind==='hall'&&v.hp>0&&v.built===1).sort((a,b)=>distance(u,a)-distance(u,b))[0];if(!hall){if(u.waypoints.length){s.announcements[u.team]='Queued gathering skipped: no completed stronghold';advanceOrder(s,u);}return;}const returning=!!hauntedMine(s,r)||acolyte(s,u)&&u.cargo>0||u.cargo>=20||u.cargo>0&&(r.amount<=0||u.cargoKind&&u.cargoKind!==r.kind),target=returning?hall:r;
-    const reach=returning?4:3;if(distance(u,target)>reach||!traversable(s.map,u.x,u.z,target.x,target.z)){move(s,u,target.x,target.z,reach-.1);return;}if(returning){s.teams[u.team][(u.cargoKind||r.kind)==='mine'?'gold':'wood']+=u.cargo;u.cargo=0;delete u.cargoKind;if(u.waypoints.length)advanceOrder(s,u);}else if(u.gatherCd<=0){const take=Math.min(5,r.amount);u.cargo+=take;u.cargoKind=r.kind;r.amount-=take;u.gatherCd=.65;if(r.kind==='tree'&&r.amount===0)r.felled={frame:s.frame,yaw:Math.atan2(r.x-u.x,r.z-u.z),age:0};}
+  function gather(s,u){let r=s.resources[u.order.resource];if(!canGather(s,u,r)){advanceOrder(s,u);return;}if(acolyte(s,u)&&!u.cargo){mineGold(s,u,r);return;}if(!u.cargo&&hauntedMine(s,r)){advanceOrder(s,u);return;}if(r.amount<=0&&!u.cargo&&resourceAvailable(s,u.order.resource,u.team)){move(s,u,r.x,r.z,2.9);return;}if(r.amount<=0&&!u.cargo){const next=s.resources.filter(v=>v.kind===r.kind&&v.amount>0&&!hauntedMine(s,v)).sort((a,b)=>distance(u,a)-distance(u,b))[0];if(!next){advanceOrder(s,u);return;}u.order.resource=s.resources.indexOf(next);r=next;}const hall=s.units.filter(v=>v.team===u.team&&v.kind==='hall'&&v.hp>0&&v.built===1).sort((a,b)=>distance(u,a)-distance(u,b))[0];if(!hall){if(u.waypoints.length){s.announcements[u.team]='Queued gathering skipped: no completed stronghold';advanceOrder(s,u);}return;}const returning=!!hauntedMine(s,r)||acolyte(s,u)&&u.cargo>0||u.cargo>=20||u.cargo>0&&(r.amount<=0||u.cargoKind&&u.cargoKind!==r.kind),target=returning?hall:r;
+    const reach=returning?4:3;if(distance(u,target)>reach||!traversable(s.map,u.x,u.z,target.x,target.z)){move(s,u,target.x,target.z,reach-.1);return;}if(returning){s.teams[u.team][(u.cargoKind||r.kind)==='mine'?'gold':'wood']+=u.cargo;u.cargo=0;delete u.cargoKind;if(u.waypoints.length)advanceOrder(s,u);}else if(u.gatherCd<=0){const take=Math.min(5,r.amount);u.cargo+=take;u.cargoKind=r.kind;r.amount-=take;u.gatherCd=.65;if(r.kind==='tree'&&r.amount===0)r.felled={frame:s.frame,yaw:Math.atan2(r.x-u.x,r.z-u.z),age:0};if(r.amount===0)learnResources(s);}
   }
   function ai(s,t){
     const team=s.teams[t],us=s.units.filter(u=>u.team===t&&u.hp>0),base=s.map.spawns[t],foe=s.map.spawns[1-t],worker=us.find(u=>u.kind==='worker'&&!u.inside&&!['construct','repair'].includes(u.order?.type));
     if(s.mode==='skirmish'){
       const pending=us.find(u=>u.built<1&&u.construction&&(!u.construction.started||u.construction.style==='work')&&!us.some(w=>w.order?.type==='construct'&&w.order.target===u.id));if(worker&&pending){command(s,t,{type:'construct',ids:[worker.id],target:pending.id});return;}
       if(s.economyVersion===1&&team.faction===3&&worker){const r=s.resources.filter(r=>r.kind==='mine'&&r.amount>0&&!hauntedMine(s,r)&&distance(r,{x:base[0],z:base[1]})<16).sort((a,b)=>distance(worker,a)-distance(worker,b))[0];if(r&&command(s,t,{type:'build',ids:[worker.id],kind:'hauntedmine',x:r.x,z:r.z})===null)return;}
-      const build=kind=>{if(!worker||['construct','repair'].includes(worker.order?.type))return false;for(const radius of [8,11])for(let i=0;i<12;i++){const a=(i+s.frame/40)*Math.PI/6;if(command(s,t,{type:'build',ids:[worker.id],kind,x:clamp(base[0]+Math.cos(a)*radius,-27,27),z:clamp(base[1]+Math.sin(a)*radius,-27,27)})===null)return true;}return false;};
+      const build=kind=>{if(!worker||['construct','repair'].includes(worker.order?.type))return false;for(const radius of [8,11,14,17])for(let i=0;i<12;i++){const a=(i+s.frame/40)*Math.PI/6;if(command(s,t,{type:'build',ids:[worker.id],kind,x:clamp(base[0]+Math.cos(a)*radius,-27,27),z:clamp(base[1]+Math.sin(a)*radius,-27,27)})===null)return true;}return false;};
       const opening=['altar','farm','barracks'].find(kind=>!us.some(u=>u.kind===kind||kind==='farm'&&types[u.kind].supply));if(opening&&build(opening))return;
       if(team.faction===3&&s.frame>350&&team.gold>450)for(const b of us.filter(u=>u.kind==='farm'&&u.built===1&&!u.zigguratUpgrade))command(s,t,{type:'zigguratUpgrade',ids:[b.id],kind:us.some(u=>u.kind==='nerubiantower'||u.zigguratUpgrade?.kind==='nerubiantower')?'spirittower':'nerubiantower'});
       const pop=population(s,t);if(pop.used+3>pop.cap&&!us.some(u=>u.kind==='farm'&&u.built<1))build('farm');
       const hall=us.find(u=>u.kind==='hall'&&u.built===1);if(hall&&us.filter(u=>u.kind==='worker'&&!u.consumed).length<5&&!hall.queue.length)command(s,t,{type:'train',ids:[hall.id],kind:'worker'});if(hall&&s.frame>350&&team.gold>600)command(s,t,{type:'tech',ids:[hall.id]});
       for(const b of us.filter(u=>u.kind==='altar'&&u.built===1)){const dead=heroRoster(s,t).find(h=>h.hp<=0&&!us.some(v=>v.queue.some(q=>q.revive===h.id)));if(dead){if(command(s,t,{type:'revive',ids:[b.id],target:dead.id})===null)continue;}const roster=heroRoster(s,t),queued=heroQueued(s,t),heroClass=[team.heroClass,...heroes.map((_,i)=>i)].find(i=>!roster.some(h=>h.heroClass===i)&&!queued.some(q=>q.heroClass===i));if(roster.length+queued.length<team.tier&&command(s,t,{type:'train',ids:[b.id],kind:'hero',heroClass})===null)continue;command(s,t,{type:'train',ids:[b.id],kind:flyers[team.faction]});}
-      if(worker&&!['construct','repair'].includes(worker.order?.type)&&team.tier>=2&&!us.some(u=>u.kind==='workshop')){const a=(s.frame/40%12)*Math.PI/6;command(s,t,{type:'build',ids:[worker.id],kind:'workshop',x:clamp(base[0]+Math.cos(a)*11,-27,27),z:clamp(base[1]+Math.sin(a)*11,-27,27)});}
-      if(worker&&!['construct','repair'].includes(worker.order?.type)&&[1,3].includes(team.faction)&&team.tier>=2&&!us.some(u=>u.kind===(team.faction===1?'spiritlodge':'temple'))){const a=(s.frame/40%12)*Math.PI/6;command(s,t,{type:'build',ids:[worker.id],kind:team.faction===1?'spiritlodge':'temple',x:clamp(base[0]+Math.cos(a)*13,-27,27),z:clamp(base[1]+Math.sin(a)*13,-27,27)});}
+      if(team.tier>=2&&!us.some(u=>u.kind==='workshop'))build('workshop');
+      if([1,3].includes(team.faction)&&team.tier>=2&&!us.some(u=>u.kind===(team.faction===1?'spiritlodge':'temple')))build(team.faction===1?'spiritlodge':'temple');
       for(const b of us.filter(u=>casterTraining[u.kind])){const school=casterTraining[b.kind],upgrade=b.kind==='temple'&&Object.keys(skeletonResearch).find(k=>!team[skeletonResearch[k].field]&&team.tier>=skeletonResearch[k].tier);if(b.casterResearch)continue;if(!b.queue.length&&upgrade&&command(s,t,{type:'skeletonResearch',ids:[b.id],upgrade})===null)continue;if(!b.queue.length&&(team[school.field]||0)<(team.tier>=3?2:1)&&command(s,t,{type:'casterResearch',ids:[b.id]})===null)continue;command(s,t,{type:'train',ids:[b.id],kind:school.unit});}
       for(const b of us.filter(u=>u.kind==='workshop')){command(s,t,{type:'rally',ids:[b.id],x:foe[0],z:foe[1]});command(s,t,{type:'train',ids:[b.id],kind:trainable(s,b)[0]});}
       for(const b of us.filter(u=>u.kind==='barracks')){if(team.faction===3&&team.gold>200&&!team.cannibalize)command(s,t,{type:'cannibalizeResearch',ids:[b.id]});const roster=trainable(s,b);command(s,t,{type:'train',ids:[b.id],kind:roster[Math.floor(s.frame/40)%(team.tier>=2?roster.length:2)]});if(team.gold>500)command(s,t,{type:'upgrade',ids:[b.id]});}
@@ -970,6 +990,7 @@ var Frost = (() => {
     }
     if(!Array.isArray(s.resources)||s.resources.length>100||s.resources.some(r=>!r||!['mine','tree','camp'].includes(r.kind)||![r.x,r.z,r.amount].every(finite)))throw Error('Invalid saved resources');
     for(const r of s.resources)if(r.felled!==undefined&&(!r.felled||r.kind!=='tree'||r.amount!==0||!Number.isSafeInteger(r.felled.frame)||r.felled.frame<1||r.felled.frame>s.frame||!Number.isFinite(r.felled.yaw)||Math.abs(r.felled.yaw)>Math.PI||!Number.isFinite(r.felled.age)||r.felled.age<0||r.felled.age>TREE_FALL_LIFETIME))throw Error('Invalid saved tree fall');
+    if(s.clearedResources===undefined)s.clearedResources=[[],[]];if(!Array.isArray(s.clearedResources)||s.clearedResources.length!==2||s.clearedResources.some(a=>!Array.isArray(a)||a.length>s.resources.length||new Set(a).size!==a.length||a.some(i=>!Number.isInteger(i)||i<0||i>=s.resources.length||s.resources[i].amount>0)))throw Error('Invalid saved resource knowledge');
     for(const u of s.units){
       if(u.kind==='hauntedmine'&&(s.economyVersion!==1||s.mode!=='skirmish'||s.teams[u.team]?.faction!==3||!s.resources.some(r=>r.kind==='mine'&&distance(r,u)<.01)||s.units.some(v=>v.id!==u.id&&v.hp>0&&u.hp>0&&v.kind==='hauntedmine'&&distance(u,v)<.01)))throw Error('Invalid saved Haunted Mine');
       if(u.order?.type==='gather'){
@@ -995,7 +1016,7 @@ var Frost = (() => {
     for(let team=0;team<2;team++){const queued=heroQueued(s,team);if(queued.length&&heroRoster(s,team).length+queued.length>Math.min(3,s.teams[team].tier))throw Error('Invalid saved hero limit');}
     s.events=[];s.pendingEvents=[];s.visible=[[],[]];if(!Array.isArray(s.explored)||s.explored.length!==2||s.explored.some(a=>!Array.isArray(a)||a.length!==1024))throw Error('Invalid saved fog');visibility(s);return s;
   }
-  function publicState(s,team){const state=clone(s);for(const u of state.units){u.sleeping=asleep(s,u);u.feeding=feeding(u);u.portalLeft=portalLeft(u);delete u.frenzySource;delete u.lightningSource;}state.corpses=s.corpses.filter(c=>c.team===team||s.visible[team][index(c.x,c.z)]).map(({id,kind,heroClass,team,x,y,z,yaw,age,boss,large})=>({id,kind,heroClass,team,x,y,z,yaw,age,boss,large}));state.projectiles=s.projectiles.filter(p=>s.visible[team][index(p.x,p.z)]).map(({id,x,y,z,vx,vy,vz,team,art})=>({id,x,y,z,vx,vy,vz,team,art}));delete state.projectileSerial;delete state.pendingEvents;delete state.tdPending;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){const r=miningTarget(s,u);if(r)u.miningTarget={x:r.x,z:r.z};u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;delete u.casterResearch;delete u.cannibalizeResearch;delete u.zigguratUpgrade;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]&&(e.fromX===undefined||s.visible[team][index(e.fromX,e.fromZ)]));state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map(r=>{if(!s.visible[team][index(r.x,r.z)]){r.amount=1;delete r.felled;}return r;});state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
-  return {PROTOCOL,zigguratUpgrades,gradeRamp,groundTile,groundSample,groundClear,walkClear,movementRadius,sculptRelief,reliefHeight,tierHeight,townPortal,portalLeft,heroRoster,heroQueued,heroRecruitment,heroRevival,cannibalize,feeding,acolyte,canGather,hauntedMine,mineWorkers,minePoint,miningTarget,skeletonResearch,casterSpells,casterTraining,attackRate,moveRate,raiseDead,maxMana,DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,TREE_FALL_LIFETIME,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,timeOfDay,isNight,daylight,asleep,canAttack,canControl,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,pickHeight,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
+  function publicState(s,team){const state=clone(s);for(const u of state.units){u.sleeping=asleep(s,u);u.feeding=feeding(u);u.portalLeft=portalLeft(u);delete u.frenzySource;delete u.lightningSource;}state.corpses=s.corpses.filter(c=>c.team===team||s.visible[team][index(c.x,c.z)]).map(({id,kind,heroClass,team,x,y,z,yaw,age,boss,large})=>({id,kind,heroClass,team,x,y,z,yaw,age,boss,large}));state.projectiles=s.projectiles.filter(p=>s.visible[team][index(p.x,p.z)]).map(({id,x,y,z,vx,vy,vz,team,art})=>({id,x,y,z,vx,vy,vz,team,art}));delete state.projectileSerial;delete state.pendingEvents;delete state.tdPending;state.zones=state.zones.filter(z=>s.visible[team][index(z.x,z.z)]);state.map.units=[];state.map.triggers=[];state.map.regions=[];state.triggered=[];delete state.triggerState;state.announcements[1-team]='';state.units=state.units.filter(u=>u.team===team||isVisible(s,team,u));for(const u of state.units)if(u.kind==='hall')u.upgradeTier=s.teams[u.team]?.tier||1;for(const u of state.units)if(u.team!==team){const r=miningTarget(s,u);if(r)u.miningTarget={x:r.x,z:r.z};u.queue=[];delete u.rally;delete u.construction;delete u.workResume;delete u.inside;delete u.consumed;delete u.casterResearch;delete u.cannibalizeResearch;delete u.zigguratUpgrade;u.order=null;delete u.waypoints;u.path=[];delete u.dest;}state.events=state.events.filter(e=>s.visible[team][index(e.x,e.z)]&&(e.fromX===undefined||s.visible[team][index(e.fromX,e.fromZ)]));state.teams[1-team]={faction:s.teams[1-team].faction};state.resources=state.resources.map((r,i)=>{if(!s.visible[team][index(r.x,r.z)]){r.amount=s.clearedResources?.[team]?.includes(i)?0:1;delete r.felled;}return r;});state.clearedResources=[team===0?(s.clearedResources?.[0]||[]):[],team===1?(s.clearedResources?.[1]||[]):[]].map(a=>[...a]);state.loot=state.loot.filter(r=>s.visible[team][index(r.x,r.z)]);state.visible=[team===0?s.visible[0]:[],team===1?s.visible[1]:[]];state.explored=[team===0?s.explored[0]:[],team===1?s.explored[1]:[]];return state;}
+  return {PROTOCOL,zigguratUpgrades,gradeRamp,groundTile,groundSample,groundClear,walkClear,movementRadius,sculptRelief,reliefHeight,tierHeight,townPortal,portalLeft,heroRoster,heroQueued,heroRecruitment,heroRevival,cannibalize,feeding,acolyte,canGather,hauntedMine,mineWorkers,minePoint,miningTarget,skeletonResearch,casterSpells,casterTraining,attackRate,moveRate,raiseDead,maxMana,DT,LIMIT,PROJECTILE_LIMIT,CORPSE_LIMIT,CORPSE_LIFETIME,TREE_FALL_LIFETIME,TREE_RADIUS,treeClear,buildingSite,resourceAvailable,resourceAt,SIZE,projectileSpeed,projectileArt,types,heroes,validHero,unitType,factions,items,itemValue,armies,siege,flyers,orderPoint,timeOfDay,isNight,daylight,asleep,canAttack,canControl,canDeny,weaponDamage,trainable,repairCost,questNames,clamp,clone,cell,index,distance,elevation,pickHeight,tileHeight,terrainEdge,traversable,flatSite,unitHeight,attackClear,highlandMap,defaultMap,siegeMap,eventMap,validateMap,removeTrigger,removeRegion,create,restore,spawn,command,tick,population,isVisible,visibility,path,solid,publicState,lanePath,tdPath};
 })();
 if(typeof module!=='undefined')module.exports=Frost;

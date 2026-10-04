@@ -11,7 +11,7 @@ for(let faction=0;faction<4;faction++){
  const starting=S.clone(s);step(s,30);assert.equal(s.teams[0].gold,500);assert.equal(s.teams[0].wood,150);assert.deepEqual(S.restore(starting),starting);
  let miners=0;for(const u of own().filter(u=>['worker','ghoul'].includes(u.kind))){const kind=u.kind==='ghoul'?'tree':faction===3||miners++<3?'mine':'tree',resource=s.resources.findIndex(r=>r.kind===kind&&S.distance(u,r)<14);assert.ok(resource>=0);assert.equal(S.command(s,0,{type:'gather',ids:[u.id],resource}),null);}
  step(s,400);assert.ok(s.teams[0].gold>500);assert.ok(s.teams[0].wood>150);
- const worker=workers[0];assert.equal(S.command(s,0,{type:'build',ids:[worker.id],kind:'altar',x:-14,z:16}),null);step(s,250);
+ const worker=workers[0];assert.equal(S.command(s,0,{type:'build',ids:[worker.id],kind:'altar',x:-12,z:16}),null);step(s,250);
  const altar=own().find(u=>u.kind==='altar');assert.ok(altar);assert.equal(altar.built,1);assert.equal(own().filter(u=>u.kind==='worker').length,workers.length);
  const gold=s.teams[0].gold,wood=s.teams[0].wood;assert.equal(S.command(s,0,{type:'train',ids:[altar.id],kind:'hero',heroClass:2}),null);assert.equal(s.teams[0].gold,gold);assert.equal(s.teams[0].wood,wood);assert.equal(altar.queue[0].left,55);
  const restored=S.restore(s);step(s,551);step(restored,551);assert.deepEqual(restored,s);assert.equal(S.heroRoster(s,0).length,1);assert.equal(S.heroRoster(s,0)[0].heroClass,2);assert.deepEqual(S.heroRoster(s,0)[0].inventory,[8]);

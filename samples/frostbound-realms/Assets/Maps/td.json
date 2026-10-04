@@ -4171,12 +4171,6 @@
     },
     {
       "kind": "tree",
-      "x": 21,
-      "z": -17,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
       "x": 19,
       "z": -17,
       "amount": 600
@@ -4195,12 +4189,6 @@
     },
     {
       "kind": "tree",
-      "x": 21,
-      "z": -15,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
       "x": 19,
       "z": -15,
       "amount": 600
@@ -4215,30 +4203,12 @@
       "kind": "tree",
       "x": 15,
       "z": -15,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -25,
-      "z": -24,
       "amount": 600
     },
     {
       "kind": "tree",
       "x": 9,
       "z": -14,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 10,
-      "z": -23,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -23,
-      "z": 6,
       "amount": 600
     },
     {
@@ -4251,24 +4221,6 @@
       "kind": "tree",
       "x": 11,
       "z": 16,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -22,
-      "z": -3,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -5,
-      "z": -22,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 12,
-      "z": 7,
       "amount": 600
     },
     {
@@ -4287,30 +4239,6 @@
       "kind": "tree",
       "x": 13,
       "z": -2,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -20,
-      "z": -21,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 14,
-      "z": -11,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": -18,
-      "z": 9,
-      "amount": 600
-    },
-    {
-      "kind": "tree",
-      "x": 16,
-      "z": 19,
       "amount": 600
     }
   ],

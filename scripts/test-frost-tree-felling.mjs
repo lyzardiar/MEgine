@@ -47,7 +47,7 @@ try{
   const closed=new Promise(resolve=>a.socket.once('close',resolve));a.socket.destroy();await closed;const c=await peer();next=c.next(m=>m.type==='joined');c.send({type:'resume',code:joined.code,token:joined.token});const resumed=(await next).state;
   assert.equal(resumed.resources[0].felled.frame,fall.frame);assert.equal(resumed.resources[0].felled.yaw,fall.yaw);assert.ok(resumed.resources[0].felled.age>=fall.age);assert.ok(resumed.frame>=fall.frame);assert.ok(V.resource(resumed.resources[0],12,1));
   const enemy=room.state.units.find(u=>u.kind==='soldier'&&u.team===1);enemy.hp=0;S.visibility(room.state);
-  next=b.next(m=>m.type==='state'&&!m.state.visible[1][S.index(-14,16)]);const hidden=(await next).state.resources[0];assert.equal(hidden.felled,undefined);assert.equal(hidden.amount,1);
+  next=b.next(m=>m.type==='state'&&!m.state.visible[1][S.index(-14,16)]);const hidden=(await next).state.resources[0];assert.equal(hidden.felled,undefined);assert.equal(hidden.amount,0,'witnessed depletion remains known after the observer leaves');
   room.state.winner=0;const finalFrame=room.state.frame;next=c.next(m=>m.type==='state'&&m.state.resources[0].felled.age===6);const done=(await next).state;assert.equal(V.resource(done.resources[0],12,1),null);assert.equal(done.frame,finalFrame);assert.equal(room.phase,'finished');assert.equal(room.state.resources[0].felled.frame,fall.frame);
   console.log('PASS TCP: real gather command, same fall on both peers, mid-fall reconnect, hidden metadata and post-victory completion with frozen battle time');
 }finally{for(const socket of sockets)socket.destroy();await app.close();}

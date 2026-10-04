@@ -1,0 +1,48 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 33,
+  "tag": "1791252000101",
+  "scope": "Native Release QuickJS and Agent input: sealed forests, harvest passages, flying, building previews, save/load and map-editor placement",
+  "physicalInput": false,
+  "audioListening": false,
+  "biomes": [
+    {
+      "tileset": 0,
+      "sealedGround": true,
+      "harvestOpensPassage": true,
+      "airCrosses": true,
+      "redBuildingPreviewAndNoPayment": true,
+      "clearedResourceKnowledge": true,
+      "saveLoad": false,
+      "shaderRejections": 0
+    },
+    {
+      "tileset": 1,
+      "sealedGround": true,
+      "harvestOpensPassage": true,
+      "airCrosses": true,
+      "redBuildingPreviewAndNoPayment": true,
+      "clearedResourceKnowledge": true,
+      "saveLoad": true,
+      "shaderRejections": 0
+    },
+    {
+      "tileset": 2,
+      "sealedGround": true,
+      "harvestOpensPassage": true,
+      "airCrosses": true,
+      "redBuildingPreviewAndNoPayment": true,
+      "clearedResourceKnowledge": true,
+      "saveLoad": false,
+      "shaderRejections": 0
+    }
+  ],
+  "lastCommand": "playback.input",
+  "editor": {
+    "treeOverActorRejected": true,
+    "groundUnitOverTreeRejected": true,
+    "clearGroundPlacement": true,
+    "mapSaveLoad": true
+  }
+}
