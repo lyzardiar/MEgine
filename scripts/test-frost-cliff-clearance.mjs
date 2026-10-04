@@ -14,6 +14,8 @@ const advance=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
   assert.ok(!S.traversable(map,-3,1,5,1),'a low-ground route cannot cross an enclosed plateau in the same connected region');
   assert.equal(S.command(s,0,{type:'move',ids:[u.id],x:.05,z:.05}),null);assert.deepEqual([u.order.x,u.order.z],[1,1]);advance(s,10);assert.equal(u.order,null);
   const edge=S.groundTile(map,16,16).edges[2],p=edge[0].map((v,i)=>(v+edge[1][i])/2),start={kind:'soldier',x:p[0],z:p[2]+.1};
+  assert.ok(Math.abs(p[1]-1.82)<1e-7,'the cliff crown folds below the authored shelf');assert.equal(S.unitHeight(s,u),2,'the inner shelf retains its authored elevation');
+  assert.ok(Math.abs(S.pickHeight(map,p[0],p[2])-p[1])<1e-7,'picking uses the folded crown triangles');
   assert.ok(S.walkClear(s,start,1,1),'an old save too close to a rim can move back to safety');
   const fly={kind:'dragon',x:1,z:1};assert.ok(S.walkClear(s,fly,-3,-3),'flying movement clears the cliff');
   const copy=S.restore(s);assert.deepEqual(S.publicState(copy,0),S.publicState(s,0));

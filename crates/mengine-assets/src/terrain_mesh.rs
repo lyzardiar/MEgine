@@ -95,6 +95,7 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
         // MiYu: broader level shoulders retain the existing passage width wherever a ramp meets them.
         let ramp=touching.iter().any(|(cell,_,_)|heights[cell*4..cell*4+4].iter().any(|h|*h!=heights[cell*4]));
         let offset=inward.normalize_or_zero()*if ramp {0.3}else{0.42};let mut p=point(vx as f32*2.-4.,height,vz as f32*2.-4.);p[0]+=offset.x;p[2]+=offset.y;
+        if !ramp {let low=touching.iter().map(|(cell,index,_)|heights[cell*4+index]).fold(height,f32::min);p[1]-=(height-low).clamp(0.,1.)*0.18;}
         let mut rays=[glam::Vec2::ZERO;2];let mut count=0;for (a,b,ray) in [(0,1,[0.,-1.]),(1,3,[1.,0.]),(3,2,[0.,1.]),(2,0,[-1.,0.])] {if high[a]!=high[b] {if count<2 {rays[count]=glam::Vec2::from_array(ray);}count+=1;}}
         if count!=2 || rays[0].dot(rays[1]).abs()>0.01 {rays=[glam::Vec2::ZERO;2];}(p,rays)
     };
@@ -123,7 +124,9 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
         let edges=[(cell-6,0,1,3,2,[0.,-1.]),(cell+1,1,2,0,3,[1.,0.]),(cell+6,2,3,1,0,[0.,1.]),(cell-1,3,0,2,1,[-1.,0.])];
         let top=|u:f32,v:f32| {
             let north=boundary([ix,iz],h[0],[ix+1,iz],h[1],u);let south=boundary([ix,iz+1],h[3],[ix+1,iz+1],h[2],u);let west=boundary([ix,iz],h[0],[ix,iz+1],h[3],v);let east=boundary([ix+1,iz],h[1],[ix+1,iz+1],h[2],v);
-            let p=std::array::from_fn(|axis|lerp(north[axis],south[axis],v)+lerp(west[axis],east[axis],u)-lerp(lerp(corners[0][axis],corners[1][axis],u),lerp(corners[3][axis],corners[2][axis],u),v));let mut shade:f32=0.;let mut rim:f32=0.;
+            let mut p=std::array::from_fn(|axis|lerp(north[axis],south[axis],v)+lerp(west[axis],east[axis],u)-lerp(lerp(corners[0][axis],corners[1][axis],u),lerp(corners[3][axis],corners[2][axis],u),v));let mut shade:f32=0.;let mut rim:f32=0.;
+            // MiYu: crowns fold down into the cliff while the inner shelf retains its authored elevation.
+            let flat=lerp(lerp(h[0],h[1],u),lerp(h[3],h[2],u),v);let interior=(u.min(1.-u).min(v.min(1.-v))*4.).clamp(0.,1.);p[1]=lerp(p[1],flat,interior);
             for (j,(neighbor,a,b,na,nb,_)) in edges.iter().enumerate() {
                 let t=[u,v,1.-u,1.-v][j];let distance=[v,1.-u,1.-v,u][j]*2.;let nh=&heights[neighbor*4..neighbor*4+4];let delta=lerp(nh[*na],nh[*nb],t)-lerp(h[*a],h[*b],t);let weight=(-distance*4.).exp()*0.5;
                 shade=shade.max(delta.max(0.)*weight);rim=rim.max((-delta).max(0.)*weight);
@@ -135,7 +138,7 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
         let center=top(0.5,0.5);let mut outline=Vec::new();let mut inner=Vec::new();
         for (a,b) in [(0,3),(3,2),(2,1),(1,0)] {
             let cut=crossing(vertices[a],vertices[b]);let mut steps=vec![0.,0.25,0.5,0.75];if let Some(t)=cut {if t>1e-6&&t<1.-1e-6&&!steps.iter().any(|v:&f32|(*v-t).abs()<1e-6) {steps.push(t);}}steps.sort_by(f32::total_cmp);
-            for t in steps {let u=lerp(vertices[a][0] as f32,vertices[b][0] as f32,t);let v=lerp(vertices[a][1] as f32,vertices[b][1] as f32,t);let outer=top(u-ix as f32,v-iz as f32);let p=std::array::from_fn(|axis|lerp(center.0[axis],outer.0[axis],0.5));let uv=top((u-ix as f32+0.5)*0.5,(v-iz as f32+0.5)*0.5).1;outline.push(outer);inner.push((p,uv));}
+            for t in steps {let u=lerp(vertices[a][0] as f32,vertices[b][0] as f32,t);let v=lerp(vertices[a][1] as f32,vertices[b][1] as f32,t);let outer=top(u-ix as f32,v-iz as f32);let mut p=std::array::from_fn(|axis|lerp(center.0[axis],outer.0[axis],0.5));let inner_top=top((u-ix as f32+0.5)*0.5,(v-iz as f32+0.5)*0.5);p[1]=inner_top.0[1];outline.push(outer);inner.push((p,inner_top.1));}
         }
         for i in 0..outline.len() {let j=(i+1)%outline.len();triangle([center.0,inner[i].0,inner[j].0],[center.1,inner[i].1,inner[j].1],true,style);triangle([inner[i].0,outline[i].0,outline[j].0],[inner[i].1,outline[i].1,outline[j].1],true,style);triangle([inner[i].0,outline[j].0,inner[j].0],[inner[i].1,outline[j].1,inner[j].1],true,style);}
         if water.is_some() {continue;}
@@ -153,7 +156,7 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
                     2=>{let row=(depth*4.).floor();let course=(depth*4.).rem_euclid(1.);let block=(t*4.+row.rem_euclid(2.)*0.5).rem_euclid(1.);let bevel=|v:f32|(v*8.).min((1.-v)*8.).clamp(0.,1.);0.06*bevel(course)*bevel(block)*bevel(t)},
                     _=>rock_module(t,upper-y,upper-lower,variant)
                 };
-                let bulge=bulge*((upper-lower)*4.).clamp(0.,1.);let mut p=boundary(vertices[a],lerp(h[a],nh[na],depth),vertices[b],lerp(h[b],nh[nb],depth),t);p[1]=y;p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,if sculpted {-1.-(upper-y)}else{upper-y}])
+                let bulge=bulge*((upper-lower)*4.).clamp(0.,1.);let mut p=boundary(vertices[a],lerp(h[a],nh[na],depth),vertices[b],lerp(h[b],nh[nb],depth),t);p[0]+=outward[0]*bulge;p[2]+=outward[1]*bulge;(p,[depth,if sculpted {-1.-(upper-y)}else{upper-y}])
             };
             // MiYu: common height subdivisions weld vertical corners between different cliff levels.
             let depths=|upper:f32,lower:f32| {let mut cuts=Vec::new();if (upper-lower).abs()>0.001 {for level in (upper.min(lower)*4.).floor() as i32..=(upper.max(lower)*4.).ceil() as i32 {let d=(upper-level as f32/4.)/(upper-lower);if d>0.&&d<1. {cuts.push(d);}}cuts.sort_by(f32::total_cmp);}cuts};
@@ -195,7 +198,7 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
 #[cfg(test)]
 mod tests {
     #[test]
-    fn rock_cliffs_repeat_broad_faces_without_changing_top_heights() {
+    fn rock_cliffs_repeat_broad_faces_and_preserve_inner_shelves() {
         for distance in [0.25,0.5,0.75,1.,1.25,1.5,1.75] {assert!((rock_course(distance,6.)-rock_course(distance+2.,6.)).abs()<1e-6);assert!((rock_course(distance,6.)-rock_course(distance+4.,6.)).abs()<1e-6);}
         for level in [0.,2.,4.,6.] {assert_eq!(rock_course(level,6.),0.);}
         for depth in [0.25,0.5,0.75] {assert!(rock_course(depth,6.)<rock_course(depth+0.25,6.));}
@@ -203,8 +206,10 @@ mod tests {
         assert_eq!(rock_course(6.,6.),0.);
         let mut heights=vec!['0';144];for i in 0..4 {heights[(2*6+2)*4+i]='6';}let key=format!("terrain4h:33{}{}",heights.into_iter().collect::<String>(),"80".repeat(49));let mesh=terrain_mesh(&key).unwrap();
         assert!(mesh.indices.len()<12000);assert!(mesh.positions.iter().flatten().all(|v|v.is_finite()));
-        assert!(mesh.positions.iter().zip(&mesh.uvs).filter(|(_,uv)|uv[1]>=0.).all(|(p,_)|p[1]==0.||p[1]==6.));
-        for depth in [0.25,2.25,4.25] {assert!(mesh.positions.iter().zip(&mesh.uvs).any(|(p,uv)|(p[1]-(6.-depth)).abs()<1e-6&&uv[1]<0.),"each height level includes its bevel vertices");}
+        let tops:Vec<_>=mesh.positions.iter().zip(&mesh.uvs).filter(|(_,uv)|uv[1]>=0.).map(|(p,_)|p).collect();
+        assert!(tops.iter().all(|p|p[1]==0.||(5.81999..=6.).contains(&p[1])));assert!(tops.iter().any(|p|p[1]==6.));assert!(tops.iter().any(|p|(p[1]-5.82).abs()<1e-6));
+        assert!(mesh.normals.iter().zip(&mesh.uvs).any(|(n,uv)|uv[1]>=0.&&n[1]>0.5&&n[1]<0.999),"the crown must include sloping top triangles");
+        for depth in [0.25,2.25,4.25] {assert!(mesh.positions.iter().zip(&mesh.uvs).any(|(p,uv)|(p[1]-(6.-depth)*0.97).abs()<1e-6&&(uv[1]+1.+depth).abs()<1e-6),"wall columns must reach the folded crown without losing their height subdivisions");}
     }
     #[test]
     fn rock_modules_have_distinct_facets_and_closed_edges() {
@@ -249,7 +254,7 @@ mod tests {
     fn cliff_styles_change_wall_geometry_and_preserve_shelves() {
         let mut h=vec!['0';144];for i in 0..4 {h[(2*6+2)*4+i]='2';}let key=format!("terrain4h:00{}{}",h.into_iter().collect::<String>(),"80".repeat(49));
         let rock=terrain_mesh(&key).unwrap();assert_eq!(rock.positions,terrain_mesh(&(key.clone()+"0")).unwrap().positions);
-        let tops=|mesh:&MeshData|mesh.positions.iter().zip(&mesh.normals).filter(|(_,n)|n[1]>0.999).map(|(p,_)|*p).collect::<Vec<_>>();
+        let tops=|mesh:&MeshData|mesh.positions.iter().zip(&mesh.uvs).filter(|(_,uv)|uv[1]>=0.).map(|(p,_)|*p).collect::<Vec<_>>();
         for style in [1,2] {let mesh=terrain_mesh(&format!("{key}{style}")).unwrap();assert_ne!(mesh.positions,rock.positions);assert_eq!(tops(&mesh),tops(&rock));assert!(mesh.positions.iter().flatten().all(|v|v.is_finite()));assert!(mesh.normals.iter().all(|n|(glam::Vec3::from_array(*n).length()-1.).abs()<0.0001));if style==2 {assert!(mesh.indices.len()>rock.indices.len());}}
         for suffix in ["3","f","12"] {assert!(terrain_mesh(&(key.clone()+suffix)).is_err());}
     }
@@ -300,7 +305,7 @@ mod tests {
         let cliff=terrain_mesh(&format!("terrain4r:00{}",h.into_iter().collect::<String>())).unwrap();
         assert!(cliff.indices.len()>2304&&cliff.indices.len()<4096);assert!(cliff.normals.iter().any(|n|n[1].abs()<0.2));
         assert!(cliff.positions.iter().zip(&cliff.uvs).any(|(p,uv)|p[1]==0. && uv[0]>0.9),"lower shelf receives contact shade");
-        assert!(cliff.positions.iter().zip(&cliff.uvs).any(|(p,uv)|p[1]==2. && uv[1]>0.9),"upper shelf receives exposed rim weight");
+        assert!(cliff.positions.iter().zip(&cliff.uvs).any(|(p,uv)|(p[1]-1.82).abs()<1e-6 && uv[1]>0.9),"folded crown receives exposed rim weight");
         assert!(cliff.uvs.iter().any(|uv|uv[1]>1.5));assert!(cliff.positions.iter().flatten().all(|v|v.is_finite()));
         for key in ["terrain4r:00","terrain4r:80", "terrain4r:gg"] {assert!(terrain_mesh(key).is_err());}
         assert!(terrain_mesh(&format!("terrain4r:80{}","0000".repeat(36))).is_err());
@@ -317,8 +322,8 @@ mod tests {
                 for triangle in mesh.indices.chunks_exact(3) {for i in 0..3 {let a=world[triangle[i] as usize].map(|v|(v*10000.).round() as i32);let b=world[triangle[(i+1)%3] as usize].map(|v|(v*10000.).round() as i32);if a!=b {*edges.entry(if a<b {(a,b)}else{(b,a)}).or_default()+=1;}}}
             }}
             for ((a,b),count) in edges {if count==1 {assert!([a,b].iter().all(|p|p[0].abs()>72500||p[2].abs()>72500),"unclosed interior edge for style {style}, ramp {ramp}, mask {mask}: {a:?} -> {b:?}");}}
-            if mask==4&&ramp<2 {let inset=(if ramp==0 {0.42}else{0.3})/2_f32.sqrt()+0.2;assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&p[1]==2.),"convex corner uses the shared curved joint");}
-            if mask==11&&ramp<2 {let inset= -(if ramp==0 {0.42}else{0.3})/2_f32.sqrt()+0.2;assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&p[1]==2.),"concave corner uses the shared curved joint");}
+            if mask==4&&ramp<2 {let inset=(if ramp==0 {0.42}else{0.3})/2_f32.sqrt()+0.2;let crown=if ramp==0 {1.82}else{2.};assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&(p[1]-crown).abs()<1e-5),"convex corner uses the shared curved joint");}
+            if mask==11&&ramp<2 {let inset= -(if ramp==0 {0.42}else{0.3})/2_f32.sqrt()+0.2;let crown=if ramp==0 {1.82}else{2.};assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&(p[1]-crown).abs()<1e-5),"concave corner uses the shared curved joint");}
         }}}
     }
     #[test]

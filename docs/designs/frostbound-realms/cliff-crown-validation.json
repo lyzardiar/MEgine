@@ -1,0 +1,75 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "17cde13ba9f89829ac63812da7ca8c2889dceba6",
+  "protocol": 31,
+  "mapVersion": 1,
+  "geometry": {
+    "levelInset": 0.42,
+    "rampInset": 0.3,
+    "crownDrop": 0.18,
+    "innerShelfRetainsAuthoredElevation": true,
+    "rampJointsRetainHeight": true,
+    "wallCrownWelded": true
+  },
+  "tests": {
+    "terrainPassed": 12,
+    "terrainFailed": 0,
+    "seamConfigurations": 192,
+    "nativeFloorFixtures": 72,
+    "fullJavaScriptTcpPassed": true,
+    "bodyClearancePassed": true,
+    "gentleRampsPassed": true,
+    "foldedCrownPickingPassed": true,
+    "threeCliffTopSurfacesIdentical": true
+  },
+  "native": {
+    "tileCourses": {
+      "levels": [
+        2,
+        4,
+        6
+      ],
+      "tilesets": 3,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "shaderRejections": 0,
+      "fixtureOnly": true,
+      "gentleRampSteps": 6,
+      "descendingRampHeight": 6
+    },
+    "rampModules": {
+      "steps": 6,
+      "ascent": true,
+      "descent": true,
+      "nativeSummitTransform": true
+    },
+    "terrain": {
+      "chunks": 64,
+      "raisedCells": 188,
+      "ramps": 22,
+      "brushUndoSaveLoad": true,
+      "groundUnitClimbed": true,
+      "shaderRejections": 0
+    },
+    "scope": "Release renderer, QuickJS and deterministic Agent input"
+  },
+  "package": {
+    "contentHash": "4c668eb84929618ef9475a3dcba10c9581f741a6d53d5d66f80fcc8e957c8904",
+    "files": 757,
+    "smokeSeconds": 30,
+    "loggedErrors": 0,
+    "runtimeSha256": "adf42f2cd82de5849ea4a73094429776333825e43bd8fd78a442b382e7ff465f"
+  },
+  "sourceHashes": {
+    "crates/mengine-assets/src/terrain_mesh.rs": "bb7c7e080c5aab61827fc04b82b03261c872461bf20bd057250bc6829e83e36a",
+    "samples/frostbound-realms/game/simulation.js": "c9f82256f932423fb4dbd118ad46b688c0ea6074a568f4c3310179b3c0de433c",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "12d9b90956f1be3f4e5281165fb254407d4096f6526338f27ccd59864bb9b339"
+  },
+  "limitations": [
+    "Original terrain art and full module fidelity incomplete",
+    "Physical input and audio unverified",
+    "Cross-machine LAN and steady Player frame time unverified"
+  ],
+  "measuredAt": "2026-10-04T11:33:41.186Z"
+}
