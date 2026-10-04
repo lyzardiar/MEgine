@@ -1,5 +1,5 @@
 Poly Haven CC0 environment models and forest ground texture
-Sources: fir_sapling_medium, shrub_01, rock_07, rock_moss_set_01, stone_fire_pit, forest_ground_04, tree_small_02, quiver_tree_01, grass_medium_01
+Sources: fir_sapling_medium, shrub_01, rock_07, rock_moss_set_01, stone_fire_pit, forest_ground_04, tree_small_02, quiver_tree_01, grass_medium_01, jacaranda_tree
 License: Creative Commons Zero 1.0 Universal
 https://polyhaven.com/license
 https://creativecommons.org/publicdomain/zero/1.0/

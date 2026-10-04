@@ -4334,5 +4334,116 @@
       "Assets/Models/RealGrassB-far.glb"
     ],
     "realistic": true
+  },
+  "RealJacaranda": {
+    "lods": [
+      "Assets/Models/RealJacaranda-trunk.glb",
+      "Assets/Models/RealJacaranda-trunk-far.glb"
+    ],
+    "lod_parts": [
+      [
+        {
+          "name": "trunk",
+          "mesh": "Assets/Models/RealJacaranda-trunk.glb",
+          "material": "Assets/Materials/Real_jacaranda_tree_trunk.mmat",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "branches",
+          "mesh": "Assets/Models/RealJacaranda-branches.glb",
+          "material": "Assets/Materials/Real_jacaranda_tree_branches.mmat",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "leaves",
+          "mesh": "Assets/Models/RealJacaranda-leaves.glb",
+          "material": "Assets/Materials/Real_jacaranda_tree_leaves.mmat",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      [
+        {
+          "name": "trunk",
+          "mesh": "Assets/Models/RealJacaranda-trunk-far.glb",
+          "material": "Assets/Materials/Real_jacaranda_tree_trunk.mmat",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "branches",
+          "mesh": "Assets/Models/RealJacaranda-branches-far.glb",
+          "material": "Assets/Materials/Real_jacaranda_tree_branches.mmat",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "name": "leaves",
+          "mesh": "Assets/Models/RealJacaranda-leaves-far.glb",
+          "material": "Assets/Materials/Real_jacaranda_tree_leaves.mmat",
+          "pivot": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    ],
+    "realistic": true,
+    "material": "Assets/Materials/Real_jacaranda_tree_trunk.mmat",
+    "parts": [
+      {
+        "name": "trunk",
+        "mesh": "Assets/Models/RealJacaranda-trunk.glb",
+        "material": "Assets/Materials/Real_jacaranda_tree_trunk.mmat",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "branches",
+        "mesh": "Assets/Models/RealJacaranda-branches.glb",
+        "material": "Assets/Materials/Real_jacaranda_tree_branches.mmat",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "leaves",
+        "mesh": "Assets/Models/RealJacaranda-leaves.glb",
+        "material": "Assets/Materials/Real_jacaranda_tree_leaves.mmat",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      24.367045,
+      19.474559,
+      19.141788
+    ]
   }
 }

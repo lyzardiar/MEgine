@@ -1,1 +1,3 @@
 Builds/
+# Large original source is fetched and hash-verified by the realistic importer.
+SourceAssets/polyhaven/jacaranda_tree/jacaranda_tree_1k.blend

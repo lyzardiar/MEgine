@@ -181,6 +181,56 @@
         }
       },
       "dry_base": "SourceAssets/polyhaven/grass_medium_01/textures/grass_medium_01_dry_diff_1k.png"
+    },
+    {
+      "id": "jacaranda_tree",
+      "names": [
+        "RealJacaranda"
+      ],
+      "triangles": [
+        230000,
+        190000
+      ],
+      "blend": "SourceAssets/polyhaven/jacaranda_tree/jacaranda_tree_1k.blend",
+      "material_images": {
+        "jacaranda_tree_leaves": {
+          "base": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_leaves_diff_1k.png",
+          "alpha": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_leaves_alpha_1k.png"
+        }
+      },
+      "page": "https://polyhaven.com/a/jacaranda_tree",
+      "authors": {
+        "Rob Tuytel": "guidance",
+        "Rico Cilliers": "All"
+      },
+      "lod_nodes": [
+        [
+          "jacaranda_tree_game_near",
+          "jacaranda_tree_game_far"
+        ]
+      ],
+      "decimate": {
+        "source": "jacaranda_tree_LOD1",
+        "ratios": [
+          0.12,
+          0.085
+        ],
+        "material_ratios": {
+          "jacaranda_tree_trunk": [
+            0.15,
+            0.06
+          ],
+          "jacaranda_tree_branches": [
+            0.05,
+            0.025
+          ],
+          "jacaranda_tree_leaves": [
+            0.12,
+            0.085
+          ]
+        }
+      },
+      "separate_materials": true
     }
   ],
   "sources": [
@@ -645,6 +695,83 @@
       "sha256": "da85639d6eb8f029b50e7920aaf7e649940541bb24fe6ad239dbae7400af2eb2",
       "size": 2167830,
       "asset": "grass_medium_01"
+    },
+    {
+      "asset": "jacaranda_tree",
+      "file": "SourceAssets/polyhaven/jacaranda_tree/jacaranda_tree_1k.blend",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/blend/1k/jacaranda_tree/jacaranda_tree_1k.blend",
+      "sha256": "e28e9ea0deb782a830420126b3c5536bde44d1b532cbfb4dccbcc0e46119a0ce",
+      "bytes": 180228496
+    },
+    {
+      "asset": "jacaranda_tree",
+      "file": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_branches_diff_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_branches_diff_1k.png",
+      "sha256": "fe671f7fae88e269e4a517b6ff7be74ae3c2d1fdedfea206ebfa9941af0d9e20",
+      "bytes": 5223386
+    },
+    {
+      "asset": "jacaranda_tree",
+      "file": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_branches_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_branches_nor_gl_1k.png",
+      "sha256": "e72c3bf652d998d75ef98fc51fb7a10de3b7efd072c191a8eb9c92b6f93340f0",
+      "bytes": 5400459
+    },
+    {
+      "asset": "jacaranda_tree",
+      "file": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_branches_rough_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_branches_rough_1k.png",
+      "sha256": "c6db3c33f23654a8d31dcf5609d19d97ab1036b36b3d9a6bcd50ecc975f8fb3c",
+      "bytes": 1625206
+    },
+    {
+      "asset": "jacaranda_tree",
+      "file": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_leaves_alpha_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_leaves_alpha_1k.png",
+      "sha256": "c708a7e928a2e4d26981b021a22deeefc0ebb0e467f60b53cfa636a7e24d68f7",
+      "bytes": 506043
+    },
+    {
+      "asset": "jacaranda_tree",
+      "file": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_leaves_diff_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_leaves_diff_1k.png",
+      "sha256": "5729978e92649ee6cc70bdc457aac1b28b16a10bde0a55004b659a1923c8861b",
+      "bytes": 2364526
+    },
+    {
+      "asset": "jacaranda_tree",
+      "file": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_leaves_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_leaves_nor_gl_1k.png",
+      "sha256": "4dc58cca117cb193629bf6a2b909bd281451c60a5d85f1b1d438d296b90a1091",
+      "bytes": 4154090
+    },
+    {
+      "asset": "jacaranda_tree",
+      "file": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_leaves_rough_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_leaves_rough_1k.png",
+      "sha256": "2f6b89e7a1983cfa6fc2050f993c2c91c9afc86ce285607fa5a5f8f6b1b4c879",
+      "bytes": 992522
+    },
+    {
+      "asset": "jacaranda_tree",
+      "file": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_trunk_diff_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_trunk_diff_1k.png",
+      "sha256": "9ba4a3af9d38d54638df35a2bae4f30455f5fb25c080825f6e22af4e5d65c7f2",
+      "bytes": 5450061
+    },
+    {
+      "asset": "jacaranda_tree",
+      "file": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_trunk_nor_gl_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_trunk_nor_gl_1k.png",
+      "sha256": "d2c1dd8a274983731e2418b4eb6b49bddcf375d170c70010b799d7417eafbfac",
+      "bytes": 5486270
+    },
+    {
+      "asset": "jacaranda_tree",
+      "file": "SourceAssets/polyhaven/jacaranda_tree/textures/jacaranda_tree_trunk_rough_1k.png",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/jacaranda_tree/jacaranda_tree_trunk_rough_1k.png",
+      "sha256": "9262a1d4e8cc848a29bfc93333e8ad844c7e470e592787604b7e090e0ed149f2",
+      "bytes": 1747236
     }
   ],
   "models": {
@@ -957,6 +1084,59 @@
           "error": 0
         }
       ]
+    },
+    "RealJacaranda": {
+      "source": "jacaranda_tree",
+      "nodes": [
+        "jacaranda_tree_game_near",
+        "jacaranda_tree_game_far"
+      ],
+      "lods": [
+        {
+          "triangles": 220161,
+          "vertices": 349529,
+          "authored": false,
+          "parts": [
+            {
+              "material": "jacaranda_tree_trunk",
+              "triangles": 4311,
+              "vertices": 2866
+            },
+            {
+              "material": "jacaranda_tree_branches",
+              "triangles": 71704,
+              "vertices": 69255
+            },
+            {
+              "material": "jacaranda_tree_leaves",
+              "triangles": 144146,
+              "vertices": 277408
+            }
+          ]
+        },
+        {
+          "triangles": 175531,
+          "vertices": 295761,
+          "authored": false,
+          "parts": [
+            {
+              "material": "jacaranda_tree_trunk",
+              "triangles": 1724,
+              "vertices": 1337
+            },
+            {
+              "material": "jacaranda_tree_branches",
+              "triangles": 71704,
+              "vertices": 69255
+            },
+            {
+              "material": "jacaranda_tree_leaves",
+              "triangles": 102103,
+              "vertices": 225169
+            }
+          ]
+        }
+      ]
     }
   },
   "generated": [
@@ -971,6 +1151,18 @@
     {
       "file": "Assets/Materials/Real_grass_medium_01_dry.mmat",
       "sha256": "72397701ef043a84d18b9d915b467295d95fb52676010af371c61a86831edadf"
+    },
+    {
+      "file": "Assets/Materials/Real_jacaranda_tree_branches.mmat",
+      "sha256": "39f95aeea9de46538cfced669c15421a57f12c6c6424eb26f8619b7b4e306881"
+    },
+    {
+      "file": "Assets/Materials/Real_jacaranda_tree_leaves.mmat",
+      "sha256": "2ae80a3dbcbb1f92467eaa8135dd682e4a8e06bacdc308b4774210672aec1585"
+    },
+    {
+      "file": "Assets/Materials/Real_jacaranda_tree_trunk.mmat",
+      "sha256": "b4da980852938bb7d7494b6b8d9d6357fb2bdfe87c121391590917cf170ed6d0"
     },
     {
       "file": "Assets/Materials/Real_quiver_tree_01.mmat",
@@ -1035,6 +1227,30 @@
     {
       "file": "Assets/Models/RealGrassC.glb",
       "sha256": "78c20770fc4acd1edd54c3a13b41255e13f73590aa7ce2a62eb6aec0ac32a5f2"
+    },
+    {
+      "file": "Assets/Models/RealJacaranda-branches-far.glb",
+      "sha256": "18999d480e089395f25d5f3f5451c46e12a84d46f091028757941b542e15fdec"
+    },
+    {
+      "file": "Assets/Models/RealJacaranda-branches.glb",
+      "sha256": "df03b245954f39efe5f851b2b3c6ae487cb90412810b1648a2ec25bdbf4c1105"
+    },
+    {
+      "file": "Assets/Models/RealJacaranda-leaves-far.glb",
+      "sha256": "1288a9e428d79a254d61d4e4bcdd9ebc3eaf70ec8047a8ce4d28725540b599d6"
+    },
+    {
+      "file": "Assets/Models/RealJacaranda-leaves.glb",
+      "sha256": "358661207ccb3ac73690f993c5d21ba8a6b1092fbe71c41f4f3482c8a7f64718"
+    },
+    {
+      "file": "Assets/Models/RealJacaranda-trunk-far.glb",
+      "sha256": "63a5f6201b7a53db0b7b3f1b0ed2b90b2bbbfccb65514e2943de0176358afcaa"
+    },
+    {
+      "file": "Assets/Models/RealJacaranda-trunk.glb",
+      "sha256": "a729bb2899e1cab7424312b88ff8b9cc946bd731ba7f1f7b209711d78fc5ad62"
     },
     {
       "file": "Assets/Models/RealMossRock1-far.glb",
@@ -1159,6 +1375,42 @@
     {
       "file": "Assets/Textures/Real_grass_medium_01_normal.png",
       "sha256": "9c84ae94fbbfb66ab91f16715cc4c5b77a650070e7dce53d1d8e4bf00b16d8da"
+    },
+    {
+      "file": "Assets/Textures/Real_jacaranda_tree_branches_arm.png",
+      "sha256": "b2f47219622afc7e4d1a2c4acfc6ce39b235c19199857ccf75a5e129200d0669"
+    },
+    {
+      "file": "Assets/Textures/Real_jacaranda_tree_branches_base.png",
+      "sha256": "ed0c356c727e7ad59210219c5a371c401def012b39c126453702c05b6df47d01"
+    },
+    {
+      "file": "Assets/Textures/Real_jacaranda_tree_branches_normal.png",
+      "sha256": "4411967f4908d0a85594985d7c8ab3b525811f5efc68f9a2cc6df0160eaffc19"
+    },
+    {
+      "file": "Assets/Textures/Real_jacaranda_tree_leaves_arm.png",
+      "sha256": "ccf2b2af069219e1ea14eca58b1a71b3ddeec2da3089039305be05a9ca956971"
+    },
+    {
+      "file": "Assets/Textures/Real_jacaranda_tree_leaves_base.png",
+      "sha256": "8fe1e2e0b05bb7960078fc2e2e8104162939742a258f60345fa77eb7c85ffa86"
+    },
+    {
+      "file": "Assets/Textures/Real_jacaranda_tree_leaves_normal.png",
+      "sha256": "a04ed8552c4f8e6c83253ad511f60425a42b7e8e1ae05c3cbfff70237ede7a2a"
+    },
+    {
+      "file": "Assets/Textures/Real_jacaranda_tree_trunk_arm.png",
+      "sha256": "77a2fb63640de37f3a8ad25113ab2fd7ee898b70f75df320abb5e46a3cff46b6"
+    },
+    {
+      "file": "Assets/Textures/Real_jacaranda_tree_trunk_base.png",
+      "sha256": "aa6069f0d8021d02ff6a306a16e6c57372cdfe824d7e288836d7e08fdf4eb2ff"
+    },
+    {
+      "file": "Assets/Textures/Real_jacaranda_tree_trunk_normal.png",
+      "sha256": "19e4c0ecc6368a809b13c777fc05b65f12e3b4d2fd21aaa9374828fb012968eb"
     },
     {
       "file": "Assets/Textures/Real_quiver_tree_01_arm.png",

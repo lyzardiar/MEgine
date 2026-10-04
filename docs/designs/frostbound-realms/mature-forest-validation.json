@@ -1,0 +1,151 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "d1441b1d2c222dcef6bed57ef9db536e8806bde2",
+  "source": "Poly Haven jacaranda_tree CC0",
+  "protocol": 31,
+  "canopy": {
+    "authoredLeafArea": 2474.918206,
+    "minimumAreaRetention": [
+      0.85,
+      0.75
+    ],
+    "lods": [
+      {
+        "parts": [
+          {
+            "name": "trunk",
+            "triangles": 4311,
+            "leafArea": null
+          },
+          {
+            "name": "branches",
+            "triangles": 71704,
+            "leafArea": null
+          },
+          {
+            "name": "leaves",
+            "triangles": 144146,
+            "leafArea": 2172.36669921875
+          }
+        ],
+        "bounds": [
+          24.367046356201172,
+          19.474559783935547,
+          19.141788482666016
+        ]
+      },
+      {
+        "parts": [
+          {
+            "name": "trunk",
+            "triangles": 1724,
+            "leafArea": null
+          },
+          {
+            "name": "branches",
+            "triangles": 71704,
+            "leafArea": null
+          },
+          {
+            "name": "leaves",
+            "triangles": 102103,
+            "leafArea": 1933.638671875
+          }
+        ],
+        "bounds": [
+          24.369400024414062,
+          19.42165184020996,
+          19.141788482666016
+        ]
+      }
+    ],
+    "materialParts": 3,
+    "sharedPivot": true,
+    "originalRepeatingBarkUvs": true,
+    "sourceLeafAlphaAndVisibleColor": true
+  },
+  "reproducibility": {
+    "sourceFiles": 77,
+    "derivedFiles": 87,
+    "previousDerivedPreserved": 69,
+    "newDerived": 18,
+    "selectedReimportIdentical": true,
+    "finalMaterialImporterHashParity": true,
+    "largeOriginalSource": "180228496-byte source cache fetched and SHA-256 verified by importer; excluded from Git and Player"
+  },
+  "native": {
+    "names": [
+      "winter",
+      "forest",
+      "barrens"
+    ],
+    "keyboardAndButton": true,
+    "undo": true,
+    "mapSaveLoad": true,
+    "gameSaveRestore": true,
+    "playtest": true,
+    "terrainSurfacesAndCliffsPreserved": true,
+    "bedAndWaterParameters": true,
+    "biomeTrees": true,
+    "nearAndFarTreeBindings": true,
+    "groundCover": true,
+    "greenAndDryCover": true,
+    "coverGroundHeightAndSlope": true,
+    "nearAndFarCoverBindings": true,
+    "protocol": 31,
+    "twoClientMap": true,
+    "reconnect": true,
+    "shaderRejections": 0,
+    "partMeshesMaterialsAndTransforms": true,
+    "unusedPartsHiddenInSingleMeshBiomes": true,
+    "isolatedAssetsMatchProductAndPackage": true
+  },
+  "tests": {
+    "matureForestImport": true,
+    "previousBiomeImport": true,
+    "previousRealisticImport": true,
+    "biomeTreesGatherAndRestore": true,
+    "allFactionVisuals": true,
+    "fullJavaScriptTcp": true
+  },
+  "binaries": {
+    "runtimeSha256": "206f96d311f92373052c9c882a9eb46b077201a9ebe2cf681870fd2b0a780295",
+    "editorSha256": "53bb59e2c1b4cbcb61f3fa95e93327dfa17ff3648806cd290f77baed2f8f969e",
+    "rebuilt": false
+  },
+  "package": {
+    "files": 775,
+    "entities": 4388,
+    "contentHash": "205c0179460a3021ed6de998900dbcdb4c7d7b306ab3bdeb1012fe0f60764ea6",
+    "allHashesAndSizesVerified": true,
+    "responsiveStartupSeconds": 30,
+    "loggedErrors": 0
+  },
+  "sourceHashes": {
+    "scripts/export-frost-foliage.py": "4e95528933309e6fe60aae376e110f8161cf328ed5469ec90a9202983453f002",
+    "scripts/import-frost-realistic.py": "308cdbba07442b9eaea9b98a327381e5f04b68cd8c234bec4b704c12cb987506",
+    "scripts/build-frostbound.mjs": "e1f305141117d2b97e341d50deb28c397c3c93767b4255e89db649b4270ca948",
+    "scripts/qa-frostbound.mjs": "85c331133d526bb03ef7ab1304723676602d1faec4919be86ebad747e8806aa9",
+    "scripts/test-frost-mature-forest.py": "6f4560b0748776411a642e8c32cd5843f2d1343e83644c451eed6a2ec05047cf",
+    "samples/frostbound-realms/game/visuals.js": "1f19ba0474d9482008c2c3f0ac4e32c014f88ef75082e24946f03de5fa978a73",
+    "samples/frostbound-realms/game/client.js": "341796346f6e2314b4c3c00fdeee86672d253e50100835695807bb812265f015",
+    "samples/frostbound-realms/model-catalog.json": "304d7b0adc8eef97da58f931917389257bfbba92f23334ccd19a3f4f10361756",
+    "samples/frostbound-realms/realistic-sources.json": "482964a456d6606f505ec4d3c2b6bbb870be73a32995b151aabd215e2bb98301",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "3226f840eb24af4aec0bb5836661ac5a032e94864793fd3901306871d9dd4c2e",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "d49d100eda4611ae576fe7a47bfc46229589aa6068cf5dd2e6315710f21d60b1"
+  },
+  "screenshots": [
+    "mature-forest-tileset-forest.png",
+    "mature-forest-tileset-forest-far.png",
+    "mature-forest-tileset-playtest.png"
+  ],
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "allOriginalTerrainArt": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformance": false
+  }
+}

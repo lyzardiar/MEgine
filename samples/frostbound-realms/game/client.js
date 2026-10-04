@@ -11,12 +11,14 @@ var FrostClient=(()=>{
   function menuMap(){return mapChoice===4?S.siegeMap():S.defaultMap(menuMaps[mapChoice][1]);}
   function applySettings(){for(const n of Object.keys(entities))if(n.startsWith('Sound ')){const a=authored[n].AudioSource;set(n,'AudioSource',{...a,volume:a.volume*(a.looped?settings.music:settings.sfx)});}}
   const previous={},visibility={},modelNames={},active={},tileState=[];
+  const environmentParts=FrostVisual.environmentPartCount();
   const missileView=FrostVisual.projectileView(),unitView=FrostVisual.projectileView(3);let flightTime=0,missileCount=0,portraitTime=0,unitTime=0,unitPositions=new Map();
   let editorPage=0,placeKind='soldier',placeHeroClass=0,placeTeam=0,placeTag='',triggerIndex=-1,triggerPanel=0,entryIndex=0,regionIndex=-1,editorTool='select',heightBrush=1,rampBrush=0,gentleRamps=true,surfaceBrush=0,surfaceRadius=0,cliffBrush=0,rename=null;
   const sculptTools=['raise','lower','smooth','flatten'];let sculptTool='raise',sculptRadius=4,sculptStrength=.25,sculptLevel=null,sculptSaved=false;
   function set(n,c,v){const e=entities[n];if(!e)return;const json=JSON.stringify(v),key=n+'/'+c;if(sent[key]===json)return;sent[key]=json;engine.pushCommandJson('{"op":"setComponent","entity":'+e.entity+',"component":'+JSON.stringify(c)+',"value":'+json+'}');}
   function activate(n,on){const e=entities[n];if(!e||active[n]===on)return;active[n]=on;engine.setActive(e.entity,on);}
   function transform(n,position,scale=[1,1,1],rotation=[0,0,0,1]){activate(n,position!==hidden);if(position!==hidden)set(n,'Transform',{position,scale,rotation});}
+  function environment(n,visual,position=hidden){for(let i=0;i<environmentParts;i++){const name=n+(i?' part '+i:''),part=visual?.parts[i];if(!part){transform(name,hidden);continue;}set(name,'MeshRenderer',{mesh:part.mesh,material:part.material});transform(name,position,[visual.scale,visual.scale,visual.scale],[0,Math.sin(visual.yaw/2),0,Math.cos(visual.yaw/2)]);}}
   function label(n,text,color){if(authored[n]?.Text)set(n,'Text',{...authored[n].Text,text,...(color?{color}:{})});}
   function show(n,on){if(visibility[n]===on)return;visibility[n]=on;activate(n,on);const a=authored[n]?.RectTransform;if(a&&on)set(n,'RectTransform',{...a,anchored_position:a.anchored_position});}
   function message(text){notice=text;noticeUntil=time+5;}
@@ -280,9 +282,8 @@ var FrostClient=(()=>{
     for(let i=0;i<140;i++){
       const edge=i<72,angle=i*2.399963,x=edge?Math.cos(angle)*(35+i%4*2):((i*17.71)%54)-27,z=edge?Math.sin(angle)*(35+i%4*2):((i*23.19)%54)-27,idx=S.index(x,z);
       const seen=edge||allVisible||state.explored[team]?.[idx],clear=edge||map.terrain[idx]===0&&state.units.every(u=>(!allVisible&&!S.isVisible(state,team,u))||S.types[u.kind].speed||Math.hypot(x-u.x,z-u.z)>4)&&!(state.mode==='td'&&Math.floor(ground[idx]/2)%3===2);
-      if(!world||!seen||!clear){transform('Scenery '+i,hidden);continue;}
-      const {asset,scale,mesh,yaw}=FrostVisual.scenery(i,edge,zoom,map.tileset??0);
-      set('Scenery '+i,'MeshRenderer',{mesh,material:asset.material});transform('Scenery '+i,[x,S.elevation(map,x,z)-.02,z],[scale,scale,scale],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]);
+      if(!world||!seen||!clear){environment('Scenery '+i,null);continue;}
+      environment('Scenery '+i,FrostVisual.scenery(i,edge,zoom,map.tileset??0),[x,S.elevation(map,x,z)-.02,z]);
     }
     const details=FrostTerrain.details(map);
     for(let i=0;i<FrostTerrain.detailCount;i++){
@@ -295,7 +296,7 @@ var FrostClient=(()=>{
     const sculptPointer=editing&&editorPage===7&&inBattlefield(hover)?worldPointer(input):null,sculptCenter=sculptPointer?[Math.round((sculptPointer.x+32)/2)*2-32,Math.round((sculptPointer.z+32)/2)*2-32]:null;
     for(let i=0;i<32;i++){if(!sculptCenter){transform('Sculpt outline '+i,hidden);continue;}const angle=i/32*Math.PI*2,x=sculptCenter[0]+Math.cos(angle)*sculptRadius,z=sculptCenter[1]-Math.sin(angle)*sculptRadius,yaw=angle+Math.PI/2;transform('Sculpt outline '+i,Math.abs(x)<=32&&Math.abs(z)<=32?[x,S.elevation(map,x,z)+.075,z]:hidden,[sculptRadius*.195,.04,.06],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]);set('Sculpt outline '+i,'MaterialPropertyBlock',{override_base_color:true,base_color:sculptTool==='lower'?[1,.35,.25,1]:sculptTool==='flatten'?[1,.8,.25,1]:[.25,.85,1,1]});}
     if(mode==='playing'&&armed?.type==='build'&&inBattlefield(screenPointer(input))){const pointer=worldPointer(input),deposit=armed.kind==='hauntedmine'&&state.resources.find(r=>r.kind==='mine'&&r.amount>0&&S.distance(r,pointer)<2.8),p=deposit||pointer,{asset,scale}=FrostVisual.model(state,{kind:armed.kind,team});set('Placement preview','MeshRenderer',{mesh:asset.parts[0].mesh,material:'Assets/Materials/Placement.mmat'});set('Placement preview','MaterialPropertyBlock',{override_base_color:true,base_color:S.flatSite(map,p.x,p.z,S.types[armed.kind].radius)?[.3,1,.55,.5]:[1,.18,.12,.5]});transform('Placement preview',[p.x,S.elevation(map,p.x,p.z)+.03,p.z],[scale,scale,scale],[0,Math.sin(Math.PI/12),0,Math.cos(Math.PI/12)]);}else transform('Placement preview',hidden);
-    for(let i=0;i<100;i++){const r=(editing?map.props:state.resources)[i],visible=world&&r&&r.amount>0&&(allVisible||state.explored[team]?.[S.index(r.x,r.z)]);if(!visible){transform('Prop '+i,hidden);continue;}if(!editing&&r.kind==='mine'&&S.hauntedMine(state,r)){transform('Prop '+i,hidden);continue;}const {asset,mesh,scale,yaw}=FrostVisual.resource(r,zoom,map.tileset??0);set('Prop '+i,'MeshRenderer',{mesh,material:asset.material});transform('Prop '+i,[r.x,S.elevation(map,r.x,r.z),r.z],[scale,scale,scale],[0,Math.sin(yaw/2),0,Math.cos(yaw/2)]);}
+    for(let i=0;i<100;i++){const r=(editing?map.props:state.resources)[i],visible=world&&r&&r.amount>0&&(allVisible||state.explored[team]?.[S.index(r.x,r.z)]);if(!visible||!editing&&r.kind==='mine'&&S.hauntedMine(state,r)){environment('Prop '+i,null);continue;}environment('Prop '+i,FrostVisual.resource(r,zoom,map.tileset??0),[r.x,S.elevation(map,r.x,r.z),r.z]);}
     const sites=state.units.filter(u=>u.hp>0&&u.built<1&&(allVisible||S.isVisible(state,team,u)));
     for(let i=0;i<32;i++){const b=sites[i],r=b?(S.types[b.kind].radius+.5)*2:1;transform('Foundation '+i,b?[b.x,S.elevation(map,b.x,b.z)-.03,b.z]:hidden,[r,.18,r]);set('Foundation '+i,'MaterialPropertyBlock',{override_base_color:true,base_color:b?[ [.75,.61,.4,1],[.65,.4,.22,1],[.3,.65,.38,1],[.5,.35,.7,1] ][state.teams[b.team]?.faction||0]:[1,1,1,1]});}
     for(let i=0;i<S.LIMIT;i++){const u=state.units[i],visible=u&&u.hp>0&&!u.inside&&(allVisible||S.isVisible(state,team,u));if(!visible){show('Mini unit '+i,false);continue;}show('Mini unit '+i,world);const r=authored['Mini unit '+i].RectTransform;set('Mini unit '+i,'RectTransform',{...r,anchored_position:world?[-621+(u.x+32)/64*180,176+(u.z+32)/64*174]:[5000,5000]});set('Mini unit '+i,'Image',{color:u.team===team?[.2,.7,1,1]:[1,.25,.15,1],raycast_target:false});}

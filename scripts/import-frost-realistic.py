@@ -44,6 +44,50 @@ def alpha_image(path):
         values=np.asarray(image);return Image.fromarray(np.rint(values/257).clip(0,255).astype(np.uint8))
     return image.convert('L')
 
+def import_material_parts(asset,doc,blob,base,adapter,catalog,models,generated):
+    """Keep authored repeating UVs and independent PBR materials on a shared model pivot."""
+    key=asset['id'];materials=doc['materials'];bindings=[];mappings=[]
+    for mat in materials:
+        pbr=mat['pbrMetallicRoughness'];mapping=texture_mapping(pbr['baseColorTexture']);mappings.append(mapping);maps={};mask=None
+        for channel,texture in [('base',pbr['baseColorTexture']),('normal',mat['normalTexture']),('arm',pbr['metallicRoughnessTexture'])]:
+            if texture_mapping(texture)!=mapping:raise ValueError('Part material texture transforms must match: '+mat['name'])
+            entry=doc['textures'][texture['index']];sampler=doc.get('samplers',[{}])[entry.get('sampler',0)]
+            if sampler.get('wrapS',10497)!=10497 or sampler.get('wrapT',10497)!=10497:raise ValueError('Part material requires repeat sampling')
+            image=doc['images'][entry['source']];source=(base/image['uri']).resolve()
+            if not source.is_relative_to(base.resolve()):raise ValueError('Texture escapes asset')
+            authored=asset.get('material_images',{}).get(mat['name'],{})
+            if channel=='base' and authored.get('base'):
+                source=(SAMPLE/authored['base']).resolve()
+                if not source.is_relative_to(SAMPLE.resolve()):raise ValueError('Base color image escapes sample')
+            im=Image.open(source).convert('RGB').resize((1024,1024),Image.Resampling.LANCZOS)
+            if mat.get('alphaMode','OPAQUE')!='OPAQUE':
+                if mask is None:
+                    alpha=(SAMPLE/authored['alpha']).resolve() if authored.get('alpha') else None
+                    if alpha and not alpha.is_relative_to(SAMPLE.resolve()):raise ValueError('Alpha image escapes sample')
+                    mask=alpha_image(alpha).resize((1024,1024),Image.Resampling.LANCZOS) if alpha else Image.open(source).convert('RGBA').getchannel('A').resize((1024,1024),Image.Resampling.LANCZOS)
+                im=pad_texture(im,mask)
+                if channel=='base':im.putalpha(mask)
+            file='Assets/Textures/Real_'+mat['name']+'_'+channel+'.png';im.save(SAMPLE/file);maps[channel]=file;generated.add(file)
+        material='Assets/Materials/Real_'+mat['name']+'.mmat';values={'version':8,'name':'Real '+mat['name'],'shader':'pbr','base_color':pbr.get('baseColorFactor',[1,1,1,1]),'base_color_texture':maps['base'],'normal_texture':maps['normal'],'normal_scale':mat['normalTexture'].get('scale',1),'metallic_roughness_texture':maps['arm'],'metallic':pbr.get('metallicFactor',0),'roughness':pbr.get('roughnessFactor',1),'double_sided':True,'occlusion_texture':maps['arm'],'occlusion_strength':.7}
+        if mask is not None:values.update(surface='cutout',alpha_cutoff=.3)
+        (SAMPLE/material).write_bytes(json.dumps(values).encode());generated.add(material);bindings.append(material)
+    authored={node:(asset['names'][i],lod) for i,pair in enumerate(asset['lod_nodes']) for lod,node in enumerate(pair)}
+    if not set(authored).issubset({n.get('name') for n in doc['nodes']}):raise ValueError('Missing part LOD node')
+    for node in doc['nodes']:
+        if 'mesh' not in node:continue
+        name,lod=authored[node['name']];transform=adapter.matrix(node);groups={}
+        for prim in doc['meshes'][node['mesh']]['primitives']:
+            if prim.get('mode',4)!=4:raise ValueError('Expected part triangles')
+            index=prim.get('material',0);mapping=mappings[index];p=adapter.accessor(doc,blob,prim['attributes']['POSITION']);n=adapter.accessor(doc,blob,prim['attributes']['NORMAL']);uv=texture_uvs(adapter.accessor(doc,blob,prim['attributes']['TEXCOORD_'+str(mapping[0])]),mapping)
+            group=groups.setdefault(index,{'positions':[],'normals':[],'coords':[],'indices':[]});group['indices'].extend((adapter.accessor(doc,blob,prim['indices']).astype(np.int64).reshape(-1)+len(group['positions'])).tolist());group['positions'].extend((transform@np.c_[p,np.ones(len(p))].T).T[:,:3]);normal=(np.linalg.inv(transform[:3,:3]).T@n.T).T;normal/=np.maximum(np.linalg.norm(normal,axis=1)[:,None],1e-9);group['normals'].extend(normal);group['coords'].extend(uv)
+        positions=np.concatenate([g['positions'] for g in groups.values()]);lo=positions.min(axis=0);hi=positions.max(axis=0);pivot=np.array([(lo[0]+hi[0])/2,lo[1],(lo[2]+hi[2])/2]);parts=[];stats=[]
+        for index,g in sorted(groups.items()):
+            part=materials[index]['name'].removeprefix(key+'_');mesh='Assets/Models/'+name+'-'+part+('-far' if lod else '')+'.glb';adapter.glb(SAMPLE/mesh,np.asarray(g['positions'])-pivot,g['normals'],g['coords'],g['indices']);generated.add(mesh);parts.append({'name':part,'mesh':mesh,'material':bindings[index],'pivot':[0,0,0]});stats.append({'material':materials[index]['name'],'triangles':len(g['indices'])//3,'vertices':len(g['positions'])})
+        entry=models.setdefault(name,{'source':key,'nodes':asset['lod_nodes'][asset['names'].index(name)],'lods':[None,None]});entry['lods'][lod]={'triangles':sum(s['triangles'] for s in stats),'vertices':sum(s['vertices'] for s in stats),'authored':not bool(asset.get('decimate')),'parts':stats}
+        art=catalog.setdefault(name,{'lods':[None,None],'lod_parts':[None,None],'realistic':True});art['lod_parts'][lod]=parts;art['lods'][lod]=parts[0]['mesh']
+        if lod==0:art.update(material=parts[0]['material'],parts=parts,size=(hi-lo).round(6).tolist())
+        print(name,entry['lods'][lod],flush=True)
+
 def main():
     manifest=json.loads(MANIFEST.read_text(encoding='utf-8'))
     parser=argparse.ArgumentParser();parser.add_argument('--asset',action='append',choices=[a['id'] for a in manifest['assets']]);args=parser.parse_args()
@@ -70,6 +114,8 @@ def main():
         doc=json.loads((base/(key+'_1k.gltf')).read_text())
         if len(doc['buffers'])!=1:raise ValueError('Expected one geometry buffer')
         blob=(base/doc['buffers'][0]['uri']).read_bytes();materials=doc['materials'];mappings=[]
+        if asset.get('separate_materials'):
+            import_material_parts(asset,doc,blob,base,adapter,catalog,models,generated);continue
         for mat in materials:
             pbr=mat['pbrMetallicRoughness'];mapping=texture_mapping(pbr['baseColorTexture'])
             if any(texture_mapping(texture)!=mapping for texture in [mat['normalTexture'],pbr['metallicRoughnessTexture']]):raise ValueError('Atlas requires matching color, normal and ARM texture transforms: '+mat['name'])
