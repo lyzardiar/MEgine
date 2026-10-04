@@ -144,10 +144,10 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let cap=1.0-smoothstep(0.02,0.20,wall_depth+(side_nz.a-0.5)*0.10);
     let foot=mix(1.0,0.67,smoothstep(0.55,1.0,contact));
     let cap_color=mix(mix(crown_color,litter*soil_tint,0.25+medium*0.2),snow_color,snow_cover*(1.0-smoothstep(0.0,0.08,wall_depth)));
-    // MiYu: rock ledges receive soil caps and a recessed band at each two-unit cliff course.
+    // MiYu: broad rock faces retain soil crowns and subtle shading at each two-unit joint.
     let course=fract(wall_depth*0.5);let rock_course=select(0.0,1.0,cliff_style==0.0);
     let ledge=rock_course*smoothstep(0.25,0.7,geometric.y)*(1.0-smoothstep(0.05,0.45,course));
-    let strata=1.0-rock_course*0.18*(1.0-smoothstep(0.0,0.12,course));
+    let strata=1.0-rock_course*0.08*(1.0-smoothstep(0.0,0.12,course));
     let cliff_color=mix(side_color*vec3<f32>(0.78,0.82,0.86)*strata,cap_color,max(cap,ledge))*foot;
     s.base_color=mix(s.base_color,cliff_color,cliff);
     s.base_color*=1.0-0.3*contact*shelf;

@@ -209,6 +209,8 @@ node scripts/qa-frostbound.mjs
 
 地图编辑器的地表页面可选择岩石、冰壁或砌石悬崖材质，撤销、地图保存、游戏存档与联机重连保留类型。CC0 素材来源、哈希、原生截图和验证见 [悬崖材质套件](../../docs/designs/frostbound-realms/cliff-styles.md)。
 
+水平高地使用更宽的斜切收边与连续岩面，坡口保留步兵和攻城单位的通行宽度；贴地与拾取同步使用原生顶面三角形。实际截图与验证见 [宽肩地块](../../docs/designs/frostbound-realms/cliff-shape.md)。
+
 ### 默认对战开局
 
 Skirmish 开始时为 500 金币、150 木材；Kingdom / Warclan / Wildwood 各有五名闲置工人，Revenant 有三名侍僧、一名食尸鬼及诅咒金矿。主基地提供的人口分别为 12 / 10 / 10 / 10，住房为 6 / 10 / 10 / 10，总上限 100。客户端先选择工人，玩家自行下达采集、建造和祭坛招募命令。AI 会建设祭坛、住房和兵营，安排金矿/伐木并优先招募所选英雄类型。客户端和服务器使用协议 30。实际默认开局及剩余差距见 [开局验证记录](../../docs/designs/frostbound-realms/melee-opening.md)。

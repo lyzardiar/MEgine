@@ -1,0 +1,92 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "4ea32c24e9cbaac099a56d955da9a0ef3f5fd9c6",
+  "protocol": 31,
+  "geometry": {
+    "levelInset": 0.42,
+    "rampInset": 0.3,
+    "verticalProfile": [
+      0,
+      0.13,
+      0.24,
+      0.32,
+      0.36,
+      0.34,
+      0.22,
+      0.1,
+      0
+    ],
+    "cliffLayerHeight": 2,
+    "jointShading": 0.08
+  },
+  "tests": {
+    "terrainPassed": 12,
+    "terrainFailed": 0,
+    "seamConfigurations": 192,
+    "nativeFloorFixtures": 72,
+    "shaderPassed": 1,
+    "shaderFailed": 0,
+    "shaderBackends": 4,
+    "fullJavaScriptTcpPassed": true,
+    "bodyClearancePassed": true,
+    "gentleRampsPassed": true
+  },
+  "native": {
+    "tileCourses": {
+      "levels": [
+        2,
+        4,
+        6
+      ],
+      "tilesets": 3,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "shaderRejections": 0,
+      "fixtureOnly": true,
+      "gentleRampSteps": 6,
+      "descendingRampHeight": 6
+    },
+    "rampModules": {
+      "steps": 6,
+      "ascent": true,
+      "descent": true,
+      "nativeSummitTransform": true
+    },
+    "cliffStyles": {
+      "styles": [
+        "rock",
+        "ice",
+        "masonry"
+      ],
+      "chunks": 64,
+      "sameTopSurface": true,
+      "distinctCliffGeometry": true,
+      "editorSelection": true,
+      "undo": true,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "gameSaveRestore": true,
+      "shaderRejections": 0
+    },
+    "scope": "Release renderer, QuickJS and deterministic Agent input"
+  },
+  "package": {
+    "contentHash": "2cbf61ac4927863e921d1765fbd6cfc8485559b6847defd9fd0bd8f0ffc99e5f",
+    "files": 757,
+    "smokeSeconds": 30,
+    "loggedErrors": 0,
+    "runtimeSha256": "4695f45da5c42be69e0b96c229c9165a2c25b37182160d1ba8c97abe44d4cdb3"
+  },
+  "sourceHashes": {
+    "crates/mengine-assets/src/terrain_mesh.rs": "8632154f119ad612bf9369c26253756b1c90783904fe70a24ea4c098f8dd4d25",
+    "samples/frostbound-realms/game/simulation.js": "53a1590e7c7309581d1acc1c5fc20875580ebd359e5f71da406c382c8acec9c3",
+    "samples/frostbound-realms/Assets/Shaders/Ground.mshader": "ee95b4a53a07aa23acb82a5da4ba3fccd39f906711e9f135e1dc2aa7ca73747a"
+  },
+  "limitations": [
+    "Original terrain art and full module fidelity incomplete",
+    "Physical input and audio unverified",
+    "Cross-machine LAN and steady Player frame time unverified"
+  ],
+  "measuredAt": "2026-10-04T10:25:09.195Z"
+}

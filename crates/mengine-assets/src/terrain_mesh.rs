@@ -1,15 +1,15 @@
 // Author: MiYu. Bounded, immutable terrain patches shared by native Scene, Game and Player.
 use crate::MeshData;
 
-// MiYu: each two-unit rock module has a crown bevel, recessed face and projecting foot.
+// MiYu: each two-unit rock module has one broad slanted face between its crown and foot.
 fn rock_course(distance:f32,height:f32) -> f32 {
-    let band=distance.rem_euclid(2.)*4.;let profile=[0.,0.24,0.42,0.34,0.18,0.12,0.26,0.36,0.];let i=band.floor() as usize;
+    let band=distance.rem_euclid(2.)*4.;let profile=[0.,0.13,0.24,0.32,0.36,0.34,0.22,0.10,0.];let i=band.floor() as usize;
     (profile[i]+(profile[i+1]-profile[i])*(band-i as f32))*((height-distance)*4.).clamp(0.,1.)
 }
 
 // MiYu: asymmetric facets vary by world tile and height layer, while every module edge stays welded.
 fn rock_module(t:f32,distance:f32,height:f32,variant:usize) -> f32 {
-    let profiles=[[0.,0.75,1.,0.4,0.],[0.,0.4,0.8,1.,0.],[0.,1.,0.55,0.85,0.]];
+    let profiles=[[0.,0.9,1.,0.8,0.],[0.,0.8,0.95,1.,0.],[0.,1.,0.85,0.9,0.]];
     let layer=(distance.max(0.)/2.).floor() as usize;let band=(t*4.).clamp(0.,4.);let i=(band.floor() as usize).min(3);
     let profile=profiles[(variant+layer)%3];let width=profile[i]+(profile[i+1]-profile[i])*(band-i as f32);
     width*rock_course(distance,height)
@@ -92,7 +92,9 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
     let corner=|vx:usize,vz:usize,height:f32| {
         let touching=[(vz*6+vx,2,[-1.,-1.]),(vz*6+vx+1,3,[1.,-1.]),((vz+1)*6+vx,1,[-1.,1.]),((vz+1)*6+vx+1,0,[1.,1.])];let mut inward=glam::Vec2::ZERO;let mut high=[false;4];
         for (i,(cell,index,direction)) in touching.iter().enumerate() {high[i]=heights[cell*4+index]>=height-0.01;if !high[i] {inward-=glam::Vec2::from_array(*direction);}}
-        let offset=inward.normalize_or_zero()*0.3;let mut p=point(vx as f32*2.-4.,height,vz as f32*2.-4.);p[0]+=offset.x;p[2]+=offset.y;
+        // MiYu: broader level shoulders retain the existing passage width wherever a ramp meets them.
+        let ramp=touching.iter().any(|(cell,_,_)|heights[cell*4..cell*4+4].iter().any(|h|*h!=heights[cell*4]));
+        let offset=inward.normalize_or_zero()*if ramp {0.3}else{0.42};let mut p=point(vx as f32*2.-4.,height,vz as f32*2.-4.);p[0]+=offset.x;p[2]+=offset.y;
         let mut rays=[glam::Vec2::ZERO;2];let mut count=0;for (a,b,ray) in [(0,1,[0.,-1.]),(1,3,[1.,0.]),(3,2,[0.,1.]),(2,0,[-1.,0.])] {if high[a]!=high[b] {if count<2 {rays[count]=glam::Vec2::from_array(ray);}count+=1;}}
         if count!=2 || rays[0].dot(rays[1]).abs()>0.01 {rays=[glam::Vec2::ZERO;2];}(p,rays)
     };
@@ -193,10 +195,12 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
 #[cfg(test)]
 mod tests {
     #[test]
-    fn rock_cliffs_repeat_beveled_courses_without_changing_walkable_tops() {
+    fn rock_cliffs_repeat_broad_faces_without_changing_top_heights() {
         for distance in [0.25,0.5,0.75,1.,1.25,1.5,1.75] {assert!((rock_course(distance,6.)-rock_course(distance+2.,6.)).abs()<1e-6);assert!((rock_course(distance,6.)-rock_course(distance+4.,6.)).abs()<1e-6);}
         for level in [0.,2.,4.,6.] {assert_eq!(rock_course(level,6.),0.);}
-        assert_eq!(rock_course(0.5,6.),0.42);assert_eq!(rock_course(1.25,6.),0.12);assert_eq!(rock_course(1.75,6.),0.36);assert_eq!(rock_course(6.,6.),0.);
+        for depth in [0.25,0.5,0.75] {assert!(rock_course(depth,6.)<rock_course(depth+0.25,6.));}
+        for depth in [1.,1.25,1.5,1.75] {assert!(rock_course(depth,6.)>rock_course(depth+0.25,6.));}
+        assert_eq!(rock_course(6.,6.),0.);
         let mut heights=vec!['0';144];for i in 0..4 {heights[(2*6+2)*4+i]='6';}let key=format!("terrain4h:33{}{}",heights.into_iter().collect::<String>(),"80".repeat(49));let mesh=terrain_mesh(&key).unwrap();
         assert!(mesh.indices.len()<12000);assert!(mesh.positions.iter().flatten().all(|v|v.is_finite()));
         assert!(mesh.positions.iter().zip(&mesh.uvs).filter(|(_,uv)|uv[1]>=0.).all(|(p,_)|p[1]==0.||p[1]==6.));
@@ -208,7 +212,7 @@ mod tests {
         assert_ne!(sample(0),sample(1));assert_ne!(sample(1),sample(2));assert_ne!(sample(0),sample(2));
         for variant in 0..3 {for distance in [0.,0.25,0.5,1.25,1.75,2.,2.5,4.,4.5,6.] {
             for t in [0.,1.] {assert_eq!(rock_module(t,distance,6.,variant),0.);}
-            for t in [0.25,0.5,0.75] {let value=rock_module(t,distance,6.,variant);assert!((0.0..=0.42).contains(&value));if distance.rem_euclid(2.)==0. {assert_eq!(value,0.);}}
+            for t in [0.25,0.5,0.75] {let value=rock_module(t,distance,6.,variant);assert!((0.0..=0.36).contains(&value));if distance.rem_euclid(2.)==0. {assert_eq!(value,0.);}}
         }assert_ne!(rock_module(0.25,0.5,6.,variant),rock_module(0.25,2.5,6.,variant));}
     }
     #[test]
@@ -313,8 +317,8 @@ mod tests {
                 for triangle in mesh.indices.chunks_exact(3) {for i in 0..3 {let a=world[triangle[i] as usize].map(|v|(v*10000.).round() as i32);let b=world[triangle[(i+1)%3] as usize].map(|v|(v*10000.).round() as i32);if a!=b {*edges.entry(if a<b {(a,b)}else{(b,a)}).or_default()+=1;}}}
             }}
             for ((a,b),count) in edges {if count==1 {assert!([a,b].iter().all(|p|p[0].abs()>72500||p[2].abs()>72500),"unclosed interior edge for style {style}, ramp {ramp}, mask {mask}: {a:?} -> {b:?}");}}
-            if mask==4&&ramp<2 {let inset=0.3/2_f32.sqrt()+0.2;assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&p[1]==2.),"convex corner uses the shared curved joint");}
-            if mask==11&&ramp<2 {let inset= -0.3/2_f32.sqrt()+0.2;assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&p[1]==2.),"concave corner uses the shared curved joint");}
+            if mask==4&&ramp<2 {let inset=(if ramp==0 {0.42}else{0.3})/2_f32.sqrt()+0.2;assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&p[1]==2.),"convex corner uses the shared curved joint");}
+            if mask==11&&ramp<2 {let inset= -(if ramp==0 {0.42}else{0.3})/2_f32.sqrt()+0.2;assert!(points.iter().any(|p|(p[0]-inset).abs()<1e-5&&(p[2]-inset).abs()<1e-5&&p[1]==2.),"concave corner uses the shared curved joint");}
         }}}
     }
     #[test]

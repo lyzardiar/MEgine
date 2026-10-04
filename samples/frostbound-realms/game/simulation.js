@@ -162,7 +162,7 @@ var Frost = (() => {
     const joints=new Map(),boundaries=new Map();
     const corner=(x,z,y)=>{
       const key=x+','+z+','+y;if(joints.has(key))return joints.get(key);const high=levels(x,z).map(v=>v>=y-.01),directions=[[-1,-1],[1,-1],[-1,1],[1,1]],offset=[0,0],rays=[];
-      high.forEach((v,k)=>{if(!v){offset[0]-=directions[k][0];offset[1]-=directions[k][1];}});const length=Math.hypot(...offset),p=point(x,y,z);if(length){p[0]+=offset[0]/length*.3;p[2]+=offset[1]/length*.3;}
+      high.forEach((v,k)=>{if(!v){offset[0]-=directions[k][0];offset[1]-=directions[k][1];}});const ramp=[[x,z],[x+1,z],[x,z+1],[x+1,z+1]].some(([cx,cz])=>{const h=at(cx,cz);return h.some(v=>v!==h[0]);}),inset=ramp?.3:.42,length=Math.hypot(...offset),p=point(x,y,z);if(length){p[0]+=offset[0]/length*inset;p[2]+=offset[1]/length*inset;}
       for(const [a,b,ray] of [[0,1,[0,-1]],[1,3,[1,0]],[3,2,[0,1]],[2,0,[-1,0]]])if(high[a]!==high[b])rays.push(ray);
       const result={p,rays:rays.length===2&&Math.abs(rays[0][0]*rays[1][0]+rays[0][1]*rays[1][1])<=.01?rays:[[0,0],[0,0]]};joints.set(key,result);return result;
     };
