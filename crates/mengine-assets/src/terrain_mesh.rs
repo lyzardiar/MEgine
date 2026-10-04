@@ -1,18 +1,25 @@
 // Author: MiYu. Bounded, immutable terrain patches shared by native Scene, Game and Player.
 use crate::MeshData;
 
-// MiYu: each two-unit rock module has one broad slanted face between its crown and foot.
-fn rock_course(distance:f32,height:f32) -> f32 {
-    let band=distance.rem_euclid(2.)*4.;let profile=[0.,0.13,0.24,0.32,0.36,0.34,0.22,0.10,0.];let i=band.floor() as usize;
+// MiYu: two-unit rock courses vary their broad face depth while retaining a shared crown and foot.
+fn rock_course(distance:f32,height:f32,variant:usize) -> f32 {
+    let profiles=[[0.,0.13,0.24,0.32,0.36,0.34,0.22,0.10,0.],[0.,0.22,0.35,0.34,0.28,0.22,0.17,0.08,0.],[0.,0.08,0.14,0.22,0.30,0.35,0.34,0.19,0.]];
+    let band=distance.rem_euclid(2.)*4.;let profile=profiles[variant%3];let i=band.floor() as usize;
     (profile[i]+(profile[i+1]-profile[i])*(band-i as f32))*((height-distance)*4.).clamp(0.,1.)
 }
 
 // MiYu: asymmetric facets vary by world tile and height layer, while every module edge stays welded.
 fn rock_module(t:f32,distance:f32,height:f32,variant:usize) -> f32 {
-    let profiles=[[0.,0.9,1.,0.8,0.],[0.,0.8,0.95,1.,0.],[0.,1.,0.85,0.9,0.]];
+    let profiles=[[0.,0.95,1.,0.65,0.],[0.,0.65,0.85,1.,0.],[0.,1.,0.65,0.9,0.]];
     let layer=(distance.max(0.)/2.).floor() as usize;let band=(t*4.).clamp(0.,4.);let i=(band.floor() as usize).min(3);
     let profile=profiles[(variant+layer)%3];let width=profile[i]+(profile[i+1]-profile[i])*(band-i as f32);
-    width*rock_course(distance,height)
+    width*rock_course(distance,height,(variant+layer)%3)
+}
+
+// MiYu: integer world coordinates select stable facets without a repeating three-tile sequence.
+fn rock_variant(x:i32,z:i32) -> usize {
+    let mut seed=(x as u32).wrapping_mul(73856093)^(z as u32).wrapping_mul(19349663);
+    seed^=seed>>16;seed=seed.wrapping_mul(0x85ebca6b);seed^=seed>>13;(seed%3) as usize
 }
 
 /// Four by four two-unit tiles, centered at the origin. Each tile supplies its four corner
@@ -146,7 +153,7 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
             let nh=&heights[neighbor*4..neighbor*4+4];if h[a]<=nh[na] && h[b]<=nh[nb] { continue; }
             let da=h[a]-nh[na];let db=h[b]-nh[nb];let first=if da<=0. {da/(da-db)}else{0.};let last=if db<=0. {da/(da-db)}else{1.};
             let wx=origin[0]+(vertices[a][0]+vertices[b][0]) as f32-4.;let wz=origin[1]+(vertices[a][1]+vertices[b][1]) as f32-4.;
-            let variant=(wx as i32*17+wz as i32*31).rem_euclid(3) as usize;
+            let variant=rock_variant(wx as i32,wz as i32);
             let side=|t:f32,depth:f32| {
                 let upper=lerp(h[a],h[b],t);let lower=lerp(nh[na],nh[nb],t).min(upper);let y=lerp(upper,lower,depth);
                 let upper_point=boundary(vertices[a],h[a],vertices[b],h[b],t);let px=upper_point[0];let pz=upper_point[2];
@@ -198,12 +205,10 @@ fn rocky_terrain(data: &str,sculpted:bool,water:Option<(&[u8],bool)>) -> Result<
 #[cfg(test)]
 mod tests {
     #[test]
-    fn rock_cliffs_repeat_broad_faces_and_preserve_inner_shelves() {
-        for distance in [0.25,0.5,0.75,1.,1.25,1.5,1.75] {assert!((rock_course(distance,6.)-rock_course(distance+2.,6.)).abs()<1e-6);assert!((rock_course(distance,6.)-rock_course(distance+4.,6.)).abs()<1e-6);}
-        for level in [0.,2.,4.,6.] {assert_eq!(rock_course(level,6.),0.);}
-        for depth in [0.25,0.5,0.75] {assert!(rock_course(depth,6.)<rock_course(depth+0.25,6.));}
-        for depth in [1.,1.25,1.5,1.75] {assert!(rock_course(depth,6.)>rock_course(depth+0.25,6.));}
-        assert_eq!(rock_course(6.,6.),0.);
+    fn rock_cliffs_have_distinct_broad_faces_and_preserve_inner_shelves() {
+        let samples=|variant|[0.25,0.5,0.75,1.,1.25,1.5,1.75].map(|depth|rock_course(depth,6.,variant));
+        assert_ne!(samples(0),samples(1));assert_ne!(samples(1),samples(2));assert_ne!(samples(0),samples(2));
+        for variant in 0..3 {for level in [0.,2.,4.,6.] {assert_eq!(rock_course(level,6.,variant),0.);}}
         let mut heights=vec!['0';144];for i in 0..4 {heights[(2*6+2)*4+i]='6';}let key=format!("terrain4h:33{}{}",heights.into_iter().collect::<String>(),"80".repeat(49));let mesh=terrain_mesh(&key).unwrap();
         assert!(mesh.indices.len()<12000);assert!(mesh.positions.iter().flatten().all(|v|v.is_finite()));
         let tops:Vec<_>=mesh.positions.iter().zip(&mesh.uvs).filter(|(_,uv)|uv[1]>=0.).map(|(p,_)|p).collect();
@@ -219,6 +224,9 @@ mod tests {
             for t in [0.,1.] {assert_eq!(rock_module(t,distance,6.,variant),0.);}
             for t in [0.25,0.5,0.75] {let value=rock_module(t,distance,6.,variant);assert!((0.0..=0.36).contains(&value));if distance.rem_euclid(2.)==0. {assert_eq!(value,0.);}}
         }assert_ne!(rock_module(0.25,0.5,6.,variant),rock_module(0.25,2.5,6.,variant));}
+        let sequence:Vec<_>=(-16..16).map(|x|rock_variant(x*2,7)).collect();
+        assert!((0..3).all(|variant|sequence.contains(&variant)));
+        assert!(sequence.iter().zip(sequence.iter().skip(3)).any(|(a,b)|a!=b),"a straight cliff must not repeat the same three-module sequence");
     }
     #[test]
     fn ramp_cliff_sides_sample_crown_and_foot_at_quarter_unit_heights() {

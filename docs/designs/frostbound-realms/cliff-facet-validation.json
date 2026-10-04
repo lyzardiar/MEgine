@@ -1,0 +1,165 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "9dbf5bb17017ffcfcafa385f46e5d5bb7659c6f3",
+  "protocol": 31,
+  "mapVersion": 1,
+  "geometry": {
+    "horizontalVerticalPairs": 3,
+    "worldCoordinateIntegerSelection": true,
+    "threeTileSequenceRepeats": false,
+    "moduleWidth": 2,
+    "maxLocalRockProjection": 0.36,
+    "sharedCrownFootAndSideEdges": true,
+    "topCornerBoundaryAndFloorRulesUnchanged": true,
+    "samplingTopologyUnchanged": true
+  },
+  "tests": {
+    "terrainPassed": 12,
+    "terrainFailed": 0,
+    "seamConfigurations": 192,
+    "nativeFloorFixtures": 72,
+    "scriptTerrainPassed": true,
+    "scriptBodyClearancePassed": true,
+    "scriptGentleRampsPassed": true
+  },
+  "native": {
+    "beforeRuntimeSha256": "adf42f2cd82de5849ea4a73094429776333825e43bd8fd78a442b382e7ff465f",
+    "beforeEditorSha256": "9bdf75de1de187d36095951c413a4ee5ccbb9d77d896d184a866a3f3e90e2710",
+    "runtimeSha256": "206f96d311f92373052c9c882a9eb46b077201a9ebe2cf681870fd2b0a780295",
+    "editorSha256": "53bb59e2c1b4cbcb61f3fa95e93327dfa17ff3648806cd290f77baed2f8f969e",
+    "matchedInputs": {
+      "Assets/Scripts/Main.js": "0554945b4560b6e69432343f2301d2273c64fd8b053438c7cfa6e121b509f935",
+      "Assets/Scenes/Main.mscene": "d2901d62617feb37644ee280318edcca25c2db19faaae8ebd2583909e6fe7e32",
+      "Assets/Shaders/Ground.mshader": "8a7483333c9d6d3fa2276eb8951d90f1f552a55b23a1a51672c1b7c134a2090c",
+      "Assets/Materials/Ground.mmat": "0eca0e5d3a6fd3ae58312ed000d1257a7273f0d315f6212e1437e4ec951b770d",
+      "ground-sources.json": "b0c4ecb16aac064e467c86be7574d92b1d4e458f2ff2196784e88f5e75fbffd7"
+    },
+    "tileCourses": {
+      "levels": [
+        2,
+        4,
+        6
+      ],
+      "tilesets": 3,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "shaderRejections": 0,
+      "fixtureOnly": true,
+      "groundShaderRevision": null,
+      "groundShaderSha256": "8a7483333c9d6d3fa2276eb8951d90f1f552a55b23a1a51672c1b7c134a2090c",
+      "gentleRampSteps": 6,
+      "descendingRampHeight": 6
+    },
+    "rampModules": {
+      "steps": 6,
+      "ascent": true,
+      "descent": true,
+      "nativeSummitTransform": true
+    },
+    "terrain": {
+      "chunks": 64,
+      "raisedCells": 188,
+      "ramps": 22,
+      "brushUndoSaveLoad": true,
+      "groundUnitClimbed": true,
+      "hero": {
+        "id": 18,
+        "kind": "hero",
+        "team": 0,
+        "x": -5.000000000000002,
+        "z": 6.935400632006681,
+        "hp": 700,
+        "maxHp": 700,
+        "damage": 38,
+        "speed": 4.5,
+        "cd": 0,
+        "order": null,
+        "waypoints": [],
+        "path": [],
+        "pathAt": -100,
+        "built": 1,
+        "queue": [],
+        "level": 1,
+        "xp": 0,
+        "mana": 156.7999999999996,
+        "spell": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "inventory": [],
+        "cargo": 0,
+        "respawn": 0,
+        "heroClass": 0,
+        "skills": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "skillPoints": 1,
+        "itemCooldown": 0,
+        "shield": 0,
+        "slow": 0,
+        "yaw": 1.5761795554599372
+      },
+      "fixture": "Highland Pass with one authored friendly hero for ramp movement; default melee opening is unchanged",
+      "shaderRejections": 0,
+      "profile": {
+        "intervals": 206,
+        "averagePresentIntervalMs": 176.5830097088536,
+        "p95PresentIntervalMs": 316,
+        "presentedFps": 5.663058986528654,
+        "averageRequestMs": 140.06328502369388,
+        "averageRenderMs": 44.967800966183574,
+        "averageCommandMs": 91.5437256038647,
+        "averageUploadMs": 1.705797106747466,
+        "averageSimulationMs": 101.87032270531405,
+        "averageSimulationRequestMs": 146.45169082183193
+      }
+    },
+    "mainEditorProcessId": 84940,
+    "mainEditorBinaryUpdated": false,
+    "physicalInput": false,
+    "audioListening": false
+  },
+  "screenshots": {
+    "cliff-facet-before-tile-courses-winter.png": {
+      "sha256": "8dc2db0fbffbe18136ba410a23a070d3f1ac2774e92beef9c1768e0781359930",
+      "width": 1280,
+      "height": 720
+    },
+    "cliff-facet-after-tile-courses-winter.png": {
+      "sha256": "77db29093bc6d85e2c313fe836e39fb2fecd1a8a88422a638ef8a5bfe67b2db9",
+      "width": 1280,
+      "height": 720
+    },
+    "cliff-facet-after-tile-courses-forest.png": {
+      "sha256": "c5f6a9fcbc930d1e21bbd656861f8e27adf413808cf7669a49c5f798a570ca68",
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "sourceHashes": {
+    "samples/frostbound-realms/game/simulation.js": "c8f913d267f3b9672c3a63b28b519a55d2bcbe309b541607d0b3ff9ef14d7f03",
+    "samples/frostbound-realms/game/terrain.js": "7aab07f49c6cfbe92248ac6428ede87fe13e3dbe3a7b2d85cef18c7fbc50a9c6",
+    "samples/frostbound-realms/game/visuals.js": "185010c3fc87d5eb8a20f2cabb6b28ef34499d13d4c218afb13a87971da42912",
+    "samples/frostbound-realms/game/client.js": "b79d68e4dc910298d6c553b99f39f806dae94f331c115712a9c316914e74717b",
+    "crates/mengine-assets/src/terrain_mesh.rs": "5ae5d74efc276dd6e8883a265d595adca470e888fb0f887a58e40b6bd666df22",
+    "samples/frostbound-realms/Assets/Shaders/Ground.mshader": "8a7483333c9d6d3fa2276eb8951d90f1f552a55b23a1a51672c1b7c134a2090c",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "d7fb0fd0241f55867390699be198291fb7f7b97d2ccd713878cb36060f9cd9c9"
+  },
+  "package": {
+    "contentHash": "c6e0710d6a37f9a0029c82f8fbb5ba38eb4d6665e43dbc13fe808b078f8d1065",
+    "files": 757,
+    "runtimeSha256": "206f96d311f92373052c9c882a9eb46b077201a9ebe2cf681870fd2b0a780295",
+    "smoke": "cliff-facet-player-smoke.json"
+  },
+  "remaining": [
+    "Procedural silhouettes still differ from the complete original cliff module suite",
+    "Original terrain art, vegetation and full game scope remain incomplete",
+    "Physical input, audio, cross-machine LAN and steady Player performance remain unverified"
+  ]
+}

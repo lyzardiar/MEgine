@@ -217,6 +217,8 @@ node scripts/qa-frostbound.mjs
 
 崖壁扫描纹理按世界坐标混合变体，土壤、草地与积雪延续到顶沿，冬季岩石台阶承接积雪。材质通道、实机对照和验证见 [崖壁纹理与顶沿](../../docs/designs/frostbound-realms/cliff-materials.md)。
 
+岩石悬崖按世界坐标和高度层选择三组横纵轮廓，保持共享边界与原有行走顶面。变体、接缝和原生登坡验证见 [岩壁轮廓变体](../../docs/designs/frostbound-realms/cliff-facets.md)。
+
 ### 默认对战开局
 
 Skirmish 开始时为 500 金币、150 木材；Kingdom / Warclan / Wildwood 各有五名闲置工人，Revenant 有三名侍僧、一名食尸鬼及诅咒金矿。主基地提供的人口分别为 12 / 10 / 10 / 10，住房为 6 / 10 / 10 / 10，总上限 100。客户端先选择工人，玩家自行下达采集、建造和祭坛招募命令。AI 会建设祭坛、住房和兵营，安排金矿/伐木并优先招募所选英雄类型。客户端和服务器使用协议 30。实际默认开局及剩余差距见 [开局验证记录](../../docs/designs/frostbound-realms/melee-opening.md)。
