@@ -1,0 +1,42 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 32,
+  "tag": "1791251000101",
+  "scope": "Native Release QuickJS, Agent pointer/keyboard input, all biomes and material parts, pause and saved-game continuation",
+  "physicalInput": false,
+  "audioListening": false,
+  "biomes": [
+    {
+      "tileset": 0,
+      "materialParts": 1,
+      "harvestInput": true,
+      "standingFallingFallenCleared": true,
+      "sharedTransform": true,
+      "pauseFrozen": true,
+      "midFallSaveRestore": false,
+      "shaderRejections": 0
+    },
+    {
+      "tileset": 1,
+      "materialParts": 3,
+      "harvestInput": true,
+      "standingFallingFallenCleared": true,
+      "sharedTransform": true,
+      "pauseFrozen": true,
+      "midFallSaveRestore": true,
+      "shaderRejections": 0
+    },
+    {
+      "tileset": 2,
+      "materialParts": 1,
+      "harvestInput": true,
+      "standingFallingFallenCleared": true,
+      "sharedTransform": true,
+      "pauseFrozen": true,
+      "midFallSaveRestore": false,
+      "shaderRejections": 0
+    }
+  ],
+  "lastCommand": "playback.step"
+}

@@ -38,6 +38,7 @@ import './test-frost-undead-economy.mjs';
 import './test-frost-undead-network.mjs';
 import './test-frost-triggers.mjs';
 import './test-frost-tilesets.mjs';
+import './test-frost-tree-felling.mjs';
 import {createRequire} from 'node:module';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');

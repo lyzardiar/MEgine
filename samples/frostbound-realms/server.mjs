@@ -53,7 +53,7 @@ export function createServer({host='127.0.0.1',port=7788}={}) {
   const interval=setInterval(()=>{
     for(const r of rooms.values()){
       for(const p of [...r.players])if(!p.client&&p.expires<=Date.now()){r.players=r.players.filter(v=>v!==p);if(r.state)r.state.teams[p.team].ai=true;}
-      if(!r.players.length){rooms.delete(r.code);continue;}if(r.phase!=='playing'&&!(r.phase==='finished'&&r.state.corpses.length))continue;
+      if(!r.players.length){rooms.delete(r.code);continue;}if(r.phase!=='playing'&&!(r.phase==='finished'&&(r.state.corpses.length||r.state.resources.some(v=>v.felled?.age<S.TREE_FALL_LIFETIME))))continue;
       for(const q of r.queue){const err=S.command(r.state,q.team,q.command);if(err&&q.client.room===r)fail(q.client,err);}r.queue=[];S.tick(r.state);
       for(const p of r.players)if(p.client)send(p.client,{type:'state',state:view(r,p)});
       if(r.state.winner!==null&&r.phase!=='finished'){r.phase='finished';publish(r);}

@@ -1,0 +1,100 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "fec55aa5a47f97e5b96cfbaad7688ed548cd342b",
+  "protocol": 32,
+  "mapVersion": 1,
+  "lifecycle": {
+    "fallSeconds": 1.5,
+    "sinkStartsAtSeconds": 4,
+    "lifetimeSeconds": 6,
+    "bornFrameYawAndAgeSaved": true,
+    "postVictoryContinuesWithoutBattleTimeAdvance": true,
+    "sharedPivotAndMaterialTransforms": true,
+    "renderFrameInterpolation": true
+  },
+  "tests": {
+    "allThreeBiomesAndFourLumberFactions": true,
+    "clientRenderTimingPauseAndFog": true,
+    "saveReplayLegacyAndInvalidState": true,
+    "realTcpGatherSharedStateMidFallReconnectAndVictory": true,
+    "fullJavaScriptTcp": true,
+    "fullSuitePassLines": 58,
+    "fullSuiteOutputSha256": "e2ebdd4e67249e91a35d135b14eaf75a780dbc8f59c1ce70892bdcb454f1b3a6"
+  },
+  "native": {
+    "tag": "1791251000101",
+    "allBiomes": [
+      {
+        "tileset": 0,
+        "materialParts": 1,
+        "harvestInput": true,
+        "standingFallingFallenCleared": true,
+        "sharedTransform": true,
+        "pauseFrozen": true,
+        "midFallSaveRestore": false,
+        "shaderRejections": 0
+      },
+      {
+        "tileset": 1,
+        "materialParts": 3,
+        "harvestInput": true,
+        "standingFallingFallenCleared": true,
+        "sharedTransform": true,
+        "pauseFrozen": true,
+        "midFallSaveRestore": true,
+        "shaderRejections": 0
+      },
+      {
+        "tileset": 2,
+        "materialParts": 1,
+        "harvestInput": true,
+        "standingFallingFallenCleared": true,
+        "sharedTransform": true,
+        "pauseFrozen": true,
+        "midFallSaveRestore": false,
+        "shaderRejections": 0
+      }
+    ],
+    "productCodeMatchesAfterQaHooksRemoved": true,
+    "assetsMatchProduct": true
+  },
+  "package": {
+    "files": 775,
+    "contentHash": "699b3193b06592cc955446ae64f1413f67f9e4c845ee584c0c0a9ab5e22528f1",
+    "allHashesAndSizesVerified": true,
+    "sourceScriptExact": true,
+    "responsiveStartupSeconds": 30,
+    "loggedErrors": 0
+  },
+  "binaries": {
+    "runtimeSha256": "206f96d311f92373052c9c882a9eb46b077201a9ebe2cf681870fd2b0a780295",
+    "editorSha256": "53bb59e2c1b4cbcb61f3fa95e93327dfa17ff3648806cd290f77baed2f8f969e",
+    "rebuilt": false
+  },
+  "sourceHashes": {
+    "samples/frostbound-realms/game/simulation.js": "b1179a5e13ee89c0a4d0c79e4fb211f8b8149e091d4d33418b80f8f89a1269c8",
+    "samples/frostbound-realms/game/client.js": "ffc5f089a2a41348afc6e64bba440d90f1faf5cdca50b56017edc04239761d77",
+    "samples/frostbound-realms/game/visuals.js": "127dc2cd5e65299f271a83be8d387b1bd8e8cf952dbc67deb461bd0066a00a10",
+    "samples/frostbound-realms/server.mjs": "a31ff3721d5ec3b1ca3d5fd67179f94d3fc608224c334b60bfc650394f994427",
+    "scripts/test-frostbound.mjs": "9001290e96ae9b682892967e658d6b535642dcb81939280edfee2f853da51c8b",
+    "scripts/test-frost-tree-felling.mjs": "bfadd6e976eb5721ccb0b699882f9858151df3bdc74372e03d7aad37bbb2657e",
+    "scripts/test-frost-tree-felling-client.mjs": "a733040c06e668d1beab4f48963b777d7fa0d00c3f898b783ec59c4043d39790",
+    "scripts/qa-frost-tree-felling.mjs": "d529f2d9a1ffd5d49f7b371ab5497ffc1a592d7cbd81c9b7475161387cbe4be7",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "0f20d2dac100b54c2140616dc55d5ab64a50a6974b0311225652cb0171285d0b"
+  },
+  "screenshots": [
+    "tree-felling-forest-standing.png",
+    "tree-felling-forest-falling.png",
+    "tree-felling-forest-fallen.png"
+  ],
+  "limitations": {
+    "fullWarcraftRecreation": false,
+    "treeTerrainContactAndBranchDeformation": false,
+    "windAndStumps": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformance": false
+  }
+}
