@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "ground": {
+    "chunks": 64,
+    "shaderRejections": 0,
+    "editorRendered": true,
+    "zoom": 12,
+    "profiler": {
+      "intervals": 20,
+      "averagePresentIntervalMs": 57.90500000119209,
+      "p95PresentIntervalMs": 66.70000004768372,
+      "presentedFps": 17.26966583161062,
+      "averageRequestMs": 56.26666666212536,
+      "averageRenderMs": 28.792299999999994,
+      "averageCommandMs": 38.5798619047619,
+      "averageUploadMs": 1.5952380952380953,
+      "averageSimulationMs": 26.974866666666667,
+      "averageSimulationRequestMs": 53.70476190816788
+    }
+  },
+  "rampModules": {
+    "steps": 6,
+    "ascent": true,
+    "descent": true,
+    "nativeSummitTransform": true
+  },
+  "tileCourses": {
+    "levels": [
+      2,
+      4,
+      6
+    ],
+    "tilesets": 3,
+    "mapSaveLoad": true,
+    "playtest": true,
+    "shaderRejections": 0,
+    "fixtureOnly": true,
+    "groundShaderRevision": null,
+    "groundShaderSha256": "8a7483333c9d6d3fa2276eb8951d90f1f552a55b23a1a51672c1b7c134a2090c",
+    "gentleRampSteps": 6,
+    "descendingRampHeight": 6
+  }
+}

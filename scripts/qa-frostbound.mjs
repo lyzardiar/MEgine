@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {fork} from 'node:child_process';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
@@ -18,6 +19,8 @@ if(process.argv.includes('--peer')){
 }else{
   fs.mkdirSync(out,{recursive:true});const peers=[],tag=Number(process.env.MENGINE_QA_TAG)||Date.now(),app=createServer({port:['--hud-only','--sculpt-only','--ground-only'].some(flag=>process.argv.includes(flag))?0:7788});await app.listening;
   const sample=path.join(process.env.MENGINE_QA_ROOT||path.join(repo,'tmp'),'frost-qa-'+tag,'sample');fs.cpSync(source,sample,{recursive:true,filter:p=>!['SourceAssets','Builds'].includes(path.basename(p))});const project=JSON.parse(fs.readFileSync(path.join(sample,'project.json')));project.storageId='frost-qa-'+tag;fs.writeFileSync(path.join(sample,'project.json'),JSON.stringify(project));
+  const groundShaderRevision=process.env.MENGINE_QA_GROUND_SHADER_REV||null;
+  if(groundShaderRevision)fs.writeFileSync(path.join(sample,'Assets/Shaders/Ground.mshader'),execFileSync('git',['show',groundShaderRevision+':samples/frostbound-realms/Assets/Shaders/Ground.mshader'],{cwd:repo}));
   if(process.argv.includes('--tile-baseline')){const revision=process.env.MENGINE_QA_BASE_REV||'6f3c306',read=file=>execFileSync('git',['show',revision+':samples/frostbound-realms/'+file],{cwd:repo}).toString(),file=path.join(sample,'Assets/Scripts/Main.js'),prefix=fs.readFileSync(file,'utf8').split('\n').slice(0,4).join('\n');fs.writeFileSync(path.join(sample,'Assets/Shaders/Ground.mshader'),read('Assets/Shaders/Ground.mshader'));fs.writeFileSync(file,prefix+'\n'+['simulation','terrain','visuals','client'].map(name=>read('game/'+name+'.js')).join('\n'));}
   if(process.argv.includes('--cover-baseline')){const revision=process.env.MENGINE_QA_BASE_REV||'8c81b88',file=path.join(sample,'Assets/Scripts/Main.js'),prefix=fs.readFileSync(file,'utf8').split('\n').slice(0,4).join('\n');fs.writeFileSync(file,prefix+'\n'+['simulation','terrain','visuals','client'].map(name=>execFileSync('git',['show',revision+':samples/frostbound-realms/game/'+name+'.js'],{cwd:repo}).toString()).join('\n'));}
   const terrainShadows=process.argv.includes('--terrain-shadows'),shadowBaseline=process.argv.includes('--shadow-baseline');
@@ -353,7 +356,7 @@ return map;};`);
           const raised=await a.query('scene.snapshot');assert.ok(raised.entities.some(e=>e.active!==false&&/^Unit /.test(e.name||'')&&e.components.MeshRenderer&&Math.abs(e.components.Transform.position[0]+13)<.3&&e.components.Transform.position[1]>5.9&&Math.abs(e.components.Transform.position[2]-7)<.3),'native unit transform reaches the six-unit summit');await capture(a,'ramp-modules-ascent');
           await arrive(foot);assert.ok((await state(a)).heroElevation<.1);await capture(a,'ramp-modules-descent');report.rampModules={steps:6,ascent:true,descent:true,nativeSummitTransform:true};
         }
-        report.tileCourses={levels:[2,4,6],tilesets:3,mapSaveLoad:true,playtest:true,shaderRejections:0,fixtureOnly:true,...(rampModules?{gentleRampSteps:6,descendingRampHeight:6}: {})};fs.writeFileSync(path.join(out,(process.env.MENGINE_QA_CAPTURE_PREFIX||'')+'native-tile-courses-qa.json'),JSON.stringify({...report,passed:true},null,2)+'\n');
+        report.tileCourses={levels:[2,4,6],tilesets:3,mapSaveLoad:true,playtest:true,shaderRejections:0,fixtureOnly:true,groundShaderRevision,groundShaderSha256:createHash('sha256').update(fs.readFileSync(path.join(sample,'Assets/Shaders/Ground.mshader'))).digest('hex'),...(rampModules?{gentleRampSteps:6,descendingRampHeight:6}: {})};fs.writeFileSync(path.join(out,(process.env.MENGINE_QA_CAPTURE_PREFIX||'')+'native-tile-courses-qa.json'),JSON.stringify({...report,passed:true},null,2)+'\n');
       }
 
       if(ridgeOnly){

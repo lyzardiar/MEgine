@@ -64,6 +64,13 @@ fn frost_cliff_nrh(uv: vec2<f32>, layer: f32) -> vec4<f32> {
     let scale=vec2<f32>(1024.0/3096.0,1024.0/1032.0);
     return textureSampleGrad(metallic_roughness_texture,material_sampler,frost_cliff_uv(uv,layer),dpdx(uv)*scale,dpdy(uv)*scale);
 }
+struct FrostCliff { color: vec3<f32>, nrh: vec4<f32> }
+// MiYu: translated scans share one height-aware weight in world space, including adjacent cliff chunks.
+fn frost_cliff(uv: vec2<f32>, layer: f32) -> FrostCliff {
+    let offset=vec2<f32>(0.37,0.61);let first=frost_cliff_nrh(uv,layer);let second=frost_cliff_nrh(uv+offset,layer);
+    let weight=frost_tile_weight(frost_noise(uv*0.73+vec2<f32>(17.0,9.0)),first,second);
+    return FrostCliff(mix(frost_cliff_color(uv,layer),frost_cliff_color(uv+offset,layer),weight),mix(first,second,weight));
+}
 fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
     var s=surface;let p=world_position.xz;let geometric=normalize(surface.normal);let tileset=clamp(floor(mengine_param_tileset().x),0.0,2.0);
     let cliff_style=clamp(floor(uv.x/2.0),0.0,2.0);let contact=clamp(uv.x-cliff_style*2.0,0.0,1.0);
@@ -129,13 +136,13 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let side_x=vec2<f32>(p.y,-world_position.y)*mapping.xy;let side_z=vec2<f32>(p.x,-world_position.y)*mapping.xy;
     let side_weight=abs(geometric.x)/max(abs(geometric.x)+abs(geometric.z),0.0001);
     // MiYu: cliff color and linear NRH reuse the standard color/MR bindings; this hook supplies all final PBR channels.
-    let side_nx=frost_cliff_nrh(side_x,cliff_style);let side_nz=frost_cliff_nrh(side_z,cliff_style);
-    let side_color=mix(frost_cliff_color(side_z,cliff_style),frost_cliff_color(side_x,cliff_style),side_weight);
+    let scan_x=frost_cliff(side_x,cliff_style);let scan_z=frost_cliff(side_z,cliff_style);
+    let side_nx=scan_x.nrh;let side_nz=scan_z.nrh;let side_color=mix(scan_z.color,scan_x.color,side_weight);
     let side_normal=normalize(mix(frost_bump(side_nz,geometric,vec3<f32>(1,0,0),vec3<f32>(0,-1,0),mapping.z),frost_bump(side_nx,geometric,vec3<f32>(0,0,1),vec3<f32>(0,-1,0),mapping.z),side_weight));
     // MiYu: the same scanned rock wraps over exposed crowns and breaks through the soil on ramps.
     let crown_uv=p*mapping.xy;
-    let crown_nrh=frost_cliff_nrh(crown_uv,cliff_style);
-    let crown_color=frost_cliff_color(crown_uv,cliff_style)*vec3<f32>(0.78,0.82,0.86);
+    let crown=frost_cliff(crown_uv,cliff_style);let crown_nrh=crown.nrh;
+    let crown_color=crown.color*vec3<f32>(0.78,0.82,0.86);
     let outcrop=smoothstep(0.12,0.72,rim+slope*0.35+(crown_nrh.a-soil_nrh.a)*0.18)*(1.0-snow_cover)*(1.0-road*0.8)*(1.0-wet);
     s.base_color=mix(s.base_color,crown_color,outcrop);
     s.normal=normalize(mix(s.normal,frost_bump(crown_nrh,geometric,vec3<f32>(1,0,0),vec3<f32>(0,0,1),mapping.z),outcrop));
@@ -143,15 +150,22 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     // MiYu: mesh UVs carry cliff depth; exposed shelves keep a soil cap and shaded rock foot.
     let cap=1.0-smoothstep(0.02,0.20,wall_depth+(side_nz.a-0.5)*0.10);
     let foot=mix(1.0,0.67,smoothstep(0.55,1.0,contact));
-    let cap_color=mix(mix(crown_color,litter*soil_tint,0.25+medium*0.2),snow_color,snow_cover*(1.0-smoothstep(0.0,0.08,wall_depth)));
+    // MiYu: the shelf's painted ground continues over the lip; winter snow settles on upward rock ledges.
+    let cap_ground=mix(litter*soil_tint*damp,grass,grass_cover);let cap_snow=smoothstep(0.4,0.7,cover)*(1.0-smoothstep(0.02,0.20,wall_depth));
+    let cap_color=mix(mix(crown_color,cap_ground,0.65+medium*0.15),snow_color,cap_snow);
     // MiYu: broad rock faces retain soil crowns and subtle shading at each two-unit joint.
     let course=fract(wall_depth*0.5);let rock_course=select(0.0,1.0,cliff_style==0.0);
     let ledge=rock_course*smoothstep(0.25,0.7,geometric.y)*(1.0-smoothstep(0.05,0.45,course));
     let strata=1.0-rock_course*0.08*(1.0-smoothstep(0.0,0.12,course));
-    let cliff_color=mix(side_color*vec3<f32>(0.78,0.82,0.86)*strata,cap_color,max(cap,ledge))*foot;
+    let ledge_snow=smoothstep(0.4,0.7,cover)*smoothstep(0.30,0.72,geometric.y)*(1.0-smoothstep(0.02,0.22,course))*rock_course;
+    let cap_weight=max(cap,ledge);let cliff_color=mix(mix(side_color*vec3<f32>(0.78,0.82,0.86)*strata,cap_color,cap_weight),snow_color,ledge_snow)*foot;
     s.base_color=mix(s.base_color,cliff_color,cliff);
     s.base_color*=1.0-0.3*contact*shelf;
-    s.normal=normalize(mix(s.normal,side_normal,cliff));s.roughness=mix(s.roughness,mix(side_nz.b,side_nx.b,side_weight),cliff);
+    let cap_nrh=mix(packed,snow_nrh,max(cap_snow,ledge_snow));
+    let cap_normal=frost_bump(cap_nrh,geometric,vec3<f32>(1,0,0),vec3<f32>(0,0,1),0.38);
+    let cliff_normal=normalize(mix(side_normal,cap_normal,max(cap_weight*0.6,ledge_snow)));
+    let cliff_roughness=mix(mix(side_nz.b,side_nx.b,side_weight),cap_nrh.b,max(cap_weight,ledge_snow));
+    s.normal=normalize(mix(s.normal,cliff_normal,cliff));s.roughness=mix(s.roughness,cliff_roughness,cliff);
     // MiYu: opaque beds sit below a separate alpha water layer; land cliffs retain their geometry.
     let layer=mengine_param_water_layer().x;
     let shoreline=frost_ground(p+drift*0.55).materials.x;

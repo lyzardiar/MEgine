@@ -1,0 +1,137 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "e8bb597b3cae630cce3ebcd5d5c4f631205297ae",
+  "protocol": 31,
+  "mapVersion": 1,
+  "shader": {
+    "beforeSha256": "f88d0d738b3abdd73b3c17bd7d72c73a1b4c9cd6069ed68378436e79c890692c",
+    "afterSha256": "8a7483333c9d6d3fa2276eb8951d90f1f552a55b23a1a51672c1b7c134a2090c",
+    "scans": "Two translated samples with one continuous world-space height-aware weight for color and linear NRH",
+    "cap": "Authored ground cover and winter snow extend over cliff lips; upward rock ledges receive snow"
+  },
+  "checks": {
+    "shaderBackendPassed": 4,
+    "shaderTestPassed": 1,
+    "shaderTestFailed": 0,
+    "sourceHashesPassed": 25,
+    "packedOutputsPassed": 11,
+    "terrainAndRulesUnchanged": true
+  },
+  "native": {
+    "tileCourses": {
+      "levels": [
+        2,
+        4,
+        6
+      ],
+      "tilesets": 3,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "shaderRejections": 0,
+      "fixtureOnly": true,
+      "groundShaderRevision": null,
+      "groundShaderSha256": "8a7483333c9d6d3fa2276eb8951d90f1f552a55b23a1a51672c1b7c134a2090c",
+      "gentleRampSteps": 6,
+      "descendingRampHeight": 6
+    },
+    "rampModules": {
+      "steps": 6,
+      "ascent": true,
+      "descent": true,
+      "nativeSummitTransform": true
+    },
+    "cliffStyles": {
+      "styles": [
+        "rock",
+        "ice",
+        "masonry"
+      ],
+      "chunks": 64,
+      "sameTopSurface": true,
+      "distinctCliffGeometry": true,
+      "editorSelection": true,
+      "undo": true,
+      "mapSaveLoad": true,
+      "playtest": true,
+      "gameSaveRestore": true,
+      "shaderRejections": 0
+    },
+    "cliffStylesInputShader": {
+      "path": "D:/MEngineNativeQA/frost-qa-1791165600202/sample/Assets/Shaders/Ground.mshader",
+      "sha256": "8a7483333c9d6d3fa2276eb8951d90f1f552a55b23a1a51672c1b7c134a2090c"
+    },
+    "physicalInput": false,
+    "audioListening": false
+  },
+  "player": {
+    "scope": "Standalone native Player frame-loop intervals from onTick dt; successful render logs checked, physical display presentation is not measured.",
+    "viewport": [
+      2560,
+      1440
+    ],
+    "warmupSeconds": 5,
+    "windows": 3,
+    "windowSeconds": 5,
+    "beforeMedianFps": 24.21194257078316,
+    "afterMedianFps": 24.63921671155992,
+    "beforeP95Ms": [
+      75.61860233545303,
+      153.10899913311005,
+      122.2703978419304
+    ],
+    "afterP95Ms": [
+      67.15289503335953,
+      146.9099074602127,
+      133.3961933851242
+    ],
+    "sameRuntimeSceneScriptAndScanAssets": true,
+    "runtimeSha256": "adf42f2cd82de5849ea4a73094429776333825e43bd8fd78a442b382e7ff465f"
+  },
+  "screenshots": {
+    "cliff-material-before-tile-courses-forest.png": {
+      "sha256": "26b5232bd42b3cb6ce242811d69ee30b6c92dd44f9e72d257ce4a17fc0e8741a",
+      "width": 1280,
+      "height": 720
+    },
+    "cliff-material-after-tile-courses-forest.png": {
+      "sha256": "6f3234c5e499a02d1c3010f6831aad97f122f99f643560a95efda929960a0b1d",
+      "width": 1280,
+      "height": 720
+    },
+    "cliff-material-before-tile-courses-winter.png": {
+      "sha256": "6060bfcc248342826235f25c14a53319a1ee9772cc71eb4fcc18a0b49c9877e9",
+      "width": 1280,
+      "height": 720
+    },
+    "cliff-material-after-tile-courses-winter.png": {
+      "sha256": "dc712494babcf1db2585984c9ccb93da07c6770ed298176cd0ba5d17e040e1d3",
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "unchangedGameplayHashes": {
+    "samples/frostbound-realms/game/simulation.js": "c8f913d267f3b9672c3a63b28b519a55d2bcbe309b541607d0b3ff9ef14d7f03",
+    "samples/frostbound-realms/game/terrain.js": "7aab07f49c6cfbe92248ac6428ede87fe13e3dbe3a7b2d85cef18c7fbc50a9c6",
+    "samples/frostbound-realms/game/visuals.js": "185010c3fc87d5eb8a20f2cabb6b28ef34499d13d4c218afb13a87971da42912",
+    "samples/frostbound-realms/game/client.js": "b79d68e4dc910298d6c553b99f39f806dae94f331c115712a9c316914e74717b"
+  },
+  "sourceHashes": {
+    "samples/frostbound-realms/Assets/Shaders/Ground.mshader": "8a7483333c9d6d3fa2276eb8951d90f1f552a55b23a1a51672c1b7c134a2090c",
+    "scripts/qa-frostbound.mjs": "dd820225bfb68e4b8d922d5567801a46fd56fa5dea2ee37b6a6f7ae038d32f90",
+    "scripts/qa-frost-player.mjs": "c0e56792e5f31e77c5412539d67838558ed0d00bc2405977347345267a155595",
+    "samples/frostbound-realms/ground-sources.json": "b0c4ecb16aac064e467c86be7574d92b1d4e458f2ff2196784e88f5e75fbffd7"
+  },
+  "package": {
+    "contentHash": "9a5e8b96994aba2beec20539f59ff5dbb64eb8594c1f99a4ab66d7551ed7ea72",
+    "files": 757,
+    "runtimeSha256": "adf42f2cd82de5849ea4a73094429776333825e43bd8fd78a442b382e7ff465f",
+    "smoke": "cliff-material-player-smoke.json"
+  },
+  "remaining": [
+    "Repeated geometric cliff silhouettes remain",
+    "Original terrain modules and vegetation fidelity remain incomplete",
+    "Short frame-loop samples do not establish physical presentation or sustained 60 FPS",
+    "Full Warcraft III game scope, physical input, audio and cross-machine LAN remain unaccepted"
+  ]
+}
