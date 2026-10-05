@@ -17,7 +17,9 @@
 - 物品、施法、商店客户端、投射物及伐木客户端回归通过。
 - `test-frost-effects-import.py`：独立输出字节一致，拒绝覆盖手工修改且拒绝后不改变任何输出。
 - `native-status-effects-play.json`：原生 `EditorPlayRuntime` 的 QuickJS 执行完整游戏脚本，注入 F1 后推进 18 帧；共享 Game View GPU 渲染器绘制 30 个原版特效实体，拒绝材质管线数为 0。画面见 `classic-status-native-play.png`。
-- `native-status-effects-qa.json`：Tauri 编辑器桥接验收失败，查询超时。生产协议编辑器可加载页面，页面诊断还记录了 Native Scene View shared-frame 超时。该记录保留为失败，不能作为编辑器交互或原生双窗口联机通过的证据。
+- `native-status-effects-qa.json`：生产协议 Tauri 编辑器通过首次工程打开、单机 30 个原版特效、游戏暂停、真实 TCP 双客户端和断线重连检查。两端均有 30 个活动特效，材质管线拒绝数为 0。画面见 `classic-status-battlefield.png` 与 `classic-status-network.png`；后者为客机当前视角。
+
+首次资源扫描在后台工作线程创建并同步 GUID sidecar，保持界面与原生 IPC 可响应。资产分类、GUID 稳定性、无效与重复元数据检查通过。原生 QA 等待按下和松开输入各自经过运行时帧，再执行下一次操作；暂停比较以游戏实际报告已暂停为起点。相关检查记录见 `asset-discovery-qa.md`。
 
 原生脚本与 GPU 验证、TCP 验证和 Tauri 验证分别记录。物理鼠标、音频以及完整 Warcraft III 游戏仍未验收完成。
 
@@ -31,6 +33,8 @@ node scripts/test-frost-effects-network.mjs
 python scripts/test-frost-effects-import.py --sampler tmp/warcraft-converter/4fe46a0772520fc7b55078bf32cda1237d1b5f2e/bin/MdxExport.dll
 node scripts/qa-frost-effects.mjs --prepare-only
 node scripts/render-frost-effects-play.mjs
+$env:MENGINE_EDITOR_EXECUTABLE='<当前生产协议编辑器 exe 的完整路径>'
+node scripts/qa-frost-effects.mjs
 ```
 
 原生预览工具通过 `cargo build --release -p mengine-editor-host --example render_asset_preview` 构建，支持 `--play-frames N` 执行固定帧数的原生游戏脚本。生产版 Tauri 需先构建 `packages/editor` 前端，再使用 `cargo build --release -p mengine-editor-tauri --features tauri/custom-protocol`，并将当前二进制路径传给 QA。已安装的编辑器程序没有替换。

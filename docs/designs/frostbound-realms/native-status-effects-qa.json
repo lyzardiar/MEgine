@@ -1,7 +1,141 @@
 {
   "method": "Native editor Game View, Agent input and real TCP server",
-  "sample": "D:\\MEngineNativeQA\\status-effects-1791236295363\\sample",
-  "editorSha256": "f56185ce841b0704e32a4901fd2f859a544e12c469199b2cbef7ebb8774f26eb",
-  "passed": false,
-  "error": "Error: BridgeConnectionError: Editor bridge request timed out (query)\n    at Timeout.<anonymous> (file:///C:/Users/admin/.codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:540:14)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)\n    at ChildProcess.<anonymous> (file:///C:/Users/admin/.codex/worktrees/1339/MEgine/scripts/qa-frost-effects.mjs:30:179)\n    at ChildProcess.emit (node:events:509:28)\n    at emit (node:internal/child_process:972:14)\n    at process.processTicksAndRejections (node:internal/process/task_queues:91:21)"
+  "sample": "D:\\MEngineNativeQA\\status-effects-1791241520273\\sample",
+  "editorSha256": "d6a0d4044fae4a6f2aebf5777a172e0d6cbd01324cd5ac19d3da7e7d2e5c3296",
+  "passed": true,
+  "solo": {
+    "active": 30,
+    "sources": [
+      "Assets/WarcraftIII/Effects/remaining-ready/Environment/LargeBuildingFire/LargeBuildingFire0.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Environment/LargeBuildingFire/LargeBuildingFire1.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Environment/LargeBuildingFire/LargeBuildingFire2.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/Rejuvenation/RejuvenationTarget.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfLargeBuildingFire0.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfLargeBuildingFire1.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfLargeBuildingFire2.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadLargeBuildingFire0.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadLargeBuildingFire1.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadLargeBuildingFire2.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/HealingSalve/HealingSalveTarget.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/ClarityPotion/ClarityTarget.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/StaffOfSanctuary/Staff_Sanctuary_Target.mfx",
+      "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/Cripple/CrippleTarget.mfx"
+    ]
+  },
+  "gamePause": true,
+  "network": {
+    "hostActive": 30,
+    "guestActive": 30
+  },
+  "reconnect": true,
+  "peer0": {
+    "counts": {
+      "entities": 14764,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 5,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 22,
+      "materialTexturesColor": 27,
+      "materialTexturesData": 5,
+      "msaaSamples": 4,
+      "renderObjects": 281,
+      "sceneViews": 1,
+      "uiBatches": 241,
+      "uiDrawCalls": 241,
+      "uiPrimitives": 1044
+    },
+    "logs": [
+      {
+        "level": "info",
+        "message": "MEngine Editor",
+        "source": "editor",
+        "time": 1791241526044
+      },
+      {
+        "level": "info",
+        "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
+        "source": "editor",
+        "time": 1791241526044
+      },
+      {
+        "level": "info",
+        "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
+        "source": "editor",
+        "time": 1791241526044
+      },
+      {
+        "level": "info",
+        "message": "场景存储：磁盘 project/Assets/Scenes",
+        "time": 1791241539224
+      },
+      {
+        "level": "info",
+        "message": "已恢复场景 Main.mscene",
+        "time": 1791241539559
+      },
+      {
+        "level": "info",
+        "message": "Agent set Game View resolution to 1280 x 720",
+        "time": 1791241546642
+      }
+    ]
+  },
+  "peer1": {
+    "counts": {
+      "entities": 14764,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 5,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 22,
+      "materialTexturesColor": 27,
+      "materialTexturesData": 5,
+      "msaaSamples": 4,
+      "renderObjects": 293,
+      "sceneViews": 1,
+      "uiBatches": 302,
+      "uiDrawCalls": 302,
+      "uiPrimitives": 1156
+    },
+    "logs": [
+      {
+        "level": "info",
+        "message": "MEngine Editor",
+        "source": "editor",
+        "time": 1791241610937
+      },
+      {
+        "level": "info",
+        "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
+        "source": "editor",
+        "time": 1791241610937
+      },
+      {
+        "level": "info",
+        "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
+        "source": "editor",
+        "time": 1791241610937
+      },
+      {
+        "level": "info",
+        "message": "场景存储：磁盘 project/Assets/Scenes",
+        "time": 1791241613600
+      },
+      {
+        "level": "info",
+        "message": "已恢复场景 Main.mscene",
+        "time": 1791241614002
+      },
+      {
+        "level": "info",
+        "message": "Agent set Game View resolution to 1280 x 720",
+        "time": 1791241620025
+      }
+    ]
+  }
 }

@@ -5920,21 +5920,27 @@ fn restore_project_asset(
 }
 
 #[tauri::command]
-fn list_project_assets(state: State<'_, AppState>) -> Result<Vec<ProjectAssetInfo>, String> {
+async fn list_project_assets(state: State<'_, AppState>) -> Result<Vec<ProjectAssetInfo>, String> {
     let project_root = state
         .project
         .lock()
         .as_ref()
         .map(|session| session.snapshot().project_root)
         .ok_or_else(|| no_project().message)?;
-    let root = Path::new(&project_root)
-        .canonicalize()
-        .map_err(|error| error.to_string())?;
-    let mut assets = Vec::new();
-    collect_project_assets(&root, &root.join("Assets"), &mut assets);
-    mark_duplicate_project_asset_guids(&mut assets);
-    assets.sort_by(|left, right| left.rel_path.cmp(&right.rel_path));
-    Ok(assets)
+    // Discovery may create and sync thousands of GUID sidecars on first open.
+    // Keep that disk work off the WebView thread so other IPC remains responsive.
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = Path::new(&project_root)
+            .canonicalize()
+            .map_err(|error| error.to_string())?;
+        let mut assets = Vec::new();
+        collect_project_assets(&root, &root.join("Assets"), &mut assets);
+        mark_duplicate_project_asset_guids(&mut assets);
+        assets.sort_by(|left, right| left.rel_path.cmp(&right.rel_path));
+        Ok(assets)
+    })
+    .await
+    .map_err(|error| format!("Asset discovery worker failed: {error}"))?
 }
 
 #[tauri::command]
