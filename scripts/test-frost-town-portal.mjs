@@ -41,7 +41,7 @@ function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0
 }
 {
  const {s,base,hero,use}=arena();assert.equal(use(),null);step(s,15);assert.equal(S.command(s,0,{type:'stop',ids:[hero.id]}),null);step(s,40);assert.equal(hero.order,null);assert.deepEqual(hero.inventory,[]);assert.ok(S.distance(hero,base)>20,'cancel spends the scroll');
- const second=S.spawn(s,'hall',0,-24,-20,{damage:0});hero.inventory=[8];assert.equal(use(),null);base.hp=0;step(s,1);assert.equal(hero.order,null);assert.match(s.announcements[0],/destroyed/);assert.ok(S.restore(s));assert.equal(second.hp,second.maxHp);
+ const second=S.spawn(s,'hall',0,-24,-20,{damage:0});hero.inventory=[8];assert.equal(use(),null);base.hp=0;step(s,1);assert.equal(hero.order,null);assert.match(s.announcements[0],/unavailable/);assert.ok(S.restore(s));assert.equal(second.hp,second.maxHp);
 }
 {
  const {s,hero,use}=arena();assert.equal(use(),null);for(const patch of [{target:9999},{target:s.units.find(u=>u.team===1).id},{left:6},{left:0},{x:31},{x:0,z:0}]){const bad=S.clone(s);Object.assign(bad.units.find(u=>u.id===hero.id).order,patch);assert.throws(()=>S.restore(bad),/Town Portal/);}

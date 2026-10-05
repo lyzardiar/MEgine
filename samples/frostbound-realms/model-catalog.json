@@ -5260,5 +5260,164 @@
       "Assets/Models/AigeiSkullPile-warcraft.glb",
       "Assets/Models/AigeiSkullPile-warcraft.glb"
     ]
+  },
+  "WildwoodHallUprooted": {
+    "material": "Assets/Materials/RealWildwood.mmat",
+    "parts": [
+      {
+        "name": "WildwoodHallUprooted",
+        "mesh": "Assets/Models/WildwoodHallUprooted.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.5,
+      7.0,
+      3.35
+    ],
+    "factionBuilding": true,
+    "realistic": true,
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 20
+      },
+      {
+        "name": "Attack",
+        "frames": 12
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Idle",
+        "frames": 18
+      },
+      {
+        "name": "Uproot",
+        "frames": 30
+      },
+      {
+        "name": "Root",
+        "frames": 30
+      },
+      {
+        "name": "EatTree",
+        "frames": 10
+      }
+    ],
+    "attackEvent": 0.5,
+    "ancientForm": true
+  },
+  "WildwoodHall2Uprooted": {
+    "material": "Assets/Materials/RealWildwood.mmat",
+    "parts": [
+      {
+        "name": "WildwoodHall2Uprooted",
+        "mesh": "Assets/Models/WildwoodHall2Uprooted.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.5,
+      7.0,
+      3.45
+    ],
+    "factionBuilding": true,
+    "realistic": true,
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 20
+      },
+      {
+        "name": "Attack",
+        "frames": 12
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Idle",
+        "frames": 18
+      },
+      {
+        "name": "Uproot",
+        "frames": 30
+      },
+      {
+        "name": "Root",
+        "frames": 30
+      },
+      {
+        "name": "EatTree",
+        "frames": 10
+      }
+    ],
+    "attackEvent": 0.5,
+    "ancientForm": true
+  },
+  "WildwoodHall3Uprooted": {
+    "material": "Assets/Materials/RealWildwood.mmat",
+    "parts": [
+      {
+        "name": "WildwoodHall3Uprooted",
+        "mesh": "Assets/Models/WildwoodHall3Uprooted.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      7.0,
+      3.65
+    ],
+    "factionBuilding": true,
+    "realistic": true,
+    "animations": [
+      {
+        "name": "Death",
+        "frames": 20
+      },
+      {
+        "name": "Attack",
+        "frames": 12
+      },
+      {
+        "name": "Walk",
+        "frames": 20
+      },
+      {
+        "name": "Idle",
+        "frames": 18
+      },
+      {
+        "name": "Uproot",
+        "frames": 30
+      },
+      {
+        "name": "Root",
+        "frames": 30
+      },
+      {
+        "name": "EatTree",
+        "frames": 10
+      }
+    ],
+    "attackEvent": 0.5,
+    "ancientForm": true
   }
 }

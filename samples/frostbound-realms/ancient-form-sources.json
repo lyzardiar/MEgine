@@ -1,0 +1,164 @@
+{
+  "author": "MiYu",
+  "generator": "scripts/import-frost-ancient-forms.py",
+  "attributionManifests": [
+    "treant-sources.json",
+    "wildwood-sources.json"
+  ],
+  "licenses": [
+    "CC-BY-3.0",
+    "CC0-1.0"
+  ],
+  "sources": [
+    {
+      "file": "Assets/Models/RealTreant.glb",
+      "sha256": "65267ef386332de25244e1e09158dcdc29c4ef80af8e141c0ca7c9e11e97c1ff"
+    },
+    {
+      "file": "Assets/Models/RealWildwoodHall.glb",
+      "sha256": "af2bf0e04f92ca76a5933a0504e8e240af7af6646359c99b64d4b9469755ce3f"
+    },
+    {
+      "file": "Assets/Models/RealWildwoodHall2.glb",
+      "sha256": "24fb82525c2023c83128e57e50df8ef1e7a565ad6df564bef748c1d17f1fc7a8"
+    },
+    {
+      "file": "Assets/Models/RealWildwoodHall3.glb",
+      "sha256": "3a20c8fc6eba20389bb4765e9c1c58305ba31310dfb77cd898f049c6b39c71f0"
+    }
+  ],
+  "models": {
+    "WildwoodHallUprooted": {
+      "tier": 1,
+      "bones": 15,
+      "skinJoints": 15,
+      "vertices": 27843,
+      "triangles": 30168,
+      "clips": [
+        {
+          "name": "Death",
+          "frames": 20
+        },
+        {
+          "name": "Attack",
+          "frames": 12
+        },
+        {
+          "name": "Walk",
+          "frames": 20
+        },
+        {
+          "name": "Idle",
+          "frames": 18
+        },
+        {
+          "name": "Uproot",
+          "frames": 30
+        },
+        {
+          "name": "Root",
+          "frames": 30
+        },
+        {
+          "name": "EatTree",
+          "frames": 10
+        }
+      ],
+      "foundationRemoved": true,
+      "crownBone": "Spine Upper"
+    },
+    "WildwoodHall2Uprooted": {
+      "tier": 2,
+      "bones": 15,
+      "skinJoints": 15,
+      "vertices": 60879,
+      "triangles": 68200,
+      "clips": [
+        {
+          "name": "Death",
+          "frames": 20
+        },
+        {
+          "name": "Attack",
+          "frames": 12
+        },
+        {
+          "name": "Walk",
+          "frames": 20
+        },
+        {
+          "name": "Idle",
+          "frames": 18
+        },
+        {
+          "name": "Uproot",
+          "frames": 30
+        },
+        {
+          "name": "Root",
+          "frames": 30
+        },
+        {
+          "name": "EatTree",
+          "frames": 10
+        }
+      ],
+      "foundationRemoved": true,
+      "crownBone": "Spine Upper"
+    },
+    "WildwoodHall3Uprooted": {
+      "tier": 3,
+      "bones": 15,
+      "skinJoints": 15,
+      "vertices": 60879,
+      "triangles": 68200,
+      "clips": [
+        {
+          "name": "Death",
+          "frames": 20
+        },
+        {
+          "name": "Attack",
+          "frames": 12
+        },
+        {
+          "name": "Walk",
+          "frames": 20
+        },
+        {
+          "name": "Idle",
+          "frames": 18
+        },
+        {
+          "name": "Uproot",
+          "frames": 30
+        },
+        {
+          "name": "Root",
+          "frames": 30
+        },
+        {
+          "name": "EatTree",
+          "frames": 10
+        }
+      ],
+      "foundationRemoved": true,
+      "crownBone": "Spine Upper"
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Models/WildwoodHallUprooted.glb",
+      "sha256": "ec24c3271d007098af22112fd2fcaef250494ac6f8180934e6a5b2e59e4c70ca"
+    },
+    {
+      "file": "Assets/Models/WildwoodHall2Uprooted.glb",
+      "sha256": "8dc63744c5c3aac582003b17c8b5db89765a92415e2d47b2a10aae98e70bc825"
+    },
+    {
+      "file": "Assets/Models/WildwoodHall3Uprooted.glb",
+      "sha256": "15bad8e27d5f11f7ad36d2ebe1dab65b85614ebe07f2c0e43c7d0b32ec592464"
+    }
+  ],
+  "animationAuthorship": "Idle/Walk/Attack/Death are from Entangled Roots. Uproot/Root/EatTree are project authored skeletal clips."
+}

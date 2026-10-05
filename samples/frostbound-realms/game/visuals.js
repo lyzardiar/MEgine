@@ -38,11 +38,11 @@ var FrostVisual=(()=>{
     const d=Frost.types[u.kind],f=u.kind==='hall'?(u.baseFaction??state.teams[u.team]?.faction??0):state.teams[u.team]?.faction||0,tier=Frost.clamp(u.upgradeTier??1,1,3);
     let key=f===0&&u.kind==='shop'?'KingdomArcaneVault':['spirittower','nerubiantower'].includes(u.kind)?'RevenantTower':u.kind==='hauntedmine'?'HauntedMine':u.kind==='temple'?'RealTemple':u.kind==='spiritlodge'?'WarclansAltar':buildings[u.kind]?Frost.factions[f]+buildings[u.kind]+(u.kind==='hall'&&tier>1?tier:''):u.kind==='hero'?Frost.unitType(u).art:u.tag==='boss'?'RealBear':u.kind==='frosttower'?'FrostTower':u.kind==='flametower'?'EmberTower':u.kind==='worker'?['RealWorker','Tribal','Rogue','RealAcolyte'][f]:units[u.kind]||base[u.kind]||base[d.model];
     const original=FrostArt[key],activity=['RealWorker','RealAcolyte','RealGhoul'].includes(key)?work(state,u):null,phase=(key==='RealArcher'||original.shotModel)&&!walking&&!u.stun?(castPhase(u,original,walking)??(u.cd>0?attackPhase(u,original):null)):null,loaded=phase!==null&&(original.ammoLoad<original.attackEvent?phase>=original.ammoLoad&&phase<original.attackEvent:phase<original.attackEvent||phase>=original.ammoLoad),variant=phase===null?key:original.shotModel?(loaded?original.loadedModel||key:original.shotModel):key+(loaded?'Loaded':'Shoot');
-    const asset=FrostArt[activity?key+activity.animation:variant]||original,scale=asset.factionBuilding?Math.min((d.radius*2*.92)/Math.hypot(asset.size[0],asset.size[2]),(asset.maxWorldHeight??Infinity)/asset.size[1]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:asset.siegeModel?1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
+    const asset=Frost.ancient(u)&&(u.uprooted||u.ancientShift)?FrostArt[key+'Uprooted']:FrostArt[activity?key+activity.animation:variant]||original,scale=asset.factionBuilding?Math.min((d.radius*2*.92)/Math.hypot(asset.size[0],asset.size[2]),(asset.maxWorldHeight??Infinity)/asset.size[1]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:asset.siegeModel?1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
     return {key,asset,scale,height:asset.size[1]*scale+.5};
   }
   function heading(state,u,old){
-    if(!Frost.types[u.kind].speed)return Math.PI/6;
+    if(!Frost.mobile(u))return Frost.ancient(u)&&(u.uprooted||u.ancientShift)?old?.yaw??u.yaw??Math.PI/6:Math.PI/6;
     if(Frost.feeding(u))return u.yaw??0;
     const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008;
     if(['hero','necromancer','shaman'].includes(u.kind)&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[units[u.kind]||Frost.unitType(u).art],moved)!==null)return u.castYaw;
@@ -58,6 +58,7 @@ var FrostVisual=(()=>{
   function pose(u,asset,walking,time,rate=12){
     if(!asset.animations?.length)return asset.parts[0].mesh;
     const frames=clip=>asset.animations[clip].frames*rate/12,mesh=(clip,frame)=>asset.parts[0].mesh+'#pose='+clip+':'+Math.min(Math.ceil(frames(clip))-1,Math.floor(frame))+(rate===12?'':'@'+rate),loop=(clip,time)=>time*rate%frames(clip);
+    if(asset.ancientForm){const morph=u.ancientShift,elapsed=u.ancientRegen>0?Frost.ancientRules.duration-u.ancientRegen:Infinity,name=morph?(morph.uprooted?'Uproot':'Root'):walking?'Walk':elapsed<10/12?'EatTree':u.cd>0&&!u.stun?'Attack':'Idle',clip=asset.animations.findIndex(a=>a.name===name);return mesh(clip,morph?(1-morph.left/Frost.ancientRules.morph)*frames(clip):name==='EatTree'?elapsed*rate:name==='Attack'?attackPhase(u,asset)*frames(clip):loop(clip,time));}
     const eat=asset.animations.findIndex(a=>a.name==='Cannibalize');if(Frost.feeding(u)&&eat>=0)return mesh(eat,loop(eat,Frost.cannibalize.duration-Frost.feeding(u)));
     if(asset.workAnimation){const clip=asset.workClip??0;return mesh(clip,loop(clip,time));}
     const cast=asset.animations.findIndex(a=>a.name===(['necromancer','shaman'].includes(u.kind)?'Staff_Attack':'Cast')),casting=castPhase(u,asset,walking);

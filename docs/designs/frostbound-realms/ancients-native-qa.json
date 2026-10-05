@@ -1,0 +1,32 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "tag": "1791182200000",
+  "project": "D:\\MEngineNativeQA\\frost-ancients-1791182200000\\sample",
+  "protocol": 39,
+  "productSha256": "226a831b0bcd7078bd9aff9fb4edf04d5537730746150326a05ff49a77b92e48",
+  "physicalInput": false,
+  "audioListening": false,
+  "models": [
+    {
+      "tier": 1,
+      "mesh": "Assets/Models/WildwoodHallUprooted.glb#pose=3:21@30"
+    },
+    {
+      "tier": 2,
+      "mesh": "Assets/Models/WildwoodHall2Uprooted.glb#pose=3:3@30"
+    },
+    {
+      "tier": 3,
+      "mesh": "Assets/Models/WildwoodHall3Uprooted.glb#pose=3:3@30"
+    }
+  ],
+  "checks": [
+    "Rooted HUD, full Uproot, weighted pose binding and suspended paid production",
+    "Move orders, changing real walk pose and blocked Root footprint",
+    "Eat Tree skeletal clip, actual fall, healing and true-menu save/load of mobile queued main base",
+    "Root morph, recovery during morph, static model return and paid production completion",
+    "In-game unit placement, Night Elf player data and F7 playtest with functional Uproot"
+  ],
+  "shaderRejections": 0
+}

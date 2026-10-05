@@ -13,3 +13,9 @@ weights, 2048x1024 texture atlases, resized rig and GLB export.
 Derived files: Assets/Models/RealTreant.glb, Assets/Textures/RealTreant_*.png,
 Assets/Materials/RealTreant.mmat and the RealTreant unit portrait.
 Source URLs and hashes: treant-sources.json. Generator: scripts/import-frost-treant.py.
+
+Ancient main-base moving forms reuse this weighted rig and Idle/Walk/Attack/Death clips.
+Assets/Models/WildwoodHallUprooted.glb, WildwoodHall2Uprooted.glb and WildwoodHall3Uprooted.glb
+combine the attributed Ancient bodies/crowns listed in Wildwood-buildings.txt with this rig.
+Uproot, Root and EatTree skeletal clips are authored by this project (MiYu).
+Generator: scripts/import-frost-ancient-forms.py. Source/output hashes: ancient-form-sources.json.

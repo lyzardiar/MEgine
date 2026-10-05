@@ -12,6 +12,8 @@ import './test-frost-waypoints.mjs';
 import './test-frost-work-queues.mjs';
 import './test-frost-patrol.mjs';
 import './test-frost-visuals.mjs';
+import './test-frost-ancients.mjs';
+import './test-frost-ancients-network.mjs';
 import './test-frost-projectiles.mjs';
 import './test-frost-denies.mjs';
 import './test-frost-lanes.mjs';

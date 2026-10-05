@@ -1,0 +1,36 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 39,
+  "ruleAndTcpPassChecks": 74,
+  "assetsIntegrationTests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "nativeQaPassed": true,
+  "nativeProductSha256": "226a831b0bcd7078bd9aff9fb4edf04d5537730746150326a05ff49a77b92e48",
+  "assetManifests": [
+    {
+      "manifest": "ancient-form-sources.json",
+      "generatedFiles": 3
+    },
+    {
+      "manifest": "aigei-building-sources.json",
+      "generatedFiles": 123
+    }
+  ],
+  "exportReproducibility": {
+    "generatedGlbFiles": 3,
+    "byteIdentical": true
+  },
+  "package": {
+    "files": 905,
+    "contentHash": "7c512f158b1a3ef4c44d2450288268d978f4326489da3e10f1d69266119a7c8f",
+    "nativeMainMatches": true,
+    "projectStorageIdentityPreserved": true,
+    "playerStartupSeconds": 30,
+    "loggedErrors": 0
+  },
+  "physicalInput": false,
+  "audioListening": false
+}
