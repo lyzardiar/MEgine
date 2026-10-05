@@ -12,7 +12,7 @@
 
 缺少源法线的 geoset 按三角面生成面积加权法线，`sourceRepairs.generatedNormals` 保留对应索引。四族鼠标的 replaceable 21 使用同目录原版 BLP；BloodSphere 的五个作者机器 TGA 路径映射到安装包中的同名 BLP，`textureSources` 保留映射依据。
 
-这些集合已供引擎导入和模型预览使用；Frostbound 战场已接入 80 项经典角色、四族建筑与树木绑定，共 4,626 个运行时文件，覆盖模型部件、动画、队色、尸体、建造预览和动态头像。`docs/designs/frostbound-realms/classic-battlefield-0.png` 至 `classic-battlefield-3.png` 是通过原生四族场景验证的战场截图；`classic-assets-preview.png`、`community-assets-preview.png` 与 `remaining-assets-preview.png` 是资产库预览。原版地形、其余模型与完整特效行为仍需继续接入。
+这些集合已供引擎导入和模型预览使用；Frostbound 战场已接入 80 项经典角色、四族建筑与树木绑定，共 4,626 个运行时文件，覆盖模型部件、动画、队色、尸体、建造预览和动态头像。`docs/designs/frostbound-realms/classic-battlefield-0.png` 至 `classic-battlefield-3.png` 是通过原生四族场景验证的战场截图；`classic-assets-preview.png`、`community-assets-preview.png` 与 `remaining-assets-preview.png` 是资产库预览。地面已接入 Winter、Forest、Barrens 的原版 tile 与拼接遮罩；原版 cliff 模块、水动画、其余模型与完整特效行为仍需继续接入。
 
 ## 重生成与验证
 

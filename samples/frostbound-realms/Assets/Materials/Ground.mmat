@@ -1,1 +1,1 @@
-{"version":8,"name":"Winterfall snow, stone and fog","shader":"custom","custom_shader":"Assets/Shaders/Ground.mshader","base_color":[1,1,1,1],"roughness":0.88,"base_color_texture":"Assets/Textures/cliffs_diff.png","metallic_roughness_texture":"Assets/Textures/cliffs_nrh.png"}
+{"version":8,"name":"Classic Warcraft tile ground and rock cliffs","shader":"custom","custom_shader":"Assets/Shaders/ClassicGround.mshader","base_color":[1,1,1,1],"roughness":0.88,"base_color_texture":"Assets/Textures/cliffs_diff.png","metallic_roughness_texture":"Assets/Textures/cliffs_nrh.png"}

@@ -1,0 +1,35 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "classicTerrain": {
+    "palettes": [
+      {
+        "name": "winter",
+        "chunks": 64,
+        "nativePipelinesRejected": 0,
+        "errorMaterialPixels": false
+      },
+      {
+        "name": "forest",
+        "chunks": 64,
+        "nativePipelinesRejected": 0,
+        "errorMaterialPixels": false
+      },
+      {
+        "name": "barrens",
+        "chunks": 64,
+        "nativePipelinesRejected": 0,
+        "errorMaterialPixels": false
+      }
+    ],
+    "cornerMasks": 16,
+    "originalPixelAtlases": 6,
+    "paintedRoads": true,
+    "cliffGeometry": true,
+    "waterCoverage": true,
+    "mapSaveLoad": true,
+    "editorPlaytest": true
+  }
+}

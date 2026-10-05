@@ -1,0 +1,72 @@
+/* MENGINE_PARAMETERS
+{"parameters":[{"name":"cells0","type":"vector4","default":[1,1,1,1]},{"name":"cells1","type":"vector4","default":[1,1,1,1]},{"name":"cells2","type":"vector4","default":[1,1,1,1]},{"name":"cells3","type":"vector4","default":[1,1,1,1]},{"name":"cells4","type":"vector4","default":[1,1,1,1]},{"name":"cells5","type":"vector4","default":[1,1,1,1]},{"name":"cells6","type":"vector4","default":[1,1,1,1]},{"name":"cells7","type":"vector4","default":[1,1,1,1]},{"name":"cells8","type":"vector4","default":[1,1,1,1]},{"name":"tileset","type":"vector4","default":[0,0,0,0]}],"textures":[{"name":"soil","type":"color","default":"Assets/Textures/Classic/tiles-soil.png"},{"name":"snow","type":"color","default":"Assets/Textures/Classic/tiles-snow.png"},{"name":"grass","type":"color","default":"Assets/Textures/Classic/tiles-grass.png"},{"name":"rock","type":"color","default":"Assets/Textures/Classic/tiles-rock.png"},{"name":"road","type":"color","default":"Assets/Textures/Classic/tiles-road.png"},{"name":"blight","type":"color","default":"Assets/Textures/Classic/tiles-blight.png"}]}
+*/
+// Author: MiYu. Original tile pixels and corner alpha masks follow the shared two-unit terrain lattice.
+fn frost_cell(p: vec2<i32>) -> f32 {
+    var data=array<vec4<f32>,9>(mengine_param_cells0(),mengine_param_cells1(),mengine_param_cells2(),mengine_param_cells3(),mengine_param_cells4(),mengine_param_cells5(),mengine_param_cells6(),mengine_param_cells7(),mengine_param_cells8());
+    let i=u32(clamp(p.y,0,5)*6+clamp(p.x,0,5));return data[i/4u][i%4u];
+}
+fn frost_values(p: vec2<f32>) -> vec4<f32> {
+    let cell=vec2<i32>(floor((p-object.model[3].xz+vec2<f32>(4.0))*0.5+vec2<f32>(0.5)));
+    return vec4<f32>(frost_cell(cell),frost_cell(cell+vec2<i32>(1,0)),frost_cell(cell+vec2<i32>(0,1)),frost_cell(cell+vec2<i32>(1,1)));
+}
+fn frost_weights(p: vec2<f32>) -> vec4<f32> {
+    let f=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract((p-object.model[3].xz+vec2<f32>(4.0))*0.5+vec2<f32>(0.5)));
+    return vec4<f32>((1.0-f.x)*(1.0-f.y),f.x*(1.0-f.y),(1.0-f.x)*f.y,f.x*f.y);
+}
+fn frost_noise(p: vec2<f32>) -> f32 {
+    let cell=floor(p);let f=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract(p));
+    let corners=vec4<f32>(dot(cell,vec2<f32>(127.1,311.7)),dot(cell+vec2<f32>(1.0,0.0),vec2<f32>(127.1,311.7)),dot(cell+vec2<f32>(0.0,1.0),vec2<f32>(127.1,311.7)),dot(cell+vec2<f32>(1.0,1.0),vec2<f32>(127.1,311.7)));
+    let v=fract(sin(corners)*43758.5453);return mix(mix(v.x,v.y,f.x),mix(v.z,v.w,f.x),f.y);
+}
+fn frost_layer(value: f32, corner: vec2<f32>, palette: f32) -> u32 {
+    let kind=u32(floor(value*0.5));let surface=kind/3u;
+    if surface==5u {return 5u;}
+    if surface>0u {return min(surface-1u,5u);}
+    if kind%3u==2u {return 4u;}
+    let cover=frost_noise(corner*0.31+vec2<f32>(7.0,11.0));
+    if palette<0.5 {return select(0u,1u,cover<0.88);}
+    return select(0u,2u,cover>select(0.26,0.79,palette>1.5));
+}
+fn frost_tile(layer: u32, mask: u32, variant: u32, palette: f32, local: vec2<f32>, dx: vec2<f32>, dy: vec2<f32>) -> vec4<f32> {
+    let slot=select(mask,16u+variant,mask==15u);
+    let offset=vec2<f32>(f32(slot%8u)*68.0+2.0,(palette*4.0+f32(slot/8u))*68.0+2.0);
+    let uv=(offset+local*64.0)/vec2<f32>(544.0,816.0);
+    var color=vec4<f32>(0.0);
+    switch layer {
+        case 0u: {color=textureSampleGrad(mengine_custom_texture_0,material_sampler,uv,dx,dy);}
+        case 1u: {color=textureSampleGrad(mengine_custom_texture_1,material_sampler,uv,dx,dy);}
+        case 2u: {color=textureSampleGrad(mengine_custom_texture_2,material_sampler,uv,dx,dy);}
+        case 3u: {color=textureSampleGrad(mengine_custom_texture_3,material_sampler,uv,dx,dy);}
+        case 4u: {color=textureSampleGrad(mengine_custom_texture_4,material_sampler,uv,dx,dy);}
+        default: {color=textureSampleGrad(mengine_custom_texture_5,material_sampler,uv,dx,dy);}
+    }
+    return vec4<f32>(color.rgb,select(color.a,0.0,mask==0u));
+}
+fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
+    var s=surface;let p=world_position.xz;let palette=clamp(floor(mengine_param_tileset().x),0.0,2.0);
+    let lattice=(p+vec2<f32>(31.0))*0.5;let corner=floor(lattice);let local=fract(lattice);let values=frost_values(p);
+    let layers=vec4<u32>(frost_layer(values.x,corner,palette),frost_layer(values.y,corner+vec2<f32>(1.0,0.0),palette),frost_layer(values.z,corner+vec2<f32>(0.0,1.0),palette),frost_layer(values.w,corner+vec2<f32>(1.0),palette));
+    let dx=dpdx(lattice)*vec2<f32>(64.0/544.0,64.0/816.0);let dy=dpdy(lattice)*vec2<f32>(64.0/544.0,64.0/816.0);
+    let seed=fract(sin(dot(corner,vec2<f32>(127.1,311.7)))*43758.5453);let variant=min(15u,u32(seed*16.0));
+    let base=min(min(layers.x,layers.y),min(layers.z,layers.w));var color=frost_tile(base,15u,variant,palette,local,dx,dy).rgb;
+    for(var layer=base+1u;layer<6u;layer++) {
+        let mask=select(0u,1u,layers.x==layer)+select(0u,2u,layers.y==layer)+select(0u,4u,layers.z==layer)+select(0u,8u,layers.w==layer);
+        let tile=frost_tile(layer,mask,variant,palette,local,dx,dy);color=mix(color,tile.rgb,tile.a);
+    }
+    let wall=uv.y<0.0;let cliff=select(1.0-smoothstep(0.3,0.6,abs(surface.normal.y)),1.0,wall);
+    let style=clamp(floor(uv.x/2.0),0.0,2.0);let side=vec2<f32>(p.x+p.y,world_position.y)*0.18;
+    let cliff_uv=(fract(side)*1024.0+vec2<f32>(4.0+style*1032.0,4.0))/vec2<f32>(3096.0,1032.0);
+    let rock=textureSampleGrad(base_color_texture,material_sampler,cliff_uv,dpdx(side)*vec2<f32>(1024.0/3096.0,1024.0/1032.0),dpdy(side)*vec2<f32>(1024.0/3096.0,1024.0/1032.0)).rgb;
+    s.base_color=mix(color,rock,cliff);s.normal=normalize(surface.normal);s.roughness=0.95;s.metallic=0.0;
+    // MiYu: match the water shader's shoreline cut so its raised surface and lower bed retain coverage.
+    let drift=vec2<f32>(frost_noise(p*0.42),frost_noise(p*0.42+vec2<f32>(37.0,19.0)))-vec2<f32>(0.5);
+    let shore=p+drift*0.55;let wet=frost_values(shore);
+    let water=dot(select(vec4<f32>(0.0),vec4<f32>(1.0),floor(wet*0.5)%vec4<f32>(3.0)==vec4<f32>(1.0)),frost_weights(shore));
+    if !wall&&water>0.5 {discard;}
+    return s;
+}
+fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, world_position: vec3<f32>, world_normal: vec3<f32>) -> vec4<f32> {
+    let values=frost_values(world_position.xz);let fog=dot(values-floor(values*0.5)*2.0,frost_weights(world_position.xz));
+    return vec4<f32>(mix(vec3<f32>(0.012,0.025,0.038),color.rgb,smoothstep(0.05,1.0,fog)),color.a);
+}

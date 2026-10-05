@@ -1,6 +1,6 @@
 # Frostbound Realms / 霜境战纪
 
-MEngine 原生 3D RTS 游戏工程。围绕资源采集、建造、出兵、英雄战斗与自定义地图建立可运行的基础版本，角色、四族建筑和树木已接入转换后的 Warcraft III 原版资源，地表细节仍包含 Quaternius、Kenney、Poly Haven 和 KayKit 资产。当前实现尚未达到《魔兽争霸 III：冰封王座》完整复刻的内容量和玩法深度。
+MEngine 原生 3D RTS 游戏工程。围绕资源采集、建造、出兵、英雄战斗与自定义地图建立可运行的基础版本，角色、四族建筑、树木和地面 tile 已接入转换后的 Warcraft III 原版资源，崖壁、水面和部分细节仍包含 Poly Haven、Quaternius、Kenney 与 KayKit 资产。当前实现尚未达到《魔兽争霸 III：冰封王座》完整复刻的内容量和玩法深度。
 
 当前画面使用经典四族模型、原版站立/行走/攻击/施法/建造/死亡动作、多部件材质和蓝红队色，保留雪地/岩土地表、柔化边缘的战争迷雾、原创菜单插画和技能图标。动态头像通过原生相机绘制完整部件层级。操作面板提供对应模型的兵种头像和训练图标、生命/法力条、悬停提示；场景内显示选择圈、移动落点、建筑预览、远程弹道与伤害数字。
 
@@ -173,7 +173,7 @@ node scripts/qa-frostbound.mjs
 
 部落 Raider 使用 Guillaume “GuieA_7” Englert 的带贴图兽人，保留护甲、战锤和待机/行走/攻击/死亡动画，兵营训练与地图布置共用实际模型头像。原始 Blender、PNG、XCF 及派生文件哈希记录于 `orc-sources.json`，CC-BY-SA 4.0 署名随 Player 分发；重建与原生验收见 [兽人美术记录](../../docs/designs/frostbound-realms/orc-art.md)。
 
-冬季地表使用多尺度积雪分布和扫描高度混合，包含湿土边缘、石缝残雪及地表纹理平移混合。素材沿用 Poly Haven CC0 扫描资产；实际截图、四后端编译和独立 Player 帧耗时见 [冬季地表](../../docs/designs/frostbound-realms/snow-surface.md)。
+地面使用 Warcraft III 原版 tile、四角透明拼接遮罩和完整地块变体，包含 Winter、Forest、Barrens 三套土壤、雪、草、岩石、道路和腐地材质；每格仍具有实际高低地与坡道几何。重生成执行 `python scripts/import-frost-classic-terrain.py`；像素、来源和原生加载验证执行 `python scripts/test-frost-classic-terrain.py --runtime <mengine-runtime.exe>`。来源与哈希记录于 `classic-terrain-sources.json`，当前原生截图及验收见 [原版地面 tile](../../docs/designs/frostbound-realms/classic-terrain.md)。
 
 地图作者可在第七页单独绘制裸土、积雪或自动冬景，支持三种笔刷尺寸、撤销、地图保存与试玩。当前编辑地图可直接用于多人建房，双方显示和重连保留材质；操作说明与双原生客户端验收见 [地表材质编辑](../../docs/designs/frostbound-realms/surface-editor.md)。
 

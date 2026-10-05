@@ -18,3 +18,6 @@ asset-library/**/Licenses/HIVE/** -text
 asset-library/warcraft-iii/game-ready/** -text whitespace=cr-at-eol
 asset-library/warcraft-iii/community-ready/** -text whitespace=cr-at-eol
 asset-library/warcraft-iii/remaining-ready/** -text whitespace=cr-at-eol
+scripts/import-frost-classic-terrain.py text eol=lf
+samples/frostbound-realms/classic-terrain-sources.json text eol=lf
+samples/frostbound-realms/Assets/Textures/Classic/** -text
