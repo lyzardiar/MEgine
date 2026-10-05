@@ -1,0 +1,302 @@
+{
+  "method": "Native editor GPU render using RuntimeMeshCache meshpatch loader",
+  "project": "D:\\MEngineNativeQA\\classic-cliffs-1791232311880",
+  "image": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\docs\\designs\\frostbound-realms\\classic-ramp-patches.png",
+  "sha256": "4eff620b50e2d57df8808e9d660cd388c4c53afc85e1e4be603246bca5115eaa",
+  "rendererSha256": "1032043d7c19c437639b8c458a6cb5213e21268619f1402955c9a409f427d532",
+  "patches": [
+    {
+      "name": "winter",
+      "family": "CliffTrans",
+      "cells": "fff80fff80fff80fff80fff800dd800f780fff80fff80fff80fff80fff80fff80fff80fff80fff80",
+      "selected": [
+        {
+          "x": 1,
+          "z": 1,
+          "pattern": "AAHL",
+          "template": 221,
+          "base": 0,
+          "footprint": [
+            1,
+            2
+          ],
+          "coveredCells": [
+            [
+              0,
+              -1
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "bounds": {
+            "min": [
+              -1,
+              0,
+              -2
+            ],
+            "max": [
+              0,
+              1,
+              0
+            ]
+          }
+        },
+        {
+          "x": 2,
+          "z": 1,
+          "pattern": "LHAA",
+          "template": 247,
+          "base": 0,
+          "footprint": [
+            1,
+            2
+          ],
+          "coveredCells": [
+            [
+              0,
+              -1
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "bounds": {
+            "min": [
+              -1,
+              0,
+              -2
+            ],
+            "max": [
+              0,
+              1,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "forest",
+      "family": "CliffTrans",
+      "cells": "fff80fff80fff80fff80fff800dd800f780fff80fff80fff80fff80fff80fff80fff80fff80fff80",
+      "selected": [
+        {
+          "x": 1,
+          "z": 1,
+          "pattern": "AAHL",
+          "template": 221,
+          "base": 0,
+          "footprint": [
+            1,
+            2
+          ],
+          "coveredCells": [
+            [
+              0,
+              -1
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "bounds": {
+            "min": [
+              -1,
+              0,
+              -2
+            ],
+            "max": [
+              0,
+              1,
+              0
+            ]
+          }
+        },
+        {
+          "x": 2,
+          "z": 1,
+          "pattern": "LHAA",
+          "template": 247,
+          "base": 0,
+          "footprint": [
+            1,
+            2
+          ],
+          "coveredCells": [
+            [
+              0,
+              -1
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "bounds": {
+            "min": [
+              -1,
+              0,
+              -2
+            ],
+            "max": [
+              0,
+              1,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "barrens",
+      "family": "CliffTrans",
+      "cells": "fff80fff80fff80fff80fff800dd800f780fff80fff80fff80fff80fff80fff80fff80fff80fff80",
+      "selected": [
+        {
+          "x": 1,
+          "z": 1,
+          "pattern": "AAHL",
+          "template": 221,
+          "base": 0,
+          "footprint": [
+            1,
+            2
+          ],
+          "coveredCells": [
+            [
+              0,
+              -1
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "bounds": {
+            "min": [
+              -1,
+              0,
+              -2
+            ],
+            "max": [
+              0,
+              1,
+              0
+            ]
+          }
+        },
+        {
+          "x": 2,
+          "z": 1,
+          "pattern": "LHAA",
+          "template": 247,
+          "base": 0,
+          "footprint": [
+            1,
+            2
+          ],
+          "coveredCells": [
+            [
+              0,
+              -1
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "bounds": {
+            "min": [
+              -1,
+              0,
+              -2
+            ],
+            "max": [
+              0,
+              1,
+              0
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "masonry",
+      "family": "CityCliffTrans",
+      "cells": "fff80fff80fff80fff80fff800cd800db80fff80fff80fff80fff80fff80fff80fff80fff80fff80",
+      "selected": [
+        {
+          "x": 1,
+          "z": 1,
+          "pattern": "AAHL",
+          "template": 205,
+          "base": 0,
+          "footprint": [
+            1,
+            2
+          ],
+          "coveredCells": [
+            [
+              0,
+              -1
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "bounds": {
+            "min": [
+              -1,
+              -0.000004687500222644303,
+              -2
+            ],
+            "max": [
+              0,
+              1.0000391006469727,
+              0
+            ]
+          }
+        },
+        {
+          "x": 2,
+          "z": 1,
+          "pattern": "LHAA",
+          "template": 219,
+          "base": 0,
+          "footprint": [
+            1,
+            2
+          ],
+          "coveredCells": [
+            [
+              0,
+              -1
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "bounds": {
+            "min": [
+              -1,
+              -0.000004687500222644303,
+              -2
+            ],
+            "max": [
+              0,
+              1.0000391006469727,
+              0
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "scope": "Original grid composition; battlefield surface/navigation integration pending"
+}

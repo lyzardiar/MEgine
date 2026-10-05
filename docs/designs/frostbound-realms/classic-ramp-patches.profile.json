@@ -1,29 +1,29 @@
 {
   "schemaVersion": 1,
-  "totalMs": 33.6711,
+  "totalMs": 34.047000000000004,
   "callTree": {
     "name": "EditorViewportRenderer.render_world",
-    "totalMs": 33.6711,
-    "selfMs": 0.00630000000000408,
+    "totalMs": 34.047000000000004,
+    "selfMs": 0.006700000000008477,
     "calls": 1,
     "children": [
       {
         "name": "Effects",
-        "totalMs": 0.0187,
+        "totalMs": 0.020499999999999997,
         "selfMs": 0.0,
         "calls": 1,
         "children": [
           {
             "name": "EffekseerWorld.update",
-            "totalMs": 0.014199999999999999,
-            "selfMs": 0.014199999999999999,
+            "totalMs": 0.0156,
+            "selfMs": 0.0156,
             "calls": 1,
             "children": []
           },
           {
             "name": "EffekseerWorld.append_to_frame",
-            "totalMs": 0.0045000000000000005,
-            "selfMs": 0.0045000000000000005,
+            "totalMs": 0.0049,
+            "selfMs": 0.0049,
             "calls": 1,
             "children": []
           }
@@ -31,62 +31,62 @@
       },
       {
         "name": "Frame compile",
-        "totalMs": 0.44389999999999996,
+        "totalMs": 0.4779,
         "selfMs": 0.0,
         "calls": 1,
         "children": [
           {
             "name": "TransformHierarchy.build",
-            "totalMs": 0.0103,
-            "selfMs": 0.0103,
+            "totalMs": 0.0125,
+            "selfMs": 0.0125,
             "calls": 1,
             "children": []
           },
           {
             "name": "FrameCompiler.compile",
-            "totalMs": 0.4335,
-            "selfMs": 0.002599999999999991,
+            "totalMs": 0.4653,
+            "selfMs": 0.0025000000000000022,
             "calls": 1,
             "children": [
               {
                 "name": "Camera, meshes and lighting",
-                "totalMs": 0.4037,
-                "selfMs": 0.4037,
+                "totalMs": 0.4351,
+                "selfMs": 0.4351,
                 "calls": 1,
                 "children": []
               },
               {
                 "name": "Canvas layout and text",
-                "totalMs": 0.0070999999999999995,
-                "selfMs": 0.0070999999999999995,
-                "calls": 1,
-                "children": []
-              },
-              {
-                "name": "World sprites",
                 "totalMs": 0.0068000000000000005,
                 "selfMs": 0.0068000000000000005,
                 "calls": 1,
                 "children": []
               },
               {
+                "name": "World sprites",
+                "totalMs": 0.0069,
+                "selfMs": 0.0069,
+                "calls": 1,
+                "children": []
+              },
+              {
                 "name": "Particles, trails and sorting",
-                "totalMs": 0.007,
-                "selfMs": 0.007,
+                "totalMs": 0.0076,
+                "selfMs": 0.0076,
                 "calls": 1,
                 "children": []
               },
               {
                 "name": "Sprite regions and materials",
-                "totalMs": 0.0034000000000000002,
-                "selfMs": 0.0034000000000000002,
+                "totalMs": 0.0038,
+                "selfMs": 0.0038,
                 "calls": 1,
                 "children": []
               },
               {
                 "name": "UI batching",
-                "totalMs": 0.0029000000000000002,
-                "selfMs": 0.0029000000000000002,
+                "totalMs": 0.0026,
+                "selfMs": 0.0026,
                 "calls": 1,
                 "children": []
               }
@@ -103,7 +103,7 @@
       },
       {
         "name": "Render backend",
-        "totalMs": 12.5628,
+        "totalMs": 12.543199999999999,
         "selfMs": 0.0,
         "calls": 1,
         "children": [
@@ -116,15 +116,15 @@
           },
           {
             "name": "Renderer.submit_frame_to",
-            "totalMs": 2.4539,
-            "selfMs": 2.4539,
+            "totalMs": 2.5260000000000002,
+            "selfMs": 2.5260000000000002,
             "calls": 1,
             "children": []
           },
           {
             "name": "Renderer.read_offscreen_rgba8",
-            "totalMs": 10.108799999999999,
-            "selfMs": 10.108799999999999,
+            "totalMs": 10.0171,
+            "selfMs": 10.0171,
             "calls": 1,
             "children": []
           }
@@ -132,42 +132,42 @@
       },
       {
         "name": "Resource sync",
-        "totalMs": 20.1383,
+        "totalMs": 20.457199999999997,
         "selfMs": 0.0,
         "calls": 1,
         "children": [
           {
             "name": "RuntimeMeshCache.sync",
-            "totalMs": 2.2144999999999997,
-            "selfMs": 2.2144999999999997,
+            "totalMs": 2.0997,
+            "selfMs": 2.0997,
             "calls": 1,
             "children": []
           },
           {
             "name": "RuntimeFontCache.sync",
-            "totalMs": 0.0014,
-            "selfMs": 0.0014,
+            "totalMs": 0.0015999999999999999,
+            "selfMs": 0.0015999999999999999,
             "calls": 1,
             "children": []
           },
           {
             "name": "RuntimeTextureCache.sync_ui",
-            "totalMs": 0.0040999999999999995,
-            "selfMs": 0.0040999999999999995,
+            "totalMs": 0.0038,
+            "selfMs": 0.0038,
             "calls": 1,
             "children": []
           },
           {
             "name": "RuntimeTextureCache.sync_ui_materials",
-            "totalMs": 0.0066,
-            "selfMs": 0.0066,
+            "totalMs": 0.0069,
+            "selfMs": 0.0069,
             "calls": 1,
             "children": []
           },
           {
             "name": "RuntimeTextureCache.sync_materials",
-            "totalMs": 17.9115,
-            "selfMs": 17.9115,
+            "totalMs": 18.345,
+            "selfMs": 18.345,
             "calls": 1,
             "children": []
           },
@@ -182,14 +182,14 @@
       },
       {
         "name": "Profiler",
-        "totalMs": 0.5011,
+        "totalMs": 0.5415,
         "selfMs": 0.0,
         "calls": 1,
         "children": [
           {
             "name": "Profiler.snapshot",
-            "totalMs": 0.5011,
-            "selfMs": 0.5011,
+            "totalMs": 0.5415,
+            "selfMs": 0.5415,
             "calls": 1,
             "children": []
           }
@@ -273,8 +273,8 @@
   "resources": [
     {
       "kind": "mesh",
-      "asset": "meshpatch:Assets/WarcraftIII/Models/Terrain/ClassicCliffs.mpatch#0008003580036800338000780002840328404480007800068401384044800058001a8001b8001480",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232162869\\meshpatch:Assets\\WarcraftIII\\Models\\Terrain\\ClassicCliffs.mpatch#0008003580036800338000780002840328404480007800068401384044800058001a8001b8001480",
+      "asset": "meshpatch:Assets/WarcraftIII/Models/Terrain/ClassicCliffs.mpatch#fff80fff80fff80fff80fff800cd800db80fff80fff80fff80fff80fff80fff80fff80fff80fff80",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232311880\\meshpatch:Assets\\WarcraftIII\\Models\\Terrain\\ClassicCliffs.mpatch#fff80fff80fff80fff80fff800cd800db80fff80fff80fff80fff80fff80fff80fff80fff80fff80",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -285,8 +285,8 @@
     },
     {
       "kind": "mesh",
-      "asset": "meshpatch:Assets/WarcraftIII/Models/Terrain/ClassicCliffs.mpatch#06f8009c8009b8009a800768007084099840a780077800748407e840a78007380084800858007f80",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232162869\\meshpatch:Assets\\WarcraftIII\\Models\\Terrain\\ClassicCliffs.mpatch#06f8009c8009b8009a800768007084099840a780077800748407e840a78007380084800858007f80",
+      "asset": "meshpatch:Assets/WarcraftIII/Models/Terrain/ClassicCliffs.mpatch#fff80fff80fff80fff80fff800dd800f780fff80fff80fff80fff80fff80fff80fff80fff80fff80",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232311880\\meshpatch:Assets\\WarcraftIII\\Models\\Terrain\\ClassicCliffs.mpatch#fff80fff80fff80fff80fff800dd800f780fff80fff80fff80fff80fff80fff80fff80fff80fff80",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -298,7 +298,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/B_Cliff0.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232162869\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\B_Cliff0.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232311880\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\B_Cliff0.png",
       "loaded": true,
       "sourceBytes": 241193,
       "gpuBytesEstimate": 262144,
@@ -313,7 +313,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/Cliff1.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232162869\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\Cliff1.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232311880\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\Cliff1.png",
       "loaded": true,
       "sourceBytes": 241951,
       "gpuBytesEstimate": 262144,
@@ -328,7 +328,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/W_Cliff1.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232162869\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\W_Cliff1.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232311880\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\W_Cliff1.png",
       "loaded": true,
       "sourceBytes": 200861,
       "gpuBytesEstimate": 262144,
@@ -343,7 +343,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/Y_Cliff1.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232162869\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\Y_Cliff1.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791232311880\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\Y_Cliff1.png",
       "loaded": true,
       "sourceBytes": 220386,
       "gpuBytesEstimate": 262144,
@@ -357,7 +357,7 @@
     }
   ],
   "resourcesTruncated": false,
-  "resourceSampleAgeMs": 0.0015,
+  "resourceSampleAgeMs": 0.0019,
   "counts": {
     "msaaSamples": 4,
     "entities": 7,

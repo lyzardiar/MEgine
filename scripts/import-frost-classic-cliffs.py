@@ -47,9 +47,11 @@ def main():
 
     source = LIBRARY / 'remaining-ready'
     catalog = json.loads((source / 'Assets/WarcraftIII/model-catalog.json').read_text())
-    models = sorted((m for m in catalog['models'] if re.fullmatch(r'(?:City)?Cliffs[ABC]{4}\d+', m['id'])), key=lambda m: m['id'])
-    assert len(models) == 205
-    templates, records, groups = [], [], {'Cliffs': {}, 'CityCliffs': {}}
+    cliffs = sorted((m for m in catalog['models'] if re.fullmatch(r'(?:City)?Cliffs[ABC]{4}\d+', m['id'])), key=lambda m: m['id'])
+    transitions = sorted((m for m in catalog['models'] if re.fullmatch(r'(?:City)?CliffTrans[ABCHLX]{4}\d+', m['id'])), key=lambda m: m['id'])
+    assert len(cliffs) == 205 and len(transitions) == 48
+    models = cliffs + transitions
+    templates, records, groups = [], [], {'Cliffs': {}, 'CityCliffs': {}, 'CliffTrans': {}, 'CityCliffTrans': {}}
     for model in models:
         assert len(model['parts']) == 1, model['id']
         part = model['parts'][0]
@@ -59,13 +61,17 @@ def main():
         primitive = doc['meshes'][0]['primitives'][0]
         channels = {key: validation.accessor(doc, blob, primitive['attributes'][name]).tolist() for key, name in [('positions', 'POSITION'), ('normals', 'NORMAL'), ('uvs', 'TEXCOORD_0')]}
         channels['indices'] = validation.accessor(doc, blob, primitive['indices']).reshape(-1).tolist()
-        match = re.fullmatch(r'((?:City)?Cliffs)([ABC]{4})(\d+)', model['id'])
+        match = re.fullmatch(r'((?:City)?(?:Cliffs|CliffTrans))([ABCHLX]{4})(\d+)', model['id'])
         family, pattern, variant = match.groups()
         groups[family].setdefault(pattern, []).append(len(templates))
-        records.append(dict(id=model['id'], template=len(templates), family=family, pattern=pattern, variation=int(variant), model=model['source'], mesh=part['mesh'], meshSha256=digest(path.read_bytes()), sourceSha256=digest((source / 'SourceAssets' / Path(*PureWindowsPath(model['source']).parts)).read_bytes()), materialSha256=digest((source / part['material']).read_bytes())))
+        bounds = dict(min=[min(p[k] for p in channels['positions']) for k in range(3)], max=[max(p[k] for p in channels['positions']) for k in range(3)])
+        footprint = [round(bounds['max'][k]-bounds['min'][k]) for k in [0,2]]
+        assert footprint in ([[1,2],[2,1]] if 'Trans' in family else [[1,1]]),model['id']
+        covered_cells = [[x,z] for z in range(1-footprint[1],1) for x in range(1-footprint[0],1)]
+        records.append(dict(id=model['id'], template=len(templates), family=family, pattern=pattern, variation=int(variant), bounds=bounds, footprint=footprint, coveredCells=covered_cells, model=model['source'], mesh=part['mesh'], meshSha256=digest(path.read_bytes()), sourceSha256=digest((source / 'SourceAssets' / Path(*PureWindowsPath(model['source']).parts)).read_bytes()), materialSha256=digest((source / part['material']).read_bytes())))
         templates.append(channels)
     for family, patterns in groups.items():
-        assert len(patterns) == 64
+        assert len(patterns) == {'Cliffs':64,'CityCliffs':64,'CliffTrans':32,'CityCliffTrans':16}[family]
         for pattern, ids in patterns.items():
             assert [records[i]['variation'] for i in ids] == list(range(len(ids)))
     relative = 'Assets/WarcraftIII/Models/Terrain/ClassicCliffs.mpatch'
@@ -86,7 +92,7 @@ def main():
         material['name'] = 'Original cliff ' + name
         material['base_color_texture'] = reference
         output('Assets/WarcraftIII/Materials/Terrain/ClassicCliff-' + name + '.mmat', material)
-    output('Assets/WarcraftIII/classic-cliff-catalog.json', dict(mesh=relative, cornerOrder=['SW', 'NW', 'NE', 'SE'], families=groups, skins={name: 'Assets/WarcraftIII/Materials/Terrain/ClassicCliff-' + name + '.mmat' for name in skins}, models=records))
+    output('Assets/WarcraftIII/classic-cliff-catalog.json', dict(mesh=relative, cornerOrder=['SW', 'NW', 'NE', 'SE'], transitionLetters={'L':0,'H':1,'X':2}, families=groups, skins={name: 'Assets/WarcraftIII/Materials/Terrain/ClassicCliff-' + name + '.mmat' for name in skins}, models=records))
     write(previous, dict(generator='scripts/import-frost-classic-cliffs.py', generatorSha256=digest(Path(__file__).read_bytes()), sourceLibrary='asset-library/warcraft-iii', sourceModels=records, sourceSkins='cliff-skins-ready', files=list(files.values()), scope='Authored templates and native composition; battlefield top surfaces and navigation integration pending'))
     print(f'Imported {len(templates)} authored cliff templates; {len(files)} runtime files')
 

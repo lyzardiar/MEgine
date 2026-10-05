@@ -16,7 +16,7 @@
 
 ## 重生成与验证
 
-原版悬崖已保留为 205 个原生网格模板和四套季节/砌石材质，详见 [悬崖转换与验证](../../docs/designs/frostbound-realms/classic-cliff-integration.md)。它们已通过独立拼接预览，尚未替换战场地面和寻路。完整转换覆盖清单见 [asset-conversion-coverage.json](../../docs/designs/frostbound-realms/asset-conversion-coverage.json)，列出每个无网格资源及缺贴图模型的原因。
+原版悬崖和坡道过渡已保留为 253 个原生网格模板和四套季节/砌石材质，详见 [悬崖转换与验证](../../docs/designs/frostbound-realms/classic-cliff-integration.md)。48 个坡道过渡模型保留两格覆盖范围；原生高度查询与独立三角形计算一致。它们已通过独立拼接预览，尚未替换战场地面和寻路。完整转换覆盖清单见 [asset-conversion-coverage.json](../../docs/designs/frostbound-realms/asset-conversion-coverage.json)，列出每个无网格资源及缺贴图模型的原因。
 
 依赖 Python、.NET 10 SDK，以及 `scripts/warcraft-assets/requirements.txt` 中的库；MPQ 读取库已附 MIT 源码。转换器使用固定提交 `4fe46a0772520fc7b55078bf32cda1237d1b5f2e` 的 W3ModelViewer 解析器。
 

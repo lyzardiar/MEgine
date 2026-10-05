@@ -9,6 +9,7 @@ mod gltf_pose;
 mod material;
 mod material_instance;
 mod mesh_patch;
+mod mesh_surface;
 mod registry;
 mod sprite;
 mod surface_shader;
@@ -35,6 +36,7 @@ pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, 
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
 pub use gltf_pose::{parse_gltf_pose, parse_gltf_pose_sample, GltfPoseSource};
 pub use mesh_patch::{parse_mesh_patch_key, MeshPatchSource};
+pub use mesh_surface::{mesh_height_at, raycast_mesh, MeshSurfaceHit};
 pub use terrain_mesh::terrain_mesh;
 pub use material::{
     load_material_asset, parse_material_asset, MaterialAsset, MaterialBlendMode, MaterialFilter,

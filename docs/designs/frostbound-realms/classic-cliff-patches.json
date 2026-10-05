@@ -1,9 +1,9 @@
 {
   "method": "Native editor GPU render using RuntimeMeshCache meshpatch loader",
-  "project": "D:\\MEngineNativeQA\\classic-cliffs-1791230916761",
+  "project": "D:\\MEngineNativeQA\\classic-cliffs-1791232162869",
   "image": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\docs\\designs\\frostbound-realms\\classic-cliff-patches.png",
   "sha256": "23be1640a22921f53e1324a02242e033d8b0fe892597ce80f59e3b879e39c55b",
-  "rendererSha256": "c9400d3f054f8a6f979f805e52d0638546495c400266078a928d4b06c5514a97",
+  "rendererSha256": "1032043d7c19c437639b8c458a6cb5213e21268619f1402955c9a409f427d532",
   "patches": [
     {
       "name": "winter",

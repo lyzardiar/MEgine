@@ -1,12 +1,17 @@
 {
-  "authoredTemplates": 205,
+  "authoredTemplates": 253,
+  "transitionTemplates": 48,
   "families": {
     "Cliffs": 64,
-    "CityCliffs": 64
+    "CityCliffs": 64,
+    "CliffTrans": 32,
+    "CityCliffTrans": 16
   },
-  "nativePatchChecks": 615,
-  "nativeVertices": 14781,
+  "nativePatchChecks": 759,
+  "nativeVertices": 19770,
   "maxPositionError": 0.0,
+  "nativeHeightSamples": 194304,
+  "maxHeightError": 4.6602337278045525e-07,
   "boundaryProfileComparisons": 9523,
   "unequalSourceProfiles": [
     {
@@ -5352,8 +5357,10 @@
   ],
   "nativeFixtureSeams": 96,
   "fixtureSubToleranceIntervals": 30,
+  "nativeRampFixtureSeams": 4,
+  "rampFixtureCoveredCells": 16,
   "files": 20,
   "boundaryCoordinateTolerance": 1e-05,
   "scope": "Source geometry preservation and selected fixture seams verified within coordinate tolerances; arbitrary matching-corner adjacency is not guaranteed by authored meshes.",
-  "probeSha256": "e539a5925e7cdc69375b06c11b47b8c1b88191cab07230f7907b44bee4453f8a"
+  "probeSha256": "ace5d13f9bdd412b1b5af372b8edc377b53611dc9e9299c2e362461cb6fc2656"
 }

@@ -42,17 +42,17 @@ def boundary(segments, t, base=0):
     values=[slope*t+offset+base for lo,hi,slope,offset in segments if lo<t<hi]
     return max(values) if values else None
 
-def compare_profiles(first, second, first_base=0, second_base=0):
+def compare_profiles(first, second, first_base=0, second_base=0, domain=(-1.,0.)):
     # Each open interval has a linear upper envelope. Split at segment endpoints
     # and crossings so vertical-wall endpoint ownership cannot create false gaps.
-    knots={-1.,0.}
+    start,end=domain;knots={start,end}
     for segments in [first,second]:
-        knots.update(t for lo,hi,_,_ in segments for t in [lo,hi] if -1<t<0)
+        knots.update(t for lo,hi,_,_ in segments for t in [lo,hi] if start<t<end)
         for i,(lo,hi,slope,offset) in enumerate(segments):
             for a,b,c,d in segments[i+1:]:
                 if abs(slope-c)>1e-10:
                     t=(d-offset)/(slope-c)
-                    if max(lo,a,-1)<t<min(hi,b,0):knots.add(t)
+                    if max(lo,a,start)<t<min(hi,b,end):knots.add(t)
     knots=sorted(knots);error,gaps,checked,at,quantization_intervals=0.,0,0,None,0
     for lo,hi in zip(knots,knots[1:]):
         if hi-lo<PLANE_TOLERANCE:
@@ -67,6 +67,21 @@ def compare_profiles(first, second, first_base=0, second_base=0):
                 error,at=abs(a-b),t
     return dict(maxDifference=error,at=at,missingSamples=gaps,openIntervalSamples=checked,subToleranceIntervals=quantization_intervals)
 
+def height_grid(positions, indices):
+    triangles=np.array(positions,dtype=np.float64)[np.array(indices).reshape(-1,3)]
+    a,b,c=triangles[:,0],triangles[:,1],triangles[:,2]
+    coordinates=np.linspace(-6,-2,16,endpoint=False)+.125
+    x,z=np.meshgrid(coordinates,coordinates);x,z=x.reshape(1,-1),z.reshape(1,-1)
+    det=(b[:,2]-c[:,2])*(a[:,0]-c[:,0])+(c[:,0]-b[:,0])*(a[:,2]-c[:,2])
+    threshold=1e-10*np.linalg.norm(b-a,axis=1)*np.linalg.norm(c-a,axis=1)
+    with np.errstate(divide='ignore',invalid='ignore'):
+        u=((b[:,2]-c[:,2])[:,None]*(x-c[:,0,None])+(c[:,0]-b[:,0])[:,None]*(z-c[:,2,None]))/det[:,None]
+        v=((c[:,2]-a[:,2])[:,None]*(x-c[:,0,None])+(a[:,0]-c[:,0])[:,None]*(z-c[:,2,None]))/det[:,None]
+        y=u*a[:,1,None]+v*b[:,1,None]+(1-u-v)*c[:,1,None]
+        covered=(abs(det)>threshold)[:,None]&(u>=-1e-8)&(v>=-1e-8)&(u+v<=1+1e-8)
+    heights=np.where(covered,y,-np.inf).max(axis=0)
+    return [float(y) if np.isfinite(y) else None for y in heights]
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--pose-probe',type=Path,required=True)
@@ -80,8 +95,8 @@ def main():
     source_models={m['source']:m for m in json.loads((source/'Assets/WarcraftIII/model-catalog.json').read_text())['models']}
     patch_path=SAMPLE/catalog['mesh']
     patch=json.loads(patch_path.read_text())
-    probe=subprocess.Popen([str(args.pose_probe),'--stdin','--positions','--normals','--uvs'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True,encoding='utf-8')
-    samples,vertices,seams,max_error=0,0,0,0.
+    probe=subprocess.Popen([str(args.pose_probe),'--stdin','--positions','--normals','--uvs','--height-grid=-6,-6,-2,-2,16'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True,encoding='utf-8')
+    samples,vertices,seams,max_error,height_samples,height_error=0,0,0,0.,0,0.
     profiles=[];unequal=[];corner_offsets=[]
     try:
         for record in catalog['models']:
@@ -98,8 +113,14 @@ def main():
             for key,values in expected.items():
                 assert np.array_equal(np.array(mesh[key],dtype=np.float32),values),(record['id'],key)
             assert np.array_equal(mesh['indices'],validation.accessor(doc,blob,prim['indices']).reshape(-1))
-            heights=[ord(c)-65 for c in record['pattern']]
-            for corner,(x,z) in enumerate([(-1,0),(-1,-1),(0,-1),(0,0)]):
+            is_transition='Trans' in record['family']
+            heights=[ord(c)-65 for c in record['pattern']] if not is_transition else []
+            points=expected['positions']
+            assert np.array_equal(points.min(axis=0),np.array(record['bounds']['min'],dtype=np.float32))
+            assert np.array_equal(points.max(axis=0),np.array(record['bounds']['max'],dtype=np.float32))
+            assert record['footprint']==[round(float(points[:,axis].max()-points[:,axis].min())) for axis in [0,2]]
+            assert record['coveredCells']==[[x,z] for z in range(1-record['footprint'][1],1) for x in range(1-record['footprint'][0],1)]
+            for corner,(x,z) in ([] if is_transition else enumerate([(-1,0),(-1,-1),(0,-1),(0,0)])):
                 positions=expected['positions']
                 distance=np.max(abs(positions[:,[0,2]]-[x,z]),axis=1)
                 at=positions[distance<validation.converter.POSE_TOLERANCE]
@@ -107,7 +128,7 @@ def main():
                 exact=positions[distance<1e-6]
                 if not len(exact) or abs(max(exact[:,1])-heights[corner])>=1e-6:
                     corner_offsets.append(dict(model=record['id'],corner=corner,nearestHorizontalOffset=float(min(distance)),heightOffset=float(max(at[:,1])-heights[corner])))
-            for axis,value,a,b in [(0,-1,1,0),(0,0,2,3),(2,-1,1,2),(2,0,0,3)]:
+            for axis,value,a,b in ([] if is_transition else [(0,-1,1,0),(0,0,2,3),(2,-1,1,2),(2,0,0,3)]):
                 base=min(heights[a],heights[b])
                 profiles.append(dict(model=record['id'],family=record['family'],axis=axis,side=value,endpoints=[heights[a]-base,heights[b]-base],base=-base,segments=boundary_segments(mesh,axis,value)))
             for height in [-2,0,4]:
@@ -116,6 +137,14 @@ def main():
                 positions=expected['positions']*np.float32(2)+np.array([-2,height,-2],dtype=np.float32)
                 error=float(np.max(abs(np.array(native['positions'])-positions)));assert error<1e-6,(record['id'],error)
                 max_error=max(max_error,error);assert np.array_equal(np.array(native['normals'],dtype=np.float32),expected['normals']);assert np.array_equal(np.array(native['uvs'],dtype=np.float32),expected['uvs']);assert native['vertices']==len(positions)
+                reference=height_grid(positions,mesh['indices'])
+                assert len(native['heightGrid'])==len(reference)==256
+                for actual,wanted in zip(native['heightGrid'],reference):
+                    assert (actual is None)==(wanted is None),(record['id'],height,actual,wanted)
+                    if actual is not None:
+                        delta=abs(actual-wanted);assert delta<1e-6,(record['id'],height,delta)
+                        height_error=max(height_error,delta)
+                    height_samples+=1
                 samples+=1;vertices+=len(positions)
         probe.stdin.close();assert probe.wait(timeout=10)==0
     finally:
@@ -142,7 +171,19 @@ def main():
                 assert comparison['maxDifference']<1e-5 and not comparison['missingSamples'],(panel['name'],x,z,dx,dz,comparison)
                 fixture_quantization_intervals+=comparison['subToleranceIntervals']
                 fixture_seams+=1
-    report=dict(authoredTemplates=len(catalog['models']),families={k:len(v) for k,v in catalog['families'].items()},nativePatchChecks=samples,nativeVertices=vertices,maxPositionError=max_error,boundaryProfileComparisons=seams,unequalSourceProfiles=unequal,authoredCornerOffsets=corner_offsets,nativeFixtureSeams=fixture_seams,fixtureSubToleranceIntervals=fixture_quantization_intervals,files=len(manifest['files']),boundaryCoordinateTolerance=PLANE_TOLERANCE,scope='Source geometry preservation and selected fixture seams verified within coordinate tolerances; arbitrary matching-corner adjacency is not guaranteed by authored meshes.',probeSha256=hashlib.sha256(args.pose_probe.read_bytes()).hexdigest())
+    ramp_fixture=json.loads((ROOT/'docs/designs/frostbound-realms/classic-ramp-patches.json').read_text())
+    ramp_seams=0;covered_cells=0
+    for panel in ramp_fixture['patches']:
+        occupied=set();first,second=panel['selected']
+        assert first['z']==second['z'] and second['x']==first['x']+1
+        for cell in panel['selected']:
+            for dx,dz in catalog['models'][cell['template']]['coveredCells']:
+                key=(cell['x']+dx,cell['z']+dz);assert key not in occupied and all(0<=v<4 for v in key),(panel['name'],key)
+                occupied.add(key);covered_cells+=1
+        comparison=compare_profiles(boundary_segments(patch['templates'][first['template']],0,0),boundary_segments(patch['templates'][second['template']],0,-1),domain=(-2.,0.))
+        assert comparison['maxDifference']<1e-5 and not comparison['missingSamples'],(panel['name'],comparison)
+        ramp_seams+=1
+    report=dict(authoredTemplates=len(catalog['models']),transitionTemplates=sum('Trans' in m['family'] for m in catalog['models']),families={k:len(v) for k,v in catalog['families'].items()},nativePatchChecks=samples,nativeVertices=vertices,maxPositionError=max_error,nativeHeightSamples=height_samples,maxHeightError=height_error,boundaryProfileComparisons=seams,unequalSourceProfiles=unequal,authoredCornerOffsets=corner_offsets,nativeFixtureSeams=fixture_seams,fixtureSubToleranceIntervals=fixture_quantization_intervals,nativeRampFixtureSeams=ramp_seams,rampFixtureCoveredCells=covered_cells,files=len(manifest['files']),boundaryCoordinateTolerance=PLANE_TOLERANCE,scope='Source geometry preservation and selected fixture seams verified within coordinate tolerances; arbitrary matching-corner adjacency is not guaranteed by authored meshes.',probeSha256=hashlib.sha256(args.pose_probe.read_bytes()).hexdigest())
     target=ROOT/'docs/designs/frostbound-realms/classic-cliff-validation.json';target.write_text(json.dumps(report,indent=2)+'\n')
     print('PASS native authored cliff patches:',json.dumps({k:v for k,v in report.items() if k not in ['unequalSourceProfiles','authoredCornerOffsets']}),'unequalSourceProfiles=',len(unequal),'authoredCornerOffsets=',len(corner_offsets))
 
