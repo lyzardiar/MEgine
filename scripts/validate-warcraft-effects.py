@@ -12,13 +12,17 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--probe',type=Path,default=Path('D:/MEngineNativeQA/tile-build-1790939800003/release/examples/gltf_bounds.exe'))
     parser.add_argument('--library',type=Path,default=ROOT/'asset-library/warcraft-iii')
+    parser.add_argument('--converter-ref',help='Git revision of the converter sources recorded when these assets were generated; defaults to current working files')
     args=parser.parse_args();probe=args.probe.resolve();effect_root=args.library/'effects-ready';pending_root=args.library/'texture-pending'
+    revision=subprocess.check_output(['git','rev-parse','--verify','--end-of-options',args.converter_ref+'^{commit}'],cwd=ROOT,text=True).strip() if args.converter_ref else None
     verified=0
     for root in [effect_root,pending_root]:
         manifest=json.loads((root/'asset-sources.json').read_text(encoding='utf-8'))
         for record in manifest['generatedFiles']+[dict(r,path='SourceAssets/'+r['path']) for r in manifest['sourceFiles']]:
             path=root/record['path'];assert path.stat().st_size==record['bytes'] and digest(path)==record['sha256'],path;verified+=1
-        for path,value in manifest['converter'].items():assert digest(ROOT/path)==value,path
+        for path,value in manifest['converter'].items():
+            actual=hashlib.sha256(subprocess.check_output(['git','show',revision+':'+path],cwd=ROOT)).hexdigest() if revision else digest(ROOT/path)
+            assert actual==value,(path,'converter source hash mismatch',revision or 'working files')
     effect_catalog=json.loads((effect_root/'Assets/WarcraftIII/effect-catalog.json').read_text(encoding='utf-8'))['models']
     keys=[];expected=[]
     for model in effect_catalog:
@@ -46,7 +50,7 @@ def main():
             a,b=native_geometry[i:i+2]
             frame=int(key.rsplit(':',1)[1]);next_frame=int(keys[i+1].rsplit(':',1)[1])
             if next_frame==frame+3:assert a['vertices']==b['vertices'] and a['min']==b['min'] and a['max']==b['max'];holds+=1
-    report=dict(nativePassed=True,probeSha256=digest(probe),hashVerifiedFiles=verified,effectSources=len(effect_catalog),effectClips=sum(e['clips'] for e in expected),effectFrames=sum(e['frames'] for e in expected),sampledParticles=sum(e['particles'] for e in expected),sampledQuads=sum(e['quads'] for e in expected),sampledLights=sum(e['lights'] for e in expected),metadataOnly=sum(m['metadataOnly'] for m in effect_catalog),pendingGeometryModels=len(geometry),nativeGeometryLoads=len(keys),terminalHolds=holds,scope='Fresh native asset parsing and pose bounds validation. GPU previews are recorded separately; full Warcraft effect solver and gameplay/camera integration are incomplete.')
+    report=dict(nativePassed=True,converterRevision=revision,probeSha256=digest(probe),hashVerifiedFiles=verified,effectSources=len(effect_catalog),effectClips=sum(e['clips'] for e in expected),effectFrames=sum(e['frames'] for e in expected),sampledParticles=sum(e['particles'] for e in expected),sampledQuads=sum(e['quads'] for e in expected),sampledLights=sum(e['lights'] for e in expected),metadataOnly=sum(m['metadataOnly'] for m in effect_catalog),pendingGeometryModels=len(geometry),nativeGeometryLoads=len(keys),terminalHolds=holds,scope='Fresh native asset parsing and pose bounds validation. GPU previews are recorded separately; full Warcraft effect solver and gameplay/camera integration are incomplete.')
     path=ROOT/'docs/designs/frostbound-realms/supplemental-conversion-validation.json';path.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8');print('PASS supplemental conversion verification:',json.dumps(report))
 
 if __name__=='__main__':main()

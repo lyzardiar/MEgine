@@ -31,6 +31,12 @@ node scripts/render-warcraft-effects.mjs
 
 可用 `--output` 输出到独立目录。生成器先校验既有输出与源副本，拒绝覆盖手工修改的文件。粒子缓存同时校验源 MDX、采样器程序集、解析器程序集与缓存文件哈希。工具 MIT 许可、固定源提交与源文件 SHA-256 随集合保存；Warcraft III 原始资产仍属于 Blizzard，社区资产保留原作者条件。
 
+验证已提交的集合时，`--converter-ref` 指定生成时的转换器 Git 版本，逐文件核对历史源码与来源清单中的 SHA-256；资产和原始 MDX 仍读取当前磁盘文件并严格校验。省略此参数会检查当前工作树的转换器源码，适用于刚用当前工具重新生成的集合。源码版本核对与原生加载检查不等同于重新生成验证。
+
+```powershell
+python scripts/validate-warcraft-effects.py --converter-ref 2b40e35271075b341d0b8d3c4b924045e7d709b3
+```
+
 ## 验证入口
 
 - [新转换的原生加载与哈希结果](supplemental-conversion-validation.json)
