@@ -1,0 +1,451 @@
+{
+  "version": 2,
+  "name": "HeroFlameLord",
+  "root": {
+    "id": "root",
+    "name": "HeroFlameLord",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-0",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-01-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-02-layer-0",
+        "name": "Geoset 2",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-02-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-02-layer-1",
+        "name": "Geoset 2",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-02-layer-1.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-03-layer-0",
+        "name": "Geoset 3",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-03.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-03-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-04-layer-0",
+        "name": "Geoset 4",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-04.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-04-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-04-layer-1",
+        "name": "Geoset 4",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-04.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-04-layer-1.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-05-layer-0",
+        "name": "Geoset 5",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-05.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-05-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-06-layer-0",
+        "name": "Geoset 6",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-06.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-06-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-07-layer-0",
+        "name": "Geoset 7",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-07.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-07-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-08-layer-0",
+        "name": "Geoset 8",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-08.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-08-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-09-layer-0",
+        "name": "Geoset 9",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-09.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-09-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-10-layer-0",
+        "name": "Geoset 10",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-10.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-10-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-11-layer-0",
+        "name": "Geoset 11",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-11.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/HeroFlameLord/HeroFlameLord/geoset-11-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

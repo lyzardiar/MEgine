@@ -4,6 +4,8 @@
   "sidecarGuids": 14838,
   "uvAnimationSamples": 16653,
   "textureAnimationSamples": 632,
+  "nativeTerminalPoseChecks": 17664,
+  "nativeTerminalMaxPositionError": 2.6964908914565988e-05,
   "jpegPlaneChecks": {
     "textures": 506,
     "maxChannelDelta": 1,
@@ -12,1123 +14,1136 @@
   "serializedGlbPoseChecks": [
     {
       "model": "AltarOfKings",
-      "samples": 234,
-      "vertices": 34290,
+      "samples": 312,
+      "vertices": 45720,
       "maxPositionError": 1.7401123031390853e-07
     },
     {
       "model": "ArcaneSanctum",
-      "samples": 288,
-      "vertices": 42840,
-      "maxPositionError": 5.005002950975168e-07
+      "samples": 384,
+      "vertices": 57120,
+      "maxPositionError": 6.100651652740652e-07
     },
     {
       "model": "ArcaneVault",
-      "samples": 285,
-      "vertices": 28950,
+      "samples": 380,
+      "vertices": 38600,
       "maxPositionError": 3.151354754926672e-07
     },
     {
       "model": "Blacksmith",
-      "samples": 252,
-      "vertices": 50490,
+      "samples": 336,
+      "vertices": 67320,
       "maxPositionError": 1.5698242172845767e-07
     },
     {
       "model": "Farm",
-      "samples": 240,
-      "vertices": 30255,
+      "samples": 320,
+      "vertices": 40340,
       "maxPositionError": 1.731262209148099e-07
     },
     {
       "model": "GryphonAviary",
-      "samples": 234,
-      "vertices": 41166,
+      "samples": 312,
+      "vertices": 54888,
       "maxPositionError": 3.062348898907885e-07
     },
     {
       "model": "HumanBarracks",
-      "samples": 273,
-      "vertices": 71064,
+      "samples": 364,
+      "vertices": 94752,
       "maxPositionError": 2.0692918950571126e-07
     },
     {
       "model": "HumanLumberMill",
-      "samples": 252,
-      "vertices": 33750,
+      "samples": 336,
+      "vertices": 45000,
       "maxPositionError": 1.4407348647438312e-07
     },
     {
       "model": "HumanTower",
-      "samples": 975,
-      "vertices": 156702,
-      "maxPositionError": 4.047162609488453e-07
+      "samples": 1300,
+      "vertices": 208936,
+      "maxPositionError": 4.961781203682847e-07
     },
     {
       "model": "TownHall",
-      "samples": 1512,
-      "vertices": 268296,
+      "samples": 2016,
+      "vertices": 357728,
       "maxPositionError": 5.301703156490589e-07
     },
     {
       "model": "Workshop",
-      "samples": 216,
-      "vertices": 69588,
+      "samples": 288,
+      "vertices": 92784,
       "maxPositionError": 2.22717285502938e-07
     },
     {
       "model": "AltarofElders",
-      "samples": 45,
-      "vertices": 11235,
+      "samples": 60,
+      "vertices": 14980,
       "maxPositionError": 5.91278075390278e-08
     },
     {
       "model": "AncientofLore",
-      "samples": 686,
-      "vertices": 95060,
+      "samples": 924,
+      "vertices": 128040,
       "maxPositionError": 5.168150890300094e-06
     },
     {
       "model": "AncientofWar",
-      "samples": 517,
-      "vertices": 91932,
+      "samples": 704,
+      "vertices": 125184,
       "maxPositionError": 8.825653610156081e-07
     },
     {
       "model": "AncientofWind",
-      "samples": 368,
-      "vertices": 74704,
+      "samples": 496,
+      "vertices": 100688,
       "maxPositionError": 4.586274114593003e-06
     },
     {
       "model": "AncientOfWonder",
-      "samples": 441,
-      "vertices": 84623,
+      "samples": 594,
+      "vertices": 113982,
       "maxPositionError": 5.168150890300094e-06
     },
     {
       "model": "AncientProtector",
-      "samples": 672,
-      "vertices": 46368,
+      "samples": 896,
+      "vertices": 61824,
       "maxPositionError": 1.3957799500641244e-06
     },
     {
       "model": "BearDen",
-      "samples": 90,
-      "vertices": 13935,
+      "samples": 120,
+      "vertices": 18580,
       "maxPositionError": 1.8280029312478518e-07
     },
     {
       "model": "ChimaeraRoost",
-      "samples": 120,
-      "vertices": 8355,
-      "maxPositionError": 4.556534205502061e-07
+      "samples": 160,
+      "vertices": 11140,
+      "maxPositionError": 5.477014393129309e-07
     },
     {
       "model": "EntangledGoldmine",
-      "samples": 270,
-      "vertices": 28710,
-      "maxPositionError": 6.658725393293707e-07
+      "samples": 360,
+      "vertices": 38280,
+      "maxPositionError": 1.3199764355431576e-05
     },
     {
       "model": "HuntersHall",
-      "samples": 105,
-      "vertices": 11085,
+      "samples": 140,
+      "vertices": 14780,
       "maxPositionError": 2.494911579553616e-07
     },
     {
       "model": "MoonWell",
-      "samples": 48,
-      "vertices": 5496,
+      "samples": 64,
+      "vertices": 7328,
       "maxPositionError": 2.4693094990979603e-07
     },
     {
       "model": "TreeofLife",
-      "samples": 387,
-      "vertices": 91719,
+      "samples": 522,
+      "vertices": 123714,
       "maxPositionError": 1.2708372665315437e-06
     },
     {
       "model": "AltarofStorms",
-      "samples": 270,
-      "vertices": 21096,
+      "samples": 360,
+      "vertices": 28128,
       "maxPositionError": 3.801379464540844e-07
     },
     {
       "model": "Beastiary",
-      "samples": 252,
-      "vertices": 25524,
+      "samples": 336,
+      "vertices": 34032,
       "maxPositionError": 2.0374541928602774e-07
     },
     {
       "model": "GreatHall",
-      "samples": 798,
-      "vertices": 153468,
+      "samples": 1064,
+      "vertices": 204624,
       "maxPositionError": 3.746682286642766e-07
     },
     {
       "model": "OrcBarracks",
-      "samples": 198,
-      "vertices": 24084,
-      "maxPositionError": 2.0568847691748715e-07
+      "samples": 264,
+      "vertices": 32112,
+      "maxPositionError": 2.2178425357344267e-07
     },
     {
       "model": "SpiritLodge",
-      "samples": 210,
-      "vertices": 26670,
-      "maxPositionError": 1.398653912687564e-07
+      "samples": 280,
+      "vertices": 35560,
+      "maxPositionError": 1.4902223344215315e-07
     },
     {
       "model": "TrollBurrow",
-      "samples": 120,
-      "vertices": 12090,
+      "samples": 160,
+      "vertices": 16120,
       "maxPositionError": 1.47653926640956e-07
     },
     {
       "model": "VoodooLounge",
-      "samples": 240,
-      "vertices": 16755,
+      "samples": 320,
+      "vertices": 22340,
       "maxPositionError": 1.6525955048862784e-07
     },
     {
       "model": "WarMill",
-      "samples": 270,
-      "vertices": 25506,
+      "samples": 360,
+      "vertices": 34008,
       "maxPositionError": 3.8566025217789957e-07
     },
     {
       "model": "WatchTower",
-      "samples": 150,
-      "vertices": 19890,
+      "samples": 200,
+      "vertices": 26520,
       "maxPositionError": 4.409384311010456e-07
     },
     {
       "model": "AltarOfDarkness",
-      "samples": 108,
-      "vertices": 23526,
+      "samples": 144,
+      "vertices": 31368,
       "maxPositionError": 1.9747924806523542e-07
     },
     {
       "model": "BoneYard",
-      "samples": 108,
-      "vertices": 26424,
+      "samples": 144,
+      "vertices": 35232,
       "maxPositionError": 1.5862769253693898e-07
     },
     {
       "model": "Crypt",
-      "samples": 72,
-      "vertices": 29286,
+      "samples": 96,
+      "vertices": 39048,
       "maxPositionError": 1.7224121062753284e-07
     },
     {
       "model": "GargoyleSpire",
-      "samples": 90,
-      "vertices": 45000,
+      "samples": 120,
+      "vertices": 60000,
       "maxPositionError": 2.2946167010928775e-07
     },
     {
       "model": "Graveyard",
-      "samples": 90,
-      "vertices": 18756,
+      "samples": 120,
+      "vertices": 25008,
       "maxPositionError": 1.2265014692758314e-07
     },
     {
       "model": "HauntedMine",
-      "samples": 90,
-      "vertices": 21135,
+      "samples": 120,
+      "vertices": 28180,
       "maxPositionError": 2.0980834936068504e-07
     },
     {
       "model": "Necropolis",
-      "samples": 714,
-      "vertices": 147000,
+      "samples": 952,
+      "vertices": 196000,
       "maxPositionError": 4.3892669676637297e-07
     },
     {
       "model": "SacrificialPit",
-      "samples": 90,
-      "vertices": 14310,
-      "maxPositionError": 1.7094382313842527e-07
+      "samples": 120,
+      "vertices": 19080,
+      "maxPositionError": 1.8153854530744695e-07
     },
     {
       "model": "SlaughterHouse",
-      "samples": 72,
-      "vertices": 23688,
+      "samples": 96,
+      "vertices": 31584,
       "maxPositionError": 2.0803832967430935e-07
     },
     {
       "model": "TempleOfTheDamned",
-      "samples": 108,
-      "vertices": 24084,
+      "samples": 144,
+      "vertices": 32112,
       "maxPositionError": 2.1508789060931122e-07
     },
     {
       "model": "TombOfRelics",
-      "samples": 90,
-      "vertices": 23040,
+      "samples": 120,
+      "vertices": 30720,
       "maxPositionError": 2.0803832967430935e-07
     },
     {
       "model": "Ziggurat",
-      "samples": 468,
-      "vertices": 43251,
+      "samples": 624,
+      "vertices": 57668,
       "maxPositionError": 2.0803832967430935e-07
     },
     {
       "model": "LordaeronTree0",
-      "samples": 30,
-      "vertices": 1185,
+      "samples": 40,
+      "vertices": 1580,
       "maxPositionError": 4.376041062847946e-07
     },
     {
       "model": "AzureDragon",
-      "samples": 126,
-      "vertices": 12243,
+      "samples": 168,
+      "vertices": 16324,
       "maxPositionError": 7.236241821306777e-07
     },
     {
       "model": "Bandit",
-      "samples": 120,
-      "vertices": 20600,
+      "samples": 162,
+      "vertices": 27810,
       "maxPositionError": 2.679055003396158e-07
     },
     {
       "model": "BanditLord",
-      "samples": 288,
-      "vertices": 53460,
+      "samples": 384,
+      "vertices": 71280,
       "maxPositionError": 5.887661884695916e-07
     },
     {
       "model": "BanditMage",
-      "samples": 216,
-      "vertices": 29268,
-      "maxPositionError": 1.0924215754215538e-06
+      "samples": 288,
+      "vertices": 39024,
+      "maxPositionError": 1.1581156069695453e-06
     },
     {
       "model": "BanditSpearThrower",
-      "samples": 111,
-      "vertices": 15466,
+      "samples": 150,
+      "vertices": 20900,
       "maxPositionError": 4.798706172426392e-07
     },
     {
       "model": "Beastmaster",
-      "samples": 240,
-      "vertices": 25890,
-      "maxPositionError": 9.392331792312802e-07
+      "samples": 320,
+      "vertices": 34520,
+      "maxPositionError": 1.3397054914321416e-06
     },
     {
       "model": "BlackDragon",
-      "samples": 126,
-      "vertices": 12243,
+      "samples": 168,
+      "vertices": 16324,
       "maxPositionError": 7.236241821306777e-07
     },
     {
       "model": "Centaur",
-      "samples": 162,
-      "vertices": 11475,
+      "samples": 216,
+      "vertices": 15300,
       "maxPositionError": 4.020631717560619e-07
     },
     {
       "model": "CentaurArcher",
-      "samples": 192,
-      "vertices": 10464,
+      "samples": 256,
+      "vertices": 13952,
       "maxPositionError": 4.0265861894067667e-07
     },
     {
       "model": "CentaurKhan",
-      "samples": 162,
-      "vertices": 11421,
+      "samples": 216,
+      "vertices": 15228,
       "maxPositionError": 4.020631717560619e-07
     },
     {
       "model": "DireWolf",
-      "samples": 144,
-      "vertices": 18540,
+      "samples": 192,
+      "vertices": 24720,
       "maxPositionError": 3.807133577282684e-07
     },
     {
       "model": "ForestTroll",
-      "samples": 210,
-      "vertices": 23670,
+      "samples": 280,
+      "vertices": 31560,
       "maxPositionError": 4.782015503579373e-07
     },
     {
       "model": "ForestTrollShadowPriest",
-      "samples": 90,
-      "vertices": 12450,
+      "samples": 120,
+      "vertices": 16600,
       "maxPositionError": 5.171133219405988e-07
     },
     {
       "model": "Furbolg",
-      "samples": 96,
-      "vertices": 10536,
+      "samples": 128,
+      "vertices": 14048,
       "maxPositionError": 3.6251942037157647e-07
     },
     {
       "model": "FurbolgElder",
-      "samples": 96,
-      "vertices": 14976,
+      "samples": 128,
+      "vertices": 19968,
       "maxPositionError": 3.6251942037157647e-07
     },
     {
       "model": "Gnoll",
-      "samples": 320,
-      "vertices": 22880,
-      "maxPositionError": 5.713134053619839e-07
+      "samples": 432,
+      "vertices": 30888,
+      "maxPositionError": 7.076776924463957e-07
     },
     {
       "model": "GnollArcher",
-      "samples": 234,
-      "vertices": 23985,
+      "samples": 312,
+      "vertices": 31980,
       "maxPositionError": 4.2479666884087663e-07
     },
     {
       "model": "GnollOverSeer",
-      "samples": 320,
-      "vertices": 22880,
-      "maxPositionError": 5.430544735007814e-07
+      "samples": 432,
+      "vertices": 30888,
+      "maxPositionError": 6.328922801390746e-07
     },
     {
       "model": "GnollWarden",
-      "samples": 390,
-      "vertices": 22776,
+      "samples": 520,
+      "vertices": 30368,
       "maxPositionError": 6.792839859492972e-07
     },
     {
       "model": "GreenDragon",
-      "samples": 105,
-      "vertices": 11487,
+      "samples": 140,
+      "vertices": 15316,
       "maxPositionError": 7.236241821306777e-07
     },
     {
       "model": "GrizzlyBear",
-      "samples": 168,
-      "vertices": 27258,
+      "samples": 224,
+      "vertices": 36344,
       "maxPositionError": 7.663760701603906e-07
     },
     {
       "model": "Harpy",
-      "samples": 90,
-      "vertices": 7686,
+      "samples": 120,
+      "vertices": 10248,
       "maxPositionError": 1.3466778723270068e-06
     },
     {
       "model": "HarpyQueen",
-      "samples": 90,
-      "vertices": 7740,
+      "samples": 120,
+      "vertices": 10320,
       "maxPositionError": 1.3466778723270068e-06
     },
     {
       "model": "HeroGoblinAlchemist",
-      "samples": 2016,
-      "vertices": 261288,
+      "samples": 2688,
+      "vertices": 348384,
       "maxPositionError": 1.927689177616543e-06
     },
     {
       "model": "HeroTinker",
-      "samples": 1932,
-      "vertices": 291594,
-      "maxPositionError": 7.804460726568152e-07
+      "samples": 2576,
+      "vertices": 388792,
+      "maxPositionError": 1.1096315635228393e-06
     },
     {
       "model": "IceTroll",
-      "samples": 210,
-      "vertices": 23670,
+      "samples": 280,
+      "vertices": 31560,
       "maxPositionError": 4.782015503579373e-07
     },
     {
       "model": "Kobold",
-      "samples": 189,
-      "vertices": 10827,
+      "samples": 252,
+      "vertices": 14436,
       "maxPositionError": 3.352783200169518e-07
     },
     {
       "model": "KoboldGeomancer",
-      "samples": 243,
-      "vertices": 9720,
+      "samples": 324,
+      "vertices": 12960,
       "maxPositionError": 3.990024838307349e-07
     },
     {
       "model": "Magnataur",
-      "samples": 225,
-      "vertices": 45540,
+      "samples": 300,
+      "vertices": 60720,
       "maxPositionError": 1.638149319305171e-06
     },
     {
       "model": "Murloc",
-      "samples": 81,
-      "vertices": 14202,
+      "samples": 108,
+      "vertices": 18936,
       "maxPositionError": 4.4080443717398055e-07
     },
     {
       "model": "MurlocWarrior",
-      "samples": 81,
-      "vertices": 14202,
+      "samples": 108,
+      "vertices": 18936,
       "maxPositionError": 4.4080443717398055e-07
     },
     {
       "model": "Ogre",
-      "samples": 117,
-      "vertices": 25935,
+      "samples": 156,
+      "vertices": 34580,
       "maxPositionError": 6.103494157860823e-07
     },
     {
       "model": "OgreLord",
-      "samples": 144,
-      "vertices": 24804,
+      "samples": 192,
+      "vertices": 33072,
       "maxPositionError": 3.918116902312807e-07
     },
     {
       "model": "OgreMagi",
-      "samples": 144,
-      "vertices": 24804,
+      "samples": 192,
+      "vertices": 33072,
       "maxPositionError": 3.918116902312807e-07
     },
     {
       "model": "PandarenBrewmaster",
-      "samples": 231,
-      "vertices": 24684,
-      "maxPositionError": 1.3433340910751213e-06
+      "samples": 308,
+      "vertices": 32912,
+      "maxPositionError": 2.0860493341601227e-06
     },
     {
       "model": "PolarBear",
-      "samples": 168,
-      "vertices": 27258,
+      "samples": 224,
+      "vertices": 36344,
       "maxPositionError": 7.663760701603906e-07
     },
     {
       "model": "RedDragon",
-      "samples": 105,
-      "vertices": 11487,
+      "samples": 140,
+      "vertices": 15316,
       "maxPositionError": 7.236241821306777e-07
     },
     {
       "model": "Revenant",
-      "samples": 147,
-      "vertices": 12579,
-      "maxPositionError": 1.5838789637623307e-06
+      "samples": 196,
+      "vertices": 16772,
+      "maxPositionError": 1.7627187538504785e-06
     },
     {
       "model": "RockGolem",
-      "samples": 117,
-      "vertices": 22698,
+      "samples": 156,
+      "vertices": 30264,
       "maxPositionError": 6.96318231074855e-07
     },
     {
       "model": "Satyr",
-      "samples": 156,
-      "vertices": 19188,
+      "samples": 208,
+      "vertices": 25584,
       "maxPositionError": 2.8802655593906934e-07
     },
     {
       "model": "satyrhellcaller",
-      "samples": 156,
-      "vertices": 19188,
-      "maxPositionError": 8.428218247757968e-07
+      "samples": 208,
+      "vertices": 25584,
+      "maxPositionError": 8.513186515735072e-07
     },
     {
       "model": "SatyrTrickster",
-      "samples": 156,
-      "vertices": 19188,
-      "maxPositionError": 3.761679737701584e-07
+      "samples": 208,
+      "vertices": 25584,
+      "maxPositionError": 4.2168366543027247e-07
     },
     {
       "model": "SkeletonArcher",
-      "samples": 120,
-      "vertices": 15360,
+      "samples": 160,
+      "vertices": 20480,
       "maxPositionError": 4.861125467714444e-07
     },
     {
       "model": "Spider",
-      "samples": 120,
-      "vertices": 14880,
+      "samples": 160,
+      "vertices": 19840,
       "maxPositionError": 4.282972264624263e-07
     },
     {
       "model": "TimberWolf",
-      "samples": 144,
-      "vertices": 18540,
+      "samples": 192,
+      "vertices": 24720,
       "maxPositionError": 3.807133577282684e-07
     },
     {
       "model": "WhiteWolf",
-      "samples": 144,
-      "vertices": 18540,
+      "samples": 192,
+      "vertices": 24720,
       "maxPositionError": 3.807133577282684e-07
     },
     {
       "model": "Arthas",
-      "samples": 195,
-      "vertices": 36738,
+      "samples": 260,
+      "vertices": 48984,
       "maxPositionError": 1.1940314159630816e-06
     },
     {
       "model": "ArthaswithSword",
-      "samples": 320,
-      "vertices": 39200,
-      "maxPositionError": 1.1494106226805911e-06
+      "samples": 432,
+      "vertices": 52920,
+      "maxPositionError": 1.1686467091820418e-06
     },
     {
       "model": "BloodElfDragonHawk",
-      "samples": 120,
-      "vertices": 23340,
-      "maxPositionError": 5.904380884214078e-07
+      "samples": 160,
+      "vertices": 31120,
+      "maxPositionError": 5.940449190333652e-07
     },
     {
       "model": "BloodElfSpellThief",
-      "samples": 396,
-      "vertices": 27396,
+      "samples": 528,
+      "vertices": 36528,
       "maxPositionError": 6.551906170937372e-07
     },
     {
       "model": "Footman",
-      "samples": 234,
-      "vertices": 24726,
+      "samples": 312,
+      "vertices": 32968,
       "maxPositionError": 2.5667479308655317e-07
     },
     {
       "model": "GryphonRider",
-      "samples": 273,
-      "vertices": 14469,
+      "samples": 364,
+      "vertices": 19292,
       "maxPositionError": 5.425686237237048e-07
     },
     {
       "model": "GyroCopter",
-      "samples": 108,
-      "vertices": 12744,
+      "samples": 144,
+      "vertices": 16992,
       "maxPositionError": 2.3432814821866543e-07
     },
     {
       "model": "HeroArchMage",
-      "samples": 120,
-      "vertices": 20790,
-      "maxPositionError": 9.83274130228473e-07
+      "samples": 160,
+      "vertices": 27720,
+      "maxPositionError": 9.976599573136014e-07
     },
     {
       "model": "HeroBloodElf",
-      "samples": 297,
-      "vertices": 25113,
-      "maxPositionError": 1.0611196987753146e-06
+      "samples": 396,
+      "vertices": 33484,
+      "maxPositionError": 1.5171666625235503e-06
     },
     {
       "model": "HeroMountainKing",
-      "samples": 1134,
-      "vertices": 105138,
-      "maxPositionError": 1.1743121639540277e-06
+      "samples": 1512,
+      "vertices": 140184,
+      "maxPositionError": 1.2920829419726942e-06
     },
     {
       "model": "HeroPaladin",
-      "samples": 156,
-      "vertices": 25896,
+      "samples": 208,
+      "vertices": 34528,
       "maxPositionError": 9.136283489752373e-07
     },
     {
       "model": "HeroPaladinBoss2",
-      "samples": 148,
-      "vertices": 24901,
+      "samples": 200,
+      "vertices": 33650,
       "maxPositionError": 1.167352561726176e-06
     },
     {
       "model": "HeroPaladinBoss",
-      "samples": 148,
-      "vertices": 24901,
+      "samples": 200,
+      "vertices": 33650,
       "maxPositionError": 1.167352561726176e-06
     },
     {
       "model": "Jaina",
-      "samples": 96,
-      "vertices": 19536,
+      "samples": 128,
+      "vertices": 26048,
       "maxPositionError": 7.308286034124478e-07
     },
     {
       "model": "Kael",
-      "samples": 297,
-      "vertices": 25113,
-      "maxPositionError": 1.0611196987753146e-06
+      "samples": 396,
+      "vertices": 33484,
+      "maxPositionError": 1.5171666625235503e-06
     },
     {
       "model": "Knight",
-      "samples": 288,
-      "vertices": 53460,
+      "samples": 384,
+      "vertices": 71280,
       "maxPositionError": 5.887661884695916e-07
     },
     {
       "model": "Militia",
-      "samples": 165,
-      "vertices": 15081,
+      "samples": 220,
+      "vertices": 20108,
       "maxPositionError": 2.0083827312333824e-07
     },
     {
       "model": "MortarTeam",
-      "samples": 360,
-      "vertices": 26130,
+      "samples": 480,
+      "vertices": 34840,
       "maxPositionError": 3.0007367880779956e-07
     },
     {
       "model": "Muradin",
-      "samples": 1092,
-      "vertices": 101244,
-      "maxPositionError": 8.784652125726211e-07
+      "samples": 1456,
+      "vertices": 134992,
+      "maxPositionError": 1.3580301443383291e-06
     },
     {
       "model": "peasant",
-      "samples": 462,
-      "vertices": 41250,
+      "samples": 616,
+      "vertices": 55000,
       "maxPositionError": 3.387159325796141e-07
     },
     {
       "model": "Phoenix",
-      "samples": 234,
-      "vertices": 24336,
+      "samples": 312,
+      "vertices": 32448,
       "maxPositionError": 3.6944844716835235e-07
     },
     {
       "model": "Priest",
-      "samples": 120,
-      "vertices": 12552,
+      "samples": 160,
+      "vertices": 16736,
       "maxPositionError": 2.759227065718406e-07
     },
     {
       "model": "Rifleman",
-      "samples": 150,
-      "vertices": 22050,
+      "samples": 200,
+      "vertices": 29400,
       "maxPositionError": 2.549130829754276e-07
     },
     {
       "model": "Sorceress",
-      "samples": 120,
-      "vertices": 20490,
+      "samples": 160,
+      "vertices": 27320,
       "maxPositionError": 3.505958700023015e-07
     },
     {
       "model": "TheCaptain",
-      "samples": 234,
-      "vertices": 24726,
+      "samples": 312,
+      "vertices": 32968,
       "maxPositionError": 3.6385135815386604e-07
     },
     {
       "model": "Uther",
-      "samples": 148,
-      "vertices": 24827,
-      "maxPositionError": 8.487398823753267e-07
+      "samples": 200,
+      "vertices": 33550,
+      "maxPositionError": 9.114269508003758e-07
     },
     {
       "model": "WarWagon",
-      "samples": 168,
-      "vertices": 14232,
+      "samples": 224,
+      "vertices": 18976,
       "maxPositionError": 3.0443201737284653e-07
     },
     {
       "model": "WaterElemental",
-      "samples": 168,
-      "vertices": 12432,
+      "samples": 224,
+      "vertices": 16576,
       "maxPositionError": 6.970108674675402e-07
     },
     {
       "model": "Archer",
-      "samples": 185,
-      "vertices": 19906,
+      "samples": 250,
+      "vertices": 26900,
       "maxPositionError": 5.396158959669606e-07
     },
     {
       "model": "Chimaera",
-      "samples": 120,
-      "vertices": 15024,
+      "samples": 160,
+      "vertices": 20032,
       "maxPositionError": 6.165368960364681e-07
     },
     {
       "model": "DruidoftheClaw",
-      "samples": 792,
-      "vertices": 90882,
+      "samples": 1056,
+      "vertices": 121176,
       "maxPositionError": 2.535165386313709e-06
     },
     {
       "model": "DruidoftheTalon",
-      "samples": 1620,
-      "vertices": 105300,
+      "samples": 2160,
+      "vertices": 140400,
       "maxPositionError": 4.91516644940404e-07
     },
     {
       "model": "Dryad",
-      "samples": 396,
-      "vertices": 20772,
+      "samples": 528,
+      "vertices": 27696,
       "maxPositionError": 5.132477868263763e-07
     },
     {
       "model": "Ent",
-      "samples": 675,
-      "vertices": 31779,
+      "samples": 900,
+      "vertices": 42372,
       "maxPositionError": 3.8560786297381355e-07
     },
     {
       "model": "IllidanEvil",
-      "samples": 1224,
-      "vertices": 134856,
+      "samples": 1632,
+      "vertices": 179808,
       "maxPositionError": 1.5898789094137555e-06
     },
     {
       "model": "FaerieDragon",
-      "samples": 126,
-      "vertices": 9072,
+      "samples": 168,
+      "vertices": 12096,
       "maxPositionError": 2.864889948384075e-06
     },
     {
       "model": "Furion",
-      "samples": 480,
-      "vertices": 33144,
+      "samples": 640,
+      "vertices": 44192,
       "maxPositionError": 8.293131528169795e-07
     },
     {
       "model": "HeroDemonHunter",
-      "samples": 1122,
-      "vertices": 89298,
+      "samples": 1496,
+      "vertices": 119064,
       "maxPositionError": 1.2683517427447555e-06
     },
     {
       "model": "HeroKeeperoftheGrove",
-      "samples": 540,
-      "vertices": 35784,
+      "samples": 720,
+      "vertices": 47712,
       "maxPositionError": 6.649066077724086e-07
     },
     {
       "model": "HeroMoonPriestess",
-      "samples": 81,
-      "vertices": 14283,
+      "samples": 108,
+      "vertices": 19044,
       "maxPositionError": 1.1106120370030226e-06
     },
     {
       "model": "HippoGryph",
-      "samples": 96,
-      "vertices": 12072,
+      "samples": 128,
+      "vertices": 16096,
       "maxPositionError": 3.855549000064684e-07
     },
     {
       "model": "Huntress",
-      "samples": 135,
-      "vertices": 22113,
+      "samples": 180,
+      "vertices": 29484,
       "maxPositionError": 4.7363810232181613e-07
     },
     {
       "model": "Maiev",
-      "samples": 216,
-      "vertices": 32976,
+      "samples": 288,
+      "vertices": 43968,
       "maxPositionError": 7.253503038207043e-07
     },
     {
       "model": "MalFurion",
-      "samples": 243,
-      "vertices": 26595,
-      "maxPositionError": 1.5436283762326752e-06
+      "samples": 324,
+      "vertices": 35460,
+      "maxPositionError": 2.126798449353373e-06
     },
     {
       "model": "MalFurionNoStag",
-      "samples": 480,
-      "vertices": 33576,
+      "samples": 640,
+      "vertices": 44768,
       "maxPositionError": 8.293131528169795e-07
     },
     {
       "model": "MountainGiant",
-      "samples": 234,
-      "vertices": 35490,
+      "samples": 312,
+      "vertices": 47320,
       "maxPositionError": 1.533008509857492e-06
     },
     {
       "model": "RiddenHippoGryph",
-      "samples": 189,
-      "vertices": 23841,
+      "samples": 252,
+      "vertices": 31788,
       "maxPositionError": 8.989401467651703e-07
     },
     {
       "model": "Shandris",
-      "samples": 296,
-      "vertices": 25345,
+      "samples": 400,
+      "vertices": 34250,
       "maxPositionError": 5.855984990255081e-07
     },
     {
       "model": "SpiritOfVengeance",
-      "samples": 120,
-      "vertices": 28170,
-      "maxPositionError": 7.049554391624913e-07
+      "samples": 160,
+      "vertices": 37560,
+      "maxPositionError": 8.284420933979408e-07
     },
     {
       "model": "Vengeance",
-      "samples": 105,
-      "vertices": 12033,
+      "samples": 140,
+      "vertices": 16044,
       "maxPositionError": 3.5183289362472614e-07
     },
     {
       "model": "Wisp",
-      "samples": 90,
-      "vertices": 1860,
+      "samples": 120,
+      "vertices": 2480,
       "maxPositionError": 4.683062903021451e-07
     },
     {
       "model": "BatTroll",
-      "samples": 357,
-      "vertices": 17766,
+      "samples": 476,
+      "vertices": 23688,
       "maxPositionError": 7.860121771785522e-07
     },
     {
       "model": "Catapult",
-      "samples": 90,
-      "vertices": 9234,
+      "samples": 120,
+      "vertices": 12312,
       "maxPositionError": 2.9443206661650123e-07
     },
     {
       "model": "grunt",
-      "samples": 324,
-      "vertices": 30312,
+      "samples": 432,
+      "vertices": 40416,
       "maxPositionError": 3.498811913527078e-07
     },
     {
       "model": "Headhunter",
-      "samples": 240,
-      "vertices": 19650,
+      "samples": 320,
+      "vertices": 26200,
       "maxPositionError": 4.129573365702424e-07
     },
     {
       "model": "Hellscream",
-      "samples": 528,
-      "vertices": 54816,
+      "samples": 704,
+      "vertices": 73088,
       "maxPositionError": 1.435921192616263e-06
     },
     {
       "model": "HeroBladeMaster",
-      "samples": 420,
-      "vertices": 29106,
+      "samples": 560,
+      "vertices": 38808,
       "maxPositionError": 1.694961979104015e-06
     },
     {
       "model": "HeroFarSeer",
-      "samples": 120,
-      "vertices": 23130,
-      "maxPositionError": 6.239301679755727e-07
+      "samples": 160,
+      "vertices": 30840,
+      "maxPositionError": 7.341556864659537e-07
     },
     {
       "model": "HeroShadowHunter",
-      "samples": 336,
-      "vertices": 29946,
+      "samples": 448,
+      "vertices": 39928,
       "maxPositionError": 1.1529651877673075e-06
     },
     {
       "model": "HeroTaurenChieftain",
-      "samples": 252,
-      "vertices": 23472,
-      "maxPositionError": 6.611202740813837e-07
+      "samples": 336,
+      "vertices": 31296,
+      "maxPositionError": 8.991907387567721e-07
     },
     {
       "model": "KotoBeast",
-      "samples": 252,
-      "vertices": 35448,
+      "samples": 336,
+      "vertices": 47264,
       "maxPositionError": 6.241940682105707e-07
     },
     {
       "model": "OrcWarlockGuldan",
-      "samples": 96,
-      "vertices": 18264,
+      "samples": 128,
+      "vertices": 24352,
       "maxPositionError": 2.820730642394409e-07
     },
     {
       "model": "peon",
-      "samples": 396,
-      "vertices": 35574,
+      "samples": 528,
+      "vertices": 47432,
       "maxPositionError": 3.764667000361044e-07
     },
     {
       "model": "Shaman",
-      "samples": 210,
-      "vertices": 28014,
+      "samples": 280,
+      "vertices": 37352,
       "maxPositionError": 5.453591174209294e-07
     },
     {
       "model": "SpiritWalker",
-      "samples": 135,
-      "vertices": 16632,
-      "maxPositionError": 5.538058065468476e-07
+      "samples": 180,
+      "vertices": 22176,
+      "maxPositionError": 6.50481724484564e-07
     },
     {
       "model": "Spiritwolf",
-      "samples": 288,
-      "vertices": 25596,
+      "samples": 384,
+      "vertices": 34128,
       "maxPositionError": 2.489711018682783e-06
     },
     {
       "model": "SpiritWyvern",
-      "samples": 60,
-      "vertices": 12990,
+      "samples": 80,
+      "vertices": 17320,
       "maxPositionError": 9.109650260796798e-07
     },
     {
       "model": "Tauren",
-      "samples": 120,
-      "vertices": 18630,
+      "samples": 160,
+      "vertices": 24840,
       "maxPositionError": 4.3025582541211804e-07
     },
     {
       "model": "Thrall",
-      "samples": 84,
-      "vertices": 14259,
-      "maxPositionError": 1.30995843150572e-06
+      "samples": 112,
+      "vertices": 19012,
+      "maxPositionError": 1.7336449982252589e-06
     },
     {
       "model": "WitchDoctor",
-      "samples": 231,
-      "vertices": 22836,
+      "samples": 308,
+      "vertices": 30448,
       "maxPositionError": 5.246356384325246e-07
     },
     {
       "model": "Wolfrider",
-      "samples": 144,
-      "vertices": 28980,
+      "samples": 192,
+      "vertices": 38640,
       "maxPositionError": 7.001089550318085e-07
     },
     {
       "model": "WyvernRider",
-      "samples": 168,
-      "vertices": 17024,
+      "samples": 228,
+      "vertices": 23104,
       "maxPositionError": 9.14124377970893e-07
     },
     {
       "model": "Abomination",
-      "samples": 180,
-      "vertices": 16770,
+      "samples": 240,
+      "vertices": 22360,
       "maxPositionError": 6.883706278326684e-07
     },
     {
       "model": "Acolyte",
-      "samples": 120,
-      "vertices": 12864,
+      "samples": 160,
+      "vertices": 17152,
       "maxPositionError": 3.360454314815797e-07
     },
     {
       "model": "Anubarak",
-      "samples": 510,
-      "vertices": 57273,
+      "samples": 680,
+      "vertices": 76364,
       "maxPositionError": 5.53184721252542e-07
     },
     {
       "model": "Banshee",
-      "samples": 108,
-      "vertices": 10458,
+      "samples": 144,
+      "vertices": 13944,
       "maxPositionError": 2.3835637835700751e-07
     },
     {
       "model": "CryptFiend",
-      "samples": 140,
-      "vertices": 17052,
+      "samples": 190,
+      "vertices": 23142,
       "maxPositionError": 5.162135271463697e-07
     },
     {
       "model": "UndeadArthas",
-      "samples": 168,
-      "vertices": 19320,
+      "samples": 224,
+      "vertices": 25760,
       "maxPositionError": 8.240338781329015e-07
     },
     {
       "model": "EvilSylvanas",
-      "samples": 264,
-      "vertices": 19503,
+      "samples": 352,
+      "vertices": 26004,
       "maxPositionError": 1.511880801885468e-06
     },
     {
       "model": "FrostWyrm",
-      "samples": 192,
-      "vertices": 17256,
+      "samples": 256,
+      "vertices": 23008,
       "maxPositionError": 6.388017796954415e-07
     },
     {
       "model": "Gargoyle",
-      "samples": 180,
-      "vertices": 34860,
+      "samples": 240,
+      "vertices": 46480,
       "maxPositionError": 8.249346207800379e-07
     },
     {
       "model": "Ghoul",
-      "samples": 459,
-      "vertices": 70380,
+      "samples": 612,
+      "vertices": 93840,
       "maxPositionError": 4.2724950621852997e-07
     },
     {
       "model": "HeroCryptLord",
-      "samples": 510,
-      "vertices": 57273,
+      "samples": 680,
+      "vertices": 76364,
       "maxPositionError": 5.53184721252542e-07
     },
     {
       "model": "HeroDeathKnight",
-      "samples": 168,
-      "vertices": 19320,
+      "samples": 224,
+      "vertices": 25760,
       "maxPositionError": 8.240338781329015e-07
     },
     {
       "model": "HeroDreadLord",
-      "samples": 396,
-      "vertices": 31647,
-      "maxPositionError": 1.485670825474017e-06
+      "samples": 528,
+      "vertices": 42196,
+      "maxPositionError": 1.8526128184870316e-06
     },
     {
       "model": "HeroLich",
-      "samples": 360,
-      "vertices": 25620,
+      "samples": 480,
+      "vertices": 34160,
       "maxPositionError": 5.303332324402277e-07
     },
     {
       "model": "Kelthuzad",
-      "samples": 108,
-      "vertices": 17442,
+      "samples": 144,
+      "vertices": 23256,
       "maxPositionError": 4.2384615317470065e-07
     },
     {
       "model": "Meatwagon",
-      "samples": 105,
-      "vertices": 23985,
+      "samples": 140,
+      "vertices": 31980,
       "maxPositionError": 2.865757680037273e-05
     },
     {
       "model": "Necromancer",
-      "samples": 81,
-      "vertices": 17118,
+      "samples": 108,
+      "vertices": 22824,
       "maxPositionError": 4.2384615317470065e-07
     },
     {
       "model": "ObsidianStatue",
-      "samples": 1386,
-      "vertices": 79548,
+      "samples": 1848,
+      "vertices": 106064,
       "maxPositionError": 1.0281993430005798e-06
     },
     {
       "model": "Shade",
-      "samples": 72,
-      "vertices": 7290,
+      "samples": 96,
+      "vertices": 9720,
       "maxPositionError": 3.3453754277879e-07
     },
     {
       "model": "Skeleton",
-      "samples": 210,
-      "vertices": 21480,
-      "maxPositionError": 3.216062511857132e-07
+      "samples": 280,
+      "vertices": 28640,
+      "maxPositionError": 3.350110613364876e-07
     },
     {
       "model": "SkeletonMage",
-      "samples": 168,
-      "vertices": 16590,
+      "samples": 224,
+      "vertices": 22120,
       "maxPositionError": 2.750724330535803e-07
     },
     {
       "model": "Tichondrius",
-      "samples": 360,
-      "vertices": 28770,
+      "samples": 480,
+      "vertices": 38360,
       "maxPositionError": 1.8526128184870316e-06
     },
     {
       "model": "UndeadAirBarge",
-      "samples": 105,
-      "vertices": 17976,
+      "samples": 140,
+      "vertices": 23968,
       "maxPositionError": 2.3836883444872115e-07
     }
   ],
   "runtimeExecutable": "D:\\MEngineNativeQA\\tile-build-1790939800003\\release\\mengine-runtime.exe",
-  "runtimeSha256": "cd0b5871a76c3109f151c1f8c870c555ed15e0df6935821b6aa49ec1b45f5017",
+  "runtimeSha256": "0eb5b42eef44e0a350e6c3052ece5cde9c5267d739b7e7a25223809197801434",
   "runtimePassed": true,
-  "runtimeOutput": "validated 30564 packaged file(s) (1393160381 bytes), 1 scene(s), 14037 runtime asset(s), script=false\n  'Warcraft III complete asset validation' from C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\asset-library\\warcraft-iii\\game-ready\\Validation/AllAssets.mscene (59864 entities)"
+  "runtimeOutput": "validated 30565 packaged file(s) (1370281576 bytes), 1 scene(s), 14037 runtime asset(s), script=false\n  'Warcraft III complete asset validation' from C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\asset-library\\warcraft-iii\\game-ready\\Validation/AllAssets.mscene (59992 entities)",
+  "compactScenes": {
+    "semanticsPreserved": true,
+    "files": {
+      "Assets/WarcraftIII/Scenes/Preview.mscene": {
+        "beforeBytes": 1370698,
+        "afterBytes": 702629
+      },
+      "Validation/AllAssets.mscene": {
+        "beforeBytes": 49455856,
+        "afterBytes": 26118939
+      }
+    }
+  }
 }

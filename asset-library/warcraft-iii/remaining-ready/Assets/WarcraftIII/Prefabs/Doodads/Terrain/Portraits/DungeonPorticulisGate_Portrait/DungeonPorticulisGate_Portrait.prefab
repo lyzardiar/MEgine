@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "DungeonPorticulisGate_Portrait",
+  "root": {
+    "id": "root",
+    "name": "DungeonPorticulisGate_Portrait",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Terrain/Portraits/DungeonPorticulisGate_Portrait/DungeonPorticulisGate_Portrait/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Terrain/Portraits/DungeonPorticulisGate_Portrait/DungeonPorticulisGate_Portrait/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

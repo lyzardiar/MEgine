@@ -3,8 +3,8 @@
   "commit": "4fe46a0772520fc7b55078bf32cda1237d1b5f2e",
   "files": {
     "upstream.zip": "dd1f41530b42c1bfe6039b1a0271bcc5167b137f829f87b6a08cea0b47e46eda",
-    "scripts/convert-warcraft-assets.py": "c108075828d7dede81f6ed2b3b08971be281ffe8457edc2fde1dcc65858931cf",
-    "scripts/warcraft-assets/Program.cs": "8d88ee5d791b5bfe80579bce3bdf4101ab242888df989f81fcddbe6e66ff3359",
+    "scripts/convert-warcraft-assets.py": "c514ac00018d9467dcd77b2b5b76646840bc43c3e85ceeffba009fd35d84713a",
+    "scripts/warcraft-assets/Program.cs": "1f0d84eb9e61d9527c25e80281769bb7fd34d2c696bfab3bcf30929db42d0ecc",
     "scripts/warcraft-assets/TextureTracks.cs": "a85341e257ed859a67efde6034b95d2f25bfb5a66f2afae6ddfdc290ecd4705f",
     "scripts/warcraft-assets/MdxExport.csproj": "94062f8546b73b73b94f5c2af346268b595eb0fa9ceac44ab2d6e80a04ddecd9"
   },

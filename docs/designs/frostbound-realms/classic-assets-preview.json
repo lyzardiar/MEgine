@@ -1,9 +1,9 @@
 {
   "method": "Native editor Game View GPU renderer",
-  "project": "D:\\MEngineNativeQA\\classic-library-1791194423774\\sample",
+  "project": "D:\\MEngineNativeQA\\classic-library-1791207336574\\sample",
   "image": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\docs\\designs\\frostbound-realms\\classic-assets-preview.png",
   "sha256": "ce75bd568bb048376e1f162deb4d0f7fd951a663b552fd11d3990b6bf9ee0ed8",
-  "rendererSha256": "3f7788410808e0da8a9ee34d9cf8275d67d63b2602ac5e93775a7d559a402de6",
+  "rendererSha256": "c35e3b00addcf6026d1d76e4c215cd76fdbc837dd825ac9b460b54c3f8695d67",
   "models": [
     {
       "model": "Footman",

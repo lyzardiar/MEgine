@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "North_WebRocks5",
+  "root": {
+    "id": "root",
+    "name": "North_WebRocks5",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Northrend/Rocks/North_WebRocks/North_WebRocks5/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Northrend/Rocks/North_WebRocks/North_WebRocks5/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

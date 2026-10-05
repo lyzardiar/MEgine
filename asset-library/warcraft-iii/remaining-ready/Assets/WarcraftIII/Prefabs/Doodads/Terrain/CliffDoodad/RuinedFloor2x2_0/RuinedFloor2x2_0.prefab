@@ -1,0 +1,91 @@
+{
+  "version": 2,
+  "name": "RuinedFloor2x2_0",
+  "root": {
+    "id": "root",
+    "name": "RuinedFloor2x2_0",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Terrain/CliffDoodad/RuinedFloor2x2_0/RuinedFloor2x2_0/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Terrain/CliffDoodad/RuinedFloor2x2_0/RuinedFloor2x2_0/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-00-layer-1",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Terrain/CliffDoodad/RuinedFloor2x2_0/RuinedFloor2x2_0/geoset-00-uv-1.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Terrain/CliffDoodad/RuinedFloor2x2_0/RuinedFloor2x2_0/geoset-00-layer-1.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

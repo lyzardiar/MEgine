@@ -195,7 +195,8 @@ def animated_mesh(sample, g, uv, positions, normals, layer=None):
             times=glb.accessor([[0],[clip['duration']]],'<f4','SCALAR',True)
             values=glb.accessor([[0,0,0],[0,0,0]],'<f4','VEC3')
             animation=dict(name=clip['name'],samplers=[dict(input=times,output=values,interpolation='LINEAR')],channels=[dict(sampler=0,target=dict(node=0,path='translation'))])
-            if layer is not None:animation['extras']=dict(mengineUv=dict(fps=12,frames=[f['state']['materials'][g['materialId']][layer]['uv'] for f in clip['frames']]))
+            animation['extras']=dict(menginePlayback=dict(durationSeconds=clip['duration'],loop=clip['loop']))
+            if layer is not None:animation['extras']['mengineUv']=dict(fps=12,frames=[f['state']['materials'][g['materialId']][layer]['uv'] for f in clip['frames']])
             glb.doc['animations'].append(animation)
         return glb
     ids, values = weights(g, model['nodes'])
@@ -232,8 +233,9 @@ def animated_mesh(sample, g, uv, positions, normals, layer=None):
     for clip in sample['clips']:
         times = glb.accessor([[f['seconds']] for f in clip['frames']], '<f4', 'SCALAR', True)
         animation = dict(name=clip['name'], samplers=[], channels=[])
+        animation['extras'] = dict(menginePlayback=dict(durationSeconds=clip['duration'], loop=clip['loop']))
         if layer is not None:
-            animation['extras'] = dict(mengineUv=dict(fps=12, frames=[f['state']['materials'][g['materialId']][layer]['uv'] for f in clip['frames']]))
+            animation['extras']['mengineUv'] = dict(fps=12, frames=[f['state']['materials'][g['materialId']][layer]['uv'] for f in clip['frames']])
         for old in used:
             for channel, kind in [('translation', 'VEC3'), ('rotation', 'VEC4'), ('scale', 'VEC3')]:
                 values = np.array([f['joints'][old][channel] for f in clip['frames']], dtype=float)
@@ -268,7 +270,7 @@ def main():
         raw_root, inventory, terrain_preview = source / 'raw', source / 'model-inventory.json', source / 'terrain-preview.jpg'
     else:
         stored = json.loads((source / 'asset-sources.json').read_text(encoding='utf-8'))
-        manifest = dict(source=stored['source'], archives=stored['archives'], precedence=stored['archivePrecedence'], files=stored['sourceFiles'], modelSamples=stored['modelSamples'])
+        manifest = dict(source=stored['source'], archives=stored['archives'], precedence=stored['archivePrecedence'], files=stored['sourceFiles'], modelSamples=stored['modelSamples'], failures=stored.get('extractionFailures',[]))
         raw_root, inventory, terrain_preview = source / 'SourceAssets', source / 'SourceAssets/model-inventory.json', source / 'Validation/terrain-preview.jpg'
     output.mkdir(parents=True, exist_ok=True)
     prior_manifest = output / 'asset-sources.json'
@@ -370,6 +372,7 @@ def main():
             entry = dict(id=path.stem, source=model_source['path'], previewSequence=sample['previewSequence'], sourceMaterialLayers=sum(len(model['materials'][g['materialId']]['layers']) for g in model['geosets']), parts=[], clips=[{k: c[k] for k in ['name', 'duration', 'loop', 'frameCount']} for c in clips], effects=dict(particles=len(model['particleEmitters']), ribbons=len(model['ribbonEmitters']), lights=len(model['lights']), billboards=sample['hasBillboards'], skippedChunks=model['skippedChunks']))
             states = [dict(name=c['name'], frames=[f['state'] for f in c['frames']]) for c in clips]
             entry['sourceRepairs'] = dict(unanimatedNonfinitePivots=sample.get('staticPivotRepairs',[]))
+            entry['sourceRepairs']['generatedNormals'] = [g['index'] for g in model['geosets'] if not g['normals']]
             entry['effects']['skippedChunks'] = [c for c in entry['effects']['skippedChunks'] if c != 'TXAN']
             state_path = PREFIX / 'Animations' / path.with_suffix('.json')
             json_write(output / state_path, dict(fps=12, clips=states), compact=True)
@@ -378,7 +381,16 @@ def main():
             for g in model['geosets']:
                 gi = g['index']
                 positions = vectors(g['positions']) @ AXES.T / 128
-                normals = vectors(g['normals']) @ AXES.T
+                if g['normals']:
+                    normals = vectors(g['normals']) @ AXES.T
+                else:
+                    normals = np.zeros_like(positions)
+                    triangles = np.asarray(g['indices']).reshape(-1,3)
+                    face = np.cross(positions[triangles[:,1]]-positions[triangles[:,0]],positions[triangles[:,2]]-positions[triangles[:,0]])
+                    for corner in range(3):np.add.at(normals,triangles[:,corner],face)
+                    lengths=np.linalg.norm(normals,axis=1)
+                    normals[lengths>1e-10]/=lengths[lengths>1e-10,None]
+                    normals[lengths<=1e-10]=[0,1,0]
                 layers = model['materials'][g['materialId']]['layers']
                 coords = {l['coordId'] for l in layers}
                 if any(c < 0 or c >= len(g['uvLayers']) for c in coords):
@@ -489,7 +501,7 @@ def main():
     shutil.copyfile(license_path, licenses / 'W3ModelViewer-MIT.txt')
     json_write(licenses / 'converter-sources.json', dict(repository=UPSTREAM, commit=COMMIT, files=tool_hashes, python=dict(numpy=np.__version__, pillow=Image.__version__)))
     # Scenes exercise every material and PNG through the actual runtime loaders, and poses at
-    # each sequence's beginning, middle and final representable 12 Hz frame.
+    # each sequence's beginning, middle and exact terminal pose.
     entities, preview = [], []
     def entity(name, mesh, mat, position=(0, 0, 0), active=True):
         return dict(entity=0, name=name, parent=None, siblingIndex=0, active=active, components=dict(Transform=dict(position=list(position), scale=[1, 1, 1], rotation=[0, 0, 0, 1]), MeshRenderer=dict(mesh=mesh, material=mat)))
@@ -506,7 +518,7 @@ def main():
             for variant in part['textureMaterials'].values():
                 entities.append(entity(part['mesh']+'/'+variant, part['mesh'], variant))
             for ci, clip in enumerate(entry['clips']):
-                for frame in sorted({0, clip['frameCount']//2, max(0, clip['frameCount']-1)}):
+                for frame in sorted({0, clip['frameCount']//2, clip['frameCount']}):
                     entities.append(entity(f'{entry["id"]}/{ci}/{frame}', part['animatedMesh']+f'#pose={ci}:{frame}', part['material']))
             preview.append(entity(f'{entry["id"]}/{part["geoset"]}/{part["layer"]}', part['mesh'], part['material'], (i*4-6, .05, 8), part['defaultVisible']))
     # Atlases and unused particle textures are also independently decoded, even when the preview
@@ -518,12 +530,13 @@ def main():
     def scene(name, entries, path):
         for i, entry in enumerate(entries, 1):
             entry.update(entity=i, siblingIndex=i-1)
-        json_write(output / path, dict(version=1, name=name, world=dict(entities=entries)))
+        json_write(output / path, dict(version=1, name=name, world=dict(entities=entries)), compact=True)
     camera = dict(entity=0, name='Camera', parent=None, siblingIndex=0, active=True, components=dict(Transform=dict(position=[0, 17, 21], scale=[1, 1, 1], rotation=[math.sin(-.67/2), 0, 0, math.cos(-.67/2)]), Camera3D=dict(primary=True, projection='orthographic', orthographic_size=13, near=.1, far=100)))
     sun = dict(entity=0, name='Sun', parent=None, siblingIndex=0, active=True, components=dict(Transform=dict(position=[0, 0, 0], scale=[1, 1, 1], rotation=[-.4, -.2, 0, .894427]), DirectionalLight=dict(color=[1, 1, 1, 1], intensity=2.2, cast_shadows=True)))
     scene('Warcraft III asset preview', [camera, sun]+preview, PREFIX / 'Scenes/Preview.mscene')
     validation = output / 'Validation'
     validation.mkdir(exist_ok=True)
+    json_write(validation / 'extraction-checks.json', dict(failedModels=manifest.get('failures',[]), extractedModels=len(manifest['modelSamples']), selectedModels=manifest.get('selectedModels',len(manifest['modelSamples'])), previouslyConvertedModels=manifest.get('previouslyConvertedModels',0), remainingInventory=manifest.get('remainingInventory')))
     scene('Warcraft III complete asset validation', entities, pathlib.Path('Validation/AllAssets.mscene'))
     for path in sorted((output / 'Assets').rglob('*')):
         if path.is_file():
@@ -531,7 +544,7 @@ def main():
     report = dict(failedModels=failures,poseToleranceEngineUnits=POSE_TOLERANCE,terrainAtlases=len(terrain), terrainTiles=sum(len(t['tiles']) for t in terrain), modelSources=len(model_catalog), geosets=sum(len({p['geoset'] for p in m['parts']}) for m in model_catalog), renderParts=sum(len(m['parts']) for m in model_catalog), sourceMaterialLayers=sum(m['sourceMaterialLayers'] for m in model_catalog), clips=sum(len(m['clips']) for m in model_catalog), poseComparison=verification, validationEntities=len(entities))
     json_write(validation / 'conversion-checks.json', report)
     generated = [dict(path=p.relative_to(output).as_posix(), bytes=p.stat().st_size, sha256=sha(p.read_bytes())) for p in sorted((output / 'Assets').rglob('*')) if p.is_file()]
-    json_write(output / 'asset-sources.json', dict(convertedOn='2026-10-05', source=manifest['source'], archives=manifest['archives'], archivePrecedence=manifest['precedence'], modelSamples=manifest['modelSamples'], sourceFiles=manifest['files'], generatedFiles=generated, converter=dict(script='scripts/convert-warcraft-assets.py', upstream=UPSTREAM, commit=COMMIT), scope=f"{len(terrain)} terrain atlases; {len(model_catalog)} converted models of {len(manifest['modelSamples'])} extracted sources; inventory does not imply conversion."))
+    json_write(output / 'asset-sources.json', dict(convertedOn='2026-10-05', source=manifest['source'], archives=manifest['archives'], archivePrecedence=manifest['precedence'], modelSamples=manifest['modelSamples'], extractionFailures=manifest.get('failures',[]), sourceFiles=manifest['files'], generatedFiles=generated, converter=dict(script='scripts/convert-warcraft-assets.py', upstream=UPSTREAM, commit=COMMIT), scope=f"{len(terrain)} terrain atlases; {len(model_catalog)} converted models of {len(manifest['modelSamples'])} extracted sources; inventory does not imply conversion."))
     for src, dest in [(inventory, output / 'SourceAssets/model-inventory.json'), (terrain_preview, output / 'Validation/terrain-preview.jpg')]:
         if src.resolve() != dest.resolve():
             shutil.copyfile(src, dest)

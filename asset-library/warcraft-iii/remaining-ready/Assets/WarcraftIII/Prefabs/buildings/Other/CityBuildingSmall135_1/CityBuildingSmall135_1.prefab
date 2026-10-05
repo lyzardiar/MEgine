@@ -1,0 +1,151 @@
+{
+  "version": 2,
+  "name": "CityBuildingSmall135_1",
+  "root": {
+    "id": "root",
+    "name": "CityBuildingSmall135_1",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/buildings/Other/CityBuildingSmall135_1/CityBuildingSmall135_1/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/buildings/Other/CityBuildingSmall135_1/CityBuildingSmall135_1/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-00-layer-1",
+        "name": "Geoset 0",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/buildings/Other/CityBuildingSmall135_1/CityBuildingSmall135_1/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/buildings/Other/CityBuildingSmall135_1/CityBuildingSmall135_1/geoset-00-layer-1.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-0",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/buildings/Other/CityBuildingSmall135_1/CityBuildingSmall135_1/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/buildings/Other/CityBuildingSmall135_1/CityBuildingSmall135_1/geoset-01-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-1",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/buildings/Other/CityBuildingSmall135_1/CityBuildingSmall135_1/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/buildings/Other/CityBuildingSmall135_1/CityBuildingSmall135_1/geoset-01-layer-1.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

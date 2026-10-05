@@ -3,6 +3,9 @@ use mengine_assets::GltfPoseSource;
 use serde_json::json;
 
 fn fixture(second_weights: [f32; 4], paired: bool, uv_track: Option<serde_json::Value>, collapsed: bool) -> std::path::PathBuf {
+    animation_fixture(second_weights, paired, uv_track.map(|track| json!({"mengineUv":track})), collapsed, 1.0)
+}
+fn animation_fixture(second_weights: [f32; 4], paired: bool, extras: Option<serde_json::Value>, collapsed: bool, duration: f32) -> std::path::PathBuf {
     let mut blob = Vec::new();
     let mut views = Vec::new();
     let mut accessors = Vec::new();
@@ -16,12 +19,12 @@ fn fixture(second_weights: [f32; 4], paired: bool, uv_track: Option<serde_json::
     let positions = floats(&[0.0; 9], 3, "VEC3");
     let weights0 = floats(&[0.125; 12], 3, "VEC4");
     let weights1 = floats(&second_weights.repeat(3), 3, "VEC4");
-    let times = floats(&[0.0, 1.0], 2, "SCALAR");
+    let times = floats(&[0.0, duration], 2, "SCALAR");
     let translations = floats(&[0.0, 0.0, 0.0, 8.0, 0.0, 0.0], 2, "VEC3");
     let uv = floats(&[0.25,0.75,0.25,0.75,0.25,0.75],3,"VEC2");
     drop(floats);
     accessors[positions]["min"] = json!([0.0,0.0,0.0]); accessors[positions]["max"] = json!([0.0,0.0,0.0]);
-    accessors[times]["min"] = json!([0.0]); accessors[times]["max"] = json!([1.0]);
+    accessors[times]["min"] = json!([0.0]); accessors[times]["max"] = json!([duration]);
     let mut joint_ids = Vec::new();
     for base in [0u16, 4] {
         let start = blob.len();
@@ -35,7 +38,7 @@ fn fixture(second_weights: [f32; 4], paired: bool, uv_track: Option<serde_json::
     let mut nodes = vec![json!({});8]; nodes.push(json!({"mesh":0,"skin":0}));
     if collapsed { for node in nodes.iter_mut().take(8) { node["scale"]=json!([0,0,0]); } }
     let mut doc = json!({"asset":{"version":"2.0"},"buffers":[{"byteLength":blob.len()}],"bufferViews":views,"accessors":accessors,"meshes":[{"primitives":[{"attributes":attributes}]}],"nodes":nodes,"skins":[{"joints":[0,1,2,3,4,5,6,7]}],"scenes":[{"nodes":[0,1,2,3,4,5,6,7,8]}],"scene":0,"animations":[{"samplers":[{"input":times,"output":translations,"interpolation":"LINEAR"}],"channels":[{"sampler":0,"target":{"node":4,"path":"translation"}}]}]});
-    if let Some(track) = uv_track { doc["animations"][0]["extras"] = json!({"mengineUv":track}); }
+    if let Some(extras) = extras { doc["animations"][0]["extras"] = extras; }
     let mut encoded = serde_json::to_vec(&doc).unwrap(); while encoded.len()%4 != 0 { encoded.push(b' '); }
     let mut file = Vec::new();
     for v in [0x46546c67u32,2,(28+encoded.len()+blob.len()) as u32,encoded.len() as u32,0x4e4f534a] { file.extend_from_slice(&v.to_le_bytes()); }
@@ -80,5 +83,52 @@ fn collapsed_death_skeleton_keeps_finite_vertices_and_normals() {
     assert_eq!(pose.positions.len(),3);
     assert!(pose.positions.iter().chain(pose.normals.iter()).flatten().all(|v|v.is_finite()));
     assert_eq!(pose.normals,vec![[0.0,1.0,0.0];3]);
+    std::fs::remove_file(path).unwrap();
+}
+
+#[test]
+fn nonlooping_death_holds_exact_nonintegral_terminal_pose_and_uv() {
+    let mut frames=vec![[1.0,0.0,0.0,1.0,0.0,0.0];14]; frames[13][4]=3.0;
+    let path=animation_fixture([0.125;4],true,Some(json!({"menginePlayback":{"durationSeconds":1.034,"loop":false},"mengineUv":{"fps":12,"frames":frames}})),false,1.034);
+    let source=GltfPoseSource::load(&path).unwrap();
+    assert!(source.sample(0,12).unwrap().positions[0][0]<1.0);
+    assert_eq!(source.sample(0,12).unwrap().uvs[0],[0.25,0.75]);
+    for (frame,rate) in [(13,12),(100,12),(32,30)] {
+        let pose=source.sample_at_rate(0,frame,rate).unwrap();
+        assert!((pose.positions[0][0]-1.0).abs()<1e-6);
+        assert_eq!(pose.uvs,vec![[3.25,0.75];3]);
+    }
+    std::fs::remove_file(path).unwrap();
+}
+
+#[test]
+fn explicit_loop_uses_source_duration_and_legacy_animation_keeps_wrapping() {
+    for extras in [None,Some(json!({"menginePlayback":{"durationSeconds":1.034,"loop":true}}))] {
+        let path=animation_fixture([0.125;4],true,extras,false,1.034);
+        let source=GltfPoseSource::load(&path).unwrap();
+        let expected=(13.0_f32/12.0%1.034)/1.034;
+        assert!((source.sample(0,13).unwrap().positions[0][0]-expected).abs()<1e-6);
+        std::fs::remove_file(path).unwrap();
+    }
+    let path=animation_fixture([0.125;4],true,Some(json!({"menginePlayback":{"durationSeconds":1.0,"loop":true}})),false,1.0);
+    assert_eq!(GltfPoseSource::load(&path).unwrap().sample(0,12).unwrap().positions,vec![[0.0;3];3]);
+    std::fs::remove_file(path).unwrap();
+}
+
+#[test]
+fn invalid_playback_metadata_is_rejected() {
+    for playback in [json!({"durationSeconds":0,"loop":false}),json!({"durationSeconds":601,"loop":false}),json!({"durationSeconds":1,"loop":"false"}),json!({"durationSeconds":1})] {
+        let path=animation_fixture([0.125;4],true,Some(json!({"menginePlayback":playback})),false,1.0);
+        assert!(GltfPoseSource::load(&path).unwrap().sample(0,0).is_err());
+        std::fs::remove_file(path).unwrap();
+    }
+}
+
+#[test]
+fn source_duration_preserves_time_after_the_last_channel_key() {
+    let path=animation_fixture([0.125;4],true,Some(json!({"menginePlayback":{"durationSeconds":2.0,"loop":true}})),false,1.0);
+    let source=GltfPoseSource::load(&path).unwrap();
+    assert_eq!(source.sample(0,18).unwrap().positions,vec![[1.0,0.0,0.0];3]);
+    assert_eq!(source.sample(0,24).unwrap().positions,vec![[0.0;3];3]);
     std::fs::remove_file(path).unwrap();
 }

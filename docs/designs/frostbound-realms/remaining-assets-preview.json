@@ -1,0 +1,105 @@
+{
+  "method": "Native editor Game View GPU renderer",
+  "project": "D:\\MEngineNativeQA\\classic-library-1791206681846\\sample",
+  "image": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\docs\\designs\\frostbound-realms\\remaining-assets-preview.png",
+  "sha256": "7037a56f36e9c25df8f87c626a47973428a9f1575dc6e60a13119098b0eb71d8",
+  "rendererSha256": "c35e3b00addcf6026d1d76e4c215cd76fdbc837dd825ac9b460b54c3f8695d67",
+  "models": [
+    {
+      "model": "TempleofTides",
+      "source": "Buildings\\Naga\\TempleofTides\\TempleofTides.mdx",
+      "row": 0,
+      "column": 0
+    },
+    {
+      "model": "CoralBed",
+      "source": "Buildings\\Naga\\CoralBed\\CoralBed.mdx",
+      "row": 0,
+      "column": 1
+    },
+    {
+      "model": "ShrineOfAshjara",
+      "source": "Buildings\\Naga\\ShrineOfAshjara\\ShrineOfAshjara.mdx",
+      "row": 0,
+      "column": 2
+    },
+    {
+      "model": "TidalGuardian",
+      "source": "Buildings\\Naga\\TidalGuardian\\TidalGuardian.mdx",
+      "row": 0,
+      "column": 3
+    },
+    {
+      "model": "Tavern",
+      "source": "Buildings\\Other\\Tavern\\Tavern.mdx",
+      "row": 1,
+      "column": 0
+    },
+    {
+      "model": "Goldmine",
+      "source": "buildings\\Other\\GoldMine\\Goldmine.mdx",
+      "row": 1,
+      "column": 1
+    },
+    {
+      "model": "Merchant",
+      "source": "buildings\\Other\\Merchant\\Merchant.mdx",
+      "row": 1,
+      "column": 2
+    },
+    {
+      "model": "MarketPlace",
+      "source": "Buildings\\Other\\MarketPlace\\MarketPlace.mdx",
+      "row": 1,
+      "column": 3
+    },
+    {
+      "model": "HumanShipyard",
+      "source": "Buildings\\Human\\HumanShipyard\\HumanShipyard.mdx",
+      "row": 2,
+      "column": 0
+    },
+    {
+      "model": "GoblinShipyard",
+      "source": "Buildings\\Other\\GoblinShipyard\\GoblinShipyard.mdx",
+      "row": 2,
+      "column": 1
+    },
+    {
+      "model": "FountainOfHealth",
+      "source": "buildings\\Other\\FountainOfLife\\FountainOfHealth.mdx",
+      "row": 2,
+      "column": 2
+    },
+    {
+      "model": "Waygate",
+      "source": "buildings\\Other\\Waygate\\Waygate.mdx",
+      "row": 2,
+      "column": 3
+    },
+    {
+      "model": "LordaeronBridge",
+      "source": "Doodads\\LordaeronSummer\\Structures\\LordaeronBridge\\LordaeronBridge.mdx",
+      "row": 3,
+      "column": 0
+    },
+    {
+      "model": "NorthrendTree0",
+      "source": "Doodads\\Terrain\\NorthrendTree\\NorthrendTree0.mdx",
+      "row": 3,
+      "column": 1
+    },
+    {
+      "model": "Icecrown_Crystal0",
+      "source": "Doodads\\Icecrown\\Rocks\\Icecrown_Crystal\\Icecrown_Crystal0.mdx",
+      "row": 3,
+      "column": 2
+    },
+    {
+      "model": "SeaTurtle",
+      "source": "Units\\Creeps\\SeaTurtle\\SeaTurtle.mdx",
+      "row": 3,
+      "column": 3
+    }
+  ]
+}

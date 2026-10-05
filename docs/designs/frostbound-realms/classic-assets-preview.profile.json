@@ -1,29 +1,29 @@
 {
   "schemaVersion": 1,
-  "totalMs": 208.90900000000002,
+  "totalMs": 210.3683,
   "callTree": {
     "name": "EditorViewportRenderer.render_world",
-    "totalMs": 208.90900000000002,
-    "selfMs": 0.008500000000044139,
+    "totalMs": 210.3683,
+    "selfMs": 0.008499999999993957,
     "calls": 1,
     "children": [
       {
         "name": "Effects",
-        "totalMs": 0.049199999999999994,
+        "totalMs": 0.0684,
         "selfMs": 0.0,
         "calls": 1,
         "children": [
           {
             "name": "EffekseerWorld.update",
-            "totalMs": 0.044199999999999996,
-            "selfMs": 0.044199999999999996,
+            "totalMs": 0.0635,
+            "selfMs": 0.0635,
             "calls": 1,
             "children": []
           },
           {
             "name": "EffekseerWorld.append_to_frame",
-            "totalMs": 0.005,
-            "selfMs": 0.005,
+            "totalMs": 0.0049,
+            "selfMs": 0.0049,
             "calls": 1,
             "children": []
           }
@@ -31,62 +31,62 @@
       },
       {
         "name": "Frame compile",
-        "totalMs": 5.8284,
+        "totalMs": 6.857900000000001,
         "selfMs": 0.0,
         "calls": 1,
         "children": [
           {
             "name": "TransformHierarchy.build",
-            "totalMs": 0.4074,
-            "selfMs": 0.4074,
+            "totalMs": 0.5274,
+            "selfMs": 0.5274,
             "calls": 1,
             "children": []
           },
           {
             "name": "FrameCompiler.compile",
-            "totalMs": 5.4209000000000005,
-            "selfMs": 0.0038000000000000256,
+            "totalMs": 6.329000000000001,
+            "selfMs": 0.0038000000000009138,
             "calls": 1,
             "children": [
               {
                 "name": "Camera, meshes and lighting",
-                "totalMs": 5.2214,
-                "selfMs": 5.2214,
+                "totalMs": 6.1251,
+                "selfMs": 6.1251,
                 "calls": 1,
                 "children": []
               },
               {
                 "name": "Canvas layout and text",
-                "totalMs": 0.0498,
-                "selfMs": 0.0498,
+                "totalMs": 0.0538,
+                "selfMs": 0.0538,
                 "calls": 1,
                 "children": []
               },
               {
                 "name": "World sprites",
-                "totalMs": 0.0537,
-                "selfMs": 0.0537,
+                "totalMs": 0.054,
+                "selfMs": 0.054,
                 "calls": 1,
                 "children": []
               },
               {
                 "name": "Particles, trails and sorting",
-                "totalMs": 0.0849,
-                "selfMs": 0.0849,
+                "totalMs": 0.083,
+                "selfMs": 0.083,
                 "calls": 1,
                 "children": []
               },
               {
                 "name": "Sprite regions and materials",
-                "totalMs": 0.0024,
-                "selfMs": 0.0024,
+                "totalMs": 0.004,
+                "selfMs": 0.004,
                 "calls": 1,
                 "children": []
               },
               {
                 "name": "UI batching",
-                "totalMs": 0.0049,
-                "selfMs": 0.0049,
+                "totalMs": 0.0053,
+                "selfMs": 0.0053,
                 "calls": 1,
                 "children": []
               }
@@ -94,8 +94,8 @@
           },
           {
             "name": "Diagnostics.texture_failures",
-            "totalMs": 0.00009999999999999999,
-            "selfMs": 0.00009999999999999999,
+            "totalMs": 0.0015,
+            "selfMs": 0.0015,
             "calls": 1,
             "children": []
           }
@@ -103,28 +103,28 @@
       },
       {
         "name": "Render backend",
-        "totalMs": 14.092799999999999,
+        "totalMs": 13.3199,
         "selfMs": 0.0,
         "calls": 1,
         "children": [
           {
             "name": "OffscreenTarget.ensure_size",
-            "totalMs": 0.00009999999999999999,
-            "selfMs": 0.00009999999999999999,
+            "totalMs": 0.0017000000000000001,
+            "selfMs": 0.0017000000000000001,
             "calls": 1,
             "children": []
           },
           {
             "name": "Renderer.submit_frame_to",
-            "totalMs": 3.8011,
-            "selfMs": 3.8011,
+            "totalMs": 2.9112,
+            "selfMs": 2.9112,
             "calls": 1,
             "children": []
           },
           {
             "name": "Renderer.read_offscreen_rgba8",
-            "totalMs": 10.291599999999999,
-            "selfMs": 10.291599999999999,
+            "totalMs": 10.407,
+            "selfMs": 10.407,
             "calls": 1,
             "children": []
           }
@@ -132,42 +132,42 @@
       },
       {
         "name": "Resource sync",
-        "totalMs": 185.6984,
+        "totalMs": 186.82690000000002,
         "selfMs": 0.0,
         "calls": 1,
         "children": [
           {
             "name": "RuntimeMeshCache.sync",
-            "totalMs": 55.0695,
-            "selfMs": 55.0695,
+            "totalMs": 54.853100000000005,
+            "selfMs": 54.853100000000005,
             "calls": 1,
             "children": []
           },
           {
             "name": "RuntimeFontCache.sync",
-            "totalMs": 0.00039999999999999996,
-            "selfMs": 0.00039999999999999996,
+            "totalMs": 0.0015,
+            "selfMs": 0.0015,
             "calls": 1,
             "children": []
           },
           {
             "name": "RuntimeTextureCache.sync_ui",
-            "totalMs": 0.003,
-            "selfMs": 0.003,
+            "totalMs": 0.0037,
+            "selfMs": 0.0037,
             "calls": 1,
             "children": []
           },
           {
             "name": "RuntimeTextureCache.sync_ui_materials",
-            "totalMs": 0.006,
-            "selfMs": 0.006,
+            "totalMs": 0.0051,
+            "selfMs": 0.0051,
             "calls": 1,
             "children": []
           },
           {
             "name": "RuntimeTextureCache.sync_materials",
-            "totalMs": 130.61939999999998,
-            "selfMs": 130.61939999999998,
+            "totalMs": 131.9634,
+            "selfMs": 131.9634,
             "calls": 1,
             "children": []
           },
@@ -182,14 +182,14 @@
       },
       {
         "name": "Profiler",
-        "totalMs": 3.2317,
+        "totalMs": 3.2867,
         "selfMs": 0.0,
         "calls": 1,
         "children": [
           {
             "name": "Profiler.snapshot",
-            "totalMs": 3.2317,
-            "selfMs": 3.2317,
+            "totalMs": 3.2867,
+            "selfMs": 3.2867,
             "calls": 1,
             "children": []
           }
@@ -274,7 +274,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-11-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Human\\TownHall\\TownHall\\geoset-11-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Human\\TownHall\\TownHall\\geoset-11-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -286,7 +286,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-13-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Human\\TownHall\\TownHall\\geoset-13-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Human\\TownHall\\TownHall\\geoset-13-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -298,7 +298,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-14-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Human\\TownHall\\TownHall\\geoset-14-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Human\\TownHall\\TownHall\\geoset-14-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -310,7 +310,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientofWar/AncientofWar/geoset-06-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-06-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-06-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -322,7 +322,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientofWar/AncientofWar/geoset-07-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-07-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-07-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -334,7 +334,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientofWar/AncientofWar/geoset-08-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-08-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-08-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -346,7 +346,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientofWar/AncientofWar/geoset-09-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-09-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-09-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -358,7 +358,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientofWar/AncientofWar/geoset-10-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-10-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-10-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -370,7 +370,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Buildings/Undead/Necropolis/Necropolis/geoset-02-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Undead\\Necropolis\\Necropolis\\geoset-02-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Undead\\Necropolis\\Necropolis\\geoset-02-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -382,7 +382,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Buildings/Undead/Necropolis/Necropolis/geoset-03-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Undead\\Necropolis\\Necropolis\\geoset-03-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Undead\\Necropolis\\Necropolis\\geoset-03-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -394,7 +394,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/TerrainTile.glb",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\TerrainTile.glb",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\TerrainTile.glb",
       "loaded": true,
       "sourceBytes": 956,
       "gpuBytesEstimate": null,
@@ -406,7 +406,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Creeps/DireWolf/DireWolf/geoset-00-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\DireWolf\\DireWolf\\geoset-00-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\DireWolf\\DireWolf\\geoset-00-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -418,7 +418,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Creeps/DireWolf/DireWolf/geoset-01-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\DireWolf\\DireWolf\\geoset-01-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\DireWolf\\DireWolf\\geoset-01-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -430,7 +430,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Creeps/Ogre/Ogre/geoset-00-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\Ogre\\Ogre\\geoset-00-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\Ogre\\Ogre\\geoset-00-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -442,7 +442,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Creeps/Ogre/Ogre/geoset-01-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\Ogre\\Ogre\\geoset-01-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\Ogre\\Ogre\\geoset-01-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -454,7 +454,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Creeps/RockGolem/RockGolem/geoset-00-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\RockGolem\\RockGolem\\geoset-00-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\RockGolem\\RockGolem\\geoset-00-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -466,7 +466,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Creeps/RockGolem/RockGolem/geoset-01-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\RockGolem\\RockGolem\\geoset-01-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\RockGolem\\RockGolem\\geoset-01-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -478,7 +478,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Creeps/RockGolem/RockGolem/geoset-02-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\RockGolem\\RockGolem\\geoset-02-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Creeps\\RockGolem\\RockGolem\\geoset-02-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -490,7 +490,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\Footman\\Footman\\geoset-00-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\Footman\\Footman\\geoset-00-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -502,7 +502,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-01-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\Footman\\Footman\\geoset-01-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\Footman\\Footman\\geoset-01-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -514,7 +514,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/HeroArchMage/HeroArchMage/geoset-00-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\HeroArchMage\\HeroArchMage\\geoset-00-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\HeroArchMage\\HeroArchMage\\geoset-00-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -526,7 +526,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/HeroArchMage/HeroArchMage/geoset-01-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\HeroArchMage\\HeroArchMage\\geoset-01-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\HeroArchMage\\HeroArchMage\\geoset-01-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -538,7 +538,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/HeroArchMage/HeroArchMage/geoset-02-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\HeroArchMage\\HeroArchMage\\geoset-02-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\HeroArchMage\\HeroArchMage\\geoset-02-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -550,7 +550,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/Peasant/peasant/geoset-00-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\Peasant\\peasant\\geoset-00-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\Peasant\\peasant\\geoset-00-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -562,7 +562,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/Peasant/peasant/geoset-01-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\Peasant\\peasant\\geoset-01-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\Peasant\\peasant\\geoset-01-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -574,7 +574,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/WaterElemental/WaterElemental/geoset-00-animated-uv-0.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\WaterElemental\\WaterElemental\\geoset-00-animated-uv-0.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\WaterElemental\\WaterElemental\\geoset-00-animated-uv-0.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -586,7 +586,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/WaterElemental/WaterElemental/geoset-00-animated-uv-1.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\WaterElemental\\WaterElemental\\geoset-00-animated-uv-1.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\WaterElemental\\WaterElemental\\geoset-00-animated-uv-1.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -598,7 +598,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/WaterElemental/WaterElemental/geoset-01-animated-uv-0.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\WaterElemental\\WaterElemental\\geoset-01-animated-uv-0.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\WaterElemental\\WaterElemental\\geoset-01-animated-uv-0.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -610,7 +610,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/WaterElemental/WaterElemental/geoset-01-animated-uv-1.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\WaterElemental\\WaterElemental\\geoset-01-animated-uv-1.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\WaterElemental\\WaterElemental\\geoset-01-animated-uv-1.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -622,7 +622,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Human/WaterElemental/WaterElemental/geoset-02-animated-uv-0.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\WaterElemental\\WaterElemental\\geoset-02-animated-uv-0.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Human\\WaterElemental\\WaterElemental\\geoset-02-animated-uv-0.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -634,7 +634,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/NightElf/Archer/Archer/geoset-00-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\NightElf\\Archer\\Archer\\geoset-00-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\NightElf\\Archer\\Archer\\geoset-00-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -646,7 +646,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/NightElf/Archer/Archer/geoset-01-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\NightElf\\Archer\\Archer\\geoset-01-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\NightElf\\Archer\\Archer\\geoset-01-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -658,7 +658,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Orc/Grunt/grunt/geoset-01-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\Grunt\\grunt\\geoset-01-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\Grunt\\grunt\\geoset-01-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -670,7 +670,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Orc/Grunt/grunt/geoset-02-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\Grunt\\grunt\\geoset-02-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\Grunt\\grunt\\geoset-02-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -682,7 +682,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Orc/Grunt/grunt/geoset-07-animated.glb#pose=1:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\Grunt\\grunt\\geoset-07-animated.glb#pose=1:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\Grunt\\grunt\\geoset-07-animated.glb#pose=1:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -694,7 +694,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Orc/HeroBladeMaster/HeroBladeMaster/geoset-00-animated.glb#pose=7:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\HeroBladeMaster\\HeroBladeMaster\\geoset-00-animated.glb#pose=7:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\HeroBladeMaster\\HeroBladeMaster\\geoset-00-animated.glb#pose=7:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -706,7 +706,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Orc/HeroBladeMaster/HeroBladeMaster/geoset-01-animated.glb#pose=7:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\HeroBladeMaster\\HeroBladeMaster\\geoset-01-animated.glb#pose=7:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\HeroBladeMaster\\HeroBladeMaster\\geoset-01-animated.glb#pose=7:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -718,7 +718,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Orc/HeroBladeMaster/HeroBladeMaster/geoset-02-animated.glb#pose=7:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\HeroBladeMaster\\HeroBladeMaster\\geoset-02-animated.glb#pose=7:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\HeroBladeMaster\\HeroBladeMaster\\geoset-02-animated.glb#pose=7:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -730,7 +730,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Orc/HeroBladeMaster/HeroBladeMaster/geoset-03-animated.glb#pose=7:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\HeroBladeMaster\\HeroBladeMaster\\geoset-03-animated.glb#pose=7:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\HeroBladeMaster\\HeroBladeMaster\\geoset-03-animated.glb#pose=7:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -742,7 +742,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Orc/HeroBladeMaster/HeroBladeMaster/geoset-05-animated.glb#pose=7:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\HeroBladeMaster\\HeroBladeMaster\\geoset-05-animated.glb#pose=7:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\HeroBladeMaster\\HeroBladeMaster\\geoset-05-animated.glb#pose=7:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -754,7 +754,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Orc/Peon/peon/geoset-00-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\Peon\\peon\\geoset-00-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\Peon\\peon\\geoset-00-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -766,7 +766,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Orc/Peon/peon/geoset-01-animated.glb#pose=0:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\Peon\\peon\\geoset-01-animated.glb#pose=0:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Orc\\Peon\\peon\\geoset-01-animated.glb#pose=0:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -778,7 +778,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Undead/Ghoul/Ghoul/geoset-00-animated.glb#pose=2:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Undead\\Ghoul\\Ghoul\\geoset-00-animated.glb#pose=2:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Undead\\Ghoul\\Ghoul\\geoset-00-animated.glb#pose=2:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -790,7 +790,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/Units/Undead/Ghoul/Ghoul/geoset-01-animated.glb#pose=2:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\Units\\Undead\\Ghoul\\Ghoul\\geoset-01-animated.glb#pose=2:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\Units\\Undead\\Ghoul\\Ghoul\\geoset-01-animated.glb#pose=2:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -802,7 +802,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/buildings/Orc/GreatHall/GreatHall/geoset-02-animated.glb#pose=2:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\buildings\\Orc\\GreatHall\\GreatHall\\geoset-02-animated.glb#pose=2:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\buildings\\Orc\\GreatHall\\GreatHall\\geoset-02-animated.glb#pose=2:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -814,7 +814,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/buildings/Orc/GreatHall/GreatHall/geoset-03-animated.glb#pose=2:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\buildings\\Orc\\GreatHall\\GreatHall\\geoset-03-animated.glb#pose=2:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\buildings\\Orc\\GreatHall\\GreatHall\\geoset-03-animated.glb#pose=2:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -826,7 +826,7 @@
     {
       "kind": "mesh",
       "asset": "Assets/WarcraftIII/Models/buildings/Orc/GreatHall/GreatHall/geoset-13-animated.glb#pose=2:0",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Models\\buildings\\Orc\\GreatHall\\GreatHall\\geoset-13-animated.glb#pose=2:0",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Models\\buildings\\Orc\\GreatHall\\GreatHall\\geoset-13-animated.glb#pose=2:0",
       "loaded": false,
       "sourceBytes": null,
       "gpuBytesEstimate": null,
@@ -838,7 +838,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Buildings/Human/TownHall/TownHallCastleKeep.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Buildings\\Human\\TownHall\\TownHallCastleKeep.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Buildings\\Human\\TownHall\\TownHallCastleKeep.png",
       "loaded": true,
       "sourceBytes": 1022670,
       "gpuBytesEstimate": 1048576,
@@ -853,7 +853,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Buildings/NightElf/AncientofWar/AncientOfWar1.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Buildings\\NightElf\\AncientofWar\\AncientOfWar1.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Buildings\\NightElf\\AncientofWar\\AncientOfWar1.png",
       "loaded": true,
       "sourceBytes": 242270,
       "gpuBytesEstimate": 262144,
@@ -868,7 +868,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Composed/Buildings/Human/TownHall/TownHall/geoset-14-team-00.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Composed\\Buildings\\Human\\TownHall\\TownHall\\geoset-14-team-00.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Composed\\Buildings\\Human\\TownHall\\TownHall\\geoset-14-team-00.png",
       "loaded": true,
       "sourceBytes": 706868,
       "gpuBytesEstimate": 1048576,
@@ -883,7 +883,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Composed/Buildings/NightElf/AncientofWar/AncientofWar/geoset-08-team-00.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Composed\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-08-team-00.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Composed\\Buildings\\NightElf\\AncientofWar\\AncientofWar\\geoset-08-team-00.png",
       "loaded": true,
       "sourceBytes": 175090,
       "gpuBytesEstimate": 262144,
@@ -898,7 +898,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Composed/Units/Creeps/Ogre/Ogre/geoset-01-team-00.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Composed\\Units\\Creeps\\Ogre\\Ogre\\geoset-01-team-00.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Composed\\Units\\Creeps\\Ogre\\Ogre\\geoset-01-team-00.png",
       "loaded": true,
       "sourceBytes": 279005,
       "gpuBytesEstimate": 524288,
@@ -913,7 +913,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Composed/Units/Creeps/RockGolem/RockGolem/geoset-02-team-00.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Composed\\Units\\Creeps\\RockGolem\\RockGolem\\geoset-02-team-00.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Composed\\Units\\Creeps\\RockGolem\\RockGolem\\geoset-02-team-00.png",
       "loaded": true,
       "sourceBytes": 12225,
       "gpuBytesEstimate": 16384,
@@ -928,7 +928,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Composed/buildings/Orc/GreatHall/GreatHall/geoset-02-team-00.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Composed\\buildings\\Orc\\GreatHall\\GreatHall\\geoset-02-team-00.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Composed\\buildings\\Orc\\GreatHall\\GreatHall\\geoset-02-team-00.png",
       "loaded": true,
       "sourceBytes": 177030,
       "gpuBytesEstimate": 262144,
@@ -943,7 +943,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/Splats/HumanTownHallUberSplat.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Splats\\HumanTownHallUberSplat.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Splats\\HumanTownHallUberSplat.png",
       "loaded": true,
       "sourceBytes": 265588,
       "gpuBytesEstimate": 262144,
@@ -958,7 +958,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/TeamColor/TeamColor00.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\TeamColor\\TeamColor00.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\TeamColor\\TeamColor00.png",
       "loaded": true,
       "sourceBytes": 76,
       "gpuBytesEstimate": 256,
@@ -973,7 +973,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/TeamGlow/TeamGlow00.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\TeamGlow\\TeamGlow00.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\TeamGlow\\TeamGlow00.png",
       "loaded": true,
       "sourceBytes": 1538,
       "gpuBytesEstimate": 4096,
@@ -988,7 +988,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Textures/Base.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Base.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Base.png",
       "loaded": true,
       "sourceBytes": 227677,
       "gpuBytesEstimate": 262144,
@@ -1003,7 +1003,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Textures/CreepyNecropolis.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\CreepyNecropolis.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\CreepyNecropolis.png",
       "loaded": true,
       "sourceBytes": 249043,
       "gpuBytesEstimate": 262144,
@@ -1018,7 +1018,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Textures/Footman.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Footman.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Footman.png",
       "loaded": true,
       "sourceBytes": 245342,
       "gpuBytesEstimate": 262144,
@@ -1033,7 +1033,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Textures/HeroBladeMaster.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\HeroBladeMaster.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\HeroBladeMaster.png",
       "loaded": true,
       "sourceBytes": 220699,
       "gpuBytesEstimate": 262144,
@@ -1048,7 +1048,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Textures/Lords0000.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Lords0000.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Lords0000.png",
       "loaded": true,
       "sourceBytes": 14962,
       "gpuBytesEstimate": 16384,
@@ -1063,7 +1063,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Textures/Peasant.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Peasant.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Peasant.png",
       "loaded": true,
       "sourceBytes": 248197,
       "gpuBytesEstimate": 262144,
@@ -1078,7 +1078,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Textures/Ranger.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Ranger.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Ranger.png",
       "loaded": true,
       "sourceBytes": 227420,
       "gpuBytesEstimate": 262144,
@@ -1093,7 +1093,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Textures/Yellow_Glow.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Yellow_Glow.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Yellow_Glow.png",
       "loaded": true,
       "sourceBytes": 3193,
       "gpuBytesEstimate": 4096,
@@ -1108,7 +1108,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Tiles/TerrainArt/LordaeronSummer/Lords_Grass/00-00.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Tiles\\TerrainArt\\LordaeronSummer\\Lords_Grass\\00-00.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Tiles\\TerrainArt\\LordaeronSummer\\Lords_Grass\\00-00.png",
       "loaded": true,
       "sourceBytes": 12826,
       "gpuBytesEstimate": 16384,
@@ -1123,7 +1123,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Units/Creeps/DireWolf/DireWolf.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Creeps\\DireWolf\\DireWolf.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Creeps\\DireWolf\\DireWolf.png",
       "loaded": true,
       "sourceBytes": 200971,
       "gpuBytesEstimate": 262144,
@@ -1138,7 +1138,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Units/Creeps/Ogre/Ogre.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Creeps\\Ogre\\Ogre.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Creeps\\Ogre\\Ogre.png",
       "loaded": true,
       "sourceBytes": 484914,
       "gpuBytesEstimate": 524288,
@@ -1153,7 +1153,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Units/Creeps/RockGolem/RockGolem2.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Creeps\\RockGolem\\RockGolem2.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Creeps\\RockGolem\\RockGolem2.png",
       "loaded": true,
       "sourceBytes": 128438,
       "gpuBytesEstimate": 131072,
@@ -1168,7 +1168,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Units/Creeps/RockGolem/rocktile.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Creeps\\RockGolem\\rocktile.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Creeps\\RockGolem\\rocktile.png",
       "loaded": true,
       "sourceBytes": 16676,
       "gpuBytesEstimate": 16384,
@@ -1183,7 +1183,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Units/Human/HeroArchMage/HeroArchmage.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Human\\HeroArchMage\\HeroArchmage.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Human\\HeroArchMage\\HeroArchmage.png",
       "loaded": true,
       "sourceBytes": 366791,
       "gpuBytesEstimate": 524288,
@@ -1198,7 +1198,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Units/Orc/Grunt/Grunt.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Orc\\Grunt\\Grunt.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Orc\\Grunt\\Grunt.png",
       "loaded": true,
       "sourceBytes": 235058,
       "gpuBytesEstimate": 262144,
@@ -1213,7 +1213,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Units/Orc/Peon/peon.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Orc\\Peon\\peon.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Orc\\Peon\\peon.png",
       "loaded": true,
       "sourceBytes": 252067,
       "gpuBytesEstimate": 262144,
@@ -1228,7 +1228,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/Units/Undead/Ghoul/Ghoul.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Undead\\Ghoul\\Ghoul.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\Units\\Undead\\Ghoul\\Ghoul.png",
       "loaded": true,
       "sourceBytes": 225931,
       "gpuBytesEstimate": 262144,
@@ -1243,7 +1243,7 @@
     {
       "kind": "texture",
       "asset": "Assets/WarcraftIII/Textures/buildings/Orc/GreatHall/GreatHall.png",
-      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791194423774\\sample\\Assets\\WarcraftIII\\Textures\\buildings\\Orc\\GreatHall\\GreatHall.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-library-1791207336574\\sample\\Assets\\WarcraftIII\\Textures\\buildings\\Orc\\GreatHall\\GreatHall.png",
       "loaded": true,
       "sourceBytes": 257355,
       "gpuBytesEstimate": 262144,
@@ -1257,7 +1257,7 @@
     }
   ],
   "resourcesTruncated": false,
-  "resourceSampleAgeMs": 0.015099999999999999,
+  "resourceSampleAgeMs": 0.016399999999999998,
   "counts": {
     "msaaSamples": 4,
     "entities": 901,

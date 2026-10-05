@@ -17,7 +17,7 @@ pub fn parse_gltf_pose_sample(reference: &str) -> Option<(&str, usize, u32, u32)
     let clip = clip.parse::<usize>().ok()?;
     let frame = frame.parse::<u32>().ok()?;
     let rate = rate.parse::<u32>().ok()?;
-    if clip > 255 || !(1..=60).contains(&rate) || frame >= rate*600 || !(path.ends_with(".gltf") || path.ends_with(".glb")) { return None; }
+    if clip > 255 || !(1..=60).contains(&rate) || frame > rate*600 || !(path.ends_with(".gltf") || path.ends_with(".glb")) { return None; }
     Some((path, clip, frame, rate))
 }
 
@@ -42,16 +42,24 @@ impl GltfPoseSource {
         let mut trs = nodes.iter().map(|n| { let (t,r,s) = n.transform().decomposed(); (Vec3::from(t), Quat::from_array(r), Vec3::from(s)) }).collect::<Vec<_>>();
         let animation = self.document.animations().nth(clip).ok_or_else(|| fail("animation clip index out of bounds"))?;
         let duration = animation.channels().filter_map(|c| c.reader(|b| Some(&self.buffers[b.index()])).read_inputs().and_then(|v| v.last())).fold(0.0_f32, f32::max);
-        let time = if duration > 0.0 { (frame as f32 / rate as f32) % duration } else { 0.0 };
+        let extra: Option<serde_json::Value> = animation.extras().as_ref().map(|v| serde_json::from_str(v.get()).map_err(|_| fail("invalid animation extras"))).transpose()?;
+        let playback = extra.as_ref().and_then(|v| v.get("menginePlayback"));
+        let (time, terminal) = if let Some(playback) = playback {
+            #[derive(serde::Deserialize)]
+            struct Playback { #[serde(rename="durationSeconds")] duration: f32, #[serde(rename="loop")] looped: bool }
+            let playback: Playback = serde_json::from_value(playback.clone()).map_err(|_| fail("invalid animation playback"))?;
+            if !playback.duration.is_finite() || playback.duration <= 0.0 || playback.duration > 600.0 { return Err(fail("invalid animation playback duration")); }
+            let seconds = frame as f32 / rate as f32;
+            if playback.looped { (seconds % playback.duration, false) } else { (seconds.min(playback.duration), seconds >= playback.duration) }
+        } else { (if duration > 0.0 { (frame as f32 / rate as f32) % duration } else { 0.0 }, false) };
         // MiYu: UV transforms are sampled alongside each classic material layer's skeleton.
-        let uv_matrix = if let Some(extra) = animation.extras() {
-            let extra: serde_json::Value = serde_json::from_str(extra.get()).map_err(|_| fail("invalid animation extras"))?;
+        let uv_matrix = if let Some(extra) = extra {
             if let Some(track) = extra.get("mengineUv") {
                 #[derive(serde::Deserialize)]
                 struct UvTrack { fps: u32, frames: Vec<[f32; 6]> }
                 let track: UvTrack = serde_json::from_value(track.clone()).map_err(|_| fail("invalid UV animation track"))?;
                 if !(1..=60).contains(&track.fps) || track.frames.is_empty() || track.frames.iter().flatten().any(|v| !v.is_finite()) { return Err(fail("invalid UV animation samples")); }
-                let index = (time * track.fps as f32 + 0.0001).floor() as usize;
+                let index = if terminal { track.frames.len()-1 } else { (time * track.fps as f32 + 0.0001).floor() as usize };
                 Some(*track.frames.get(index).ok_or_else(|| fail("UV animation frame is missing"))?)
             } else { None }
         } else { None };
@@ -137,8 +145,10 @@ mod tests {
         assert!(parse_gltf_pose("Assets/hero.glb#pose=2:30@30").is_none(),"legacy consumers must not interpret a 30 Hz frame at 12 Hz");
         assert_eq!(parse_gltf_pose_sample("a.gltf#pose=255:5999@60"),Some(("a.gltf",255,5999,60)));
         assert_eq!(parse_gltf_pose_sample("a.glb#pose=0:3000@30"),Some(("a.glb",0,3000,30)));
-        for key in ["a.glb#pose=0:18000@30","a.glb#pose=0:0@0","a.glb#pose=0:0@61","a.glb#pose=0:0@-1","a.glb#pose=0:0@NaN","a.glb#pose=0:0@30@30"] { assert!(parse_gltf_pose_sample(key).is_none()); }
-        for key in ["a.glb#pose=0:7200","a.glb#pose=256:0","a.glb#pose=-1:0","a.glb#pose=0:NaN","a.png#pose=0:0"] { assert!(parse_gltf_pose(key).is_none()); }
+        assert_eq!(parse_gltf_pose_sample("a.glb#pose=0:18000@30"),Some(("a.glb",0,18000,30)));
+        assert_eq!(parse_gltf_pose("a.glb#pose=0:7200"),Some(("a.glb",0,7200)));
+        for key in ["a.glb#pose=0:18001@30","a.glb#pose=0:0@0","a.glb#pose=0:0@61","a.glb#pose=0:0@-1","a.glb#pose=0:0@NaN","a.glb#pose=0:0@30@30"] { assert!(parse_gltf_pose_sample(key).is_none()); }
+        for key in ["a.glb#pose=0:7201","a.glb#pose=256:0","a.glb#pose=-1:0","a.glb#pose=0:NaN","a.png#pose=0:0"] { assert!(parse_gltf_pose(key).is_none()); }
     }
     #[test]
     fn step_channels_advance_at_the_key_and_hold_the_final_key() {

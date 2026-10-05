@@ -1,0 +1,421 @@
+{
+  "version": 2,
+  "name": "StormPandarenBrewmaster",
+  "root": {
+    "id": "root",
+    "name": "StormPandarenBrewmaster",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-1",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-01-team-00.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-02-layer-0",
+        "name": "Geoset 2",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-02-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-03-layer-0",
+        "name": "Geoset 3",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-03.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-03-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-04-layer-0",
+        "name": "Geoset 4",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-04.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-04-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-05-layer-0",
+        "name": "Geoset 5",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-05.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-05-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-06-layer-0",
+        "name": "Geoset 6",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-06.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-06-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-07-layer-0",
+        "name": "Geoset 7",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-07.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-07-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-08-layer-0",
+        "name": "Geoset 8",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-08.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-08-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-09-layer-0",
+        "name": "Geoset 9",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-09.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-09-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-10-layer-0",
+        "name": "Geoset 10",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-10.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-10-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-11-layer-0",
+        "name": "Geoset 11",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-11.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-11-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-12-layer-0",
+        "name": "Geoset 12",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-12.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Creeps/StormPandarenBrewmaster/StormPandarenBrewmaster/geoset-12-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

@@ -372,7 +372,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Human/AltarOfKings/AltarOfKings.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Human/AltarOfKings/AltarOfKings.prefab"
@@ -741,7 +742,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Human/ArcaneSanctum/ArcaneSanctum.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Human/ArcaneSanctum/ArcaneSanctum.prefab"
@@ -1103,7 +1105,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Human/ArcaneVault/ArcaneVault.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Human/ArcaneVault/ArcaneVault.prefab"
@@ -1440,7 +1443,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Human/Blacksmith/Blacksmith.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Human/Blacksmith/Blacksmith.prefab"
@@ -1757,7 +1761,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Human/Farm/Farm.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Human/Farm/Farm.prefab"
@@ -2078,7 +2083,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Human/GryphonAviary/GryphonAviary.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Human/GryphonAviary/GryphonAviary.prefab"
@@ -2457,7 +2463,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Human/HumanBarracks/HumanBarracks.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Human/HumanBarracks/HumanBarracks.prefab"
@@ -2794,7 +2801,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Human/HumanLumberMill/HumanLumberMill.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Human/HumanLumberMill/HumanLumberMill.prefab"
@@ -3609,7 +3617,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Human/HumanTower/HumanTower.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Human/HumanTower/HumanTower.prefab"
@@ -4606,7 +4615,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Human/TownHall/TownHall.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Human/TownHall/TownHall.prefab"
@@ -4911,7 +4921,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Human/Workshop/Workshop.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Human/Workshop/Workshop.prefab"
@@ -5066,7 +5077,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/NightElf/AltarofElders/AltarofElders.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/NightElf/AltarofElders/AltarofElders.prefab"
@@ -5420,7 +5432,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/NightElf/AncientofLore/AncientofLore.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/NightElf/AncientofLore/AncientofLore.prefab"
@@ -5876,7 +5889,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/NightElf/AncientofWar/AncientofWar.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/NightElf/AncientofWar/AncientofWar.prefab"
@@ -6128,7 +6142,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/NightElf/AncientofWind/AncientofWind.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/NightElf/AncientofWind/AncientofWind.prefab"
@@ -6500,7 +6515,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/NightElf/AncientOfWonder/AncientOfWonder.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/NightElf/AncientOfWonder/AncientOfWonder.prefab"
@@ -6894,7 +6910,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/NightElf/AncientProtector/AncientProtector.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/NightElf/AncientProtector/AncientProtector.prefab"
@@ -7045,7 +7062,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/NightElf/BearDen/BearDen.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/NightElf/BearDen/BearDen.prefab"
@@ -7280,7 +7298,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/NightElf/ChimaeraRoost/ChimaeraRoost.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/NightElf/ChimaeraRoost/ChimaeraRoost.prefab"
@@ -7509,7 +7528,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/NightElf/EntangledGoldmine/EntangledGoldmine.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/NightElf/EntangledGoldmine/EntangledGoldmine.prefab"
@@ -7728,7 +7748,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/NightElf/HuntersHall/HuntersHall.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/NightElf/HuntersHall/HuntersHall.prefab"
@@ -7844,7 +7865,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/NightElf/MoonWell/MoonWell.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/NightElf/MoonWell/MoonWell.prefab"
@@ -8106,7 +8128,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/NightElf/TreeofLife/TreeofLife.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/NightElf/TreeofLife/TreeofLife.prefab"
@@ -8615,7 +8638,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Orc/AltarofStorms/AltarofStorms.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Orc/AltarofStorms/AltarofStorms.prefab"
@@ -8952,7 +8976,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Orc/Beastiary/Beastiary.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Orc/Beastiary/Beastiary.prefab"
@@ -9521,7 +9546,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Orc/GreatHall/GreatHall.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Orc/GreatHall/GreatHall.prefab"
@@ -9810,7 +9836,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Orc/OrcBarracks/OrcBarracks.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Orc/OrcBarracks/OrcBarracks.prefab"
@@ -10040,7 +10067,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Orc/SpiritLodge/SpiritLodge.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Orc/SpiritLodge/SpiritLodge.prefab"
@@ -10275,7 +10303,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Orc/TrollBurrow/TrollBurrow.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Orc/TrollBurrow/TrollBurrow.prefab"
@@ -10791,7 +10820,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Orc/VoodooLounge/VoodooLounge.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Orc/VoodooLounge/VoodooLounge.prefab"
@@ -11144,7 +11174,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Orc/WarMill/WarMill.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Orc/WarMill/WarMill.prefab"
@@ -11411,7 +11442,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Orc/WatchTower/WatchTower.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Orc/WatchTower/WatchTower.prefab"
@@ -11571,7 +11603,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Undead/AltarOfDarkness/AltarOfDarkness.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Undead/AltarOfDarkness/AltarOfDarkness.prefab"
@@ -11734,7 +11767,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Undead/BoneYard/BoneYard.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Undead/BoneYard/BoneYard.prefab"
@@ -11911,7 +11945,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Undead/Crypt/Crypt.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Undead/Crypt/Crypt.prefab"
@@ -12104,7 +12139,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Undead/GargoyleSpire/GargoyleSpire.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Undead/GargoyleSpire/GargoyleSpire.prefab"
@@ -12248,7 +12284,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Undead/Graveyard/Graveyard.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Undead/Graveyard/Graveyard.prefab"
@@ -12402,7 +12439,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Undead/HauntedMine/HauntedMine.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Undead/HauntedMine/HauntedMine.prefab"
@@ -12794,7 +12832,8 @@
         ]
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Undead/Necropolis/Necropolis.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Undead/Necropolis/Necropolis.prefab"
@@ -12987,7 +13026,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/buildings/Undead/SacrificialPit/SacrificialPit.json",
       "prefab": "Assets/WarcraftIII/Prefabs/buildings/Undead/SacrificialPit/SacrificialPit.prefab"
@@ -13164,7 +13204,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Undead/SlaughterHouse/SlaughterHouse.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Undead/SlaughterHouse/SlaughterHouse.prefab"
@@ -13373,7 +13414,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Undead/TempleOfTheDamned/TempleOfTheDamned.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Undead/TempleOfTheDamned/TempleOfTheDamned.prefab"
@@ -13517,7 +13559,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Undead/TombOfRelics/TombOfRelics.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Undead/TombOfRelics/TombOfRelics.prefab"
@@ -13821,7 +13864,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Buildings/Undead/Ziggurat/Ziggurat.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Buildings/Undead/Ziggurat/Ziggurat.prefab"
@@ -13905,7 +13949,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Doodads/Terrain/LordaeronTree/LordaeronTree0.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Doodads/Terrain/LordaeronTree/LordaeronTree0.prefab"
@@ -14068,7 +14113,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/AzureDragon/AzureDragon.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/AzureDragon/AzureDragon.prefab"
@@ -14274,7 +14320,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Bandit/Bandit.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Bandit/Bandit.prefab"
@@ -14502,7 +14549,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/BanditLord/BanditLord.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/BanditLord/BanditLord.prefab"
@@ -14698,7 +14746,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/BanditMage/BanditMage.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/BanditMage/BanditMage.prefab"
@@ -14898,7 +14947,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/BanditSpearThrower/BanditSpearThrower.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/BanditSpearThrower/BanditSpearThrower.prefab"
@@ -15117,7 +15167,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Beastmaster/Beastmaster.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Beastmaster/Beastmaster.prefab"
@@ -15280,7 +15331,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/BlackDragon/BlackDragon.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/BlackDragon/BlackDragon.prefab"
@@ -15455,7 +15507,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Centaur/Centaur.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Centaur/Centaur.prefab"
@@ -15861,7 +15914,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/CentaurArcher/CentaurArcher.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/CentaurArcher/CentaurArcher.prefab"
@@ -16036,7 +16090,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/CentaurKhan/CentaurKhan.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/CentaurKhan/CentaurKhan.prefab"
@@ -16197,7 +16252,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/DireWolf/DireWolf.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/DireWolf/DireWolf.prefab"
@@ -16443,7 +16499,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/ForestTroll/ForestTroll.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/ForestTroll/ForestTroll.prefab"
@@ -16625,7 +16682,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/ForestTrollShadowPriest/ForestTrollShadowPriest.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/ForestTrollShadowPriest/ForestTrollShadowPriest.prefab"
@@ -16762,7 +16820,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Furbolg/Furbolg.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Furbolg/Furbolg.prefab"
@@ -16899,7 +16958,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/FurbolgElder/FurbolgElder.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/FurbolgElder/FurbolgElder.prefab"
@@ -17142,7 +17202,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Gnoll/Gnoll.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Gnoll/Gnoll.prefab"
@@ -17344,7 +17405,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/GnollArcher/GnollArcher.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/GnollArcher/GnollArcher.prefab"
@@ -17587,7 +17649,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/GnollOverSeer/GnollOverSeer.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/GnollOverSeer/GnollOverSeer.prefab"
@@ -17856,7 +17919,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/GnollWarden/GnollWarden.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/GnollWarden/GnollWarden.prefab"
@@ -18052,7 +18116,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/GreenDragon/GreenDragon.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/GreenDragon/GreenDragon.prefab"
@@ -18225,7 +18290,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/GrizzlyBear/GrizzlyBear.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/GrizzlyBear/GrizzlyBear.prefab"
@@ -18415,7 +18481,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Harpy/Harpy.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Harpy/Harpy.prefab"
@@ -18605,7 +18672,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/HarpyQueen/HarpyQueen.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/HarpyQueen/HarpyQueen.prefab"
@@ -19228,7 +19296,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/HEROGoblinALCHEMIST/HeroGoblinAlchemist.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/HEROGoblinALCHEMIST/HeroGoblinAlchemist.prefab"
@@ -19853,7 +19922,8 @@
         ]
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/HeroTinker/HeroTinker.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/HeroTinker/HeroTinker.prefab"
@@ -20099,7 +20169,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/IceTroll/IceTroll.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/IceTroll/IceTroll.prefab"
@@ -20495,7 +20566,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Kobold/Kobold.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Kobold/Kobold.prefab"
@@ -20923,7 +20995,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/KoboldGeomancer/KoboldGeomancer.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/KoboldGeomancer/KoboldGeomancer.prefab"
@@ -21118,7 +21191,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Magnataur/Magnataur.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Magnataur/Magnataur.prefab"
@@ -21294,7 +21368,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Murloc/Murloc.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Murloc/Murloc.prefab"
@@ -21470,7 +21545,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/MurlocWarrior/MurlocWarrior.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/MurlocWarrior/MurlocWarrior.prefab"
@@ -21670,7 +21746,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Ogre/Ogre.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Ogre/Ogre.prefab"
@@ -21880,7 +21957,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/OgreLord/OgreLord.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/OgreLord/OgreLord.prefab"
@@ -22090,7 +22168,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/OgreMagi/OgreMagi.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/OgreMagi/OgreMagi.prefab"
@@ -22351,7 +22430,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/PandarenBrewmaster/PandarenBrewmaster.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/PandarenBrewmaster/PandarenBrewmaster.prefab"
@@ -22524,7 +22604,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/PolarBear/PolarBear.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/PolarBear/PolarBear.prefab"
@@ -22720,7 +22801,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/RedDragon/RedDragon.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/RedDragon/RedDragon.prefab"
@@ -22901,7 +22983,8 @@
         ]
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Revenant/Revenant.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Revenant/Revenant.prefab"
@@ -23101,7 +23184,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/RockGolem/RockGolem.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/RockGolem/RockGolem.prefab"
@@ -23320,7 +23404,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Satyr/Satyr.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Satyr/Satyr.prefab"
@@ -23539,7 +23624,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/satyrhellcaller/satyrhellcaller.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/satyrhellcaller/satyrhellcaller.prefab"
@@ -23758,7 +23844,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/SatyrTrickster/SatyrTrickster.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/SatyrTrickster/SatyrTrickster.prefab"
@@ -24012,7 +24099,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/SkeletonArcher/SkeletonArcher.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/SkeletonArcher/SkeletonArcher.prefab"
@@ -24161,7 +24249,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/Spider/Spider.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/Spider/Spider.prefab"
@@ -24322,7 +24411,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/TimberWolf/TimberWolf.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/TimberWolf/TimberWolf.prefab"
@@ -24483,7 +24573,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Creeps/WhiteWolf/WhiteWolf.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Creeps/WhiteWolf/WhiteWolf.prefab"
@@ -24669,7 +24760,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Arthas/Arthas.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Arthas/Arthas.prefab"
@@ -24912,7 +25004,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/ArthaswithSword/ArthaswithSword.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/ArthaswithSword/ArthaswithSword.prefab"
@@ -25061,7 +25154,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/BloodElfDragonHawk/BloodElfDragonHawk.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/BloodElfDragonHawk/BloodElfDragonHawk.prefab"
@@ -25334,7 +25428,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/BloodElfSpellThief/BloodElfSpellThief.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/BloodElfSpellThief/BloodElfSpellThief.prefab"
@@ -25533,7 +25628,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Footman/Footman.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Footman/Footman.prefab"
@@ -25808,7 +25904,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/GryphonRider/GryphonRider.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/GryphonRider/GryphonRider.prefab"
@@ -25951,7 +26048,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/GyroCopter/GyroCopter.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/GyroCopter/GyroCopter.prefab"
@@ -26103,7 +26201,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/HeroArchMage/HeroArchMage.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/HeroArchMage/HeroArchMage.prefab"
@@ -26390,7 +26489,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/HeroBloodElf/HeroBloodElf.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/HeroBloodElf/HeroBloodElf.prefab"
@@ -26810,7 +26910,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/HeroMountainKing/HeroMountainKing.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/HeroMountainKing/HeroMountainKing.prefab"
@@ -26980,7 +27081,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/HeroPaladin/HeroPaladin.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/HeroPaladin/HeroPaladin.prefab"
@@ -27150,7 +27252,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/HeroPaladinBoss2/HeroPaladinBoss2.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/HeroPaladinBoss2/HeroPaladinBoss2.prefab"
@@ -27320,7 +27423,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/HeroPaladinBoss/HeroPaladinBoss.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/HeroPaladinBoss/HeroPaladinBoss.prefab"
@@ -27460,7 +27564,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Jaina/Jaina.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Jaina/Jaina.prefab"
@@ -27747,7 +27852,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Kael/Kael.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Kael/Kael.prefab"
@@ -27975,7 +28081,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Knight/Knight.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Knight/Knight.prefab"
@@ -28146,7 +28253,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Militia/Militia.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Militia/Militia.prefab"
@@ -28426,7 +28534,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/MortarTeam/MortarTeam.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/MortarTeam/MortarTeam.prefab"
@@ -28840,7 +28949,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Muradin/Muradin.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Muradin/Muradin.prefab"
@@ -29109,7 +29219,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Peasant/peasant.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Peasant/peasant.prefab"
@@ -29357,7 +29468,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Phoenix/Phoenix.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Phoenix/Phoenix.prefab"
@@ -29510,7 +29622,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Priest/Priest.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Priest/Priest.prefab"
@@ -29675,7 +29788,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Rifleman/Rifleman.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Rifleman/Rifleman.prefab"
@@ -29824,7 +29938,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Sorceress/Sorceress.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Sorceress/Sorceress.prefab"
@@ -30023,7 +30138,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/TheCaptain/TheCaptain.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/TheCaptain/TheCaptain.prefab"
@@ -30193,7 +30309,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/Uther/Uther.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/Uther/Uther.prefab"
@@ -30381,7 +30498,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/WarWagon/WarWagon.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/WarWagon/WarWagon.prefab"
@@ -30614,7 +30732,8 @@
         ]
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Human/WaterElemental/WaterElemental.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Human/WaterElemental/WaterElemental.prefab"
@@ -30797,7 +30916,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/Archer/Archer.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/Archer/Archer.prefab"
@@ -30950,7 +31070,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/Chimaera/Chimaera.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/Chimaera/Chimaera.prefab"
@@ -31302,7 +31423,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/DruidOfTheClaw/DruidoftheClaw.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/DruidOfTheClaw/DruidoftheClaw.prefab"
@@ -31897,7 +32019,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/DruidOfTheTalon/DruidoftheTalon.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/DruidOfTheTalon/DruidoftheTalon.prefab"
@@ -32176,7 +32299,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/Dryad/Dryad.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/Dryad/Dryad.prefab"
@@ -32667,7 +32791,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/Ent/Ent.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/Ent/Ent.prefab"
@@ -33126,7 +33251,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/EvilIllidan/IllidanEvil.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/EvilIllidan/IllidanEvil.prefab"
@@ -33289,7 +33415,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/FaerieDragon/FaerieDragon.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/FaerieDragon/FaerieDragon.prefab"
@@ -33703,7 +33830,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/Furion/Furion.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/Furion/Furion.prefab"
@@ -34202,7 +34330,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/HeroDemonHunter/HeroDemonHunter.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/HeroDemonHunter/HeroDemonHunter.prefab"
@@ -34545,7 +34674,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/HeroKeeperOfTheGrove/HeroKeeperoftheGrove.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/HeroKeeperOfTheGrove/HeroKeeperoftheGrove.prefab"
@@ -34724,7 +34854,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/HeroMoonPriestess/HeroMoonPriestess.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/HeroMoonPriestess/HeroMoonPriestess.prefab"
@@ -34861,7 +34992,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/HippoGryph/HippoGryph.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/HippoGryph/HippoGryph.prefab"
@@ -35020,7 +35152,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/Huntress/Huntress.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/Huntress/Huntress.prefab"
@@ -35216,7 +35349,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/Maiev/Maiev.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/Maiev/Maiev.prefab"
@@ -35448,7 +35582,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/MalFurion/MalFurion.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/MalFurion/MalFurion.prefab"
@@ -35862,7 +35997,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/MalFurion/MalFurionNoStag.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/MalFurion/MalFurionNoStag.prefab"
@@ -36061,7 +36197,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/MountainGiant/MountainGiant.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/MountainGiant/MountainGiant.prefab"
@@ -36255,7 +36392,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/RiddenHippoGryph/RiddenHippoGryph.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/RiddenHippoGryph/RiddenHippoGryph.prefab"
@@ -36492,7 +36630,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/Shandris/Shandris.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/Shandris/Shandris.prefab"
@@ -36644,7 +36783,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/SpiritOfVengeance/SpiritOfVengeance.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/SpiritOfVengeance/SpiritOfVengeance.prefab"
@@ -36791,7 +36931,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/Vengeance/Vengeance.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/Vengeance/Vengeance.prefab"
@@ -36948,7 +37089,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/NightElf/Wisp/Wisp.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/NightElf/Wisp/Wisp.prefab"
@@ -37287,7 +37429,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/BatTroll/BatTroll.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/BatTroll/BatTroll.prefab"
@@ -37431,7 +37574,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/Catapult/Catapult.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/Catapult/Catapult.prefab"
@@ -37672,7 +37816,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/Grunt/grunt.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/Grunt/grunt.prefab"
@@ -37888,7 +38033,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/HeadHunter/Headhunter.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/HeadHunter/Headhunter.prefab"
@@ -38191,7 +38337,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/Hellscream/Hellscream.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/Hellscream/Hellscream.prefab"
@@ -38466,7 +38613,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/HeroBladeMaster/HeroBladeMaster.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/HeroBladeMaster/HeroBladeMaster.prefab"
@@ -38618,7 +38766,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/HeroFarseer/HeroFarSeer.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/HeroFarseer/HeroFarSeer.prefab"
@@ -38861,7 +39010,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/HeroShadowHunter/HeroShadowHunter.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/HeroShadowHunter/HeroShadowHunter.prefab"
@@ -39076,7 +39226,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/HeroTaurenChieftain/HeroTaurenChieftain.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/HeroTaurenChieftain/HeroTaurenChieftain.prefab"
@@ -39281,7 +39432,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/KotoBeast/KotoBeast.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/KotoBeast/KotoBeast.prefab"
@@ -39418,7 +39570,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/OrcWarlockGuldan/OrcWarlockGuldan.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/OrcWarlockGuldan/OrcWarlockGuldan.prefab"
@@ -39671,7 +39824,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/Peon/peon.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/Peon/peon.prefab"
@@ -39860,7 +40014,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/Shaman/Shaman.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/Shaman/Shaman.prefab"
@@ -40019,7 +40174,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/SpiritWalker/SpiritWalker.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/SpiritWalker/SpiritWalker.prefab"
@@ -40247,7 +40403,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/Spiritwolf/Spiritwolf.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/Spiritwolf/Spiritwolf.prefab"
@@ -40361,7 +40518,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/SpiritWyvern/SpiritWyvern.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/SpiritWyvern/SpiritWyvern.prefab"
@@ -40510,7 +40668,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/Tauren/Tauren.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/Tauren/Tauren.prefab"
@@ -40644,7 +40803,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/Thrall/Thrall.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/Thrall/Thrall.prefab"
@@ -40847,7 +41007,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/WitchDoctor/WitchDoctor.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/WitchDoctor/WitchDoctor.prefab"
@@ -41008,7 +41169,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/Wolfrider/Wolfrider.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/Wolfrider/Wolfrider.prefab"
@@ -41192,7 +41354,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Orc/WyvernRider/WyvernRider.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Orc/WyvernRider/WyvernRider.prefab"
@@ -41373,7 +41536,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Abomination/Abomination.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Abomination/Abomination.prefab"
@@ -41526,7 +41690,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Acolyte/Acolyte.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Acolyte/Acolyte.prefab"
@@ -41819,7 +41984,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Anubarak/Anubarak.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Anubarak/Anubarak.prefab"
@@ -41976,7 +42142,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Banshee/Banshee.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Banshee/Banshee.prefab"
@@ -42141,7 +42308,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/CryptFiend/CryptFiend.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/CryptFiend/CryptFiend.prefab"
@@ -42329,7 +42497,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/EvilArthas/UndeadArthas.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/EvilArthas/UndeadArthas.prefab"
@@ -42557,7 +42726,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/EvilSylvanas/EvilSylvanas.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/EvilSylvanas/EvilSylvanas.prefab"
@@ -42767,7 +42937,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/FrostWyrm/FrostWyrm.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/FrostWyrm/FrostWyrm.prefab"
@@ -42951,7 +43122,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Gargoyle/Gargoyle.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Gargoyle/Gargoyle.prefab"
@@ -43225,7 +43397,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Ghoul/Ghoul.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Ghoul/Ghoul.prefab"
@@ -43518,7 +43691,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/HeroCryptLord/HeroCryptLord.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/HeroCryptLord/HeroCryptLord.prefab"
@@ -43706,7 +43880,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/HeroDeathKnight/HeroDeathKnight.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/HeroDeathKnight/HeroDeathKnight.prefab"
@@ -44041,7 +44216,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/HeroDreadLord/HeroDreadLord.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/HeroDreadLord/HeroDreadLord.prefab"
@@ -44431,7 +44607,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/HeroLich/HeroLich.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/HeroLich/HeroLich.prefab"
@@ -44626,7 +44803,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Kelthuzad/Kelthuzad.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Kelthuzad/Kelthuzad.prefab"
@@ -44796,7 +44974,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Meatwagon/Meatwagon.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Meatwagon/Meatwagon.prefab"
@@ -44972,7 +45151,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Necromancer/Necromancer.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Necromancer/Necromancer.prefab"
@@ -45620,7 +45800,8 @@
         ]
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/ObsidianStatue/ObsidianStatue.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/ObsidianStatue/ObsidianStatue.prefab"
@@ -45745,7 +45926,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Shade/Shade.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Shade/Shade.prefab"
@@ -45945,7 +46127,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Skeleton/Skeleton.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Skeleton/Skeleton.prefab"
@@ -46143,7 +46326,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/SkeletonMage/SkeletonMage.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/SkeletonMage/SkeletonMage.prefab"
@@ -46472,7 +46656,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/Tichondrius/Tichondrius.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/Tichondrius/Tichondrius.prefab"
@@ -46622,7 +46807,8 @@
         "skippedChunks": []
       },
       "sourceRepairs": {
-        "unanimatedNonfinitePivots": []
+        "unanimatedNonfinitePivots": [],
+        "generatedNormals": []
       },
       "stateTracks": "Assets/WarcraftIII/Animations/Units/Undead/UndeadAirBarge/UndeadAirBarge.json",
       "prefab": "Assets/WarcraftIII/Prefabs/Units/Undead/UndeadAirBarge/UndeadAirBarge.prefab"

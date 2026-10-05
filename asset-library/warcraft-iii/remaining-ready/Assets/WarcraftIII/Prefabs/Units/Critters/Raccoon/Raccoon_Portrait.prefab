@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "Raccoon_Portrait",
+  "root": {
+    "id": "root",
+    "name": "Raccoon_Portrait",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Critters/Raccoon/Raccoon_Portrait/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Critters/Raccoon/Raccoon_Portrait/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

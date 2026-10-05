@@ -1,0 +1,91 @@
+{
+  "version": 2,
+  "name": "DungeonPorticulisGate",
+  "root": {
+    "id": "root",
+    "name": "DungeonPorticulisGate",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Dungeon/Terrain/DungeonPorticulisGate/DungeonPorticulisGate/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Dungeon/Terrain/DungeonPorticulisGate/DungeonPorticulisGate/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-0",
+        "name": "Geoset 1",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Dungeon/Terrain/DungeonPorticulisGate/DungeonPorticulisGate/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Dungeon/Terrain/DungeonPorticulisGate/DungeonPorticulisGate/geoset-01-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

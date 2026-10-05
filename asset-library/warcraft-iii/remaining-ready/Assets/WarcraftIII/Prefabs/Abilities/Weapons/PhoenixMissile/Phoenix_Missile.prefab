@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "Phoenix_Missile",
+  "root": {
+    "id": "root",
+    "name": "Phoenix_Missile",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Abilities/Weapons/PhoenixMissile/Phoenix_Missile/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Abilities/Weapons/PhoenixMissile/Phoenix_Missile/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

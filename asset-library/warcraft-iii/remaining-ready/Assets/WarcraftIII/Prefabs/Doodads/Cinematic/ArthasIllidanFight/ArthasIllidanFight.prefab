@@ -1,0 +1,3301 @@
+{
+  "version": 2,
+  "name": "ArthasIllidanFight",
+  "root": {
+    "id": "root",
+    "name": "ArthasIllidanFight",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-0",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-01-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-02-layer-0",
+        "name": "Geoset 2",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-02-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-03-layer-0",
+        "name": "Geoset 3",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-03.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-03-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-04-layer-0",
+        "name": "Geoset 4",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-04.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-04-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-05-layer-0",
+        "name": "Geoset 5",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-05.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-05-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-06-layer-0",
+        "name": "Geoset 6",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-06.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-06-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-07-layer-0",
+        "name": "Geoset 7",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-07.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-07-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-08-layer-0",
+        "name": "Geoset 8",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-08.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-08-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-09-layer-0",
+        "name": "Geoset 9",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-09.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-09-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-10-layer-0",
+        "name": "Geoset 10",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-10.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-10-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-11-layer-0",
+        "name": "Geoset 11",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-11.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-11-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-12-layer-0",
+        "name": "Geoset 12",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-12.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-12-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-13-layer-0",
+        "name": "Geoset 13",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-13.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-13-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-14-layer-0",
+        "name": "Geoset 14",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-14.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-14-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-15-layer-0",
+        "name": "Geoset 15",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-15.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-15-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-16-layer-0",
+        "name": "Geoset 16",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-16.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-16-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-17-layer-0",
+        "name": "Geoset 17",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-17.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-17-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-18-layer-0",
+        "name": "Geoset 18",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-18.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-18-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-19-layer-0",
+        "name": "Geoset 19",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-19.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-19-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-20-layer-0",
+        "name": "Geoset 20",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-20.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-20-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-21-layer-0",
+        "name": "Geoset 21",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-21.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-21-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-22-layer-0",
+        "name": "Geoset 22",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-22.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-22-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-23-layer-0",
+        "name": "Geoset 23",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-23.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-23-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-24-layer-0",
+        "name": "Geoset 24",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-24.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-24-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-25-layer-0",
+        "name": "Geoset 25",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-25.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-25-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-26-layer-0",
+        "name": "Geoset 26",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-26.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-26-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-27-layer-0",
+        "name": "Geoset 27",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-27.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-27-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-28-layer-0",
+        "name": "Geoset 28",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-28.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-28-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-29-layer-0",
+        "name": "Geoset 29",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-29.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-29-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-30-layer-0",
+        "name": "Geoset 30",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-30.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-30-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-31-layer-0",
+        "name": "Geoset 31",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-31.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-31-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-32-layer-0",
+        "name": "Geoset 32",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-32.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-32-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-33-layer-0",
+        "name": "Geoset 33",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-33.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-33-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-34-layer-0",
+        "name": "Geoset 34",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-34.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-34-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-35-layer-0",
+        "name": "Geoset 35",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-35.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-35-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-36-layer-0",
+        "name": "Geoset 36",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-36.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-36-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-37-layer-0",
+        "name": "Geoset 37",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-37.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-37-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-38-layer-0",
+        "name": "Geoset 38",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-38.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-38-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-39-layer-0",
+        "name": "Geoset 39",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-39.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-39-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-40-layer-0",
+        "name": "Geoset 40",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-40.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-40-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-41-layer-0",
+        "name": "Geoset 41",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-41.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-41-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-42-layer-0",
+        "name": "Geoset 42",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-42.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-42-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-43-layer-0",
+        "name": "Geoset 43",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-43.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-43-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-44-layer-0",
+        "name": "Geoset 44",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-44.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-44-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-45-layer-0",
+        "name": "Geoset 45",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-45.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-45-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-46-layer-0",
+        "name": "Geoset 46",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-46.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-46-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-47-layer-0",
+        "name": "Geoset 47",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-47.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-47-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-48-layer-0",
+        "name": "Geoset 48",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-48.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-48-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-49-layer-0",
+        "name": "Geoset 49",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-49.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-49-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-50-layer-0",
+        "name": "Geoset 50",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-50.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-50-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-51-layer-0",
+        "name": "Geoset 51",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-51.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-51-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-52-layer-0",
+        "name": "Geoset 52",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-52.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-52-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-53-layer-0",
+        "name": "Geoset 53",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-53.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-53-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-54-layer-0",
+        "name": "Geoset 54",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-54.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-54-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-55-layer-0",
+        "name": "Geoset 55",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-55.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-55-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-56-layer-0",
+        "name": "Geoset 56",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-56.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-56-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-57-layer-0",
+        "name": "Geoset 57",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-57.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-57-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-58-layer-0",
+        "name": "Geoset 58",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-58.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-58-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-59-layer-0",
+        "name": "Geoset 59",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-59.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-59-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-60-layer-0",
+        "name": "Geoset 60",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-60.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-60-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-61-layer-0",
+        "name": "Geoset 61",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-61.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-61-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-62-layer-0",
+        "name": "Geoset 62",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-62.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-62-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-63-layer-0",
+        "name": "Geoset 63",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-63.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-63-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-64-layer-0",
+        "name": "Geoset 64",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-64.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-64-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-65-layer-0",
+        "name": "Geoset 65",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-65.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-65-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-66-layer-0",
+        "name": "Geoset 66",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-66.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-66-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-67-layer-0",
+        "name": "Geoset 67",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-67.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-67-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-68-layer-0",
+        "name": "Geoset 68",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-68.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-68-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-69-layer-0",
+        "name": "Geoset 69",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-69.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-69-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-70-layer-0",
+        "name": "Geoset 70",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-70.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-70-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-71-layer-0",
+        "name": "Geoset 71",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-71.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-71-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-72-layer-0",
+        "name": "Geoset 72",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-72.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-72-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-73-layer-0",
+        "name": "Geoset 73",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-73.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-73-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-74-layer-0",
+        "name": "Geoset 74",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-74.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-74-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-75-layer-0",
+        "name": "Geoset 75",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-75.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-75-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-76-layer-0",
+        "name": "Geoset 76",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-76.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-76-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-77-layer-0",
+        "name": "Geoset 77",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-77.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-77-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-78-layer-0",
+        "name": "Geoset 78",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-78.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-78-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-79-layer-0",
+        "name": "Geoset 79",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-79.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-79-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-80-layer-0",
+        "name": "Geoset 80",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-80.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-80-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-81-layer-0",
+        "name": "Geoset 81",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-81.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-81-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-82-layer-0",
+        "name": "Geoset 82",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-82.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-82-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-83-layer-0",
+        "name": "Geoset 83",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-83.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-83-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-84-layer-0",
+        "name": "Geoset 84",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-84.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-84-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-85-layer-0",
+        "name": "Geoset 85",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-85.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-85-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-86-layer-0",
+        "name": "Geoset 86",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-86.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-86-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-87-layer-0",
+        "name": "Geoset 87",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-87.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-87-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-88-layer-0",
+        "name": "Geoset 88",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-88.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-88-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-89-layer-0",
+        "name": "Geoset 89",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-89.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-89-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-90-layer-0",
+        "name": "Geoset 90",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-90.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-90-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-91-layer-0",
+        "name": "Geoset 91",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-91.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-91-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-92-layer-0",
+        "name": "Geoset 92",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-92.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-92-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-93-layer-0",
+        "name": "Geoset 93",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-93.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-93-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-94-layer-0",
+        "name": "Geoset 94",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-94.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-94-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-95-layer-0",
+        "name": "Geoset 95",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-95.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-95-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-96-layer-0",
+        "name": "Geoset 96",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-96.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-96-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-97-layer-0",
+        "name": "Geoset 97",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-97.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-97-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-98-layer-0",
+        "name": "Geoset 98",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-98.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-98-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-99-layer-0",
+        "name": "Geoset 99",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-99.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-99-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-100-layer-0",
+        "name": "Geoset 100",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-100.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-100-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-101-layer-0",
+        "name": "Geoset 101",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-101.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-101-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-102-layer-0",
+        "name": "Geoset 102",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-102.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-102-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-103-layer-0",
+        "name": "Geoset 103",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-103.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-103-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-104-layer-0",
+        "name": "Geoset 104",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-104.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-104-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-105-layer-0",
+        "name": "Geoset 105",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-105.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-105-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-106-layer-0",
+        "name": "Geoset 106",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-106.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-106-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-107-layer-0",
+        "name": "Geoset 107",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-107.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-107-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-108-layer-0",
+        "name": "Geoset 108",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-108.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cinematic/ArthasIllidanFight/ArthasIllidanFight/geoset-108-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

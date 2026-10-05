@@ -17,3 +17,4 @@ third_party/mpyq/** -text
 asset-library/**/Licenses/HIVE/** -text
 asset-library/warcraft-iii/game-ready/** -text whitespace=cr-at-eol
 asset-library/warcraft-iii/community-ready/** -text whitespace=cr-at-eol
+asset-library/warcraft-iii/remaining-ready/** -text whitespace=cr-at-eol

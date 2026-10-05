@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "VillagerWoman_Portrait",
+  "root": {
+    "id": "root",
+    "name": "VillagerWoman_Portrait",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Critters/VillagerWoman/VillagerWoman_Portrait/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Critters/VillagerWoman/VillagerWoman_Portrait/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

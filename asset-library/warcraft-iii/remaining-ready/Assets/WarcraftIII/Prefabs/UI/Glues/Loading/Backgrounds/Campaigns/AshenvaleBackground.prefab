@@ -1,0 +1,1351 @@
+{
+  "version": 2,
+  "name": "AshenvaleBackground",
+  "root": {
+    "id": "root",
+    "name": "AshenvaleBackground",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-0",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-01-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-02-layer-0",
+        "name": "Geoset 2",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-02-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-03-layer-0",
+        "name": "Geoset 3",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-03.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-03-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-04-layer-0",
+        "name": "Geoset 4",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-04.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-04-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-05-layer-0",
+        "name": "Geoset 5",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-05.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-05-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-06-layer-0",
+        "name": "Geoset 6",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-06.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-06-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-07-layer-0",
+        "name": "Geoset 7",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-07.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-07-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-08-layer-0",
+        "name": "Geoset 8",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-08.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-08-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-09-layer-0",
+        "name": "Geoset 9",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-09.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-09-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-10-layer-0",
+        "name": "Geoset 10",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-10.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-10-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-11-layer-0",
+        "name": "Geoset 11",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-11.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-11-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-12-layer-0",
+        "name": "Geoset 12",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-12.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-12-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-13-layer-0",
+        "name": "Geoset 13",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-13.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-13-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-14-layer-0",
+        "name": "Geoset 14",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-14.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-14-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-15-layer-0",
+        "name": "Geoset 15",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-15.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-15-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-16-layer-0",
+        "name": "Geoset 16",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-16.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-16-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-17-layer-0",
+        "name": "Geoset 17",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-17.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-17-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-18-layer-0",
+        "name": "Geoset 18",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-18.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-18-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-19-layer-0",
+        "name": "Geoset 19",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-19.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-19-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-20-layer-0",
+        "name": "Geoset 20",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-20.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-20-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-21-layer-0",
+        "name": "Geoset 21",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-21.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-21-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-22-layer-0",
+        "name": "Geoset 22",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-22.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-22-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-23-layer-0",
+        "name": "Geoset 23",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-23.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-23-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-24-layer-0",
+        "name": "Geoset 24",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-24.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-24-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-25-layer-0",
+        "name": "Geoset 25",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-25.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-25-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-26-layer-0",
+        "name": "Geoset 26",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-26.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-26-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-27-layer-0",
+        "name": "Geoset 27",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-27.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-27-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-28-layer-0",
+        "name": "Geoset 28",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-28.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-28-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-29-layer-0",
+        "name": "Geoset 29",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-29.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-29-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-30-layer-0",
+        "name": "Geoset 30",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-30.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-30-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-31-layer-0",
+        "name": "Geoset 31",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-31.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-31-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-32-layer-0",
+        "name": "Geoset 32",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-32.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-32-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-33-layer-0",
+        "name": "Geoset 33",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-33.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-33-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-34-layer-0",
+        "name": "Geoset 34",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-34.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-34-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-35-layer-0",
+        "name": "Geoset 35",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-35.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-35-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-36-layer-0",
+        "name": "Geoset 36",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-36.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-36-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-37-layer-0",
+        "name": "Geoset 37",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-37.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-37-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-38-layer-0",
+        "name": "Geoset 38",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-38.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-38-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-39-layer-0",
+        "name": "Geoset 39",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-39.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-39-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-40-layer-0",
+        "name": "Geoset 40",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-40.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-40-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-41-layer-0",
+        "name": "Geoset 41",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-41.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-41-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-42-layer-0",
+        "name": "Geoset 42",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-42.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-42-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-43-layer-0",
+        "name": "Geoset 43",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-43.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/Loading/Backgrounds/Campaigns/AshenvaleBackground/geoset-43-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "version": 2,
+  "name": "BattlenetProgressBar",
+  "root": {
+    "id": "root",
+    "name": "BattlenetProgressBar",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-0",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-01-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-02-layer-0",
+        "name": "Geoset 2",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-02-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-03-layer-0",
+        "name": "Geoset 3",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-03.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-03-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-04-layer-0",
+        "name": "Geoset 4",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-04.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-04-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-05-layer-0",
+        "name": "Geoset 5",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-05.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Glues/BattleNet/ProgressBar/BattlenetProgressBar/geoset-05-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

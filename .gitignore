@@ -1,6 +1,8 @@
 # Rust
 /target
 **/target
+!/asset-library/warcraft-iii/*-ready/**/Target/
+!/asset-library/warcraft-iii/*-ready/**/Target/**
 
 # Node
 node_modules

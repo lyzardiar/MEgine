@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "CliffRubble_Double0",
+  "root": {
+    "id": "root",
+    "name": "CliffRubble_Double0",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Ruins/Rocks/CliffRubble_Double/CliffRubble_Double0/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Ruins/Rocks/CliffRubble_Double/CliffRubble_Double0/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

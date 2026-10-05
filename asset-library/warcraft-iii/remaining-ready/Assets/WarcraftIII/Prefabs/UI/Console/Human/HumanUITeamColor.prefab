@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "HumanUITeamColor",
+  "root": {
+    "id": "root",
+    "name": "HumanUITeamColor",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-1",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UI/Console/Human/HumanUITeamColor/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/UI/Console/Human/HumanUITeamColor/geoset-00-team-00.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

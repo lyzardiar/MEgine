@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "Ruins_Shells8",
+  "root": {
+    "id": "root",
+    "name": "Ruins_Shells8",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Ruins/Props/Ruins_Shells/Ruins_Shells8/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Ruins/Props/Ruins_Shells/Ruins_Shells8/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

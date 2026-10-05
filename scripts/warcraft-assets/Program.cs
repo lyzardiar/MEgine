@@ -66,10 +66,22 @@ bool Collapsed(Matrix4x4 m) => m.M11 == 0 && m.M12 == 0 && m.M13 == 0 && m.M21 =
 const float unitScale = 1f / 128;
 float[] Position(Vector3 v) => [v.X * unitScale, v.Z * unitScale, -v.Y * unitScale];
 float[] Direction(Vector3 v) => [v.X, v.Z, -v.Y];
+Vector3[] FaceNormals(MdxGeoset g, Vector3[] positions) {
+    var normals = new Vector3[positions.Length];
+    for (int i = 0; i + 2 < g.Indices.Length; i += 3) {
+        int a = g.Indices[i], b = g.Indices[i + 1], c = g.Indices[i + 2];
+        var n = Vector3.Cross(positions[b] - positions[a], positions[c] - positions[a]);
+        normals[a] += n; normals[b] += n; normals[c] += n;
+    }
+    for (int i = 0; i < normals.Length; i++) normals[i] = normals[i].LengthSquared() > 1e-10f ? Vector3.Normalize(normals[i]) : Vector3.UnitZ;
+    return normals;
+}
 object[] Geometry() => model.Geosets.Select(g => {
     var positions = new Vector3[g.VertexCount];
     var normals = new Vector3[g.VertexCount];
-    animator.SkinGeoset(g, positions, normals);
+    if (g.Normals.Length != 0 && g.Normals.Length != g.VertexCount) throw new InvalidDataException($"Incomplete source normals: geoset {g.Index}");
+    animator.SkinGeoset(g, positions, g.Normals.Length == 0 ? null : normals);
+    if (g.Normals.Length == 0) normals = FaceNormals(g, positions);
     return (object)new { positions = positions.Select(Position), normals = normals.Select(Direction) };
 }).ToArray();
 object State(MdxSequence? seq, int time, long wall) => new {
@@ -113,7 +125,7 @@ foreach (var seq in model.Sequences) {
             var (loc, rot, scale) = required.Contains(i) ? Local(i,seq,time,(long)Math.Round(seconds*1000)) : (model.Nodes[i].Pivot - (parent >= 0 ? model.Nodes[parent].Pivot : Vector3.Zero), Quaternion.Identity, Vector3.One);
             return new { translation = Position(loc), rotation = new[] { rot.X, rot.Z, -rot.Y, rot.W }, scale = new[] { scale.X, scale.Z, scale.Y } };
         }).ToArray();
-        frames.Add(new { seconds, joints, state = State(seq, time, (long)Math.Round(seconds * 1000)), reference = frame == 0 || frame == frameCount / 2 || frame == frameCount - 1 ? Geometry() : null });
+        frames.Add(new { seconds, joints, state = State(seq, time, (long)Math.Round(seconds * 1000)), reference = frame == 0 || frame == frameCount / 2 || frame == frameCount - 1 || frame == frameCount ? Geometry() : null });
     }
     clips.Add(new { name = seq.Name, duration, loop = (seq.Flags & 1) == 0, frameCount, frames });
 }

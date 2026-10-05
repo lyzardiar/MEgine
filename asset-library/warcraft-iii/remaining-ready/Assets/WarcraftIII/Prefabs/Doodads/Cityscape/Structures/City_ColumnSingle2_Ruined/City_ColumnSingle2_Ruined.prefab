@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "City_ColumnSingle2_Ruined",
+  "root": {
+    "id": "root",
+    "name": "City_ColumnSingle2_Ruined",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Cityscape/Structures/City_ColumnSingle2_Ruined/City_ColumnSingle2_Ruined/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Cityscape/Structures/City_ColumnSingle2_Ruined/City_ColumnSingle2_Ruined/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

@@ -84,6 +84,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=pathlib.Path, default=ROOT / 'asset-library/warcraft-iii/classic')
     parser.add_argument('--runtime', type=pathlib.Path, default=ROOT / 'target/release/mengine-runtime.exe')
+    parser.add_argument('--pose-probe',type=pathlib.Path,help='Native gltf_bounds executable for comparing nonloop terminal geometry and UVs against MDX')
     args = parser.parse_args()
     root = args.root.resolve()
     source = json.loads((root / 'asset-sources.json').read_text())
@@ -121,36 +122,67 @@ def main():
     cache = ROOT / 'tmp/warcraft-converter' / converter.COMMIT / 'sampled'
     checks = []
     uv_samples, texture_samples = 0, 0
-    for entry in catalog['models']:
-        sample = json.loads((cache / (converter.sha(entry['source'].lower().encode())[:12] + '-' + entry['id'] + '.json')).read_text())
-        result = dict(model=entry['id'], samples=0, vertices=0, maxPositionError=0.0)
-        for part in entry['parts']:
-            doc, blob = load_glb(root / part['animatedMesh'])
-            assert [a['name'] for a in doc.get('animations',[])] == [c['name'] for c in entry['clips']]
-            g = part['geoset']
-            expected_uv=np.array([[v['x'],v['y']] for v in sample['model']['geosets'][g]['uvLayers'][part.get('uvChannel',0)]])
-            assert np.allclose(accessor(doc,blob,doc['meshes'][0]['primitives'][0]['attributes']['TEXCOORD_0']),expected_uv,atol=1e-6)
-            for ci, clip in enumerate(sample['clips']):
-                for fi, f in enumerate(clip['frames']):
-                    state = f['state']['materials'][part['materialIndex']][part['layer']]
-                    if part['textureAnimationId'] >= 0:
-                        actual = doc['animations'][ci]['extras']['mengineUv']['frames'][fi]
-                        assert np.allclose(actual, state['uv'], atol=1e-7), (entry['id'], g, ci, fi, 'UV')
-                        uv_samples += 1
-                    if part['textureMaterials']:
-                        mat = json.loads((root / part['textureMaterials'][str(state['texture'])]).read_text())
-                        assert (root / mat['base_color_texture']).is_file()
-                        texture_samples += 1
-                    if f['reference'] is None:
-                        continue
-                    posed = serialized_pose(doc, blob, ci, fi)
-                    reference = np.array(f['reference'][g]['positions'])
-                    error = float(np.max(np.abs(posed-reference)))
-                    assert error < converter.POSE_TOLERANCE, (entry['id'], g, ci, fi, error)
-                    result['maxPositionError'] = max(result['maxPositionError'], error)
-                    result['samples'] += 1
-                    result['vertices'] += len(posed)
-        checks.append(result)
+    native_checks,native_error=0,0.0
+    probe=subprocess.Popen([str(args.pose_probe),'--stdin','--positions','--uvs','--normals'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,text=True,encoding='utf-8') if args.pose_probe else None
+    try:
+        for entry in catalog['models']:
+            sample = json.loads((cache / (converter.sha(entry['source'].lower().encode())[:12] + '-' + entry['id'] + '.json')).read_text())
+            result = dict(model=entry['id'], samples=0, vertices=0, maxPositionError=0.0)
+            for part in entry['parts']:
+                doc, blob = load_glb(root / part['animatedMesh'])
+                assert [a['name'] for a in doc.get('animations',[])] == [c['name'] for c in entry['clips']]
+                g = part['geoset']
+                expected_uv=np.array([[v['x'],v['y']] for v in sample['model']['geosets'][g]['uvLayers'][part.get('uvChannel',0)]])
+                assert np.allclose(accessor(doc,blob,doc['meshes'][0]['primitives'][0]['attributes']['TEXCOORD_0']),expected_uv,atol=1e-6)
+                for ci, clip in enumerate(sample['clips']):
+                    playback=doc['animations'][ci]['extras']['menginePlayback']
+                    assert playback == dict(durationSeconds=clip['duration'],loop=clip['loop']), (entry['source'],ci,'playback')
+                    if probe and not clip['loop']:
+                        terminal=clip['frames'][-1]
+                        assert terminal['reference'] is not None, (entry['source'],ci,'terminal MDX reference')
+                        expected=np.array(terminal['reference'][g]['positions'])
+                        uv=expected_uv
+                        if part['textureAnimationId']>=0:
+                            m=terminal['state']['materials'][part['materialIndex']][part['layer']]['uv']
+                            uv=np.column_stack([uv[:,0]*m[0]+uv[:,1]*m[2]+m[4],uv[:,0]*m[1]+uv[:,1]*m[3]+m[5]])
+                        for frame in sorted({clip['frameCount'],min(7200,clip['frameCount']+12)}):
+                            probe.stdin.write(str(root / part['animatedMesh'])+f'#pose={ci}:{frame}\n');probe.stdin.flush()
+                            actual=json.loads(probe.stdout.readline())
+                            assert np.asarray(actual['positions']).shape==expected.shape and np.asarray(actual['uvs']).shape==uv.shape, (entry['source'],g,ci,'native shape')
+                            normals=np.asarray(actual['normals'])
+                            assert normals.shape==expected.shape and np.isfinite(normals).all() and np.allclose(np.linalg.norm(normals,axis=1),1,atol=1e-5), (entry['source'],g,ci,'native normals')
+                            error=float(np.max(np.abs(np.array(actual['positions'])-expected)))
+                            assert error < converter.POSE_TOLERANCE, (entry['source'],g,ci,frame,'native terminal',error)
+                            assert np.allclose(actual['uvs'],uv,atol=1e-5,rtol=1e-5), (entry['source'],g,ci,frame,'native terminal UV')
+                            native_checks+=1;native_error=max(native_error,error)
+                    for fi, f in enumerate(clip['frames']):
+                        state = f['state']['materials'][part['materialIndex']][part['layer']]
+                        if part['textureAnimationId'] >= 0:
+                            actual = doc['animations'][ci]['extras']['mengineUv']['frames'][fi]
+                            assert np.allclose(actual, state['uv'], atol=1e-7), (entry['id'], g, ci, fi, 'UV')
+                            uv_samples += 1
+                        if part['textureMaterials']:
+                            mat = json.loads((root / part['textureMaterials'][str(state['texture'])]).read_text())
+                            assert (root / mat['base_color_texture']).is_file()
+                            texture_samples += 1
+                        if f['reference'] is None:
+                            continue
+                        posed = serialized_pose(doc, blob, ci, fi)
+                        reference = np.array(f['reference'][g]['positions'])
+                        error = float(np.max(np.abs(posed-reference)))
+                        assert error < converter.POSE_TOLERANCE, (entry['id'], g, ci, fi, error)
+                        result['maxPositionError'] = max(result['maxPositionError'], error)
+                        result['samples'] += 1
+                        result['vertices'] += len(posed)
+            checks.append(result)
+    finally:
+        if probe:
+            probe.stdin.close()
+            try:probe.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                probe.terminate();probe.wait(timeout=10)
+            probe.stdout.close()
+    if probe:assert probe.returncode==0,'Native pose probe failed'
     guids = set()
     for p in (root / 'Assets').rglob('*.meta'):
         meta = json.loads(p.read_text())
@@ -169,7 +201,7 @@ def main():
             x, y, w, h = tile['sourceRect']
             actual = Image.open(root / tile['texture']).convert('RGBA')
             assert np.array_equal(np.array(actual), np.array(image.crop((x, y, x+w, y+h))))
-    report = dict(sourceFiles=len(source['sourceFiles']), generatedFiles=len(source['generatedFiles']), sidecarGuids=len(guids), uvAnimationSamples=uv_samples, textureAnimationSamples=texture_samples, jpegPlaneChecks=dict(textures=len(texture_checks), maxChannelDelta=max((x['maxChannelDelta'] for x in texture_checks),default=0), texturesWithAlpha=sum(x['alphaMin']<255 for x in texture_checks)), serializedGlbPoseChecks=checks, runtimeExecutable=str(args.runtime.resolve()), runtimeSha256=converter.sha(args.runtime.read_bytes()))
+    report = dict(sourceFiles=len(source['sourceFiles']), generatedFiles=len(source['generatedFiles']), sidecarGuids=len(guids), uvAnimationSamples=uv_samples, textureAnimationSamples=texture_samples, nativeTerminalPoseChecks=native_checks,nativeTerminalMaxPositionError=native_error, jpegPlaneChecks=dict(textures=len(texture_checks), maxChannelDelta=max((x['maxChannelDelta'] for x in texture_checks),default=0), texturesWithAlpha=sum(x['alphaMin']<255 for x in texture_checks)), serializedGlbPoseChecks=checks, runtimeExecutable=str(args.runtime.resolve()), runtimeSha256=converter.sha(args.runtime.read_bytes()))
     converter.json_write(root / 'Validation/verification.json', report)
     def package_manifest():
         files = [dict(path=p.relative_to(root).as_posix(), size=p.stat().st_size, sha256=converter.sha(p.read_bytes())) for p in sorted(root.rglob('*')) if p.is_file() and p.name != 'mengine-build.json']
