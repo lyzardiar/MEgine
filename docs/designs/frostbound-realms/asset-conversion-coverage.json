@@ -1,0 +1,1044 @@
+{
+  "inventory": "G:\\work\\github\\MEgine\\tmp\\war3-inspect\\export\\model-inventory.json",
+  "inventorySha256": "7574e55fdffed3da312ec611d7df169f10fe9c15062f011ee9e96aa22271cf82",
+  "originalIndexedModels": 3264,
+  "originalAccountedModels": 3264,
+  "communityAccountedModels": 1514,
+  "convertedModels": 4534,
+  "clips": 12623,
+  "deferredModels": 229,
+  "missingDependencies": 15,
+  "collections": [
+    {
+      "collection": "game-ready",
+      "catalogSha256": "bd3233f6cbb751318af4d30042549d757f0a28d915f7c7cf50bd32508f8a0ade",
+      "extractedModels": 186,
+      "convertedModels": 186,
+      "clips": 1961,
+      "verifiedSourceModels": 186,
+      "verifiedGeneratedDependencies": 5368,
+      "deferredModels": [],
+      "missingDependencies": [],
+      "previousRuntimeValidation": {
+        "report": "asset-library\\warcraft-iii\\game-ready\\Validation\\verification.json",
+        "executableSha256": "0eb5b42eef44e0a350e6c3052ece5cde9c5267d739b7e7a25223809197801434",
+        "passed": true,
+        "nativeTerminalPoseChecks": 17664
+      }
+    },
+    {
+      "collection": "remaining-ready",
+      "catalogSha256": "b14e7b1ff5b2b606ed7e948473d2b99fb684c570ac8d191e5697df7e09eba086",
+      "extractedModels": 3078,
+      "convertedModels": 2866,
+      "clips": 8686,
+      "verifiedSourceModels": 3078,
+      "verifiedGeneratedDependencies": 30380,
+      "deferredModels": [
+        {
+          "path": "Abilities\\Spells\\Human\\Banish\\BanishTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\CloudOfFog\\CloudOfFog.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\Feedback\\ArcaneTowerAttack.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\Feedback\\SpellBreakerAttack.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\FlakCannons\\FlakTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\FlameStrike\\FlameStrikeDamageTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\FlameStrike\\FlameStrikeEmbers.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\FlameStrike\\FlameStrikeTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\MarkOfChaos\\MarkOfChaosDone.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\Polymorph\\PolyMorphDoneGround.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\Polymorph\\PolyMorphTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\Slow\\SlowTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Human\\SpellSteal\\SpellStealTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\AIfb\\AIfbSpecialArt.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\AIob\\AIobSpecialArt.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\ClarityPotion\\ClarityTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\HealingSalve\\HealingSalveTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\OrbCorruption\\OrbCorruptionMissile.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\OrbCorruption\\OrbCorruptionSpecialArt.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\OrbVenom\\OrbVenomSpecialArt.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\ResourceItems\\ResourceEffectTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\ScrollOfRegeneration\\Scroll_Regen_Target.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\ScrollOfRejuvenation\\ScrollManaHealth.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\StaffOfPurification\\PurificationCaster.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\StaffOfPurification\\PurificationTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\StaffOfSanctuary\\Staff_Sanctuary_Target.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Items\\VampiricPotion\\VampPotionCaster.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\NightElf\\Barkskin\\BarkSkinTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\NightElf\\CorrosiveBreath\\ChimaeraAcidTargetArt.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\NightElf\\FaerieDragonInvis\\FaerieDragon_Invis.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\NightElf\\Immolation\\ImmolationDamage.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\NightElf\\MoonWell\\MoonWellCasterArt.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\NightElf\\Rejuvenation\\RejuvenationTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\NightElf\\TargetArtLumber\\TargetArtLumber.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Orc\\Devour\\DevourEffectArt.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Orc\\Disenchant\\DisenchantSpecialArt.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Orc\\EtherealForm\\SpiritWalkerChange.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Orc\\LiquidFire\\Liquidfire.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Orc\\MirrorImage\\MirrorImageDeathCaster.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Orc\\Voodoo\\VoodooAuraTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\ANrl\\ANrlTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\ANrm\\ANrmTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\BreathOfFire\\BreathOfFireDamage.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\BreathOfFire\\BreathOfFireTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\BreathOfFrost\\BreathOfFrostTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Cleave\\CleaveDamageTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\CrushingWave\\CrushingWaveDamage.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Drain\\DrainCaster.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Drain\\DrainTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Drain\\ManaDrainCaster.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Drain\\ManaDrainTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\FrostDamage\\FrostDamage.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\HealingSpray\\HealBottleMissile.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\ImmolationRed\\ImmolationRedDamage.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Incinerate\\IncinerateBuff.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Monsoon\\MonsoonRain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Silence\\SilenceAreaBirth.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Stampede\\StampedeMissileDeath.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\StrongDrink\\BrewmasterTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Tornado\\Tornado_Target.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Tornado\\TornadoSpinner.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Other\\Volcano\\VolcanoDeath.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\CarrionSwarm\\CarrionSwarmDamage.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\Cripple\\CrippleTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\DarkRitual\\DarkRitualCaster.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\DeathandDecay\\DeathandDecayDamage.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\DeathandDecay\\DeathandDecayTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\DeathPact\\DeathPactCaster.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\FrostArmor\\FrostArmorDamage.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\Impale\\ImpaleCaster.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\PlagueCloud\\PlagueCloudCaster.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\RegenerationAura\\ObsidianRegenAura.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\ReplenishHealth\\ReplenishHealthCaster.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\ReplenishMana\\ReplenishManaCaster.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Spells\\Undead\\Unsummon\\UnsummonTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\AvengerMissile\\AvengerMissile.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\BallistaMissile\\BallistaImpact.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\BallistaMissile\\BallistaMissileTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\DragonHawkMissile\\DragonHawkMissile.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\FlameThrowerMissile\\FlameThrowerMissile.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\FrostWyrmMissile\\FrostWyrmMissile.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\GlaiveMissile\\GlaiveMissileTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\GryphonRiderMissile\\GryphonRiderMissileTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\LocustMissile\\LocustMissile.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\PhoenixMissile\\Phoenix_Missile_mini.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\PoisonSting\\PoisonStingTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\SeaElementalMissile\\SeaElementalMissile.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\SludgeMissile\\SludgeMissile.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\SteamTank\\SteamTankImpact.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\WaterElementalMissile\\WaterElementalMissile.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Abilities\\Weapons\\ZigguratFrostMissile\\ZigguratFrostMissile.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Doodads\\Cinematic\\DemonStorm\\DemonStorm.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Doodads\\Icecrown\\Water\\BubbleGeyserSteam\\BubbleGeyserSteam.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Doodads\\LordaeronSummer\\Water\\Shoreline\\Shoreline0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Doodads\\LordaeronSummer\\Water\\ShorelineInsideCorner\\ShorelineInsideCorner0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Doodads\\LordaeronSummer\\Water\\ShorelineOutsideCorner\\ShorelineOutsideCorner0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Doodads\\Outland\\Water\\OutlandShoreline\\OutlandShoreline0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Doodads\\Ruins\\Water\\BubbleGeyser\\BubbleGeyser.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Doodads\\Terrain\\OutlandMushroomTree\\OutlandMushroomTree1D.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Doodads\\Terrain\\OutlandMushroomTree\\OutlandMushroomTree8D.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Doodads\\Terrain\\OutlandMushroomTree\\OutlandMushroomTree9D.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\BlightDoodad\\BlightDoodad.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCAshenvale\\DNCAshenValeTerrain\\DNCAshenValeTerrain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCAshenvale\\DNCAshenValeUnit\\DNCAshenValeUnit.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCDalaran\\DNCDalaranTerrain\\DNCDalaranTerrain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCDalaran\\DNCDalaranUnit\\DNCDalaranUnit.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCDungeon\\DNCDungeonTerrain\\DNCDungeonTerrain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCDungeon\\DNCDungeonUnit\\DNCDungeonUnit.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCFelwood\\DNCFelWoodTerrain\\DNCFelWoodTerrain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCFelwood\\DNCFelWoodUnit\\DNCFelWoodUnit.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCLordaeron\\DNCLordaeronTarget\\DNCLordaeronTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCLordaeron\\DNCLordaeronTerrain\\DNCLordaeronTerrain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCLordaeron\\DNCLordaeronUnit\\DNCLordaeronUnit.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCUnderground\\DNCUndergroundTerrain\\DNCUndergroundTerrain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\DNC\\DNCUnderground\\DNCUndergroundUnit\\DNCUndergroundUnit.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\LargeBuildingFire\\LargeBuildingFire0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\LargeBuildingFire\\LargeBuildingFire1.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\LargeBuildingFire\\LargeBuildingFire2.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\NightElfBuildingFire\\ElfLargeBuildingFire0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\NightElfBuildingFire\\ElfLargeBuildingFire1.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\NightElfBuildingFire\\ElfLargeBuildingFire2.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\NightElfBuildingFire\\ElfSmallBuildingFire0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\NightElfBuildingFire\\ElfSmallBuildingFire1.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\NightElfBuildingFire\\ElfSmallBuildingFire2.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\SmallBuildingFire\\SmallBuildingFire0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\SmallBuildingFire\\SmallBuildingFire1.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\SmallBuildingFire\\SmallBuildingFire2.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\UndeadBuildingFire\\UndeadLargeBuildingFire0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\UndeadBuildingFire\\UndeadLargeBuildingFire1.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\UndeadBuildingFire\\UndeadLargeBuildingFire2.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\UndeadBuildingFire\\UndeadSmallBuildingFire0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\UndeadBuildingFire\\UndeadSmallBuildingFire1.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Environment\\UndeadBuildingFire\\UndeadSmallBuildingFire2.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraCloseUpLow.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraCloseUpLowNoise.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraCloseUpMed.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraCloseUpMedNoise.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraJainaEnters.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraPanLeftHigh.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraPanLeftLow.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraPanUpClose.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraZoomInLow.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraZoomInMid.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraZoomOut.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraZoomOutLow.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\CinematicCameras\\CameraZoomOutMid.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Critters\\Albatross\\CritterBloodAlbatross.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Demon\\DemonBlood\\DemonBloodLarge0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Demon\\DemonBlood\\DemonBloodPitlord.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Human\\HCancelDeath\\HCancelDeath.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Human\\HumanBlood\\BloodElfSpellThiefBlood.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Human\\HumanBlood\\HeroBloodElfBlood.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodFootman.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodKnight.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodLarge0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodMortarTeam.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodPeasant.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodPriest.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodRifleman.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodSorceress.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Naga\\NagaBlood\\NagaBloodWindserpent.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Naga\\NagaDeath\\NagaDeath.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\MALFurion_Blood.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodArcher.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodChimaera.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodDruidBear.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodDruidoftheClaw.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodDruidoftheTalon.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodDruidRaven.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodDryad.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodHeroDemonHunter.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodHeroKeeperoftheGrove.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodHippoGryph.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodHuntress.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodLarge0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodLarge1.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodMoonPriestess.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\BattrollBlood.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\HeroShadowHunterBlood.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodGrunt.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodHeadhunter.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodHellScream.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodHeroFarSeer.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodHeroTaurenChieftain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodKotoBeast.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodLarge0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodPeon.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodTauren.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodWitchDoctor.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodWolfrider.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrdBloodRiderlessWyvernRider.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrdBloodWyvernRider.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Other\\BeastmasterBlood\\BeastmasterBlood.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Other\\HumanBloodCinematicEffect\\HumanBloodCinematicEffect.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Other\\IllidanFootprint\\IllidanWaterSpawnFootPrint.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Other\\NeutralBuildingExplosion\\NeutralBuildingExplosion.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Other\\NPCBlood\\NPCbloodVillagerWoman\\NPCbloodVillagerWoman.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Other\\OrcBloodCinematicEffect\\OrcBloodCinematicEffect.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Other\\PandarenBrewmasterBlood\\PandarenBrewmasterBlood.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Undead\\ImpaleTargetDust\\ImpaleTargetDust.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodAbomination.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodAcolyte.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodCryptFiend.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodGargoyle.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodGhoul.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodLarge0.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodLarge1.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodNecromancer.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UI\\Feedback\\Autocast\\UI-ModalButtonOn.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UI\\Feedback\\QuestButton\\UI-QuestButtonOn.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Units\\Undead\\PlagueCloud\\PlagueCloud.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "Units\\Undead\\PlagueCloud\\PlagueCloudTarget.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        }
+      ],
+      "missingDependencies": [],
+      "previousRuntimeValidation": {
+        "report": "asset-library\\warcraft-iii\\remaining-ready\\Validation\\verification.json",
+        "executableSha256": "0eb5b42eef44e0a350e6c3052ece5cde9c5267d739b7e7a25223809197801434",
+        "passed": true,
+        "nativeTerminalPoseChecks": 65690
+      }
+    },
+    {
+      "collection": "community-ready",
+      "catalogSha256": "2d4eb6ab76203538adb80c9f57df39a3cc123c795f3796c38559fd101c9cf8e9",
+      "extractedModels": 1499,
+      "convertedModels": 1482,
+      "clips": 1976,
+      "verifiedSourceModels": 1499,
+      "verifiedGeneratedDependencies": 10251,
+      "deferredModels": [
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/BlueLight.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/BreathOfFireDamageX3.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCAshenValeTerrain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCAshenValeUnit.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDalaranUnit.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDalaranterrain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDungeonUnit.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDungeonterrain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCFelwoodTerrain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCFelwoodUnit.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCUndergroundUnit.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCUndergroundterrain.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/EerieFog.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Light.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Light7xxxxy2.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Star_Particles.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Waterdrops.mdx",
+          "error": "No renderable geosets; requires particle/ribbon conversion"
+        }
+      ],
+      "missingDependencies": [
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5.mdx",
+          "error": "'redstone_rock.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen.mdx",
+          "error": "'worldtreetrunk.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax.mdx",
+          "error": "'rockseemles a1.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow.mdx",
+          "error": "'rockseemles a1.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b.mdx",
+          "error": "'rockseemles a1.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra.mdx",
+          "error": "'rockseemles a1.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b.mdx",
+          "error": "'redstone_rock.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene.mdx",
+          "error": "'redstone_rock.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1.mdx",
+          "error": "'worldtreetrunk.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2.mdx",
+          "error": "'worldtreetrunk.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3.mdx",
+          "error": "'worldtreetrunk.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner].MDX",
+          "error": "'carpet.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed].MDX",
+          "error": "'carpet.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge].MDX",
+          "error": "'carpet.blp'"
+        },
+        {
+          "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile].MDX",
+          "error": "'carpet.blp'"
+        }
+      ],
+      "previousRuntimeValidation": {
+        "report": "asset-library\\warcraft-iii\\community-ready\\Validation\\verification.json",
+        "executableSha256": "0eb5b42eef44e0a350e6c3052ece5cde9c5267d739b7e7a25223809197801434",
+        "passed": true,
+        "nativeTerminalPoseChecks": 3724
+      }
+    }
+  ],
+  "scope": "Mesh assets converted and current source/output dependencies hash-verified. Meshless effects require emitter/ribbon/light adaptation; missing texture dependencies remain unresolved. Existing runtime/pose results are prior verification reports, not new gameplay acceptance."
+}

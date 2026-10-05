@@ -2019,6 +2019,12 @@ fn validate_world_assets(
     for entity in world.iter_entities() {
         if let Some(renderer) = world.get_component::<MeshRenderer>(entity) {
             let mesh = renderer.mesh.trim();
+            if mesh.starts_with("meshpatch:") {
+                let (asset, cells) = mengine_assets::parse_mesh_patch_key(mesh).with_context(|| format!("invalid mesh patch key: {mesh}"))?;
+                let path = resolve(asset, "mesh patch")?;
+                mengine_assets::MeshPatchSource::load(&path).and_then(|s| s.compose(cells)).map_err(|error| anyhow::anyhow!("invalid mesh patch {}: {error}", path.display()))?;
+                validated.insert(path);
+            }
             let pose = mengine_assets::parse_gltf_pose_sample(mesh);
             let mesh = pose.map(|p| p.0).unwrap_or(mesh);
             if mesh.to_ascii_lowercase().ends_with(".gltf")

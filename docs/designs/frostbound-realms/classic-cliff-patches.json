@@ -1,0 +1,486 @@
+{
+  "method": "Native editor GPU render using RuntimeMeshCache meshpatch loader",
+  "project": "D:\\MEngineNativeQA\\classic-cliffs-1791230916761",
+  "image": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\docs\\designs\\frostbound-realms\\classic-cliff-patches.png",
+  "sha256": "23be1640a22921f53e1324a02242e033d8b0fe892597ce80f59e3b879e39c55b",
+  "rendererSha256": "c9400d3f054f8a6f979f805e52d0638546495c400266078a928d4b06c5514a97",
+  "patches": [
+    {
+      "name": "winter",
+      "family": "Cliffs",
+      "cells": "06f8009c8009b8009a800768007084099840a780077800748407e840a78007380084800858007f80",
+      "selected": [
+        {
+          "x": 0,
+          "z": 0,
+          "pattern": "AAAB",
+          "template": 111,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 0,
+          "pattern": "BAAB",
+          "template": 156,
+          "base": 0
+        },
+        {
+          "x": 2,
+          "z": 0,
+          "pattern": "BAAB",
+          "template": 155,
+          "base": 0
+        },
+        {
+          "x": 3,
+          "z": 0,
+          "pattern": "BAAA",
+          "template": 154,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 1,
+          "pattern": "AABB",
+          "template": 118,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 1,
+          "pattern": "AAAB",
+          "template": 112,
+          "base": 1
+        },
+        {
+          "x": 2,
+          "z": 1,
+          "pattern": "BAAA",
+          "template": 153,
+          "base": 1
+        },
+        {
+          "x": 3,
+          "z": 1,
+          "pattern": "BBAA",
+          "template": 167,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 2,
+          "pattern": "AABB",
+          "template": 119,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 2,
+          "pattern": "AABA",
+          "template": 116,
+          "base": 1
+        },
+        {
+          "x": 2,
+          "z": 2,
+          "pattern": "ABAA",
+          "template": 126,
+          "base": 1
+        },
+        {
+          "x": 3,
+          "z": 2,
+          "pattern": "BBAA",
+          "template": 167,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 3,
+          "pattern": "AABA",
+          "template": 115,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 3,
+          "pattern": "ABBA",
+          "template": 132,
+          "base": 0
+        },
+        {
+          "x": 2,
+          "z": 3,
+          "pattern": "ABBA",
+          "template": 133,
+          "base": 0
+        },
+        {
+          "x": 3,
+          "z": 3,
+          "pattern": "ABAA",
+          "template": 127,
+          "base": 0
+        }
+      ]
+    },
+    {
+      "name": "forest",
+      "family": "Cliffs",
+      "cells": "06f8009c8009b8009a800768007084099840a780077800748407e840a78007380084800858007f80",
+      "selected": [
+        {
+          "x": 0,
+          "z": 0,
+          "pattern": "AAAB",
+          "template": 111,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 0,
+          "pattern": "BAAB",
+          "template": 156,
+          "base": 0
+        },
+        {
+          "x": 2,
+          "z": 0,
+          "pattern": "BAAB",
+          "template": 155,
+          "base": 0
+        },
+        {
+          "x": 3,
+          "z": 0,
+          "pattern": "BAAA",
+          "template": 154,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 1,
+          "pattern": "AABB",
+          "template": 118,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 1,
+          "pattern": "AAAB",
+          "template": 112,
+          "base": 1
+        },
+        {
+          "x": 2,
+          "z": 1,
+          "pattern": "BAAA",
+          "template": 153,
+          "base": 1
+        },
+        {
+          "x": 3,
+          "z": 1,
+          "pattern": "BBAA",
+          "template": 167,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 2,
+          "pattern": "AABB",
+          "template": 119,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 2,
+          "pattern": "AABA",
+          "template": 116,
+          "base": 1
+        },
+        {
+          "x": 2,
+          "z": 2,
+          "pattern": "ABAA",
+          "template": 126,
+          "base": 1
+        },
+        {
+          "x": 3,
+          "z": 2,
+          "pattern": "BBAA",
+          "template": 167,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 3,
+          "pattern": "AABA",
+          "template": 115,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 3,
+          "pattern": "ABBA",
+          "template": 132,
+          "base": 0
+        },
+        {
+          "x": 2,
+          "z": 3,
+          "pattern": "ABBA",
+          "template": 133,
+          "base": 0
+        },
+        {
+          "x": 3,
+          "z": 3,
+          "pattern": "ABAA",
+          "template": 127,
+          "base": 0
+        }
+      ]
+    },
+    {
+      "name": "barrens",
+      "family": "Cliffs",
+      "cells": "06f8009c8009b8009a800768007084099840a780077800748407e840a78007380084800858007f80",
+      "selected": [
+        {
+          "x": 0,
+          "z": 0,
+          "pattern": "AAAB",
+          "template": 111,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 0,
+          "pattern": "BAAB",
+          "template": 156,
+          "base": 0
+        },
+        {
+          "x": 2,
+          "z": 0,
+          "pattern": "BAAB",
+          "template": 155,
+          "base": 0
+        },
+        {
+          "x": 3,
+          "z": 0,
+          "pattern": "BAAA",
+          "template": 154,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 1,
+          "pattern": "AABB",
+          "template": 118,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 1,
+          "pattern": "AAAB",
+          "template": 112,
+          "base": 1
+        },
+        {
+          "x": 2,
+          "z": 1,
+          "pattern": "BAAA",
+          "template": 153,
+          "base": 1
+        },
+        {
+          "x": 3,
+          "z": 1,
+          "pattern": "BBAA",
+          "template": 167,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 2,
+          "pattern": "AABB",
+          "template": 119,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 2,
+          "pattern": "AABA",
+          "template": 116,
+          "base": 1
+        },
+        {
+          "x": 2,
+          "z": 2,
+          "pattern": "ABAA",
+          "template": 126,
+          "base": 1
+        },
+        {
+          "x": 3,
+          "z": 2,
+          "pattern": "BBAA",
+          "template": 167,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 3,
+          "pattern": "AABA",
+          "template": 115,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 3,
+          "pattern": "ABBA",
+          "template": 132,
+          "base": 0
+        },
+        {
+          "x": 2,
+          "z": 3,
+          "pattern": "ABBA",
+          "template": 133,
+          "base": 0
+        },
+        {
+          "x": 3,
+          "z": 3,
+          "pattern": "ABAA",
+          "template": 127,
+          "base": 0
+        }
+      ]
+    },
+    {
+      "name": "masonry",
+      "family": "CityCliffs",
+      "cells": "0008003580036800338000780002840328404480007800068401384044800058001a8001b8001480",
+      "selected": [
+        {
+          "x": 0,
+          "z": 0,
+          "pattern": "AAAB",
+          "template": 0,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 0,
+          "pattern": "BAAB",
+          "template": 53,
+          "base": 0
+        },
+        {
+          "x": 2,
+          "z": 0,
+          "pattern": "BAAB",
+          "template": 54,
+          "base": 0
+        },
+        {
+          "x": 3,
+          "z": 0,
+          "pattern": "BAAA",
+          "template": 51,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 1,
+          "pattern": "AABB",
+          "template": 7,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 1,
+          "pattern": "AAAB",
+          "template": 2,
+          "base": 1
+        },
+        {
+          "x": 2,
+          "z": 1,
+          "pattern": "BAAA",
+          "template": 50,
+          "base": 1
+        },
+        {
+          "x": 3,
+          "z": 1,
+          "pattern": "BBAA",
+          "template": 68,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 2,
+          "pattern": "AABB",
+          "template": 7,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 2,
+          "pattern": "AABA",
+          "template": 6,
+          "base": 1
+        },
+        {
+          "x": 2,
+          "z": 2,
+          "pattern": "ABAA",
+          "template": 19,
+          "base": 1
+        },
+        {
+          "x": 3,
+          "z": 2,
+          "pattern": "BBAA",
+          "template": 68,
+          "base": 0
+        },
+        {
+          "x": 0,
+          "z": 3,
+          "pattern": "AABA",
+          "template": 5,
+          "base": 0
+        },
+        {
+          "x": 1,
+          "z": 3,
+          "pattern": "ABBA",
+          "template": 26,
+          "base": 0
+        },
+        {
+          "x": 2,
+          "z": 3,
+          "pattern": "ABBA",
+          "template": 27,
+          "base": 0
+        },
+        {
+          "x": 3,
+          "z": 3,
+          "pattern": "ABAA",
+          "template": 20,
+          "base": 0
+        }
+      ]
+    }
+  ],
+  "scope": "Original grid composition; battlefield surface/navigation integration pending"
+}

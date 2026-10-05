@@ -1,0 +1,19 @@
+{
+  "sourceFiles": 5,
+  "generatedFiles": 26,
+  "sidecarGuids": 12,
+  "uvAnimationSamples": 0,
+  "textureAnimationSamples": 0,
+  "nativeTerminalPoseChecks": 0,
+  "nativeTerminalMaxPositionError": 0.0,
+  "jpegPlaneChecks": {
+    "textures": 5,
+    "maxChannelDelta": 1,
+    "texturesWithAlpha": 0
+  },
+  "serializedGlbPoseChecks": [],
+  "runtimeExecutable": "D:\\MEngineNativeQA\\tile-build-1790939800003\\release\\mengine-runtime.exe",
+  "runtimeSha256": "c5d2817d890c7d12157bef44e07ebc54ae555901ea904665292b31d0b9f3673b",
+  "runtimePassed": true,
+  "runtimeOutput": "validated 39 packaged file(s) (1875922 bytes), 1 scene(s), 11 runtime asset(s), script=false\n  'Warcraft III complete asset validation' from C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\asset-library\\warcraft-iii\\cliff-skins-ready\\Validation/AllAssets.mscene (5 entities)"
+}

@@ -16,6 +16,8 @@
 
 ## 重生成与验证
 
+原版悬崖已保留为 205 个原生网格模板和四套季节/砌石材质，详见 [悬崖转换与验证](../../docs/designs/frostbound-realms/classic-cliff-integration.md)。它们已通过独立拼接预览，尚未替换战场地面和寻路。完整转换覆盖清单见 [asset-conversion-coverage.json](../../docs/designs/frostbound-realms/asset-conversion-coverage.json)，列出每个无网格资源及缺贴图模型的原因。
+
 依赖 Python、.NET 10 SDK，以及 `scripts/warcraft-assets/requirements.txt` 中的库；MPQ 读取库已附 MIT 源码。转换器使用固定提交 `4fe46a0772520fc7b55078bf32cda1237d1b5f2e` 的 W3ModelViewer 解析器。
 
 已有集合包含重生成所需原始数据，可输出到独立目录：
@@ -24,6 +26,7 @@
 python scripts/convert-warcraft-assets.py --input asset-library/warcraft-iii/game-ready --output tmp/classic-reproduction --keep-going
 python scripts/convert-warcraft-assets.py --input asset-library/warcraft-iii/community-ready --output tmp/community-reproduction --keep-going
 python scripts/validate-warcraft-assets.py --root tmp/classic-reproduction --runtime <mengine-runtime.exe 的完整路径> --pose-probe <gltf_bounds.exe 的完整路径>
+python scripts/audit-warcraft-coverage.py
 ```
 
 `--reuse-samples` 仅在原文件、采样器二进制和缓存 JSON 的哈希全部匹配时复用采样结果。已生成文件被手工改动时，转换器拒绝覆盖。源文件和生成文件校验值位于各集合的 `asset-sources.json`，工具版本与哈希位于 `Licenses/converter-sources.json`。

@@ -1,5 +1,5 @@
 //! MiYu: inspect native static or sampled skeletal geometry for authoring previews.
-use mengine_assets::{load_gltf_mesh_data, parse_gltf_pose_sample, GltfPoseSource};
+use mengine_assets::{load_gltf_mesh_data, parse_gltf_pose_sample, parse_mesh_patch_key, GltfPoseSource, MeshPatchSource};
 use std::path::Path;
 use std::io::BufRead;
 
@@ -10,9 +10,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let streamed = std::env::args().any(|arg| arg == "--stdin");
     let arguments: Box<dyn Iterator<Item=Result<String,std::io::Error>>> = if streamed { Box::new(std::io::stdin().lock().lines()) } else { Box::new(std::env::args().skip(1).filter(|a| !a.starts_with("--")).map(Ok)) };
     let mut source: Option<(String,GltfPoseSource)> = None;
+    let mut patch: Option<(String,MeshPatchSource)> = None;
     for argument in arguments {
         let argument = argument?;
-        let mesh = if let Some((path, clip, frame, rate)) = parse_gltf_pose_sample(&argument) {
+        let mesh = if let Some((path, cells)) = parse_mesh_patch_key(&argument) {
+            if patch.as_ref().map(|s| s.0.as_str()) != Some(path) { patch = Some((path.into(),MeshPatchSource::load(Path::new(path))?)); }
+            patch.as_ref().unwrap().1.compose(cells)?
+        } else if let Some((path, clip, frame, rate)) = parse_gltf_pose_sample(&argument) {
             if source.as_ref().map(|s| s.0.as_str()) != Some(path) { source = Some((path.into(),GltfPoseSource::load(Path::new(path))?)); }
             source.as_ref().unwrap().1.sample_at_rate(clip, frame, rate)?
         } else { load_gltf_mesh_data(Path::new(&argument))? };

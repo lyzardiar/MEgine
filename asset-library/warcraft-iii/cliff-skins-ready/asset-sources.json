@@ -1,0 +1,200 @@
+{
+  "convertedOn": "2026-10-05",
+  "source": "E:\\Program Files (x86)\\dzclient\\Game\\Warcraft III Frozen Throne",
+  "archives": [
+    {
+      "archive": "war3.mpq",
+      "files": 10682
+    },
+    {
+      "archive": "War3x.mpq",
+      "files": 5841
+    },
+    {
+      "archive": "War3xLocal.mpq",
+      "files": 1133
+    },
+    {
+      "archive": "War3Patch.mpq",
+      "files": 768
+    }
+  ],
+  "archivePrecedence": [
+    "war3.mpq",
+    "War3x.mpq",
+    "War3xLocal.mpq",
+    "War3Patch.mpq"
+  ],
+  "modelSamples": [],
+  "extractionFailures": [],
+  "sourceFiles": [
+    {
+      "path": "ReplaceableTextures\\Cliff\\N_Cliff1.blp",
+      "archive": "war3.mpq",
+      "bytes": 55111,
+      "sha256": "cc53b3d097a83d2185ea340bd498237cb58a58ba267c173c88e8d6aeb11a83af"
+    },
+    {
+      "path": "ReplaceableTextures\\Cliff\\W_Cliff1.blp",
+      "archive": "war3.mpq",
+      "bytes": 58374,
+      "sha256": "facab612ec5eaf747252291965f085c476355f4df325f3ea57c65c563c5b88b7"
+    },
+    {
+      "path": "ReplaceableTextures\\Cliff\\Cliff1.blp",
+      "archive": "war3.mpq",
+      "bytes": 111150,
+      "sha256": "871c4535cb9741007d8e2ae7c425e8e5a028a787896f7c605d5f243c7d1d3709"
+    },
+    {
+      "path": "ReplaceableTextures\\Cliff\\B_Cliff0.blp",
+      "archive": "war3.mpq",
+      "bytes": 67905,
+      "sha256": "0cdf05b4e0a1277b48dff35b9f62eae7c672bb91d89fb102d1f59e92d297fa54"
+    },
+    {
+      "path": "ReplaceableTextures\\Cliff\\Y_Cliff1.blp",
+      "archive": "war3.mpq",
+      "bytes": 96377,
+      "sha256": "62830ebcb5da14fcc9d5fabcfb7db5801b3e819467c15cb730449aa8fbf05191"
+    }
+  ],
+  "generatedFiles": [
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/cliff/b_cliff0.mmat",
+      "bytes": 497,
+      "sha256": "76f8167deeb4b63123fefc1512ad1226bc119465fae7e4aad18799689e88bd0e"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/cliff/b_cliff0.mmat.meta",
+      "bytes": 106,
+      "sha256": "60439ed8d001b67b8cc974b3d98e09c3a0c7c7809196ff77b09eba0eb178138c"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/cliff/cliff1.mmat",
+      "bytes": 493,
+      "sha256": "6d7a849d4409865a7107c167d4c3dff34d50002dd55bb3ebaac315ad1ad2a5a6"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/cliff/cliff1.mmat.meta",
+      "bytes": 106,
+      "sha256": "863c9fec317ee485516f2330f1244a89b97e3d148d633679bad4537f6b7389cb"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/cliff/n_cliff1.mmat",
+      "bytes": 497,
+      "sha256": "53a68ce48ae59455e0750904bc2ae94ff03ec8b9607c6ce9296e5f66d4b485da"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/cliff/n_cliff1.mmat.meta",
+      "bytes": 106,
+      "sha256": "455c1b907dbec98167b40887a69a0bb77536717ef95717791e90d2b7650cca53"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/cliff/w_cliff1.mmat",
+      "bytes": 497,
+      "sha256": "031c25ab4605c30b8582bf004680f717316d82e4287869ccb1eb1368aeb5ba02"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/cliff/w_cliff1.mmat.meta",
+      "bytes": 106,
+      "sha256": "9bbbb8e2646eaa80d9bcfb1d9710556d82a79f77ce780b2674ad31dd4b66211a"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/cliff/y_cliff1.mmat",
+      "bytes": 497,
+      "sha256": "66bf713eab8bf00cdceae33c61a3465141ab5b5b07ee65a8773b9ef4f9d69467"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/cliff/y_cliff1.mmat.meta",
+      "bytes": 106,
+      "sha256": "d9f89079edc5fcb3acafff95e1b8212a3923f40da317949c78b8510966b579b0"
+    },
+    {
+      "path": "Assets/WarcraftIII/model-catalog.json",
+      "bytes": 127,
+      "sha256": "a349d73c8468f894c00d227b952c09a7f0a027554891c12d11786fb33662868c"
+    },
+    {
+      "path": "Assets/WarcraftIII/Models/TerrainTile.glb",
+      "bytes": 956,
+      "sha256": "0e2b10ffd2e0c2829f0db1aec212beca17cb60c0c0ca1020327b50cf9719b356"
+    },
+    {
+      "path": "Assets/WarcraftIII/Models/TerrainTile.glb.meta",
+      "bytes": 103,
+      "sha256": "69a369c33a3ddfbe60a9cbd93f4407fb782380d68c89c017e6ca421ed5e29d55"
+    },
+    {
+      "path": "Assets/WarcraftIII/Scenes/Preview.mscene",
+      "bytes": 690,
+      "sha256": "2ae5e7dd3659c91de722d8ab2cb9c8b50996947d3856f195ba1c691f53e6653e"
+    },
+    {
+      "path": "Assets/WarcraftIII/Scenes/Preview.mscene.meta",
+      "bytes": 103,
+      "sha256": "a7916082d8e052dff9ebb991a1a1169fe8f357e2c64d11b9492a23b409f64d76"
+    },
+    {
+      "path": "Assets/WarcraftIII/terrain-catalog.json",
+      "bytes": 116,
+      "sha256": "6962355d5ca71225fe8f2a0c7e508ccc2a488ef840eb1ecfb2e8a7d6f69fe819"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/B_Cliff0.png",
+      "bytes": 241193,
+      "sha256": "7930dc66a4dd79885839a55c4c515ec9e36bc36122008d6438484aa5a458fe1e"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/B_Cliff0.png.meta",
+      "bytes": 105,
+      "sha256": "b5cdb58c256db1ae38098ef9870449c0ce4aeecb79d46a9145f44d1a5e26e5b8"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/Cliff1.png",
+      "bytes": 241951,
+      "sha256": "b07700d5cd47a6ae6ea7c37546fc908fb1e389abc1f1819644f98ecc17a2c4d2"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/Cliff1.png.meta",
+      "bytes": 105,
+      "sha256": "b03cf3502228b451da3d9d49e4e278bb4a764f76821da3f70c47e86157c51033"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/N_Cliff1.png",
+      "bytes": 204823,
+      "sha256": "613c92be3dc7f84c8f12a83dfb4844729e910f5d4e1428cbf95454c855a2f451"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/N_Cliff1.png.meta",
+      "bytes": 105,
+      "sha256": "3a8ff3561307eca884c7c4017065dd319aeff80f420f02d6a4e2cc310914ffeb"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/W_Cliff1.png",
+      "bytes": 200861,
+      "sha256": "070ebbd777a639cd8f8fee8bbba0129441496176aa366fe0ca12ed0ac15eee03"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/W_Cliff1.png.meta",
+      "bytes": 105,
+      "sha256": "1bbde0d40d194e78c33f97941750f7d9fcd6f47fd602fbd9eea48f08c8d01b4f"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/Y_Cliff1.png",
+      "bytes": 220386,
+      "sha256": "ddde397d19b827fd76cc5e8dc0bddf9013bb8df74c82cc7a8c9fba7b2371ef0a"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/Y_Cliff1.png.meta",
+      "bytes": 105,
+      "sha256": "4a0c75c768746a4f03ed497b13b8a4add22d25c70b22dbebe16da2d41af6a2d2"
+    }
+  ],
+  "converter": {
+    "script": "scripts/convert-warcraft-assets.py",
+    "upstream": "https://github.com/Darithos/W3ModelViewer",
+    "commit": "4fe46a0772520fc7b55078bf32cda1237d1b5f2e"
+  },
+  "scope": "0 terrain atlases; 0 converted models of 0 extracted sources; inventory does not imply conversion."
+}

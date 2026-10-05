@@ -1,5 +1,5 @@
 use crate::textures::resolve_project_asset_path;
-use mengine_assets::{load_gltf_mesh_data, terrain_mesh, parse_gltf_pose_sample, GltfPoseSource, MeshData};
+use mengine_assets::{load_gltf_mesh_data, terrain_mesh, parse_gltf_pose_sample, parse_mesh_patch_key, GltfPoseSource, MeshData, MeshPatchSource};
 use mengine_rhi::{RenderObject, Renderer, Vertex};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -24,6 +24,7 @@ pub struct RuntimeMeshCache {
     attempted: HashMap<String, FileStamp>,
     last_poll: Option<Instant>,
     poses: HashMap<String, (FileStamp, GltfPoseSource)>,
+    patches: HashMap<String, (FileStamp, MeshPatchSource)>,
     pose_usage: HashMap<String, u64>,
     frame: u64,
     evicted: Vec<String>,
@@ -36,6 +37,7 @@ impl RuntimeMeshCache {
             attempted: HashMap::new(),
             last_poll: None,
             poses: HashMap::new(),
+            patches: HashMap::new(),
             pose_usage: HashMap::new(),
             frame: 0,
             evicted: Vec::new(),
@@ -50,11 +52,15 @@ impl RuntimeMeshCache {
         self.attempted.clear();
         self.last_poll = None;
         self.poses.clear();
+        self.patches.clear();
         self.evicted.extend(self.pose_usage.keys().cloned());
         self.pose_usage.clear();
     }
 
     pub fn invalidate(&mut self, key: &str) {
+        let patch = parse_mesh_patch_key(key).map(|p| p.0).unwrap_or(key);
+        self.patches.remove(patch);
+        self.attempted.retain(|k, _| parse_mesh_patch_key(k).is_none_or(|p| p.0 != patch));
         self.attempted.remove(key.trim());
         self.poses.remove(key.split('#').next().unwrap_or(key).trim());
         let asset = key.split('#').next().unwrap_or(key).trim();
@@ -77,6 +83,32 @@ impl RuntimeMeshCache {
         let mut frame_keys = HashSet::new();
         for object in objects {
             let key = object.mesh_key.trim();
+            if key.starts_with("meshpatch:") {
+                self.pose_usage.insert(key.to_owned(), self.frame);
+                if !frame_keys.insert(key.to_owned()) { continue; }
+                if !poll && self.attempted.contains_key(key) { continue; }
+                let Some((asset, cells)) = parse_mesh_patch_key(key) else {
+                    if should_attempt(&mut self.attempted, key, FileStamp::default()) { failures.push(MeshLoadFailure { key:key.into(), path:root.to_owned(), error:"invalid mesh patch key".into() }); }
+                    continue;
+                };
+                let Some(path) = resolve_project_asset_path(root, asset) else {
+                    if should_attempt(&mut self.attempted, key, FileStamp::default()) { failures.push(MeshLoadFailure { key:key.into(), path:root.to_owned(), error:"mesh patch path must be project-relative without '..'".into() }); }
+                    continue;
+                };
+                let stamp = file_stamp(&path);
+                if !should_attempt(&mut self.attempted, key, stamp) { continue; }
+                if self.patches.get(asset).is_none_or(|(old, _)| *old != stamp) {
+                    match MeshPatchSource::load(&path) {
+                        Ok(source) => { self.patches.insert(asset.to_owned(), (stamp, source)); }
+                        Err(error) => { failures.push(MeshLoadFailure { key:key.into(), path, error }); continue; }
+                    }
+                }
+                match self.patches[asset].1.compose(cells) {
+                    Ok(mesh) => renderer.upload_gltf_static(key, &vertices_from_mesh(&mesh), &mesh.indices),
+                    Err(error) => failures.push(MeshLoadFailure { key:key.into(), path, error }),
+                }
+                continue;
+            }
             if key.starts_with("terrain4:") || key.starts_with("terrain4r:") || key.starts_with("terrain4h:") || key.starts_with("terrain4w:") {
                 self.pose_usage.insert(key.to_owned(), self.frame);
                 if should_attempt(&mut self.attempted, key, FileStamp::default()) {
@@ -140,6 +172,7 @@ impl RuntimeMeshCache {
             for (key, _) in stale.into_iter().take(self.pose_usage.len() - 256) { self.pose_usage.remove(&key); self.attempted.remove(&key); renderer.remove_mesh(&key); }
         }
         self.poses.retain(|asset, _| self.pose_usage.keys().any(|key| parse_gltf_pose_sample(key).is_some_and(|p| p.0 == asset)));
+        self.patches.retain(|asset, _| self.pose_usage.keys().any(|key| parse_mesh_patch_key(key).is_some_and(|p| p.0 == asset)));
         failures
     }
 }
@@ -184,6 +217,14 @@ mod tests {
         for key in ["a.glb", "a.glb#pose=0:4", "a.glb#pose=0:10@30", "a.glb#pose=1:20@60", "b.glb#pose=0:10@30"] { cache.attempted.insert(key.into(), FileStamp::default()); }
         cache.invalidate("a.glb");
         assert_eq!(cache.attempted.keys().cloned().collect::<Vec<_>>(), vec!["b.glb#pose=0:10@30"]);
+    }
+
+    #[test]
+    fn patch_invalidation_removes_all_placements_for_the_changed_source() {
+        let mut cache = RuntimeMeshCache::new(None);
+        for key in ["meshpatch:Assets/a.mpatch#00080", "meshpatch:Assets/a.mpatch#fff80", "meshpatch:Assets/b.mpatch#00080"] { cache.attempted.insert(key.into(), FileStamp::default()); }
+        cache.invalidate("Assets/a.mpatch");
+        assert_eq!(cache.attempted.keys().cloned().collect::<Vec<_>>(), vec!["meshpatch:Assets/b.mpatch#00080"]);
     }
 
     #[test]

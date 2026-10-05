@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "fps": 12,
+  "sourceUnitToEngineUnit": 0.0078125,
+  "axes": "(x,y,z) -> (x,z,-y)",
+  "models": []
+}

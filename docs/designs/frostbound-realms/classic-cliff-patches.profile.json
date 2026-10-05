@@ -1,0 +1,379 @@
+{
+  "schemaVersion": 1,
+  "totalMs": 33.2545,
+  "callTree": {
+    "name": "EditorViewportRenderer.render_world",
+    "totalMs": 33.2545,
+    "selfMs": 0.0062000000000009825,
+    "calls": 1,
+    "children": [
+      {
+        "name": "Effects",
+        "totalMs": 0.0199,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "EffekseerWorld.update",
+            "totalMs": 0.0152,
+            "selfMs": 0.0152,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "EffekseerWorld.append_to_frame",
+            "totalMs": 0.0047,
+            "selfMs": 0.0047,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Frame compile",
+        "totalMs": 0.5153,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "TransformHierarchy.build",
+            "totalMs": 0.0111,
+            "selfMs": 0.0111,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "FrameCompiler.compile",
+            "totalMs": 0.5041,
+            "selfMs": 0.0023999999999999577,
+            "calls": 1,
+            "children": [
+              {
+                "name": "Camera, meshes and lighting",
+                "totalMs": 0.4726,
+                "selfMs": 0.4726,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Canvas layout and text",
+                "totalMs": 0.0073,
+                "selfMs": 0.0073,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "World sprites",
+                "totalMs": 0.0074,
+                "selfMs": 0.0074,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Particles, trails and sorting",
+                "totalMs": 0.0079,
+                "selfMs": 0.0079,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Sprite regions and materials",
+                "totalMs": 0.0037,
+                "selfMs": 0.0037,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "UI batching",
+                "totalMs": 0.0028,
+                "selfMs": 0.0028,
+                "calls": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "name": "Diagnostics.texture_failures",
+            "totalMs": 0.00009999999999999999,
+            "selfMs": 0.00009999999999999999,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Render backend",
+        "totalMs": 12.428600000000001,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "OffscreenTarget.ensure_size",
+            "totalMs": 0.00009999999999999999,
+            "selfMs": 0.00009999999999999999,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "Renderer.submit_frame_to",
+            "totalMs": 2.3471,
+            "selfMs": 2.3471,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "Renderer.read_offscreen_rgba8",
+            "totalMs": 10.0814,
+            "selfMs": 10.0814,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Resource sync",
+        "totalMs": 19.7774,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "RuntimeMeshCache.sync",
+            "totalMs": 1.6205,
+            "selfMs": 1.6205,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeFontCache.sync",
+            "totalMs": 0.0015,
+            "selfMs": 0.0015,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_ui",
+            "totalMs": 0.0036,
+            "selfMs": 0.0036,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_ui_materials",
+            "totalMs": 0.0069,
+            "selfMs": 0.0069,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_materials",
+            "totalMs": 18.1447,
+            "selfMs": 18.1447,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_environment",
+            "totalMs": 0.00019999999999999998,
+            "selfMs": 0.00019999999999999998,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Profiler",
+        "totalMs": 0.5071,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "Profiler.snapshot",
+            "totalMs": 0.5071,
+            "selfMs": 0.5071,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "memory": [
+    {
+      "name": "CPU readback RGBA",
+      "domain": "cpu",
+      "bytes": 5242880,
+      "certainty": "exact",
+      "source": "Renderer.read_offscreen_rgba8 Vec length"
+    },
+    {
+      "name": "Frame packet / render objects",
+      "domain": "cpu",
+      "bytes": 3200,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled render objects"
+    },
+    {
+      "name": "Frame packet / UI primitives",
+      "domain": "cpu",
+      "bytes": 0,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI primitives"
+    },
+    {
+      "name": "Frame packet / UI batches",
+      "domain": "cpu",
+      "bytes": 0,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI batches"
+    },
+    {
+      "name": "Frame packet / controls",
+      "domain": "cpu",
+      "bytes": 0,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI controls"
+    },
+    {
+      "name": "GPU offscreen color",
+      "domain": "gpu",
+      "bytes": 5242880,
+      "certainty": "estimate",
+      "source": "viewport width x height x 4 RGBA8 bytes"
+    },
+    {
+      "name": "GPU offscreen depth",
+      "domain": "gpu",
+      "bytes": 20971520,
+      "certainty": "estimate",
+      "source": "viewport width x height x 4 depth/stencil bytes x MSAA samples; physical format is backend-dependent"
+    },
+    {
+      "name": "GPU HDR and multisampled color",
+      "domain": "gpu",
+      "bytes": 73400320,
+      "certainty": "estimate",
+      "source": "resolved RGBA16F plus MSAA RGBA16F and surface RGBA8 attachments; excludes driver allocation padding"
+    },
+    {
+      "name": "GPU texture residency",
+      "domain": "gpu",
+      "bytes": 1048576,
+      "certainty": "estimate",
+      "source": "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded"
+    },
+    {
+      "name": "GPU live scene views",
+      "domain": "gpu",
+      "bytes": 0,
+      "certainty": "estimate",
+      "source": "resolved RGBA8 and RGBA16F, depth/stencil and MSAA color attachments; excludes driver padding"
+    }
+  ],
+  "residentMemoryEstimateBytes": 105909376,
+  "resources": [
+    {
+      "kind": "mesh",
+      "asset": "meshpatch:Assets/WarcraftIII/Models/Terrain/ClassicCliffs.mpatch#0008003580036800338000780002840328404480007800068401384044800058001a8001b8001480",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791230916761\\meshpatch:Assets\\WarcraftIII\\Models\\Terrain\\ClassicCliffs.mpatch#0008003580036800338000780002840328404480007800068401384044800058001a8001b8001480",
+      "loaded": false,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "meshpatch:Assets/WarcraftIII/Models/Terrain/ClassicCliffs.mpatch#06f8009c8009b8009a800768007084099840a780077800748407e840a78007380084800858007f80",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791230916761\\meshpatch:Assets\\WarcraftIII\\Models\\Terrain\\ClassicCliffs.mpatch#06f8009c8009b8009a800768007084099840a780077800748407e840a78007380084800858007f80",
+      "loaded": false,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/B_Cliff0.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791230916761\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\B_Cliff0.png",
+      "loaded": true,
+      "sourceBytes": 241193,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/Cliff1.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791230916761\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\Cliff1.png",
+      "loaded": true,
+      "sourceBytes": 241951,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/W_Cliff1.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791230916761\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\W_Cliff1.png",
+      "loaded": true,
+      "sourceBytes": 200861,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/Cliff/Y_Cliff1.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-cliffs-1791230916761\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Cliff\\Y_Cliff1.png",
+      "loaded": true,
+      "sourceBytes": 220386,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    }
+  ],
+  "resourcesTruncated": false,
+  "resourceSampleAgeMs": 0.0013,
+  "counts": {
+    "msaaSamples": 4,
+    "entities": 7,
+    "renderObjects": 4,
+    "sceneViews": 0,
+    "uiPrimitives": 0,
+    "uiBatches": 0,
+    "uiDrawCalls": 0,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialPipelinesRejected": 0,
+    "materialPipelineEvictions": 0,
+    "materialTexturesColor": 4,
+    "materialTexturesData": 0,
+    "materialTextureBindGroups": 4,
+    "materialSamplers": 1
+  }
+}

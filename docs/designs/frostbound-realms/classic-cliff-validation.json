@@ -1,0 +1,5359 @@
+{
+  "authoredTemplates": 205,
+  "families": {
+    "Cliffs": 64,
+    "CityCliffs": 64
+  },
+  "nativePatchChecks": 615,
+  "nativeVertices": 14781,
+  "maxPositionError": 0.0,
+  "boundaryProfileComparisons": 9523,
+  "unequalSourceProfiles": [
+    {
+      "first": "CityCliffsAAAB0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsAAAB1",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsAAAB2",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsAABB0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsAABB1",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsAABB2",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsAABB3",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsAACB0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsABAB0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsABAB1",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsABAB2",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsABBB0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsABCB0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsACAB0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsACBB0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsACCB0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsBAAC0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsBABC0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsBACC0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsBBAC0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsBCAC0",
+      "second": "CityCliffsBABA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsACAA0",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsACAA1",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsACAB0",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsACAC0",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsACAC1",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsACAC2",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsBCAA0",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsBCAB0",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsBCAC0",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsCCAA0",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.7499746656844763,
+      "at": -0.494264654815197,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsCCAA1",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.7499746656844763,
+      "at": -0.494264654815197,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsCCAA2",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.7499746656844763,
+      "at": -0.494264654815197,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsCCAA3",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.7499746656844763,
+      "at": -0.494264654815197,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsCCAB0",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsCCAC0",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAA0",
+      "second": "CityCliffsCCAC1",
+      "axis": 2,
+      "endpoints": [
+        2,
+        0
+      ],
+      "maxDifference": 1.75,
+      "at": -0.49426523596048355,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAA1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAC1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAC2",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAC3",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCABA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023664486705343,
+      "at": -0.12499980628490448,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCABC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCACA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCACA1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCACA2",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCACB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCACC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCACC1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.125,
+      "missingSamples": 0,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsAAAB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsAAAB1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsAAAB2",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsAAAC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsAAAC1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsABBA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsABBA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsABBA2",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsABBA3",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsABBB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsABBC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsACCA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsACCA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsACCA2",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsACCA3",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsACCB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsACCC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsACCC1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsBAAA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsBAAA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsBAAB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsBAAB1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsBAAB2",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsBAAB3",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsBAAC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsBBBA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsBBBA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsBCCA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAC1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAC2",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCAAC3",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCBBA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCCCA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CityCliffsCBAC0",
+      "second": "CityCliffsCCCA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.00024023652076721191,
+      "at": -0.25,
+      "missingSamples": 0,
+      "openIntervalSamples": 2,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAAAB0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAAAB1",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.2256627996153355e-07,
+      "at": -0.27539004385471344,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCAAA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.400828976245606e-05,
+      "at": -0.4667937532067299,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCAAA1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.400828976245606e-05,
+      "at": -0.4667937532067299,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCAAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.0248048445026257e-05,
+      "at": -0.4667937532067299,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCAAC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.0248048445026257e-05,
+      "at": -0.4667937532067299,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCAAC1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.0248048445026257e-05,
+      "at": -0.4667937532067299,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCABA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.4008429833521916e-05,
+      "at": -0.4003896489739418,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 3.919449008593645e-05,
+      "at": -0.4003914147615433,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCABC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.0248048445026257e-05,
+      "at": -0.4667937532067299,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCACA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.400828976245606e-05,
+      "at": -0.4667937532067299,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCACA1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.400828976245606e-05,
+      "at": -0.4667937532067299,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCACB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.4008429833521916e-05,
+      "at": -0.4003896489739418,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCACC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.5261850917779327e-05,
+      "at": -0.4667939469218254,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsCACC1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 2.5261850917779327e-05,
+      "at": -0.4667939469218254,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.002327492346104937,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0005272328334405552,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsAAAC0",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06933796981785534,
+      "at": -0.36328066885471344,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAAAC1",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.518612577688927e-05,
+      "at": -0.40039219707250595,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsAAAC1",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.002327492346104937,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsAAAC1",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0005272328334405552,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsAAAC1",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06933796981785534,
+      "at": -0.36328066885471344,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAABB0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAABB0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAABB1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAABB1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAABB2",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAABB2",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAABC0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.2256628007255586e-07,
+      "at": -0.27539004385471344,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsAABC0",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.002327492346104937,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsAABC0",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0005272328334405552,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsAABC0",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06934140537514,
+      "at": -0.36328125,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAACC0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAACC0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAACC0",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.002326735419565712,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsAACC0",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00052798975997978,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsAACC0",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06933796981785534,
+      "at": -0.36328066885471344,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAACC1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAACC1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsAACC1",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.002326735419565712,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsAACC1",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.00052798975997978,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsAACC1",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06933796981785534,
+      "at": -0.36328066885471344,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABAA0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABAA0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABAA1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABAA1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABAB0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.2256627996153355e-07,
+      "at": -0.27539004385471344,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABAB1",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 8.976074905575615e-08,
+      "at": -0.09179668128490448,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABAC0",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.518612577688927e-05,
+      "at": -0.40039219707250595,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsABAC0",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.002327492346104937,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABAC0",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0005272328334405552,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsABAC0",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06933796981785534,
+      "at": -0.36328066885471344,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABBB0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABBB0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABBB1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABBB1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABBC0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.2256628007255586e-07,
+      "at": -0.27539004385471344,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABBC0",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0023273415863513947,
+      "at": -0.6249994188547134,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABBC0",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0005273880183106205,
+      "at": -0.6249994188547134,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABBC0",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06934140537514,
+      "at": -0.36328125,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsAACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.005859375,
+      "at": -0.6249994188547134,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsAACA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.005859375,
+      "at": -0.6249994188547134,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.008186716586351395,
+      "at": -0.6249994188547134,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0053319869816893795,
+      "at": -0.6249994188547134,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsAACC1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.005860131926539225,
+      "at": -0.6249994188547134,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06934140537514,
+      "at": -0.36328125,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsBACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.005859211553141452,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsBACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.005860131926539225,
+      "at": -0.6249994188547134,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsCACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.005859211553141452,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsCACA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.005859211553141452,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsCACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.005859211553141452,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsCACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.005859211553141452,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsABCC0",
+      "second": "CliffsCACC1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.005859375,
+      "at": -0.6249994188547134,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACAA0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACAA0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACAA1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACAA1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACAB0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.2256627996153355e-07,
+      "at": -0.27539004385471344,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsACAC0",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.3932600904986714e-05,
+      "at": -0.40039239078760147,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsACAC0",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.002327492346104937,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsACAC0",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0005272328334405552,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsACAC0",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06934140537514,
+      "at": -0.36328125,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACAC1",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.3932600904986714e-05,
+      "at": -0.40039239078760147,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsACAC1",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.002327492346104937,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsACAC1",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0005272328334405552,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsACAC1",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06933796981785534,
+      "at": -0.36328066885471344,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACBB0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACBB0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACBC0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.2256628007255586e-07,
+      "at": -0.27539004385471344,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsACBC0",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0023273415863513947,
+      "at": -0.6249994188547134,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsACBC0",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0005273880183106205,
+      "at": -0.6249994188547134,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsACBC0",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06934140537514,
+      "at": -0.36328125,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsACCC0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACCC0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACCC0",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.002327492346104937,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsACCC0",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0005272328334405552,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsACCC0",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06933796981785534,
+      "at": -0.36328066885471344,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACCC1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACCC1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsACCC1",
+      "second": "CliffsAACB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.002327492346104937,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsACCC1",
+      "second": "CliffsAACC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.0005272328334405552,
+      "at": -0.625,
+      "missingSamples": 0,
+      "openIntervalSamples": 10,
+      "subToleranceIntervals": 3
+    },
+    {
+      "first": "CliffsACCC1",
+      "second": "CliffsBACA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 0.06933796981785534,
+      "at": -0.36328066885471344,
+      "missingSamples": 0,
+      "openIntervalSamples": 8,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBAAA0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBAAA0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBAAA0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBAAA0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBAAA1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBAAA1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBAAA1",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBAAA1",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBAAB0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBAAB1",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBAAC0",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.7692864160423483e-05,
+      "at": -0.40039239078760147,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBABA0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBABA0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBABA1",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBABA1",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBABB0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBABB0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBABB1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBABB1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBABC0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.2256628007255586e-07,
+      "at": -0.27539004385471344,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBACA0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBACA0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBACC0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBACC0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAA0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAA0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAA0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAA0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAA1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAA1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAA1",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAA1",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBAAA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 1.769985457089618e-05,
+      "at": -0.46679433435201645,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBAAA1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 1.769985457089618e-05,
+      "at": -0.46679433435201645,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBAAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 1.769985457089618e-05,
+      "at": -0.46679433435201645,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBAAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 1.8873293366361565e-05,
+      "at": -0.46679433435201645,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBAAC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 1.7118722976938727e-05,
+      "at": -0.46679433435201645,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBABA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 1.9431933150126923e-05,
+      "at": -0.4003898426890373,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBABA1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 1.9431933150126923e-05,
+      "at": -0.4003898426890373,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.049164988671137e-05,
+      "at": -0.4003898426890373,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBABB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.049164988671137e-05,
+      "at": -0.4003898426890373,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBABC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.049164988671137e-05,
+      "at": -0.4003898426890373,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBACA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.049164988671137e-05,
+      "at": -0.4003898426890373,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBACB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.049164988671137e-05,
+      "at": -0.4003898426890373,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBACC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 1.605901129275722e-05,
+      "at": -0.40038926154375076,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCBAA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 1.9431933150126923e-05,
+      "at": -0.4003898426890373,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 6,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCBAC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.049164988671137e-05,
+      "at": -0.4003898426890373,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCBBA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 1.769985457089618e-05,
+      "at": -0.46679433435201645,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCBCA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.049164988671137e-05,
+      "at": -0.4003898426890373,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsAAAB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsAAAB1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsAAAC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsAAAC1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsABBA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsABBA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsABBA2",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsABBB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsABBB1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsABBC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsACCA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsACCA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsACCB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsACCC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsACCC1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBAAA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBAAA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBAAB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBAAB1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBAAC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBBBA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBBBA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsBCCA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCAAA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCAAA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCAAB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCAAC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCAAC1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCBBA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCCCA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB0",
+      "second": "CliffsCCCA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBAAA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 3.179188019508672e-06,
+      "at": -0.400390625,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBAAA1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 3.179188019508672e-06,
+      "at": -0.400390625,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBAAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 3.179188019508672e-06,
+      "at": -0.400390625,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBAAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.788025692090912e-06,
+      "at": -0.400390625,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBAAC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 3.3729065056498087e-06,
+      "at": -0.400390625,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBABA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 3.1792065677826997e-06,
+      "at": -0.46679629385471344,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBABA1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 3.1792065677826997e-06,
+      "at": -0.46679629385471344,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBABB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBABC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBACA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBACB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBACC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 4.820088506996001e-06,
+      "at": -0.46679629385471344,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCBAA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 3.1792065677826997e-06,
+      "at": -0.46679629385471344,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 6,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCBAC0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCBBA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 3.179188019508672e-06,
+      "at": -0.400390625,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCBCA0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsAAAB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsAAAB1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsAAAC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsAAAC1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsABBA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsABBA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsABBA2",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsABBB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsABBB1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsABBC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsACCA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsACCA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsACCB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsACCC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsACCC1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBAAA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBAAA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBAAB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBAAB1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBAAC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBBBA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBBBA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsBCCA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCAAA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCAAA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCAAB0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCAAC0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCAAC1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCBBA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCCCA0",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAB1",
+      "second": "CliffsCCCA1",
+      "axis": 2,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBAC0",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.3932600904986714e-05,
+      "at": -0.40039239078760147,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBBA0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBBA0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBBBA1",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 3.3729250539238365e-06,
+      "at": -0.5996087938547134,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBBA1",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 3.1792065677826997e-06,
+      "at": -0.5996087938547134,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBBCA0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 4.820088506996001e-06,
+      "at": -0.5332029312849045,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBBCA0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 4.238942090228903e-06,
+      "at": -0.5996087938547134,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBCAA0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBCAA0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBCAA0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBCAA0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsBCAB0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.2256627996153355e-07,
+      "at": -0.27539004385471344,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBCAC0",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.3932600904986714e-05,
+      "at": -0.40039239078760147,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsBCBA0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 3.3729250539238365e-06,
+      "at": -0.5996087938547134,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBCBA0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 3.1792065677826997e-06,
+      "at": -0.5996087938547134,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBCCA0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 3.3729250539238365e-06,
+      "at": -0.5996087938547134,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsBCCA0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 3.1792065677826997e-06,
+      "at": -0.5996087938547134,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsCAAA0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCAAA0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCAAA1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCAAA1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCAAB0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCAAB0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCAAB0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCAAC0",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.7692864160423483e-05,
+      "at": -0.40039239078760147,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsCAAC1",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.7692864160423483e-05,
+      "at": -0.40039239078760147,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsCABB0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCABB0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCABB0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCABB0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCABC0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.2256628007255586e-07,
+      "at": -0.27539004385471344,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsCACB0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCACB0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCACC0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCACC0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCACC1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCACC1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCBAA0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCBAA0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCBAB0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.2256627996153355e-07,
+      "at": -0.27539004385471344,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsCBAB0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCBAB0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCBAC0",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.3932600904986714e-05,
+      "at": -0.40039239078760147,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsCCAA0",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCCAA0",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCCAA1",
+      "second": "CliffsBBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCCAA1",
+      "second": "CliffsBBAB1",
+      "axis": 0,
+      "endpoints": [
+        0,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 4,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCCAB0",
+      "second": "CliffsCBAB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        1
+      ],
+      "maxDifference": 2.2256627996153355e-07,
+      "at": -0.27539004385471344,
+      "missingSamples": 4,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 1
+    },
+    {
+      "first": "CliffsCCAB0",
+      "second": "CliffsBBAB0",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 5.811452865600586e-07,
+      "at": -0.533203125,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCCAB0",
+      "second": "CliffsBBAB1",
+      "axis": 2,
+      "endpoints": [
+        1,
+        0
+      ],
+      "maxDifference": 0.0,
+      "at": null,
+      "missingSamples": 2,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 0
+    },
+    {
+      "first": "CliffsCCAC0",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.3932600904986714e-05,
+      "at": -0.40039239078760147,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    },
+    {
+      "first": "CliffsCCAC1",
+      "second": "CliffsCABB0",
+      "axis": 0,
+      "endpoints": [
+        0,
+        2
+      ],
+      "maxDifference": 1.3932600904986714e-05,
+      "at": -0.40039239078760147,
+      "missingSamples": 0,
+      "openIntervalSamples": 6,
+      "subToleranceIntervals": 2
+    }
+  ],
+  "authoredCornerOffsets": [
+    {
+      "model": "CityCliffsCBAC0",
+      "corner": 3,
+      "nearestHorizontalOffset": 0.0,
+      "heightOffset": -0.0003203153610229492
+    },
+    {
+      "model": "CliffsAAAC0",
+      "corner": 0,
+      "nearestHorizontalOffset": 1.874999952633516e-06,
+      "heightOffset": 0.0
+    },
+    {
+      "model": "CliffsAAAC0",
+      "corner": 3,
+      "nearestHorizontalOffset": 2.6562499897408998e-06,
+      "heightOffset": 0.0
+    },
+    {
+      "model": "CliffsBBAB0",
+      "corner": 0,
+      "nearestHorizontalOffset": 2.3437501113221515e-06,
+      "heightOffset": 0.0
+    },
+    {
+      "model": "CliffsBBAB0",
+      "corner": 1,
+      "nearestHorizontalOffset": 3.123283386230469e-05,
+      "heightOffset": 0.0
+    },
+    {
+      "model": "CliffsBBAB0",
+      "corner": 3,
+      "nearestHorizontalOffset": 2.3437500203726813e-05,
+      "heightOffset": 0.0
+    },
+    {
+      "model": "CliffsBBAB1",
+      "corner": 1,
+      "nearestHorizontalOffset": 3.123283386230469e-05,
+      "heightOffset": 0.0
+    },
+    {
+      "model": "CliffsBBAB1",
+      "corner": 3,
+      "nearestHorizontalOffset": 2.3437500203726813e-05,
+      "heightOffset": 0.0
+    },
+    {
+      "model": "CliffsBCAA0",
+      "corner": 0,
+      "nearestHorizontalOffset": 1.0937500292129698e-06,
+      "heightOffset": 0.0
+    },
+    {
+      "model": "CliffsBCAA0",
+      "corner": 3,
+      "nearestHorizontalOffset": 1.249999968422344e-06,
+      "heightOffset": 0.0
+    }
+  ],
+  "nativeFixtureSeams": 96,
+  "fixtureSubToleranceIntervals": 30,
+  "files": 20,
+  "boundaryCoordinateTolerance": 1e-05,
+  "scope": "Source geometry preservation and selected fixture seams verified within coordinate tolerances; arbitrary matching-corner adjacency is not guaranteed by authored meshes.",
+  "probeSha256": "e539a5925e7cdc69375b06c11b47b8c1b88191cab07230f7907b44bee4453f8a"
+}

@@ -3,7 +3,7 @@ use std::path::Path;
 
 /// Static geometry extracted from the first glTF mesh. All triangle primitives are combined so a
 /// MeshRenderer can draw common multi-primitive exports with one MEngine material override.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct MeshData {
     pub positions: Vec<[f32; 3]>,
     pub normals: Vec<[f32; 3]>,

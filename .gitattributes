@@ -22,3 +22,6 @@ scripts/import-frost-classic-terrain.py text eol=lf
 samples/frostbound-realms/classic-terrain-sources.json text eol=lf
 samples/frostbound-realms/Assets/Textures/Classic/** -text
 asset-library/warcraft-iii/tree-skins-ready/** -text whitespace=cr-at-eol
+asset-library/warcraft-iii/cliff-skins-ready/** -text whitespace=cr-at-eol
+scripts/import-frost-classic-cliffs.py -text whitespace=cr-at-eol
+samples/frostbound-realms/classic-cliff-sources.json -text

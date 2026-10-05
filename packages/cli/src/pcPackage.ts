@@ -1143,6 +1143,12 @@ function scanBuildAssetDependencies(
   ) => {
     const path = rawPath.trim().replaceAll('\\', '/');
     if (!path || builtins.some((builtin) => builtin.toLowerCase() === path.toLowerCase())) return;
+    if (path.startsWith('meshpatch:')) {
+      const patch = /^meshpatch:([^#]+\.mpatch)#([0-9a-f]+)$/i.exec(path);
+      if (!patch || patch[2].length % 5 || patch[2].length > 32 * 32 * 5) throw new Error(`invalid mesh patch reference: ${path}`);
+      enqueue(patch[1], from, kind, builtins);
+      return;
+    }
     if (/\.(?:mmat|mat|minst)$/i.test(path)
       && (kind === 'material'
         || kind === 'always included asset'

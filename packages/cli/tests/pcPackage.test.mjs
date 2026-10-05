@@ -2572,6 +2572,26 @@ test('buildPcPackage includes skeletal pose models without sprite sidecars and r
   }
 });
 
+test('buildPcPackage includes mesh patch sources without sprite sidecars and rejects malformed cells', () => {
+  const paths = fixture('mesh-patch');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Models'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Models', 'Tiles.mpatch'), JSON.stringify({ schemaVersion: 1, columns: 1, rows: 1, cellSize: [2,2], scale: 2, heightStep: .5, origin: [0,0], templateOffset: [0,0,0], templates: [{ positions: [[0,0,0],[1,0,0],[0,0,1]], normals: [[0,1,0],[0,1,0],[0,1,0]], uvs: [[0,0],[1,0],[0,1]], indices: [0,1,2] }] }));
+    const scene = join(paths.project, 'Assets', 'Scenes', 'Main.mscene');
+    const writePatch = (mesh) => writeFileSync(scene, JSON.stringify({ world: { entities: [{ components: { MeshRenderer: { mesh, material: 'default' } } }] } }));
+    for (const mesh of ['meshpatch:Assets/Models/Tiles.mpatch#0008', 'meshpatch:Assets/Models/Tiles.mpatch#0008x', 'meshpatch:Assets/Models/Tiles.json#00080']) {
+      writePatch(mesh);
+      assert.throws(() => buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test' }), /invalid mesh patch reference/);
+    }
+    writePatch('meshpatch:Assets/Models/Tiles.mpatch#00080');
+    const manifest = buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test' });
+    assert.ok(manifest.files.some(file => file.path === 'Assets/Models/Tiles.mpatch'));
+    assert.ok(!manifest.files.some(file => file.path.endsWith('.sprite.json')));
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage type-checks TypeScript and emits only runnable JavaScript', () => {
   const paths = fixture('typescript');
   try {
