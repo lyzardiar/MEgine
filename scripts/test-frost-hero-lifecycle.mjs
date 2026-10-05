@@ -19,7 +19,7 @@ function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0
 }
 {
  const {s,altar,other,train,revive}=arena();assert.equal(train(1),null);step(s,551);const h=S.heroRoster(s,0)[0];h.x=4;h.z=0;h.order={type:'hold'};h.level=4;h.skillPoints=4;h.xp=70;
- assert.equal(S.command(s,0,{type:'learn',ids:[h.id],slot:0}),null);h.x=-4;assert.equal(S.command(s,0,{type:'buy',ids:[h.id],item:0}),null);h.x=4;
+ assert.equal(S.command(s,0,{type:'learn',ids:[h.id],slot:0}),null);h.x=-4;assert.equal(S.command(s,0,{type:'buy',ids:[h.id],item:9}),null);h.x=4;
  h.spell[0]=5;h.itemCooldown=8;h.slow=3;h.hp=1;const killer=S.spawn(s,'soldier',1,4,1,{damage:9999,speed:0,order:{type:'attack',target:h.id}});S.visibility(s);step(s,1);killer.damage=0;killer.order={type:'hold'};
  assert.equal(h.hp,0);assert.ok(s.units.includes(h));assert.equal(h.order,null);assert.equal(s.corpses.some(c=>c.id===h.id),false);assert.equal(S.population(s,0).used,5);assert.match(s.announcements[0],/fallen/);
  s.visible[1].fill(1);assert.ok(!S.publicState(s,1).units.some(u=>u.id===h.id),'opponent never receives retained dead hero state');assert.ok(S.publicState(s,0).units.some(u=>u.id===h.id));
@@ -32,7 +32,7 @@ function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0
  assert.equal(S.command(s,0,{type:'cancelTrain',ids:[altar.id],index:0}),null);assert.equal(s.teams[0].gold,2000);assert.equal(h.hp,0);assert.equal(revive(h,other),null);
  other.hp=0;step(s,1);assert.ok(!s.units.includes(other));assert.equal(revive(h),null,'another altar can resume a hero after the original altar is destroyed');
  const restored=S.restore(s);step(s,1101);step(restored,1101);const copy=restored.units.find(u=>u.id===h.id);
- assert.equal(h.hp,h.maxHp);assert.ok(h.mana>=100&&h.mana<101);assert.equal(h.level,4);assert.equal(h.xp,70);assert.deepEqual(h.skills,[1,0,0,0]);assert.equal(h.skillPoints,3);assert.deepEqual(h.inventory,[8,0]);assert.equal(h.slow,0);assert.equal(h.spell[0],0);assert.equal(h.itemCooldown,0);assert.deepEqual(copy.inventory,h.inventory);assert.equal(copy.id,h.id);assert.equal(S.population(s,0).used,5);
+ assert.equal(h.hp,h.maxHp);assert.ok(h.mana>=100&&h.mana<101);assert.equal(h.level,4);assert.equal(h.xp,70);assert.deepEqual(h.skills,[1,0,0,0]);assert.equal(h.skillPoints,3);assert.deepEqual(h.inventory,[8,9]);assert.equal(h.slow,0);assert.equal(h.spell[0],0);assert.equal(h.itemCooldown,0);assert.deepEqual(copy.inventory,h.inventory);assert.equal(copy.id,h.id);assert.equal(S.population(s,0).used,5);
 }
 {
  const {s,altar,train}=arena();assert.equal(train(0),null);const old=S.clone(s);delete old.heroLifecycleVersion;delete old.units.find(u=>u.id===altar.id).queue[0].heroClass;delete old.units.find(u=>u.id===altar.id).queue[0].paidGold;delete old.units.find(u=>u.id===altar.id).queue[0].paidWood;old.units.find(u=>u.id===altar.id).queue[0].left=10;

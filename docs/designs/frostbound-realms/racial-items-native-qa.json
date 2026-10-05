@@ -1,0 +1,93 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 36,
+  "tag": "1791153832540",
+  "scope": "Release editor QuickJS and Agent HUD input; isolated authored saved fixtures, observation-only qaUnits/qaMap",
+  "physicalInput": false,
+  "audioListening": false,
+  "factions": [
+    {
+      "faction": 0,
+      "offers": [
+        9,
+        10,
+        11,
+        12,
+        13,
+        8,
+        14,
+        15,
+        16
+      ],
+      "tierLock": true,
+      "sharedStock": true,
+      "buyerCycle": true,
+      "mesh": "Assets/Models/RealKingdomWorkshop.glb"
+    },
+    {
+      "faction": 1,
+      "offers": [
+        17,
+        18,
+        11,
+        12,
+        13,
+        8,
+        19,
+        20
+      ],
+      "tierLock": true,
+      "sharedStock": true,
+      "buyerCycle": true,
+      "mesh": "Assets/Models/RealWarclansWorkshop.glb"
+    },
+    {
+      "faction": 2,
+      "offers": [
+        21,
+        11,
+        22,
+        12,
+        13,
+        8,
+        23,
+        24,
+        25
+      ],
+      "tierLock": true,
+      "sharedStock": true,
+      "buyerCycle": true,
+      "mesh": "Assets/Models/RealWildwoodWorkshop.glb"
+    },
+    {
+      "faction": 3,
+      "offers": [
+        26,
+        27,
+        22,
+        12,
+        13,
+        8,
+        28,
+        29
+      ],
+      "tierLock": true,
+      "sharedStock": true,
+      "buyerCycle": true,
+      "mesh": "Assets/Models/RevenantWorkshop.glb"
+    }
+  ],
+  "effects": [
+    "regeneration",
+    "ivory-tower-and-guard-upgrade",
+    "staff-sanctuary",
+    "salve-target-charges-save",
+    "moonstone-hidden-archer-dust",
+    "rod-corpse-skeletons-and-skull-blight"
+  ],
+  "lastCommand": "playback.input",
+  "stage": "faction-3",
+  "savedContinuation": true,
+  "shaderRejections": 0
+}

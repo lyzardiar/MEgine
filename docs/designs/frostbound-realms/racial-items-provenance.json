@@ -1,0 +1,59 @@
+{
+  "author": "MiYu",
+  "reference": "Blizzard Classic Warcraft III guide snapshot",
+  "retrievedDate": "2026-10-05",
+  "catalogSha256": "2bae9a45cb0e91926c945f8bc0725db4f0cc0a9f8c0c8a48ecdeabed8bd0552f",
+  "sources": [
+    {
+      "url": "https://classic.battle.net/war3/human/arcanevault.shtml",
+      "extractedTextBytes": 3376,
+      "extractedTextSha256": "dc850333a39af1d96b7f72655067338a866d1bdec60350cda2f86d2c3bbb5a8a",
+      "retrievedHtmlBytes": 30677,
+      "retrievedHtmlSha256": "5dae5a5c16681a746ef2e8ed339aed50332f8cc25a9e43f05947b28e15a04b96"
+    },
+    {
+      "url": "https://classic.battle.net/war3/orc/voodoolounge.shtml",
+      "extractedTextBytes": 2729,
+      "extractedTextSha256": "bf5afeefb20ce034ceff67dac003ce769668333573666a1901970b0aab3344aa",
+      "retrievedHtmlBytes": 28337,
+      "retrievedHtmlSha256": "da8c49ad45522ce080501a1f1a43bbe55c6305773bcf7e06c9307fc932f47439"
+    },
+    {
+      "url": "https://classic.battle.net/war3/nightelf/ancientofwonders.shtml",
+      "extractedTextBytes": 2162,
+      "extractedTextSha256": "c6bba1e96cdcedfe0521b278bad7f07ecd516021d62b649b64bfcac6cb72bc2b",
+      "retrievedHtmlBytes": 27175,
+      "retrievedHtmlSha256": "26d07327471acfc761a9c44b0c2c43416c2a01de5e2409d32564928690d600ab"
+    },
+    {
+      "url": "https://classic.battle.net/war3/undead/tombofrelics.shtml",
+      "extractedTextBytes": 2821,
+      "extractedTextSha256": "534eb52ccc9c6d35f01533028c0e59dbe54fd7fcd8c07c7ce1e5e9ff75a7b731",
+      "retrievedHtmlBytes": 27216,
+      "retrievedHtmlSha256": "74e37f39f17d34964be6e57c32ab05a3947d09d25aec2729d814ecb59d37c010"
+    },
+    {
+      "url": "https://classic.battle.net/war3/basics/heroitemsconsumed.shtml",
+      "extractedTextBytes": 13156,
+      "extractedTextSha256": "db75ca93c935acf05e3fbe1354534a1d1443fcd764ecd839d65d3c774ee59a93"
+    },
+    {
+      "url": "https://classic.battle.net/war3/basics/heroitemscharged.shtml",
+      "extractedTextBytes": 6718,
+      "extractedTextSha256": "dfde13dd18e3b6078ba13e461180b8c441853e7fa3c8013e2a4359913d4376c0"
+    },
+    {
+      "url": "https://classic.battle.net/war3/basics/heroitemspermanent.shtml",
+      "extractedTextBytes": 13973,
+      "extractedTextSha256": "f60dd7015fefe6a6b13602ec46cfdcad25eb05b222cee092f4accc42d4a0f86d"
+    }
+  ],
+  "factsUsed": [
+    "racial offer names, prices, lumber, tier availability, stock capacity and restock periods",
+    "item charges, recovery duration/amount, cooldown, temporary night and detection",
+    "orb damage, proc probability, poison and armor reduction"
+  ],
+  "newArtDownloads": 0,
+  "art": "Existing licensed command icons, buildings, wildlife and skeleton models; provenance remains realistic-sources.json and shipped Assets/Licenses.",
+  "worldScale": "Radii and ranges use the current 64-unit engine map scale."
+}

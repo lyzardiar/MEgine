@@ -2,7 +2,7 @@
 {"parameters":[{"name":"cells0","type":"vector4","default":[1,1,1,1]},{"name":"cells1","type":"vector4","default":[1,1,1,1]},{"name":"cells2","type":"vector4","default":[1,1,1,1]},{"name":"cells3","type":"vector4","default":[1,1,1,1]},{"name":"cells4","type":"vector4","default":[1,1,1,1]},{"name":"cells5","type":"vector4","default":[1,1,1,1]},{"name":"cells6","type":"vector4","default":[1,1,1,1]},{"name":"cells7","type":"vector4","default":[1,1,1,1]},{"name":"cells8","type":"vector4","default":[1,1,1,1]},{"name":"cliff_mapping","type":"vector4","default":[0.18,0.18,0.8,0]},{"name":"tileset","type":"vector4","default":[0,0,0,0]},{"name":"water_layer","type":"vector4","default":[0,0,0,0]},{"name":"water_time","type":"vector4","default":[0,0,0,0]}],"textures":[{"name":"soil","type":"color","default":"Assets/Textures/soil_grass_diff.png"},{"name":"snow","type":"color","default":"Assets/Textures/snow_02_diff_1k.jpg"},{"name":"stone","type":"color","default":"Assets/Textures/rocky_terrain_diff_1k.jpg"},{"name":"soil_nrh","type":"data","default":"Assets/Textures/soil_grass_nrh.png"},{"name":"snow_nrh","type":"data","default":"Assets/Textures/snow_02_nrh_1k.png"},{"name":"stone_nrh","type":"data","default":"Assets/Textures/rocky_terrain_nrh_1k.png"}]}
 */
 // MiYu: 64 terrain chunks replace 1024 independently shaded cubes.
-struct FrostGround { materials: vec4<f32>, painted: vec2<f32>, fog: f32 }
+struct FrostGround { materials: vec4<f32>, painted: vec2<f32>, fog: f32, blight: f32 }
 fn frost_cell(p: vec2<i32>) -> f32 {
     var data=array<vec4<f32>,9>(mengine_param_cells0(),mengine_param_cells1(),mengine_param_cells2(),mengine_param_cells3(),mengine_param_cells4(),mengine_param_cells5(),mengine_param_cells6(),mengine_param_cells7(),mengine_param_cells8());
     let i=u32(clamp(p.y,0,5)*6+clamp(p.x,0,5));
@@ -18,7 +18,7 @@ fn frost_ground(p: vec2<f32>) -> FrostGround {
     let zero=vec4<f32>(0.0);let one=vec4<f32>(1.0);
     let masks=vec4<f32>(dot(select(zero,one,terrain==one),weights),dot(select(zero,one,terrain==vec4<f32>(2.0)),weights),dot(select(zero,one,surfaces==one),weights),dot(select(zero,one,surfaces==vec4<f32>(2.0)),weights));
     let painted=vec2<f32>(dot(select(zero,one,surfaces==vec4<f32>(3.0)),weights),dot(select(zero,one,surfaces==vec4<f32>(4.0)),weights));
-    return FrostGround(masks,painted,dot(values-kinds*2.0,weights));
+    return FrostGround(masks,painted,dot(values-kinds*2.0,weights),dot(select(zero,one,surfaces==vec4<f32>(5.0)),weights));
 }
 fn frost_noise(p: vec2<f32>) -> f32 {
     let cell=floor(p);let blend=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract(p));
@@ -183,6 +183,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
             s.alpha=mix(0.25,0.65,deep);s.emissive=vec3<f32>(0.004,0.012,0.014);
         }
     }
+    if mengine_param_water_layer().x<0.5 { let blight_color=mix(litter*vec3<f32>(0.6,0.42,0.5),stone*vec3<f32>(0.45,0.32,0.4),frost_noise(p*1.8)*0.4);s.base_color=mix(s.base_color,blight_color,ground.blight*(1.0-cliff));s.roughness=mix(s.roughness,0.92,ground.blight*(1.0-cliff)); }
     return s;
 }
 fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, world_position: vec3<f32>, world_normal: vec3<f32>) -> vec4<f32> {

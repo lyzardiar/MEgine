@@ -28,10 +28,10 @@ function kill(s,kind='soldier',extra={}){const u=S.spawn(s,'rifleman',0,0,0,{dam
 {
  const s=arena('moba'),{v,c}=kill(s,'hero');assert.ok(!c&&v.respawn>0);const copy=S.restore(s);step(copy,141);assert.ok(copy.units.find(u=>u.id===v.id).hp>0);assert.ok(!copy.corpses.some(c=>c.id===v.id),'reviving hero removes old body');
 }
-for(const kind of Object.keys(S.types).filter(k=>S.types[k].speed&&S.types[k].attack!=='siege'&&k!=='hero')){
+for(const kind of Object.keys(S.types).filter(k=>S.types[k].speed&&!S.types[k].mechanical&&S.types[k].attack!=='siege'&&k!=='hero')){
  for(const heroClass of kind==='hero'?[0,1,2,3]:[0]){const s=arena(),{c}=kill(s,kind,{heroClass});assert.ok(c,kind);for(let faction=0;faction<4;faction++){s.teams[1].faction=faction;assert.ok(V.corpse(s,c),kind+' faction '+faction+' has an authored death clip');}S.restore(s);if(S.types[kind].flying)assert.ok(V.corpse(s,{...c,age:4}).y<=.01,'flying body reaches ground');}
 }
-for(const kind of ['ballista','catapult','trebuchet','ram']){const s=arena();assert.equal(kill(s,kind).c,undefined,'siege engine does not create a biological corpse');}
+for(const kind of ['ballista','catapult','trebuchet','ram','critter']){const s=arena();assert.equal(kill(s,kind).c,undefined,'mechanical unit does not create a biological corpse');}
 {const s=arena();assert.equal(kill(s,'soldier',{summoned:true}).c,undefined,'summoned units leave no persistent body');}
 {
  const s=arena(),hero=S.spawn(s,'hero',0,0,0),target=S.spawn(s,'soldier',1,0,1,{hp:1});S.visibility(s);assert.equal(S.command(s,0,{type:'learn',ids:[hero.id],slot:0}),null);assert.equal(S.command(s,0,{type:'spell',ids:[hero.id],slot:0,x:0,z:1}),null);assert.equal(target.hp,0);assert.ok(s.units.includes(target));assert.equal(S.restore(s).corpses.length,1,'immediate spell death saves before the next cleanup tick');

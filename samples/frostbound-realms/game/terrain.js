@@ -9,10 +9,11 @@ var FrostTerrain=(()=>{
   const material=map=>'Assets/Materials/'+cliffMaterials[map.cliffStyle||0]+'.mmat';
   const cliff=(map,i)=>map.cliffs?.[i]?map.cliffs[i]-1:map.cliffStyle||0;
   function cells(state,team,allVisible){
+    const blight=[...(state.blight||[]),...state.units.filter(u=>u.hp>0&&u.built===1&&u.kind==='hall'&&state.teams[u.team]?.faction===3).map(u=>({x:u.x,z:u.z,radius:10}))];
     return state.map.terrain.map((kind,i)=>{
       if(state.mode==='td'&&kind===0){const x=i%32*2-31,z=Math.floor(i/32)*2-31;if(Frost.tdPath.slice(1).some((p,j)=>{const a=Frost.tdPath[j];return Math.abs(a[0]-p[0])<1?Math.abs(x-p[0])<2&&z>=Math.min(a[1],p[1])&&z<=Math.max(a[1],p[1]):Math.abs(z-p[1])<2&&x>=Math.min(a[0],p[0])&&x<=Math.max(a[0],p[0]);}))kind=2;}
       // MiYu: base terrain + three times the authored surface; the fractional field retains fog.
-      if(kind!==1)kind+=(state.map.surfaces?.[i]||0)*3;
+      if(kind!==1)kind+=(blight.some(b=>Math.hypot(i%32*2-31-b.x,Math.floor(i/32)*2-31-b.z)<=b.radius)?5:state.map.surfaces?.[i]||0)*3;
       return kind*2+(allVisible||state.visible[team]?.[i]?1:state.explored[team]?.[i]?.4:.07);
     });
   }

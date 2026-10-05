@@ -1,0 +1,167 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "264b1c194d3fb230428e0bcbb1ff0881d386d431",
+  "protocol": 36,
+  "shopSaveVersion": 2,
+  "catalog": {
+    "items": 30,
+    "newClassicItems": 21,
+    "uniqueClassicOffers": 22,
+    "races": 4,
+    "provenanceSha256": "abffa2f168660737b04512735755bdb1fec6b5a83af52318bfed45f22e7846d0"
+  },
+  "tests": {
+    "fullRulesTcpExitCode": 0,
+    "passLines": 68,
+    "outputSha256": "d9514a5989682cb34dae20c88fbe32c809574d7caa3882883e11b07193a6bd66",
+    "corpseMechanicalExclusion": true,
+    "legacyShopVersion1AndRecipesExplicit": true
+  },
+  "native": {
+    "tag": "1791153832540",
+    "factions": [
+      {
+        "faction": 0,
+        "offers": [
+          9,
+          10,
+          11,
+          12,
+          13,
+          8,
+          14,
+          15,
+          16
+        ],
+        "tierLock": true,
+        "sharedStock": true,
+        "buyerCycle": true,
+        "mesh": "Assets/Models/RealKingdomWorkshop.glb"
+      },
+      {
+        "faction": 1,
+        "offers": [
+          17,
+          18,
+          11,
+          12,
+          13,
+          8,
+          19,
+          20
+        ],
+        "tierLock": true,
+        "sharedStock": true,
+        "buyerCycle": true,
+        "mesh": "Assets/Models/RealWarclansWorkshop.glb"
+      },
+      {
+        "faction": 2,
+        "offers": [
+          21,
+          11,
+          22,
+          12,
+          13,
+          8,
+          23,
+          24,
+          25
+        ],
+        "tierLock": true,
+        "sharedStock": true,
+        "buyerCycle": true,
+        "mesh": "Assets/Models/RealWildwoodWorkshop.glb"
+      },
+      {
+        "faction": 3,
+        "offers": [
+          26,
+          27,
+          22,
+          12,
+          13,
+          8,
+          28,
+          29
+        ],
+        "tierLock": true,
+        "sharedStock": true,
+        "buyerCycle": true,
+        "mesh": "Assets/Models/RevenantWorkshop.glb"
+      }
+    ],
+    "effects": [
+      "regeneration",
+      "ivory-tower-and-guard-upgrade",
+      "staff-sanctuary",
+      "salve-target-charges-save",
+      "moonstone-hidden-archer-dust",
+      "rod-corpse-skeletons-and-skull-blight"
+    ],
+    "actualPauseMenuSaveReload": true,
+    "itemChargesDisplayed": true,
+    "targetSelection": true,
+    "shaderRejections": 0,
+    "productCodeExactAfterTelemetryRemoved": true,
+    "assetAndLicenseFilesExact": 805,
+    "fixtureSource": "Legal isolated authored saved states loaded through actual pause-menu Load input; observation-only qaMap/qaUnits fields"
+  },
+  "scene": {
+    "entities": 4837,
+    "unchangedFromBase": true
+  },
+  "package": {
+    "files": 778,
+    "contentHash": "7c90fc941ba53b4354ee10126b07b7037f4aaabc6e2b32200463d2466b435506",
+    "allSizesAndHashesVerified": true,
+    "sourceScriptExact": true,
+    "sceneExact": true,
+    "shaderVariants": 10,
+    "responsiveStartupSeconds": 30,
+    "loggedErrors": 0
+  },
+  "art": {
+    "newDownloads": 0,
+    "existingLicensedBuildingWildlifeSkeletonsAndIcons": true,
+    "sourceManifestSha256": "482964a456d6606f505ec4d3c2b6bbb870be73a32995b151aabd215e2bb98301"
+  },
+  "sourceHashes": {
+    "samples/frostbound-realms/game/racial-items.json": "2bae9a45cb0e91926c945f8bc0725db4f0cc0a9f8c0c8a48ecdeabed8bd0552f",
+    "samples/frostbound-realms/game/simulation.js": "dc34eadd09fc1cf74e2f3e99a35c2ca95a6d8169e40286d768ec9205631a6ddb",
+    "samples/frostbound-realms/game/client.js": "a5a84d2dbbd7ae442b9eda6aa23cdd02fdc85e8d83f456d709d0d3f8b08a9e7e",
+    "samples/frostbound-realms/game/terrain.js": "75babfa4ddbf2cbc0c8f3babe6a0b5776ea5bd56e74219260b7f6a9d08efbd89",
+    "samples/frostbound-realms/game/visuals.js": "cf6d7aa7b42f06e36d2fe339a6ebc6d2805039a23d7003dd4b7a380c0ac8a7a6",
+    "samples/frostbound-realms/Assets/Shaders/Ground.mshader": "f0b86c2790921ff5e206e20306923c93f08f1894be9b6eb546d23bba5ea28f0e",
+    "scripts/build-frostbound.mjs": "c39be56b7c1ee8f29d7feeb00f98b691d11551dd13d7aa7baf3c5391753da2dc",
+    "scripts/test-frost-racial-items.mjs": "3c07eb17a0e3b11c30702b0364addb9156e634ebc10da31d5a4add6f16e5b8fb",
+    "scripts/test-frost-racial-items-network.mjs": "b699e9a5beb92bb28e24e21efb5ee57c34204025bf2c29465d89bcaab4cb9a81",
+    "scripts/test-frostbound.mjs": "77a19520faff3970d1d65e769ccc3881f3c89f300fe3d97c6e73b6aad40788c8",
+    "scripts/qa-frost-racial-items.mjs": "6fbc1d5e354248abee64e87c62bef50e88850182e8d1551864da62327705704e",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "9d8085634aea30b4a737bb6640dd770a58d75688c5c58f6858fec71ce94199ac"
+  },
+  "screenshots": {
+    "racial-items-shop-0.png": "06492b1c2c7523806c88dab10cae9d52c102be694697b7e722af6aa6b41aac3a",
+    "racial-items-shop-1.png": "a52005dbaba69f26e852b65963a4b2914498d57ce050690b47a9481efc7d943b",
+    "racial-items-shop-2.png": "6e180a64b779ce63dc7d70e4e91bdf073aee6455dab1de4bdc5fad15135af7d1",
+    "racial-items-shop-3.png": "93f4249ee9824341ccef84bef8bc58d4edc52e54f4f6e518ea6e2265d4979b35",
+    "racial-items-regeneration.png": "c273688853f5a3f9de72f1fafba8cbf994165dfe8337b53b8c94027c875a160d",
+    "racial-items-guard-tower.png": "630e4b16e1cbf81a36e52832ac55174107a88c901a48e5814dad9567270d98d8",
+    "racial-items-sanctuary.png": "646fcbf59ca255cd25498f50a883a7354da4c3ded81b40b2ca8fe0b996b782f8",
+    "racial-items-salve-charges.png": "bead48143ab9147eff4a736421586127180bc64c41d2b215aaa71a549741cac0",
+    "racial-items-night-dust.png": "7eb04d3b1996bf0c4a9301682e2932ca8f18f51d83b1b1d8acca52f2373ee0dd",
+    "racial-items-blight-skeletons.png": "7c555d8d4170edb0823ad3235f1c21a043dbca6fb67a7b2eb628e2c71aab6340"
+  },
+  "limitations": {
+    "balanceReference": "Blizzard Classic guide snapshot retrieved 2026-10-05",
+    "independentMainBaseTech": false,
+    "dedicatedShopArtAndItemIcons": false,
+    "aiPurchasingAndItemUse": false,
+    "fullWarcraftRecreation": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false,
+    "steadyPlayerPerformance": false
+  }
+}

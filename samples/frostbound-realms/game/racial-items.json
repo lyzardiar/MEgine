@@ -1,0 +1,395 @@
+{
+  "author": "MiYu",
+  "balanceReference": "Blizzard Classic Warcraft III guide as retrieved 2026-10-05; not a Reforged patch balance claim",
+  "firstItem": 9,
+  "items": [
+    {
+      "name": "Scroll of Regeneration",
+      "gold": 100,
+      "regen": {
+        "hp": 225,
+        "time": 45,
+        "radius": 6
+      },
+      "hint": "heal"
+    },
+    {
+      "name": "Mechanical Critter",
+      "gold": 50,
+      "critter": true,
+      "hint": "wood"
+    },
+    {
+      "name": "Lesser Clarity Potion",
+      "gold": 70,
+      "regen": {
+        "mana": 100,
+        "time": 30
+      },
+      "hint": "frost"
+    },
+    {
+      "name": "Potion of Healing",
+      "gold": 150,
+      "restoreHp": 250,
+      "cooldown": 20,
+      "cooldownGroup": "potion",
+      "hint": "heal"
+    },
+    {
+      "name": "Potion of Mana",
+      "gold": 200,
+      "restoreMana": 150,
+      "cooldown": 20,
+      "cooldownGroup": "potion",
+      "hint": "frost"
+    },
+    {
+      "name": "Ivory Tower",
+      "gold": 40,
+      "wood": 20,
+      "deploy": "scouttower",
+      "buildTime": 5,
+      "hint": "tower"
+    },
+    {
+      "name": "Orb of Fire",
+      "gold": 275,
+      "damage": 5,
+      "orb": "fire",
+      "hint": "attack"
+    },
+    {
+      "name": "Staff of Sanctuary",
+      "gold": 250,
+      "staff": "sanctuary",
+      "cooldown": 45,
+      "range": 7,
+      "hint": "charm"
+    },
+    {
+      "name": "Healing Salve",
+      "gold": 100,
+      "charges": 3,
+      "range": 5,
+      "regen": {
+        "hp": 400,
+        "time": 45,
+        "target": true
+      },
+      "hint": "heal"
+    },
+    {
+      "name": "Scroll of Speed",
+      "gold": 50,
+      "speedScroll": 10,
+      "radius": 6,
+      "hint": "boots"
+    },
+    {
+      "name": "Orb of Lightning",
+      "gold": 375,
+      "damage": 5,
+      "orb": "lightning",
+      "hint": "storm"
+    },
+    {
+      "name": "Tiny Great Hall",
+      "gold": 600,
+      "wood": 185,
+      "deploy": "hall",
+      "buildTime": 20,
+      "hint": "tower"
+    },
+    {
+      "name": "Moonstone",
+      "gold": 50,
+      "moonstone": 30,
+      "hint": "frost"
+    },
+    {
+      "name": "Dust of Appearance",
+      "gold": 75,
+      "charges": 2,
+      "dust": 20,
+      "radius": 10,
+      "cooldown": 20,
+      "hint": "gold"
+    },
+    {
+      "name": "Staff of Preservation",
+      "gold": 150,
+      "staff": "preservation",
+      "cooldown": 30,
+      "range": 7,
+      "hint": "charm"
+    },
+    {
+      "name": "Orb of Venom",
+      "gold": 325,
+      "damage": 5,
+      "orb": "venom",
+      "hint": "heal"
+    },
+    {
+      "name": "Anti-magic Potion",
+      "gold": 100,
+      "magicImmune": 15,
+      "hint": "shield"
+    },
+    {
+      "name": "Rod of Necromancy",
+      "gold": 150,
+      "charges": 4,
+      "rod": true,
+      "cooldown": 22,
+      "range": 8,
+      "summonTime": 40,
+      "hint": "attack"
+    },
+    {
+      "name": "Sacrificial Skull",
+      "gold": 50,
+      "skull": 3.5,
+      "range": 5,
+      "hint": "wood"
+    },
+    {
+      "name": "Orb of Corruption",
+      "gold": 375,
+      "damage": 5,
+      "orb": "corruption",
+      "hint": "edge"
+    },
+    {
+      "name": "Scroll of Healing",
+      "gold": 250,
+      "healGroup": 150,
+      "radius": 6,
+      "hint": "heal"
+    }
+  ],
+  "shops": [
+    [
+      {
+        "item": 9,
+        "tier": 1,
+        "capacity": 2,
+        "restock": 90
+      },
+      {
+        "item": 10,
+        "tier": 1,
+        "capacity": 2,
+        "restock": 60
+      },
+      {
+        "item": 11,
+        "tier": 1,
+        "capacity": 2,
+        "restock": 30
+      },
+      {
+        "item": 12,
+        "tier": 2,
+        "capacity": 3,
+        "restock": 120
+      },
+      {
+        "item": 13,
+        "tier": 2,
+        "capacity": 2,
+        "restock": 120
+      },
+      {
+        "item": 8,
+        "tier": 2,
+        "capacity": 2,
+        "restock": 120
+      },
+      {
+        "item": 14,
+        "tier": 2,
+        "capacity": 3,
+        "restock": 30
+      },
+      {
+        "item": 15,
+        "tier": 3,
+        "capacity": 1,
+        "restock": 120
+      },
+      {
+        "item": 16,
+        "tier": 3,
+        "capacity": 1,
+        "restock": 120
+      }
+    ],
+    [
+      {
+        "item": 17,
+        "tier": 1,
+        "capacity": 2,
+        "restock": 60
+      },
+      {
+        "item": 18,
+        "tier": 1,
+        "capacity": 1,
+        "restock": 60
+      },
+      {
+        "item": 11,
+        "tier": 1,
+        "capacity": 2,
+        "restock": 30
+      },
+      {
+        "item": 12,
+        "tier": 2,
+        "capacity": 3,
+        "restock": 120
+      },
+      {
+        "item": 13,
+        "tier": 2,
+        "capacity": 2,
+        "restock": 120
+      },
+      {
+        "item": 8,
+        "tier": 2,
+        "capacity": 2,
+        "restock": 120
+      },
+      {
+        "item": 19,
+        "tier": 3,
+        "capacity": 1,
+        "restock": 120
+      },
+      {
+        "item": 20,
+        "tier": 3,
+        "capacity": 1,
+        "restock": 120
+      }
+    ],
+    [
+      {
+        "item": 21,
+        "tier": 1,
+        "capacity": 1,
+        "restock": 90
+      },
+      {
+        "item": 11,
+        "tier": 1,
+        "capacity": 2,
+        "restock": 30
+      },
+      {
+        "item": 22,
+        "tier": 1,
+        "capacity": 1,
+        "restock": 60
+      },
+      {
+        "item": 12,
+        "tier": 2,
+        "capacity": 3,
+        "restock": 120
+      },
+      {
+        "item": 13,
+        "tier": 2,
+        "capacity": 2,
+        "restock": 120
+      },
+      {
+        "item": 8,
+        "tier": 2,
+        "capacity": 2,
+        "restock": 120
+      },
+      {
+        "item": 23,
+        "tier": 2,
+        "capacity": 1,
+        "restock": 120
+      },
+      {
+        "item": 24,
+        "tier": 3,
+        "capacity": 1,
+        "restock": 120
+      },
+      {
+        "item": 25,
+        "tier": 3,
+        "capacity": 2,
+        "restock": 120
+      }
+    ],
+    [
+      {
+        "item": 26,
+        "tier": 1,
+        "capacity": 1,
+        "restock": 60
+      },
+      {
+        "item": 27,
+        "tier": 1,
+        "capacity": 2,
+        "restock": 60
+      },
+      {
+        "item": 22,
+        "tier": 1,
+        "capacity": 1,
+        "restock": 60
+      },
+      {
+        "item": 12,
+        "tier": 2,
+        "capacity": 3,
+        "restock": 120
+      },
+      {
+        "item": 13,
+        "tier": 2,
+        "capacity": 2,
+        "restock": 120
+      },
+      {
+        "item": 8,
+        "tier": 2,
+        "capacity": 2,
+        "restock": 120
+      },
+      {
+        "item": 28,
+        "tier": 3,
+        "capacity": 1,
+        "restock": 120
+      },
+      {
+        "item": 29,
+        "tier": 3,
+        "capacity": 2,
+        "restock": 120
+      }
+    ]
+  ],
+  "sources": [
+    "https://classic.battle.net/war3/human/arcanevault.shtml",
+    "https://classic.battle.net/war3/orc/voodoolounge.shtml",
+    "https://classic.battle.net/war3/nightelf/ancientofwonders.shtml",
+    "https://classic.battle.net/war3/undead/tombofrelics.shtml",
+    "https://classic.battle.net/war3/basics/heroitemsconsumed.shtml",
+    "https://classic.battle.net/war3/basics/heroitemscharged.shtml",
+    "https://classic.battle.net/war3/basics/heroitemspermanent.shtml"
+  ]
+}

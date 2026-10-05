@@ -1,6 +1,6 @@
 /* Author: MiYu. Shared faction models for live units, map placement and construction previews. */
 var FrostVisual=(()=>{
-  const buildings={hall:'Hall',barracks:'Barracks',farm:'Lodge',tower:'Tower',altar:'Altar',workshop:'Workshop',shop:'Workshop'};
+  const buildings={hall:'Hall',barracks:'Barracks',farm:'Lodge',tower:'Tower',altar:'Altar',workshop:'Workshop',scouttower:'Tower',guardtower:'Tower',shop:'Workshop',scouttower:'Tower',guardtower:'Tower'};
   const names=[
     {hall:['Keep','Castle','Royal citadel'],barracks:'Royal barracks',farm:'Town house',tower:'Guard tower',altar:'Sanctuary',workshop:'Royal workshop',shop:'Arcane Vault'},
     {hall:['Great lodge','War hall','Iron stronghold'],barracks:'War barracks',farm:'Clan dwelling',tower:'Watch post',altar:'Spirit sanctuary',workshop:'Siege workshop',shop:'Voodoo Lounge'},
@@ -83,7 +83,7 @@ var FrostVisual=(()=>{
   }
   function heroPortrait(heroClass=0,closeup=false){const art=Frost.heroes[heroClass].art;return FrostArt[art].realistic?'Assets/Art/'+(closeup?'head-portraits':'unit-portraits')+'.png#'+art:'Assets/Art/hero-portraits.png#hero-'+heroClass;}
   function unitPortrait(state,u){const v=model(state,u),key=v.key;return (v.asset.factionBuilding?'Assets/Art/faction-buildings.png#':['RealFrostWarden','RealEmberSage','RealSylvanRanger','RealDawnPaladin','RealFootman','RealWorker','RealArcher','RealRifleman','RealOrc','RealAcolyte','RealNecromancer','RealShaman'].includes(key)?'Assets/Art/head-portraits.png#':'Assets/Art/unit-portraits.png#')+key;}
-  function name(state,u){const f=state.teams[u.team]?.faction||0,value=names[f][u.kind];if(u.kind==='worker'&&f===3)return 'Acolyte';if(u.kind==='neutral')return u.tag==='boss'?'Frostbound sovereign':'Frostfang wolf';return Array.isArray(value)?value[Frost.clamp((u.upgradeTier??state.teams[u.team]?.tier??1)-1,0,2)]:value||Frost.unitType(u).label;}
+  function name(state,u){const f=state.teams[u.team]?.faction||0,value=names[f][u.kind];if(u.kind==='worker'&&f===3)return 'Acolyte';if(u.kind==='critter')return u.team===0?'Mechanical Critter':'Critter';if(u.tag==='critter')return 'Critter';if(u.kind==='neutral')return u.tag==='boss'?'Frostbound sovereign':'Frostfang wolf';return Array.isArray(value)?value[Frost.clamp((u.upgradeTier??state.teams[u.team]?.tier??1)-1,0,2)]:value||Frost.unitType(u).label;}
   const projectileColors={fire:[1,.32,.055,1],frost:[.35,.8,1,1],nature:[.35,.85,.24,1],shadow:[.57,.22,.8,1],arcane:[.5,.48,1,1]};
   function muzzle(e){const [x,y,z]=FrostArt.RealRifleman.muzzle,angle=Math.atan2(e.x-e.fromX,e.z-e.fromZ),sin=Math.sin(angle),cos=Math.cos(angle);return {type:'muzzle',art:'musket',team:e.team,x:e.fromX+(x*cos+z*sin)*.85,y:e.fromY-1.6+y*.85,z:e.fromZ+(-x*sin+z*cos)*.85};}
   function projectile(art){
