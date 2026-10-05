@@ -152,3 +152,11 @@ Author: MiYu。Ponytail 保持禁用。协议 37、主城科技存档版本 1。
 Player 778 文件、4837 实体、10 着色器变体，内容 SHA-256 52b38b643ac04466ed19fc289bb1a44f2fe394a8f938983d7aa462a403c67f00；包中各文件大小/hash、产品脚本、场景、原生资产/许可和 Release runtime 校验通过，30 秒存活且响应、错误 0。原生仅增加 qaMap/qaUnits 观察字段，去除后与产品脚本一致。证据 main-base-technology.md、main-base-provenance.json、main-base-native-qa.json、main-base-validation.json、main-base-player-smoke.json。
 
 主城基础建造成本/工期、种族攻击及能力、完整科技建筑前置关系、专属原作品质美术、完整战役/兵种/英雄/经典地图和编辑器仍需完善。原生 Agent 输入不证明物理键鼠、试听、跨机器 LAN 或稳定 Player 帧性能。完整目标保持 active，原有两个原生 QA JSON 和无关截图/tmp 保留。本阶段无新增资产下载、Rust/C# 修改或子代理委派。
+
+## 2026-10-05：四族主城建造、维修与战斗
+
+Author: MiYu。Ponytail 保持禁用。协议 38、主城规则存档版本 1。按建筑种族接入经典费用／完整工期、护甲、扎根古树近战与升级亡灵地空冰冻弹；保留旧存档施工、维修、付款与在途弹道。维修、协助费用和 HUD 使用实际建筑定义。
+
+最终规则／真实 TCP 72 条 PASS、退出 0，模型／源资产验证通过。原生四族实际 HUD 地基走完完整工期，菜单存读档、取消退款、维修、种族战斗通过，材质拒绝 0；最终脚本去观察字段后与产品完全一致。Player 778 文件、4837 实体、10 材质变体，逐文件大小／hash、源脚本、场景、原生资产／许可和 Release runtime 一致；内容 dca95a610cd482d8e82ea2bf243d903d80ba59d6f3770d59ea68912240f95f13，30 秒存活响应、错误 0。证据 main-base-rules.md、main-base-rules-provenance.json、main-base-rules-native-qa.json、main-base-rules-validation.json、main-base-rules-player-smoke.json。
+
+拔根、吃树、金矿缠绕、民兵、种族研究、原作品质美术与完整游戏／地图／编辑器仍未完成；Frost 英雄时长和倍率尚未独立核对。物理输入、试听、跨机 LAN 与稳定帧率未验收。完整目标保持 active。本阶段无新增美术资产或 Rust/C# 修改，无子代理委派；原有两个 QA JSON 和无关图片／tmp 保留。

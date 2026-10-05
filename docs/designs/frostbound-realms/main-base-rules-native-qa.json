@@ -1,0 +1,102 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 38,
+  "tag": "1791153832540",
+  "productSha256": "f0336313bc3c6f55d2fae6dac41e9f1c7c7b08c8aab4976d46393f699bab21a3",
+  "scope": "Release QuickJS with Agent HUD input and true menu save reload; observation-only qaUnits/qaMap",
+  "physicalInput": false,
+  "audioListening": false,
+  "completionFixtures": "Native construction advances the full 100/120/150/180 seconds from actual HUD foundations; only battle targets are authored fixtures.",
+  "factions": [
+    {
+      "faction": 0,
+      "gold": 385,
+      "wood": 205,
+      "time": 180,
+      "fullNativeConstruction": true,
+      "tooltip": "Town Hall [C]\nCost: 385 gold / 205 lumber / 180s",
+      "paidOnce": true,
+      "trueMenuSave": true,
+      "cancelRefund": true,
+      "repair": true,
+      "combat": {
+        "grade": 1,
+        "damage": 0,
+        "armor": 5,
+        "targetDamage": 0,
+        "cold": 0,
+        "workerDamage": 0,
+        "isolatedImpact": true
+      }
+    },
+    {
+      "faction": 1,
+      "gold": 385,
+      "wood": 185,
+      "time": 150,
+      "fullNativeConstruction": true,
+      "tooltip": "Great Hall [C]\nCost: 385 gold / 185 lumber / 150s",
+      "paidOnce": true,
+      "trueMenuSave": true,
+      "cancelRefund": true,
+      "repair": true,
+      "combat": {
+        "grade": 1,
+        "damage": 0,
+        "armor": 5,
+        "targetDamage": 0,
+        "cold": 0,
+        "workerDamage": 0,
+        "isolatedImpact": true
+      }
+    },
+    {
+      "faction": 2,
+      "gold": 340,
+      "wood": 185,
+      "time": 120,
+      "fullNativeConstruction": true,
+      "tooltip": "Tree of Life [C]\nCost: 340 gold / 185 lumber / 120s",
+      "paidOnce": true,
+      "trueMenuSave": true,
+      "cancelRefund": true,
+      "repair": true,
+      "combat": {
+        "grade": 1,
+        "damage": 45.5,
+        "armor": 2,
+        "targetDamage": 45.5,
+        "cold": 0,
+        "workerDamage": 0,
+        "isolatedImpact": true
+      }
+    },
+    {
+      "faction": 3,
+      "gold": 255,
+      "wood": 0,
+      "time": 100,
+      "fullNativeConstruction": true,
+      "tooltip": "Necropolis [C]\nCost: 255 gold / 0 lumber / 100s",
+      "paidOnce": true,
+      "trueMenuSave": true,
+      "cancelRefund": true,
+      "repair": true,
+      "combat": {
+        "grade": 2,
+        "damage": 11.5,
+        "armor": 5,
+        "targetDamage": 11.5,
+        "cold": 4.400000000000002,
+        "workerDamage": 0,
+        "isolatedImpact": true
+      }
+    }
+  ],
+  "fullNativeConstructionProductSha256": "f0336313bc3c6f55d2fae6dac41e9f1c7c7b08c8aab4976d46393f699bab21a3",
+  "recheckedIsolatedCombat": true,
+  "lastCommand": "playback.input",
+  "stage": "combat-3",
+  "shaderRejections": 0
+}

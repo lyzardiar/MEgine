@@ -38,6 +38,8 @@ import './test-frost-hero-lifecycle.mjs';
 import './test-frost-melee-opening.mjs';
 import './test-frost-base-tech.mjs';
 import './test-frost-base-tech-network.mjs';
+import './test-frost-base-rules.mjs';
+import './test-frost-base-rules-network.mjs';
 import './test-frost-town-portal.mjs';
 import './test-frost-town-portal-network.mjs';
 import './test-frost-construction.mjs';

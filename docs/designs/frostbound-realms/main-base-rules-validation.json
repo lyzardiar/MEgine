@@ -1,0 +1,171 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "33a561f31578d9a54bfbd417c0063e176d2ab8ed",
+  "protocol": 38,
+  "baseRulesSaveVersion": 1,
+  "provenanceSha256": "29d59c3d3a35e9c07a8807feaaf9368855284e66a5ab6f4603a02455dde4a669",
+  "tests": {
+    "fullRulesTcpExitCode": 0,
+    "passLines": 72,
+    "outputSha256": "2805be430a35f2bc9c12e61bcb4321f0b0fbb297c9f472757376a81836f1b4ab",
+    "finalVisualNamesAndAssetsExitCode": 0,
+    "finalVisualOutputSha256": "de0c3cf92eee8437659703c4f019e016fd515d9dde94f4f7c093fe85f547c50c"
+  },
+  "native": {
+    "tag": "1791153832540",
+    "factions": [
+      {
+        "faction": 0,
+        "gold": 385,
+        "wood": 205,
+        "time": 180,
+        "fullNativeConstruction": true,
+        "tooltip": "Town Hall [C]\nCost: 385 gold / 205 lumber / 180s",
+        "paidOnce": true,
+        "trueMenuSave": true,
+        "cancelRefund": true,
+        "repair": true,
+        "combat": {
+          "grade": 1,
+          "damage": 0,
+          "armor": 5,
+          "targetDamage": 0,
+          "cold": 0,
+          "workerDamage": 0,
+          "isolatedImpact": true
+        }
+      },
+      {
+        "faction": 1,
+        "gold": 385,
+        "wood": 185,
+        "time": 150,
+        "fullNativeConstruction": true,
+        "tooltip": "Great Hall [C]\nCost: 385 gold / 185 lumber / 150s",
+        "paidOnce": true,
+        "trueMenuSave": true,
+        "cancelRefund": true,
+        "repair": true,
+        "combat": {
+          "grade": 1,
+          "damage": 0,
+          "armor": 5,
+          "targetDamage": 0,
+          "cold": 0,
+          "workerDamage": 0,
+          "isolatedImpact": true
+        }
+      },
+      {
+        "faction": 2,
+        "gold": 340,
+        "wood": 185,
+        "time": 120,
+        "fullNativeConstruction": true,
+        "tooltip": "Tree of Life [C]\nCost: 340 gold / 185 lumber / 120s",
+        "paidOnce": true,
+        "trueMenuSave": true,
+        "cancelRefund": true,
+        "repair": true,
+        "combat": {
+          "grade": 1,
+          "damage": 45.5,
+          "armor": 2,
+          "targetDamage": 45.5,
+          "cold": 0,
+          "workerDamage": 0,
+          "isolatedImpact": true
+        }
+      },
+      {
+        "faction": 3,
+        "gold": 255,
+        "wood": 0,
+        "time": 100,
+        "fullNativeConstruction": true,
+        "tooltip": "Necropolis [C]\nCost: 255 gold / 0 lumber / 100s",
+        "paidOnce": true,
+        "trueMenuSave": true,
+        "cancelRefund": true,
+        "repair": true,
+        "combat": {
+          "grade": 2,
+          "damage": 11.5,
+          "armor": 5,
+          "targetDamage": 11.5,
+          "cold": 4.400000000000002,
+          "workerDamage": 0,
+          "isolatedImpact": true
+        }
+      }
+    ],
+    "shaderRejections": 0,
+    "completionFixtures": "Native construction advances the full 100/120/150/180 seconds from actual HUD foundations; only battle targets are authored fixtures.",
+    "finalProductSha256": "f0336313bc3c6f55d2fae6dac41e9f1c7c7b08c8aab4976d46393f699bab21a3",
+    "productScriptExactAfterTelemetryRemoved": true,
+    "assetAndLicenseFilesExact": 805
+  },
+  "scene": {
+    "entities": 4837,
+    "unchangedFromBase": true
+  },
+  "package": {
+    "files": 778,
+    "contentHash": "dca95a610cd482d8e82ea2bf243d903d80ba59d6f3770d59ea68912240f95f13",
+    "allSizesAndHashesVerified": true,
+    "sourceScriptExact": true,
+    "sceneExact": true,
+    "shaderVariants": 10,
+    "responsiveStartupSeconds": 30,
+    "loggedErrors": 0
+  },
+  "sourceHashes": {
+    "samples/frostbound-realms/game/simulation.js": "20e2db6d3f505c819b9e8d7b52393cbed092883652fe50accea81314173c4cf7",
+    "samples/frostbound-realms/game/client.js": "190291b69332200a2a6d92da1afa4fdcdcfb44bb3e97d5e43c808d5bb83b4caf",
+    "samples/frostbound-realms/game/visuals.js": "f6e56e1466db0894ac46ba384b64120283587b9a3efe677ad807507e5ca82a00",
+    "scripts/test-frost-base-rules.mjs": "2dcadce1ef4c5920521a330a3ced700e7880bb5bbaf794d25144c20c728d9147",
+    "scripts/test-frost-base-rules-network.mjs": "000cde0f369dcf785441862fd79a8d3f9f022eea9842507d9f0c1e0fce430a2e",
+    "scripts/test-frost-construction.mjs": "a770eb383adf57aaf8b305eb3266258be4827530de4c920c1ebcd3d72a70754b",
+    "scripts/test-frost-work-queues.mjs": "c371bfa42773f446ca311446a151f215248ca80d818e4ba3587aa86730e77d7a",
+    "scripts/test-frostbound.mjs": "a98eb352fc2cbf0f0fa579810b3a5924e2de5329e332d4818d65ef977d94ff9a",
+    "scripts/qa-frost-base-rules.mjs": "730138999ccc84367a366c64d9579d530d073cd4b98d47600eafd5a7b4fe9c45",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "f0336313bc3c6f55d2fae6dac41e9f1c7c7b08c8aab4976d46393f699bab21a3"
+  },
+  "screenshots": {
+    "base-rules-construction-0.png": "5e1cf7d18d381356325e6d87a605ff69df87c8b2c4be6453afe167c892798686",
+    "base-rules-construction-1.png": "248a0ad907ae8ded80f3d5ca92d427f559a4b27fa0f369c996d9c1c4b9b66335",
+    "base-rules-construction-2.png": "23afcce7dba9ebb7c717da1bad871095431176361e1a28c78664a4413d717ba9",
+    "base-rules-construction-3.png": "a9a7161617517dcf06398fdf022fce771fddc3785e6d4507e8d824a401702d6c",
+    "base-rules-completed-0.png": "c7801e6da353dac0ceb5e6ac855bc165fe02021a4758f9fec65e1791273d4f39",
+    "base-rules-completed-1.png": "b64d023962feb5d2e126acc318b2ac67e479aa5c4292085a68f4cd87903f0822",
+    "base-rules-completed-2.png": "753139e0425f8a61f54ccf03886644fb51314442364cf9229d3fed7c0e5046fa",
+    "base-rules-completed-3.png": "33fb952ee1660712ba2e156c6bba71c9b55b0e0e54dacd2d0727019cdcfa8326",
+    "base-rules-repair-0.png": "4cbdfa0daf57f3c4265fba0ffd2f0a9d9fdcec2f4f624ef3fcb6751ec393bc09",
+    "base-rules-repair-1.png": "924636b4c3944015b568efdbd8dee4765dfba4a448991ee8b36beca8ab5e9401",
+    "base-rules-repair-2.png": "4442d73d4ebb1f313fc403f731e5d241cf92815444f78a99af95b5df10e8cf94",
+    "base-rules-repair-3.png": "b5d3cf9cb4136bf7944da743c07fd1a307541ae776f860a917f56c198cf9954f",
+    "base-rules-combat-0.png": "bf7bf1a97778bfd9e7dab2726d1444ebc1928f4c9b7b8bd4e1118d1f7f493e13",
+    "base-rules-combat-1.png": "1ca5ce64184f67c5c0181e733ec525433c929334d5801b7555545c6ba6ee1af8",
+    "base-rules-combat-2.png": "a7bfac31cb3558a792f234fbbe49455b7f8253465582f577740237b869a06198",
+    "base-rules-combat-3.png": "c3a06e67d3b45e492513536ea08fd96a0d67d7c3c8381654913aa0e30807fe79"
+  },
+  "limitations": [
+    "root/uproot movement",
+    "Nature Blessing research",
+    "Eat Tree",
+    "Entangle Gold Mine",
+    "Call to Arms",
+    "Spiked Barricades",
+    "racial armor/HP researches",
+    "random damage rolls",
+    "exact original unit/range/collision scale",
+    "independently verified Frost duration/hero duration/multipliers",
+    "dedicated original-quality main-base art",
+    "full Warcraft III recreation",
+    "physical mouse/keyboard acceptance",
+    "audio listening",
+    "cross-machine LAN",
+    "steady Player frame-time acceptance"
+  ]
+}

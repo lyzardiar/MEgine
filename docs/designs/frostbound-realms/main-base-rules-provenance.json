@@ -1,0 +1,192 @@
+{
+  "author": "MiYu",
+  "retrieved": "2026-10-05",
+  "balance": "Blizzard Classic guide snapshot; no current Reforged balance claim",
+  "sourceHashVerification": "Fresh HTTP200 response bytes saved without transcoding and hashed",
+  "sources": [
+    {
+      "race": "human",
+      "name": "townhall",
+      "url": "https://classic.battle.net/war3/human/buildings/townhall.shtml",
+      "sha256": "6bade37f8fbc549b9ff2c91ecc623f772b81bae93207edaeeab4e6c4ca26021f"
+    },
+    {
+      "race": "human",
+      "name": "keep",
+      "url": "https://classic.battle.net/war3/human/buildings/keep.shtml",
+      "sha256": "e04ce6a0161b123e1191dbb78f1295dfdce734b67a493c08c4463afa014850de"
+    },
+    {
+      "race": "human",
+      "name": "castle",
+      "url": "https://classic.battle.net/war3/human/buildings/castle.shtml",
+      "sha256": "a6871a4c7e0145a99916dfefa24b882b6b912baa02c18ff1c42361729c6b409a"
+    },
+    {
+      "race": "orc",
+      "name": "greathall",
+      "url": "https://classic.battle.net/war3/orc/buildings/greathall.shtml",
+      "sha256": "8df45f668a487645b3c963039d8071682859bbb37d217afcdf30ca9c7a5691f9"
+    },
+    {
+      "race": "orc",
+      "name": "stronghold",
+      "url": "https://classic.battle.net/war3/orc/buildings/stronghold.shtml",
+      "sha256": "8fa87527b9565e39e9d71fda7e32d192ec4cef951460a05a06ae592723f93c80"
+    },
+    {
+      "race": "orc",
+      "name": "fortress",
+      "url": "https://classic.battle.net/war3/orc/buildings/fortress.shtml",
+      "sha256": "84a54848e2b3e20fb369a2f202f3cd45d30782703b08d6941ddee4bacd94eeb8"
+    },
+    {
+      "race": "nightelf",
+      "name": "treeoflife",
+      "url": "https://classic.battle.net/war3/nightelf/buildings/treeoflife.shtml",
+      "sha256": "ee1e6721e8fd7d1cc28576cb541888ca046ff3f664d237368936515c35c83472"
+    },
+    {
+      "race": "nightelf",
+      "name": "treeofages",
+      "url": "https://classic.battle.net/war3/nightelf/buildings/treeofages.shtml",
+      "sha256": "32aea6f1a534e4a4b7be969e34c3302dade2e5f4c3b1c811824be596dad24875"
+    },
+    {
+      "race": "nightelf",
+      "name": "treeofeternity",
+      "url": "https://classic.battle.net/war3/nightelf/buildings/treeofeternity.shtml",
+      "sha256": "1be4823d5d1b3460d134a8a3e875fbf35f0852465b042d6b092bc19d7e4a17c3"
+    },
+    {
+      "race": "undead",
+      "name": "necropolis",
+      "url": "https://classic.battle.net/war3/undead/buildings/necropolis.shtml",
+      "sha256": "1ce26970a3b67e9639bb720d6420b488ed52118c84c5cef6081e614fe7bfd7c1"
+    },
+    {
+      "race": "undead",
+      "name": "hallsofthedead",
+      "url": "https://classic.battle.net/war3/undead/buildings/hallsofthedead.shtml",
+      "sha256": "66f6bb3c6025e038c7ea49535160c37e9b811235e00687dcb724efa9068d6703"
+    },
+    {
+      "race": "undead",
+      "name": "blackcitadel",
+      "url": "https://classic.battle.net/war3/undead/buildings/blackcitadel.shtml",
+      "sha256": "944e48b6ec8e79ef5c4b5389f50582e2bb754c0278266d88cdca41767352bb60"
+    }
+  ],
+  "rootedAncientReference": {
+    "url": "https://warcraft.wiki.gg/wiki/Tree_of_Life_(Warcraft_III)",
+    "sha256": "2721988589211b3e908ff91b534310ac16709918a78d8f235b1658f49e4d369a",
+    "interpretation": "Rooted fortified armor 2; Nature Blessing raises armor to 7. Patch 1.10 enabled rooted attacks."
+  },
+  "construction": [
+    {
+      "faction": 0,
+      "name": "Town Hall",
+      "gold": 385,
+      "wood": 205,
+      "time": 180,
+      "hp": 1500,
+      "armor": 5,
+      "damage": 0,
+      "cooldown": 1,
+      "range": 0,
+      "attack": "normal",
+      "air": false
+    },
+    {
+      "faction": 1,
+      "name": "Great Hall",
+      "gold": 385,
+      "wood": 185,
+      "time": 150,
+      "hp": 1500,
+      "armor": 5,
+      "damage": 0,
+      "cooldown": 1,
+      "range": 0,
+      "attack": "normal",
+      "air": false
+    },
+    {
+      "faction": 2,
+      "name": "Tree of Life",
+      "gold": 340,
+      "wood": 185,
+      "time": 120,
+      "hp": 1300,
+      "armor": 2,
+      "damage": 45.5,
+      "cooldown": 2.5,
+      "range": 2,
+      "attack": "normal",
+      "air": false
+    },
+    {
+      "faction": 3,
+      "name": "Necropolis",
+      "gold": 255,
+      "wood": 0,
+      "time": 100,
+      "hp": 1500,
+      "armor": 5,
+      "damage": 0,
+      "cooldown": 1,
+      "range": 0,
+      "attack": "normal",
+      "air": false
+    }
+  ],
+  "upgradedAttacks": {
+    "nightElf": {
+      "damageMean": [
+        45.5,
+        54.5,
+        67
+      ],
+      "cooldown": 2.5,
+      "armor": 2,
+      "attack": "normal",
+      "air": false,
+      "rangeModel": "project melee reach 2 plus main-base footprint 2.5; melee ground traversal still required"
+    },
+    "undead": {
+      "damageMean": [
+        0,
+        11.5,
+        14
+      ],
+      "cooldown": 1,
+      "armor": 5,
+      "attack": "pierce",
+      "airFromGrade": 2,
+      "range": 8,
+      "cold": {
+        "duration": 5,
+        "movementMultiplier": 0.5,
+        "attackRateMultiplier": 0.75,
+        "validation": "Frost ability and movement slowdown confirmed by Classic guide; duration, hero duration and multipliers reuse existing Nerubian effect and are not independently verified"
+      }
+    },
+    "humanOrc": "No ordinary attack"
+  },
+  "repair": "Current grade definition; per tick maxHp*DT/(time*1.5), costs one half of definition gold/lumber scaled by restored HP",
+  "save": "baseRulesVersion1; each melee hall records baseRules, baseFaction and upgradeTier; old halls keep generic construction/repair/combat until an upgrade completes; new construction uses Classic rules",
+  "notImplemented": [
+    "root/uproot movement",
+    "Nature Blessing research",
+    "Eat Tree",
+    "Entangle Gold Mine",
+    "Call to Arms",
+    "Spiked Barricades",
+    "racial armor/HP researches",
+    "random damage rolls",
+    "exact original unit/range/collision scale",
+    "independently verified Frost duration/hero duration/multipliers",
+    "dedicated original-quality main-base art",
+    "full Warcraft III recreation"
+  ]
+}

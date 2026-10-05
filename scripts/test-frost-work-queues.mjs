@@ -12,7 +12,7 @@ for(let f=0;f<4;f++){
  ok(s,w,'build',{kind:'farm',x:0,z:0});ok(s,w,'build',{kind:'farm',x:24,z:0,append:true});step(s,400);assert.equal(s.units.filter(u=>u.kind==='farm'&&u.built===1).length,2,'far queued site walks into construction range');assert.doesNotThrow(()=>S.restore(s));
 }
 {
- const {s,w,hall}=game();hall.hp-=80;ok(s,w,'move',{x:-8,z:-3});ok(s,w,'repair',{target:hall.id,append:true});ok(s,w,'gather',{resource:0,append:true});step(s,200);assert.equal(hall.hp,hall.maxHp);assert.equal(w.order.type,'gather');
+ const {s,w,hall}=game();hall.hp-=80;ok(s,w,'move',{x:-8,z:-3});ok(s,w,'repair',{target:hall.id,append:true});ok(s,w,'gather',{resource:0,append:true});step(s,400);assert.equal(hall.hp,hall.maxHp);assert.equal(w.order.type,'gather');
  ok(s,w,'build',{kind:'farm',x:-5,z:3});ok(s,w,'gather',{resource:0,append:true});const b=s.units.at(-1);ok(s,b,'cancelBuild');assert.equal(w.order.type,'gather');assert.equal(w.waypoints.length,0);
 }
 {
