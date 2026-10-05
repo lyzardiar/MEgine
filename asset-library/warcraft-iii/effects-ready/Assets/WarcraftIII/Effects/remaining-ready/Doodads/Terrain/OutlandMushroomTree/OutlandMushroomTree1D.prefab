@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "OutlandMushroomTree1D",
+  "root": {
+    "id": "root",
+    "name": "OutlandMushroomTree1D",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "SampledEffect": {
+        "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Terrain/OutlandMushroomTree/OutlandMushroomTree1D.mfx",
+        "clip": 0,
+        "playing": true,
+        "looping": false,
+        "speed": 1,
+        "time_seconds": 0
+      }
+    },
+    "children": []
+  }
+}

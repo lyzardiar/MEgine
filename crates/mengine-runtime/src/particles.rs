@@ -233,12 +233,14 @@ impl Emitter<'_> {
 
 #[derive(Default)]
 pub struct ParticleWorld {
+    pub sampled_effects: crate::sampled_effects::SampledEffectWorld,
     emitters: HashMap<Entity, EmitterState>,
     skip_step_once: HashSet<Entity>,
 }
 
 impl ParticleWorld {
     pub fn reset_entity(&mut self, entity: Entity) {
+        self.sampled_effects.reset_entity(entity);
         self.emitters.remove(&entity);
         self.skip_step_once.remove(&entity);
     }

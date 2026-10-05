@@ -25,3 +25,6 @@ asset-library/warcraft-iii/tree-skins-ready/** -text whitespace=cr-at-eol
 asset-library/warcraft-iii/cliff-skins-ready/** -text whitespace=cr-at-eol
 scripts/import-frost-classic-cliffs.py -text whitespace=cr-at-eol
 samples/frostbound-realms/classic-cliff-sources.json -text
+asset-library/warcraft-iii/effects-ready/** -text whitespace=cr-at-eol
+asset-library/warcraft-iii/texture-pending/** -text whitespace=cr-at-eol
+idl/components/core.idl whitespace=cr-at-eol

@@ -1,13 +1,192 @@
 {
-  "inventory": "G:\\work\\github\\MEgine\\tmp\\war3-inspect\\export\\model-inventory.json",
+  "inventory": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\asset-library\\warcraft-iii\\cliff-skins-ready\\SourceAssets\\model-inventory.json",
   "inventorySha256": "7574e55fdffed3da312ec611d7df169f10fe9c15062f011ee9e96aa22271cf82",
   "originalIndexedModels": 3264,
   "originalAccountedModels": 3264,
   "communityAccountedModels": 1514,
   "convertedModels": 4534,
   "clips": 12623,
-  "deferredModels": 229,
+  "legacyDeferredModels": 229,
+  "deferredModels": 0,
+  "convertedSources": 4778,
   "missingDependencies": 15,
+  "additionalConversions": {
+    "effects-ready": {
+      "models": 229,
+      "verifiedGeneratedDependencies": 1087,
+      "verification": {
+        "convertedSources": 229,
+        "visualEffects": 210,
+        "metadataOnly": 19,
+        "clips": 373,
+        "frames": 36454,
+        "failedModels": []
+      }
+    },
+    "texture-pending": {
+      "models": 15,
+      "verifiedGeneratedDependencies": 192,
+      "verification": {
+        "geometryModels": 15,
+        "parts": 44,
+        "clips": 15,
+        "poseComparison": [
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5.mdx",
+            "samples": 2,
+            "vertices": 362,
+            "maxPositionError": 6.8749999998507505e-09
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen.mdx",
+            "samples": 4,
+            "vertices": 1816,
+            "maxPositionError": 1.1125000010103747e-07
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax.mdx",
+            "samples": 4,
+            "vertices": 160,
+            "maxPositionError": 2.500000007010783e-08
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow.mdx",
+            "samples": 4,
+            "vertices": 160,
+            "maxPositionError": 2.500000007010783e-08
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b.mdx",
+            "samples": 4,
+            "vertices": 160,
+            "maxPositionError": 2.500000007010783e-08
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra.mdx",
+            "samples": 4,
+            "vertices": 160,
+            "maxPositionError": 2.500000007010783e-08
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b.mdx",
+            "samples": 2,
+            "vertices": 1442,
+            "maxPositionError": 1.0000000005838672e-07
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene.mdx",
+            "samples": 2,
+            "vertices": 10812,
+            "maxPositionError": 2.1875000033588776e-07
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1.mdx",
+            "samples": 4,
+            "vertices": 3724,
+            "maxPositionError": 1.0012500006872926e-07
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2.mdx",
+            "samples": 4,
+            "vertices": 3248,
+            "maxPositionError": 9.749999985153579e-08
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3.mdx",
+            "samples": 4,
+            "vertices": 5600,
+            "maxPositionError": 7.000000001866624e-08
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner].MDX",
+            "samples": 4,
+            "vertices": 16,
+            "maxPositionError": 2.500000012561898e-09
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed].MDX",
+            "samples": 4,
+            "vertices": 16,
+            "maxPositionError": 2.500000012561898e-09
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge].MDX",
+            "samples": 4,
+            "vertices": 16,
+            "maxPositionError": 2.500000012561898e-09
+          },
+          {
+            "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile].MDX",
+            "samples": 4,
+            "vertices": 16,
+            "maxPositionError": 2.500000012561898e-09
+          }
+        ],
+        "missingDependencies": [
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5.mdx",
+            "error": "'redstone_rock.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen.mdx",
+            "error": "'worldtreetrunk.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax.mdx",
+            "error": "'rockseemles a1.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow.mdx",
+            "error": "'rockseemles a1.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b.mdx",
+            "error": "'rockseemles a1.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra.mdx",
+            "error": "'rockseemles a1.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b.mdx",
+            "error": "'redstone_rock.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene.mdx",
+            "error": "'redstone_rock.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1.mdx",
+            "error": "'worldtreetrunk.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2.mdx",
+            "error": "'worldtreetrunk.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3.mdx",
+            "error": "'worldtreetrunk.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner].MDX",
+            "error": "'carpet.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed].MDX",
+            "error": "'carpet.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge].MDX",
+            "error": "'carpet.blp'"
+          },
+          {
+            "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile].MDX",
+            "error": "'carpet.blp'"
+          }
+        ]
+      }
+    }
+  },
   "collections": [
     {
       "collection": "game-ready",
@@ -1040,5 +1219,5 @@
       }
     }
   ],
-  "scope": "Mesh assets converted and current source/output dependencies hash-verified. Meshless effects require emitter/ribbon/light adaptation; missing texture dependencies remain unresolved. Existing runtime/pose results are prior verification reports, not new gameplay acceptance."
+  "scope": "Existing textured mesh libraries hash-verified. Additional conversions account for meshless sampled effects and geometry awaiting textures; legacy deferred lists identify source records handled by those collections. Sampled effects approximate the viewer solver; camera/helper tracks remain metadata. Missing original textures remain unresolved. Runtime/pose reports are prior verification, not new gameplay acceptance."
 }

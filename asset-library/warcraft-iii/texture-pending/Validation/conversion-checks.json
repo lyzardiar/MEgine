@@ -1,0 +1,159 @@
+{
+  "geometryModels": 15,
+  "parts": 44,
+  "clips": 15,
+  "poseComparison": [
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5.mdx",
+      "samples": 2,
+      "vertices": 362,
+      "maxPositionError": 6.8749999998507505e-09
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen.mdx",
+      "samples": 4,
+      "vertices": 1816,
+      "maxPositionError": 1.1125000010103747e-07
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax.mdx",
+      "samples": 4,
+      "vertices": 160,
+      "maxPositionError": 2.500000007010783e-08
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow.mdx",
+      "samples": 4,
+      "vertices": 160,
+      "maxPositionError": 2.500000007010783e-08
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b.mdx",
+      "samples": 4,
+      "vertices": 160,
+      "maxPositionError": 2.500000007010783e-08
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra.mdx",
+      "samples": 4,
+      "vertices": 160,
+      "maxPositionError": 2.500000007010783e-08
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b.mdx",
+      "samples": 2,
+      "vertices": 1442,
+      "maxPositionError": 1.0000000005838672e-07
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene.mdx",
+      "samples": 2,
+      "vertices": 10812,
+      "maxPositionError": 2.1875000033588776e-07
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1.mdx",
+      "samples": 4,
+      "vertices": 3724,
+      "maxPositionError": 1.0012500006872926e-07
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2.mdx",
+      "samples": 4,
+      "vertices": 3248,
+      "maxPositionError": 9.749999985153579e-08
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3.mdx",
+      "samples": 4,
+      "vertices": 5600,
+      "maxPositionError": 7.000000001866624e-08
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner].MDX",
+      "samples": 4,
+      "vertices": 16,
+      "maxPositionError": 2.500000012561898e-09
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed].MDX",
+      "samples": 4,
+      "vertices": 16,
+      "maxPositionError": 2.500000012561898e-09
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge].MDX",
+      "samples": 4,
+      "vertices": 16,
+      "maxPositionError": 2.500000012561898e-09
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile].MDX",
+      "samples": 4,
+      "vertices": 16,
+      "maxPositionError": 2.500000012561898e-09
+    }
+  ],
+  "missingDependencies": [
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5.mdx",
+      "error": "'redstone_rock.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen.mdx",
+      "error": "'worldtreetrunk.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax.mdx",
+      "error": "'rockseemles a1.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow.mdx",
+      "error": "'rockseemles a1.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b.mdx",
+      "error": "'rockseemles a1.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra.mdx",
+      "error": "'rockseemles a1.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b.mdx",
+      "error": "'redstone_rock.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene.mdx",
+      "error": "'redstone_rock.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1.mdx",
+      "error": "'worldtreetrunk.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2.mdx",
+      "error": "'worldtreetrunk.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3.mdx",
+      "error": "'worldtreetrunk.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner].MDX",
+      "error": "'carpet.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed].MDX",
+      "error": "'carpet.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge].MDX",
+      "error": "'carpet.blp'"
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile].MDX",
+      "error": "'carpet.blp'"
+    }
+  ]
+}

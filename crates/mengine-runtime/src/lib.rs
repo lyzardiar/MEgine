@@ -11,6 +11,7 @@ pub mod materials;
 pub mod meshes;
 pub mod mobile_stub;
 pub mod particles;
+pub mod sampled_effects;
 pub mod player_config;
 pub mod prefabs;
 pub mod scenes;

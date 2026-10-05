@@ -2572,6 +2572,29 @@ test('buildPcPackage includes skeletal pose models without sprite sidecars and r
   }
 });
 
+test('buildPcPackage includes sampled effect textures and rejects missing dependencies and endpoints', () => {
+  const paths = fixture('sampled-effect');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Effects'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({ world: { entities: [{ components: { SampledEffect: { effect: 'Assets/Effects/Spark.mfx' } } }] } }));
+    const effect = { schemaVersion: 1, fps: 12, materials: [{ texture: 'Assets/Textures/Spark.png', blend: 'additive' }], clips: [{ name: 'Birth', duration: 0.1, loop: false, frames: [0, 0.1].map(seconds => ({ seconds, particles: [], quads: [], lights: [] })) }] };
+    const save = () => writeFileSync(join(paths.project, 'Assets', 'Effects', 'Spark.mfx'), JSON.stringify(effect));
+    save();
+    const build = () => buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test' });
+    assert.throws(build, /missing sampled effect texture/);
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'Spark.png'), 'texture');
+    effect.clips[0].frames[1].seconds = 0.09; save();
+    assert.throws(build, /invalid sampled effect.*endpoints/);
+    effect.clips[0].frames[1].seconds = 0.1; save();
+    const manifest = build();
+    assert.ok(manifest.files.some(file => file.path === 'Assets/Effects/Spark.mfx'));
+    const texture = manifest.files.find(file => file.path === 'Assets/Textures/Spark.png');
+    assert.ok(texture?.includedBy.some(reason => reason.kind === 'sampled effect texture'));
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage includes mesh patch sources without sprite sidecars and rejects malformed cells', () => {
   const paths = fixture('mesh-patch');
   try {

@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "Scroll_Regen_Target",
+  "root": {
+    "id": "root",
+    "name": "Scroll_Regen_Target",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "SampledEffect": {
+        "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/ScrollOfRegeneration/Scroll_Regen_Target.mfx",
+        "clip": 2,
+        "playing": true,
+        "looping": true,
+        "speed": 1,
+        "time_seconds": 0
+      }
+    },
+    "children": []
+  }
+}

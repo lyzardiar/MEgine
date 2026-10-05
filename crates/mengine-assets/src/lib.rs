@@ -11,6 +11,7 @@ mod material_instance;
 mod mesh_patch;
 mod mesh_surface;
 mod registry;
+mod sampled_effect;
 mod sprite;
 mod surface_shader;
 mod terrain_mesh;
@@ -37,6 +38,7 @@ pub use gltf_import::{load_gltf_mesh_data, MeshData};
 pub use gltf_pose::{parse_gltf_pose, parse_gltf_pose_sample, GltfPoseSource};
 pub use mesh_patch::{parse_mesh_patch_key, MeshPatchSource};
 pub use mesh_surface::{mesh_height_at, raycast_mesh, MeshSurfaceHit};
+pub use sampled_effect::{effect_asset_path, EffectClip, EffectFrame, EffectLight, EffectMaterial, SampledEffectAsset};
 pub use terrain_mesh::terrain_mesh;
 pub use material::{
     load_material_asset, parse_material_asset, MaterialAsset, MaterialBlendMode, MaterialFilter,

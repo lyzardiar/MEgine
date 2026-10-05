@@ -1,0 +1,170 @@
+{
+  "method": "Native editor Game View GPU renderer",
+  "imageSha256": "b13dac6c98d463963d21bb1ef6184665dd752c2a661049fd0a73caff815c6de3",
+  "rendererSha256": "48c3bc9815ba162536a5e82817eb0f05fca542c4014d9c49df251220dc67cb12",
+  "project": "D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample",
+  "factor": 0.35,
+  "models": [
+    {
+      "model": "BanishTarget",
+      "source": "Abilities\\Spells\\Human\\Banish\\BanishTarget.mdx",
+      "clip": "Stand",
+      "time": 0.6666667,
+      "row": 0,
+      "column": 0,
+      "particles": 30,
+      "quads": 58
+    },
+    {
+      "model": "CloudOfFog",
+      "source": "Abilities\\Spells\\Human\\CloudOfFog\\CloudOfFog.mdx",
+      "clip": "Stand",
+      "time": 0.333,
+      "row": 0,
+      "column": 1,
+      "particles": 16,
+      "quads": 0
+    },
+    {
+      "model": "FlameStrikeTarget",
+      "source": "Abilities\\Spells\\Human\\FlameStrike\\FlameStrikeTarget.mdx",
+      "clip": "stand",
+      "time": 3,
+      "row": 0,
+      "column": 2,
+      "particles": 59,
+      "quads": 0
+    },
+    {
+      "model": "ClarityTarget",
+      "source": "Abilities\\Spells\\Items\\ClarityPotion\\ClarityTarget.mdx",
+      "clip": "Birth",
+      "time": 0.41666666,
+      "row": 0,
+      "column": 3,
+      "particles": 0,
+      "quads": 73
+    },
+    {
+      "model": "HealingSalveTarget",
+      "source": "Abilities\\Spells\\Items\\HealingSalve\\HealingSalveTarget.mdx",
+      "clip": "Stand",
+      "time": 0.5,
+      "row": 1,
+      "column": 0,
+      "particles": 16,
+      "quads": 16
+    },
+    {
+      "model": "PurificationTarget",
+      "source": "Abilities\\Spells\\Items\\StaffOfPurification\\PurificationTarget.mdx",
+      "clip": "Birth",
+      "time": 0.41666666,
+      "row": 1,
+      "column": 1,
+      "particles": 12,
+      "quads": 0
+    },
+    {
+      "model": "RejuvenationTarget",
+      "source": "Abilities\\Spells\\NightElf\\Rejuvenation\\RejuvenationTarget.mdx",
+      "clip": "Stand",
+      "time": 0.41666666,
+      "row": 1,
+      "column": 2,
+      "particles": 0,
+      "quads": 55
+    },
+    {
+      "model": "BreathOfFireTarget",
+      "source": "Abilities\\Spells\\Other\\BreathOfFire\\BreathOfFireTarget.mdx",
+      "clip": "Death",
+      "time": 0.25,
+      "row": 1,
+      "column": 3,
+      "particles": 13,
+      "quads": 0
+    },
+    {
+      "model": "BreathOfFrostTarget",
+      "source": "Abilities\\Spells\\Other\\BreathOfFrost\\BreathOfFrostTarget.mdx",
+      "clip": "Death",
+      "time": 0.25,
+      "row": 2,
+      "column": 0,
+      "particles": 13,
+      "quads": 0
+    },
+    {
+      "model": "Tornado_Target",
+      "source": "Abilities\\Spells\\Other\\Tornado\\Tornado_Target.mdx",
+      "clip": "Stand",
+      "time": 0.5833333,
+      "row": 2,
+      "column": 1,
+      "particles": 0,
+      "quads": 31
+    },
+    {
+      "model": "DeathandDecayTarget",
+      "source": "Abilities\\Spells\\Undead\\DeathandDecay\\DeathandDecayTarget.mdx",
+      "clip": "Stand 2",
+      "time": 0.8333333,
+      "row": 2,
+      "column": 2,
+      "particles": 22,
+      "quads": 15
+    },
+    {
+      "model": "UnsummonTarget",
+      "source": "Abilities\\Spells\\Undead\\Unsummon\\UnsummonTarget.mdx",
+      "clip": "Stand",
+      "time": 2.25,
+      "row": 2,
+      "column": 3,
+      "particles": 18,
+      "quads": 114
+    },
+    {
+      "model": "FrostWyrmMissile",
+      "source": "Abilities\\Weapons\\FrostWyrmMissile\\FrostWyrmMissile.mdx",
+      "clip": "Birth",
+      "time": 0.5,
+      "row": 3,
+      "column": 0,
+      "particles": 78,
+      "quads": 19
+    },
+    {
+      "model": "WaterElementalMissile",
+      "source": "Abilities\\Weapons\\WaterElementalMissile\\WaterElementalMissile.mdx",
+      "clip": "Birth",
+      "time": 0.41666666,
+      "row": 3,
+      "column": 1,
+      "particles": 38,
+      "quads": 53
+    },
+    {
+      "model": "SteamTankImpact",
+      "source": "Abilities\\Weapons\\SteamTank\\SteamTankImpact.mdx",
+      "clip": "Birth",
+      "time": 0.33333334,
+      "row": 3,
+      "column": 2,
+      "particles": 40,
+      "quads": 4
+    },
+    {
+      "model": "DemonStorm",
+      "source": "Doodads\\Cinematic\\DemonStorm\\DemonStorm.mdx",
+      "clip": "Stand",
+      "time": 3.6666667,
+      "row": 3,
+      "column": 3,
+      "particles": 524,
+      "quads": 0
+    }
+  ],
+  "primitives": 496
+}

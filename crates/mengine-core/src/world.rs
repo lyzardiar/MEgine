@@ -512,6 +512,7 @@ fn canonical_component_name(component: &str) -> &str {
         "AutoRotate" | "autoRotate" => "AutoRotate",
         "ParticleEmitter2D" | "particleEmitter2D" | "particleEmitter2d" => "ParticleEmitter2D",
         "ParticleEmitter3D" | "particleEmitter3D" | "particleEmitter3d" => "ParticleEmitter3D",
+        "SampledEffect" | "sampledEffect" => "SampledEffect",
         "SpineSkeleton" | "spineSkeleton" => "SpineSkeleton",
         other => other,
     }

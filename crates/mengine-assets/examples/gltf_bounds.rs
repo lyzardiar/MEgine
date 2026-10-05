@@ -19,6 +19,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut patch: Option<(String,MeshPatchSource)> = None;
     for argument in arguments {
         let argument = argument?;
+        if argument.to_ascii_lowercase().ends_with(".mfx") {
+            let effect = mengine_assets::SampledEffectAsset::load(Path::new(&argument))?;
+            let frames = effect.clips.iter().flat_map(|c| &c.frames).collect::<Vec<_>>();
+            println!("{}", serde_json::json!({"effect":argument,"clips":effect.clips.len(),"frames":frames.len(),"particles":frames.iter().map(|f|f.particles.len()).sum::<usize>(),"quads":frames.iter().map(|f|f.quads.len()).sum::<usize>(),"lights":frames.iter().map(|f|f.lights.len()).sum::<usize>()}));
+            continue;
+        }
         let mesh = if let Some((path, cells)) = parse_mesh_patch_key(&argument) {
             if patch.as_ref().map(|s| s.0.as_str()) != Some(path) { patch = Some((path.into(),MeshPatchSource::load(Path::new(path))?)); }
             patch.as_ref().unwrap().1.compose(cells)?

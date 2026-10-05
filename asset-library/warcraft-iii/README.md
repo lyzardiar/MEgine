@@ -1,12 +1,14 @@
 # Warcraft III 引擎资产
 
-`game-ready` 保存四族主要单位、建筑、英雄和中立怪物；`remaining-ready` 保存补充提取的原版场景、角色、头像、UI 和带网格的特效；`community-ready` 保存用户提供的 HIVE 模型包和 UTM 4.0 地图内的模型。原始文件、依赖关系、来源和 SHA-256 均随各集合保存。原版安装包索引的 3,264 个 MDX 已全部提取并处理：186 个主要模型、2,866 个补充几何模型，另外 212 个没有 geoset 的资源需要粒子/缎带适配。社区来源共 1,514 个模型：1,482 个生成了几何模型，15 个缺贴图、17 个无 geoset。三套库合计 4,534 个几何模型和 12,623 段动画；地形包含 161 张图集、4,065 个原始 tile。异常原因分别记录于 extraction-checks.json 与 conversion-checks.json；几何转换完成不代表全部特效行为已适配。
+`game-ready` 保存四族主要单位、建筑、英雄和中立怪物；`remaining-ready` 保存补充提取的原版场景、角色、头像、UI 和带网格的特效；`community-ready` 保存用户提供的 HIVE 模型包和 UTM 4.0 地图内的模型。原始文件、依赖关系、来源和 SHA-256 均随各集合保存。三套库合计 4,534 个带贴图的几何模型、12,623 段动画，以及 161 张地形图集、4,065 个原始 tile。
+
+`effects-ready` 补充转换原版的 212 个及社区的 17 个无 geoset 资源，共 229 项、373 段动画：210 项包含粒子、缎带或灯光，19 项为镜头、辅助节点及空定义。原生 `SampledEffect` 播放 `.mfx` 采样帧。`texture-pending` 保存其余 15 个模型的几何、UV 和动画；缺少原始贴图，未生成战场 prefab。原版 3,264 个及社区 1,514 个 MDX 均有对应转换结果或不可见定义，详见[补充转换与验证](../../docs/designs/frostbound-realms/supplemental-conversion.md)。查看器采样模拟器与原游戏求解器存在差异；完成资产转换不表示全部游戏行为已适配。
 
 每个集合的 `Assets/WarcraftIII/model-catalog.json` 列出 prefab、每层材质、网格、骨骼动画、队色、动态纹理和状态轨道；`terrain-catalog.json` 列出地形图集和原始 64×64 tile。`id` 是源文件名标签，可能重名；使用完整 `source` 或 `prefab` 路径识别模型。模型坐标按 `(x,y,z) → (x,z,-y)` 转换，长度为原始 MDX 的 1/128，保留模型原点。
 
 动画以 12 Hz 采样，所有部件共用 clip/frame。`animatedMesh#pose=clip:frame` 使用原生姿态加载器；`frameCount` 是 12 Hz 区间数，实际保存 `frameCount+1` 个采样，最后一个采样对应源动画的精确终点。每个动画的 `menginePlayback` 保存源时长及循环标志：循环动作按源时长回绕，非循环动作在 `frameCount` 帧到达并保持末姿态；UV 和材质状态轨道也使用这一终点。没有播放元数据的旧 GLB 保持原有循环行为。材质 alpha、geoset 可见性/颜色和纹理切换由 `stateTracks` 提供。队色材质覆盖全部相关层；`textureMaterials` 按采样状态中的 texture ID 选择。UV 动画保存在各层 GLB 的 `mengineUv` 状态中，由原生加载器应用；多个 UV 通道使用对应的层网格。独立的上层材质使用 depth_equal 接受同深度片元，并保留源光照与双面语义。
 
-`Validation/conversion-checks.json` 是转换结果，`Validation/verification.json` 是源哈希、序列化姿态、贴图和实际引擎加载验证。几何误差阈值为 0.5 个原始 MDX 单位（0.00390625 引擎单位），报告保留每个模型的实测误差。原包缺失贴图及纯粒子/光照模型分别列入提取和转换异常清单。粒子、缎带、相机朝向 billboard 和灯光尚未完整适配；各模型 `effects` 记录这些源内容，原始 MDX 保持原字节。
+`Validation/conversion-checks.json` 是转换结果，`Validation/verification.json` 是源哈希、序列化姿态、贴图和实际引擎加载验证。几何误差阈值为 0.5 个原始 MDX 单位（0.00390625 引擎单位），报告保留每个模型的实测误差。原库的缺贴图与无 geoset 异常清单作为源索引保留，由新增集合逐项对应。`effects-ready` 支持粒子、缎带、相机朝向 billboard 与灯光的采样播放；原始 MDX 保持原字节，原始特效求解器与战场绑定仍需继续完善。
 
 部分 UTM 静态模型的原文件包含 NaN 枢轴。转换仅对没有动画的 Bone/Helper 将枢轴归零：其世界变换为 identity，枢轴在 bind 和 pose 中抵消，因此不改变几何。`sourceRepairs.unanimatedNonfinitePivots` 记录对应节点；有动画或特效的无效枢轴仍拒绝转换。
 

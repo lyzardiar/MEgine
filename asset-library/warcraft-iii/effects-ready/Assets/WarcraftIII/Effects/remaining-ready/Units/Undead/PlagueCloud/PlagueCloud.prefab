@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "PlagueCloud",
+  "root": {
+    "id": "root",
+    "name": "PlagueCloud",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "SampledEffect": {
+        "effect": "Assets/WarcraftIII/Effects/remaining-ready/Units/Undead/PlagueCloud/PlagueCloud.mfx",
+        "clip": 1,
+        "playing": true,
+        "looping": true,
+        "speed": 1,
+        "time_seconds": 0
+      }
+    },
+    "children": []
+  }
+}

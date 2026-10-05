@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "Phoenix_Missile_mini",
+  "root": {
+    "id": "root",
+    "name": "Phoenix_Missile_mini",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "SampledEffect": {
+        "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/PhoenixMissile/Phoenix_Missile_mini.mfx",
+        "clip": 1,
+        "playing": true,
+        "looping": true,
+        "speed": 1,
+        "time_seconds": 0
+      }
+    },
+    "children": []
+  }
+}

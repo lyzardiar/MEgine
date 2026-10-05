@@ -1284,6 +1284,7 @@ function scanBuildAssetDependencies(
     enqueue(stringValue(component('Animator'), 'controller'), from, 'animator controller');
     enqueue(stringValue(component('TimelineDirector'), 'asset'), from, 'Timeline asset');
     enqueue(stringValue(component('AudioSource'), 'clip'), from, 'audio clip');
+    enqueue(stringValue(component('SampledEffect'), 'effect'), from, 'sampled effect');
     enqueue(
       stringValue(component('EffekseerEffect'), 'effect'),
       from,
@@ -1345,6 +1346,37 @@ function scanBuildAssetDependencies(
           }
         };
         walk(effectDirectory);
+      }
+    } else if (extension === '.mfx') {
+      const effect = readJsonAsset(absolute, root, 'sampled effect');
+      if (effect.schemaVersion !== 1 || !Number.isInteger(effect.fps) || Number(effect.fps) < 1 || Number(effect.fps) > 120 || !Array.isArray(effect.materials) || !Array.isArray(effect.clips) || effect.materials.length > 1024 || effect.clips.length > 1024) {
+        throw new Error(`invalid sampled effect ${source}: schema or limits`);
+      }
+      for (const value of effect.materials) {
+        const material = jsonObject(value);
+        const texture = stringValue(material, 'texture').replaceAll('\\', '/');
+        if (!texture.startsWith('Assets/') || texture.includes(':') || texture.split('/').some(segment => !segment || segment === '.' || segment === '..') || !['alpha', 'additive', 'multiply'].includes(stringValue(material, 'blend'))) {
+          throw new Error(`invalid sampled effect ${source}: material`);
+        }
+        enqueue(texture, source, 'sampled effect texture');
+      }
+      for (const value of effect.clips) {
+        const clip = jsonObject(value);
+        const frames = clip?.frames;
+        if (!clip || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration) || clip.duration <= 0 || clip.duration > 600 || !Array.isArray(frames) || frames.length < 1 || frames.length > 72001) {
+          throw new Error(`invalid sampled effect ${source}: clip`);
+        }
+        let previous = -1;
+        for (const item of frames) {
+          const frame = jsonObject(item);
+          if (!frame || typeof frame.seconds !== 'number' || !Number.isFinite(frame.seconds) || frame.seconds <= previous || frame.seconds < 0 || frame.seconds > clip.duration + 0.0001 || !Array.isArray(frame.particles) || !Array.isArray(frame.quads) || !Array.isArray(frame.lights)) {
+            throw new Error(`invalid sampled effect ${source}: frame`);
+          }
+          previous = frame.seconds;
+        }
+        if (jsonObject(frames[0])?.seconds !== 0 || Math.abs(previous - clip.duration) > 0.0001) {
+          throw new Error(`invalid sampled effect ${source}: endpoints`);
+        }
       }
     } else if (extension === '.mscene') {
       auditedScenes += 1;

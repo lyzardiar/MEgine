@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "FlameStrikeDamageTarget",
+  "root": {
+    "id": "root",
+    "name": "FlameStrikeDamageTarget",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "SampledEffect": {
+        "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/FlameStrike/FlameStrikeDamageTarget.mfx",
+        "clip": 0,
+        "playing": true,
+        "looping": true,
+        "speed": 1,
+        "time_seconds": 0
+      }
+    },
+    "children": []
+  }
+}

@@ -423,6 +423,15 @@ export interface ParticleEmitter3D {
   seed: number;
 }
 
+export interface SampledEffect {
+  effect: string;
+  clip: number;
+  playing: boolean;
+  looping: boolean;
+  speed: number;
+  timeSeconds: number;
+}
+
 export interface EffekseerEffect {
   effect: string;
   playing: boolean;
@@ -1184,6 +1193,14 @@ export type SerializedComponentMap = {
     billboard: boolean;
     seed: number;
   };
+  SampledEffect: {
+    effect: string;
+    clip: number;
+    playing: boolean;
+    looping: boolean;
+    speed: number;
+    time_seconds: number;
+  };
   EffekseerEffect: {
     effect: string;
     playing: boolean;
@@ -1572,6 +1589,7 @@ export type ComponentName =
   | 'AutoRotate'
   | 'ParticleEmitter2D'
   | 'ParticleEmitter3D'
+  | 'SampledEffect'
   | 'EffekseerEffect'
   | 'SpineSkeleton'
   | 'Canvas'
@@ -1645,6 +1663,7 @@ export const COMPONENT_NAMES = [
   'AutoRotate',
   'ParticleEmitter2D',
   'ParticleEmitter3D',
+  'SampledEffect',
   'EffekseerEffect',
   'SpineSkeleton',
   'Canvas',

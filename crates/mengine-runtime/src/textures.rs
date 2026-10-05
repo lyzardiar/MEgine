@@ -79,6 +79,7 @@ fn opaque_alpha_texture() -> Arc<UiAlphaTexture> {
 }
 
 impl RuntimeTextureCache {
+    pub fn project_root(&self) -> Option<&Path> { self.project_root.as_deref() }
     pub fn new(project_root: Option<PathBuf>) -> Self {
         Self {
             project_root,

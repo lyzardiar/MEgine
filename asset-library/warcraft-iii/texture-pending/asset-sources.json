@@ -1,0 +1,1116 @@
+{
+  "sourceCollection": "community-ready",
+  "sourceFiles": [
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5.mdx",
+      "bytes": 8149,
+      "sha256": "3d1253560c60b1b71249aef30c56f195cc1dab152422bfa73cf4416e641964b0",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\Barrens_Rocks5.mdx"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen.mdx",
+      "bytes": 22374,
+      "sha256": "1efd399bdd725957d9d508fbb74d712dc378cce0cfc5bd2a0919409b8ea54d41",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\Evergreen.mdx"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax.mdx",
+      "bytes": 4084,
+      "sha256": "d3a56dbd660702bf4e6f23c04e63e17a73af8a2b1317da03855a2d6e3f0a7644",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\Plane Rocks_Paralax.mdx"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow.mdx",
+      "bytes": 4224,
+      "sha256": "bfe43799f4fd1bdc770cdf85cd03dc9331c46dacc713a77b4d994128098b1f38",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\Plane Rocks_Paralax_Ultra Glow.mdx"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b.mdx",
+      "bytes": 4196,
+      "sha256": "cce7e6ca9716b8fbecf8cc5ec885ed994e2aa86d004525ef09f7d413bcf88edc",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\Plane Rocks_Paralax_Ultra b.mdx"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra.mdx",
+      "bytes": 4196,
+      "sha256": "11d8c64169fdf9159e67bc56f791fa3dd82c8cec461cd8c84a4cb925cdb2f8f8",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\Plane Rocks_Paralax_Ultra.mdx"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b.mdx",
+      "bytes": 28945,
+      "sha256": "23d755828ba1bb8e7d2bfe10f01dccd0e01733423213aa2013f98e4e06b69db0",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\Rock Difuse Agria b.mdx"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene.mdx",
+      "bytes": 223534,
+      "sha256": "ddcb8ba04268544a7eb89eb3647bf7cecb5b8ae9a09f94287219264eae5ae777",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\Rock Scene.mdx"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1.mdx",
+      "bytes": 41349,
+      "sha256": "598638b518108f799240aeaa78ef4bf01afdbd6445a1f65788ce5d4022401ee0",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\Tree1.mdx"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2.mdx",
+      "bytes": 36428,
+      "sha256": "bc5f0b42c259d9d028b33ff78a57ce4567ea8ec2853af499bc635b7ef27315b2",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\Tree2.mdx"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3.mdx",
+      "bytes": 65940,
+      "sha256": "9d67bc052fc227ebf5928075059a9d9bd9968927934e903db791ff0b02ad384c",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\Tree3.mdx"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner].MDX",
+      "bytes": 1304,
+      "sha256": "5b28076ab460c0dc1878fd588c460c3fc8fbbe46793855a773c2790685350cfe",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\tile_carpet[corner].MDX"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed].MDX",
+      "bytes": 1304,
+      "sha256": "175bd5ef83489fa223e301ff4cf52a9060dff9ab0ee639e2a4d490d039993979",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\tile_carpet[corner_reversed].MDX"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge].MDX",
+      "bytes": 1304,
+      "sha256": "91eaa773979281a3c06a895432e4f5e4950909d2f8b7e5529bfb1c3a1b12b93d",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\tile_carpet[edge].MDX"
+      }
+    },
+    {
+      "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile].MDX",
+      "bytes": 1304,
+      "sha256": "ca85a98029294b8952fe4c53c5180e2a9043f6452e1dd8ab12cf89cd9ad94a8f",
+      "origin": {
+        "map": "G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\terrain\\ultimate-terraining-map-4\\The Ultimate Terraining Map 4.0 v1.w3x",
+        "path": "war3mapImported\\tile_carpet[tile].MDX"
+      }
+    }
+  ],
+  "generatedFiles": [
+    {
+      "path": "Assets/WarcraftIII/texture-pending-catalog.json",
+      "bytes": 128100,
+      "sha256": "2eb1bf6dbf62ff8baace4d1795cc7503b305b7b7ef0aa0e753ebe79a3a0ee44a"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5/geoset-00-layer-00-animated.glb",
+      "bytes": 14588,
+      "sha256": "3c961289dd97d1bcb6ddbd755e127e4a578e00bc5b37af47bfc692a4137c707d"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "274ecd18d8de61ed18df6e575eb41fc3db8f54b2a6a0589f7a475e4a04d657ee"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5/geoset-00-layer-00.glb",
+      "bytes": 8704,
+      "sha256": "8ac89b6eec55603cc4fda4a79bdf7825a811b9ff4cb49e2e946161b44b15ec16"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "7523fd4b7cdcef6bbd278fca99153e429283849e32e9bef47b29118f0927e0d2"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5.states.json",
+      "bytes": 295,
+      "sha256": "8f60056fea9f15e1a748cd9a4945e8c61954ea559cbe81dde0649794f4061a9c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-00-layer-00-animated.glb",
+      "bytes": 5780,
+      "sha256": "86ff41ecc4272fec0be716117b617e75d53d99f953dcf6ee769eb6f50245cc6d"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "6518205bfe2f7fb07840252d31a17d470d2edef9c5a29af2c74c5db611af8cea"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-00-layer-00.glb",
+      "bytes": 1972,
+      "sha256": "ecb888c049d9129f7014a7dedbebc5269f8e1cd8e0a69579a41796837fe942ce"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "943380b64671bb22a45fc0ae9c7305261cc5ad2da4f8b4486d3c780d8862b183"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-01-layer-00-animated.glb",
+      "bytes": 33012,
+      "sha256": "7d502371e73f5d1433d44690e701085cb071872f6e763456f687bb022f893ade"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-01-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "11b92269be4d1fdb3cadc607ffa795095b5e9db0d2a618cdb6702b2f01ae7aee"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-01-layer-00.glb",
+      "bytes": 19352,
+      "sha256": "75e95e390c7dd43599e7d32fa6c348e399c3c7a6cfe44a35492c064c4d11e960"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-01-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "f6899a4bc0e8b4f66f93f2a812259e15639e85d71941440196559e62358b6b4b"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen.states.json",
+      "bytes": 8665,
+      "sha256": "06677cfe744a04e158820b7f39bc2ebf5b8ad4c624d3147c2a4b347cc1fc2629"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-00-layer-00-animated.glb",
+      "bytes": 3368,
+      "sha256": "df86d6e737b0717dea1351f9720e04edc441c57c0526801d1bd91c202c18f6b5"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "bb7adda58c598dd39ad0106d9fafae5b15db61756afcf6ada628854b1efd0b7c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-00-layer-00.glb",
+      "bytes": 1188,
+      "sha256": "50f9fad97b0736d23354dfba0f0ef466710d064865844e5f6871ec393d410a9c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "fe428669df3d53cb73fb1e0de7efd0ae32fc01d45ffa9b38ca156bc4a4a4d605"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-01-layer-00-animated.glb",
+      "bytes": 3384,
+      "sha256": "ea1c702943eaa662f4f826ec27dc437b73d1eabe3778839312548ffeef528f77"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-01-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "1a902e8222f61d67ce1da8cd3f3f5dd1f3d5dad44446cb401de0800d1e5b3b03"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-01-layer-00.glb",
+      "bytes": 1204,
+      "sha256": "d2764dfb7c60c53e3dbeb9135418fa6aa554db505c3bcfeda5e14abe75064a6e"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-01-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "fda44800c8e5073f6dbbe20d8f4b68bc4bbedc60b4995e9cca93493962a664ff"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-02-layer-00-animated.glb",
+      "bytes": 3376,
+      "sha256": "e2a4c85f3f02fac5e2387bb624777bd6dbe4e3368e6b05553be45d673b94b357"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-02-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "8e90dd433c1b7bc6cafda3a024fffc6a92ebeab69ba2175c723f7ba40839464f"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-02-layer-00.glb",
+      "bytes": 1192,
+      "sha256": "545071249c7a3f7bc1957dc64ee9b252e8af04ecdb2243918d9da2110ad49d94"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-02-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "83fdcaa4bf27710ba1c76d028609f111c58586615e1cdbc85cfb306aa315d468"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-03-layer-00-animated.glb",
+      "bytes": 3892,
+      "sha256": "5af30ed2d5d981342b431d785e2224ba7618b2bc92d5bfaa9590484beebc8184"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-03-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "ecd60448060e2efa24d7d92544bd4c4e9c637d98cfe07e3588801928cad67413"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-03-layer-00.glb",
+      "bytes": 1512,
+      "sha256": "b401a9654e8afc330443c18ce2ad5abe8c944c6716aff361474e40298b55abe0"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-03-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "1b97b934f510a9219f8fb4f26cde3db25d525584f980c20ede795320c037a051"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax.states.json",
+      "bytes": 5125,
+      "sha256": "b1e04164dbd457c3406e37ee9cb434d732082b68c5c68d49d7c4a5e419679324"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-00-animated.glb",
+      "bytes": 3368,
+      "sha256": "df86d6e737b0717dea1351f9720e04edc441c57c0526801d1bd91c202c18f6b5"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "24ac9381f0f2cae6d25e65c91d6c063d3f1504cbcb81f73510268af05f4157ec"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-00.glb",
+      "bytes": 1188,
+      "sha256": "50f9fad97b0736d23354dfba0f0ef466710d064865844e5f6871ec393d410a9c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "bfdb54a53570b592f0f39155b91ae5367692a3b39c692d287561956d1a7b9ca8"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-01-animated.glb",
+      "bytes": 3368,
+      "sha256": "df86d6e737b0717dea1351f9720e04edc441c57c0526801d1bd91c202c18f6b5"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "c8ce39daec15222f430bba2ed75359c23600e02956ab28a9a2eb395957bc3758"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-01.glb",
+      "bytes": 1188,
+      "sha256": "50f9fad97b0736d23354dfba0f0ef466710d064865844e5f6871ec393d410a9c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "53a13ef8774dd04df11efd17f5387d92a6741c03ae1d79bd7f6277610280f3ae"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-00-animated.glb",
+      "bytes": 3384,
+      "sha256": "ea1c702943eaa662f4f826ec27dc437b73d1eabe3778839312548ffeef528f77"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "385fac03a8d5c5a10cf918e6a14eda28d37c343f4a673660b091941d2050bb0a"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-00.glb",
+      "bytes": 1204,
+      "sha256": "d2764dfb7c60c53e3dbeb9135418fa6aa554db505c3bcfeda5e14abe75064a6e"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "c287bae43989630f04855800f01f8f50d62a57b61c45b768db4c84dc10171708"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-01-animated.glb",
+      "bytes": 3384,
+      "sha256": "ea1c702943eaa662f4f826ec27dc437b73d1eabe3778839312548ffeef528f77"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "19a8e475be716a978a5f3a4026c255379cc79cfa37668d1177ef36bc05a7c705"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-01.glb",
+      "bytes": 1204,
+      "sha256": "d2764dfb7c60c53e3dbeb9135418fa6aa554db505c3bcfeda5e14abe75064a6e"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "7108d519d5425f3327c9e5210fbf8a3a73cbb5171bb1820317ad0aa75a9d41aa"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-00-animated.glb",
+      "bytes": 3376,
+      "sha256": "e2a4c85f3f02fac5e2387bb624777bd6dbe4e3368e6b05553be45d673b94b357"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "50d3e2332bff46a4e375b98e72c76b4c9073581995a5a88f8a5f8caedae871a1"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-00.glb",
+      "bytes": 1192,
+      "sha256": "545071249c7a3f7bc1957dc64ee9b252e8af04ecdb2243918d9da2110ad49d94"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "3542a3cbdccd56e4d7427552b0a18d2d097b33e77d4783dcb5e5f986c78acde3"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-01-animated.glb",
+      "bytes": 3376,
+      "sha256": "e2a4c85f3f02fac5e2387bb624777bd6dbe4e3368e6b05553be45d673b94b357"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "77b7dfdbde3fc9e26c7608db1ce9ab9e1a1837c601f867c61a4cb760620fe9f2"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-01.glb",
+      "bytes": 1192,
+      "sha256": "545071249c7a3f7bc1957dc64ee9b252e8af04ecdb2243918d9da2110ad49d94"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "0615ad79b6f9309b8c5bbe43db574e2405fc7837c57eed48b6369f8f429a798c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-00-animated.glb",
+      "bytes": 3892,
+      "sha256": "5af30ed2d5d981342b431d785e2224ba7618b2bc92d5bfaa9590484beebc8184"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "1640da74e2d790144c403989e043cbcd0bd8ed3a10f15cf575f0c37c1576d907"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-00.glb",
+      "bytes": 1512,
+      "sha256": "b401a9654e8afc330443c18ce2ad5abe8c944c6716aff361474e40298b55abe0"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "274273a8219f7a745c6e8388117a8224beaef5c9335bcc581f116a0addafd5ee"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-01-animated.glb",
+      "bytes": 3892,
+      "sha256": "5af30ed2d5d981342b431d785e2224ba7618b2bc92d5bfaa9590484beebc8184"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "3229550675ff9813773c9b9d287f0f42ced5ceb3bb1ee002d7ede1dcbbf52791"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-01.glb",
+      "bytes": 1512,
+      "sha256": "b401a9654e8afc330443c18ce2ad5abe8c944c6716aff361474e40298b55abe0"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "e8d0ef570126513f2050e8b915f5d5cb47649b8301489fe91f0dbbd841579ccb"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-00-animated.glb",
+      "bytes": 3368,
+      "sha256": "df86d6e737b0717dea1351f9720e04edc441c57c0526801d1bd91c202c18f6b5"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "9a9cc0611fc88302d6f1df4c02ee562edfe8c41ad930d2eaba73c84a1a9f22b2"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-00.glb",
+      "bytes": 1188,
+      "sha256": "50f9fad97b0736d23354dfba0f0ef466710d064865844e5f6871ec393d410a9c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "82a05828e4cd6fa7fcdf43be609bd35318de84f573e3180493b6d3be0b0314ab"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-01-animated.glb",
+      "bytes": 3368,
+      "sha256": "df86d6e737b0717dea1351f9720e04edc441c57c0526801d1bd91c202c18f6b5"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "62a02bfdfcd4d1adce25bc934cd3013b62cb8bfc74d79054dbdc51c3cec304ad"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-01.glb",
+      "bytes": 1188,
+      "sha256": "50f9fad97b0736d23354dfba0f0ef466710d064865844e5f6871ec393d410a9c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "d39f13b0f2decd600e88c94f5c09acb2219fbc52ed7920721c1fe9765076e597"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-00-animated.glb",
+      "bytes": 3384,
+      "sha256": "ea1c702943eaa662f4f826ec27dc437b73d1eabe3778839312548ffeef528f77"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "f12cf5b0962b752de2bf10b9ac32ca591617cac53f79d68dbe912b8645fa37ef"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-00.glb",
+      "bytes": 1204,
+      "sha256": "d2764dfb7c60c53e3dbeb9135418fa6aa554db505c3bcfeda5e14abe75064a6e"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "31fd86bf59707e9967500d9d75cd69625fd352292d318680b0bff44fc35a786a"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-01-animated.glb",
+      "bytes": 3384,
+      "sha256": "ea1c702943eaa662f4f826ec27dc437b73d1eabe3778839312548ffeef528f77"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "0a40e6fc05c7997a63fae31257ec514a56a743add0c6c2ea00ee8707a92ada68"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-01.glb",
+      "bytes": 1204,
+      "sha256": "d2764dfb7c60c53e3dbeb9135418fa6aa554db505c3bcfeda5e14abe75064a6e"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "0e2e8ab720a8479de16b0a729638765f236e0f9d82127d1cbb9e4f2404041f5a"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-00-animated.glb",
+      "bytes": 3376,
+      "sha256": "e2a4c85f3f02fac5e2387bb624777bd6dbe4e3368e6b05553be45d673b94b357"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "673c0afb3109eb7084e568122f991089c8edf6a590d88ed05b6b7fe59ad1797a"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-00.glb",
+      "bytes": 1192,
+      "sha256": "545071249c7a3f7bc1957dc64ee9b252e8af04ecdb2243918d9da2110ad49d94"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "5ad7bd64d07e17ab392f07914d7280eeeb86f343992bddb70f5c40c55cf03e43"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-01-animated.glb",
+      "bytes": 3376,
+      "sha256": "e2a4c85f3f02fac5e2387bb624777bd6dbe4e3368e6b05553be45d673b94b357"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "d1e44f6ed3a6b6ad9dcaae8c46ffcdbbed693728b1b8ea12dd1b0bbbf2b9d637"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-01.glb",
+      "bytes": 1192,
+      "sha256": "545071249c7a3f7bc1957dc64ee9b252e8af04ecdb2243918d9da2110ad49d94"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "40b761dd36bbfb79e08efdd7f36850a4b8299c731a60a780423662e9bd7b88f8"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-00-animated.glb",
+      "bytes": 3892,
+      "sha256": "5af30ed2d5d981342b431d785e2224ba7618b2bc92d5bfaa9590484beebc8184"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "fb5aca34f16d2dd40bac53cb6746603da0cde41daa95c359a6bd1e0a67c9458b"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-00.glb",
+      "bytes": 1512,
+      "sha256": "b401a9654e8afc330443c18ce2ad5abe8c944c6716aff361474e40298b55abe0"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "b1047b4f6e75ece9492f0ec4d8dc13b9fbec3b6f91bc80ca838e4d0e8f2607c8"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-01-animated.glb",
+      "bytes": 3892,
+      "sha256": "5af30ed2d5d981342b431d785e2224ba7618b2bc92d5bfaa9590484beebc8184"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "f356e3e26e8f23917ee220dc839926080cd5c517560ab9391075d1b4855daf47"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-01.glb",
+      "bytes": 1512,
+      "sha256": "b401a9654e8afc330443c18ce2ad5abe8c944c6716aff361474e40298b55abe0"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "a8f738264a53f9eb1c5e056f5102b24005ff717e7f857fc8626ad0b8c36bc42e"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b.states.json",
+      "bytes": 7933,
+      "sha256": "538f474bf5eef6074ee52e6a7e433eb1a0a5a2fe782776dcf5c4c18bca4e468c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-00-animated.glb",
+      "bytes": 3368,
+      "sha256": "df86d6e737b0717dea1351f9720e04edc441c57c0526801d1bd91c202c18f6b5"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "9ef4cca142b6dd0d7aad10a9f3eb4ae91b59ee71d25c5d72e35b718dd194eb9d"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-00.glb",
+      "bytes": 1188,
+      "sha256": "50f9fad97b0736d23354dfba0f0ef466710d064865844e5f6871ec393d410a9c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "c64267822cc5189e8b35e22c5cf8ef10bc5584e6e5528a5b2d77f78f32e48b16"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-01-animated.glb",
+      "bytes": 3368,
+      "sha256": "df86d6e737b0717dea1351f9720e04edc441c57c0526801d1bd91c202c18f6b5"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "505d2174682b2d30fdfaa13d017596df44dbd0745e63b607c4b6bd43bf35a188"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-01.glb",
+      "bytes": 1188,
+      "sha256": "50f9fad97b0736d23354dfba0f0ef466710d064865844e5f6871ec393d410a9c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "e9806fd8245d9021bbd98b8a62ea21fab36f1e77ed506170954c755be4f90e18"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-02-animated.glb",
+      "bytes": 3368,
+      "sha256": "df86d6e737b0717dea1351f9720e04edc441c57c0526801d1bd91c202c18f6b5"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-02-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "1c71ad34180aebaeec0fe23ab96b1062d3948d24c018d833113a6fb421eb2ad9"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-02.glb",
+      "bytes": 1188,
+      "sha256": "50f9fad97b0736d23354dfba0f0ef466710d064865844e5f6871ec393d410a9c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-02.glb.meta",
+      "bytes": 103,
+      "sha256": "cb8942267758075d6667062f3bb697e86f3424c02ce1e42e7b3dad68998969e6"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-00-animated.glb",
+      "bytes": 3384,
+      "sha256": "ea1c702943eaa662f4f826ec27dc437b73d1eabe3778839312548ffeef528f77"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "959b6a623c902466e4f8fe5f24068e205e784dd27c805e76da3ab903e640c02c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-00.glb",
+      "bytes": 1204,
+      "sha256": "d2764dfb7c60c53e3dbeb9135418fa6aa554db505c3bcfeda5e14abe75064a6e"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "89d2c1f0894ef2b09dff6cb21bab453fabe72b854428bfc771e4c552c6754d4f"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-01-animated.glb",
+      "bytes": 3384,
+      "sha256": "ea1c702943eaa662f4f826ec27dc437b73d1eabe3778839312548ffeef528f77"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "a9ee56ae79952a35ec7f7b066e15efc1675b18af0992fdba547e2cc9475fe3df"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-01.glb",
+      "bytes": 1204,
+      "sha256": "d2764dfb7c60c53e3dbeb9135418fa6aa554db505c3bcfeda5e14abe75064a6e"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "267213c98a50ad156d778e1ffe962cabfb341988139ef3caef92f6f494638790"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-00-animated.glb",
+      "bytes": 3376,
+      "sha256": "e2a4c85f3f02fac5e2387bb624777bd6dbe4e3368e6b05553be45d673b94b357"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "7d9415a24b2346d91071565996dd04c7c9ee4259c356bbe99b7d0227348d0ff6"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-00.glb",
+      "bytes": 1192,
+      "sha256": "545071249c7a3f7bc1957dc64ee9b252e8af04ecdb2243918d9da2110ad49d94"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "9850f8dae91c303607ec4e4d0886a9d5459139b7bbd592abbf550c01ef70c970"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-01-animated.glb",
+      "bytes": 3376,
+      "sha256": "e2a4c85f3f02fac5e2387bb624777bd6dbe4e3368e6b05553be45d673b94b357"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "cd70994499e7bdc6417c5224d551744e22b1d47eec5f3126da20b29d90b90309"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-01.glb",
+      "bytes": 1192,
+      "sha256": "545071249c7a3f7bc1957dc64ee9b252e8af04ecdb2243918d9da2110ad49d94"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "992eb3d1b99a992e2f2dd41263d3922023a324cb5257709ef88e054b8a453007"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-00-animated.glb",
+      "bytes": 3892,
+      "sha256": "5af30ed2d5d981342b431d785e2224ba7618b2bc92d5bfaa9590484beebc8184"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "35bdb9ce58e8d8f98c7fb8bfd349181f210f2b73f1c28c3b049721e859e2e9ba"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-00.glb",
+      "bytes": 1512,
+      "sha256": "b401a9654e8afc330443c18ce2ad5abe8c944c6716aff361474e40298b55abe0"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "e9fc85292771a2210d0e830b092c1f6cafebb07163722b98cb4e37e8452e2db9"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-01-animated.glb",
+      "bytes": 3892,
+      "sha256": "5af30ed2d5d981342b431d785e2224ba7618b2bc92d5bfaa9590484beebc8184"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-01-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "9ba782d44d8ee1b2483e47a5066253c1e2c07c5a587209da9388c430fa85887c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-01.glb",
+      "bytes": 1512,
+      "sha256": "b401a9654e8afc330443c18ce2ad5abe8c944c6716aff361474e40298b55abe0"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-01.glb.meta",
+      "bytes": 103,
+      "sha256": "13d39cd0058a8368ecaa55337845e93b8716b2bf8521c319b553e3af54a36da6"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow.states.json",
+      "bytes": 8635,
+      "sha256": "eaf785f8debac1532aeedaaccb61c2855e5ab50c6e6e603de4edf79358c136ff"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra.states.json",
+      "bytes": 7933,
+      "sha256": "538f474bf5eef6074ee52e6a7e433eb1a0a5a2fe782776dcf5c4c18bca4e468c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b/geoset-00-layer-00-animated.glb",
+      "bytes": 50780,
+      "sha256": "2ae95e15908ec6ea13ba1ce6551ab2b737d95415478b8cf1fe5bc135a0da0f9b"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "213e4e839edc207979ebdc7d9c5dc03699a764ab547346dea8285180fb7c0727"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b/geoset-00-layer-00.glb",
+      "bytes": 31936,
+      "sha256": "29cbbf649e3b1f5d593a255bb9be6bfcdea008cf5fc1ef9b7f18ea55ab435b3f"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "5d4f4d106b418d1f67713fab4f006da9eb988033ec394e8b7473460456aba833"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b.states.json",
+      "bytes": 295,
+      "sha256": "44697d2745d304efc956957d271835127af96f216228800b16518b2507ed2d63"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene/geoset-00-layer-00-animated.glb",
+      "bytes": 393128,
+      "sha256": "caaf1e46eca9b2d7a877c82ffccd0d6c2ff1b9e20023dd4727102a37b7c32eca"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "7d1ee2a3f697b17d986c3529506174eed66f4930e1f07af44f0471098012969f"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene/geoset-00-layer-00.glb",
+      "bytes": 261836,
+      "sha256": "01143da10b2fe47343708a1307f8a0e604ad0dabcac5f99885b1f08b74549ea8"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "eaca07b132baea3c71b86cb2bd6a2f99b0fb13aaa1a410b2e00edce6bfb1ab35"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene.states.json",
+      "bytes": 295,
+      "sha256": "44697d2745d304efc956957d271835127af96f216228800b16518b2507ed2d63"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner]/geoset-00-layer-00-animated.glb",
+      "bytes": 4400,
+      "sha256": "62284cb857523cc43923e85468522067b04dde03402a2cfeefbeba99ad43d5e0"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner]/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "dc80da90b5f86533fba2b6086045d3339db52194c305b1531b9f50803e5ea3b4"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner]/geoset-00-layer-00.glb",
+      "bytes": 1056,
+      "sha256": "246201de66af30fd8e7067a9cdd249041ff208acb4361f6b15b2b25d20f09eba"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner]/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "e6484bb43e64a2b6424dcb237f9259a136ca88dd39867b77f9c613f4e704ea6c"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner].states.json",
+      "bytes": 4975,
+      "sha256": "44b0a721195431316a655f14ae2112834bf3233653c22dcf1b442162a252ead9"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed]/geoset-00-layer-00-animated.glb",
+      "bytes": 4400,
+      "sha256": "127a57e0eaa1206197017d29b37435db64b0b9cfb08d7dd5a906a45cbe9409c2"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed]/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "116c726cbc94f6168d3b502e4f00183f6dc986e3a92a93238f1d9722c6f410dd"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed]/geoset-00-layer-00.glb",
+      "bytes": 1056,
+      "sha256": "f663e0c4aa2b3f705dbd8da8c75fd35962d5a537880c9ab37dd550ab6e420388"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed]/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "3b2ad871815552814633b65d49eada59a9d645a77d7a845d0a124d71cd802525"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed].states.json",
+      "bytes": 4975,
+      "sha256": "44b0a721195431316a655f14ae2112834bf3233653c22dcf1b442162a252ead9"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge]/geoset-00-layer-00-animated.glb",
+      "bytes": 4400,
+      "sha256": "e84c5e3e9f1a2cb41599c5e81f6b8519b8b568d49623b4b6599b98ec97dd48e5"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge]/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "727dbf5e21dd50611fe4c3b6247a3188567e165db78ac3ef5803303e463b25cb"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge]/geoset-00-layer-00.glb",
+      "bytes": 1056,
+      "sha256": "c3c66e8610c1dc3e6fcc302da8a736103e811323541d59ff14e4259047e44c74"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge]/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "922db5278befd67260b3a9f88ab86ccc7e659f88d7bdde2d4ab628f409a4e2e7"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge].states.json",
+      "bytes": 4975,
+      "sha256": "44b0a721195431316a655f14ae2112834bf3233653c22dcf1b442162a252ead9"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile]/geoset-00-layer-00-animated.glb",
+      "bytes": 4400,
+      "sha256": "c3f64419b7fea866ce163344ecb02c0a116ffc8875e1a5ea4e82b5028bea35eb"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile]/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "1d4a1ae11bc1fda84c45a18e4cf39f47f58852fd310c0a2ec4ad7644933d628a"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile]/geoset-00-layer-00.glb",
+      "bytes": 1056,
+      "sha256": "89a4d559369db82566acf0b2fea572365cbfdf1e614bbe1449b21a8954cb462f"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile]/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "0a54b4098dc3bba764bae5dd84320e0ad0a23c65baf967871993e75380d2a327"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile].states.json",
+      "bytes": 4975,
+      "sha256": "44b0a721195431316a655f14ae2112834bf3233653c22dcf1b442162a252ead9"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-00-layer-00-animated.glb",
+      "bytes": 40036,
+      "sha256": "2c86976aec0055b5c9722e742955fe932965256e84aaa9ccd513607ab852fac7"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "6fa3d6ccea4607da956b72b36f66379739b6c38bf1534d58f1107f17d0cccb1b"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-00-layer-00.glb",
+      "bytes": 23712,
+      "sha256": "8028813818707e98304c7e3762e0091e344c56abb5fc6bef1f4a417c50ed6c96"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "0066731bfcb2373c48210835081d23f278b5331fc8c587d5bbc53c62c5674e17"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-01-layer-00-animated.glb",
+      "bytes": 28268,
+      "sha256": "e35d31e8b06552c94e7974c99972fd0c64854959d30b9e6b198c156ecbcc6fb6"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-01-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "4d5e43fae73ae52b7ebaf31564bea24e465ccdc49d88b5406e232c214cef19c7"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-01-layer-00.glb",
+      "bytes": 15664,
+      "sha256": "9712dea1b43659bfb8498e2ef732bebe4807ade0bee07cc4e7f6fbf8d9ca89cf"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-01-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "6b3d35c2325312d69b1af745eecce4c6aa377ef0ef21cee692e1b189e687cd2a"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1.states.json",
+      "bytes": 8665,
+      "sha256": "06677cfe744a04e158820b7f39bc2ebf5b8ad4c624d3147c2a4b347cc1fc2629"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-00-layer-00-animated.glb",
+      "bytes": 19824,
+      "sha256": "ce10da434262275ec46349ee8f5b3e234781c3173ca6c29aee08b204cd1bd223"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "fb50c73bac7e605cfea8bf2097311ae01b3929f27b78288319eede6ee2f50f5b"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-00-layer-00.glb",
+      "bytes": 10496,
+      "sha256": "13bbb3f3e84b0d8de91b2c0f0052f13ea8ea8b37161ffcbe1954dfff7991755e"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "506d542833b111b4137cc0e4644ba388d2286fe80e05e6069f859ef9a8c0d468"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-01-layer-00-animated.glb",
+      "bytes": 40940,
+      "sha256": "3ae7a98d93d5e0de7b3de8f1f8f0bd1e62f09a29b6c66a95771c4d23b0b6346d"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-01-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "9bd1fdaba80653c82de75f894511886ef297e07397cd015b0647631f4ada561f"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-01-layer-00.glb",
+      "bytes": 24220,
+      "sha256": "ac020fa2b335b87930f47554410867926340355ccb9665d7b852b47bb2962b57"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-01-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "014453f5447fc864ce8cb31b8bb21fd89beb4b3abb113b1576e891cf848fcb3e"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2.states.json",
+      "bytes": 8665,
+      "sha256": "06677cfe744a04e158820b7f39bc2ebf5b8ad4c624d3147c2a4b347cc1fc2629"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-00-layer-00-animated.glb",
+      "bytes": 19088,
+      "sha256": "9da738ffe6af19f41a3e180895b5419fc6f8d9e637fc8bf6418f8ea266182ea1"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-00-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "1f3c3a5b6a2784a75e7e8aba1a5deaadac7d74275bf1fbde4226c140367992c4"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-00-layer-00.glb",
+      "bytes": 10040,
+      "sha256": "654bef64012bc4ab32ba552c1bb6d49fef3c36e6f94bdbdd290c86e552e4fedc"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-00-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "b3328eeda9867ef891513b553b6fa325ae63de87a19da92bffa844191fdc11b7"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-01-layer-00-animated.glb",
+      "bytes": 83296,
+      "sha256": "1eee4049d70db3751c6abdaef3a886c01d5a67809f4ec44ddb2b07c0e297e94d"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-01-layer-00-animated.glb.meta",
+      "bytes": 103,
+      "sha256": "76a5b036c091f3ae0f9ff8e5fc0d8e2573ef237aee0a600550e2c82d9316a145"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-01-layer-00.glb",
+      "bytes": 52164,
+      "sha256": "dff0a9241471d6ddc435d642a28a8c2a7928f880740bae1d8580f6d05b1bea41"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-01-layer-00.glb.meta",
+      "bytes": 103,
+      "sha256": "6899c70640770731ffab411e463b0ae137cfa6292abdcbff212c8cec3e272c94"
+    },
+    {
+      "path": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3.states.json",
+      "bytes": 8665,
+      "sha256": "06677cfe744a04e158820b7f39bc2ebf5b8ad4c624d3147c2a4b347cc1fc2629"
+    }
+  ],
+  "converter": {
+    "scripts/convert-warcraft-missing-geometry.py": "adb8eb0366e36977a6fa4290688b1520673454d248dbfcab188aede44fa33cac",
+    "scripts/convert-warcraft-assets.py": "43c960e281b9ed2d8df2ac7cdd1f2b6df86447e36a4a2f1383b9b4b8ac62b979",
+    "scripts/warcraft-assets/Program.cs": "b7030885ccc6520355ff4bd83c21674293da5c43811a46a4d0001793aede1a7b",
+    "scripts/warcraft-assets/TextureTracks.cs": "a85341e257ed859a67efde6034b95d2f25bfb5a66f2afae6ddfdc290ecd4705f",
+    "scripts/warcraft-assets/EffectExport.cs": "1224533fb4d270841e4e2dc9fe3c2af7837222f30e0886ab38973485222ec04d",
+    "scripts/warcraft-assets/MdxExport.csproj": "94062f8546b73b73b94f5c2af346268b595eb0fa9ceac44ab2d6e80a04ddecd9"
+  },
+  "upstream": {
+    "url": "https://github.com/Darithos/W3ModelViewer",
+    "commit": "4fe46a0772520fc7b55078bf32cda1237d1b5f2e",
+    "archiveSha256": "dd1f41530b42c1bfe6039b1a0271bcc5167b137f829f87b6a08cea0b47e46eda"
+  },
+  "scope": "Native geometry and animation only; original material texture references retained. No substitute textures or battlefield prefabs generated."
+}

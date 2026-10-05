@@ -1,0 +1,16 @@
+{
+  "nativePassed": true,
+  "probeSha256": "a036b319536ef17e4aba0edc046f2774a9ba4daaf033d8b5c8453ea9e7f011b4",
+  "hashVerifiedFiles": 1523,
+  "effectSources": 229,
+  "effectClips": 373,
+  "effectFrames": 36454,
+  "sampledParticles": 221453,
+  "sampledQuads": 156480,
+  "sampledLights": 16103,
+  "metadataOnly": 19,
+  "pendingGeometryModels": 15,
+  "nativeGeometryLoads": 176,
+  "terminalHolds": 44,
+  "scope": "Fresh native asset parsing and pose bounds validation. GPU previews are recorded separately; full Warcraft effect solver and gameplay/camera integration are incomplete."
+}

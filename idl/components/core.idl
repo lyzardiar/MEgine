@@ -473,6 +473,16 @@ component ParticleEmitter3D {
   seed:             int    = 1
 }
 
+/// Sampled billboard, ribbon and light clips converted from authored effects.
+component SampledEffect {
+  effect:       string = ""
+  clip:         int    = 0
+  playing:      bool   = true
+  looping:      bool   = true
+  speed:        float  = 1
+  time_seconds: float  = 0
+}
+
 /// Effekseer 1.80 effect evaluated by the shared runtime and rendered through MEngine RHI.
 component EffekseerEffect {
   effect:          string = ""

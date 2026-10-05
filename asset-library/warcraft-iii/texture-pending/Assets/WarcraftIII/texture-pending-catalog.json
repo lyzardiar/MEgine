@@ -1,0 +1,3701 @@
+{
+  "schemaVersion": 1,
+  "models": [
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5.mdx",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 0,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "redstone_rock.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5.states.json",
+      "clips": [
+        {
+          "name": "stand",
+          "duration": 0.001,
+          "loop": true,
+          "frameCount": 1
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'redstone_rock.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen.mdx",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 0,
+                "shadingFlags": 17,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "worldtreetrunk.blp",
+              "flags": 3,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "UI\\Glues\\SinglePlayer\\NightElfCampaign3d\\AeriePeaksFir01CanopySkin.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-01-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen/geoset-01-layer-00-animated.glb",
+          "geoset": 1,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 17,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "worldtreetrunk.blp",
+              "flags": 3,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "UI\\Glues\\SinglePlayer\\NightElfCampaign3d\\AeriePeaksFir01CanopySkin.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen.states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frameCount": 40
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'worldtreetrunk.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax.mdx",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-01-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-01-layer-00-animated.glb",
+          "geoset": 1,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-02-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-02-layer-00-animated.glb",
+          "geoset": 2,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-03-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax/geoset-03-layer-00-animated.glb",
+          "geoset": 3,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax.states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frameCount": 12
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'rockseemles a1.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow.mdx",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 49,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 4,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-01-animated.glb",
+          "geoset": 0,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 49,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 4,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-02.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-00-layer-02-animated.glb",
+          "geoset": 0,
+          "layer": 2,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 49,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 4,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-00-animated.glb",
+          "geoset": 1,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 1,
+            "flags": 49,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-01-layer-01-animated.glb",
+          "geoset": 1,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 1,
+            "flags": 49,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-00-animated.glb",
+          "geoset": 2,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 1,
+            "flags": 49,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-02-layer-01-animated.glb",
+          "geoset": 2,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 1,
+            "flags": 49,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-00-animated.glb",
+          "geoset": 3,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 1,
+            "flags": 49,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow/geoset-03-layer-01-animated.glb",
+          "geoset": 3,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 1,
+            "flags": 49,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow.states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frameCount": 12
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'rockseemles a1.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b.mdx",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-00-layer-01-animated.glb",
+          "geoset": 0,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-00-animated.glb",
+          "geoset": 1,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-01-layer-01-animated.glb",
+          "geoset": 1,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-00-animated.glb",
+          "geoset": 2,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-02-layer-01-animated.glb",
+          "geoset": 2,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-00-animated.glb",
+          "geoset": 3,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b/geoset-03-layer-01-animated.glb",
+          "geoset": 3,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b.states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frameCount": 12
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'rockseemles a1.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra.mdx",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-00-layer-01-animated.glb",
+          "geoset": 0,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-00-animated.glb",
+          "geoset": 1,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-01-layer-01-animated.glb",
+          "geoset": 1,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-00-animated.glb",
+          "geoset": 2,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-02-layer-01-animated.glb",
+          "geoset": 2,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 2,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 2,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-00-animated.glb",
+          "geoset": 3,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra/geoset-03-layer-01-animated.glb",
+          "geoset": 3,
+          "layer": 1,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              },
+              {
+                "filterMode": 2,
+                "shadingFlags": 0,
+                "textureId": 3,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 3,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles A1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles B1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles C1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "RockSeemles D1.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra.states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frameCount": 12
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'rockseemles a1.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b.mdx",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 0,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "redstone_rock.blp",
+              "flags": 3,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b.states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.031,
+          "loop": true,
+          "frameCount": 1
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'redstone_rock.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene.mdx",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 0,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "redstone_rock.blp",
+              "flags": 3,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene.states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.031,
+          "loop": true,
+          "frameCount": 1
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'redstone_rock.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1.mdx",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 0,
+                "shadingFlags": 0,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "worldtreetrunk.blp",
+              "flags": 3,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "UI\\Glues\\SinglePlayer\\HumanCampaign3D\\HumanCampaignTreeCanopy.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-01-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1/geoset-01-layer-00-animated.glb",
+          "geoset": 1,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 17,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "worldtreetrunk.blp",
+              "flags": 3,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "UI\\Glues\\SinglePlayer\\HumanCampaign3D\\HumanCampaignTreeCanopy.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1.states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frameCount": 40
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'worldtreetrunk.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2.mdx",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 17,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "UI\\Glues\\SinglePlayer\\HumanCampaign3D\\HumanCampaignTreeCanopy.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "worldtreetrunk.blp",
+              "flags": 3,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-01-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2/geoset-01-layer-00-animated.glb",
+          "geoset": 1,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 0,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "UI\\Glues\\SinglePlayer\\HumanCampaign3D\\HumanCampaignTreeCanopy.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "worldtreetrunk.blp",
+              "flags": 3,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2.states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frameCount": 40
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'worldtreetrunk.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3.mdx",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 17,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "UI\\Glues\\SinglePlayer\\HumanCampaign3D\\HumanCampaignTreeCanopy.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "worldtreetrunk.blp",
+              "flags": 3,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        },
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-01-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3/geoset-01-layer-00-animated.glb",
+          "geoset": 1,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 0,
+                "shadingFlags": 0,
+                "textureId": 1,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 1,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "UI\\Glues\\SinglePlayer\\HumanCampaign3D\\HumanCampaignTreeCanopy.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            },
+            {
+              "replaceableId": 0,
+              "fileName": "worldtreetrunk.blp",
+              "flags": 3,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3.states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frameCount": 40
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'worldtreetrunk.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner].MDX",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner]/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner]/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 16,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "carpet.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner].states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frameCount": 40
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'carpet.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed].MDX",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed]/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed]/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 16,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "carpet.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed].states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frameCount": 40
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'carpet.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge].MDX",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge]/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge]/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 1,
+                "shadingFlags": 16,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "carpet.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge].states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frameCount": 40
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'carpet.blp'"
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile].MDX",
+      "parts": [
+        {
+          "mesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile]/geoset-00-layer-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile]/geoset-00-layer-00-animated.glb",
+          "geoset": 0,
+          "layer": 0,
+          "sourceMaterial": {
+            "priorityPlane": 0,
+            "flags": 0,
+            "layers": [
+              {
+                "filterMode": 0,
+                "shadingFlags": 16,
+                "textureId": 0,
+                "textureAnimationId": -1,
+                "coordId": 0,
+                "alpha": 1,
+                "emissiveMultiplier": 0,
+                "fresnelColor": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "fresnelMultiplier": 0,
+                "teamColorMultiplier": 0,
+                "textureSlots": {},
+                "alphaTrack": null,
+                "emissiveTrack": null,
+                "textureIdTrack": null,
+                "normalIdTrack": null,
+                "isPbr": false,
+                "diffuseTextureId": 0,
+                "flipbookTextureIds": []
+              }
+            ]
+          },
+          "sourceTextures": [
+            {
+              "replaceableId": 0,
+              "fileName": "carpet.blp",
+              "flags": 0,
+              "isTeamColor": false,
+              "isTeamGlow": false,
+              "isReplaceable": false
+            }
+          ]
+        }
+      ],
+      "stateTracks": "Assets/WarcraftIII/TexturePending/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile].states.json",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frameCount": 40
+        }
+      ],
+      "status": "geometry-converted-awaiting-original-textures",
+      "missingTexture": "'carpet.blp'"
+    }
+  ]
+}

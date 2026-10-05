@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "CameraCloseUpLow",
+  "root": {
+    "id": "root",
+    "name": "CameraCloseUpLow",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "SampledEffect": {
+        "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraCloseUpLow.mfx",
+        "clip": 0,
+        "playing": true,
+        "looping": true,
+        "speed": 1,
+        "time_seconds": 0
+      }
+    },
+    "children": []
+  }
+}

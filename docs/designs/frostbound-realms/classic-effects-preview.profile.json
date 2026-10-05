@@ -1,0 +1,625 @@
+{
+  "schemaVersion": 1,
+  "totalMs": 150.67510000000001,
+  "callTree": {
+    "name": "EditorViewportRenderer.render_world",
+    "totalMs": 150.67510000000001,
+    "selfMs": 0.013800000000024237,
+    "calls": 1,
+    "children": [
+      {
+        "name": "Effects",
+        "totalMs": 0.0303,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "EffekseerWorld.update",
+            "totalMs": 0.0214,
+            "selfMs": 0.0214,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "EffekseerWorld.append_to_frame",
+            "totalMs": 0.0089,
+            "selfMs": 0.0089,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Frame compile",
+        "totalMs": 72.84790000000001,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "TransformHierarchy.build",
+            "totalMs": 0.016,
+            "selfMs": 0.016,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "FrameCompiler.compile",
+            "totalMs": 72.8318,
+            "selfMs": 0.007000000000005002,
+            "calls": 1,
+            "children": [
+              {
+                "name": "Camera, meshes and lighting",
+                "totalMs": 71.4704,
+                "selfMs": 71.4704,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Canvas layout and text",
+                "totalMs": 0.022600000000000002,
+                "selfMs": 0.022600000000000002,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "World sprites",
+                "totalMs": 0.0153,
+                "selfMs": 0.0153,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Particles, trails and sorting",
+                "totalMs": 0.8577,
+                "selfMs": 0.8577,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Sprite regions and materials",
+                "totalMs": 0.1671,
+                "selfMs": 0.1671,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "UI batching",
+                "totalMs": 0.2917,
+                "selfMs": 0.2917,
+                "calls": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "name": "Diagnostics.texture_failures",
+            "totalMs": 0.00009999999999999999,
+            "selfMs": 0.00009999999999999999,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Render backend",
+        "totalMs": 71.2113,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "OffscreenTarget.ensure_size",
+            "totalMs": 0.0,
+            "selfMs": 0.0,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "Renderer.submit_frame_to",
+            "totalMs": 59.894299999999994,
+            "selfMs": 59.894299999999994,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "Renderer.read_offscreen_rgba8",
+            "totalMs": 11.317,
+            "selfMs": 11.317,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Resource sync",
+        "totalMs": 4.721,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "RuntimeMeshCache.sync",
+            "totalMs": 0.0086,
+            "selfMs": 0.0086,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeFontCache.sync",
+            "totalMs": 0.0031999999999999997,
+            "selfMs": 0.0031999999999999997,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_ui",
+            "totalMs": 4.685,
+            "selfMs": 4.685,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_ui_materials",
+            "totalMs": 0.018600000000000002,
+            "selfMs": 0.018600000000000002,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_materials",
+            "totalMs": 0.0056,
+            "selfMs": 0.0056,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_environment",
+            "totalMs": 0.0,
+            "selfMs": 0.0,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Profiler",
+        "totalMs": 1.8508,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "Profiler.snapshot",
+            "totalMs": 1.8508,
+            "selfMs": 1.8508,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "memory": [
+    {
+      "name": "CPU readback RGBA",
+      "domain": "cpu",
+      "bytes": 5242880,
+      "certainty": "exact",
+      "source": "Renderer.read_offscreen_rgba8 Vec length"
+    },
+    {
+      "name": "Frame packet / render objects",
+      "domain": "cpu",
+      "bytes": 0,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled render objects"
+    },
+    {
+      "name": "Frame packet / UI primitives",
+      "domain": "cpu",
+      "bytes": 674304,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI primitives"
+    },
+    {
+      "name": "Frame packet / UI batches",
+      "domain": "cpu",
+      "bytes": 75816,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI batches"
+    },
+    {
+      "name": "Frame packet / controls",
+      "domain": "cpu",
+      "bytes": 0,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI controls"
+    },
+    {
+      "name": "GPU offscreen color",
+      "domain": "gpu",
+      "bytes": 5242880,
+      "certainty": "estimate",
+      "source": "viewport width x height x 4 RGBA8 bytes"
+    },
+    {
+      "name": "GPU offscreen depth",
+      "domain": "gpu",
+      "bytes": 20971520,
+      "certainty": "estimate",
+      "source": "viewport width x height x 4 depth/stencil bytes x MSAA samples; physical format is backend-dependent"
+    },
+    {
+      "name": "GPU HDR and multisampled color",
+      "domain": "gpu",
+      "bytes": 73400320,
+      "certainty": "estimate",
+      "source": "resolved RGBA16F plus MSAA RGBA16F and surface RGBA8 attachments; excludes driver allocation padding"
+    },
+    {
+      "name": "GPU texture residency",
+      "domain": "gpu",
+      "bytes": 1327104,
+      "certainty": "estimate",
+      "source": "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded"
+    },
+    {
+      "name": "GPU live scene views",
+      "domain": "gpu",
+      "bytes": 0,
+      "certainty": "estimate",
+      "source": "resolved RGBA8 and RGBA16F, depth/stencil and MSAA color attachments; excludes driver padding"
+    }
+  ],
+  "residentMemoryEstimateBytes": 106934824,
+  "resources": [
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Abilities/Spells/Human/Banish/GenericGlow2bA.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Abilities\\Spells\\Human\\Banish\\GenericGlow2bA.png",
+      "loaded": true,
+      "sourceBytes": 19285,
+      "gpuBytesEstimate": 65536,
+      "dimensions": [
+        128,
+        128
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Abilities/Spells/Human/FlameStrike/MegaBlastTail.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Abilities\\Spells\\Human\\FlameStrike\\MegaBlastTail.png",
+      "loaded": true,
+      "sourceBytes": 24624,
+      "gpuBytesEstimate": 65536,
+      "dimensions": [
+        128,
+        128
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/ReplaceableTextures/Weather/Clouds8x8.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\ReplaceableTextures\\Weather\\Clouds8x8.png",
+      "loaded": true,
+      "sourceBytes": 180432,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/CartoonCloud.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\CartoonCloud.png",
+      "loaded": true,
+      "sourceBytes": 1625,
+      "gpuBytesEstimate": 4096,
+      "dimensions": [
+        32,
+        32
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Clouds8x8.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\Clouds8x8.png",
+      "loaded": true,
+      "sourceBytes": 180432,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Clouds8x8Mod.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\Clouds8x8Mod.png",
+      "loaded": true,
+      "sourceBytes": 155010,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Dust3.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\Dust3.png",
+      "loaded": true,
+      "sourceBytes": 7680,
+      "gpuBytesEstimate": 16384,
+      "dimensions": [
+        64,
+        64
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/GenericGlow2b.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\GenericGlow2b.png",
+      "loaded": true,
+      "sourceBytes": 20562,
+      "gpuBytesEstimate": 65536,
+      "dimensions": [
+        128,
+        128
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/GenericGlow2c.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\GenericGlow2c.png",
+      "loaded": true,
+      "sourceBytes": 17493,
+      "gpuBytesEstimate": 65536,
+      "dimensions": [
+        128,
+        128
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/GenericGlowX.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\GenericGlowX.png",
+      "loaded": true,
+      "sourceBytes": 3284,
+      "gpuBytesEstimate": 4096,
+      "dimensions": [
+        32,
+        32
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Ghost2.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\Ghost2.png",
+      "loaded": true,
+      "sourceBytes": 7736,
+      "gpuBytesEstimate": 8192,
+      "dimensions": [
+        64,
+        32
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/LavaLump.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\LavaLump.png",
+      "loaded": true,
+      "sourceBytes": 2754,
+      "gpuBytesEstimate": 4096,
+      "dimensions": [
+        32,
+        32
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/RibbonBlur1.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\RibbonBlur1.png",
+      "loaded": true,
+      "sourceBytes": 12382,
+      "gpuBytesEstimate": 16384,
+      "dimensions": [
+        64,
+        64
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/RibbonNE1.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\RibbonNE1.png",
+      "loaded": true,
+      "sourceBytes": 7499,
+      "gpuBytesEstimate": 8192,
+      "dimensions": [
+        64,
+        32
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Shockwave10.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\Shockwave10.png",
+      "loaded": true,
+      "sourceBytes": 22277,
+      "gpuBytesEstimate": 65536,
+      "dimensions": [
+        128,
+        128
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/WaterBlobs1.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\WaterBlobs1.png",
+      "loaded": true,
+      "sourceBytes": 15125,
+      "gpuBytesEstimate": 16384,
+      "dimensions": [
+        64,
+        64
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/dust1.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\dust1.png",
+      "loaded": true,
+      "sourceBytes": 2023,
+      "gpuBytesEstimate": 4096,
+      "dimensions": [
+        32,
+        32
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/firering6.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\firering6.png",
+      "loaded": true,
+      "sourceBytes": 8587,
+      "gpuBytesEstimate": 16384,
+      "dimensions": [
+        64,
+        64
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/rock64.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\rock64.png",
+      "loaded": true,
+      "sourceBytes": 16407,
+      "gpuBytesEstimate": 16384,
+      "dimensions": [
+        64,
+        64
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/snowflake.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\snowflake.png",
+      "loaded": true,
+      "sourceBytes": 11255,
+      "gpuBytesEstimate": 16384,
+      "dimensions": [
+        64,
+        64
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/star5tga.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\star5tga.png",
+      "loaded": true,
+      "sourceBytes": 9363,
+      "gpuBytesEstimate": 16384,
+      "dimensions": [
+        64,
+        64
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/star6.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\effect-preview-1791234307094\\sample\\Assets\\WarcraftIII\\Effects\\Textures\\remaining-ready\\Textures\\star6.png",
+      "loaded": true,
+      "sourceBytes": 25647,
+      "gpuBytesEstimate": 65536,
+      "dimensions": [
+        128,
+        128
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    }
+  ],
+  "resourcesTruncated": false,
+  "resourceSampleAgeMs": 0.004,
+  "counts": {
+    "msaaSamples": 4,
+    "entities": 17,
+    "renderObjects": 0,
+    "sceneViews": 0,
+    "uiPrimitives": 1317,
+    "uiBatches": 729,
+    "uiDrawCalls": 729,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialPipelinesRejected": 0,
+    "materialPipelineEvictions": 0,
+    "materialTexturesColor": 0,
+    "materialTexturesData": 0,
+    "materialTextureBindGroups": 0,
+    "materialSamplers": 0
+  }
+}

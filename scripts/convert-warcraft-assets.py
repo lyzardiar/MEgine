@@ -66,7 +66,7 @@ def sampler():
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(package.read(member))
     sources = {'upstream.zip': sha(archive.read_bytes())}
-    for path in [ROOT/'scripts/convert-warcraft-assets.py',ROOT/'scripts/warcraft-assets/Program.cs',ROOT/'scripts/warcraft-assets/TextureTracks.cs',ROOT/'scripts/warcraft-assets/MdxExport.csproj']:
+    for path in [ROOT/'scripts/convert-warcraft-assets.py',ROOT/'scripts/warcraft-assets/Program.cs',ROOT/'scripts/warcraft-assets/TextureTracks.cs',ROOT/'scripts/warcraft-assets/EffectExport.cs',ROOT/'scripts/warcraft-assets/MdxExport.csproj']:
         sources[path.relative_to(ROOT).as_posix()] = sha(path.read_bytes())
     binary = cache / 'bin'
     subprocess.run(['dotnet', 'build', str(ROOT / 'scripts/warcraft-assets/MdxExport.csproj'), '-p:Wc3Core=' + str(core), '-o', str(binary), '--nologo', '--verbosity', 'quiet'], check=True)

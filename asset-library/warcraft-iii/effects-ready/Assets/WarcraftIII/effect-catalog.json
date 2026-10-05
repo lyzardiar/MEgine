@@ -1,0 +1,5678 @@
+{
+  "schemaVersion": 1,
+  "models": [
+    {
+      "source": "Abilities\\Spells\\Human\\Banish\\BanishTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Banish/BanishTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Banish/BanishTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.667,
+          "loop": true,
+          "frames": 10
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 3,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 13,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\CloudOfFog\\CloudOfFog.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/CloudOfFog/CloudOfFog.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/CloudOfFog/CloudOfFog.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.334,
+          "loop": false,
+          "frames": 6
+        },
+        {
+          "name": "Stand",
+          "duration": 0.333,
+          "loop": true,
+          "frames": 5
+        },
+        {
+          "name": "Death",
+          "duration": 0.334,
+          "loop": false,
+          "frames": 6
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\Feedback\\ArcaneTowerAttack.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Feedback/ArcaneTowerAttack.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Feedback/ArcaneTowerAttack.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.1,
+          "loop": false,
+          "frames": 27
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\Feedback\\SpellBreakerAttack.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Feedback/SpellBreakerAttack.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Feedback/SpellBreakerAttack.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.1,
+          "loop": false,
+          "frames": 27
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\FlakCannons\\FlakTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/FlakCannons/FlakTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/FlakCannons/FlakTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.4,
+          "loop": false,
+          "frames": 42
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\FlameStrike\\FlameStrikeDamageTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/FlameStrike/FlameStrikeDamageTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/FlameStrike/FlameStrikeDamageTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 2.1,
+          "loop": true,
+          "frames": 27
+        },
+        {
+          "name": "Birth",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Death",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\FlameStrike\\FlameStrikeEmbers.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/FlameStrike/FlameStrikeEmbers.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/FlameStrike/FlameStrikeEmbers.prefab",
+      "clips": [
+        {
+          "name": "birth",
+          "duration": 0.667,
+          "loop": false,
+          "frames": 10
+        },
+        {
+          "name": "stand",
+          "duration": 0.667,
+          "loop": false,
+          "frames": 10
+        },
+        {
+          "name": "death",
+          "duration": 3.333,
+          "loop": false,
+          "frames": 41
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\FlameStrike\\FlameStrikeTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/FlameStrike/FlameStrikeTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/FlameStrike/FlameStrikeTarget.prefab",
+      "clips": [
+        {
+          "name": "birth",
+          "duration": 0.133,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "stand",
+          "duration": 3,
+          "loop": true,
+          "frames": 37
+        },
+        {
+          "name": "death",
+          "duration": 8.667,
+          "loop": false,
+          "frames": 106
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\MarkOfChaos\\MarkOfChaosDone.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MarkOfChaos/MarkOfChaosDone.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MarkOfChaos/MarkOfChaosDone.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.8,
+          "loop": false,
+          "frames": 47
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\Polymorph\\PolyMorphDoneGround.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Polymorph/PolyMorphDoneGround.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Polymorph/PolyMorphDoneGround.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.4,
+          "loop": false,
+          "frames": 42
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 4,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\Polymorph\\PolyMorphTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Polymorph/PolyMorphTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Polymorph/PolyMorphTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.4,
+          "loop": false,
+          "frames": 42
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\Slow\\SlowTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Slow/SlowTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/Slow/SlowTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Birth",
+          "duration": 0.134,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Death",
+          "duration": 0.167,
+          "loop": false,
+          "frames": 4
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\SpellSteal\\SpellStealTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/SpellSteal/SpellStealTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/SpellSteal/SpellStealTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.966,
+          "loop": false,
+          "frames": 37
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\AIfb\\AIfbSpecialArt.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/AIfb/AIfbSpecialArt.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/AIfb/AIfbSpecialArt.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\AIob\\AIobSpecialArt.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/AIob/AIobSpecialArt.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/AIob/AIobSpecialArt.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\ClarityPotion\\ClarityTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/ClarityPotion/ClarityTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/ClarityPotion/ClarityTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.2,
+          "loop": false,
+          "frames": 28
+        },
+        {
+          "name": "Death",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Stand",
+          "duration": 0.6,
+          "loop": true,
+          "frames": 9
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 4,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 16,
+      "previewClip": 2
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\HealingSalve\\HealingSalveTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/HealingSalve/HealingSalveTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/HealingSalve/HealingSalveTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.833,
+          "loop": true,
+          "frames": 23
+        },
+        {
+          "name": "Death",
+          "duration": 0.3,
+          "loop": false,
+          "frames": 5
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\OrbCorruption\\OrbCorruptionMissile.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/OrbCorruption/OrbCorruptionMissile.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/OrbCorruption/OrbCorruptionMissile.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.067,
+          "loop": false,
+          "frames": 2
+        },
+        {
+          "name": "Stand",
+          "duration": 0.533,
+          "loop": true,
+          "frames": 8
+        },
+        {
+          "name": "Death",
+          "duration": 0.966,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 3,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 13,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\OrbCorruption\\OrbCorruptionSpecialArt.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/OrbCorruption/OrbCorruptionSpecialArt.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/OrbCorruption/OrbCorruptionSpecialArt.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.533,
+          "loop": false,
+          "frames": 8
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 3,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 12,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\OrbVenom\\OrbVenomSpecialArt.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/OrbVenom/OrbVenomSpecialArt.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/OrbVenom/OrbVenomSpecialArt.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.666,
+          "loop": false,
+          "frames": 21
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\ResourceItems\\ResourceEffectTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/ResourceItems/ResourceEffectTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/ResourceItems/ResourceEffectTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.033,
+          "loop": false,
+          "frames": 14
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 4,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 17,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\ScrollOfRegeneration\\Scroll_Regen_Target.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/ScrollOfRegeneration/Scroll_Regen_Target.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/ScrollOfRegeneration/Scroll_Regen_Target.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.033,
+          "loop": false,
+          "frames": 26
+        },
+        {
+          "name": "Death",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Stand",
+          "duration": 0.1,
+          "loop": true,
+          "frames": 3
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 3,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 12,
+      "previewClip": 2
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\ScrollOfRejuvenation\\ScrollManaHealth.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/ScrollOfRejuvenation/ScrollManaHealth.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/ScrollOfRejuvenation/ScrollManaHealth.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.133,
+          "loop": false,
+          "frames": 27
+        },
+        {
+          "name": "Death",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Stand",
+          "duration": 0.1,
+          "loop": true,
+          "frames": 3
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 4,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 15,
+      "previewClip": 2
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\StaffOfPurification\\PurificationCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/StaffOfPurification/PurificationCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/StaffOfPurification/PurificationCaster.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 4,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 38,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\StaffOfPurification\\PurificationTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/StaffOfPurification/PurificationTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/StaffOfPurification/PurificationTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\StaffOfSanctuary\\Staff_Sanctuary_Target.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/StaffOfSanctuary/Staff_Sanctuary_Target.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/StaffOfSanctuary/Staff_Sanctuary_Target.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.5,
+          "loop": false,
+          "frames": 7
+        },
+        {
+          "name": "Stand",
+          "duration": 3.8,
+          "loop": true,
+          "frames": 47
+        },
+        {
+          "name": "Death",
+          "duration": 0.633,
+          "loop": false,
+          "frames": 9
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Items\\VampiricPotion\\VampPotionCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/VampiricPotion/VampPotionCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Items/VampiricPotion/VampPotionCaster.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Birth",
+          "duration": 0.134,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Death",
+          "duration": 0.167,
+          "loop": false,
+          "frames": 4
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\NightElf\\Barkskin\\BarkSkinTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/Barkskin/BarkSkinTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/Barkskin/BarkSkinTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Stand",
+          "duration": 0.3,
+          "loop": true,
+          "frames": 5
+        },
+        {
+          "name": "Death",
+          "duration": 0.166,
+          "loop": false,
+          "frames": 3
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\NightElf\\CorrosiveBreath\\ChimaeraAcidTargetArt.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/CorrosiveBreath/ChimaeraAcidTargetArt.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/CorrosiveBreath/ChimaeraAcidTargetArt.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 0.034,
+          "loop": false,
+          "frames": 2
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\NightElf\\FaerieDragonInvis\\FaerieDragon_Invis.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/FaerieDragonInvis/FaerieDragon_Invis.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/FaerieDragonInvis/FaerieDragon_Invis.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.4,
+          "loop": false,
+          "frames": 42
+        },
+        {
+          "name": "Stand",
+          "duration": 0.334,
+          "loop": true,
+          "frames": 6
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 4,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 6,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\NightElf\\Immolation\\ImmolationDamage.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/Immolation/ImmolationDamage.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/Immolation/ImmolationDamage.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 2.1,
+          "loop": true,
+          "frames": 27
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\NightElf\\MoonWell\\MoonWellCasterArt.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/MoonWell/MoonWellCasterArt.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/MoonWell/MoonWellCasterArt.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 5.134,
+          "loop": false,
+          "frames": 63
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\NightElf\\Rejuvenation\\RejuvenationTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/Rejuvenation/RejuvenationTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/Rejuvenation/RejuvenationTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.067,
+          "loop": false,
+          "frames": 2
+        },
+        {
+          "name": "Stand",
+          "duration": 0.533,
+          "loop": true,
+          "frames": 8
+        },
+        {
+          "name": "Death",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 3,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 12,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\NightElf\\TargetArtLumber\\TargetArtLumber.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/TargetArtLumber/TargetArtLumber.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/TargetArtLumber/TargetArtLumber.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.833,
+          "loop": true,
+          "frames": 23
+        },
+        {
+          "name": "Death",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 3,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 12,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Orc\\Devour\\DevourEffectArt.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Devour/DevourEffectArt.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Devour/DevourEffectArt.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 4.266,
+          "loop": false,
+          "frames": 53
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Orc\\Disenchant\\DisenchantSpecialArt.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Disenchant/DisenchantSpecialArt.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Disenchant/DisenchantSpecialArt.prefab",
+      "clips": [
+        {
+          "name": "Death",
+          "duration": 0.033,
+          "loop": false,
+          "frames": 2
+        },
+        {
+          "name": "Birth",
+          "duration": 0.5,
+          "loop": false,
+          "frames": 7
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Orc\\EtherealForm\\SpiritWalkerChange.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/EtherealForm/SpiritWalkerChange.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/EtherealForm/SpiritWalkerChange.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.934,
+          "loop": false,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Orc\\LiquidFire\\Liquidfire.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LiquidFire/Liquidfire.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LiquidFire/Liquidfire.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.333,
+          "loop": false,
+          "frames": 17
+        },
+        {
+          "name": "Stand",
+          "duration": 3.334,
+          "loop": true,
+          "frames": 42
+        },
+        {
+          "name": "Death",
+          "duration": 0.033,
+          "loop": false,
+          "frames": 2
+        },
+        {
+          "name": "Birth Medium",
+          "duration": 1.333,
+          "loop": false,
+          "frames": 17
+        },
+        {
+          "name": "Stand Medium",
+          "duration": 3.333,
+          "loop": true,
+          "frames": 41
+        },
+        {
+          "name": "Death Medium",
+          "duration": 0.033,
+          "loop": false,
+          "frames": 2
+        },
+        {
+          "name": "Birth Large",
+          "duration": 1.334,
+          "loop": false,
+          "frames": 18
+        },
+        {
+          "name": "Stand Large",
+          "duration": 3.333,
+          "loop": true,
+          "frames": 41
+        },
+        {
+          "name": "Death Large",
+          "duration": 0.034,
+          "loop": false,
+          "frames": 2
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 6,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 9,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Orc\\MirrorImage\\MirrorImageDeathCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/MirrorImage/MirrorImageDeathCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/MirrorImage/MirrorImageDeathCaster.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.9,
+          "loop": false,
+          "frames": 12
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Orc\\Voodoo\\VoodooAuraTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Voodoo/VoodooAuraTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Voodoo/VoodooAuraTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.5,
+          "loop": false,
+          "frames": 7
+        },
+        {
+          "name": "Stand",
+          "duration": 3.8,
+          "loop": true,
+          "frames": 47
+        },
+        {
+          "name": "Death",
+          "duration": 0.633,
+          "loop": false,
+          "frames": 9
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\ANrl\\ANrlTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/ANrl/ANrlTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/ANrl/ANrlTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.2,
+          "loop": true,
+          "frames": 16
+        },
+        {
+          "name": "Death",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\ANrm\\ANrmTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/ANrm/ANrmTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/ANrm/ANrmTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.2,
+          "loop": true,
+          "frames": 16
+        },
+        {
+          "name": "Death",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\BreathOfFire\\BreathOfFireDamage.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/BreathOfFire/BreathOfFireDamage.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/BreathOfFire/BreathOfFireDamage.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 2.1,
+          "loop": true,
+          "frames": 27
+        },
+        {
+          "name": "Birth",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Death",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\BreathOfFire\\BreathOfFireTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/BreathOfFire/BreathOfFireTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/BreathOfFire/BreathOfFireTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.5,
+          "loop": true,
+          "frames": 7
+        },
+        {
+          "name": "Death",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        },
+        {
+          "name": "Birth",
+          "duration": 0.033,
+          "loop": false,
+          "frames": 2
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\BreathOfFrost\\BreathOfFrostTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/BreathOfFrost/BreathOfFrostTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/BreathOfFrost/BreathOfFrostTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.5,
+          "loop": true,
+          "frames": 7
+        },
+        {
+          "name": "Death",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        },
+        {
+          "name": "Birth",
+          "duration": 0.033,
+          "loop": false,
+          "frames": 2
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Cleave\\CleaveDamageTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Cleave/CleaveDamageTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Cleave/CleaveDamageTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.5,
+          "loop": false,
+          "frames": 7
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\CrushingWave\\CrushingWaveDamage.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/CrushingWave/CrushingWaveDamage.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/CrushingWave/CrushingWaveDamage.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 4.4,
+          "loop": false,
+          "frames": 54
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 4,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Drain\\DrainCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Drain/DrainCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Drain/DrainCaster.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Birth",
+          "duration": 0.134,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Death",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Drain\\DrainTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Drain/DrainTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Drain/DrainTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Birth",
+          "duration": 0.134,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Death",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Drain\\ManaDrainCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Drain/ManaDrainCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Drain/ManaDrainCaster.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Birth",
+          "duration": 0.134,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Death",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Drain\\ManaDrainTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Drain/ManaDrainTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Drain/ManaDrainTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Birth",
+          "duration": 0.134,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Death",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\FrostDamage\\FrostDamage.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/FrostDamage/FrostDamage.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/FrostDamage/FrostDamage.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.034,
+          "loop": false,
+          "frames": 2
+        },
+        {
+          "name": "Stand",
+          "duration": 1.5,
+          "loop": true,
+          "frames": 19
+        },
+        {
+          "name": "Death",
+          "duration": 0.033,
+          "loop": false,
+          "frames": 2
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\HealingSpray\\HealBottleMissile.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/HealingSpray/HealBottleMissile.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/HealingSpray/HealBottleMissile.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.567,
+          "loop": true,
+          "frames": 8
+        },
+        {
+          "name": "Birth",
+          "duration": 0.034,
+          "loop": false,
+          "frames": 2
+        },
+        {
+          "name": "Death",
+          "duration": 0.966,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 7,
+      "ribbons": 1,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 8,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\ImmolationRed\\ImmolationRedDamage.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/ImmolationRed/ImmolationRedDamage.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/ImmolationRed/ImmolationRedDamage.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 2.1,
+          "loop": true,
+          "frames": 27
+        },
+        {
+          "name": "death",
+          "duration": 2.1,
+          "loop": false,
+          "frames": 27
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Incinerate\\IncinerateBuff.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Incinerate/IncinerateBuff.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Incinerate/IncinerateBuff.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.5,
+          "loop": true,
+          "frames": 7
+        },
+        {
+          "name": "Death",
+          "duration": 3.334,
+          "loop": false,
+          "frames": 42
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Monsoon\\MonsoonRain.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Monsoon/MonsoonRain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Monsoon/MonsoonRain.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.667,
+          "loop": false,
+          "frames": 34
+        },
+        {
+          "name": "Stand",
+          "duration": 2.066,
+          "loop": true,
+          "frames": 26
+        },
+        {
+          "name": "Death",
+          "duration": 0.234,
+          "loop": false,
+          "frames": 4
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Silence\\SilenceAreaBirth.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Silence/SilenceAreaBirth.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Silence/SilenceAreaBirth.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.567,
+          "loop": false,
+          "frames": 8
+        },
+        {
+          "name": "Death",
+          "duration": 0.2,
+          "loop": false,
+          "frames": 4
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Stampede\\StampedeMissileDeath.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Stampede/StampedeMissileDeath.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Stampede/StampedeMissileDeath.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 4.4,
+          "loop": false,
+          "frames": 54
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\StrongDrink\\BrewmasterTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/StrongDrink/BrewmasterTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/StrongDrink/BrewmasterTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.033,
+          "loop": false,
+          "frames": 2
+        },
+        {
+          "name": "Stand",
+          "duration": 0.966,
+          "loop": true,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Tornado\\Tornado_Target.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Tornado/Tornado_Target.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Tornado/Tornado_Target.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.034,
+          "loop": false,
+          "frames": 2
+        },
+        {
+          "name": "Stand",
+          "duration": 1.766,
+          "loop": true,
+          "frames": 23
+        },
+        {
+          "name": "Death",
+          "duration": 0.033,
+          "loop": false,
+          "frames": 2
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 1,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Tornado\\TornadoSpinner.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Tornado/TornadoSpinner.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Tornado/TornadoSpinner.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.1,
+          "loop": false,
+          "frames": 15
+        },
+        {
+          "name": "Stand",
+          "duration": 3.266,
+          "loop": true,
+          "frames": 41
+        },
+        {
+          "name": "Death",
+          "duration": 1.033,
+          "loop": false,
+          "frames": 14
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Other\\Volcano\\VolcanoDeath.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Volcano/VolcanoDeath.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/Volcano/VolcanoDeath.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 5,
+          "loop": false,
+          "frames": 61
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\CarrionSwarm\\CarrionSwarmDamage.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/CarrionSwarm/CarrionSwarmDamage.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/CarrionSwarm/CarrionSwarmDamage.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.9,
+          "loop": false,
+          "frames": 12
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\Cripple\\CrippleTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/Cripple/CrippleTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/Cripple/CrippleTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.067,
+          "loop": false,
+          "frames": 2
+        },
+        {
+          "name": "Stand",
+          "duration": 0.533,
+          "loop": true,
+          "frames": 8
+        },
+        {
+          "name": "Death",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 3,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 12,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\DarkRitual\\DarkRitualCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/DarkRitual/DarkRitualCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/DarkRitual/DarkRitualCaster.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.1,
+          "loop": false,
+          "frames": 27
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\DeathandDecay\\DeathandDecayDamage.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/DeathandDecay/DeathandDecayDamage.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/DeathandDecay/DeathandDecayDamage.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.967,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\DeathandDecay\\DeathandDecayTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/DeathandDecay/DeathandDecayTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/DeathandDecay/DeathandDecayTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.867,
+          "loop": false,
+          "frames": 24
+        },
+        {
+          "name": "Stand 2",
+          "duration": 2.834,
+          "loop": false,
+          "frames": 36
+        },
+        {
+          "name": "Stand 3",
+          "duration": 1.067,
+          "loop": false,
+          "frames": 14
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 5,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 6,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\DeathPact\\DeathPactCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/DeathPact/DeathPactCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/DeathPact/DeathPactCaster.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.1,
+          "loop": false,
+          "frames": 27
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\FrostArmor\\FrostArmorDamage.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/FrostArmor/FrostArmorDamage.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/FrostArmor/FrostArmorDamage.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\Impale\\ImpaleCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/Impale/ImpaleCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/Impale/ImpaleCaster.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.4,
+          "loop": false,
+          "frames": 18
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\PlagueCloud\\PlagueCloudCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/PlagueCloud/PlagueCloudCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/PlagueCloud/PlagueCloudCaster.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.334,
+          "loop": false,
+          "frames": 6
+        },
+        {
+          "name": "Stand",
+          "duration": 0.333,
+          "loop": true,
+          "frames": 5
+        },
+        {
+          "name": "Death",
+          "duration": 0.334,
+          "loop": false,
+          "frames": 6
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\RegenerationAura\\ObsidianRegenAura.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/RegenerationAura/ObsidianRegenAura.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/RegenerationAura/ObsidianRegenAura.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.334,
+          "loop": true,
+          "frames": 18
+        },
+        {
+          "name": "Birth",
+          "duration": 0.033,
+          "loop": false,
+          "frames": 2
+        },
+        {
+          "name": "Death",
+          "duration": 0.5,
+          "loop": false,
+          "frames": 7
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\ReplenishHealth\\ReplenishHealthCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/ReplenishHealth/ReplenishHealthCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/ReplenishHealth/ReplenishHealthCaster.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.033,
+          "loop": false,
+          "frames": 14
+        },
+        {
+          "name": "Death",
+          "duration": 1.033,
+          "loop": false,
+          "frames": 14
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\ReplenishMana\\ReplenishManaCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/ReplenishMana/ReplenishManaCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/ReplenishMana/ReplenishManaCaster.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.033,
+          "loop": false,
+          "frames": 14
+        },
+        {
+          "name": "Death",
+          "duration": 1.033,
+          "loop": false,
+          "frames": 14
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Undead\\Unsummon\\UnsummonTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/Unsummon/UnsummonTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Undead/Unsummon/UnsummonTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        },
+        {
+          "name": "Death",
+          "duration": 1.667,
+          "loop": false,
+          "frames": 22
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 4,
+      "ribbons": 3,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 16,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\AvengerMissile\\AvengerMissile.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/AvengerMissile/AvengerMissile.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/AvengerMissile/AvengerMissile.prefab",
+      "clips": [
+        {
+          "name": "Death",
+          "duration": 2.333,
+          "loop": false,
+          "frames": 29
+        },
+        {
+          "name": "Stand",
+          "duration": 1.6,
+          "loop": true,
+          "frames": 21
+        },
+        {
+          "name": "Birth",
+          "duration": 0.333,
+          "loop": false,
+          "frames": 5
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 3,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 12,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Weapons\\BallistaMissile\\BallistaImpact.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/BallistaMissile/BallistaImpact.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/BallistaMissile/BallistaImpact.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.967,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\BallistaMissile\\BallistaMissileTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/BallistaMissile/BallistaMissileTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/BallistaMissile/BallistaMissileTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.967,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\DragonHawkMissile\\DragonHawkMissile.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/DragonHawkMissile/DragonHawkMissile.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/DragonHawkMissile/DragonHawkMissile.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.666,
+          "loop": true,
+          "frames": 21
+        },
+        {
+          "name": "Birth",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Death",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\FlameThrowerMissile\\FlameThrowerMissile.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/FlameThrowerMissile/FlameThrowerMissile.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/FlameThrowerMissile/FlameThrowerMissile.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 4.4,
+          "loop": false,
+          "frames": 54
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\FrostWyrmMissile\\FrostWyrmMissile.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/FrostWyrmMissile/FrostWyrmMissile.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/FrostWyrmMissile/FrostWyrmMissile.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.5,
+          "loop": true,
+          "frames": 7
+        },
+        {
+          "name": "Death",
+          "duration": 6.3,
+          "loop": false,
+          "frames": 77
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 4,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\GlaiveMissile\\GlaiveMissileTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/GlaiveMissile/GlaiveMissileTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/GlaiveMissile/GlaiveMissileTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.967,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\GryphonRiderMissile\\GryphonRiderMissileTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/GryphonRiderMissile/GryphonRiderMissileTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/GryphonRiderMissile/GryphonRiderMissileTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.967,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\LocustMissile\\LocustMissile.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/LocustMissile/LocustMissile.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/LocustMissile/LocustMissile.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.266,
+          "loop": false,
+          "frames": 5
+        },
+        {
+          "name": "Death",
+          "duration": 1.666,
+          "loop": false,
+          "frames": 21
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\PhoenixMissile\\Phoenix_Missile_mini.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/PhoenixMissile/Phoenix_Missile_mini.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/PhoenixMissile/Phoenix_Missile_mini.prefab",
+      "clips": [
+        {
+          "name": "Death",
+          "duration": 2.333,
+          "loop": false,
+          "frames": 29
+        },
+        {
+          "name": "Stand",
+          "duration": 1.6,
+          "loop": true,
+          "frames": 21
+        },
+        {
+          "name": "Birth",
+          "duration": 0.333,
+          "loop": false,
+          "frames": 5
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 3,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 12,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Weapons\\PoisonSting\\PoisonStingTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/PoisonSting/PoisonStingTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/PoisonSting/PoisonStingTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.766,
+          "loop": false,
+          "frames": 11
+        },
+        {
+          "name": "Stand",
+          "duration": 0.6,
+          "loop": true,
+          "frames": 9
+        },
+        {
+          "name": "Death",
+          "duration": 0.033,
+          "loop": false,
+          "frames": 2
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Weapons\\SeaElementalMissile\\SeaElementalMissile.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/SeaElementalMissile/SeaElementalMissile.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/SeaElementalMissile/SeaElementalMissile.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.5,
+          "loop": false,
+          "frames": 7
+        },
+        {
+          "name": "Death",
+          "duration": 2.333,
+          "loop": false,
+          "frames": 29
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 1,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\SludgeMissile\\SludgeMissile.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/SludgeMissile/SludgeMissile.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/SludgeMissile/SludgeMissile.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.5,
+          "loop": false,
+          "frames": 7
+        },
+        {
+          "name": "Death",
+          "duration": 2.333,
+          "loop": false,
+          "frames": 29
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 1,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\SteamTank\\SteamTankImpact.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/SteamTank/SteamTankImpact.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/SteamTank/SteamTankImpact.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.6,
+          "loop": false,
+          "frames": 21
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 6,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 7,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\WaterElementalMissile\\WaterElementalMissile.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/WaterElementalMissile/WaterElementalMissile.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/WaterElementalMissile/WaterElementalMissile.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.5,
+          "loop": false,
+          "frames": 7
+        },
+        {
+          "name": "Death",
+          "duration": 2.333,
+          "loop": false,
+          "frames": 29
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 1,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Weapons\\ZigguratFrostMissile\\ZigguratFrostMissile.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/ZigguratFrostMissile/ZigguratFrostMissile.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Weapons/ZigguratFrostMissile/ZigguratFrostMissile.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.5,
+          "loop": false,
+          "frames": 7
+        },
+        {
+          "name": "Death",
+          "duration": 6.3,
+          "loop": false,
+          "frames": 77
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 4,
+      "ribbons": 2,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 13,
+      "previewClip": 0
+    },
+    {
+      "source": "Doodads\\Cinematic\\DemonStorm\\DemonStorm.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Cinematic/DemonStorm/DemonStorm.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Cinematic/DemonStorm/DemonStorm.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 16.233,
+          "loop": false,
+          "frames": 196
+        },
+        {
+          "name": "Death",
+          "duration": 0.267,
+          "loop": false,
+          "frames": 5
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Doodads\\Icecrown\\Water\\BubbleGeyserSteam\\BubbleGeyserSteam.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Icecrown/Water/BubbleGeyserSteam/BubbleGeyserSteam.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Icecrown/Water/BubbleGeyserSteam/BubbleGeyserSteam.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 8,
+          "loop": false,
+          "frames": 97
+        },
+        {
+          "name": "death",
+          "duration": 3.1,
+          "loop": false,
+          "frames": 39
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Doodads\\LordaeronSummer\\Water\\Shoreline\\Shoreline0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/LordaeronSummer/Water/Shoreline/Shoreline0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/LordaeronSummer/Water/Shoreline/Shoreline0.prefab",
+      "clips": [
+        {
+          "name": "Stand 2",
+          "duration": 2.3,
+          "loop": true,
+          "frames": 29
+        },
+        {
+          "name": "Stand 3",
+          "duration": 3.767,
+          "loop": true,
+          "frames": 47
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Doodads\\LordaeronSummer\\Water\\ShorelineInsideCorner\\ShorelineInsideCorner0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/LordaeronSummer/Water/ShorelineInsideCorner/ShorelineInsideCorner0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/LordaeronSummer/Water/ShorelineInsideCorner/ShorelineInsideCorner0.prefab",
+      "clips": [
+        {
+          "name": "Stand 2",
+          "duration": 2.3,
+          "loop": true,
+          "frames": 29
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Doodads\\LordaeronSummer\\Water\\ShorelineOutsideCorner\\ShorelineOutsideCorner0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/LordaeronSummer/Water/ShorelineOutsideCorner/ShorelineOutsideCorner0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/LordaeronSummer/Water/ShorelineOutsideCorner/ShorelineOutsideCorner0.prefab",
+      "clips": [
+        {
+          "name": "Stand 2",
+          "duration": 2.3,
+          "loop": true,
+          "frames": 29
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Doodads\\Outland\\Water\\OutlandShoreline\\OutlandShoreline0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Outland/Water/OutlandShoreline/OutlandShoreline0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Outland/Water/OutlandShoreline/OutlandShoreline0.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frames": 41
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Doodads\\Ruins\\Water\\BubbleGeyser\\BubbleGeyser.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Ruins/Water/BubbleGeyser/BubbleGeyser.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Ruins/Water/BubbleGeyser/BubbleGeyser.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 8,
+          "loop": false,
+          "frames": 97
+        },
+        {
+          "name": "death",
+          "duration": 3.1,
+          "loop": false,
+          "frames": 39
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Doodads\\Terrain\\OutlandMushroomTree\\OutlandMushroomTree1D.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Terrain/OutlandMushroomTree/OutlandMushroomTree1D.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Terrain/OutlandMushroomTree/OutlandMushroomTree1D.prefab",
+      "clips": [
+        {
+          "name": "stand",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        },
+        {
+          "name": "stand hit",
+          "duration": 0.3,
+          "loop": false,
+          "frames": 5
+        },
+        {
+          "name": "death",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        },
+        {
+          "name": "Birth",
+          "duration": 3,
+          "loop": false,
+          "frames": 37
+        },
+        {
+          "name": "Spell EatTree",
+          "duration": 2,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Doodads\\Terrain\\OutlandMushroomTree\\OutlandMushroomTree8D.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Terrain/OutlandMushroomTree/OutlandMushroomTree8D.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Terrain/OutlandMushroomTree/OutlandMushroomTree8D.prefab",
+      "clips": [
+        {
+          "name": "stand",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        },
+        {
+          "name": "stand hit",
+          "duration": 0.3,
+          "loop": false,
+          "frames": 5
+        },
+        {
+          "name": "death",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        },
+        {
+          "name": "Birth",
+          "duration": 3,
+          "loop": false,
+          "frames": 37
+        },
+        {
+          "name": "Spell EatTree",
+          "duration": 2,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Doodads\\Terrain\\OutlandMushroomTree\\OutlandMushroomTree9D.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Terrain/OutlandMushroomTree/OutlandMushroomTree9D.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Terrain/OutlandMushroomTree/OutlandMushroomTree9D.prefab",
+      "clips": [
+        {
+          "name": "stand",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        },
+        {
+          "name": "stand hit",
+          "duration": 0.3,
+          "loop": false,
+          "frames": 5
+        },
+        {
+          "name": "death",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        },
+        {
+          "name": "Birth",
+          "duration": 3,
+          "loop": false,
+          "frames": 37
+        },
+        {
+          "name": "Spell EatTree",
+          "duration": 2,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\BlightDoodad\\BlightDoodad.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/BlightDoodad/BlightDoodad.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/BlightDoodad/BlightDoodad.prefab",
+      "clips": [
+        {
+          "name": "stand",
+          "duration": 2.334,
+          "loop": true,
+          "frames": 30
+        },
+        {
+          "name": "Death",
+          "duration": 20,
+          "loop": false,
+          "frames": 241
+        },
+        {
+          "name": "stand",
+          "duration": 4.267,
+          "loop": true,
+          "frames": 53
+        },
+        {
+          "name": "stand",
+          "duration": 2.334,
+          "loop": true,
+          "frames": 30
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCAshenvale\\DNCAshenValeTerrain\\DNCAshenValeTerrain.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCAshenvale/DNCAshenValeTerrain/DNCAshenValeTerrain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCAshenvale/DNCAshenValeTerrain/DNCAshenValeTerrain.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCAshenvale\\DNCAshenValeUnit\\DNCAshenValeUnit.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCAshenvale/DNCAshenValeUnit/DNCAshenValeUnit.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCAshenvale/DNCAshenValeUnit/DNCAshenValeUnit.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCDalaran\\DNCDalaranTerrain\\DNCDalaranTerrain.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCDalaran/DNCDalaranTerrain/DNCDalaranTerrain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCDalaran/DNCDalaranTerrain/DNCDalaranTerrain.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCDalaran\\DNCDalaranUnit\\DNCDalaranUnit.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCDalaran/DNCDalaranUnit/DNCDalaranUnit.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCDalaran/DNCDalaranUnit/DNCDalaranUnit.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCDungeon\\DNCDungeonTerrain\\DNCDungeonTerrain.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCDungeon/DNCDungeonTerrain/DNCDungeonTerrain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCDungeon/DNCDungeonTerrain/DNCDungeonTerrain.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCDungeon\\DNCDungeonUnit\\DNCDungeonUnit.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCDungeon/DNCDungeonUnit/DNCDungeonUnit.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCDungeon/DNCDungeonUnit/DNCDungeonUnit.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCFelwood\\DNCFelWoodTerrain\\DNCFelWoodTerrain.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCFelwood/DNCFelWoodTerrain/DNCFelWoodTerrain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCFelwood/DNCFelWoodTerrain/DNCFelWoodTerrain.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCFelwood\\DNCFelWoodUnit\\DNCFelWoodUnit.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCFelwood/DNCFelWoodUnit/DNCFelWoodUnit.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCFelwood/DNCFelWoodUnit/DNCFelWoodUnit.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCLordaeron\\DNCLordaeronTarget\\DNCLordaeronTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCLordaeron/DNCLordaeronTarget/DNCLordaeronTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCLordaeron/DNCLordaeronTarget/DNCLordaeronTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCLordaeron\\DNCLordaeronTerrain\\DNCLordaeronTerrain.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCLordaeron/DNCLordaeronTerrain/DNCLordaeronTerrain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCLordaeron/DNCLordaeronTerrain/DNCLordaeronTerrain.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCLordaeron\\DNCLordaeronUnit\\DNCLordaeronUnit.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCLordaeron/DNCLordaeronUnit/DNCLordaeronUnit.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCLordaeron/DNCLordaeronUnit/DNCLordaeronUnit.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCUnderground\\DNCUndergroundTerrain\\DNCUndergroundTerrain.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCUnderground/DNCUndergroundTerrain/DNCUndergroundTerrain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCUnderground/DNCUndergroundTerrain/DNCUndergroundTerrain.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\DNC\\DNCUnderground\\DNCUndergroundUnit\\DNCUndergroundUnit.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCUnderground/DNCUndergroundUnit/DNCUndergroundUnit.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/DNC/DNCUnderground/DNCUndergroundUnit/DNCUndergroundUnit.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\LargeBuildingFire\\LargeBuildingFire0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/LargeBuildingFire/LargeBuildingFire0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/LargeBuildingFire/LargeBuildingFire0.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\LargeBuildingFire\\LargeBuildingFire1.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/LargeBuildingFire/LargeBuildingFire1.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/LargeBuildingFire/LargeBuildingFire1.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\LargeBuildingFire\\LargeBuildingFire2.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/LargeBuildingFire/LargeBuildingFire2.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/LargeBuildingFire/LargeBuildingFire2.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\NightElfBuildingFire\\ElfLargeBuildingFire0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfLargeBuildingFire0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfLargeBuildingFire0.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\NightElfBuildingFire\\ElfLargeBuildingFire1.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfLargeBuildingFire1.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfLargeBuildingFire1.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\NightElfBuildingFire\\ElfLargeBuildingFire2.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfLargeBuildingFire2.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfLargeBuildingFire2.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\NightElfBuildingFire\\ElfSmallBuildingFire0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfSmallBuildingFire0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfSmallBuildingFire0.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\NightElfBuildingFire\\ElfSmallBuildingFire1.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfSmallBuildingFire1.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfSmallBuildingFire1.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\NightElfBuildingFire\\ElfSmallBuildingFire2.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfSmallBuildingFire2.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/NightElfBuildingFire/ElfSmallBuildingFire2.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\SmallBuildingFire\\SmallBuildingFire0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/SmallBuildingFire/SmallBuildingFire0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/SmallBuildingFire/SmallBuildingFire0.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\SmallBuildingFire\\SmallBuildingFire1.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/SmallBuildingFire/SmallBuildingFire1.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/SmallBuildingFire/SmallBuildingFire1.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\SmallBuildingFire\\SmallBuildingFire2.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/SmallBuildingFire/SmallBuildingFire2.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/SmallBuildingFire/SmallBuildingFire2.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\UndeadBuildingFire\\UndeadLargeBuildingFire0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadLargeBuildingFire0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadLargeBuildingFire0.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\UndeadBuildingFire\\UndeadLargeBuildingFire1.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadLargeBuildingFire1.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadLargeBuildingFire1.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\UndeadBuildingFire\\UndeadLargeBuildingFire2.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadLargeBuildingFire2.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadLargeBuildingFire2.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\UndeadBuildingFire\\UndeadSmallBuildingFire0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadSmallBuildingFire0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadSmallBuildingFire0.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\UndeadBuildingFire\\UndeadSmallBuildingFire1.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadSmallBuildingFire1.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadSmallBuildingFire1.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 3,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Environment\\UndeadBuildingFire\\UndeadSmallBuildingFire2.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadSmallBuildingFire2.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Environment/UndeadBuildingFire/UndeadSmallBuildingFire2.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraCloseUpLow.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraCloseUpLow.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraCloseUpLow.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 66.667,
+          "loop": true,
+          "frames": 802
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraCloseUpLowNoise.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraCloseUpLowNoise.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraCloseUpLowNoise.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 69.167,
+          "loop": true,
+          "frames": 832
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraCloseUpMed.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraCloseUpMed.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraCloseUpMed.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 66.667,
+          "loop": true,
+          "frames": 802
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraCloseUpMedNoise.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraCloseUpMedNoise.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraCloseUpMedNoise.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 69.167,
+          "loop": true,
+          "frames": 832
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraJainaEnters.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraJainaEnters.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraJainaEnters.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 66.667,
+          "loop": true,
+          "frames": 802
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraPanLeftHigh.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraPanLeftHigh.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraPanLeftHigh.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraPanLeftLow.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraPanLeftLow.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraPanLeftLow.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraPanUpClose.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraPanUpClose.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraPanUpClose.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 69.167,
+          "loop": true,
+          "frames": 832
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraZoomInLow.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraZoomInLow.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraZoomInLow.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraZoomInMid.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraZoomInMid.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraZoomInMid.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraZoomOut.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraZoomOut.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraZoomOut.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraZoomOutLow.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraZoomOutLow.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraZoomOutLow.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\CinematicCameras\\CameraZoomOutMid.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraZoomOutMid.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/CinematicCameras/CameraZoomOutMid.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 1,
+      "nodes": 0,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Critters\\Albatross\\CritterBloodAlbatross.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Critters/Albatross/CritterBloodAlbatross.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Critters/Albatross/CritterBloodAlbatross.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 7,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 7,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Demon\\DemonBlood\\DemonBloodLarge0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Demon/DemonBlood/DemonBloodLarge0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Demon/DemonBlood/DemonBloodLarge0.prefab",
+      "clips": [
+        {
+          "name": "Death Explode",
+          "duration": 4.266,
+          "loop": false,
+          "frames": 53
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Demon\\DemonBlood\\DemonBloodPitlord.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Demon/DemonBlood/DemonBloodPitlord.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Demon/DemonBlood/DemonBloodPitlord.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.666,
+          "loop": false,
+          "frames": 33
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Human\\HCancelDeath\\HCancelDeath.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HCancelDeath/HCancelDeath.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HCancelDeath/HCancelDeath.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.334,
+          "loop": false,
+          "frames": 30
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 6,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 6,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Human\\HumanBlood\\BloodElfSpellThiefBlood.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/BloodElfSpellThiefBlood.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/BloodElfSpellThiefBlood.prefab",
+      "clips": [
+        {
+          "name": "birth",
+          "duration": 2,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Human\\HumanBlood\\HeroBloodElfBlood.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HeroBloodElfBlood.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HeroBloodElfBlood.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3,
+          "loop": false,
+          "frames": 37
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodFootman.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodFootman.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodFootman.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.034,
+          "loop": false,
+          "frames": 38
+        },
+        {
+          "name": "Decay Bone",
+          "duration": 60,
+          "loop": false,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodKnight.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodKnight.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodKnight.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 5.1,
+          "loop": false,
+          "frames": 63
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodLarge0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodLarge0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodLarge0.prefab",
+      "clips": [
+        {
+          "name": "Death Explode",
+          "duration": 4.266,
+          "loop": false,
+          "frames": 53
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodMortarTeam.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodMortarTeam.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodMortarTeam.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodPeasant.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodPeasant.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodPeasant.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.334,
+          "loop": false,
+          "frames": 42
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodPriest.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodPriest.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodPriest.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodRifleman.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodRifleman.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodRifleman.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.7,
+          "loop": false,
+          "frames": 22
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Human\\HumanBlood\\HumanBloodSorceress.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodSorceress.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Human/HumanBlood/HumanBloodSorceress.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.867,
+          "loop": false,
+          "frames": 24
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Naga\\NagaBlood\\NagaBloodWindserpent.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Naga/NagaBlood/NagaBloodWindserpent.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Naga/NagaBlood/NagaBloodWindserpent.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.133,
+          "loop": false,
+          "frames": 27
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 7,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Naga\\NagaDeath\\NagaDeath.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Naga/NagaDeath/NagaDeath.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Naga/NagaDeath/NagaDeath.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.133,
+          "loop": false,
+          "frames": 27
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 5,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 6,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\MALFurion_Blood.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/MALFurion_Blood.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/MALFurion_Blood.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.167,
+          "loop": false,
+          "frames": 28
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodArcher.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodArcher.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodArcher.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.233,
+          "loop": false,
+          "frames": 40
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodChimaera.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodChimaera.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodChimaera.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.834,
+          "loop": false,
+          "frames": 36
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodDruidBear.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodDruidBear.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodDruidBear.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.967,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodDruidoftheClaw.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodDruidoftheClaw.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodDruidoftheClaw.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.2,
+          "loop": false,
+          "frames": 16
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodDruidoftheTalon.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodDruidoftheTalon.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodDruidoftheTalon.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 4.334,
+          "loop": false,
+          "frames": 54
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodDruidRaven.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodDruidRaven.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodDruidRaven.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodDryad.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodDryad.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodDryad.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.634,
+          "loop": false,
+          "frames": 33
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodHeroDemonHunter.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodHeroDemonHunter.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodHeroDemonHunter.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 4.1,
+          "loop": false,
+          "frames": 51
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodHeroKeeperoftheGrove.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodHeroKeeperoftheGrove.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodHeroKeeperoftheGrove.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.334,
+          "loop": false,
+          "frames": 42
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodHippoGryph.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodHippoGryph.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodHippoGryph.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.867,
+          "loop": false,
+          "frames": 48
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodHuntress.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodHuntress.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodHuntress.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.667,
+          "loop": false,
+          "frames": 22
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodLarge0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodLarge0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodLarge0.prefab",
+      "clips": [
+        {
+          "name": "Death Explode",
+          "duration": 4.266,
+          "loop": false,
+          "frames": 53
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodLarge1.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodLarge1.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodLarge1.prefab",
+      "clips": [
+        {
+          "name": "Death Explode",
+          "duration": 4.266,
+          "loop": false,
+          "frames": 53
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\NightElf\\NightElfBlood\\NightElfBloodMoonPriestess.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodMoonPriestess.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/NightElf/NightElfBlood/NightElfBloodMoonPriestess.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\BattrollBlood.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/BattrollBlood.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/BattrollBlood.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.333,
+          "loop": false,
+          "frames": 29
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 11,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\HeroShadowHunterBlood.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/HeroShadowHunterBlood.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/HeroShadowHunterBlood.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.766,
+          "loop": false,
+          "frames": 47
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodGrunt.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodGrunt.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodGrunt.prefab",
+      "clips": [
+        {
+          "name": "Death",
+          "duration": 1.567,
+          "loop": false,
+          "frames": 20
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodHeadhunter.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodHeadhunter.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodHeadhunter.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.1,
+          "loop": false,
+          "frames": 27
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodHellScream.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodHellScream.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodHellScream.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.9,
+          "loop": false,
+          "frames": 24
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodHeroFarSeer.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodHeroFarSeer.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodHeroFarSeer.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.867,
+          "loop": false,
+          "frames": 24
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodHeroTaurenChieftain.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodHeroTaurenChieftain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodHeroTaurenChieftain.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodKotoBeast.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodKotoBeast.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodKotoBeast.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.333,
+          "loop": false,
+          "frames": 41
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 6,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodLarge0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodLarge0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodLarge0.prefab",
+      "clips": [
+        {
+          "name": "Death Explode",
+          "duration": 4.266,
+          "loop": false,
+          "frames": 53
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 4,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodPeon.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodPeon.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodPeon.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 4.733,
+          "loop": false,
+          "frames": 58
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodTauren.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodTauren.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodTauren.prefab",
+      "clips": [
+        {
+          "name": "Death",
+          "duration": 3.134,
+          "loop": false,
+          "frames": 39
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodWitchDoctor.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodWitchDoctor.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodWitchDoctor.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.967,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrcBloodWolfrider.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodWolfrider.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrcBloodWolfrider.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.866,
+          "loop": false,
+          "frames": 24
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 6,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrdBloodRiderlessWyvernRider.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrdBloodRiderlessWyvernRider.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrdBloodRiderlessWyvernRider.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.133,
+          "loop": false,
+          "frames": 27
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 7,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Orc\\OrcBlood\\OrdBloodWyvernRider.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrdBloodWyvernRider.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Orc/OrcBlood/OrdBloodWyvernRider.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.133,
+          "loop": false,
+          "frames": 27
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 8,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Other\\BeastmasterBlood\\BeastmasterBlood.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/BeastmasterBlood/BeastmasterBlood.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/BeastmasterBlood/BeastmasterBlood.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.667,
+          "loop": false,
+          "frames": 46
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Other\\HumanBloodCinematicEffect\\HumanBloodCinematicEffect.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/HumanBloodCinematicEffect/HumanBloodCinematicEffect.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/HumanBloodCinematicEffect/HumanBloodCinematicEffect.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 5.5,
+          "loop": true,
+          "frames": 67
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Other\\IllidanFootprint\\IllidanWaterSpawnFootPrint.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/IllidanFootprint/IllidanWaterSpawnFootPrint.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/IllidanFootprint/IllidanWaterSpawnFootPrint.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 4,
+          "loop": false,
+          "frames": 49
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Other\\NeutralBuildingExplosion\\NeutralBuildingExplosion.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/NeutralBuildingExplosion/NeutralBuildingExplosion.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/NeutralBuildingExplosion/NeutralBuildingExplosion.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 7.4,
+          "loop": false,
+          "frames": 90
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 6,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 6,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Other\\NPCBlood\\NPCbloodVillagerWoman\\NPCbloodVillagerWoman.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/NPCBlood/NPCbloodVillagerWoman/NPCbloodVillagerWoman.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/NPCBlood/NPCbloodVillagerWoman/NPCbloodVillagerWoman.prefab",
+      "clips": [
+        {
+          "name": "Death",
+          "duration": 1.867,
+          "loop": false,
+          "frames": 24
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Other\\OrcBloodCinematicEffect\\OrcBloodCinematicEffect.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/OrcBloodCinematicEffect/OrcBloodCinematicEffect.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/OrcBloodCinematicEffect/OrcBloodCinematicEffect.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 5.5,
+          "loop": true,
+          "frames": 67
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Other\\PandarenBrewmasterBlood\\PandarenBrewmasterBlood.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/PandarenBrewmasterBlood/PandarenBrewmasterBlood.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Other/PandarenBrewmasterBlood/PandarenBrewmasterBlood.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.667,
+          "loop": false,
+          "frames": 34
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Undead\\ImpaleTargetDust\\ImpaleTargetDust.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/ImpaleTargetDust/ImpaleTargetDust.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/ImpaleTargetDust/ImpaleTargetDust.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3,
+          "loop": false,
+          "frames": 37
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodAbomination.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodAbomination.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodAbomination.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 2.167,
+          "loop": false,
+          "frames": 28
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodAcolyte.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodAcolyte.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodAcolyte.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.567,
+          "loop": false,
+          "frames": 20
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodCryptFiend.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodCryptFiend.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodCryptFiend.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 3.034,
+          "loop": false,
+          "frames": 38
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodGargoyle.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodGargoyle.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodGargoyle.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.667,
+          "loop": false,
+          "frames": 22
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 9,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodGhoul.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodGhoul.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodGhoul.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.667,
+          "loop": false,
+          "frames": 22
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodLarge0.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodLarge0.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodLarge0.prefab",
+      "clips": [
+        {
+          "name": "Death Explode",
+          "duration": 4.266,
+          "loop": false,
+          "frames": 53
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodLarge1.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodLarge1.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodLarge1.prefab",
+      "clips": [
+        {
+          "name": "Death Explode",
+          "duration": 4.266,
+          "loop": false,
+          "frames": 53
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Objects\\Spawnmodels\\Undead\\UndeadBlood\\UndeadBloodNecromancer.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodNecromancer.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Objects/Spawnmodels/Undead/UndeadBlood/UndeadBloodNecromancer.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 5,
+      "previewClip": 0
+    },
+    {
+      "source": "UI\\Feedback\\Autocast\\UI-ModalButtonOn.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/UI/Feedback/Autocast/UI-ModalButtonOn.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/UI/Feedback/Autocast/UI-ModalButtonOn.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.667,
+          "loop": true,
+          "frames": 22
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 4,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 4,
+      "previewClip": 0
+    },
+    {
+      "source": "UI\\Feedback\\QuestButton\\UI-QuestButtonOn.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/UI/Feedback/QuestButton/UI-QuestButtonOn.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/UI/Feedback/QuestButton/UI-QuestButtonOn.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.667,
+          "loop": true,
+          "frames": 22
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 2,
+      "previewClip": 0
+    },
+    {
+      "source": "Units\\Undead\\PlagueCloud\\PlagueCloud.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Units/Undead/PlagueCloud/PlagueCloud.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Units/Undead/PlagueCloud/PlagueCloud.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.334,
+          "loop": false,
+          "frames": 6
+        },
+        {
+          "name": "Stand",
+          "duration": 0.333,
+          "loop": true,
+          "frames": 5
+        },
+        {
+          "name": "Death",
+          "duration": 0.334,
+          "loop": false,
+          "frames": 6
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 1
+    },
+    {
+      "source": "Units\\Undead\\PlagueCloud\\PlagueCloudTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Units/Undead/PlagueCloud/PlagueCloudTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Units/Undead/PlagueCloud/PlagueCloudTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.334,
+          "loop": false,
+          "frames": 6
+        },
+        {
+          "name": "Stand",
+          "duration": 0.333,
+          "loop": true,
+          "frames": 5
+        },
+        {
+          "name": "Death",
+          "duration": 0.334,
+          "loop": false,
+          "frames": 6
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 1
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/BlueLight.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/BlueLight.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/BlueLight.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frames": 41
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/BreathOfFireDamageX3.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/BreathOfFireDamageX3.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/BreathOfFireDamageX3.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 2.1,
+          "loop": true,
+          "frames": 27
+        },
+        {
+          "name": "Birth",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        },
+        {
+          "name": "Death",
+          "duration": 0.1,
+          "loop": false,
+          "frames": 3
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCAshenValeTerrain.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCAshenValeTerrain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCAshenValeTerrain.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCAshenValeUnit.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCAshenValeUnit.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCAshenValeUnit.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDalaranUnit.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDalaranUnit.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDalaranUnit.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDalaranterrain.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDalaranterrain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDalaranterrain.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDungeonUnit.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDungeonUnit.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDungeonUnit.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDungeonterrain.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDungeonterrain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCDungeonterrain.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCFelwoodTerrain.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCFelwoodTerrain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCFelwoodTerrain.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCFelwoodUnit.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCFelwoodUnit.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCFelwoodUnit.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCUndergroundUnit.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCUndergroundUnit.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCUndergroundUnit.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCUndergroundterrain.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCUndergroundterrain.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/DNCUndergroundterrain.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 60,
+          "loop": true,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/EerieFog.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/EerieFog.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/EerieFog.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 0.967,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Death",
+          "duration": 7.767,
+          "loop": false,
+          "frames": 95
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Light.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Light.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Light.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frames": 41
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Light7xxxxy2.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Light7xxxxy2.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Light7xxxxy2.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frames": 41
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Star_Particles.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Star_Particles.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Star_Particles.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 3.333,
+          "loop": true,
+          "frames": 41
+        },
+        {
+          "name": "Death",
+          "duration": 1,
+          "loop": false,
+          "frames": 13
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    },
+    {
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Waterdrops.mdx",
+      "collection": "community-ready",
+      "effect": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Waterdrops.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/community-ready/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Waterdrops.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 8,
+          "loop": false,
+          "frames": 97
+        },
+        {
+          "name": "death",
+          "duration": 3.1,
+          "loop": false,
+          "frames": 39
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 1,
+      "previewClip": 0
+    }
+  ]
+}

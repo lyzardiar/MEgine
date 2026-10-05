@@ -78,9 +78,23 @@ def main():
             assert not (original & covered),name
             original |= covered
     assert original==expected,dict(unaccounted=sorted(expected-original),unexpected=sorted(original-expected))
-    report=dict(inventory=str(args.inventory.resolve()),inventorySha256=digest(args.inventory),originalIndexedModels=len(expected),originalAccountedModels=len(original),communityAccountedModels=len(community),convertedModels=sum(r['convertedModels'] for r in reports),clips=sum(r['clips'] for r in reports),deferredModels=sum(len(r['deferredModels']) for r in reports),missingDependencies=sum(len(r['missingDependencies']) for r in reports),collections=reports,scope='Mesh assets converted and current source/output dependencies hash-verified. Meshless effects require emitter/ribbon/light adaptation; missing texture dependencies remain unresolved. Existing runtime/pose results are prior verification reports, not new gameplay acceptance.')
+    additions={}
+    for name,catalog_file in [('effects-ready','effect-catalog.json'),('texture-pending','texture-pending-catalog.json')]:
+        root=LIBRARY/name
+        if not root.exists():continue
+        manifest=json.loads((root/'asset-sources.json').read_text(encoding='utf-8'))
+        for r in manifest['generatedFiles']:
+            path=root/r['path'];assert path.stat().st_size==r['bytes'] and digest(path)==r['sha256'],path
+        for r in manifest['sourceFiles']:
+            path=root/'SourceAssets'/Path(*PureWindowsPath(r['path']).parts);assert path.stat().st_size==r['bytes'] and digest(path)==r['sha256'],path
+        catalog=json.loads((root/'Assets/WarcraftIII'/catalog_file).read_text(encoding='utf-8'))
+        converted={source_key(m['source']) for m in catalog['models']}
+        expected_addition={source_key(m['path']) for r in reports for m in r['deferredModels' if name=='effects-ready' else 'missingDependencies']}
+        assert converted==expected_addition,(name,'coverage mismatch')
+        additions[name]=dict(models=len(converted),verifiedGeneratedDependencies=len(manifest['generatedFiles']),verification=json.loads((root/'Validation/conversion-checks.json').read_text(encoding='utf-8')))
+    report=dict(inventory=str(args.inventory.resolve()),inventorySha256=digest(args.inventory),originalIndexedModels=len(expected),originalAccountedModels=len(original),communityAccountedModels=len(community),convertedModels=sum(r['convertedModels'] for r in reports),clips=sum(r['clips'] for r in reports),legacyDeferredModels=sum(len(r['deferredModels']) for r in reports),deferredModels=sum(len(r['deferredModels']) for r in reports)-additions.get('effects-ready',{}).get('models',0),convertedSources=sum(r['convertedModels'] for r in reports)+sum(a['models'] for a in additions.values()),missingDependencies=sum(len(r['missingDependencies']) for r in reports),additionalConversions=additions,collections=reports,scope='Existing textured mesh libraries hash-verified. Additional conversions account for meshless sampled effects and geometry awaiting textures; legacy deferred lists identify source records handled by those collections. Sampled effects approximate the viewer solver; camera/helper tracks remain metadata. Missing original textures remain unresolved. Runtime/pose reports are prior verification, not new gameplay acceptance.')
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.output.write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-    print('PASS Warcraft conversion coverage:',json.dumps({k:v for k,v in report.items() if k not in ['collections','scope']},ensure_ascii=False))
+    print('PASS Warcraft conversion coverage:',json.dumps({k:v for k,v in report.items() if k not in ['collections','scope','additionalConversions']},ensure_ascii=False))
 
 if __name__=='__main__':main()

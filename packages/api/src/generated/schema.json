@@ -2484,6 +2484,37 @@
     ],
     "type": "object"
   },
+  "SampledEffect": {
+    "properties": {
+      "clip": {
+        "type": "number"
+      },
+      "effect": {
+        "type": "string"
+      },
+      "looping": {
+        "type": "boolean"
+      },
+      "playing": {
+        "type": "boolean"
+      },
+      "speed": {
+        "type": "number"
+      },
+      "time_seconds": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "effect",
+      "clip",
+      "playing",
+      "looping",
+      "speed",
+      "time_seconds"
+    ],
+    "type": "object"
+  },
   "ScrollView": {
     "properties": {
       "horizontal": {

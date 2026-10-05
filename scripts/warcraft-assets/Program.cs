@@ -9,6 +9,7 @@ using System.Numerics;
 using System.Text.Json;
 using Wc3ModelViewer.Core.Formats;
 
+if (args.Length == 3 && args[0] == "--effects") { EffectExport.Write(args[1], args[2]); return; }
 if (args.Length == 3 && args[0] == "--textures") {
     int count = 0;
     foreach (var path in Directory.EnumerateFiles(args[1], "*.blp", SearchOption.AllDirectories)) {

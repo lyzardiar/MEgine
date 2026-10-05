@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "BreathOfFireTarget",
+  "root": {
+    "id": "root",
+    "name": "BreathOfFireTarget",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "SampledEffect": {
+        "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Other/BreathOfFire/BreathOfFireTarget.mfx",
+        "clip": 0,
+        "playing": true,
+        "looping": true,
+        "speed": 1,
+        "time_seconds": 0
+      }
+    },
+    "children": []
+  }
+}

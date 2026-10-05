@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "OutlandShoreline0",
+  "root": {
+    "id": "root",
+    "name": "OutlandShoreline0",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "SampledEffect": {
+        "effect": "Assets/WarcraftIII/Effects/remaining-ready/Doodads/Outland/Water/OutlandShoreline/OutlandShoreline0.mfx",
+        "clip": 0,
+        "playing": true,
+        "looping": true,
+        "speed": 1,
+        "time_seconds": 0
+      }
+    },
+    "children": []
+  }
+}

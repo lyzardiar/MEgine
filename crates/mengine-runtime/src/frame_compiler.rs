@@ -172,7 +172,9 @@ impl FrameCompiler<'_> {
         } else {
             Vec::new()
         };
-        let authored_lighting = collect_lighting(request.world, request.hierarchy);
+        let mut authored_lighting = collect_lighting(request.world, request.hierarchy);
+        self.particles.sampled_effects.set_project_root(self.textures.project_root());
+        let effect_primitives = self.particles.sampled_effects.collect(request.world, request.hierarchy, camera, request.delta_seconds, &mut authored_lighting);
         let mut lighting = authored_lighting.clone();
         let clear = resolve_camera_background(&active_camera, request.scene_clear, &mut lighting);
         phase("Camera, meshes and lighting");
@@ -197,6 +199,7 @@ impl FrameCompiler<'_> {
         let mut texture_failures = self
             .textures
             .resolve_image_alpha_hit_tests(&mut ui.controls);
+        texture_failures.extend(self.particles.sampled_effects.failures.iter().cloned());
         append_ui_focus_ring(&mut ui.plan, &ui.controls, request.focused_ui);
         phase("Canvas layout and text");
 
@@ -227,6 +230,7 @@ impl FrameCompiler<'_> {
             request.delta_seconds,
         );
         if has_scene_camera {
+            world_primitives.extend(effect_primitives);
             world_primitives.extend(particle_primitives);
             world_primitives.extend(trail_primitives);
         }
