@@ -1,0 +1,6651 @@
+{
+  "version": 1,
+  "name": "Warcraft III asset preview",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Camera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              17,
+              21
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              -0.32876916987390314,
+              0,
+              0,
+              0.944410309632643
+            ]
+          },
+          "Camera3D": {
+            "primary": true,
+            "projection": "orthographic",
+            "orthographic_size": 13,
+            "near": 0.1,
+            "far": 100
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Sun",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              -0.4,
+              -0.2,
+              0,
+              0.894427
+            ]
+          },
+          "DirectionalLight": {
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "intensity": 2.2,
+            "cast_shadows": true
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Ashen_Dirt",
+        "parent": null,
+        "siblingIndex": 2,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ashenvale/Ashen_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Ashen_DirtGrass",
+        "parent": null,
+        "siblingIndex": 3,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ashenvale/Ashen_DirtGrass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Ashen_DirtRough",
+        "parent": null,
+        "siblingIndex": 4,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ashenvale/Ashen_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Ashen_Grass",
+        "parent": null,
+        "siblingIndex": 5,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ashenvale/Ashen_Grass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Ashen_GrassLumpy",
+        "parent": null,
+        "siblingIndex": 6,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ashenvale/Ashen_GrassLumpy/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Ashen_Leaves",
+        "parent": null,
+        "siblingIndex": 7,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ashenvale/Ashen_Leaves/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Ashen_Rock",
+        "parent": null,
+        "siblingIndex": 8,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ashenvale/Ashen_Rock/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Ashen_Vines",
+        "parent": null,
+        "siblingIndex": 9,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ashenvale/Ashen_Vines/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Barrens_Desert",
+        "parent": null,
+        "siblingIndex": 10,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Barrens/Barrens_Desert/00-05.mmat"
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Barrens_DesertDark",
+        "parent": null,
+        "siblingIndex": 11,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Barrens/Barrens_DesertDark/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Barrens_Dirt",
+        "parent": null,
+        "siblingIndex": 12,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Barrens/Barrens_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "Barrens_DirtGrass",
+        "parent": null,
+        "siblingIndex": 13,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Barrens/Barrens_DirtGrass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "Barrens_DirtRough",
+        "parent": null,
+        "siblingIndex": 14,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Barrens/Barrens_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Barrens_Grass",
+        "parent": null,
+        "siblingIndex": 15,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0,
+              -6
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Barrens/Barrens_Grass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "Barrens_Pebbles",
+        "parent": null,
+        "siblingIndex": 16,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Barrens/Barrens_Pebbles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Barrens_Rock",
+        "parent": null,
+        "siblingIndex": 17,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Barrens/Barrens_Rock/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Citadel_DarkTiles",
+        "parent": null,
+        "siblingIndex": 18,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/BlackCitadel/Citadel_DarkTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Citadel_Dirt",
+        "parent": null,
+        "siblingIndex": 19,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/BlackCitadel/Citadel_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "Citadel_DirtLight",
+        "parent": null,
+        "siblingIndex": 20,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/BlackCitadel/Citadel_DirtLight/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "Citadel_FlatStones",
+        "parent": null,
+        "siblingIndex": 21,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/BlackCitadel/Citadel_FlatStones/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "Citadel_LargeBricks",
+        "parent": null,
+        "siblingIndex": 22,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/BlackCitadel/Citadel_LargeBricks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Citadel_RoughDirt",
+        "parent": null,
+        "siblingIndex": 23,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/BlackCitadel/Citadel_RoughDirt/03-03.mmat"
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "Citadel_SmallBricks",
+        "parent": null,
+        "siblingIndex": 24,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/BlackCitadel/Citadel_SmallBricks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 26,
+        "name": "Citadel_SquareTiles",
+        "parent": null,
+        "siblingIndex": 25,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/BlackCitadel/Citadel_SquareTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 27,
+        "name": "Ashen_Blight",
+        "parent": null,
+        "siblingIndex": 26,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Ashen_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 28,
+        "name": "Barrens_Blight",
+        "parent": null,
+        "siblingIndex": 27,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Barrens_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 29,
+        "name": "Cave_Blight",
+        "parent": null,
+        "siblingIndex": 28,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Cave_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 30,
+        "name": "Citadel_Blight",
+        "parent": null,
+        "siblingIndex": 29,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0,
+              -5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Citadel_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 31,
+        "name": "DRuins_Blight",
+        "parent": null,
+        "siblingIndex": 30,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/DRuins_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 32,
+        "name": "Dungeon_Blight",
+        "parent": null,
+        "siblingIndex": 31,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Dungeon_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 33,
+        "name": "Felwood_Blight",
+        "parent": null,
+        "siblingIndex": 32,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Felwood_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 34,
+        "name": "G_Blight",
+        "parent": null,
+        "siblingIndex": 33,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/G_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 35,
+        "name": "Ice_Blight",
+        "parent": null,
+        "siblingIndex": 34,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Ice_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 36,
+        "name": "Lordf_Blight",
+        "parent": null,
+        "siblingIndex": 35,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Lordf_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 37,
+        "name": "Lords_Blight",
+        "parent": null,
+        "siblingIndex": 36,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Lords_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 38,
+        "name": "Lordw_Blight",
+        "parent": null,
+        "siblingIndex": 37,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Lordw_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 39,
+        "name": "North_Blight",
+        "parent": null,
+        "siblingIndex": 38,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/North_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 40,
+        "name": "Outland_Blight",
+        "parent": null,
+        "siblingIndex": 39,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Outland_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 41,
+        "name": "Ruins_Blight",
+        "parent": null,
+        "siblingIndex": 40,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Ruins_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 42,
+        "name": "Village_Blight",
+        "parent": null,
+        "siblingIndex": 41,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/Village_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 43,
+        "name": "VillageFall_Blight",
+        "parent": null,
+        "siblingIndex": 42,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Blight/VillageFall_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 44,
+        "name": "City_BlackMarble",
+        "parent": null,
+        "siblingIndex": 43,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0,
+              -4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Cityscape/City_BlackMarble/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 45,
+        "name": "City_BrickTiles",
+        "parent": null,
+        "siblingIndex": 44,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Cityscape/City_BrickTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 46,
+        "name": "City_Dirt",
+        "parent": null,
+        "siblingIndex": 45,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Cityscape/City_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 47,
+        "name": "City_DirtRough",
+        "parent": null,
+        "siblingIndex": 46,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Cityscape/City_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 48,
+        "name": "City_Grass",
+        "parent": null,
+        "siblingIndex": 47,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Cityscape/City_Grass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 49,
+        "name": "City_GrassTrim",
+        "parent": null,
+        "siblingIndex": 48,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Cityscape/City_GrassTrim/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 50,
+        "name": "City_RoundTiles",
+        "parent": null,
+        "siblingIndex": 49,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Cityscape/City_RoundTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 51,
+        "name": "City_SquareTiles",
+        "parent": null,
+        "siblingIndex": 50,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Cityscape/City_SquareTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 52,
+        "name": "City_WhiteMarble",
+        "parent": null,
+        "siblingIndex": 51,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Cityscape/City_WhiteMarble/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 53,
+        "name": "Dalaran_BlackMarble",
+        "parent": null,
+        "siblingIndex": 52,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dalaran/Dalaran_BlackMarble/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 54,
+        "name": "Dalaran_BrickTiles",
+        "parent": null,
+        "siblingIndex": 53,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dalaran/Dalaran_BrickTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 55,
+        "name": "Dalaran_Dirt",
+        "parent": null,
+        "siblingIndex": 54,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dalaran/Dalaran_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 56,
+        "name": "Dalaran_DirtRough",
+        "parent": null,
+        "siblingIndex": 55,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dalaran/Dalaran_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 57,
+        "name": "Dalaran_Grass",
+        "parent": null,
+        "siblingIndex": 56,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dalaran/Dalaran_Grass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 58,
+        "name": "Dalaran_GrassTrim",
+        "parent": null,
+        "siblingIndex": 57,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0,
+              -3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dalaran/Dalaran_GrassTrim/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 59,
+        "name": "Dalaran_RoundTiles",
+        "parent": null,
+        "siblingIndex": 58,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dalaran/Dalaran_RoundTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 60,
+        "name": "Dalaran_SquareTiles",
+        "parent": null,
+        "siblingIndex": 59,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dalaran/Dalaran_SquareTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 61,
+        "name": "Dalaran_WhiteMarble",
+        "parent": null,
+        "siblingIndex": 60,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dalaran/Dalaran_WhiteMarble/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 62,
+        "name": "DRuins_BlackMarble",
+        "parent": null,
+        "siblingIndex": 61,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/DalaranRuins/DRuins_BlackMarble/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 63,
+        "name": "DRuins_BrickTiles",
+        "parent": null,
+        "siblingIndex": 62,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/DalaranRuins/DRuins_BrickTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 64,
+        "name": "DRuins_Dirt",
+        "parent": null,
+        "siblingIndex": 63,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/DalaranRuins/DRuins_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 65,
+        "name": "DRuins_DirtRough",
+        "parent": null,
+        "siblingIndex": 64,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/DalaranRuins/DRuins_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 66,
+        "name": "DRuins_Grass",
+        "parent": null,
+        "siblingIndex": 65,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/DalaranRuins/DRuins_Grass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 67,
+        "name": "DRuins_GrassTrim",
+        "parent": null,
+        "siblingIndex": 66,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/DalaranRuins/DRuins_GrassTrim/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 68,
+        "name": "DRuins_RoundTiles",
+        "parent": null,
+        "siblingIndex": 67,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/DalaranRuins/DRuins_RoundTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 69,
+        "name": "DRuins_SquareTiles",
+        "parent": null,
+        "siblingIndex": 68,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/DalaranRuins/DRuins_SquareTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 70,
+        "name": "DRuins_WhiteMarble",
+        "parent": null,
+        "siblingIndex": 69,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/DalaranRuins/DRuins_WhiteMarble/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 71,
+        "name": "GBrick",
+        "parent": null,
+        "siblingIndex": 70,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon2/GBrick/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 72,
+        "name": "GDarkRocks",
+        "parent": null,
+        "siblingIndex": 71,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0,
+              -2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon2/GDarkRocks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 73,
+        "name": "GDirt",
+        "parent": null,
+        "siblingIndex": 72,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon2/GDirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 74,
+        "name": "GGreyStones",
+        "parent": null,
+        "siblingIndex": 73,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon2/GGreyStones/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 75,
+        "name": "GLava",
+        "parent": null,
+        "siblingIndex": 74,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon2/GLava/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 76,
+        "name": "GLavaCracks",
+        "parent": null,
+        "siblingIndex": 75,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon2/GLavaCracks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 77,
+        "name": "GRedStones",
+        "parent": null,
+        "siblingIndex": 76,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon2/GRedStones/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 78,
+        "name": "GSquareTiles",
+        "parent": null,
+        "siblingIndex": 77,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon2/GSquareTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 79,
+        "name": "Cave_Brick",
+        "parent": null,
+        "siblingIndex": 78,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon/Cave_Brick/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 80,
+        "name": "Cave_DarkRocks",
+        "parent": null,
+        "siblingIndex": 79,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon/Cave_DarkRocks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 81,
+        "name": "Cave_Dirt",
+        "parent": null,
+        "siblingIndex": 80,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon/Cave_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 82,
+        "name": "Cave_GreyStones",
+        "parent": null,
+        "siblingIndex": 81,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon/Cave_GreyStones/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 83,
+        "name": "Cave_Lava",
+        "parent": null,
+        "siblingIndex": 82,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon/Cave_Lava/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 84,
+        "name": "Cave_LavaCracks",
+        "parent": null,
+        "siblingIndex": 83,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon/Cave_LavaCracks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 85,
+        "name": "Cave_RedStones",
+        "parent": null,
+        "siblingIndex": 84,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon/Cave_RedStones/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 86,
+        "name": "Cave_SquareTiles",
+        "parent": null,
+        "siblingIndex": 85,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0,
+              -1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Dungeon/Cave_SquareTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 87,
+        "name": "Felwood_Dirt",
+        "parent": null,
+        "siblingIndex": 86,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Felwood/Felwood_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 88,
+        "name": "Felwood_DirtRough",
+        "parent": null,
+        "siblingIndex": 87,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Felwood/Felwood_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 89,
+        "name": "Felwood_Grass",
+        "parent": null,
+        "siblingIndex": 88,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Felwood/Felwood_Grass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 90,
+        "name": "Felwood_Leaves",
+        "parent": null,
+        "siblingIndex": 89,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Felwood/Felwood_Leaves/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 91,
+        "name": "Felwood_Poison",
+        "parent": null,
+        "siblingIndex": 90,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Felwood/Felwood_Poison/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 92,
+        "name": "Felwood_Rock",
+        "parent": null,
+        "siblingIndex": 91,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Felwood/Felwood_Rock/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 93,
+        "name": "Felwood_Vines",
+        "parent": null,
+        "siblingIndex": 92,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Felwood/Felwood_Vines/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 94,
+        "name": "Ice_BlackBricks",
+        "parent": null,
+        "siblingIndex": 93,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Icecrown/Ice_BlackBricks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 95,
+        "name": "Ice_BlackSquares",
+        "parent": null,
+        "siblingIndex": 94,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Icecrown/Ice_BlackSquares/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 96,
+        "name": "Ice_Cracks",
+        "parent": null,
+        "siblingIndex": 95,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Icecrown/Ice_Cracks/03-03.mmat"
+          }
+        }
+      },
+      {
+        "entity": 97,
+        "name": "Ice_DarkIce",
+        "parent": null,
+        "siblingIndex": 96,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Icecrown/Ice_DarkIce/03-03.mmat"
+          }
+        }
+      },
+      {
+        "entity": 98,
+        "name": "Ice_Dirt",
+        "parent": null,
+        "siblingIndex": 97,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Icecrown/Ice_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 99,
+        "name": "Ice_DirtRough",
+        "parent": null,
+        "siblingIndex": 98,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Icecrown/Ice_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 100,
+        "name": "Ice_Ice",
+        "parent": null,
+        "siblingIndex": 99,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Icecrown/Ice_Ice/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 101,
+        "name": "Ice_RuneBricks",
+        "parent": null,
+        "siblingIndex": 100,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Icecrown/Ice_RuneBricks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 102,
+        "name": "Ice_Snow",
+        "parent": null,
+        "siblingIndex": 101,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Icecrown/Ice_Snow/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 103,
+        "name": "Ice_TiledBricks",
+        "parent": null,
+        "siblingIndex": 102,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Icecrown/Ice_TiledBricks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 104,
+        "name": "Lordf_Dirt",
+        "parent": null,
+        "siblingIndex": 103,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronFall/Lordf_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 105,
+        "name": "Lordf_DirtGrass",
+        "parent": null,
+        "siblingIndex": 104,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronFall/Lordf_DirtGrass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 106,
+        "name": "Lordf_DirtRough",
+        "parent": null,
+        "siblingIndex": 105,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronFall/Lordf_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 107,
+        "name": "Lordf_Grass",
+        "parent": null,
+        "siblingIndex": 106,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronFall/Lordf_Grass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 108,
+        "name": "Lordf_GrassDark",
+        "parent": null,
+        "siblingIndex": 107,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronFall/Lordf_GrassDark/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 109,
+        "name": "Lordf_Rock",
+        "parent": null,
+        "siblingIndex": 108,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronFall/Lordf_Rock/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 110,
+        "name": "Lords_Dirt",
+        "parent": null,
+        "siblingIndex": 109,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronSummer/Lords_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 111,
+        "name": "Lords_DirtGrass",
+        "parent": null,
+        "siblingIndex": 110,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronSummer/Lords_DirtGrass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 112,
+        "name": "Lords_DirtRough",
+        "parent": null,
+        "siblingIndex": 111,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronSummer/Lords_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 113,
+        "name": "Lords_Grass",
+        "parent": null,
+        "siblingIndex": 112,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronSummer/Lords_Grass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 114,
+        "name": "Lords_GrassDark",
+        "parent": null,
+        "siblingIndex": 113,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronSummer/Lords_GrassDark/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 115,
+        "name": "Lords_Rock",
+        "parent": null,
+        "siblingIndex": 114,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronSummer/Lords_Rock/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 116,
+        "name": "Lordw_Dirt",
+        "parent": null,
+        "siblingIndex": 115,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronWinter/Lordw_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 117,
+        "name": "Lordw_DirtRough",
+        "parent": null,
+        "siblingIndex": 116,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronWinter/Lordw_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 118,
+        "name": "Lordw_Grass",
+        "parent": null,
+        "siblingIndex": 117,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronWinter/Lordw_Grass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 119,
+        "name": "Lordw_Rock",
+        "parent": null,
+        "siblingIndex": 118,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronWinter/Lordw_Rock/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 120,
+        "name": "Lordw_Snow",
+        "parent": null,
+        "siblingIndex": 119,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronWinter/Lordw_Snow/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 121,
+        "name": "Lordw_SnowGrass",
+        "parent": null,
+        "siblingIndex": 120,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/LordaeronWinter/Lordw_SnowGrass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 122,
+        "name": "North_dirt",
+        "parent": null,
+        "siblingIndex": 121,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Northrend/North_dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 123,
+        "name": "North_dirtdark",
+        "parent": null,
+        "siblingIndex": 122,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Northrend/North_dirtdark/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 124,
+        "name": "North_Grass",
+        "parent": null,
+        "siblingIndex": 123,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Northrend/North_Grass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 125,
+        "name": "North_ice",
+        "parent": null,
+        "siblingIndex": 124,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Northrend/North_ice/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 126,
+        "name": "North_rock",
+        "parent": null,
+        "siblingIndex": 125,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Northrend/North_rock/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 127,
+        "name": "North_Snow",
+        "parent": null,
+        "siblingIndex": 126,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Northrend/North_Snow/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 128,
+        "name": "North_SnowRock",
+        "parent": null,
+        "siblingIndex": 127,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0,
+              2
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Northrend/North_SnowRock/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 129,
+        "name": "nothing",
+        "parent": null,
+        "siblingIndex": 128,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Nothing/nothing/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 130,
+        "name": "Outland_Abyss",
+        "parent": null,
+        "siblingIndex": 129,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Outland/Outland_Abyss/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 131,
+        "name": "Outland_Dirt",
+        "parent": null,
+        "siblingIndex": 130,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Outland/Outland_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 132,
+        "name": "Outland_DirtCracked",
+        "parent": null,
+        "siblingIndex": 131,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Outland/Outland_DirtCracked/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 133,
+        "name": "Outland_DirtLight",
+        "parent": null,
+        "siblingIndex": 132,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Outland/Outland_DirtLight/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 134,
+        "name": "Outland_FlatStones",
+        "parent": null,
+        "siblingIndex": 133,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Outland/Outland_FlatStones/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 135,
+        "name": "Outland_FlatStonesLight",
+        "parent": null,
+        "siblingIndex": 134,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Outland/Outland_FlatStonesLight/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 136,
+        "name": "Outland_Rock",
+        "parent": null,
+        "siblingIndex": 135,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Outland/Outland_Rock/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 137,
+        "name": "Outland_RoughDirt",
+        "parent": null,
+        "siblingIndex": 136,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Outland/Outland_RoughDirt/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 138,
+        "name": "Ruins_Dirt",
+        "parent": null,
+        "siblingIndex": 137,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ruins/Ruins_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 139,
+        "name": "Ruins_DirtGrass",
+        "parent": null,
+        "siblingIndex": 138,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ruins/Ruins_DirtGrass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 140,
+        "name": "Ruins_DirtRough",
+        "parent": null,
+        "siblingIndex": 139,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ruins/Ruins_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 141,
+        "name": "Ruins_Grass",
+        "parent": null,
+        "siblingIndex": 140,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ruins/Ruins_Grass/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 142,
+        "name": "Ruins_GrassDark",
+        "parent": null,
+        "siblingIndex": 141,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0,
+              3
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ruins/Ruins_GrassDark/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 143,
+        "name": "Ruins_LargeBricks",
+        "parent": null,
+        "siblingIndex": 142,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ruins/Ruins_LargeBricks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 144,
+        "name": "Ruins_RoundTiles",
+        "parent": null,
+        "siblingIndex": 143,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ruins/Ruins_RoundTiles/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 145,
+        "name": "Ruins_Sand",
+        "parent": null,
+        "siblingIndex": 144,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ruins/Ruins_Sand/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 146,
+        "name": "Ruins_SmallBricks",
+        "parent": null,
+        "siblingIndex": 145,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Ruins/Ruins_SmallBricks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 147,
+        "name": "Village_CobblePath",
+        "parent": null,
+        "siblingIndex": 146,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Village/Village_CobblePath/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 148,
+        "name": "Village_Crops",
+        "parent": null,
+        "siblingIndex": 147,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Village/Village_Crops/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 149,
+        "name": "Village_Dirt",
+        "parent": null,
+        "siblingIndex": 148,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Village/Village_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 150,
+        "name": "Village_DirtRough",
+        "parent": null,
+        "siblingIndex": 149,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Village/Village_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 151,
+        "name": "Village_GrassShort",
+        "parent": null,
+        "siblingIndex": 150,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              1,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Village/Village_GrassShort/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 152,
+        "name": "Village_GrassThick",
+        "parent": null,
+        "siblingIndex": 151,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Village/Village_GrassThick/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 153,
+        "name": "Village_Rocks",
+        "parent": null,
+        "siblingIndex": 152,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              3,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Village/Village_Rocks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 154,
+        "name": "Village_StonePath",
+        "parent": null,
+        "siblingIndex": 153,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              4,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/Village/Village_StonePath/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 155,
+        "name": "VillageFall_Blight",
+        "parent": null,
+        "siblingIndex": 154,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              5,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/VillageFall/VillageFall_Blight/00-04.mmat"
+          }
+        }
+      },
+      {
+        "entity": 156,
+        "name": "VillageFall_CobblePath",
+        "parent": null,
+        "siblingIndex": 155,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0,
+              4
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/VillageFall/VillageFall_CobblePath/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 157,
+        "name": "VillageFall_Crops",
+        "parent": null,
+        "siblingIndex": 156,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -7,
+              0,
+              5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/VillageFall/VillageFall_Crops/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 158,
+        "name": "VillageFall_Dirt",
+        "parent": null,
+        "siblingIndex": 157,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0,
+              5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/VillageFall/VillageFall_Dirt/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 159,
+        "name": "VillageFall_DirtRough",
+        "parent": null,
+        "siblingIndex": 158,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -5,
+              0,
+              5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/VillageFall/VillageFall_DirtRough/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 160,
+        "name": "VillageFall_GrassShort",
+        "parent": null,
+        "siblingIndex": 159,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -4,
+              0,
+              5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/VillageFall/VillageFall_GrassShort/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 161,
+        "name": "VillageFall_GrassThick",
+        "parent": null,
+        "siblingIndex": 160,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -3,
+              0,
+              5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/VillageFall/VillageFall_GrassThick/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 162,
+        "name": "VillageFall_Rocks",
+        "parent": null,
+        "siblingIndex": 161,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0,
+              5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/VillageFall/VillageFall_Rocks/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 163,
+        "name": "VillageFall_StonePath",
+        "parent": null,
+        "siblingIndex": 162,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -1,
+              0,
+              5
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/TerrainTile.glb",
+            "material": "Assets/WarcraftIII/Materials/Tiles/TerrainArt/VillageFall/VillageFall_StonePath/00-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 164,
+        "name": "Footman/0/0",
+        "parent": null,
+        "siblingIndex": 163,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-00-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 165,
+        "name": "Footman/1/1",
+        "parent": null,
+        "siblingIndex": 164,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-01-team-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 166,
+        "name": "Footman/2/0",
+        "parent": null,
+        "siblingIndex": 165,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-02-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 167,
+        "name": "Footman/3/0",
+        "parent": null,
+        "siblingIndex": 166,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-03.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-03-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 168,
+        "name": "Footman/4/0",
+        "parent": null,
+        "siblingIndex": 167,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              -6,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-04.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-04-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 169,
+        "name": "Grunt/0/0",
+        "parent": null,
+        "siblingIndex": 168,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-00-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 170,
+        "name": "Grunt/1/0",
+        "parent": null,
+        "siblingIndex": 169,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-01-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 171,
+        "name": "Grunt/2/1",
+        "parent": null,
+        "siblingIndex": 170,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-02-team-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 172,
+        "name": "Grunt/3/0",
+        "parent": null,
+        "siblingIndex": 171,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-03.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-03-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 173,
+        "name": "Grunt/4/0",
+        "parent": null,
+        "siblingIndex": 172,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-04.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-04-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 174,
+        "name": "Grunt/5/0",
+        "parent": null,
+        "siblingIndex": 173,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-05.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-05-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 175,
+        "name": "Grunt/6/0",
+        "parent": null,
+        "siblingIndex": 174,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-06.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-06-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 176,
+        "name": "Grunt/7/0",
+        "parent": null,
+        "siblingIndex": 175,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              -2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-07.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-07-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 177,
+        "name": "TownHall/0/1",
+        "parent": null,
+        "siblingIndex": 176,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-00-team-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 178,
+        "name": "TownHall/1/0",
+        "parent": null,
+        "siblingIndex": 177,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-01-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 179,
+        "name": "TownHall/2/0",
+        "parent": null,
+        "siblingIndex": 178,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-02-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 180,
+        "name": "TownHall/3/0",
+        "parent": null,
+        "siblingIndex": 179,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-03.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-03-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 181,
+        "name": "TownHall/4/0",
+        "parent": null,
+        "siblingIndex": 180,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-04.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-04-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 182,
+        "name": "TownHall/5/0",
+        "parent": null,
+        "siblingIndex": 181,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-05.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-05-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 183,
+        "name": "TownHall/6/0",
+        "parent": null,
+        "siblingIndex": 182,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-06.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-06-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 184,
+        "name": "TownHall/7/0",
+        "parent": null,
+        "siblingIndex": 183,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-07.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-07-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 185,
+        "name": "TownHall/8/0",
+        "parent": null,
+        "siblingIndex": 184,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-08.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-08-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 186,
+        "name": "TownHall/9/0",
+        "parent": null,
+        "siblingIndex": 185,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-09.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-09-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 187,
+        "name": "TownHall/10/0",
+        "parent": null,
+        "siblingIndex": 186,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-10.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-10-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 188,
+        "name": "TownHall/11/0",
+        "parent": null,
+        "siblingIndex": 187,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-11.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-11-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 189,
+        "name": "TownHall/12/0",
+        "parent": null,
+        "siblingIndex": 188,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-12.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-12-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 190,
+        "name": "TownHall/13/0",
+        "parent": null,
+        "siblingIndex": 189,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-13.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-13-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 191,
+        "name": "TownHall/14/1",
+        "parent": null,
+        "siblingIndex": 190,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-14.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-14-team-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 192,
+        "name": "TownHall/15/0",
+        "parent": null,
+        "siblingIndex": 191,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-15.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-15-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 193,
+        "name": "TownHall/16/0",
+        "parent": null,
+        "siblingIndex": 192,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-16.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-16-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 194,
+        "name": "TownHall/17/1",
+        "parent": null,
+        "siblingIndex": 193,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-17.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-17-team-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 195,
+        "name": "TownHall/18/0",
+        "parent": null,
+        "siblingIndex": 194,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-18.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-18-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 196,
+        "name": "TownHall/19/0",
+        "parent": null,
+        "siblingIndex": 195,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-19.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-19-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 197,
+        "name": "TownHall/20/0",
+        "parent": null,
+        "siblingIndex": 196,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-20.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-20-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 198,
+        "name": "TownHall/21/0",
+        "parent": null,
+        "siblingIndex": 197,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-21.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-21-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 199,
+        "name": "TownHall/22/0",
+        "parent": null,
+        "siblingIndex": 198,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-22.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-22-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 200,
+        "name": "TownHall/23/0",
+        "parent": null,
+        "siblingIndex": 199,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-23.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-23-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 201,
+        "name": "TownHall/24/1",
+        "parent": null,
+        "siblingIndex": 200,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-24.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-24-team-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 202,
+        "name": "TownHall/25/0",
+        "parent": null,
+        "siblingIndex": 201,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-25.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-25-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 203,
+        "name": "TownHall/26/1",
+        "parent": null,
+        "siblingIndex": 202,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-26.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-26-team-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 204,
+        "name": "TownHall/27/0",
+        "parent": null,
+        "siblingIndex": 203,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-27.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-27-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 205,
+        "name": "TownHall/28/0",
+        "parent": null,
+        "siblingIndex": 204,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-28.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-28-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 206,
+        "name": "TownHall/29/0",
+        "parent": null,
+        "siblingIndex": 205,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-29.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-29-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 207,
+        "name": "TownHall/30/0",
+        "parent": null,
+        "siblingIndex": 206,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-30.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-30-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 208,
+        "name": "TownHall/31/1",
+        "parent": null,
+        "siblingIndex": 207,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-31.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-31-team-00.mmat"
+          }
+        }
+      },
+      {
+        "entity": 209,
+        "name": "TownHall/32/0",
+        "parent": null,
+        "siblingIndex": 208,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-32.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-32-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 210,
+        "name": "TownHall/33/0",
+        "parent": null,
+        "siblingIndex": 209,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-33.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-33-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 211,
+        "name": "TownHall/34/0",
+        "parent": null,
+        "siblingIndex": 210,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-34.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-34-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 212,
+        "name": "TownHall/35/0",
+        "parent": null,
+        "siblingIndex": 211,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              2,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-35.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-35-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 213,
+        "name": "LordaeronTree0/0/0",
+        "parent": null,
+        "siblingIndex": 212,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Terrain/LordaeronTree/LordaeronTree0/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Terrain/LordaeronTree/LordaeronTree0/geoset-00-layer-0.mmat"
+          }
+        }
+      },
+      {
+        "entity": 214,
+        "name": "LordaeronTree0/1/0",
+        "parent": null,
+        "siblingIndex": 213,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              6,
+              0.05,
+              8
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Doodads/Terrain/LordaeronTree/LordaeronTree0/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/Doodads/Terrain/LordaeronTree/LordaeronTree0/geoset-01-layer-0.mmat"
+          }
+        }
+      }
+    ]
+  }
+}

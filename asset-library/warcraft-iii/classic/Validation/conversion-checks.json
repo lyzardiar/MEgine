@@ -1,0 +1,36 @@
+{
+  "terrainAtlases": 161,
+  "terrainTiles": 4065,
+  "modelSources": 4,
+  "geosets": 51,
+  "renderParts": 51,
+  "sourceMaterialLayers": 59,
+  "clips": 44,
+  "poseComparison": [
+    {
+      "model": "Units\\Human\\Footman\\Footman.mdx",
+      "samples": 39,
+      "vertices": 22698,
+      "maxPositionError": 2.60727972656305e-07
+    },
+    {
+      "model": "Units\\Orc\\Grunt\\Grunt.mdx",
+      "samples": 36,
+      "vertices": 27324,
+      "maxPositionError": 2.63294592420249e-07
+    },
+    {
+      "model": "Buildings\\Human\\TownHall\\TownHall.mdx",
+      "samples": 42,
+      "vertices": 268296,
+      "maxPositionError": 5.617810998614914e-07
+    },
+    {
+      "model": "Doodads\\Terrain\\LordaeronTree\\LordaeronTree0.mdx",
+      "samples": 15,
+      "vertices": 1185,
+      "maxPositionError": 4.2198029148732275e-07
+    }
+  ],
+  "validationEntities": 6343
+}

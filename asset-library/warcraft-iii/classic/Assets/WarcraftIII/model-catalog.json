@@ -1,0 +1,1481 @@
+{
+  "version": 1,
+  "fps": 12,
+  "sourceUnitToEngineUnit": 0.0078125,
+  "axes": "(x,y,z) -> (x,z,-y)",
+  "models": [
+    {
+      "id": "Footman",
+      "source": "Units\\Human\\Footman\\Footman.mdx",
+      "previewSequence": "Stand - 1",
+      "sourceMaterialLayers": 6,
+      "parts": [
+        {
+          "geoset": 0,
+          "materialIndex": 0,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-00-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": true,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 1,
+          "materialIndex": 1,
+          "layer": 1,
+          "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-01-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-01-team-00.mmat",
+          "teamMaterials": {
+            "0": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-01-team-00.mmat",
+            "1": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-01-team-01.mmat"
+          },
+          "sourceLayers": [
+            {
+              "filterMode": 0,
+              "shadingFlags": 1,
+              "textureId": 1,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 1,
+              "flipbookTextureIds": []
+            },
+            {
+              "filterMode": 2,
+              "shadingFlags": 0,
+              "textureId": 0,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 0,
+              "flipbookTextureIds": []
+            }
+          ],
+          "replaceableId": 1,
+          "defaultVisible": true,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 2,
+          "materialIndex": 0,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-02.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-02-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-02-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 3,
+          "materialIndex": 0,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-03.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-03-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-03-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 4,
+          "materialIndex": 2,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-04.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-04-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Human/Footman/Footman/geoset-04-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        }
+      ],
+      "clips": [
+        {
+          "name": "Stand - 1",
+          "duration": 1.5,
+          "loop": true,
+          "frameCount": 18
+        },
+        {
+          "name": "Stand - 2",
+          "duration": 2.5,
+          "loop": true,
+          "frameCount": 30
+        },
+        {
+          "name": "Stand Victory",
+          "duration": 2.333,
+          "loop": true,
+          "frameCount": 28
+        },
+        {
+          "name": "Stand - 4",
+          "duration": 5.267,
+          "loop": true,
+          "frameCount": 64
+        },
+        {
+          "name": "Attack - 1",
+          "duration": 1,
+          "loop": false,
+          "frameCount": 12
+        },
+        {
+          "name": "Attack - 2",
+          "duration": 1,
+          "loop": false,
+          "frameCount": 12
+        },
+        {
+          "name": "Walk",
+          "duration": 0.8,
+          "loop": true,
+          "frameCount": 10
+        },
+        {
+          "name": "Stand Defend",
+          "duration": 1,
+          "loop": true,
+          "frameCount": 12
+        },
+        {
+          "name": "Walk Defend",
+          "duration": 1.1,
+          "loop": true,
+          "frameCount": 14
+        },
+        {
+          "name": "Death",
+          "duration": 3.034,
+          "loop": false,
+          "frameCount": 37
+        },
+        {
+          "name": "Decay Flesh",
+          "duration": 60,
+          "loop": false,
+          "frameCount": 720
+        },
+        {
+          "name": "Attack Defend",
+          "duration": 1,
+          "loop": false,
+          "frameCount": 12
+        },
+        {
+          "name": "Decay Bone",
+          "duration": 60,
+          "loop": false,
+          "frameCount": 720
+        }
+      ],
+      "effects": {
+        "particles": 0,
+        "ribbons": 0,
+        "lights": 0,
+        "billboards": true,
+        "skippedChunks": []
+      },
+      "stateTracks": "Assets/WarcraftIII/Animations/Footman.json",
+      "prefab": "Assets/WarcraftIII/Prefabs/Footman.prefab"
+    },
+    {
+      "id": "Grunt",
+      "source": "Units\\Orc\\Grunt\\Grunt.mdx",
+      "previewSequence": "Stand - 1",
+      "sourceMaterialLayers": 9,
+      "parts": [
+        {
+          "geoset": 0,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-00-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-00-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 1,
+          "materialIndex": 0,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-01-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-01-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": true,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 2,
+          "materialIndex": 5,
+          "layer": 1,
+          "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-02.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-02-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-02-team-00.mmat",
+          "teamMaterials": {
+            "0": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-02-team-00.mmat",
+            "1": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-02-team-01.mmat"
+          },
+          "sourceLayers": [
+            {
+              "filterMode": 0,
+              "shadingFlags": 1,
+              "textureId": 3,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 3,
+              "flipbookTextureIds": []
+            },
+            {
+              "filterMode": 2,
+              "shadingFlags": 0,
+              "textureId": 0,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 0,
+              "flipbookTextureIds": []
+            }
+          ],
+          "replaceableId": 1,
+          "defaultVisible": true,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 3,
+          "materialIndex": 0,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-03.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-03-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-03-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 4,
+          "materialIndex": 2,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-04.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-04-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-04-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 5,
+          "materialIndex": 3,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-05.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-05-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-05-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 6,
+          "materialIndex": 4,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-06.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-06-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-06-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 7,
+          "materialIndex": 0,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-07.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Units/Orc/Grunt/Grunt/geoset-07-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Units/Orc/Grunt/Grunt/geoset-07-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": true,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        }
+      ],
+      "clips": [
+        {
+          "name": "walk",
+          "duration": 0.666,
+          "loop": true,
+          "frameCount": 8
+        },
+        {
+          "name": "Stand - 1",
+          "duration": 3,
+          "loop": true,
+          "frameCount": 36
+        },
+        {
+          "name": "Attack - 1",
+          "duration": 0.967,
+          "loop": false,
+          "frameCount": 12
+        },
+        {
+          "name": "Death",
+          "duration": 1.567,
+          "loop": false,
+          "frameCount": 19
+        },
+        {
+          "name": "Decay Flesh",
+          "duration": 60,
+          "loop": false,
+          "frameCount": 720
+        },
+        {
+          "name": "Attack - 2",
+          "duration": 0.966,
+          "loop": false,
+          "frameCount": 12
+        },
+        {
+          "name": "Stand - 2",
+          "duration": 3.333,
+          "loop": true,
+          "frameCount": 40
+        },
+        {
+          "name": "Stand Victory",
+          "duration": 1.333,
+          "loop": true,
+          "frameCount": 16
+        },
+        {
+          "name": "Stand - 3",
+          "duration": 1.433,
+          "loop": true,
+          "frameCount": 18
+        },
+        {
+          "name": "Spell",
+          "duration": 1.434,
+          "loop": false,
+          "frameCount": 18
+        },
+        {
+          "name": "Stand Ready",
+          "duration": 0.966,
+          "loop": true,
+          "frameCount": 12
+        },
+        {
+          "name": "Decay Bone",
+          "duration": 60,
+          "loop": false,
+          "frameCount": 720
+        }
+      ],
+      "effects": {
+        "particles": 0,
+        "ribbons": 0,
+        "lights": 0,
+        "billboards": true,
+        "skippedChunks": []
+      },
+      "stateTracks": "Assets/WarcraftIII/Animations/Grunt.json",
+      "prefab": "Assets/WarcraftIII/Prefabs/Grunt.prefab"
+    },
+    {
+      "id": "TownHall",
+      "source": "Buildings\\Human\\TownHall\\TownHall.mdx",
+      "previewSequence": "Stand",
+      "sourceMaterialLayers": 42,
+      "parts": [
+        {
+          "geoset": 0,
+          "materialIndex": 5,
+          "layer": 1,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-00-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-00-team-00.mmat",
+          "teamMaterials": {
+            "0": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-00-team-00.mmat",
+            "1": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-00-team-01.mmat"
+          },
+          "sourceLayers": [
+            {
+              "filterMode": 0,
+              "shadingFlags": 0,
+              "textureId": 13,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 13,
+              "flipbookTextureIds": []
+            },
+            {
+              "filterMode": 2,
+              "shadingFlags": 0,
+              "textureId": 8,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 8,
+              "flipbookTextureIds": []
+            }
+          ],
+          "replaceableId": 1,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 1,
+          "materialIndex": 0,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-01-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-01-layer-0.mmat",
+          "teamMaterials": {
+            "0": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-01-layer-0.mmat",
+            "1": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-01-layer-0-team-01.mmat"
+          },
+          "sourceLayers": [],
+          "replaceableId": 2,
+          "defaultVisible": false,
+          "sourceFlags": 1,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 2,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-02.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-02-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-02-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 3,
+          "materialIndex": 2,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-03.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-03-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-03-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 1,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 4,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-04.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-04-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-04-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 5,
+          "materialIndex": 3,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-05.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-05-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-05-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 6,
+          "materialIndex": 4,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-06.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-06-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-06-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 7,
+          "materialIndex": 4,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-07.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-07-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-07-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 8,
+          "materialIndex": 4,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-08.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-08-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-08-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 9,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-09.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-09-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-09-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 10,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-10.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-10-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-10-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 11,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-11.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-11-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-11-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": true,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 12,
+          "materialIndex": 4,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-12.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-12-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-12-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 13,
+          "materialIndex": 3,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-13.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-13-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-13-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": true,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 14,
+          "materialIndex": 5,
+          "layer": 1,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-14.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-14-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-14-team-00.mmat",
+          "teamMaterials": {
+            "0": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-14-team-00.mmat",
+            "1": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-14-team-01.mmat"
+          },
+          "sourceLayers": [
+            {
+              "filterMode": 0,
+              "shadingFlags": 0,
+              "textureId": 13,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 13,
+              "flipbookTextureIds": []
+            },
+            {
+              "filterMode": 2,
+              "shadingFlags": 0,
+              "textureId": 8,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 8,
+              "flipbookTextureIds": []
+            }
+          ],
+          "replaceableId": 1,
+          "defaultVisible": true,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 15,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-15.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-15-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-15-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 16,
+          "materialIndex": 3,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-16.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-16-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-16-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 17,
+          "materialIndex": 5,
+          "layer": 1,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-17.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-17-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-17-team-00.mmat",
+          "teamMaterials": {
+            "0": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-17-team-00.mmat",
+            "1": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-17-team-01.mmat"
+          },
+          "sourceLayers": [
+            {
+              "filterMode": 0,
+              "shadingFlags": 0,
+              "textureId": 13,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 13,
+              "flipbookTextureIds": []
+            },
+            {
+              "filterMode": 2,
+              "shadingFlags": 0,
+              "textureId": 8,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 8,
+              "flipbookTextureIds": []
+            }
+          ],
+          "replaceableId": 1,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 18,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-18.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-18-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-18-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 19,
+          "materialIndex": 4,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-19.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-19-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-19-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 20,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-20.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-20-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-20-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 21,
+          "materialIndex": 4,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-21.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-21-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-21-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 22,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-22.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-22-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-22-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 23,
+          "materialIndex": 4,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-23.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-23-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-23-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 24,
+          "materialIndex": 5,
+          "layer": 1,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-24.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-24-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-24-team-00.mmat",
+          "teamMaterials": {
+            "0": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-24-team-00.mmat",
+            "1": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-24-team-01.mmat"
+          },
+          "sourceLayers": [
+            {
+              "filterMode": 0,
+              "shadingFlags": 0,
+              "textureId": 13,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 13,
+              "flipbookTextureIds": []
+            },
+            {
+              "filterMode": 2,
+              "shadingFlags": 0,
+              "textureId": 8,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 8,
+              "flipbookTextureIds": []
+            }
+          ],
+          "replaceableId": 1,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 25,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-25.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-25-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-25-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 26,
+          "materialIndex": 5,
+          "layer": 1,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-26.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-26-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-26-team-00.mmat",
+          "teamMaterials": {
+            "0": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-26-team-00.mmat",
+            "1": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-26-team-01.mmat"
+          },
+          "sourceLayers": [
+            {
+              "filterMode": 0,
+              "shadingFlags": 0,
+              "textureId": 13,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 13,
+              "flipbookTextureIds": []
+            },
+            {
+              "filterMode": 2,
+              "shadingFlags": 0,
+              "textureId": 8,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 8,
+              "flipbookTextureIds": []
+            }
+          ],
+          "replaceableId": 1,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 27,
+          "materialIndex": 6,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-27.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-27-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-27-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 28,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-28.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-28-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-28-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 29,
+          "materialIndex": 4,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-29.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-29-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-29-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 30,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-30.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-30-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-30-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 31,
+          "materialIndex": 5,
+          "layer": 1,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-31.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-31-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-31-team-00.mmat",
+          "teamMaterials": {
+            "0": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-31-team-00.mmat",
+            "1": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-31-team-01.mmat"
+          },
+          "sourceLayers": [
+            {
+              "filterMode": 0,
+              "shadingFlags": 0,
+              "textureId": 13,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 13,
+              "flipbookTextureIds": []
+            },
+            {
+              "filterMode": 2,
+              "shadingFlags": 0,
+              "textureId": 8,
+              "textureAnimationId": -1,
+              "coordId": 0,
+              "alpha": 1,
+              "emissiveMultiplier": 0,
+              "fresnelColor": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "fresnelMultiplier": 0,
+              "teamColorMultiplier": 0,
+              "textureSlots": {},
+              "alphaTrack": null,
+              "emissiveTrack": null,
+              "textureIdTrack": null,
+              "normalIdTrack": null,
+              "isPbr": false,
+              "diffuseTextureId": 8,
+              "flipbookTextureIds": []
+            }
+          ],
+          "replaceableId": 1,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 32,
+          "materialIndex": 1,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-32.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-32-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-32-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 33,
+          "materialIndex": 6,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-33.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-33-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-33-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 34,
+          "materialIndex": 7,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-34.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-34-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-34-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 1,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 35,
+          "materialIndex": 8,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-35.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-35-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Buildings/Human/TownHall/TownHall/geoset-35-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 0,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        }
+      ],
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 60,
+          "loop": false,
+          "frameCount": 720
+        },
+        {
+          "name": "Stand",
+          "duration": 0.333,
+          "loop": true,
+          "frameCount": 4
+        },
+        {
+          "name": "Stand Work",
+          "duration": 5.333,
+          "loop": true,
+          "frameCount": 64
+        },
+        {
+          "name": "Portrait -1",
+          "duration": 3.334,
+          "loop": true,
+          "frameCount": 41
+        },
+        {
+          "name": "Birth Upgrade First",
+          "duration": 60,
+          "loop": false,
+          "frameCount": 720
+        },
+        {
+          "name": "Stand Upgrade First",
+          "duration": 0.167,
+          "loop": true,
+          "frameCount": 3
+        },
+        {
+          "name": "Stand Work Upgrade First",
+          "duration": 2,
+          "loop": true,
+          "frameCount": 24
+        },
+        {
+          "name": "Portrait Upgrade First",
+          "duration": 1,
+          "loop": true,
+          "frameCount": 12
+        },
+        {
+          "name": "Birth Upgrade Second",
+          "duration": 60,
+          "loop": false,
+          "frameCount": 720
+        },
+        {
+          "name": "Stand Upgrade Second",
+          "duration": 0.333,
+          "loop": true,
+          "frameCount": 4
+        },
+        {
+          "name": "Stand Work Upgrade Second",
+          "duration": 2,
+          "loop": true,
+          "frameCount": 24
+        },
+        {
+          "name": "Portrait Upgrade Second",
+          "duration": 3.334,
+          "loop": true,
+          "frameCount": 41
+        },
+        {
+          "name": "Death",
+          "duration": 3.167,
+          "loop": false,
+          "frameCount": 39
+        },
+        {
+          "name": "Decay",
+          "duration": 60,
+          "loop": false,
+          "frameCount": 720
+        }
+      ],
+      "effects": {
+        "particles": 21,
+        "ribbons": 0,
+        "lights": 1,
+        "billboards": false,
+        "skippedChunks": []
+      },
+      "stateTracks": "Assets/WarcraftIII/Animations/TownHall.json",
+      "prefab": "Assets/WarcraftIII/Prefabs/TownHall.prefab"
+    },
+    {
+      "id": "LordaeronTree0",
+      "source": "Doodads\\Terrain\\LordaeronTree\\LordaeronTree0.mdx",
+      "previewSequence": "stand",
+      "sourceMaterialLayers": 2,
+      "parts": [
+        {
+          "geoset": 0,
+          "materialIndex": 0,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Doodads/Terrain/LordaeronTree/LordaeronTree0/geoset-00.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Doodads/Terrain/LordaeronTree/LordaeronTree0/geoset-00-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Doodads/Terrain/LordaeronTree/LordaeronTree0/geoset-00-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 31,
+          "defaultVisible": true,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        },
+        {
+          "geoset": 1,
+          "materialIndex": 0,
+          "layer": 0,
+          "mesh": "Assets/WarcraftIII/Models/Doodads/Terrain/LordaeronTree/LordaeronTree0/geoset-01.glb",
+          "animatedMesh": "Assets/WarcraftIII/Models/Doodads/Terrain/LordaeronTree/LordaeronTree0/geoset-01-animated.glb",
+          "material": "Assets/WarcraftIII/Materials/Doodads/Terrain/LordaeronTree/LordaeronTree0/geoset-01-layer-0.mmat",
+          "teamMaterials": {},
+          "sourceLayers": [],
+          "replaceableId": 31,
+          "defaultVisible": false,
+          "sourceFlags": 0,
+          "textureAnimationId": -1
+        }
+      ],
+      "clips": [
+        {
+          "name": "stand",
+          "duration": 1,
+          "loop": false,
+          "frameCount": 12
+        },
+        {
+          "name": "stand hit",
+          "duration": 0.3,
+          "loop": false,
+          "frameCount": 4
+        },
+        {
+          "name": "death",
+          "duration": 1.5,
+          "loop": false,
+          "frameCount": 18
+        },
+        {
+          "name": "Birth",
+          "duration": 3,
+          "loop": false,
+          "frameCount": 36
+        },
+        {
+          "name": "Spell EatTree",
+          "duration": 2,
+          "loop": false,
+          "frameCount": 24
+        }
+      ],
+      "effects": {
+        "particles": 0,
+        "ribbons": 0,
+        "lights": 0,
+        "billboards": false,
+        "skippedChunks": []
+      },
+      "stateTracks": "Assets/WarcraftIII/Animations/LordaeronTree0.json",
+      "prefab": "Assets/WarcraftIII/Prefabs/LordaeronTree0.prefab"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "sourceFiles": 192,
+  "generatedFiles": 17370,
+  "sidecarGuids": 8682,
+  "jpegPlaneChecks": {
+    "textures": 184,
+    "maxChannelDelta": 1,
+    "texturesWithAlpha": 176
+  },
+  "serializedGlbPoseChecks": [
+    {
+      "model": "Footman",
+      "samples": 195,
+      "vertices": 22698,
+      "maxPositionError": 2.5667479308655317e-07
+    },
+    {
+      "model": "Grunt",
+      "samples": 288,
+      "vertices": 27324,
+      "maxPositionError": 3.498811913527078e-07
+    },
+    {
+      "model": "TownHall",
+      "samples": 1512,
+      "vertices": 268296,
+      "maxPositionError": 5.301703156490589e-07
+    },
+    {
+      "model": "LordaeronTree0",
+      "samples": 30,
+      "vertices": 1185,
+      "maxPositionError": 4.376041062847946e-07
+    }
+  ],
+  "runtimeExecutable": "G:\\work\\github\\MEgine\\target\\release\\mengine-runtime.exe",
+  "runtimeSha256": "feabdf3850c356910e214db48fe2357bb4fec0a56312979026a3959c42f55daf",
+  "runtimePassed": true,
+  "runtimeOutput": "validated 17572 packaged file(s) (181524758 bytes), 1 scene(s), 8677 runtime asset(s), script=false\n  'Warcraft III complete asset validation' from G:\\work\\github\\MEgine\\asset-library\\warcraft-iii\\classic\\Validation/AllAssets.mscene (6343 entities)",
+  "reproducibility": {
+    "input": "Bundled SourceAssets and stored modelSamples",
+    "generatedFiles": 17370,
+    "changedHashes": 0
+  },
+  "nativePreview": {
+    "scene": "Assets/WarcraftIII/Scenes/Preview.mscene",
+    "entities": 214,
+    "file": "Validation/native-preview.png",
+    "sha256": "a7a4d642044fae59768ace17d69c5c90cb8d9a48bb08b2b9579289935b7763cc",
+    "scope": "Isolated native Release editor, GPU-rendered static terrain and model preview"
+  }
+}

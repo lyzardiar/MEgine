@@ -1,6 +1,8 @@
-# Warcraft III 原始素材
+# Warcraft III 素材
 
 下载日期：2026-10-05。来源为 HIVE Workshop，保留原包内部目录、文件名和自带说明，供各项目复用。
+
+本机经典 Warcraft III 安装包的提取、转换资产另存于 [classic](classic/README.md)：161 张地形图集、4,065 个独立地形 tile、4 个模型 prefab、44 段骨骼动画，以及源文件、材质和校验记录。该集合与下列 HIVE 原始包分别记录来源。
 
 | 分类 | 目录 | 来源 | 作者 |
 | --- | --- | --- | --- |

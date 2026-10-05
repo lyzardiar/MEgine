@@ -1,0 +1,11 @@
+{
+  "repository": "https://github.com/Darithos/W3ModelViewer",
+  "commit": "4fe46a0772520fc7b55078bf32cda1237d1b5f2e",
+  "files": {
+    "upstream.zip": "dd1f41530b42c1bfe6039b1a0271bcc5167b137f829f87b6a08cea0b47e46eda"
+  },
+  "python": {
+    "numpy": "2.4.4",
+    "pillow": "12.2.0"
+  }
+}
