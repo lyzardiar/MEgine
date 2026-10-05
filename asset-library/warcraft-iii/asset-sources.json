@@ -1,0 +1,749 @@
+{
+  "downloaded_on": "2026-10-05",
+  "formats": "Original Warcraft III assets; no engine conversion performed.",
+  "packs": [
+    {
+      "id": "footman-captain",
+      "name": "Footman, Captain, and Derivatives",
+      "category": "units",
+      "authors": [
+        "Ujimasa Hojo",
+        "CloudWolf (Stromgarde texture)",
+        "Wandering Soul (crossbow animation)",
+        "Cuore (included blood elf lieutenant derivatives)"
+      ],
+      "page": "https://www.hiveworkshop.com/threads/footman-captain-and-derivatives.300263/",
+      "archive": {
+        "name": "footman-captain.zip",
+        "bytes": 847806,
+        "sha256": "eeebd125913d98276e38a8d1aa58c6bf05f994fd84c255578b3acd227d206aa2"
+      },
+      "license": "Not specified; retain original credits and consult the resource author for intended use.",
+      "usage_notes": "Archive readme requires credit to the author. No explicit standardized license or cross-engine/commercial permission identified.",
+      "files": [
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/assets/Blood elf lieutenant and derivatives/BELieutenant BloodElfPriestface V 1.02.mdx",
+          "bytes": 126741,
+          "sha256": "af0fd0aa04e3346e983ece326554bb2efebef4370a74e9e946c7e6d714cabdbc"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/assets/Blood elf lieutenant and derivatives/BELieutenant CustomEyes V 1.01.mdx",
+          "bytes": 126782,
+          "sha256": "a40f58bfdbb478b7a292be08b12d892cc7561e916050d7f5fc29374a9b7ce206"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/assets/Blood elf lieutenant and derivatives/BELieutenant V1.00.mdx",
+          "bytes": 124909,
+          "sha256": "0b627fc45dce68d58990b301bd48e092b56326acff7e5a9ee46fe0b504ce6c16"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/assets/Blood elf lieutenant and derivatives/Captain HighElfPriestface V 1.03.mdx",
+          "bytes": 127212,
+          "sha256": "cd77b5262551392bf97757267f713f3ac9f1c697444d45c1cf596fb9d5ed2006"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/assets/Blood elf lieutenant and derivatives/readme.html",
+          "bytes": 3469,
+          "sha256": "d5130fc4c5ac843a0b736fd2f681c98174c73fb3e88cd0da0058e08bda909ceb"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/CaptainGilneasV1.03.mdx",
+          "bytes": 126894,
+          "sha256": "de5562c7e6debb3f439730b11ffd1dc8f1b0b0651470a65ca6242f83e7517afc"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/CaptainKulTirasV1.03.mdx",
+          "bytes": 130821,
+          "sha256": "3eb5b82b92941c028db30c3f6e13094dc80016e5fc61c35e831f0205258fb905"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/CaptainRisenV1.05.mdx",
+          "bytes": 85582,
+          "sha256": "82af9f0abc54729639d5a550ebbde5b575c0a8d244d1a4dc355fa82fa3f22ca1"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/DeathGuardV1.04.mdx",
+          "bytes": 93797,
+          "sha256": "da32b87c5b19d098d5f2910a45d517971433b22974d824a92b181753a820a526"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/Footman (Stromgarde Undead)/CW_Galen_Trollbane.blp",
+          "bytes": 116279,
+          "sha256": "f5b8296cebb1f3e321ada86f84203d7181f1e300df88a7dcb37b34bfc36c35f0"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/Footman (Stromgarde Undead)/FootmanStromgardeUndeadV1.03.mdx",
+          "bytes": 84834,
+          "sha256": "0d729df2abd0216d356dba21b81dc7a8a59f375d378195d0c3d2fd484fcbaafd"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/Footman (Stromgarde)/CW_Galen_Trollbane.blp",
+          "bytes": 116279,
+          "sha256": "f5b8296cebb1f3e321ada86f84203d7181f1e300df88a7dcb37b34bfc36c35f0"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/Footman (Stromgarde)/FootmanStromgardeV1.04.mdx",
+          "bytes": 141962,
+          "sha256": "3e78b401eb4ee5680254b223a738bb848b1acf388ea90af3b4249ed2d0bbb590"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/FootmanBanditV1.00.mdx",
+          "bytes": 126717,
+          "sha256": "a45b0b05bd4c5aa41251c9a85526607ea556af0298eafb71bb1cb6ef7571181a"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/FootmanEbonBladeV1.00.mdx",
+          "bytes": 127566,
+          "sha256": "2113cfd690f054a5e2287e2b3f88f213e3b154846142855b8c626c8767a93a7a"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/FootmanRisenV1.10.mdx",
+          "bytes": 83850,
+          "sha256": "bfa5b9985d8638ba04528391bc15ebd954502b7477d0f9a8af9558886d0a89eb"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/FootmanV2.03.mdx",
+          "bytes": 126151,
+          "sha256": "56c14e47ef24c3fe1ebbd4647e98be9bf0d395c0c647563c8023b7e26e7e36b2"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/readme.html",
+          "bytes": 30008,
+          "sha256": "143baf0d8e8dd860049915f724e6df148ff3dd283d77b575a0130e2a90498dfc"
+        },
+        {
+          "path": "units/footman-captain/Footman Captain and Derivatives/TheCaptainV2.03.mdx",
+          "bytes": 126575,
+          "sha256": "f12ed1b50c882f509cdd0f26caedf527c50755e69d7ad120a1e36fc1271f9a21"
+        }
+      ],
+      "included_resource_pages": [
+        "https://www.hiveworkshop.com/threads/blood-elf-lieutenant-and-derivatives.300294/"
+      ]
+    },
+    {
+      "id": "beautiful-city",
+      "name": "Beautiful City Model Pack",
+      "category": "buildings",
+      "authors": [
+        "ValdionWorld"
+      ],
+      "page": "https://www.hiveworkshop.com/threads/beautiful-city-model-pack.330555/",
+      "archive": {
+        "name": "beautiful-city.zip",
+        "bytes": 5238740,
+        "sha256": "9e2a040cbdf82156e1d96f426cd5c89cf71c8cf44c50bfdea7ea23e5b49d05d3"
+      },
+      "license": "Not specified; retain original credits and consult the resource author for intended use.",
+      "usage_notes": "Archive readme requires credit to the author. No explicit standardized license or cross-engine/commercial permission identified.",
+      "files": [
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Big Palace/CapitalPalace.mdx",
+          "bytes": 280913,
+          "sha256": "dc211b61f793dd4f972ffeaa4db142c6bb89d368e9223e8108e46d7379762d6e"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Big Palace/CathedralNew.blp",
+          "bytes": 94135,
+          "sha256": "a71f24721933c77cf1c24a13b7e3d397cf8c5354a6135fb485f2bed0584d52c3"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Big Palace/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Big Palace/PalaceGarden.blp",
+          "bytes": 40755,
+          "sha256": "e1cbcdd6dbca39d67b24ef2f48a54f269a0b3b75d44a38dccbece5f5be7d0ec4"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Big Tower/JanosBigTowerNew.mdx",
+          "bytes": 4969,
+          "sha256": "51daa08ec8082bd53630662329551c1b161829350257963a0080b1cfdd7a2e45"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Big Tower/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/BigCurtain.mdx",
+          "bytes": 4128,
+          "sha256": "784314a70c1826c64fa0319317ede12417983853b696d8c0512e53922bc5539e"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 1/CathedralNew.blp",
+          "bytes": 94135,
+          "sha256": "a71f24721933c77cf1c24a13b7e3d397cf8c5354a6135fb485f2bed0584d52c3"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 1/JanosBuild01.mdx",
+          "bytes": 52606,
+          "sha256": "c6a19e719e6624650da9146fbd49b9203fc3f90c6a4bfc170e1252138ea04175"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 1/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 2/CathedralNew.blp",
+          "bytes": 94135,
+          "sha256": "a71f24721933c77cf1c24a13b7e3d397cf8c5354a6135fb485f2bed0584d52c3"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 2/JanosBuild02.mdx",
+          "bytes": 89600,
+          "sha256": "d1431e1b85db93b9fd024b9c1827341284a6ef0f6c4e45692cb6da83298c96a3"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 2/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 3/CathedralNew.blp",
+          "bytes": 94135,
+          "sha256": "a71f24721933c77cf1c24a13b7e3d397cf8c5354a6135fb485f2bed0584d52c3"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 3/JanosBuild03.mdx",
+          "bytes": 72355,
+          "sha256": "ada6447ca0d7039d9c94c4625d57de70baef16b889ea1009bed9e79ad227f47d"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 3/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 4/CathedralNew.blp",
+          "bytes": 94135,
+          "sha256": "a71f24721933c77cf1c24a13b7e3d397cf8c5354a6135fb485f2bed0584d52c3"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 4/JanosBuild04.mdx",
+          "bytes": 72355,
+          "sha256": "86a92a21a36cd758119f6d20c1cf14ff19408ee5367f6ba8a7bc9a118f56d02b"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 4/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 5/CathedralNew.blp",
+          "bytes": 94135,
+          "sha256": "a71f24721933c77cf1c24a13b7e3d397cf8c5354a6135fb485f2bed0584d52c3"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 5/JanosBuild05.mdx",
+          "bytes": 77095,
+          "sha256": "d7f2f463999915807a437644577d9093a7dd5b2a792e20fa43cdb59c5b129751"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 5/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 6/CathedralNew.blp",
+          "bytes": 94135,
+          "sha256": "a71f24721933c77cf1c24a13b7e3d397cf8c5354a6135fb485f2bed0584d52c3"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 6/JanosBuild06.mdx",
+          "bytes": 223832,
+          "sha256": "8f31f4cd6c980912eab01e243847ba7c79e51973d0938320c78aa37c161ee8b8"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 6/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 7/CathedralNew.blp",
+          "bytes": 94135,
+          "sha256": "a71f24721933c77cf1c24a13b7e3d397cf8c5354a6135fb485f2bed0584d52c3"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 7/JanosBuild07.mdx",
+          "bytes": 234077,
+          "sha256": "b5f2e854f81d8fc258ff499db6231fea8bb04a793f032602bddf278b7fe79a88"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 7/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 8/CathedralNew.blp",
+          "bytes": 94135,
+          "sha256": "a71f24721933c77cf1c24a13b7e3d397cf8c5354a6135fb485f2bed0584d52c3"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 8/JanosBuild08.mdx",
+          "bytes": 206418,
+          "sha256": "be3156564e4dfd0ff9dcdacd3d36a7b2eca768a7d19c0ff725bc2e4d5a5fc3fc"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 8/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Build 8/PalaceGarden.blp",
+          "bytes": 40755,
+          "sha256": "e1cbcdd6dbca39d67b24ef2f48a54f269a0b3b75d44a38dccbece5f5be7d0ec4"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Celling Hall/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Celling Hall/ThroneRoomCelling1.mdx",
+          "bytes": 48659,
+          "sha256": "08e573ecb6d97520de6ea1f526cfd90cd520c67abf449d28e58ce0e513089b55"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Floor Hall/ThroneRoomFloor.blp",
+          "bytes": 2239366,
+          "sha256": "cb1d5bd97557cfc66a355033739595560749a4be77c38e3efb35f6bc8491fbf9"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Floor Hall/ThroneRoomFloor.mdx",
+          "bytes": 1324,
+          "sha256": "24affc7359585eec04d518dcd92950a0658540196dae3c4f72bb699ab4946323"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/readme.html",
+          "bytes": 6158,
+          "sha256": "17c4044c3409d5412e5b70c8853b76773a19e8cb2000145edfc15347b18497f0"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Steeple/JanosBigTowerNew.mdx",
+          "bytes": 4969,
+          "sha256": "51daa08ec8082bd53630662329551c1b161829350257963a0080b1cfdd7a2e45"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Steeple/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Wall Hall 1/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Wall Hall 1/ThroneRoomWall1.mdx",
+          "bytes": 30766,
+          "sha256": "d1d4a408211f96099e2f50887f72ed4dfa7cb76de357bf45be915b3789a46222"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Wall Hall 2/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Wall Hall 2/ThroneRoomWall2.mdx",
+          "bytes": 62524,
+          "sha256": "79567aefadbd4814f93985741a5cd03e9c1a63135ef978a5ce0a13ad5c24d7df"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Wall Hall 3/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Wall Hall 3/ThroneRoomWall3.mdx",
+          "bytes": 35714,
+          "sha256": "bb0a4d5b48654a2e692f77523a279bf7ecee2cc90cb66c32f1ebe2e0fe9a0abb"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Wall Hall 4/JanosCliff1.blp",
+          "bytes": 95077,
+          "sha256": "629b3b4f89abadcd9ba2b29484b785be31366407eb937328fe6a4d5d2a95611a"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/Wall Hall 4/ThroneRoomWall4.mdx",
+          "bytes": 31378,
+          "sha256": "1367fdd0893dad9163472dd7b7e8bf17d9c53ba39f9a10d833d803c18a8d10b8"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/WhiteCathedral/CathedralNew.blp",
+          "bytes": 94135,
+          "sha256": "a71f24721933c77cf1c24a13b7e3d397cf8c5354a6135fb485f2bed0584d52c3"
+        },
+        {
+          "path": "buildings/beautiful-city/Beautiful City Model Pack/WhiteCathedral/WhiteCathedral.mdx",
+          "bytes": 21531,
+          "sha256": "9621e1bcdd7b577dc640095fdf422f4bc8a169c98728095bcd453fc3aa376d94"
+        }
+      ]
+    },
+    {
+      "id": "raven-mountain",
+      "name": "Raven Mountain Model Pack",
+      "category": "buildings",
+      "authors": [
+        "ValdionWorld"
+      ],
+      "page": "https://www.hiveworkshop.com/threads/raven-mountain-model-pack.330554/",
+      "archive": {
+        "name": "raven-mountain.zip",
+        "bytes": 1124835,
+        "sha256": "808c672f28780242534055155c5319219a6c5e276a3bbf69b76d260e7518c47f"
+      },
+      "license": "Not specified; retain original credits and consult the resource author for intended use.",
+      "usage_notes": "Archive readme requires credit to the author. No explicit standardized license or cross-engine/commercial permission identified.",
+      "files": [
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Flag 1/RavenBanner.blp",
+          "bytes": 23817,
+          "sha256": "590372c695f6cdcb15665b7eea51584af14439aaa030b0f6fcd1b8508ce84b41"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Flag 1/RavenBanner01.mdx",
+          "bytes": 4278,
+          "sha256": "653803375c70b7a99037b9e5b9a42e8ff5ca3287241783e9b698a48284858f7f"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Flag 2/RavenBanner.blp",
+          "bytes": 23817,
+          "sha256": "590372c695f6cdcb15665b7eea51584af14439aaa030b0f6fcd1b8508ce84b41"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Flag 2/RavenBanner02.mdx",
+          "bytes": 3045,
+          "sha256": "5c2037e4170be9e22193549dc8a29b29bdf7f349b5d6a6a586ba7eac29fcb4ac"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragBuild1.mdx",
+          "bytes": 47507,
+          "sha256": "d91a10fea596b5c83029fef26cae4511215a467a013a76c286709cae94473766"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragBuild2.mdx",
+          "bytes": 47927,
+          "sha256": "31caaa88937622a3115f625b72569581fe09778cda00eb52f41f47f909ccb802"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragBuild3.mdx",
+          "bytes": 70856,
+          "sha256": "642e287ff3e9fcc54538db42829185d4eb05d5999a8199d226a8a5c8551fe6ba"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragBuild4.mdx",
+          "bytes": 64775,
+          "sha256": "1e0bc48656c8926e41f4d93a41cbf52950ba861541a92db0fa8dde62025aff86"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragBuild5.mdx",
+          "bytes": 108368,
+          "sha256": "5a7846906479c17684ab37b12a281eee4289081c6b664c7d6d717817d1290cfb"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragBuild6.mdx",
+          "bytes": 96122,
+          "sha256": "26a8321ffe89eeac673ffd1f3cbcfd6d28c1ab80f73c2f594f5c532378e1cce8"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragFragment1.mdx",
+          "bytes": 41746,
+          "sha256": "61c0c41cd631e2233cb23114e433af62bd20ebeaffdf3843296cf1d49e7068f8"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragFragment2.mdx",
+          "bytes": 23494,
+          "sha256": "045965ad761bc608379c96c64730e0463013b8876e2c88ceb822e0ea5dff77da"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragFragment3.mdx",
+          "bytes": 23494,
+          "sha256": "1c2984af7dd893ded6d23b493e195ef63049c398f474bdd41b8e4f22a5e9be69"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragGate1.mdx",
+          "bytes": 29170,
+          "sha256": "87c48ee1b3a538f1a243602e288fe3163363fde4f7739244f9ba162629e7ff11"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragGate2.mdx",
+          "bytes": 24052,
+          "sha256": "6c0839590d63414a872fc6726c9e0dd75d09a73b50f68001b719a0d728d32ed2"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragTower.mdx",
+          "bytes": 28996,
+          "sha256": "530af9f843397397161d8ae4e70c93874a673666281306dfaf022983cb06a774"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragWall1.mdx",
+          "bytes": 26668,
+          "sha256": "b443a1a6efc97363e845e4c29a6aad199a51bfd86173f9907182291cf163fdc0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragWall2.mdx",
+          "bytes": 22014,
+          "sha256": "301157f9aa7aa87883c79602ca6c1a12ba808c331cb543351555fb3e6647503f"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragWallNew.mdx",
+          "bytes": 4672,
+          "sha256": "482237121229a00180785267319c84f3758ae7320a63b23602034429e7969e57"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/RavenCragWallWindow.mdx",
+          "bytes": 15555,
+          "sha256": "5f38750fd5447d708db5cc2bc268c8266ad12f48c883d2598fac0e295451f4f1"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/readme.html",
+          "bytes": 7164,
+          "sha256": "d996fbb31c91d8fe801a6bc86e1c90f6df00eb85992a94dd32011c7e1e538f89"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 1/RavenCragBuild1S.mdx",
+          "bytes": 58591,
+          "sha256": "bc599d9a79ba83fe4b607b0a4d644ba60f8619d1a12fe557dc839fcb70d4a176"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 1/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 2/RavenCragBuild2S.mdx",
+          "bytes": 62689,
+          "sha256": "8adfd9910cfda8a98afa92cb778bdd8756e0036afc3133723ef0a891c3f5d03b"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 2/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 3/RavenCragBuild3S.mdx",
+          "bytes": 92014,
+          "sha256": "90f8c01c6d1ac9c16e97c1f0a0562d49bea3a4b54a284f1797cc6868b0f58860"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 3/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 4/RavenCragBuild4S.mdx",
+          "bytes": 89359,
+          "sha256": "006748e1c7073cff93be374c436ec180462210be2d1843d3a0f43a09898f924f"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 4/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 5/RavenCragBuild5S.mdx",
+          "bytes": 130048,
+          "sha256": "3c5a2a023fa031432ddd71939d52c7186264a8473da51ac29bea6e408551299f"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 5/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 6/RavenCragBuild6S.mdx",
+          "bytes": 117802,
+          "sha256": "851f1095fb202e9e0a8135a49e4875e839eb736d93be85e50aae73d3d93500bc"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow build 6/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow fragment 1/RavenCragFragment1S.mdx",
+          "bytes": 52830,
+          "sha256": "15ffed129c6a003744736d7884fe46e122f915c6d2a9fa759470092fdc6904cc"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow fragment 1/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow fragment 2/RavenCragFragment2S.mdx",
+          "bytes": 29832,
+          "sha256": "982e32339cb5f56df71107b92cbd5fb4281fbad177388bf4d84172e9f72d6bea"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow fragment 2/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow fragment 3/RavenCragFragment3S.mdx",
+          "bytes": 29832,
+          "sha256": "257f2facccfa383df3c39b04eb73cdae9204cd9cb657889fdea8e4eff3688b21"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow fragment 3/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow gate 1/RavenCragGate1S.mdx",
+          "bytes": 38971,
+          "sha256": "59b0b8ddab1528fd344afe74596b63dd227a6922c4e04985648319d4ee4025ef"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow gate 1/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow gate 2/RavenCragGate2S.mdx",
+          "bytes": 31171,
+          "sha256": "20e4f2b404a08547329d00e35283233745731e26bfe73c5948fea70c82fd8cca"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow gate 2/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow tower/RavenCragTowerS.mdx",
+          "bytes": 32373,
+          "sha256": "d41aa02f13c4d06e399fd15d5b191a88ea72afad60b08ebaaab832ac3b98a3ee"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow tower/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow Wall 1/RavenCragWall1S.mdx",
+          "bytes": 37716,
+          "sha256": "2d476c021904a6be94f7ea3d8f5bd44c7825956d8d7145bb90744446d65fe708"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow Wall 1/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow wall 2/RavenCragWall2S.mdx",
+          "bytes": 30380,
+          "sha256": "4f10977aeea967681dbab6957fbacb2922619e0a1dc54dbbd63c40cbf6875cb1"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Snow wall 2/Snow.blp",
+          "bytes": 32743,
+          "sha256": "275db999deec5b4c8e6af4b9e77382d342ceaf854c09eddcaaefea6154727cf0"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Wall portrait/kingmirror01.blp",
+          "bytes": 39354,
+          "sha256": "2b4083bfec09aaaa614cbf736825c536e70da91ee79231587a9ea86163000b60"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Wall portrait/Portrait 01.mdx",
+          "bytes": 6204,
+          "sha256": "5b8b8aee3f84b72f5dcc7cdf50be7cd10b556758daa806c90d948a00a3f904c4"
+        },
+        {
+          "path": "buildings/raven-mountain/Raven Mountain Model Pack/Wall portrait/RavenCastle.blp",
+          "bytes": 44632,
+          "sha256": "8ad65dab44df5f84a08c41acd0d9437e2463299dffadfdd2a096e54b0e466341"
+        }
+      ]
+    },
+    {
+      "id": "quick-slash",
+      "name": "Quick Slash Pack",
+      "category": "effects",
+      "authors": [
+        "Judash137 / Khil",
+        "OVOgenez (uploader)"
+      ],
+      "page": "https://www.hiveworkshop.com/threads/quick-slash-pack.363862/",
+      "archive": {
+        "name": "quick-slash.zip",
+        "bytes": 7230,
+        "sha256": "1a945b9e3acac0f6853fb3d6a8add55b6a6adffdb469ef0a9abf68e28f9a14c1"
+      },
+      "license": "Not specified; retain original credits and consult the resource author for intended use.",
+      "usage_notes": "Archive readme requires credit to the author. No explicit standardized license or cross-engine/commercial permission identified. The linked thread reports author permission for public sharing by OVOgenez; it does not specify a standardized license.",
+      "files": [
+        {
+          "path": "effects/quick-slash/Quick Slash Pack/Blue Quick.mdx",
+          "bytes": 8788,
+          "sha256": "d525e0fa80b55e24405f24dd464a2cea74f24d824bdc2e7504f435c7c2e74db5"
+        },
+        {
+          "path": "effects/quick-slash/Quick Slash Pack/Green Quick.mdx",
+          "bytes": 8788,
+          "sha256": "c648272bd7c8b76f61ab65b3c3aba19423a5aea6ad43ee8413872f1c449545fa"
+        },
+        {
+          "path": "effects/quick-slash/Quick Slash Pack/readme.html",
+          "bytes": 1100,
+          "sha256": "a262cc123c7ee7e0b8800a9392cdf50c1bea596486eace831d156e9ea4f0c6a9"
+        },
+        {
+          "path": "effects/quick-slash/Quick Slash Pack/Red Quick.mdx",
+          "bytes": 8788,
+          "sha256": "0088b9475fd0be1b1792a2dfb80956187ae96ceaf77126d49f8d43e121d11337"
+        },
+        {
+          "path": "effects/quick-slash/Quick Slash Pack/Yellow Quick.mdx",
+          "bytes": 8788,
+          "sha256": "b1ecc601343f5a28b7290c9ea3c68c71cdf18d3f77b70337653e75d26d77d923"
+        }
+      ],
+      "permission_reference": "https://www.hiveworkshop.com/threads/judash137s-models.363771/"
+    },
+    {
+      "id": "ultimate-terraining-map-4",
+      "name": "The Ultimate Terraining Map 4.0",
+      "category": "terrain",
+      "authors": [
+        "DungeonM",
+        "fladdermasken",
+        "individual model authors listed in the map and source thread"
+      ],
+      "page": "https://www.hiveworkshop.com/threads/the-ultimate-terraining-map-4-0.252232/",
+      "archive": {
+        "name": "ultimate-terraining-map-4.rar",
+        "bytes": 46524129,
+        "sha256": "fba82d8007e3b33fcbea8b42e9e7ae4ab224eb817523b74f38cf21311feb2753"
+      },
+      "license": "Not specified; retain original credits and consult the resource author for intended use.",
+      "usage_notes": "Credits in the map and source thread cover multiple authors; the thread also identifies uncredited resources. No blanket license identified.",
+      "files": [
+        {
+          "path": "terrain/ultimate-terraining-map-4/Readme.txt",
+          "bytes": 5196,
+          "sha256": "af5a1006b6054a2612238e2e2bd197b80130ded73bf50c841cb2ce062815c484"
+        },
+        {
+          "path": "terrain/ultimate-terraining-map-4/The Ultimate Terraining Map 4.0 v1.w3x",
+          "bytes": 47357822,
+          "sha256": "feda35001d1b016b49475f1c8a2ccde8944ff7de9e5106a1dee171f56ad90461"
+        }
+      ],
+      "credits_reference": [
+        "Talavaj",
+        "tobyfat50",
+        "oGre_",
+        "Born^{2}Modificate",
+        "Deolrin",
+        "additional credits inside UTM 3.0 and the map"
+      ]
+    }
+  ]
+}

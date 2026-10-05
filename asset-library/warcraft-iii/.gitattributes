@@ -1,0 +1,11 @@
+units/** -text
+buildings/** -text
+effects/** -text
+terrain/** -text
+*.mdx binary
+*.blp binary
+*.w3x binary
+*.w3m binary
+*.md text eol=lf
+*.json text eol=lf
+.gitattributes text eol=lf
