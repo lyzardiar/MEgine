@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "cellSize": 64,
+  "plane": "Assets/WarcraftIII/Models/TerrainTile.glb",
+  "atlases": []
+}

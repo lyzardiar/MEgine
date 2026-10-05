@@ -1,0 +1,105 @@
+{
+  "method": "Native editor Game View GPU renderer",
+  "project": "D:\\MEngineNativeQA\\classic-library-1791194423774\\sample",
+  "image": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\docs\\designs\\frostbound-realms\\classic-assets-preview.png",
+  "sha256": "ce75bd568bb048376e1f162deb4d0f7fd951a663b552fd11d3990b6bf9ee0ed8",
+  "rendererSha256": "3f7788410808e0da8a9ee34d9cf8275d67d63b2602ac5e93775a7d559a402de6",
+  "models": [
+    {
+      "model": "Footman",
+      "source": "Units\\Human\\Footman\\Footman.mdx",
+      "row": 0,
+      "column": 0
+    },
+    {
+      "model": "Grunt",
+      "source": "Units\\Orc\\Grunt\\grunt.mdx",
+      "row": 0,
+      "column": 1
+    },
+    {
+      "model": "Peasant",
+      "source": "Units\\Human\\Peasant\\peasant.mdx",
+      "row": 0,
+      "column": 2
+    },
+    {
+      "model": "Peon",
+      "source": "Units\\Orc\\Peon\\peon.mdx",
+      "row": 0,
+      "column": 3
+    },
+    {
+      "model": "Archer",
+      "source": "Units\\NightElf\\Archer\\Archer.mdx",
+      "row": 1,
+      "column": 0
+    },
+    {
+      "model": "Ghoul",
+      "source": "Units\\Undead\\Ghoul\\Ghoul.mdx",
+      "row": 1,
+      "column": 1
+    },
+    {
+      "model": "HeroArchMage",
+      "source": "Units\\Human\\HeroArchMage\\HeroArchMage.mdx",
+      "row": 1,
+      "column": 2
+    },
+    {
+      "model": "HeroBladeMaster",
+      "source": "Units\\Orc\\HeroBladeMaster\\HeroBladeMaster.mdx",
+      "row": 1,
+      "column": 3
+    },
+    {
+      "model": "Ogre",
+      "source": "Units\\Creeps\\Ogre\\Ogre.mdx",
+      "row": 2,
+      "column": 0
+    },
+    {
+      "model": "DireWolf",
+      "source": "Units\\Creeps\\DireWolf\\DireWolf.mdx",
+      "row": 2,
+      "column": 1
+    },
+    {
+      "model": "RockGolem",
+      "source": "Units\\Creeps\\RockGolem\\RockGolem.mdx",
+      "row": 2,
+      "column": 2
+    },
+    {
+      "model": "WaterElemental",
+      "source": "Units\\Human\\WaterElemental\\WaterElemental.mdx",
+      "row": 2,
+      "column": 3
+    },
+    {
+      "model": "TownHall",
+      "source": "Buildings\\Human\\TownHall\\TownHall.mdx",
+      "row": 3,
+      "column": 0
+    },
+    {
+      "model": "AncientofWar",
+      "source": "Buildings\\NightElf\\AncientofWar\\AncientofWar.mdx",
+      "row": 3,
+      "column": 1
+    },
+    {
+      "model": "Necropolis",
+      "source": "Buildings\\Undead\\Necropolis\\Necropolis.mdx",
+      "row": 3,
+      "column": 2
+    },
+    {
+      "model": "GreatHall",
+      "source": "buildings\\Orc\\GreatHall\\GreatHall.mdx",
+      "row": 3,
+      "column": 3
+    }
+  ]
+}

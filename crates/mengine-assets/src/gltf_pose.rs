@@ -17,7 +17,7 @@ pub fn parse_gltf_pose_sample(reference: &str) -> Option<(&str, usize, u32, u32)
     let clip = clip.parse::<usize>().ok()?;
     let frame = frame.parse::<u32>().ok()?;
     let rate = rate.parse::<u32>().ok()?;
-    if clip > 255 || !(1..=60).contains(&rate) || frame >= rate*100 || !(path.ends_with(".gltf") || path.ends_with(".glb")) { return None; }
+    if clip > 255 || !(1..=60).contains(&rate) || frame >= rate*600 || !(path.ends_with(".gltf") || path.ends_with(".glb")) { return None; }
     Some((path, clip, frame, rate))
 }
 
@@ -43,6 +43,18 @@ impl GltfPoseSource {
         let animation = self.document.animations().nth(clip).ok_or_else(|| fail("animation clip index out of bounds"))?;
         let duration = animation.channels().filter_map(|c| c.reader(|b| Some(&self.buffers[b.index()])).read_inputs().and_then(|v| v.last())).fold(0.0_f32, f32::max);
         let time = if duration > 0.0 { (frame as f32 / rate as f32) % duration } else { 0.0 };
+        // MiYu: UV transforms are sampled alongside each classic material layer's skeleton.
+        let uv_matrix = if let Some(extra) = animation.extras() {
+            let extra: serde_json::Value = serde_json::from_str(extra.get()).map_err(|_| fail("invalid animation extras"))?;
+            if let Some(track) = extra.get("mengineUv") {
+                #[derive(serde::Deserialize)]
+                struct UvTrack { fps: u32, frames: Vec<[f32; 6]> }
+                let track: UvTrack = serde_json::from_value(track.clone()).map_err(|_| fail("invalid UV animation track"))?;
+                if !(1..=60).contains(&track.fps) || track.frames.is_empty() || track.frames.iter().flatten().any(|v| !v.is_finite()) { return Err(fail("invalid UV animation samples")); }
+                let index = (time * track.fps as f32 + 0.0001).floor() as usize;
+                Some(*track.frames.get(index).ok_or_else(|| fail("UV animation frame is missing"))?)
+            } else { None }
+        } else { None };
         for channel in animation.channels() {
             let reader = channel.reader(|b| Some(&self.buffers[b.index()]));
             let times = reader.read_inputs().ok_or_else(|| fail("animation has no times"))?.collect::<Vec<_>>();
@@ -75,25 +87,36 @@ impl GltfPoseSource {
             for primitive in mesh.primitives() {
                 if primitive.mode() != gltf::mesh::Mode::Triangles { return Err(fail("skeletal mesh requires triangle primitives")); }
                 let reader = primitive.reader(|b| Some(&self.buffers[b.index()]));
-                if reader.read_joints(1).is_some() || reader.read_weights(1).is_some() { return Err(fail("skeletal poses support up to four joint influences per vertex")); }
                 let positions = reader.read_positions().ok_or_else(|| fail("mesh has no positions"))?.collect::<Vec<_>>();
                 let normals = reader.read_normals().map(|v| v.collect::<Vec<_>>()).unwrap_or_else(|| vec![[0.0,1.0,0.0];positions.len()]);
-                let weights = reader.read_weights(0).map(|v| v.into_f32().collect::<Vec<_>>());
-                let ids = reader.read_joints(0).map(|v| v.into_u16().collect::<Vec<_>>());
-                if !joints.is_empty() && (weights.as_ref().map(Vec::len) != Some(positions.len()) || ids.as_ref().map(Vec::len) != Some(positions.len())) { return Err(fail("skin is missing complete joint weights")); }
+                let mut influences = Vec::new();
+                if !joints.is_empty() {
+                    for (semantic, _) in primitive.attributes() { if let gltf::Semantic::Joints(set) = semantic {
+                        let ids = reader.read_joints(set).ok_or_else(|| fail("skin is missing joint indices"))?.into_u16().collect::<Vec<_>>();
+                        let weights = reader.read_weights(set).ok_or_else(|| fail("skin is missing matching weights"))?.into_f32().collect::<Vec<_>>();
+                        if ids.len() != positions.len() || weights.len() != positions.len() { return Err(fail("skin is missing complete joint weights")); }
+                        influences.push((ids, weights));
+                    } }
+                    if influences.is_empty() { return Err(fail("skin is missing complete joint weights")); }
+                    for (semantic, _) in primitive.attributes() { if let gltf::Semantic::Weights(set) = semantic { if reader.read_joints(set).is_none() { return Err(fail("skin weights have no matching joint indices")); } } }
+                }
                 let base = out.positions.len() as u32;
                 for (i,p) in positions.iter().enumerate() {
                     let matrix = if !joints.is_empty() {
-                        let mut m = Mat4::ZERO; let ws = weights.as_ref().unwrap()[i]; let js = ids.as_ref().unwrap()[i]; let sum: f32 = ws.iter().sum();
+                        let mut m = Mat4::ZERO; let sum: f32 = influences.iter().map(|(_, weights)| weights[i].iter().sum::<f32>()).sum();
                         if !sum.is_finite() || sum <= 0.0 { return Err(fail("invalid skin weights")); }
-                        for j in 0..4 { if ws[j] < 0.0 { return Err(fail("negative skin weight")); } if ws[j] > 0.0 { m += *joints.get(js[j] as usize).ok_or_else(|| fail("skin joint index out of bounds"))? * (ws[j]/sum); } } m
+                        for (ids, weights) in &influences { let ws = weights[i]; let js = ids[i]; for j in 0..4 { if ws[j] < 0.0 { return Err(fail("negative skin weight")); } if ws[j] > 0.0 { m += *joints.get(js[j] as usize).ok_or_else(|| fail("skin joint index out of bounds"))? * (ws[j]/sum); } } } m
                     } else { globals[node.index()] };
                     let p = matrix * Vec4::new(p[0],p[1],p[2],1.0);
-                    let n = matrix.inverse().transpose().transform_vector3(Vec3::from(*normals.get(i).ok_or_else(|| fail("normal count mismatch"))?)).normalize_or_zero();
+                    let normal_matrix = if matrix.determinant().abs() > 1e-12 { matrix.inverse().transpose() } else { matrix };
+                    let n = normal_matrix.transform_vector3(Vec3::from(*normals.get(i).ok_or_else(|| fail("normal count mismatch"))?)).normalize_or_zero();
+                    let n = if n.length_squared() > 0.0 { n } else { Vec3::Y };
                     if !p.is_finite() || !n.is_finite() { return Err(fail("non-finite skeletal vertex")); }
                     out.positions.push(p.truncate().to_array());out.normals.push(n.to_array());
                 }
-                out.uvs.extend(reader.read_tex_coords(0).map(|v| v.into_f32().collect::<Vec<_>>()).unwrap_or_else(|| vec![[0.0,0.0];positions.len()]));
+                let uvs = reader.read_tex_coords(0).map(|v| v.into_f32().collect::<Vec<_>>()).unwrap_or_else(|| vec![[0.0,0.0];positions.len()]);
+                if uvs.len() != positions.len() { return Err(fail("UV count mismatch")); }
+                out.uvs.extend(uvs.into_iter().map(|[u,v]| if let Some(m) = uv_matrix { [u*m[0]+v*m[2]+m[4],u*m[1]+v*m[3]+m[5]] } else { [u,v] }));
                 let indices = reader.read_indices().map(|v| v.into_u32().collect::<Vec<_>>()).unwrap_or_else(|| (0..positions.len() as u32).collect());
                 if indices.len()%3!=0 || indices.iter().any(|v| *v as usize>=positions.len()) { return Err(fail("invalid skeletal triangle indices")); }
                 out.indices.extend(indices.into_iter().map(|i|i+base));
@@ -113,8 +136,9 @@ mod tests {
         assert_eq!(parse_gltf_pose_sample("Assets/hero.glb#pose=2:30@30"),Some(("Assets/hero.glb",2,30,30)));
         assert!(parse_gltf_pose("Assets/hero.glb#pose=2:30@30").is_none(),"legacy consumers must not interpret a 30 Hz frame at 12 Hz");
         assert_eq!(parse_gltf_pose_sample("a.gltf#pose=255:5999@60"),Some(("a.gltf",255,5999,60)));
-        for key in ["a.glb#pose=0:3000@30","a.glb#pose=0:0@0","a.glb#pose=0:0@61","a.glb#pose=0:0@-1","a.glb#pose=0:0@NaN","a.glb#pose=0:0@30@30"] { assert!(parse_gltf_pose_sample(key).is_none()); }
-        for key in ["a.glb#pose=0:1200","a.glb#pose=256:0","a.glb#pose=-1:0","a.glb#pose=0:NaN","a.png#pose=0:0"] { assert!(parse_gltf_pose(key).is_none()); }
+        assert_eq!(parse_gltf_pose_sample("a.glb#pose=0:3000@30"),Some(("a.glb",0,3000,30)));
+        for key in ["a.glb#pose=0:18000@30","a.glb#pose=0:0@0","a.glb#pose=0:0@61","a.glb#pose=0:0@-1","a.glb#pose=0:0@NaN","a.glb#pose=0:0@30@30"] { assert!(parse_gltf_pose_sample(key).is_none()); }
+        for key in ["a.glb#pose=0:7200","a.glb#pose=256:0","a.glb#pose=-1:0","a.glb#pose=0:NaN","a.png#pose=0:0"] { assert!(parse_gltf_pose(key).is_none()); }
     }
     #[test]
     fn step_channels_advance_at_the_key_and_hold_the_final_key() {

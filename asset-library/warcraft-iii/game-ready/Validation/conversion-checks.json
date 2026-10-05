@@ -1,0 +1,1130 @@
+{
+  "failedModels": [],
+  "poseToleranceEngineUnits": 0.00390625,
+  "terrainAtlases": 161,
+  "terrainTiles": 4065,
+  "modelSources": 186,
+  "geosets": 1358,
+  "renderParts": 1554,
+  "sourceMaterialLayers": 1649,
+  "clips": 1961,
+  "poseComparison": [
+    {
+      "model": "buildings\\Human\\AltarOfKings\\AltarOfKings.mdx",
+      "samples": 18,
+      "vertices": 34290,
+      "maxPositionError": 1.4375000034760888e-07
+    },
+    {
+      "model": "buildings\\Human\\ArcaneSanctum\\ArcaneSanctum.mdx",
+      "samples": 18,
+      "vertices": 42840,
+      "maxPositionError": 5.803389000469394e-07
+    },
+    {
+      "model": "Buildings\\Human\\ArcaneVault\\ArcaneVault.mdx",
+      "samples": 15,
+      "vertices": 28365,
+      "maxPositionError": 3.382038352706118e-07
+    },
+    {
+      "model": "buildings\\Human\\Blacksmith\\Blacksmith.mdx",
+      "samples": 18,
+      "vertices": 50490,
+      "maxPositionError": 2.462499999467127e-07
+    },
+    {
+      "model": "buildings\\Human\\Farm\\Farm.mdx",
+      "samples": 15,
+      "vertices": 27480,
+      "maxPositionError": 2.3249999969721102e-07
+    },
+    {
+      "model": "Buildings\\Human\\GryphonAviary\\GryphonAviary.mdx",
+      "samples": 18,
+      "vertices": 41166,
+      "maxPositionError": 3.4417968786115694e-07
+    },
+    {
+      "model": "buildings\\Human\\HumanBarracks\\HumanBarracks.mdx",
+      "samples": 21,
+      "vertices": 71064,
+      "maxPositionError": 1.9375000093191375e-07
+    },
+    {
+      "model": "buildings\\Human\\HumanLumberMill\\HumanLumberMill.mdx",
+      "samples": 18,
+      "vertices": 33750,
+      "maxPositionError": 2.500000002569891e-07
+    },
+    {
+      "model": "Buildings\\Human\\HumanTower\\HumanTower.mdx",
+      "samples": 39,
+      "vertices": 156702,
+      "maxPositionError": 3.5557004940400816e-07
+    },
+    {
+      "model": "Buildings\\Human\\TownHall\\TownHall.mdx",
+      "samples": 42,
+      "vertices": 268296,
+      "maxPositionError": 5.617810998614914e-07
+    },
+    {
+      "model": "buildings\\Human\\Workshop\\Workshop.mdx",
+      "samples": 18,
+      "vertices": 69588,
+      "maxPositionError": 2.005154946527199e-07
+    },
+    {
+      "model": "Buildings\\NightElf\\AltarofElders\\AltarofElders.mdx",
+      "samples": 15,
+      "vertices": 11235,
+      "maxPositionError": 1.9999999967268423e-07
+    },
+    {
+      "model": "Buildings\\NightElf\\AncientofLore\\AncientofLore.mdx",
+      "samples": 49,
+      "vertices": 93100,
+      "maxPositionError": 5.188954753598818e-06
+    },
+    {
+      "model": "Buildings\\NightElf\\AncientofWar\\AncientofWar.mdx",
+      "samples": 47,
+      "vertices": 91932,
+      "maxPositionError": 8.697440778693277e-07
+    },
+    {
+      "model": "Buildings\\NightElf\\AncientofWind\\AncientofWind.mdx",
+      "samples": 46,
+      "vertices": 72496,
+      "maxPositionError": 4.585470439577577e-06
+    },
+    {
+      "model": "Buildings\\NightElf\\AncientOfWonder\\AncientOfWonder.mdx",
+      "samples": 49,
+      "vertices": 84623,
+      "maxPositionError": 5.188954753598818e-06
+    },
+    {
+      "model": "Buildings\\NightElf\\AncientProtector\\AncientProtector.mdx",
+      "samples": 48,
+      "vertices": 46368,
+      "maxPositionError": 1.2454940063744147e-06
+    },
+    {
+      "model": "buildings\\NightElf\\BearDen\\BearDen.mdx",
+      "samples": 15,
+      "vertices": 13395,
+      "maxPositionError": 3.1375000020261723e-07
+    },
+    {
+      "model": "buildings\\NightElf\\ChimaeraRoost\\ChimaeraRoost.mdx",
+      "samples": 15,
+      "vertices": 8355,
+      "maxPositionError": 8.939750006931035e-07
+    },
+    {
+      "model": "buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine.mdx",
+      "samples": 30,
+      "vertices": 28710,
+      "maxPositionError": 1.4864875009790168e-06
+    },
+    {
+      "model": "buildings\\NightElf\\HuntersHall\\HuntersHall.mdx",
+      "samples": 15,
+      "vertices": 11085,
+      "maxPositionError": 3.122945311240244e-07
+    },
+    {
+      "model": "buildings\\NightElf\\MoonWell\\MoonWell.mdx",
+      "samples": 12,
+      "vertices": 5304,
+      "maxPositionError": 2.7559298976242985e-07
+    },
+    {
+      "model": "Buildings\\NightElf\\TreeofLife\\TreeofLife.mdx",
+      "samples": 43,
+      "vertices": 87290,
+      "maxPositionError": 1.0935766225905752e-06
+    },
+    {
+      "model": "Buildings\\Orc\\AltarofStorms\\AltarofStorms.mdx",
+      "samples": 18,
+      "vertices": 21096,
+      "maxPositionError": 2.9597158301974957e-07
+    },
+    {
+      "model": "buildings\\Orc\\Beastiary\\Beastiary.mdx",
+      "samples": 18,
+      "vertices": 25524,
+      "maxPositionError": 2.1140064307423323e-07
+    },
+    {
+      "model": "buildings\\Orc\\GreatHall\\GreatHall.mdx",
+      "samples": 42,
+      "vertices": 153468,
+      "maxPositionError": 4.276612826092929e-07
+    },
+    {
+      "model": "buildings\\Orc\\OrcBarracks\\OrcBarracks.mdx",
+      "samples": 18,
+      "vertices": 24084,
+      "maxPositionError": 2.500000002569891e-07
+    },
+    {
+      "model": "Buildings\\Orc\\SpiritLodge\\SpiritLodge.mdx",
+      "samples": 21,
+      "vertices": 25578,
+      "maxPositionError": 1.5000000019860238e-07
+    },
+    {
+      "model": "Buildings\\Orc\\TrollBurrow\\TrollBurrow.mdx",
+      "samples": 15,
+      "vertices": 12090,
+      "maxPositionError": 1.4999999997655777e-07
+    },
+    {
+      "model": "Buildings\\Orc\\VoodooLounge\\VoodooLounge.mdx",
+      "samples": 15,
+      "vertices": 16755,
+      "maxPositionError": 2.1250000004080505e-07
+    },
+    {
+      "model": "buildings\\Orc\\WarMill\\WarMill.mdx",
+      "samples": 18,
+      "vertices": 25506,
+      "maxPositionError": 3.6791682722636665e-07
+    },
+    {
+      "model": "buildings\\Orc\\WatchTower\\WatchTower.mdx",
+      "samples": 15,
+      "vertices": 19890,
+      "maxPositionError": 4.354297848951916e-07
+    },
+    {
+      "model": "buildings\\Undead\\AltarOfDarkness\\AltarOfDarkness.mdx",
+      "samples": 18,
+      "vertices": 21618,
+      "maxPositionError": 2.0249999987953515e-07
+    },
+    {
+      "model": "Buildings\\Undead\\BoneYard\\BoneYard.mdx",
+      "samples": 18,
+      "vertices": 25632,
+      "maxPositionError": 2.649999997217378e-07
+    },
+    {
+      "model": "buildings\\Undead\\Crypt\\Crypt.mdx",
+      "samples": 18,
+      "vertices": 29286,
+      "maxPositionError": 2.749999996609631e-07
+    },
+    {
+      "model": "buildings\\Undead\\GargoyleSpire\\GargoyleSpire.mdx",
+      "samples": 18,
+      "vertices": 45000,
+      "maxPositionError": 3.49999999649242e-07
+    },
+    {
+      "model": "Buildings\\Undead\\Graveyard\\Graveyard.mdx",
+      "samples": 18,
+      "vertices": 18054,
+      "maxPositionError": 1.9125000072506282e-07
+    },
+    {
+      "model": "buildings\\Undead\\HauntedMine\\HauntedMine.mdx",
+      "samples": 15,
+      "vertices": 21135,
+      "maxPositionError": 2.1249999981876044e-07
+    },
+    {
+      "model": "Buildings\\Undead\\Necropolis\\Necropolis.mdx",
+      "samples": 42,
+      "vertices": 75600,
+      "maxPositionError": 4.250000005256993e-07
+    },
+    {
+      "model": "buildings\\Undead\\SacrificialPit\\SacrificialPit.mdx",
+      "samples": 18,
+      "vertices": 14310,
+      "maxPositionError": 2.3750000011091288e-07
+    },
+    {
+      "model": "Buildings\\Undead\\SlaughterHouse\\SlaughterHouse.mdx",
+      "samples": 18,
+      "vertices": 23688,
+      "maxPositionError": 2.2499999996483666e-07
+    },
+    {
+      "model": "Buildings\\Undead\\TempleOfTheDamned\\TempleOfTheDamned.mdx",
+      "samples": 18,
+      "vertices": 24084,
+      "maxPositionError": 1.624999999005894e-07
+    },
+    {
+      "model": "Buildings\\Undead\\TombOfRelics\\TombOfRelics.mdx",
+      "samples": 18,
+      "vertices": 22320,
+      "maxPositionError": 2.5749999910118504e-07
+    },
+    {
+      "model": "Buildings\\Undead\\Ziggurat\\Ziggurat.mdx",
+      "samples": 39,
+      "vertices": 41808,
+      "maxPositionError": 2.636249991638806e-07
+    },
+    {
+      "model": "Doodads\\Terrain\\LordaeronTree\\LordaeronTree0.mdx",
+      "samples": 15,
+      "vertices": 1185,
+      "maxPositionError": 4.2198029148732275e-07
+    },
+    {
+      "model": "Units\\Creeps\\AzureDragon\\AzureDragon.mdx",
+      "samples": 21,
+      "vertices": 11487,
+      "maxPositionError": 8.665312496436428e-07
+    },
+    {
+      "model": "Units\\Creeps\\Bandit\\Bandit.mdx",
+      "samples": 40,
+      "vertices": 20600,
+      "maxPositionError": 2.8090046655382395e-07
+    },
+    {
+      "model": "Units\\Creeps\\BanditLord\\BanditLord.mdx",
+      "samples": 36,
+      "vertices": 46836,
+      "maxPositionError": 5.795836888200512e-07
+    },
+    {
+      "model": "Units\\Creeps\\BanditMage\\BanditMage.mdx",
+      "samples": 36,
+      "vertices": 28512,
+      "maxPositionError": 9.83132902199202e-07
+    },
+    {
+      "model": "Units\\Creeps\\BanditSpearThrower\\BanditSpearThrower.mdx",
+      "samples": 37,
+      "vertices": 15466,
+      "maxPositionError": 4.956149243229291e-07
+    },
+    {
+      "model": "Units\\Creeps\\Beastmaster\\Beastmaster.mdx",
+      "samples": 30,
+      "vertices": 24900,
+      "maxPositionError": 1.1894705158610464e-06
+    },
+    {
+      "model": "Units\\Creeps\\BlackDragon\\BlackDragon.mdx",
+      "samples": 21,
+      "vertices": 11487,
+      "maxPositionError": 8.665312496436428e-07
+    },
+    {
+      "model": "Units\\Creeps\\Centaur\\Centaur.mdx",
+      "samples": 27,
+      "vertices": 10881,
+      "maxPositionError": 3.876536435187816e-07
+    },
+    {
+      "model": "Units\\Creeps\\CentaurArcher\\CentaurArcher.mdx",
+      "samples": 24,
+      "vertices": 10464,
+      "maxPositionError": 4.2781395388769017e-07
+    },
+    {
+      "model": "Units\\Creeps\\CentaurKhan\\CentaurKhan.mdx",
+      "samples": 27,
+      "vertices": 10611,
+      "maxPositionError": 3.876536435187816e-07
+    },
+    {
+      "model": "Units\\Creeps\\DireWolf\\DireWolf.mdx",
+      "samples": 36,
+      "vertices": 15984,
+      "maxPositionError": 3.478248005173157e-07
+    },
+    {
+      "model": "Units\\Creeps\\ForestTroll\\ForestTroll.mdx",
+      "samples": 30,
+      "vertices": 23670,
+      "maxPositionError": 4.1560996577594267e-07
+    },
+    {
+      "model": "Units\\Creeps\\ForestTrollShadowPriest\\ForestTrollShadowPriest.mdx",
+      "samples": 30,
+      "vertices": 12450,
+      "maxPositionError": 5.324827538899513e-07
+    },
+    {
+      "model": "Units\\Creeps\\Furbolg\\Furbolg.mdx",
+      "samples": 24,
+      "vertices": 9912,
+      "maxPositionError": 3.6189164831501586e-07
+    },
+    {
+      "model": "Units\\Creeps\\FurbolgElder\\FurbolgElder.mdx",
+      "samples": 24,
+      "vertices": 9840,
+      "maxPositionError": 3.6189164831501586e-07
+    },
+    {
+      "model": "Units\\Creeps\\Gnoll\\Gnoll.mdx",
+      "samples": 40,
+      "vertices": 18760,
+      "maxPositionError": 5.356985510740486e-07
+    },
+    {
+      "model": "Units\\Creeps\\GnollArcher\\GnollArcher.mdx",
+      "samples": 39,
+      "vertices": 18837,
+      "maxPositionError": 4.319973017363754e-07
+    },
+    {
+      "model": "Units\\Creeps\\GnollOverSeer\\GnollOverSeer.mdx",
+      "samples": 40,
+      "vertices": 18760,
+      "maxPositionError": 5.067643208400696e-07
+    },
+    {
+      "model": "Units\\Creeps\\GnollWarden\\GnollWarden.mdx",
+      "samples": 39,
+      "vertices": 18759,
+      "maxPositionError": 4.6245510598730277e-07
+    },
+    {
+      "model": "Units\\Creeps\\GreenDragon\\GreenDragon.mdx",
+      "samples": 21,
+      "vertices": 11487,
+      "maxPositionError": 8.665312496436428e-07
+    },
+    {
+      "model": "Units\\Creeps\\GrizzlyBear\\GrizzlyBear.mdx",
+      "samples": 42,
+      "vertices": 24906,
+      "maxPositionError": 7.750440040865669e-07
+    },
+    {
+      "model": "Units\\Creeps\\Harpy\\Harpy.mdx",
+      "samples": 18,
+      "vertices": 7686,
+      "maxPositionError": 1.3003233272357306e-06
+    },
+    {
+      "model": "Units\\Creeps\\HarpyQueen\\HarpyQueen.mdx",
+      "samples": 18,
+      "vertices": 7740,
+      "maxPositionError": 1.3003233272357306e-06
+    },
+    {
+      "model": "Units\\Creeps\\HEROGoblinALCHEMIST\\HeroGoblinAlchemist.mdx",
+      "samples": 72,
+      "vertices": 100152,
+      "maxPositionError": 2.2292656792766152e-06
+    },
+    {
+      "model": "Units\\Creeps\\HeroTinker\\HeroTinker.mdx",
+      "samples": 69,
+      "vertices": 282348,
+      "maxPositionError": 7.746693286847517e-07
+    },
+    {
+      "model": "Units\\Creeps\\IceTroll\\IceTroll.mdx",
+      "samples": 30,
+      "vertices": 23670,
+      "maxPositionError": 4.1560996577594267e-07
+    },
+    {
+      "model": "Units\\Creeps\\Kobold\\Kobold.mdx",
+      "samples": 27,
+      "vertices": 10827,
+      "maxPositionError": 3.7206255654176346e-07
+    },
+    {
+      "model": "Units\\Creeps\\KoboldGeomancer\\KoboldGeomancer.mdx",
+      "samples": 27,
+      "vertices": 9720,
+      "maxPositionError": 4.3462029308827255e-07
+    },
+    {
+      "model": "Units\\Creeps\\Magnataur\\Magnataur.mdx",
+      "samples": 45,
+      "vertices": 43200,
+      "maxPositionError": 1.6540213954030492e-06
+    },
+    {
+      "model": "Units\\Creeps\\Murloc\\Murloc.mdx",
+      "samples": 27,
+      "vertices": 14202,
+      "maxPositionError": 4.0458363748108184e-07
+    },
+    {
+      "model": "Units\\Creeps\\MurlocWarrior\\MurlocWarrior.mdx",
+      "samples": 27,
+      "vertices": 14202,
+      "maxPositionError": 4.0458363748108184e-07
+    },
+    {
+      "model": "Units\\Creeps\\Ogre\\Ogre.mdx",
+      "samples": 39,
+      "vertices": 25935,
+      "maxPositionError": 7.087594762200666e-07
+    },
+    {
+      "model": "Units\\Creeps\\OgreLord\\OgreLord.mdx",
+      "samples": 36,
+      "vertices": 24804,
+      "maxPositionError": 3.9080907385247166e-07
+    },
+    {
+      "model": "Units\\Creeps\\OgreMagi\\OgreMagi.mdx",
+      "samples": 36,
+      "vertices": 24804,
+      "maxPositionError": 3.9080907385247166e-07
+    },
+    {
+      "model": "Units\\Creeps\\PandarenBrewmaster\\PandarenBrewmaster.mdx",
+      "samples": 33,
+      "vertices": 24684,
+      "maxPositionError": 1.2003122398240862e-06
+    },
+    {
+      "model": "Units\\Creeps\\PolarBear\\PolarBear.mdx",
+      "samples": 42,
+      "vertices": 24906,
+      "maxPositionError": 7.750440040865669e-07
+    },
+    {
+      "model": "Units\\Creeps\\RedDragon\\RedDragon.mdx",
+      "samples": 21,
+      "vertices": 11487,
+      "maxPositionError": 8.665312496436428e-07
+    },
+    {
+      "model": "Units\\Creeps\\Revenant\\Revenant.mdx",
+      "samples": 21,
+      "vertices": 10248,
+      "maxPositionError": 2.3383851410763157e-06
+    },
+    {
+      "model": "Units\\Creeps\\RockGolem\\RockGolem.mdx",
+      "samples": 39,
+      "vertices": 22698,
+      "maxPositionError": 7.048404990772639e-07
+    },
+    {
+      "model": "Units\\Creeps\\Satyr\\Satyr.mdx",
+      "samples": 39,
+      "vertices": 19188,
+      "maxPositionError": 2.80279338182865e-07
+    },
+    {
+      "model": "Units\\Creeps\\satyrhellcaller\\satyrhellcaller.mdx",
+      "samples": 39,
+      "vertices": 19188,
+      "maxPositionError": 7.330420739304344e-07
+    },
+    {
+      "model": "Units\\Creeps\\SatyrTrickster\\SatyrTrickster.mdx",
+      "samples": 39,
+      "vertices": 19188,
+      "maxPositionError": 3.5712878754257105e-07
+    },
+    {
+      "model": "Units\\Creeps\\SkeletonArcher\\SkeletonArcher.mdx",
+      "samples": 24,
+      "vertices": 15360,
+      "maxPositionError": 4.811781116886849e-07
+    },
+    {
+      "model": "Units\\Creeps\\Spider\\Spider.mdx",
+      "samples": 30,
+      "vertices": 14370,
+      "maxPositionError": 4.3165407970224834e-07
+    },
+    {
+      "model": "Units\\Creeps\\TimberWolf\\TimberWolf.mdx",
+      "samples": 36,
+      "vertices": 15984,
+      "maxPositionError": 3.478248005173157e-07
+    },
+    {
+      "model": "Units\\Creeps\\WhiteWolf\\WhiteWolf.mdx",
+      "samples": 36,
+      "vertices": 15984,
+      "maxPositionError": 3.478248005173157e-07
+    },
+    {
+      "model": "Units\\Human\\Arthas\\Arthas.mdx",
+      "samples": 39,
+      "vertices": 25350,
+      "maxPositionError": 1.403302273494944e-06
+    },
+    {
+      "model": "Units\\Human\\ArthaswithSword\\ArthaswithSword.mdx",
+      "samples": 40,
+      "vertices": 27760,
+      "maxPositionError": 9.133177112374824e-07
+    },
+    {
+      "model": "Units\\Human\\BloodElfDragonHawk\\BloodElfDragonHawk.mdx",
+      "samples": 30,
+      "vertices": 20220,
+      "maxPositionError": 5.9672426977464e-07
+    },
+    {
+      "model": "Units\\Human\\BloodElfSpellThief\\BloodElfSpellThief.mdx",
+      "samples": 36,
+      "vertices": 22428,
+      "maxPositionError": 6.867438206992205e-07
+    },
+    {
+      "model": "Units\\Human\\Footman\\Footman.mdx",
+      "samples": 39,
+      "vertices": 22698,
+      "maxPositionError": 2.60727972656305e-07
+    },
+    {
+      "model": "Units\\Human\\GryphonRider\\GryphonRider.mdx",
+      "samples": 21,
+      "vertices": 13797,
+      "maxPositionError": 1.0802921872055116e-06
+    },
+    {
+      "model": "Units\\Human\\GyroCopter\\GyroCopter.mdx",
+      "samples": 27,
+      "vertices": 10800,
+      "maxPositionError": 1.5127848829177282e-07
+    },
+    {
+      "model": "Units\\Human\\HeroArchMage\\HeroArchMage.mdx",
+      "samples": 30,
+      "vertices": 20160,
+      "maxPositionError": 7.971849220744787e-07
+    },
+    {
+      "model": "Units\\Human\\HeroBloodElf\\HeroBloodElf.mdx",
+      "samples": 33,
+      "vertices": 25113,
+      "maxPositionError": 1.131251948116585e-06
+    },
+    {
+      "model": "Units\\Human\\HeroMountainKing\\HeroMountainKing.mdx",
+      "samples": 81,
+      "vertices": 58968,
+      "maxPositionError": 1.3406359236078913e-06
+    },
+    {
+      "model": "Units\\Human\\HeroPaladin\\HeroPaladin.mdx",
+      "samples": 39,
+      "vertices": 23439,
+      "maxPositionError": 9.035077717101103e-07
+    },
+    {
+      "model": "Units\\Human\\HeroPaladinBoss2\\HeroPaladinBoss2.mdx",
+      "samples": 37,
+      "vertices": 22422,
+      "maxPositionError": 1.1945268649782292e-06
+    },
+    {
+      "model": "Units\\Human\\HeroPaladinBoss\\HeroPaladinBoss.mdx",
+      "samples": 37,
+      "vertices": 22422,
+      "maxPositionError": 1.1945268649782292e-06
+    },
+    {
+      "model": "Units\\Human\\Jaina\\Jaina.mdx",
+      "samples": 24,
+      "vertices": 15528,
+      "maxPositionError": 7.04739007373334e-07
+    },
+    {
+      "model": "Units\\Human\\Kael\\Kael.mdx",
+      "samples": 33,
+      "vertices": 25113,
+      "maxPositionError": 1.131251948116585e-06
+    },
+    {
+      "model": "Units\\Human\\Knight\\Knight.mdx",
+      "samples": 36,
+      "vertices": 46836,
+      "maxPositionError": 5.795836888200512e-07
+    },
+    {
+      "model": "Units\\Human\\Militia\\Militia.mdx",
+      "samples": 33,
+      "vertices": 13563,
+      "maxPositionError": 2.1236080849362793e-07
+    },
+    {
+      "model": "Units\\Human\\MortarTeam\\MortarTeam.mdx",
+      "samples": 30,
+      "vertices": 24720,
+      "maxPositionError": 2.7208148106749874e-07
+    },
+    {
+      "model": "Units\\Human\\Muradin\\Muradin.mdx",
+      "samples": 78,
+      "vertices": 56784,
+      "maxPositionError": 1.083438662341507e-06
+    },
+    {
+      "model": "Units\\Human\\Peasant\\peasant.mdx",
+      "samples": 66,
+      "vertices": 38214,
+      "maxPositionError": 3.02754438852304e-07
+    },
+    {
+      "model": "Units\\Human\\Phoenix\\Phoenix.mdx",
+      "samples": 39,
+      "vertices": 24336,
+      "maxPositionError": 3.816764571062947e-07
+    },
+    {
+      "model": "Units\\Human\\Priest\\Priest.mdx",
+      "samples": 24,
+      "vertices": 10920,
+      "maxPositionError": 2.4576133916820453e-07
+    },
+    {
+      "model": "Units\\Human\\Rifleman\\Rifleman.mdx",
+      "samples": 30,
+      "vertices": 16980,
+      "maxPositionError": 2.7464529650522707e-07
+    },
+    {
+      "model": "Units\\Human\\Sorceress\\Sorceress.mdx",
+      "samples": 30,
+      "vertices": 17280,
+      "maxPositionError": 3.3637312257805974e-07
+    },
+    {
+      "model": "Units\\Human\\TheCaptain\\TheCaptain.mdx",
+      "samples": 39,
+      "vertices": 22698,
+      "maxPositionError": 3.705920589291978e-07
+    },
+    {
+      "model": "Units\\Human\\Uther\\Uther.mdx",
+      "samples": 37,
+      "vertices": 22459,
+      "maxPositionError": 8.297222087172429e-07
+    },
+    {
+      "model": "Units\\Human\\WarWagon\\WarWagon.mdx",
+      "samples": 24,
+      "vertices": 13704,
+      "maxPositionError": 4.996061351292269e-07
+    },
+    {
+      "model": "Units\\Human\\WaterElemental\\WaterElemental.mdx",
+      "samples": 21,
+      "vertices": 6594,
+      "maxPositionError": 7.222528572992104e-07
+    },
+    {
+      "model": "Units\\NightElf\\Archer\\Archer.mdx",
+      "samples": 37,
+      "vertices": 17205,
+      "maxPositionError": 5.690247366629819e-07
+    },
+    {
+      "model": "Units\\NightElf\\Chimaera\\Chimaera.mdx",
+      "samples": 24,
+      "vertices": 13752,
+      "maxPositionError": 5.385978630312316e-07
+    },
+    {
+      "model": "Units\\NightElf\\DruidOfTheClaw\\DruidoftheClaw.mdx",
+      "samples": 66,
+      "vertices": 87582,
+      "maxPositionError": 4.496093752193175e-06
+    },
+    {
+      "model": "Units\\NightElf\\DruidOfTheTalon\\DruidoftheTalon.mdx",
+      "samples": 60,
+      "vertices": 91920,
+      "maxPositionError": 4.439493518360038e-07
+    },
+    {
+      "model": "Units\\NightElf\\Dryad\\Dryad.mdx",
+      "samples": 36,
+      "vertices": 17964,
+      "maxPositionError": 5.475861095671775e-07
+    },
+    {
+      "model": "Units\\NightElf\\Ent\\Ent.mdx",
+      "samples": 27,
+      "vertices": 23463,
+      "maxPositionError": 4.417769980946673e-07
+    },
+    {
+      "model": "Units\\NightElf\\EvilIllidan\\IllidanEvil.mdx",
+      "samples": 72,
+      "vertices": 134856,
+      "maxPositionError": 1.529406171929537e-06
+    },
+    {
+      "model": "Units\\NightElf\\FaerieDragon\\FaerieDragon.mdx",
+      "samples": 21,
+      "vertices": 7476,
+      "maxPositionError": 2.8322140614989166e-06
+    },
+    {
+      "model": "Units\\NightElf\\Furion\\Furion.mdx",
+      "samples": 24,
+      "vertices": 30816,
+      "maxPositionError": 8.360059080558813e-07
+    },
+    {
+      "model": "Units\\NightElf\\HeroDemonHunter\\HeroDemonHunter.mdx",
+      "samples": 66,
+      "vertices": 89298,
+      "maxPositionError": 1.2159559754643112e-06
+    },
+    {
+      "model": "Units\\NightElf\\HeroKeeperOfTheGrove\\HeroKeeperoftheGrove.mdx",
+      "samples": 36,
+      "vertices": 32832,
+      "maxPositionError": 6.506948859730244e-07
+    },
+    {
+      "model": "Units\\NightElf\\HeroMoonPriestess\\HeroMoonPriestess.mdx",
+      "samples": 27,
+      "vertices": 14283,
+      "maxPositionError": 1.2668268922766401e-06
+    },
+    {
+      "model": "Units\\NightElf\\HippoGryph\\HippoGryph.mdx",
+      "samples": 24,
+      "vertices": 9984,
+      "maxPositionError": 3.523782865499925e-07
+    },
+    {
+      "model": "Units\\NightElf\\Huntress\\Huntress.mdx",
+      "samples": 27,
+      "vertices": 20115,
+      "maxPositionError": 4.41367756315314e-07
+    },
+    {
+      "model": "Units\\NightElf\\Maiev\\Maiev.mdx",
+      "samples": 36,
+      "vertices": 31500,
+      "maxPositionError": 8.210203450431663e-07
+    },
+    {
+      "model": "Units\\NightElf\\MalFurion\\MalFurion.mdx",
+      "samples": 27,
+      "vertices": 25461,
+      "maxPositionError": 1.5711570382492823e-06
+    },
+    {
+      "model": "Units\\NightElf\\MalFurion\\MalFurionNoStag.mdx",
+      "samples": 24,
+      "vertices": 30816,
+      "maxPositionError": 8.360059080558813e-07
+    },
+    {
+      "model": "Units\\NightElf\\MountainGiant\\MountainGiant.mdx",
+      "samples": 39,
+      "vertices": 34164,
+      "maxPositionError": 1.5176003440031671e-06
+    },
+    {
+      "model": "Units\\NightElf\\RiddenHippoGryph\\RiddenHippoGryph.mdx",
+      "samples": 27,
+      "vertices": 19224,
+      "maxPositionError": 9.305366819312155e-07
+    },
+    {
+      "model": "Units\\NightElf\\Shandris\\Shandris.mdx",
+      "samples": 37,
+      "vertices": 22755,
+      "maxPositionError": 6.290116880691698e-07
+    },
+    {
+      "model": "Units\\NightElf\\SpiritOfVengeance\\SpiritOfVengeance.mdx",
+      "samples": 30,
+      "vertices": 28170,
+      "maxPositionError": 6.640663156309845e-07
+    },
+    {
+      "model": "Units\\NightElf\\Vengeance\\Vengeance.mdx",
+      "samples": 21,
+      "vertices": 11571,
+      "maxPositionError": 3.542275160417496e-07
+    },
+    {
+      "model": "Units\\NightElf\\Wisp\\Wisp.mdx",
+      "samples": 15,
+      "vertices": 1860,
+      "maxPositionError": 4.431270962390599e-07
+    },
+    {
+      "model": "Units\\Orc\\BatTroll\\BatTroll.mdx",
+      "samples": 21,
+      "vertices": 16989,
+      "maxPositionError": 7.869414514471984e-07
+    },
+    {
+      "model": "Units\\Orc\\Catapult\\Catapult.mdx",
+      "samples": 18,
+      "vertices": 8100,
+      "maxPositionError": 3.675903477162734e-07
+    },
+    {
+      "model": "Units\\Orc\\Grunt\\grunt.mdx",
+      "samples": 36,
+      "vertices": 27324,
+      "maxPositionError": 2.63294592420249e-07
+    },
+    {
+      "model": "Units\\Orc\\HeadHunter\\Headhunter.mdx",
+      "samples": 30,
+      "vertices": 16560,
+      "maxPositionError": 3.906862835467706e-07
+    },
+    {
+      "model": "Units\\Orc\\Hellscream\\Hellscream.mdx",
+      "samples": 48,
+      "vertices": 28608,
+      "maxPositionError": 1.3979754616144646e-06
+    },
+    {
+      "model": "Units\\Orc\\HeroBladeMaster\\HeroBladeMaster.mdx",
+      "samples": 42,
+      "vertices": 27342,
+      "maxPositionError": 1.723400363418115e-06
+    },
+    {
+      "model": "Units\\Orc\\HeroFarseer\\HeroFarSeer.mdx",
+      "samples": 30,
+      "vertices": 22200,
+      "maxPositionError": 7.588736767871751e-07
+    },
+    {
+      "model": "Units\\Orc\\HeroShadowHunter\\HeroShadowHunter.mdx",
+      "samples": 42,
+      "vertices": 27930,
+      "maxPositionError": 1.1635390237962895e-06
+    },
+    {
+      "model": "Units\\Orc\\HeroTaurenChieftain\\HeroTaurenChieftain.mdx",
+      "samples": 36,
+      "vertices": 19584,
+      "maxPositionError": 7.412642997195462e-07
+    },
+    {
+      "model": "Units\\Orc\\KotoBeast\\KotoBeast.mdx",
+      "samples": 42,
+      "vertices": 33684,
+      "maxPositionError": 6.282100410981428e-07
+    },
+    {
+      "model": "Units\\Orc\\OrcWarlockGuldan\\OrcWarlockGuldan.mdx",
+      "samples": 24,
+      "vertices": 17424,
+      "maxPositionError": 2.9955568470185767e-07
+    },
+    {
+      "model": "Units\\Orc\\Peon\\peon.mdx",
+      "samples": 66,
+      "vertices": 31746,
+      "maxPositionError": 3.6580666806784734e-07
+    },
+    {
+      "model": "Units\\Orc\\Shaman\\Shaman.mdx",
+      "samples": 42,
+      "vertices": 26082,
+      "maxPositionError": 5.090092948245584e-07
+    },
+    {
+      "model": "Units\\Orc\\SpiritWalker\\SpiritWalker.mdx",
+      "samples": 27,
+      "vertices": 14202,
+      "maxPositionError": 5.905232653979908e-07
+    },
+    {
+      "model": "Units\\Orc\\Spiritwolf\\Spiritwolf.mdx",
+      "samples": 36,
+      "vertices": 23040,
+      "maxPositionError": 2.9228125082852996e-06
+    },
+    {
+      "model": "Units\\Orc\\SpiritWyvern\\SpiritWyvern.mdx",
+      "samples": 30,
+      "vertices": 12990,
+      "maxPositionError": 8.52031182940749e-07
+    },
+    {
+      "model": "Units\\Orc\\Tauren\\Tauren.mdx",
+      "samples": 30,
+      "vertices": 17130,
+      "maxPositionError": 4.2661851129555117e-07
+    },
+    {
+      "model": "Units\\Orc\\Thrall\\Thrall.mdx",
+      "samples": 21,
+      "vertices": 13356,
+      "maxPositionError": 1.3941106287163052e-06
+    },
+    {
+      "model": "Units\\Orc\\WitchDoctor\\WitchDoctor.mdx",
+      "samples": 33,
+      "vertices": 18513,
+      "maxPositionError": 4.639724576760429e-07
+    },
+    {
+      "model": "Units\\Orc\\Wolfrider\\Wolfrider.mdx",
+      "samples": 36,
+      "vertices": 25956,
+      "maxPositionError": 5.632267783273193e-07
+    },
+    {
+      "model": "Units\\Orc\\WyvernRider\\WyvernRider.mdx",
+      "samples": 28,
+      "vertices": 14448,
+      "maxPositionError": 8.328656200262685e-07
+    },
+    {
+      "model": "Units\\Undead\\Abomination\\Abomination.mdx",
+      "samples": 30,
+      "vertices": 15840,
+      "maxPositionError": 6.440101016913502e-07
+    },
+    {
+      "model": "Units\\Undead\\Acolyte\\Acolyte.mdx",
+      "samples": 24,
+      "vertices": 11472,
+      "maxPositionError": 3.2943080352509924e-07
+    },
+    {
+      "model": "Units\\Undead\\Anubarak\\Anubarak.mdx",
+      "samples": 51,
+      "vertices": 50439,
+      "maxPositionError": 6.221228829872416e-07
+    },
+    {
+      "model": "Units\\Undead\\Banshee\\Banshee.mdx",
+      "samples": 18,
+      "vertices": 9576,
+      "maxPositionError": 2.740794773359312e-07
+    },
+    {
+      "model": "Units\\Undead\\CryptFiend\\CryptFiend.mdx",
+      "samples": 28,
+      "vertices": 16268,
+      "maxPositionError": 4.906486852362946e-07
+    },
+    {
+      "model": "Units\\Undead\\EvilArthas\\UndeadArthas.mdx",
+      "samples": 24,
+      "vertices": 17352,
+      "maxPositionError": 6.773103663482161e-07
+    },
+    {
+      "model": "Units\\Undead\\EvilSylvanas\\EvilSylvanas.mdx",
+      "samples": 33,
+      "vertices": 19206,
+      "maxPositionError": 1.360464283450824e-06
+    },
+    {
+      "model": "Units\\Undead\\FrostWyrm\\FrostWyrm.mdx",
+      "samples": 24,
+      "vertices": 14712,
+      "maxPositionError": 6.324515149369603e-07
+    },
+    {
+      "model": "Units\\Undead\\Gargoyle\\Gargoyle.mdx",
+      "samples": 30,
+      "vertices": 29850,
+      "maxPositionError": 8.267789669280656e-07
+    },
+    {
+      "model": "Units\\Undead\\Ghoul\\Ghoul.mdx",
+      "samples": 51,
+      "vertices": 67218,
+      "maxPositionError": 4.1163471653504757e-07
+    },
+    {
+      "model": "Units\\Undead\\HeroCryptLord\\HeroCryptLord.mdx",
+      "samples": 51,
+      "vertices": 50439,
+      "maxPositionError": 6.221228829872416e-07
+    },
+    {
+      "model": "Units\\Undead\\HeroDeathKnight\\HeroDeathKnight.mdx",
+      "samples": 24,
+      "vertices": 17352,
+      "maxPositionError": 6.773103663482161e-07
+    },
+    {
+      "model": "Units\\Undead\\HeroDreadLord\\HeroDreadLord.mdx",
+      "samples": 33,
+      "vertices": 31647,
+      "maxPositionError": 1.7155962286352633e-06
+    },
+    {
+      "model": "Units\\Undead\\HeroLich\\HeroLich.mdx",
+      "samples": 30,
+      "vertices": 25620,
+      "maxPositionError": 5.216782230643702e-07
+    },
+    {
+      "model": "Units\\Undead\\Kelthuzad\\Kelthuzad.mdx",
+      "samples": 27,
+      "vertices": 17442,
+      "maxPositionError": 2.944161326956518e-07
+    },
+    {
+      "model": "Units\\Undead\\Meatwagon\\Meatwagon.mdx",
+      "samples": 15,
+      "vertices": 22905,
+      "maxPositionError": 2.863689226417776e-05
+    },
+    {
+      "model": "Units\\Undead\\Necromancer\\Necromancer.mdx",
+      "samples": 27,
+      "vertices": 17118,
+      "maxPositionError": 2.944161326956518e-07
+    },
+    {
+      "model": "Units\\Undead\\ObsidianStatue\\ObsidianStatue.mdx",
+      "samples": 42,
+      "vertices": 70938,
+      "maxPositionError": 1.0525352633905527e-06
+    },
+    {
+      "model": "Units\\Undead\\Shade\\Shade.mdx",
+      "samples": 18,
+      "vertices": 6534,
+      "maxPositionError": 3.5533289888256547e-07
+    },
+    {
+      "model": "Units\\Undead\\Skeleton\\Skeleton.mdx",
+      "samples": 30,
+      "vertices": 19500,
+      "maxPositionError": 3.148244404060918e-07
+    },
+    {
+      "model": "Units\\Undead\\SkeletonMage\\SkeletonMage.mdx",
+      "samples": 21,
+      "vertices": 14616,
+      "maxPositionError": 2.4863378511597034e-07
+    },
+    {
+      "model": "Units\\Undead\\Tichondrius\\Tichondrius.mdx",
+      "samples": 30,
+      "vertices": 28770,
+      "maxPositionError": 1.9799554020760723e-06
+    },
+    {
+      "model": "Units\\Undead\\UndeadAirBarge\\UndeadAirBarge.mdx",
+      "samples": 21,
+      "vertices": 16674,
+      "maxPositionError": 2.436298394137282e-07
+    }
+  ],
+  "validationEntities": 59864
+}

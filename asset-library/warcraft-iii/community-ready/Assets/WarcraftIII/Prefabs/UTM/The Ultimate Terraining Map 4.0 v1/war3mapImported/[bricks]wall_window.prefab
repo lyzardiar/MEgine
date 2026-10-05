@@ -1,0 +1,151 @@
+{
+  "version": 2,
+  "name": "[bricks]wall_window",
+  "root": {
+    "id": "root",
+    "name": "[bricks]wall_window",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/[bricks]wall_window/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/[bricks]wall_window/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-0",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/[bricks]wall_window/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/[bricks]wall_window/geoset-01-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-02-layer-0",
+        "name": "Geoset 2",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/[bricks]wall_window/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/[bricks]wall_window/geoset-02-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-03-layer-0",
+        "name": "Geoset 3",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/[bricks]wall_window/geoset-03.glb",
+            "material": "Assets/WarcraftIII/Materials/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/[bricks]wall_window/geoset-03-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

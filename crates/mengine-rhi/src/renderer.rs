@@ -98,6 +98,7 @@ pub struct RenderMaterial {
     pub transparent: bool,
     pub blend_mode: MaterialBlendMode,
     pub depth_write: bool,
+    pub depth_equal: bool,
     pub render_queue: i32,
     pub alpha_cutoff: f32,
     pub base_color_texture: String,
@@ -213,6 +214,7 @@ impl Default for RenderMaterial {
             transparent: false,
             blend_mode: MaterialBlendMode::Alpha,
             depth_write: true,
+            depth_equal: false,
             render_queue: 2000,
             alpha_cutoff: 0.0,
             base_color_texture: String::new(),
@@ -506,6 +508,7 @@ struct MaterialPipelineKey {
     blend: MaterialPipelineBlend,
     double_sided: bool,
     depth_write: bool,
+    depth_equal: bool,
     shader_fingerprint: u64,
 }
 
@@ -539,6 +542,7 @@ impl From<&RenderMaterial> for MaterialPipelineKey {
             },
             double_sided: material.double_sided,
             depth_write: !material.transparent || material.depth_write,
+            depth_equal: material.depth_equal,
             shader_fingerprint: surface_shader_fingerprint(
                 &material.surface_shader,
                 &material.surface_keywords,
@@ -1042,33 +1046,37 @@ impl Renderer {
         });
         let mut material_pipelines = HashMap::new();
         for double_sided in [false, true] {
-            let opaque = MaterialPipelineKey {
-                blend: MaterialPipelineBlend::Replace,
-                double_sided,
-                depth_write: true,
-                shader_fingerprint: 0,
-            };
-            material_pipelines.insert(
-                opaque,
-                create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, opaque, sample_count),
-            );
-            for blend in [
-                MaterialPipelineBlend::Alpha,
-                MaterialPipelineBlend::Premultiplied,
-                MaterialPipelineBlend::Additive,
-                MaterialPipelineBlend::Multiply,
-            ] {
-                for depth_write in [false, true] {
-                    let key = MaterialPipelineKey {
-                        blend,
-                        double_sided,
-                        depth_write,
-                        shader_fingerprint: 0,
-                    };
-                    material_pipelines.insert(
-                        key,
-                        create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, key, sample_count),
-                    );
+            for depth_equal in [false, true] {
+                let opaque = MaterialPipelineKey {
+                    blend: MaterialPipelineBlend::Replace,
+                    double_sided,
+                    depth_write: true,
+                    depth_equal,
+                    shader_fingerprint: 0,
+                };
+                material_pipelines.insert(
+                    opaque,
+                    create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, opaque, sample_count),
+                );
+                for blend in [
+                    MaterialPipelineBlend::Alpha,
+                    MaterialPipelineBlend::Premultiplied,
+                    MaterialPipelineBlend::Additive,
+                    MaterialPipelineBlend::Multiply,
+                ] {
+                    for depth_write in [false, true] {
+                        let key = MaterialPipelineKey {
+                            blend,
+                            double_sided,
+                            depth_write,
+                            depth_equal,
+                            shader_fingerprint: 0,
+                        };
+                        material_pipelines.insert(
+                            key,
+                            create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, key, sample_count),
+                        );
+                    }
                 }
             }
         }
@@ -2938,7 +2946,7 @@ fn create_pipeline(
         depth_stencil: Some(wgpu::DepthStencilState {
             format: wgpu::TextureFormat::Depth24PlusStencil8,
             depth_write_enabled: key.depth_write,
-            depth_compare: wgpu::CompareFunction::Less,
+            depth_compare: if key.depth_equal { wgpu::CompareFunction::LessEqual } else { wgpu::CompareFunction::Less },
             stencil: Default::default(),
             bias: Default::default(),
         }),
@@ -4167,6 +4175,7 @@ mod tests {
             blend: MaterialPipelineBlend::Additive,
             double_sided: true,
             depth_write: false,
+            depth_equal: false,
             shader_fingerprint: 42,
         };
         assert_eq!(
@@ -4515,6 +4524,7 @@ mod tests {
             transparent: true,
             blend_mode: MaterialBlendMode::Premultiplied,
             depth_write: false,
+            depth_equal: false,
             double_sided: true,
             ..Default::default()
         };
@@ -4524,6 +4534,7 @@ mod tests {
                 blend: MaterialPipelineBlend::Premultiplied,
                 double_sided: true,
                 depth_write: false,
+                depth_equal: false,
                 shader_fingerprint: 0,
             }
         );
@@ -4538,11 +4549,24 @@ mod tests {
     }
 
     #[test]
+    fn layered_material_has_a_distinct_equal_depth_pipeline() {
+        let base = RenderMaterial::default();
+        let overlay = RenderMaterial { depth_equal: true, ..base.clone() };
+        let base_key = MaterialPipelineKey::from(&base);
+        let overlay_key = MaterialPipelineKey::from(&overlay);
+        assert!(!base_key.depth_equal);
+        assert!(overlay_key.depth_equal);
+        assert_ne!(base_key, overlay_key);
+        assert!(error_material_pipeline_key(overlay_key).depth_equal);
+    }
+
+    #[test]
     fn material_pipeline_eviction_keeps_resident_and_current_frame_variants() {
         let key = |fingerprint| MaterialPipelineKey {
             blend: MaterialPipelineBlend::Replace,
             double_sided: false,
             depth_write: true,
+            depth_equal: false,
             shader_fingerprint: fingerprint,
         };
         let epoch = MATERIAL_PIPELINE_GRACE_FRAMES + 10;

@@ -1,0 +1,121 @@
+{
+  "version": 2,
+  "name": "TreeCommon_Yelow 01 b",
+  "root": {
+    "id": "root",
+    "name": "TreeCommon_Yelow 01 b",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/TreeCommon_Yelow 01 b/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/TreeCommon_Yelow 01 b/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-0",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/TreeCommon_Yelow 01 b/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/TreeCommon_Yelow 01 b/geoset-01-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-1",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/TreeCommon_Yelow 01 b/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/TreeCommon_Yelow 01 b/geoset-01-layer-1.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

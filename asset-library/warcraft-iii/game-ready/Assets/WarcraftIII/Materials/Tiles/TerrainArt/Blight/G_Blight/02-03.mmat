@@ -1,0 +1,22 @@
+{
+  "version": 8,
+  "name": "G_Blight/2-3",
+  "shader": "pbr",
+  "surface": "transparent",
+  "blend_mode": "alpha",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "base_color_texture": "Assets/WarcraftIII/Textures/Tiles/TerrainArt/Blight/G_Blight/02-03.png",
+  "roughness": 0.95,
+  "metallic": 0,
+  "double_sided": false,
+  "alpha_cutoff": 0.75,
+  "transparent_depth_write": false,
+  "render_queue": 3000,
+  "wrap_u": "repeat",
+  "wrap_v": "repeat"
+}

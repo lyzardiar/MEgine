@@ -1,0 +1,62 @@
+[
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Barrens_Rocks5.mdx",
+    "error": "'redstone_rock.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Evergreen.mdx",
+    "error": "'worldtreetrunk.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax.mdx",
+    "error": "'rockseemles a1.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra Glow.mdx",
+    "error": "'rockseemles a1.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra b.mdx",
+    "error": "'rockseemles a1.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Plane Rocks_Paralax_Ultra.mdx",
+    "error": "'rockseemles a1.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Difuse Agria b.mdx",
+    "error": "'redstone_rock.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock Scene.mdx",
+    "error": "'redstone_rock.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree1.mdx",
+    "error": "'worldtreetrunk.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree2.mdx",
+    "error": "'worldtreetrunk.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Tree3.mdx",
+    "error": "'worldtreetrunk.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner].MDX",
+    "error": "'carpet.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[corner_reversed].MDX",
+    "error": "'carpet.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[edge].MDX",
+    "error": "'carpet.blp'"
+  },
+  {
+    "path": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/tile_carpet[tile].MDX",
+    "error": "'carpet.blp'"
+  }
+]

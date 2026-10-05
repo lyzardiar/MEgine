@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "paesantbed",
+  "root": {
+    "id": "root",
+    "name": "paesantbed",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/paesantbed/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/paesantbed/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

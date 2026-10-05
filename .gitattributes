@@ -1,0 +1,19 @@
+asset-library/**/*.glb binary
+asset-library/**/*.png binary
+asset-library/**/*.blp binary
+asset-library/**/*.jpg binary
+asset-library/**/*.json text eol=lf
+asset-library/**/*.mmat text eol=lf
+asset-library/**/*.mscene text eol=lf
+asset-library/**/*.prefab text eol=lf
+asset-library/**/*.meta text eol=lf
+asset-library/**/*.md text eol=lf
+asset-library/**/SourceAssets/** -text
+scripts/*warcraft*.py -text whitespace=cr-at-eol
+scripts/extract-frost-classic.py -text whitespace=cr-at-eol
+scripts/warcraft-assets/*.cs text eol=lf
+scripts/warcraft-assets/*.csproj text eol=lf
+third_party/mpyq/** -text
+asset-library/**/Licenses/HIVE/** -text
+asset-library/warcraft-iii/game-ready/** -text whitespace=cr-at-eol
+asset-library/warcraft-iii/community-ready/** -text whitespace=cr-at-eol

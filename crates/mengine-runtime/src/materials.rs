@@ -687,6 +687,7 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
         },
         depth_write: material.surface != MaterialSurface::Transparent
             || material.transparent_depth_write,
+        depth_equal: material.depth_equal,
         render_queue: if material.render_queue >= 0 {
             material.render_queue
         } else {
@@ -954,6 +955,7 @@ mod tests {
             surface: MaterialSurface::Cutout,
             blend_mode: AssetMaterialBlendMode::Premultiplied,
             transparent_depth_write: true,
+            depth_equal: true,
             render_queue: 2600,
             alpha_cutoff: 0.4,
             base_color_texture: "Assets/Textures/leaves.png".into(),
@@ -981,6 +983,7 @@ mod tests {
         assert!(!material.transparent);
         assert_eq!(material.blend_mode, MaterialBlendMode::Premultiplied);
         assert!(material.depth_write);
+        assert!(material.depth_equal);
         assert_eq!(material.render_queue, 2600);
         assert_eq!(material.alpha_cutoff, 0.4);
         assert_eq!(material.base_color_texture, asset.base_color_texture);

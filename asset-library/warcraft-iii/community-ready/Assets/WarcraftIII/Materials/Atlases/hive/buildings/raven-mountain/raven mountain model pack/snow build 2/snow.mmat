@@ -1,0 +1,22 @@
+{
+  "version": 8,
+  "name": "hive/buildings/raven-mountain/raven mountain model pack/snow build 2/snow.blp",
+  "shader": "pbr",
+  "surface": "opaque",
+  "blend_mode": "alpha",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "base_color_texture": "Assets/WarcraftIII/Textures/HIVE/buildings/raven-mountain/Raven Mountain Model Pack/Snow build 2/Snow.png",
+  "roughness": 0.95,
+  "metallic": 0,
+  "double_sided": false,
+  "alpha_cutoff": 0.75,
+  "transparent_depth_write": false,
+  "render_queue": 2000,
+  "wrap_u": "repeat",
+  "wrap_v": "repeat"
+}

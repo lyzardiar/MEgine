@@ -1,0 +1,271 @@
+{
+  "version": 2,
+  "name": "Spiritwolf",
+  "root": {
+    "id": "root",
+    "name": "Spiritwolf",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-0",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Spiritwolf/Spiritwolf/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Spiritwolf/Spiritwolf/geoset-00-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-0",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Spiritwolf/Spiritwolf/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Spiritwolf/Spiritwolf/geoset-01-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-1",
+        "name": "Geoset 1",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Spiritwolf/Spiritwolf/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Spiritwolf/Spiritwolf/geoset-01-layer-1.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-02-layer-0",
+        "name": "Geoset 2",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Spiritwolf/Spiritwolf/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Spiritwolf/Spiritwolf/geoset-02-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-03-layer-0",
+        "name": "Geoset 3",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Spiritwolf/Spiritwolf/geoset-03.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Spiritwolf/Spiritwolf/geoset-03-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-04-layer-0",
+        "name": "Geoset 4",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Spiritwolf/Spiritwolf/geoset-04.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Spiritwolf/Spiritwolf/geoset-04-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-05-layer-0",
+        "name": "Geoset 5",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Spiritwolf/Spiritwolf/geoset-05.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Spiritwolf/Spiritwolf/geoset-05-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-06-layer-0",
+        "name": "Geoset 6",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Units/Orc/Spiritwolf/Spiritwolf/geoset-06.glb",
+            "material": "Assets/WarcraftIII/Materials/Units/Orc/Spiritwolf/Spiritwolf/geoset-06-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}

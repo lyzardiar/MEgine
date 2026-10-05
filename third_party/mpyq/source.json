@@ -1,0 +1,12 @@
+{
+  "project": "mpyq",
+  "version": "0.2.5",
+  "source": "https://pypi.org/project/mpyq/0.2.5/",
+  "license": "MIT",
+  "releaseArchiveSha256": "30aaf5962be569f3f2b53978060cd047434ee4f5a215925dd6ff0fef04ec0007",
+  "files": {
+    "mpyq.py": "526d3e3ae1f5254d8bc32e0248b0763ec5998f350846876c38794373983bed78",
+    "LICENSE": "193916c6fb0a70df0263d25264d823a88ed3819086628402a95e0b4c85e12026"
+  },
+  "unmodifiedReleaseSource": true
+}

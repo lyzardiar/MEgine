@@ -1,0 +1,781 @@
+{
+  "version": 2,
+  "name": "HumanTower",
+  "root": {
+    "id": "root",
+    "name": "HumanTower",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "geoset-00-layer-1",
+        "name": "Geoset 0",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-00.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-00-team-00.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-01-layer-1",
+        "name": "Geoset 1",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-01.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-01-team-00.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-02-layer-0",
+        "name": "Geoset 2",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-02.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-02-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-03-layer-0",
+        "name": "Geoset 3",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-03.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-03-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-04-layer-0",
+        "name": "Geoset 4",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-04.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-04-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-05-layer-0",
+        "name": "Geoset 5",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-05.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-05-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-06-layer-0",
+        "name": "Geoset 6",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-06.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-06-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-07-layer-0",
+        "name": "Geoset 7",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-07.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-07-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-08-layer-0",
+        "name": "Geoset 8",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-08.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-08-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-09-layer-0",
+        "name": "Geoset 9",
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-09.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-09-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-10-layer-1",
+        "name": "Geoset 10",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-10.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-10-team-00.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-11-layer-0",
+        "name": "Geoset 11",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-11.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-11-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-12-layer-0",
+        "name": "Geoset 12",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-12.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-12-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-13-layer-0",
+        "name": "Geoset 13",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-13.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-13-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-14-layer-1",
+        "name": "Geoset 14",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-14.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-14-team-00.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-15-layer-0",
+        "name": "Geoset 15",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-15.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-15-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-16-layer-0",
+        "name": "Geoset 16",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-16.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-16-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-17-layer-0",
+        "name": "Geoset 17",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-17.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-17-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-18-layer-0",
+        "name": "Geoset 18",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-18.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-18-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-19-layer-0",
+        "name": "Geoset 19",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-19.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-19-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-20-layer-1",
+        "name": "Geoset 20",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-20.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-20-team-00.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-21-layer-0",
+        "name": "Geoset 21",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-21.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-21-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-22-layer-0",
+        "name": "Geoset 22",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-22.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-22-layer-0.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-23-layer-1",
+        "name": "Geoset 23",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-23.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-23-team-00.mmat"
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "geoset-24-layer-0",
+        "name": "Geoset 24",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/WarcraftIII/Models/Buildings/Human/HumanTower/HumanTower/geoset-24.glb",
+            "material": "Assets/WarcraftIII/Materials/Buildings/Human/HumanTower/HumanTower/geoset-24-layer-0.mmat"
+          }
+        },
+        "children": []
+      }
+    ]
+  }
+}
