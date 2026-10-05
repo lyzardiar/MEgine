@@ -2,10 +2,10 @@
 var FrostVisual=(()=>{
   const buildings={hall:'Hall',barracks:'Barracks',farm:'Lodge',tower:'Tower',altar:'Altar',workshop:'Workshop',scouttower:'Tower',guardtower:'Tower',shop:'Workshop',scouttower:'Tower',guardtower:'Tower'};
   const names=[
-    {hall:['Keep','Castle','Royal citadel'],barracks:'Royal barracks',farm:'Town house',tower:'Guard tower',altar:'Sanctuary',workshop:'Royal workshop',shop:'Arcane Vault'},
-    {hall:['Great lodge','War hall','Iron stronghold'],barracks:'War barracks',farm:'Clan dwelling',tower:'Watch post',altar:'Spirit sanctuary',workshop:'Siege workshop',shop:'Voodoo Lounge'},
-    {hall:['Ancient of roots','Ancient of boughs','Elder grove'],barracks:'Sentinel grove',farm:'Living shelter',tower:'Thorn watch',altar:'Moon sanctuary',workshop:'Grove workshop',shop:'Ancient of Wonders'},
-    {hall:['Necropolis','Black citadel','Dread fortress'],barracks:'Crypt',farm:'Ziggurat',tower:'Soul tower',altar:'Altar of shadows',workshop:'Bone foundry',shop:'Tomb of Relics'}
+    {barracks:'Royal barracks',farm:'Town house',tower:'Guard tower',altar:'Sanctuary',workshop:'Royal workshop',shop:'Arcane Vault'},
+    {barracks:'War barracks',farm:'Clan dwelling',tower:'Watch post',altar:'Spirit sanctuary',workshop:'Siege workshop',shop:'Voodoo Lounge'},
+    {barracks:'Sentinel grove',farm:'Living shelter',tower:'Thorn watch',altar:'Moon sanctuary',workshop:'Grove workshop',shop:'Ancient of Wonders'},
+    {barracks:'Crypt',farm:'Ziggurat',tower:'Soul tower',altar:'Altar of shadows',workshop:'Bone foundry',shop:'Tomb of Relics'}
   ];
   const units={skeletonmage:'RealSkeletonMage',skeletonwarrior:'RealSkeletonWarrior',treant:'RealTreant',rifleman:'RealRifleman',mage:'RealEmberSage',paladin:'RealPaladin',knight:'RealKnight',archer:'RealArcher',raider:'RealOrc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'RealShaman',ghoul:'RealGhoul',abomination:'RealAbomination',necromancer:'RealNecromancer',bonearcher:'RealBoneArcher'};
   const base={worker:'RealWorker',soldier:'RealFootman',archer:'Ranger',knight:'Warrior',mage:'Wizard',hero:'Cleric',creep:'RealFootman',rangedcreep:'RealArcher',siegecreep:'RealCatapult',neutral:'RealWolf',ballista:'RealBallista',catapult:'RealCatapult',trebuchet:'RealTrebuchet',ram:'RealRam',dragon:'Dragon'};
@@ -35,7 +35,7 @@ var FrostVisual=(()=>{
     return elapsed>=0&&elapsed<.8?(asset.loadedModel?asset.attackEvent+(1-asset.attackEvent)*elapsed/.8:elapsed/.8):null;
   }
   function model(state,u,walking=false){
-    const d=Frost.types[u.kind],f=state.teams[u.team]?.faction||0,tier=Frost.clamp(u.upgradeTier??state.teams[u.team]?.tier??1,1,3);
+    const d=Frost.types[u.kind],f=state.teams[u.team]?.faction||0,tier=Frost.clamp(u.upgradeTier??1,1,3);
     let key=['spirittower','nerubiantower'].includes(u.kind)?'RevenantTower':u.kind==='hauntedmine'?'HauntedMine':u.kind==='temple'?'RealTemple':u.kind==='spiritlodge'?'WarclansAltar':buildings[u.kind]?Frost.factions[f]+buildings[u.kind]+(u.kind==='hall'&&tier>1?tier:''):u.kind==='hero'?Frost.unitType(u).art:u.tag==='boss'?'RealBear':u.kind==='frosttower'?'FrostTower':u.kind==='flametower'?'EmberTower':u.kind==='worker'?['RealWorker','Tribal','Rogue','RealAcolyte'][f]:units[u.kind]||base[u.kind]||base[d.model];
     const original=FrostArt[key],activity=['RealWorker','RealAcolyte','RealGhoul'].includes(key)?work(state,u):null,phase=(key==='RealArcher'||original.shotModel)&&!walking&&!u.stun?(castPhase(u,original,walking)??(u.cd>0?attackPhase(u,original):null)):null,loaded=phase!==null&&(original.ammoLoad<original.attackEvent?phase>=original.ammoLoad&&phase<original.attackEvent:phase<original.attackEvent||phase>=original.ammoLoad),variant=phase===null?key:original.shotModel?(loaded?original.loadedModel||key:original.shotModel):key+(loaded?'Loaded':'Shoot');
     const asset=FrostArt[activity?key+activity.animation:variant]||original,scale=asset.factionBuilding?(d.radius*2*.92)/Math.hypot(asset.size[0],asset.size[2]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:asset.siegeModel?1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
@@ -83,7 +83,7 @@ var FrostVisual=(()=>{
   }
   function heroPortrait(heroClass=0,closeup=false){const art=Frost.heroes[heroClass].art;return FrostArt[art].realistic?'Assets/Art/'+(closeup?'head-portraits':'unit-portraits')+'.png#'+art:'Assets/Art/hero-portraits.png#hero-'+heroClass;}
   function unitPortrait(state,u){const v=model(state,u),key=v.key;return (v.asset.factionBuilding?'Assets/Art/faction-buildings.png#':['RealFrostWarden','RealEmberSage','RealSylvanRanger','RealDawnPaladin','RealFootman','RealWorker','RealArcher','RealRifleman','RealOrc','RealAcolyte','RealNecromancer','RealShaman'].includes(key)?'Assets/Art/head-portraits.png#':'Assets/Art/unit-portraits.png#')+key;}
-  function name(state,u){const f=state.teams[u.team]?.faction||0,value=names[f][u.kind];if(u.kind==='worker'&&f===3)return 'Acolyte';if(u.kind==='critter')return u.team===0?'Mechanical Critter':'Critter';if(u.tag==='critter')return 'Critter';if(u.kind==='neutral')return u.tag==='boss'?'Frostbound sovereign':'Frostfang wolf';return Array.isArray(value)?value[Frost.clamp((u.upgradeTier??state.teams[u.team]?.tier??1)-1,0,2)]:value||Frost.unitType(u).label;}
+  function name(state,u){if(u.kind==='hall')return Frost.mainBase(state,u).name;const f=state.teams[u.team]?.faction||0,value=names[f][u.kind];if(u.kind==='worker'&&f===3)return 'Acolyte';if(u.kind==='critter')return u.team===0?'Mechanical Critter':'Critter';if(u.tag==='critter')return 'Critter';if(u.kind==='neutral')return u.tag==='boss'?'Frostbound sovereign':'Frostfang wolf';return Array.isArray(value)?value[Frost.clamp((u.upgradeTier??1)-1,0,2)]:value||Frost.unitType(u).label;}
   const projectileColors={fire:[1,.32,.055,1],frost:[.35,.8,1,1],nature:[.35,.85,.24,1],shadow:[.57,.22,.8,1],arcane:[.5,.48,1,1]};
   function muzzle(e){const [x,y,z]=FrostArt.RealRifleman.muzzle,angle=Math.atan2(e.x-e.fromX,e.z-e.fromZ),sin=Math.sin(angle),cos=Math.cos(angle);return {type:'muzzle',art:'musket',team:e.team,x:e.fromX+(x*cos+z*sin)*.85,y:e.fromY-1.6+y*.85,z:e.fromZ+(-x*sin+z*cos)*.85};}
   function projectile(art){

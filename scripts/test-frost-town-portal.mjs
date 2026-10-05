@@ -1,5 +1,6 @@
 // Author: MiYu. Full Town Portal duration, transport eligibility, immunity, safe arrivals and saved channels.
 import assert from 'node:assert/strict';
+import {setTechnology} from './frost-battle-fixture.mjs';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
@@ -49,7 +50,7 @@ function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0
 }
 {
  const s=S.create('skirmish',{ai:[false,false]}),worker=s.units.find(u=>u.team===0&&u.kind==='worker');assert.equal(S.command(s,0,{type:'build',ids:[worker.id],kind:'altar',x:-12,z:16}),null);step(s,220);const altar=s.units.find(u=>u.team===0&&u.kind==='altar');assert.equal(S.command(s,0,{type:'train',ids:[altar.id],kind:'hero',heroClass:0}),null);step(s,551);const first=S.heroRoster(s,0)[0];assert.deepEqual(first.inventory,[8]);assert.equal(s.teams[0].portalGranted,true);
- s.teams[0].tier=2;s.teams[0].gold=2000;s.teams[0].wood=1000;S.spawn(s,'farm',0,-24,10);assert.equal(S.command(s,0,{type:'train',ids:[altar.id],kind:'hero',heroClass:1}),null);step(s,551);assert.deepEqual(S.heroRoster(s,0).find(u=>u.heroClass===1).inventory,[]);
+ setTechnology(S,s,0,2);s.teams[0].gold=2000;s.teams[0].wood=1000;S.spawn(s,'farm',0,-24,10);assert.equal(S.command(s,0,{type:'train',ids:[altar.id],kind:'hero',heroClass:1}),null);step(s,551);assert.deepEqual(S.heroRoster(s,0).find(u=>u.heroClass===1).inventory,[]);
  const old=S.clone(s);delete old.teams[0].portalGranted;delete old.teams[1].portalGranted;assert.equal(S.restore(old).teams[0].portalGranted,true);first.inventory=[];first.hp=0;first.order=null;assert.equal(S.command(s,0,{type:'revive',ids:[altar.id],target:first.id}),null);step(s,360);assert.deepEqual(first.inventory,[],'revival never replaces a spent scroll');
  first.x=-20;first.z=23;S.spawn(s,'shop',0,-13,23);const gold=s.teams[0].gold;assert.equal(S.command(s,0,{type:'buy',ids:[first.id],item:8}),null);assert.equal(s.teams[0].gold,gold-350);assert.deepEqual(first.inventory,[8]);
 }

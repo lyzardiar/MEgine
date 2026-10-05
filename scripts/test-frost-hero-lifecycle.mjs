@@ -1,5 +1,6 @@
 // Author: MiYu. Altar recruitment, retained hero identity, revival, supply and save validation.
 import assert from 'node:assert/strict';
+import {setTechnology} from './frost-battle-fixture.mjs';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
@@ -11,10 +12,10 @@ function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0
  assert.match(train(2,other),/one hero/);assert.match(train(1,other),/tier 2/);
  assert.equal(S.command(s,0,{type:'cancelTrain',ids:[altar.id],index:0}),null);assert.equal(S.population(s,0).used,0);assert.equal(s.teams[0].gold,gold);
  assert.equal(train(2),null);const saved=S.restore(s);step(s,551);step(saved,551);const h=S.heroRoster(s,0)[0];assert.equal(h.heroClass,2);assert.equal(h.skillPoints,1);assert.equal(h.id,S.heroRoster(saved,0)[0].id);assert.equal(S.population(s,0).used,5);
- assert.match(train(2),/one hero/);assert.match(train(0),/tier 2/);s.teams[0].tier=2;s.teams[0].gold=2000;s.teams[0].wood=1000;
+ assert.match(train(2),/one hero/);assert.match(train(0),/tier 2/);setTechnology(S,s,0,2);s.teams[0].gold=2000;s.teams[0].wood=1000;
  assert.equal(train(0),null);assert.equal(s.teams[0].gold,1575);assert.equal(s.teams[0].wood,900);assert.equal(S.population(s,0).used,10);assert.match(train(3,other),/tier 3/);
  assert.equal(S.command(s,0,{type:'cancelTrain',ids:[altar.id],index:0}),null);assert.equal(s.teams[0].gold,2000);assert.equal(s.teams[0].wood,1000);
- assert.equal(train(0),null);s.teams[0].tier=3;assert.equal(train(3,other),null);assert.match(train(1),/Maximum three/);step(s,551);assert.deepEqual(S.heroRoster(s,0).map(h=>h.heroClass).sort(),[0,2,3]);
+ assert.equal(train(0),null);setTechnology(S,s,0,3);assert.equal(train(3,other),null);assert.match(train(1),/Maximum three/);step(s,551);assert.deepEqual(S.heroRoster(s,0).map(h=>h.heroClass).sort(),[0,2,3]);
  assert.equal(S.population(s,0).used,15);assert.equal(S.heroRoster(S.restore(s),0).length,3);
 }
 {

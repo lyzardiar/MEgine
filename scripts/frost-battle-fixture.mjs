@@ -1,4 +1,5 @@
 // Author: MiYu. Explicit authored actors for battle tests; default melee opening is tested separately.
+export function setTechnology(S,s,team,tier){const bases=s.units.filter(u=>u.team===team&&u.kind==='hall'&&u.built===1&&u.hp>0);if(!bases.length)throw Error('Technology fixture requires a completed main base');for(const u of bases)u.upgradeTier=tier;S.updateTechnology(s);}
 export function battleFixture(S,mode='skirmish',options={},actors=[]){
  const map=S.clone(options.map||S.defaultMap(mode));if(map.mode!=='skirmish')return S.create(mode,options);
  const placed=[];for(let team=0;team<2;team++){

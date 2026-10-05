@@ -1,6 +1,6 @@
 // Author: MiYu. Construction lifecycle, economy, saved occupants and expansion regression checks.
 import assert from 'node:assert/strict';
-import {battleFixture} from './frost-battle-fixture.mjs';
+import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
@@ -32,7 +32,7 @@ for(const f of [1,2]){
   const {s,w}=setup(2);build(s,w);step(s,25);s.units=s.units.filter(u=>u.id!==w.id);assert.throws(()=>S.restore(s),'living building must retain its consumed worker until completed');
 }
 for(let f=0;f<4;f++){
-  const {s}=setup(f);s.teams[0].tier=3;s.teams[0].ai=true;const firstId=s.serial;step(s,800);assert.ok(s.units.some(u=>u.id>firstId&&u.kind==='workshop'&&u.built===1),'AI finishes workshop for faction '+f);assert.ok(s.units.some(u=>u.team===0&&u.kind==='worker'&&!u.inside&&u.order?.type==='gather'),'AI retains economy for faction '+f);
+  const {s}=setup(f);setTechnology(S,s,0,3);s.teams[0].ai=true;const firstId=s.serial;step(s,800);assert.ok(s.units.some(u=>u.id>firstId&&u.kind==='workshop'&&u.built===1),'AI finishes workshop for faction '+f);assert.ok(s.units.some(u=>u.team===0&&u.kind==='worker'&&!u.inside&&u.order?.type==='gather'),'AI retains economy for faction '+f);
 }
 {
   const {s,w}=setup();const b=build(s,w,'hall');for(const u of s.units)if(u.team===0&&u.kind==='hall'&&u.id!==b.id)u.hp=0;assert.equal(S.command(s,0,{type:'cancelBuild',ids:[b.id]}),null);assert.equal(s.winner,1,'cancelling last surviving hall also ends skirmish');

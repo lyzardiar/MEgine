@@ -142,3 +142,13 @@ Author: MiYu。Ponytail 保持禁用。近战使用四族各自的经典商品�
 Player 778 文件、4837 实体（场景未变化）、10 材质变体，内容 7c90fc941ba53b4354ee10126b07b7037f4aaabc6e2b32200463d2466b435506；逐文件大小/hash 和 Release runtime 校验通过，30 秒存活/响应、日志错误 0。本阶段无新增美术下载和 Rust/C# 修改。证据 racial-items.md、racial-items-provenance.json、racial-items-native-qa.json、racial-items-validation.json、racial-items-player-smoke.json。
 
 主城科技仍按队伍共享；专属商店/逐物品图标、AI 购物、完整原作单位/英雄/战役/经典地图及编辑器仍需完善。原生 Agent 输入不证明物理键鼠、试听、跨机器 LAN 或稳定 Player 帧性能。完整目标保持 active。原有两个原生 QA JSON 改动和无关截图/tmp 保留。
+
+## 2026-10-05：独立主城升级与科技可用性
+
+Author: MiYu。Ponytail 保持禁用。协议 37、主城科技存档版本 1。四族每座主城保存各自的等级和升级计时，采用经典指南的升级费用、140 秒耗时和生命值；扩张保持一级，双基地可并行升级，训练与新升级互斥，取消返回 75% 费用并保留基地。科技门槛由存活且完工基地的最高等级派生，高级基地被毁后新生产/招募/研究/购物重新受门槛约束，已有单位、已得研究与已付费队列保留。旧存档保留原生命值、原升级剩余秒数与原支付基准；传送杖选择实际最高等级基地，敌方快照保密升级进度与全局科技。主城名称来自同一经典数据表。
+
+最终共享规则与真实 TCP 回归 70 条 PASS、退出 0；名称修正后模型/资产/构建入口再次通过。原生 Release QuickJS 四族 HUD 升级、并行进度、取消按钮及退款、实际游戏菜单存读档、二级/三级独立模型与名称通过，材质拒绝 0。原生验证检查 140 秒启动计时和存档剩余时间，再使用合法的剩余 1 秒存档验证完成和三维模型变化；完整 140 秒推进由共享规则测试验证。已查看四族最终三级截图。
+
+Player 778 文件、4837 实体、10 着色器变体，内容 SHA-256 52b38b643ac04466ed19fc289bb1a44f2fe394a8f938983d7aa462a403c67f00；包中各文件大小/hash、产品脚本、场景、原生资产/许可和 Release runtime 校验通过，30 秒存活且响应、错误 0。原生仅增加 qaMap/qaUnits 观察字段，去除后与产品脚本一致。证据 main-base-technology.md、main-base-provenance.json、main-base-native-qa.json、main-base-validation.json、main-base-player-smoke.json。
+
+主城基础建造成本/工期、种族攻击及能力、完整科技建筑前置关系、专属原作品质美术、完整战役/兵种/英雄/经典地图和编辑器仍需完善。原生 Agent 输入不证明物理键鼠、试听、跨机器 LAN 或稳定 Player 帧性能。完整目标保持 active，原有两个原生 QA JSON 和无关截图/tmp 保留。本阶段无新增资产下载、Rust/C# 修改或子代理委派。

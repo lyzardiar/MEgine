@@ -1,17 +1,18 @@
 // Author: MiYu. Classic racial inventory, consumable effects and deterministic saved combat.
 import assert from 'node:assert/strict';
+import {setTechnology} from './frost-battle-fixture.mjs';
 import {createRequire} from 'node:module';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const steps=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},close=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
-function arena(faction=0){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.units=[];map.triggers=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map,factions:[faction,2],ai:[false,false]});s.units=[];s.teams[0].gold=10000;s.teams[0].wood=10000;s.teams[0].tier=3;const base=S.spawn(s,'hall',0,-22,20,{damage:0}),foe=S.spawn(s,'hall',1,24,-20,{damage:0}),h=S.spawn(s,'hero',0,0,0,{heroClass:2,damage:0,order:{type:'hold'}}),shop=S.spawn(s,'shop',0,7,0);S.visibility(s);return {s,h,shop,base,foe};}
+function arena(faction=0){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.units=[];map.triggers=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map,factions:[faction,2],ai:[false,false]});s.units=[];s.teams[0].gold=10000;s.teams[0].wood=10000;const base=S.spawn(s,'hall',0,-22,20,{damage:0}),foe=S.spawn(s,'hall',1,24,-20,{damage:0}),h=S.spawn(s,'hero',0,0,0,{heroClass:2,damage:0,order:{type:'hold'}}),shop=S.spawn(s,'shop',0,7,0);setTechnology(S,s,0,3);S.visibility(s);return {s,h,shop,base,foe};}
 const buy=(s,h,i,shop)=>S.command(s,h.team,{type:'buy',ids:[h.id],item:i,...(shop?{shop:shop.id}:{})}),use=(s,h,i,patch={})=>S.command(s,h.team,{type:'useItem',ids:[h.id],slot:h.inventory.indexOf(i),item:i,...patch});
 function reject(s,fn,match){const before=S.clone(s);assert.match(fn(),match);assert.deepEqual(s,before,'rejected transaction is atomic');}
 for(let faction=0;faction<4;faction++){
  const {s,h,shop}=arena(faction),offers=S.shopOffers(s,shop);assert.deepEqual(offers.map(o=>o.item),[[9,10,11,12,13,8,14,15,16],[17,18,11,12,13,8,19,20],[21,11,22,12,13,8,23,24,25],[26,27,22,12,13,8,28,29]][faction]);
  assert.equal(shop.stock.length,30);for(let i=0;i<30;i++)assert.equal(shop.stock[i].count,offers.find(o=>o.item===i)?.capacity||0);
- reject(s,()=>buy(s,h,0,shop),/does not sell/);for(const o of offers){s.teams[0].tier=o.tier-1;if(o.tier>1)reject(s,()=>buy(s,h,o.item,shop),/tier/);s.teams[0].tier=3;const gold=s.teams[0].gold,wood=s.teams[0].wood;assert.equal(buy(s,h,o.item,shop),null);assert.equal(s.teams[0].gold,gold-S.items[o.item].gold);assert.equal(s.teams[0].wood,wood-(S.items[o.item].wood||0));assert.equal(shop.stock[o.item].count,o.capacity-1);assert.equal(S.command(s,0,{type:'sellItem',ids:[h.id],slot:0,item:o.item}),null);}
+ reject(s,()=>buy(s,h,0,shop),/does not sell/);for(const o of offers){setTechnology(S,s,0,Math.max(1,o.tier-1));if(o.tier>1)reject(s,()=>buy(s,h,o.item,shop),/tier/);setTechnology(S,s,0,3);const gold=s.teams[0].gold,wood=s.teams[0].wood;assert.equal(buy(s,h,o.item,shop),null);assert.equal(s.teams[0].gold,gold-S.items[o.item].gold);assert.equal(s.teams[0].wood,wood-(S.items[o.item].wood||0));assert.equal(shop.stock[o.item].count,o.capacity-1);assert.equal(S.command(s,0,{type:'sellItem',ids:[h.id],slot:0,item:o.item}),null);}
  assert.deepEqual(S.restore(s).units.find(u=>u.id===shop.id).stock,shop.stock);
 }
 {

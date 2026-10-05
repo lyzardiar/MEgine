@@ -1,6 +1,6 @@
 // Author: MiYu. Faction model selection, tier changes and derived asset/source integrity.
 import assert from 'node:assert/strict';
-import {battleFixture} from './frost-battle-fixture.mjs';
+import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import {createRequire} from 'node:module';
@@ -12,7 +12,7 @@ for(let f=0;f<4;f++){
   for(const kind of Object.keys(S.types)){const visual=V.model(s,{kind,team:0});assert.ok(visual.asset,kind);assert.ok(Number.isFinite(visual.scale)&&visual.scale>0,kind);assert.ok(V.name(s,{kind,team:0}));}
   const original=V.model(s,hall);halls.add(original.key);assert.equal(original.key,S.factions[f]+'Hall');
   s.teams[0].gold=2000;s.teams[0].wood=2000;
-  for(const tier of [2,3]){assert.equal(S.command(s,0,{type:'tech',ids:[hall.id]}),null);for(let i=0;i<(tier-1)*200+2;i++)S.tick(s);assert.equal(s.teams[0].tier,tier);assert.equal(V.model(s,hall).key,S.factions[f]+'Hall'+tier);}
+  for(const tier of [2,3]){assert.equal(S.command(s,0,{type:'tech',ids:[hall.id]}),null);for(let i=0;i<S.mainBase(s,hall,tier).time/S.DT+2;i++)S.tick(s);assert.equal(s.teams[0].tier,tier);assert.equal(V.model(s,hall).key,S.factions[f]+'Hall'+tier);assert.equal(V.name(s,hall),S.mainBase(s,hall).name);}
   assert.equal(V.model(S.restore(s),hall).key,S.factions[f]+'Hall3');s.visible[1].fill(1);const view=S.publicState(s,1),seen=view.units.find(u=>u.id===hall.id);assert.equal(V.model(view,seen).key,S.factions[f]+'Hall3');assert.equal(V.name(view,seen),V.name(s,hall));assert.equal(view.teams[0].tier,undefined,'global enemy tech stays private');s.visible[1].fill(0);assert.ok(!S.publicState(s,1).units.some(u=>u.id===hall.id));
   for(const kind of ['hall','barracks','farm','tower','altar','workshop','temple']){const {asset,scale}=V.model(s,{kind,team:0});assert.ok(Math.max(asset.size[0],asset.size[2])*scale<=S.types[kind].radius*2,'art stays inside gameplay footprint');}
 }
@@ -84,7 +84,7 @@ const treant=JSON.parse(fs.readFileSync(new URL('treant-sources.json',root)));as
 {
  const map=S.defaultMap();map.players[0].faction=2;map.players.forEach(p=>p.ai=false);map.units=[{kind:'treant',team:0,x:-12,z:12}];const s=battleFixture(S,'skirmish',{map},['hero','barracks','farm','guard','harvest']),u=s.units.find(u=>u.kind==='treant'),v=V.model(s,u);assert.equal(v.key,'RealTreant');assert.ok(portraitKeys.has(v.key));assert.deepEqual(v.asset.animations.map(a=>a.name),['Idle','Walk','Attack','Death']);assert.ok(v.height>4);assert.match(V.pose(u,v.asset,false,.5),/#pose=0:6$/);assert.match(V.pose(u,v.asset,true,.5),/#pose=1:6$/);u.cd=S.unitType(u).cooldown;assert.match(V.pose(u,v.asset,false,0),/#pose=2:6$/);assert.equal(V.pose(S.restore(s).units.find(t=>t.id===u.id),v.asset,false,90),V.pose(u,v.asset,false,0));assert.equal(V.model(S.publicState(s,0),u).key,'RealTreant');
  const c={id:u.id,kind:'treant',team:0,x:u.x,y:0,z:u.z,yaw:.8,age:0},early=V.corpse(s,c),settled=V.corpse(s,{...c,age:4});assert.match(early.mesh,/RealTreant.glb#pose=3:0$/);assert.match(settled.mesh,/#pose=3:19$/);assert.equal(V.corpse(s,{...c,age:10}).mesh,settled.mesh);
- s.teams[0].tier=2;s.teams[0].gold=2000;s.teams[0].wood=1000;const barracks=s.units.find(v=>v.team===0&&v.kind==='barracks');assert.ok(S.trainable(s,barracks).includes('treant'));assert.equal(S.command(s,0,{type:'train',ids:[barracks.id],kind:'treant'}),null);for(let i=0;i<110;i++)S.tick(s);const trained=s.units.find(v=>v.kind==='treant'&&v.id!==u.id);assert.ok(trained);assert.equal(V.model(s,trained).key,'RealTreant');
+ setTechnology(S,s,0,2);s.teams[0].gold=2000;s.teams[0].wood=1000;const barracks=s.units.find(v=>v.team===0&&v.kind==='barracks');assert.ok(S.trainable(s,barracks).includes('treant'));assert.equal(S.command(s,0,{type:'train',ids:[barracks.id],kind:'treant'}),null);for(let i=0;i<110;i++)S.tick(s);const trained=s.units.find(v=>v.kind==='treant'&&v.id!==u.id);assert.ok(trained);assert.equal(V.model(s,trained).key,'RealTreant');
 }
 const wildlife=JSON.parse(fs.readFileSync(new URL('wildlife-sources.json',root)));assert.equal(wildlife.license,'CC-BY-SA-3.0');wildlife.sources.forEach(verify);wildlife.generated.forEach(verify);
 for(const [tag,key] of [[undefined,'RealWolf'],['boss','RealBear']]){

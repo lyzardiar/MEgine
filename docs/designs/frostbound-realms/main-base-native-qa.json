@@ -1,0 +1,71 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 37,
+  "tag": "1791153832540",
+  "scope": "Release QuickJS with Agent HUD input and true menu save reload; observation-only qaUnits/qaMap",
+  "physicalInput": false,
+  "audioListening": false,
+  "completionFixtures": "Real HUD schedules 140s; true save/reload retains that timer. Authored 1s-remaining saves exercise native completion. Full 140s elapse is verified in shared-rule tests.",
+  "factions": [
+    {
+      "faction": 0,
+      "upgradeGold": 320,
+      "upgradeWood": 210,
+      "time": 140,
+      "parallel": true,
+      "refund": true,
+      "trueMenuSave": true,
+      "grade2": true,
+      "grade3": true,
+      "expansionGrade": 1,
+      "initialMesh": "Assets/Models/RealKingdomHall.glb",
+      "upgradedMesh": "Assets/Models/RealKingdomHall3.glb"
+    },
+    {
+      "faction": 1,
+      "upgradeGold": 315,
+      "upgradeWood": 190,
+      "time": 140,
+      "parallel": true,
+      "refund": true,
+      "trueMenuSave": true,
+      "grade2": true,
+      "grade3": true,
+      "expansionGrade": 1,
+      "initialMesh": "Assets/Models/RealWarclansHall.glb",
+      "upgradedMesh": "Assets/Models/RealWarclansHall3.glb"
+    },
+    {
+      "faction": 2,
+      "upgradeGold": 320,
+      "upgradeWood": 180,
+      "time": 140,
+      "parallel": true,
+      "refund": true,
+      "trueMenuSave": true,
+      "grade2": true,
+      "grade3": true,
+      "expansionGrade": 1,
+      "initialMesh": "Assets/Models/RealWildwoodHall.glb",
+      "upgradedMesh": "Assets/Models/RealWildwoodHall3.glb"
+    },
+    {
+      "faction": 3,
+      "upgradeGold": 320,
+      "upgradeWood": 210,
+      "time": 140,
+      "parallel": true,
+      "refund": true,
+      "trueMenuSave": true,
+      "grade2": true,
+      "grade3": true,
+      "expansionGrade": 1,
+      "initialMesh": "Assets/Models/RealRevenantHall.glb",
+      "upgradedMesh": "Assets/Models/RealRevenantHall3.glb"
+    }
+  ],
+  "lastCommand": "playback.step",
+  "stage": "faction-3",
+  "shaderRejections": 0
+}
