@@ -19,6 +19,7 @@ parser.add_argument('--out',type=Path,default=ROOT/'tmp/classic-actors-export')
 parser.add_argument('--all',action='store_true',help='Extract every indexed MDX, including scenery, portraits and effects')
 parser.add_argument('--exclude-converted',type=Path,help='Skip model source paths already present in an engine-ready catalog')
 parser.add_argument('--skip-terrain',action='store_true',help='Keep existing terrain library instead of duplicating its atlases')
+parser.add_argument('--only-texture',action='append',default=[],help='Extract only these archive texture paths, preserving source bytes and archive precedence')
 args=parser.parse_args();out=args.out.resolve();out.mkdir(parents=True,exist_ok=True)
 archives=[];effective={};summaries=[]
 for name in ['war3.mpq','War3x.mpq','War3xLocal.mpq','War3Patch.mpq']:
@@ -64,7 +65,7 @@ neutral={x.replace(' ','') for x in neutral}
 inventory=[{'path':v[0],'archive':v[1]} for k,v in sorted(effective.items()) if k.endswith('.mdx')]
 selected=[];seen=set()
 excluded={m['source'].lower() for m in json.loads(args.exclude_converted.read_text(encoding='utf-8'))['models']} if args.exclude_converted else set()
-for entry in inventory:
+for entry in ([] if args.only_texture else inventory):
     p=entry['path'].lower();parts=PureWindowsPath(p).parts;stem=PureWindowsPath(p).stem
     racial=len(parts)>2 and parts[0] in ('units','buildings') and parts[1] in ('human','orc','nightelf','undead')
     regular=not any(word in stem for word in ['portrait','_v1','explos','ball','sphere','missile','cloud','cin','ship','boat','ghost','ward','totem','phoenixegg']) and stem not in {'ubirth','locust','scarab','knightnorider','kotobeastnorider','riderlesswyvern','owl','owlscout','runner','ancestralguardian','stasis','wispexplode'}
@@ -77,6 +78,7 @@ models=[];failures=[]
 replacements={1:r'ReplaceableTextures\TeamColor\TeamColor00.blp',2:r'ReplaceableTextures\TeamGlow\TeamGlow00.blp',31:r'ReplaceableTextures\LordaeronTree\LordaeronSummerTree.blp'}
 replacements.update({11:r'ReplaceableTextures\Cliff\Cliff1.blp',32:r'ReplaceableTextures\AshenvaleTree\AshenTree.blp',33:r'ReplaceableTextures\BarrensTree\BarrensTree.blp',34:r'ReplaceableTextures\NorthrendTree\NorthTree.blp',35:r'ReplaceableTextures\Mushroom\MushroomTree.blp',36:r'ReplaceableTextures\RuinsTree\RuinsTree.blp',37:r'ReplaceableTextures\OutlandMushroomTree\MushroomTree.blp'})
 try:
+    for texture in args.only_texture:extract(texture)
     for entry in selected:
         try:
             data=extract(entry['path']);assert data[:4]==b'MDLX';offset=4;chunks=[];textures=[];aliases={}
@@ -104,11 +106,11 @@ try:
             models.append({'path':entry['path'],'chunks':chunks,'textures':textures,'textureSources':aliases})
         except Exception as e:failures.append({'path':entry['path'],'error':str(e)})
     for path in sorted(effective):
-        if not args.skip_terrain and path.startswith('terrainart\\') and path.endswith('.blp') and path not in records:extract(path)
+        if not args.only_texture and not args.skip_terrain and path.startswith('terrainart\\') and path.endswith('.blp') and path not in records:extract(path)
     (out/'model-inventory.json').write_text(json.dumps(inventory,indent=2),encoding='utf-8')
     # The converter retains this contact sheet for provenance, rather than fabricating a new preview.
     preview=args.library/'Validation/terrain-preview.jpg'
-    (out/'terrain-preview.jpg').write_bytes(preview.read_bytes())
+    if not args.only_texture:(out/'terrain-preview.jpg').write_bytes(preview.read_bytes())
     manifest={'source':str(args.game),'archives':summaries,'precedence':[x['archive'] for x in summaries],'modelSamples':models,'files':list(records.values()),'failures':failures,'selectedModels':len(selected),'previouslyConvertedModels':len(excluded),'remainingInventory':len(inventory)-len(models)-len(excluded)}
     (out/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps({k:v for k,v in manifest.items() if k not in ('files','modelSamples')},ensure_ascii=False))

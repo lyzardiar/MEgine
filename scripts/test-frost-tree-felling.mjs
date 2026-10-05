@@ -17,7 +17,7 @@ for(const tileset of [0,1,2])for(const faction of [0,1,2,3]){
   assert.equal(r.amount,0);assert.deepEqual(r.felled,{frame:s.frame,yaw:Math.PI/2,age:0});assert.equal(w.cargo,5);
   const ended=S.restore(s);ended.winner=0;const endedFrame=ended.frame;for(let i=0;i<60;i++)S.tick(ended);assert.equal(ended.frame,endedFrame);assert.equal(ended.resources[0].felled.age,6);assert.equal(V.resource(ended.resources[0],12,tileset),null,'post-victory fall finishes without advancing battle time');
   const f=structuredClone(r.felled),begin=V.resource(r,12,tileset),middle=V.resource(r,12,tileset,.75),flat=V.resource(r,12,tileset,1.5),far=V.resource(r,27,tileset,1.5);
-  assert.ok(begin);assert.equal(begin.parts.length,FrostArt[['ClassicOak','ClassicBarrensTree','ClassicWinterTree'][tileset]].parts.length);assert.equal(flat.scale,far.scale);assert.deepEqual(flat.rotation,far.rotation);
+  assert.ok(begin);assert.equal(begin.parts.length,begin.asset.parts.length);assert.equal(flat.scale,far.scale);assert.deepEqual(flat.rotation,far.rotation);
   assert.ok(Math.abs(Math.hypot(...middle.rotation)-1)<1e-12);assert.ok(Math.abs(rotate(begin.rotation,[0,1,0])[1]-1)<1e-12);
   const tip=rotate(flat.rotation,[0,1,0]);assert.ok(Math.abs(tip[0]-1)<1e-12&&Math.abs(tip[1])<1e-12&&Math.abs(tip[2])<1e-12,'tree tips away from worker');
   assert.deepEqual(rotate(flat.rotation,[0,0,0]),[0,0,0]);assert.equal(flat.sink,0);assert.ok(V.resource(r,12,tileset,5).sink>0);assert.equal(V.resource(r,12,tileset,6),null);

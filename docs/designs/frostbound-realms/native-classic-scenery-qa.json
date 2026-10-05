@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "classicScenery": {
+    "palettes": [
+      {
+        "name": "winter",
+        "treeResources": 6,
+        "rockVariants": 6,
+        "mineAllocatedLayers": 5
+      },
+      {
+        "name": "forest",
+        "treeResources": 6,
+        "rockVariants": 6,
+        "mineAllocatedLayers": 5
+      },
+      {
+        "name": "barrens",
+        "treeResources": 6,
+        "rockVariants": 6,
+        "mineAllocatedLayers": 5
+      }
+    ],
+    "editorPaletteSave": true,
+    "placementPalette": true,
+    "editorPlaytest": true,
+    "workAtCargo": [
+      10,
+      15
+    ],
+    "deliveredGold": true,
+    "saveRestored": true,
+    "nativePipelinesRejected": 0
+  }
+}

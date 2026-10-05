@@ -55,7 +55,13 @@ for(const key of ['RealFootman','RealArcher','RealGhoul','RealAbomination']){
  const end=V.classicSample(u,asset,false,duration,'Death'),late=V.classicSample(u,asset,false,duration+10,'Death');assert.deepEqual(end,late);assert.equal(end.frame,Math.ceil(duration*12));
 }
 for(const [x,z] of [[0,8],[8,0],[0,-8],[-8,0]]){const m=V.muzzle({x,z,fromX:0,fromZ:0,fromY:1.6,team:0});assert.ok([m.x,m.y,m.z].every(Number.isFinite));assert.ok(m.x*x+m.z*z>0);}
-for(let tileset=0;tileset<3;tileset++){const v=V.resource({kind:'tree',x:2,z:3,amount:3000},12,tileset);assert.equal(v.key,['ClassicOak','ClassicBarrensTree','ClassicWinterTree'][tileset]);assert.ok(v.parts.length>=1);}
+for(let tileset=0;tileset<3;tileset++){
+ const prefix=['ClassicWinterTree','ClassicOak','ClassicBarrensTree'][tileset],variants=new Set();for(let i=0;i<24;i++){const v=V.resource({kind:'tree',x:i+.21,z:i*1.17,amount:3000},12,tileset);assert.ok(v.key.startsWith(prefix));assert.ok(v.asset.classic&&v.parts.length>=1);variants.add(v.key);}assert.ok(variants.size>3,'climate trees vary by resource position');
+ for(let variant=0;variant<6;variant++){const d={kind:'rock',variant,scale:1,yaw:.3},near=V.doodad(d,12,tileset),far=V.doodad(d,27,tileset);assert.equal(near.key,['ClassicWinterRock','ClassicForestRock','ClassicBarrensRock'][tileset]+variant);assert.equal(far.key,near.key);assert.ok(near.asset.classic);assert.deepEqual(near.parts,far.parts);assert.ok(Math.max(...near.asset.size.filter((_,i)=>i!==1))*near.scale<=S.doodads.rock.width+1e-6);}
+}
+const mine={kind:'mine',x:0,z:0,amount:3000},idle=V.resource(mine),working=V.resource(mine,27,0,0,.2,true),later=V.resource(mine,27,0,0,.4,true);
+assert.equal(idle.key,'ClassicGoldMine');assert.equal(idle.parts.length,5);assert.notEqual(working.mesh,idle.mesh);assert.notEqual(working.mesh,later.mesh);assert.match(working.mesh,/#pose=1:\d+@30$/);assert.equal(V.resource({...mine,amount:0}),null);
+for(const p of FrostArt.ClassicWinterTree.parts){const m=JSON.parse(fs.readFileSync(new URL(p.material,root)));assert.match(m.base_color_texture,/LordaeronSnowTree\.png$/);}
 const scene=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world.entities,portraitRoot=scene.find(e=>e.name==='Portrait model');
 assert.equal(scene.filter(e=>e.parent===portraitRoot.entity).length,V.actorPartCount());
 for(const prefix of ['Unit 0','Corpse 0','Placement preview'])assert.equal(scene.filter(e=>e.name===prefix||e.name.startsWith(prefix+' part ')).length,V.actorPartCount());

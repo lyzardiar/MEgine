@@ -1,0 +1,122 @@
+{
+  "convertedOn": "2026-10-05",
+  "source": "E:\\Program Files (x86)\\dzclient\\Game\\Warcraft III Frozen Throne",
+  "archives": [
+    {
+      "archive": "war3.mpq",
+      "files": 10682
+    },
+    {
+      "archive": "War3x.mpq",
+      "files": 5841
+    },
+    {
+      "archive": "War3xLocal.mpq",
+      "files": 1133
+    },
+    {
+      "archive": "War3Patch.mpq",
+      "files": 768
+    }
+  ],
+  "archivePrecedence": [
+    "war3.mpq",
+    "War3x.mpq",
+    "War3xLocal.mpq",
+    "War3Patch.mpq"
+  ],
+  "modelSamples": [],
+  "extractionFailures": [],
+  "sourceFiles": [
+    {
+      "path": "ReplaceableTextures\\LordaeronTree\\LordaeronSnowTree.blp",
+      "archive": "war3.mpq",
+      "bytes": 92369,
+      "sha256": "e9003ef6e1df3d06c63403bbc0780d37580f1e9aa004d492be890a60b349bf31"
+    },
+    {
+      "path": "ReplaceableTextures\\LordaeronTree\\LordaeronWinterTree.blp",
+      "archive": "war3.mpq",
+      "bytes": 85120,
+      "sha256": "061d9794255a05a91eb3d27ca7c9a437646797b8bef03577af201d25a58411fa"
+    }
+  ],
+  "generatedFiles": [
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/lordaerontree/lordaeronsnowtree.mmat",
+      "bytes": 531,
+      "sha256": "ad5e41d7852b524eccace5329dca3763433316c3dab07d8aa2b1808beb07495d"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/lordaerontree/lordaeronsnowtree.mmat.meta",
+      "bytes": 106,
+      "sha256": "39e7e26ccad80fdca08acc31a6c7ef2a5e1ba9b3cf9b123a9befb58f75a8c271"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/lordaerontree/lordaeronwintertree.mmat",
+      "bytes": 535,
+      "sha256": "09a684a5051bf3c490e0ffea128e3912d60f20c8f3137292e8f7e9078259d7ab"
+    },
+    {
+      "path": "Assets/WarcraftIII/Materials/Atlases/replaceabletextures/lordaerontree/lordaeronwintertree.mmat.meta",
+      "bytes": 106,
+      "sha256": "94ed750688ff7fdd90abe83c5c9b85911c7b5f071d6f8b5885aed3e63404438c"
+    },
+    {
+      "path": "Assets/WarcraftIII/model-catalog.json",
+      "bytes": 127,
+      "sha256": "a349d73c8468f894c00d227b952c09a7f0a027554891c12d11786fb33662868c"
+    },
+    {
+      "path": "Assets/WarcraftIII/Models/TerrainTile.glb",
+      "bytes": 956,
+      "sha256": "0e2b10ffd2e0c2829f0db1aec212beca17cb60c0c0ca1020327b50cf9719b356"
+    },
+    {
+      "path": "Assets/WarcraftIII/Models/TerrainTile.glb.meta",
+      "bytes": 103,
+      "sha256": "69a369c33a3ddfbe60a9cbd93f4407fb782380d68c89c017e6ca421ed5e29d55"
+    },
+    {
+      "path": "Assets/WarcraftIII/Scenes/Preview.mscene",
+      "bytes": 690,
+      "sha256": "2ae5e7dd3659c91de722d8ab2cb9c8b50996947d3856f195ba1c691f53e6653e"
+    },
+    {
+      "path": "Assets/WarcraftIII/Scenes/Preview.mscene.meta",
+      "bytes": 103,
+      "sha256": "a7916082d8e052dff9ebb991a1a1169fe8f357e2c64d11b9492a23b409f64d76"
+    },
+    {
+      "path": "Assets/WarcraftIII/terrain-catalog.json",
+      "bytes": 116,
+      "sha256": "6962355d5ca71225fe8f2a0c7e508ccc2a488ef840eb1ecfb2e8a7d6f69fe819"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/LordaeronTree/LordaeronSnowTree.png",
+      "bytes": 197163,
+      "sha256": "2498359af9e0eff241073cc4186ce332a408f58be9991f54d18856d4bed7fcda"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/LordaeronTree/LordaeronSnowTree.png.meta",
+      "bytes": 105,
+      "sha256": "48ffc25abe9be94eea277cac4d9e138f9c6ba7a7db0cefea87e978fecd6016bd"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/LordaeronTree/LordaeronWinterTree.png",
+      "bytes": 186193,
+      "sha256": "a5e294e2c2bade9adcbfd41a2db1a78335958cf4d4320b31bda0250d134f751a"
+    },
+    {
+      "path": "Assets/WarcraftIII/Textures/ReplaceableTextures/LordaeronTree/LordaeronWinterTree.png.meta",
+      "bytes": 105,
+      "sha256": "3b5e0c539e88cb3d6f19baa5ae4c244c240d51241292f9b5d9d0d02b7c3a3061"
+    }
+  ],
+  "converter": {
+    "script": "scripts/convert-warcraft-assets.py",
+    "upstream": "https://github.com/Darithos/W3ModelViewer",
+    "commit": "4fe46a0772520fc7b55078bf32cda1237d1b5f2e"
+  },
+  "scope": "0 terrain atlases; 0 converted models of 0 extracted sources; inventory does not imply conversion."
+}

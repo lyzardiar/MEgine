@@ -53,7 +53,7 @@ def main():
     previous = SAMPLE / 'classic-sources.json'
     old = {x['path'].lower(): x['sha256'] for x in load(previous).get('files', [])} if previous.exists() else {}
     files, sources = {}, []
-    libraries = {key: LIBRARY / key for key in ['game-ready', 'community-ready', 'remaining-ready']}
+    libraries = {key: LIBRARY / key for key in ['game-ready', 'community-ready', 'remaining-ready', 'tree-skins-ready']}
     models = {key: {m['id'].lower(): m for m in load(root / 'Assets/WarcraftIII/model-catalog.json')['models']} for key, root in libraries.items()}
 
     def copy(pack, relative):
@@ -77,7 +77,17 @@ def main():
                 shutil.copyfile(sidecar, destination)
             files[meta] = dict(path=meta, sha256=digest(data), bytes=len(data))
 
-    def bind(key, identifier, pack='game-ready', tier=1, building=False, environment=False):
+    def generated(relative, value):
+        raw = (json.dumps(value, ensure_ascii=False, separators=(',', ':')) + '\n').encode('utf-8')
+        target = SAMPLE / relative
+        if target.exists() and target.read_bytes() != raw:
+            assert old.get(relative.lower()) == digest(target.read_bytes()), f'Preserve modified generated asset: {target}'
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if not target.exists() or target.read_bytes() != raw:
+            target.write_bytes(raw)
+        files[relative] = dict(path=relative, sha256=digest(raw), bytes=len(raw))
+
+    def bind(key, identifier, pack='game-ready', tier=1, building=False, environment=False, skin=None):
         root = libraries[pack]
         model = models[pack][identifier.lower()]
         tracks = load(root / model['stateTracks'])
@@ -105,12 +115,24 @@ def main():
                         runs.append([frame, *value])
                         last = value
                 p['states'].append(runs)
+            if skin and part['replaceableId'] == 31:
+                copy(skin[0], skin[1])
+                replacements = {}
+                for reference in {p['material'], *p['teamMaterials'].values(), *p['textureMaterials'].values()}:
+                    seasonal = load(root / reference)
+                    seasonal['base_color_texture'] = skin[1]
+                    seasonal_path = 'Assets/WarcraftIII/Materials/Seasonal/' + key + '/' + pathlib.PurePosixPath(reference).name
+                    generated(seasonal_path, seasonal)
+                    replacements[reference] = seasonal_path
+                p['material'] = replacements[p['material']]
+                p['teamMaterials'] = {k: replacements[v] for k, v in p['teamMaterials'].items()}
+                p['textureMaterials'] = {k: replacements[v] for k, v in p['textureMaterials'].items()}
             # Placement keeps each layer's texture, lighting and culling state.
-            placement = load(root / part['material'])
+            placement = load(SAMPLE / p['material'])
             placement.update(surface='transparent', transparent_depth_write=False, render_queue=4000 + part['layer'])
             if placement['blend_mode'] not in ('additive', 'multiply'):
                 placement['blend_mode'] = 'alpha'
-            placement_path = 'Assets/WarcraftIII/Materials/Placement/' + digest(part['material'].encode())[:20] + '.mmat'
+            placement_path = 'Assets/WarcraftIII/Materials/Placement/' + digest(p['material'].encode())[:20] + '.mmat'
             destination = SAMPLE / placement_path
             candidate = (json.dumps(placement, ensure_ascii=False, separators=(',', ':')) + '\n').encode('utf-8')
             if destination.exists() and destination.read_bytes() != candidate:
@@ -146,7 +168,7 @@ def main():
         if environment:
             entry.update(lods=[parts[0]['mesh']] * 2, lod_parts=[parts] * 2)
         catalog[key] = entry
-        sources.append(dict(key=key, source=identifier, pack=pack, model=model['source'], tier=tier))
+        sources.append(dict(key=key, source=identifier, pack=pack, model=model['source'], tier=tier, **(dict(skinPack=skin[0], skinTexture=skin[1]) if skin else {})))
 
     for key, model in UNITS.items():
         bind(key, model)
@@ -159,8 +181,15 @@ def main():
         bind(key, model, building=True)
     for key, tier in [('RevenantSpiritTower', 2), ('RevenantNerubianTower', 3)]:
         bind(key, 'Ziggurat', tier=tier, building=True)
-    for key, model, pack in [('ClassicOak', 'LordaeronTree0', 'game-ready'), ('ClassicBarrensTree', 'BarrensTree0', 'community-ready'), ('ClassicWinterTree', 'Wintertree', 'community-ready')]:
-        bind(key, model, pack, environment=True)
+    winter_skin = ('tree-skins-ready', 'Assets/WarcraftIII/Textures/ReplaceableTextures/LordaeronTree/LordaeronSnowTree.png')
+    for i in range(6):
+        tree_pack = 'remaining-ready' if i else 'game-ready'
+        bind('ClassicOak' + (str(i) if i else ''), 'LordaeronTree' + str(i), tree_pack, environment=True)
+        bind('ClassicWinterTree' + (str(i) if i else ''), 'LordaeronTree' + str(i), tree_pack, environment=True, skin=winter_skin)
+        bind('ClassicBarrensTree' + (str(i) if i else ''), 'BarrensTree' + str(i), 'remaining-ready', environment=True)
+        for prefix, source in [('ClassicWinterRock', 'Ice_SnowRock'), ('ClassicForestRock', 'LoardaeronRockChunks'), ('ClassicBarrensRock', 'Barrens_Rocks')]:
+            bind(prefix + str(i), source + str(i), 'remaining-ready', environment=True)
+    bind('ClassicGoldMine', 'Goldmine', 'remaining-ready', environment=True)
     for key in ['RealWorker', 'ClassicPeon', 'ClassicWisp', 'RealAcolyte', 'RealGhoul']:
         for activity in ['Mine', 'Wood', 'Build']:
             catalog[key + activity] = dict(catalog[key], classicWork=activity)

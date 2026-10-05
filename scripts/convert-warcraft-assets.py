@@ -546,7 +546,7 @@ def main():
     generated = [dict(path=p.relative_to(output).as_posix(), bytes=p.stat().st_size, sha256=sha(p.read_bytes())) for p in sorted((output / 'Assets').rglob('*')) if p.is_file()]
     json_write(output / 'asset-sources.json', dict(convertedOn='2026-10-05', source=manifest['source'], archives=manifest['archives'], archivePrecedence=manifest['precedence'], modelSamples=manifest['modelSamples'], extractionFailures=manifest.get('failures',[]), sourceFiles=manifest['files'], generatedFiles=generated, converter=dict(script='scripts/convert-warcraft-assets.py', upstream=UPSTREAM, commit=COMMIT), scope=f"{len(terrain)} terrain atlases; {len(model_catalog)} converted models of {len(manifest['modelSamples'])} extracted sources; inventory does not imply conversion."))
     for src, dest in [(inventory, output / 'SourceAssets/model-inventory.json'), (terrain_preview, output / 'Validation/terrain-preview.jpg')]:
-        if src.resolve() != dest.resolve():
+        if src.is_file() and src.resolve() != dest.resolve():
             shutil.copyfile(src, dest)
     print(json.dumps(report, indent=2))
     if failures:raise SystemExit(1)

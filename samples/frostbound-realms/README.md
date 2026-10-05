@@ -1,10 +1,12 @@
 # Frostbound Realms / 霜境战纪
 
-MEngine 原生 3D RTS 游戏工程。围绕资源采集、建造、出兵、英雄战斗与自定义地图建立可运行的基础版本，角色、四族建筑、树木和地面 tile 已接入转换后的 Warcraft III 原版资源，崖壁、水面和部分细节仍包含 Poly Haven、Quaternius、Kenney 与 KayKit 资产。当前实现尚未达到《魔兽争霸 III：冰封王座》完整复刻的内容量和玩法深度。
+MEngine 原生 3D RTS 游戏工程。围绕资源采集、建造、出兵、英雄战斗与自定义地图建立可运行的基础版本，角色、四族建筑、季节树木、岩石、金矿和地面 tile 已接入转换后的 Warcraft III 原版资源，崖壁、水面和部分细节仍包含 Poly Haven、Quaternius、Kenney 与 KayKit 资产。当前实现尚未达到《魔兽争霸 III：冰封王座》完整复刻的内容量和玩法深度。
 
 当前画面使用经典四族模型、原版站立/行走/攻击/施法/建造/死亡动作、多部件材质和蓝红队色，保留雪地/岩土地表、柔化边缘的战争迷雾、原创菜单插画和技能图标。动态头像通过原生相机绘制完整部件层级。操作面板提供对应模型的兵种头像和训练图标、生命/法力条、悬停提示；场景内显示选择圈、移动落点、建筑预览、远程弹道与伤害数字。
 
 ## 运行
+
+经典模型当前包含 114 个绑定、4,952 个运行时文件。Winter、Forest、Barrens 各使用六种原版树木和岩石，冬季使用原版覆雪贴图；金矿采集播放原版 Stand Work 循环。验证与来源见 [原版景物说明](../../docs/designs/frostbound-realms/classic-scenery.md)。
 
 经典模型按所选站立姿态的原生几何范围确定尺寸。重导入时先构建 `cargo build --release -p mengine-assets --example gltf_bounds`，执行 `python scripts/import-frost-classic.py --pose-probe target/release/examples/gltf_bounds.exe`；来源、许可和文件哈希保存在 `classic-sources.json` 与 `Assets/Licenses/warcraft-classic-sources.json`。
 
