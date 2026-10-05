@@ -1,0 +1,56 @@
+// Author: MiYu. Native battle status rendering, pause, authoritative TCP peers and reconnect.
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {fork} from 'node:child_process';
+import {createRequire} from 'node:module';
+import {fileURLToPath} from 'node:url';
+import {createServer} from '../samples/frostbound-realms/server.mjs';
+const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),out=path.join(repo,'docs/designs/frostbound-realms'),tag=Date.now(),sample=path.join(process.env.MENGINE_QA_ROOT||'D:/MEngineNativeQA','status-effects-'+tag,'sample'),S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
+const executable=process.env.MENGINE_EDITOR_EXECUTABLE||'D:/MEngineNativeQA/tile-build-1790939800003/release/mengine-editor-tauri.exe',originalCreate=S.create,peers=[],sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function fixture(create,mode,options={}){
+  const s=create(mode,options);if(mode!=='skirmish')return s;
+  s.map.terrain.fill(0);s.map.heights.fill(0);s.map.relief.fill(0);s.map.ramps.fill(0);s.map.props=[];s.resources=[];s.units=[];s.teams.forEach(t=>t.ai=false);
+  for(let team=0;team<2;team++){
+    for(let faction=0;faction<4;faction++)Frost.spawn(s,'hall',team,-15+faction*10,team?0:10,{baseRules:1,baseFaction:faction,hp:180,maxHp:1000,damage:0,...(faction===2?{ancientRegen:30}:{})});
+    for(let i=0;i<4;i++)Frost.spawn(s,i===1?'hero':'soldier',team,-12+i*8,team?-5:16,{hp:100,maxHp:1000,damage:0,mana:0,order:{type:'hold'},...(i===0?{itemRegen:{hp:2,mana:0,left:45}}:i===1?{itemRegen:{hp:0,mana:3,left:30}}:i===2?{sanctuary:true}:{cripple:60})});
+  }
+  Frost.visibility(s);return s;
+}
+globalThis.Frost=S;S.create=(mode,options)=>fixture(originalCreate,mode,options);
+const app=createServer({port:0}),address=await app.listening;
+fs.cpSync(source,sample,{recursive:true,filter:p=>!['SourceAssets','Builds'].includes(path.basename(p))});
+const project=JSON.parse(fs.readFileSync(path.join(sample,'project.json')));project.storageId='status-effects-'+tag;fs.writeFileSync(path.join(sample,'project.json'),JSON.stringify(project));
+const script=path.join(sample,'Assets/Scripts/Main.js');let body=fs.readFileSync(script,'utf8');body=body.replace("address='127.0.0.1:7788'","address='127.0.0.1:"+address.port+"'");assert.ok(body.includes('var FrostClient='));body=body.replace('var FrostClient=',`const nativeEffectCreate=Frost.create;Frost.create=(mode,options)=>(${fixture.toString()})(nativeEffectCreate,mode,options);\nvar FrostClient=`);fs.writeFileSync(script,body);
+fs.writeFileSync(path.join(out,'status-effects-fixture.json'),JSON.stringify({sample,method:'Isolated copies of the game assets and a deterministic battlefield fixture'},null,2)+'\n');
+if(process.argv.includes('--prepare-only')){await app.close();S.create=originalCreate;console.log('Prepared status battlefield:',sample);process.exit(0);}
+function peer(i){
+  const config=path.join(repo,'tmp','status-effects-peer-'+tag+'-'+i);fs.mkdirSync(config,{recursive:true});
+  const debug=process.env.MENGINE_QA_DEBUG_PORT?' --remote-debugging-port='+(Number(process.env.MENGINE_QA_DEBUG_PORT)+i):'';
+  const child=fork(path.join(repo,'scripts/qa-frostbound.mjs'),['--peer'],{cwd:repo,env:{...process.env,MENGINE_EDITOR_CONFIG_DIR:config,MENGINE_EDITOR_EXECUTABLE:executable,WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:(process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS||'')+debug},stdio:['ignore','pipe','pipe','ipc'],windowsHide:true});child.stderr.on('data',b=>process.stderr.write(b));
+  let serial=0;const waiting=new Map();child.on('message',m=>{const request=waiting.get(m.id);if(request){clearTimeout(request.timer);waiting.delete(m.id);m.error?request.reject(Error(m.error)):request.resolve(m.result);}});
+  const call=(op,name,args)=>new Promise((resolve,reject)=>{const id=++serial;waiting.set(id,{resolve,reject,timer:setTimeout(()=>reject(Error('QA timeout '+name)),90000)});child.send({id,op,name,args});});
+  const p={child,query:(n,a)=>call('query',n,a),execute:(n,a)=>call('execute',n,a),close:()=>call('close')};peers.push(p);return p;
+}
+const snapshot=p=>p.query('scene.snapshot'),state=async p=>JSON.parse((await snapshot(p)).entities.find(e=>e.name==='Frost telemetry').components.Text.text),until=async(check,label,timeout=60000)=>{const end=Date.now()+timeout;while(Date.now()<end){const result=await check();if(result)return result;await sleep(350);}throw Error('Timed out '+label);};
+const press=async(p,key)=>{await p.execute('playback.input',{keys:[key],viewport:[1280,720]});await sleep(250);await p.execute('playback.input',{keys:[]});await sleep(250);};
+async function open(p){
+  await p.query('project.state');try{await p.execute('project.open',{root:sample});}catch(e){if(!/workspace is still loading|BridgeConnectionError|did not finish loading|A project is already open/.test(e.message))throw e;}
+  await until(async()=>{const s=await p.query('project.state');return s.ready&&s.editorReady&&path.resolve(s.project.root)===path.resolve(sample);},'native project');
+  await p.execute('view.set_game_resolution',{resolution:{width:1280,height:720}});await p.execute('panel.focus',{kind:'game'});await p.execute('playback.play');await until(async()=>(await state(p)).mode==='title','native title');
+}
+async function capture(p,name){const shot=await p.query('view.screenshot',{target:'game'});fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));}
+async function effects(p){return (await snapshot(p)).entities.filter(e=>e.active!==false&&e.name.startsWith('Classic status ')&&e.components.Transform.position[1]>-50);}
+const report={method:'Native editor Game View, Agent input and real TCP server',sample,editorSha256:crypto.createHash('sha256').update(fs.readFileSync(executable)).digest('hex'),passed:false};
+try{
+  const a=peer(0);await open(a);await press(a,'F1');await until(async()=>(await state(a)).mode==='playing','solo battle');await sleep(600);
+  const observed=await effects(a),paths=observed.map(e=>e.components.SampledEffect.effect);assert.ok(observed.length>=16,observed.length+' active original status effects');for(const name of ['HealingSalveTarget','ClarityTarget','Staff_Sanctuary_Target','RejuvenationTarget','CrippleTarget','ElfLargeBuildingFire','UndeadLargeBuildingFire'])assert.ok(paths.some(p=>p.includes(name)),name);
+  report.solo={active:observed.length,sources:[...new Set(paths)]};await capture(a,'classic-status-battlefield');await press(a,'F10');const paused=await effects(a);await sleep(450);const after=await effects(a);assert.deepEqual(after.map(e=>e.components.SampledEffect),paused.map(e=>e.components.SampledEffect));report.gamePause=true;
+  await press(a,'KeyX');await press(a,'Enter');await press(a,'F1');await until(async()=>(await state(a)).room,'host lobby');const code=(await state(a)).room,b=peer(1);await open(b);await press(b,'Enter');await press(b,'F3');await until(async()=>(await state(b)).mode==='rooms','room browser');await press(b,'Enter');await until(async()=>(await state(b)).room===code,'guest joins');await press(b,'Enter');await press(a,'Enter');await press(a,'Enter');await until(async()=>(await state(a)).netStates>8&&(await state(b)).netStates>8,'authoritative frames');
+  for(const p of [a,b]){const active=await effects(p);assert.ok(active.length>=16);assert.ok(active.every(e=>e.components.SampledEffect.playing===false),'source time comes from authority');}
+  report.network={hostActive:(await effects(a)).length,guestActive:(await effects(b)).length};await capture(b,'classic-status-network');const guest=[...app.clients].find(c=>c.player?.team===1);assert.ok(guest);guest.socket.destroy();await until(async()=>[...app.clients].some(c=>c!==guest&&c.player?.team===1)&&(await state(b)).mode==='playing','guest reconnect');assert.ok((await effects(b)).length>=16);report.reconnect=true;
+  for(const [i,p] of peers.entries()){const profile=await p.query('profiler.get_samples',{source:'game',limit:20}),logs=await p.query('console.get_logs',{limit:100});assert.equal(profile.nativeLatest.counts.materialPipelinesRejected,0);assert.ok(!/sampled effect:|cannot load texture|unsupported component|ReferenceError|TypeError/i.test(JSON.stringify(logs)),JSON.stringify(logs));report['peer'+i]={counts:profile.nativeLatest.counts,logs};}
+  report.passed=true;console.log('PASS native status battlefield, frozen pause, two real TCP clients and reconnect');
+}catch(e){report.error=e.stack;for(const [i,p] of peers.entries())try{report['failure'+i]={state:await state(p),logs:await p.query('console.get_logs',{limit:50})};await capture(p,'classic-status-failure-'+i);}catch{}process.exitCode=1;console.error(e.stack);}
+finally{fs.writeFileSync(path.join(out,'native-status-effects-qa.json'),JSON.stringify(report,null,2)+'\n');for(const p of peers){try{await p.execute('playback.stop');await p.close();}catch{}p.child.kill();}await app.close();S.create=originalCreate;}

@@ -1,0 +1,4 @@
+Author: MiYu
+Warcraft III source models and textures: Blizzard Entertainment. Original asset rights remain with their owners.
+The W3ModelViewer conversion tool is MIT licensed; its license is preserved separately.
+effect-sources.json records original model/texture hashes, converted output hashes and the pinned tool source.

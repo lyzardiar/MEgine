@@ -10,6 +10,31 @@ using System.Text.Json;
 using Wc3ModelViewer.Core.Formats;
 
 if (args.Length == 3 && args[0] == "--effects") { EffectExport.Write(args[1], args[2]); return; }
+if (args.Length == 3 && args[0] == "--attachments") {
+    var source = MdxReader.Read(File.ReadAllBytes(args[1]));
+    var pose = new MdxAnimator(source);
+    var attachments = source.Nodes.Select((node, index) => (node, index)).Where(a => a.node.Kind == MdxNodeKind.Attachment).ToArray();
+    var tracks = new List<object>();
+    foreach (var seq in source.Sequences) {
+        double duration = (seq.IntervalEnd - seq.IntervalStart) / 1000.0;
+        if (duration == 0) continue;
+        if (duration < 0 || duration > 600) throw new InvalidDataException($"Unsupported attachment sequence: {seq.Name}");
+        var frames = new List<object>();
+        for (int frame = 0; frame <= (int)Math.Ceiling(duration * 12); frame++) {
+            double seconds = Math.Min(frame / 12.0, duration);
+            int time = Math.Min(seq.IntervalEnd, seq.IntervalStart + (int)Math.Round(seconds * 1000));
+            pose.Evaluate(seq, time, (long)Math.Round(seconds * 1000));
+            frames.Add(attachments.Select(a => {
+                var p = Vector3.Transform(a.node.Pivot, pose.World(a.index));
+                return new[] { p.X / 128, p.Z / 128, -p.Y / 128 };
+            }).ToArray());
+        }
+        tracks.Add(new { name = seq.Name, duration, frames });
+    }
+    var data = new { fps = 12, names = attachments.Select(a => a.node.Name), clips = tracks };
+    File.WriteAllText(args[2], JsonSerializer.Serialize(data, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+    return;
+}
 if (args.Length == 3 && args[0] == "--textures") {
     int count = 0;
     foreach (var path in Directory.EnumerateFiles(args[1], "*.blp", SearchOption.AllDirectories)) {
