@@ -7,7 +7,7 @@ const root=fileURLToPath(new URL('../samples/frostbound-realms/',import.meta.url
 const V=createRequire(import.meta.url)('../samples/frostbound-realms/game/visuals.js');
 const detailCount=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js').detailCount;
 const catalog=JSON.parse(fs.readFileSync(path.join(root,'model-catalog.json'),'utf8'));
-const environmentParts=V.environmentPartCount(catalog);
+const environmentParts=V.environmentPartCount(catalog),actorParts=V.actorPartCount(catalog);
 const portraitViews=Object.fromEntries(JSON.parse(fs.readFileSync(path.join(root,'head-portraits.json'),'utf8')).views.map(v=>[v.key,v]));
 for(const dir of ['Scenes','Scripts','Fonts','Maps','Audio'])fs.mkdirSync(path.join(root,'Assets',dir),{recursive:true});
 for(const file of ['Roboto-Regular.ttf','LICENSE.txt'])fs.copyFileSync(fileURLToPath(new URL('../samples/ion-outpost/Assets/Fonts/'+file,import.meta.url)),path.join(root,'Assets/Fonts',file));
@@ -125,7 +125,9 @@ fs.writeFileSync(path.join(root,'Assets/Maps/highland-pass.json'),JSON.stringify
 fs.writeFileSync(path.join(root,'Assets/Maps/supply-road.json'),JSON.stringify(S.eventMap(),null,2)+'\n');
 for(let i=32;i<S.LIMIT;i++)entity('Objective '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog['roof-point'].parts[0].mesh,material:catalog['roof-point'].material}});
 for(let i=0;i<S.LIMIT;i++)entity('Unit aura '+i,{Transform:T([0,-100,0]),ParticleEmitter3D:{playing:false,looping:true,rate_over_time:45,max_particles:24,lifetime_min:.12,lifetime_max:.3,speed_min:1,speed_max:3,size_start:.55,size_end:0,color_start:[.45,.65,1,1],color_end:[.2,.25,1,0],gravity:[0,0,0],shape:'sphere',shape_radius:1.15,direction:[0,1,0],spread_degrees:180,simulation_space:'local',texture:'Assets/Textures/spark_01.png',billboard:true,blend_mode:'additive',seed:i+1}});
-const portraitModel=entity('Portrait model',{Transform:T([1000,0,0],[1,1,1],[0,Math.sin(-Math.PI/16),0,Math.cos(-Math.PI/16)]),MeshRenderer:{mesh:portraitViews.RealFrostWarden.mesh,material:portraitViews.RealFrostWarden.material,cast_shadows:false,receive_shadows:false}});
+const portraitModel=entity('Portrait model',{Transform:T([1000,0,0],[1,1,1],[0,Math.sin(-Math.PI/16),0,Math.cos(-Math.PI/16)])});
+for(let part=0;part<actorParts;part++){entity('Portrait model mesh '+part,{Transform:T(),MeshRenderer:{mesh:catalog.Warrior.parts[0].mesh,material:catalog.Warrior.material,cast_shadows:false,receive_shadows:false}},portraitModel);E.at(-1).active=false;}
+for(const [prefix,count] of [['Unit',S.LIMIT],['Corpse',S.CORPSE_LIMIT],['Placement preview',1]])for(let i=0;i<count;i++)for(let part=1;part<actorParts;part++){entity((prefix==='Placement preview'?prefix:prefix+' '+i)+' part '+part,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.Warrior.parts[0].mesh,material:catalog.Warrior.material}});E.at(-1).active=false;}
 const portraitCamera=entity('Portrait camera',{Transform:T([1000,2,10]),Camera3D:{primary:false,projection:'orthographic',orthographic_size:1,near:.1,far:100,clear_flags:'solidcolor',background_color:[.025,.04,.055,1]}});
 ui('HUD Live portrait',-344,247,132,136,{RawImage:{render_camera:String(portraitCamera),render_root:String(portraitModel),color:[1,1,1,1],raycast_target:false}});
 E.at(-1).siblingIndex=E.find(e=>e.name==='Portrait').siblingIndex;

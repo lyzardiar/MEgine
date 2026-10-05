@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "scope": "One native Release editor, QuickJS and Agent input for focused gameplay acceptance",
+  "physicalInput": false,
+  "audioListening": false,
+  "classicAssets": [
+    {
+      "faction": 0,
+      "visibleParts": 23,
+      "portraitParts": 4,
+      "nativePipelinesRejected": 0
+    },
+    {
+      "faction": 1,
+      "visibleParts": 23,
+      "portraitParts": 3,
+      "nativePipelinesRejected": 0
+    },
+    {
+      "faction": 2,
+      "visibleParts": 33,
+      "portraitParts": 3,
+      "nativePipelinesRejected": 0
+    },
+    {
+      "faction": 3,
+      "visibleParts": 24,
+      "portraitParts": 4,
+      "nativePipelinesRejected": 0
+    }
+  ]
+}

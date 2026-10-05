@@ -43,8 +43,8 @@ for(const setup of [({n})=>n.casterRank=0,({n})=>n.mana=49,({n})=>n.stun=1,({n})
 }
 {
  const {s,h,v}=arena();globalThis.Frost=S;globalThis.FrostArt=JSON.parse(fs.readFileSync(new URL('../samples/frostbound-realms/model-catalog.json',import.meta.url)));const V=createRequire(import.meta.url)('../samples/frostbound-realms/game/visuals.js');
- assert.equal(cast(s,h,'purge',v),null);const {key,asset}=V.model(s,h);assert.equal(key,'RealShaman');assert.equal(V.heading(s,h,{x:h.x,z:h.z,yaw:0}),Math.atan2(v.x-h.x,v.z-h.z));assert.match(V.pose(h,asset,false,0),/#pose=2:0$/);
+ assert.equal(cast(s,h,'purge',v),null);const {key,asset}=V.model(s,h);assert.equal(key,'RealShaman');assert.equal(V.heading(s,h,{x:h.x,z:h.z,yaw:0}),Math.atan2(v.x-h.x,v.z-h.z));assert.match(asset.animations[V.classicSample(h,asset,false,0).clip].name,/^Spell/i);
  step(s,4);const restored=S.restore(S.clone(s)),saved=restored.units.find(u=>u.id===h.id);assert.equal(V.pose(saved,asset,false,0),V.pose(h,asset,false,0));assert.equal(V.heading(restored,saved),h.castYaw);
- assert.match(V.pose(h,asset,true,0),/#pose=1:0$/);h.stun=1;assert.match(V.pose(h,asset,false,0),/#pose=0:0$/);h.stun=0;step(s,8);assert.match(V.pose(h,asset,false,0),/#pose=0:0$/);
+ assert.equal(asset.animations[V.classicSample(h,asset,true,0).clip].name,'Walk');h.stun=1;assert.match(asset.animations[V.classicSample(h,asset,false,0).clip].name,/^Stand/i);h.stun=0;step(s,8);assert.match(asset.animations[V.classicSample(h,asset,false,0).clip].name,/^Stand/i);
 }
 console.log('PASS: caster rules and saves; realistic shaman cast pose/direction, movement/stun interruption and restored animation');

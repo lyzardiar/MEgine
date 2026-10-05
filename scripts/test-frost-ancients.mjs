@@ -40,7 +40,13 @@ for(const edit of [a=>a.uprooted=1,a=>a.uprooted=true,a=>a.ancientShift={uproote
 }
 {
  globalThis.Frost=S;globalThis.FrostArt=createRequire(import.meta.url)('../samples/frostbound-realms/model-catalog.json');const V=createRequire(import.meta.url)('../samples/frostbound-realms/game/visuals.js');
- for(const tier of [1,2,3]){const {s,a}=arena();a.upgradeTier=tier;const rooted=V.model(s,a);assert.ok(!rooted.asset.ancientForm);a.ancientShift={uprooted:true,left:1.25};const moving=V.model(s,a);assert.ok(moving.asset.ancientForm);assert.equal(moving.key,rooted.key);assert.match(V.pose(a,moving.asset,false,0),/#pose=4:15$/);assert.match(V.pose(a,moving.asset,false,0,30),/#pose=4:37@30$/);delete a.ancientShift;a.uprooted=true;a.speed=.4;assert.match(V.pose(a,moving.asset,true,.3),/#pose=2:/);a.ancientRegen=30;assert.match(V.pose(a,moving.asset,false,0),/#pose=6:0$/);delete a.ancientRegen;a.cd=.8;assert.match(V.pose(a,moving.asset,false,0),/#pose=1:/);a.cd=0;assert.match(V.pose(a,moving.asset,false,0),/#pose=3:/);a.ancientShift={uprooted:false,left:1.25};assert.match(V.pose(a,moving.asset,false,0),/#pose=5:15$/);}
+ for(const tier of [1,2,3]){
+  const {s,a}=arena();a.upgradeTier=tier;const rooted=V.model(s,a);assert.ok(!rooted.asset.classicUprooted);
+  const clip=walking=>rooted.asset.animations[V.classicSample(a,rooted.asset,walking,.3).clip].name;
+  assert.match(clip(false),/Stand Alternate/i);a.ancientShift={uprooted:true,left:1.25};const moving=V.model(s,a);assert.ok(moving.asset.classicUprooted);assert.equal(moving.key,rooted.key);assert.match(clip(false),/^Morph Alternate$/i);
+  const at12=V.classicSample(a,moving.asset,false,0),at30=V.classicSample(a,moving.asset,false,0,undefined,30);assert.ok(Math.abs(at12.frame/12-at30.frame/30)<=1/12);
+  delete a.ancientShift;a.uprooted=true;a.speed=.4;assert.match(clip(true),/^Walk$/i);a.ancientRegen=30;assert.match(clip(false),/^Spell Eat Tree$/i);delete a.ancientRegen;a.cd=.8;assert.match(clip(false),/^Attack/i);a.cd=0;assert.ok(!/Alternate/i.test(clip(false)));a.ancientShift={uprooted:false,left:1.25};assert.equal(clip(false),'Morph');
+ }
 }
 {
  const {s,a}=arena(),h=S.spawn(s,'hero',0,12,0,{inventory:[8],damage:0});S.visibility(s);assert.equal(S.command(s,0,{type:'useItem',ids:[h.id],slot:0,item:8,target:a.id,x:S.townPortal.baseRange-.1,z:0}),null);up(s,a);assert.equal(cmd(s,a,'move',{x:-6,z:0}),null);step(s,10);assert.ok(S.distance(a,h.order)>S.townPortal.baseRange);const saved=S.restore(s);step(s,15);step(saved,15);assert.equal(h.order,null);assert.equal(h.x,12);assert.deepEqual(s.units,saved.units);

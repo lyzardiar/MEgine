@@ -14,8 +14,8 @@ tick(.01);tick(.01,['F1']);commands.length=0;const positions=[],poses=[];
 for(let i=0;i<60;i++){tick(1/60);positions.push(model()[0]);poses.push(mesh());assert.ok(model()[0]<=context.motionState.units[0].x+1e-9,'presentation never predicts ahead of authority');}
 assert.ok(positions.filter((x,i)=>i&&x>positions[i-1]).length>40,'movement progresses on render frames between simulation ticks');
 assert.ok(positions.every((x,i)=>!i||x>=positions[i-1]),'interpolation never runs backwards');
-assert.ok(new Set(poses).size>=25,'world bodies sample at least 25 distinct poses per second');assert.ok(poses.every(p=>p.endsWith('@30')),'world poses request native 30 Hz sampling');
-for(let i=0;i<8;i++){tick(1/60);assert.match(mesh(),/#pose=1:/,'walking clip persists between authoritative ticks');}
+assert.ok(poses.filter((p,i)=>i&&p!==poses[i-1]).length>=25,'world bodies update at least 25 poses per second across short native loops');assert.ok(poses.every(p=>p.endsWith('@30')),'world poses request native 30 Hz sampling');
+for(let i=0;i<8;i++){tick(1/60);assert.equal(context.FrostArt.RealFrostWarden.animations[Number(mesh().split('#pose=')[1].split(':')[0])].name,'Walk','walking clip persists between authoritative ticks');}
 const unit=context.motionState.units[0],visual=model(),camera=value('Strategy camera','Transform').position,zoom=value('Strategy camera','Camera3D').orthographic_size,pitch=Math.atan2(32,42),pointer=[640+(visual[0]-camera[0])/zoom*360,360+((visual[2]-(camera[2]-42))*Math.sin(pitch)-visual[1]*Math.cos(pitch))/zoom*360];
 assert.equal(context.pointerQueries,0,'idle frames and keyboard controls do not cast terrain rays');
 tick(.001,[],pointer,[0]);tick(.001,[],pointer,[],[0]);assert.equal(telemetry().selected[0],unit.id,'input refreshes the HUD and picks the rendered unit');

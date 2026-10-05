@@ -9,7 +9,7 @@ function kill(s,kind='soldier',extra={}){const u=S.spawn(s,'rifleman',0,0,0,{dam
 {
  const s=arena(),{v,c}=kill(s);assert.ok(c);assert.equal(c.yaw,1.1);assert.equal(c.age,0);assert.ok(!s.units.some(u=>u.id===v.id));assert.equal(S.population(s,1).used,0);const body=S.clone(c);S.command(s,1,{type:'move',ids:[v.id],x:5,z:5});assert.deepEqual(c,body);
  assert.equal(S.command(s,0,{type:'move',ids:[s.units[0].id],x:0,z:1}),null);step(s,5);assert.ok(S.distance(s.units[0],c)<.5,'corpse is not a movement obstacle');
- const copy=S.restore(s);step(s,10);step(copy,10);assert.deepEqual(copy.corpses,s.corpses,'saved death timing continues exactly');const aged=S.clone(s.corpses[0]);aged.age=19;const final=V.corpse(s,aged);assert.ok(final.y<0);assert.match(final.mesh,/#pose=3:14$/);
+ const copy=S.restore(s);step(s,10);step(copy,10);assert.deepEqual(copy.corpses,s.corpses,'saved death timing continues exactly');const aged=S.clone(s.corpses[0]);aged.age=19;const final=V.corpse(s,aged);assert.ok(final.y<0);assert.equal(Number(final.mesh.split(':').at(-1)),Math.ceil(final.asset.animations[final.sample.clip].duration*12),'death holds the exact original terminal pose');
  const early=V.corpse(s,{...aged,age:0}),settled=V.corpse(s,{...aged,age:3}),later=V.corpse(s,{...aged,age:12});assert.notEqual(early.mesh,settled.mesh);assert.equal(settled.mesh,later.mesh,'death pose never loops');
  s.winner=0;const frame=s.frame;step(s,200);assert.equal(s.corpses.length,0);assert.equal(s.frame,frame,'post-victory decay leaves battle time unchanged');
  const legacy=S.clone(copy);delete legacy.corpses;for(const u of legacy.units)delete u.yaw;assert.deepEqual(S.restore(legacy).corpses,[]);

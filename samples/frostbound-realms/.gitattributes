@@ -2,3 +2,4 @@
 SourceAssets/** -text
 Licenses/** -text
 Assets/Licenses/** -text
+Assets/WarcraftIII/** -text whitespace=cr-at-eol

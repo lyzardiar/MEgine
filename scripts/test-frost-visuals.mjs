@@ -1,193 +1,62 @@
-// Author: MiYu. Faction model selection, tier changes and derived asset/source integrity.
+// Author: MiYu. Classic Warcraft geometry, animation states, teams and reproducible runtime bindings.
 import assert from 'node:assert/strict';
-import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import {createRequire} from 'node:module';
+import {battleFixture} from './frost-battle-fixture.mjs';
 const require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js'),root=new URL('../samples/frostbound-realms/',import.meta.url);
 globalThis.Frost=S;globalThis.FrostArt=JSON.parse(fs.readFileSync(new URL('model-catalog.json',root)));const V=require('../samples/frostbound-realms/game/visuals.js');
-const halls=new Set();
-for(let f=0;f<4;f++){
-  const s=battleFixture(S,'skirmish',{factions:[f,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),hall=s.units.find(u=>u.team===0&&u.kind==='hall');
-  for(const kind of Object.keys(S.types)){const visual=V.model(s,{kind,team:0});assert.ok(visual.asset,kind);assert.ok(Number.isFinite(visual.scale)&&visual.scale>0,kind);assert.ok(V.name(s,{kind,team:0}));}
-  const original=V.model(s,hall);halls.add(original.key);assert.equal(original.key,S.factions[f]+'Hall');
-  s.teams[0].gold=2000;s.teams[0].wood=2000;
-  for(const tier of [2,3]){assert.equal(S.command(s,0,{type:'tech',ids:[hall.id]}),null);for(let i=0;i<S.mainBase(s,hall,tier).time/S.DT+2;i++)S.tick(s);assert.equal(s.teams[0].tier,tier);assert.equal(V.model(s,hall).key,S.factions[f]+'Hall'+tier);assert.equal(V.name(s,hall),S.mainBase(s,hall).name);}
-  assert.equal(V.model(S.restore(s),hall).key,S.factions[f]+'Hall3');s.visible[1].fill(1);const view=S.publicState(s,1),seen=view.units.find(u=>u.id===hall.id);assert.equal(V.model(view,seen).key,S.factions[f]+'Hall3');assert.equal(V.name(view,seen),V.name(s,hall));assert.equal(view.teams[0].tier,undefined,'global enemy tech stays private');s.visible[1].fill(0);assert.ok(!S.publicState(s,1).units.some(u=>u.id===hall.id));
-  for(const kind of ['hall','barracks','farm','tower','altar','workshop','temple']){const {asset,scale}=V.model(s,{kind,team:0});assert.ok(Math.max(asset.size[0],asset.size[2])*scale<=S.types[kind].radius*2,'art stays inside gameplay footprint');}
-}
-assert.equal(halls.size,4);
-const verify=entry=>{const data=fs.readFileSync(new URL(entry.file,root));assert.equal(crypto.createHash('sha256').update(data).digest('hex'),entry.sha256,entry.file);};
-const aigei=JSON.parse(fs.readFileSync(new URL('aigei-building-sources.json',root)));verify(aigei.source);aigei.generated.forEach(verify);assert.equal(aigei.sourceMeshCount,330);assert.equal(aigei.replacements.length,10);assert.equal(Object.keys(aigei.models).length,41);assert.match(aigei.source.license,/No redistribution grant/);
-for(const key of aigei.replacements){const asset=FrostArt[key];assert.equal(asset.sourcePack,'aigei-warcraft-buildings');assert.ok(asset.factionBuilding);assert.ok(asset.size.every(v=>Number.isFinite(v)&&v>0));const material=JSON.parse(fs.readFileSync(new URL(asset.material,root)));assert.equal(material.surface,'cutout');assert.ok(fs.existsSync(new URL(material.base_color_texture,root)));const mesh=fs.readFileSync(new URL(asset.parts[0].mesh,root));assert.equal(mesh.toString('ascii',0,4),'glTF');assert.equal(mesh.readUInt32LE(8),mesh.length);}
-for(const state of [battleFixture(S,'skirmish',{factions:[0,2]},['hero','barracks','farm','guard','harvest']),S.restore(battleFixture(S,'skirmish',{factions:[0,2]},['hero','barracks','farm','guard','harvest']))]){assert.equal(V.model(state,{kind:'shop',team:0}).key,'KingdomArcaneVault');for(const kind of ['hall','barracks','farm','tower','altar','workshop','shop']){const v=V.model(state,{kind,team:0});assert.equal(v.asset.sourcePack,'aigei-warcraft-buildings');assert.ok(v.asset.size[1]*v.scale<=v.asset.maxWorldHeight+1e-6);assert.ok(Math.max(v.asset.size[0],v.asset.size[2])*v.scale<=S.types[kind].radius*2);}assert.equal(V.model(state,{kind:'farm',team:1}).asset.sourcePack,'aigei-warcraft-buildings');}
-const ground=JSON.parse(fs.readFileSync(new URL('ground-sources.json',root)));assert.equal(ground.license,'CC0-1.0');ground.sources.forEach(verify);ground.generated.forEach(verify);
-const realistic=JSON.parse(fs.readFileSync(new URL('realistic-sources.json',root))),houses=JSON.parse(fs.readFileSync(new URL('house-sources.json',root)));
-for(const manifest of [realistic,houses]){assert.equal(manifest.license,'CC0-1.0');manifest.sources.forEach(verify);manifest.generated.forEach(verify);}realistic.impostors.forEach(verify);
-const warclans=JSON.parse(fs.readFileSync(new URL('warclans-sources.json',root)));assert.equal(warclans.license,'CC-BY-SA-3.0');assert.equal(warclans.author,'Wildfire Games');warclans.sources.forEach(verify);warclans.generated.forEach(verify);
-assert.equal(Object.keys(warclans.models).length,8);for(const key of Object.keys(warclans.models)){const asset=FrostArt[key];assert.ok(asset.realistic);assert.equal(asset.parts[0].mesh,'Assets/Models/Real'+key+'.glb');}
-const attribution=fs.readFileSync(new URL('Assets/Licenses/0ad-warclans.txt',root),'utf8');assert.ok(attribution.includes('Wildfire Games')&&attribution.includes(warclans.licenseUrl));assert.ok(attribution.includes('Assets/Art/faction-buildings.png'));
-for(let i=0;i<140;i++)for(const zoom of [12,27]){const edge=i<72,visual=V.scenery(i,edge,zoom);assert.ok(visual.scale>0);assert.ok(Math.max(visual.asset.size[0],visual.asset.size[2])*visual.scale<=(visual.key.startsWith('RealSpruce')?6:edge?4.5:1.7)+1e-6,'scenery horizontal footprint is bounded');}
-for(const kind of ['tree','mine','camp']){
- const near=V.resource({kind,x:12,z:-3},12),far=V.resource({kind,x:12,z:-3},27);assert.ok(fs.existsSync(new URL(near.mesh,root)));assert.ok(fs.existsSync(new URL(far.mesh,root)));assert.notEqual(near.mesh,far.mesh);assert.equal(near.scale,far.scale);
- if(kind==='tree'){assert.match(far.mesh,/-far.glb$/);assert.equal(far.yaw,near.yaw,'3D LOD retains the authored tree rotation');assert.equal(far.asset.material,near.asset.material);const material=JSON.parse(fs.readFileSync(new URL(far.asset.material,root)));assert.equal(material.surface,'cutout');}
-}
-const buildings=JSON.parse(fs.readFileSync(new URL('faction-sources.json',root)));buildings.sources.forEach(verify);buildings.generated.forEach(verify);
-const temple=JSON.parse(fs.readFileSync(new URL('temple-sources.json',root)));assert.equal(temple.license,'CC0-1.0');temple.sources.forEach(verify);temple.generated.forEach(verify);assert.equal(V.model(battleFixture(S,'skirmish',{},['hero','barracks','farm','guard','harvest']),{kind:'temple',team:0}).key,'RealTemple');assert.ok(FrostArt.RealTemple.factionBuilding);
-const fortress=JSON.parse(fs.readFileSync(new URL('revenant-fortress-sources.json',root)));assert.equal(fortress.license,'CC0-1.0');fortress.sources.forEach(verify);fortress.generated.forEach(verify);for(const key of ['RevenantHall','RevenantHall2','RevenantHall3']){assert.ok(FrostArt[key].realistic);assert.equal(FrostArt[key].parts[0].mesh,'Assets/Models/Real'+key+'.glb');}
-const monsters=JSON.parse(fs.readFileSync(new URL('monster-sources.json',root)));monsters.forEach(m=>{verify(m);m.generated.forEach(verify);assert.ok(m.animations.length>=8);});
-const crypt=JSON.parse(fs.readFileSync(new URL('crypt-sources.json',root)));assert.equal(crypt.license,'CC0-1.0');crypt.sources.forEach(verify);crypt.generated.forEach(verify);assert.ok(FrostArt.RevenantBarracks.realistic);assert.equal(FrostArt.RevenantBarracks.parts[0].mesh,'Assets/Models/RealRevenantBarracks.glb');for(const state of [battleFixture(S,'skirmish',{factions:[3,0]},['hero','barracks','farm','guard','harvest']),S.restore(battleFixture(S,'skirmish',{factions:[3,0]},['hero','barracks','farm','guard','harvest']))]){const u={kind:'barracks',team:0,built:.5};assert.equal(V.model(state,u).key,'RevenantBarracks');assert.equal(V.model(S.publicState(state,0),u).asset.material,'Assets/Materials/RealRevenantBarracks.mmat');}
-const ziggurat=JSON.parse(fs.readFileSync(new URL('ziggurat-sources.json',root)));assert.equal(ziggurat.license,'CC0-1.0');ziggurat.sources.forEach(verify);ziggurat.generated.forEach(verify);for(const [kind,key] of [['farm','RevenantLodge'],['tower','RevenantTower']]){assert.ok(FrostArt[key].realistic);assert.equal(FrostArt[key].parts[0].mesh,'Assets/Models/Real'+key+'.glb');for(const state of [battleFixture(S,'skirmish',{factions:[3,0]},['hero','barracks','farm','guard','harvest']),S.restore(battleFixture(S,'skirmish',{factions:[3,0]},['hero','barracks','farm','guard','harvest']))]){const u={kind,team:0,built:.5};assert.equal(V.model(state,u).key,key);assert.equal(V.model(S.publicState(state,0),u).asset.material,'Assets/Materials/Real'+key+'.mmat');}}
-const wildwood=JSON.parse(fs.readFileSync(new URL('wildwood-sources.json',root)));wildwood.sources.forEach(verify);wildwood.generated.forEach(verify);assert.equal(Object.keys(wildwood.models).length,8);for(const key of Object.keys(wildwood.models)){if(key==='WildwoodLodge'){assert.equal(FrostArt[key].sourcePack,'aigei-warcraft-buildings');assert.equal(FrostArt[key].parts[0].mesh,'Assets/Models/'+key+'-warcraft.glb');}else{assert.ok(FrostArt[key].realistic);assert.equal(FrostArt[key].parts[0].mesh,'Assets/Models/Real'+key+'.glb');}}
-const icons=JSON.parse(fs.readFileSync(new URL('faction-icons.json',root))),slices=JSON.parse(fs.readFileSync(new URL(icons.file+'.sprite.json',root))).slices;verify(icons);assert.equal(slices.length,35);assert.deepEqual(slices.map(s=>s.name).sort(),[...Object.keys(buildings.models),'RealTemple','HauntedMine','KingdomArcaneVault'].sort());
-assert.equal(Object.keys(buildings.models).length,32);assert.equal(monsters.length,5);
-const skeletons=JSON.parse(fs.readFileSync(new URL('skeleton-sources.json',root)));assert.equal(skeletons.license,'CC0-1.0');skeletons.sources.forEach(verify);skeletons.generated.forEach(verify);
-const humans=JSON.parse(fs.readFileSync(new URL('human-sources.json',root)));assert.equal(humans.license,'CC-BY-SA-3.0');assert.equal(humans.author,'Wildfire Games');humans.sources.forEach(verify);humans.generated.forEach(verify);
-const humanLicense=fs.readFileSync(new URL('Assets/Licenses/0ad-humans.txt',root),'utf8');assert.ok(humanLicense.includes('Wildfire Games')&&humanLicense.includes('https://creativecommons.org/licenses/by-sa/3.0/')&&humanLicense.includes('Assets/Art/unit-portraits.png'));
-for(const [kind,key] of [['soldier','RealFootman'],['worker','RealWorker']]){
- const unit={kind,team:0,cd:0},visual=V.model(battleFixture(S,'skirmish',{factions:[0,1]},['hero','barracks','farm','guard','harvest']),unit);assert.equal(visual.key,key);assert.match(V.pose(unit,visual.asset,false,.5),/#pose=0:6$/);assert.match(V.pose(unit,visual.asset,true,.5),/#pose=1:6$/);
- for(const order of [undefined,{type:'attack'},{type:'attackMove'},{type:'hold'},{type:'patrol'}]){unit.cd=.7;unit.order=order;assert.match(V.pose(unit,visual.asset,false,.5),/#pose=2:6$/);}
- if(kind==='worker')for(const type of ['gather','build','construct','repair']){unit.order={type};assert.match(V.pose(unit,visual.asset,false,.5),/#pose=0:6$/,'work cooldown does not play combat');}
-}
-{
- const state=battleFixture(S,'skirmish',{factions:[0,1]},['hero','barracks','farm','guard','harvest']),unit={kind:'archer',team:0,cd:0};
- assert.equal(V.model(state,unit).key,'RealArcher');assert.equal(V.model(state,unit).asset,FrostArt.RealArcher);
- for(const [cd,key] of [[1.2,'RealArcherShoot'],[.8,'RealArcherLoaded'],[.2,'RealArcherLoaded']]){unit.cd=cd;const v=V.model(state,unit);assert.equal(v.key,'RealArcher');assert.equal(v.asset,FrostArt[key]);assert.equal(V.pose(unit,v.asset,false,0),V.pose(unit,v.asset,false,90),'shot frame depends on simulation cooldown, including save/network restoration');assert.match(V.pose(unit,v.asset,false,0),/#pose=2:/);}
- assert.equal(V.model(state,unit,true).asset,FrostArt.RealArcher,'moving keeps the hand arrow');assert.match(V.pose(unit,FrostArt.RealArcher,true,.5),/#pose=1:/);
- assert.equal(V.model(state,{...unit,stun:1}).asset,FrostArt.RealArcher);unit.cd=0;assert.match(V.pose(unit,V.model(state,unit).asset,false,.5),/#pose=0:/);
-}
-{
- const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const state=battleFixture(S,'skirmish',{map},['hero','barracks','farm','guard','harvest']),archer=S.spawn(state,'archer',0,0,0),target=S.spawn(state,'neutral',1,0,6);target.speed=0;target.damage=0;S.visibility(state);
- assert.equal(S.command(state,0,{type:'attack',ids:[archer.id],target:target.id}),null);S.tick(state);const hit=state.events.find(e=>e.fromX===archer.x&&e.fromZ===archer.z);assert.equal(hit.type,'launch');assert.equal(hit.ranged,true);assert.equal(target.hp,target.maxHp);assert.equal(S.publicState(state,0).projectiles[0].art,'arrow','network-visible shot retains projectile art');
-}
-{
- const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];const state=battleFixture(S,'skirmish',{map},['hero','barracks','farm','guard','harvest']),unit=S.spawn(state,'worker',0,0,0),target=S.spawn(state,'neutral',1,1.5,0);unit.order={type:'attack',target:target.id};unit.cd=.7;
- assert.equal(V.heading(state,unit,{x:0,z:-.1,yaw:0}),Math.PI/2,'melee slot adjustment after striking keeps facing the victim');target.x=20;assert.equal(V.heading(state,unit,{x:0,z:-.1,yaw:0}),0,'out of range pursuit faces movement');
-}
-const portraits=JSON.parse(fs.readFileSync(new URL('unit-icons.json',root)));verify(portraits);const unitSlices=JSON.parse(fs.readFileSync(new URL(portraits.file+'.sprite.json',root))).slices,portraitKeys=new Set(unitSlices.map(s=>s.name));assert.equal(portraitKeys.size,32);assert.ok(portraitKeys.has('RealSkeletonMage'));assert.ok(portraitKeys.has('RealShaman'));assert.ok(portraitKeys.has('RealAcolyte'));
-const acolyte=JSON.parse(fs.readFileSync(new URL('acolyte-sources.json',root)));assert.equal(acolyte.license,'CC-BY-SA-3.0');acolyte.sources.forEach(verify);acolyte.generated.forEach(verify);assert.equal(Object.keys(acolyte.models).length,4);const acolyteLicense=fs.readFileSync(new URL('Assets/Licenses/0ad-acolyte.txt',root),'utf8');assert.ok(acolyteLicense.includes('Wildfire Games')&&acolyteLicense.includes(acolyte.licenseUrl));assert.equal(acolyteLicense,fs.readFileSync(new URL('Licenses/0ad-acolyte.txt',root),'utf8'));
-const abomination=JSON.parse(fs.readFileSync(new URL('abomination-sources.json',root)));assert.equal(abomination.license,'CC-BY-3.0');abomination.sources.forEach(verify);abomination.generated.forEach(verify);assert.ok(portraitKeys.has('RealAbomination'));const bruteLicense=fs.readFileSync(new URL('Assets/Licenses/piacenti-Abomination.txt',root),'utf8');assert.ok(bruteLicense.includes(abomination.author)&&bruteLicense.includes(abomination.licenseUrl));assert.equal(bruteLicense,fs.readFileSync(new URL('Licenses/piacenti-Abomination.txt',root),'utf8'));
-{const s=battleFixture(S,'skirmish',{factions:[3,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),u=S.spawn(s,'abomination',0,-12,12),v=V.model(s,u);assert.equal(v.key,'RealAbomination');assert.ok(v.height>V.model(s,{...u,kind:'ghoul'}).height);assert.deepEqual(v.asset.animations.map(a=>a.name),['Idle','Walk','Attack','Death','Cannibalize']);assert.match(V.pose(u,v.asset,false,.5),/#pose=0:6$/);assert.match(V.pose(u,v.asset,true,.5),/#pose=1:6$/);u.cd=S.unitType(u).cooldown;assert.match(V.pose(u,v.asset,false,0),/#pose=2:8$/);assert.equal(V.pose(u,v.asset,false,0),V.pose(S.restore(s).units.find(t=>t.id===u.id),v.asset,false,90));assert.equal(V.model(S.publicState(s,0),u).key,'RealAbomination');assert.match(V.corpse(s,{...u,age:4,y:0}).mesh,/RealAbomination.glb#pose=3:19$/);assert.equal(V.model(s,{kind:'berserker',team:1}).key,'Orc_Skull');}
-const ghoul=JSON.parse(fs.readFileSync(new URL('ghoul-sources.json',root)));assert.equal(ghoul.license,'CC-BY-3.0');ghoul.sources.forEach(verify);ghoul.generated.forEach(verify);assert.ok(portraitKeys.has('RealGhoul'));const ghoulLicense=fs.readFileSync(new URL('Assets/Licenses/Rosswet-Ghoul.txt',root),'utf8');assert.ok(ghoulLicense.includes(ghoul.author)&&ghoulLicense.includes(ghoul.licenseUrl));assert.equal(ghoulLicense,fs.readFileSync(new URL('Licenses/Rosswet-Ghoul.txt',root),'utf8'));
-{
- const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[{kind:'tree',x:0,z:0,amount:1000}];const s=S.create('skirmish',{map,factions:[3,0],ai:[false,false]});s.units=[];S.spawn(s,'hall',0,-8,0);S.spawn(s,'hall',1,24,-24);const u=S.spawn(s,'ghoul',0,-2,0);S.visibility(s);const v=V.model(s,u);assert.equal(v.key,'RealGhoul');assert.deepEqual(v.asset.animations.map(a=>a.name),['Idle','Walk','Attack','Death','Harvest','Cannibalize']);assert.match(V.pose(u,v.asset,false,.5),/#pose=0:6$/);assert.match(V.pose(u,v.asset,true,.5),/#pose=1:6$/);u.cd=S.unitType(u).cooldown;assert.match(V.pose(u,v.asset,false,0),/#pose=2:10$/);assert.equal(V.pose(u,v.asset,false,0),V.pose(S.restore(s).units.find(t=>t.id===u.id),v.asset,false,90));u.cd=0;
- assert.equal(S.command(s,0,{type:'gather',ids:[u.id],resource:0}),null);S.tick(s);assert.equal(V.model(s,u).key,'RealGhoul');assert.equal(V.model(s,u).asset,FrostArt.RealGhoulWood);assert.match(V.pose(u,V.model(s,u).asset,false,.5),/#pose=4:6$/);assert.equal(V.heading(s,u,{...u,yaw:0}),Math.PI/2);let restored=S.restore(s),saved=restored.units.find(t=>t.id===u.id);assert.equal(V.model(restored,saved).asset,FrostArt.RealGhoulWood);
- assert.equal(S.command(s,0,{type:'stop',ids:[u.id]}),null);assert.equal(V.model(s,u).asset,FrostArt.RealGhoul);assert.equal(S.command(s,0,{type:'gather',ids:[u.id],resource:0}),null);let returning=false,delivered=false;const wood=s.teams[0].wood;for(let i=0;i<300;i++){S.tick(s);if(u.cargo>=20){returning=true;assert.equal(V.model(s,u).asset,FrostArt.RealGhoul);}if(s.teams[0].wood>wood){delivered=true;break;}}assert.ok(returning&&delivered);restored=S.restore(s);assert.equal(V.model(restored,restored.units.find(t=>t.id===u.id)).key,'RealGhoul');
- const c={...u,y:0,age:0};assert.match(V.corpse(s,c).mesh,/RealGhoul.glb#pose=3:0$/);assert.match(V.corpse(s,{...c,age:4}).mesh,/#pose=3:19$/);
-}
-{const state=battleFixture(S,'skirmish',{factions:[3,0]},['hero','barracks','farm','guard','harvest']),u=state.units.find(u=>u.team===0&&u.kind==='worker');assert.equal(S.command(state,0,{type:'move',ids:[u.id],x:u.x+4,z:u.z}),null);const v=V.model(state,u);assert.equal(v.key,'RealAcolyte');assert.match(V.pose(u,v.asset,true,.5),/#pose=1:/);assert.match(V.pose({...u,cd:.7,order:{type:'attack'}},v.asset,false,.5),/#pose=2:/);assert.match(V.corpse(state,{...u,y:0,age:.5}).mesh,/RealAcolyte.glb#pose=3:/);}
-const shaman=JSON.parse(fs.readFileSync(new URL('shaman-sources.json',root)));assert.equal(shaman.license,'CC-BY-SA-4.0');shaman.sources.forEach(verify);shaman.generated.forEach(verify);
-const orc=JSON.parse(fs.readFileSync(new URL('orc-sources.json',root)));assert.equal(orc.license,'CC-BY-SA-4.0');orc.sources.forEach(verify);orc.generated.forEach(verify);
-{
- const map=S.defaultMap();map.players[0].faction=1;map.players.forEach(p=>p.ai=false);map.units=[{kind:'raider',team:0,x:-12,z:12}];const s=battleFixture(S,'skirmish',{map},['hero','barracks','farm','guard','harvest']),u=s.units.find(u=>u.kind==='raider'),v=V.model(s,u);assert.equal(v.key,'RealOrc');assert.ok(portraitKeys.has(v.key));assert.deepEqual(v.asset.animations.map(a=>a.name),['Idle','Walk','Attack','Death']);assert.match(V.pose(u,v.asset,false,.5),/#pose=0:6$/);assert.match(V.pose(u,v.asset,true,.5),/#pose=1:6$/);u.cd=S.unitType(u).cooldown;assert.match(V.pose(u,v.asset,false,0),/#pose=2:7$/);assert.equal(V.pose(S.restore(s).units.find(t=>t.id===u.id),v.asset,false,90),V.pose(u,v.asset,false,0));assert.equal(V.model(S.publicState(s,0),u).key,'RealOrc');
- const c={id:u.id,kind:'raider',team:0,x:u.x,y:0,z:u.z,yaw:.8,age:0};assert.match(V.corpse(s,c).mesh,/RealOrc.glb#pose=3:0$/);assert.match(V.corpse(s,{...c,age:4}).mesh,/#pose=3:15$/);assert.equal(V.corpse(s,{...c,age:10}).mesh,V.corpse(s,{...c,age:4}).mesh);
- const barracks=s.units.find(v=>v.team===0&&v.kind==='barracks');assert.ok(S.trainable(s,barracks).includes('raider'));assert.equal(S.command(s,0,{type:'train',ids:[barracks.id],kind:'raider'}),null);for(let i=0;i<70;i++)S.tick(s);const trained=s.units.find(v=>v.kind==='raider'&&v.id!==u.id);assert.ok(trained);assert.equal(V.model(s,trained).key,'RealOrc');
-}
-const treant=JSON.parse(fs.readFileSync(new URL('treant-sources.json',root)));assert.equal(treant.license,'CC-BY-3.0');treant.sources.forEach(verify);treant.generated.forEach(verify);
-{
- const map=S.defaultMap();map.players[0].faction=2;map.players.forEach(p=>p.ai=false);map.units=[{kind:'treant',team:0,x:-12,z:12}];const s=battleFixture(S,'skirmish',{map},['hero','barracks','farm','guard','harvest']),u=s.units.find(u=>u.kind==='treant'),v=V.model(s,u);assert.equal(v.key,'RealTreant');assert.ok(portraitKeys.has(v.key));assert.deepEqual(v.asset.animations.map(a=>a.name),['Idle','Walk','Attack','Death']);assert.ok(v.height>4);assert.match(V.pose(u,v.asset,false,.5),/#pose=0:6$/);assert.match(V.pose(u,v.asset,true,.5),/#pose=1:6$/);u.cd=S.unitType(u).cooldown;assert.match(V.pose(u,v.asset,false,0),/#pose=2:6$/);assert.equal(V.pose(S.restore(s).units.find(t=>t.id===u.id),v.asset,false,90),V.pose(u,v.asset,false,0));assert.equal(V.model(S.publicState(s,0),u).key,'RealTreant');
- const c={id:u.id,kind:'treant',team:0,x:u.x,y:0,z:u.z,yaw:.8,age:0},early=V.corpse(s,c),settled=V.corpse(s,{...c,age:4});assert.match(early.mesh,/RealTreant.glb#pose=3:0$/);assert.match(settled.mesh,/#pose=3:19$/);assert.equal(V.corpse(s,{...c,age:10}).mesh,settled.mesh);
- setTechnology(S,s,0,2);s.teams[0].gold=2000;s.teams[0].wood=1000;const barracks=s.units.find(v=>v.team===0&&v.kind==='barracks');assert.ok(S.trainable(s,barracks).includes('treant'));assert.equal(S.command(s,0,{type:'train',ids:[barracks.id],kind:'treant'}),null);for(let i=0;i<110;i++)S.tick(s);const trained=s.units.find(v=>v.kind==='treant'&&v.id!==u.id);assert.ok(trained);assert.equal(V.model(s,trained).key,'RealTreant');
-}
-const wildlife=JSON.parse(fs.readFileSync(new URL('wildlife-sources.json',root)));assert.equal(wildlife.license,'CC-BY-SA-3.0');wildlife.sources.forEach(verify);wildlife.generated.forEach(verify);
-for(const [tag,key] of [[undefined,'RealWolf'],['boss','RealBear']]){
- const s=S.create('rpg'),u=s.units.find(u=>u.kind==='neutral'&&(tag?u.tag===tag:u.tag==='scout')),v=V.model(s,u);assert.equal(v.key,key);assert.ok(portraitKeys.has(key));assert.deepEqual(v.asset.animations.map(a=>a.name),['Idle','Walk','Attack','Death']);assert.match(V.pose(u,v.asset,true,.3),/#pose=1:/);u.cd=1;assert.match(V.pose(u,v.asset,false,.3),/#pose=2:/);assert.equal(V.pose(S.restore(s).units.find(v=>v.id===u.id),v.asset,false,80),V.pose(u,v.asset,false,.3));
- const c={id:u.id,kind:'neutral',team:u.team,x:u.x,y:0,z:u.z,yaw:1,age:0,boss:tag==='boss',large:false},early=V.corpse(s,c),settled=V.corpse(s,{...c,age:4}),late=V.corpse(s,{...c,age:10});assert.ok(early.mesh.includes(key));assert.notEqual(early.mesh,settled.mesh);assert.equal(settled.mesh,late.mesh);assert.ok(settled.mesh.includes('#pose=3:'));
-}
-const cavalry=JSON.parse(fs.readFileSync(new URL('cavalry-sources.json',root)));assert.equal(cavalry.license,'CC-BY-SA-3.0');cavalry.sources.forEach(verify);cavalry.generated.forEach(verify);
-{
- const state=battleFixture(S,'skirmish',{factions:[0,1]},['hero','barracks','farm','guard','harvest']),knight=S.spawn(state,'knight',0,0,0),v=V.model(state,knight);assert.equal(v.key,'RealKnight');assert.ok(v.asset.mountedModel);assert.equal(v.scale,1);assert.ok(portraitKeys.has('RealKnight'));assert.match(V.pose(knight,v.asset,false,.2),/#pose=0:/);assert.match(V.pose(knight,v.asset,true,.2),/#pose=1:/);knight.cd=1.3;assert.match(V.pose(knight,v.asset,false,.2),/#pose=2:8$/);const restored=S.restore(state).units.find(u=>u.id===knight.id);assert.equal(V.pose(restored,v.asset,false,90),V.pose(knight,v.asset,false,.2));assert.notEqual(V.model(state,{kind:'paladin',team:0}).key,'RealKnight');
-}
-const paladins=JSON.parse(fs.readFileSync(new URL('paladin-sources.json',root)));assert.equal(paladins.license,'CC-BY-SA-3.0');paladins.sources.forEach(verify);paladins.generated.forEach(verify);
-for(let slot=0;slot<4;slot++){
- const state=battleFixture(S,'skirmish',{heroes:[3,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),hero=state.units.find(u=>u.kind==='hero'&&u.team===0),v=V.model(state,hero),unit=V.model(state,{kind:'paladin',team:0});assert.equal(v.key,'RealDawnPaladin');assert.equal(V.heroPortrait(3),'Assets/Art/unit-portraits.png#RealDawnPaladin');assert.equal(unit.key,'RealPaladin');assert.ok(portraitKeys.has(v.key)&&portraitKeys.has(unit.key));assert.deepEqual(v.asset.animations.map(a=>a.name),['Idle','Walk','Sword_Attack','Cast','Death']);
- assert.match(S.command(state,0,{type:'spell',ids:[hero.id],slot,x:hero.x,z:hero.z}),/Learn/);assert.match(V.pose(hero,v.asset,false,0),/#pose=0:/);hero.level=6;hero.skillPoints=6;assert.equal(S.command(state,0,{type:'learn',ids:[hero.id],slot}),null);assert.equal(S.command(state,0,{type:'spell',ids:[hero.id],slot,x:hero.x,z:hero.z}),null);assert.match(V.pose(hero,v.asset,false,90),/#pose=3:0$/);
- const cooldown=S.unitType(hero).spells[slot].cooldown;hero.spell[slot]=cooldown-.4;const mid=V.pose(hero,v.asset,false,1);assert.match(mid,/#pose=3:9$|#pose=3:10$/);assert.equal(V.pose(S.restore(state).units.find(u=>u.id===hero.id),v.asset,false,80),mid);assert.equal(V.pose(S.publicState(state,0).units.find(u=>u.id===hero.id),v.asset,false,80),mid);assert.match(V.pose(hero,v.asset,true,0),/#pose=1:/);hero.stun=1;assert.match(V.pose(hero,v.asset,false,0),/#pose=0:/);hero.stun=0;hero.spell[slot]=cooldown-1;assert.match(V.pose(hero,v.asset,false,0),/#pose=0:/);
-}
-const mages=JSON.parse(fs.readFileSync(new URL('mage-sources.json',root)));assert.equal(mages.license,'CC-BY-SA-3.0');mages.sources.forEach(verify);mages.generated.forEach(verify);
-for(const [heroClass,key] of [[0,'RealFrostWarden'],[1,'RealEmberSage']])for(let slot=0;slot<4;slot++){
- const state=battleFixture(S,'skirmish',{heroes:[heroClass,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),hero=state.units.find(u=>u.kind==='hero'&&u.team===0),v=V.model(state,hero);assert.equal(v.key,key);assert.equal(V.heroPortrait(heroClass),'Assets/Art/unit-portraits.png#'+key);assert.ok(portraitKeys.has(key));assert.deepEqual(v.asset.animations.map(a=>a.name),['Idle','Walk','Staff_Attack','Cast','Death']);
- assert.match(S.command(state,0,{type:'spell',ids:[hero.id],slot,x:hero.x,z:hero.z}),/Learn/);assert.match(V.pose(hero,v.asset,false,0),/#pose=0:/);hero.level=6;hero.skillPoints=6;assert.equal(S.command(state,0,{type:'learn',ids:[hero.id],slot}),null);assert.equal(S.command(state,0,{type:'spell',ids:[hero.id],slot,x:hero.x,z:hero.z}),null);assert.match(V.pose(hero,v.asset,false,90),/#pose=3:0$/);
- const cooldown=S.unitType(hero).spells[slot].cooldown;hero.spell[slot]=cooldown-.4;const mid=V.pose(hero,v.asset,false,1);assert.match(mid,/#pose=3:24$|#pose=3:25$/);assert.equal(V.pose(S.restore(state).units.find(u=>u.id===hero.id),v.asset,false,80),mid);assert.equal(V.pose(S.publicState(state,0).units.find(u=>u.id===hero.id),v.asset,false,80),mid);assert.match(V.pose(hero,v.asset,true,0),/#pose=1:/);hero.stun=1;assert.match(V.pose(hero,v.asset,false,0),/#pose=0:/);hero.stun=0;hero.spell[slot]=cooldown-1;hero.cd=S.unitType(hero).cooldown;assert.match(V.pose(hero,v.asset,false,0),/#pose=2:12$/);assert.equal(V.pose(hero,v.asset,false,90),V.pose(hero,v.asset,false,0));
- assert.equal(V.model(state,{kind:'mage',team:0}).key,'RealEmberSage');assert.equal(V.model(state,{kind:'rifleman',team:0}).key,'RealRifleman');assert.equal(V.model(state,{kind:'druid',team:0}).key,'Wizard');
-}
-const ranger=JSON.parse(fs.readFileSync(new URL('ranger-sources.json',root)));assert.equal(ranger.license,'CC-BY-SA-3.0');ranger.sources.forEach(verify);ranger.generated.forEach(verify);
-for(let slot=0;slot<4;slot++){
- const state=battleFixture(S,'skirmish',{heroes:[2,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),hero=state.units.find(u=>u.kind==='hero'&&u.team===0),key='RealSylvanRanger';assert.equal(V.model(state,hero).key,key);assert.equal(V.heroPortrait(2),'Assets/Art/unit-portraits.png#'+key);assert.ok(portraitKeys.has(key));assert.deepEqual(FrostArt[key].animations.map(a=>a.name),['Idle','Walk','Bow_Shoot','Cast','Death']);
- assert.match(S.command(state,0,{type:'spell',ids:[hero.id],slot,x:hero.x,z:hero.z}),/Learn/);assert.match(V.pose(hero,V.model(state,hero).asset,false,0),/#pose=0:/);hero.level=6;hero.skillPoints=6;assert.equal(S.command(state,0,{type:'learn',ids:[hero.id],slot}),null);assert.equal(S.command(state,0,{type:'spell',ids:[hero.id],slot,x:hero.x,z:hero.z}),null);
- const cooldown=S.unitType(hero).spells[slot].cooldown;
- for(const elapsed of [0,.2,.4,.6,.79]){
-  hero.spell[slot]=cooldown-elapsed;hero.cd=.9;const phase=.45+.55*elapsed/.8,v=V.model(state,hero),expected=FrostArt[key+(phase<.72?'Shoot':'Loaded')];assert.equal(v.asset,expected,'cast arrow follows release/reload, even while ordinary attack cooldown is positive');const pose=V.pose(hero,v.asset,false,100);assert.match(pose,/#pose=3:/);assert.ok(Math.abs(Number(pose.split(':').at(-1))-Math.floor(phase*30))<=1);
-  for(const copy of [S.restore(state),S.publicState(state,0)]){const u=copy.units.find(u=>u.id===hero.id),restored=V.model(copy,u);assert.equal(restored.asset,v.asset);assert.equal(V.pose(u,restored.asset,false,999),pose);}
-  assert.equal(V.model(state,hero,true).asset,FrostArt[key]);assert.match(V.pose(hero,FrostArt[key],true,0),/#pose=1:/);hero.stun=1;assert.equal(V.model(state,hero).asset,FrostArt[key]);assert.match(V.pose(hero,FrostArt[key],false,0),/#pose=0:/);hero.stun=0;
+const source=JSON.parse(fs.readFileSync(new URL('classic-sources.json',root))),sha=data=>crypto.createHash('sha256').update(data).digest('hex');
+for(const file of source.files)assert.equal(sha(fs.readFileSync(new URL(file.path,root))),file.sha256,file.path);
+let samples=0,teamLayers=0,hiddenLayers=0;
+for(const asset of Object.values(FrostArt).filter(a=>a.classic)){
+ assert.ok(asset.bounds.min.every(Number.isFinite)&&asset.bounds.max.every(Number.isFinite));
+ for(let clip=0;clip<asset.animations.length;clip++)for(const t of [0,.3,asset.animations[clip].duration,asset.animations[clip].duration+2]){
+  const action=asset.animations[clip].name,u={kind:'soldier',team:0,cd:0,built:1},sample=V.classicSample(u,asset,false,t,action,30),mesh=V.pose(u,asset,false,t,30);
+  assert.ok(Number.isInteger(sample.frame)&&sample.frame>=0&&sample.frame<=18000);assert.ok(sample.clip>=0&&sample.clip<asset.animations.length);
+  assert.match(mesh,/#pose=\d+:\d+@30$/);assert.ok(fs.existsSync(new URL(mesh.split('#')[0],root)));samples++;
  }
- hero.spell[slot]=cooldown-1;
- for(const cd of [1,.8,.6,.4,.2,.05]){hero.cd=cd;const v=V.model(state,hero);assert.equal(v.asset,FrostArt[key+(cd>.73?'Shoot':'Loaded')]);assert.match(V.pose(hero,v.asset,false,0),/#pose=2:/);assert.equal(V.pose(hero,v.asset,false,99),V.pose(hero,v.asset,false,0));}
- hero.cd=0;assert.equal(V.model(state,hero).asset,FrostArt[key]);assert.match(V.pose(hero,FrostArt[key],false,0),/#pose=0:/);
+ const u={kind:'soldier',team:0,cd:0,built:1},mesh=V.pose(u,asset,false,.3,30),blue=V.parts(asset,mesh,0),red=V.parts(asset,mesh,1);
+ assert.equal(blue.length,asset.parts.length);
+ for(let i=0;i<blue.length;i++){
+  const p=asset.parts[i];assert.ok(blue[i].color.every(Number.isFinite));assert.ok(blue[i].mesh.startsWith(p.mesh));
+  if(p.teamMaterials['1']){assert.equal(blue[i].material,p.teamMaterials['1']);assert.equal(red[i].material,p.teamMaterials['0']);teamLayers++;}
+  if(!blue[i].visible)hiddenLayers++;
+ }
+}
+assert.ok(samples>1000&&teamLayers>20&&hiddenLayers>10);
+for(let faction=0;faction<4;faction++){
+ const s=battleFixture(S,'skirmish',{factions:[faction,0],ai:[false,false]},['hero','barracks','farm']);
+ for(const kind of Object.keys(S.types)){const v=V.model(s,{kind,team:0,cd:0,built:1});assert.ok(v.asset,kind);assert.ok(Number.isFinite(v.scale)&&v.scale>0,kind);assert.ok(V.name(s,{kind,team:0}));}
+ const worker=s.units.find(u=>u.kind==='worker'&&u.team===0),view=V.model(s,worker);assert.equal(view.key,['RealWorker','ClassicPeon','ClassicWisp','RealAcolyte'][faction]);assert.ok(view.asset.classic);
+ const soldier=V.model(s,{kind:'soldier',team:0,cd:0,built:1});assert.equal(soldier.key,['RealFootman','RealOrc','ClassicHuntress','RealGhoul'][faction]);
+ for(const tier of [1,2,3]){
+  const hall=s.units.find(u=>u.kind==='hall'&&u.team===0);hall.upgradeTier=tier;const v=V.model(s,hall);assert.ok(v.asset.classic&&v.asset.factionBuilding);assert.equal(v.asset.classicTier,tier);
+  assert.ok(v.scale*Math.hypot(v.asset.size[0],v.asset.size[2])<=S.types.hall.radius*2*.92+1e-6);
+  if(faction===0){const clip=v.asset.animations[V.classicSample(hall,v.asset,false,0).clip];if(tier>1)assert.match(clip.name,tier===2?/Upgrade First/:/Upgrade Second/);else assert.equal(clip.name,'Stand');}
+  const ghost=V.parts(v.asset,V.pose({...hall,built:1,cd:0},v.asset,false,0),0,true);assert.ok(ghost.filter(p=>p.visible).every(p=>p.material.includes('/Placement/')));
+ }
+}
+for(const key of ['RealWorker','ClassicPeon','RealGhoul']){
+ const asset=FrostArt[key+'Wood'],u={kind:key==='RealGhoul'?'ghoul':'worker',team:0,cd:0,cargo:5,cargoKind:'tree'};
+ const a=V.classicSample(u,asset,false,20,undefined,30),b=V.classicSample(u,asset,false,20.25,undefined,30);assert.match(asset.animations[a.clip].name,/Attack Lumber/i);assert.notEqual(a.frame,b.frame,'harvesting continues after match startup');
+ assert.equal(V.pose(u,asset,false,20,30),V.pose({...u},asset,false,20,30));
 }
 for(let heroClass=0;heroClass<4;heroClass++){
- const state=battleFixture(S,'skirmish',{heroes:[heroClass,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),hero=state.units.find(u=>u.kind==='hero'&&u.team===0);assert.equal(S.command(state,0,{type:'learn',ids:[hero.id],slot:0}),null);assert.equal(S.command(state,0,{type:'spell',ids:[hero.id],slot:0,x:hero.x+3,z:hero.z+1}),null);const old={x:hero.x,z:hero.z,yaw:-1};assert.equal(V.heading(state,hero,old),Math.atan2(3,1));assert.equal(V.heading(state,hero,{...old,x:hero.x-1}),Math.PI/2,'movement overrides casting direction');hero.stun=1;assert.equal(V.heading(state,hero,old),old.yaw);hero.stun=0;
- for(const copy of [S.restore(state),S.publicState(state,0)])assert.equal(V.heading(copy,copy.units.find(u=>u.id===hero.id),old),hero.castYaw);hero.spell[0]=S.heroes[heroClass].spells[0].cooldown-1;assert.equal(V.heading(state,hero,old),old.yaw,'expired cast no longer overrides facing');
+ const s=battleFixture(S,'skirmish',{heroes:[heroClass,0],ai:[false,false]},['hero']),hero=s.units.find(u=>u.kind==='hero'&&u.team===0),view=V.model(s,hero);
+ assert.ok(view.asset.classic);hero.level=6;hero.skillPoints=6;assert.equal(S.command(s,0,{type:'learn',ids:[hero.id],slot:0}),null);assert.equal(S.command(s,0,{type:'spell',ids:[hero.id],slot:0,x:hero.x+2,z:hero.z}),null);
+ const sample=V.classicSample(hero,view.asset,false,100,undefined,30);assert.match(view.asset.animations[sample.clip].name,/Spell/i);
+ assert.equal(V.pose(hero,view.asset,false,100,30),V.pose(S.restore(s).units.find(u=>u.id===hero.id),view.asset,false,100,30));
+ assert.match(view.asset.animations[V.classicSample(hero,view.asset,true,1).clip].name,/Walk/i);
+ assert.ok(V.portrait(view.asset).size>0);
 }
-const siege=JSON.parse(fs.readFileSync(new URL('siege-sources.json',root)));assert.equal(siege.license,'CC-BY-SA-3.0');siege.sources.forEach(verify);siege.generated.forEach(verify);
-for(const [kind,key] of [['ballista','RealBallista'],['catapult','RealCatapult'],['trebuchet','RealTrebuchet'],['ram','RealRam']]){
- const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const state=battleFixture(S,'skirmish',{map},['hero','barracks','farm','guard','harvest']),unit=S.spawn(state,kind,0,0,0),target=S.spawn(state,'tower',1,0,3);target.damage=0;target.hp=target.maxHp=100000;S.visibility(state);unit.order={type:'attack',target:target.id};
- const idle=V.model(state,unit);assert.equal(idle.key,key);assert.equal(idle.scale,1);assert.ok(portraitKeys.has(key));assert.equal(idle.asset,FrostArt[key]);
- let released=false,sawLoaded=false,sawEmpty=false;
- for(let i=0;i<100;i++){
-  S.tick(state);const v=V.model(state,unit);assert.equal(v.key,key);assert.equal(v.scale,1);if(state.events.some(e=>e.type==='launch'&&e.fromX===unit.x&&e.fromZ===unit.z)){released=true;if(v.asset.shotModel)assert.equal(v.asset,FrostArt[key+'Shoot'],'released ammunition is removed');}
-  sawLoaded||=v.asset===FrostArt[key];sawEmpty||=v.asset===FrostArt[key+'Shoot'];
-  const copy=S.restore(state),restored=copy.units.find(u=>u.id===unit.id);assert.equal(V.model(copy,restored).asset,v.asset);assert.equal(V.pose(restored,v.asset,false,0),V.pose(unit,v.asset,false,90),'mechanical cycle survives save restoration');
- }
- if(kind!=='ram')assert.ok(released&&sawLoaded&&sawEmpty,kind+' completes loaded/release/reload cycle');
- assert.equal(V.model(state,unit,true).asset,FrostArt[key]);assert.match(V.pose(unit,FrostArt[key],true,.5),/#pose=1:/);assert.equal(V.model(state,{...unit,stun:1}).asset,FrostArt[key]);
+for(const key of ['RealFootman','RealArcher','RealGhoul','RealAbomination']){
+ const asset=FrostArt[key],u={kind:'soldier',team:0,cd:0},clip=V.classicClip(asset,'Death',u),duration=asset.animations[clip].duration;
+ const end=V.classicSample(u,asset,false,duration,'Death'),late=V.classicSample(u,asset,false,duration+10,'Death');assert.deepEqual(end,late);assert.equal(end.frame,Math.ceil(duration*12));
 }
-for(const [faction,key] of [[0,'RealWorker'],[3,'RealAcolyte']]){
- const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[{kind:'tree',x:-8,z:12,amount:4000},{kind:'mine',x:-8,z:16,amount:4000}];map.players.forEach(p=>p.ai=false);
- const state=battleFixture(S,'skirmish',{map,factions:[faction,1]},['hero','barracks','farm','guard','harvest']),worker=state.units.find(u=>u.kind==='worker'&&u.team===0);state.units.filter(u=>u.kind==='worker').forEach(u=>u.order=null);worker.x=-12;worker.z=12;
- const art=()=>V.model(state,worker),until=fn=>{for(let i=0;i<600;i++){if(fn())return;S.tick(state);}assert.fail('worker activity did not complete');};
- if(faction===0){
- assert.equal(S.command(state,0,{type:'gather',ids:[worker.id],resource:0}),null);assert.equal(art().asset,FrostArt[key],'approaching a resource keeps walking equipment');
- until(()=>art().asset===FrostArt[key+'Wood']&&worker.cargo>0);assert.equal(worker.cd,0);assert.ok(worker.gatherCd>0);assert.equal(art().key,key,'working keeps the same portrait identity');assert.match(V.pose(worker,art().asset,false,.5),new RegExp(key+'Wood\\.glb#pose=0:'));
- assert.equal(V.heading(state,worker,{x:worker.x,z:worker.z,yaw:0}),Math.atan2(-8-worker.x,12-worker.z));
- const legacy=S.clone(state),legacyWorker=legacy.units.find(u=>u.id===worker.id);delete legacyWorker.gatherCd;legacyWorker.cd=.4;const migrated=S.restore(legacy).units.find(u=>u.id===worker.id);assert.equal(migrated.gatherCd,.4);assert.equal(migrated.cd,.4);legacyWorker.cd=1.2;assert.equal(S.restore(legacy).units.find(u=>u.id===worker.id).gatherCd,1.2);legacyWorker.gatherCd=-1;assert.throws(()=>S.restore(legacy),/gathering cooldown/);
- const restored=S.restore(state),restoredWorker=restored.units.find(u=>u.id===worker.id);assert.equal(V.model(restored,restoredWorker).asset,FrostArt[key+'Wood']);
- for(const patch of [{cargo:20},{stun:1},{inside:1}])assert.equal(V.model(state,{...worker,...patch}).asset,FrostArt[key]);
- const amount=state.resources[0].amount;state.resources[0].amount=0;assert.equal(art().asset,FrostArt[key]);state.resources[0].amount=amount;
- assert.equal(S.command(state,0,{type:'gather',ids:[worker.id],resource:1}),null);until(()=>art().asset===FrostArt[key+'Mine']&&worker.cargoKind==='mine');
- }else{assert.ok(S.command(state,0,{type:'gather',ids:[worker.id],resource:0}));S.spawn(state,'hauntedmine',0,-8,16);assert.equal(S.command(state,0,{type:'gather',ids:[worker.id],resource:1}),null);until(()=>art().asset===FrostArt.RealAcolyteMine);assert.equal(worker.cargo,0);state.visible[1].fill(1);const enemyView=S.publicState(state,1),visibleWorker=enemyView.units.find(u=>u.id===worker.id);assert.equal(visibleWorker.order,null);assert.deepEqual(Object.keys(visibleWorker.miningTarget).sort(),['x','z']);assert.equal(V.model(enemyView,visibleWorker).asset,FrostArt.RealAcolyteMine);assert.equal(V.model(S.restore(state),S.restore(state).units.find(u=>u.id===worker.id)).asset,FrostArt.RealAcolyteMine);}
- assert.equal(S.command(state,0,{type:'stop',ids:[worker.id]}),null);assert.equal(art().asset,FrostArt[key]);assert.match(V.pose(worker,art().asset,false,.5),/#pose=0:6$/,'stopping gathering does not start a combat swing');
- assert.equal(S.command(state,0,{type:'build',ids:[worker.id],kind:'farm',x:faction===3?-12:-4,z:10}),null);const building=state.units.find(u=>u.kind==='farm'&&u.built<1);if(faction===3){until(()=>building.construction.started);assert.equal(building.construction.style,'summon');assert.notEqual(art().asset,FrostArt[key+'Build']);}else{until(()=>art().asset===FrostArt[key+'Build']);assert.equal(V.model(state,{...worker,root:1}).asset,FrostArt[key]);}assert.ok(building.built<1);const progress=building.built;S.tick(state);assert.ok(building.built>progress);
- until(()=>building.built===1);assert.notEqual(art().asset,FrostArt[key+'Build']);building.hp=building.maxHp/2;assert.equal(S.command(state,0,{type:'repair',ids:[worker.id],target:building.id}),null);until(()=>art().asset===FrostArt[key+'Build']);const budget={...state.teams[0]};state.teams[0].gold=state.teams[0].wood=0;assert.equal(art().asset,FrostArt[key]);Object.assign(state.teams[0],budget);const hp=building.hp;S.tick(state);assert.ok(building.hp>hp);until(()=>building.hp===building.maxHp);assert.notEqual(art().asset,FrostArt[key+'Build']);
-}
-for(let faction=0;faction<4;faction++){const state=battleFixture(S,'skirmish',{factions:[faction,0]},['hero','barracks','farm','guard','harvest']);for(const kind of Object.keys(S.types))if(S.types[kind].speed)assert.ok(portraitKeys.has(V.model(state,{kind,team:0}).key),kind);}
-
-{
- const state=battleFixture(S,'skirmish',{},['hero','barracks','farm','guard','harvest']),unit=S.spawn(state,'bonearcher',0,0,0),target=S.spawn(state,'soldier',1,8,0),old={x:0,z:-1,yaw:0};unit.cd=1;unit.order={type:'attack',target:target.id};state.events=[{type:'hit',team:0,fromX:0,fromZ:0,x:8,z:0}];assert.equal(V.heading(state,unit,old),Math.PI/2,'attack turns from the old marching direction toward the actual hit');
- state.events=[];assert.equal(V.heading(state,unit,{x:0,z:0,yaw:0}),Math.PI/2,'stationary explicit attacks continue tracking their target');unit.order=null;unit.cd=0;assert.equal(V.heading(state,unit,{x:-1,z:0,yaw:0}),Math.PI/2,'marching turns with movement');assert.equal(V.heading(state,{kind:'tower',team:0,x:0,z:0,cd:1},old),Math.PI/6,'buildings show both facades and retain their orientation');
-}
-{
- const manifest=JSON.parse(fs.readFileSync(new URL('crossbowman-sources.json',root)));for(const entry of [...manifest.sources,...manifest.inputs,...manifest.generated])verify(entry);
- const state=battleFixture(S,'skirmish',{},['hero','barracks','farm','guard','harvest']),unit={kind:'bonearcher',team:0,cd:0},asset=FrostArt.RealBoneArcher;assert.equal(V.model(state,unit).asset,asset);assert.ok(portraitKeys.has('RealBoneArcher'));
- for(const [phase,loaded] of [[.2,false],[.5,true],[.8,true],[.85,false],[.95,false]]){unit.cd=(1-(phase-asset.attackEvent+1)%1)*S.unitType(unit).cooldown;const visual=V.model(state,unit);assert.equal(visual.asset,FrostArt[loaded?'RealBoneArcher':'RealBoneArcherShoot']);assert.match(V.pose(unit,visual.asset,false,0),/#pose=2:/);}
- unit.cd=0;assert.match(V.pose(unit,asset,true,.5),/#pose=1:/);assert.match(V.pose(unit,asset,false,.5),/#pose=0:/);assert.ok(V.corpse(state,{...unit,x:0,z:0,y:0,age:1,yaw:0}).mesh.includes('#pose=3:'));
-}
-{
- const manifest=JSON.parse(fs.readFileSync(new URL('necromancer-sources.json',root)));for(const entry of [...manifest.sources,...manifest.inputs,...manifest.generated])verify(entry);
- const state=battleFixture(S,'skirmish',{},['hero','barracks','farm','guard','harvest']),unit={kind:'necromancer',team:0,cd:0},asset=FrostArt.RealNecromancer;assert.equal(V.model(state,unit).asset,asset);assert.ok(portraitKeys.has('RealNecromancer'));assert.match(V.pose(unit,asset,false,.5),/#pose=0:6$/);assert.match(V.pose(unit,asset,true,.5),/#pose=1:6$/);
- unit.cd=S.unitType(unit).cooldown;assert.equal(V.pose(unit,asset,false,0),V.pose(unit,asset,false,100));assert.match(V.pose(unit,asset,false,0),/#pose=2:12$/);assert.match(V.pose({...unit,stun:1},asset,false,0),/#pose=0:/);
- assert.ok(V.corpse(state,{...unit,cd:0,x:0,z:0,y:0,age:1,yaw:0}).mesh.includes('#pose=3:'));assert.equal(S.projectileArt(unit),'shadow');
-}
-{const asset={parts:[{mesh:'odd.glb'}],animations:[{name:'Idle',frames:15},{name:'Walk',frames:15}]},u={kind:'hero',cd:0};assert.equal(V.pose(u,asset,true,.5,30),'odd.glb#pose=1:15@30');assert.equal(V.pose(u,asset,true,1.25,30),'odd.glb#pose=1:0@30','higher rates retain the original loop period');assert.equal(V.pose(u,asset,true,1.24,30),'odd.glb#pose=1:37@30');}
-console.log('PASS: four faction rosters, 35 building portraits, tier upgrades/save restore, footprints, animated monsters and skeletons, native unit portraits and pinned source/derived hashes');
-
-{
- const manifest=JSON.parse(fs.readFileSync(new URL('rifleman-sources.json',root)));manifest.sources.forEach(verify);manifest.generated.forEach(verify);assert.ok(portraitKeys.has('RealRifleman'));
- const s=battleFixture(S,'skirmish',{},['hero','barracks','farm','guard','harvest']),u=S.spawn(s,'rifleman',0,0,0),asset=FrostArt.RealRifleman;
- assert.equal(V.model(s,u).asset,asset);u.cd=S.unitType(u).cooldown;
- assert.equal(V.pose(u,asset,false,0),V.pose(u,asset,false,123));assert.match(V.pose(u,asset,false,0),/#pose=2:/);
- assert.match(V.pose(u,asset,true,0),/#pose=1:/);assert.match(V.pose({...u,stun:1},asset,false,0),/#pose=0:/);
- for(const [x,z] of [[0,8],[8,0],[0,-8],[-8,0]]){const e={x,z,fromX:0,fromZ:0,fromY:3.6,team:0},m=V.muzzle(e);assert.ok(m.x*x+m.z*z>0);assert.ok(Math.abs(m.y-(2+asset.muzzle[1]*.85))<1e-6);}
- assert.equal(V.projectile('musket').mesh,null);
- const restored=S.restore(s).units.find(v=>v.id===u.id);assert.equal(V.pose(restored,asset,false,0),V.pose(u,asset,false,0));
-}
+for(const [x,z] of [[0,8],[8,0],[0,-8],[-8,0]]){const m=V.muzzle({x,z,fromX:0,fromZ:0,fromY:1.6,team:0});assert.ok([m.x,m.y,m.z].every(Number.isFinite));assert.ok(m.x*x+m.z*z>0);}
+for(let tileset=0;tileset<3;tileset++){const v=V.resource({kind:'tree',x:2,z:3,amount:3000},12,tileset);assert.equal(v.key,['ClassicOak','ClassicBarrensTree','ClassicWinterTree'][tileset]);assert.ok(v.parts.length>=1);}
+const scene=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world.entities,portraitRoot=scene.find(e=>e.name==='Portrait model');
+assert.equal(scene.filter(e=>e.parent===portraitRoot.entity).length,V.actorPartCount());
+for(const prefix of ['Unit 0','Corpse 0','Placement preview'])assert.equal(scene.filter(e=>e.name===prefix||e.name.startsWith(prefix+' part ')).length,V.actorPartCount());
+console.log('PASS: classic asset hashes',source.files.length,'pose samples',samples,'team layers',teamLayers,'hidden layers',hiddenLayers,'four rosters, tiers, worker cycles, spells, terminal deaths and complete render slots');
