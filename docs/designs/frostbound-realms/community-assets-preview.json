@@ -1,0 +1,105 @@
+{
+  "method": "Native editor Game View GPU renderer",
+  "project": "D:\\MEngineNativeQA\\classic-library-1791196290757\\sample",
+  "image": "C:\\Users\\admin\\.codex\\worktrees\\1339\\MEgine\\docs\\designs\\frostbound-realms\\community-assets-preview.png",
+  "sha256": "46265bbed125967d0b42c9a7add3abc0f10b1de73e3b1218289a132886b79624",
+  "rendererSha256": "3f7788410808e0da8a9ee34d9cf8275d67d63b2602ac5e93775a7d559a402de6",
+  "models": [
+    {
+      "model": "FootmanV2.03",
+      "source": "HIVE/units/footman-captain/Footman Captain and Derivatives/FootmanV2.03.mdx",
+      "row": 0,
+      "column": 0
+    },
+    {
+      "model": "FootmanStromgardeV1.04",
+      "source": "HIVE/units/footman-captain/Footman Captain and Derivatives/Footman (Stromgarde)/FootmanStromgardeV1.04.mdx",
+      "row": 0,
+      "column": 1
+    },
+    {
+      "model": "FootmanBanditV1.00",
+      "source": "HIVE/units/footman-captain/Footman Captain and Derivatives/FootmanBanditV1.00.mdx",
+      "row": 0,
+      "column": 2
+    },
+    {
+      "model": "FootmanEbonBladeV1.00",
+      "source": "HIVE/units/footman-captain/Footman Captain and Derivatives/FootmanEbonBladeV1.00.mdx",
+      "row": 0,
+      "column": 3
+    },
+    {
+      "model": "Ashenvale Tree",
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Ashenvale Tree.MDX",
+      "row": 1,
+      "column": 0
+    },
+    {
+      "model": "Autumn Tree",
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Autumn Tree.MDX",
+      "row": 1,
+      "column": 1
+    },
+    {
+      "model": "PineTree01s",
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/PineTree01s.mdx",
+      "row": 1,
+      "column": 2
+    },
+    {
+      "model": "cityscape pine",
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/cityscape pine.MDX",
+      "row": 1,
+      "column": 3
+    },
+    {
+      "model": "Rock",
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/Rock.mdx",
+      "row": 2,
+      "column": 0
+    },
+    {
+      "model": "BridgeArched",
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/BridgeArched.MDX",
+      "row": 2,
+      "column": 1
+    },
+    {
+      "model": "CityscapeDrawBridge",
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/CityscapeDrawBridge.MDX",
+      "row": 2,
+      "column": 2
+    },
+    {
+      "model": "ThroneRoomFloor",
+      "source": "HIVE/buildings/beautiful-city/Beautiful City Model Pack/Floor Hall/ThroneRoomFloor.mdx",
+      "row": 2,
+      "column": 3
+    },
+    {
+      "model": "ElfHouse",
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/ElfHouse.MDX",
+      "row": 3,
+      "column": 0
+    },
+    {
+      "model": "HumanLighthouse",
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/HumanLighthouse.mdx",
+      "row": 3,
+      "column": 1
+    },
+    {
+      "model": "RavenCragTower",
+      "source": "HIVE/buildings/raven-mountain/Raven Mountain Model Pack/RavenCragTower.mdx",
+      "row": 3,
+      "column": 2
+    },
+    {
+      "model": "HumanTower",
+      "source": "UTM/The Ultimate Terraining Map 4.0 v1/war3mapImported/HumanTower.mdx",
+      "row": 3,
+      "column": 3
+    }
+  ]
+}

@@ -10,7 +10,7 @@
 
 部分 UTM 静态模型的原文件包含 NaN 枢轴。转换仅对没有动画的 Bone/Helper 将枢轴归零：其世界变换为 identity，枢轴在 bind 和 pose 中抵消，因此不改变几何。`sourceRepairs.unanimatedNonfinitePivots` 记录对应节点；有动画或特效的无效枢轴仍拒绝转换。
 
-这些集合已供引擎导入和模型预览使用；当前 Frostbound 战场的资源绑定仍需接入新集合。`docs/designs/frostbound-realms/classic-assets-preview.png` 是原生编辑器生成的模型预览，不代表完整战场替换验收。
+这些集合已供引擎导入和模型预览使用；当前 Frostbound 战场的资源绑定仍需接入新集合。`docs/designs/frostbound-realms/classic-assets-preview.png` 与 `community-assets-preview.png` 是原生编辑器生成的模型预览，不代表完整战场替换验收。
 
 ## 重生成与验证
 
@@ -25,6 +25,10 @@ python scripts/validate-warcraft-assets.py --root tmp/classic-reproduction --run
 ```
 
 `--reuse-samples` 仅在原文件、采样器二进制和缓存 JSON 的哈希全部匹配时复用采样结果。已生成文件被手工改动时，转换器拒绝覆盖。源文件和生成文件校验值位于各集合的 `asset-sources.json`，工具版本与哈希位于 `Licenses/converter-sources.json`。
+
+预览使用编辑器共用的原生 Game View GPU 渲染器：`node scripts/render-warcraft-library.mjs` 生成经典预览，追加 `--community` 生成社区预览。可用 `MENGINE_ASSET_PREVIEW_EXECUTABLE` 指定本地构建的 `render_asset_preview.exe`。
+
+验证中资产库 66 项、RHI 串行 52 项、材质传递 1 项均通过。RHI 并行测试曾发生 STATUS_HEAP_CORRUPTION；串行复跑全部通过，尚未确认该并行崩溃的根因。原生图片与包加载验证通过，不代表物理鼠标或音频验收。
 
 ## 来源与署名
 
