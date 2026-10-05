@@ -1,49 +1,49 @@
 {
   "file": "Assets/Art/faction-buildings.png",
-  "sha256": "aabb3c84e8f93c356ec14b869b18b783f7d2da0a653648873c571a198cfd04c3",
+  "sha256": "b39081c032e9589c4ea2117a9be707f7d7a1f3c24036778c8155f8e55e06d76a",
   "generator": "scripts/render-frost-faction-icons.mjs",
   "method": "Native MEngine Release render of the actual building meshes; no generated concept art",
-  "runtimeSha256": "7b1e20a4b7a64759f62765bb8c6d0092bbed91dd56a2f8ef5d506cf2380c2892",
+  "runtimeSha256": "53bb59e2c1b4cbcb61f3fa95e93327dfa17ff3648806cd290f77baed2f8f969e",
   "models": [
     {
       "name": "KingdomHall",
-      "mesh": "Assets/Models/RealKingdomHall.glb",
-      "material": "Assets/Materials/RealKingdomHall.mmat"
+      "mesh": "Assets/Models/KingdomHall-warcraft.glb",
+      "material": "Assets/Materials/KingdomHall-warcraft.mmat"
     },
     {
       "name": "KingdomHall2",
-      "mesh": "Assets/Models/RealKingdomHall2.glb",
-      "material": "Assets/Materials/RealKingdomHall2.mmat"
+      "mesh": "Assets/Models/KingdomHall2-warcraft.glb",
+      "material": "Assets/Materials/KingdomHall2-warcraft.mmat"
     },
     {
       "name": "KingdomHall3",
-      "mesh": "Assets/Models/RealKingdomHall3.glb",
-      "material": "Assets/Materials/RealKingdomHall3.mmat"
+      "mesh": "Assets/Models/KingdomHall3-warcraft.glb",
+      "material": "Assets/Materials/KingdomHall3-warcraft.mmat"
     },
     {
       "name": "KingdomBarracks",
-      "mesh": "Assets/Models/RealKingdomBarracks.glb",
-      "material": "Assets/Materials/RealKingdomBarracks.mmat"
+      "mesh": "Assets/Models/KingdomBarracks-warcraft.glb",
+      "material": "Assets/Materials/KingdomBarracks-warcraft.mmat"
     },
     {
       "name": "KingdomLodge",
-      "mesh": "Assets/Models/RealKingdomLodge.glb",
-      "material": "Assets/Materials/RealKingdomLodge.mmat"
+      "mesh": "Assets/Models/KingdomLodge-warcraft.glb",
+      "material": "Assets/Materials/KingdomLodge-warcraft.mmat"
     },
     {
       "name": "KingdomTower",
-      "mesh": "Assets/Models/RealKingdomTower.glb",
-      "material": "Assets/Materials/RealKingdomTower.mmat"
+      "mesh": "Assets/Models/KingdomTower-warcraft.glb",
+      "material": "Assets/Materials/KingdomTower-warcraft.mmat"
     },
     {
       "name": "KingdomAltar",
-      "mesh": "Assets/Models/RealKingdomAltar.glb",
-      "material": "Assets/Materials/RealKingdomAltar.mmat"
+      "mesh": "Assets/Models/KingdomAltar-warcraft.glb",
+      "material": "Assets/Materials/KingdomAltar-warcraft.mmat"
     },
     {
       "name": "KingdomWorkshop",
-      "mesh": "Assets/Models/RealKingdomWorkshop.glb",
-      "material": "Assets/Materials/RealKingdomWorkshop.mmat"
+      "mesh": "Assets/Models/KingdomWorkshop-warcraft.glb",
+      "material": "Assets/Materials/KingdomWorkshop-warcraft.mmat"
     },
     {
       "name": "WarclansHall",
@@ -107,8 +107,8 @@
     },
     {
       "name": "WildwoodLodge",
-      "mesh": "Assets/Models/RealWildwoodLodge.glb",
-      "material": "Assets/Materials/RealWildwood.mmat"
+      "mesh": "Assets/Models/WildwoodLodge-warcraft.glb",
+      "material": "Assets/Materials/WildwoodLodge-warcraft.mmat"
     },
     {
       "name": "WildwoodTower",
@@ -174,6 +174,11 @@
       "name": "HauntedMine",
       "mesh": "Assets/Models/RealHauntedMine.glb",
       "material": "Assets/Materials/RealHauntedMine.mmat"
+    },
+    {
+      "name": "KingdomArcaneVault",
+      "mesh": "Assets/Models/KingdomArcaneVault-warcraft.glb",
+      "material": "Assets/Materials/KingdomArcaneVault-warcraft.mmat"
     }
   ]
 }

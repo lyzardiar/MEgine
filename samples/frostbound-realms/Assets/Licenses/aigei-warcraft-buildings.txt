@@ -1,0 +1,13 @@
+User supplied Warcraft scenery archive
+
+Source: G:/work/github/MEgine/tmp/魔兽争霸3warcraft3建筑模型集合_爱给网_aigei_com.zip
+Archive SHA-256: c08dd860fa7c6af229637391eec893eadf5ffa165a7edd9c1e48481171e6552e
+Distributor named by archive text: Aigei, https://www.aigei.com/3d/model/
+Original model author and redistribution license are not specified by the archive.
+These files are not described as CC0 or as assets authored by this project.
+
+The game uses static meshes converted from TitleRPG.max with the original UVs and textures.
+Mesh-to-gameplay assignments are project choices; this scene does not supply a complete set of the four racial production buildings.
+Source archive, object mapping and generated hashes: SourceAssets/aigei-warcraft-buildings.zip and aigei-building-sources.json.
+Importer: io_scene_max 1.9.2, GPL-3.0-or-later, https://github.com/nrgsille76/io_scene_max
+The importer is a build tool and is not shipped in the Player.

@@ -1141,11 +1141,11 @@
     ]
   },
   "KingdomHall": {
-    "material": "Assets/Materials/RealKingdomHall.mmat",
+    "material": "Assets/Materials/KingdomHall-warcraft.mmat",
     "parts": [
       {
         "name": "KingdomHall",
-        "mesh": "Assets/Models/RealKingdomHall.glb",
+        "mesh": "Assets/Models/KingdomHall-warcraft.glb",
         "pivot": [
           0,
           0,
@@ -1154,19 +1154,24 @@
       }
     ],
     "size": [
-      8.777414321899414,
-      12.441641807556152,
-      5.539161682128906
+      5.0,
+      3.995398394328767,
+      3.834723907805139
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/KingdomHall-warcraft.glb",
+      "Assets/Models/KingdomHall-warcraft.glb"
     ],
     "factionBuilding": true,
-    "realistic": true
+    "maxWorldHeight": 5.5
   },
   "KingdomBarracks": {
-    "material": "Assets/Materials/RealKingdomBarracks.mmat",
+    "material": "Assets/Materials/KingdomBarracks-warcraft.mmat",
     "parts": [
       {
         "name": "KingdomBarracks",
-        "mesh": "Assets/Models/RealKingdomBarracks.glb",
+        "mesh": "Assets/Models/KingdomBarracks-warcraft.glb",
         "pivot": [
           0,
           0,
@@ -1175,19 +1180,24 @@
       }
     ],
     "size": [
-      13.241365432739258,
-      9.321049690246582,
-      5.539161682128906
+      5.0,
+      3.907826760773614,
+      3.834716779193189
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/KingdomBarracks-warcraft.glb",
+      "Assets/Models/KingdomBarracks-warcraft.glb"
     ],
     "factionBuilding": true,
-    "realistic": true
+    "maxWorldHeight": 4.5
   },
   "KingdomLodge": {
-    "material": "Assets/Materials/RealKingdomLodge.mmat",
+    "material": "Assets/Materials/KingdomLodge-warcraft.mmat",
     "parts": [
       {
         "name": "KingdomLodge",
-        "mesh": "Assets/Models/RealKingdomLodge.glb",
+        "mesh": "Assets/Models/KingdomLodge-warcraft.glb",
         "pivot": [
           0,
           0,
@@ -1196,19 +1206,24 @@
       }
     ],
     "size": [
-      8.777414321899414,
-      7.404144287109375,
-      5.539161682128906
+      3.517216559772759,
+      5.000000224609963,
+      4.0481458907348316
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/KingdomLodge-warcraft.glb",
+      "Assets/Models/KingdomLodge-warcraft.glb"
     ],
     "factionBuilding": true,
-    "realistic": true
+    "maxWorldHeight": 4.5
   },
   "KingdomTower": {
-    "material": "Assets/Materials/RealKingdomTower.mmat",
+    "material": "Assets/Materials/KingdomTower-warcraft.mmat",
     "parts": [
       {
         "name": "KingdomTower",
-        "mesh": "Assets/Models/RealKingdomTower.glb",
+        "mesh": "Assets/Models/KingdomTower-warcraft.glb",
         "pivot": [
           0,
           0,
@@ -1217,19 +1232,24 @@
       }
     ],
     "size": [
-      4.827577590942383,
-      10.067081451416016,
-      3.046538829803467
+      0.8233901638325253,
+      4.999999959755115,
+      0.8233884467174469
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/KingdomTower-warcraft.glb",
+      "Assets/Models/KingdomTower-warcraft.glb"
     ],
     "factionBuilding": true,
-    "realistic": true
+    "maxWorldHeight": 4.5
   },
   "KingdomAltar": {
-    "material": "Assets/Materials/RealKingdomAltar.mmat",
+    "material": "Assets/Materials/KingdomAltar-warcraft.mmat",
     "parts": [
       {
         "name": "KingdomAltar",
-        "mesh": "Assets/Models/RealKingdomAltar.glb",
+        "mesh": "Assets/Models/KingdomAltar-warcraft.glb",
         "pivot": [
           0,
           0,
@@ -1238,19 +1258,24 @@
       }
     ],
     "size": [
-      5.349999904632568,
-      8.804880142211914,
-      4.45736026763916
+      2.197453104901846,
+      4.999999943181494,
+      3.0585399417608086
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/KingdomAltar-warcraft.glb",
+      "Assets/Models/KingdomAltar-warcraft.glb"
     ],
     "factionBuilding": true,
-    "realistic": true
+    "maxWorldHeight": 4.5
   },
   "KingdomWorkshop": {
-    "material": "Assets/Materials/RealKingdomWorkshop.mmat",
+    "material": "Assets/Materials/KingdomWorkshop-warcraft.mmat",
     "parts": [
       {
         "name": "KingdomWorkshop",
-        "mesh": "Assets/Models/RealKingdomWorkshop.glb",
+        "mesh": "Assets/Models/KingdomWorkshop-warcraft.glb",
         "pivot": [
           0,
           0,
@@ -1259,12 +1284,17 @@
       }
     ],
     "size": [
-      5.349999904632568,
-      6.997012138366699,
-      4.45736026763916
+      5.0,
+      3.42070982029932,
+      3.8304360626055645
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/KingdomWorkshop-warcraft.glb",
+      "Assets/Models/KingdomWorkshop-warcraft.glb"
     ],
     "factionBuilding": true,
-    "realistic": true
+    "maxWorldHeight": 4.5
   },
   "WarclansHall": {
     "material": "Assets/Materials/RealWarclansHall.mmat",
@@ -1435,11 +1465,11 @@
     "realistic": true
   },
   "WildwoodLodge": {
-    "material": "Assets/Materials/RealWildwood.mmat",
+    "material": "Assets/Materials/WildwoodLodge-warcraft.mmat",
     "parts": [
       {
         "name": "WildwoodLodge",
-        "mesh": "Assets/Models/RealWildwoodLodge.glb",
+        "mesh": "Assets/Models/WildwoodLodge-warcraft.glb",
         "pivot": [
           0,
           0,
@@ -1448,12 +1478,17 @@
       }
     ],
     "size": [
-      2.3,
-      4.6,
-      2.75
+      3.185168149208105,
+      5.000000034911583,
+      2.278158563475569
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/WildwoodLodge-warcraft.glb",
+      "Assets/Models/WildwoodLodge-warcraft.glb"
     ],
     "factionBuilding": true,
-    "realistic": true
+    "maxWorldHeight": 4.5
   },
   "WildwoodTower": {
     "material": "Assets/Materials/RealWildwood.mmat",
@@ -1643,11 +1678,11 @@
     "factionBuilding": true
   },
   "KingdomHall2": {
-    "material": "Assets/Materials/RealKingdomHall2.mmat",
+    "material": "Assets/Materials/KingdomHall2-warcraft.mmat",
     "parts": [
       {
         "name": "KingdomHall2",
-        "mesh": "Assets/Models/RealKingdomHall2.glb",
+        "mesh": "Assets/Models/KingdomHall2-warcraft.glb",
         "pivot": [
           0,
           0,
@@ -1656,19 +1691,24 @@
       }
     ],
     "size": [
-      13.241365432739258,
-      12.441641807556152,
-      5.539161682128906
+      2.288860938211085,
+      4.999999921612683,
+      2.2321941640418115
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/KingdomHall2-warcraft.glb",
+      "Assets/Models/KingdomHall2-warcraft.glb"
     ],
     "factionBuilding": true,
-    "realistic": true
+    "maxWorldHeight": 5.5
   },
   "KingdomHall3": {
-    "material": "Assets/Materials/RealKingdomHall3.mmat",
+    "material": "Assets/Materials/KingdomHall3-warcraft.mmat",
     "parts": [
       {
         "name": "KingdomHall3",
-        "mesh": "Assets/Models/RealKingdomHall3.glb",
+        "mesh": "Assets/Models/KingdomHall3-warcraft.glb",
         "pivot": [
           0,
           0,
@@ -1677,12 +1717,17 @@
       }
     ],
     "size": [
-      17.705318450927734,
-      12.441641807556152,
-      5.539161682128906
+      1.5056698885784903,
+      4.999999947484538,
+      1.799537003520502
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/KingdomHall3-warcraft.glb",
+      "Assets/Models/KingdomHall3-warcraft.glb"
     ],
     "factionBuilding": true,
-    "realistic": true
+    "maxWorldHeight": 5.5
   },
   "WarclansHall2": {
     "material": "Assets/Materials/RealWarclansHall2.mmat",
@@ -4444,6 +4489,776 @@
       24.367045,
       19.474559,
       19.141788
+    ]
+  },
+  "KingdomArcaneVault": {
+    "material": "Assets/Materials/KingdomArcaneVault-warcraft.mmat",
+    "parts": [
+      {
+        "name": "KingdomArcaneVault",
+        "mesh": "Assets/Models/KingdomArcaneVault-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.3164183130194123,
+      5.0,
+      2.305918660923
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/KingdomArcaneVault-warcraft.glb",
+      "Assets/Models/KingdomArcaneVault-warcraft.glb"
+    ],
+    "factionBuilding": true,
+    "maxWorldHeight": 4.5
+  },
+  "AigeiCityHouse": {
+    "material": "Assets/Materials/AigeiCityHouse-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiCityHouse",
+        "mesh": "Assets/Models/AigeiCityHouse-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      3.4559962529259134,
+      3.8347244938811063
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiCityHouse-warcraft.glb",
+      "Assets/Models/AigeiCityHouse-warcraft.glb"
+    ]
+  },
+  "AigeiCityHouseTall": {
+    "material": "Assets/Materials/AigeiCityHouseTall-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiCityHouseTall",
+        "mesh": "Assets/Models/AigeiCityHouseTall-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      3.9688145296469344,
+      3.8416661879986336
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiCityHouseTall-warcraft.glb",
+      "Assets/Models/AigeiCityHouseTall-warcraft.glb"
+    ]
+  },
+  "AigeiVillageTower": {
+    "material": "Assets/Materials/AigeiVillageTower-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiVillageTower",
+        "mesh": "Assets/Models/AigeiVillageTower-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1.5583782138804427,
+      4.999999969266439,
+      1.6275448434144637
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiVillageTower-warcraft.glb",
+      "Assets/Models/AigeiVillageTower-warcraft.glb"
+    ]
+  },
+  "AigeiVillageHouse": {
+    "material": "Assets/Materials/AigeiVillageHouse-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiVillageHouse",
+        "mesh": "Assets/Models/AigeiVillageHouse-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1.9896493344520139,
+      4.999999960761074,
+      2.077957495877496
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiVillageHouse-warcraft.glb",
+      "Assets/Models/AigeiVillageHouse-warcraft.glb"
+    ]
+  },
+  "AigeiElvenTower": {
+    "material": "Assets/Materials/AigeiElvenTower-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiElvenTower",
+        "mesh": "Assets/Models/AigeiElvenTower-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.584909852903236,
+      5.0,
+      1.8488300275977454
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiElvenTower-warcraft.glb",
+      "Assets/Models/AigeiElvenTower-warcraft.glb"
+    ]
+  },
+  "AigeiCityRuin": {
+    "material": "Assets/Materials/AigeiCityRuin-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiCityRuin",
+        "mesh": "Assets/Models/AigeiCityRuin-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      3.2531873081350238,
+      3.810884981840962
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiCityRuin-warcraft.glb",
+      "Assets/Models/AigeiCityRuin-warcraft.glb"
+    ]
+  },
+  "AigeiCityRuinSmall": {
+    "material": "Assets/Materials/AigeiCityRuinSmall-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiCityRuinSmall",
+        "mesh": "Assets/Models/AigeiCityRuinSmall-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      4.852122005042051,
+      3.1427657185520537
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiCityRuinSmall-warcraft.glb",
+      "Assets/Models/AigeiCityRuinSmall-warcraft.glb"
+    ]
+  },
+  "AigeiArcheryRange": {
+    "material": "Assets/Materials/AigeiArcheryRange-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiArcheryRange",
+        "mesh": "Assets/Models/AigeiArcheryRange-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.959834768108213,
+      4.287239074125803,
+      5.0
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiArcheryRange-warcraft.glb",
+      "Assets/Models/AigeiArcheryRange-warcraft.glb"
+    ]
+  },
+  "AigeiWoodBridge": {
+    "material": "Assets/Materials/AigeiWoodBridge-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiWoodBridge",
+        "mesh": "Assets/Models/AigeiWoodBridge-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      2.834034685041979,
+      3.042157882352661
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiWoodBridge-warcraft.glb",
+      "Assets/Models/AigeiWoodBridge-warcraft.glb"
+    ]
+  },
+  "AigeiWoodBridgeSmall": {
+    "material": "Assets/Materials/AigeiWoodBridgeSmall-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiWoodBridgeSmall",
+        "mesh": "Assets/Models/AigeiWoodBridgeSmall-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      4.559750052795334,
+      4.590717071788157
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiWoodBridgeSmall-warcraft.glb",
+      "Assets/Models/AigeiWoodBridgeSmall-warcraft.glb"
+    ]
+  },
+  "AigeiStoneBridge": {
+    "material": "Assets/Materials/AigeiStoneBridge-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiStoneBridge",
+        "mesh": "Assets/Models/AigeiStoneBridge-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      2.838101130322795,
+      2.3675465373272164
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiStoneBridge-warcraft.glb",
+      "Assets/Models/AigeiStoneBridge-warcraft.glb"
+    ]
+  },
+  "AigeiStoneBridgeSmall": {
+    "material": "Assets/Materials/AigeiStoneBridgeSmall-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiStoneBridgeSmall",
+        "mesh": "Assets/Models/AigeiStoneBridgeSmall-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      4.56422883330883,
+      4.5930964878471325
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiStoneBridgeSmall-warcraft.glb",
+      "Assets/Models/AigeiStoneBridgeSmall-warcraft.glb"
+    ]
+  },
+  "AigeiRuinedBridge": {
+    "material": "Assets/Materials/AigeiRuinedBridge-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiRuinedBridge",
+        "mesh": "Assets/Models/AigeiRuinedBridge-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.999999752209743,
+      3.27828168954894,
+      3.599878999062163
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiRuinedBridge-warcraft.glb",
+      "Assets/Models/AigeiRuinedBridge-warcraft.glb"
+    ]
+  },
+  "AigeiStoneWall": {
+    "material": "Assets/Materials/AigeiStoneWall-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiStoneWall",
+        "mesh": "Assets/Models/AigeiStoneWall-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      3.9249372449896898,
+      1.348220248185574
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiStoneWall-warcraft.glb",
+      "Assets/Models/AigeiStoneWall-warcraft.glb"
+    ]
+  },
+  "AigeiRuinedWall": {
+    "material": "Assets/Materials/AigeiRuinedWall-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiRuinedWall",
+        "mesh": "Assets/Models/AigeiRuinedWall-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      2.6860787000996393,
+      1.8910626825027315
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiRuinedWall-warcraft.glb",
+      "Assets/Models/AigeiRuinedWall-warcraft.glb"
+    ]
+  },
+  "AigeiRuinedArch": {
+    "material": "Assets/Materials/AigeiRuinedArch-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiRuinedArch",
+        "mesh": "Assets/Models/AigeiRuinedArch-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.5285143792915217,
+      4.341831117954901,
+      5.0
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiRuinedArch-warcraft.glb",
+      "Assets/Models/AigeiRuinedArch-warcraft.glb"
+    ]
+  },
+  "AigeiArchway": {
+    "material": "Assets/Materials/AigeiArchway-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiArchway",
+        "mesh": "Assets/Models/AigeiArchway-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      0.7831300623934397,
+      3.439608341380134,
+      5.0
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiArchway-warcraft.glb",
+      "Assets/Models/AigeiArchway-warcraft.glb"
+    ]
+  },
+  "AigeiObelisk": {
+    "material": "Assets/Materials/AigeiObelisk-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiObelisk",
+        "mesh": "Assets/Models/AigeiObelisk-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.173648488362148,
+      5.0000000617277065,
+      4.175016334830105
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiObelisk-warcraft.glb",
+      "Assets/Models/AigeiObelisk-warcraft.glb"
+    ]
+  },
+  "AigeiGrave": {
+    "material": "Assets/Materials/AigeiGrave-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiGrave",
+        "mesh": "Assets/Models/AigeiGrave-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      3.81669252711155,
+      4.754921926140893
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiGrave-warcraft.glb",
+      "Assets/Models/AigeiGrave-warcraft.glb"
+    ]
+  },
+  "AigeiGraveCross": {
+    "material": "Assets/Materials/AigeiGraveCross-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiGraveCross",
+        "mesh": "Assets/Models/AigeiGraveCross-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.88245741646974,
+      5.0,
+      3.6584730461635937
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiGraveCross-warcraft.glb",
+      "Assets/Models/AigeiGraveCross-warcraft.glb"
+    ]
+  },
+  "AigeiOak": {
+    "material": "Assets/Materials/AigeiOak-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiOak",
+        "mesh": "Assets/Models/AigeiOak-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.908867510007786,
+      5.000000171533718,
+      4.376232188451001
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiOak-warcraft.glb",
+      "Assets/Models/AigeiOak-warcraft.glb"
+    ]
+  },
+  "AigeiOakTall": {
+    "material": "Assets/Materials/AigeiOakTall-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiOakTall",
+        "mesh": "Assets/Models/AigeiOakTall-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.963179828267495,
+      5.000000136319011,
+      3.5362485324367765
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiOakTall-warcraft.glb",
+      "Assets/Models/AigeiOakTall-warcraft.glb"
+    ]
+  },
+  "AigeiSnowTree": {
+    "material": "Assets/Materials/AigeiSnowTree-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiSnowTree",
+        "mesh": "Assets/Models/AigeiSnowTree-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.6826453045707592,
+      4.99999982370307,
+      3.1045538788328506
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiSnowTree-warcraft.glb",
+      "Assets/Models/AigeiSnowTree-warcraft.glb"
+    ]
+  },
+  "AigeiBarrensTree": {
+    "material": "Assets/Materials/AigeiBarrensTree-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiBarrensTree",
+        "mesh": "Assets/Models/AigeiBarrensTree-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.695338249019911,
+      5.00000010279214,
+      2.870679785493638
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiBarrensTree-warcraft.glb",
+      "Assets/Models/AigeiBarrensTree-warcraft.glb"
+    ]
+  },
+  "AigeiMushroomTree": {
+    "material": "Assets/Materials/AigeiMushroomTree-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiMushroomTree",
+        "mesh": "Assets/Models/AigeiMushroomTree-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.723154839811073,
+      5.0000000577194585,
+      4.681547862044622
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiMushroomTree-warcraft.glb",
+      "Assets/Models/AigeiMushroomTree-warcraft.glb"
+    ]
+  },
+  "AigeiCactus": {
+    "material": "Assets/Materials/AigeiCactus-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiCactus",
+        "mesh": "Assets/Models/AigeiCactus-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      3.509384544919489,
+      5.000000016212814,
+      4.086180863428981
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiCactus-warcraft.glb",
+      "Assets/Models/AigeiCactus-warcraft.glb"
+    ]
+  },
+  "AigeiRock": {
+    "material": "Assets/Materials/AigeiRock-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiRock",
+        "mesh": "Assets/Models/AigeiRock-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      4.999995278693974,
+      3.0365927723687514,
+      5.0
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiRock-warcraft.glb",
+      "Assets/Models/AigeiRock-warcraft.glb"
+    ]
+  },
+  "AigeiRockPillar": {
+    "material": "Assets/Materials/AigeiRockPillar-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiRockPillar",
+        "mesh": "Assets/Models/AigeiRockPillar-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      2.4566304049447787,
+      5.000000053067591,
+      3.1354948060413506
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiRockPillar-warcraft.glb",
+      "Assets/Models/AigeiRockPillar-warcraft.glb"
+    ]
+  },
+  "AigeiRockArch": {
+    "material": "Assets/Materials/AigeiRockArch-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiRockArch",
+        "mesh": "Assets/Models/AigeiRockArch-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      1.7475601801940384,
+      1.9293271766964455,
+      5.0
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiRockArch-warcraft.glb",
+      "Assets/Models/AigeiRockArch-warcraft.glb"
+    ]
+  },
+  "AigeiShrub": {
+    "material": "Assets/Materials/AigeiShrub-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiShrub",
+        "mesh": "Assets/Models/AigeiShrub-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      3.6364329312528456,
+      4.933379591236621
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiShrub-warcraft.glb",
+      "Assets/Models/AigeiShrub-warcraft.glb"
+    ]
+  },
+  "AigeiSkullPile": {
+    "material": "Assets/Materials/AigeiSkullPile-warcraft.mmat",
+    "parts": [
+      {
+        "name": "AigeiSkullPile",
+        "mesh": "Assets/Models/AigeiSkullPile-warcraft.glb",
+        "pivot": [
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "size": [
+      5.0,
+      2.6430370497832385,
+      4.402383349427791
+    ],
+    "sourcePack": "aigei-warcraft-buildings",
+    "lods": [
+      "Assets/Models/AigeiSkullPile-warcraft.glb",
+      "Assets/Models/AigeiSkullPile-warcraft.glb"
     ]
   }
 }

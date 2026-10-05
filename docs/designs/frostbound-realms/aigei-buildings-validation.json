@@ -1,0 +1,36 @@
+{
+  "passed": true,
+  "models": 41,
+  "triangles": 6724,
+  "deterministicGeneratedFiles": 123,
+  "sourceSha256": "c08dd860fa7c6af229637391eec893eadf5ffa165a7edd9c1e48481171e6552e",
+  "finitePositionsNormalsUvs": true,
+  "unitNormals": true,
+  "indicesInBounds": true,
+  "ruleTcpPasses": 72,
+  "ruleTcpLogSha256": "2805be430a35f2bc9c12e61bcb4321f0b0fbb297c9f472757376a81836f1b4ab",
+  "visualTestsPassed": true,
+  "nativeQaSha256": "c5165270855cf28ffd841d7485e0a41f99147202685d27f07f53327f344583f5",
+  "nativeConstruction": true,
+  "trueMenuSaveLoad": true,
+  "shaderRejections": 0,
+  "package": {
+    "files": 902,
+    "contentHash": "573c8e066b61ebdbc2d89991f351bab665e44de787f560f5cd0704a7b66e2ef0",
+    "allSizesAndHashesVerified": true,
+    "scriptMatchesNativeQa": true,
+    "projectStorageIdentityPreserved": true,
+    "startupSeconds": 30,
+    "loggedErrors": 0
+  },
+  "screenshots": {
+    "aigei-citadel.png": "0eb54c04b2c71d6b48434ddec96003f8d78b19eb2524414e66a557fe13f43880",
+    "aigei-completed-house.png": "4340066539077868a228a9aaf4c7660135c2a8548adbe64bd74333fe48791738",
+    "aigei-construction-preview.png": "cf097612258d17790e80f0bf3b5d38a337bee0d78c20784c6a2bbefe03ac480f",
+    "aigei-elven-house.png": "84025f8c2bfdd91f57cd3fe93d8d8c5229204a17500a1ec75ab7888d08d77edf",
+    "aigei-settlement.png": "747f2c705aeca3482fbbf9797e17e013466aac9b4a472344886d52da11045a16"
+  },
+  "releasedSimulationRuleTcpPasses": 72,
+  "releasedSimulationRuleTcpLogSha256": "7dbf8561e17a48e4ef4b762fa122f4a3003d548658c7f34c1a6d848bdc5e905d",
+  "releasedSimulationProtocol": 38
+}

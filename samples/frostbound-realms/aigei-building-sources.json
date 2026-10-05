@@ -1,0 +1,2639 @@
+{
+  "source": {
+    "file": "SourceAssets/aigei-warcraft-buildings.zip",
+    "sha256": "c08dd860fa7c6af229637391eec893eadf5ffa165a7edd9c1e48481171e6552e",
+    "providedPath": "G:/work/github/MEgine/tmp/魔兽争霸3warcraft3建筑模型集合_爱给网_aigei_com.zip",
+    "site": "https://www.aigei.com/3d/model/",
+    "license": "No redistribution grant or CC0 declaration found in archive; user supplied Warcraft scenery"
+  },
+  "importer": {
+    "url": "https://raw.githubusercontent.com/nrgsille76/io_scene_max/37db107126f956f7219152671443080360565691/source/import_max.py",
+    "sha256": "1b786ebe82d2a1c0df273514af449e8b91430672abafde3de4ee634f2432320d",
+    "license": "GPL-3.0-or-later",
+    "version": "1.9.2"
+  },
+  "sourceMeshCount": 330,
+  "sourceMeshes": [
+    {
+      "name": "AshenRock01",
+      "vertices": 64,
+      "faces": 56
+    },
+    {
+      "name": "AshenRock11",
+      "vertices": 64,
+      "faces": 56
+    },
+    {
+      "name": "AshenRock21",
+      "vertices": 34,
+      "faces": 29
+    },
+    {
+      "name": "AshenRock31",
+      "vertices": 64,
+      "faces": 56
+    },
+    {
+      "name": "AshenRock41",
+      "vertices": 94,
+      "faces": 83
+    },
+    {
+      "name": "AshenRock51",
+      "vertices": 64,
+      "faces": 56
+    },
+    {
+      "name": "AshenRock61",
+      "vertices": 34,
+      "faces": 29
+    },
+    {
+      "name": "AshenRock71",
+      "vertices": 64,
+      "faces": 56
+    },
+    {
+      "name": "AshenRock81",
+      "vertices": 34,
+      "faces": 29
+    },
+    {
+      "name": "AshenRock91",
+      "vertices": 94,
+      "faces": 83
+    },
+    {
+      "name": "G_RockChunks01",
+      "vertices": 126,
+      "faces": 78
+    },
+    {
+      "name": "G_RockChunks11",
+      "vertices": 115,
+      "faces": 82
+    },
+    {
+      "name": "G_RockChunks21",
+      "vertices": 108,
+      "faces": 72
+    },
+    {
+      "name": "G_RockChunks31",
+      "vertices": 84,
+      "faces": 56
+    },
+    {
+      "name": "G_RockChunks41",
+      "vertices": 106,
+      "faces": 68
+    },
+    {
+      "name": "G_RockChunks51",
+      "vertices": 93,
+      "faces": 54
+    },
+    {
+      "name": "RockPillar01",
+      "vertices": 91,
+      "faces": 54
+    },
+    {
+      "name": "RockPillar11",
+      "vertices": 92,
+      "faces": 58
+    },
+    {
+      "name": "RockPillar21",
+      "vertices": 92,
+      "faces": 54
+    },
+    {
+      "name": "A_RockArch1",
+      "vertices": 169,
+      "faces": 198
+    },
+    {
+      "name": "Barrens_Bones01",
+      "vertices": 5,
+      "faces": 4
+    },
+    {
+      "name": "Barrens_Bones11",
+      "vertices": 15,
+      "faces": 12
+    },
+    {
+      "name": "Barrens_Bones21",
+      "vertices": 15,
+      "faces": 12
+    },
+    {
+      "name": "Barrens_Bones31",
+      "vertices": 46,
+      "faces": 44
+    },
+    {
+      "name": "Barrens_Bones41",
+      "vertices": 104,
+      "faces": 106
+    },
+    {
+      "name": "Barrens_Bones61",
+      "vertices": 76,
+      "faces": 80
+    },
+    {
+      "name": "Barrens_Bones71",
+      "vertices": 15,
+      "faces": 12
+    },
+    {
+      "name": "Barrens_Bones81",
+      "vertices": 41,
+      "faces": 40
+    },
+    {
+      "name": "Barrens_Bones91",
+      "vertices": 10,
+      "faces": 8
+    },
+    {
+      "name": "AshenTree01",
+      "vertices": 45,
+      "faces": 43
+    },
+    {
+      "name": "AshenTree02",
+      "vertices": 43,
+      "faces": 25
+    },
+    {
+      "name": "AshenTree21",
+      "vertices": 43,
+      "faces": 25
+    },
+    {
+      "name": "AshenTree22",
+      "vertices": 29,
+      "faces": 18
+    },
+    {
+      "name": "AshenTree41",
+      "vertices": 43,
+      "faces": 25
+    },
+    {
+      "name": "AshenTree42",
+      "vertices": 50,
+      "faces": 46
+    },
+    {
+      "name": "AshenTree61",
+      "vertices": 43,
+      "faces": 25
+    },
+    {
+      "name": "AshenTree62",
+      "vertices": 50,
+      "faces": 46
+    },
+    {
+      "name": "AshenTree81",
+      "vertices": 28,
+      "faces": 12
+    },
+    {
+      "name": "AshenTree82",
+      "vertices": 50,
+      "faces": 46
+    },
+    {
+      "name": "BarrensTree21",
+      "vertices": 43,
+      "faces": 25
+    },
+    {
+      "name": "BarrensTree22",
+      "vertices": 51,
+      "faces": 42
+    },
+    {
+      "name": "BarrensTree41",
+      "vertices": 43,
+      "faces": 25
+    },
+    {
+      "name": "BarrensTree42",
+      "vertices": 51,
+      "faces": 42
+    },
+    {
+      "name": "BarrensTree51",
+      "vertices": 43,
+      "faces": 25
+    },
+    {
+      "name": "BarrensTree52",
+      "vertices": 50,
+      "faces": 36
+    },
+    {
+      "name": "BarrensTree61",
+      "vertices": 43,
+      "faces": 25
+    },
+    {
+      "name": "BarrensTree62",
+      "vertices": 50,
+      "faces": 36
+    },
+    {
+      "name": "BarrensTree71",
+      "vertices": 28,
+      "faces": 12
+    },
+    {
+      "name": "BarrensTree72",
+      "vertices": 51,
+      "faces": 42
+    },
+    {
+      "name": "Shrooms01",
+      "vertices": 110,
+      "faces": 136
+    },
+    {
+      "name": "Shrooms02",
+      "vertices": 27,
+      "faces": 30
+    },
+    {
+      "name": "Shrooms21",
+      "vertices": 27,
+      "faces": 30
+    },
+    {
+      "name": "Shrooms22",
+      "vertices": 84,
+      "faces": 104
+    },
+    {
+      "name": "Shrooms31",
+      "vertices": 54,
+      "faces": 60
+    },
+    {
+      "name": "Shrooms32",
+      "vertices": 114,
+      "faces": 138
+    },
+    {
+      "name": "Shrooms51",
+      "vertices": 27,
+      "faces": 30
+    },
+    {
+      "name": "Shrooms52",
+      "vertices": 110,
+      "faces": 136
+    },
+    {
+      "name": "Shrooms61",
+      "vertices": 48,
+      "faces": 48
+    },
+    {
+      "name": "Shrooms62",
+      "vertices": 106,
+      "faces": 122
+    },
+    {
+      "name": "Barrens_Spires01",
+      "vertices": 108,
+      "faces": 93
+    },
+    {
+      "name": "Barrens_Spires11",
+      "vertices": 122,
+      "faces": 109
+    },
+    {
+      "name": "Barrens_Spires21",
+      "vertices": 78,
+      "faces": 69
+    },
+    {
+      "name": "Barrens_Spires31",
+      "vertices": 142,
+      "faces": 124
+    },
+    {
+      "name": "Barrens_Spires41",
+      "vertices": 48,
+      "faces": 42
+    },
+    {
+      "name": "Barrens_Spires51",
+      "vertices": 108,
+      "faces": 93
+    },
+    {
+      "name": "Barrens_Spires61",
+      "vertices": 122,
+      "faces": 109
+    },
+    {
+      "name": "Barrens_Spires71",
+      "vertices": 82,
+      "faces": 70
+    },
+    {
+      "name": "Cactus01",
+      "vertices": 86,
+      "faces": 94
+    },
+    {
+      "name": "Cactus11",
+      "vertices": 80,
+      "faces": 94
+    },
+    {
+      "name": "Cactus21",
+      "vertices": 80,
+      "faces": 94
+    },
+    {
+      "name": "Cactus31",
+      "vertices": 86,
+      "faces": 94
+    },
+    {
+      "name": "Cactus41",
+      "vertices": 86,
+      "faces": 94
+    },
+    {
+      "name": "Cactus51",
+      "vertices": 86,
+      "faces": 94
+    },
+    {
+      "name": "Cactus61",
+      "vertices": 59,
+      "faces": 64
+    },
+    {
+      "name": "Cactus71",
+      "vertices": 59,
+      "faces": 64
+    },
+    {
+      "name": "Cactus81",
+      "vertices": 86,
+      "faces": 94
+    },
+    {
+      "name": "Cactus91",
+      "vertices": 59,
+      "faces": 64
+    },
+    {
+      "name": "CityBuildingLarge_01",
+      "vertices": 216,
+      "faces": 108
+    },
+    {
+      "name": "CityBuildingLarge_02",
+      "vertices": 381,
+      "faces": 193
+    },
+    {
+      "name": "CityBuildingSmall0_01",
+      "vertices": 96,
+      "faces": 48
+    },
+    {
+      "name": "CityBuildingSmall0_02",
+      "vertices": 193,
+      "faces": 98
+    },
+    {
+      "name": "ElvenVillageBuilding01",
+      "vertices": 192,
+      "faces": 98
+    },
+    {
+      "name": "ElvenVillageBuilding11",
+      "vertices": 208,
+      "faces": 106
+    },
+    {
+      "name": "ElvenVillageBuilding12",
+      "vertices": 26,
+      "faces": 16
+    },
+    {
+      "name": "ElvenVillageBuilding71",
+      "vertices": 209,
+      "faces": 107
+    },
+    {
+      "name": "ElvenVillageBuilding72",
+      "vertices": 46,
+      "faces": 26
+    },
+    {
+      "name": "CityBuilding101",
+      "vertices": 56,
+      "faces": 36
+    },
+    {
+      "name": "CityBuilding111",
+      "vertices": 56,
+      "faces": 36
+    },
+    {
+      "name": "CityBuilding121",
+      "vertices": 43,
+      "faces": 24
+    },
+    {
+      "name": "CityBuilding131",
+      "vertices": 40,
+      "faces": 24
+    },
+    {
+      "name": "MoreCityBuilding51",
+      "vertices": 56,
+      "faces": 36
+    },
+    {
+      "name": "VillageBuilding01",
+      "vertices": 70,
+      "faces": 34
+    },
+    {
+      "name": "VillageBuilding02",
+      "vertices": 110,
+      "faces": 52
+    },
+    {
+      "name": "VillageBuilding11",
+      "vertices": 228,
+      "faces": 110
+    },
+    {
+      "name": "VillageBuilding21",
+      "vertices": 212,
+      "faces": 102
+    },
+    {
+      "name": "DalaranBuilding01",
+      "vertices": 248,
+      "faces": 336
+    },
+    {
+      "name": "DalaranBuilding11",
+      "vertices": 104,
+      "faces": 132
+    },
+    {
+      "name": "StoneWall021",
+      "vertices": 80,
+      "faces": 38
+    },
+    {
+      "name": "StoneWall4501",
+      "vertices": 62,
+      "faces": 32
+    },
+    {
+      "name": "StoneWall4541",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall9001",
+      "vertices": 52,
+      "faces": 26
+    },
+    {
+      "name": "StoneWall9031",
+      "vertices": 52,
+      "faces": 26
+    },
+    {
+      "name": "StoneWall9041",
+      "vertices": 26,
+      "faces": 16
+    },
+    {
+      "name": "StoneWall13521",
+      "vertices": 90,
+      "faces": 44
+    },
+    {
+      "name": "G_PorticulisWall45_11",
+      "vertices": 405,
+      "faces": 300
+    },
+    {
+      "name": "AshenBrokenColumn11",
+      "vertices": 58,
+      "faces": 42
+    },
+    {
+      "name": "City_ColumnDouble1",
+      "vertices": 258,
+      "faces": 206
+    },
+    {
+      "name": "City_ColumnSemiCircle1",
+      "vertices": 425,
+      "faces": 340
+    },
+    {
+      "name": "City_ColumnSingle1",
+      "vertices": 119,
+      "faces": 98
+    },
+    {
+      "name": "FelwoodBrokenColumn01",
+      "vertices": 98,
+      "faces": 62
+    },
+    {
+      "name": "AshenRubble01",
+      "vertices": 116,
+      "faces": 76
+    },
+    {
+      "name": "AshenRubble11",
+      "vertices": 80,
+      "faces": 40
+    },
+    {
+      "name": "AshenRubble21",
+      "vertices": 87,
+      "faces": 54
+    },
+    {
+      "name": "RubbleStoneWall1",
+      "vertices": 88,
+      "faces": 50
+    },
+    {
+      "name": "AshenvaleLilyPad01",
+      "vertices": 9,
+      "faces": 5
+    },
+    {
+      "name": "AshenvaleLilyPad11",
+      "vertices": 6,
+      "faces": 2
+    },
+    {
+      "name": "AshenvaleLilyPad21",
+      "vertices": 4,
+      "faces": 2
+    },
+    {
+      "name": "WyvernCage1",
+      "vertices": 20,
+      "faces": 10
+    },
+    {
+      "name": "WyvernCage2",
+      "vertices": 230,
+      "faces": 206
+    },
+    {
+      "name": "CageTrashed1",
+      "vertices": 91,
+      "faces": 45
+    },
+    {
+      "name": "CageEmpty1",
+      "vertices": 76,
+      "faces": 38
+    },
+    {
+      "name": "CageEmpty2",
+      "vertices": 24,
+      "faces": 12
+    },
+    {
+      "name": "Felwood_Thorns01",
+      "vertices": 21,
+      "faces": 12
+    },
+    {
+      "name": "Felwood_Thorns21",
+      "vertices": 21,
+      "faces": 12
+    },
+    {
+      "name": "Felwood_Thorns31",
+      "vertices": 25,
+      "faces": 14
+    },
+    {
+      "name": "Felwood_Thorns51",
+      "vertices": 9,
+      "faces": 6
+    },
+    {
+      "name": "Felwood_Thorns61",
+      "vertices": 5,
+      "faces": 4
+    },
+    {
+      "name": "WoodBridgeLarge451",
+      "vertices": 1125,
+      "faces": 540
+    },
+    {
+      "name": "WoodBridgeLarge452",
+      "vertices": 128,
+      "faces": 64
+    },
+    {
+      "name": "WoodBridgeSmall01",
+      "vertices": 342,
+      "faces": 168
+    },
+    {
+      "name": "WoodBridgeSmall02",
+      "vertices": 48,
+      "faces": 24
+    },
+    {
+      "name": "BridgeRampSmall3151",
+      "vertices": 306,
+      "faces": 191
+    },
+    {
+      "name": "CityBridgeLarge45Destroyed1",
+      "vertices": 241,
+      "faces": 114
+    },
+    {
+      "name": "CityBridgeLarge45Destroyed2",
+      "vertices": 1147,
+      "faces": 533
+    },
+    {
+      "name": "CityBridgeLarge901",
+      "vertices": 1157,
+      "faces": 540
+    },
+    {
+      "name": "CityBridgeLarge902",
+      "vertices": 128,
+      "faces": 64
+    },
+    {
+      "name": "CityBridgeSmall901",
+      "vertices": 390,
+      "faces": 192
+    },
+    {
+      "name": "City_LowWall1",
+      "vertices": 20,
+      "faces": 10
+    },
+    {
+      "name": "City_LowWall_ShortEndCap1",
+      "vertices": 20,
+      "faces": 10
+    },
+    {
+      "name": "City_LowWall_TallEndCap1",
+      "vertices": 56,
+      "faces": 28
+    },
+    {
+      "name": "City_LowWall_TallEndCapWithLantern1",
+      "vertices": 66,
+      "faces": 36
+    },
+    {
+      "name": "CityLowWall01",
+      "vertices": 12,
+      "faces": 6
+    },
+    {
+      "name": "CityLowWall451",
+      "vertices": 12,
+      "faces": 6
+    },
+    {
+      "name": "CityLowWall901",
+      "vertices": 12,
+      "faces": 6
+    },
+    {
+      "name": "CityLowWall1351",
+      "vertices": 12,
+      "faces": 6
+    },
+    {
+      "name": "RuinedCurvedWall1",
+      "vertices": 180,
+      "faces": 108
+    },
+    {
+      "name": "RuinedWall1",
+      "vertices": 76,
+      "faces": 46
+    },
+    {
+      "name": "CityGrave01",
+      "vertices": 70,
+      "faces": 40
+    },
+    {
+      "name": "CityGrave11",
+      "vertices": 50,
+      "faces": 30
+    },
+    {
+      "name": "CityGrave21",
+      "vertices": 91,
+      "faces": 94
+    },
+    {
+      "name": "CityGrave31",
+      "vertices": 68,
+      "faces": 42
+    },
+    {
+      "name": "Grave02",
+      "vertices": 198,
+      "faces": 191
+    },
+    {
+      "name": "RiverRushes01",
+      "vertices": 49,
+      "faces": 24
+    },
+    {
+      "name": "RiverRushes011",
+      "vertices": 146,
+      "faces": 72
+    },
+    {
+      "name": "RiverRushes021",
+      "vertices": 81,
+      "faces": 40
+    },
+    {
+      "name": "RiverRushes031",
+      "vertices": 59,
+      "faces": 29
+    },
+    {
+      "name": "GrassTuft01",
+      "vertices": 31,
+      "faces": 17
+    },
+    {
+      "name": "GrassTuft11",
+      "vertices": 31,
+      "faces": 17
+    },
+    {
+      "name": "GrassTuft21",
+      "vertices": 31,
+      "faces": 17
+    },
+    {
+      "name": "GrassTuft31",
+      "vertices": 29,
+      "faces": 15
+    },
+    {
+      "name": "SkullonStick01",
+      "vertices": 45,
+      "faces": 45
+    },
+    {
+      "name": "SkullonStick32",
+      "vertices": 4,
+      "faces": 2
+    },
+    {
+      "name": "SkullonStick41",
+      "vertices": 48,
+      "faces": 46
+    },
+    {
+      "name": "SkullonStick51",
+      "vertices": 48,
+      "faces": 46
+    },
+    {
+      "name": "SkullPile01",
+      "vertices": 267,
+      "faces": 286
+    },
+    {
+      "name": "SkullPile11",
+      "vertices": 130,
+      "faces": 144
+    },
+    {
+      "name": "AshenBush01",
+      "vertices": 32,
+      "faces": 20
+    },
+    {
+      "name": "AshenCatTail1",
+      "vertices": 124,
+      "faces": 78
+    },
+    {
+      "name": "AshenHollowStump1",
+      "vertices": 198,
+      "faces": 144
+    },
+    {
+      "name": "AshenLillyPad1",
+      "vertices": 4,
+      "faces": 2
+    },
+    {
+      "name": "AshenLogStraight1",
+      "vertices": 85,
+      "faces": 76
+    },
+    {
+      "name": "AshenBrokenObilisk01",
+      "vertices": 124,
+      "faces": 60
+    },
+    {
+      "name": "AshenBrokenObilisk11",
+      "vertices": 106,
+      "faces": 68
+    },
+    {
+      "name": "AshenObilisk1",
+      "vertices": 64,
+      "faces": 30
+    },
+    {
+      "name": "AshenRuinsBlocks1",
+      "vertices": 81,
+      "faces": 52
+    },
+    {
+      "name": "AshenRuinsBlocks2",
+      "vertices": 100,
+      "faces": 50
+    },
+    {
+      "name": "BarrensFissure01",
+      "vertices": 174,
+      "faces": 153
+    },
+    {
+      "name": "BarrensFissure11",
+      "vertices": 150,
+      "faces": 129
+    },
+    {
+      "name": "Crator01",
+      "vertices": 217,
+      "faces": 222
+    },
+    {
+      "name": "Crator11",
+      "vertices": 209,
+      "faces": 218
+    },
+    {
+      "name": "RuinedArch01",
+      "vertices": 140,
+      "faces": 98
+    },
+    {
+      "name": "RuinedArch11",
+      "vertices": 90,
+      "faces": 60
+    },
+    {
+      "name": "RuinedArch21",
+      "vertices": 140,
+      "faces": 98
+    },
+    {
+      "name": "RuinedChunk01",
+      "vertices": 48,
+      "faces": 28
+    },
+    {
+      "name": "RuinedChunk11",
+      "vertices": 28,
+      "faces": 18
+    },
+    {
+      "name": "Archway11",
+      "vertices": 300,
+      "faces": 196
+    },
+    {
+      "name": "BookOfSummoning2",
+      "vertices": 86,
+      "faces": 42
+    },
+    {
+      "name": "BookOfSummoning3",
+      "vertices": 60,
+      "faces": 38
+    },
+    {
+      "name": "City_Oblisk1",
+      "vertices": 41,
+      "faces": 20
+    },
+    {
+      "name": "City_Statue1",
+      "vertices": 297,
+      "faces": 298
+    },
+    {
+      "name": "CityStoneBench1",
+      "vertices": 102,
+      "faces": 70
+    },
+    {
+      "name": "CityWoodBench1",
+      "vertices": 102,
+      "faces": 70
+    },
+    {
+      "name": "DalaranVioletCitadel1",
+      "vertices": 962,
+      "faces": 882
+    },
+    {
+      "name": "Hay01",
+      "vertices": 75,
+      "faces": 42
+    },
+    {
+      "name": "Hay11",
+      "vertices": 43,
+      "faces": 35
+    },
+    {
+      "name": "Hay21",
+      "vertices": 29,
+      "faces": 21
+    },
+    {
+      "name": "Hay41",
+      "vertices": 44,
+      "faces": 28
+    },
+    {
+      "name": "Hay51",
+      "vertices": 92,
+      "faces": 58
+    },
+    {
+      "name": "ArcheryRange1",
+      "vertices": 112,
+      "faces": 50
+    },
+    {
+      "name": "ArcheryRange2",
+      "vertices": 60,
+      "faces": 34
+    },
+    {
+      "name": "BannerHuman21",
+      "vertices": 75,
+      "faces": 37
+    },
+    {
+      "name": "BannerOrc11",
+      "vertices": 102,
+      "faces": 74
+    },
+    {
+      "name": "Barricade11",
+      "vertices": 282,
+      "faces": 142
+    },
+    {
+      "name": "Gate1",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "Gate2",
+      "vertices": 60,
+      "faces": 30
+    },
+    {
+      "name": "Gate3",
+      "vertices": 52,
+      "faces": 32
+    },
+    {
+      "name": "Gate4",
+      "vertices": 66,
+      "faces": 36
+    },
+    {
+      "name": "Gate5",
+      "vertices": 32,
+      "faces": 20
+    },
+    {
+      "name": "brazier1",
+      "vertices": 75,
+      "faces": 37
+    },
+    {
+      "name": "EmptyCrates01",
+      "vertices": 64,
+      "faces": 32
+    },
+    {
+      "name": "EmptyCrates11",
+      "vertices": 48,
+      "faces": 24
+    },
+    {
+      "name": "EmptyCrates21",
+      "vertices": 24,
+      "faces": 12
+    },
+    {
+      "name": "Flies1",
+      "vertices": 20,
+      "faces": 10
+    },
+    {
+      "name": "HayCart1",
+      "vertices": 92,
+      "faces": 54
+    },
+    {
+      "name": "Hay31",
+      "vertices": 58,
+      "faces": 42
+    },
+    {
+      "name": "HeadOnSpear01",
+      "vertices": 68,
+      "faces": 50
+    },
+    {
+      "name": "Well1",
+      "vertices": 92,
+      "faces": 60
+    },
+    {
+      "name": "Trough11",
+      "vertices": 118,
+      "faces": 58
+    },
+    {
+      "name": "Trash11",
+      "vertices": 114,
+      "faces": 68
+    },
+    {
+      "name": "RottenHayCartbroken2",
+      "vertices": 92,
+      "faces": 54
+    },
+    {
+      "name": "LanternPost1",
+      "vertices": 92,
+      "faces": 78
+    },
+    {
+      "name": "LanternPost2",
+      "vertices": 8,
+      "faces": 4
+    },
+    {
+      "name": "LanternPost3",
+      "vertices": 4,
+      "faces": 2
+    },
+    {
+      "name": "LanternPost11",
+      "vertices": 52,
+      "faces": 26
+    },
+    {
+      "name": "LanternPost12",
+      "vertices": 29,
+      "faces": 14
+    },
+    {
+      "name": "LanternPost13",
+      "vertices": 9,
+      "faces": 4
+    },
+    {
+      "name": "LanternPost14",
+      "vertices": 8,
+      "faces": 4
+    },
+    {
+      "name": "LanternPost15",
+      "vertices": 4,
+      "faces": 2
+    },
+    {
+      "name": "LanternPost16",
+      "vertices": 20,
+      "faces": 10
+    },
+    {
+      "name": "LanternPost01",
+      "vertices": 60,
+      "faces": 30
+    },
+    {
+      "name": "LanternPost02",
+      "vertices": 29,
+      "faces": 14
+    },
+    {
+      "name": "LanternPost03",
+      "vertices": 9,
+      "faces": 4
+    },
+    {
+      "name": "LanternPost04",
+      "vertices": 8,
+      "faces": 4
+    },
+    {
+      "name": "LanternPost05",
+      "vertices": 4,
+      "faces": 2
+    },
+    {
+      "name": "LanternPost06",
+      "vertices": 20,
+      "faces": 10
+    },
+    {
+      "name": "BridgeRampSmall3152",
+      "vertices": 306,
+      "faces": 191
+    },
+    {
+      "name": "WoodBridgeLarge453",
+      "vertices": 1125,
+      "faces": 540
+    },
+    {
+      "name": "WoodBridgeLarge454",
+      "vertices": 128,
+      "faces": 64
+    },
+    {
+      "name": "A_RockArch02",
+      "vertices": 169,
+      "faces": 198
+    },
+    {
+      "name": "WoodBridgeSmall03",
+      "vertices": 342,
+      "faces": 168
+    },
+    {
+      "name": "WoodBridgeSmall04",
+      "vertices": 48,
+      "faces": 24
+    },
+    {
+      "name": "BridgeRampSmall3153",
+      "vertices": 306,
+      "faces": 191
+    },
+    {
+      "name": "CityBridgeLarge45Destroyed03",
+      "vertices": 241,
+      "faces": 114
+    },
+    {
+      "name": "CityBridgeLarge45Destroyed04",
+      "vertices": 1147,
+      "faces": 533
+    },
+    {
+      "name": "CityBridgeLarge903",
+      "vertices": 1157,
+      "faces": 540
+    },
+    {
+      "name": "CityBridgeLarge904",
+      "vertices": 128,
+      "faces": 64
+    },
+    {
+      "name": "CityBridgeSmall902",
+      "vertices": 390,
+      "faces": 192
+    },
+    {
+      "name": "Gate06",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "Gate07",
+      "vertices": 60,
+      "faces": 30
+    },
+    {
+      "name": "Gate08",
+      "vertices": 52,
+      "faces": 32
+    },
+    {
+      "name": "Gate09",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "StoneWall13522",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13523",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13524",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13525",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13526",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13527",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13528",
+      "vertices": 62,
+      "faces": 32
+    },
+    {
+      "name": "Gate10",
+      "vertices": 32,
+      "faces": 20
+    },
+    {
+      "name": "StoneWall13529",
+      "vertices": 52,
+      "faces": 26
+    },
+    {
+      "name": "StoneWall13530",
+      "vertices": 26,
+      "faces": 16
+    },
+    {
+      "name": "Gate11",
+      "vertices": 66,
+      "faces": 36
+    },
+    {
+      "name": "Gate12",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "Gate13",
+      "vertices": 60,
+      "faces": 30
+    },
+    {
+      "name": "Gate14",
+      "vertices": 52,
+      "faces": 32
+    },
+    {
+      "name": "StoneWall13531",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13532",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "Gate15",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "Gate16",
+      "vertices": 60,
+      "faces": 30
+    },
+    {
+      "name": "Gate17",
+      "vertices": 52,
+      "faces": 32
+    },
+    {
+      "name": "Gate18",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "StoneWall13533",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13534",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13535",
+      "vertices": 90,
+      "faces": 44
+    },
+    {
+      "name": "StoneWall13536",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13537",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13538",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13539",
+      "vertices": 62,
+      "faces": 32
+    },
+    {
+      "name": "Gate19",
+      "vertices": 32,
+      "faces": 20
+    },
+    {
+      "name": "StoneWall13540",
+      "vertices": 52,
+      "faces": 26
+    },
+    {
+      "name": "StoneWall13541",
+      "vertices": 26,
+      "faces": 16
+    },
+    {
+      "name": "Gate20",
+      "vertices": 66,
+      "faces": 36
+    },
+    {
+      "name": "Gate21",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "Gate22",
+      "vertices": 60,
+      "faces": 30
+    },
+    {
+      "name": "Gate23",
+      "vertices": 52,
+      "faces": 32
+    },
+    {
+      "name": "StoneWall13542",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13543",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "Gate24",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "Gate25",
+      "vertices": 60,
+      "faces": 30
+    },
+    {
+      "name": "Gate26",
+      "vertices": 52,
+      "faces": 32
+    },
+    {
+      "name": "Gate27",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "StoneWall13544",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13545",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13546",
+      "vertices": 90,
+      "faces": 44
+    },
+    {
+      "name": "StoneWall13547",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13548",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13549",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13550",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13551",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13552",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13553",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13554",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13555",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13556",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13557",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13558",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13559",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13562",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13563",
+      "vertices": 62,
+      "faces": 32
+    },
+    {
+      "name": "Gate28",
+      "vertices": 32,
+      "faces": 20
+    },
+    {
+      "name": "StoneWall13564",
+      "vertices": 52,
+      "faces": 26
+    },
+    {
+      "name": "StoneWall13565",
+      "vertices": 26,
+      "faces": 16
+    },
+    {
+      "name": "Gate29",
+      "vertices": 66,
+      "faces": 36
+    },
+    {
+      "name": "Gate30",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "Gate31",
+      "vertices": 60,
+      "faces": 30
+    },
+    {
+      "name": "Gate32",
+      "vertices": 52,
+      "faces": 32
+    },
+    {
+      "name": "StoneWall13566",
+      "vertices": 90,
+      "faces": 44
+    },
+    {
+      "name": "Gate33",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "Gate34",
+      "vertices": 52,
+      "faces": 32
+    },
+    {
+      "name": "Gate35",
+      "vertices": 60,
+      "faces": 30
+    },
+    {
+      "name": "StoneWall13567",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13568",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13569",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13570",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "Gate36",
+      "vertices": 193,
+      "faces": 96
+    },
+    {
+      "name": "StoneWall13571",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13572",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13573",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "StoneWall13574",
+      "vertices": 38,
+      "faces": 22
+    },
+    {
+      "name": "Plane01",
+      "vertices": 25,
+      "faces": 32
+    }
+  ],
+  "replacements": [
+    "KingdomHall",
+    "KingdomHall2",
+    "KingdomHall3",
+    "KingdomBarracks",
+    "KingdomLodge",
+    "KingdomTower",
+    "KingdomAltar",
+    "KingdomWorkshop",
+    "KingdomArcaneVault",
+    "WildwoodLodge"
+  ],
+  "models": {
+    "KingdomHall": {
+      "objects": [
+        "CityBuilding111"
+      ],
+      "vertices": 56,
+      "faces": 36,
+      "textures": [
+        "citybuildings.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "KingdomHall2": {
+      "objects": [
+        "DalaranBuilding01"
+      ],
+      "vertices": 248,
+      "faces": 336,
+      "textures": [
+        "dalaranbuildings.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "KingdomHall3": {
+      "objects": [
+        "DalaranVioletCitadel1"
+      ],
+      "vertices": 962,
+      "faces": 882,
+      "textures": [
+        "dalaranbuildings.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "KingdomBarracks": {
+      "objects": [
+        "CityBuilding101"
+      ],
+      "vertices": 56,
+      "faces": 36,
+      "textures": [
+        "citybuildings.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "KingdomLodge": {
+      "objects": [
+        "VillageBuilding01",
+        "VillageBuilding02"
+      ],
+      "vertices": 180,
+      "faces": 86,
+      "textures": [
+        "citybuildingsnew.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "KingdomTower": {
+      "objects": [
+        "DalaranBuilding11"
+      ],
+      "vertices": 104,
+      "faces": 132,
+      "textures": [
+        "dalaranbuildings.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "KingdomAltar": {
+      "objects": [
+        "City_Statue1"
+      ],
+      "vertices": 297,
+      "faces": 298,
+      "textures": [
+        "citystructures.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "KingdomWorkshop": {
+      "objects": [
+        "CityBuilding131"
+      ],
+      "vertices": 40,
+      "faces": 24,
+      "textures": [
+        "citybuildings.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "KingdomArcaneVault": {
+      "objects": [
+        "ElvenVillageBuilding71",
+        "ElvenVillageBuilding72"
+      ],
+      "vertices": 255,
+      "faces": 133,
+      "textures": [
+        "elvenfarm.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "WildwoodLodge": {
+      "objects": [
+        "ElvenVillageBuilding01"
+      ],
+      "vertices": 192,
+      "faces": 98,
+      "textures": [
+        "elvenfarm.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiCityHouse": {
+      "objects": [
+        "CityBuilding121"
+      ],
+      "vertices": 43,
+      "faces": 24,
+      "textures": [
+        "citybuildings.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiCityHouseTall": {
+      "objects": [
+        "MoreCityBuilding51"
+      ],
+      "vertices": 56,
+      "faces": 36,
+      "textures": [
+        "citybuildings.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiVillageTower": {
+      "objects": [
+        "VillageBuilding11"
+      ],
+      "vertices": 228,
+      "faces": 110,
+      "textures": [
+        "citybuildingsnew.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiVillageHouse": {
+      "objects": [
+        "VillageBuilding21"
+      ],
+      "vertices": 212,
+      "faces": 102,
+      "textures": [
+        "citybuildingsnew.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiElvenTower": {
+      "objects": [
+        "ElvenVillageBuilding11",
+        "ElvenVillageBuilding12"
+      ],
+      "vertices": 234,
+      "faces": 122,
+      "textures": [
+        "elvenfarm.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiCityRuin": {
+      "objects": [
+        "CityBuildingLarge_01",
+        "CityBuildingLarge_02"
+      ],
+      "vertices": 597,
+      "faces": 301,
+      "textures": [
+        "barrensnatural.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiCityRuinSmall": {
+      "objects": [
+        "CityBuildingSmall0_01",
+        "CityBuildingSmall0_02"
+      ],
+      "vertices": 289,
+      "faces": 146,
+      "textures": [
+        "barrensnatural.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiArcheryRange": {
+      "objects": [
+        "ArcheryRange1",
+        "ArcheryRange2"
+      ],
+      "vertices": 172,
+      "faces": 84,
+      "textures": [
+        "doodads0.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiWoodBridge": {
+      "objects": [
+        "WoodBridgeLarge451",
+        "WoodBridgeLarge452"
+      ],
+      "vertices": 1253,
+      "faces": 604,
+      "textures": [
+        "doodads0.TGA",
+        "doodads1.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiWoodBridgeSmall": {
+      "objects": [
+        "WoodBridgeSmall01",
+        "WoodBridgeSmall02"
+      ],
+      "vertices": 390,
+      "faces": 192,
+      "textures": [
+        "doodads0.TGA",
+        "doodads1.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiStoneBridge": {
+      "objects": [
+        "CityBridgeLarge901",
+        "CityBridgeLarge902"
+      ],
+      "vertices": 1285,
+      "faces": 604,
+      "textures": [
+        "Cliff0.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiStoneBridgeSmall": {
+      "objects": [
+        "CityBridgeSmall901"
+      ],
+      "vertices": 390,
+      "faces": 192,
+      "textures": [
+        "Cliff0.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiRuinedBridge": {
+      "objects": [
+        "CityBridgeLarge45Destroyed1",
+        "CityBridgeLarge45Destroyed2"
+      ],
+      "vertices": 1388,
+      "faces": 647,
+      "textures": [
+        "Cliff0.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiStoneWall": {
+      "objects": [
+        "StoneWall9001"
+      ],
+      "vertices": 52,
+      "faces": 26,
+      "textures": [
+        "doodads1.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiRuinedWall": {
+      "objects": [
+        "RuinedWall1"
+      ],
+      "vertices": 76,
+      "faces": 46,
+      "textures": [
+        "barrensnatural.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiRuinedArch": {
+      "objects": [
+        "RuinedArch01"
+      ],
+      "vertices": 140,
+      "faces": 98,
+      "textures": [
+        "barrensnatural.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiArchway": {
+      "objects": [
+        "Archway11"
+      ],
+      "vertices": 300,
+      "faces": 196,
+      "textures": [
+        "citystructures.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiObelisk": {
+      "objects": [
+        "AshenObilisk1"
+      ],
+      "vertices": 64,
+      "faces": 30,
+      "textures": [
+        "ashenstructures.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiGrave": {
+      "objects": [
+        "CityGrave01"
+      ],
+      "vertices": 70,
+      "faces": 40,
+      "textures": [
+        "citystructures.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiGraveCross": {
+      "objects": [
+        "CityGrave31"
+      ],
+      "vertices": 68,
+      "faces": 42,
+      "textures": [
+        "citystructures.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiOak": {
+      "objects": [
+        "AshenTree01"
+      ],
+      "vertices": 45,
+      "faces": 43,
+      "textures": [
+        "lordaeronfalltree.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiOakTall": {
+      "objects": [
+        "AshenTree42"
+      ],
+      "vertices": 50,
+      "faces": 46,
+      "textures": [
+        "lordaeronfalltree.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiSnowTree": {
+      "objects": [
+        "AshenTree82"
+      ],
+      "vertices": 50,
+      "faces": 46,
+      "textures": [
+        "northtree.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiBarrensTree": {
+      "objects": [
+        "BarrensTree22"
+      ],
+      "vertices": 51,
+      "faces": 42,
+      "textures": [
+        "BarrensTree.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiMushroomTree": {
+      "objects": [
+        "Shrooms01"
+      ],
+      "vertices": 110,
+      "faces": 136,
+      "textures": [
+        "MushroomTree.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiCactus": {
+      "objects": [
+        "Cactus01"
+      ],
+      "vertices": 86,
+      "faces": 94,
+      "textures": [
+        "cacti.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiRock": {
+      "objects": [
+        "AshenRock31"
+      ],
+      "vertices": 64,
+      "faces": 56,
+      "textures": [
+        "ashenrocks.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiRockPillar": {
+      "objects": [
+        "RockPillar01"
+      ],
+      "vertices": 91,
+      "faces": 54,
+      "textures": [
+        "barrensrockwall.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiRockArch": {
+      "objects": [
+        "A_RockArch1"
+      ],
+      "vertices": 169,
+      "faces": 198,
+      "textures": [
+        "ashenrocks.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiShrub": {
+      "objects": [
+        "AshenBush01"
+      ],
+      "vertices": 32,
+      "faces": 20,
+      "textures": [
+        "ashennatural.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    },
+    "AigeiSkullPile": {
+      "objects": [
+        "SkullPile01"
+      ],
+      "vertices": 267,
+      "faces": 286,
+      "textures": [
+        "doodads0.TGA"
+      ],
+      "animation": "Static mesh conversion; MAX animation tracks are not imported"
+    }
+  },
+  "generated": [
+    {
+      "file": "Assets/Models/KingdomHall-warcraft.glb",
+      "sha256": "0c74d505bdc5e2a8d1f3714b97d92d99babc86f961aac556e53479a945b125d2"
+    },
+    {
+      "file": "Assets/Textures/KingdomHall-warcraft.png",
+      "sha256": "b9eea91a8c025a57ada71dfd0b8d1eb993b10f61aba6abee9b15e724ff2f8306"
+    },
+    {
+      "file": "Assets/Materials/KingdomHall-warcraft.mmat",
+      "sha256": "7860c06a499c8357d6331c725556b480a2a15edb5e0da9ec2901d26fa3c5a957"
+    },
+    {
+      "file": "Assets/Models/KingdomHall2-warcraft.glb",
+      "sha256": "206b10c679d566851ad944179fa3ca4a37dc4e6115f9c63636f01f2ed69a251e"
+    },
+    {
+      "file": "Assets/Textures/KingdomHall2-warcraft.png",
+      "sha256": "807965de48b2defe878ad03f1a764b32fd44046fb4ee69e08b9fc2ea5f57907a"
+    },
+    {
+      "file": "Assets/Materials/KingdomHall2-warcraft.mmat",
+      "sha256": "ed4eec22bf085de5aa2982f6aab7e6f234cda6663630f5b414c8d01084109325"
+    },
+    {
+      "file": "Assets/Models/KingdomHall3-warcraft.glb",
+      "sha256": "6d8d61be474f6e72ab4e0d83505ea39b1087be3a43ea656c395afaecf6906f49"
+    },
+    {
+      "file": "Assets/Textures/KingdomHall3-warcraft.png",
+      "sha256": "807965de48b2defe878ad03f1a764b32fd44046fb4ee69e08b9fc2ea5f57907a"
+    },
+    {
+      "file": "Assets/Materials/KingdomHall3-warcraft.mmat",
+      "sha256": "9d89e2168d8d12a6e4c33458e28595e0bde8acf93ab18ef71bc798bad8544967"
+    },
+    {
+      "file": "Assets/Models/KingdomBarracks-warcraft.glb",
+      "sha256": "d21401db0bcebb2ee509e1bc4ddcbf41ccff84efa4cd73968d75e21979a3a906"
+    },
+    {
+      "file": "Assets/Textures/KingdomBarracks-warcraft.png",
+      "sha256": "b9eea91a8c025a57ada71dfd0b8d1eb993b10f61aba6abee9b15e724ff2f8306"
+    },
+    {
+      "file": "Assets/Materials/KingdomBarracks-warcraft.mmat",
+      "sha256": "63ebea9693d514f97b512a846b9d3472e1b24eba71eb0c1f6d0e263482f4439c"
+    },
+    {
+      "file": "Assets/Models/KingdomLodge-warcraft.glb",
+      "sha256": "9b1c1b9ff768e1f21a8de3fdf1752062d372942b885d8213e633c39802392906"
+    },
+    {
+      "file": "Assets/Textures/KingdomLodge-warcraft.png",
+      "sha256": "c304bb6fa0479c5c65cf540dd43a215f306101b6ce6f8f2ada0176071a126892"
+    },
+    {
+      "file": "Assets/Materials/KingdomLodge-warcraft.mmat",
+      "sha256": "90880a8ed4b92b048180c9aaa794d09a2b46e7c5427945ad8aa80cc33b2ba1f5"
+    },
+    {
+      "file": "Assets/Models/KingdomTower-warcraft.glb",
+      "sha256": "419645ecfd524801e8659b6518e29b8e15468fc43904988304b7cc274e211eca"
+    },
+    {
+      "file": "Assets/Textures/KingdomTower-warcraft.png",
+      "sha256": "807965de48b2defe878ad03f1a764b32fd44046fb4ee69e08b9fc2ea5f57907a"
+    },
+    {
+      "file": "Assets/Materials/KingdomTower-warcraft.mmat",
+      "sha256": "7d0a7f3e5eb00c0dbcffe582ed803311227c92c18bdfc56c3d9a89ea89451156"
+    },
+    {
+      "file": "Assets/Models/KingdomAltar-warcraft.glb",
+      "sha256": "d4c98d4a2dc81ee950a884f9006a8c7cc9f983eb14e286b86db43686eb610f21"
+    },
+    {
+      "file": "Assets/Textures/KingdomAltar-warcraft.png",
+      "sha256": "5d6e3bb7ed53014607c6488ee64c8b95306e4ec2820d54183fc836789685eb27"
+    },
+    {
+      "file": "Assets/Materials/KingdomAltar-warcraft.mmat",
+      "sha256": "ca0da9c95d34645764878e8debb343371baaf6afd5deff6c84fbc6cef5c96e50"
+    },
+    {
+      "file": "Assets/Models/KingdomWorkshop-warcraft.glb",
+      "sha256": "412ee2d79374cf9f56f062215ed3cedb7dc80c0a42166bb0727735d223cbdfcc"
+    },
+    {
+      "file": "Assets/Textures/KingdomWorkshop-warcraft.png",
+      "sha256": "b9eea91a8c025a57ada71dfd0b8d1eb993b10f61aba6abee9b15e724ff2f8306"
+    },
+    {
+      "file": "Assets/Materials/KingdomWorkshop-warcraft.mmat",
+      "sha256": "e82ad8e057baed4af0425d5b54cd2bc9fdbe7f61f956884b24669426135b9ee7"
+    },
+    {
+      "file": "Assets/Models/KingdomArcaneVault-warcraft.glb",
+      "sha256": "8d39a711c34cb5235801c23cff38cb8c41294e7d1c16d2425c014c9fd72bba2d"
+    },
+    {
+      "file": "Assets/Textures/KingdomArcaneVault-warcraft.png",
+      "sha256": "2ba58213351d9868e52d7358914262171b8b68df1a87c7a85c4f5d287ad5999d"
+    },
+    {
+      "file": "Assets/Materials/KingdomArcaneVault-warcraft.mmat",
+      "sha256": "97f591301f7a5d806b598f9e58468547bc7951bcea303178a8be99ceee6b419a"
+    },
+    {
+      "file": "Assets/Models/WildwoodLodge-warcraft.glb",
+      "sha256": "1f7905f3b551c64874d072f47d83ddce0c30d739def9a6b74a52c66a8232bbb8"
+    },
+    {
+      "file": "Assets/Textures/WildwoodLodge-warcraft.png",
+      "sha256": "2ba58213351d9868e52d7358914262171b8b68df1a87c7a85c4f5d287ad5999d"
+    },
+    {
+      "file": "Assets/Materials/WildwoodLodge-warcraft.mmat",
+      "sha256": "d4ed775c9b56903022377fa0fbb1043141cb08d4b28f8fe50a76071b7a766057"
+    },
+    {
+      "file": "Assets/Models/AigeiCityHouse-warcraft.glb",
+      "sha256": "66027c2597ed87b7d9625dd89468ad71b3f8cf2cd5a1789a2d03e9fc6e9bef17"
+    },
+    {
+      "file": "Assets/Textures/AigeiCityHouse-warcraft.png",
+      "sha256": "b9eea91a8c025a57ada71dfd0b8d1eb993b10f61aba6abee9b15e724ff2f8306"
+    },
+    {
+      "file": "Assets/Materials/AigeiCityHouse-warcraft.mmat",
+      "sha256": "215edfc5c3434f07d6c3bbe493f73c59976f6e2d0ae60b1979ea9f0e1d903b55"
+    },
+    {
+      "file": "Assets/Models/AigeiCityHouseTall-warcraft.glb",
+      "sha256": "398fe1a538d138adb28b82a040566b669ad1750489325ae498c517b07b708b6c"
+    },
+    {
+      "file": "Assets/Textures/AigeiCityHouseTall-warcraft.png",
+      "sha256": "b9eea91a8c025a57ada71dfd0b8d1eb993b10f61aba6abee9b15e724ff2f8306"
+    },
+    {
+      "file": "Assets/Materials/AigeiCityHouseTall-warcraft.mmat",
+      "sha256": "0a423738aa428b20245b98f88884158bae08dc049fc37b155222882435a8d2f3"
+    },
+    {
+      "file": "Assets/Models/AigeiVillageTower-warcraft.glb",
+      "sha256": "02c1a91fc39d64b96bc9ce522af33debf933118f2dba1b57410f9dbdfc699737"
+    },
+    {
+      "file": "Assets/Textures/AigeiVillageTower-warcraft.png",
+      "sha256": "c304bb6fa0479c5c65cf540dd43a215f306101b6ce6f8f2ada0176071a126892"
+    },
+    {
+      "file": "Assets/Materials/AigeiVillageTower-warcraft.mmat",
+      "sha256": "3b22a16b7bc68a9fce43cb64d06b8c224d0cbddb5931b276b27c3e07708d97ee"
+    },
+    {
+      "file": "Assets/Models/AigeiVillageHouse-warcraft.glb",
+      "sha256": "ee745bacb6366d2b0258ac3b85e35b736fe7545d58d7f89073cef576e7e89bad"
+    },
+    {
+      "file": "Assets/Textures/AigeiVillageHouse-warcraft.png",
+      "sha256": "c304bb6fa0479c5c65cf540dd43a215f306101b6ce6f8f2ada0176071a126892"
+    },
+    {
+      "file": "Assets/Materials/AigeiVillageHouse-warcraft.mmat",
+      "sha256": "c3a270a93ad151bb729df68d221fea612590befa9003894f9b4b33d9328c7991"
+    },
+    {
+      "file": "Assets/Models/AigeiElvenTower-warcraft.glb",
+      "sha256": "f87100c19b60f6628f71505fc0bece317be4ec3e62fca47e7ebfb94b2cb827e3"
+    },
+    {
+      "file": "Assets/Textures/AigeiElvenTower-warcraft.png",
+      "sha256": "2ba58213351d9868e52d7358914262171b8b68df1a87c7a85c4f5d287ad5999d"
+    },
+    {
+      "file": "Assets/Materials/AigeiElvenTower-warcraft.mmat",
+      "sha256": "47340b712d92c29c15dfdb1c155d45a63cd89af453ae10f63b027b44aa2275b8"
+    },
+    {
+      "file": "Assets/Models/AigeiCityRuin-warcraft.glb",
+      "sha256": "4c80d75e150d21b5f44b6ccbedbf60e70ab638b4ec76d1a63b232fd7534bf8b4"
+    },
+    {
+      "file": "Assets/Textures/AigeiCityRuin-warcraft.png",
+      "sha256": "5b4891ecfcbcad65159f04b9d6e9347de6884b5f45f924aece2e3a009bbc7fc2"
+    },
+    {
+      "file": "Assets/Materials/AigeiCityRuin-warcraft.mmat",
+      "sha256": "30d706258962964caee4f524188b28dc2b2d73716ea844a3295eacbcb87f16ed"
+    },
+    {
+      "file": "Assets/Models/AigeiCityRuinSmall-warcraft.glb",
+      "sha256": "dc7db6cdefd708f01ef55911502029465dc8d34757fefc9ca7e76e330be7ab28"
+    },
+    {
+      "file": "Assets/Textures/AigeiCityRuinSmall-warcraft.png",
+      "sha256": "5b4891ecfcbcad65159f04b9d6e9347de6884b5f45f924aece2e3a009bbc7fc2"
+    },
+    {
+      "file": "Assets/Materials/AigeiCityRuinSmall-warcraft.mmat",
+      "sha256": "a29d287fca532f5473c80442faedc5c3fecabbba2265f956b22a23b0b4c3cfba"
+    },
+    {
+      "file": "Assets/Models/AigeiArcheryRange-warcraft.glb",
+      "sha256": "c59d1d1ce04264639b7217ec5225cb864a8691606d8ef30d2f6abbb6c65d5476"
+    },
+    {
+      "file": "Assets/Textures/AigeiArcheryRange-warcraft.png",
+      "sha256": "60e02c0697b05a039d783c3ee05638b2b22cbdeea0c0fc3d42dcdfde2a893926"
+    },
+    {
+      "file": "Assets/Materials/AigeiArcheryRange-warcraft.mmat",
+      "sha256": "1e36c251d2f75ca32445f71e6e069af7a66feab3d7ee7e15e03d3ee74a99446e"
+    },
+    {
+      "file": "Assets/Models/AigeiWoodBridge-warcraft.glb",
+      "sha256": "0d03050238624d748affc62c37aafaed92ff327bf3b37dde7acfe0c062a48de9"
+    },
+    {
+      "file": "Assets/Textures/AigeiWoodBridge-warcraft.png",
+      "sha256": "57348a7a14bdce2c5ee7b51f963fac814cfae051ce14da428138d41bcd4379e8"
+    },
+    {
+      "file": "Assets/Materials/AigeiWoodBridge-warcraft.mmat",
+      "sha256": "dcbff331aa5f5f6c12023a22c451d7fa488b73fdf8b4c87e3d6ef07f7594e3aa"
+    },
+    {
+      "file": "Assets/Models/AigeiWoodBridgeSmall-warcraft.glb",
+      "sha256": "4356000c3a515be04c845250167748be58fcb846d7d7f6c36c6b35819e07210f"
+    },
+    {
+      "file": "Assets/Textures/AigeiWoodBridgeSmall-warcraft.png",
+      "sha256": "57348a7a14bdce2c5ee7b51f963fac814cfae051ce14da428138d41bcd4379e8"
+    },
+    {
+      "file": "Assets/Materials/AigeiWoodBridgeSmall-warcraft.mmat",
+      "sha256": "b4f74092bc6f42b18318e97991d396209c3dcb58565bd83a8e64bdc086326030"
+    },
+    {
+      "file": "Assets/Models/AigeiStoneBridge-warcraft.glb",
+      "sha256": "bb190e65e0b5b8b048ce1a2f78cd965b56da317b18e984691dff10a4c13e2c77"
+    },
+    {
+      "file": "Assets/Textures/AigeiStoneBridge-warcraft.png",
+      "sha256": "80ee4d5492a5b61d7332d4f23873dbae62357e46358fa1ee5ffe00c77f43f759"
+    },
+    {
+      "file": "Assets/Materials/AigeiStoneBridge-warcraft.mmat",
+      "sha256": "76a4d44d018fa8444bc7fa54166ab6fa707e1566e6ee4642d48a699764103f30"
+    },
+    {
+      "file": "Assets/Models/AigeiStoneBridgeSmall-warcraft.glb",
+      "sha256": "7f660fb58c86bef0702722277d4adc5e22a1d74b5056a5af43b468de99fa1c45"
+    },
+    {
+      "file": "Assets/Textures/AigeiStoneBridgeSmall-warcraft.png",
+      "sha256": "80ee4d5492a5b61d7332d4f23873dbae62357e46358fa1ee5ffe00c77f43f759"
+    },
+    {
+      "file": "Assets/Materials/AigeiStoneBridgeSmall-warcraft.mmat",
+      "sha256": "a364291c4970edba3e0bcf926577b816c0c3d97a336e57046c486284db8fd6ec"
+    },
+    {
+      "file": "Assets/Models/AigeiRuinedBridge-warcraft.glb",
+      "sha256": "ba9319d8ae2e71a6a3aa5e0333a1422fd81e6fe6935a645b836fce2923abda17"
+    },
+    {
+      "file": "Assets/Textures/AigeiRuinedBridge-warcraft.png",
+      "sha256": "80ee4d5492a5b61d7332d4f23873dbae62357e46358fa1ee5ffe00c77f43f759"
+    },
+    {
+      "file": "Assets/Materials/AigeiRuinedBridge-warcraft.mmat",
+      "sha256": "d8b8f4cb645788f5b0161a50fbcd6b101d1699bdcda81a8bbdb94823caf78a47"
+    },
+    {
+      "file": "Assets/Models/AigeiStoneWall-warcraft.glb",
+      "sha256": "ccc176c3f928a8d423c0a91ccbc0d45cbb28c94a530a03ecb9b717d6dc0a78ab"
+    },
+    {
+      "file": "Assets/Textures/AigeiStoneWall-warcraft.png",
+      "sha256": "61323852edc7d0e120e0d193e18eae1fb86bfb1b01db7d154bd72c4bb074f6e7"
+    },
+    {
+      "file": "Assets/Materials/AigeiStoneWall-warcraft.mmat",
+      "sha256": "2d26ffec524aa22f4b809e5f71a612cc39a034968df28d1ede94fd1d5bf4267b"
+    },
+    {
+      "file": "Assets/Models/AigeiRuinedWall-warcraft.glb",
+      "sha256": "3846f3360c21580f8d1686386fced49874c406adec55e8e95720445dd7cb9199"
+    },
+    {
+      "file": "Assets/Textures/AigeiRuinedWall-warcraft.png",
+      "sha256": "5b4891ecfcbcad65159f04b9d6e9347de6884b5f45f924aece2e3a009bbc7fc2"
+    },
+    {
+      "file": "Assets/Materials/AigeiRuinedWall-warcraft.mmat",
+      "sha256": "519fe697dcccc124d488f4a1fcb0bfb6c45b6da286fed2094645fd313f811359"
+    },
+    {
+      "file": "Assets/Models/AigeiRuinedArch-warcraft.glb",
+      "sha256": "65572a74e400eb7ddb7efa88bdeb1c44970e54e2fe28159f9ab68e864678b5ec"
+    },
+    {
+      "file": "Assets/Textures/AigeiRuinedArch-warcraft.png",
+      "sha256": "5b4891ecfcbcad65159f04b9d6e9347de6884b5f45f924aece2e3a009bbc7fc2"
+    },
+    {
+      "file": "Assets/Materials/AigeiRuinedArch-warcraft.mmat",
+      "sha256": "4fb53e28b0354cc8b829d3b9943b9cf8d733debd2697ca8132632cb79007442d"
+    },
+    {
+      "file": "Assets/Models/AigeiArchway-warcraft.glb",
+      "sha256": "c7ba6524a2bf46446e602d5e3d38eb167cb0a676b9141ba02e6fec1ecd19d884"
+    },
+    {
+      "file": "Assets/Textures/AigeiArchway-warcraft.png",
+      "sha256": "5d6e3bb7ed53014607c6488ee64c8b95306e4ec2820d54183fc836789685eb27"
+    },
+    {
+      "file": "Assets/Materials/AigeiArchway-warcraft.mmat",
+      "sha256": "2d56b8c8e8bcff47ddcb9087f331308c87854c6f38c635a5bb5469fef9521b5d"
+    },
+    {
+      "file": "Assets/Models/AigeiObelisk-warcraft.glb",
+      "sha256": "29f203902730f36e0dd00403c27bf7c94c1f2d8e68d325d3ca8204918b39b0e9"
+    },
+    {
+      "file": "Assets/Textures/AigeiObelisk-warcraft.png",
+      "sha256": "f3271ff792d9d4203fccaafdc105b66b254295274be41eef1393fcd1be3a7039"
+    },
+    {
+      "file": "Assets/Materials/AigeiObelisk-warcraft.mmat",
+      "sha256": "29341f641a32f2e943dd126c8f6c27af06f4ca82fcfa67507c22d33ed9f44936"
+    },
+    {
+      "file": "Assets/Models/AigeiGrave-warcraft.glb",
+      "sha256": "d83c6411f7be1d648f4b0c39686881df694da949fd28c455279eea923723e61c"
+    },
+    {
+      "file": "Assets/Textures/AigeiGrave-warcraft.png",
+      "sha256": "5d6e3bb7ed53014607c6488ee64c8b95306e4ec2820d54183fc836789685eb27"
+    },
+    {
+      "file": "Assets/Materials/AigeiGrave-warcraft.mmat",
+      "sha256": "d1c12218ef2a34804cb293a252eac7b41032b3d75e91de929087ea0fee4c1e6e"
+    },
+    {
+      "file": "Assets/Models/AigeiGraveCross-warcraft.glb",
+      "sha256": "d2caa8657aa20a75f9e3d1e0c1b8f64d84f43327a4d5ac4f25bb3ccc6f0a61ac"
+    },
+    {
+      "file": "Assets/Textures/AigeiGraveCross-warcraft.png",
+      "sha256": "5d6e3bb7ed53014607c6488ee64c8b95306e4ec2820d54183fc836789685eb27"
+    },
+    {
+      "file": "Assets/Materials/AigeiGraveCross-warcraft.mmat",
+      "sha256": "6f2ae0675350acd2904ef3ef5dcde7cd04d7e37b15eeb56548780a187d50ec37"
+    },
+    {
+      "file": "Assets/Models/AigeiOak-warcraft.glb",
+      "sha256": "ee610335e341545dc60dcfe7b81b58beec125b3bb33498b89f9ebbe21f551c8f"
+    },
+    {
+      "file": "Assets/Textures/AigeiOak-warcraft.png",
+      "sha256": "9ef065427c265e191e402260dfea934c45a81cc6b9b497dcae5b4464ab0e9e1f"
+    },
+    {
+      "file": "Assets/Materials/AigeiOak-warcraft.mmat",
+      "sha256": "e177dcfea651ded3e37057db64d9cd60c3e37d926f81b204ea4c5c17ea87fe03"
+    },
+    {
+      "file": "Assets/Models/AigeiOakTall-warcraft.glb",
+      "sha256": "684735417909f445d5e1bc17438f6bf38d5c6738166ee892689d38f46175e631"
+    },
+    {
+      "file": "Assets/Textures/AigeiOakTall-warcraft.png",
+      "sha256": "9ef065427c265e191e402260dfea934c45a81cc6b9b497dcae5b4464ab0e9e1f"
+    },
+    {
+      "file": "Assets/Materials/AigeiOakTall-warcraft.mmat",
+      "sha256": "5efdda4ede65d70651359cdac33015a1373eb92b43934d6e33fb7fc5087dfeea"
+    },
+    {
+      "file": "Assets/Models/AigeiSnowTree-warcraft.glb",
+      "sha256": "958c4a425899bab0b3b9c6404730031d2b759f4e411884a723849062777a142e"
+    },
+    {
+      "file": "Assets/Textures/AigeiSnowTree-warcraft.png",
+      "sha256": "7575a1a10e47429e2006279197c92e4bfa28cb576cdbcc3b21c9474e5785ddf3"
+    },
+    {
+      "file": "Assets/Materials/AigeiSnowTree-warcraft.mmat",
+      "sha256": "c9b5dad90bdd408f082dd5091fd603bf110f79f80602926354aa33f9fd692423"
+    },
+    {
+      "file": "Assets/Models/AigeiBarrensTree-warcraft.glb",
+      "sha256": "953b4c0bfe81926b95e97cd6e507336827338f3f22dfda148776271895888a86"
+    },
+    {
+      "file": "Assets/Textures/AigeiBarrensTree-warcraft.png",
+      "sha256": "81dea4c2498da6ed7cbc19f6d54b1c9252004b11df67751051f021ec2797ef14"
+    },
+    {
+      "file": "Assets/Materials/AigeiBarrensTree-warcraft.mmat",
+      "sha256": "ebfe9b9d55dc21f21a82ea7ab867201cc195a7be910c511d95e2049e5181c376"
+    },
+    {
+      "file": "Assets/Models/AigeiMushroomTree-warcraft.glb",
+      "sha256": "a0630298224e71ea0e1e1cb9ed27af866d7b8bb0990f1ab2344821ba5dc64f91"
+    },
+    {
+      "file": "Assets/Textures/AigeiMushroomTree-warcraft.png",
+      "sha256": "7be5ada859c56455d7fc5af51c4b4d1d6226ae011113d41a350e51b889671367"
+    },
+    {
+      "file": "Assets/Materials/AigeiMushroomTree-warcraft.mmat",
+      "sha256": "e1dd2d63984ee0af0ba31f3e14ea2427290a2a1d28f71dad4dbedce32e09327a"
+    },
+    {
+      "file": "Assets/Models/AigeiCactus-warcraft.glb",
+      "sha256": "a5316449ca43ca93cee8f86d3a2e95b74037997f2684b0fb51353567d6e4bab9"
+    },
+    {
+      "file": "Assets/Textures/AigeiCactus-warcraft.png",
+      "sha256": "460d59fc91820a121e0ead5f5e656ee6a3118d82db778912dd6e7f89e53d2e70"
+    },
+    {
+      "file": "Assets/Materials/AigeiCactus-warcraft.mmat",
+      "sha256": "c85ea3c33153934e287143530327b57db3c416420fc124162c24a28294377b9e"
+    },
+    {
+      "file": "Assets/Models/AigeiRock-warcraft.glb",
+      "sha256": "45c21702e1ec4487076b8d2681d5e64ec2a5a424ae1d8f200effc40744efdbd6"
+    },
+    {
+      "file": "Assets/Textures/AigeiRock-warcraft.png",
+      "sha256": "8cff8a0f8b59b54a8c3baaa651e6d903cfbab26ab61353e8a6b17d623c67b969"
+    },
+    {
+      "file": "Assets/Materials/AigeiRock-warcraft.mmat",
+      "sha256": "d4d60efc95afb491e4bd2ee15ff4b1a04b27ebd7cfa959ef7df9234fead39278"
+    },
+    {
+      "file": "Assets/Models/AigeiRockPillar-warcraft.glb",
+      "sha256": "9cd11eee9fb7de49a28fc9750d0b40ce14b310fcfaef277f6028c59de39b2758"
+    },
+    {
+      "file": "Assets/Textures/AigeiRockPillar-warcraft.png",
+      "sha256": "e833726232bb35b7ba1b6b28da20fc0b41696d45a3cd860db0704a49142c4e38"
+    },
+    {
+      "file": "Assets/Materials/AigeiRockPillar-warcraft.mmat",
+      "sha256": "cfd6c410d1b019957fb6080a1b46faa2cff69ade9dbba0246e5fd2e8c928d092"
+    },
+    {
+      "file": "Assets/Models/AigeiRockArch-warcraft.glb",
+      "sha256": "ebec178bc7ab8505a7d75b56ed95756bef186bfbe2a2525289b6c19425e1e399"
+    },
+    {
+      "file": "Assets/Textures/AigeiRockArch-warcraft.png",
+      "sha256": "8cff8a0f8b59b54a8c3baaa651e6d903cfbab26ab61353e8a6b17d623c67b969"
+    },
+    {
+      "file": "Assets/Materials/AigeiRockArch-warcraft.mmat",
+      "sha256": "05905af354cf7ac5f33ec2d1723034f32838fff75749487294eb9b644c401937"
+    },
+    {
+      "file": "Assets/Models/AigeiShrub-warcraft.glb",
+      "sha256": "d7e05705bd1f4fdf1678f0832f419147e6069dc9f270719b4274e0fae711d64a"
+    },
+    {
+      "file": "Assets/Textures/AigeiShrub-warcraft.png",
+      "sha256": "de7ca0618e60f6b6935e259f1d0dcef7e3eee81e5ff9d093d4bc2e1c4819171f"
+    },
+    {
+      "file": "Assets/Materials/AigeiShrub-warcraft.mmat",
+      "sha256": "7927e9951f0243397f132e984f39a5ed3f6c24be2d48367d82321d0a9f420a27"
+    },
+    {
+      "file": "Assets/Models/AigeiSkullPile-warcraft.glb",
+      "sha256": "5c7eb0c68229e6262d5dc2a5e3476e6aaa6ff4c22991f0fb23f3a82449f7cad3"
+    },
+    {
+      "file": "Assets/Textures/AigeiSkullPile-warcraft.png",
+      "sha256": "60e02c0697b05a039d783c3ee05638b2b22cbdeea0c0fc3d42dcdfde2a893926"
+    },
+    {
+      "file": "Assets/Materials/AigeiSkullPile-warcraft.mmat",
+      "sha256": "e6ac8a239768f6ff0477415a49c9053c15adac9d5fd2ede4e26c36d24c76398c"
+    }
+  ]
+}

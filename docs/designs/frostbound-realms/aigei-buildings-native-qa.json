@@ -1,0 +1,89 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "tag": "1791158800000",
+  "project": "D:\\MEngineNativeQA\\frost-aigei-1791158800000\\sample",
+  "protocol": 38,
+  "simulationBaseline": "04384735b4fbd10fbd9e70632bc58b4bf8f83a82",
+  "productSha256": "dc9a85c15d171fdb053281dec30e1a2685a36428ac5fd59f2fb695417c95f48d",
+  "physicalInput": false,
+  "audioListening": false,
+  "models": [
+    {
+      "kind": "hall",
+      "team": 0,
+      "tier": 1,
+      "key": "KingdomHall",
+      "mesh": "Assets/Models/KingdomHall-warcraft.glb",
+      "material": "Assets/Materials/KingdomHall-warcraft.mmat"
+    },
+    {
+      "kind": "hall",
+      "team": 0,
+      "tier": 2,
+      "key": "KingdomHall2",
+      "mesh": "Assets/Models/KingdomHall2-warcraft.glb",
+      "material": "Assets/Materials/KingdomHall2-warcraft.mmat"
+    },
+    {
+      "kind": "hall",
+      "team": 0,
+      "tier": 3,
+      "key": "KingdomHall3",
+      "mesh": "Assets/Models/KingdomHall3-warcraft.glb",
+      "material": "Assets/Materials/KingdomHall3-warcraft.mmat"
+    },
+    {
+      "kind": "barracks",
+      "team": 0,
+      "key": "KingdomBarracks",
+      "mesh": "Assets/Models/KingdomBarracks-warcraft.glb",
+      "material": "Assets/Materials/KingdomBarracks-warcraft.mmat"
+    },
+    {
+      "kind": "farm",
+      "team": 0,
+      "key": "KingdomLodge",
+      "mesh": "Assets/Models/KingdomLodge-warcraft.glb",
+      "material": "Assets/Materials/KingdomLodge-warcraft.mmat"
+    },
+    {
+      "kind": "tower",
+      "team": 0,
+      "key": "KingdomTower",
+      "mesh": "Assets/Models/KingdomTower-warcraft.glb",
+      "material": "Assets/Materials/KingdomTower-warcraft.mmat"
+    },
+    {
+      "kind": "altar",
+      "team": 0,
+      "key": "KingdomAltar",
+      "mesh": "Assets/Models/KingdomAltar-warcraft.glb",
+      "material": "Assets/Materials/KingdomAltar-warcraft.mmat"
+    },
+    {
+      "kind": "workshop",
+      "team": 0,
+      "key": "KingdomWorkshop",
+      "mesh": "Assets/Models/KingdomWorkshop-warcraft.glb",
+      "material": "Assets/Materials/KingdomWorkshop-warcraft.mmat"
+    },
+    {
+      "kind": "shop",
+      "team": 0,
+      "key": "KingdomArcaneVault",
+      "mesh": "Assets/Models/KingdomArcaneVault-warcraft.glb",
+      "material": "Assets/Materials/KingdomArcaneVault-warcraft.mmat"
+    },
+    {
+      "kind": "farm",
+      "team": 1,
+      "key": "WildwoodLodge",
+      "mesh": "Assets/Models/WildwoodLodge-warcraft.glb",
+      "material": "Assets/Materials/WildwoodLodge-warcraft.mmat"
+    }
+  ],
+  "nativeConstruction": true,
+  "trueMenuSaveLoad": true,
+  "shaderRejections": 0
+}
