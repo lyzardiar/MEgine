@@ -259,3 +259,5 @@ Skirmish 开始时为 500 金币、150 木材；Kingdom / Warclan / Wildwood 各
 四族控制台已使用原版 ConsoleUI.fdf 和 BLP 贴图，头像、单位信息、2×3 物品栏及 4×3 命令栏按源布局校准，边缘锚点与点击区域共用实际视口坐标。原生四族与三种宽高比验收见 `docs/designs/frostbound-realms/console-layout.md`。
 
 TCP 心跳、连接期限和断线重连使用实际时间。原生双客户端菜单创建／浏览／加入／开局、16 秒大厅空闲及客机重连验收见 `docs/designs/frostbound-realms/network-clock.md`；运行 `node scripts/test-frost-network-clock.mjs` 与 `node scripts/qa-frost-menu-network.mjs` 可复验。
+
+暗夜新近战开局绑定原版缠绕金矿。扎根主树按 G 或右键目标矿井进行 3 秒缠绕施法，再生长 60 秒；金矿最多容纳五个小精灵，按实际人数播放原版工作序列和 EntangleWisp 挂接模型。选择金矿后，L 装载、U 全部卸载，也可分别卸载驻矿单位；面板显示人数与剩余黄金。源数据、共享轮转收入、退出阻挡、绑定解除、存档、真实 TCP 和原生截图见 [缠绕金矿](../../docs/designs/frostbound-realms/entangled-mining.md)。当前协议 41。

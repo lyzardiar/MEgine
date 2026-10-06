@@ -1,0 +1,19 @@
+{
+  "author": "MiYu",
+  "beforeCommit": "518b228",
+  "beforeFalseEvents": [
+    {
+      "type": "added",
+      "path": "Assets/Main.mscene"
+    }
+  ],
+  "currentSourceSha256": "472ec3492f43a8024cc51f9b35f999b6d5fb0229e47ead184b1608f2ab6c6652",
+  "targetedTests": {
+    "passed": 14,
+    "failed": 0
+  },
+  "frontendBuild": true,
+  "nativeBuild": true,
+  "nativeEditorSha256": "79ac76db830fbe37d072815c38314ff8f64fe1cb8b764441f4b3cce3f292754a",
+  "nativeEntangledTwoClients": true
+}

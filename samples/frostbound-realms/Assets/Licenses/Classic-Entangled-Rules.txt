@@ -1,0 +1,1 @@
+Original Warcraft III Entangle and Entangled Gold Mine ability/unit data: Blizzard Entertainment. Original game asset terms apply. Signed source tables are retained in SourceAssets/WarcraftIII/Units and referenced by entangled-rule-sources.json.

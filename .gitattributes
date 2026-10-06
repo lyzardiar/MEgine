@@ -37,6 +37,7 @@ scripts/import-frost-construction.py text eol=lf
 scripts/import-frost-building-scales.py text eol=lf
 scripts/import-frost-unit-scales.py text eol=lf
 samples/frostbound-realms/construction-sources.json text eol=lf
+samples/frostbound-realms/construction-catalog.json text eol=lf
 scripts/convert-frost-billboards.py text eol=lf
 scripts/convert-frost-classic-billboards.py text eol=lf
 scripts/warcraft-node-metadata/*.cs text eol=lf
@@ -57,6 +58,10 @@ samples/frostbound-realms/SourceAssets/WarcraftIII/TerrainArt/Water.slk -text wh
 samples/frostbound-realms/SourceAssets/WarcraftIII/ReplaceableTextures/Water/*.blp binary
 
 scripts/import-frost-wisp-rules.py text eol=lf
+scripts/import-frost-entangled-assets.py text eol=lf
+scripts/import-frost-entangled-rules.py text eol=lf
+scripts/import-frost-entangled-wisp-icon.py text eol=lf
+samples/frostbound-realms/entangled-*.json text eol=lf
 samples/frostbound-realms/wisp-rule-sources.json text eol=lf
 samples/frostbound-realms/wisp-rules.json text eol=lf
 samples/frostbound-realms/SourceAssets/WarcraftIII/Units/*.slk -text whitespace=cr-at-eol

@@ -24,7 +24,7 @@ for(const [key,asset] of Object.entries(art)){
     hidden+=nodes.length-rendered.length;sampled++;
   }
 }
-assert.equal(sources.size,15);assert.ok(visible>0&&hidden>0);assert.notEqual(construction.models['sharedmodels/ubirth.mdx'].effect,construction.models['buildings/undead/ziggurat/ubirth.mdx'].effect);
+assert.equal(sources.size,16);assert.ok(visible>0&&hidden>0);assert.notEqual(construction.models['sharedmodels/ubirth.mdx'].effect,construction.models['buildings/undead/ziggurat/ubirth.mdx'].effect);
 const completedAltar=art.RevenantAltar,stand=V.pose({kind:'altar',built:1,team:0},completedAltar,false,0,30);assert.deepEqual(E.embedded({kind:'altar',built:1},{asset:completedAltar},stand,{x:0,y:0,z:0},0,1,{nodes(){throw Error('Invisible Stand must not query nodes');}}),[]);
 const scene=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world,script=fs.readFileSync(new URL('Assets/Scripts/Main.js',root),'utf8'),copy=x=>JSON.parse(JSON.stringify(x));
 function client(){

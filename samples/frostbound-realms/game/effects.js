@@ -22,17 +22,19 @@ var FrostEffects=(()=>{
     else{const n=Math.sqrt(1+r[10]-r[0]-r[5])*2;q=[(r[8]+r[2])/n,(r[9]+r[6])/n,n/4,(r[1]-r[4])/n];}
     const norm=Math.hypot(...q);return {position:[position.x+m[12],position.y+m[13],position.z+m[14]],scale:scales,rotation:q.map(v=>v/norm)};
   }
-  function embedded(u,visual,mesh,position,facing,scale,at){
+  function embedded(u,visual,mesh,position,facing,scale,at,clock=null){
     const definitions=visual.asset.classic&&FrostConstructionArt.owners[visual.asset.sourceModel.replace(/\\/g,'/').toLowerCase()];if(!definitions)return [];
     const pose=mesh.match(/#pose=(\d+):(\d+)(?:@(\d+))?$/),seconds=pose?Number(pose[2])/Number(pose[3]||12):0,result=[];
-    if(!definitions.some(d=>d.clips.includes(pose?Number(pose[1]):0)))return result;
+    const cargo=u.kind==='entangledmine'&&u.built===1&&u.hp>0?Math.min(5,u.workers||0):0;
+    if(!cargo&&!definitions.some(d=>d.clips.includes(pose?Number(pose[1]):0)))return result;
+    const cargoIds=definitions.filter(d=>/entanglewisp\.mdl$/i.test(d.path)).slice(0,cargo).map(d=>d.id);
     for(const node of at.nodes()){
-      const definition=node.attachment;if(!definition?.path||definition.visibility<=.001)continue;
+      const definition=node.attachment;if(!definition?.path)continue;const resident=cargoIds.includes(definition.id);if(!resident&&definition.visibility<=.001)continue;
       const key=definition.path.replace(/\\/g,'/').replace(/\.mdl$/i,'.mdx').toLowerCase(),art=FrostConstructionArt.models[key];if(!art)throw Error('Unresolved embedded model: '+definition.path);
       const transform=nodeTransform(node.matrix,position,facing,scale);if(!transform)continue;
-      const clip=art.animations.findIndex(a=>/^birth$/i.test(a.name));if(clip<0)throw Error('Embedded construction model has no Birth: '+key);
-      const elapsed=Math.min(seconds,art.animations[clip].duration),frame=Math.floor(elapsed*30+1e-7);
-      result.push({slot:result.length,name:key,node:node.index,attachmentId:definition.id,visibility:definition.visibility,component:{effect:art.effect,clip,playing:false,looping:false,speed:1,time_seconds:elapsed},parts:FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+frame+'@30',u.team),...transform});
+      const clip=art.animations.findIndex(a=>(resident?/^stand$/i:/^birth$/i).test(a.name));if(clip<0)throw Error('Embedded construction model has no Birth: '+key);
+      const elapsed=resident?Math.max(0,clock??seconds)%art.animations[clip].duration:Math.min(seconds,art.animations[clip].duration),frame=Math.floor(elapsed*30+1e-7);
+      result.push({slot:result.length,name:key,node:node.index,attachmentId:definition.id,visibility:resident?1:definition.visibility,component:{effect:art.effect,clip,playing:false,looping:resident,speed:1,time_seconds:elapsed},parts:FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+frame+'@30',u.team),...transform});
     }
     return result;
   }

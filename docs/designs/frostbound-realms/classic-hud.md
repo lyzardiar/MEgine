@@ -8,7 +8,7 @@ Controls and their click regions use the same native RectTransform coordinates. 
 
 The primary portrait renders the selected classic model through an independent camera and RawImage.render_root. Portrait animation shares the main actor's sampled pose and freezes while single-player simulation is paused. The F10 game menu supports resume, save, load and exit; multiplayer simulation continues while the local menu is open. Move, Stop, Hold, Attack and Patrol have fixed command slots. Single Wisp selection has no Attack command. Construction, research, training and inventory controls retain their actual simulation behavior.
 
-The day/night dial follows simulation time and daylight. Its hover text shows the current hour. HUD statistics show health, mana, attack, armor and movement; hero selection also shows experience, skill points and inventory. The editor has its own panel layout, terrain controls, save and page navigation.
+The day/night dial follows simulation time and daylight. Its hover text shows the current hour. HUD task and gathering status use a separate row above movement and resident information. Multi-line status occupies that space until it ends; movement information then returns. HUD statistics show health, mana, attack, armor and movement; hero selection also shows experience, skill points and inventory. The editor has its own panel layout, terrain controls, save and page navigation.
 
 ![Original human console](console-layout-human.png)
 ![Original night elf console](console-layout-night-elf.png)

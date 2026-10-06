@@ -1,0 +1,23 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "allowedChanges": [
+    "project id/storageId",
+    "local TCP port",
+    "qaUnits observation field"
+  ],
+  "peers": [
+    {
+      "sample": "D:\\MEngineNativeQA\\entangled-1791325767764\\sample",
+      "comparedFiles": 6600,
+      "bundleSha256": "0eea57d75c72b34515aff95749a968886654532e1a42ee0c65bbc61b20eba229",
+      "sceneSha256": "46d61eaa8175f80a4eaf5a596d908d9cb3a556b1e112dad257b31f9123b1db0d"
+    },
+    {
+      "sample": "D:\\MEngineNativeQA\\entangled-1791325767764\\sample-1",
+      "comparedFiles": 6600,
+      "bundleSha256": "0eea57d75c72b34515aff95749a968886654532e1a42ee0c65bbc61b20eba229",
+      "sceneSha256": "46d61eaa8175f80a4eaf5a596d908d9cb3a556b1e112dad257b31f9123b1db0d"
+    }
+  ]
+}

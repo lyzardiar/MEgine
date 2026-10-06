@@ -63,6 +63,7 @@ export type ProjectAssetReadOptions = {
 let projectFiles: ProjectFileAsset[] = [];
 let watchedProjectFiles: ProjectFileAsset[] = [];
 let watchBaselineInitialized = false;
+let assetSessionGeneration = 0;
 let audioPreview: { path: string; audio: HTMLAudioElement; url: string } | null = null;
 const writeBaselines = new Map<string, string>();
 const internalWrites = new Map<string, number>();
@@ -77,6 +78,7 @@ export function listProjectFiles(): ProjectFileAsset[] {
 }
 
 export function resetProjectAssetState(): void {
+  assetSessionGeneration += 1;
   projectFiles = [];
   watchedProjectFiles = [];
   watchBaselineInitialized = false;
@@ -133,8 +135,11 @@ async function fetchProjectFiles(): Promise<ProjectFileAsset[]> {
 }
 
 export async function refreshProjectFiles(): Promise<ProjectFileAsset[]> {
+  const generation = assetSessionGeneration;
   try {
-    projectFiles = await fetchProjectFiles();
+    const current = await fetchProjectFiles();
+    if (generation !== assetSessionGeneration) return projectFiles;
+    projectFiles = current;
     if (!watchBaselineInitialized) {
       watchedProjectFiles = projectFiles;
       watchBaselineInitialized = true;
@@ -148,13 +153,17 @@ export async function refreshProjectFiles(): Promise<ProjectFileAsset[]> {
 
 /** Accepts an editor-owned multi-file transaction as the new watcher baseline. */
 export async function resetProjectAssetWatchBaseline(): Promise<ProjectFileAsset[]> {
+  const generation = assetSessionGeneration;
   try {
-    projectFiles = await fetchProjectFiles();
+    const current = await fetchProjectFiles();
+    if (generation !== assetSessionGeneration) return projectFiles;
+    projectFiles = current;
     watchedProjectFiles = projectFiles;
     watchBaselineInitialized = true;
   } catch {
     // The disk transaction already committed. Suppress one future diff instead
     // of reporting failure or misclassifying our rename as an external delete.
+    if (generation !== assetSessionGeneration) return projectFiles;
     watchBaselineInitialized = false;
   }
   writeBaselines.clear();
@@ -201,8 +210,10 @@ export function diffProjectFiles(
 }
 
 export async function pollProjectFileChanges(): Promise<ProjectAssetChange[]> {
-  const previous = watchedProjectFiles;
+  const generation = assetSessionGeneration;
   const current = await fetchProjectFiles();
+  if (generation !== assetSessionGeneration) return [];
+  const previous = watchedProjectFiles;
   if (!watchBaselineInitialized) {
     projectFiles = current;
     watchedProjectFiles = current;

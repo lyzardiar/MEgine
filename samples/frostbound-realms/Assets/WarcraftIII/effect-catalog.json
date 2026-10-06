@@ -23,6 +23,27 @@
       "previewClip": 0
     },
     {
+      "source": "SharedModels\\EntangleWisp.MDX",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/EntangleWisp.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/EntangleWisp.prefab",
+      "clips": [
+        {
+          "name": "stand",
+          "duration": 0.667,
+          "loop": true,
+          "frames": 10
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 4,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 61,
+      "previewClip": 0
+    },
+    {
       "source": "SharedModels\\NEBirth.MDX",
       "collection": "remaining-ready",
       "effect": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/NEBirth.mfx",

@@ -47,8 +47,10 @@ import './test-frost-town-portal-network.mjs';
 import './test-frost-construction.mjs';
 import './test-frost-undead-economy.mjs';
 import './test-frost-wisp-harvest.mjs';
+import './test-frost-entangled-rules.mjs';
 import './test-frost-wisp-client.mjs';
 import './test-frost-undead-network.mjs';
+import './test-frost-entangled-network.mjs';
 import './test-frost-triggers.mjs';
 import './test-frost-tilesets.mjs';
 import './test-frost-tree-felling.mjs';
@@ -77,6 +79,7 @@ for(let faction=0;faction<4;faction++){
   const game=battleFixture(S,'skirmish',{factions:[faction,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),worker=game.units.find(u=>u.team===0&&u.kind==='worker'),hall=game.units.find(u=>u.team===0&&u.kind==='hall');
   assert.match(S.command(game,0,{type:'build',ids:[worker.id],kind:'workshop',x:-10,z:25}),/tier 2/);
   step(game,400);assert.equal(S.command(game,0,{type:'tech',ids:[hall.id]}),null);step(game,1401);
+  if(worker.inside)assert.equal(S.command(game,0,{type:'unloadWisps',ids:[worker.inside],target:worker.id}),null);
   assert.equal(S.command(game,0,{type:'move',ids:[worker.id],x:-10,z:21}),null);step(game,60);
   assert.equal(S.command(game,0,{type:'build',ids:[worker.id],kind:'workshop',x:-10,z:25}),null);step(game,125);
   step(game,1200);const workshop=game.units.find(u=>u.team===0&&u.kind==='workshop'),kind=S.siege[faction],gold=game.teams[0].gold,wood=game.teams[0].wood,pop=S.population(game,0).used;

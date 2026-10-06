@@ -36,6 +36,7 @@ export async function attachDesktopProject(): Promise<ProjectSnapshot> {
     resetProjectAssetState();
     try {
       currentProject = await getProjectSnapshot();
+      resetProjectAssetState();
       return currentProject;
     } catch (error) {
       currentProject = null;
@@ -48,6 +49,7 @@ export async function startDesktopProject(root: string): Promise<ProjectSnapshot
   return enqueueSessionOperation(async () => {
     resetProjectAssetState();
     currentProject = await openProject(root);
+    resetProjectAssetState();
     return currentProject;
   });
 }
@@ -59,6 +61,7 @@ export async function createDesktopProject(
   return enqueueSessionOperation(async () => {
     resetProjectAssetState();
     currentProject = await createProject(parent, name);
+    resetProjectAssetState();
     return currentProject;
   });
 }

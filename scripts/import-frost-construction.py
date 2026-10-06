@@ -26,17 +26,19 @@ def main():
     args = parser.parse_args(); library = args.library.resolve(); output = args.output.resolve()
     receipt_raw = (library / 'asset-sources.json').read_bytes(); receipt = json.loads(receipt_raw)
     for path, digest in receipt['converter'].items(): assert base.digest((ROOT / path).read_bytes()) == digest, path
-    assert base.digest((base.LIBRARY / 'classic-attachment-ready/asset-sources.json').read_bytes()) == receipt['ownerReceiptSha256']
+    owner_receipts = receipt.get('ownerReceipts', [dict(path='asset-library/warcraft-iii/classic-attachment-ready', sha256=receipt.get('ownerReceiptSha256'))])
+    for owner in owner_receipts: assert base.digest((ROOT / owner['path'] / 'asset-sources.json').read_bytes()) == owner['sha256']
     assert base.digest((base.LIBRARY / 'remaining-ready/asset-sources.json').read_bytes()) == receipt['sourceReceiptSha256']
     generated = {}
     for f in receipt['generatedFiles']:
         raw = (library / f['path']).read_bytes(); assert len(raw) == f['bytes'] and base.digest(raw) == f['sha256'], f['path']
         if f['path'].startswith('Assets/'): generated[f['path']] = raw
-    owners = {}; owner_root = base.LIBRARY / 'classic-attachment-ready'
-    owner = json.loads((owner_root / 'asset-sources.json').read_bytes())
-    for a in owner['annotations']:
-        metadata = json.loads((owner_root / a['metadata']).read_bytes()); definitions = [d for d in metadata['attachments'] if d['path']]
-        if definitions: owners[base.key(a['source'])] = [dict(id=d['id'], path=d['path'], clips=visible_clips(d, metadata['sequences'])) for d in definitions]
+    owners = {}
+    for source_owner in owner_receipts:
+        owner_root = ROOT / source_owner['path']; owner = json.loads((owner_root / 'asset-sources.json').read_bytes())
+        for a in owner['annotations']:
+            metadata = json.loads((owner_root / a['metadata']).read_bytes()); definitions = [d for d in metadata['attachments'] if d['path']]
+            if definitions: owners[base.key(a['source'])] = [dict(id=d['id'], path=d['path'], clips=visible_clips(d, metadata['sequences'])) for d in definitions]
     catalog = json.loads((library / 'construction-catalog.json').read_bytes()); catalog['owners'] = owners
     generated['construction-catalog.json'] = base.encode(catalog)
     generated['Assets/Licenses/warcraft-construction-sources.json'] = receipt_raw

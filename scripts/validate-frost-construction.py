@@ -20,7 +20,8 @@ parser.add_argument('--metadata-reader', type=pathlib.Path, required=True)
 parser.add_argument('--sampler', type=pathlib.Path, required=True)
 parser.add_argument('--probe', type=pathlib.Path, default=pathlib.Path('D:/MEngineNativeQA/tile-build-1790939800003/release/examples/gltf_bounds.exe'))
 parser.add_argument('--reference', type=pathlib.Path, default=ROOT / 'tmp/warcraft-effects/billboard-reference/BillboardReference.dll')
-args = parser.parse_args(); library = base.LIBRARY / 'construction-ready'; sample = ROOT / 'samples/frostbound-realms'
+parser.add_argument('--library', type=pathlib.Path, default=base.LIBRARY / 'construction-ready')
+args = parser.parse_args(); library = args.library.resolve(); sample = ROOT / 'samples/frostbound-realms'
 receipt = json.loads((library / 'asset-sources.json').read_bytes()); imported = json.loads((sample / 'construction-sources.json').read_bytes()); catalog = json.loads((library / 'construction-catalog.json').read_bytes())['models']
 for container, records in [(library, receipt['generatedFiles']), (sample, imported['files'])]:
     paths = set()
@@ -36,6 +37,7 @@ def run(command):
 with tempfile.TemporaryDirectory(prefix='construction-validation-', dir=ROOT / 'tmp') as directory:
     temporary = pathlib.Path(directory); converted = temporary / 'library'
     command = ['python', str(ROOT / 'scripts/convert-frost-construction.py'), '--metadata-reader', str(args.metadata_reader.resolve()), '--sampler', str(args.sampler.resolve()), '--output', str(converted)]
+    for owner in receipt.get('ownerReceipts', []): command += ['--owner', str(ROOT / owner['path'])]
     run(command)
     for f in receipt['generatedFiles']: assert (converted / f['path']).read_bytes() == (library / f['path']).read_bytes(), f['path']
     assert (converted / 'asset-sources.json').read_bytes() == (library / 'asset-sources.json').read_bytes()

@@ -21,12 +21,14 @@ def main():
     parser.add_argument('--node-reader', type=pathlib.Path, default=ROOT / 'tmp/warcraft-effects/node-metadata/NodeMetadata.dll')
     parser.add_argument('--sampler', type=pathlib.Path, required=True)
     parser.add_argument('--output', type=pathlib.Path, default=LIBRARY / 'construction-ready')
+    parser.add_argument('--owner', type=pathlib.Path, action='append', help='Verified owner attachment overlay; repeat to combine owners')
     args = parser.parse_args()
-    owner = LIBRARY / 'classic-attachment-ready'
-    _, owner_sha, receipt = base.load_overlay(owner)
-    references = set()
-    for metadata in sorted({a['metadata'] for a in receipt['annotations']}):
-        references.update(source_key(a['path']) for a in json.loads((owner / metadata).read_bytes())['attachments'] if a['path'])
+    references, owner_receipts = set(), []
+    for owner in args.owner or [LIBRARY / 'classic-attachment-ready']:
+        owner = owner.resolve(); _, owner_sha, receipt = base.load_overlay(owner)
+        owner_receipts.append(dict(path=owner.relative_to(ROOT).as_posix(), sha256=owner_sha))
+        for metadata in sorted({a['metadata'] for a in receipt['annotations']}):
+            references.update(source_key(a['path']) for a in json.loads((owner / metadata).read_bytes())['attachments'] if a['path'])
     library = LIBRARY / 'remaining-ready'
     original_raw = (library / 'asset-sources.json').read_bytes(); original = json.loads(original_raw)
     inputs = {base.key(f['path']): f for f in original['generatedFiles']}
@@ -105,7 +107,7 @@ def main():
     for relative, raw in generated.items():
         path = output / relative
         assert not path.exists() or path.read_bytes() == raw or relative in protected, 'Preserve untracked construction output: ' + relative
-    manifest = dict(generator=SOURCES[0], ownerReceiptSha256=owner_sha, sourceReceiptSha256=base.digest(original_raw), sourceFiles=sources, metadataReaderSha256=base.digest(args.metadata_reader.read_bytes()), nodeReaderSha256=base.digest(args.node_reader.read_bytes()), metadataParserSha256=base.digest(args.metadata_reader.with_name('Wc3ModelViewer.Core.dll').read_bytes()), samplerSha256=base.digest(args.sampler.read_bytes()), samplerCoreSha256=base.digest(args.sampler.with_name('Wc3ModelViewer.Core.dll').read_bytes()), converter={p: base.digest((ROOT / p).read_bytes()) for p in SOURCES}, generatedFiles=[dict(path=p, bytes=len(raw), sha256=base.digest(raw)) for p, raw in sorted(generated.items())], scope='Embedded construction assets resolved by complete MDX path, including distinct SharedModels and Ziggurat UBirth sources. Source geometry and binary preserved, full node tracks added, source material animation and sampled particles/ribbons retained.')
+    manifest = dict(generator=SOURCES[0], ownerReceipts=owner_receipts, sourceReceiptSha256=base.digest(original_raw), sourceFiles=sources, metadataReaderSha256=base.digest(args.metadata_reader.read_bytes()), nodeReaderSha256=base.digest(args.node_reader.read_bytes()), metadataParserSha256=base.digest(args.metadata_reader.with_name('Wc3ModelViewer.Core.dll').read_bytes()), samplerSha256=base.digest(args.sampler.read_bytes()), samplerCoreSha256=base.digest(args.sampler.with_name('Wc3ModelViewer.Core.dll').read_bytes()), converter={p: base.digest((ROOT / p).read_bytes()) for p in SOURCES}, generatedFiles=[dict(path=p, bytes=len(raw), sha256=base.digest(raw)) for p, raw in sorted(generated.items())], scope='Embedded construction assets resolved by complete MDX path, including distinct SharedModels and Ziggurat UBirth sources. Source geometry and binary preserved, full node tracks added, source material animation and sampled particles/ribbons retained.')
     for relative, raw in generated.items():
         path = output / relative; path.parent.mkdir(parents=True, exist_ok=True)
         if not path.exists() or path.read_bytes() != raw: path.write_bytes(raw)
