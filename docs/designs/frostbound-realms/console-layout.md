@@ -12,6 +12,7 @@
 python scripts/import-frost-console.py
 node scripts/build-frostbound.mjs
 node scripts/qa-frost-console.mjs
+node scripts/qa-frost-menu-network.mjs
 node scripts/qa-frostbound.mjs --menu-only --deterministic-input
 ```
 
@@ -19,6 +20,6 @@ node scripts/qa-frostbound.mjs --menu-only --deterministic-input
 
 四族原生控制台显示与物品点击验证通过。1024×768、1920×1080、2560×1080 的菜单、小地图和命令栏输入验证通过，材质管线拒绝数为 0。宽屏截图输出为 2048×864，保持实际视口的宽高比。报告见 [原生布局验收](native-console-layout-qa.json)，画面见 [人族](console-layout-human.png)、[兽族](console-layout-orc.png)、[暗夜精灵](console-layout-night-elf.png)、[亡灵](console-layout-undead.png)、[4:3](console-layout-1024x768.png)、[16:9](console-layout-1920x1080.png)、[宽屏](console-layout-2560x1080.png)。
 
-菜单回归已执行单人开局、地图与英雄选择、保存／载入、设置持久化、制作名单及退出取消。双客户端菜单流程在房间列表阶段超时：主机提示重连令牌过期，客机提示连接失败；本次菜单 TCP 验收未通过，原因尚未确认。失败摘要见 [菜单联机记录](native-console-menu-qa.json)。随后独立联机诊断在编辑器工程打开阶段遇到 Bridge 超时，未取得新的 TCP 事件证据。
+菜单回归已执行单人开局、地图与英雄选择、保存／载入、设置持久化、制作名单及退出取消。双原生客户端的 TCP 菜单创建、浏览、加入、准备／开局、16 秒大厅空闲及客机断线重连验收通过；主机使用兽族控制台，客机使用暗夜精灵控制台，双方材质管线拒绝数为 0。报告见 [菜单联机验收](native-menu-network-qa.json)，连接时钟与验证方式见 [联机连接计时](network-clock.md)。
 
 本阶段完成控制台素材、布局和点击区域校准。小地图仍使用当前地形摘要，原版昼夜动画、完整英雄属性与全部界面交互仍需继续完善；物理鼠标和音频未在上述 Agent 输入验收中验证。

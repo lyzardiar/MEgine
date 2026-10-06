@@ -93,13 +93,14 @@ var FrostClient=(()=>{
     else if(editMap.props.length<100){if(brush===3&&!S.doodadClear(state,x,z,x,z,S.TREE_RADIUS)){message('Keep trees clear of rocks');return;}if(brush===3&&state.units.some(u=>u.hp>0&&!S.types[u.kind].flying&&Math.hypot(u.x-x,u.z-z)<S.TREE_RADIUS+(u.speed?S.movementRadius(u):S.types[u.kind].radius||1))){message('Keep trees clear of units and buildings');return;}editMap.props=editMap.props.filter(v=>Math.hypot(v.x-x,v.z-z)>1);editMap.props.push({kind:['tree','mine','camp'][brush-3],x,z,amount:brush===4?9000:600});}
     try{editorState();if(JSON.stringify(before)!==JSON.stringify(editMap)&&(editorPage!==7||!sculptSaved)){undo.push(before);if(undo.length>20)undo.shift();if(editorPage===7)sculptSaved=true;}}catch(e){editMap=before;editorState();message(e.message);}
   }
-  function connect(action){stopNetwork();online=true;intent=action;mode='connecting';retry=time;reconnectUntil=time+8;message('Connecting to '+address);}
+  function connect(action){const now=Date.now()/1000;stopNetwork();online=true;intent=action;mode='connecting';retry=now;reconnectUntil=now+8;message('Connecting to '+address);}
   function collectEvents(){if(lastFrame===state.frame)return;for(const e of state.events||[])if(state.visible[team]?.[S.index(e.x,e.z)])pendingFx.push(e);if(pendingFx.length>48)pendingFx.splice(0,pendingFx.length-48);lastFrame=state.frame;}
   function receive(){
+    const now=Date.now()/1000;
     for(const e of engine.network.poll()){
-      if(e.type==='connected'){connected=true;lastReceive=time;engine.network.send({type:'hello',protocol:S.PROTOCOL,name:'Commander'});}
-      if(e.type==='closed'){connected=false;if(online&&token){mode='reconnecting';intent='resume';retry=time+.5;reconnectUntil=time+12;message('Connection lost. Reconnecting...');}else if(online){online=false;mode='network';message('Connection failed. Start server.mjs and check the address.');}}
-      if(e.type!=='message')continue;const m=e.data;lastReceive=time;
+      if(e.type==='connected'){connected=true;lastReceive=now;engine.network.send({type:'hello',protocol:S.PROTOCOL,name:'Commander'});}
+      if(e.type==='closed'){connected=false;if(online&&token){mode='reconnecting';intent='resume';retry=now+.5;reconnectUntil=now+12;message('Connection lost. Reconnecting...');}else if(online){online=false;mode='network';message('Connection failed. Start server.mjs and check the address.');}}
+      if(e.type!=='message')continue;const m=e.data;lastReceive=now;
       if(m.type==='welcome'){
         if(intent==='create')engine.network.send({type:'create',mode:editMap.mode==='moba'?'moba':'skirmish',map:editMap.mode==='td'?S.defaultMap():editMap,faction,heroClass});
         if(intent==='browse'){engine.network.send({type:'list'});mode='rooms';}
@@ -116,9 +117,9 @@ var FrostClient=(()=>{
       if(m.type==='state'){state=m.state;collectEvents();netStates++;mode=state.winner===null?'playing':'finished';if(!selected.length)selected=state.units.filter(u=>u.team===team&&u.kind==='hero').map(u=>u.id);}
       if(m.type==='error'){message(m.message);if(intent==='resume'&&m.message.includes('expired')){stopNetwork();mode='network';}}
     }
-    if(online&&!connected&&time>=retry){if(time>reconnectUntil){stopNetwork();mode='network';message('Connection timed out');}else {engine.network.connect(address);retry=time+3;}}
-    if(connected&&Math.floor(time)%3===0&&Math.floor(time)!==receive.lastPing){receive.lastPing=Math.floor(time);engine.network.send({type:'ping',nonce:time});}
-    if(connected&&time-lastReceive>8)engine.network.close();
+    if(online&&!connected&&now>=retry){if(now>reconnectUntil){stopNetwork();mode='network';message('Connection timed out');}else {engine.network.connect(address);retry=now+3;}}
+    if(connected&&Math.floor(now/3)!==receive.lastPing){receive.lastPing=Math.floor(now/3);engine.network.send({type:'ping',nonce:now});}
+    if(connected&&now-lastReceive>8)engine.network.close();
   }
   function inBattlefield(p){const v=FrostHUD.viewport(engine.input||{});return p.y<v.height/2-(mode==='editor'?200:212)&&p.y>-v.height/2+38;}
   function screenPointer(input){return FrostHUD.pointer(input,['playing','editor','finished','reconnecting'].includes(mode));}

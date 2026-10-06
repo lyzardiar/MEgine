@@ -1,0 +1,572 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "scope": "Two native clients, actual menu clicks, real authoritative TCP, idle keepalives and reconnect",
+  "sample": "D:\\MEngineNativeQA\\menu-network-1791300815604\\sample",
+  "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
+  "physicalInput": false,
+  "audioListening": false,
+  "idleKeepaliveSeconds": 16,
+  "menu": {
+    "create": true,
+    "browse": true,
+    "join": true,
+    "readyStart": true,
+    "factionConsoles": true,
+    "twoAuthoritativeClients": true,
+    "reconnect": true
+  },
+  "shaderRejections": [
+    0,
+    0
+  ],
+  "events": [
+    {
+      "at": 265.611,
+      "id": 1,
+      "type": "connected"
+    },
+    {
+      "at": 268.915,
+      "id": 1,
+      "type": "hello"
+    },
+    {
+      "at": 268.916,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301091.241
+    },
+    {
+      "at": 270.757,
+      "id": 1,
+      "type": "create"
+    },
+    {
+      "at": 270.758,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301093.084
+    },
+    {
+      "at": 274.387,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301096.716
+    },
+    {
+      "at": 276.708,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301099.036
+    },
+    {
+      "at": 278.886,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301101.215
+    },
+    {
+      "at": 283.385,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301105.714
+    },
+    {
+      "at": 284.988,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301107.316
+    },
+    {
+      "at": 286.41,
+      "id": 2,
+      "type": "connected"
+    },
+    {
+      "at": 288.184,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301110.512
+    },
+    {
+      "at": 289.343,
+      "id": 2,
+      "type": "hello"
+    },
+    {
+      "at": 289.345,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301111.671
+    },
+    {
+      "at": 289.842,
+      "id": 2,
+      "type": "list"
+    },
+    {
+      "at": 291.506,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301113.836
+    },
+    {
+      "at": 292.937,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301115.265
+    },
+    {
+      "at": 294.317,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301116.646
+    },
+    {
+      "at": 294.715,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301117.043
+    },
+    {
+      "at": 298.081,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301120.41
+    },
+    {
+      "at": 299.688,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301122.019
+    },
+    {
+      "at": 300.742,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301123.07
+    },
+    {
+      "at": 302.932,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301125.261
+    },
+    {
+      "at": 303.702,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301126.031
+    },
+    {
+      "at": 306.642,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301128.971
+    },
+    {
+      "at": 307.64,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301129.969
+    },
+    {
+      "at": 309.222,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301131.549
+    },
+    {
+      "at": 311.271,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301133.6
+    },
+    {
+      "at": 311.273,
+      "id": 2,
+      "type": "join"
+    },
+    {
+      "at": 312.348,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301134.677
+    },
+    {
+      "at": 314.169,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301136.498
+    },
+    {
+      "at": 317.275,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301139.604
+    },
+    {
+      "at": 317.517,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301139.846
+    },
+    {
+      "at": 319.002,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301141.331
+    },
+    {
+      "at": 319.153,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301141.482
+    },
+    {
+      "at": 320.684,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301143.014
+    },
+    {
+      "at": 320.828,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301143.156
+    },
+    {
+      "at": 324.009,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301146.34
+    },
+    {
+      "at": 324.981,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301147.311
+    },
+    {
+      "at": 327.267,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301149.596
+    },
+    {
+      "at": 327.78,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301150.109
+    },
+    {
+      "at": 330.499,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301152.827
+    },
+    {
+      "at": 330.608,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301152.938
+    },
+    {
+      "at": 333.661,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301155.989
+    },
+    {
+      "at": 334.049,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301156.379
+    },
+    {
+      "at": 336.343,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301158.672
+    },
+    {
+      "at": 336.601,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301158.93
+    },
+    {
+      "at": 339.49,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301161.819
+    },
+    {
+      "at": 341.059,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301163.388
+    },
+    {
+      "at": 341.835,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301164.164
+    },
+    {
+      "at": 342.736,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301165.064
+    },
+    {
+      "at": 345.845,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301168.175
+    },
+    {
+      "at": 347.538,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301169.867
+    },
+    {
+      "at": 347.54,
+      "id": 2,
+      "type": "ready"
+    },
+    {
+      "at": 349.221,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301171.55
+    },
+    {
+      "at": 350.611,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301172.942
+    },
+    {
+      "at": 351.261,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301173.59
+    },
+    {
+      "at": 353.579,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301175.909
+    },
+    {
+      "at": 355.012,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301177.341
+    },
+    {
+      "at": 356.67,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301179
+    },
+    {
+      "at": 356.671,
+      "id": 1,
+      "type": "ready"
+    },
+    {
+      "at": 357.927,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301180.257
+    },
+    {
+      "at": 359.886,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301182.216
+    },
+    {
+      "at": 362.122,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301184.451
+    },
+    {
+      "at": 363.255,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301185.583
+    },
+    {
+      "at": 363.519,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301185.848
+    },
+    {
+      "at": 366.566,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301188.894
+    },
+    {
+      "at": 368.393,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301190.723
+    },
+    {
+      "at": 368.397,
+      "id": 1,
+      "type": "start"
+    },
+    {
+      "at": 369.526,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301191.85
+    },
+    {
+      "at": 371.898,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301194.208
+    },
+    {
+      "at": 374.055,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301196.357
+    },
+    {
+      "at": 376.136,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301198.441
+    },
+    {
+      "at": 376.306,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301198.621
+    },
+    {
+      "at": 378.586,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301200.9
+    },
+    {
+      "at": 378.689,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301201.005
+    },
+    {
+      "at": 381.065,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301203.381
+    },
+    {
+      "at": 381.152,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301203.468
+    },
+    {
+      "at": 385.714,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301208.03
+    },
+    {
+      "at": 385.945,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301208.261
+    },
+    {
+      "at": 388.035,
+      "id": 2,
+      "type": "ping",
+      "nonce": 1791301210.35
+    },
+    {
+      "at": 388.143,
+      "id": 2,
+      "type": "closed"
+    },
+    {
+      "at": 388.644,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301210.959
+    },
+    {
+      "at": 391.116,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301213.433
+    },
+    {
+      "at": 391.329,
+      "id": 3,
+      "type": "connected"
+    },
+    {
+      "at": 393.603,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301215.919
+    },
+    {
+      "at": 393.997,
+      "id": 3,
+      "type": "hello"
+    },
+    {
+      "at": 393.999,
+      "id": 3,
+      "type": "ping",
+      "nonce": 1791301216.325
+    },
+    {
+      "at": 395.62,
+      "id": 3,
+      "type": "resume"
+    },
+    {
+      "at": 395.897,
+      "id": 3,
+      "type": "ping",
+      "nonce": 1791301218.223
+    },
+    {
+      "at": 396.063,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301218.38
+    },
+    {
+      "at": 398.861,
+      "id": 3,
+      "type": "ping",
+      "nonce": 1791301221.175
+    },
+    {
+      "at": 400.898,
+      "id": 1,
+      "type": "ping",
+      "nonce": 1791301223.214
+    }
+  ],
+  "durationSeconds": 401.276,
+  "clientSha256": "7b3f22c46f97c2d05c6f78812eb1d8a05bf4527fe9d5ec213dd7ed2449dafa76",
+  "scriptSha256": "5e3607f6a05a7717b659c64d6e49ff57de81e2d05417c396c1f85f16e6d0bb1d"
+}
