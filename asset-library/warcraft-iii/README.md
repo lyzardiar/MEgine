@@ -43,6 +43,8 @@ python scripts/audit-warcraft-coverage.py
 
 ## 来源与署名
 
+`construction-ready` 从经典宿主附件路径派生三种建造 Birth 资源，包含 27 个完整节点网格部件、原材质动画及采样粒子/缎带。两个不同目录的 `UBirth` 按完整路径区分，来源、工具、生成字节与署名记录在集合清单中。转换、导入和源姿态验证见 [原版建造附件](../../docs/designs/frostbound-realms/construction-attachments.md)。
+
 - 经典 Warcraft III 资产：本机 Warcraft III Frozen Throne 安装包，Blizzard Entertainment；这些游戏资产没有转为 CC0 或 MIT。
 - Footman、Captain 和衍生单位：[Ujimasa Hojo](https://www.hiveworkshop.com/threads/footman-captain-and-derivatives.300263/)，纹理/动画贡献包含 CloudWolf、Wandering Soul；血精灵变体为 [Cuore](https://www.hiveworkshop.com/threads/blood-elf-lieutenant-and-derivatives.300294/)。
 - Beautiful City 与 Raven Mountain：[ValdionWorld](https://www.hiveworkshop.com/threads/beautiful-city-model-pack.330555/)，[Raven Mountain 来源](https://www.hiveworkshop.com/threads/raven-mountain-model-pack.330554/)。

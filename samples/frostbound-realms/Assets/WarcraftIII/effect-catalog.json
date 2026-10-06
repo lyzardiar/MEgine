@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "models": [
+    {
+      "source": "Buildings\\Undead\\Ziggurat\\UBirth.MDX",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Buildings/Undead/Ziggurat/UBirth.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Buildings/Undead/Ziggurat/UBirth.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 60,
+          "loop": false,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 2,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 66,
+      "previewClip": 0
+    },
+    {
+      "source": "SharedModels\\NEBirth.MDX",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/NEBirth.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/NEBirth.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 60,
+          "loop": false,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 7,
+      "ribbons": 3,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 111,
+      "previewClip": 0
+    },
+    {
+      "source": "SharedModels\\UBirth.MDX",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/UBirth.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/UBirth.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 60,
+          "loop": false,
+          "frames": 721
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 2,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 66,
+      "previewClip": 0
+    }
+  ]
+}

@@ -4,5 +4,5 @@ SourceAssets/AbilityArt/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eo
 Licenses/** -text
 Assets/Licenses/** -text
 Assets/WarcraftIII/** -text whitespace=cr-at-eol
-effect-catalog.json text eol=lf
+/effect-catalog.json text eol=lf
 effect-sources.json text eol=lf

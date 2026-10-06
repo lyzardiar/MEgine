@@ -1,0 +1,232 @@
+{
+  "sourceCollections": [
+    "remaining-ready",
+    "community-ready"
+  ],
+  "sourceFiles": [
+    {
+      "path": "remaining-ready/Buildings/Undead/Ziggurat/UBirth.MDX",
+      "sha256": "1da6d3284f03dd62744a74b47333b1c97ccb7eef0b03032ddceadefb39592275",
+      "bytes": 104718
+    },
+    {
+      "path": "remaining-ready/SharedModels/NEBirth.MDX",
+      "sha256": "39574630220969de537dd7cc92cb033a4744daad8e061eb60e0dcb994f70d330",
+      "bytes": 105710
+    },
+    {
+      "path": "remaining-ready/SharedModels/UBirth.MDX",
+      "sha256": "1da6d3284f03dd62744a74b47333b1c97ccb7eef0b03032ddceadefb39592275",
+      "bytes": 104718
+    }
+  ],
+  "textureSources": {
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Star8b.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\Star8b.blp",
+      "sha256": "fedb1b626d655e44a76148e00e0754153637c9d5de213d11eb848a0a14ee0881",
+      "convertedSha256": "a1393e5addf4c6ea726792d4c6f0adcbe508e09031a925318461f26f5809a9a5"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Ghost2.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\Ghost2.blp",
+      "sha256": "0225ffcefdfe95fd308cf12881b142cd8a1656dbfc282748a73a01d82987c18c",
+      "convertedSha256": "9a4cfd4aa434989fc61845f2df4b2c5013023b69ce4c476510cb6f61e1b5cb42"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/CloudSingle.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\CloudSingle.blp",
+      "sha256": "255a9e8ac8847d2393389bd9c83f916de9eb8f1b73b6e934df355cfba054c746",
+      "convertedSha256": "30ac82cb994a54defd4bcf79df7454d8196799ab192e58661c9fd90afa27ff3d"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/rainTail.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\rainTail.blp",
+      "sha256": "77ccc03ef285192e0d306f0c297eaf24034ee3ad12b2c05b3b077f4c28f2a802",
+      "convertedSha256": "05f4f95d2e2755a3683c82f5d5d172bd4d2077a20c93a398346066fecdae2481"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Leaf.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\Leaf.blp",
+      "sha256": "2927bc8cffbfee7a6a0a2bed7579003c61ca40e0966b7bfe08270e990d9a9009",
+      "convertedSha256": "a53e0ddf1258b0c1db6bc243b82f2b4da7e4e561daf6d0518427700854fe3852"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Green_Glow2.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\Green_Glow2.blp",
+      "sha256": "e12b0669614dcfc74051d15adceaf7c41460bce4cda50a46d14932227a84e65a",
+      "convertedSha256": "93b5ed9d52e1877dd2a4b39fda3f021b476d866718e5f7375d8249a6e1e7b968"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/star4_32.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\star4_32.blp",
+      "sha256": "c4c160bf93862e7ad2a74d448b7d65d777e32496e3858755816c6e200b5caebf",
+      "convertedSha256": "779075974153fe6f1e7c89f63470c9d9d105c0fa4a26e75c78cebd3e67678a18"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/RibbonNE1_blue.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\RibbonNE1_blue.blp",
+      "sha256": "7d4037fd10d8d5806a02f3001199a123cf195e167a843ce804da5bd20af70795",
+      "convertedSha256": "2f92d4498872c9ea0adc6dddc45d75fe82a736b2806feee185a70c31176e17bb"
+    }
+  },
+  "generatedFiles": [
+    {
+      "path": "Assets/WarcraftIII/effect-catalog.json",
+      "sha256": "f52d15ca92773e5ecadd569730d6b1e091092a1e512479b097d6f6b4b4867398",
+      "bytes": 1869
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Buildings/Undead/Ziggurat/UBirth.mfx",
+      "sha256": "bfcacb1f152b1beeab54fe904a838aa9915dad8946b55f8eac61b3d53efd0b88",
+      "bytes": 9150380
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Buildings/Undead/Ziggurat/UBirth.mfx.meta",
+      "sha256": "1fd75810c165c3455060d261bf552bfc16502c973c91ecb88b733ba5276459d4",
+      "bytes": 112
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Buildings/Undead/Ziggurat/UBirth.prefab",
+      "sha256": "6360befef150c2c34a6ca8adb171aca7c6021ca19b069f29f07427abe358dd73",
+      "bytes": 702
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Buildings/Undead/Ziggurat/UBirth.prefab.meta",
+      "sha256": "1fb06368d2ce72518dc948c88b5c59f2f554da7daaf672374b4553ee6e335549",
+      "bytes": 104
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/NEBirth.mfx",
+      "sha256": "1e0b7ac6fc734e61ed54299bf62361410efa6b3457f85b679e284ccb994f5ffe",
+      "bytes": 9261897
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/NEBirth.mfx.meta",
+      "sha256": "55c8013ee30db2c30bf0354b5036e8b5492a950e94480e2d7a263dce7df65051",
+      "bytes": 112
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/NEBirth.prefab",
+      "sha256": "1c442d6729bb2858ab0d760ed16326f717291ced2eee95b5c8efac61637f8753",
+      "bytes": 692
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/NEBirth.prefab.meta",
+      "sha256": "261c5d2498e23cfe3f3b2313b64790e6fe78a99f5980bf4a96176a00cc29a7f4",
+      "bytes": 104
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/UBirth.mfx",
+      "sha256": "bfcacb1f152b1beeab54fe904a838aa9915dad8946b55f8eac61b3d53efd0b88",
+      "bytes": 9150380
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/UBirth.mfx.meta",
+      "sha256": "91bccfbb37f8f27afe8d7118619bb993be148ecb805b9d3a8076b4c8f139b45c",
+      "bytes": 112
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/UBirth.prefab",
+      "sha256": "a3835ef467ff99832ccf971807120f604a8376f9c50085a7132d78dcad002d8d",
+      "bytes": 689
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/SharedModels/UBirth.prefab.meta",
+      "sha256": "cf5b6bf6efc87c39330283421291c6c335425c9211f711e4e4fb0cfc1cdf5ee4",
+      "bytes": 104
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/CloudSingle.png",
+      "sha256": "30ac82cb994a54defd4bcf79df7454d8196799ab192e58661c9fd90afa27ff3d",
+      "bytes": 16046
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/CloudSingle.png.meta",
+      "sha256": "9dfe2262a39f9496e0657df7ad7b8abc31a154ab18d1fea31b580ba906984dc8",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Ghost2.png",
+      "sha256": "9a4cfd4aa434989fc61845f2df4b2c5013023b69ce4c476510cb6f61e1b5cb42",
+      "bytes": 7736
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Ghost2.png.meta",
+      "sha256": "094d52c7cfab62948b4876ca4694d9cc836344a34a5bdb08486d5fd9e504f907",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Green_Glow2.png",
+      "sha256": "93b5ed9d52e1877dd2a4b39fda3f021b476d866718e5f7375d8249a6e1e7b968",
+      "bytes": 2406
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Green_Glow2.png.meta",
+      "sha256": "d41ccec752c7b663c3afcc89f0daab7444c8c107ac32cafd59d577479a02161c",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Leaf.png",
+      "sha256": "a53e0ddf1258b0c1db6bc243b82f2b4da7e4e561daf6d0518427700854fe3852",
+      "bytes": 851
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Leaf.png.meta",
+      "sha256": "b75adcf7c099bf1a2473c45a86fa6dd3f8b3babbb42b125b579363597958ab0a",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/rainTail.png",
+      "sha256": "05f4f95d2e2755a3683c82f5d5d172bd4d2077a20c93a398346066fecdae2481",
+      "bytes": 2132
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/rainTail.png.meta",
+      "sha256": "df7c46fb9747b114a36f36a93fc5162b70989b97d0ab69588bda818438f62957",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/RibbonNE1_blue.png",
+      "sha256": "2f92d4498872c9ea0adc6dddc45d75fe82a736b2806feee185a70c31176e17bb",
+      "bytes": 7669
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/RibbonNE1_blue.png.meta",
+      "sha256": "7ace9f8e9b74bcd8df82a7bccb2871072efcb9a0b1db15c8b4b9cd46278b6e13",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/star4_32.png",
+      "sha256": "779075974153fe6f1e7c89f63470c9d9d105c0fa4a26e75c78cebd3e67678a18",
+      "bytes": 2231
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/star4_32.png.meta",
+      "sha256": "2796356f134ed919e2c216d7ed85e542c52d257b8edad889fa385d93aa4e0d53",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Star8b.png",
+      "sha256": "a1393e5addf4c6ea726792d4c6f0adcbe508e09031a925318461f26f5809a9a5",
+      "bytes": 9713
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Star8b.png.meta",
+      "sha256": "d4d773451b89b26be47f585a7e92501eedccc1c36d6f9ad106f5003178aa97b2",
+      "bytes": 105
+    }
+  ],
+  "converter": {
+    "scripts/convert-warcraft-effects.py": "41094d22558d932fd39d27bba597aa3514d23259673136373d4c2233ac7f6a5a",
+    "scripts/warcraft-assets/EffectExport.cs": "a725436a21345d372410fb458915281436d4dfc29cd4a3cc4f4d5a46248feaa5",
+    "scripts/warcraft-assets/Program.cs": "e0af2af930bccadf34b59a7fb44d508ea88773570a9ba3e8f9f41797bae5ae36",
+    "scripts/warcraft-assets/MdxExport.csproj": "94062f8546b73b73b94f5c2af346268b595eb0fa9ceac44ab2d6e80a04ddecd9"
+  },
+  "upstream": {
+    "url": "https://github.com/Darithos/W3ModelViewer",
+    "commit": "4fe46a0772520fc7b55078bf32cda1237d1b5f2e",
+    "archiveSha256": "dd1f41530b42c1bfe6039b1a0271bcc5167b137f829f87b6a08cea0b47e46eda"
+  },
+  "scope": "Sampled effect playback with source MDX preserved. Viewer simulation is approximate; cameras and helper tracks are metadata only."
+}

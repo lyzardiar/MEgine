@@ -7,7 +7,34 @@ var FrostEffects=(()=>{
   function anchors(mesh,facing=0,scale=1){
     const pitch=-Math.atan2(FrostVisual.camera.height,FrostVisual.camera.depth),c=Math.cos(facing)*scale,s=Math.sin(facing)*scale;
     const camera={model:[c,0,-s,0,0,scale,0,0,s,0,c,0,0,0,0,1],look:[0,Math.sin(pitch),-Math.cos(pitch)],up:[0,Math.cos(pitch),Math.sin(pitch)]};let nodes;
-    return name=>{nodes??=engine.assets.sampleNodes(mesh,{camera,attachmentsOnly:true});return nodes.find(n=>name.test((n.name||'').trim()))?.position||null;};
+    const query=()=>nodes??=engine.assets.sampleNodes(mesh,{camera,attachmentsOnly:true}),at=name=>query().find(n=>name.test((n.name||'').trim()))?.position||null;at.nodes=query;return at;
+  }
+  function nodeTransform(matrix,position,facing,scale){
+    const c=Math.cos(facing)*scale,s=Math.sin(facing)*scale,m=matrix.map((v,i)=>i%4===3?v: i%4===0?c*matrix[i]+s*matrix[i+2]:i%4===2?-s*matrix[i-2]+c*matrix[i]:v*scale),length=j=>Math.hypot(m[j],m[j+1],m[j+2]),sx=length(0),sy=length(4),sz=length(8);
+    if(Math.min(sx,sy,sz)<1e-8)return null;
+    const determinant=m[0]*(m[5]*m[10]-m[6]*m[9])-m[4]*(m[1]*m[10]-m[2]*m[9])+m[8]*(m[1]*m[6]-m[2]*m[5]),scales=[determinant<0?-sx:sx,sy,sz],r=[...m];
+    for(let col=0;col<3;col++)for(let row=0;row<3;row++)r[col*4+row]/=scales[col];
+    for(const [a,b] of [[0,4],[0,8],[4,8]])if(Math.abs(r[a]*r[b]+r[a+1]*r[b+1]+r[a+2]*r[b+2])>.00001)throw Error('Attachment matrix requires affine transform support');
+    let q,t=r[0]+r[5]+r[10];
+    if(t>0){const n=Math.sqrt(t+1)*2;q=[(r[6]-r[9])/n,(r[8]-r[2])/n,(r[1]-r[4])/n,n/4];}
+    else if(r[0]>r[5]&&r[0]>r[10]){const n=Math.sqrt(1+r[0]-r[5]-r[10])*2;q=[n/4,(r[4]+r[1])/n,(r[8]+r[2])/n,(r[6]-r[9])/n];}
+    else if(r[5]>r[10]){const n=Math.sqrt(1+r[5]-r[0]-r[10])*2;q=[(r[4]+r[1])/n,n/4,(r[9]+r[6])/n,(r[8]-r[2])/n];}
+    else{const n=Math.sqrt(1+r[10]-r[0]-r[5])*2;q=[(r[8]+r[2])/n,(r[9]+r[6])/n,n/4,(r[1]-r[4])/n];}
+    const norm=Math.hypot(...q);return {position:[position.x+m[12],position.y+m[13],position.z+m[14]],scale:scales,rotation:q.map(v=>v/norm)};
+  }
+  function embedded(u,visual,mesh,position,facing,scale,at){
+    const definitions=visual.asset.classic&&FrostConstructionArt.owners[visual.asset.sourceModel.replace(/\\/g,'/').toLowerCase()];if(!definitions)return [];
+    const pose=mesh.match(/#pose=(\d+):(\d+)(?:@(\d+))?$/),seconds=pose?Number(pose[2])/Number(pose[3]||12):0,result=[];
+    if(!definitions.some(d=>d.clips.includes(pose?Number(pose[1]):0)))return result;
+    for(const node of at.nodes()){
+      const definition=node.attachment;if(!definition?.path||definition.visibility<=.001)continue;
+      const key=definition.path.replace(/\\/g,'/').replace(/\.mdl$/i,'.mdx').toLowerCase(),art=FrostConstructionArt.models[key];if(!art)throw Error('Unresolved embedded model: '+definition.path);
+      const transform=nodeTransform(node.matrix,position,facing,scale);if(!transform)continue;
+      const clip=art.animations.findIndex(a=>/^birth$/i.test(a.name));if(clip<0)throw Error('Embedded construction model has no Birth: '+key);
+      const elapsed=Math.min(seconds,art.animations[clip].duration),frame=Math.floor(elapsed*30+1e-7);
+      result.push({slot:result.length,name:key,node:node.index,attachmentId:definition.id,visibility:definition.visibility,component:{effect:art.effect,clip,playing:false,looping:false,speed:1,time_seconds:elapsed},parts:FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+frame+'@30',u.team),...transform});
+    }
+    return result;
   }
   function anchor(key,mesh,name){
     if(!FrostArt[key]?.classic)return null;
@@ -52,6 +79,6 @@ var FrostEffects=(()=>{
     if(u.portalArrivalFrame!==undefined)add('portalArrival',clock-u.portalArrivalFrame*Frost.DT);
     return result;
   }
-  return {slots,spellBindings,anchor,anchors,status,spells};
+  return {slots,spellBindings,anchor,anchors,nodeTransform,embedded,status,spells};
 })();
 if(typeof module!=='undefined')module.exports=FrostEffects;

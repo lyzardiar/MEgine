@@ -1,43 +1,42 @@
-// Author: MiYu. Construction lifecycle, economy, saved occupants and expansion regression checks.
+// Author: MiYu. Source visibility, complete attachment transforms and actual game construction presentation.
 import assert from 'node:assert/strict';
-import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
+import fs from 'node:fs';
+import vm from 'node:vm';
 import {createRequire} from 'node:module';
-const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
-const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
-function setup(faction=0){const s=battleFixture(S,'skirmish',{factions:[faction,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']);s.map.terrain.fill(0);s.map.heights.fill(0);s.map.relief.fill(0);s.map.ramps.fill(0);s.teams[0].gold=3000;s.teams[0].wood=3000;for(const u of s.units)u.order=null;const w=s.units.find(u=>u.kind==='worker');w.x=-14;w.z=20;return {s,w};}
-function build(s,w,kind='barracks'){assert.equal(S.command(s,0,{type:'build',ids:[w.id],kind,x:-10,z:20}),null);return s.units.at(-1);}
-for(let f=0;f<4;f++){
-  let {s,w}=setup(f);const b=build(s,w),id=w.id;assert.equal(b.hp,b.maxHp*.1);S.tick(s);assert.equal(b.built,.01,'foundation waits for worker arrival');step(s,30);assert.ok(b.built>.01);assert.equal(!!w.inside,f===1||f===2);assert.equal(S.isVisible(s,0,w),!w.inside);assert.ok(S.publicState(s,0).units.some(u=>u.id===id),'own occupant retained for food');s.visible[1].fill(1);const enemy=S.publicState(s,1);assert.equal(enemy.units.find(u=>u.id===b.id).construction,undefined);if(w.inside){assert.ok(!enemy.units.some(u=>u.id===id));assert.ok(!S.canAttack({kind:'archer'},w));assert.ok(S.command(s,0,{type:'build',ids:[id],kind:'farm',x:0,z:0}));}
-  const saved=S.restore(s);step(saved,200);assert.equal(saved.units.find(u=>u.id===b.id).built,1);assert.equal(saved.units.some(u=>u.id===id),f!==2,'living building consumes worker');if(f!==2)assert.ok(!saved.units.find(u=>u.id===id).inside);
-  const money=s.teams[0].gold,wood=s.teams[0].wood;assert.equal(S.command(s,0,{type:'cancelBuild',ids:[b.id]}),null);assert.equal(s.teams[0].gold,money+135);assert.equal(s.teams[0].wood,wood+60);assert.ok(S.command(s,0,{type:'cancelBuild',ids:[b.id]}));step(s,1);assert.ok(s.units.some(u=>u.id===id&&u.hp>0&&!u.inside));assert.ok(!s.units.some(u=>u.id===b.id));assert.doesNotThrow(()=>S.restore(s));
+import {nativeNodeQueries} from './frost-native-node-fixture.mjs';
+const require=createRequire(import.meta.url),root=new URL('../samples/frostbound-realms/',import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js'),art=require('../samples/frostbound-realms/model-catalog.json'),construction=require('../samples/frostbound-realms/construction-catalog.json');
+globalThis.Frost=S;globalThis.FrostArt=art;globalThis.FrostEffectArt=require('../samples/frostbound-realms/effect-catalog.json');globalThis.FrostConstructionArt=construction;globalThis.engine={assets:nativeNodeQueries()};
+const V=require('../samples/frostbound-realms/game/visuals.js'),E=require('../samples/frostbound-realms/game/effects.js');globalThis.FrostVisual=V;
+const matrix=t=>{const [x,y,z,w]=t.rotation,[sx,sy,sz]=t.scale;return [(1-2*(y*y+z*z))*sx,2*(x*y+w*z)*sx,2*(x*z-w*y)*sx,0,2*(x*y-w*z)*sy,(1-2*(x*x+z*z))*sy,2*(y*z+w*x)*sy,0,2*(x*z+w*y)*sz,2*(y*z-w*x)*sz,(1-2*(x*x+y*y))*sz,0,...t.position,1];};
+const close=(a,b,label)=>assert.ok(Math.max(...a.map((v,i)=>Math.abs(v-b[i])))<.00002,label);
+for(const rotation of [[.2,.3,.4,.8],[.7,.1,.2,.1],[.1,.8,.1,.1],[.1,.1,.8,.1]])for(const scale of [[2,3,4],[-2,3,4]]){
+  const norm=Math.hypot(...rotation),original=matrix({position:[3,4,5],rotation:rotation.map(v=>v/norm),scale}),converted=E.nodeTransform(original,{x:0,y:0,z:0},0,1);close(matrix(converted),original,'complete quaternion/scale/reflection reconstruction');
 }
-{
-  const {s,w}=setup(),b=build(s,w);step(s,25);assert.equal(S.command(s,0,{type:'stop',ids:[w.id]}),null);const paused=b.built;step(s,20);assert.equal(b.built,paused);const w2=s.units.find(u=>u.kind==='worker'&&u.id!==w.id);w2.x=-12;w2.z=20;assert.equal(S.command(s,0,{type:'construct',ids:[w.id,w2.id],target:b.id}),null);const g=s.teams[0].gold;step(s,10);assert.ok(b.built-paused>1/9);assert.ok(s.teams[0].gold<g,'assistance consumes resources');step(s,100);assert.equal(b.built,1);
-  b.hp-=200;const hp=b.hp,gold=s.teams[0].gold,wood=s.teams[0].wood;assert.equal(S.command(s,0,{type:'repair',ids:[w.id],target:b.id}),null);step(s,10);assert.ok(b.hp>hp);assert.ok(s.teams[0].gold<gold&&s.teams[0].wood<wood);S.command(s,0,{type:'stop',ids:[w.id]});const stopped=b.hp;step(s,10);assert.equal(b.hp,stopped);assert.ok(S.command(s,1,{type:'repair',ids:[w.id],target:b.id}));s.teams[0].gold=0;S.command(s,0,{type:'repair',ids:[w.id],target:b.id});step(s,10);assert.equal(b.hp,stopped);
+assert.equal(E.nodeTransform(matrix({position:[0,0,0],rotation:[0,0,0,1],scale:[0,1,1]}),{x:0,y:0,z:0},0,1),null);
+const shear=matrix({position:[0,0,0],rotation:[0,0,0,1],scale:[1,1,1]});shear[4]=.2;assert.throws(()=>E.nodeTransform(shear,{x:0,y:0,z:0},0,1),/affine/);
+let sampled=0,visible=0,hidden=0;const sources=new Set();
+for(const [key,asset] of Object.entries(art)){
+  const owner=asset.sourceModel?.replace(/\\/g,'/').toLowerCase();if(!construction.owners[owner]||sources.has(owner))continue;sources.add(owner);
+  for(const progress of [0,.1,.5,.99,1]){
+    const u={kind:'hall',team:0,built:progress,hp:100,cd:0},mesh=V.pose(u,asset,false,0,30),at=E.anchors(mesh,.37,1.4),nodes=at.nodes().filter(n=>n.attachment?.path),rendered=E.embedded(u,{key,asset},mesh,{x:2,y:3,z:4},.37,1.4,at);
+    const expected=nodes.filter(n=>n.attachment.visibility>.001&&E.nodeTransform(n.matrix,{x:2,y:3,z:4},.37,1.4));assert.equal(rendered.length,expected.length,owner+' authored KATV');
+    for(const e of rendered){const node=expected.find(n=>n.index===e.node);assert.equal(e.name,node.attachment.path.replace(/\\/g,'/').replace(/\.mdl$/i,'.mdx').toLowerCase());close(matrix(e),matrix(E.nodeTransform(node.matrix,{x:2,y:3,z:4},.37,1.4)),'native full node transform');assert.match(e.parts[0].mesh,/#pose=\d+:\d+@30$/);assert.equal(e.component.playing,false);assert.ok(e.component.time_seconds<=60);visible++;}
+    hidden+=nodes.length-rendered.length;sampled++;
+  }
 }
-for(const f of [1,2]){
-  const {s,w}=setup(f),b=build(s,w);step(s,25);assert.ok(w.inside);const attacker=S.spawn(s,'hero',1,b.x+1,b.z,{damage:10000});attacker.order={type:'attack',target:b.id};S.visibility(s);step(s,2);assert.equal(b.hp,0);assert.equal(w.hp>0,f===1);assert.ok(!w.inside);assert.ok(!w.order);assert.doesNotThrow(()=>S.restore(s));
+assert.equal(sources.size,15);assert.ok(visible>0&&hidden>0);assert.notEqual(construction.models['sharedmodels/ubirth.mdx'].effect,construction.models['buildings/undead/ziggurat/ubirth.mdx'].effect);
+const completedAltar=art.RevenantAltar,stand=V.pose({kind:'altar',built:1,team:0},completedAltar,false,0,30);assert.deepEqual(E.embedded({kind:'altar',built:1},{asset:completedAltar},stand,{x:0,y:0,z:0},0,1,{nodes(){throw Error('Invisible Stand must not query nodes');}}),[]);
+const scene=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world,script=fs.readFileSync(new URL('Assets/Scripts/Main.js',root),'utf8'),copy=x=>JSON.parse(JSON.stringify(x));
+function client(){
+  const values=new Map(),active=new Map(scene.entities.map(e=>[e.entity,e.active!==false])),messages=[];
+  const engine={assets:nativeNodeQueries(),snapshot:structuredClone(scene),network:{poll:()=>messages.splice(0),connect(){},close(){},send(){}},storage:{load(){},save(){}},setActive:(id,on)=>active.set(id,on),playAudio(){},pushCommandJson:raw=>{const c=JSON.parse(raw);values.set(c.entity+'/'+c.component,c.value);}};
+  const context=vm.createContext({engine});vm.runInContext(script,context);vm.runInContext('const constructionCreate=Frost.create;Frost.create=(mode,options)=>{globalThis.constructionState=constructionCreate(mode,options);return constructionState;};',context);
+  const entity=name=>scene.entities.find(e=>e.name===name),component=(name,key)=>values.get(entity(name).entity+'/'+key)||entity(name).components[key],tick=(input={},dt=.001)=>{engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};context.onTick(dt);},key=k=>{tick({pressedKeys:[k],keys:[k]});tick();};tick();key('F1');return {context,tick,key,component,on:n=>active.get(entity(n).entity),messages};
 }
-{
-  const {s,w}=setup(3);w.x=0;w.z=10;assert.match(S.command(s,0,{type:'build',ids:[w.id],kind:'farm',x:5,z:10}),/territory/);assert.equal(S.command(s,0,{type:'build',ids:[w.id],kind:'hall',x:5,z:10}),null);step(s,1100);const expansion=s.units.at(-1);assert.equal(expansion.built,1);const home=s.units.find(u=>u.kind==='hall'&&u.id!==expansion.id&&u.team===0),foe=S.spawn(s,'hero',1,home.x+1,home.z,{damage:10000,order:{type:'attack',target:home.id}});S.visibility(s);step(s,2);assert.equal(home.hp,0);assert.equal(s.winner,null,'remaining hall preserves skirmish');foe.x=expansion.x+1;foe.z=expansion.z;foe.cd=0;foe.order={type:'attack',target:expansion.id};S.visibility(s);step(s,2);assert.equal(s.winner,1);
-}
-{
-  const {s,w}=setup();w.x=0;w.z=10;w.cargo=20;w.cargoKind='mine';w.order={type:'gather',resource:s.resources.findIndex(r=>r.kind==='mine')};const near=S.spawn(s,'hall',0,5,10,{built:.5}),far=S.spawn(s,'hall',0,0,17);const gold=s.teams[0].gold;step(s,1);assert.deepEqual(w.dest,[far.x,far.z],'return to nearest completed base');step(s,40);assert.ok(s.teams[0].gold>=gold+20);assert.equal(near.built,.5);assert.equal(far.hp,far.maxHp);
-}
-{
-  const {s,w}=setup(1),b=build(s,w);step(s,25);const invalid=S.clone(s);invalid.units.find(u=>u.id===w.id).inside=9999;assert.throws(()=>S.restore(invalid));const invalidCost=S.clone(s);invalidCost.units.find(u=>u.id===b.id).construction.paidGold=1e6;assert.throws(()=>S.restore(invalidCost));
-  const legacy=setup().s,old=S.spawn(legacy,'farm',0,-10,20,{built:.2});const restored=S.restore(legacy);step(restored,70);assert.equal(restored.units.find(u=>u.id===old.id).built,1,'legacy construction keeps progressing');
-}
-{
-  const {s,w}=setup(2);build(s,w);step(s,25);s.units=s.units.filter(u=>u.id!==w.id);assert.throws(()=>S.restore(s),'living building must retain its consumed worker until completed');
-}
-for(let f=0;f<4;f++){
-  const {s}=setup(f);setTechnology(S,s,0,3);s.teams[0].ai=true;const firstId=s.serial;step(s,800);assert.ok(s.units.some(u=>u.id>firstId&&u.kind==='workshop'&&u.built===1),'AI finishes workshop for faction '+f);assert.ok(s.units.some(u=>u.team===0&&u.kind==='worker'&&!u.inside&&u.order?.type==='gather'),'AI retains economy for faction '+f);
-}
-{
-  const {s,w}=setup();const b=build(s,w,'hall');for(const u of s.units)if(u.team===0&&u.kind==='hall'&&u.id!==b.id)u.hp=0;assert.equal(S.command(s,0,{type:'cancelBuild',ids:[b.id]}),null);assert.equal(s.winner,1,'cancelling last surviving hall also ends skirmish');
-}
-{
-  const {s,w}=setup(),b=build(s,w,'hall'),h=s.units.find(u=>u.team===0&&u.kind==='hero');h.x=b.x;h.z=b.z;h.hp-=100;const hp=h.hp;assert.match(S.command(s,0,{type:'buy',ids:[h.id],item:0}),/Visit/);step(s,5);assert.equal(h.hp,hp,'unfinished base cannot heal heroes');
-}
-console.log('PASS: four construction styles, arrival/pause/assist, repair costs, cancel/refund, occupants, expansion defeat, nearest completed base and save migration');
+const c=client(),F=c.context.Frost,s=c.context.constructionState;s.units=[];s.resources=[];s.teams.forEach(t=>{t.ai=false;t.faction=3;t.gold=5000;t.wood=5000;});for(const field of ['terrain','heights','relief','ramps'])s.map[field].fill(0);s.map.props=[];
+F.spawn(s,'hall',0,-8,0,{damage:0});F.spawn(s,'hall',1,24,24,{damage:0});const worker=F.spawn(s,'worker',0,0,0,{damage:0});F.visibility(s);assert.equal(F.command(s,0,{type:'build',ids:[worker.id],kind:'altar',x:2,z:0}),null);const building=s.units.at(-1);for(let i=0;i<20;i++)F.tick(s);assert.ok(building.construction.started);c.tick();const name='Classic attachment '+s.units.indexOf(building)+' 0';assert.ok(c.on(name));assert.match(c.component(name,'SampledEffect').effect,/SharedModels\/UBirth\.mfx$/);assert.ok(scene.entities.filter(e=>e.name.startsWith(name+' mesh ')).some(e=>c.on(e.name)));
+c.key('F10');const frozen=copy(c.component(name,'SampledEffect')),transform=copy(c.component(name,'Transform'));c.tick({},.2);assert.deepEqual(copy(c.component(name,'SampledEffect')),frozen);assert.deepEqual(copy(c.component(name,'Transform')),transform);assert.ok(F.restore(s));
+const saved=F.clone(s),authority=F.publicState(saved,0),peerName='Classic attachment '+authority.units.findIndex(u=>u.id===building.id)+' 0',a=client(),b=client();for(const peer of [a,b]){peer.key('F10');peer.key('KeyX');peer.key('Enter');peer.key('F1');peer.messages.push({type:'connected'},{type:'message',data:{type:'joined',team:0,token:'construction-art',code:'BUILD',state:copy(authority)}});peer.tick();}assert.ok(a.on(peerName));assert.deepEqual(copy(a.component(peerName,'SampledEffect')),copy(b.component(peerName,'SampledEffect')));assert.deepEqual(copy(a.component(peerName,'Transform')),copy(b.component(peerName,'Transform')));a.tick({},.2);assert.deepEqual(copy(a.component(peerName,'SampledEffect')),frozen,'authority construction phase is frozen without new snapshot');
+c.key('Escape');s.visible[0].fill(0);building.team=1;c.tick();assert.equal(c.on(name),false,'fog hides embedded model');building.team=0;F.visibility(s);c.tick();assert.ok(c.on(name));assert.equal(F.command(s,0,{type:'cancelBuild',ids:[building.id]}),null);c.tick();assert.equal(c.on(name),false,'cancelled construction removes embedded model');
+const completed=F.spawn(s,'altar',0,2,0,{built:1,damage:0});c.tick();const done='Classic attachment '+s.units.indexOf(completed)+' 0';assert.equal(c.on(done),false,'completed Stand uses authored visibility');
+console.log('PASS construction art:',sampled,'source poses;',visible,'visible and',hidden,'hidden embedded nodes; exact path identities, full transforms, actual build/cancel, pause, fog, save and authoritative clients');

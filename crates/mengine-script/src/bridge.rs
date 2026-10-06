@@ -113,6 +113,7 @@ pub struct ScriptHost {
     context: Context,
     _runtime: Runtime,
     deadline: Rc<Cell<Instant>>,
+    startup_tick: bool,
     commands: Rc<RefCell<CommandBuffer>>,
     requests: Rc<RefCell<Vec<ScriptRuntimeRequest>>>,
     snapshot: Rc<RefCell<ScriptSnapshot>>,
@@ -210,7 +211,7 @@ impl ScriptHost {
             };
             install().map_err(|error| script_error(&ctx, error))
         })?;
-        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, commands, requests, snapshot, storage_root, asset_nodes, snapshot_cache: WorldSnapshotCache::default() };
+        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, startup_tick: true, commands, requests, snapshot, storage_root, asset_nodes, snapshot_cache: WorldSnapshotCache::default() };
         host.set_input(&ScriptInput::default())?;
         Ok(host)
     }
@@ -232,7 +233,9 @@ impl ScriptHost {
     pub fn tick(&mut self, world: &mut World, dt: f32) -> Result<(), ScriptError> {
         self.asset_nodes.borrow_mut().begin_frame();
         self.sync_world(world)?;
-        self.deadline.set(Instant::now() + Duration::from_secs(1));
+        // MiYu: cold scene snapshot decoding and initialization get one bounded loading frame.
+        let seconds=if std::mem::replace(&mut self.startup_tick,false) {3} else {1};
+        self.deadline.set(Instant::now() + Duration::from_secs(seconds));
         let result = self.context.with(|ctx| {
             let mut invoke = || -> rquickjs::Result<()> {
                 if self.tick_callback.is_none() {
@@ -583,6 +586,15 @@ mod tests {
         host.eval("if (engine.snapshot.frame !== 42 || JSON.parse(lastSnapshot).frame !== 42) throw Error('missing injected snapshot');").unwrap();
     }
 
+    #[test]
+    fn loading_frame_budget_is_consumed_once_and_normal_ticks_remain_bounded_after_eval() {
+        let mut host=ScriptHost::new().unwrap();let mut world=World::new();
+        host.eval("function onTick(){const begin=Date.now();while(Date.now()-begin<1200){}engine.setClearColor(0,1,0,1);}").unwrap();
+        host.tick(&mut world,0.016).unwrap();assert_eq!(world.time.clear_color.y,1.0);
+        host.eval("function onTick(){engine.setClearColor(1,0,0,1);const begin=Date.now();while(Date.now()-begin<1200){}}").unwrap();
+        assert!(host.tick(&mut world,0.016).is_err());assert_eq!(world.time.clear_color.y,1.0);
+        host.eval("onTick=()=>engine.setClearColor(0,0,1,1)").unwrap();host.tick(&mut world,0.016).unwrap();assert_eq!(world.time.clear_color.z,1.0);
+    }
     #[test]
     fn runaway_ticks_abort_without_leaking_commands_and_the_host_recovers() {
         let mut host = ScriptHost::new().unwrap();
