@@ -38,6 +38,7 @@ const ENGINE_TYPES = `interface EngineSceneInfo {
 }
 
 interface EngineApi {
+  assets: { sampleNodes(reference: string, options?: { camera?: { model: number[]; look: [number,number,number]; up: [number,number,number] }; attachmentsOnly?: boolean }): Array<{ index: number; name: string | null; position: [number,number,number]; matrix: number[]; attachment: { id: number; path: string; visibility: number } | null }> };
   snapshot: { entities: Array<{ entity: number; name: string | null; parent: number | null; components: Record<string, any> }>; frame: number; elapsed: number; clear_color: number[] };
   input: { keys: string[]; pressedKeys: string[]; releasedKeys: string[]; pointer: [number, number]; pointerDelta: [number, number]; pointerLocked: boolean; viewport: [number, number]; buttons: number[]; pressedButtons: number[]; releasedButtons: number[] };
   network: { connect(address: string): boolean; send(message: unknown): boolean; poll(): Array<{ type: 'connected' | 'message' | 'closed'; data?: any; error?: string | null }>; close(): void };

@@ -201,7 +201,7 @@ impl PlaySession {
         let mut scenes = SceneManager::new(project.root.clone(), project.build_scenes, false);
         let initial_scene = scenes.set_current(&project.scene, project.name);
         let mut script = ScriptHost::new().map_err(|error| error.to_string())?;
-        if let Some(root) = project.root.as_deref() { script.set_storage_root(mengine_script::project_storage_root(root)); }
+        if let Some(root) = project.root.as_deref() { script.set_storage_root(mengine_script::project_storage_root(root)); script.set_project_root(root.to_path_buf()); }
         script.inject_snapshot_json(&serde_json::to_string(&initial).map_err(|error| error.to_string())?).map_err(|error| error.to_string())?;
         script.eval(source).map_err(|error| error.to_string())?;
         script.notify_scene_loaded(&initial_scene.name, &initial_scene.path.to_string_lossy().replace('\\', "/"), initial_scene.build_index, initial_scene.build_scene_count).map_err(|error| error.to_string())?;

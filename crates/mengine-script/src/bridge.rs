@@ -117,6 +117,7 @@ pub struct ScriptHost {
     requests: Rc<RefCell<Vec<ScriptRuntimeRequest>>>,
     snapshot: Rc<RefCell<ScriptSnapshot>>,
     storage_root: Rc<RefCell<Option<std::path::PathBuf>>>,
+    asset_nodes: Rc<RefCell<crate::asset_nodes::AssetNodeCache>>,
     snapshot_cache: WorldSnapshotCache,
 }
 
@@ -158,8 +159,11 @@ impl ScriptHost {
         let snapshot = Rc::new(RefCell::new(ScriptSnapshot::default()));
         let network = Rc::new(RefCell::new(crate::network::ScriptNetwork::default()));
         let storage_root = Rc::new(RefCell::new(None::<std::path::PathBuf>));
+        let asset_nodes=Rc::new(RefCell::new(crate::asset_nodes::AssetNodeCache::default()));
         let restore_snapshot = context.with(|ctx| {
             let install = || -> rquickjs::Result<Persistent<Function<'static>>> {
+                let nodes=asset_nodes.clone();
+                ctx.globals().set("__mengineAssetNodes",Function::new(ctx.clone(),move |reference: String,options: String| -> String {nodes.borrow_mut().query(&reference,&options)})?)?;
                 let storage = storage_root.clone();
                 ctx.globals().set("__mengineStorage", Function::new(ctx.clone(), move |operation: String, key: String, payload: String| -> String {
                     crate::storage::operate(storage.borrow().as_deref(), &operation, &key, &payload)
@@ -206,14 +210,16 @@ impl ScriptHost {
             };
             install().map_err(|error| script_error(&ctx, error))
         })?;
-        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, commands, requests, snapshot, storage_root, snapshot_cache: WorldSnapshotCache::default() };
+        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, commands, requests, snapshot, storage_root, asset_nodes, snapshot_cache: WorldSnapshotCache::default() };
         host.set_input(&ScriptInput::default())?;
         Ok(host)
     }
 
     pub fn set_storage_root(&mut self, root: std::path::PathBuf) { *self.storage_root.borrow_mut() = Some(root); }
+    pub fn set_project_root(&mut self, root: std::path::PathBuf) {self.asset_nodes.borrow_mut().set_root(root);}
 
     pub fn eval(&mut self, source: &str) -> Result<(), ScriptError> {
+        self.asset_nodes.borrow_mut().begin_frame();
         self.tick_callback = None;
         self.deadline.set(Instant::now() + Duration::from_secs(1));
         let mut options = EvalOptions::default();
@@ -224,6 +230,7 @@ impl ScriptHost {
     pub fn load_file(&mut self, path: &std::path::Path) -> Result<(), ScriptError> { self.eval(&std::fs::read_to_string(path)?) }
 
     pub fn tick(&mut self, world: &mut World, dt: f32) -> Result<(), ScriptError> {
+        self.asset_nodes.borrow_mut().begin_frame();
         self.sync_world(world)?;
         self.deadline.set(Instant::now() + Duration::from_secs(1));
         let result = self.context.with(|ctx| {

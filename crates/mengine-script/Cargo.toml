@@ -7,6 +7,8 @@ description = "MEngine QuickJS script host and TS bridge"
 
 [dependencies]
 mengine-core.workspace = true
+mengine-assets.workspace = true
+glam.workspace = true
 rquickjs = "0.14"
 serde.workspace = true
 serde_json.workspace = true

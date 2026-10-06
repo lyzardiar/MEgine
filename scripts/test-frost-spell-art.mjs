@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createRequire} from 'node:module';
+import {nativeNodeQueries} from './frost-native-node-fixture.mjs';
 const require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js'),root=new URL('../samples/frostbound-realms/',import.meta.url),scene=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world,script=fs.readFileSync(new URL('Assets/Scripts/Main.js',root),'utf8'),catalog=JSON.parse(fs.readFileSync(new URL('effect-catalog.json',root))),copy=x=>JSON.parse(JSON.stringify(x));
 function client(){
   const values=new Map(),active=new Map(scene.entities.map(e=>[e.entity,e.active!==false])),messages=[];
-  const engine={snapshot:structuredClone(scene),network:{poll:()=>messages.splice(0),connect(){},close(){},send(){}},storage:{load(){},save(){}},setActive:(id,on)=>active.set(id,on),playAudio(){},pushCommandJson:raw=>{const c=JSON.parse(raw);values.set(c.entity+'/'+c.component,c.value);}};
+  const engine={assets:nativeNodeQueries(),snapshot:structuredClone(scene),network:{poll:()=>messages.splice(0),connect(){},close(){},send(){}},storage:{load(){},save(){}},setActive:(id,on)=>active.set(id,on),playAudio(){},pushCommandJson:raw=>{const c=JSON.parse(raw);values.set(c.entity+'/'+c.component,c.value);}};
   const context=vm.createContext({engine});vm.runInContext(script,context);vm.runInContext('const artCreate=Frost.create;Frost.create=(mode,options)=>{globalThis.artState=artCreate(mode,options);return artState;};',context);
   const entity=name=>scene.entities.find(e=>e.name===name),component=(name,key)=>values.get(entity(name).entity+'/'+key)||entity(name).components[key],on=name=>active.get(entity(name).entity),tick=(input={},dt=.001)=>{engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};context.onTick(dt);},key=k=>{tick({pressedKeys:[k],keys:[k]});tick();};
   tick();key('F1');return {context,tick,key,component,on,messages};

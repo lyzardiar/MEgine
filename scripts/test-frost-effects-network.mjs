@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import net from 'node:net';
 import {createRequire} from 'node:module';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
+import {nativeNodeQueries} from './frost-native-node-fixture.mjs';
 const require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js');
 globalThis.Frost=S;globalThis.FrostArt=require('../samples/frostbound-realms/model-catalog.json');globalThis.FrostEffectArt=require('../samples/frostbound-realms/effect-catalog.json');const V=require('../samples/frostbound-realms/game/visuals.js'),E=require('../samples/frostbound-realms/game/effects.js'),app=createServer({port:0}),address=await app.listening,clients=[];
 globalThis.FrostVisual=V;
+globalThis.engine={assets:nativeNodeQueries()};
 async function peer(){
   const socket=net.connect(address.port,'127.0.0.1'),messages=[],waiting=[];let buffer='';clients.push(socket);socket.setEncoding('utf8');socket.on('data',chunk=>{buffer+=chunk;let end;while((end=buffer.indexOf('\n'))>=0){const m=JSON.parse(buffer.slice(0,end));buffer=buffer.slice(end+1);messages.push(m);for(const request of [...waiting])if(request.check(m)){waiting.splice(waiting.indexOf(request),1);clearTimeout(request.timer);request.resolve(m);}}});socket.on('error',()=>{});await new Promise((r,j)=>{socket.once('connect',r);socket.once('error',j);});
   const send=m=>socket.write(JSON.stringify(m)+'\n'),next=check=>new Promise((resolve,reject)=>{const request={check,resolve,timer:setTimeout(()=>reject(Error('TCP wait '+check.toString()+': '+JSON.stringify(messages.filter(m=>m.type==='error').map(m=>m.message)))),5000)};waiting.push(request);});let welcome=next(m=>m.type==='welcome');send({type:'hello',protocol:S.PROTOCOL,name:'Effect QA'});await welcome;return {socket,send,next,messages};

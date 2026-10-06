@@ -47,7 +47,7 @@ def digest(data):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pose-probe', default=os.environ.get('MENGINE_POSE_PROBE_EXECUTABLE'))
-    parser.add_argument('--billboard-library', type=pathlib.Path, default=LIBRARY / 'classic-billboard-ready')
+    parser.add_argument('--billboard-library', type=pathlib.Path, default=LIBRARY / 'classic-attachment-ready')
     parser.add_argument('--output', type=pathlib.Path, default=SAMPLE)
     args = parser.parse_args()
     sample = args.output.resolve()

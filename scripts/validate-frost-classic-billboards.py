@@ -13,10 +13,11 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--probe', type=pathlib.Path, default=pathlib.Path('D:/MEngineNativeQA/tile-build-1790939800003/release/examples/gltf_bounds.exe'))
 parser.add_argument('--reference', type=pathlib.Path, default=ROOT / 'tmp/warcraft-effects/billboard-reference/BillboardReference.dll')
 args = parser.parse_args()
-library = ROOT / 'asset-library/warcraft-iii/classic-billboard-ready'
-overrides, receipt_sha, receipt = converter.load_overlay(library)
 sample = ROOT / 'samples/frostbound-realms'
 imported = json.loads((sample / 'classic-sources.json').read_bytes())
+library=ROOT/'asset-library/warcraft-iii'/imported['billboardCollection']
+attachment_nodes=library.name=='classic-attachment-ready'
+overrides, receipt_sha, receipt = converter.load_overlay(library)
 assert imported['billboardReceiptSha256'] == receipt_sha
 for record in imported['files']:
     raw = (sample / record['path']).read_bytes()
@@ -27,7 +28,22 @@ for annotation in receipt['annotations']:
     assert old_binary == new_binary, annotation['path']
     del new['extras']['mengineMdxAnimation']
     if not new['extras']: del new['extras']
+    if attachment_nodes:
+        old_mesh=len(old['nodes'])-1;new_mesh=len(new['nodes'])-1
+        new['nodes']=new['nodes'][:old_mesh]+[new['nodes'][new_mesh]]
+        for node in new['nodes']:
+            if 'children' in node:node['children']=[i for i in node['children'] if i<old_mesh]
+            if not node.get('children'):node.pop('children',None)
+            node.get('extras',{}).pop('mengineSourceNode',None)
+        for original, scene in zip(old['scenes'], new['scenes']):
+            roots=[old_mesh if i==new_mesh else i for i in scene['nodes'] if i<old_mesh or i==new_mesh]
+            assert sorted(roots)==sorted(original['nodes']), annotation['path']
+            scene['nodes']=original['nodes'][:]
+        for animation in new['animations']:
+            for channel in animation['channels']:
+                if channel['target']['node']==new_mesh:channel['target']['node']=old_mesh
     for index, node in enumerate(new['nodes']):
+        if not node.get('extras') and 'extras' not in old['nodes'][index]:node.pop('extras',None)
         if 'mengineBillboard' in node.get('extras', {}) and 'mengineBillboard' not in old['nodes'][index].get('extras', {}):
             del node['extras']['mengineBillboard']
             if not node['extras']: del node['extras']
@@ -74,5 +90,5 @@ with tempfile.TemporaryDirectory(prefix='classic-billboard-reference-', dir=ROOT
         results.append(result)
         print('PASS source camera poses:', source, 'loads', result['loads'], 'max error', result['maxPositionError'], flush=True)
 report = dict(passed=True, sourceModels=len(receipt['sourceFiles']), billboardModels=len({(a['pack'], a['source']) for a in receipt['annotations'] if a['nodes']}), geometryParts=len(overrides), sourceBillboardNodes=len({(a['pack'], a['source'], n['sourceNode']) for a in receipt['annotations'] for n in a['nodes']}), sourceFlags=sorted({n['flags'] for a in receipt['annotations'] for n in a['nodes']}), nativeLoads=loads, comparedVertices=comparisons, maxPositionError=max_error, cameraViews=len(views), binaryBuffersPreserved=True, importedFiles=len(imported['files']), probeSha256=converter.digest(args.probe.read_bytes()), referenceSha256=converter.digest(args.reference.read_bytes()), models=results, scope='Independent pinned source MDX evaluator against imported native actor and building poses. All clips, start/middle/exact endpoints, actor yaw, full billboards and source lock-Z billboards, including degenerate overhead views. Separate GPU and game integration validation required.')
-(ROOT / 'docs/designs/frostbound-realms/classic-billboard-pose-validation.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+(ROOT / 'docs/designs/frostbound-realms'/('native-anchor-mesh-pose-validation.json' if attachment_nodes else 'classic-billboard-pose-validation.json')).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
 print('PASS classic billboard poses:', json.dumps({k:v for k,v in report.items() if k != 'models'}))

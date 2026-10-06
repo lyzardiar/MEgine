@@ -97,7 +97,7 @@ impl RuntimeMeshCache {
                     self.poses.insert(asset.into(),(stamp,source));
                 }
             }
-            if !self.poses[asset].1.has_billboards() { continue; }
+            if !self.poses[asset].1.has_mesh_billboards() { continue; }
             let Some(view) = billboard_camera(camera,object) else { continue; };
             let rendered = billboard_key(key,view);
             self.billboard_views.entry(rendered.clone()).or_insert_with(|| (key.into(),view));

@@ -1201,7 +1201,7 @@ impl ApplicationHandler for App {
 
         let mut script = ScriptHost::new().ok();
         if let Some(ref mut s) = script {
-            if let Some(root) = self.args.project_root.as_deref() { s.set_storage_root(mengine_script::project_storage_root(root)); }
+            if let Some(root) = self.args.project_root.as_deref() { s.set_storage_root(mengine_script::project_storage_root(root)); s.set_project_root(root.to_path_buf()); }
             if let Err(error) = s.sync_world(&self.world) { log::error!("script snapshot failed: {error}"); }
             let default_script = r#"
 var t = 0.0;

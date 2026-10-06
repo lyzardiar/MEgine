@@ -31,7 +31,20 @@ pub struct GltfNodePose { pub index: usize, pub name: Option<String>, pub matrix
 #[derive(Clone, Debug)]
 pub struct GltfAttachmentPose { pub id: u32, pub path: String, pub visibility: f32 }
 
-pub struct GltfPoseSource { document: gltf::Document, buffers: Vec<gltf::buffer::Data>, billboards: Vec<u32>, mdx: Option<crate::gltf_mdx::MdxAnimation> }
+pub struct GltfPoseSource { document: gltf::Document, buffers: Vec<gltf::buffer::Data>, billboards: Vec<u32>, mesh_billboards: bool, mdx: Option<crate::gltf_mdx::MdxAnimation> }
+
+fn mesh_billboards(document: &gltf::Document, flags: &[u32]) -> bool {
+    let mut parents=vec![None;flags.len()];let mut relevant=vec![false;flags.len()];
+    for node in document.nodes() {for child in node.children() {parents[child.index()]=Some(node.index());}}
+    for node in document.nodes().filter(|n|n.mesh().is_some()) {
+        let joints=node.skin().map(|s|s.joints().map(|j|j.index()).collect::<Vec<_>>()).unwrap_or_default();
+        for index in std::iter::once(node.index()).chain(joints) {
+            let mut current=Some(index);
+            while let Some(i)=current {if relevant[i] {break;}relevant[i]=true;current=parents[i];}
+        }
+    }
+    flags.iter().zip(relevant).any(|(flag,relevant)|relevant && *flag!=0)
+}
 
 fn billboard_matrix(world: Mat4, flags: u32, camera: GltfBillboardCamera) -> Mat4 {
     let to_camera = -camera.look;
@@ -62,8 +75,43 @@ fn keyframe_segment(times: &[f32], time: f32, step: bool) -> (usize, usize) {
     (if step { b } else { b.saturating_sub(1) }, b)
 }
 impl GltfPoseSource {
+    /// MiYu: validate every file dependency before allowing a project script to load the pose.
+    pub fn load_in_project(path: &Path, root: &Path) -> Result<(Self,Vec<std::path::PathBuf>),AssetError> {
+        let fail=|s: &str| AssetError::Gltf(s.into());
+        let root=root.canonicalize().map_err(|e|fail(&e.to_string()))?;
+        let path=path.canonicalize().map_err(|e|fail(&e.to_string()))?;
+        if !path.starts_with(&root) { return Err(fail("pose asset is outside the project")); }
+        if std::fs::metadata(&path).map_err(|e|fail(&e.to_string()))?.len()>128*1024*1024 {return Err(fail("pose asset size exceeds 128 MiB"));}
+        let source=gltf::Gltf::open(&path).map_err(|e|fail(&e.to_string()))?;
+        let document=source.document;
+        let mut dependencies=vec![path.clone()];
+        let uris=document.buffers().filter_map(|b|match b.source() {gltf::buffer::Source::Uri(uri)=>Some(uri),_=>None}).chain(document.images().filter_map(|i|match i.source() {gltf::image::Source::Uri {uri,..}=>Some(uri),_=>None}));
+        for uri in uris {
+            if uri.starts_with("data:") { continue; }
+            let bytes=uri.as_bytes();let mut decoded=Vec::new();let mut i=0;
+            while i<bytes.len() {
+                if bytes[i]==b'%' {
+                    let hex=bytes.get(i+1..i+3).ok_or_else(||fail("invalid pose dependency URI"))?;
+                    let hex=std::str::from_utf8(hex).map_err(|_|fail("invalid pose dependency URI"))?;
+                    decoded.push(u8::from_str_radix(hex,16).map_err(|_|fail("invalid pose dependency URI"))?);i+=3;
+                } else {decoded.push(bytes[i]);i+=1;}
+            }
+            let decoded=String::from_utf8(decoded).map_err(|_|fail("invalid pose dependency URI"))?;
+            if decoded.contains([':', '\0']) || Path::new(&decoded).is_absolute() { return Err(fail("pose dependency must be project relative")); }
+            let dependency=path.parent().unwrap().join(decoded).canonicalize().map_err(|e|fail(&e.to_string()))?;
+            if !dependency.starts_with(&root) { return Err(fail("pose dependency is outside the project")); }
+            if !dependencies.contains(&dependency) {dependencies.push(dependency);}
+        }
+        let bytes=dependencies.iter().try_fold(0u64,|total,p|std::fs::metadata(p).map(|m|total.saturating_add(m.len()))).map_err(|e|fail(&e.to_string()))?;
+        if bytes>128*1024*1024 { return Err(fail("pose dependency size exceeds 128 MiB")); }
+        let buffers=gltf::import_buffers(&document,path.parent(),source.blob).map_err(|e|fail(&e.to_string()))?;
+        Ok((Self::from_parts(document,buffers)?,dependencies))
+    }
     pub fn load(path: &Path) -> Result<Self, AssetError> {
         let (document, buffers, _) = gltf::import(path).map_err(|e| AssetError::Gltf(e.to_string()))?;
+        Self::from_parts(document,buffers)
+    }
+    fn from_parts(document: gltf::Document, buffers: Vec<gltf::buffer::Data>) -> Result<Self,AssetError> {
         let mut billboards = Vec::new();
         for node in document.nodes() {
             let extra: Option<serde_json::Value> = node.extras().as_ref().map(|v| serde_json::from_str(v.get()).map_err(|_| AssetError::Gltf("invalid node extras".into()))).transpose()?;
@@ -75,9 +123,11 @@ impl GltfPoseSource {
         }
         let extra:Option<serde_json::Value>=document.as_json().extras.as_ref().map(|v|serde_json::from_str(v.get()).map_err(|_|AssetError::Gltf("invalid document extras".into()))).transpose()?;
         let mdx=extra.and_then(|v|v.get("mengineMdxAnimation").cloned()).map(|v|crate::gltf_mdx::MdxAnimation::parse(v,&document)).transpose()?;
-        Ok(Self { document, buffers, billboards, mdx })
+        let mesh_billboards=mesh_billboards(&document,&billboards);
+        Ok(Self { document, buffers, billboards, mesh_billboards, mdx })
     }
     pub fn has_billboards(&self) -> bool { self.billboards.iter().any(|v| *v != 0) }
+    pub fn has_mesh_billboards(&self) -> bool {self.mesh_billboards}
     pub fn sample(&self, clip: usize, frame: u32) -> Result<MeshData, AssetError> {
         self.sample_at_rate(clip, frame, 12)
     }
@@ -259,12 +309,22 @@ mod tests {
         assert_eq!(keyframe_segment(&[0.0,0.5],0.25,false),(0,1));
     }
     #[test]
+    fn unskinned_attachment_billboards_do_not_require_per_camera_mesh_uploads() {
+        let mut value=serde_json::json!({"asset":{"version":"2.0"},"accessors":[{"componentType":5126,"count":1,"type":"VEC3","min":[0,0,0],"max":[0,0,0]}],"meshes":[{"primitives":[{"attributes":{"POSITION":0}}]}],"nodes":[{"mesh":0},{"children":[2]},{}]});
+        value["buffers"]=serde_json::json!([{"byteLength":12}]);value["bufferViews"]=serde_json::json!([{"buffer":0,"byteLength":12}]);value["accessors"][0]["bufferView"]=serde_json::json!(0);
+        let document=|v: &serde_json::Value|gltf::Gltf::from_slice(&serde_json::to_vec(v).unwrap()).unwrap().document;
+        assert!(!mesh_billboards(&document(&value),&[0,8,0]));
+        value["nodes"][0]["skin"]=serde_json::json!(0);value["skins"]=serde_json::json!([{"joints":[2]}]);
+        assert!(mesh_billboards(&document(&value),&[0,8,0]));assert!(mesh_billboards(&document(&value),&[0,0,64]));
+        assert!(!mesh_billboards(&document(&value),&[0,0,0]));
+    }
+    #[test]
     fn node_queries_keep_duplicate_names_parent_motion_and_authored_visibility() {
         let value=serde_json::json!({"asset":{"version":"2.0"},"nodes":[{"name":"ref","translation":[10,0,0],"children":[1]},{"name":"ref","translation":[2,0,0]}],"animations":[{"name":"birth","samplers":[],"channels":[],"extras":{"menginePlayback":{"durationSeconds":1.0,"loop":false}}}]});
         let gltf=gltf::Gltf::from_slice(&serde_json::to_vec(&value).unwrap()).unwrap();
         let metadata=serde_json::json!({"sequences":[{"name":"birth","start":1000,"end":2000}],"globalSequences":[],"nodes":[{"node":0,"restTranslation":[10,0,0]},{"node":1,"restTranslation":[2,0,0],"attachment":{"id":7,"path":"embedded.mdx","visibility":{"interpolation":0,"globalSequence":-1,"times":[1000,1500,2000],"values":[[0],[1],[0]]}}}]});
         let mdx=crate::gltf_mdx::MdxAnimation::parse(metadata,&gltf.document).unwrap();
-        let source=GltfPoseSource {document:gltf.document,buffers:vec![],billboards:vec![8,0],mdx:Some(mdx)};
+        let source=GltfPoseSource {document:gltf.document,buffers:vec![],billboards:vec![8,0],mesh_billboards:false,mdx:Some(mdx)};
         let camera=GltfBillboardCamera {model:Mat4::IDENTITY,look:-Vec3::Z,up:Vec3::Y};
         for (frame,expected) in [(29,0.0),(30,1.0),(59,1.0),(60,0.0),(99,0.0)] {
             let poses=source.sample_nodes(0,frame,60,Some(camera)).unwrap();

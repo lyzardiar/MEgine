@@ -27,4 +27,22 @@ python scripts/validate-frost-classic-attachments.py --reference tmp/warcraft-ef
 
 最终验证通过：83 项引擎资产测试、1,670 项源读取器检查、6,356 次原生节点加载和 462,686 个完整节点矩阵对照。最大枢轴位置误差为 `0.0000044037124633522495`，最大矩阵分量误差为 `0.000010144042974502554`；51,221 个可见和 8,754 个隐藏附件样本均与源轨道一致。2,308 次网格加载对照未改变顶点，1,253 个文件独立重生成字节一致，手工改动时拒绝覆盖且其他产物保持原样。编辑器宿主集成检查通过。
 
-本阶段交付原生节点查询与完整源节点集合。Frostbound 的技能代码仍使用既有位置采样，后续需将查询接入脚本运行时和特效挂点，并解析 15 个内置附件模型的实际依赖。当前验证不等于新挂点路径的战场 GPU、联机或完整游戏验收。
+Frostbound 已导入完整节点集合，并通过脚本 API `engine.assets.sampleNodes(reference, {camera, attachmentsOnly})` 查询当前动画帧的挂点。`reference` 使用工程相对的 `#pose=clip:frame@rate` 路径；返回节点索引、名称、位置、完整矩阵及附件 ID/path/visibility。编辑器 Play 与独立 Player 设置各自工程根，源和 URI 依赖均检查工程边界。缓存最多 128 个源、256 MiB 输入依赖；单源依赖最多 128 MiB，每帧检查大小与修改时间，切换工程清空缓存。各相机结果独立，单源单帧结果缓存最多 512 KiB。
+
+客户端按实际模型动画、朝向、缩放和策略相机查询 origin、左右手与建筑 sprite 节点，同一单位的状态和技能共享惰性查询。没有效果的单位和健康建筑不触发节点采样。相机朝向仅影响附件参考点时，不重复上传无关几何；影响网格、蒙皮 joint 或其祖先时，仍按相机更新网格。
+
+当前接入挂点位置，特效旋转与缩放沿用单位朝向和比例，尚未继承节点的完整旋转/缩放。15 个非空内置路径指向三种建造 Birth 模型，模型均已在 `remaining-ready`，但内置附件播放及 KATV 驱动仍需接入；独立全局时钟和完整游戏验收仍未完成。
+
+脚本接入验证通过 84 项资产测试与 24 项脚本测试，包含真实 QuickJS API、工程切换、URI 越界拒绝、外部 buffer 热更新、不同相机结果隔离及附件参考点不触发网格重复上传。CLI 构建、独立 Player 检查、状态/技能客户端及真实 TCP 测试通过。
+
+[网格源姿态报告](native-anchor-mesh-pose-validation.json) 覆盖 94 个模型、577 个部件、4 个视角和全部动作，共 73,236 次原生加载、10,122,960 个顶点对照，最大误差 `0.000007660351562410739`。二进制缓冲保持一致；增加完整节点后，恢复原网格节点索引并核对根节点集合，原 GLB 结构一致。[重生成报告](classic-attachment-import-reproduction.json) 记录 1,253 个库文件及 4,956 个导入文件字节一致，手工修改时拒绝覆盖且不改变其他输出。
+
+[原生窗口报告](native-anchor-art-qa.json) 使用当前 Release 编辑器、真实 GPU Game View 与两个 TCP 客户端。单机 35 处、主机 44 处、客机 36 处挂点与同一原子场景快照中的探针结果对照，最大误差 `0.0000007330137989924879`。暂停后特效时间与变换保持一致，8 个回城到达效果、重连和两端材质管线检查通过，拒绝数为 0。画面见 [战场](native-anchor-battlefield.png)、[回城到达](native-anchor-arrival.png)、[联机客机](native-anchor-network.png)。此范围未包含物理鼠标、音频或完整游戏验收。
+
+```powershell
+python scripts/import-frost-classic.py --pose-probe <当前 gltf_bounds.exe 的绝对路径>
+node scripts/build-frostbound.mjs
+python scripts/test-frost-classic-billboards.py --metadata-reader tmp/warcraft-effects/attachment-metadata/AttachmentMetadata.dll --pose-probe <当前 gltf_bounds.exe 的绝对路径>
+python scripts/validate-frost-classic-billboards.py --probe <当前 gltf_bounds.exe 的绝对路径>
+node scripts/qa-frost-effects.mjs --native-anchors
+```
