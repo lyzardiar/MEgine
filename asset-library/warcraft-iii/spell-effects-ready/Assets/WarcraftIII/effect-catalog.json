@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 1,
+  "models": [
+    {
+      "source": "Abilities\\Spells\\Human\\MassTeleport\\MassTeleportCaster.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportCaster.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportCaster.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.5,
+          "loop": false,
+          "frames": 19
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 13,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\MassTeleport\\MassTeleportTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 1.934,
+          "loop": false,
+          "frames": 25
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 1,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 13,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Human\\MassTeleport\\MassTeleportTo.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTo.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTo.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.9,
+          "loop": false,
+          "frames": 12
+        },
+        {
+          "name": "Stand",
+          "duration": 1.5,
+          "loop": true,
+          "frames": 19
+        },
+        {
+          "name": "Death",
+          "duration": 2.167,
+          "loop": false,
+          "frames": 28
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 5,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 20,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Orc\\Bloodlust\\BloodLustSpecial.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustSpecial.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustSpecial.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.667,
+          "loop": false,
+          "frames": 10
+        },
+        {
+          "name": "stand",
+          "duration": 0.667,
+          "loop": true,
+          "frames": 10
+        },
+        {
+          "name": "Death",
+          "duration": 0.667,
+          "loop": false,
+          "frames": 10
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Orc\\Bloodlust\\BloodLustTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustTarget.prefab",
+      "clips": [
+        {
+          "name": "Birth",
+          "duration": 0.667,
+          "loop": false,
+          "frames": 10
+        },
+        {
+          "name": "stand",
+          "duration": 0.667,
+          "loop": true,
+          "frames": 10
+        },
+        {
+          "name": "Death",
+          "duration": 0.667,
+          "loop": false,
+          "frames": 10
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 2,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 3,
+      "previewClip": 1
+    },
+    {
+      "source": "Abilities\\Spells\\Orc\\LightningShield\\LightningShieldBuff.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldBuff.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldBuff.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1.533,
+          "loop": false,
+          "frames": 20
+        }
+      ],
+      "metadataOnly": true,
+      "particles": 0,
+      "ribbons": 0,
+      "lights": 0,
+      "cameras": 0,
+      "nodes": 7,
+      "previewClip": 0
+    },
+    {
+      "source": "Abilities\\Spells\\Orc\\LightningShield\\LightningShieldTarget.mdx",
+      "collection": "remaining-ready",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldTarget.mfx",
+      "prefab": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldTarget.prefab",
+      "clips": [
+        {
+          "name": "Stand",
+          "duration": 1,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Birth",
+          "duration": 0.6,
+          "loop": false,
+          "frames": 9
+        },
+        {
+          "name": "Death",
+          "duration": 0.333,
+          "loop": false,
+          "frames": 5
+        },
+        {
+          "name": "Stand Medium",
+          "duration": 1,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Birth Medium",
+          "duration": 0.6,
+          "loop": false,
+          "frames": 9
+        },
+        {
+          "name": "Death Medium",
+          "duration": 0.334,
+          "loop": false,
+          "frames": 6
+        },
+        {
+          "name": "Stand Large",
+          "duration": 1,
+          "loop": true,
+          "frames": 13
+        },
+        {
+          "name": "Birth Large",
+          "duration": 0.6,
+          "loop": false,
+          "frames": 9
+        },
+        {
+          "name": "Death Large",
+          "duration": 0.333,
+          "loop": false,
+          "frames": 5
+        }
+      ],
+      "metadataOnly": false,
+      "particles": 0,
+      "ribbons": 8,
+      "lights": 1,
+      "cameras": 0,
+      "nodes": 71,
+      "previewClip": 0
+    }
+  ]
+}

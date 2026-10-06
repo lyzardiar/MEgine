@@ -4,6 +4,8 @@
 
 原有库的 229 个无 geoset 资源已生成 `effects-ready` 集合；15 个缺少原始贴图的社区模型已生成 `texture-pending` 集合。共享 `G:/work/github/MEgine/asset-library` 保持只读，输出位于当前工作树的 `asset-library/warcraft-iii`。
 
+覆盖清单已核对 4,778 个源文件均有转换产物，待转换数为 0。另为嗜血、闪电护盾和回城的 7 个带网格技能资源生成 `spell-effects-ready` 集合，补充其粒子、缎带及灯光：21 段动画、265 帧，其中 6 个含可见采样效果，1 个只有辅助定义。其动画网格使用既有 `remaining-ready` 输出，样例已接入 27 个网格部件。来源清单保留源 MDX、转换器与输出哈希；接入和验证见 [原版状态与技能特效接入](status-effects-integration.md)。
+
 ## 资源与引擎
 
 `effects-ready/Assets/WarcraftIII/effect-catalog.json` 索引 229 个源文件：210 个含粒子、缎带或灯光，19 个只含镜头、辅助节点或空定义。共 373 段动画、36,454 帧。每个资源保留原始 MDX、完整源轨道、纹理来源及校验值。两个低频循环岸线资源在采样前积累发射额度，`prewarmSeconds` 记录 7 秒和 8.333333 秒的预热，使短循环中每秒不足一颗的粒子能够出现。
@@ -35,6 +37,14 @@ node scripts/render-warcraft-effects.mjs
 
 ```powershell
 python scripts/validate-warcraft-effects.py --converter-ref 2b40e35271075b341d0b8d3c4b924045e7d709b3
+```
+
+技能集合可按已记录的 7 个明确路径重生成：
+
+```powershell
+$spellSources = (Get-Content asset-library/warcraft-iii/spell-effects-ready/Assets/WarcraftIII/effect-catalog.json -Raw | ConvertFrom-Json).models
+$sourceArgs = @(); foreach ($model in $spellSources) { $sourceArgs += '--source'; $sourceArgs += $model.collection + '/' + $model.source }
+python scripts/convert-warcraft-effects.py --output asset-library/warcraft-iii/spell-effects-ready --sampler tmp/warcraft-converter/4fe46a0772520fc7b55078bf32cda1237d1b5f2e/bin/MdxExport.dll @sourceArgs
 ```
 
 ## 验证入口

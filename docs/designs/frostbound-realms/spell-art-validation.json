@@ -1,0 +1,16 @@
+{
+  "passed": true,
+  "verifiedFiles": 183,
+  "sourceModels": 31,
+  "verifiedSpellConversionFiles": 39,
+  "models": 7,
+  "geometryParts": 27,
+  "nativeLoads": 259,
+  "terminalHolds": 48,
+  "effectFrames": 265,
+  "particles": 1906,
+  "ribbonQuads": 5277,
+  "lights": 82,
+  "probeSha256": "a036b319536ef17e4aba0edc046f2774a9ba4daaf033d8b5c8453ea9e7f011b4",
+  "scope": "Source and imported hashes, native geometry pose loading and non-looping endpoint clamping. Game View and TCP checks are recorded separately."
+}

@@ -27,4 +27,6 @@ scripts/import-frost-classic-cliffs.py -text whitespace=cr-at-eol
 samples/frostbound-realms/classic-cliff-sources.json -text
 asset-library/warcraft-iii/effects-ready/** -text whitespace=cr-at-eol
 asset-library/warcraft-iii/texture-pending/** -text whitespace=cr-at-eol
+asset-library/warcraft-iii/spell-effects-ready/** -text whitespace=cr-at-eol
+scripts/import-frost-effects.py text eol=lf
 idl/components/core.idl whitespace=cr-at-eol

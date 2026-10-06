@@ -3,7 +3,7 @@
  Created: 2026
  Filename: EffectExport.cs
  Author: MiYu
- Descriptions: Deterministically sample classic MDX effects for native playback.
+ Descriptions: Sample classic MDX particles, ribbons and lights alongside geometry.
 *********************************************************************/
 using System.Numerics;
 using System.Text.Json;
@@ -12,7 +12,6 @@ using Wc3ModelViewer.Core.Formats;
 internal static class EffectExport {
     public static void Write(string source, string target) {
         var model = MdxReader.Read(File.ReadAllBytes(source));
-        if (model.Geosets.Count != 0) throw new InvalidDataException("Use the geometry converter for geoset models");
         var animator = new MdxAnimator(model);
         var simulation = new MdxEffectSimulator(model);
         const float unit = 1f / 128;

@@ -1,4 +1,4 @@
-"""Author: MiYu. Convert every meshless library source into sampled native effect assets."""
+"""Author: MiYu. Convert selected sources or all meshless sources into sampled native effects."""
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--library', type=Path, default=ROOT/'asset-library/warcraft-iii')
     parser.add_argument('--output', type=Path, default=ROOT/'asset-library/warcraft-iii/effects-ready')
     parser.add_argument('--sampler', type=Path, default=ROOT/'tmp/warcraft-effects/bin/MdxExport.dll')
+    parser.add_argument('--source', action='append', default=[], help='Exact collection/source MDX path; repeat for a selected effect collection')
     args = parser.parse_args(); library = args.library.resolve(); output = args.output.resolve(); binary = args.sampler.resolve()
     output.mkdir(parents=True, exist_ok=True)
     previous = output/'asset-sources.json'
@@ -28,18 +29,25 @@ def main():
         for record in protected:
             path = output/converter.relative(record['path'])
             if not path.is_file() or digest(path) != record['sha256']: raise ValueError(f'Preserve modified output: {path}')
-    jobs = []
+    jobs = []; selected = {p.replace('\\','/').lower() for p in args.source}; matched = set()
     for collection in ['remaining-ready', 'community-ready']:
         root = library/collection
         source = json.loads((root/'asset-sources.json').read_text(encoding='utf-8'))
         models = {m['path'].replace('\\','/').lower():m for m in source['modelSamples']}
         sources = {m['path'].replace('\\','/').lower():m for m in source['sourceFiles']}
         generated = {m['path'].replace('\\','/').lower():m for m in source['generatedFiles']}
-        failures = json.loads((root/'Validation/conversion-checks.json').read_text(encoding='utf-8'))['failedModels']
-        for failure in failures:
-            if 'No renderable geosets' not in failure['error']: raise ValueError(f'Unclassified conversion error: {failure}')
-            key = failure['path'].replace('\\','/').lower()
-            jobs.append((collection, root, models[key], sources, generated))
+        if selected:
+            for key, model in models.items():
+                source = collection+'/'+key
+                if source in selected:
+                    jobs.append((collection, root, model, sources, generated)); matched.add(source)
+        else:
+            failures = json.loads((root/'Validation/conversion-checks.json').read_text(encoding='utf-8'))['failedModels']
+            for failure in failures:
+                if 'No renderable geosets' not in failure['error']: raise ValueError(f'Unclassified conversion error: {failure}')
+                key = failure['path'].replace('\\','/').lower()
+                jobs.append((collection, root, models[key], sources, generated))
+    if selected != matched: raise ValueError(f'Unknown effect sources: {sorted(selected-matched)}')
     def sample(job):
         collection, root, model, sources, generated = job
         path = root/'SourceAssets'/converter.relative(sources[model['path'].replace('\\','/').lower()]['path'])

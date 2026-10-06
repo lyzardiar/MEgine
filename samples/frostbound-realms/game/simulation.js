@@ -551,7 +551,7 @@ var Frost = (() => {
       if(v.team!==u.team){v.purgeLeft=v.kind==='hero'?5:spell.duration;v.root=.2;}
       if(v.summoned&&v.team!==u.team)damage(s,u,v,400,'spell');
     }
-    s.events.push({type:'spell',art:c.spell==='purge'?'nature':c.spell==='lightningShield'?'arcane':c.spell==='bloodlust'?'fire':'shadow',x:v.x,z:v.z,team:u.team});if(!simulating.has(s))(s.pendingEvents??=[]).push(...s.events.slice(eventStart));return null;
+    s.events.push({type:'spell',spell:c.spell,art:c.spell==='purge'?'nature':c.spell==='lightningShield'?'arcane':c.spell==='bloodlust'?'fire':'shadow',x:v.x,z:v.z,team:u.team});if(!simulating.has(s))(s.pendingEvents??=[]).push(...s.events.slice(eventStart));return null;
   }
   function command(s,team,c){
     if(s.winner!==null||!c||![0,1].includes(team))return 'Match is finished';
@@ -684,7 +684,7 @@ var Frost = (() => {
           if(u.stun>0||u.root>0)return 'Hero cannot use Town Portal while disabled';
           const bases=s.units.filter(v=>rootedBase(v)&&v.team===team&&v.hp>0&&v.built===1),base=c.target!==undefined?bases.find(v=>v.id===c.target):point?bases.filter(v=>distance(v,c)<=townPortal.baseRange).sort((a,b)=>distance(a,c)-distance(b,c)||a.id-b.id)[0]:bases.sort((a,b)=>b.level-a.level||a.id-b.id)[0];
           if(!base||c.target!==undefined&&!Number.isSafeInteger(c.target)||point&&distance(base,c)>townPortal.baseRange||!point&&(c.x!==undefined||c.z!==undefined))return 'Select a completed friendly main base';
-          u.order={type:'townPortal',target:base.id,x:point?c.x:base.x,z:point?c.z:base.z,left:townPortal.time};u.path=[];u.pathAt=-100;u.waypoints=[];delete u.dest;setInventory(u,next,nextUses);const e={type:'spell',slot:2,heroClass:u.heroClass,x:u.x,z:u.z,team};s.events.push(e);if(!simulating.has(s))(s.pendingEvents??=[]).push(e);return null;
+          u.order={type:'townPortal',target:base.id,x:point?c.x:base.x,z:point?c.z:base.z,left:townPortal.time};u.path=[];u.pathAt=-100;u.waypoints=[];delete u.dest;setInventory(u,next,nextUses);const e={type:'spell',art:'townPortal',slot:2,heroClass:u.heroClass,x:u.x,z:u.z,team};s.events.push(e);if(!simulating.has(s))(s.pendingEvents??=[]).push(e);return null;
         }
         if(!item.restoreHp&&!item.restoreMana)return 'This item grants a passive bonus';if(u.stun>0||u.itemCooldown>0)return 'Item is not ready';if(item.restoreHp&&u.hp>=u.maxHp||item.restoreMana&&u.mana>=150+u.level*10)return 'Already at full health or mana';
         if(item.restoreHp)u.hp=Math.min(u.maxHp,u.hp+item.restoreHp);if(item.restoreMana)u.mana=Math.min(150+u.level*10,u.mana+item.restoreMana);u.itemCooldown=10;const event={type:'spell',slot:1,heroClass:u.heroClass,x:u.x,z:u.z,team};s.events.push(event);if(!simulating.has(s))(s.pendingEvents??=[]).push(event);
@@ -922,8 +922,8 @@ var Frost = (() => {
     const passengers=[u,...s.units.filter(v=>v.id!==u.id&&v.team===u.team&&v.hp>0&&!v.inside&&v.built===1&&types[v.kind].speed&&(!v.summoned||s.frame<v.expires)&&!v.root&&distance(u,v)<=townPortal.radius&&(!['worker','ghoul'].includes(v.kind)||!['gather','build','construct','repair'].includes(v.order?.type)))],slots=new Map(),reserved=s.units.filter(v=>v.hp>0&&!v.inside&&mobile(v)&&!passengers.includes(v)).map(v=>({x:v.x,z:v.z,r:movementRadius(v),flying:!!types[v.kind].flying}));
     const cells=[{x:o.x,z:o.z},...Array.from({length:1024},(_,i)=>({x:i%32*2-31,z:Math.floor(i/32)*2-31}))].filter(p=>Math.abs(p.x)<=30&&Math.abs(p.z)<=30).sort((a,b)=>distance(a,o)-distance(b,o)||a.z-b.z||a.x-b.x);
     for(const v of passengers){const flying=!!types[v.kind].flying,r=movementRadius(v),p=cells.find(p=>(flying||!solid(s,p.x,p.z,0,-1,r))&&reserved.every(b=>b.flying!==flying||distance(p,b)>=r+b.r+.1));if(!p){if(v===u){u.order=null;s.announcements[u.team]='Town Portal failed: no free arrival space';return;}continue;}slots.set(v.id,p);reserved.push({...p,r,flying});}
-    const from={x:u.x,z:u.z};for(const v of passengers){const p=slots.get(v.id);if(!p)continue;v.x=p.x;v.z=p.z;v.order=null;v.waypoints=[];v.path=[];v.pathAt=-100;delete v.dest;delete v.workResume;}
-    s.announcements[u.team]='Town Portal transported '+slots.size+' units';s.events.push({type:'spell',slot:2,heroClass:u.heroClass,...from,team:u.team},{type:'spell',slot:2,heroClass:u.heroClass,x:u.x,z:u.z,team:u.team});visibility(s);
+    const from={x:u.x,z:u.z};for(const v of passengers){const p=slots.get(v.id);if(!p)continue;v.x=p.x;v.z=p.z;v.portalArrivalFrame=s.frame;v.order=null;v.waypoints=[];v.path=[];v.pathAt=-100;delete v.dest;delete v.workResume;}
+    s.announcements[u.team]='Town Portal transported '+slots.size+' units';s.events.push({type:'spell',art:'townPortal',slot:2,heroClass:u.heroClass,...from,team:u.team},{type:'spell',art:'townPortal',slot:2,heroClass:u.heroClass,x:u.x,z:u.z,team:u.team});visibility(s);
   }
   function tick(s){
     for(const r of s.resources)if(r.felled)r.felled.age=Math.min(TREE_FALL_LIFETIME,(Math.round(r.felled.age/DT)+1)*DT);
@@ -1106,6 +1106,7 @@ var Frost = (() => {
       if(u.kind==='hero'){u.itemCooldown??=0;if(!finite(u.itemCooldown)||u.itemCooldown<0||u.itemCooldown>10)throw Error('Invalid saved item cooldown');u.heroClass??=0;if(u.skills===undefined){u.skills=[1,0,0,0];u.skillPoints=u.level-1;}if(!validHero(u.heroClass)||!Number.isInteger(u.level)||u.level<1||u.level>10||!Array.isArray(u.skills)||u.skills.length!==4||u.skills.some((r,i)=>!Number.isInteger(r)||r<0||r>(i===3?1:3)||r>0&&u.level<skillLevel(i,r))||!Number.isInteger(u.skillPoints)||u.skillPoints<0||u.skills.reduce((n,r)=>n+r,0)+u.skillPoints!==u.level)throw Error('Invalid saved hero skills');}
       for(const key of ['stun','root','haste','avatar','shieldLeft','shield'])if(u[key]!==undefined&&(!finite(u[key])||u[key]<0))throw Error('Invalid saved combat effect');
       if(u.yaw!==undefined&&(!finite(u.yaw)||Math.abs(u.yaw)>Math.PI))throw Error('Invalid saved facing');
+      if(u.portalArrivalFrame!==undefined&&(!Number.isSafeInteger(u.portalArrivalFrame)||u.portalArrivalFrame<0||u.portalArrivalFrame>raw.frame))throw Error('Invalid saved Town Portal arrival frame');
       if(u.castYaw!==undefined&&(!['hero','necromancer','shaman'].includes(u.kind)||!finite(u.castYaw)||Math.abs(u.castYaw)>Math.PI))throw Error('Invalid saved cast direction');
       if(u.awakeUntil!==undefined&&(u.team!==-1||!u.home||!Number.isSafeInteger(u.awakeUntil)||u.awakeUntil<0))throw Error('Invalid saved camp wake time');
       if(u.summoned&&(!Number.isSafeInteger(u.expires)||u.expires<0))throw Error('Invalid saved summon');

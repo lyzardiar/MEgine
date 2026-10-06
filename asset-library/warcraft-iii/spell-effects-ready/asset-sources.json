@@ -1,0 +1,284 @@
+{
+  "sourceCollections": [
+    "remaining-ready",
+    "community-ready"
+  ],
+  "sourceFiles": [
+    {
+      "path": "remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportCaster.mdx",
+      "sha256": "c98ebfe1e5a8d6f4e4b265089f17df42fb7569324d11036ef86d8277ce91eaf4",
+      "bytes": 9375
+    },
+    {
+      "path": "remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTarget.mdx",
+      "sha256": "3bd304b63bb37c446c489ee739a715fc7572170f585daa23d2bb4c2f36abcec8",
+      "bytes": 9219
+    },
+    {
+      "path": "remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTo.mdx",
+      "sha256": "3cb0db2089c02b98a60e9e8e6e35904ebaf88b69dcea6e4dac476b00becc1c14",
+      "bytes": 10907
+    },
+    {
+      "path": "remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustSpecial.mdx",
+      "sha256": "d57159fae2c72b20cc7fb2b35b3c3e75f940ec09d21720950663c65379b4158d",
+      "bytes": 3190
+    },
+    {
+      "path": "remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustTarget.mdx",
+      "sha256": "c2c08a848de239028f8c999019e6c6e2efaf30e66af115e56f6b5f1a8c682b66",
+      "bytes": 3058
+    },
+    {
+      "path": "remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldBuff.mdx",
+      "sha256": "df06b3c8e267b2a9fc0fcaa570ad1b46564e2daaface04482d84cfbca5b09352",
+      "bytes": 6712
+    },
+    {
+      "path": "remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldTarget.mdx",
+      "sha256": "e5ce268a6ae3006ac2694ca8d3c93392bb5094918740495c295cfb4e02624e4c",
+      "bytes": 43552
+    }
+  ],
+  "textureSources": {
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Blue_Star2.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\Blue_Star2.blp",
+      "sha256": "977ffdfed2e71d279e017bf87b628bb18b3060515ef74b081e184a8c8aa0e429",
+      "convertedSha256": "4586474a5a34f7573d0b9013df7f307460783ccb7be8b32e6204f9ab5b090b94"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/ReplaceableTextures/Weather/Clouds8x8.png": {
+      "collection": "remaining-ready",
+      "source": "ReplaceableTextures\\Weather\\Clouds8x8.blp",
+      "sha256": "6ce87e14a5f129cf390531660803694f13e44fc25dba05ff2853c7a622f0fc56",
+      "convertedSha256": "be97c9e00d98e808e551992124b42aa9194b58822a2b5f8a5957aca4d68bbaab"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Dust5A.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\Dust5A.blp",
+      "sha256": "4e61eb9a97de2d4ea94b3558d1350da267b85514ee2e680eed9eac18420727a6",
+      "convertedSha256": "ff5254f1de8002b73bc204c4db1268072ba02b98288bf9619e93d7f73aa17549"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Shockwave4white.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\Shockwave4white.blp",
+      "sha256": "dd78191eae4243c8a6525cfccc6a7ce8d3400f74991dc2af09da93949f3b234f",
+      "convertedSha256": "afe1350d6367dbdc3922df905b5dcff8d0c077f8b02dbfb3a268f76a65239a8d"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Red_star2.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\Red_star2.blp",
+      "sha256": "02a845639f7dfb8ae53b3498d84ba15acb273d3165bf1701d03f2bdc10ee9710",
+      "convertedSha256": "52c162a4b9881c68d4075f739000ecd308aa0939bb74aba45efe8de5e220607d"
+    }
+  },
+  "generatedFiles": [
+    {
+      "path": "Assets/WarcraftIII/effect-catalog.json",
+      "sha256": "2d1ee6b1ea33071ba5b03d777d3b0daccfe3cbcb31c1561aeb5f8864c49bd015",
+      "bytes": 6756
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportCaster.mfx",
+      "sha256": "df1defeb1ed95aa7b3ff9177a4920941098fbaeb75c0258716a4a4558257a808",
+      "bytes": 95035
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportCaster.mfx.meta",
+      "sha256": "f7c96b7b1f649e486d5edcee4d4697a7b3be0596130870da36f5e2f616cb513c",
+      "bytes": 112
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportCaster.prefab",
+      "sha256": "a2395817c8bb67d2b5a41cb1b34660f2e9e88e66e0b47f9a73bf33f6887dceb2",
+      "bytes": 748
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportCaster.prefab.meta",
+      "sha256": "84afa7dddfff9cb8ea346e8eba9ee61e9bb852ac43cb6f114d7791dd9a86a0c9",
+      "bytes": 104
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTarget.mfx",
+      "sha256": "ff934364ba40f9fd92fdf9fbcc6d9b2b1559d5a24a196d0d98552094cad125a9",
+      "bytes": 71296
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTarget.mfx.meta",
+      "sha256": "717fd821b321913d57ca7ffbe4fcde05bd95f0e024e4cb48a9bcae203c8296b0",
+      "bytes": 112
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTarget.prefab",
+      "sha256": "c1921188952d8c36241ad5ecee0498cb654e9143e77e78e273a47fe6dd43db7b",
+      "bytes": 748
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTarget.prefab.meta",
+      "sha256": "ba13064360b2bc41aa906f99a79a09554f36a57387736b1493bb335f7b5a66b1",
+      "bytes": 104
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTo.mfx",
+      "sha256": "79917da3448c965e6de9ad53433feb197702dab9d94a5a9b4a7786da8b4a1364",
+      "bytes": 891243
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTo.mfx.meta",
+      "sha256": "b33896785bbd65d9031d3655da595df5b4f38aaa272da80622eec3d9eec7d164",
+      "bytes": 112
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTo.prefab",
+      "sha256": "732b80ce5196e8904cc45211516fa2889d43e3c118859058cf2e75141291d04f",
+      "bytes": 735
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/MassTeleport/MassTeleportTo.prefab.meta",
+      "sha256": "bb87944afde82315f38404cadfe28627d7cdb31f5a045fe16dd8aecf9148b578",
+      "bytes": 104
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustSpecial.mfx",
+      "sha256": "60dff27100a988c941ec05f048690148cc583f9d8e7318ee0e0ebb4383057ef5",
+      "bytes": 68075
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustSpecial.mfx.meta",
+      "sha256": "951c4252390a32793c934715e4c469b11b8ca8e0eb452a8e80cc6a327995a7a5",
+      "bytes": 112
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustSpecial.prefab",
+      "sha256": "5095334fb839993ad6e410e95ad5b25c5d744cb83cc27e26639e75704a52a38a",
+      "bytes": 736
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustSpecial.prefab.meta",
+      "sha256": "3d6cdd2628ed6d2002c0b52923d3e8df39b218578a1d1d44d83c39cb58385029",
+      "bytes": 104
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustTarget.mfx",
+      "sha256": "6dd75bbaecb9edc72b86b784989357acabe1d700643f2785d559a5b46b5d7fb8",
+      "bytes": 68125
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustTarget.mfx.meta",
+      "sha256": "5e10f1054448bccc42701ce7fec1979f29da39fbf585edfe0f0cd524daf81750",
+      "bytes": 112
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustTarget.prefab",
+      "sha256": "a2d000ceb0884c37805ec7db2bc690d24ab34a2ce65b71ac5c0cfec61dea130f",
+      "bytes": 733
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/Bloodlust/BloodLustTarget.prefab.meta",
+      "sha256": "aa04af6e72e4212388dfdcdd8d1523c72b679ef7c4bf6ece8b21555d37b57c30",
+      "bytes": 104
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldBuff.mfx",
+      "sha256": "a9405e3041f090da6abc664b8555a21920992269149387090ae7f049c71a4899",
+      "bytes": 34762
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldBuff.mfx.meta",
+      "sha256": "f50b684f1c0e45a7432fd0ad6e90deae5ccf18b51f01df4a5f1448930b342853",
+      "bytes": 112
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldBuff.prefab",
+      "sha256": "0e8dadf4c03433510c49629437f9a2fadf82b7d1ac70ae7210e3a0ec9649aa95",
+      "bytes": 752
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldBuff.prefab.meta",
+      "sha256": "f4a31cf6dd70838c7042211dd89fbaa9178664dd6b6606db9a4bf3ab3f755377",
+      "bytes": 104
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldTarget.mfx",
+      "sha256": "248e90003825c105c00a083626ca5c84db333cebcd903bb9d3cb677cf90e39f7",
+      "bytes": 667395
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldTarget.mfx.meta",
+      "sha256": "b9fc0f943d11bed6966470652cf9ef98d751d14cc93b1b9f7a9cb5e00c30993e",
+      "bytes": 112
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldTarget.prefab",
+      "sha256": "023cceaf0e9db4be0d8936c3289b570a5385b958e610d1cfdf3d5e81b71ecf4f",
+      "bytes": 757
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/LightningShield/LightningShieldTarget.prefab.meta",
+      "sha256": "17a2704f5ed21f6bbd60d3afa94c8cbd28259c40494f70db72d3f67a37fe96da",
+      "bytes": 104
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/ReplaceableTextures/Weather/Clouds8x8.png",
+      "sha256": "be97c9e00d98e808e551992124b42aa9194b58822a2b5f8a5957aca4d68bbaab",
+      "bytes": 180432
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/ReplaceableTextures/Weather/Clouds8x8.png.meta",
+      "sha256": "61889a314328faab6860b6da379247877364269de72c7fbf1719387872b49c5f",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Blue_Star2.png",
+      "sha256": "4586474a5a34f7573d0b9013df7f307460783ccb7be8b32e6204f9ab5b090b94",
+      "bytes": 9886
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Blue_Star2.png.meta",
+      "sha256": "1c137ee11f97404cfbe606c7824b9d20e7f9f004f1a20db67e366a50baf98b39",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Dust5A.png",
+      "sha256": "ff5254f1de8002b73bc204c4db1268072ba02b98288bf9619e93d7f73aa17549",
+      "bytes": 7764
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Dust5A.png.meta",
+      "sha256": "6dbf507bb88b920cbf5e0be6a1089679d9784671f735ea2137a807651a58c0a1",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Red_star2.png",
+      "sha256": "52c162a4b9881c68d4075f739000ecd308aa0939bb74aba45efe8de5e220607d",
+      "bytes": 9842
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Red_star2.png.meta",
+      "sha256": "00063823ce9de93b81e2e84c0cd92f5318532803cde9cbb58eb923ce959aab1a",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Shockwave4white.png",
+      "sha256": "afe1350d6367dbdc3922df905b5dcff8d0c077f8b02dbfb3a268f76a65239a8d",
+      "bytes": 18756
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Shockwave4white.png.meta",
+      "sha256": "90c582267875d8e509fb793bb3fed44c806b0e29b8e4d6839013744d58de5cf3",
+      "bytes": 105
+    }
+  ],
+  "converter": {
+    "scripts/convert-warcraft-effects.py": "41094d22558d932fd39d27bba597aa3514d23259673136373d4c2233ac7f6a5a",
+    "scripts/warcraft-assets/EffectExport.cs": "a725436a21345d372410fb458915281436d4dfc29cd4a3cc4f4d5a46248feaa5",
+    "scripts/warcraft-assets/Program.cs": "e0af2af930bccadf34b59a7fb44d508ea88773570a9ba3e8f9f41797bae5ae36",
+    "scripts/warcraft-assets/MdxExport.csproj": "94062f8546b73b73b94f5c2af346268b595eb0fa9ceac44ab2d6e80a04ddecd9"
+  },
+  "upstream": {
+    "url": "https://github.com/Darithos/W3ModelViewer",
+    "commit": "4fe46a0772520fc7b55078bf32cda1237d1b5f2e",
+    "archiveSha256": "dd1f41530b42c1bfe6039b1a0271bcc5167b137f829f87b6a08cea0b47e46eda"
+  },
+  "scope": "Sampled effect playback with source MDX preserved. Viewer simulation is approximate; cameras and helper tracks are metadata only."
+}
