@@ -35,6 +35,7 @@ asset-library/warcraft-iii/construction-ready/** -text whitespace=cr-at-eol
 scripts/convert-frost-construction.py text eol=lf
 scripts/import-frost-construction.py text eol=lf
 scripts/import-frost-building-scales.py text eol=lf
+scripts/import-frost-unit-scales.py text eol=lf
 samples/frostbound-realms/construction-sources.json text eol=lf
 scripts/convert-frost-billboards.py text eol=lf
 scripts/convert-frost-classic-billboards.py text eol=lf

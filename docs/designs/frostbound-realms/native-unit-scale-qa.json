@@ -1,0 +1,976 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\unit-scale-1791269287509\\sample",
+  "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
+  "models": [
+    {
+      "faction": 0,
+      "kind": "hall",
+      "tier": 3,
+      "key": "KingdomHall3",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        6.17884373664856,
+        8.888234376907349,
+        5.817453145980835
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "farm",
+      "key": "KingdomLodge",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        2.5802031755447388,
+        3.652445435523987,
+        2.3876733779907227
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "tower",
+      "key": "KingdomTower",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        2.310615599155426,
+        5.096329510211945,
+        2.045525074005127
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "hero",
+      "key": "RealFrostWarden",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        2.8196916580200195,
+        2.6481960639357567,
+        1.089179813861847
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "worker",
+      "key": "RealWorker",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        0.7290684878826141,
+        1.4454355840571225,
+        0.8791849315166473
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "soldier",
+      "key": "RealFootman",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.1191316843032837,
+        1.5521023087203503,
+        1.0806095600128174
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "archer",
+      "key": "RealArcher",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3447361588478088,
+        1.457992384210229,
+        1.6372531056404114
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "rifleman",
+      "key": "RealRifleman",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3878777623176575,
+        1.2726604212075472,
+        1.3687567710876465
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "knight",
+      "key": "RealKnight",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        2.310081362724304,
+        2.377923130057752,
+        1.1800573468208313
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "shaman",
+      "key": "RealShaman",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        1.1893188953399658,
+        1.7060649245977402,
+        1.4148762226104736
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "necromancer",
+      "key": "RealNecromancer",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        1.2163122594356537,
+        2.059735059738159,
+        1.704358458518982
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "abomination",
+      "key": "RealAbomination",
+      "scale": 1.7999999523162842,
+      "visibleParts": 5,
+      "worldSize": [
+        3.105380619754243,
+        2.488511615633655,
+        2.5721610222349938
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "treant",
+      "key": "RealTreant",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.7406068444252014,
+        2.4917440563440323,
+        1.8176155090332031
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "catapult",
+      "key": "RealCatapult",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        3.0968780517578125,
+        1.2072245685849339,
+        2.1323704719543457
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "emberdrake",
+      "key": "ClassicWyvern",
+      "scale": 2,
+      "visibleParts": 6,
+      "worldSize": [
+        2.806968927383423,
+        2.6759501099586487,
+        2.818249225616455
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "grovewyrm",
+      "key": "ClassicChimaera",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        3.549745202064514,
+        4.297636032104492,
+        2.477676272392273
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "spectralwyrm",
+      "key": "ClassicFrostWyrm",
+      "scale": 2,
+      "visibleParts": 5,
+      "worldSize": [
+        4.4108535051345825,
+        2.692062497138977,
+        3.5498080253601074
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "paladin",
+      "key": "RealPaladin",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        1.6178412437438965,
+        1.751420995220542,
+        1.7987868785858154
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "hero",
+      "key": "RealEmberSage",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3999086916446686,
+        2.216371776536107,
+        1.5672367811203003
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "hero",
+      "key": "RealSylvanRanger",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        3.409753680229187,
+        2.312409677542746,
+        1.65452241897583
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "hall",
+      "tier": 3,
+      "key": "WarclansHall3",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        6.672203063964844,
+        6.380890607833862,
+        7.373937368392944
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "farm",
+      "key": "WarclansLodge",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        3.301437497138977,
+        2.452204704284668,
+        3.2504374980926514
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "tower",
+      "key": "WarclansTower",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        2.745013952255249,
+        4.4226062297821045,
+        2.681640625
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "hero",
+      "key": "RealFrostWarden",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        2.8196916580200195,
+        2.6481960639357567,
+        1.089179813861847
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "worker",
+      "key": "ClassicPeon",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.0471592247486115,
+        1.3735720813274384,
+        1.0592566132545471
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "soldier",
+      "key": "RealOrc",
+      "scale": 2.200000047683716,
+      "visibleParts": 4,
+      "worldSize": [
+        1.544953189003536,
+        1.7364935574242288,
+        1.4144520648924228
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "archer",
+      "key": "RealArcher",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3447361588478088,
+        1.457992384210229,
+        1.6372531056404114
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "rifleman",
+      "key": "RealRifleman",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3878777623176575,
+        1.2726604212075472,
+        1.3687567710876465
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "knight",
+      "key": "RealKnight",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        2.310081362724304,
+        2.377923130057752,
+        1.1800573468208313
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "shaman",
+      "key": "RealShaman",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        1.1893188953399658,
+        1.7060649245977402,
+        1.4148762226104736
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "necromancer",
+      "key": "RealNecromancer",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        1.2163122594356537,
+        2.059735059738159,
+        1.704358458518982
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "abomination",
+      "key": "RealAbomination",
+      "scale": 1.7999999523162842,
+      "visibleParts": 5,
+      "worldSize": [
+        3.105380619754243,
+        2.488511615633655,
+        2.5721610222349938
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "treant",
+      "key": "RealTreant",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.7406068444252014,
+        2.4917440563440323,
+        1.8176155090332031
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "catapult",
+      "key": "RealCatapult",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        3.0968780517578125,
+        1.2072245685849339,
+        2.1323704719543457
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "emberdrake",
+      "key": "ClassicWyvern",
+      "scale": 2,
+      "visibleParts": 6,
+      "worldSize": [
+        2.806968927383423,
+        2.6759501099586487,
+        2.818249225616455
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "grovewyrm",
+      "key": "ClassicChimaera",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        3.549745202064514,
+        4.297636032104492,
+        2.477676272392273
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "spectralwyrm",
+      "key": "ClassicFrostWyrm",
+      "scale": 2,
+      "visibleParts": 5,
+      "worldSize": [
+        4.4108535051345825,
+        2.692062497138977,
+        3.5498080253601074
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "paladin",
+      "key": "RealPaladin",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        1.6178412437438965,
+        1.751420995220542,
+        1.7987868785858154
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "hero",
+      "key": "RealEmberSage",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3999086916446686,
+        2.216371776536107,
+        1.5672367811203003
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "hero",
+      "key": "RealSylvanRanger",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        3.409753680229187,
+        2.312409677542746,
+        1.65452241897583
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "hall",
+      "tier": 3,
+      "key": "WildwoodHall3",
+      "scale": 2.5999999046325684,
+      "visibleParts": 5,
+      "worldSize": [
+        6.886895594710722,
+        6.907421151505657,
+        6.209937297016381
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "farm",
+      "key": "WildwoodLodge",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        2.834640383720398,
+        4.437219500541687,
+        2.811103105545044
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "tower",
+      "key": "WildwoodTower",
+      "scale": 2,
+      "visibleParts": 6,
+      "worldSize": [
+        3.111198902130127,
+        4.290453985333443,
+        3.0558125972747803
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "hero",
+      "key": "RealFrostWarden",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        2.8196916580200195,
+        2.6481960639357567,
+        1.089179813861847
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "worker",
+      "key": "ClassicWisp",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        1.0177249908447266,
+        2.3833158388733864,
+        2.3833062648773193
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "soldier",
+      "key": "ClassicHuntress",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        2.999996781349182,
+        1.9996296055614948,
+        1.308630108833313
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "archer",
+      "key": "RealArcher",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3447361588478088,
+        1.457992384210229,
+        1.6372531056404114
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "rifleman",
+      "key": "RealRifleman",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3878777623176575,
+        1.2726604212075472,
+        1.3687567710876465
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "knight",
+      "key": "RealKnight",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        2.310081362724304,
+        2.377923130057752,
+        1.1800573468208313
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "shaman",
+      "key": "RealShaman",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        1.1893188953399658,
+        1.7060649245977402,
+        1.4148762226104736
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "necromancer",
+      "key": "RealNecromancer",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        1.2163122594356537,
+        2.059735059738159,
+        1.704358458518982
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "abomination",
+      "key": "RealAbomination",
+      "scale": 1.7999999523162842,
+      "visibleParts": 5,
+      "worldSize": [
+        3.105380619754243,
+        2.488511615633655,
+        2.5721610222349938
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "treant",
+      "key": "RealTreant",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.7406068444252014,
+        2.4917440563440323,
+        1.8176155090332031
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "catapult",
+      "key": "RealCatapult",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        3.0968780517578125,
+        1.2072245685849339,
+        2.1323704719543457
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "emberdrake",
+      "key": "ClassicWyvern",
+      "scale": 2,
+      "visibleParts": 6,
+      "worldSize": [
+        2.806968927383423,
+        2.6759501099586487,
+        2.818249225616455
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "grovewyrm",
+      "key": "ClassicChimaera",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        3.549745202064514,
+        4.297636032104492,
+        2.477676272392273
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "spectralwyrm",
+      "key": "ClassicFrostWyrm",
+      "scale": 2,
+      "visibleParts": 5,
+      "worldSize": [
+        4.4108535051345825,
+        2.692062497138977,
+        3.5498080253601074
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "paladin",
+      "key": "RealPaladin",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        1.6178412437438965,
+        1.751420995220542,
+        1.7987868785858154
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "hero",
+      "key": "RealEmberSage",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3999086916446686,
+        2.216371776536107,
+        1.5672367811203003
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "hero",
+      "key": "RealSylvanRanger",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        3.409753680229187,
+        2.312409677542746,
+        1.65452241897583
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "hall",
+      "tier": 3,
+      "key": "RevenantHall3",
+      "scale": 2,
+      "visibleParts": 5,
+      "worldSize": [
+        6.24860954284668,
+        7.402661144733429,
+        6.2049219608306885
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "farm",
+      "key": "RevenantLodge",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        4.019296884536743,
+        4.577434301376343,
+        4.3929688930511475
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "tower",
+      "key": "RevenantTower",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        4.019296884536743,
+        4.577434301376343,
+        4.3929688930511475
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "hero",
+      "key": "RealFrostWarden",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        2.8196916580200195,
+        2.6481960639357567,
+        1.089179813861847
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "worker",
+      "key": "RealAcolyte",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.1044666767120361,
+        1.5041844248771667,
+        0.9954859614372253
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "soldier",
+      "key": "RealGhoul",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3050069212913513,
+        0.9413823820650578,
+        1.5286633968353271
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "archer",
+      "key": "RealArcher",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3447361588478088,
+        1.457992384210229,
+        1.6372531056404114
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "rifleman",
+      "key": "RealRifleman",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3878777623176575,
+        1.2726604212075472,
+        1.3687567710876465
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "knight",
+      "key": "RealKnight",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        2.310081362724304,
+        2.377923130057752,
+        1.1800573468208313
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "shaman",
+      "key": "RealShaman",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        1.1893188953399658,
+        1.7060649245977402,
+        1.4148762226104736
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "necromancer",
+      "key": "RealNecromancer",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        1.2163122594356537,
+        2.059735059738159,
+        1.704358458518982
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "abomination",
+      "key": "RealAbomination",
+      "scale": 1.7999999523162842,
+      "visibleParts": 5,
+      "worldSize": [
+        3.105380619754243,
+        2.488511615633655,
+        2.5721610222349938
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "treant",
+      "key": "RealTreant",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.7406068444252014,
+        2.4917440563440323,
+        1.8176155090332031
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "catapult",
+      "key": "RealCatapult",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        3.0968780517578125,
+        1.2072245685849339,
+        2.1323704719543457
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "emberdrake",
+      "key": "ClassicWyvern",
+      "scale": 2,
+      "visibleParts": 6,
+      "worldSize": [
+        2.806968927383423,
+        2.6759501099586487,
+        2.818249225616455
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "grovewyrm",
+      "key": "ClassicChimaera",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        3.549745202064514,
+        4.297636032104492,
+        2.477676272392273
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "spectralwyrm",
+      "key": "ClassicFrostWyrm",
+      "scale": 2,
+      "visibleParts": 5,
+      "worldSize": [
+        4.4108535051345825,
+        2.692062497138977,
+        3.5498080253601074
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "paladin",
+      "key": "RealPaladin",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        1.6178412437438965,
+        1.751420995220542,
+        1.7987868785858154
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "hero",
+      "key": "RealEmberSage",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        1.3999086916446686,
+        2.216371776536107,
+        1.5672367811203003
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "hero",
+      "key": "RealSylvanRanger",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        3.409753680229187,
+        2.312409677542746,
+        1.65452241897583
+      ]
+    }
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "selectionChecked": 4,
+  "shaderRejections": 0
+}

@@ -1,6 +1,7 @@
 /* Author: MiYu. Shared faction models for live units, map placement and construction previews. */
 var FrostVisual=(()=>{
   const buildingScales=typeof module!=='undefined'?require('../building-scale-catalog.json'):FrostBuildingScales;
+  const unitScales=typeof module!=='undefined'?require('../unit-scale-catalog.json'):FrostUnitScales;
   const buildings={hall:'Hall',barracks:'Barracks',farm:'Lodge',tower:'Tower',altar:'Altar',workshop:'Workshop',scouttower:'Tower',guardtower:'Tower',shop:'Shop'};
   const names=[
     {barracks:'Royal barracks',farm:'Town house',tower:'Guard tower',altar:'Sanctuary',workshop:'Royal workshop',shop:'Arcane Vault'},
@@ -10,6 +11,8 @@ var FrostVisual=(()=>{
   ];
   const units={skeletonmage:'RealSkeletonMage',skeletonwarrior:'RealSkeletonWarrior',treant:'RealTreant',rifleman:'RealRifleman',mage:'RealEmberSage',paladin:'RealPaladin',knight:'RealKnight',archer:'RealArcher',raider:'RealOrc',hunter:'Tribal',berserker:'Orc_Skull',shaman:'RealShaman',ghoul:'RealGhoul',abomination:'RealAbomination',necromancer:'RealNecromancer',bonearcher:'RealBoneArcher'};
   const base={worker:'RealWorker',soldier:'RealFootman',archer:'Ranger',knight:'Warrior',mage:'Wizard',hero:'Cleric',creep:'RealFootman',rangedcreep:'RealArcher',siegecreep:'RealCatapult',neutral:'RealWolf',ballista:'RealBallista',catapult:'RealCatapult',trebuchet:'RealTrebuchet',ram:'RealRam',dragon:'Dragon'};
+  function classicScale(key,u={}){const building=buildingScales.models[key],unit=unitScales.models[key];if(building)return buildingScales.worldScale*building.modelScale;if(!unit)throw Error('Missing source actor scale: '+key);return unitScales.worldScale*unit.modelScale*(u.tag==='boss'||u.tdBoss?1.5:1);}
+  function selectionSpan(key,u={}){const unit=unitScales.models[key],scale=unit?.selectionScale??unitScales.buildingSelection[key];if(!scale)throw Error('Missing source selection scale: '+key);return unitScales.circles[unit&&/^[A-Z]/.test(unit.unit)?'hero':'unit'].worldSpan*scale*(u.tag==='boss'||u.tdBoss?1.5:1);}
   function work(state,u){
     if(u.miningTarget&&u.hp>0&&!u.stun)return {target:u.miningTarget,animation:'Mine'};
     if(!['worker','ghoul'].includes(u.kind)||!u.order||u.hp<=0||u.stun>0||u.inside)return null;
@@ -40,8 +43,8 @@ var FrostVisual=(()=>{
     let key=f===0&&u.kind==='shop'?'KingdomArcaneVault':u.kind==='spirittower'?'RevenantSpiritTower':u.kind==='nerubiantower'?'RevenantNerubianTower':u.kind==='hauntedmine'?'HauntedMine':u.kind==='temple'?'RealTemple':u.kind==='spiritlodge'?'ClassicSpiritLodge':buildings[u.kind]?Frost.factions[f]+buildings[u.kind]+(u.kind==='hall'&&tier>1?tier:''):u.kind==='hero'?Frost.unitType(u).art:u.tag==='boss'?'RealBear':u.kind==='frosttower'?'FrostTower':u.kind==='flametower'?'EmberTower':u.kind==='worker'?['RealWorker','ClassicPeon','ClassicWisp','RealAcolyte'][f]:u.kind==='soldier'?['RealFootman','RealOrc','ClassicHuntress','RealGhoul'][f]:u.kind==='hunter'?'ClassicHeadhunter':u.kind==='druid'?'ClassicDruid':u.kind==='emberdrake'?'ClassicWyvern':u.kind==='grovewyrm'?'ClassicChimaera':u.kind==='spectralwyrm'?'ClassicFrostWyrm':units[u.kind]||base[u.kind]||base[d.model];
     const original=FrostArt[key],activity=['RealWorker','ClassicPeon','ClassicWisp','RealAcolyte','RealGhoul'].includes(key)?work(state,u):null,phase=!original.classic&&(key==='RealArcher'||original.shotModel)&&!walking&&!u.stun?(castPhase(u,original,walking)??(u.cd>0?attackPhase(u,original):null)):null,loaded=phase!==null&&(original.ammoLoad<original.attackEvent?phase>=original.ammoLoad&&phase<original.attackEvent:phase<original.attackEvent||phase>=original.ammoLoad),variant=phase===null?key:original.shotModel?(loaded?original.loadedModel||key:original.shotModel):key+(loaded?'Loaded':'Shoot');
     const asset=Frost.ancient(u)&&(u.uprooted||u.ancientShift)?FrostArt[key+'Uprooted']:FrostArt[activity?key+activity.animation:variant]||original,scale=asset.factionBuilding?Math.min((d.radius*2*.92)/Math.hypot(asset.size[0],asset.size[2]),(asset.maxWorldHeight??Infinity)/asset.size[1]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:asset.siegeModel?1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
-    const actualScale=asset.classic?(asset.factionBuilding?buildingScales.worldScale*buildingScales.models[key].modelScale:(u.tag==='boss'||u.tdBoss?1.5:1)*(asset.worldHeight||2.55)/asset.size[1]):scale;
-    return {key,asset,scale:actualScale,height:asset.size[1]*actualScale+.5};
+    const actualScale=asset.classic?classicScale(key,u):scale;
+    return {key,asset,scale:actualScale,height:(asset.classic&&asset.bounds?Math.max(0,asset.bounds.max[1]):asset.size[1])*actualScale+.5,...(asset.classic?{selectionSpan:selectionSpan(key,u)}:{})};
   }
   function heading(state,u,old){
     if(!Frost.mobile(u))return Frost.ancient(u)&&(u.uprooted||u.ancientShift)?old?.yaw??u.yaw??Math.PI/6:Math.PI/6;
@@ -135,7 +138,7 @@ var FrostVisual=(()=>{
   function unitPortrait(state,u){const v=model(state,u),key=v.key;return (v.asset.factionBuilding?'Assets/Art/faction-buildings.png#':['RealFrostWarden','RealEmberSage','RealSylvanRanger','RealDawnPaladin','RealFootman','RealWorker','RealArcher','RealRifleman','RealOrc','RealAcolyte','RealNecromancer','RealShaman'].includes(key)?'Assets/Art/head-portraits.png#':'Assets/Art/unit-portraits.png#')+key;}
   function name(state,u){if(u.kind==='hall')return Frost.mainBase(state,u).name;const f=state.teams[u.team]?.faction||0,value=names[f][u.kind];if(u.kind==='worker'&&f===3)return 'Acolyte';if(u.kind==='critter')return u.team===0?'Mechanical Critter':'Critter';if(u.tag==='critter')return 'Critter';if(u.kind==='neutral')return u.tag==='boss'?'Frostbound sovereign':'Frostfang wolf';return Array.isArray(value)?value[Frost.clamp((u.upgradeTier??1)-1,0,2)]:value||Frost.unitType(u).label;}
   const projectileColors={fire:[1,.32,.055,1],frost:[.35,.8,1,1],nature:[.35,.85,.24,1],shadow:[.57,.22,.8,1],arcane:[.5,.48,1,1]};
-  function muzzle(e){const asset=FrostArt.RealRifleman,scale=asset.classic?asset.worldHeight/asset.size[1]:.85,[x,y,z]=asset.muzzle||[0,asset.bounds.min[1]+asset.size[1]*.6,asset.bounds.max[0]],angle=Math.atan2(e.x-e.fromX,e.z-e.fromZ),sin=Math.sin(angle),cos=Math.cos(angle);return {type:'muzzle',art:'musket',team:e.team,x:e.fromX+(x*cos+z*sin)*scale,y:e.fromY-1.6+y*scale,z:e.fromZ+(-x*sin+z*cos)*scale};}
+  function muzzle(e){const asset=FrostArt.RealRifleman,scale=asset.classic?classicScale('RealRifleman'):.85,[x,y,z]=asset.muzzle||[0,asset.bounds.min[1]+asset.size[1]*.6,asset.bounds.max[0]],angle=Math.atan2(e.x-e.fromX,e.z-e.fromZ),sin=Math.sin(angle),cos=Math.cos(angle);return {type:'muzzle',art:'musket',team:e.team,x:e.fromX+(x*cos+z*sin)*scale,y:e.fromY-1.6+y*scale,z:e.fromZ+(-x*sin+z*cos)*scale};}
   function projectile(art){
     if(art==='musket')return {mesh:null,scale:[1,1,1],color:[.74,.67,.5,.7],texture:'smoke_01',trail:false,particleSize:.3,impactSize:.3};
     const color=projectileColors[art],stone=art==='stone',physical=!color,asset=physical?FrostArt[stone?'RealRock07':'RealArrow']:null,size=stone?1.2/Math.max(...asset.size):1;

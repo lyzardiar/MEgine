@@ -1,16 +1,16 @@
 {
   "method": "Native editor Game View, Agent input and real TCP server",
-  "sample": "D:\\MEngineNativeQA\\status-effects-1791263133810\\sample",
+  "sample": "D:\\MEngineNativeQA\\status-effects-1791271734704\\sample",
   "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
   "passed": true,
   "soloAnchors": {
     "comparisons": 35,
-    "maxPositionError": 7.330137989924879e-7,
+    "maxPositionError": 7.65780619360612e-7,
     "method": "One atomic native world snapshot, actual actor pose references and camera transforms against compiled node probe"
   },
   "soloConstruction": {
     "comparisons": 2,
-    "maxMatrixError": 4.786457061811689e-7,
+    "maxMatrixError": 8.201471750624023e-7,
     "active": 2,
     "method": "Atomic snapshot construction state and camera, complete native source node matrices against rendered TRS; independent matrix multiplication"
   },
@@ -46,26 +46,26 @@
   "gamePause": true,
   "networkAnchors": [
     {
-      "comparisons": 36,
-      "maxPositionError": 4.90959239485278e-7,
+      "comparisons": 44,
+      "maxPositionError": 5.78562083575207e-7,
       "method": "One atomic native world snapshot, actual actor pose references and camera transforms against compiled node probe"
     },
     {
       "comparisons": 36,
-      "maxPositionError": 4.90959239485278e-7,
+      "maxPositionError": 5.78562083575207e-7,
       "method": "One atomic native world snapshot, actual actor pose references and camera transforms against compiled node probe"
     }
   ],
   "networkConstruction": [
     {
       "comparisons": 2,
-      "maxMatrixError": 4.786457061811689e-7,
+      "maxMatrixError": 8.201471750624023e-7,
       "active": 2,
       "method": "Atomic snapshot construction state and camera, complete native source node matrices against rendered TRS; independent matrix multiplication"
     },
     {
       "comparisons": 2,
-      "maxMatrixError": 4.75028612001438e-7,
+      "maxMatrixError": 3.1733190297700276e-7,
       "active": 2,
       "method": "Atomic snapshot construction state and camera, complete native source node matrices against rendered TRS; independent matrix multiplication"
     }
@@ -74,14 +74,14 @@
     "hostActive": 31,
     "guestActive": 31,
     "spells": [
-      4,
-      4
+      5,
+      5
     ]
   },
   "reconnect": true,
   "reconnectedConstruction": {
     "comparisons": 2,
-    "maxMatrixError": 4.75028612001438e-7,
+    "maxMatrixError": 3.1733190297700276e-7,
     "active": 2,
     "method": "Atomic snapshot construction state and camera, complete native source node matrices against rendered TRS; independent matrix multiplication"
   },
@@ -101,43 +101,43 @@
       "msaaSamples": 4,
       "renderObjects": 330,
       "sceneViews": 1,
-      "uiBatches": 253,
-      "uiDrawCalls": 253,
-      "uiPrimitives": 1088
+      "uiBatches": 261,
+      "uiDrawCalls": 261,
+      "uiPrimitives": 1116
     },
     "logs": [
       {
         "level": "info",
         "message": "MEngine Editor",
         "source": "editor",
-        "time": 1791263141072
+        "time": 1791271742617
       },
       {
         "level": "info",
         "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
         "source": "editor",
-        "time": 1791263141072
+        "time": 1791271742617
       },
       {
         "level": "info",
         "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
         "source": "editor",
-        "time": 1791263141072
+        "time": 1791271742617
       },
       {
         "level": "info",
         "message": "场景存储：磁盘 project/Assets/Scenes",
-        "time": 1791263152061
+        "time": 1791271754046
       },
       {
         "level": "info",
         "message": "已恢复场景 Main.mscene",
-        "time": 1791263152550
+        "time": 1791271754551
       },
       {
         "level": "info",
         "message": "Agent set Game View resolution to 1280 x 720",
-        "time": 1791263165183
+        "time": 1791271762545
       }
     ]
   },
@@ -157,43 +157,43 @@
       "msaaSamples": 4,
       "renderObjects": 347,
       "sceneViews": 1,
-      "uiBatches": 231,
-      "uiDrawCalls": 231,
-      "uiPrimitives": 1093
+      "uiBatches": 222,
+      "uiDrawCalls": 222,
+      "uiPrimitives": 1094
     },
     "logs": [
       {
         "level": "info",
         "message": "MEngine Editor",
         "source": "editor",
-        "time": 1791263293230
+        "time": 1791271891443
       },
       {
         "level": "info",
         "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
         "source": "editor",
-        "time": 1791263293230
+        "time": 1791271891443
       },
       {
         "level": "info",
         "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
         "source": "editor",
-        "time": 1791263293230
+        "time": 1791271891443
       },
       {
         "level": "info",
         "message": "场景存储：磁盘 project/Assets/Scenes",
-        "time": 1791263302669
+        "time": 1791271905331
       },
       {
         "level": "info",
         "message": "已恢复场景 Main.mscene",
-        "time": 1791263303180
+        "time": 1791271905853
       },
       {
         "level": "info",
         "message": "Agent set Game View resolution to 1280 x 720",
-        "time": 1791263316363
+        "time": 1791271914697
       }
     ]
   }

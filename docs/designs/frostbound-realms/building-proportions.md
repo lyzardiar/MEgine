@@ -15,6 +15,8 @@
 
 这些值采用各模型当前 Stand 边界。动画自身的变形保留在源网格中。
 
+完整包围盒高度包含地下部分；血条与旗帜使用局部最高点 `maxY` 计算地上位置。角色与建筑共用资产显示尺度，见 [单位与建筑的源模型比例](unit-proportions.md)。
+
 来源按 `war3.mpq`、`War3x.mpq`、`War3xLocal.mpq`、`War3Patch.mpq` 优先级读取，当前有效源为 `War3Patch.mpq`。原始 SLK 字节、完整模型路径、对象 ID、导入器和生成文件 SHA-256 均保留在 `building-scale-sources.json`。这些数据属于原 Warcraft III 游戏资产，沿用项目的 Blizzard 来源及署名记录。
 
 ```powershell

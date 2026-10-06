@@ -7,4 +7,5 @@ Assets/Licenses/** -text
 Assets/WarcraftIII/** -text whitespace=cr-at-eol
 /effect-catalog.json text eol=lf
 /building-scale-*.json text eol=lf
+/unit-scale-*.json text eol=lf
 effect-sources.json text eol=lf
