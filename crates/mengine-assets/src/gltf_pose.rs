@@ -24,7 +24,7 @@ pub fn parse_gltf_pose_sample(reference: &str) -> Option<(&str, usize, u32, u32)
 #[derive(Clone, Copy, Debug)]
 pub struct GltfBillboardCamera { pub model: Mat4, pub look: Vec3, pub up: Vec3 }
 
-pub struct GltfPoseSource { document: gltf::Document, buffers: Vec<gltf::buffer::Data>, billboards: Vec<u32> }
+pub struct GltfPoseSource { document: gltf::Document, buffers: Vec<gltf::buffer::Data>, billboards: Vec<u32>, mdx: Option<crate::gltf_mdx::MdxAnimation> }
 
 fn billboard_matrix(world: Mat4, flags: u32, camera: GltfBillboardCamera) -> Mat4 {
     let to_camera = -camera.look;
@@ -66,7 +66,9 @@ impl GltfPoseSource {
             } else { 0 };
             billboards.push(flags);
         }
-        Ok(Self { document, buffers, billboards })
+        let extra:Option<serde_json::Value>=document.as_json().extras.as_ref().map(|v|serde_json::from_str(v.get()).map_err(|_|AssetError::Gltf("invalid document extras".into()))).transpose()?;
+        let mdx=extra.and_then(|v|v.get("mengineMdxAnimation").cloned()).map(|v|crate::gltf_mdx::MdxAnimation::parse(v,&document)).transpose()?;
+        Ok(Self { document, buffers, billboards, mdx })
     }
     pub fn has_billboards(&self) -> bool { self.billboards.iter().any(|v| *v != 0) }
     pub fn sample(&self, clip: usize, frame: u32) -> Result<MeshData, AssetError> {
@@ -104,7 +106,7 @@ impl GltfPoseSource {
                 Some(*track.frames.get(index).ok_or_else(|| fail("UV animation frame is missing"))?)
             } else { None }
         } else { None };
-        for channel in animation.channels() {
+        if self.mdx.is_none() { for channel in animation.channels() {
             let reader = channel.reader(|b| Some(&self.buffers[b.index()]));
             let times = reader.read_inputs().ok_or_else(|| fail("animation has no times"))?.collect::<Vec<_>>();
             if times.is_empty() { continue; }
@@ -120,9 +122,11 @@ impl GltfPoseSource {
                 _ => return Err(fail("morph weight animation is not supported by skeletal poses")),
             }
         }
+        }
         let mut parents = vec![None; nodes.len()];
         for node in &nodes { for child in node.children() { parents[child.index()] = Some(node.index()); } }
-        let local = trs.iter().map(|(t,r,s)| Mat4::from_scale_rotation_translation(*s,*r,*t)).collect::<Vec<_>>();
+        let mut local = trs.iter().map(|(t,r,s)| Mat4::from_scale_rotation_translation(*s,*r,*t)).collect::<Vec<_>>();
+        if let Some(mdx)=&self.mdx {mdx.apply(clip,time,&mut local)?;}
         let mut globals = vec![Mat4::IDENTITY;nodes.len()];
         let mut done = vec![false;nodes.len()];
         for i in 0..nodes.len() {

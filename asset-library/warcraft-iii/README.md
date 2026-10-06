@@ -1,5 +1,7 @@
 # Warcraft III 引擎资产
 
+`classic-billboard-ready` 为 Frostbound 已接入的 94 个原版模型保留源节点朝向和原始变换关键帧，覆盖 577 个动画网格部件。32 个模型的 176 个相机朝向节点在战场和头像相机下独立求值。原有二进制缓冲不变，源文件对照及重生成验证见[原版角色与建筑节点动画](../../docs/designs/frostbound-realms/classic-node-animation.md)。
+
 `game-ready` 保存四族主要单位、建筑、英雄和中立怪物；`remaining-ready` 保存补充提取的原版场景、角色、头像、UI 和带网格的特效；`community-ready` 保存用户提供的 HIVE 模型包和 UTM 4.0 地图内的模型。原始文件、依赖关系、来源和 SHA-256 均随各集合保存。三套库合计 4,534 个带贴图的几何模型、12,623 段动画，以及 161 张地形图集、4,065 个原始 tile。
 
 `effects-ready` 补充转换原版的 212 个及社区的 17 个无 geoset 资源，共 229 项、373 段动画：210 项包含粒子、缎带或灯光，19 项为镜头、辅助节点及空定义。原生 `SampledEffect` 播放 `.mfx` 采样帧。`texture-pending` 保存其余 15 个模型的几何、UV 和动画；缺少原始贴图，未生成战场 prefab。原版 3,264 个及社区 1,514 个 MDX 均有对应转换结果或不可见定义，详见[补充转换与验证](../../docs/designs/frostbound-realms/supplemental-conversion.md)。查看器采样模拟器与原游戏求解器存在差异；完成资产转换不表示全部游戏行为已适配。

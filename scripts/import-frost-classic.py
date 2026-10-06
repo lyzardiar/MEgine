@@ -7,6 +7,7 @@ import json
 import pathlib
 import shutil
 import struct
+import importlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SAMPLE = ROOT / 'samples/frostbound-realms'
@@ -46,31 +47,40 @@ def digest(data):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pose-probe', default=os.environ.get('MENGINE_POSE_PROBE_EXECUTABLE'))
+    parser.add_argument('--billboard-library', type=pathlib.Path, default=LIBRARY / 'classic-billboard-ready')
+    parser.add_argument('--output', type=pathlib.Path, default=SAMPLE)
     args = parser.parse_args()
+    sample = args.output.resolve()
     assert args.pose_probe and pathlib.Path(args.pose_probe).is_file(), 'Pass --pose-probe with the current gltf_bounds executable (cargo build --release -p mengine-assets --example gltf_bounds)'
-    catalog_path = SAMPLE / 'model-catalog.json'
+    catalog_path = sample / 'model-catalog.json'
     catalog = load(catalog_path)
-    previous = SAMPLE / 'classic-sources.json'
+    previous = sample / 'classic-sources.json'
     old = {x['path'].lower(): x['sha256'] for x in load(previous).get('files', [])} if previous.exists() else {}
+    for relative, expected in old.items():
+        assert digest((sample / relative).read_bytes()) == expected, f'Preserve modified classic asset: {relative}'
+    node_billboards = importlib.import_module('convert-frost-classic-billboards')
+    overrides, billboard_receipt, billboard_manifest = node_billboards.load_overlay(args.billboard_library)
     files, sources = {}, []
     libraries = {key: LIBRARY / key for key in ['game-ready', 'community-ready', 'remaining-ready', 'tree-skins-ready']}
     models = {key: {m['id'].lower(): m for m in load(root / 'Assets/WarcraftIII/model-catalog.json')['models']} for key, root in libraries.items()}
 
     def copy(pack, relative):
         source = libraries[pack] / relative
-        raw = source.read_bytes()
-        target = SAMPLE / relative
+        raw = overrides.get((pack, node_billboards.key(relative)))
+        if raw is None:
+            raw = source.read_bytes()
+        target = sample / relative
         if target.exists() and target.read_bytes() != raw:
             assert old.get(relative.lower()) == digest(target.read_bytes()), f'Preserve modified asset: {target}'
         target.parent.mkdir(parents=True, exist_ok=True)
         if not target.exists() or target.read_bytes() != raw:
-            shutil.copyfile(source, target)
+            target.write_bytes(raw)
         files[relative] = dict(path=relative, sha256=digest(raw), bytes=len(raw))
         sidecar = source.with_name(source.name + '.meta')
         if sidecar.exists():
             meta = relative + '.meta'
             data = sidecar.read_bytes()
-            destination = SAMPLE / meta
+            destination = sample / meta
             if destination.exists() and destination.read_bytes() != data:
                 assert old.get(meta.lower()) == digest(destination.read_bytes()), f'Preserve modified sidecar: {destination}'
             if not destination.exists() or destination.read_bytes() != data:
@@ -79,7 +89,7 @@ def main():
 
     def generated(relative, value):
         raw = (json.dumps(value, ensure_ascii=False, separators=(',', ':')) + '\n').encode('utf-8')
-        target = SAMPLE / relative
+        target = sample / relative
         if target.exists() and target.read_bytes() != raw:
             assert old.get(relative.lower()) == digest(target.read_bytes()), f'Preserve modified generated asset: {target}'
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -128,17 +138,17 @@ def main():
                 p['teamMaterials'] = {k: replacements[v] for k, v in p['teamMaterials'].items()}
                 p['textureMaterials'] = {k: replacements[v] for k, v in p['textureMaterials'].items()}
             # Placement keeps each layer's texture, lighting and culling state.
-            placement = load(SAMPLE / p['material'])
+            placement = load(sample / p['material'])
             placement.update(surface='transparent', transparent_depth_write=False, render_queue=4000 + part['layer'])
             if placement['blend_mode'] not in ('additive', 'multiply'):
                 placement['blend_mode'] = 'alpha'
             placement_path = 'Assets/WarcraftIII/Materials/Placement/' + digest(p['material'].encode())[:20] + '.mmat'
-            destination = SAMPLE / placement_path
+            destination = sample / placement_path
             candidate = (json.dumps(placement, ensure_ascii=False, separators=(',', ':')) + '\n').encode('utf-8')
             if destination.exists() and destination.read_bytes() != candidate:
                 assert old.get(placement_path.lower()) == digest(destination.read_bytes()), f'Preserve modified placement material: {destination}'
             write(destination, placement)
-            raw = (SAMPLE / placement_path).read_bytes()
+            raw = (sample / placement_path).read_bytes()
             files[placement_path] = dict(path=placement_path, sha256=digest(raw), bytes=len(raw))
             p['placementMaterial'] = placement_path
             parts.append(p)
@@ -207,7 +217,7 @@ def main():
             body = [p for p in visible if not p['sourceFlags'] & 1] or visible
             boxes = []
             for part in body:
-                ref = str(SAMPLE / part['mesh']) + ('#pose=' + str(clip) + ':0' if entry['animations'] and clip >= 0 else '')
+                ref = str(sample / part['mesh']) + ('#pose=' + str(clip) + ':0' if entry['animations'] and clip >= 0 else '')
                 if ref not in cached:
                     probe.stdin.write(ref + '\n')
                     probe.stdin.flush()
@@ -224,7 +234,7 @@ def main():
         if probe.wait(timeout=10):
             raise RuntimeError('Native pose bounds exited unsuccessfully')
     # Match the stored spelling of every copied path on case-sensitive checkouts.
-    spelling = {p.relative_to(SAMPLE).as_posix().lower(): p.relative_to(SAMPLE).as_posix() for p in (SAMPLE / 'Assets/WarcraftIII').rglob('*') if p.is_file()}
+    spelling = {p.relative_to(sample).as_posix().lower(): p.relative_to(sample).as_posix() for p in (sample / 'Assets/WarcraftIII').rglob('*') if p.is_file()}
     def canonical(value):
         if isinstance(value, str):
             return spelling.get(value.lower(), value)
@@ -236,7 +246,7 @@ def main():
     normalized = {}
     for entry in files.values():
         relative = spelling[entry['path'].lower()]
-        path = SAMPLE / relative
+        path = sample / relative
         if path.suffix == '.mmat':
             material = load(path)
             fixed = canonical(material)
@@ -247,10 +257,12 @@ def main():
     files = normalized
     catalog = canonical(catalog)
     write(catalog_path, catalog)
-    report = dict(generator='scripts/import-frost-classic.py', models=sources, files=list(files.values()), sourceLibrary='asset-library/warcraft-iii', poseProbeSha256=digest(pathlib.Path(args.pose_probe).read_bytes()), boundsReferences=len(cached), teamMapping={'0': 'blue', '1': 'red'})
+    imported_sources = {(s['pack'], node_billboards.key(s['model'])) for s in sources}
+    assert imported_sources == {(s['pack'], node_billboards.key(s['path'])) for s in billboard_manifest['sourceFiles']}, 'Node billboard source selection must match classic bindings'
+    report = dict(generator='scripts/import-frost-classic.py', models=sources, files=[files[p] for p in sorted(files)], sourceLibrary='asset-library/warcraft-iii', billboardCollection=args.billboard_library.name, billboardReceiptSha256=billboard_receipt, nodeAnimationParts=len(overrides), billboardParts=sum(bool(a['nodes']) for a in billboard_manifest['annotations']), poseProbeSha256=digest(pathlib.Path(args.pose_probe).read_bytes()), boundsReferences=len(cached), teamMapping={'0': 'blue', '1': 'red'})
     write(previous, report)
-    write(SAMPLE / 'Assets/Licenses/warcraft-classic-sources.json', report)
-    (SAMPLE / 'Assets/Licenses/warcraft-classic.txt').write_text('Warcraft III classic game assets: Blizzard Entertainment. Community scenery: UTM 4.0 and its contributing authors. Source, original attribution and conversion records: asset-library/warcraft-iii/README.md and each source package Licenses directory. These assets are not CC0 or MIT.\n', encoding='utf-8', newline='\n')
+    write(sample / 'Assets/Licenses/warcraft-classic-sources.json', report)
+    (sample / 'Assets/Licenses/warcraft-classic.txt').write_text('Warcraft III classic game assets: Blizzard Entertainment. Community scenery: UTM 4.0 and its contributing authors. Source, original attribution and conversion records: asset-library/warcraft-iii/README.md and each source package Licenses directory. These assets are not CC0 or MIT.\n', encoding='utf-8', newline='\n')
     print(f'Imported {len(sources)} classic actor/scenery bindings; {len(files)} runtime files')
 
 if __name__ == '__main__':

@@ -1,0 +1,587 @@
+{
+  "schemaVersion": 1,
+  "totalMs": 443.4994,
+  "callTree": {
+    "name": "EditorViewportRenderer.render_world",
+    "totalMs": 443.4994,
+    "selfMs": 0.008600000000021146,
+    "calls": 1,
+    "children": [
+      {
+        "name": "Effects",
+        "totalMs": 0.0196,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "EffekseerWorld.update",
+            "totalMs": 0.0149,
+            "selfMs": 0.0149,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "EffekseerWorld.append_to_frame",
+            "totalMs": 0.0047,
+            "selfMs": 0.0047,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Frame compile",
+        "totalMs": 0.9595999999999999,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "TransformHierarchy.build",
+            "totalMs": 0.025599999999999998,
+            "selfMs": 0.025599999999999998,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "FrameCompiler.compile",
+            "totalMs": 0.9339,
+            "selfMs": 0.0038999999999999035,
+            "calls": 1,
+            "children": [
+              {
+                "name": "Camera, meshes and lighting",
+                "totalMs": 0.7768,
+                "selfMs": 0.7768,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Canvas layout and text",
+                "totalMs": 0.06420000000000001,
+                "selfMs": 0.06420000000000001,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "World sprites",
+                "totalMs": 0.009000000000000001,
+                "selfMs": 0.009000000000000001,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Particles, trails and sorting",
+                "totalMs": 0.0095,
+                "selfMs": 0.0095,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Sprite regions and materials",
+                "totalMs": 0.054400000000000004,
+                "selfMs": 0.054400000000000004,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "UI batching",
+                "totalMs": 0.0161,
+                "selfMs": 0.0161,
+                "calls": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "name": "Diagnostics.texture_failures",
+            "totalMs": 0.00009999999999999999,
+            "selfMs": 0.00009999999999999999,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Render backend",
+        "totalMs": 415.2068,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "OffscreenTarget.ensure_size",
+            "totalMs": 0.00009999999999999999,
+            "selfMs": 0.00009999999999999999,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "Renderer.submit_frame_to",
+            "totalMs": 401.9614,
+            "selfMs": 401.9614,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "Renderer.read_offscreen_rgba8",
+            "totalMs": 13.2453,
+            "selfMs": 13.2453,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Resource sync",
+        "totalMs": 26.3941,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "RuntimeMeshCache.sync",
+            "totalMs": 12.182500000000001,
+            "selfMs": 12.182500000000001,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeFontCache.sync",
+            "totalMs": 0.0017000000000000001,
+            "selfMs": 0.0017000000000000001,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_ui",
+            "totalMs": 0.0048,
+            "selfMs": 0.0048,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_ui_materials",
+            "totalMs": 0.0074,
+            "selfMs": 0.0074,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_materials",
+            "totalMs": 14.1975,
+            "selfMs": 14.1975,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_environment",
+            "totalMs": 0.00019999999999999998,
+            "selfMs": 0.00019999999999999998,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Profiler",
+        "totalMs": 0.9107,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "Profiler.snapshot",
+            "totalMs": 0.9107,
+            "selfMs": 0.9107,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "memory": [
+    {
+      "name": "CPU readback RGBA",
+      "domain": "cpu",
+      "bytes": 5242880,
+      "certainty": "exact",
+      "source": "Renderer.read_offscreen_rgba8 Vec length"
+    },
+    {
+      "name": "Frame packet / render objects",
+      "domain": "cpu",
+      "bytes": 21600,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled render objects"
+    },
+    {
+      "name": "Frame packet / UI primitives",
+      "domain": "cpu",
+      "bytes": 3072,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI primitives"
+    },
+    {
+      "name": "Frame packet / UI batches",
+      "domain": "cpu",
+      "bytes": 624,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI batches"
+    },
+    {
+      "name": "Frame packet / controls",
+      "domain": "cpu",
+      "bytes": 0,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI controls"
+    },
+    {
+      "name": "GPU offscreen color",
+      "domain": "gpu",
+      "bytes": 5242880,
+      "certainty": "estimate",
+      "source": "viewport width x height x 4 RGBA8 bytes"
+    },
+    {
+      "name": "GPU offscreen depth",
+      "domain": "gpu",
+      "bytes": 20971520,
+      "certainty": "estimate",
+      "source": "viewport width x height x 4 depth/stencil bytes x MSAA samples; physical format is backend-dependent"
+    },
+    {
+      "name": "GPU HDR and multisampled color",
+      "domain": "gpu",
+      "bytes": 73400320,
+      "certainty": "estimate",
+      "source": "resolved RGBA16F plus MSAA RGBA16F and surface RGBA8 attachments; excludes driver allocation padding"
+    },
+    {
+      "name": "GPU texture residency",
+      "domain": "gpu",
+      "bytes": 860416,
+      "certainty": "estimate",
+      "source": "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded"
+    },
+    {
+      "name": "GPU live scene views",
+      "domain": "gpu",
+      "bytes": 40310400,
+      "certainty": "estimate",
+      "source": "resolved RGBA8 and RGBA16F, depth/stencil and MSAA color attachments; excludes driver padding"
+    }
+  ],
+  "residentMemoryEstimateBytes": 146053712,
+  "resources": [
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/Undead/SlaughterHouse/SlaughterHouse/geoset-01-animated.glb#pose=1:2",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Undead\\SlaughterHouse\\SlaughterHouse\\geoset-01-animated.glb",
+      "loaded": true,
+      "sourceBytes": 581724,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/Undead/SlaughterHouse/SlaughterHouse/geoset-02-animated.glb#pose=1:2",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\Undead\\SlaughterHouse\\SlaughterHouse\\geoset-02-animated.glb",
+      "loaded": true,
+      "sourceBytes": 151808,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Units/NightElf/Ent/Ent/geoset-00-animated.glb#pose=0:2",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Models\\Units\\NightElf\\Ent\\Ent\\geoset-00-animated.glb",
+      "loaded": true,
+      "sourceBytes": 684992,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Units/NightElf/Ent/Ent/geoset-04-animated.glb#pose=0:2",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Models\\Units\\NightElf\\Ent\\Ent\\geoset-04-animated.glb",
+      "loaded": true,
+      "sourceBytes": 1116756,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Units/NightElf/Wisp/Wisp/geoset-00-animated.glb#pose=0:2",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Models\\Units\\NightElf\\Wisp\\Wisp\\geoset-00-animated.glb",
+      "loaded": true,
+      "sourceBytes": 103096,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Units/NightElf/Wisp/Wisp/geoset-01-animated.glb#pose=0:2",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Models\\Units\\NightElf\\Wisp\\Wisp\\geoset-01-animated.glb",
+      "loaded": true,
+      "sourceBytes": 18588,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Units/NightElf/Wisp/Wisp/geoset-02-animated.glb#pose=0:2",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Models\\Units\\NightElf\\Wisp\\Wisp\\geoset-02-animated.glb",
+      "loaded": true,
+      "sourceBytes": 125440,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Units/NightElf/Wisp/Wisp/geoset-03-animated.glb#pose=0:2",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Models\\Units\\NightElf\\Wisp\\Wisp\\geoset-03-animated.glb",
+      "loaded": true,
+      "sourceBytes": 10552,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967313",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        340,
+        260
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967315",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        340,
+        260
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967317",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        340,
+        260
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967319",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        340,
+        260
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967321",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        340,
+        260
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967323",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        340,
+        260
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Composed/Buildings/Undead/SlaughterHouse/SlaughterHouse/geoset-02-team-00.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Textures\\Composed\\Buildings\\Undead\\SlaughterHouse\\SlaughterHouse\\geoset-02-team-00.png",
+      "loaded": true,
+      "sourceBytes": 114650,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/TeamColor/TeamColor00.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\TeamColor\\TeamColor00.png",
+      "loaded": true,
+      "sourceBytes": 76,
+      "gpuBytesEstimate": 256,
+      "dimensions": [
+        8,
+        8
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/TeamGlow/TeamGlow00.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\TeamGlow\\TeamGlow00.png",
+      "loaded": true,
+      "sourceBytes": 1538,
+      "gpuBytesEstimate": 4096,
+      "dimensions": [
+        32,
+        32
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Textures/Shockwave10.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Shockwave10.png",
+      "loaded": true,
+      "sourceBytes": 22277,
+      "gpuBytesEstimate": 65536,
+      "dimensions": [
+        128,
+        128
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Textures/SlaughterHouse.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\SlaughterHouse.png",
+      "loaded": true,
+      "sourceBytes": 209657,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Textures/star2_32.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\star2_32.png",
+      "loaded": true,
+      "sourceBytes": 2091,
+      "gpuBytesEstimate": 4096,
+      "dimensions": [
+        32,
+        32
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Units/NightElf/Ent/GoodEnt.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample\\Assets\\WarcraftIII\\Textures\\Units\\NightElf\\Ent\\GoodEnt.png",
+      "loaded": true,
+      "sourceBytes": 218762,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    }
+  ],
+  "resourcesTruncated": false,
+  "resourceSampleAgeMs": 0.004,
+  "counts": {
+    "msaaSamples": 4,
+    "entities": 28,
+    "renderObjects": 9,
+    "sceneViews": 6,
+    "billboardMeshes": 15,
+    "uiPrimitives": 6,
+    "uiBatches": 6,
+    "uiDrawCalls": 6,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialPipelinesRejected": 0,
+    "materialPipelineEvictions": 0,
+    "materialTexturesColor": 7,
+    "materialTexturesData": 0,
+    "materialTextureBindGroups": 7,
+    "materialSamplers": 1
+  }
+}

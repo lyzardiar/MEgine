@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "models": [
+    "AncientOfWonder",
+    "SlaughterHouse",
+    "Wisp",
+    "Ent",
+    "DruidoftheClaw",
+    "peasant"
+  ],
+  "poseRates": [
+    30,
+    60
+  ],
+  "nativeLoads": 6800,
+  "comparedVertices": 740096,
+  "maxPositionError": 3.829516601605576e-06,
+  "nonloopTerminalHolds": 854,
+  "actorYaw": 0.65,
+  "probeSha256": "8e84f24b74914b2f15ae7e76b7ca6deedff50251cc83fe8a071f1432d353e873",
+  "referenceSha256": "df394ee234de15ece70e57ba0d5c7dda92e546f5a5db0e5b2eacabbc787093b8",
+  "referenceSourceSha256": "8029eb1558a003e0feba913470956e1a5d52e9fdea0146c8e822645e1c833a69",
+  "scope": "Independent source MDX curves at 30/60 Hz, exact and beyond-end frames, loop boundaries, full and lock-Z billboards, actor rotation and collapsed scales. Does not change the game animation cadence."
+}

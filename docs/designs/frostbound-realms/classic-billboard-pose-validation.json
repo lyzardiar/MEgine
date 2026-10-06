@@ -1,0 +1,868 @@
+{
+  "passed": true,
+  "sourceModels": 94,
+  "billboardModels": 32,
+  "geometryParts": 577,
+  "sourceBillboardNodes": 176,
+  "sourceFlags": [
+    8,
+    64
+  ],
+  "nativeLoads": 73236,
+  "comparedVertices": 10122960,
+  "maxPositionError": 7.660351562410739e-06,
+  "cameraViews": 4,
+  "binaryBuffersPreserved": true,
+  "importedFiles": 4952,
+  "probeSha256": "8e84f24b74914b2f15ae7e76b7ca6deedff50251cc83fe8a071f1432d353e873",
+  "referenceSha256": "7c5fa317de450d61ab507dc981f346729625c22f48e67b42fb5fd17a081ab462",
+  "models": [
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Human\\ArcaneVault\\ArcaneVault.mdx",
+      "parts": 19,
+      "clips": 5,
+      "loads": 1140,
+      "vertices": 115800,
+      "maxPositionError": 3.7830810550865124e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Human\\HumanTower\\HumanTower.mdx",
+      "parts": 25,
+      "clips": 13,
+      "loads": 3900,
+      "vertices": 626808,
+      "maxPositionError": 4.931152344234135e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Human\\TownHall\\TownHall.mdx",
+      "parts": 36,
+      "clips": 14,
+      "loads": 6048,
+      "vertices": 1073184,
+      "maxPositionError": 4.920211791326068e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\NightElf\\AltarofElders\\AltarofElders.mdx",
+      "parts": 3,
+      "clips": 5,
+      "loads": 180,
+      "vertices": 44940,
+      "maxPositionError": 5.91278075390278e-08
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\NightElf\\AncientOfWonder\\AncientOfWonder.mdx",
+      "parts": 9,
+      "clips": 17,
+      "loads": 1836,
+      "vertices": 352308,
+      "maxPositionError": 7.202239991066506e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\NightElf\\AncientProtector\\AncientProtector.mdx",
+      "parts": 14,
+      "clips": 16,
+      "loads": 2688,
+      "vertices": 185472,
+      "maxPositionError": 7.644531248018893e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\NightElf\\AncientofWar\\AncientofWar.mdx",
+      "parts": 11,
+      "clips": 17,
+      "loads": 2244,
+      "vertices": 399024,
+      "maxPositionError": 6.515251159688873e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\NightElf\\TreeofLife\\TreeofLife.mdx",
+      "parts": 9,
+      "clips": 15,
+      "loads": 1620,
+      "vertices": 383940,
+      "maxPositionError": 8.358743286140946e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Orc\\AltarofStorms\\AltarofStorms.mdx",
+      "parts": 15,
+      "clips": 6,
+      "loads": 1080,
+      "vertices": 84384,
+      "maxPositionError": 3.9896545400708305e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Orc\\SpiritLodge\\SpiritLodge.mdx",
+      "parts": 10,
+      "clips": 7,
+      "loads": 840,
+      "vertices": 106680,
+      "maxPositionError": 2.6565246580290136e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Orc\\TrollBurrow\\TrollBurrow.mdx",
+      "parts": 8,
+      "clips": 5,
+      "loads": 480,
+      "vertices": 48360,
+      "maxPositionError": 2.7969970695096436e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Orc\\VoodooLounge\\VoodooLounge.mdx",
+      "parts": 16,
+      "clips": 5,
+      "loads": 960,
+      "vertices": 67020,
+      "maxPositionError": 4.772717285272954e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Undead\\Necropolis\\Necropolis.mdx",
+      "parts": 17,
+      "clips": 14,
+      "loads": 2856,
+      "vertices": 588000,
+      "maxPositionError": 5.846862789482543e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Undead\\SlaughterHouse\\SlaughterHouse.mdx",
+      "parts": 4,
+      "clips": 6,
+      "loads": 288,
+      "vertices": 94752,
+      "maxPositionError": 2.0803832967430935e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Undead\\TempleOfTheDamned\\TempleOfTheDamned.mdx",
+      "parts": 6,
+      "clips": 6,
+      "loads": 432,
+      "vertices": 96336,
+      "maxPositionError": 2.1508789060931122e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Undead\\TombOfRelics\\TombOfRelics.mdx",
+      "parts": 5,
+      "clips": 6,
+      "loads": 360,
+      "vertices": 92160,
+      "maxPositionError": 2.0803832967430935e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Buildings\\Undead\\Ziggurat\\Ziggurat.mdx",
+      "parts": 12,
+      "clips": 13,
+      "loads": 1872,
+      "vertices": 173004,
+      "maxPositionError": 5.360717771907275e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Doodads\\Terrain\\LordaeronTree\\LordaeronTree0.mdx",
+      "parts": 2,
+      "clips": 5,
+      "loads": 120,
+      "vertices": 4740,
+      "maxPositionError": 4.204071044622282e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Creeps\\DireWolf\\DireWolf.mdx",
+      "parts": 4,
+      "clips": 12,
+      "loads": 576,
+      "vertices": 74160,
+      "maxPositionError": 4.19857025146797e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Creeps\\PolarBear\\PolarBear.mdx",
+      "parts": 4,
+      "clips": 14,
+      "loads": 672,
+      "vertices": 109032,
+      "maxPositionError": 5.988418578795063e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Creeps\\SkeletonArcher\\SkeletonArcher.mdx",
+      "parts": 5,
+      "clips": 8,
+      "loads": 480,
+      "vertices": 61440,
+      "maxPositionError": 2.873031615946431e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Human\\Footman\\Footman.mdx",
+      "parts": 6,
+      "clips": 13,
+      "loads": 936,
+      "vertices": 98904,
+      "maxPositionError": 4.19927063011194e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Human\\GryphonRider\\GryphonRider.mdx",
+      "parts": 13,
+      "clips": 7,
+      "loads": 1092,
+      "vertices": 57876,
+      "maxPositionError": 1.43630981447318e-06
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Human\\HeroArchMage\\HeroArchMage.mdx",
+      "parts": 4,
+      "clips": 10,
+      "loads": 480,
+      "vertices": 83160,
+      "maxPositionError": 7.604614258305276e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Human\\HeroBloodElf\\HeroBloodElf.mdx",
+      "parts": 9,
+      "clips": 11,
+      "loads": 1188,
+      "vertices": 100452,
+      "maxPositionError": 1.6496276851185598e-06
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Human\\HeroPaladin\\HeroPaladin.mdx",
+      "parts": 4,
+      "clips": 13,
+      "loads": 624,
+      "vertices": 103584,
+      "maxPositionError": 7.33670043828738e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Human\\Knight\\Knight.mdx",
+      "parts": 8,
+      "clips": 12,
+      "loads": 1152,
+      "vertices": 213840,
+      "maxPositionError": 4.899246215384068e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Human\\MortarTeam\\MortarTeam.mdx",
+      "parts": 12,
+      "clips": 10,
+      "loads": 1440,
+      "vertices": 104520,
+      "maxPositionError": 2.6771293640259763e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Human\\Peasant\\peasant.mdx",
+      "parts": 7,
+      "clips": 22,
+      "loads": 1848,
+      "vertices": 165000,
+      "maxPositionError": 2.130737304373298e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Human\\Rifleman\\Rifleman.mdx",
+      "parts": 5,
+      "clips": 10,
+      "loads": 600,
+      "vertices": 88200,
+      "maxPositionError": 1.914924621093661e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\NightElf\\Archer\\Archer.mdx",
+      "parts": 5,
+      "clips": 13,
+      "loads": 780,
+      "vertices": 83928,
+      "maxPositionError": 3.3496093765350565e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\NightElf\\Chimaera\\Chimaera.mdx",
+      "parts": 5,
+      "clips": 8,
+      "loads": 480,
+      "vertices": 60096,
+      "maxPositionError": 5.353543091057844e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\NightElf\\DruidOfTheClaw\\DruidoftheClaw.mdx",
+      "parts": 12,
+      "clips": 22,
+      "loads": 3168,
+      "vertices": 363528,
+      "maxPositionError": 7.660351562410739e-06
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\NightElf\\Ent\\Ent.mdx",
+      "parts": 25,
+      "clips": 9,
+      "loads": 2700,
+      "vertices": 127116,
+      "maxPositionError": 4.0336914053362705e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\NightElf\\HeroMoonPriestess\\HeroMoonPriestess.mdx",
+      "parts": 3,
+      "clips": 9,
+      "loads": 324,
+      "vertices": 57132,
+      "maxPositionError": 1.1298217774680097e-06
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\NightElf\\Huntress\\Huntress.mdx",
+      "parts": 5,
+      "clips": 9,
+      "loads": 540,
+      "vertices": 88452,
+      "maxPositionError": 2.742340087791284e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\NightElf\\Wisp\\Wisp.mdx",
+      "parts": 6,
+      "clips": 5,
+      "loads": 360,
+      "vertices": 7440,
+      "maxPositionError": 3.581909179262155e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Orc\\Catapult\\Catapult.mdx",
+      "parts": 5,
+      "clips": 6,
+      "loads": 360,
+      "vertices": 36936,
+      "maxPositionError": 3.703659057219255e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Orc\\Grunt\\grunt.mdx",
+      "parts": 9,
+      "clips": 12,
+      "loads": 1296,
+      "vertices": 121248,
+      "maxPositionError": 3.4331970222289954e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Orc\\HeadHunter\\Headhunter.mdx",
+      "parts": 8,
+      "clips": 10,
+      "loads": 960,
+      "vertices": 78600,
+      "maxPositionError": 7.152751983641875e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Orc\\Peon\\peon.mdx",
+      "parts": 6,
+      "clips": 22,
+      "loads": 1584,
+      "vertices": 142296,
+      "maxPositionError": 2.589492797966386e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Orc\\Shaman\\Shaman.mdx",
+      "parts": 5,
+      "clips": 14,
+      "loads": 840,
+      "vertices": 112056,
+      "maxPositionError": 4.045211792202963e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Orc\\WyvernRider\\WyvernRider.mdx",
+      "parts": 6,
+      "clips": 10,
+      "loads": 720,
+      "vertices": 72960,
+      "maxPositionError": 5.915832521630193e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Undead\\Abomination\\Abomination.mdx",
+      "parts": 6,
+      "clips": 10,
+      "loads": 720,
+      "vertices": 67080,
+      "maxPositionError": 9.800415039507016e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Undead\\Acolyte\\Acolyte.mdx",
+      "parts": 5,
+      "clips": 8,
+      "loads": 480,
+      "vertices": 51456,
+      "maxPositionError": 2.6599060060084057e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Undead\\FrostWyrm\\FrostWyrm.mdx",
+      "parts": 8,
+      "clips": 8,
+      "loads": 768,
+      "vertices": 69024,
+      "maxPositionError": 4.1227661129461524e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Undead\\Ghoul\\Ghoul.mdx",
+      "parts": 9,
+      "clips": 17,
+      "loads": 1836,
+      "vertices": 281520,
+      "maxPositionError": 2.877624512009902e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Undead\\Meatwagon\\Meatwagon.mdx",
+      "parts": 7,
+      "clips": 5,
+      "loads": 420,
+      "vertices": 95940,
+      "maxPositionError": 3.0626525876487065e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Undead\\Necromancer\\Necromancer.mdx",
+      "parts": 3,
+      "clips": 9,
+      "loads": 324,
+      "vertices": 68472,
+      "maxPositionError": 3.602545166070392e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Undead\\SkeletonMage\\SkeletonMage.mdx",
+      "parts": 8,
+      "clips": 7,
+      "loads": 672,
+      "vertices": 66360,
+      "maxPositionError": 2.1873626709911775e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "Units\\Undead\\Skeleton\\Skeleton.mdx",
+      "parts": 7,
+      "clips": 10,
+      "loads": 840,
+      "vertices": 85920,
+      "maxPositionError": 2.3414825434109332e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\Human\\AltarOfKings\\AltarOfKings.mdx",
+      "parts": 13,
+      "clips": 6,
+      "loads": 936,
+      "vertices": 137160,
+      "maxPositionError": 1.823672485246064e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\Human\\Farm\\Farm.mdx",
+      "parts": 16,
+      "clips": 5,
+      "loads": 960,
+      "vertices": 121020,
+      "maxPositionError": 1.731262209148099e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\Human\\HumanBarracks\\HumanBarracks.mdx",
+      "parts": 13,
+      "clips": 7,
+      "loads": 1092,
+      "vertices": 284256,
+      "maxPositionError": 2.845642090854028e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\Human\\Workshop\\Workshop.mdx",
+      "parts": 12,
+      "clips": 6,
+      "loads": 864,
+      "vertices": 278352,
+      "maxPositionError": 2.22717285502938e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\NightElf\\HuntersHall\\HuntersHall.mdx",
+      "parts": 7,
+      "clips": 5,
+      "loads": 420,
+      "vertices": 44340,
+      "maxPositionError": 5.071105957377142e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\NightElf\\MoonWell\\MoonWell.mdx",
+      "parts": 4,
+      "clips": 4,
+      "loads": 192,
+      "vertices": 21984,
+      "maxPositionError": 2.7854614259581467e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\Orc\\GreatHall\\GreatHall.mdx",
+      "parts": 19,
+      "clips": 14,
+      "loads": 3192,
+      "vertices": 613872,
+      "maxPositionError": 5.094177244480136e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\Orc\\OrcBarracks\\OrcBarracks.mdx",
+      "parts": 11,
+      "clips": 6,
+      "loads": 792,
+      "vertices": 96336,
+      "maxPositionError": 2.821289062371335e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\Orc\\WarMill\\WarMill.mdx",
+      "parts": 15,
+      "clips": 6,
+      "loads": 1080,
+      "vertices": 102024,
+      "maxPositionError": 5.1423950209184e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\Orc\\WatchTower\\WatchTower.mdx",
+      "parts": 10,
+      "clips": 5,
+      "loads": 600,
+      "vertices": 79560,
+      "maxPositionError": 4.6563110356334647e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\Undead\\AltarOfDarkness\\AltarOfDarkness.mdx",
+      "parts": 6,
+      "clips": 6,
+      "loads": 432,
+      "vertices": 94104,
+      "maxPositionError": 1.9747924806523542e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\Undead\\Crypt\\Crypt.mdx",
+      "parts": 4,
+      "clips": 6,
+      "loads": 288,
+      "vertices": 117144,
+      "maxPositionError": 1.7224121062753284e-07
+    },
+    {
+      "pack": "game-ready",
+      "source": "buildings\\Undead\\HauntedMine\\HauntedMine.mdx",
+      "parts": 6,
+      "clips": 5,
+      "loads": 360,
+      "vertices": 84540,
+      "maxPositionError": 2.5014953619617586e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Barrens\\Rocks\\Barrens_Rocks\\Barrens_Rocks0.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 768,
+      "maxPositionError": 2.8051757805513944e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Barrens\\Rocks\\Barrens_Rocks\\Barrens_Rocks1.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 768,
+      "maxPositionError": 2.5946807813426176e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Barrens\\Rocks\\Barrens_Rocks\\Barrens_Rocks2.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 408,
+      "maxPositionError": 2.5521087687607746e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Barrens\\Rocks\\Barrens_Rocks\\Barrens_Rocks3.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 768,
+      "maxPositionError": 2.9042816152013984e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Barrens\\Rocks\\Barrens_Rocks\\Barrens_Rocks4.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 1128,
+      "maxPositionError": 3.0824279795282905e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Barrens\\Rocks\\Barrens_Rocks\\Barrens_Rocks5.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 768,
+      "maxPositionError": 2.9533386181057608e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Icecrown\\Rocks\\Ice_SnowRock\\Ice_SnowRock0.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 720,
+      "maxPositionError": 2.8051757805513944e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Icecrown\\Rocks\\Ice_SnowRock\\Ice_SnowRock1.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 720,
+      "maxPositionError": 2.5946807813426176e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Icecrown\\Rocks\\Ice_SnowRock\\Ice_SnowRock2.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 360,
+      "maxPositionError": 2.5521087687607746e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Icecrown\\Rocks\\Ice_SnowRock\\Ice_SnowRock3.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 720,
+      "maxPositionError": 2.9042816152013984e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Icecrown\\Rocks\\Ice_SnowRock\\Ice_SnowRock4.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 1080,
+      "maxPositionError": 3.0824279795282905e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Icecrown\\Rocks\\Ice_SnowRock\\Ice_SnowRock5.mdx",
+      "parts": 1,
+      "clips": 1,
+      "loads": 12,
+      "vertices": 720,
+      "maxPositionError": 2.9533386181057608e-08
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\LordaeronSummer\\Terrain\\LoardaeronRockChunks\\LoardaeronRockChunks0.mdx",
+      "parts": 1,
+      "clips": 2,
+      "loads": 24,
+      "vertices": 3024,
+      "maxPositionError": 1.4434356687687e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\LordaeronSummer\\Terrain\\LoardaeronRockChunks\\LoardaeronRockChunks1.mdx",
+      "parts": 1,
+      "clips": 2,
+      "loads": 24,
+      "vertices": 2760,
+      "maxPositionError": 1.4864349373588936e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\LordaeronSummer\\Terrain\\LoardaeronRockChunks\\LoardaeronRockChunks2.mdx",
+      "parts": 1,
+      "clips": 2,
+      "loads": 24,
+      "vertices": 2592,
+      "maxPositionError": 1.222174071946469e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\LordaeronSummer\\Terrain\\LoardaeronRockChunks\\LoardaeronRockChunks3.mdx",
+      "parts": 1,
+      "clips": 2,
+      "loads": 24,
+      "vertices": 2016,
+      "maxPositionError": 1.6779022216084627e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\LordaeronSummer\\Terrain\\LoardaeronRockChunks\\LoardaeronRockChunks4.mdx",
+      "parts": 1,
+      "clips": 2,
+      "loads": 24,
+      "vertices": 2544,
+      "maxPositionError": 1.144979858702655e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\LordaeronSummer\\Terrain\\LoardaeronRockChunks\\LoardaeronRockChunks5.mdx",
+      "parts": 1,
+      "clips": 2,
+      "loads": 24,
+      "vertices": 2232,
+      "maxPositionError": 1.829788207619032e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Terrain\\BarrensTree\\BarrensTree0.mdx",
+      "parts": 2,
+      "clips": 4,
+      "loads": 96,
+      "vertices": 4512,
+      "maxPositionError": 4.235061645818661e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Terrain\\BarrensTree\\BarrensTree1.mdx",
+      "parts": 2,
+      "clips": 4,
+      "loads": 96,
+      "vertices": 4464,
+      "maxPositionError": 2.5921325685906993e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Terrain\\BarrensTree\\BarrensTree2.mdx",
+      "parts": 2,
+      "clips": 4,
+      "loads": 96,
+      "vertices": 4512,
+      "maxPositionError": 5.054260254766518e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Terrain\\BarrensTree\\BarrensTree3.mdx",
+      "parts": 2,
+      "clips": 4,
+      "loads": 96,
+      "vertices": 4512,
+      "maxPositionError": 5.065490724653898e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Terrain\\BarrensTree\\BarrensTree4.mdx",
+      "parts": 2,
+      "clips": 4,
+      "loads": 96,
+      "vertices": 4512,
+      "maxPositionError": 2.764450073300395e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Terrain\\BarrensTree\\BarrensTree5.mdx",
+      "parts": 2,
+      "clips": 4,
+      "loads": 96,
+      "vertices": 4464,
+      "maxPositionError": 2.870941162580465e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Terrain\\LordaeronTree\\LordaeronTree1.mdx",
+      "parts": 2,
+      "clips": 5,
+      "loads": 120,
+      "vertices": 4740,
+      "maxPositionError": 4.372253417095351e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Terrain\\LordaeronTree\\LordaeronTree2.mdx",
+      "parts": 2,
+      "clips": 5,
+      "loads": 120,
+      "vertices": 4440,
+      "maxPositionError": 4.102752685364308e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Terrain\\LordaeronTree\\LordaeronTree3.mdx",
+      "parts": 2,
+      "clips": 5,
+      "loads": 120,
+      "vertices": 4440,
+      "maxPositionError": 2.4811248777734107e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Terrain\\LordaeronTree\\LordaeronTree4.mdx",
+      "parts": 2,
+      "clips": 5,
+      "loads": 120,
+      "vertices": 4740,
+      "maxPositionError": 3.748931884928197e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "Doodads\\Terrain\\LordaeronTree\\LordaeronTree5.mdx",
+      "parts": 2,
+      "clips": 5,
+      "loads": 120,
+      "vertices": 4740,
+      "maxPositionError": 3.1229705821367304e-07
+    },
+    {
+      "pack": "remaining-ready",
+      "source": "buildings\\Other\\GoldMine\\Goldmine.mdx",
+      "parts": 5,
+      "clips": 6,
+      "loads": 360,
+      "vertices": 39456,
+      "maxPositionError": 1.4225311284477016e-07
+    }
+  ],
+  "scope": "Independent pinned source MDX evaluator against imported native actor and building poses. All clips, start/middle/exact endpoints, actor yaw, full billboards and source lock-Z billboards, including degenerate overhead views. Separate GPU and game integration validation required."
+}

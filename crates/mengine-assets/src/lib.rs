@@ -6,6 +6,7 @@ mod asset_sidecar;
 mod avatar_mask;
 mod gltf_import;
 mod gltf_pose;
+mod gltf_mdx;
 mod material;
 mod material_instance;
 mod mesh_patch;

@@ -1,0 +1,67 @@
+{
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\classic-node-views-1791252658746\\sample",
+  "rendererSha256": "e3822a3f9abde2ce8a8fb845a561d04af8cf461171adaaf27836e9d659a0d5ba",
+  "imageSha256": "a37e61f5a7dbdbb12b8dae37566c38d37fc0105a05d5eddc84586c85aefbe8e0",
+  "models": [
+    {
+      "key": "ClassicWisp",
+      "source": "Units\\NightElf\\Wisp\\Wisp.mdx",
+      "clip": 0,
+      "frame": 2,
+      "drawn": 4,
+      "root": 1,
+      "position": [
+        -6,
+        1.8563131083983622,
+        0
+      ]
+    },
+    {
+      "key": "RealTreant",
+      "source": "Units\\NightElf\\Ent\\Ent.mdx",
+      "clip": 0,
+      "frame": 2,
+      "drawn": 3,
+      "root": 6,
+      "position": [
+        0,
+        2.045439646840172,
+        0
+      ]
+    },
+    {
+      "key": "RevenantWorkshop",
+      "source": "Buildings\\Undead\\SlaughterHouse\\SlaughterHouse.mdx",
+      "clip": 1,
+      "frame": 2,
+      "drawn": 2,
+      "root": 10,
+      "position": [
+        6,
+        1.9818859098652426,
+        0
+      ]
+    }
+  ],
+  "method": "Shared native Game View renderer with original Wisp, Treant and Slaughterhouse assets, full and lock-Z node billboards, six rooted live UI views and main camera",
+  "counts": {
+    "msaaSamples": 4,
+    "entities": 28,
+    "renderObjects": 9,
+    "sceneViews": 6,
+    "billboardMeshes": 15,
+    "uiPrimitives": 6,
+    "uiBatches": 6,
+    "uiDrawCalls": 6,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialPipelinesRejected": 0,
+    "materialPipelineEvictions": 0,
+    "materialTexturesColor": 7,
+    "materialTexturesData": 0,
+    "materialTextureBindGroups": 7,
+    "materialSamplers": 1
+  }
+}
