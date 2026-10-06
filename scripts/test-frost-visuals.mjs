@@ -7,6 +7,9 @@ import {battleFixture} from './frost-battle-fixture.mjs';
 const require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js'),root=new URL('../samples/frostbound-realms/',import.meta.url);
 globalThis.Frost=S;globalThis.FrostArt=JSON.parse(fs.readFileSync(new URL('model-catalog.json',root)));const V=require('../samples/frostbound-realms/game/visuals.js');
 const source=JSON.parse(fs.readFileSync(new URL('classic-sources.json',root))),sha=data=>crypto.createHash('sha256').update(data).digest('hex');
+const buildingScales=JSON.parse(fs.readFileSync(new URL('building-scale-catalog.json',root))),buildingSources=JSON.parse(fs.readFileSync(new URL('building-scale-sources.json',root)));
+for(const file of buildingSources.files)assert.equal(sha(fs.readFileSync(new URL(file.path,root))),file.sha256,file.path);
+assert.equal(Object.keys(buildingScales.models).length,Object.values(FrostArt).filter(a=>a.classic&&a.factionBuilding).length);
 for(const file of source.files)assert.equal(sha(fs.readFileSync(new URL(file.path,root))),file.sha256,file.path);
 let samples=0,teamLayers=0,hiddenLayers=0;
 for(const asset of Object.values(FrostArt).filter(a=>a.classic)){
@@ -32,10 +35,14 @@ for(let faction=0;faction<4;faction++){
  const soldier=V.model(s,{kind:'soldier',team:0,cd:0,built:1});assert.equal(soldier.key,['RealFootman','RealOrc','ClassicHuntress','RealGhoul'][faction]);
  for(const tier of [1,2,3]){
   const hall=s.units.find(u=>u.kind==='hall'&&u.team===0);hall.upgradeTier=tier;const v=V.model(s,hall);assert.ok(v.asset.classic&&v.asset.factionBuilding);assert.equal(v.asset.classicTier,tier);
-  assert.ok(v.scale*Math.hypot(v.asset.size[0],v.asset.size[2])<=S.types.hall.radius*2*.92+1e-6);
+  assert.equal(v.scale,buildingScales.worldScale*buildingScales.models[v.key].modelScale);
   if(faction===0){const clip=v.asset.animations[V.classicSample(hall,v.asset,false,0).clip];if(tier>1)assert.match(clip.name,tier===2?/Upgrade First/:/Upgrade Second/);else assert.equal(clip.name,'Stand');}
   const ghost=V.parts(v.asset,V.pose({...hall,built:1,cd:0},v.asset,false,0),0,true);assert.ok(ghost.filter(p=>p.visible).every(p=>p.material.includes('/Placement/')));
  }
+ const hall=V.model(s,{kind:'hall',team:0,upgradeTier:3,built:1,cd:0}),farm=V.model(s,{kind:'farm',team:0,built:1,cd:0});
+ assert.ok(hall.asset.size[0]*hall.scale>farm.asset.size[0]*farm.scale*1.3,'main base retains source width compared to supply building');
+ const a=V.model(s,{kind:'hall',team:0,upgradeTier:1,built:1,cd:0}),b=V.model(s,{kind:'hall',team:0,upgradeTier:3,built:.2,cd:0});
+ assert.equal(b.scale/a.scale,faction===2?1.3:1,'source object scale survives upgrading and construction');
 }
 for(const key of ['RealWorker','ClassicPeon','RealGhoul']){
  const asset=FrostArt[key+'Wood'],u={kind:key==='RealGhoul'?'ghoul':'worker',team:0,cd:0,cargo:5,cargoKind:'tree'};

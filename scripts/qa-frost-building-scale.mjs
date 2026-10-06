@@ -1,0 +1,41 @@
+// Author: MiYu. Native building proportions, upgrade sizes and placement presentation.
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {createRequire} from 'node:module';
+import {fileURLToPath} from 'node:url';
+const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),tag=Number(process.env.MENGINE_QA_TAG)||Date.now(),root=path.join(process.env.MENGINE_QA_ROOT||'D:/MEngineNativeQA','building-scale-'+tag),sample=path.join(root,'sample'),out=path.join(repo,'docs/designs/frostbound-realms');
+fs.cpSync(source,sample,{recursive:true,filter:p=>!['SourceAssets','Builds'].includes(path.basename(p))});
+const project=JSON.parse(fs.readFileSync(path.join(sample,'project.json')));project.storageId='building-scale-'+tag;fs.writeFileSync(path.join(sample,'project.json'),JSON.stringify(project));
+const script=path.join(sample,'Assets/Scripts/Main.js');fs.writeFileSync(script,fs.readFileSync(script,'utf8').replace('JSON.stringify({mode,','JSON.stringify({qaUnits:state.units,qaMap:map,mode,'));
+process.env.MENGINE_EDITOR_EXECUTABLE??='D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe';process.env.MENGINE_AGENT_EDITOR_MODE='auto-background';process.env.MENGINE_EDITOR_CONFIG_DIR=path.join(root,'config');fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});
+process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS='--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows';
+const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs'),require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js');globalThis.Frost=S;globalThis.FrostArt=JSON.parse(fs.readFileSync(path.join(source,'model-catalog.json')));const V=require('../samples/frostbound-realms/game/visuals.js');
+const execute=async(n,args={})=>{const r=await bridgeExecute(n,args,{requestId:crypto.randomUUID()});assert.ok(r.ok,r.error?.message);return r.data;},sleep=ms=>new Promise(r=>setTimeout(r,ms)),snapshot=()=>query('scene.snapshot'),state=async()=>JSON.parse((await snapshot()).entities.find(e=>e.name==='Frost telemetry').components.Text.text),step=()=>execute('playback.step',{deltaTime:.001,steps:1});
+async function until(check,label){const end=Date.now()+120000;while(Date.now()<end){if(await check())return;await sleep(500);}throw Error('Timeout '+label);}
+const key=async k=>{await execute('playback.input',{keys:[k],viewport:[1280,720]});await step();await execute('playback.input',{keys:[]});await step();};
+let hash=0xcbf29ce484222325n;for(const byte of Buffer.from(project.storageId))hash=BigInt.asUintN(64,(hash^BigInt(byte))*0x100000001b3n);const storage=path.join(process.env.LOCALAPPDATA,'MEngine/UserData',hash.toString(16).padStart(16,'0'));fs.mkdirSync(storage,{recursive:true});
+async function load(s){fs.writeFileSync(path.join(storage,'quicksave.json'),JSON.stringify(s));if((await state()).mode==='title')await key('F1');if(!(await state()).paused)await key('F10');await execute('playback.input',{pointer:[640,388],viewport:[1280,720],buttons:[0]});await step();await execute('playback.input',{buttons:[]});await step();assert.equal((await state()).mode,'playing');await key('Space');}
+async function capture(name){await execute('playback.input',{pointer:[640,230],viewport:[1280,720]});await step();const shot=await query('view.screenshot',{target:'game'});fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));}
+const report={author:'MiYu',passed:false,sample,editorSha256:createHash('sha256').update(fs.readFileSync(process.env.MENGINE_EDITOR_EXECUTABLE)).digest('hex'),models:[],physicalInput:false,audioListening:false};
+try{
+ await query('project.state');try{await execute('project.open',{root:sample});}catch(e){if(!/workspace is still loading|A project is already open|lifecycle is busy|request timed out|did not finish loading/.test(e.message))throw e;}
+ await until(async()=>{const p=await query('project.state');return p.ready&&p.editorReady&&path.resolve(p.project.root)===path.resolve(sample);},'project');
+ await execute('view.set_game_resolution',{resolution:{width:1280,height:720}});await execute('panel.focus',{kind:'game'});await execute('playback.play',{paused:true});await step();
+ for(let faction=0;faction<4;faction++){
+  const map=S.defaultMap();map.name='Building proportions';map.tileset=1;map.props=[];map.triggers=[];map.units=[];for(const f of ['terrain','heights','relief','ramps'])map[f].fill(0);
+  const s=S.create('skirmish',{map,factions:[faction,faction],ai:[false,false]});s.units=[];s.resources=[];
+  for(const [kind,x,z,tier] of [['hall',-18,22,1],['hall',-6,22,2],['hall',6,22,3],['farm',18,22,1],['barracks',-18,10,1],['altar',-6,10,1],['tower',6,10,1],['workshop',18,10,1],['shop',-18,-2,1]])S.spawn(s,kind,0,x,z,{...(kind==='hall'?{upgradeTier:tier}:{}),damage:0});
+  S.spawn(s,'hero',0,0,10);S.spawn(s,'worker',0,-6,-2);S.visibility(s);await load(S.restore(s));
+  const live=await state(),world=await snapshot();
+  for(const u of live.qaUnits.filter(u=>!S.types[u.kind].speed)){
+   const view=V.model(s,u),index=live.qaUnits.findIndex(x=>x.id===u.id),name='Unit '+index,parts=world.entities.filter(e=>e.active!==false&&(e.name===name||e.name.startsWith(name+' part ')));assert.ok(parts.length,'visible source building geometry');
+   for(const entity of parts){const scale=entity.components.Transform.scale;assert.ok(scale.every(v=>Math.abs(v-view.scale)<.00001),JSON.stringify({key:view.key,expected:view.scale,actual:scale,entity:entity.name}));assert.ok(view.asset.parts.some(p=>entity.components.MeshRenderer.mesh.startsWith(p.mesh)));}
+   const scale=parts[0].components.Transform.scale[0],hp=world.entities.find(e=>e.name==='HP '+index);assert.ok(Math.abs(hp.components.Transform.position[1]-view.height)<.00001,'health bar follows building height');report.models.push({faction,kind:u.kind,tier:u.upgradeTier,key:view.key,scale,visibleParts:parts.length,worldSize:view.asset.size.map(v=>v*scale)});
+  }
+  const hall=report.models.find(v=>v.faction===faction&&v.kind==='hall'&&v.tier===3),farm=report.models.find(v=>v.faction===faction&&v.kind==='farm');assert.ok(hall.worldSize[0]>farm.worldSize[0]*1.3);await capture('building-scale-'+['human','orc','night-elf','undead'][faction]);console.log('PASS native source sizes for faction',faction);
+ }
+ const profile=await query('profiler.get_samples',{source:'game',limit:20}),logs=await query('console.get_logs',{limit:100});assert.equal(profile.nativeLatest.counts.materialPipelinesRejected,0);assert.ok(!logs.some(l=>l.level==='error'),JSON.stringify(logs));report.shaderRejections=0;report.passed=true;console.log('PASS native building proportions:',report.models.length,'buildings, upgrade sizes and health bars');
+}catch(e){report.error=e.stack;try{report.logs=await query('console.get_logs',{limit:40});await capture('building-scale-failure');}catch{}process.exitCode=1;console.error(e.stack);}
+finally{fs.writeFileSync(path.join(out,'native-building-scale-qa.json'),JSON.stringify(report,null,2)+'\n');try{await execute('playback.stop');}catch{}closeBridgeConnection();}

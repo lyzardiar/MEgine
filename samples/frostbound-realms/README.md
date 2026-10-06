@@ -10,6 +10,8 @@ MEngine 原生 3D RTS 游戏工程。围绕资源采集、建造、出兵、英�
 
 经典模型按所选站立姿态的原生几何范围确定尺寸。重导入时先构建 `cargo build --release -p mengine-assets --example gltf_bounds`，执行 `python scripts/import-frost-classic.py --pose-probe target/release/examples/gltf_bounds.exe`；来源、许可和文件哈希保存在 `classic-sources.json` 与 `Assets/Licenses/warcraft-classic-sources.json`。
 
+经典建筑保留各自源模型的相对体量，45 个建筑条目使用原版对象 `modelScale`，主城等级、建造预览与附件共用该比例。血条与旗帜跟随实际模型高度，来源和原生四族画面见 [建筑模型比例](../../docs/designs/frostbound-realms/building-proportions.md)。
+
 先在仓库根目录执行 `node scripts/build-frostbound.mjs`，生成被 Git 忽略的 `Assets/Scripts/Main.js`，再在 MEngine 编辑器打开本目录，切到 Game 后 Play。独立播放器构建入口（先完成 CLI 和 Release runtime 构建）：
 
 ```powershell

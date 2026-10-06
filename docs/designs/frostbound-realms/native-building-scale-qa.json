@@ -1,0 +1,455 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\building-scale-1791264868965\\sample",
+  "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
+  "models": [
+    {
+      "faction": 0,
+      "kind": "hall",
+      "tier": 1,
+      "key": "KingdomHall",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        5.616921901702881,
+        7.76143741607666,
+        5.719828128814697
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "hall",
+      "tier": 2,
+      "key": "KingdomHall2",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        5.616921901702881,
+        8.23842191696167,
+        5.719828128814697
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "hall",
+      "tier": 3,
+      "key": "KingdomHall3",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        6.17884373664856,
+        8.888234376907349,
+        5.817453145980835
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "farm",
+      "key": "KingdomLodge",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        2.5802031755447388,
+        3.652445435523987,
+        2.3876733779907227
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "barracks",
+      "key": "KingdomBarracks",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        5.437109470367432,
+        5.786531448364258,
+        5.30414080619812
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "altar",
+      "key": "KingdomAltar",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        3.9608280658721924,
+        4.64229679107666,
+        3.8051249980926514
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "tower",
+      "key": "KingdomTower",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        2.310615599155426,
+        5.096329510211945,
+        2.045525074005127
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "workshop",
+      "key": "KingdomWorkshop",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        3.9848592281341553,
+        4.6773905754089355,
+        4.098687410354614
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "shop",
+      "key": "KingdomArcaneVault",
+      "scale": 2,
+      "visibleParts": 7,
+      "worldSize": [
+        3.85685932636261,
+        8.502852201461792,
+        4.8032190799713135
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "hall",
+      "tier": 1,
+      "key": "WarclansHall",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        6.1227498054504395,
+        5.744921922683716,
+        6.743624925613403
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "hall",
+      "tier": 2,
+      "key": "WarclansHall2",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        5.999984502792358,
+        6.457124948501587,
+        6.945937633514404
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "hall",
+      "tier": 3,
+      "key": "WarclansHall3",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        6.672203063964844,
+        6.380890607833862,
+        7.373937368392944
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "farm",
+      "key": "WarclansLodge",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        3.301437497138977,
+        2.452204704284668,
+        3.2504374980926514
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "barracks",
+      "key": "WarclansBarracks",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        5.390312433242798,
+        5.285203218460083,
+        5.127218723297119
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "altar",
+      "key": "WarclansAltar",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        4.413109540939331,
+        4.081610918045044,
+        3.9308594465255737
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "tower",
+      "key": "WarclansTower",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        2.745013952255249,
+        4.4226062297821045,
+        2.681640625
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "workshop",
+      "key": "WarclansWorkshop",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        4.607906341552734,
+        4.137287497520447,
+        4.556874990463257
+      ]
+    },
+    {
+      "faction": 1,
+      "kind": "shop",
+      "key": "WarclansShop",
+      "scale": 2,
+      "visibleParts": 7,
+      "worldSize": [
+        4.333500027656555,
+        2.963460922241211,
+        4.2453906536102295
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "hall",
+      "tier": 1,
+      "key": "WildwoodHall",
+      "scale": 2,
+      "visibleParts": 5,
+      "worldSize": [
+        5.297612190246582,
+        5.313401080667973,
+        4.776875019073486
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "hall",
+      "tier": 2,
+      "key": "WildwoodHall2",
+      "scale": 2.299999952316284,
+      "visibleParts": 5,
+      "worldSize": [
+        6.092253892478652,
+        6.110411116086815,
+        5.493406158044934
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "hall",
+      "tier": 3,
+      "key": "WildwoodHall3",
+      "scale": 2.5999999046325684,
+      "visibleParts": 5,
+      "worldSize": [
+        6.886895594710722,
+        6.907421151505657,
+        6.209937297016381
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "farm",
+      "key": "WildwoodLodge",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        2.834640383720398,
+        4.437219500541687,
+        2.811103105545044
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "barracks",
+      "key": "WildwoodBarracks",
+      "scale": 2,
+      "visibleParts": 5,
+      "worldSize": [
+        3.78579044342041,
+        3.7888319194316864,
+        5.063392877578735
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "altar",
+      "key": "WildwoodAltar",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        4.162468671798706,
+        4.743671894073486,
+        4.378437519073486
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "tower",
+      "key": "WildwoodTower",
+      "scale": 2,
+      "visibleParts": 6,
+      "worldSize": [
+        3.111198902130127,
+        4.290453985333443,
+        3.0558125972747803
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "workshop",
+      "key": "WildwoodWorkshop",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        4.374671936035156,
+        5.290175080299377,
+        4.099390506744385
+      ]
+    },
+    {
+      "faction": 2,
+      "kind": "shop",
+      "key": "WildwoodShop",
+      "scale": 2,
+      "visibleParts": 6,
+      "worldSize": [
+        2.581847667694092,
+        3.4111664295196533,
+        3.397341728210449
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "hall",
+      "tier": 1,
+      "key": "RevenantHall",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        6.246203184127808,
+        5.946631193161011,
+        6.278125047683716
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "hall",
+      "tier": 2,
+      "key": "RevenantHall2",
+      "scale": 2,
+      "visibleParts": 5,
+      "worldSize": [
+        6.246203184127808,
+        5.946637392044067,
+        6.278109550476074
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "hall",
+      "tier": 3,
+      "key": "RevenantHall3",
+      "scale": 2,
+      "visibleParts": 5,
+      "worldSize": [
+        6.24860954284668,
+        7.402661144733429,
+        6.2049219608306885
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "farm",
+      "key": "RevenantLodge",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        4.019296884536743,
+        4.577434301376343,
+        4.3929688930511475
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "barracks",
+      "key": "RevenantBarracks",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        6.121578216552734,
+        6.987828254699707,
+        6.499765634536743
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "altar",
+      "key": "RevenantAltar",
+      "scale": 2,
+      "visibleParts": 4,
+      "worldSize": [
+        4.602640628814697,
+        4.133001685142517,
+        4.120765686035156
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "tower",
+      "key": "RevenantTower",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        4.019296884536743,
+        4.577434301376343,
+        4.3929688930511475
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "workshop",
+      "key": "RevenantWorkshop",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        4.0040000677108765,
+        4.51951352134347,
+        3.800937533378601
+      ]
+    },
+    {
+      "faction": 3,
+      "kind": "shop",
+      "key": "RevenantShop",
+      "scale": 2,
+      "visibleParts": 3,
+      "worldSize": [
+        6.436984539031982,
+        4.532118797302246,
+        6.2047343254089355
+      ]
+    }
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "shaderRejections": 0
+}

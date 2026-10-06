@@ -1,5 +1,6 @@
 /* Author: MiYu. Shared faction models for live units, map placement and construction previews. */
 var FrostVisual=(()=>{
+  const buildingScales=typeof module!=='undefined'?require('../building-scale-catalog.json'):FrostBuildingScales;
   const buildings={hall:'Hall',barracks:'Barracks',farm:'Lodge',tower:'Tower',altar:'Altar',workshop:'Workshop',scouttower:'Tower',guardtower:'Tower',shop:'Shop'};
   const names=[
     {barracks:'Royal barracks',farm:'Town house',tower:'Guard tower',altar:'Sanctuary',workshop:'Royal workshop',shop:'Arcane Vault'},
@@ -39,7 +40,7 @@ var FrostVisual=(()=>{
     let key=f===0&&u.kind==='shop'?'KingdomArcaneVault':u.kind==='spirittower'?'RevenantSpiritTower':u.kind==='nerubiantower'?'RevenantNerubianTower':u.kind==='hauntedmine'?'HauntedMine':u.kind==='temple'?'RealTemple':u.kind==='spiritlodge'?'ClassicSpiritLodge':buildings[u.kind]?Frost.factions[f]+buildings[u.kind]+(u.kind==='hall'&&tier>1?tier:''):u.kind==='hero'?Frost.unitType(u).art:u.tag==='boss'?'RealBear':u.kind==='frosttower'?'FrostTower':u.kind==='flametower'?'EmberTower':u.kind==='worker'?['RealWorker','ClassicPeon','ClassicWisp','RealAcolyte'][f]:u.kind==='soldier'?['RealFootman','RealOrc','ClassicHuntress','RealGhoul'][f]:u.kind==='hunter'?'ClassicHeadhunter':u.kind==='druid'?'ClassicDruid':u.kind==='emberdrake'?'ClassicWyvern':u.kind==='grovewyrm'?'ClassicChimaera':u.kind==='spectralwyrm'?'ClassicFrostWyrm':units[u.kind]||base[u.kind]||base[d.model];
     const original=FrostArt[key],activity=['RealWorker','ClassicPeon','ClassicWisp','RealAcolyte','RealGhoul'].includes(key)?work(state,u):null,phase=!original.classic&&(key==='RealArcher'||original.shotModel)&&!walking&&!u.stun?(castPhase(u,original,walking)??(u.cd>0?attackPhase(u,original):null)):null,loaded=phase!==null&&(original.ammoLoad<original.attackEvent?phase>=original.ammoLoad&&phase<original.attackEvent:phase<original.attackEvent||phase>=original.ammoLoad),variant=phase===null?key:original.shotModel?(loaded?original.loadedModel||key:original.shotModel):key+(loaded?'Loaded':'Shoot');
     const asset=Frost.ancient(u)&&(u.uprooted||u.ancientShift)?FrostArt[key+'Uprooted']:FrostArt[activity?key+activity.animation:variant]||original,scale=asset.factionBuilding?Math.min((d.radius*2*.92)/Math.hypot(asset.size[0],asset.size[2]),(asset.maxWorldHeight??Infinity)/asset.size[1]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:asset.siegeModel?1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
-    const actualScale=asset.classic&&!asset.factionBuilding?(u.tag==='boss'||u.tdBoss?1.5:1)*(asset.worldHeight||2.55)/asset.size[1]:scale;
+    const actualScale=asset.classic?(asset.factionBuilding?buildingScales.worldScale*buildingScales.models[key].modelScale:(u.tag==='boss'||u.tdBoss?1.5:1)*(asset.worldHeight||2.55)/asset.size[1]):scale;
     return {key,asset,scale:actualScale,height:asset.size[1]*actualScale+.5};
   }
   function heading(state,u,old){
