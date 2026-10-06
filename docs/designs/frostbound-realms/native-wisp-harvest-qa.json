@@ -1,0 +1,28 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\wisp-harvest-1791311819539\\sample",
+  "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
+  "physicalInput": false,
+  "audioListening": false,
+  "solo": {
+    "startFrame": 1,
+    "firstIncomeFrame": 81,
+    "woodDelta": 5,
+    "treeRemaining": 100,
+    "mesh": "Assets/WarcraftIII/Models/Units/NightElf/Wisp/Wisp/geoset-00-animated.glb#pose=0:3@30"
+  },
+  "pauseSaveRestore": true,
+  "trainingSave": true,
+  "tcp": {
+    "fullCycle": true,
+    "treeRemaining": 100,
+    "enemyOrderPrivate": true,
+    "enemyWorkingAnimation": true,
+    "reconnect": true
+  },
+  "shaderRejections": [
+    0,
+    0
+  ]
+}

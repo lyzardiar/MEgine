@@ -14,6 +14,7 @@ for(const tileset of [0,1,2])for(const faction of [0,1,2,3]){
   const s=S.create('skirmish',{map:mapFor(tileset),ai:[false,false],factions:[faction,0]});s.units=[];S.spawn(s,'hall',0,-22,16);S.spawn(s,'hall',1,22,-16);
   const r=s.resources[0];r.amount=5;const w=S.spawn(s,faction===3?'ghoul':'worker',0,-16,16);S.visibility(s);
   assert.equal(S.command(s,0,{type:'gather',ids:[w.id],resource:0}),null);S.tick(s);
+  if(S.wisp(s,w)){for(let i=0;i<90;i++)S.tick(s);assert.equal(r.amount,5);assert.equal(r.felled,undefined);assert.equal(w.cargo,0);assert.equal(s.teams[0].wood,155);assert.doesNotThrow(()=>S.restore(s));continue;}
   assert.equal(r.amount,0);assert.deepEqual(r.felled,{frame:s.frame,yaw:Math.PI/2,age:0});assert.equal(w.cargo,5);
   const ended=S.restore(s);ended.winner=0;const endedFrame=ended.frame;for(let i=0;i<60;i++)S.tick(ended);assert.equal(ended.frame,endedFrame);assert.equal(ended.resources[0].felled.age,6);assert.equal(V.resource(ended.resources[0],12,tileset),null,'post-victory fall finishes without advancing battle time');
   const f=structuredClone(r.felled),begin=V.resource(r,12,tileset),middle=V.resource(r,12,tileset,.75),flat=V.resource(r,12,tileset,1.5),far=V.resource(r,27,tileset,1.5);
@@ -28,7 +29,7 @@ for(const tileset of [0,1,2])for(const faction of [0,1,2,3]){
   f.age=r.felled.age;s.visible[0][S.index(r.x,r.z)]=1;s.visible[1][S.index(r.x,r.z)]=0;
   assert.deepEqual(S.publicState(s,0).resources[0].felled,f);const hidden=S.publicState(s,1).resources[0];assert.equal(hidden.amount,1);assert.equal(hidden.felled,undefined);assert.deepEqual(r.felled,f,'filtering cannot mutate authority');
 }
-console.log('PASS: all three biomes and four lumber factions, root pivot/direction, LOD parity, continuation, saves, legacy saves, invalid metadata and private fog');
+console.log('PASS: three biomes, three lumber factions and intact Wisp trees, root pivot/direction, LOD parity, continuation, saves, legacy saves, invalid metadata and private fog');
 const app=createServer({port:0}),address=await app.listening,sockets=[];
 async function peer(){
   const socket=net.connect(address.port,'127.0.0.1'),pending=[];let buffer='';sockets.push(socket);socket.setEncoding('utf8');socket.on('error',()=>{});

@@ -14,11 +14,12 @@ var FrostVisual=(()=>{
   function classicScale(key,u={}){const building=buildingScales.models[key],unit=unitScales.models[key];if(building)return buildingScales.worldScale*building.modelScale;if(!unit)throw Error('Missing source actor scale: '+key);return unitScales.worldScale*unit.modelScale*(u.tag==='boss'||u.tdBoss?1.5:1);}
   function selectionSpan(key,u={}){const unit=unitScales.models[key],scale=unit?.selectionScale??unitScales.buildingSelection[key];if(!scale)throw Error('Missing source selection scale: '+key);return unitScales.circles[unit&&/^[A-Z]/.test(unit.unit)?'hero':'unit'].worldSpan*scale*(u.tag==='boss'||u.tdBoss?1.5:1);}
   function work(state,u){
+    if(u.lumberTarget&&u.hp>0&&!u.stun)return {target:u.lumberTarget,animation:'Wood'};
     if(u.miningTarget&&u.hp>0&&!u.stun)return {target:u.miningTarget,animation:'Mine'};
     if(!['worker','ghoul'].includes(u.kind)||!u.order||u.hp<=0||u.stun>0||u.inside)return null;
     let target,animation;
     if(u.order.type==='gather'){
-      target=state.resources[u.order.resource];if(Frost.acolyte(state,u)&&!u.cargo)return Frost.miningTarget(state,u)?{target,animation:'Mine'}:null;if(!target||target.amount<=0||u.cargo>=20||u.cargo>0&&u.cargoKind&&u.cargoKind!==target.kind||!state.units.some(v=>v.team===u.team&&v.kind==='hall'&&v.hp>0&&v.built===1)||Frost.distance(u,target)>3)return null;
+      target=state.resources[u.order.resource];if(Frost.wisp(state,u)&&target?.kind==='tree')return Frost.wispWorkingTarget(state,u)?{target,animation:'Wood'}:null;if(Frost.acolyte(state,u)&&!u.cargo)return Frost.miningTarget(state,u)?{target,animation:'Mine'}:null;if(!target||target.amount<=0||u.cargo>=20||u.cargo>0&&u.cargoKind&&u.cargoKind!==target.kind||!state.units.some(v=>v.team===u.team&&v.kind==='hall'&&v.hp>0&&v.built===1)||Frost.distance(u,target)>3)return null;
       animation=target.kind==='tree'?'Wood':'Mine';
     }else if(['construct','repair'].includes(u.order.type)){
       if(u.root>0)return null;
@@ -136,7 +137,7 @@ var FrostVisual=(()=>{
   }
   function heroPortrait(heroClass=0,closeup=false){const art=Frost.heroes[heroClass].art;return FrostArt[art].realistic?'Assets/Art/'+(closeup?'head-portraits':'unit-portraits')+'.png#'+art:'Assets/Art/hero-portraits.png#hero-'+heroClass;}
   function unitPortrait(state,u){const v=model(state,u),key=v.key;return (v.asset.factionBuilding?'Assets/Art/faction-buildings.png#':['RealFrostWarden','RealEmberSage','RealSylvanRanger','RealDawnPaladin','RealFootman','RealWorker','RealArcher','RealRifleman','RealOrc','RealAcolyte','RealNecromancer','RealShaman'].includes(key)?'Assets/Art/head-portraits.png#':'Assets/Art/unit-portraits.png#')+key;}
-  function name(state,u){if(u.kind==='hall')return Frost.mainBase(state,u).name;const f=state.teams[u.team]?.faction||0,value=names[f][u.kind];if(u.kind==='worker'&&f===3)return 'Acolyte';if(u.kind==='critter')return u.team===0?'Mechanical Critter':'Critter';if(u.tag==='critter')return 'Critter';if(u.kind==='neutral')return u.tag==='boss'?'Frostbound sovereign':'Frostfang wolf';return Array.isArray(value)?value[Frost.clamp((u.upgradeTier??1)-1,0,2)]:value||Frost.unitType(u).label;}
+  function name(state,u){if(Frost.wisp(state,u))return 'Wisp';if(u.kind==='hall')return Frost.mainBase(state,u).name;const f=state.teams[u.team]?.faction||0,value=names[f][u.kind];if(u.kind==='worker'&&f===3)return 'Acolyte';if(u.kind==='critter')return u.team===0?'Mechanical Critter':'Critter';if(u.tag==='critter')return 'Critter';if(u.kind==='neutral')return u.tag==='boss'?'Frostbound sovereign':'Frostfang wolf';return Array.isArray(value)?value[Frost.clamp((u.upgradeTier??1)-1,0,2)]:value||Frost.unitType(u).label;}
   const projectileColors={fire:[1,.32,.055,1],frost:[.35,.8,1,1],nature:[.35,.85,.24,1],shadow:[.57,.22,.8,1],arcane:[.5,.48,1,1]};
   function muzzle(e){const asset=FrostArt.RealRifleman,scale=asset.classic?classicScale('RealRifleman'):.85,[x,y,z]=asset.muzzle||[0,asset.bounds.min[1]+asset.size[1]*.6,asset.bounds.max[0]],angle=Math.atan2(e.x-e.fromX,e.z-e.fromZ),sin=Math.sin(angle),cos=Math.cos(angle);return {type:'muzzle',art:'musket',team:e.team,x:e.fromX+(x*cos+z*sin)*scale,y:e.fromY-1.6+y*scale,z:e.fromZ+(-x*sin+z*cos)*scale};}
   function projectile(art){

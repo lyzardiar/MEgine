@@ -1,0 +1,1 @@
+Wisp unit and harvest ability data: Blizzard Entertainment, original Warcraft III game asset terms apply. Original MPQ files, archive identities, hashes and selected rows are recorded in wisp-rule-sources.json and wisp-rules.json.

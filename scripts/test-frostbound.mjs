@@ -46,6 +46,8 @@ import './test-frost-town-portal.mjs';
 import './test-frost-town-portal-network.mjs';
 import './test-frost-construction.mjs';
 import './test-frost-undead-economy.mjs';
+import './test-frost-wisp-harvest.mjs';
+import './test-frost-wisp-client.mjs';
 import './test-frost-undead-network.mjs';
 import './test-frost-triggers.mjs';
 import './test-frost-tilesets.mjs';
@@ -93,7 +95,7 @@ assert.deepEqual(S.trainable(battleFixture(S,'skirmish',{},['hero','barracks','f
 const sky=battleFixture(S,'skirmish',{ai:[false,false]},['hero','barracks','farm','guard','harvest']),dragon=S.spawn(sky,'dragon',0,-4,10),sword=S.spawn(sky,'soldier',1,-3,10),bow=S.spawn(sky,'archer',1,-2,10);S.visibility(sky);assert.ok(S.command(sky,1,{type:'attack',ids:[sword.id],target:dragon.id}));assert.equal(S.command(sky,1,{type:'attack',ids:[bow.id],target:dragon.id}),null);S.tick(sky);assert.equal(dragon.hp,dragon.maxHp,'flying target is unharmed at release');step(sky,6);assert.ok(dragon.hp<dragon.maxHp,'ranged projectiles can reach flying targets');assert.ok(!S.canAttack(sword,dragon));assert.ok(!S.canAttack({kind:'catapult'},dragon));
 assert.equal(S.command(sky,0,{type:'move',ids:[dragon.id],x:6,z:10}),null);step(sky,20);assert.ok(dragon.x>2,'flying units cross water without ground navigation');assert.ok(sky.map.terrain[S.index(0,10)]===1);
 console.log('PASS: four licensed siege rosters, legal economy/tech/build/production, cancellation/refund, saved rally, armor classes and production privacy');
-const harvest=battleFixture(S,'skirmish',{factions:[2,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),initialWood=harvest.resources.filter(r=>r.kind==='tree').reduce((n,r)=>n+r.amount,0);step(harvest,2000);assert.ok(harvest.teams[0].wood>850,'fast faction delivers cargo and automatically moves to the next tree');const carried=harvest.units.filter(u=>u.cargoKind==='tree').reduce((n,u)=>n+u.cargo,0);assert.equal(harvest.teams.reduce((n,t)=>n+t.wood-250,0)+carried,initialWood-harvest.resources.filter(r=>r.kind==='tree').reduce((n,r)=>n+r.amount,0),'no wood is discarded when trees deplete');
+const harvest=battleFixture(S,'skirmish',{factions:[2,2],ai:[false,false]},['hero','barracks','farm','guard','harvest']),initialWood=harvest.resources.filter(r=>r.kind==='tree').reduce((n,r)=>n+r.amount,0);step(harvest,2000);assert.ok(harvest.teams.every(t=>t.wood>250),'Wisp teams earn direct lumber');assert.equal(harvest.units.filter(u=>u.kind==='worker').reduce((n,u)=>n+(u.cargoKind==='tree'?u.cargo:0),0),0);assert.equal(initialWood,harvest.resources.filter(r=>r.kind==='tree').reduce((n,r)=>n+r.amount,0),'Wisp lumber preserves the forest');
 const s=battleFixture(S,'skirmish',{ai:[false,false]},['hero','barracks','farm','guard','harvest']);step(s,250);assert.ok(s.teams[0].gold>500,'workers deliver gold');assert.ok(s.teams[0].wood>250,'workers deliver lumber');
 const barracks=s.units.find(u=>u.team===0&&u.kind==='barracks'),worker=s.units.find(u=>u.team===0&&u.kind==='worker');
 assert.equal(S.command(s,0,{type:'train',ids:[barracks.id],kind:'archer'}),null);step(s,75);assert.ok(s.units.some(u=>u.team===0&&u.kind==='archer'));
