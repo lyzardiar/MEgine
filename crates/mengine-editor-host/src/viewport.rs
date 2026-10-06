@@ -77,6 +77,7 @@ pub struct EditorViewportProfileCounts {
     pub entities: usize,
     pub render_objects: usize,
     pub scene_views: usize,
+    pub billboard_meshes: usize,
     pub ui_primitives: usize,
     pub ui_batches: usize,
     pub ui_draw_calls: u32,
@@ -536,7 +537,7 @@ impl EditorViewportRenderer {
         log_texture_failures(frame.texture_failures.drain(..));
         finish_stage(&mut stages, "Diagnostics.texture_failures", stage_started);
         let stage_started = Instant::now();
-        for failure in self.meshes.sync(&mut self.renderer, &frame.resource_objects()) {
+        for failure in self.meshes.sync_frame(&mut self.renderer, &mut frame) {
             log::warn!(
                 "viewport mesh '{}' could not be loaded from {}: {}",
                 failure.key,
@@ -809,6 +810,7 @@ fn build_viewport_profile(
             entities: world.iter_entities().count(),
             render_objects: frame.objects.len(),
             scene_views: frame.scene_views.len(),
+            billboard_meshes: frame.objects.iter().chain(frame.scene_views.iter().flat_map(|v| &v.objects)).filter(|o| o.mesh_key.starts_with("billboard:")).map(|o| &o.mesh_key).collect::<BTreeSet<_>>().len(),
             ui_primitives: frame.ui.primitives.len(),
             ui_batches: frame.ui.batches.len(),
             ui_draw_calls: ui_stats.draw_calls,
@@ -854,7 +856,7 @@ fn collect_frame_resources(
         }
     }
     for object in frame.resource_objects().iter() {
-        add("mesh", &object.mesh_key, "RenderObject");
+        add("mesh", mengine_runtime::meshes::source_mesh_reference(&object.mesh_key), "RenderObject");
         for texture in [
             &object.material.base_color_texture,
             &object.material.normal_texture,
@@ -896,8 +898,8 @@ fn collect_frame_resources(
                     referenced_by: referenced_by.into_iter().collect(),
                 };
             }
-            let resolved =
-                mengine_runtime::textures::resolve_project_asset_path(project_root, &asset);
+            let source = if kind == "mesh" { mengine_assets::parse_gltf_pose_sample(&asset).map_or(asset.as_str(),|p| p.0) } else { &asset };
+            let resolved = mengine_runtime::textures::resolve_project_asset_path(project_root, source);
             let metadata = resolved
                 .as_deref()
                 .and_then(|path| std::fs::metadata(path).ok());

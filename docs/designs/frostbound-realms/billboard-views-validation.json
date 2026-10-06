@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\billboard-views-1791249467089\\sample",
+  "method": "Shared native Game View renderer: one source geoset, three distinct camera-dependent GPU meshes, two rooted live UI views",
+  "counts": {
+    "msaaSamples": 4,
+    "entities": 8,
+    "renderObjects": 1,
+    "sceneViews": 2,
+    "billboardMeshes": 3,
+    "uiPrimitives": 2,
+    "uiBatches": 2,
+    "uiDrawCalls": 2,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialPipelinesRejected": 0,
+    "materialPipelineEvictions": 0,
+    "materialTexturesColor": 1,
+    "materialTexturesData": 0,
+    "materialTextureBindGroups": 1,
+    "materialSamplers": 1
+  }
+}

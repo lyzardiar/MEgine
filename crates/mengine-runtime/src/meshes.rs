@@ -1,7 +1,10 @@
 use crate::textures::resolve_project_asset_path;
-use mengine_assets::{load_gltf_mesh_data, terrain_mesh, parse_gltf_pose_sample, parse_mesh_patch_key, GltfPoseSource, MeshData, MeshPatchSource};
-use mengine_rhi::{RenderObject, Renderer, Vertex};
+use crate::frame_compiler::CompiledFrame;
+use glam::{Vec3, Vec4};
+use mengine_assets::{load_gltf_mesh_data, terrain_mesh, parse_gltf_pose_sample, parse_mesh_patch_key, GltfBillboardCamera, GltfPoseSource, MeshData, MeshPatchSource};
+use mengine_rhi::{FrameCamera, RenderObject, Renderer, Vertex};
 use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime};
 
@@ -28,6 +31,7 @@ pub struct RuntimeMeshCache {
     pose_usage: HashMap<String, u64>,
     frame: u64,
     evicted: Vec<String>,
+    billboard_views: HashMap<String, (String, GltfBillboardCamera)>,
 }
 
 impl RuntimeMeshCache {
@@ -41,6 +45,7 @@ impl RuntimeMeshCache {
             pose_usage: HashMap::new(),
             frame: 0,
             evicted: Vec::new(),
+            billboard_views: HashMap::new(),
         }
     }
 
@@ -55,6 +60,7 @@ impl RuntimeMeshCache {
         self.patches.clear();
         self.evicted.extend(self.pose_usage.keys().cloned());
         self.pose_usage.clear();
+        self.billboard_views.clear();
     }
 
     pub fn invalidate(&mut self, key: &str) {
@@ -65,6 +71,38 @@ impl RuntimeMeshCache {
         self.poses.remove(key.split('#').next().unwrap_or(key).trim());
         let asset = key.split('#').next().unwrap_or(key).trim();
         self.attempted.retain(|k, _| parse_gltf_pose_sample(k).is_none_or(|p| p.0 != asset));
+        let keys = self.billboard_views.iter().filter(|(_, (source, _))| parse_gltf_pose_sample(source).is_some_and(|p| p.0 == asset)).map(|(k,_)| k.clone()).collect::<Vec<_>>();
+        for key in keys { self.billboard_views.remove(&key);self.attempted.remove(&key);self.pose_usage.remove(&key);self.evicted.push(key); }
+    }
+
+    /// MiYu: billboard nodes are sampled separately for the game, editor and each portrait camera.
+    pub fn sync_frame(&mut self, renderer: &mut Renderer, frame: &mut CompiledFrame) -> Vec<MeshLoadFailure> {
+        self.prepare_billboards(frame.camera,&mut frame.objects);
+        for view in &mut frame.scene_views { self.prepare_billboards(view.camera,&mut view.objects); }
+        let objects = frame.objects.iter().chain(frame.scene_views.iter().flat_map(|v| &v.objects)).cloned().collect::<Vec<_>>();
+        self.sync(renderer,&objects)
+    }
+
+    fn prepare_billboards(&mut self, camera: FrameCamera, objects: &mut [RenderObject]) {
+        let Some(root) = self.project_root.as_deref() else { return; };
+        let poll = self.last_poll.is_none_or(|last| last.elapsed() >= Duration::from_millis(250));
+        for object in objects {
+            let key = object.mesh_key.trim();
+            let Some((asset,_,_,_)) = parse_gltf_pose_sample(key) else { continue; };
+            if poll || !self.poses.contains_key(asset) {
+                let Some(path) = resolve_project_asset_path(root,asset) else { continue; };
+                let stamp = file_stamp(&path);
+                if self.poses.get(asset).is_none_or(|(old,_)| *old != stamp) {
+                    let Ok(source) = GltfPoseSource::load(&path) else { continue; };
+                    self.poses.insert(asset.into(),(stamp,source));
+                }
+            }
+            if !self.poses[asset].1.has_billboards() { continue; }
+            let Some(view) = billboard_camera(camera,object) else { continue; };
+            let rendered = billboard_key(key,view);
+            self.billboard_views.entry(rendered.clone()).or_insert_with(|| (key.into(),view));
+            object.mesh_key=rendered;
+        }
     }
 
     pub fn sync(
@@ -119,7 +157,8 @@ impl RuntimeMeshCache {
                 }
                 continue;
             }
-            let pose = parse_gltf_pose_sample(key);
+            let billboard = self.billboard_views.get(key);
+            let pose = parse_gltf_pose_sample(billboard.map_or(key,|(source,_)| source));
             if pose.is_some() { self.pose_usage.insert(key.to_owned(), self.frame); }
             let asset_key = pose.map(|p| p.0).unwrap_or(key);
             let lower = asset_key.to_ascii_lowercase();
@@ -151,7 +190,7 @@ impl RuntimeMeshCache {
                         Err(error) => { failures.push(MeshLoadFailure { key:key.into(), path, error:error.to_string() }); continue; }
                     }
                 }
-                self.poses[asset].1.sample_at_rate(clip, frame, rate)
+                self.poses[asset].1.sample_with_camera(clip, frame, rate, billboard.map(|(_,camera)| *camera))
             } else { load_gltf_mesh_data(&path) };
             match mesh {
                 Ok(mesh) => renderer.upload_gltf_static(
@@ -171,10 +210,29 @@ impl RuntimeMeshCache {
             stale.sort_by_key(|(_, used)| *used);
             for (key, _) in stale.into_iter().take(self.pose_usage.len() - 256) { self.pose_usage.remove(&key); self.attempted.remove(&key); renderer.remove_mesh(&key); }
         }
-        self.poses.retain(|asset, _| self.pose_usage.keys().any(|key| parse_gltf_pose_sample(key).is_some_and(|p| p.0 == asset)));
+        self.billboard_views.retain(|key,_| self.pose_usage.contains_key(key));
+        self.poses.retain(|asset, _| self.pose_usage.keys().any(|key| parse_gltf_pose_sample(self.billboard_views.get(key).map_or(key,|(source,_)| source)).is_some_and(|p| p.0 == asset)));
         self.patches.retain(|asset, _| self.pose_usage.keys().any(|key| parse_mesh_patch_key(key).is_some_and(|p| p.0 == asset)));
         failures
     }
+}
+
+fn billboard_camera(camera: FrameCamera, object: &RenderObject) -> Option<GltfBillboardCamera> {
+    let mut model = object.model;model.w_axis=Vec4::W;
+    let view = camera.view.inverse();
+    let camera = GltfBillboardCamera { model, look:view.transform_vector3(-Vec3::Z).normalize_or_zero(), up:view.transform_vector3(Vec3::Y).normalize_or_zero() };
+    (model.is_finite() && model.determinant().abs() >= 1e-12 && camera.look.is_finite() && camera.up.is_finite()).then_some(camera)
+}
+
+fn billboard_key(source: &str, camera: GltfBillboardCamera) -> String {
+    let mut hash = std::collections::hash_map::DefaultHasher::new();source.hash(&mut hash);
+    for value in camera.model.to_cols_array().into_iter().chain(camera.look.to_array()).chain(camera.up.to_array()) { (if value == 0.0 { 0 } else { value.to_bits() }).hash(&mut hash); }
+    format!("billboard:{:016x}:{source}",hash.finish())
+}
+
+/// MiYu: resolve the authored asset behind an internal camera-specific GPU mesh key.
+pub fn source_mesh_reference(key: &str) -> &str {
+    key.strip_prefix("billboard:").and_then(|s| s.split_once(':')).filter(|(hash,_)| hash.len()==16 && hash.bytes().all(|b| b.is_ascii_hexdigit())).map_or(key,|(_,source)| source)
 }
 
 fn vertices_from_mesh(mesh: &MeshData) -> Vec<Vertex> {
@@ -210,6 +268,25 @@ fn should_attempt(cache: &mut HashMap<String, FileStamp>, key: &str, stamp: File
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn billboard_views_share_translated_actors_but_separate_camera_rotation_and_scale() {
+        let camera=FrameCamera { view:glam::Mat4::look_at_rh(Vec3::new(0.0,3.0,4.0),Vec3::ZERO,Vec3::Y),proj:glam::Mat4::IDENTITY,position:Vec3::new(0.0,3.0,4.0) };
+        let mut object=RenderObject { mesh_key:"a.glb#pose=0:1@30".into(),model:glam::Mat4::IDENTITY,material:Default::default(),cast_shadows:false,receive_shadows:false };
+        let key=billboard_key(&object.mesh_key,billboard_camera(camera,&object).unwrap());
+        assert_eq!(source_mesh_reference(&key),object.mesh_key);
+        object.model.w_axis=Vec3::new(8.0,0.0,3.0).extend(1.0);assert_eq!(key,billboard_key(&object.mesh_key,billboard_camera(camera,&object).unwrap()));
+        object.model=glam::Mat4::from_rotation_y(0.8);assert_ne!(key,billboard_key(&object.mesh_key,billboard_camera(camera,&object).unwrap()));
+        object.model=glam::Mat4::from_scale(Vec3::new(1.0,2.0,3.0));assert_ne!(key,billboard_key(&object.mesh_key,billboard_camera(camera,&object).unwrap()));
+        object.model=glam::Mat4::IDENTITY;let mut portrait=camera;portrait.view=glam::Mat4::look_at_rh(Vec3::new(4.0,0.0,0.0),Vec3::ZERO,Vec3::Y);assert_ne!(key,billboard_key(&object.mesh_key,billboard_camera(portrait,&object).unwrap()));
+        object.model=glam::Mat4::from_scale(Vec3::ZERO);assert!(billboard_camera(camera,&object).is_none());
+    }
+    #[test]
+    fn changed_billboard_assets_invalidate_every_camera_and_keep_other_models() {
+        let mut cache=RuntimeMeshCache::new(None);
+        let camera=GltfBillboardCamera { model:glam::Mat4::IDENTITY,look:-Vec3::Z,up:Vec3::Y };
+        for (key,source) in [("billboard:0000000000000001:a.glb#pose=0:1@30","a.glb#pose=0:1@30"),("billboard:0000000000000002:a.glb#pose=0:1@30","a.glb#pose=0:1@30"),("billboard:0000000000000003:b.glb#pose=0:1@30","b.glb#pose=0:1@30")] { cache.billboard_views.insert(key.into(),(source.into(),camera));cache.attempted.insert(key.into(),FileStamp::default());cache.pose_usage.insert(key.into(),1); }
+        cache.invalidate("a.glb");assert_eq!(cache.billboard_views.len(),1);assert_eq!(cache.attempted.len(),1);assert_eq!(cache.pose_usage.len(),1);assert_eq!(cache.evicted.len(),2);
+    }
 
     #[test]
     fn invalidation_removes_every_sampling_rate_for_the_changed_asset() {

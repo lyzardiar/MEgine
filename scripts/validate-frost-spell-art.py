@@ -18,6 +18,9 @@ for record in manifest['files']:
     assert hashlib.sha256(raw).hexdigest() == record['sha256'] and len(raw) == record['bytes'], record['path']
 assert hashlib.sha256((ROOT / 'scripts/import-frost-effects.py').read_bytes()).hexdigest() == manifest['importerSha256']
 models = {name: art for name, art in catalog['effects'].items() if art.get('parts')}
+geometry = ROOT / 'asset-library/warcraft-iii' / manifest['geometryCollection']
+geometry_receipt = (geometry / 'asset-sources.json').read_bytes()
+assert hashlib.sha256(geometry_receipt).hexdigest() == manifest['geometryReceiptSha256']
 receipts = {}
 for source in manifest['sources']:
     name = pathlib.PureWindowsPath(source['source']).stem

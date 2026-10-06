@@ -1,0 +1,353 @@
+{
+  "schemaVersion": 1,
+  "totalMs": 140.2158,
+  "callTree": {
+    "name": "EditorViewportRenderer.render_world",
+    "totalMs": 140.2158,
+    "selfMs": 0.013100000000028644,
+    "calls": 1,
+    "children": [
+      {
+        "name": "Effects",
+        "totalMs": 0.0341,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "EffekseerWorld.update",
+            "totalMs": 0.025,
+            "selfMs": 0.025,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "EffekseerWorld.append_to_frame",
+            "totalMs": 0.009099999999999999,
+            "selfMs": 0.009099999999999999,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Frame compile",
+        "totalMs": 0.51,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "TransformHierarchy.build",
+            "totalMs": 0.0204,
+            "selfMs": 0.0204,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "FrameCompiler.compile",
+            "totalMs": 0.48950000000000005,
+            "selfMs": 0.006699999999999984,
+            "calls": 1,
+            "children": [
+              {
+                "name": "Camera, meshes and lighting",
+                "totalMs": 0.31930000000000003,
+                "selfMs": 0.31930000000000003,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Canvas layout and text",
+                "totalMs": 0.0971,
+                "selfMs": 0.0971,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "World sprites",
+                "totalMs": 0.0121,
+                "selfMs": 0.0121,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Particles, trails and sorting",
+                "totalMs": 0.0129,
+                "selfMs": 0.0129,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Sprite regions and materials",
+                "totalMs": 0.028900000000000002,
+                "selfMs": 0.028900000000000002,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "UI batching",
+                "totalMs": 0.0125,
+                "selfMs": 0.0125,
+                "calls": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "name": "Diagnostics.texture_failures",
+            "totalMs": 0.00009999999999999999,
+            "selfMs": 0.00009999999999999999,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Render backend",
+        "totalMs": 138.19119999999998,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "OffscreenTarget.ensure_size",
+            "totalMs": 0.00009999999999999999,
+            "selfMs": 0.00009999999999999999,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "Renderer.submit_frame_to",
+            "totalMs": 129.3104,
+            "selfMs": 129.3104,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "Renderer.read_offscreen_rgba8",
+            "totalMs": 8.880700000000001,
+            "selfMs": 8.880700000000001,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Resource sync",
+        "totalMs": 1.162,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "RuntimeMeshCache.sync",
+            "totalMs": 0.7517999999999999,
+            "selfMs": 0.7517999999999999,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeFontCache.sync",
+            "totalMs": 0.0028,
+            "selfMs": 0.0028,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_ui",
+            "totalMs": 0.0104,
+            "selfMs": 0.0104,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_ui_materials",
+            "totalMs": 0.0155,
+            "selfMs": 0.0155,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_materials",
+            "totalMs": 0.3814,
+            "selfMs": 0.3814,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_environment",
+            "totalMs": 0.00009999999999999999,
+            "selfMs": 0.00009999999999999999,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Profiler",
+        "totalMs": 0.3054,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "Profiler.snapshot",
+            "totalMs": 0.3054,
+            "selfMs": 0.3054,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "memory": [
+    {
+      "name": "CPU readback RGBA",
+      "domain": "cpu",
+      "bytes": 5242880,
+      "certainty": "exact",
+      "source": "Renderer.read_offscreen_rgba8 Vec length"
+    },
+    {
+      "name": "Frame packet / render objects",
+      "domain": "cpu",
+      "bytes": 2400,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled render objects"
+    },
+    {
+      "name": "Frame packet / UI primitives",
+      "domain": "cpu",
+      "bytes": 1024,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI primitives"
+    },
+    {
+      "name": "Frame packet / UI batches",
+      "domain": "cpu",
+      "bytes": 208,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI batches"
+    },
+    {
+      "name": "Frame packet / controls",
+      "domain": "cpu",
+      "bytes": 0,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI controls"
+    },
+    {
+      "name": "GPU offscreen color",
+      "domain": "gpu",
+      "bytes": 5242880,
+      "certainty": "estimate",
+      "source": "viewport width x height x 4 RGBA8 bytes"
+    },
+    {
+      "name": "GPU offscreen depth",
+      "domain": "gpu",
+      "bytes": 20971520,
+      "certainty": "estimate",
+      "source": "viewport width x height x 4 depth/stencil bytes x MSAA samples; physical format is backend-dependent"
+    },
+    {
+      "name": "GPU HDR and multisampled color",
+      "domain": "gpu",
+      "bytes": 73400320,
+      "certainty": "estimate",
+      "source": "resolved RGBA16F plus MSAA RGBA16F and surface RGBA8 attachments; excludes driver allocation padding"
+    },
+    {
+      "name": "GPU texture residency",
+      "domain": "gpu",
+      "bytes": 4096,
+      "certainty": "estimate",
+      "source": "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded"
+    },
+    {
+      "name": "GPU live scene views",
+      "domain": "gpu",
+      "bytes": 15564800,
+      "certainty": "estimate",
+      "source": "resolved RGBA8 and RGBA16F, depth/stencil and MSAA color attachments; excludes driver padding"
+    }
+  ],
+  "residentMemoryEstimateBytes": 120430128,
+  "resources": [
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Abilities/Spells/Orc/Bloodlust/BloodLustTarget/geoset-00-animated.glb#pose=1:2",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\billboard-views-1791249467089\\sample\\Assets\\WarcraftIII\\Models\\Abilities\\Spells\\Orc\\Bloodlust\\BloodLustTarget\\geoset-00-animated.glb",
+      "loaded": true,
+      "sourceBytes": 9004,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967301",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        320,
+        320
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967303",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        320,
+        320
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Textures/Red_Glow3.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\billboard-views-1791249467089\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Red_Glow3.png",
+      "loaded": true,
+      "sourceBytes": 2716,
+      "gpuBytesEstimate": 4096,
+      "dimensions": [
+        32,
+        32
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    }
+  ],
+  "resourcesTruncated": false,
+  "resourceSampleAgeMs": 0.0017000000000000001,
+  "counts": {
+    "msaaSamples": 4,
+    "entities": 8,
+    "renderObjects": 1,
+    "sceneViews": 2,
+    "billboardMeshes": 3,
+    "uiPrimitives": 2,
+    "uiBatches": 2,
+    "uiDrawCalls": 2,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialPipelinesRejected": 0,
+    "materialPipelineEvictions": 0,
+    "materialTexturesColor": 1,
+    "materialTexturesData": 0,
+    "materialTextureBindGroups": 1,
+    "materialSamplers": 1
+  }
+}

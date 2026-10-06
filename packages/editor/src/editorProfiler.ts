@@ -51,6 +51,7 @@ export type NativeProfilerResource = {
 export type NativeProfilerCounts = {
   entities: number;
   renderObjects: number;
+  billboardMeshes?: number;
   uiPrimitives: number;
   uiBatches: number;
   uiDrawCalls: number;

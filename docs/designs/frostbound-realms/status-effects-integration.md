@@ -10,7 +10,7 @@
 
 每个单位的状态特效使用独立、默认失活的 `SampledEffect` 实体。实体没有占位网格。特效时间来自模拟帧；单机使用固定步长余量，联机使用收到的权威帧。暂停不推进特效，重连和读档直接恢复当前状态，不需要复播历史事件，也不改变战斗随机数。
 
-嗜血使用左手 `BloodLustTarget` 与右手 `BloodLustSpecial`；闪电护盾使用 `LightningShieldTarget` 与一次性 `LightningShieldBuff`；回城分别使用 `MassTeleportCaster`、目的区域 `MassTeleportTo` 和各乘客到达时的 `MassTeleportTarget`。绑定来自本机四个游戏 MPQ 按补丁优先级读取的 `[Bblo]`、`[Blsh]`、`[AItp]`，原始配置及哈希保存在 `SourceAssets/AbilityArt`。技能实体以子网格应用源材质颜色、透明度及纹理状态，按源时长播放 Birth、Stand 和一次性动画；网格使用引擎支持的整数帧 `#pose=clip:frame@30`。闪电护盾 Birth 阶段网格透明度为零，画面由缎带表现。
+嗜血使用左手 `BloodLustTarget` 与右手 `BloodLustSpecial`；闪电护盾使用 `LightningShieldTarget` 与一次性 `LightningShieldBuff`；回城分别使用 `MassTeleportCaster`、目的区域 `MassTeleportTo` 和各乘客到达时的 `MassTeleportTarget`。绑定来自本机四个游戏 MPQ 按补丁优先级读取的 `[Bblo]`、`[Blsh]`、`[AItp]`，原始配置及哈希保存在 `SourceAssets/AbilityArt`。技能实体以子网格应用源材质颜色、透明度及纹理状态，按源时长播放 Birth、Stand 和一次性动画；网格使用引擎支持的整数帧 `#pose=clip:frame@30`。这 7 个技能模型中 26 处 billboard 标记由引擎按每个相机处理，来源和独立源姿态验证见 [节点相机朝向](billboard-integration.md)。闪电护盾 Birth 阶段网格透明度为零，画面由缎带表现。
 
 成功回城的每个乘客保存权威 `portalArrivalFrame`；本机、客机、读档和重连以同一模拟帧恢复到达效果。该字段必须为非负安全整数且不超过存档帧。嗜血、闪电护盾和回城的可见效果来自上述原版资源。
 
@@ -51,4 +51,4 @@ node scripts/qa-frost-effects.mjs --spell-art
 
 ## 特效精度与后续接入
 
-恢复、残废和建筑火焰等状态效果目前播放 Stand；新接入技能播放 Birth/Stand，一次性效果按源时长结束。效果取消或到期的 Death 过渡尚未接入。MDX 挂点的 KATV 可见性轨道和网格 billboard 节点的相机朝向处理尚未实现，镜头旋转一致性尚未验收。`.mfx` 仍是固定查看器的离散模拟采样，短循环中跨周期的粒子存续、世界空间尾迹、squirt、缎带细节及 Modulate2X 与原版求解器存在差异。其他技能、投射物与命中特效绑定，以及战场悬崖、碰撞和地图编辑器完整复刻仍有未完成项。
+恢复、残废和建筑火焰等状态效果目前播放 Stand；新接入技能播放 Birth/Stand，一次性效果按源时长结束。效果取消或到期的 Death 过渡尚未接入。MDX 挂点的 KATV 可见性轨道尚未应用；其他网格模型的 billboard 元数据及原版镜头行为仍需验证。`.mfx` 仍是固定查看器的离散模拟采样，短循环中跨周期的粒子存续、世界空间尾迹、squirt、缎带细节及 Modulate2X 与原版求解器存在差异。其他技能、投射物与命中特效绑定，以及战场悬崖、碰撞和地图编辑器完整复刻仍有未完成项。

@@ -35,7 +35,7 @@ pub use asset_sidecar::{
 };
 pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
-pub use gltf_pose::{parse_gltf_pose, parse_gltf_pose_sample, GltfPoseSource};
+pub use gltf_pose::{parse_gltf_pose, parse_gltf_pose_sample, GltfBillboardCamera, GltfPoseSource};
 pub use mesh_patch::{parse_mesh_patch_key, MeshPatchSource};
 pub use mesh_surface::{mesh_height_at, raycast_mesh, MeshSurfaceHit};
 pub use sampled_effect::{effect_asset_path, EffectClip, EffectFrame, EffectLight, EffectMaterial, SampledEffectAsset};

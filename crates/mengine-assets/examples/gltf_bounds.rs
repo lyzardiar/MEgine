@@ -2,12 +2,19 @@
 use mengine_assets::{load_gltf_mesh_data, mesh_height_at, parse_gltf_pose_sample, parse_mesh_patch_key, GltfPoseSource, MeshPatchSource};
 use std::path::Path;
 use std::io::BufRead;
+use glam::{Mat4, Vec3};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let positions = std::env::args().any(|arg| arg == "--positions");
     let uvs = std::env::args().any(|arg| arg == "--uvs");
     let normals = std::env::args().any(|arg| arg == "--normals");
     let streamed = std::env::args().any(|arg| arg == "--stdin");
+    let billboard = std::env::args().find_map(|a| a.strip_prefix("--billboard-camera=").map(str::to_owned)).map(|s| -> Result<_,Box<dyn std::error::Error>> {
+        let values=s.split(',').map(str::parse::<f32>).collect::<Result<Vec<_>,_>>()?;
+        let values:[f32;6]=values.try_into().map_err(|_| "billboard camera needs look and up vectors")?;
+        let model=std::env::args().find_map(|a| a.strip_prefix("--billboard-model=").map(str::to_owned)).map(|s| -> Result<_,Box<dyn std::error::Error>> { let v=s.split(',').map(str::parse::<f32>).collect::<Result<Vec<_>,_>>()?;let v:[f32;16]=v.try_into().map_err(|_| "billboard model needs 16 column-major values")?;Ok(Mat4::from_cols_array(&v)) }).transpose()?.unwrap_or(Mat4::IDENTITY);
+        Ok(mengine_assets::GltfBillboardCamera { model,look:Vec3::from_array(values[..3].try_into()?),up:Vec3::from_array(values[3..].try_into()?) })
+    }).transpose()?;
     let grid=std::env::args().find_map(|arg|arg.strip_prefix("--height-grid=").map(str::to_owned)).map(|text| -> Result<[f32;5],Box<dyn std::error::Error>> {
         let values=text.split(',').map(str::parse::<f32>).collect::<Result<Vec<_>,_>>()?;
         let grid:[f32;5]=values.try_into().map_err(|_|"height grid requires x0,z0,x1,z1,count")?;
@@ -30,7 +37,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             patch.as_ref().unwrap().1.compose(cells)?
         } else if let Some((path, clip, frame, rate)) = parse_gltf_pose_sample(&argument) {
             if source.as_ref().map(|s| s.0.as_str()) != Some(path) { source = Some((path.into(),GltfPoseSource::load(Path::new(path))?)); }
-            source.as_ref().unwrap().1.sample_at_rate(clip, frame, rate)?
+            source.as_ref().unwrap().1.sample_with_camera(clip, frame, rate, billboard)?
         } else { load_gltf_mesh_data(Path::new(&argument))? };
         let mut min = [f32::INFINITY; 3];
         let mut max = [f32::NEG_INFINITY; 3];

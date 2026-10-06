@@ -21,7 +21,34 @@ pub fn parse_gltf_pose_sample(reference: &str) -> Option<(&str, usize, u32, u32)
     Some((path, clip, frame, rate))
 }
 
-pub struct GltfPoseSource { document: gltf::Document, buffers: Vec<gltf::buffer::Data> }
+#[derive(Clone, Copy, Debug)]
+pub struct GltfBillboardCamera { pub model: Mat4, pub look: Vec3, pub up: Vec3 }
+
+pub struct GltfPoseSource { document: gltf::Document, buffers: Vec<gltf::buffer::Data>, billboards: Vec<u32> }
+
+fn billboard_matrix(world: Mat4, flags: u32, camera: GltfBillboardCamera) -> Mat4 {
+    let to_camera = -camera.look;
+    let (x, y, z) = if flags & 8 != 0 {
+        let x = to_camera.normalize_or_zero();
+        let y = (camera.up - x*camera.up.dot(x)).normalize_or_zero();
+        (x,y,x.cross(y))
+    } else if flags & 0x40 != 0 {
+        let y = Vec3::Y;
+        let x = (to_camera - y*to_camera.dot(y)).normalize_or_zero();
+        (x,y,x.cross(y))
+    } else if flags & 0x20 != 0 {
+        let z = Vec3::Z;
+        let x = (to_camera - z*to_camera.dot(z)).normalize_or_zero();
+        (x,z.cross(x),z)
+    } else {
+        let x = Vec3::X;
+        let y = (camera.up - x*camera.up.dot(x)).normalize_or_zero();
+        (x,y,x.cross(y))
+    };
+    if x.length_squared() < 0.5 || y.length_squared() < 0.5 || z.length_squared() < 0.5 { return world; }
+    let scale = Vec3::new(world.x_axis.truncate().length(),world.y_axis.truncate().length(),world.z_axis.truncate().length());
+    Mat4::from_cols((x*scale.x).extend(0.0),(y*scale.y).extend(0.0),(z*scale.z).extend(0.0),world.w_axis)
+}
 fn keyframe_segment(times: &[f32], time: f32, step: bool) -> (usize, usize) {
     let upper = times.partition_point(|v| *v <= time);
     let b = if step { upper.saturating_sub(1) } else { upper.min(times.len()-1) };
@@ -30,14 +57,28 @@ fn keyframe_segment(times: &[f32], time: f32, step: bool) -> (usize, usize) {
 impl GltfPoseSource {
     pub fn load(path: &Path) -> Result<Self, AssetError> {
         let (document, buffers, _) = gltf::import(path).map_err(|e| AssetError::Gltf(e.to_string()))?;
-        Ok(Self { document, buffers })
+        let mut billboards = Vec::new();
+        for node in document.nodes() {
+            let extra: Option<serde_json::Value> = node.extras().as_ref().map(|v| serde_json::from_str(v.get()).map_err(|_| AssetError::Gltf("invalid node extras".into()))).transpose()?;
+            let flags = if let Some(value) = extra.as_ref().and_then(|v| v.get("mengineBillboard")) {
+                let flags = value.get("flags").and_then(|v| v.as_u64()).filter(|v| *v > 0 && *v & !0x78 == 0).ok_or_else(|| AssetError::Gltf("invalid node billboard flags".into()))?;
+                flags as u32
+            } else { 0 };
+            billboards.push(flags);
+        }
+        Ok(Self { document, buffers, billboards })
     }
+    pub fn has_billboards(&self) -> bool { self.billboards.iter().any(|v| *v != 0) }
     pub fn sample(&self, clip: usize, frame: u32) -> Result<MeshData, AssetError> {
         self.sample_at_rate(clip, frame, 12)
     }
     pub fn sample_at_rate(&self, clip: usize, frame: u32, rate: u32) -> Result<MeshData, AssetError> {
+        self.sample_with_camera(clip,frame,rate,None)
+    }
+    pub fn sample_with_camera(&self, clip: usize, frame: u32, rate: u32, camera: Option<GltfBillboardCamera>) -> Result<MeshData, AssetError> {
         let fail = |s: &str| AssetError::Gltf(s.into());
         if !(1..=60).contains(&rate) { return Err(fail("skeletal sample rate must be between 1 and 60 Hz")); }
+        if camera.is_some_and(|c| !c.model.is_finite() || !c.look.is_finite() || !c.up.is_finite() || c.model.determinant().abs() < 1e-12) { return Err(fail("invalid billboard camera transform")); }
         let nodes = self.document.nodes().collect::<Vec<_>>();
         let mut trs = nodes.iter().map(|n| { let (t,r,s) = n.transform().decomposed(); (Vec3::from(t), Quat::from_array(r), Vec3::from(s)) }).collect::<Vec<_>>();
         let animation = self.document.animations().nth(clip).ok_or_else(|| fail("animation clip index out of bounds"))?;
@@ -82,8 +123,17 @@ impl GltfPoseSource {
         let mut parents = vec![None; nodes.len()];
         for node in &nodes { for child in node.children() { parents[child.index()] = Some(node.index()); } }
         let local = trs.iter().map(|(t,r,s)| Mat4::from_scale_rotation_translation(*s,*r,*t)).collect::<Vec<_>>();
-        let mut globals = Vec::with_capacity(nodes.len());
-        for i in 0..nodes.len() { let mut m = local[i]; let mut p = parents[i]; let mut depth = 0; while let Some(j) = p { depth += 1; if depth > nodes.len() { return Err(fail("cyclic node hierarchy")); } m = local[j]*m; p=parents[j]; } globals.push(m); }
+        let mut globals = vec![Mat4::IDENTITY;nodes.len()];
+        let mut done = vec![false;nodes.len()];
+        for i in 0..nodes.len() {
+            let mut chain = Vec::new();let mut node = Some(i);
+            while let Some(j) = node { if done[j] { break; } chain.push(j);if chain.len() > nodes.len() { return Err(fail("cyclic node hierarchy")); } node=parents[j]; }
+            for j in chain.into_iter().rev() {
+                let mut world = parents[j].map_or(local[j],|p| globals[p]*local[j]);
+                if self.billboards[j] != 0 { if let Some(camera) = camera { world=camera.model.inverse()*billboard_matrix(camera.model*world,self.billboards[j],camera); } }
+                globals[j]=world;done[j]=true;
+            }
+        }
         let mut out = MeshData { positions:vec![], normals:vec![], uvs:vec![], indices:vec![] };
         for node in &nodes {
             let Some(mesh) = node.mesh() else { continue; };
@@ -138,6 +188,27 @@ impl GltfPoseSource {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn billboard_keeps_pivot_and_scale_while_facing_the_camera() {
+        let world=Mat4::from_scale_rotation_translation(Vec3::new(2.0,3.0,4.0),Quat::from_rotation_y(1.2),Vec3::new(7.0,9.0,-2.0));
+        let camera=GltfBillboardCamera { model:Mat4::IDENTITY,look:Vec3::new(-1.0,-1.0,-1.0).normalize(),up:Vec3::Y };
+        let result=billboard_matrix(world,8,camera);
+        assert_eq!(result.w_axis,world.w_axis);
+        assert!((result.x_axis.truncate().length()-2.0).abs()<1e-6);
+        assert!((result.y_axis.truncate().length()-3.0).abs()<1e-6);
+        assert!((result.z_axis.truncate().length()-4.0).abs()<1e-6);
+        assert!(result.x_axis.truncate().normalize().dot(-camera.look)>0.99999);
+        assert!(result.x_axis.dot(result.y_axis).abs()<1e-6);
+        assert!(result.determinant()>0.0);
+    }
+    #[test]
+    fn locked_billboards_keep_the_source_axis_and_degenerate_views_keep_the_pose() {
+        let world=Mat4::from_rotation_z(0.7);
+        let mut camera=GltfBillboardCamera { model:Mat4::IDENTITY,look:Vec3::new(-1.0,-2.0,-3.0).normalize(),up:Vec3::Y };
+        for (flags,axis) in [(0x10,0),(0x40,1),(0x20,2)] { let m=billboard_matrix(world,flags,camera);assert!(m.col(axis).truncate().dot([Vec3::X,Vec3::Y,Vec3::Z][axis])>0.99999); }
+        camera.look=Vec3::Y;assert_eq!(billboard_matrix(world,0x40,camera),world);
+        camera.look=Vec3::ZERO;assert_eq!(billboard_matrix(world,8,camera),world);
+    }
     #[test]
     fn pose_references_are_bounded() {
         assert_eq!(parse_gltf_pose("Assets/hero.glb#pose=2:12"),Some(("Assets/hero.glb",2,12)));

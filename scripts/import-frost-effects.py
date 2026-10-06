@@ -26,10 +26,11 @@ def main():
     parser.add_argument('--sampler', type=pathlib.Path, required=True)
     parser.add_argument('--output', type=pathlib.Path, default=SAMPLE)
     parser.add_argument('--game', type=pathlib.Path, default=pathlib.Path(r'E:\Program Files (x86)\dzclient\Game\Warcraft III Frozen Throne'))
+    parser.add_argument('--geometry-library', type=pathlib.Path, default=LIBRARY / 'billboard-ready')
     args = parser.parse_args()
     output = args.output.resolve()
     generated, catalog, sources, attachments, textures = {}, {}, [], {}, {}
-    geometry = LIBRARY / 'remaining-ready'
+    geometry = args.geometry_library.resolve()
     geometry_catalog = {m['id'].lower(): m for m in json.loads((geometry / 'Assets/WarcraftIII/model-catalog.json').read_text())['models']}
     geometry_receipt = json.loads((geometry / 'asset-sources.json').read_text())
     geometry_files = {f['path'].lower(): f for f in geometry_receipt['generatedFiles']}
@@ -151,7 +152,7 @@ def main():
         destination.parent.mkdir(parents=True, exist_ok=True)
         if not destination.exists() or destination.read_bytes() != raw:
             destination.write_bytes(raw)
-    manifest = dict(samplerSha256=digest(args.sampler.read_bytes()), importerSha256=digest(pathlib.Path(__file__).read_bytes()), upstream=receipt['upstream'], sources=sources, textureSources=textures, artDefinitions=art_definitions, attachmentModels=len(cache), files=[dict(path=p, sha256=digest(raw), bytes=len(raw)) for p, raw in sorted(generated.items())])
+    manifest = dict(samplerSha256=digest(args.sampler.read_bytes()), importerSha256=digest(pathlib.Path(__file__).read_bytes()), geometryCollection=geometry.name, geometryReceiptSha256=digest((geometry / 'asset-sources.json').read_bytes()), upstream=receipt['upstream'], sources=sources, textureSources=textures, artDefinitions=art_definitions, attachmentModels=len(cache), files=[dict(path=p, sha256=digest(raw), bytes=len(raw)) for p, raw in sorted(generated.items())])
     manifest_path.write_bytes(encode(manifest))
     print(f'PASS imported {len(catalog)} original effects, {len(cache)} model attachment tracks, {len(generated)} protected files')
 

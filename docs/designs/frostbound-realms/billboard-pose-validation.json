@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "models": 7,
+  "geometryParts": 27,
+  "billboardAnnotations": 26,
+  "nativeLoads": 757,
+  "comparedVertices": 26496,
+  "maxPositionError": 0.0001785169242858875,
+  "cameraViews": 4,
+  "nonuniformScaleFacesCamera": true,
+  "binaryBuffersPreserved": true,
+  "probeSha256": "b0569372236213e35b71cab6b6b495640fbdc76f801c1edbf6f9f7957f355502",
+  "referenceSha256": "7c5fa317de450d61ab507dc981f346729625c22f48e67b42fb5fd17a081ab462",
+  "scope": "Independent pinned MDX evaluator against native node billboard poses, including overhead cameras, actor yaw, all source clips and exact endpoints. GPU and multiple view rendering are checked separately."
+}

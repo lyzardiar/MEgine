@@ -1682,7 +1682,7 @@ function onTick(dt, frame) {
                             );
                         }
                     }
-                    for failure in self.meshes.sync(r, &frame.resource_objects()) {
+                    for failure in self.meshes.sync_frame(r, &mut frame) {
                         log::warn!(
                             "Mesh '{}' could not be loaded from {}: {}",
                             failure.key,

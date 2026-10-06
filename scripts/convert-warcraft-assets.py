@@ -220,6 +220,8 @@ def animated_mesh(sample, g, uv, positions, normals, layer=None):
         pivot = AXES @ vectors([node['pivot']])[0] / 128
         parent_pivot = AXES @ vectors([model['nodes'][parents[old]]['pivot']])[0] / 128 if parents[old] >= 0 else np.zeros(3)
         item = dict(name=node['name'], translation=(pivot-parent_pivot).tolist())
+        if node['flags'] & 0x78:
+            item['extras'] = dict(mengineBillboard=dict(flags=node['flags'] & 0x78))
         children = [remap[j] for j in used if parents[j] == old]
         if children:
             item['children'] = children

@@ -11,6 +11,6 @@
   "particles": 1906,
   "ribbonQuads": 5277,
   "lights": 82,
-  "probeSha256": "a036b319536ef17e4aba0edc046f2774a9ba4daaf033d8b5c8453ea9e7f011b4",
+  "probeSha256": "b0569372236213e35b71cab6b6b495640fbdc76f801c1edbf6f9f7957f355502",
   "scope": "Source and imported hashes, native geometry pose loading and non-looping endpoint clamping. Game View and TCP checks are recorded separately."
 }
