@@ -1,0 +1,93 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\console-layout-1791307145816\\sample",
+  "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
+  "factions": [],
+  "viewports": [],
+  "physicalInput": false,
+  "audioListening": false,
+  "editorViewports": [
+    {
+      "input": [
+        1280,
+        720
+      ],
+      "containedControls": true,
+      "noInfoOverlap": true,
+      "minimapClick": true,
+      "saveClick": true,
+      "pageClick": true
+    },
+    {
+      "input": [
+        1024,
+        768
+      ],
+      "containedControls": true,
+      "noInfoOverlap": true,
+      "minimapClick": true,
+      "saveClick": true,
+      "pageClick": true
+    },
+    {
+      "input": [
+        1920,
+        1080
+      ],
+      "containedControls": true,
+      "noInfoOverlap": true,
+      "minimapClick": true,
+      "saveClick": true,
+      "pageClick": true
+    },
+    {
+      "input": [
+        2560,
+        1080
+      ],
+      "containedControls": true,
+      "noInfoOverlap": true,
+      "minimapClick": true,
+      "saveClick": true,
+      "pageClick": true
+    }
+  ],
+  "editorRects": {
+    "frame": {
+      "x": 269,
+      "y": 260,
+      "w": 1164.6666666666667,
+      "h": 200
+    },
+    "first": {
+      "x": 218.3333282470703,
+      "y": 214,
+      "w": 137,
+      "h": 42
+    },
+    "last": {
+      "x": 659.3333129882812,
+      "y": 314,
+      "w": 137,
+      "h": 42
+    }
+  },
+  "shaderRejections": 0,
+  "sourceValidation": [
+    {
+      "path": "samples/frostbound-realms/game/client.js",
+      "nativeRawSha256": "3135f1b967ee8fe95fd2713de05a75ff7e2c809741407af2988615217ea2b6ec",
+      "nativeGitBlob": "c32aa2ad5d3bddc81292ac352eac0ffe25ea700a",
+      "stagedGitBlob": "c32aa2ad5d3bddc81292ac352eac0ffe25ea700a",
+      "gitFilterApplied": true
+    },
+    {
+      "path": "samples/frostbound-realms/game/hud.js",
+      "nativeRawSha256": "56f251d3d28ea7b4aa63737d72ae067b449b8cfb5850674fa85469621910bc88",
+      "nativeGitBlob": "c8cc7cc29893ce82e65a86a21bbe781a294fd216",
+      "stagedGitBlob": "c8cc7cc29893ce82e65a86a21bbe781a294fd216",
+      "gitFilterApplied": true
+    }
+  ]
+}

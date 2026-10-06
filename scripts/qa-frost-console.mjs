@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
+const editorOnly=process.argv.includes('--editor-only');
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),tag=Number(process.env.MENGINE_QA_TAG)||Date.now(),prefix='console-layout',root=path.join(process.env.MENGINE_QA_ROOT||'D:/MEngineNativeQA',prefix+'-'+tag),sample=path.join(root,'sample'),out=path.join(repo,'docs/designs/frostbound-realms');
 fs.cpSync(source,sample,{recursive:true,filter:p=>!['SourceAssets','Builds'].includes(path.basename(p))});
 const project=JSON.parse(fs.readFileSync(path.join(sample,'project.json')));project.storageId=prefix+'-'+tag;fs.writeFileSync(path.join(sample,'project.json'),JSON.stringify(project));
@@ -26,14 +27,14 @@ try{
  await query('project.state');try{await execute('project.open',{root:sample});}catch(e){if(!/workspace is still loading|A project is already open|lifecycle is busy|request timed out|did not finish loading/.test(e.message))throw e;}
  await until(async()=>{const p=await query('project.state');return p.ready&&p.editorReady&&path.resolve(p.project.root)===path.resolve(sample);},'project');
  await execute('view.set_game_resolution',{resolution:{width:1280,height:720}});await execute('panel.focus',{kind:'game'});await execute('playback.play',{paused:true});await step();
- for(let faction=0;faction<4;faction++){
+ for(let faction=0;faction<(editorOnly?0:4);faction++){
   const map=S.defaultMap();map.name='Console proportions';map.tileset=1;map.triggers=[];map.units=[];const s=S.create('skirmish',{map,factions:[faction,faction],ai:[false,false]});s.units=[];s.resources=[];
   S.spawn(s,'hall',0,-9,5,{upgradeTier:3});S.spawn(s,'farm',0,2,5);const hero=S.spawn(s,'hero',0,-4,-4);hero.inventory=[6];hero.hp=200;S.spawn(s,'worker',0,2,-4);S.visibility(s);await load(S.restore(s));
   let world=await snapshot();const skin=['human','orc','night-elf','undead'][faction];for(let i=0;i<9;i++){const e=world.entities.find(e=>e.name==='HUD Console '+i);assert.equal(e.active,true);assert.equal(e.components.Image.sprite,'Assets/Art/console-'+skin+'-'+i+'.png');}assert.equal(world.entities.find(e=>e.name==='HUD Frame Info').active,false);assert.equal(world.entities.find(e=>e.name==='HUD Live portrait').active,true);
   await click('item0 box');assert.ok((await state()).hero.hp>200,'visible item slot uses the carried healing potion');await capture('console-layout-'+skin);report.factions.push({faction,sourceConsolePieces:9,itemClick:true});console.log('PASS native original console faction',faction);
  }
- for(const viewport of [[1024,768],[1920,1080],[2560,1080]]){
-  qaViewport=viewport;await execute('view.set_game_resolution',{resolution:{width:viewport[0],height:viewport[1]}});await execute('playback.input',{viewport});await step();await key('Space');
+ for(const viewport of (editorOnly?[]:[[1024,768],[1920,1080],[2560,1080]])){
+  qaViewport=viewport;await execute('view.set_game_resolution',{resolution:{width:viewport[0],height:viewport[1]}});await execute('playback.input',{viewport});await execute('playback.step',{deltaTime:.1,steps:1});await key('Space');
   const world=await snapshot(),v=H.viewport({viewport}),r=n=>H.rect(world.entities.find(e=>e.name===n).components.RectTransform,{viewport});
   for(const n of ['Minimap','HUD Live portrait','action0 box','action11 box','item0 box','item5 box','hudMenu box','HUD Gold value']){const p=r(n);assert.ok(p.x-p.w/2>=-v.width/2-1&&p.x+p.w/2<=v.width/2+1&&p.y-p.h/2>=-v.height/2-1&&p.y+p.h/2<=v.height/2+1,n+' stays within viewport');}
   const center=r('HUD Console 6'),left=r('HUD Console 5'),right=r('HUD Console 7');assert.ok(Math.abs(center.x-center.w/2-(left.x+left.w/2))<1e-3&&Math.abs(center.x+center.w/2-(right.x-right.w/2))<1e-3,'source console joins remain continuous across aspect ratios');
@@ -41,6 +42,19 @@ try{
   await key('Space');await click('action0 box');assert.equal((await state()).qaArmed?.type,'move');await key('Escape');
   const name='console-layout-'+viewport.join('x');await capture(name);const raw=fs.readFileSync(path.join(out,name+'.png'));const actual=[raw.readUInt32BE(16),raw.readUInt32BE(20)];report.viewports.push({input:viewport,capture:actual,scale:v.scale,menuClick:true,minimapClick:true,commandClick:true});console.log('PASS native viewport',viewport.join('x'),'capture',actual.join('x'));
  }
+ await key('F10');await key('KeyX');await key('F4');assert.equal((await state()).mode,'editor');report.editorViewports=[];
+ for(const viewport of [[1280,720],[1024,768],[1920,1080],[2560,1080]]){
+  qaViewport=viewport;await execute('view.set_game_resolution',{resolution:{width:viewport[0],height:viewport[1]}});await execute('playback.input',{viewport});await execute('playback.step',{deltaTime:.1,steps:1});
+  const world=await snapshot(),input={viewport},v=H.viewport(input),r=n=>H.rect(world.entities.find(e=>e.name===n).components.RectTransform,input);
+  report.editorRects={frame:r('HUD Frame Commands'),first:r('action0 box'),last:r('action11 box')};
+  const contains=(outer,inner)=>inner.x-inner.w/2>=outer.x-outer.w/2-.01&&inner.x+inner.w/2<=outer.x+outer.w/2+.01&&inner.y-inner.h/2>=outer.y-outer.h/2-.01&&inner.y+inner.h/2<=outer.y+outer.h/2+.01;
+  for(const [frame,children] of [['Minimap',['Minimap']],['Portrait',['Portrait']],['Info',['Selection title','Selection stats','Selection queue']],['Commands',Array.from({length:12},(_,i)=>'action'+i+' box')]])for(const child of children)assert.ok(contains(r('HUD Frame '+frame),r(child)),child+' stays in editor '+frame+' panel');
+  const info=r('HUD Frame Info');for(let i=0;i<12;i++)assert.ok(r('action'+i+' box').x-r('action'+i+' box').w/2>info.x+info.w/2,'editor commands stay clear of information');
+  for(const n of ['HUD Frame Minimap','HUD Frame Portrait','HUD Frame Info','HUD Frame Commands'])assert.ok(contains({x:0,y:0,w:v.width,h:v.height},r(n)),n+' stays in viewport');
+  const mini=r('Minimap'),tile=r('Mini tile 0');assert.ok(contains(mini,tile));assert.equal(world.entities.find(e=>e.name==='HUD Frame Inventory').active,false);
+  await click('Minimap');assert.ok((await state()).camera.every(n=>Math.abs(n)<1e-6));await click('action9 box');assert.match((await state()).notice,/Saved map/);for(let i=0;i<8;i++)await key('KeyV');assert.equal((await state()).editorPage,8);await click('action8 box');assert.equal((await state()).editorPage,9);await key('KeyV');assert.equal((await state()).editorPage,0);
+  const labels=await snapshot();assert.match(labels.entities.find(e=>e.name==='action0 label').components.Text.text,/Ground/,'editor page labels match the current page');await capture('console-editor-'+viewport.join('x'));report.editorViewports.push({input:viewport,containedControls:true,noInfoOverlap:true,minimapClick:true,saveClick:true,pageClick:true});console.log('PASS native editor layout',viewport.join('x'));
+ }
  const profile=await query('profiler.get_samples',{source:'game',limit:20}),logs=await query('console.get_logs',{limit:100});assert.equal(profile.nativeLatest.counts.materialPipelinesRejected,0);assert.ok(!logs.some(l=>l.level==='error'),JSON.stringify(logs));report.shaderRejections=0;report.passed=true;
 }catch(e){report.error=e.stack;try{report.logs=await query('console.get_logs',{limit:40});await capture('console-layout-failure');}catch{}process.exitCode=1;console.error(e.stack);}
-finally{fs.writeFileSync(path.join(out,'native-console-layout-qa.json'),JSON.stringify(report,null,2)+'\n');try{await execute('playback.stop');}catch{}closeBridgeConnection();}
+finally{fs.writeFileSync(path.join(out,editorOnly?'native-editor-layout-qa.json':'native-console-layout-qa.json'),JSON.stringify(report,null,2)+'\n');try{await execute('playback.stop');}catch{}closeBridgeConnection();}

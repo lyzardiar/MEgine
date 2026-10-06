@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-const root=new URL('../samples/frostbound-realms/',import.meta.url),source=['simulation','terrain','visuals','client'].map(name=>fs.readFileSync(new URL('game/'+name+'.js',root),'utf8')).join('\n'),world=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world,catalog=JSON.parse(fs.readFileSync(new URL('model-catalog.json',root)));
+const root=new URL('../samples/frostbound-realms/',import.meta.url),source=fs.readFileSync(new URL('Assets/Scripts/Main.js',root),'utf8'),world=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world,catalog=JSON.parse(fs.readFileSync(new URL('model-catalog.json',root)));
 function client(){
   const commands=[],inbox=[],engine={snapshot:structuredClone(world),network:{poll:()=>inbox.splice(0),close(){},send(){},connect(){}},storage:{load:()=>null,save(){}},setActive(){},playAudio(){},pushCommandJson:command=>commands.push(JSON.parse(command))};
   const buttons=world.entities.filter(e=>/^action\d+ box$/.test(e.name)).map(e=>{const r=e.components.RectTransform;return {id:e.name.split(' ')[0],group:'hud',x:r.anchored_position[0],y:r.anchored_position[1],w:r.size_delta[0],h:r.size_delta[1]};});

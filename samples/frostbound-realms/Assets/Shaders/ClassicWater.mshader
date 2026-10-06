@@ -1,0 +1,45 @@
+/* MENGINE_PARAMETERS
+{"parameters":[{"name":"cells0","type":"vector4","default":[1,1,1,1]},{"name":"cells1","type":"vector4","default":[1,1,1,1]},{"name":"cells2","type":"vector4","default":[1,1,1,1]},{"name":"cells3","type":"vector4","default":[1,1,1,1]},{"name":"cells4","type":"vector4","default":[1,1,1,1]},{"name":"cells5","type":"vector4","default":[1,1,1,1]},{"name":"cells6","type":"vector4","default":[1,1,1,1]},{"name":"cells7","type":"vector4","default":[1,1,1,1]},{"name":"cells8","type":"vector4","default":[1,1,1,1]},{"name":"tileset","type":"vector4","default":[0,0,0,0]},{"name":"water_layer","type":"vector4","default":[2,0,0,0]},{"name":"water_time","type":"vector4","default":[0,15,45,2]},{"name":"water_Smin","type":"vector4","default":[1,1,1,0.0392156862745098]},{"name":"water_Smax","type":"vector4","default":[0.4588235294117647,0.4588235294117647,0.7843137254901961,0.8588235294117647]},{"name":"water_Dmin","type":"vector4","default":[0.4588235294117647,0.4588235294117647,0.7843137254901961,0.8588235294117647]},{"name":"water_Dmax","type":"vector4","default":[0.3764705882352941,0.3764705882352941,0.7529411764705882,0.9803921568627451]}],"textures":[{"name":"water","type":"color","default":"Assets/Textures/Classic/water.png"}]}
+*/
+fn frost_cell(p: vec2<i32>) -> f32 {
+    var data=array<vec4<f32>,9>(mengine_param_cells0(),mengine_param_cells1(),mengine_param_cells2(),mengine_param_cells3(),mengine_param_cells4(),mengine_param_cells5(),mengine_param_cells6(),mengine_param_cells7(),mengine_param_cells8());
+    let i=u32(clamp(p.y,0,5)*6+clamp(p.x,0,5));return data[i/4u][i%4u];
+}
+fn frost_values(p: vec2<f32>) -> vec4<f32> {
+    let cell=vec2<i32>(floor((p-object.model[3].xz+vec2<f32>(4.0))*0.5+vec2<f32>(0.5)));
+    return vec4<f32>(frost_cell(cell),frost_cell(cell+vec2<i32>(1,0)),frost_cell(cell+vec2<i32>(0,1)),frost_cell(cell+vec2<i32>(1,1)));
+}
+fn frost_weights(p: vec2<f32>) -> vec4<f32> {
+    let f=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract((p-object.model[3].xz+vec2<f32>(4.0))*0.5+vec2<f32>(0.5)));
+    return vec4<f32>((1.0-f.x)*(1.0-f.y),f.x*(1.0-f.y),(1.0-f.x)*f.y,f.x*f.y);
+}
+fn frost_noise(p: vec2<f32>) -> f32 {
+    let cell=floor(p);let f=smoothstep(vec2<f32>(0.0),vec2<f32>(1.0),fract(p));
+    let corners=vec4<f32>(dot(cell,vec2<f32>(127.1,311.7)),dot(cell+vec2<f32>(1.0,0.0),vec2<f32>(127.1,311.7)),dot(cell+vec2<f32>(0.0,1.0),vec2<f32>(127.1,311.7)),dot(cell+vec2<f32>(1.0,1.0),vec2<f32>(127.1,311.7)));
+    let v=fract(sin(corners)*43758.5453);return mix(mix(v.x,v.y,f.x),mix(v.z,v.w,f.x),f.y);
+}
+// Author: MiYu. Water.slk selects original frames at 15 FPS on the shared world-space tile lattice.
+fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
+    var s=surface;let p=world_position.xz;let animation=mengine_param_water_time();
+    let frame=u32(floor(max(0.0,animation.x)*animation.y))%u32(animation.z);
+    let lattice=(p+vec2<f32>(31.0))/(2.0*animation.w);let local=fract(lattice);
+    let offset=vec2<f32>(f32(frame%8u)*132.0+2.0,f32(frame/8u)*132.0+2.0);
+    let atlas_uv=(offset+local*128.0)/vec2<f32>(1056.0,792.0);
+    let pixel=textureSampleGrad(mengine_custom_texture_0,material_sampler,atlas_uv,dpdx(lattice)*vec2<f32>(128.0/1056.0,128.0/792.0),dpdy(lattice)*vec2<f32>(128.0/1056.0,128.0/792.0));
+    let drift=vec2<f32>(frost_noise(p*0.42),frost_noise(p*0.42+vec2<f32>(37.0,19.0)))-vec2<f32>(0.5);
+    let shore=p+drift*0.55;let values=frost_values(shore);
+    let water=dot(select(vec4<f32>(0.0),vec4<f32>(1.0),floor(values*0.5)%vec4<f32>(3.0)==vec4<f32>(1.0)),frost_weights(shore));
+    let depth=clamp((water-0.5)*2.0,0.0,1.0);
+    // MiYu: continuous tint transitions adapt the source shallow/deep colors to the sample's river coverage.
+    let shallow=mix(mengine_param_water_Smin(),mengine_param_water_Smax(),smoothstep(0.0,0.45,depth));
+    let middle=mix(shallow,mengine_param_water_Dmin(),smoothstep(0.45,0.55,depth));
+    let tint=mix(middle,mengine_param_water_Dmax(),smoothstep(0.55,1.0,depth));
+    if water<=0.5 {discard;}
+    s.base_color=pixel.rgb*pow(tint.rgb,vec3<f32>(2.2));s.alpha=pixel.a*tint.a;
+    s.normal=normalize(surface.normal);s.roughness=0.4;s.metallic=0.0;s.emissive=s.base_color*0.12;
+    return s;
+}
+fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, world_position: vec3<f32>, world_normal: vec3<f32>) -> vec4<f32> {
+    let values=frost_values(world_position.xz);let fog=dot(values-floor(values*0.5)*2.0,frost_weights(world_position.xz));
+    return vec4<f32>(mix(vec3<f32>(0.012,0.025,0.038),color.rgb,smoothstep(0.05,1.0,fog)),color.a);
+}

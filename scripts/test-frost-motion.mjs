@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const root=new URL('../samples/frostbound-realms/',import.meta.url),world=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world;
-const source=['simulation','terrain','visuals','client'].map(n=>fs.readFileSync(new URL('game/'+n+'.js',root),'utf8')).join('\n'),commands=[],current=new Map(),active=new Map(),inbox=[];
+const source=fs.readFileSync(new URL('Assets/Scripts/Main.js',root),'utf8'),commands=[],current=new Map(),active=new Map(),inbox=[];
 const engine={snapshot:JSON.parse(JSON.stringify(world)),network:{poll:()=>inbox.splice(0),close(){},send(){},connect(){}},storage:{load:()=>null,save(){}},setActive:(id,on)=>active.set(id,on),playAudio(){},pushCommandJson:raw=>{const c=JSON.parse(raw);commands.push(c);current.set(c.entity+'/'+c.component,c.value);}};
 const context=vm.createContext({FrostItemCatalog:JSON.parse(fs.readFileSync(new URL('game/racial-items.json',root))),engine,FrostArt:JSON.parse(fs.readFileSync(new URL('model-catalog.json',root))),FrostPortraitViews:Object.fromEntries(JSON.parse(fs.readFileSync(new URL('head-portraits.json',root))).views.map(v=>[v.key,v])),FrostButtons:[]});vm.runInContext(source,context);
 vm.runInContext(`const motionCreate=Frost.create;Frost.create=(mode,options)=>{const s=motionCreate(mode,options);if(mode!=='skirmish')return s;s.map.terrain.fill(0);s.map.heights.fill(0);s.map.relief.fill(0);s.map.ramps.fill(0);s.resources=[];const h=Frost.spawn(s,'hero',0,0,0);s.units=[h];h.x=0;h.z=0;h.order={type:'move',x:8,z:0};s.teams.forEach(t=>t.ai=false);Frost.visibility(s);globalThis.motionState=s;return s;};`,context);
@@ -34,6 +34,8 @@ send(8,-12,undefined,true);assert.equal(model()[0],-12,'joining or resuming clea
 tick(.001,['Escape']);snapshot.map.terrain[10*32+16]=1;send(31,-12);tick(.09);
 const water=world.entities.filter(e=>e.name.startsWith('Water ')&&active.get(e.entity));assert.ok(water.length>0);
 for(const e of water){const mesh=current.get(e.entity+'/MeshRenderer'),block=current.get(e.entity+'/MaterialPropertyBlock');assert.match(mesh.mesh,/^terrain4w:/);assert.equal(mesh.cast_shadows,false);assert.equal(block.custom_parameter_values[block.custom_parameter_names.indexOf('water_layer')][0],2);assert.equal(block.custom_parameter_values[block.custom_parameter_names.indexOf('water_time')][0],3.1);assert.equal(active.get(entity(e.name.replace('Water ','Riverbed '))),true);}
-send(32,-12);tick(.09);assert.equal(value(water[0].name,'MaterialPropertyBlock').custom_parameter_values.at(-1)[0],3.2);
+send(32,-12);tick(.09);const phaseBlock=value(water[0].name,'MaterialPropertyBlock');assert.equal(phaseBlock.custom_parameter_values[phaseBlock.custom_parameter_names.indexOf('water_time')][0],3.2);
 snapshot.map.terrain.fill(0);send(33,-12);tick(.09);assert.ok(water.every(e=>active.get(e.entity)===false),'dry authoritative map removes water layers');
+engine.input={...engine.input,viewport:[2560,1080],pressedKeys:[],pressedButtons:[],releasedButtons:[]};context.onTick(.001);assert.equal(value('Interface','CanvasScaler').match_width_or_height,1,'viewport resize refreshes UI in the first tick');
+tick(.001,['F10']);tick(.001,['KeyX']);tick(.001,['F4']);assert.match(value('action0 label','Text').text,/Ground/);tick(.001,['KeyV']);assert.ok(value('action0 label','Text').text.includes(context.Frost.types.soldier.label),'editor page labels refresh on the page-change tick');
 console.log('PASS: per-frame movement, walking, picking, immediate HUD, pause, camera, new-game reset, network interpolation, hidden units, snapshot rewind/gap, blink and rejoin');

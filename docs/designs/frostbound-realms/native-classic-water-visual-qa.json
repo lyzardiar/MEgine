@@ -1,0 +1,34 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\classic-water-1791306487760\\sample",
+  "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
+  "shaderSha256": "cf4ed86032f015662048cbfbe4a64122b5026a2f7bbc2f23ad2c47ad7dfcce0e",
+  "palettes": [
+    {
+      "name": "winter",
+      "wetChunks": 16,
+      "phase": 2.1000001430511475
+    },
+    {
+      "name": "forest",
+      "wetChunks": 16,
+      "phase": 2.700000047683716
+    },
+    {
+      "name": "barrens",
+      "wetChunks": 16,
+      "phase": 2.9000000953674316
+    }
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "originalFramePixelDifference": [
+    3.158533333333333,
+    3.7661,
+    5.550666666666666
+  ],
+  "shaderRejections": [
+    0
+  ]
+}

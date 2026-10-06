@@ -1,0 +1,1 @@
+Original Warcraft III water frames and TerrainArt/Water.slk: Blizzard Entertainment. Original game asset terms and copyright remain applicable. Source archives, hashes and runtime adaptations are recorded in classic-water-sources.json.

@@ -1,7 +1,7 @@
 {
   "author": "MiYu",
   "passed": true,
-  "sample": "D:\\MEngineNativeQA\\console-layout-1791296883563\\sample",
+  "sample": "D:\\MEngineNativeQA\\console-layout-1791305814221\\sample",
   "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
   "factions": [
     {
@@ -71,5 +71,71 @@
   ],
   "physicalInput": false,
   "audioListening": false,
+  "editorViewports": [
+    {
+      "input": [
+        1280,
+        720
+      ],
+      "containedControls": true,
+      "noInfoOverlap": true,
+      "minimapClick": true,
+      "saveClick": true,
+      "pageClick": true
+    },
+    {
+      "input": [
+        1024,
+        768
+      ],
+      "containedControls": true,
+      "noInfoOverlap": true,
+      "minimapClick": true,
+      "saveClick": true,
+      "pageClick": true
+    },
+    {
+      "input": [
+        1920,
+        1080
+      ],
+      "containedControls": true,
+      "noInfoOverlap": true,
+      "minimapClick": true,
+      "saveClick": true,
+      "pageClick": true
+    },
+    {
+      "input": [
+        2560,
+        1080
+      ],
+      "containedControls": true,
+      "noInfoOverlap": true,
+      "minimapClick": true,
+      "saveClick": true,
+      "pageClick": true
+    }
+  ],
+  "editorRects": {
+    "frame": {
+      "x": 269,
+      "y": 260,
+      "w": 1164.6666666666667,
+      "h": 200
+    },
+    "first": {
+      "x": 218.3333282470703,
+      "y": 214,
+      "w": 137,
+      "h": 42
+    },
+    "last": {
+      "x": 659.3333129882812,
+      "y": 314,
+      "w": 137,
+      "h": 42
+    }
+  },
   "shaderRejections": 0
 }

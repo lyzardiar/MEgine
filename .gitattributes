@@ -49,3 +49,9 @@ scripts/import-frost-effects.py text eol=lf
 idl/components/core.idl whitespace=cr-at-eol
 
 scripts/import-frost-console.py text eol=lf
+
+scripts/import-frost-water.py text eol=lf
+samples/frostbound-realms/classic-water-sources.json text eol=lf
+samples/frostbound-realms/water-catalog.json text eol=lf
+samples/frostbound-realms/SourceAssets/WarcraftIII/TerrainArt/Water.slk -text whitespace=cr-at-eol
+samples/frostbound-realms/SourceAssets/WarcraftIII/ReplaceableTextures/Water/*.blp binary
