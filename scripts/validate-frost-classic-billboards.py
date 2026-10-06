@@ -15,8 +15,8 @@ parser.add_argument('--reference', type=pathlib.Path, default=ROOT / 'tmp/warcra
 args = parser.parse_args()
 sample = ROOT / 'samples/frostbound-realms'
 imported = json.loads((sample / 'classic-sources.json').read_bytes())
-library=ROOT/'asset-library/warcraft-iii'/imported['billboardCollection']
-attachment_nodes=library.name=='classic-attachment-ready'
+library=ROOT/imported.get('billboardPath', 'asset-library/warcraft-iii/'+imported['billboardCollection'])
+attachment_nodes=json.loads((library/'asset-sources.json').read_bytes())['generator']=='scripts/convert-frost-classic-attachments.py'
 overrides, receipt_sha, receipt = converter.load_overlay(library)
 assert imported['billboardReceiptSha256'] == receipt_sha
 for record in imported['files']:

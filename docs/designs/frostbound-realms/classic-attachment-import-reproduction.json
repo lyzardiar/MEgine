@@ -1,7 +1,7 @@
 {
   "passed": true,
-  "reproducedLibraryFiles": 1253,
-  "reproducedImportedFiles": 4956,
+  "reproducedLibraryFiles": 1272,
+  "reproducedImportedFiles": 5027,
   "modifiedLibraryProtected": true,
   "modifiedImportProtected": true,
   "refusalsLeaveOutputsUnchanged": true

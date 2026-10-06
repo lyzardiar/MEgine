@@ -187,7 +187,7 @@ def main():
             bind(faction + suffix, model, building=True)
         for tier in [2, 3]:
             bind(faction + 'Hall' + str(tier), values[0], tier=tier, building=True)
-    for key, model in {'KingdomArcaneVault': 'ArcaneVault', 'HauntedMine': 'HauntedMine', 'RealTemple': 'TempleOfTheDamned', 'RevenantTower': 'Ziggurat', 'ClassicSpiritLodge': 'SpiritLodge'}.items():
+    for key, model in {'KingdomArcaneVault': 'ArcaneVault', 'HauntedMine': 'HauntedMine', 'ClassicEntangledMine': 'EntangledGoldmine', 'RealTemple': 'TempleOfTheDamned', 'RevenantTower': 'Ziggurat', 'ClassicSpiritLodge': 'SpiritLodge'}.items():
         bind(key, model, building=True)
     for key, tier in [('RevenantSpiritTower', 2), ('RevenantNerubianTower', 3)]:
         bind(key, 'Ziggurat', tier=tier, building=True)
@@ -259,7 +259,9 @@ def main():
     write(catalog_path, catalog)
     imported_sources = {(s['pack'], node_billboards.key(s['model'])) for s in sources}
     assert imported_sources == {(s['pack'], node_billboards.key(s['path'])) for s in billboard_manifest['sourceFiles']}, 'Node billboard source selection must match classic bindings'
-    report = dict(generator='scripts/import-frost-classic.py', models=sources, files=[files[p] for p in sorted(files)], sourceLibrary='asset-library/warcraft-iii', billboardCollection=args.billboard_library.name, billboardReceiptSha256=billboard_receipt, nodeAnimationParts=len(overrides), billboardParts=sum(bool(a['nodes']) for a in billboard_manifest['annotations']), poseProbeSha256=digest(pathlib.Path(args.pose_probe).read_bytes()), boundsReferences=len(cached), teamMapping={'0': 'blue', '1': 'red'})
+    overlay_root = args.billboard_library.resolve()
+    overlay = overlay_root.relative_to(ROOT).as_posix() if overlay_root.is_relative_to(ROOT) else overlay_root.as_posix()
+    report = dict(generator='scripts/import-frost-classic.py', models=sources, files=[files[p] for p in sorted(files)], sourceLibrary='asset-library/warcraft-iii', billboardCollection=args.billboard_library.name, billboardPath=overlay, billboardReceiptSha256=billboard_receipt, nodeAnimationParts=len(overrides), billboardParts=sum(bool(a['nodes']) for a in billboard_manifest['annotations']), poseProbeSha256=digest(pathlib.Path(args.pose_probe).read_bytes()), boundsReferences=len(cached), teamMapping={'0': 'blue', '1': 'red'})
     write(previous, report)
     write(sample / 'Assets/Licenses/warcraft-classic-sources.json', report)
     (sample / 'Assets/Licenses/warcraft-classic.txt').write_text('Warcraft III classic game assets: Blizzard Entertainment. Community scenery: UTM 4.0 and its contributing authors. Source, original attribution and conversion records: asset-library/warcraft-iii/README.md and each source package Licenses directory. These assets are not CC0 or MIT.\n', encoding='utf-8', newline='\n')

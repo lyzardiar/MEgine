@@ -1,0 +1,1124 @@
+{
+  "schemaVersion": 1,
+  "totalMs": 524.0416,
+  "callTree": {
+    "name": "EditorViewportRenderer.render_world",
+    "totalMs": 524.0416,
+    "selfMs": 0.008600000000025476,
+    "calls": 1,
+    "children": [
+      {
+        "name": "Effects",
+        "totalMs": 0.0223,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "EffekseerWorld.update",
+            "totalMs": 0.0177,
+            "selfMs": 0.0177,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "EffekseerWorld.append_to_frame",
+            "totalMs": 0.0046,
+            "selfMs": 0.0046,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Frame compile",
+        "totalMs": 9.34,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "TransformHierarchy.build",
+            "totalMs": 0.0408,
+            "selfMs": 0.0408,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "FrameCompiler.compile",
+            "totalMs": 9.2991,
+            "selfMs": 0.004099999999999326,
+            "calls": 1,
+            "children": [
+              {
+                "name": "Camera, meshes and lighting",
+                "totalMs": 2.9677000000000002,
+                "selfMs": 2.9677000000000002,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Canvas layout and text",
+                "totalMs": 6.0238000000000005,
+                "selfMs": 6.0238000000000005,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "World sprites",
+                "totalMs": 0.0165,
+                "selfMs": 0.0165,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Particles, trails and sorting",
+                "totalMs": 0.0177,
+                "selfMs": 0.0177,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "Sprite regions and materials",
+                "totalMs": 0.1295,
+                "selfMs": 0.1295,
+                "calls": 1,
+                "children": []
+              },
+              {
+                "name": "UI batching",
+                "totalMs": 0.1398,
+                "selfMs": 0.1398,
+                "calls": 1,
+                "children": []
+              }
+            ]
+          },
+          {
+            "name": "Diagnostics.texture_failures",
+            "totalMs": 0.00009999999999999999,
+            "selfMs": 0.00009999999999999999,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Render backend",
+        "totalMs": 467.83340000000004,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "OffscreenTarget.ensure_size",
+            "totalMs": 0.0,
+            "selfMs": 0.0,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "Renderer.submit_frame_to",
+            "totalMs": 456.81080000000003,
+            "selfMs": 456.81080000000003,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "Renderer.read_offscreen_rgba8",
+            "totalMs": 11.0226,
+            "selfMs": 11.0226,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Resource sync",
+        "totalMs": 44.986399999999996,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "RuntimeMeshCache.sync",
+            "totalMs": 25.046599999999998,
+            "selfMs": 25.046599999999998,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeFontCache.sync",
+            "totalMs": 1.8631,
+            "selfMs": 1.8631,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_ui",
+            "totalMs": 0.431,
+            "selfMs": 0.431,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_ui_materials",
+            "totalMs": 0.007700000000000001,
+            "selfMs": 0.007700000000000001,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_materials",
+            "totalMs": 17.6378,
+            "selfMs": 17.6378,
+            "calls": 1,
+            "children": []
+          },
+          {
+            "name": "RuntimeTextureCache.sync_environment",
+            "totalMs": 0.00019999999999999998,
+            "selfMs": 0.00019999999999999998,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "Profiler",
+        "totalMs": 1.8509,
+        "selfMs": 0.0,
+        "calls": 1,
+        "children": [
+          {
+            "name": "Profiler.snapshot",
+            "totalMs": 1.8509,
+            "selfMs": 1.8509,
+            "calls": 1,
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "memory": [
+    {
+      "name": "CPU readback RGBA",
+      "domain": "cpu",
+      "bytes": 5242880,
+      "certainty": "exact",
+      "source": "Renderer.read_offscreen_rgba8 Vec length"
+    },
+    {
+      "name": "Frame packet / render objects",
+      "domain": "cpu",
+      "bytes": 70400,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled render objects"
+    },
+    {
+      "name": "Frame packet / UI primitives",
+      "domain": "cpu",
+      "bytes": 49664,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI primitives"
+    },
+    {
+      "name": "Frame packet / UI batches",
+      "domain": "cpu",
+      "bytes": 1352,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI batches"
+    },
+    {
+      "name": "Frame packet / controls",
+      "domain": "cpu",
+      "bytes": 0,
+      "certainty": "lower-bound",
+      "source": "Rust shallow size for compiled UI controls"
+    },
+    {
+      "name": "GPU offscreen color",
+      "domain": "gpu",
+      "bytes": 5242880,
+      "certainty": "estimate",
+      "source": "viewport width x height x 4 RGBA8 bytes"
+    },
+    {
+      "name": "GPU offscreen depth",
+      "domain": "gpu",
+      "bytes": 20971520,
+      "certainty": "estimate",
+      "source": "viewport width x height x 4 depth/stencil bytes x MSAA samples; physical format is backend-dependent"
+    },
+    {
+      "name": "GPU HDR and multisampled color",
+      "domain": "gpu",
+      "bytes": 73400320,
+      "certainty": "estimate",
+      "source": "resolved RGBA16F plus MSAA RGBA16F and surface RGBA8 attachments; excludes driver allocation padding"
+    },
+    {
+      "name": "GPU texture residency",
+      "domain": "gpu",
+      "bytes": 13598720,
+      "certainty": "estimate",
+      "source": "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded"
+    },
+    {
+      "name": "GPU live scene views",
+      "domain": "gpu",
+      "bytes": 45964800,
+      "certainty": "estimate",
+      "source": "resolved RGBA8 and RGBA16F, depth/stencil and MSAA color attachments; excludes driver padding"
+    }
+  ],
+  "residentMemoryEstimateBytes": 164542536,
+  "resources": [
+    {
+      "kind": "font-atlas",
+      "asset": "mengine-font://00f72665aeefa5e8/0",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": 4194304,
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "font-atlas",
+      "asset": "mengine-font://1420c4f83e5a545c/0",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": 4194304,
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "font-atlas",
+      "asset": "mengine-font://1dbd9ee2dc510100/0",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": 4194304,
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-00-animated.glb#pose=0:900@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-00-animated.glb",
+      "loaded": true,
+      "sourceBytes": 2518492,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-00-animated.glb#pose=1:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-00-animated.glb",
+      "loaded": true,
+      "sourceBytes": 2518492,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-00-animated.glb#pose=2:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-00-animated.glb",
+      "loaded": true,
+      "sourceBytes": 2518492,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-00-animated.glb#pose=3:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-00-animated.glb",
+      "loaded": true,
+      "sourceBytes": 2518492,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-00-animated.glb#pose=4:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-00-animated.glb",
+      "loaded": true,
+      "sourceBytes": 2518492,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-00-animated.glb#pose=5:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-00-animated.glb",
+      "loaded": true,
+      "sourceBytes": 2518492,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-00-animated.glb#pose=6:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-00-animated.glb",
+      "loaded": true,
+      "sourceBytes": 2518492,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-01-animated.glb#pose=0:900@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-01-animated.glb",
+      "loaded": true,
+      "sourceBytes": 979596,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-01-animated.glb#pose=1:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-01-animated.glb",
+      "loaded": true,
+      "sourceBytes": 979596,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-01-animated.glb#pose=2:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-01-animated.glb",
+      "loaded": true,
+      "sourceBytes": 979596,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-01-animated.glb#pose=3:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-01-animated.glb",
+      "loaded": true,
+      "sourceBytes": 979596,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-01-animated.glb#pose=4:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-01-animated.glb",
+      "loaded": true,
+      "sourceBytes": 979596,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-01-animated.glb#pose=5:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-01-animated.glb",
+      "loaded": true,
+      "sourceBytes": 979596,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-01-animated.glb#pose=6:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-01-animated.glb",
+      "loaded": true,
+      "sourceBytes": 979596,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-02-animated.glb#pose=0:900@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-02-animated.glb",
+      "loaded": true,
+      "sourceBytes": 209700,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-02-animated.glb#pose=1:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-02-animated.glb",
+      "loaded": true,
+      "sourceBytes": 209700,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-02-animated.glb#pose=2:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-02-animated.glb",
+      "loaded": true,
+      "sourceBytes": 209700,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-02-animated.glb#pose=3:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-02-animated.glb",
+      "loaded": true,
+      "sourceBytes": 209700,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-02-animated.glb#pose=4:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-02-animated.glb",
+      "loaded": true,
+      "sourceBytes": 209700,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-02-animated.glb#pose=5:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-02-animated.glb",
+      "loaded": true,
+      "sourceBytes": 209700,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-02-animated.glb#pose=6:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-02-animated.glb",
+      "loaded": true,
+      "sourceBytes": 209700,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-03-animated.glb#pose=0:900@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-03-animated.glb",
+      "loaded": true,
+      "sourceBytes": 196960,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-03-animated.glb#pose=1:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-03-animated.glb",
+      "loaded": true,
+      "sourceBytes": 196960,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-03-animated.glb#pose=2:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-03-animated.glb",
+      "loaded": true,
+      "sourceBytes": 196960,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-03-animated.glb#pose=3:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-03-animated.glb",
+      "loaded": true,
+      "sourceBytes": 196960,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-03-animated.glb#pose=4:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-03-animated.glb",
+      "loaded": true,
+      "sourceBytes": 196960,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-03-animated.glb#pose=5:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-03-animated.glb",
+      "loaded": true,
+      "sourceBytes": 196960,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-03-animated.glb#pose=6:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-03-animated.glb",
+      "loaded": true,
+      "sourceBytes": 196960,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-04-animated.glb#pose=0:900@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-04-animated.glb",
+      "loaded": true,
+      "sourceBytes": 199260,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-04-animated.glb#pose=1:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-04-animated.glb",
+      "loaded": true,
+      "sourceBytes": 199260,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-04-animated.glb#pose=2:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-04-animated.glb",
+      "loaded": true,
+      "sourceBytes": 199260,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-04-animated.glb#pose=3:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-04-animated.glb",
+      "loaded": true,
+      "sourceBytes": 199260,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-04-animated.glb#pose=4:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-04-animated.glb",
+      "loaded": true,
+      "sourceBytes": 199260,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-04-animated.glb#pose=5:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-04-animated.glb",
+      "loaded": true,
+      "sourceBytes": 199260,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-04-animated.glb#pose=6:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-04-animated.glb",
+      "loaded": true,
+      "sourceBytes": 199260,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-05-animated.glb#pose=0:900@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-05-animated.glb",
+      "loaded": true,
+      "sourceBytes": 191868,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-05-animated.glb#pose=1:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-05-animated.glb",
+      "loaded": true,
+      "sourceBytes": 191868,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-05-animated.glb#pose=2:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-05-animated.glb",
+      "loaded": true,
+      "sourceBytes": 191868,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-05-animated.glb#pose=3:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-05-animated.glb",
+      "loaded": true,
+      "sourceBytes": 191868,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-05-animated.glb#pose=4:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-05-animated.glb",
+      "loaded": true,
+      "sourceBytes": 191868,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-05-animated.glb#pose=5:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-05-animated.glb",
+      "loaded": true,
+      "sourceBytes": 191868,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-05-animated.glb#pose=6:21@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-05-animated.glb",
+      "loaded": true,
+      "sourceBytes": 191868,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-06-animated.glb#pose=0:900@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-06-animated.glb",
+      "loaded": true,
+      "sourceBytes": 681280,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "mesh",
+      "asset": "Assets/WarcraftIII/Models/Buildings/NightElf/EntangledGoldmine/EntangledGoldmine/geoset-07-animated.glb#pose=0:900@30",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Models\\Buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine\\geoset-07-animated.glb",
+      "loaded": true,
+      "sourceBytes": 191836,
+      "gpuBytesEstimate": null,
+      "dimensions": null,
+      "referencedBy": [
+        "RenderObject"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967313",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        288,
+        300
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967323",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        288,
+        300
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967333",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        288,
+        300
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967343",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        288,
+        300
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967353",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        288,
+        300
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967363",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        288,
+        300
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "scene-view",
+      "asset": "$scene-view:4294967373",
+      "resolvedPath": null,
+      "loaded": true,
+      "sourceBytes": null,
+      "gpuBytesEstimate": null,
+      "dimensions": [
+        288,
+        300
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/Art/classic-entangle-mine-disabled.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\Art\\classic-entangle-mine-disabled.png",
+      "loaded": true,
+      "sourceBytes": 8249,
+      "gpuBytesEstimate": 16384,
+      "dimensions": [
+        64,
+        64
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/Art/classic-entangle-mine.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\Art\\classic-entangle-mine.png",
+      "loaded": true,
+      "sourceBytes": 11477,
+      "gpuBytesEstimate": 16384,
+      "dimensions": [
+        64,
+        64
+      ],
+      "referencedBy": [
+        "UI batch"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Buildings/NightElf/EntangledGoldmine/LightRoots.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Textures\\Buildings\\NightElf\\EntangledGoldmine\\LightRoots.png",
+      "loaded": true,
+      "sourceBytes": 53740,
+      "gpuBytesEstimate": 65536,
+      "dimensions": [
+        256,
+        64
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Buildings/NightElf/EntangledGoldmine/Lightbush.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Textures\\Buildings\\NightElf\\EntangledGoldmine\\Lightbush.png",
+      "loaded": true,
+      "sourceBytes": 54157,
+      "gpuBytesEstimate": 65536,
+      "dimensions": [
+        128,
+        128
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/ReplaceableTextures/Splats/GoldmineUberSplat.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Textures\\ReplaceableTextures\\Splats\\GoldmineUberSplat.png",
+      "loaded": true,
+      "sourceBytes": 267976,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Textures/Base.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Base.png",
+      "loaded": true,
+      "sourceBytes": 227677,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Textures/Chest.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Chest.png",
+      "loaded": true,
+      "sourceBytes": 9281,
+      "gpuBytesEstimate": 16384,
+      "dimensions": [
+        64,
+        64
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Textures/Goldmine.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Goldmine.png",
+      "loaded": true,
+      "sourceBytes": 258602,
+      "gpuBytesEstimate": 262144,
+      "dimensions": [
+        256,
+        256
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Textures/Star7b.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\Star7b.png",
+      "loaded": true,
+      "sourceBytes": 7594,
+      "gpuBytesEstimate": 16384,
+      "dimensions": [
+        64,
+        64
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    },
+    {
+      "kind": "texture",
+      "asset": "Assets/WarcraftIII/Textures/Textures/grad2d.png",
+      "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample\\Assets\\WarcraftIII\\Textures\\Textures\\grad2d.png",
+      "loaded": true,
+      "sourceBytes": 20844,
+      "gpuBytesEstimate": 32768,
+      "dimensions": [
+        64,
+        128
+      ],
+      "referencedBy": [
+        "3D material"
+      ]
+    }
+  ],
+  "resourcesTruncated": false,
+  "resourceSampleAgeMs": 0.013699999999999999,
+  "counts": {
+    "msaaSamples": 4,
+    "entities": 82,
+    "renderObjects": 44,
+    "sceneViews": 7,
+    "billboardMeshes": 4,
+    "uiPrimitives": 97,
+    "uiBatches": 13,
+    "uiDrawCalls": 13,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialPipelinesRejected": 0,
+    "materialPipelineEvictions": 0,
+    "materialTexturesColor": 8,
+    "materialTexturesData": 0,
+    "materialTextureBindGroups": 8,
+    "materialSamplers": 1
+  }
+}

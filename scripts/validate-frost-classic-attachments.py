@@ -14,10 +14,14 @@ p.add_argument('--library', type=pathlib.Path, default=LIBRARY/'classic-attachme
 p.add_argument('--reference', type=pathlib.Path, required=True)
 p.add_argument('--probe', type=pathlib.Path, required=True)
 p.add_argument('--output', type=pathlib.Path, default=ROOT/'docs/designs/frostbound-realms/classic-attachment-validation.json')
+p.add_argument('--source', help='Validate one exact source model path')
 args = p.parse_args()
 overrides, receipt_sha, receipt = base.load_overlay(args.library)
-old, previous_sha, previous = base.load_overlay(LIBRARY/receipt['baseCollection'])
+old, previous_sha, previous = base.load_overlay(args.library.resolve().parent/receipt['baseCollection'])
 assert receipt['baseReceiptSha256'] == previous_sha
+if args.source:
+    receipt = {**receipt, 'sourceFiles': [r for r in receipt['sourceFiles'] if base.key(r['path']) == base.key(args.source)], 'annotations': [a for a in receipt['annotations'] if base.key(a['source']) == base.key(args.source)]}
+    assert len(receipt['sourceFiles']) == 1 and receipt['annotations'], 'Unknown source model: ' + args.source
 def run(command, **kw):
     result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', **kw)
     assert result.returncode == 0, result.stderr[:3000]
@@ -71,7 +75,7 @@ with tempfile.TemporaryDirectory(prefix='attachment-reference-',dir=ROOT/'tmp') 
         old_keys=[]; new_keys=[]
         for part in candidates:
             for frame in [0,3]:
-                old_keys.append(str((LIBRARY/receipt['baseCollection']/part['output']).resolve())+f'#pose=0:{frame}@30')
+                old_keys.append(str((args.library.resolve().parent/receipt['baseCollection']/part['output']).resolve())+f'#pose=0:{frame}@30')
                 new_keys.append(str((args.library/part['output']).resolve())+f'#pose=0:{frame}@30')
         old_rows=probe(old_keys,np.array([0.,-.7,-.71414284])); new_rows=probe(new_keys,np.array([0.,-.7,-.71414284]))
         assert len(old_rows)==len(new_rows)==len(new_keys)

@@ -14,14 +14,15 @@ parser.add_argument('--pose-probe', type=pathlib.Path, required=True)
 args = parser.parse_args()
 sample = ROOT / 'samples/frostbound-realms'
 imported = json.loads((sample / 'classic-sources.json').read_bytes())
-attachment_nodes=imported['billboardCollection']=='classic-attachment-ready'
-library=ROOT/'asset-library/warcraft-iii'/imported['billboardCollection']
+library=ROOT/imported.get('billboardPath', 'asset-library/warcraft-iii/'+imported['billboardCollection'])
 manifest = json.loads((library / 'asset-sources.json').read_bytes())
+attachment_nodes=manifest['generator']=='scripts/convert-frost-classic-attachments.py'
 def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 def run(command): return subprocess.run(command, capture_output=True, text=True, encoding='utf-8')
 with tempfile.TemporaryDirectory(prefix='classic-node-reproduction-', dir=ROOT / 'tmp') as directory:
     output = pathlib.Path(directory) / library.name
     command = [sys.executable, str(ROOT / ('scripts/convert-frost-classic-attachments.py' if attachment_nodes else 'scripts/convert-frost-classic-billboards.py')), '--metadata-reader', str(args.metadata_reader.resolve()), '--output', str(output)]
+    if attachment_nodes: command += ['--base', str(library.parent / manifest['baseCollection'])]
     result = run(command); assert result.returncode == 0, result.stderr
     paths = [r['path'] for r in manifest['generatedFiles']] + ['asset-sources.json']
     for path in paths: assert (output / path).read_bytes() == (library / path).read_bytes(), path
@@ -38,6 +39,12 @@ with tempfile.TemporaryDirectory(prefix='classic-node-reproduction-', dir=ROOT /
     imported_paths = [r['path'] for r in imported['files']] + ['model-catalog.json', 'classic-sources.json', 'Assets/Licenses/warcraft-classic-sources.json', 'Assets/Licenses/warcraft-classic.txt']
     for path in imported_paths:
         actual = (isolated / path).read_bytes(); expected = (sample / path).read_bytes()
+        if path.endswith('classic-sources.json'):
+            a, b = json.loads(actual), json.loads(expected)
+            assert a.pop('billboardPath') == output.relative_to(ROOT).as_posix()
+            b.pop('billboardPath')
+            assert a == b, path
+            continue
         if actual != expected and path.endswith('.json'):
             a, b = json.loads(actual), json.loads(expected)
             print('Import differs:', path, {k: [str(a.get(k))[:300], str(b.get(k))[:300]] for k in set(a) | set(b) if a.get(k) != b.get(k)}, flush=True)

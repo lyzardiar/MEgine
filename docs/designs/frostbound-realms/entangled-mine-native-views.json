@@ -1,0 +1,85 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\entangled-mine-views-1791315412323\\sample",
+  "rendererSha256": "b4ea5d95a1603005b7559ff4540dff4efe64d6a35768dfce4e535c5e61d70748",
+  "imageSha256": "e835390defc3a11fa306b704f75b00cbc59a19ce393119f01da21200486cb105",
+  "models": [
+    {
+      "action": "Birth",
+      "seconds": 30,
+      "clip": 0,
+      "frame": 900,
+      "drawn": 8,
+      "sourceScale": 2
+    },
+    {
+      "action": "Stand",
+      "seconds": 0.7,
+      "clip": 6,
+      "frame": 21,
+      "drawn": 6,
+      "sourceScale": 2
+    },
+    {
+      "action": "Stand Work First",
+      "seconds": 0.7,
+      "clip": 4,
+      "frame": 21,
+      "drawn": 6,
+      "sourceScale": 2
+    },
+    {
+      "action": "Stand Work Second",
+      "seconds": 0.7,
+      "clip": 3,
+      "frame": 21,
+      "drawn": 6,
+      "sourceScale": 2
+    },
+    {
+      "action": "Stand Work Third",
+      "seconds": 0.7,
+      "clip": 5,
+      "frame": 21,
+      "drawn": 6,
+      "sourceScale": 2
+    },
+    {
+      "action": "Stand Work Fourth",
+      "seconds": 0.7,
+      "clip": 2,
+      "frame": 21,
+      "drawn": 6,
+      "sourceScale": 2
+    },
+    {
+      "action": "Stand Work Fifth",
+      "seconds": 0.7,
+      "clip": 1,
+      "frame": 21,
+      "drawn": 6,
+      "sourceScale": 2
+    }
+  ],
+  "counts": {
+    "msaaSamples": 4,
+    "entities": 82,
+    "renderObjects": 44,
+    "sceneViews": 7,
+    "billboardMeshes": 4,
+    "uiPrimitives": 97,
+    "uiBatches": 13,
+    "uiDrawCalls": 13,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialPipelinesRejected": 0,
+    "materialPipelineEvictions": 0,
+    "materialTexturesColor": 8,
+    "materialTexturesData": 0,
+    "materialTextureBindGroups": 8,
+    "materialSamplers": 1
+  },
+  "scope": "Original model and icons through native GPU renderer; asset preview does not establish Entangle gameplay or income rules."
+}

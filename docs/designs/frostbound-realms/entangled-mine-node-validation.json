@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "sourceModels": 1,
+  "geometryParts": 9,
+  "nativeNodeLoads": 98,
+  "comparedNodePoses": 8330,
+  "maxPositionError": 4.2864532467934424e-07,
+  "maxMatrixError": 4.748799132814341e-07,
+  "visibleAttachments": 434,
+  "hiddenAttachments": 350,
+  "nativeGeometryLoads": 36,
+  "binaryBuffersPreserved": true,
+  "nativeGeometryUnchanged": true,
+  "receiptSha256": "9649a5ec57d83af02ec6fb523bafd71a6aa27419d9cec472904943d3515ed8c3",
+  "probeSha256": "de30442f1ecd860bc77b3f4328657e4402aad54cda0cf8277da699634962ea6e",
+  "referenceSha256": "8958b0960236fcb1a0ff8ffb79f20b9a4194a1065e6d251141839add9cf082ce",
+  "models": [
+    {
+      "pack": "game-ready",
+      "source": "buildings\\NightElf\\EntangledGoldmine\\EntangledGoldmine.mdx",
+      "nodes": 85,
+      "loads": 98,
+      "maxPositionError": 4.2864532467934424e-07
+    }
+  ],
+  "scope": "Complete classic source node matrices and pivots compared with pinned MDX animator at 30/60 Hz in two camera views, including attachment visibility key boundaries and terminal holds. External spell integration and embedded attachment child models require separate game validation."
+}
