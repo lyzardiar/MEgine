@@ -26,7 +26,10 @@ struct Node {
     translation: Option<Track>,
     rotation: Option<Track>,
     scale: Option<Track>,
+    #[serde(default)] attachment: Option<Attachment>,
 }
+#[derive(Deserialize)]
+pub(crate) struct Attachment { pub id: u32, pub path: String, visibility: Option<Track> }
 #[derive(Deserialize)]
 #[serde(rename_all="camelCase")]
 pub(crate) struct MdxAnimation { sequences: Vec<Sequence>, global_sequences: Vec<u32>, nodes: Vec<Node> }
@@ -39,7 +42,7 @@ impl Track {
         Ok(())
     }
     fn value(values: &[Vec<f32>], index: usize) -> Vec4 {
-        let v=&values[index];Vec4::new(v[0],v[1],v[2],if v.len()==4 {v[3]} else {0.0})
+        let v=&values[index];Vec4::new(v[0],v.get(1).copied().unwrap_or(0.0),v.get(2).copied().unwrap_or(0.0),if v.len()==4 {v[3]} else {0.0})
     }
     fn sample(&self, sequence: &Sequence, wall: u32, globals: &[u32], rest: Vec4, rotation: bool) -> Vec4 {
         if self.times.is_empty() { return rest; }
@@ -91,6 +94,10 @@ impl MdxAnimation {
             let (rest,_,_)=nodes[node.node].transform().decomposed();
             if rest.iter().zip(node.rest_translation).any(|(a,b)|(*a-b).abs()>1e-6) { return Err(fail("source pivot differs from glTF")); }
             for (track,width) in [(&node.translation,3),(&node.rotation,4),(&node.scale,3)] { if let Some(track)=track {track.validate(width,result.global_sequences.len())?;} }
+            if let Some(attachment)=&node.attachment {
+                if attachment.path.len()>260 || attachment.path.contains('\0') { return Err(fail("invalid attachment path")); }
+                if let Some(track)=&attachment.visibility { track.validate(1,result.global_sequences.len())?; }
+            }
         }
         if document.skins().flat_map(|s|s.joints()).any(|j|!seen[j.index()]) { return Err(fail("source joint is missing")); }
         Ok(result)
@@ -107,6 +114,13 @@ impl MdxAnimation {
             matrices[node.node]=matrix;
         }
         Ok(())
+    }
+    pub(crate) fn attachment(&self, node: usize, clip: usize, time: f32) -> Option<(u32,&str,f32)> {
+        let attachment=self.nodes.get(node).filter(|n|n.node==node).or_else(||self.nodes.iter().find(|n|n.node==node))?.attachment.as_ref()?;
+        let sequence=self.sequences.get(clip)?;
+        let wall=((time*1000.0).round_ties_even() as u32).min(sequence.end-sequence.start);
+        let visibility=attachment.visibility.as_ref().map_or(1.0,|t|t.sample(sequence,wall,&self.global_sequences,Vec4::X,false).x);
+        Some((attachment.id,&attachment.path,visibility))
     }
 }
 
@@ -151,5 +165,16 @@ mod tests {
         let matrix=transform(Vec3::new(2.0,3.0,4.0),Vec4::new(0.0,std::f32::consts::FRAC_1_SQRT_2,0.0,std::f32::consts::FRAC_1_SQRT_2),Vec3::new(2.0,3.0,4.0));
         assert!((matrix.transform_point3(Vec3::X)-Vec3::new(2.0,3.0,2.0)).length()<1e-5);
         let collapsed=transform(Vec3::Y,Vec4::W,Vec3::ZERO);assert_eq!(collapsed.transform_point3(Vec3::ONE),Vec3::Y);
+    }
+    #[test]
+    fn scalar_attachment_visibility_supports_cubic_global_and_empty_tracks() {
+        let mut t=track(0,-1,vec![1000,1050],vec![vec![0.0],vec![1.0]]);
+        assert!(t.validate(1,0).is_ok());assert_eq!(t.sample(&sequence(),49,&[],Vec4::X,false).x,0.0);assert_eq!(t.sample(&sequence(),50,&[],Vec4::X,false).x,1.0);
+        t.interpolation=1;assert_eq!(t.sample(&sequence(),25,&[],Vec4::X,false).x,0.5);
+        t.interpolation=2;t.in_tangents=Some(vec![vec![0.0];2]);t.out_tangents=Some(vec![vec![2.0],vec![0.0]]);
+        assert!(t.validate(1,0).is_ok());assert_eq!(t.sample(&sequence(),25,&[],Vec4::X,false).x,0.75);
+        t.interpolation=3;assert_eq!(t.sample(&sequence(),25,&[],Vec4::X,false).x,0.875);
+        t.global_sequence=0;t.times=vec![0,100];t.interpolation=1;assert_eq!(t.sample(&sequence(),250,&[200],Vec4::X,false).x,0.5);
+        t.times.clear();t.values.clear();assert_eq!(t.sample(&sequence(),10,&[200],Vec4::X,false).x,1.0);
     }
 }

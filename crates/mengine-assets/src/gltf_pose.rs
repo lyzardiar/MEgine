@@ -24,6 +24,13 @@ pub fn parse_gltf_pose_sample(reference: &str) -> Option<(&str, usize, u32, u32)
 #[derive(Clone, Copy, Debug)]
 pub struct GltfBillboardCamera { pub model: Mat4, pub look: Vec3, pub up: Vec3 }
 
+/// MiYu: model-space node transform from the same solver used by visible geometry.
+#[derive(Clone, Debug)]
+pub struct GltfNodePose { pub index: usize, pub name: Option<String>, pub matrix: Mat4, pub attachment: Option<GltfAttachmentPose> }
+/// Visibility belongs to the source attachment's embedded model, not arbitrary external buffs.
+#[derive(Clone, Debug)]
+pub struct GltfAttachmentPose { pub id: u32, pub path: String, pub visibility: f32 }
+
 pub struct GltfPoseSource { document: gltf::Document, buffers: Vec<gltf::buffer::Data>, billboards: Vec<u32>, mdx: Option<crate::gltf_mdx::MdxAnimation> }
 
 fn billboard_matrix(world: Mat4, flags: u32, camera: GltfBillboardCamera) -> Mat4 {
@@ -78,6 +85,20 @@ impl GltfPoseSource {
         self.sample_with_camera(clip,frame,rate,None)
     }
     pub fn sample_with_camera(&self, clip: usize, frame: u32, rate: u32, camera: Option<GltfBillboardCamera>) -> Result<MeshData, AssetError> {
+        let (globals,uv_matrix,_)=self.node_matrices(clip,frame,rate,camera)?;
+        self.mesh_from_pose(&globals,uv_matrix)
+    }
+    /// Duplicate names remain distinct; indices identify the nodes. Camera rules match mesh sampling.
+    pub fn sample_nodes(&self, clip: usize, frame: u32, rate: u32, camera: Option<GltfBillboardCamera>) -> Result<Vec<GltfNodePose>, AssetError> {
+        let (globals,_,time)=self.node_matrices(clip,frame,rate,camera)?;
+        self.document.nodes().map(|node| {
+            if !globals[node.index()].is_finite() { return Err(AssetError::Gltf("non-finite node pose".into())); }
+            let attachment=self.mdx.as_ref().and_then(|m|m.attachment(node.index(),clip,time)).map(|(id,path,visibility)|GltfAttachmentPose {id,path:path.into(),visibility});
+            if attachment.as_ref().is_some_and(|a|!a.visibility.is_finite()) { return Err(AssetError::Gltf("non-finite attachment visibility".into())); }
+            Ok(GltfNodePose { index:node.index(),name:node.name().map(str::to_owned),matrix:globals[node.index()],attachment })
+        }).collect()
+    }
+    fn node_matrices(&self, clip: usize, frame: u32, rate: u32, camera: Option<GltfBillboardCamera>) -> Result<(Vec<Mat4>,Option<[f32;6]>,f32), AssetError> {
         let fail = |s: &str| AssetError::Gltf(s.into());
         if !(1..=60).contains(&rate) { return Err(fail("skeletal sample rate must be between 1 and 60 Hz")); }
         if camera.is_some_and(|c| !c.model.is_finite() || !c.look.is_finite() || !c.up.is_finite() || c.model.determinant().abs() < 1e-12) { return Err(fail("invalid billboard camera transform")); }
@@ -138,6 +159,11 @@ impl GltfPoseSource {
                 globals[j]=world;done[j]=true;
             }
         }
+        Ok((globals,uv_matrix,time))
+    }
+    fn mesh_from_pose(&self, globals: &[Mat4], uv_matrix: Option<[f32;6]>) -> Result<MeshData,AssetError> {
+        let fail=|s: &str| AssetError::Gltf(s.into());
+        let nodes=self.document.nodes().collect::<Vec<_>>();
         let mut out = MeshData { positions:vec![], normals:vec![], uvs:vec![], indices:vec![] };
         for node in &nodes {
             let Some(mesh) = node.mesh() else { continue; };
@@ -231,5 +257,22 @@ mod tests {
         assert_eq!(keyframe_segment(&[0.0,0.5],0.5,true),(1,1));
         assert_eq!(keyframe_segment(&[0.0,0.5],0.7,true),(1,1));
         assert_eq!(keyframe_segment(&[0.0,0.5],0.25,false),(0,1));
+    }
+    #[test]
+    fn node_queries_keep_duplicate_names_parent_motion_and_authored_visibility() {
+        let value=serde_json::json!({"asset":{"version":"2.0"},"nodes":[{"name":"ref","translation":[10,0,0],"children":[1]},{"name":"ref","translation":[2,0,0]}],"animations":[{"name":"birth","samplers":[],"channels":[],"extras":{"menginePlayback":{"durationSeconds":1.0,"loop":false}}}]});
+        let gltf=gltf::Gltf::from_slice(&serde_json::to_vec(&value).unwrap()).unwrap();
+        let metadata=serde_json::json!({"sequences":[{"name":"birth","start":1000,"end":2000}],"globalSequences":[],"nodes":[{"node":0,"restTranslation":[10,0,0]},{"node":1,"restTranslation":[2,0,0],"attachment":{"id":7,"path":"embedded.mdx","visibility":{"interpolation":0,"globalSequence":-1,"times":[1000,1500,2000],"values":[[0],[1],[0]]}}}]});
+        let mdx=crate::gltf_mdx::MdxAnimation::parse(metadata,&gltf.document).unwrap();
+        let source=GltfPoseSource {document:gltf.document,buffers:vec![],billboards:vec![8,0],mdx:Some(mdx)};
+        let camera=GltfBillboardCamera {model:Mat4::IDENTITY,look:-Vec3::Z,up:Vec3::Y};
+        for (frame,expected) in [(29,0.0),(30,1.0),(59,1.0),(60,0.0),(99,0.0)] {
+            let poses=source.sample_nodes(0,frame,60,Some(camera)).unwrap();
+            assert_eq!(poses[0].name,poses[1].name);assert_ne!(poses[0].index,poses[1].index);
+            assert!((poses[1].matrix.w_axis.truncate()-Vec3::new(10.0,0.0,2.0)).length()<1e-6);
+            let a=poses[1].attachment.as_ref().unwrap();assert_eq!(a.id,7);assert_eq!(a.path,"embedded.mdx");assert_eq!(a.visibility,expected);
+        }
+        assert_eq!(source.sample_nodes(0,30,60,None).unwrap()[1].matrix.w_axis.truncate(),Vec3::new(12.0,0.0,0.0));
+        assert!(source.sample_nodes(1,0,60,None).is_err());assert!(source.sample_nodes(0,0,0,None).is_err());
     }
 }

@@ -8,6 +8,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let positions = std::env::args().any(|arg| arg == "--positions");
     let uvs = std::env::args().any(|arg| arg == "--uvs");
     let normals = std::env::args().any(|arg| arg == "--normals");
+    let nodes = std::env::args().any(|arg| arg == "--nodes");
     let streamed = std::env::args().any(|arg| arg == "--stdin");
     let billboard = std::env::args().find_map(|a| a.strip_prefix("--billboard-camera=").map(str::to_owned)).map(|s| -> Result<_,Box<dyn std::error::Error>> {
         let values=s.split(',').map(str::parse::<f32>).collect::<Result<Vec<_>,_>>()?;
@@ -37,6 +38,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             patch.as_ref().unwrap().1.compose(cells)?
         } else if let Some((path, clip, frame, rate)) = parse_gltf_pose_sample(&argument) {
             if source.as_ref().map(|s| s.0.as_str()) != Some(path) { source = Some((path.into(),GltfPoseSource::load(Path::new(path))?)); }
+            if nodes {
+                let poses=source.as_ref().unwrap().1.sample_nodes(clip,frame,rate,billboard)?;
+                println!("{}",serde_json::json!({"mesh":argument,"nodes":poses.iter().map(|n|serde_json::json!({"index":n.index,"name":n.name,"matrix":n.matrix.to_cols_array(),"position":n.matrix.w_axis.truncate().to_array(),"attachment":n.attachment.as_ref().map(|a|serde_json::json!({"id":a.id,"path":a.path,"visibility":a.visibility}))})).collect::<Vec<_>>()}));
+                continue;
+            }
             source.as_ref().unwrap().1.sample_with_camera(clip, frame, rate, billboard)?
         } else { load_gltf_mesh_data(Path::new(&argument))? };
         let mut min = [f32::INFINITY; 3];
