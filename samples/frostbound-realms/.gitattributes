@@ -1,6 +1,7 @@
 # Preserve provenance hashes across Windows and Unix checkouts.
 SourceAssets/** -text
 SourceAssets/WarcraftIII/Units/*.slk binary
+SourceAssets/WarcraftIII/UI/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 SourceAssets/AbilityArt/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
 Licenses/** -text
 Assets/Licenses/** -text
@@ -9,3 +10,5 @@ Assets/WarcraftIII/** -text whitespace=cr-at-eol
 /building-scale-*.json text eol=lf
 /unit-scale-*.json text eol=lf
 effect-sources.json text eol=lf
+
+/console-*.json text eol=lf

@@ -1,0 +1,36 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "scope": "Native menu TCP browsing after single-player menu regression",
+  "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
+  "physicalInput": false,
+  "audioListening": false,
+  "error": "Error: Timed out native menu room list\n    at until (file:///C:/Users/admin/.codex/worktrees/1339/MEgine/scripts/qa-frostbound.mjs:129:282)\n    at async file:///C:/Users/admin/.codex/worktrees/1339/MEgine/scripts/qa-frostbound.mjs:283:151",
+  "singlePlayerAssertionsCompleted": [
+    "start",
+    "map and hero choice",
+    "save/load",
+    "options and settings persistence",
+    "credits",
+    "quit cancellation"
+  ],
+  "failurePeers": [
+    {
+      "peer": 0,
+      "mode": "network",
+      "online": false,
+      "room": "",
+      "notice": "Reconnect token expired",
+      "netStates": 0
+    },
+    {
+      "peer": 1,
+      "mode": "network",
+      "online": false,
+      "room": "",
+      "notice": "Connection failed. Start server.mjs and check the address.",
+      "netStates": 0
+    }
+  ],
+  "followupDiagnostic": "Editor project-open Bridge timeout; no new TCP trace collected"
+}

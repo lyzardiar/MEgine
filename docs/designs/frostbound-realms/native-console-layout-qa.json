@@ -1,0 +1,75 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\console-layout-1791296883563\\sample",
+  "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
+  "factions": [
+    {
+      "faction": 0,
+      "sourceConsolePieces": 9,
+      "itemClick": true
+    },
+    {
+      "faction": 1,
+      "sourceConsolePieces": 9,
+      "itemClick": true
+    },
+    {
+      "faction": 2,
+      "sourceConsolePieces": 9,
+      "itemClick": true
+    },
+    {
+      "faction": 3,
+      "sourceConsolePieces": 9,
+      "itemClick": true
+    }
+  ],
+  "viewports": [
+    {
+      "input": [
+        1024,
+        768
+      ],
+      "capture": [
+        1024,
+        768
+      ],
+      "scale": 0.8,
+      "menuClick": true,
+      "minimapClick": true,
+      "commandClick": true
+    },
+    {
+      "input": [
+        1920,
+        1080
+      ],
+      "capture": [
+        1920,
+        1080
+      ],
+      "scale": 1.5,
+      "menuClick": true,
+      "minimapClick": true,
+      "commandClick": true
+    },
+    {
+      "input": [
+        2560,
+        1080
+      ],
+      "capture": [
+        2048,
+        864
+      ],
+      "scale": 1.5,
+      "menuClick": true,
+      "minimapClick": true,
+      "commandClick": true
+    }
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "shaderRejections": 0
+}

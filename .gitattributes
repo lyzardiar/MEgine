@@ -47,3 +47,5 @@ scripts/convert-frost-classic-attachments.py text eol=lf
 scripts/warcraft-billboard-reference/*.cs text eol=lf
 scripts/import-frost-effects.py text eol=lf
 idl/components/core.idl whitespace=cr-at-eol
+
+scripts/import-frost-console.py text eol=lf

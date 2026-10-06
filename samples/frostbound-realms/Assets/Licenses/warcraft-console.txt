@@ -1,0 +1,3 @@
+Warcraft III console textures, frame definitions, resource icons and button states: Blizzard Entertainment. These assets are not CC0 or MIT.
+Source archive precedence and original file SHA-256: console-frame-sources.json. Original console texture source and all generated asset SHA-256: console-sources.json. Source bytes are retained in SourceAssets/WarcraftIII/UI.
+Author: MiYu. Conversion: scripts/import-frost-console.py, using Pillow and NumPy.

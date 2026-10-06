@@ -255,3 +255,5 @@ Skirmish 开始时为 500 金币、150 木材；Kingdom / Warclan / Wildwood 各
 一级主城使用四族经典建造成本和完整工期：人族 385/205、180 秒；兽族 385/185、150 秒；暗夜 340/185、120 秒；亡灵 255/0、100 秒。R 继续施工或维修，取消返还初始付款的 75%。人族／兽族主城无普通攻击，暗夜古树扎根时近战攻击地面，亡灵二级／三级主城对地空发射冰冻弹。存档保留建筑自身种族及旧施工规则；菜单显示实际费用和工期。规则、迁移边界、数据来源与最终运行证据见 [四族主城规则](../../docs/designs/frostbound-realms/main-base-rules.md)。
 
 经典美术验收入口：`node scripts/qa-frostbound.mjs --classic-assets-only --deterministic-input`。它在独立原生编辑器中检查四族可见网格、材质路径、30 Hz 动作与动态头像层级，并保存 `classic-battlefield-0.png` 至 `classic-battlefield-3.png`。原版粒子、缎带和 billboard 尚未全部适配，完整战役、Dota 与地图编辑器复刻仍在继续。
+
+四族控制台已使用原版 ConsoleUI.fdf 和 BLP 贴图，头像、单位信息、2×3 物品栏及 4×3 命令栏按源布局校准，边缘锚点与点击区域共用实际视口坐标。原生四族与三种宽高比验收见 `docs/designs/frostbound-realms/console-layout.md`。
