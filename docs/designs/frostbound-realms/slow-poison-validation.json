@@ -1,0 +1,97 @@
+{
+  "author": "MiYu",
+  "baselineCommit": "fc40233cb5215185267cd543e4267ea199520c1d",
+  "protocol": 50,
+  "dryadVersion": 2,
+  "sourceFiles": {
+    "samples/frostbound-realms/SourceAssets/SlowPoison/effect-conversion.json": "98515eaebe36e25dbd3e2fff321d3a13ee503ba9efc58c732c45ddcf72fa735c",
+    "samples/frostbound-realms/slow-poison-art.json": "98d695d3d42320c9ad49f184732356c948fb7b2c5a18b28c1bfc99f6103efd33",
+    "samples/frostbound-realms/slow-poison-rules.json": "ac8f6dd82255e54ae6be0cc9db7d29bd0d1f82cd979ef6fa88172332d88536e3",
+    "samples/frostbound-realms/slow-poison-sources.json": "349906d50e75fe475e4eed5b732a37d07b2456d014ace7d5d306cf0fbb599f5d",
+    "samples/frostbound-realms/SourceAssets/SlowPoison/.gitattributes": "cd31350619929786e8452bdb2dc2f7d6fd37626ff04b228b5fbc4e0b10f470c8",
+    "samples/frostbound-realms/game/simulation.js": "5ec7d6ee6a2cfe743b3817dc150a8f8dd2e42b840b2890cae20b6bb79298c57a",
+    "samples/frostbound-realms/game/client.js": "9db1497662eac3dcd7c9f877abca5a0f42bf87b904139f5af830098492221ff7",
+    "samples/frostbound-realms/game/effects.js": "3c4e2d64eb87ebc17abf7aa06c5e5296faab82356df106bddb0ea1d4f58fdf71",
+    "scripts/build-frostbound.mjs": "66468c754c00fd42d8c6d8d8467b00139b071a0e1cc158b428a9076e79673686",
+    "scripts/import-frost-slow-poison.py": "1eb9470af37819c949ec12cb2cb3790d572a7f302b9b99b1d8a63d96a9e76064",
+    "scripts/test-frost-slow-poison.mjs": "26e1981175cacb7f547f734712f26893471c8cd7fd5c66d746339f5e2f728bf2",
+    "scripts/test-frost-slow-poison-client.mjs": "e8bb06f80424f1a512378f93e653fdfd9453170e6484951922db39776d592c64",
+    "scripts/test-frost-slow-poison-network.mjs": "d1a51dafad3fa772d54efcd1ea79d620810299702362812b616b9b1f246c7aa4",
+    "scripts/test-frost-dryad.mjs": "21cc736f09a74eeddcaf0d61e2b6dfbf1e833ec45f4753b0bb1f98e0b2fd424b",
+    "scripts/test-frost-dryad-client.mjs": "6b0d22b9670b0f360ea135ed073330f1f01620ed54a781e970e8838a748a3fd3",
+    "scripts/test-frost-dryad-network.mjs": "46600010c96b5c6fc3bedc6c5eecdae8a476dea5cbe2aeb1c4d983ea4cc2ae61",
+    "scripts/test-frostbound.mjs": "5af977f6ecfe2eac2593125d76a1fe77b4fad663b4444d99da3deefe7dcdb510",
+    "scripts/qa-frost-slow-poison.mjs": "7e667745e77d27a1668f46e3df7bb2c0373ca7db4cf8bd4c2cd3f6fd3133679e",
+    "scripts/frost-slow-poison-fixture.mjs": "d7131f6b5f1a062b48492b07a666271ad6baf1d4e924d37d7b04f4f010ef1d7a"
+  },
+  "workingSourceFiles": {
+    "samples/frostbound-realms/SourceAssets/SlowPoison/effect-conversion.json": "98515eaebe36e25dbd3e2fff321d3a13ee503ba9efc58c732c45ddcf72fa735c",
+    "samples/frostbound-realms/slow-poison-art.json": "98d695d3d42320c9ad49f184732356c948fb7b2c5a18b28c1bfc99f6103efd33",
+    "samples/frostbound-realms/slow-poison-rules.json": "ac8f6dd82255e54ae6be0cc9db7d29bd0d1f82cd979ef6fa88172332d88536e3",
+    "samples/frostbound-realms/slow-poison-sources.json": "349906d50e75fe475e4eed5b732a37d07b2456d014ace7d5d306cf0fbb599f5d",
+    "samples/frostbound-realms/SourceAssets/SlowPoison/.gitattributes": "cd31350619929786e8452bdb2dc2f7d6fd37626ff04b228b5fbc4e0b10f470c8",
+    "samples/frostbound-realms/game/simulation.js": "1ec742a8b059f2785c280e24c89a52e242084e919783c2b55e39b64a9a752aab",
+    "samples/frostbound-realms/game/client.js": "9db1497662eac3dcd7c9f877abca5a0f42bf87b904139f5af830098492221ff7",
+    "samples/frostbound-realms/game/effects.js": "4daa36df542741a0b03020f1d6602a52dfdb2670f5de0613d866921c6ab3b345",
+    "scripts/build-frostbound.mjs": "66468c754c00fd42d8c6d8d8467b00139b071a0e1cc158b428a9076e79673686",
+    "scripts/import-frost-slow-poison.py": "1eb9470af37819c949ec12cb2cb3790d572a7f302b9b99b1d8a63d96a9e76064",
+    "scripts/test-frost-slow-poison.mjs": "f4df2bead084d0ce3fd6391baf73df258cdd517997c44d7dd6f44c7af37c7d72",
+    "scripts/test-frost-slow-poison-client.mjs": "ea824e17aacad09b41556e0af6b03bf5f35b3bb93e3a4a45e2527b3e20038bd0",
+    "scripts/test-frost-slow-poison-network.mjs": "cb1cf5438ae5f06556fb515e8b43fc432dbbd9271a34b2ca713a8351d4fa6b96",
+    "scripts/test-frost-dryad.mjs": "21cc736f09a74eeddcaf0d61e2b6dfbf1e833ec45f4753b0bb1f98e0b2fd424b",
+    "scripts/test-frost-dryad-client.mjs": "6b0d22b9670b0f360ea135ed073330f1f01620ed54a781e970e8838a748a3fd3",
+    "scripts/test-frost-dryad-network.mjs": "46600010c96b5c6fc3bedc6c5eecdae8a476dea5cbe2aeb1c4d983ea4cc2ae61",
+    "scripts/test-frostbound.mjs": "71ada1e0a0f762fa32ada32d031e632474697dcb73d73874e4590d8932c32653",
+    "scripts/qa-frost-slow-poison.mjs": "01f21f2c0c4216cc26fd9fce3378456f74eca7b072d1bcaeeca63625d335de05",
+    "scripts/frost-slow-poison-fixture.mjs": "a3854a1e00241aac819ae50b8ad5a5403119a97ffbfc0ad1e2408b84cb1e5abe"
+  },
+  "signedOutputCount": 13,
+  "byteExactRegeneration": true,
+  "editedOutputProtection": true,
+  "stagedReceiptBlobVerification": true,
+  "corePassGroups": 10,
+  "generatedClientPassGroups": 4,
+  "tcpPassGroups": 1,
+  "fullRegression": {
+    "command": "node scripts/test-frostbound.mjs",
+    "exitCode": 0,
+    "passGroups": 157,
+    "logSha256": "0ca25b9e1437b4316e53b9a5ace73bb8878f37ec6be8b4a99195892d53c0a4a4"
+  },
+  "native": {
+    "report": "docs/designs/frostbound-realms/native-slow-poison-qa.json",
+    "reportSha256": "37fbc1084038a198e1efb26bae5bc584dabd3370f1cf95d49fbdef1547e26f67",
+    "productMainSha256": "228b8c5bcd00987d905a9ee8bee9de7f9e3b49f4038820acc6d4bd326358fdd6",
+    "generatedSceneSha256": "fd48e896a50e1c72e8fadca6d45d9e010a4db14ac549f97934f2f34767d25c96",
+    "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+    "passed": true,
+    "shaderRejections": 0,
+    "steps": [
+      {
+        "name": "project open and ready",
+        "ms": 77932
+      },
+      {
+        "name": "native passive card and actual missile poison",
+        "ms": 322627
+      }
+    ],
+    "normalExit": true,
+    "fixtureRemoved": true
+  },
+  "screenshots": {
+    "slow-poison-impact.png": "423b676133ded3c458616e5d311382dd66df55d8f1b2b67707ec53ae90e48cd9",
+    "slow-poison-restored.png": "b401438022ba9c596330c05ff4026e9df50fdf23f8de0d19c0386812078cde52",
+    "slow-poison-dispelled.png": "d4fbaf50f0171e5e5909d886b2ae3c90fb0493d390c0bf52f9befd01f9f4657c"
+  },
+  "scope": {
+    "originalSourceFlagsAndConfiguredAutocast": true,
+    "originalRuntimeVerified": false,
+    "provisionalImpactAttribution": "Independently timed additive per-impact damage and nonstacking poison slows",
+    "originalRepeatedHitAttributionCadenceImmunityAndDispelPending": true,
+    "physicalDesktopInput": false,
+    "audioListening": false,
+    "crossMachineLAN": false,
+    "completeWarcraftRecreation": false
+  }
+}

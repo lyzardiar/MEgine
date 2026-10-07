@@ -2,6 +2,8 @@
 
 Author: MiYu
 
+This document records the protocol-49 Dryad delivery. The current protocol-50 Slow Poison extension, configured default autocast and acceptance are documented in `slow-poison.md` and `slow-poison-validation.json`.
+
 The Ancient of Lore can train Dryads in current Night Elf skirmishes. Dryads use the original body, independent portrait, missile, command icons and Dispel Magic target effect prepared in `dryad-assets.md`. They remain separate from the two morphable Druids. The overall Warcraft III recreation and full Dryad equivalence remain incomplete.
 
 ## Source rules and controls
@@ -10,7 +12,7 @@ The Ancient of Lore can train Dryads in current Night Elf skirmishes. Dryads use
 
 `scripts/import-frost-dryad-portrait.py` verifies the original portrait MDX against the existing source receipt and extracts its single static `CAMS` camera. It rejects nonzero camera animation, converts the original positions and target with `(x,y,z) -> (x,z,-y)` at 1/128, and preserves its perspective field of view and clipping distances in `dryad-portrait.json`. The client keeps this model's rotation unchanged and uses a quaternion facing the original target. The generated-client regression checks the actual camera components and restores orthographic framing after selecting a building. `--check` verifies byte-exact camera regeneration.
 
-Select a rooted Lore and press S to research Abolish Magic (`Resi`): 50 gold, 50 lumber and 45 seconds. Research uses the shared production queue, suspends while the Ancient uproots, rejects duplicates and refunds cancelled research. Select a researched Dryad and press B or click command slot eight, then select a visible target. Right-click the command toggles autocast. Autocast initially stays off; the original game's initial toggle state has not been measured.
+Select a rooted Lore and press S to research Abolish Magic (`Resi`): 50 gold, 50 lumber and 45 seconds. Research uses the shared production queue, suspends while the Ancient uproots, rejects duplicates and refunds cancelled research. Select a researched Dryad and press B or click command slot eight, then select a visible target. Right-click the command toggles autocast. Version-one saves retain default-off spawning. New version-two games use the original `UnitAbilities.auto=Aadm` preference; see `slow-poison.md`.
 
 Abolish Magic costs 50 mana at the end of its 0.3-second cast point, has five-unit range, no cooldown and a 0.51-second backswing. Interrupting before completion does not charge mana. The engine clears harmful allied effects or beneficial enemy effects, including enemy Scroll of Regeneration, Healing Salve and Lesser Clarity regeneration, and deals 300 dispel damage to enemy summons. Friendly beneficial effects and enemy harmful effects remain. Its target effect uses original sampled mesh and particle assets.
 
@@ -30,4 +32,4 @@ The TCP test uses real sockets and disconnection/resumption, verifies research p
 
 Final acceptance passed 142 regression groups, eight Dryad core groups, two generated-client groups and one real TCP group. Native acceptance passed on the final generated bundle with zero material pipeline rejections; the original portrait camera's screenshot was visually checked. The owned editor exited normally and its isolated fixture was removed. The preexisting dirty source scene was preserved and restored after acceptance; run `node scripts/build-frostbound.mjs` to regenerate the scene and ignored startup script from the current sources.
 
-Slow Poison is not implemented. Original `Aspo.DataD1=1` stacking, repeated-hit behavior and the initial autocast state still need accepted original-game measurements. The responding dzclient Warcraft III 1.27 OpenGL process has not produced a confirmed map load or probe output. MEngine tests and native rendering do not establish Warcraft runtime equivalence. The measurement tooling and its limitations are documented in `dryad-assets.md`.
+Slow Poison is implemented by the subsequent protocol-50 extension. Original `Aspo.DataD1=1` bit definitions and configured initial autocast are preserved from original editor/unit data; repeated-hit attribution and runtime behavior still need accepted original-game measurements. The responding dzclient Warcraft III 1.27 OpenGL process has not produced a confirmed map load or probe output. MEngine tests and native rendering do not establish Warcraft runtime equivalence. The measurement tooling and its limitations are documented in `dryad-assets.md`.

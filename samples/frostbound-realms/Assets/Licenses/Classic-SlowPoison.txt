@@ -1,0 +1,1 @@
+Original Warcraft III Slow Poison source data and effects belong to Blizzard Entertainment. Source archives, hashes and conversion provenance are recorded in slow-poison-sources.json. Extraction does not establish a free redistribution license.

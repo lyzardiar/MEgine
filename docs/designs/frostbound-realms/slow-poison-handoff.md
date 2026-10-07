@@ -1,0 +1,11 @@
+# Slow Poison implementation handoff
+
+Author: MiYu
+
+Current phase: source-derived Dryad passive, original sampled target particles, source-configured initial Abolish autocast, strict saves and TCP protocol 50. Rules and known fidelity limits are in `slow-poison.md`. The full Warcraft III recreation remains active and incomplete. Ponytail remains disabled; `asset-library` remains read-only.
+
+Implementation covers legal potion clearing, Wisp mining timers, consumption/death cleanup, caster removal, privacy, generated command card and actual TCP reconnection. Source/art regeneration and edited-output protection have passed. Targeted gameplay and client/TCP tests have passed. Final acceptance passed 157 regression groups (10 poison core, four generated-client groups and one real TCP group) and native MEngine verification on generated bundle SHA-256 `228b8c5bcd00987d905a9ee8bee9de7f9e3b49f4038820acc6d4bd326358fdd6`. Native source card, right-click attack/missile/particles, F5 timers, B dispel and expiration passed with zero material pipeline rejections. The owned editor exited normally and its successful fixture was removed. Results and source hashes are in `slow-poison-validation.json`. The shared generated-client fixture rehearsal now runs before native QA opens an editor. Native stage/command timings are in `slow-poison-timings.md`.
+
+Preserve the preexisting dirty scene using `tmp/dryad-gameplay-scene-before.mscene`, SHA-256 `f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748`. Build-generated scene changes are excluded from this phase's commit; current sources regenerate the scene and ignored `Main.js`. Preserve `.gitattributes`, catalog and unrelated historical QA/screenshots. Stage explicit phase files only.
+
+Original Warcraft stacking, hit attribution, damage cadence and immunity/dispel behavior still require actual reference measurements. Recheck and reuse the existing Warcraft process before attempting reference work; do not infer map load from a responding process. Existing probe and fixture paths remain documented in `dryad-assets.md` and the prior Dryad handoff. Continue with reference measurement and source-backed Night Elf/remaining race gameplay; do not mark the full recreation complete.

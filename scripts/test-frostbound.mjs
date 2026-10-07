@@ -2,6 +2,9 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-slow-poison.mjs';
+import './test-frost-slow-poison-client.mjs';
+import './test-frost-slow-poison-network.mjs';
 import './test-frost-dryad.mjs';
 import './test-frost-dryad-client.mjs';
 import './test-frost-dryad-network.mjs';

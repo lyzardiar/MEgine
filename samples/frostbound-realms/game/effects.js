@@ -1,6 +1,6 @@
 /* Author: MiYu. Original Warcraft effects, geometry and animated attachment positions. */
 var FrostEffects=(()=>{
-  const slots=['recovery','clarity','sanctuary','rejuvenation','cripple','fire0','fire1','fire2'];
+  const slots=['recovery','clarity','sanctuary','rejuvenation','cripple','poison','fire0','fire1','fire2'];
   const definitions=Object.assign({},...FrostEffectArt.artDefinitions.map(d=>d.sections)),stem=p=>{const name=p.split(/[\\/]/).pop().replace(/\.mdl$/i,'');return Object.keys(FrostEffectArt.effects).find(k=>k.toLowerCase()===name.toLowerCase());};
   const blood=definitions.Bblo.Targetart.split(',');
   const spellBindings={bloodlustLeft:stem(blood[0]),bloodlustRight:stem(blood[1]),shield:stem(definitions.Blsh.Targetart),shieldCast:stem(definitions.Blsh.Specialart),portalCaster:stem(definitions.AItp.Casterart),portalArea:stem(definitions.AItp.Areaeffectart),portalArrival:stem(definitions.AItp.Targetart)};
@@ -55,6 +55,7 @@ var FrostEffects=(()=>{
     if(u.sanctuary)add('sanctuary','Staff_Sanctuary_Target');
     if(u.ancientRegen>0||u.rejuvenation>0)add('rejuvenation','RejuvenationTarget',u.rejuvenation>0?at(/^Chest Ref$/i)||[0,(visual.height-.5)/scale*.6,0]:undefined);
     if(u.cripple>0)add('cripple','CrippleTarget');
+    if(Frost.slowPoisonLeft(u)>0)add('poison','PoisonStingTarget');
     if(u.built===1&&!Frost.mobile(u)&&u.hp>0&&u.maxHp>0){
       const damage=u.hp/u.maxHp<.25?3:u.hp/u.maxHp<.5?2:u.hp/u.maxHp<.75?1:0;if(!damage)return effects;
       const faction=u.kind==='hall'?u.baseFaction??state.teams[u.team]?.faction:state.teams[u.team]?.faction,prefix=faction===2?'Elf':faction===3?'Undead':'',large=at(/^Sprite Large Ref$/i),size=large||Frost.types[u.kind].radius>=1.8?'Large':'Small',points=['First','Second','Third'].map(n=>at(new RegExp('^Sprite '+n+' Ref$','i'))).filter(Boolean);
