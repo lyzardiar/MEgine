@@ -244,3 +244,11 @@ Author: MiYu。协议 45、ancientWarVersion 1。战争古树训练原版弓箭�
 Author: MiYu。Editor store 的 entitySnapshot 从活动世界定位并只复制目标的快照投影；两类 Edit 预览继续使用完整层级计算。AgentBridge entity.get 保留名称首匹配、返回值隔离和原错误行为。33 项针对性检查、29 项 MCP 协议／合约检查、TypeScript／Vite 与带 custom-protocol 的 Native Release 构建通过。原生 Edit 与暂停 Play 的完整快照／单实体返回值一致；Play 往返中位数 759.65／34.50 毫秒、返回结果 13,326,514／7,472 字节。此为两个读取接口的对照，不代表整个 QA、帧率或旧新版 entity.get 二进制 A/B。
 
 验收增加启动前夹具校验、阶段报告、每百步训练进度与逐命令计时；Native Play 初始化使用有界长等待。原生查询验收打开／Edit／Play 三段为 20.667／33.761／63.277 秒，Game panel.focus 占 39.666 秒，下一步继续分段定位。控制台错误 0、专属 Editor 正常退出并清理临时工程／测试存档。记录与复现命令见 agent-entity-query.md；原版战争古树训练阶段已推送 722c8e38822d2051a548ddedc291a3555a03acb8。完整复刻目标保持 active，下一功能阶段为战争古树／猎手大厅原版科技。
+
+## 2026-10-07：战争古树／猎手大厅原版科技来源
+
+Author: MiYu。新增原版科技导入器与 night-elf-technology.json，覆盖 eaom／edob 的 11 项研究、19 个等级、38 张可用／禁用图标，保留中文、槽位、热键、逐阶前置／费用／时间、单位实际绑定、升级效果、能力与两个武器的源行。独立只读审核核对绑定、哨兵、穿刺剑刃与月井规则；主代理核对原版元数据后明确月井夜间魔法回复来自 Ambt，生命回复类型仍为 none。中文源与安装档案字节一致，未因终端显示乱码改写原始文字。
+
+50 个原始源、90 个签名输出、全部研究阶数／成本／前置／图标与关键效果语义检查通过；脱离安装逐字节复现、修改素材预检保护和损坏签名源拒绝均通过，见 night-elf-technology.md 与 night-elf-technology-art-validation.json。暂存区生成器／回执／签名输出共 92 项核对通过，使用一次 git cat-file 批量读取；独立审核把 38 个 BLP 在内存重新解码，与 PNG 逐字节一致。Main.js／Main.mscene 哈希仍为 e6d293c721d89829dcbadb5c2e594bac242076199db6139695db1cd5b6419163／7e7b2644fc32e5353e4a3873634ae85a0563526fc4d781116f81bb6c081777c4。
+
+这一阶段是科技数据／素材交付，尚未接入可玩研究、队列、客户端和联机状态，runtimeResearchAcceptance=false；没有启动原生 Editor，也不把数据验证作为运行时验收。下一步完整接入目录中的实际效果与保存／联机隐私，继续 active。Ponytail 禁用、资产库只读；既有无关图片、QA 和草稿保持原样。

@@ -1,0 +1,16 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "researchIds": 11,
+  "researchRanks": 19,
+  "icons": 38,
+  "sources": 50,
+  "signedFiles": 90,
+  "catalogSha256": "80b0b7cf0792568d190089db90c55ea2130f4e5d9217a282fb1cb9f45276e0bc",
+  "regenerationWithoutInstallation": true,
+  "byteExact": true,
+  "preservesModifiedOutputAtomically": true,
+  "rejectsCorruptInputBeforeWrites": true,
+  "stagedChecks": 92,
+  "runtimeResearchAcceptance": false
+}
