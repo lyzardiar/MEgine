@@ -202,7 +202,7 @@ impl PlaySession {
         let initial_scene = scenes.set_current(&project.scene, project.name);
         let mut script = ScriptHost::new().map_err(|error| error.to_string())?;
         if let Some(root) = project.root.as_deref() { script.set_storage_root(mengine_script::project_storage_root(root)); script.set_project_root(root.to_path_buf()); }
-        script.inject_snapshot_json(&serde_json::to_string(&initial).map_err(|error| error.to_string())?).map_err(|error| error.to_string())?;
+        script.sync_world(&world).map_err(|error| error.to_string())?;
         script.eval(source).map_err(|error| error.to_string())?;
         script.notify_scene_loaded(&initial_scene.name, &initial_scene.path.to_string_lossy().replace('\\', "/"), initial_scene.build_index, initial_scene.build_scene_count).map_err(|error| error.to_string())?;
         Ok(Self { quit_requested: false, world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new(), snapshot_stream: PlaySnapshotStream::default(), snapshot_cache: WorldSnapshotCache::default() })
@@ -288,6 +288,17 @@ impl PlaySession {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn named_entity_queries_are_available_in_editor_startup_and_scene_loaded() {
+        let runtime = EditorPlayRuntime::default();
+        let id = runtime.begin();
+        let initial: WorldSnapshot = serde_json::from_value(serde_json::json!({"entities":[{"entity":1,"name":"Owl","components":{}}]})).unwrap();
+        let source = "if(engine.findEntitiesByName(['Owl']).length!==1) throw Error('startup lookup'); function onSceneLoaded() { if(engine.findEntitiesByName(['Owl']).length!==1) throw Error('scene lookup'); } function onTick() { if(engine.findEntitiesByName(['Owl']).length!==1) throw Error('tick lookup'); }";
+        runtime.start(id, source.into(), initial, PlayProject::default()).unwrap();
+        runtime.advance(id, None, ScriptInput::default(), 0.1).unwrap();
+        runtime.stop();
+    }
 
     #[test]
     fn snapshot_stream_reconstructs_mutations_removal_reuse_and_editor_reset() {

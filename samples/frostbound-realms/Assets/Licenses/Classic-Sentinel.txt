@@ -1,0 +1,1 @@
+Original Warcraft III Sentinel Owl model and textures: Blizzard Entertainment. Original game asset terms apply. Sampled particles approximate the viewer solver. Original and converted hashes are recorded in sentinel-sources.json.

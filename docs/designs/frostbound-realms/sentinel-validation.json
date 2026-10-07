@@ -1,0 +1,131 @@
+{
+  "author": "MiYu",
+  "sourceHashes": {
+    "samples/frostbound-realms/game/client.js": "287cbe3acb7ff90470d67d8257f677ad7752d77bf9d518f25247a7880233f30c",
+    "samples/frostbound-realms/game/simulation.js": "4a8d8fa9aa5490555aea0b87368bff1ad06265d15933ff5a1b799943c745f3f1",
+    "samples/frostbound-realms/game/visuals.js": "128d0907e3450d62a10335f23e5ac85ea2072ffadf070d9f8cd30a27c1e496df",
+    "scripts/build-frostbound.mjs": "9ef9dd7e4b5d532a5237bca82eefa32b9a7a278c8df902425a68450072cc4cdf",
+    "crates/mengine-script/src/bridge.rs": "4bebd7f1728d1f4c5c1f1aa0dbfc2c3e8cf1763c55d596cd9f846801b658f750",
+    "crates/mengine-script/src/engine_api.js": "663f0381e4e4a7fc6d0b1545fe2d5a0101a0e21571943611ce3f7b9e0298f70b",
+    "crates/mengine-editor-host/src/play_runtime.rs": "3486d45d252e958a21798d4d983700b3a0f19f82c65cc55a0eb91ec9662020bd"
+  },
+  "originalFiles": 6,
+  "signedOutputs": 49,
+  "stagedSignatureChecks": 50,
+  "assetCheck": "Signed source/header, unchanged converted geometry binary, billboard, exact animation metadata, two particle emitters, byte-exact import regeneration, modified-output rejection",
+  "gameRegressionPassLines": 111,
+  "scriptUnitTests": {
+    "passed": 26,
+    "failed": 0,
+    "manualTrafficIgnored": 1
+  },
+  "editorUnitTests": {
+    "passed": 33,
+    "failed": 0,
+    "ignored": 1
+  },
+  "native": {
+    "report": "native-sentinel-qa.json",
+    "passed": true,
+    "productMainSha256": "f6b1b1f3907e089aaa0caf82d1cc8777dca28b9c2aac01192c4d8532f611cc05",
+    "productSceneSha256": "f1eb648e7659e9d833b79c7dda4a0dcb9cc1fed21cf3be8d01317c77cb27ab2e",
+    "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+    "steps": [
+      {
+        "name": "project open and ready",
+        "ms": 64720
+      },
+      {
+        "name": "original Owl flight and perch",
+        "ms": 132245
+      },
+      {
+        "name": "pause and actual save/load",
+        "ms": 85961
+      },
+      {
+        "name": "Shaman Q at rendered Owl height",
+        "ms": 88530
+      },
+      {
+        "name": "native overflow and title cleanup",
+        "ms": 84804
+      },
+      {
+        "name": "completed-world Owl persistence",
+        "ms": 45223
+      }
+    ],
+    "totalStepMs": 501483,
+    "slowestCommands": [
+      {
+        "name": "execute:playback.step",
+        "count": 65,
+        "totalMs": 236602,
+        "maxMs": 5190,
+        "averageMs": 3640
+      },
+      {
+        "name": "execute:playback.input",
+        "count": 60,
+        "totalMs": 120052,
+        "maxMs": 4163,
+        "averageMs": 2001
+      },
+      {
+        "name": "query:entity.get",
+        "count": 45,
+        "totalMs": 75671,
+        "maxMs": 3630,
+        "averageMs": 1682
+      },
+      {
+        "name": "execute:panel.focus",
+        "count": 1,
+        "totalMs": 29508,
+        "maxMs": 29508,
+        "averageMs": 29508
+      },
+      {
+        "name": "execute:project.open",
+        "count": 1,
+        "totalMs": 11787,
+        "maxMs": 11787,
+        "averageMs": 11787
+      },
+      {
+        "name": "query:view.screenshot",
+        "count": 3,
+        "totalMs": 9489,
+        "maxMs": 3187,
+        "averageMs": 3163
+      },
+      {
+        "name": "query:project.state",
+        "count": 2,
+        "totalMs": 8952,
+        "maxMs": 5454,
+        "averageMs": 4476
+      },
+      {
+        "name": "execute:playback.play",
+        "count": 1,
+        "totalMs": 6843,
+        "maxMs": 6843,
+        "averageMs": 6843
+      }
+    ],
+    "normalExit": true,
+    "fixtureAndStorageRemoved": true
+  },
+  "images": {
+    "sentinel-flight.png": "87f5742bb2dbf22721eeca87257f66bac46316ab44c42ed9c836e33779dccaa8",
+    "sentinel-perched.png": "4e261928038cdb05445a80db8a6d047ed5b3c56a826c15e01a3e6892ff9826c9",
+    "sentinel-purged.png": "ea04ae64afa01d6679854073212cd9d2452d66e6d5313a24cb09f7d6b46c9f44"
+  },
+  "limits": [
+    "Agent Bridge input; physical input/audio listening/cross-machine LAN not accepted",
+    "Sampled particle solver is approximate, not original-game solver equality",
+    "Full Warcraft III recreation remains incomplete"
+  ]
+}

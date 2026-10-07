@@ -2,6 +2,7 @@
 var FrostVisual=(()=>{
   const buildingScales=typeof module!=='undefined'?require('../building-scale-catalog.json'):FrostBuildingScales;
   const unitScales=typeof module!=='undefined'?require('../unit-scale-catalog.json'):FrostUnitScales;
+  const sentinelArt=typeof module!=='undefined'?require('../sentinel-catalog.json'):FrostSentinelArt;
   const buildings={hall:'Hall',barracks:'Barracks',farm:'Lodge',tower:'Tower',altar:'Altar',workshop:'Workshop',scouttower:'Tower',guardtower:'Tower',shop:'Shop'};
   const names=[
     {barracks:'Royal barracks',farm:'Town house',tower:'Guard tower',altar:'Sanctuary',workshop:'Royal workshop',shop:'Arcane Vault'},
@@ -112,6 +113,11 @@ var FrostVisual=(()=>{
     const duration=animation.duration||animation.frames/12||1,t=progress!==null?Frost.clamp(progress,0,1)*duration:animation.loop||asset.classicWork&&action!=='Death'?elapsed%duration:Math.min(elapsed,duration),frame=t>=duration?Math.ceil(duration*rate):Math.floor(t*rate+1e-7);
     return {clip,frame,rate};
   }
+  function sentinel(state,owl,time){
+    const art=sentinelArt,asset=art.model,scale=unitScales.worldScale,tree=state.resources[owl.resource],sample=classicSample({},asset,false,time,owl.perched?'Stand':'Walk',30),yaw=owl.perched?0:Math.atan2(tree.x-owl.x,tree.z-owl.z)-Math.PI/2,height=Frost.nightTechnology.specialRules.sentinel.perchedHeight/art.sourceUnitsPerModelUnit*scale;
+    const position=[owl.x,Frost.elevation(state.map,owl.x,owl.z)+(owl.perched?height:0),owl.z];
+    return {parts:parts(asset,sampleMesh(asset.parts[0],sample),owl.team),position,scale:[scale,scale,scale],rotation:[0,Math.sin(yaw/2),0,Math.cos(yaw/2)],target:{x:owl.x,z:owl.z,y:position[1]+(asset.bounds.min[1]+asset.bounds.max[1])/2*scale},component:{effect:art.effect,clip:sample.clip,playing:false,looping:true,speed:1,time_seconds:time%asset.animations[sample.clip].duration}};
+  }
   function sampleMesh(part,sample){return part.mesh+'#pose='+sample.clip+':'+sample.frame+(sample.rate&&sample.rate!==12?'@'+sample.rate:'');}
   function parts(asset,mesh,team=0,placement=false){
     const match=mesh?.match(/#pose=(\d+):([\d.]+)(?:@(\d+))?$/),clip=match?Number(match[1]):0,seconds=match?Number(match[2])/Number(match[3]||12):0,animation=asset.animations?.[clip],frame=animation&&seconds>=animation.duration?animation.frames:seconds*12;
@@ -159,6 +165,6 @@ var FrostVisual=(()=>{
       return [...tracks.values()].map(v=>position(v,clock));
     }};
   }
-  return {camera:{height:32,depth:42},model,name,pose,corpse,heroPortrait,unitPortrait,heading,resource,scenery,doodad,environmentPartCount,groundDetail,projectile,projectileView,muzzle,classicClip,classicSample,parts,actorPartCount,portrait};
+  return {camera:{height:32,depth:42},model,name,pose,corpse,heroPortrait,unitPortrait,heading,resource,scenery,doodad,environmentPartCount,groundDetail,projectile,projectileView,muzzle,classicClip,classicSample,parts,actorPartCount,portrait,sentinel};
 })();
 if(typeof module!=='undefined')module.exports=FrostVisual;

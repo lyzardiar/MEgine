@@ -1,0 +1,86 @@
+{
+  "sourceCollections": [
+    "remaining-ready",
+    "community-ready"
+  ],
+  "sourceFiles": [
+    {
+      "path": "remaining-ready/Units/NightElf/Owl/Owl.mdx",
+      "sha256": "cfef44526635c98962dd9d1c72d2ef0bc1d6b2c267252ec49bb87b748ac27999",
+      "bytes": 47813
+    }
+  ],
+  "textureSources": {
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/star4_32.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\star4_32.blp",
+      "sha256": "c4c160bf93862e7ad2a74d448b7d65d777e32496e3858755816c6e200b5caebf",
+      "convertedSha256": "779075974153fe6f1e7c89f63470c9d9d105c0fa4a26e75c78cebd3e67678a18"
+    },
+    "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Star8b.png": {
+      "collection": "remaining-ready",
+      "source": "Textures\\Star8b.blp",
+      "sha256": "fedb1b626d655e44a76148e00e0754153637c9d5de213d11eb848a0a14ee0881",
+      "convertedSha256": "a1393e5addf4c6ea726792d4c6f0adcbe508e09031a925318461f26f5809a9a5"
+    }
+  },
+  "generatedFiles": [
+    {
+      "path": "Assets/WarcraftIII/effect-catalog.json",
+      "sha256": "bdbbf1b096c9b62146ae5e5e3febfd07d7b27a3bb573eb8e1bb51637839ebbbd",
+      "bytes": 1173
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Units/NightElf/Owl/Owl.mfx",
+      "sha256": "e62ee88fe606be747504f291d10ff4250d46f6d9d2d7694950ebf1df79edf1dd",
+      "bytes": 548334
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Units/NightElf/Owl/Owl.mfx.meta",
+      "sha256": "67e9c0f14d3828d9ab0a730751a478c485f1ac3257bf97c22ff83ee0410b94c2",
+      "bytes": 112
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Units/NightElf/Owl/Owl.prefab",
+      "sha256": "6dd111cbbd0b49bead88a951b707e457520c4c096eb3ac057516786c69d627ed",
+      "bytes": 685
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/remaining-ready/Units/NightElf/Owl/Owl.prefab.meta",
+      "sha256": "a7f8477c6b3c5d877ee7ccddafa20ccf08d682346a5f2f1020dad3a8e3aa4822",
+      "bytes": 104
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/star4_32.png",
+      "sha256": "779075974153fe6f1e7c89f63470c9d9d105c0fa4a26e75c78cebd3e67678a18",
+      "bytes": 2231
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/star4_32.png.meta",
+      "sha256": "2796356f134ed919e2c216d7ed85e542c52d257b8edad889fa385d93aa4e0d53",
+      "bytes": 105
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Star8b.png",
+      "sha256": "a1393e5addf4c6ea726792d4c6f0adcbe508e09031a925318461f26f5809a9a5",
+      "bytes": 9713
+    },
+    {
+      "path": "Assets/WarcraftIII/Effects/Textures/remaining-ready/Textures/Star8b.png.meta",
+      "sha256": "d4d773451b89b26be47f585a7e92501eedccc1c36d6f9ad106f5003178aa97b2",
+      "bytes": 105
+    }
+  ],
+  "converter": {
+    "scripts/convert-warcraft-effects.py": "41094d22558d932fd39d27bba597aa3514d23259673136373d4c2233ac7f6a5a",
+    "scripts/warcraft-assets/EffectExport.cs": "a725436a21345d372410fb458915281436d4dfc29cd4a3cc4f4d5a46248feaa5",
+    "scripts/warcraft-assets/Program.cs": "e0af2af930bccadf34b59a7fb44d508ea88773570a9ba3e8f9f41797bae5ae36",
+    "scripts/warcraft-assets/MdxExport.csproj": "94062f8546b73b73b94f5c2af346268b595eb0fa9ceac44ab2d6e80a04ddecd9"
+  },
+  "upstream": {
+    "url": "https://github.com/Darithos/W3ModelViewer",
+    "commit": "4fe46a0772520fc7b55078bf32cda1237d1b5f2e",
+    "archiveSha256": "dd1f41530b42c1bfe6039b1a0271bcc5167b137f829f87b6a08cea0b47e46eda"
+  },
+  "scope": "Sampled effect playback with source MDX preserved. Viewer simulation is approximate; cameras and helper tracks are metadata only."
+}

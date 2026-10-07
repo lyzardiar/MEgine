@@ -201,6 +201,16 @@ impl ScriptHost {
                 })?)?;
                 let state = snapshot.clone();
                 ctx.globals().set("__mengineRevision", Function::new(ctx.clone(), move || state.borrow().revision as f64)?)?;
+                // MiYu: dynamic pools query only their new entities without decoding the full scene snapshot.
+                let state = snapshot.clone();
+                ctx.globals().set("__mengineFindEntities", Function::new(ctx.clone(), move |json: String| -> String {
+                    let Ok(names) = serde_json::from_str::<Vec<String>>(&json) else { return "[]".into(); };
+                    if names.len() > 1024 { return "[]".into(); }
+                    let names: std::collections::HashSet<_> = names.into_iter().collect();
+                    let state = state.borrow();
+                    let entities: Vec<_> = state.world.iter().flat_map(|world| &world.entities).filter(|entity| entity.name.as_ref().is_some_and(|name| names.contains(name))).collect();
+                    serde_json::to_string(&entities).expect("selected entities serialize")
+                })?)?;
                 let state = snapshot.clone();
                 ctx.globals().set("__mengineSnapshot", Function::new(ctx.clone(), move || {
                     let mut state = state.borrow_mut();
@@ -514,6 +524,25 @@ fn runtime_request(operation: &str, args: &[JsonValue]) -> Option<ScriptRuntimeR
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn named_entity_queries_follow_spawn_parent_and_despawn_without_full_snapshot_json() {
+        use mengine_core::generated::Name;
+        let mut host = ScriptHost::new().unwrap();
+        let mut world = World::new();
+        for _ in 0..20000 { world.spawn_empty(); }
+        let root = world.spawn_empty(); world.insert_component(root, Name { value: "Owl".into() });
+        host.eval("function onTick() { const found=engine.findEntitiesByName(['Owl','missing']); if(found.length!==1 || found[0].name!=='Owl') throw Error('lookup'); engine.pushCommandJson(JSON.stringify({op:'spawn',name:'Owl part',components:{}})); }").unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        assert!(host.snapshot.borrow().json.is_none());
+        host.eval("function onTick() { const found=engine.findEntitiesByName(['Owl','Owl part']); if(found.length!==2) throw Error('spawn'); engine.pushCommandJson(JSON.stringify({op:'setParent',entity:found[1].entity,parent:found[0].entity})); }").unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        host.eval("function onTick() { const found=engine.findEntitiesByName(['Owl','Owl part']); if(found[1].parent!==found[0].entity) throw Error('parent'); engine.pushCommandJson(JSON.stringify({op:'despawn',entity:found[1].entity})); }").unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        host.eval("function onTick() { if(engine.findEntitiesByName(['Owl part']).length) throw Error('despawn'); if(engine.findEntitiesByName([]).length) throw Error('empty'); try { engine.findEntitiesByName(new Array(1025).fill('Owl')); throw Error('unbounded'); } catch(e) { if(!(e instanceof TypeError)) throw e; } }").unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        assert!(host.snapshot.borrow().json.is_none());
+    }
 
     #[test]
     fn application_quit_is_queued_and_consumed_once() {

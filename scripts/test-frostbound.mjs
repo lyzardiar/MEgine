@@ -56,6 +56,7 @@ import './test-frost-ancient-war.mjs';
 import './test-frost-night-elf-technology.mjs';
 import './test-frost-night-elf-technology-client.mjs';
 import './test-frost-night-elf-technology-network.mjs';
+import './test-frost-sentinel-client.mjs';
 import './test-frost-ancient-war-client.mjs';
 import './test-frost-ancient-war-network.mjs';
 import './test-frost-natures-blessing.mjs';
