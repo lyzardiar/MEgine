@@ -1,0 +1,1 @@
+Original Warcraft III Dryad assets and rules belong to Blizzard Entertainment. Extraction does not establish a free redistribution license. Source archives, hashes and generators are recorded in dryad-sources.json.

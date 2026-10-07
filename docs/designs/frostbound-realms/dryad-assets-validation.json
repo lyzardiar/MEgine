@@ -1,0 +1,97 @@
+{
+  "author": "MiYu",
+  "signedDryadOutputs": 235,
+  "nativeStandBindings": {
+    "ClassicDryad": {
+      "parts": 11,
+      "animations": 12,
+      "bounds": {
+        "min": [
+          -0.33202657103538513,
+          0.013732771389186382,
+          -0.3039892017841339
+        ],
+        "max": [
+          0.7622736096382141,
+          1.1429061889648438,
+          0.3040568232536316
+        ]
+      }
+    },
+    "ClassicDryadPortrait": {
+      "parts": 3,
+      "animations": 2,
+      "bounds": {
+        "min": [
+          -0.26561641693115234,
+          0.40126484632492065,
+          -0.168380469083786
+        ],
+        "max": [
+          0.24379375576972961,
+          0.9618281126022339,
+          0.170462504029274
+        ]
+      }
+    },
+    "ClassicDryadMissile": {
+      "parts": 2,
+      "animations": 3,
+      "bounds": {
+        "min": [
+          -0.5621976852416992,
+          -0.19017939269542694,
+          -0.10700000077486038
+        ],
+        "max": [
+          0.5142546892166138,
+          0.1276835948228836,
+          0.09649218618869781
+        ]
+      }
+    },
+    "ClassicDispelMagicTarget": {
+      "parts": 6,
+      "animations": 2,
+      "bounds": {
+        "min": [
+          -0.6792476773262024,
+          -0.6912164092063904,
+          -0.14380937814712524
+        ],
+        "max": [
+          -0.6499695181846619,
+          -0.3229062557220459,
+          0.11752969026565552
+        ]
+      }
+    }
+  },
+  "byteExactRegenerationPassed": true,
+  "modifiedOutputProtectionPassed": true,
+  "mpqWriterTestsPassed": 3,
+  "syntheticMeasurementGateTestsPassed": 6,
+  "existingDruidAssetOutputsVerified": 457,
+  "existingDruidSpellArtOutputsVerified": 105,
+  "existingDruidRulePassGroups": 8,
+  "existingDruidSpellPassGroups": 7,
+  "fullRegressionPassGroups": 131,
+  "originalReference": {
+    "latestMapSha256": "8882904994896fb4c9e1ed5b576ded28d82428d80bcd527fff072355191ba537",
+    "latestScriptSha256": "e69bc66f3b1dfd16b3c9d3269202e81b325773167dd214c7a884e24898f906ce",
+    "mapFileCount": 14,
+    "explicitCallSymbolsChecked": 45,
+    "runtime": {
+      "War3.exe": "ea8f5192efede23f84bc60140c2d4a0085ea68b86f430c1d60c354a555922def",
+      "Game.dll": "e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a"
+    },
+    "defaultRenderer": "DirectX initialization failed: original-game error dialog observed through accessibility",
+    "openGL": "Process launched; map-load confirmation and measurement output unavailable",
+    "desktopActivationError": "0x80070005",
+    "desktopCaptureError": "0x80070057",
+    "acceptedMeasurements": false,
+    "jassCompilationVerified": false,
+    "nativeDryadVisualAccepted": false
+  },
+  "gameplayIntegration": "Pending"
+}

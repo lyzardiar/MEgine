@@ -195,6 +195,10 @@ def main():
     if requested and 'ClassicSentinelOwl' in requested:
         bind('ClassicSentinelOwl', 'Owl', 'remaining-ready', environment=True)
     if requested:
+        bind('ClassicDryad', 'Dryad')
+        bind('ClassicDryadPortrait', 'Dryad_portrait', 'remaining-ready', environment=True)
+        bind('ClassicDryadMissile', 'Dryadmissile', 'remaining-ready', environment=True)
+        bind('ClassicDispelMagicTarget', 'DispelMagicTarget', 'remaining-ready', environment=True)
         bind('ClassicDruidTalon', 'DruidoftheTalon')
         bind('ClassicAncientLore', 'AncientofLore', building=True)
         bind('ClassicAncientWind', 'AncientofWind', building=True)
