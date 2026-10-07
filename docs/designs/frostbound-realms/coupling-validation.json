@@ -1,0 +1,232 @@
+{
+  "author": "MiYu",
+  "protocol": 52,
+  "hippogryphVersion": 2,
+  "originalRuntimeMeasured": false,
+  "provisional": [
+    "life transfer",
+    "retained initiator/member identities",
+    "buff/DOT/order/weapon cooldown reset",
+    "shared cooldown",
+    "safe landing policy"
+  ],
+  "regression": {
+    "startedAt": "2026-10-07T21:49:00.8925636Z",
+    "finishedAt": "2026-10-07T21:51:59.3615752Z",
+    "ms": 178469.0,
+    "exitCode": 0,
+    "passGroups": 176,
+    "log": "tmp/coupling-regression-final.log"
+  },
+  "mcpRegression": {
+    "command": "node --test packages/editor/tests/agentMcpContract.test.mjs packages/editor/tests/agentMcpProtocol.test.mjs",
+    "pass": 29,
+    "fail": 0,
+    "ms": 517.9218,
+    "logSha256": "ea1e53e45c79b7a1e98d63cefec7c5f1c123282eb332ca675080fdc0c2a9467c"
+  },
+  "regressionLogSha256": "842323cbb4370695e4e14daffff9f455f16b3022c9debbcc6b81682b163d1624",
+  "nativeFull": {
+    "report": "native-coupling-qa.json",
+    "passed": true,
+    "scope": "Full 30-second research/cooldown, pairing, F5 restore, dismount and approach; game simulation is unchanged by the final U routing correction",
+    "productMainSha256": "93c39e7fc603d7890f67d90e5a03cd2ac63c8197ef16849e896210a8220f3982",
+    "steps": [
+      {
+        "name": "project open and ready",
+        "ms": 85303
+      },
+      {
+        "name": "I original Hippogryph Taming research",
+        "ms": 428933
+      },
+      {
+        "name": "Hippogryph U approach and selected transformation",
+        "ms": 83909
+      }
+    ],
+    "shaderRejections": 0,
+    "shutdown": {
+      "pid": 129264,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    },
+    "cleanup": {
+      "fixtureRemoved": true,
+      "qaStorageRemoved": true
+    },
+    "commandGroups": [
+      {
+        "command": "playback.step",
+        "calls": 51,
+        "ms": 364011
+      },
+      {
+        "command": "playback.input",
+        "calls": 46,
+        "ms": 80729
+      },
+      {
+        "command": "entity.get",
+        "calls": 34,
+        "ms": 63424
+      },
+      {
+        "command": "panel.focus",
+        "calls": 1,
+        "ms": 34779
+      },
+      {
+        "command": "project.open",
+        "calls": 1,
+        "ms": 16426
+      },
+      {
+        "command": "panel.get_layout",
+        "calls": 2,
+        "ms": 10430
+      },
+      {
+        "command": "view.screenshot",
+        "calls": 3,
+        "ms": 10423
+      },
+      {
+        "command": "project.state",
+        "calls": 2,
+        "ms": 9923
+      },
+      {
+        "command": "playback.play",
+        "calls": 1,
+        "ms": 4287
+      },
+      {
+        "command": "view.set_game_resolution",
+        "calls": 1,
+        "ms": 3583
+      },
+      {
+        "command": "playback.stop",
+        "calls": 1,
+        "ms": 334
+      },
+      {
+        "command": "profiler.get_samples",
+        "calls": 1,
+        "ms": 109
+      },
+      {
+        "command": "console.get_logs",
+        "calls": 1,
+        "ms": 30
+      }
+    ]
+  },
+  "nativeFinalClient": {
+    "report": "native-coupling-hotkeys-qa.json",
+    "passed": true,
+    "scope": "Native final generated client U routing, targeted mount, portraits, selection, F5 pair/cooldown restore, dismount and Hippogryph approach. Uses a researched fixture and controlled .1s cooldown for dismount; full 30s timings are recorded separately in native-coupling-qa.json. Original-game transfer semantics, physical input, audio and cross-machine LAN remain unverified.",
+    "controlledCooldown": 0.1,
+    "productMainSha256": "bca247e75e6becf1689a124187951785a7ad67c817c806e8b4fb33820b0e82ea",
+    "steps": [
+      {
+        "name": "project open and ready",
+        "ms": 81826
+      },
+      {
+        "name": "Final U routing, portraits and F5/dismount",
+        "ms": 262522
+      },
+      {
+        "name": "Hippogryph U approach and selected transformation",
+        "ms": 86155
+      }
+    ],
+    "shaderRejections": 0,
+    "shutdown": {
+      "pid": 185824,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    },
+    "cleanup": {
+      "fixtureRemoved": true,
+      "qaStorageRemoved": true
+    },
+    "commandGroups": [
+      {
+        "command": "playback.step",
+        "calls": 49,
+        "ms": 190166
+      },
+      {
+        "command": "playback.input",
+        "calls": 48,
+        "ms": 92185
+      },
+      {
+        "command": "entity.get",
+        "calls": 38,
+        "ms": 64839
+      },
+      {
+        "command": "panel.focus",
+        "calls": 1,
+        "ms": 34784
+      },
+      {
+        "command": "project.open",
+        "calls": 1,
+        "ms": 16395
+      },
+      {
+        "command": "panel.get_layout",
+        "calls": 2,
+        "ms": 9821
+      },
+      {
+        "command": "project.state",
+        "calls": 2,
+        "ms": 7279
+      },
+      {
+        "command": "view.screenshot",
+        "calls": 2,
+        "ms": 7012
+      },
+      {
+        "command": "playback.play",
+        "calls": 1,
+        "ms": 4483
+      },
+      {
+        "command": "view.set_game_resolution",
+        "calls": 1,
+        "ms": 3411
+      },
+      {
+        "command": "playback.stop",
+        "calls": 1,
+        "ms": 303
+      },
+      {
+        "command": "profiler.get_samples",
+        "calls": 1,
+        "ms": 76
+      },
+      {
+        "command": "console.get_logs",
+        "calls": 1,
+        "ms": 59
+      }
+    ]
+  },
+  "protectedSceneSha256": "f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748",
+  "screenshots": {
+    "coupling-research.png": "bc4cf95f95a455430e01cd8464dce1663f495a93a53045d6b288e63551c347af",
+    "coupling-mounted.png": "00676b91aa03dc2b21a7f6473e07290f02a37f3be1ff0a579e80ed3d21ec9a32",
+    "coupling-dismounted.png": "ee9942d3bdf631436ecb898e0e24644ad2740ce76a7e047c3820154a77b22ee3"
+  }
+}

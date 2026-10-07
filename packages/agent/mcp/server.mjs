@@ -674,13 +674,13 @@ function bridgeExecuteParams(command, args = {}, options = {}) {
 
 async function bridgeExecute(command, args = {}, options = {}) {
   const longRunning = command === 'build.verify' || command === 'playback.play' || (command === 'playback.step' && args.steps > 1);
+  const timeoutMs = options.timeoutMs ?? (longRunning ? BUILD_ARTIFACT_REQUEST_TIMEOUT_MS : REQUEST_TIMEOUT_MS);
+  if (!Number.isFinite(timeoutMs) || timeoutMs < 1 || timeoutMs > BUILD_ARTIFACT_REQUEST_TIMEOUT_MS) throw new ToolInputValidationError('Execution timeout must be between 1 and 300000 milliseconds');
   return await rpc(
     'execute',
     bridgeExecuteParams(command, args, options),
     {
-      timeoutMs: longRunning
-        ? BUILD_ARTIFACT_REQUEST_TIMEOUT_MS
-        : REQUEST_TIMEOUT_MS,
+      timeoutMs,
       signal: options.signal,
     },
   );

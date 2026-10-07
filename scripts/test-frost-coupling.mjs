@@ -1,0 +1,46 @@
+// Author: MiYu. Source research, dual-unit lifecycle, atomic landing and versioned saved coupling state.
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {couplingFixture} from './frost-coupling-fixture.mjs';
+const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},cmd=(s,u,type,extra={})=>S.command(s,u.team,{type,ids:[u.id],...extra}),close=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
+{
+ const {s,wind,archer,hippo}=couplingFixture(S,false);assert.equal(S.couplingOption(s,archer).available,false);assert.ok(cmd(s,archer,'couple',{target:hippo.id}));assert.equal(cmd(s,wind,'hippogryphResearch',{upgrade:'Reht'}),null);assert.deepEqual(wind.queue,[{research:'Reht',rank:1,left:30}]);assert.equal(s.teams[0].gold,9925);assert.equal(s.teams[0].wood,9925);assert.ok(cmd(s,wind,'hippogryphResearch',{upgrade:'Reht'}));assert.ok(S.restore(s));assert.equal(cmd(s,wind,'uproot'),null);step(s,25);const left=wind.queue[0].left;step(s,20);assert.equal(wind.queue[0].left,left);assert.equal(cmd(s,wind,'rootAncient'),null);step(s,25);const saved=S.restore(s);step(s,300);step(saved,300);assert.deepEqual(saved,s);assert.equal(s.teams[0].hippogryphTaming,1);assert.equal(S.publicState(s,1).teams[0].hippogryphTaming,undefined);
+ const f=couplingFixture(S,false);assert.equal(cmd(f.s,f.wind,'hippogryphResearch',{upgrade:'Reht'}),null);assert.equal(cmd(f.s,f.wind,'cancelTrain',{index:0}),null);assert.equal(f.s.teams[0].gold,10000);assert.equal(f.s.teams[0].wood,10000);
+}
+console.log('PASS Hippogryph Taming: original 75/75/30 queue, duplicate/ownership gates, Root suspension, exact saved completion, private research and refund');
+{
+ const {s,archer,hippo}=couplingFixture(S),a=archer.id,h=hippo.id,pop=S.population(s,0).used;archer.hp=100;hippo.hp=200;Object.assign(s.teams[0].nightResearch,{Resw:2,Rerh:2,Resm:1,Rema:1});S.updateNightUnit(s,archer);S.updateNightUnit(s,hippo);assert.equal(cmd(s,archer,'couple',{target:hippo.id}),null);assert.equal(archer.kind,'hippogryphrider');assert.equal(archer.maxHp,765);close(archer.hp,765*300/770);assert.equal(archer.id,a);assert.deepEqual(archer.coupled,{archerId:a,hippoId:h});assert.equal(archer.nightLevels.Resw,undefined);assert.equal(archer.nightLevels.Resm,1);assert.equal(S.population(s,0).used,pop);assert.ok(!s.units.some(u=>u.id===h));assert.equal(S.publicState(s,1).units.find(u=>u.id===a)?.coupled,undefined);assert.ok(S.restore(s));assert.ok(cmd(s,archer,'dismount'));const saved=S.restore(s);step(s,300);step(saved,300);assert.deepEqual(saved,s);assert.equal(cmd(s,archer,'dismount'),null);assert.equal(archer.kind,'nightarcher');const returned=s.units.find(u=>u.id===h);assert.equal(returned.kind,'hippogryph');assert.equal(returned.nightLevels.Resw,2);assert.equal(archer.nightLevels.Resm,1);assert.equal(S.population(s,0).used,pop);close(archer.hp,245*300/770);close(returned.hp,525*300/770);assert.ok(S.restore(s));
+}
+console.log('PASS paired lifecycle: 2+2 to 4 to 2+2, selected identity, reserved partner identity, correct upgrade families, shared cooldown and provisional weighted-life continuation');
+{
+ const {s,archer,hippo}=couplingFixture(S);assert.equal(cmd(s,hippo,'couple'),null);assert.equal(hippo.order.type,'couple');step(s,1);assert.equal(hippo.kind,'hippogryph');const saved=S.restore(s);step(s,20);step(saved,20);assert.deepEqual(saved,s);assert.equal(hippo.kind,'hippogryphrider');assert.equal(hippo.id,saved.units.find(u=>u.kind==='hippogryphrider').id);assert.ok(!s.units.some(u=>u.id===archer.id));assert.ok(S.restore(s));
+ const f=couplingFixture(S);assert.equal(cmd(f.s,f.hippo,'couple',{target:f.archer.id}),null);assert.equal(cmd(f.s,f.hippo,'stop'),null);step(f.s,30);assert.equal(f.hippo.kind,'hippogryph');assert.ok(f.s.units.some(u=>u.id===f.archer.id));
+}
+console.log('PASS Hippogryph partner approach: deterministic nearest partner, original move-to-partner flag, saved movement and Stop interruption');
+{
+ {const {s,archer,hippo}=couplingFixture(S);archer.z=hippo.z+8;S.visibility(s);assert.equal(cmd(s,hippo,'couple',{target:archer.id}),null);const mage=S.spawn(s,'hero',1,hippo.x+2,hippo.z,{heroClass:3,skills:[1,0,0,0],skillPoints:0,damage:0,order:{type:'hold'}});S.visibility(s);assert.equal(cmd(s,mage,'spell',{slot:0,x:hippo.x,z:hippo.z}),null);assert.ok(hippo.stun>0);step(s,1);const saved=S.restore(s);assert.equal(saved.units.find(u=>u.id===hippo.id).order.type,'couple');step(s,80);step(saved,80);assert.deepEqual(saved,s);assert.equal(hippo.kind,'hippogryphrider');}
+ const {s,archer,hippo}=couplingFixture(S);assert.equal(cmd(s,hippo,'couple',{target:archer.id}),null);const killer=S.spawn(s,'soldier',1,hippo.x+1,hippo.z,{damage:10000});S.fire(s,killer,hippo);assert.equal(hippo.hp,0);assert.equal(hippo.order,null);assert.ok(S.restore(s));step(s,1);assert.equal(archer.kind,'nightarcher');
+ const f=couplingFixture(S);assert.equal(cmd(f.s,f.hippo,'couple',{target:f.archer.id}),null);f.archer.x=20;S.visibility(f.s);step(f.s,1);assert.equal(f.hippo.order,null);assert.equal(f.hippo.kind,'hippogryph');assert.ok(S.restore(f.s));
+}
+console.log('PASS interrupted approach: stunned save resumes exactly, dead initiator drops order and escaped partner cancels safely');
+{
+ const {s,archer,hippo}=couplingFixture(S);assert.equal(cmd(s,archer,'couple',{target:hippo.id}),null);step(s,300);s.map.terrain.fill(1);let before=S.clone(s);assert.match(cmd(s,archer,'dismount'),/ground/);assert.deepEqual(s,before);s.map.terrain.fill(0);while(s.units.length<S.LIMIT)S.spawn(s,'creep',0,20,20);before=S.clone(s);assert.match(cmd(s,archer,'dismount'),/capacity/);assert.deepEqual(s,before);s.units.pop();assert.equal(cmd(s,archer,'dismount'),null);assert.equal(s.units.length,S.LIMIT);assert.ok(S.restore(s));
+}
+console.log('PASS atomic dismount: illegal ground and full capacity leave life/IDs/population untouched; exact capacity boundary succeeds');
+{
+ const {s,archer,hippo}=couplingFixture(S);assert.equal(cmd(s,archer,'couple',{target:hippo.id}),null);const foreign=S.spawn(s,'soldier',1,archer.x+1,archer.z,{damage:10000});S.fire(s,foreign,archer);assert.equal(archer.hp,0);assert.equal(archer.coupled,undefined);assert.ok(S.restore(s));step(s,1);assert.ok(!s.units.some(u=>[archer.id,hippo.id].includes(u.id)));assert.ok(!s.corpses.some(c=>c.id===archer.id));
+}
+console.log('PASS mounted death: paired identity discarded, no dismount revival or aerial biological corpse');
+{
+ const {s,archer,hippo}=couplingFixture(S);assert.equal(cmd(s,archer,'couple',{target:hippo.id}),null);for(const change of [s=>s.hippogryphVersion=1,s=>delete s.teams[0].hippogryphTaming,s=>s.teams[0].hippogryphTaming=0,s=>s.units.find(u=>u.id===archer.id).coupled=null,s=>s.units.find(u=>u.id===archer.id).coupled.archerId=hippo.id,s=>s.units.find(u=>u.id===archer.id).coupled.hippoId=s.units.find(u=>u.kind==='hall').id,s=>s.units.find(u=>u.id===archer.id).coupleCd=31]){const raw=S.clone(s);change(raw);assert.throws(()=>S.restore(raw));}
+ const legacy=couplingFixture(S,false);legacy.s.hippogryphVersion=1;delete legacy.s.teams[0].hippogryphTaming;delete legacy.s.teams[1].hippogryphTaming;const restored=S.restore(legacy.s);assert.equal(restored.hippogryphVersion,1);assert.equal(restored.teams[0].hippogryphTaming,0);assert.equal(S.couplingOption(restored,restored.units.find(u=>u.id===legacy.archer.id)),null);assert.deepEqual(S.trainable(restored,restored.units.find(u=>u.id===legacy.wind.id)),['druidtalon','hippogryph']);
+}
+console.log('PASS strict coupling saves: missing/foreign research, reserved ID aliasing, invalid cooldown and paired state rejected; genuine version-1 standalone air saves retained');
+{
+ const {s,archer,hippo}=couplingFixture(S),body=S.spawn(s,'soldier',1,20,20,{hp:1,damage:0}),killer=S.spawn(s,'soldier',0,20,19,{damage:10000});S.fire(s,killer,body);step(s,1);assert.ok(s.corpses.some(c=>c.id===body.id));assert.ok(!s.units.some(u=>u.id===body.id));assert.equal(cmd(s,archer,'couple',{target:hippo.id}),null);assert.ok(S.restore(s));const raw=S.clone(s);raw.units.find(u=>u.id===archer.id).coupled.hippoId=body.id;assert.throws(()=>S.restore(raw),/coupled identity/);
+}
+console.log('PASS reserved pair identities: existing biological corpse cannot be reassigned to a dismounted partner');
+{
+ for(const initiatedBy of ['archer','hippo']){const {s,archer,hippo}=couplingFixture(S),target=S.spawn(s,'soldier',1,archer.x+6,archer.z,{hp:1000,maxHp:1000,damage:0,speed:0,order:{type:'hold'}});S.visibility(s);assert.ok(S.fire(s,archer,target));const shot=S.clone(s.projectiles[0]),expected=S.weaponDamage(shot,target,shot.damage);if(initiatedBy==='archer')assert.equal(cmd(s,archer,'couple',{target:hippo.id}),null);else{hippo.x=archer.x;hippo.z=archer.z;assert.equal(cmd(s,hippo,'couple',{target:archer.id}),null);step(s,1);}const rider=s.units.find(u=>u.kind==='hippogryphrider');rider.cd=99;rider.order={type:'hold'};const saved=S.restore(s);step(s,12);step(saved,12);assert.deepEqual(saved,s);close(target.hp,1000-expected);assert.equal(s.projectiles.length,0);}
+}
+console.log('PASS in-flight source arrows: Archer- and Hippogryph-initiated fusion retains signed launch damage and exact saved projectile continuation');

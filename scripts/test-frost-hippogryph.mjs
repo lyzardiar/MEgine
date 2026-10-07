@@ -24,7 +24,7 @@ console.log('PASS mounted source form: independent 765HP, ground/air targeting, 
 }
 console.log('PASS source upgrade families, idempotence, Improved Bows, night-only HP regeneration, zero mana and no aerial corpse');
 {
- const {s,wind}=hippogryphFixture(S);for(const mutate of [s=>s.hippogryphVersion=2,s=>delete s.hippogryphVersion,s=>s.units.find(S.hippogryphUnit).mana=1,s=>s.units.find(S.hippogryphUnit).speed=4.48,s=>s.units.find(S.hippogryphUnit).maxHp=770,s=>s.units.find(u=>u.id===wind.id).queue=[{kind:'hippogryphrider',left:1}],s=>s.units.find(u=>u.id===wind.id).queue=[{kind:'hippogryph',left:31}]]){const raw=S.clone(s);mutate(raw);assert.throws(()=>S.restore(raw));}
+ const {s,wind}=hippogryphFixture(S);for(const mutate of [s=>s.hippogryphVersion=3,s=>delete s.hippogryphVersion,s=>s.units.find(S.hippogryphUnit).mana=1,s=>s.units.find(S.hippogryphUnit).speed=4.48,s=>s.units.find(S.hippogryphUnit).maxHp=770,s=>s.units.find(u=>u.id===wind.id).queue=[{kind:'hippogryphrider',left:1}],s=>s.units.find(u=>u.id===wind.id).queue=[{kind:'hippogryph',left:31}]]){const raw=S.clone(s);mutate(raw);assert.throws(()=>S.restore(raw));}
  const legacy=S.clone(s);legacy.units=legacy.units.filter(u=>!S.hippogryphUnit(u));delete legacy.hippogryphVersion;const restored=S.restore(legacy);assert.equal(restored.hippogryphVersion,0);assert.deepEqual(S.trainable(restored,restored.units.find(u=>u.id===wind.id)),['druidtalon']);assert.deepEqual(S.trainable(restored,S.spawn(restored,'altar',0,16,6)),['hero','grovewyrm']);
 }
 console.log('PASS strict saves: source/version/mana/speed/HP/producer bounds, genuine legacy Wind roster and legacy altar production');

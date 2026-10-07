@@ -1,0 +1,126 @@
+{
+  "author": "MiYu",
+  "failures": [
+    {
+      "startedAt": "2026-10-07T21:31:08.379Z",
+      "steps": [
+        {
+          "name": "project open and ready",
+          "ms": 67439
+        }
+      ],
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3170
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 15599
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5153
+        },
+        {
+          "kind": "execute",
+          "name": "view.set_game_resolution",
+          "ms": 3484
+        },
+        {
+          "kind": "execute",
+          "name": "panel.focus",
+          "ms": 40029
+        },
+        {
+          "kind": "query",
+          "name": "console.get_logs",
+          "ms": 624
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 3068
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 494
+        }
+      ],
+      "error": "BridgeConnectionError: Editor bridge request timed out (execute)\n    at Timeout.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:540:14)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)",
+      "shutdown": {
+        "pid": 103868,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    },
+    {
+      "startedAt": "2026-10-07T21:33:43.912Z",
+      "steps": [
+        {
+          "name": "project open and ready",
+          "ms": 94174
+        }
+      ],
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 6245
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 14310
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4980
+        },
+        {
+          "kind": "execute",
+          "name": "view.set_game_resolution",
+          "ms": 3396
+        },
+        {
+          "kind": "execute",
+          "name": "playback.play",
+          "ms": 25220
+        },
+        {
+          "kind": "execute",
+          "name": "panel.focus",
+          "ms": 40019
+        },
+        {
+          "kind": "query",
+          "name": "console.get_logs",
+          "ms": 9090
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 40049
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 12366
+        }
+      ],
+      "error": "BridgeConnectionError: Editor bridge request timed out (execute)\n    at Timeout.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:540:14)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)",
+      "shutdown": {
+        "pid": 35940,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    }
+  ]
+}
