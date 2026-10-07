@@ -1,0 +1,83 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-07T13:23:03.991Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\night-elf-technology-1791379374123\\sample",
+  "steps": [
+    {
+      "name": "fixture validation",
+      "ms": 5
+    },
+    {
+      "name": "project open and editor ready",
+      "ms": 72766
+    },
+    {
+      "name": "original cards and paid queues",
+      "ms": 142783
+    },
+    {
+      "name": "full Sentinel research and tree targeting",
+      "ms": 239267
+    },
+    {
+      "name": "Moon Well manual and autocast controls",
+      "ms": 82780
+    },
+    {
+      "name": "Glaive ground and tree controls",
+      "ms": 106199
+    }
+  ],
+  "editorSha256": "b4dae5f6dfcbf4db15ed19356f71344c743b678a45b207c4c498bc1eed52272c",
+  "productMainSha256": "530e140a7845d7881d45eccaf5c48e2479f3d96a092d05e563813d51f90ff3b9",
+  "productSceneSha256": "7e7b2644fc32e5353e4a3873634ae85a0563526fc4d781116f81bb6c081777c4",
+  "physicalInput": false,
+  "audioListening": false,
+  "cards": {
+    "originalElevenCards": false,
+    "lockedSourcePrerequisite": true,
+    "originalHunterSlots": true,
+    "actualClickAndM": true,
+    "sourcePaymentAndRefund": true,
+    "sourceCardChecks": [
+      "Resc",
+      "Resm",
+      "Rema",
+      "Resw",
+      "Rerh",
+      "Reuv",
+      "Rews"
+    ]
+  },
+  "sentinel": {
+    "full20SecondResearch": true,
+    "originalSlotE": true,
+    "realTreeTarget": true,
+    "flightAndPerchRules": true,
+    "singleUse": true,
+    "actualSaveLoad": true,
+    "owlRendering": false
+  },
+  "moonWell": {
+    "originalRAndIcon": true,
+    "healthAndManaDebit": true,
+    "rightClickAutocast": true
+  },
+  "glaive": {
+    "groundG": true,
+    "treeA": true
+  },
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 97316,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "scope": "Original cards checked: disabled Sentinel and six Hunter researches; paid/refunded queue, full Sentinel timer, target/save/load, Moon Well and Glaive controls. Final bundle card/mobile checks use the separate mobile report."
+}

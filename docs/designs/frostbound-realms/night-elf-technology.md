@@ -1,8 +1,8 @@
-# 暗夜精灵原版科技数据与图标
+# 暗夜精灵原版科技与操作界面
 
 Author: MiYu。`night-elf-technology.json` 保存战争古树 `eaom` 和猎手大厅 `edob` 的全部原版研究列表：11 个研究 ID、19 个等级、38 张原版可用／禁用图标。导入器同时保留原始费用、时间、前置数量、指令槽位、热键、中文文字、升级效果代码、实际单位绑定和相关单位／能力／武器原始行。
 
-这一阶段交付原版数据与素材。研究队列、联机状态、存档和客户端指令接入仍待完成，`night-elf-technology-art-validation.json` 的 `runtimeResearchAcceptance` 明确为 `false`。原生产品 `Main.js`／`Main.mscene` 没有改动，因此没有以素材检查代替可玩科技树验收。
+战争古树和猎手大厅已接入共享生产／研究队列、逐阶计费和退款、完成效果、严格存档与协议 46 的权威联机状态。客户端按原版槽位、热键、中文提示和启用／禁用图标显示研究。素材报告 `night-elf-technology-art-validation.json` 的 `runtimeResearchAcceptance=false` 只限定该报告的素材验证口径；运行时验证使用独立规则、客户端、TCP 和原生报告。
 
 ## 覆盖范围
 
@@ -27,7 +27,7 @@ Author: MiYu。`night-elf-technology.json` 保存战争古树 `eaom` 和猎手�
 ## 效果依据
 
 - 单位绑定来自 `UnitBalance.upgrades`。`Resm` 的 `class=melee` 和 `Resw` 的 `class=ranged` 不能用作单位分类。月之力量绑定弓箭手／女猎手／投刃车等，月之护甲不包含投刃车；野性系列绑定熊形态和风暴之鸦形态，不包含德鲁伊人形。
-- `ratd` 每级增加一个攻击骰。弓箭手／女猎手骰面为 3，平均增加 2；投刃车骰面为 18，平均增加 9.5。保留两个武器的骰数、骰面与固定伤害，供真实随机伤害实现使用。护甲升级使用单位自己的 `defUp`，实际绑定单位均为每级 2。
+- `ratd` 每级增加一个攻击骰。弓箭手／女猎手骰面为 3，平均增加 2；投刃车骰面为 18，平均增加 9.5。保留两个武器的骰数、骰面与固定伤害，实际攻击按保存的确定性随机数掷骰；队列容量阻止发射时不消耗随机数。护甲升级使用单位自己的 `defUp`，实际绑定单位均为每级 2。
 - 硬弓增加 200 源单位射程；射击术增加 3 点攻击；女猎手初始共 2 个弹射目标，研究后共 3 个，每跳损伤衰减 50%。源长度仍使用原值，换算系数为每 100 源单位对应一个世界单位。
 - 哨兵 `Aesn` 针对树，施法距离 800、零魔法、零持续时间代表不限时；飞行视野 100、盘旋视野 900、高度 275、数量 1。字段由 `AbilityMetaData` 的 `Esn1–4` 与编辑器字符串确认。[Blizzard 女猎手说明](https://classic.battle.net/war3/nightelf/units/huntress.shtml)补充每名女猎手只有一次使用、可看隐形、锚定树受伤移除和可驱散。原始 `Cool1=120` 保留在源行，不能作为无限重复施放的依据。
 - 穿刺剑刃增加 200 源单位穿透距离、启用第二武器；穿透半径 50、最小射程 250，第二武器原始目标包含树。[Blizzard 投刃车说明](https://classic.battle.net/war3/nightelf/units/glaivethrower.shtml)补充 Attack Ground 不穿透、穿透不伤树、Attack Ground 可伤多棵树。补充规则均带独立 `ruleReference`，与原始表行分别记录。
@@ -38,6 +38,12 @@ Author: MiYu。`night-elf-technology.json` 保存战争古树 `eaom` 和猎手�
 ```powershell
 python scripts/import-frost-night-elf-technology.py
 python scripts/test-frost-night-elf-technology-assets.py
+node scripts/build-frostbound.mjs
+node scripts/test-frost-night-elf-technology.mjs
+node scripts/test-frost-night-elf-technology-client.mjs
+node scripts/test-frost-night-elf-technology-network.mjs
+node scripts/test-frostbound.mjs
+node scripts/qa-frost-night-elf-technology.mjs
 # 在本阶段文件已加入暂存区后，同时验证 Git blob 的签名。
 python scripts/test-frost-night-elf-technology-assets.py --index
 ```
@@ -49,3 +55,27 @@ python scripts/test-frost-night-elf-technology-assets.py --index
 提交前另验证暂存区生成器、回执及全部签名输出共 92 项，使用一次 `git cat-file --batch` 读取，并核对 blob 的实际字节哈希。Git 属性固定生成器／目录 JSON 的 LF 换行、保留 WorldEditStrings 原始字节，确保检出后仍可复现。独立只读审核额外从 38 个原始 BLP 在内存重新解码，与交付 PNG 逐字节比较，通过。
 
 下一步按这份目录实现队列、全队升级状态、原版效果、保存／恢复与联机隐私，完成客户端原版槽位／热键／提示以及原生运行验收。完整游戏复刻目标仍在进行中。
+
+## 当前实现与验收边界
+
+研究与训练共用三格队列。研究要求完成原版建筑前置、足够资源和未完成等级；同一队伍不能重复排队同一研究。取消按具体等级退款；拔根暂停已有队列并隐藏研究指令，恢复移动／停止指令。`S`、`M`、`U` 等研究热键不会同时发送通用战斗或升级命令。队列文字显示具体研究名称，原版提示中的颜色标记和换行经过文字转换。
+
+已有原版弓箭手、女猎手和投刃车应用相应攻击／护甲／射程研究；未实现的野性兵种仍保留精确单位绑定，不把人形德鲁伊占位模型当成熊形／鸟形升级对象。发射时冻结升级等级、发射位置与目标；存档恢复相同随机伤害。对地攻击使用原射程 11.5，不加树木碰撞半径。树木 50 HP 与木材库存分开，穿刺与树木溅射分别处理。源字段 `Wood` 表示护甲材质；本阶段没有测定原版树木的数值护甲和伤害系数。
+
+月井使用源建造费用、50 秒建造时间和 600 HP，初始魔法 100。夜间回复与月井之春容量／回复倍率生效。`R` 选择单位手动恢复；原版指令槽 0 可右键切换自动恢复，使用原版开／关图标，并在状态区显示井魔法。哨兵使用女猎手原版 `E`、槽 8，点击树木后飞行、停树、侦测隐形并永久保留已用标志；飞行中的投射物不可驱散，停树效果可被 Wisp Detonate 或后端 Shaman Purge 命令移除。投刃车 `G` 对地攻击；穿刺剑刃完成后，`A` 点树和右键点树直接攻击树木。
+
+素材共 56 个原始源、102 个签名输出，包括 38 张研究图标、6 个能力指令图标文件、原版能力中文、树木 SLK 及元数据。导入可脱离游戏安装逐字节复现；全部输出预检保护已有修改。暂存区使用一次 Git 批量读取验证签名。
+
+**尚未完成的原版内容：** Owl 身体、billboard 和两个粒子发射器还没有接入场景哨兵渲染池；当前哨兵规则与操作有效，但不会显示完整猫头鹰。原资产已经在只读共享库找到，独立核查记录位于 `tmp/sentinel-research/review.json`。Shaman 的哨兵树木／效果点选驱散尚未接入客户端。野性系列全部原版兵种、原版 AI 科技策略、完整四族科技树、战役、完整经典 Dota／塔防地图和通用地图编辑器仍需继续。完整复刻目标保持未完成。
+
+原生报告为 `native-night-elf-technology-qa.json`；原生操作输入验证不等于物理键鼠、音频听感或跨机器 LAN 验收。
+
+## 阶段验证
+
+全量 Node 规则／生成客户端／真实 TCP 回归为 106 条 PASS、退出 0，见 `night-elf-technology-rule-validation.json`。新增规则 10 组、生成客户端 6 组；真实 TCP 验证实际断线／恢复、权威研究完成、费用和退款，以及敌方研究／已用标志／锚定元数据隐私。
+
+原生主验收通过原版猎手大厅六个槽位、锁定哨兵按钮、实际研究费用与退款、完整 20 秒哨兵研究、真实 `E` 点树、飞行／停树／单次使用、真实 F5 与菜单恢复、月井 `R` 点选及右键自动施放，以及投刃车 `G` 地面／`A` 树木操作。报告 `native-night-elf-technology-qa.json` 保留该次产品哈希，校验期间只有原版规则与操作，没有猫头鹰渲染。
+
+主验收后，拔根指令卡隐藏研究、恢复 Move／Stop 并保持一个取消按钮的最终修正由生成客户端测试和 `native-night-elf-technology-mobile-qa.json` 单独验证。该补充报告使用最终产品哈希，并重新检查所有 11 张源研究按钮；原生两次验收的范围与哈希分别保留。
+
+最终前置拒绝提示显示可读建筑名，例如 `Requires Hunter's Hall, Tree of Ages`，由生成客户端六组检查验证。该提示文字修正发生在全量回归与原生操作验收之后；各报告保留实际测试时的产品哈希，规则报告另记最终脚本哈希和这一文字差异。

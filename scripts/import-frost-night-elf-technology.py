@@ -65,8 +65,11 @@ def main():
     upgrade_func = original('Units/NightElfUpgradeFunc.txt')
     upgrade_strings = original('Units/NightElfUpgradeStrings.txt')
     ability_func = original('Units/NightElfAbilityFunc.txt')
+    ability_strings = original('Units/NightElfAbilityStrings.txt')
     ability_meta = rows(original('Units/AbilityMetaData.slk'))
     effect_meta = rows(original('Units/UpgradeEffectMetaData.slk'))
+    tree_data = rows(original('Units/DestructableData.slk'))
+    tree_meta = rows(original('Units/DestructableMetaData.slk'))
     editor_strings = section(original('UI/WorldEditStrings.txt').removeprefix(b'\xef\xbb\xbf'), 'WorldEditStrings')
     assert '\ufffd' not in upgrade_strings.decode('utf-8'), 'Damaged original research localization'
     buildings = {}
@@ -127,15 +130,28 @@ def main():
     for n, meta in enumerate(sentinel_meta.values(), 1): assert meta['useSpecific'] == 'Aesn' and meta['data'] == str(n)
     moon_well = ability_data['Ambt']; moon_meta = {k: ability_meta[k] for k in ['Mbt1', 'Mbt2', 'Mbt3', 'Mbt4', 'Mbt5']}
     assert 'Ambt' in abilities['emow']['abilList'].split(',') and moon_well['DataE1'] == '1'
+    commands = {}
+    for key, name in [('Aesn', 'sentinel'), ('Ambt', 'moon-recharge')]:
+        func, text = section(ability_func, key), section(ability_strings, key)
+        x, y = map(int, func['Buttonpos'].split(','))
+        command = dict(slot=x + y * 4, hotkey=text['Hotkey'], name=text['Name'], tip=text['Tip'], tooltip=text['Ubertip'], sourceFunc=func, sourceStrings=text)
+        for field, source in [('icon', func['Art']), ('offIcon', func.get('Unart', func['Art'])), ('disabledIcon', func['Art'].replace('\\CommandButtons\\BTN', '\\CommandButtonsDisabled\\DISBTN'))]:
+            target = 'Assets/Art/classic-' + name + '-' + field + '.png'
+            files[target] = base.decode_icon(original(source.replace('\\', '/'))); command[field] = target
+        commands[key] = command
     special = dict(
-        sentinel=dict(sourceAbility='Aesn', usesPerUnit=1, range=float(sentinel['Rng1']), mana=float(sentinel['Cost1']), duration=float(sentinel['Dur1']), durationZeroMeansUnlimited=True, flightSight=float(sentinel['DataA1']), perchedSight=float(sentinel['DataB1']), perchedHeight=float(sentinel['DataC1']), count=int(sentinel['DataD1']), detectsInvisible=True, dispellable=True, removedOnAnchoredTreeDamage=True, sourceRow=sentinel, sourceFunc=sentinel_art, sourceMetadata=sentinel_meta, sourceLabels={k: editor_strings[v['displayName']] for k, v in sentinel_meta.items()}, ruleReference=REFERENCES['sentinel']),
+        sentinel=dict(sourceAbility='Aesn', usesPerUnit=1, range=float(sentinel['Rng1']), mana=float(sentinel['Cost1']), duration=float(sentinel['Dur1']), durationZeroMeansUnlimited=True, flightSight=float(sentinel['DataA1']), perchedSight=float(sentinel['DataB1']), perchedHeight=float(sentinel['DataC1']), missileSpeed=float(sentinel_art['MissileSpeed']), count=int(sentinel['DataD1']), detectsInvisible=True, dispellable=True, removedOnAnchoredTreeDamage=True, sourceRow=sentinel, sourceFunc=sentinel_art, sourceBuffFunc=section(ability_func, sentinel['EfctID1']), sourceMetadata=sentinel_meta, sourceLabels={k: editor_strings[v['displayName']] for k, v in sentinel_meta.items()}, ruleReference=REFERENCES['sentinel']),
         moonGlaive=dict(sourceUnit='esen', originalTargets=int(weapons['esen']['targCount1']), upgradedTargets=int(weapons['esen']['targCount1']) + int(upgrade['Remg']['base1']), damageLoss=float(weapons['esen']['damageLoss1'])),
         vorpalBlades=dict(sourceUnit='ebal', spillDistanceBonus=float(upgrade['Repb']['base1']), spillRadius=float(weapons['ebal']['spillRadius1']), enabledWeaponMask=int(upgrade['Repb']['base2']), minRange=float(weapons['ebal']['minRange']), attackGroundSpills=False, spillDamagesTrees=False, directAttackTargetsTrees=True, attackGroundDamagesMultipleTrees=True, ruleReference=REFERENCES['vorpalBlades']),
         ultravision=dict(nightSightEqualsDaySight=True, units=research['Reuv']['units']),
         wellSpring=dict(sourceUnit='emow', sourceAbility='Ambt', regeneratesOnlyAtNight=bool(int(moon_well['DataE1'])), healthPerWellMana=float(moon_well['DataA1']), targetManaPerWellMana=float(moon_well['DataB1']), maxManaBonus=float(upgrade['Rews']['base1']), manaRegenMultiplier=1 + float(upgrade['Rews']['base2']), upgradedMaxMana=units['emow']['maxMana'] + float(upgrade['Rews']['base1']), upgradedManaRegen=round(units['emow']['manaRegen'] * (1 + float(upgrade['Rews']['base2'])), 6), sourceAbilityRow=moon_well, sourceMetadata=moon_meta, sourceLabels={k: editor_strings[v['displayName']] for k, v in moon_meta.items()}),
     )
     assert special['moonGlaive']['upgradedTargets'] == 3
-    catalog = dict(author='MiYu', schemaVersion=1, sourceUnitsPerWorldUnit=100, localization='zh-CN', buildings=buildings, research=research, units=units, specialRules=special)
+    trees = {key: tree_data[key] for key in ['LTlt', 'ATtr', 'BTtw', 'CTtr', 'FTtw', 'NTtw', 'VTlt', 'WTst', 'ZTtw']}
+    assert all(row['HP'] == '50' and row['targType'] == 'tree' and row['armor'] == 'Wood' for row in trees.values())
+    assert tree_meta['bhps']['field'] == 'HP' and tree_meta['barm']['field'] == 'armor'
+    tree_rules = dict(hp=50, targetType='tree', armorMaterial='Wood', sourceRows=trees, sourceMetadata={key: tree_meta[key] for key in ['bhps', 'barm']})
+    catalog = dict(author='MiYu', schemaVersion=1, sourceUnitsPerWorldUnit=100, localization='zh-CN', buildings=buildings, research=research, units=units, specialRules=special, commands=commands, treeRules=tree_rules)
     files['night-elf-technology.json'] = encode(catalog)
     files['Assets/Licenses/Classic-Night-Elf-Technology.txt'] = b'Original Warcraft III research tables, localization and command icons: Blizzard Entertainment. Original game asset terms apply; download or extraction does not grant a free redistribution license. Source paths, archive identities, SHA-256 signatures and generator are recorded in night-elf-technology-sources.json. Supplementary gameplay rules cite Blizzard unit references in night-elf-technology.json.\n'
     generator = 'scripts/import-frost-night-elf-technology.py'

@@ -53,6 +53,9 @@ import './test-frost-production-ancients.mjs';
 import './test-frost-production-ancients-client.mjs';
 import './test-frost-production-ancients-network.mjs';
 import './test-frost-ancient-war.mjs';
+import './test-frost-night-elf-technology.mjs';
+import './test-frost-night-elf-technology-client.mjs';
+import './test-frost-night-elf-technology-network.mjs';
 import './test-frost-ancient-war-client.mjs';
 import './test-frost-ancient-war-network.mjs';
 import './test-frost-natures-blessing.mjs';
@@ -89,7 +92,7 @@ const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 for(let faction=0;faction<4;faction++){
   const game=battleFixture(S,'skirmish',{factions:[faction,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),worker=game.units.find(u=>u.team===0&&u.kind==='worker'),hall=game.units.find(u=>u.team===0&&u.kind==='hall');
   // MiYu: preserve siege workshop behavior for legacy Wildwood saves.
-  if(faction===2)game.ancientWarVersion=0;
+  if(faction===2){game.ancientWarVersion=0;game.nightElfTechVersion=0;for(const u of game.units){delete u.nightLevels;delete u.moonWellRules;delete u.rechargeAuto;}}
   assert.match(S.command(game,0,{type:'build',ids:[worker.id],kind:'workshop',x:-10,z:25}),/tier 2/);
   step(game,400);assert.equal(S.command(game,0,{type:'tech',ids:[hall.id]}),null);step(game,1401);
   if(worker.inside)assert.equal(S.command(game,0,{type:'unloadWisps',ids:[worker.inside],target:worker.id}),null);
@@ -128,7 +131,7 @@ const win=S.create('td');win.map.waves=3;win.map.waveInterval=10;for(let i=0;i<7
 const moba=S.create('moba',{ai:[false,false]});step(moba,42);assert.ok(moba.units.filter(u=>u.kind==='creep').length>=18,'three lanes spawn for both teams');const mh=moba.units.find(u=>u.kind==='hero');mh.hp=0;mh.respawn=.2;step(moba,3);assert.equal(mh.hp,mh.maxHp,'MOBA heroes respawn');
 const shopping=S.create('moba',{ai:[false,false]}),shopper=shopping.units.find(u=>u.team===0&&u.kind==='hero');shopping.teams[0].gold=2000;for(const item of [0,1,3])assert.equal(S.command(shopping,0,{type:'buy',ids:[shopper.id],item}),null);assert.deepEqual(shopper.inventory,[3]);const remaining=shopping.teams[0].gold;assert.ok(S.command(shopping,0,{type:'buy',ids:[shopper.id],item:'constructor'}));assert.equal(shopping.teams[0].gold,remaining);
 for(let faction=0;faction<4;faction++){
-  const game=battleFixture(S,'skirmish',{factions:[faction,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),b=game.units.find(u=>u.team===0&&u.kind==='barracks'),hall=game.units.find(u=>u.team===0&&u.kind==='hall');if(faction===2)game.ancientWarVersion=0;const roster=S.trainable(game,b);
+  const game=battleFixture(S,'skirmish',{factions:[faction,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),b=game.units.find(u=>u.team===0&&u.kind==='barracks'),hall=game.units.find(u=>u.team===0&&u.kind==='hall');if(faction===2){game.ancientWarVersion=0;game.nightElfTechVersion=0;for(const u of game.units){delete u.nightLevels;delete u.moonWellRules;delete u.rechargeAuto;}}const roster=S.trainable(game,b);
   assert.equal(new Set(S.armies.flatMap(a=>a.units)).size,17);assert.ok(S.command(game,0,{type:'train',ids:[b.id],kind:roster[2]}),'advanced unit is locked');assert.equal(S.command(game,0,{type:'tech',ids:[hall.id]}),null);step(game,1401);assert.equal(game.teams[0].tier,2);game.teams[0].gold=1000;game.teams[0].wood=1000;
   assert.equal(S.command(game,0,{type:'train',ids:[b.id],kind:roster[2]}),null);step(game,110);assert.ok(game.units.some(u=>u.kind===roster[2]&&u.team===0));
 }

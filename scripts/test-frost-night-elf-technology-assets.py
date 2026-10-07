@@ -70,6 +70,14 @@ sentinel = special['sentinel']
 assert (sentinel['usesPerUnit'], sentinel['range'], sentinel['mana'], sentinel['duration'], sentinel['flightSight'], sentinel['perchedSight'], sentinel['perchedHeight'], sentinel['count']) == (1, 800, 0, 0, 100, 900, 275, 1)
 assert sentinel['durationZeroMeansUnlimited'] and sentinel['detectsInvisible'] and sentinel['dispellable'] and sentinel['removedOnAnchoredTreeDamage']
 assert sentinel['sourceRow']['Cool1'] == '120', 'The source cooldown must not become repeated owl uses'
+assert sentinel['missileSpeed'] == 1500 and sentinel['sourceFunc']['Missileart'] == sentinel['sourceBuffFunc']['Targetart'] == r'Units\NightElf\Owl\Owl.mdl'
+assert catalog['treeRules']['hp'] == 50 and catalog['treeRules']['armorMaterial'] == 'Wood'
+assert all(row['HP'] == '50' and row['targType'] == 'tree' for row in catalog['treeRules']['sourceRows'].values())
+commands = catalog['commands']
+assert (commands['Aesn']['hotkey'], commands['Aesn']['slot'], commands['Ambt']['hotkey'], commands['Ambt']['slot']) == ('E', 8, 'R', 0)
+for command in commands.values():
+    for field in ['icon', 'offIcon', 'disabledIcon']:
+        with Image.open(SAMPLE / command[field]) as icon: assert icon.size == (64, 64) and icon.mode == 'RGBA'
 assert special['vorpalBlades']['enabledWeaponMask'] == 2 and special['vorpalBlades']['spillDistanceBonus'] == 200 and special['vorpalBlades']['spillRadius'] == 50 and special['vorpalBlades']['minRange'] == 250
 assert 'tree' not in units['ebal']['weapons']['1']['targets'] and 'tree' in units['ebal']['weapons']['2']['targets']
 assert not special['vorpalBlades']['attackGroundSpills'] and not special['vorpalBlades']['spillDamagesTrees']
@@ -120,5 +128,5 @@ if '--index' in sys.argv:
     assert not stream.read()
     index_checks = len(check)
     print('PASS staged byte/hash validation:', index_checks, 'generator, receipt and signed outputs in one Git batch')
-report = dict(author='MiYu', passed=True, researchIds=11, researchRanks=19, icons=len(icons), sources=len(receipt['sources']), signedFiles=len(receipt['files']), catalogSha256=sha((SAMPLE / 'night-elf-technology.json').read_bytes()), regenerationWithoutInstallation=True, byteExact=True, preservesModifiedOutputAtomically=True, rejectsCorruptInputBeforeWrites=True, stagedChecks=index_checks, runtimeResearchAcceptance=False)
+report = dict(author='MiYu', passed=True, researchIds=11, researchRanks=19, icons=len(icons), sources=len(receipt['sources']), signedFiles=len(receipt['files']), catalogSha256=sha((SAMPLE / 'night-elf-technology.json').read_bytes()), regenerationWithoutInstallation=True, byteExact=True, preservesModifiedOutputAtomically=True, rejectsCorruptInputBeforeWrites=True, stagedChecks=index_checks, abilityCommands=2, abilityIcons=6, sourceTreeHp=50, sentinelSourceArt=True, runtimeResearchAcceptance=False)
 (ROOT / 'docs/designs/frostbound-realms/night-elf-technology-art-validation.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')

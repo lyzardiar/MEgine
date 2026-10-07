@@ -1,0 +1,20 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "fullRegressionPassLines": 106,
+  "simulationSha256": "b2f0579a7787fc8da404cc7dfe55e8fb77ad3f753a8fe015867ed11cac49e310",
+  "productMainSha256": "e758b16e8f581f866456ebaf7fca9ac37dabbc161edb18f70fbf379ab7c98ea9",
+  "sourceResearchIds": 11,
+  "sourceResearchRanks": 19,
+  "ruleGroups": 10,
+  "clientGroups": 6,
+  "protocol": 46,
+  "realTcpReconnect": true,
+  "dispelFlightAndPerchCovered": true,
+  "fullOriginalGameAcceptance": false,
+  "finalPrerequisiteMessageUsesBuildingNames": true,
+  "finalPrerequisiteMessageClientGroups": 6,
+  "finalSimulationSha256": "db12f7bfa98dad7ca248f969bca75ab70c50342f78af4e37205ccab370a4cf51",
+  "finalProductMainSha256": "f4f67f552f00c428836c9e2509d7d3b08213a81bea0f1dd4520f434c22881217",
+  "finalDeltaFromFullRegression": "Prerequisite rejection text uses readable building names; generated-client tests pass after this text-only change."
+}
