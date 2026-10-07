@@ -1,0 +1,8 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "signedFiles": 11,
+  "originalSourceFiles": 7,
+  "reproducibleWithoutGameInstallation": true,
+  "preservesModifiedOutputAtomically": true
+}

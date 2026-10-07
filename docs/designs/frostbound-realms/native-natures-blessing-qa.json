@@ -1,0 +1,49 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\natures-blessing-1791339376401\\sample",
+  "protocol": 43,
+  "editorSha256": "79ac76db830fbe37d072815c38314ff8f64fe1cb8b764441f4b3cce3f292754a",
+  "physicalInput": false,
+  "audioListening": false,
+  "componentTelemetryMatchesSnapshot": true,
+  "solo": {
+    "originalSlot": true,
+    "tierLock": true,
+    "originalIcons": true,
+    "actualClickAndN": true,
+    "duplicateRejected": true,
+    "mixedWispQueue": true,
+    "cancelRefund": true,
+    "full14SecondWisp": true,
+    "full60SecondResearch": true,
+    "pauseFreezes": true,
+    "exactSavedTimer": true,
+    "sourceArmorAndMovement": true
+  },
+  "tcp": {
+    "actualLobbyAndHudCommand": true,
+    "fullResearchTimer": {
+      "accepted": {
+        "frame": 254,
+        "left": 60,
+        "gold": 4850,
+        "wood": 4800
+      },
+      "completed": {
+        "frame": 854
+      },
+      "initialObservedLeft": 51.49999999999988,
+      "initialFrame": 339,
+      "completeFrame": 856
+    },
+    "enemyQueuePrivate": true,
+    "bothVisibleArmor": true,
+    "reconnectKeepsUpgrade": true
+  },
+  "shaderRejections": [
+    0,
+    0
+  ],
+  "bundleMatchesProduct": true
+}

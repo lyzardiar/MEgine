@@ -65,3 +65,5 @@ samples/frostbound-realms/entangled-*.json text eol=lf
 samples/frostbound-realms/wisp-rule-sources.json text eol=lf
 samples/frostbound-realms/wisp-rules.json text eol=lf
 samples/frostbound-realms/SourceAssets/WarcraftIII/Units/*.slk -text whitespace=cr-at-eol
+scripts/import-frost-natures-blessing.py text eol=lf
+samples/frostbound-realms/natures-blessing*.json text eol=lf

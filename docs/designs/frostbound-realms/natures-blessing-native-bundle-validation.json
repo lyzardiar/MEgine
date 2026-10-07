@@ -1,0 +1,23 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "allowedChanges": [
+    "project id/storageId",
+    "temporary local TCP port",
+    "qaUnits observation field"
+  ],
+  "peers": [
+    {
+      "sample": "D:\\MEngineNativeQA\\natures-blessing-1791339376401\\sample",
+      "comparedFiles": 6654,
+      "bundleSha256": "882b10cb421b535f2bf0479ec62ddf7f445a6f5e9161bb72e6955ca8b729a41f",
+      "sceneSha256": "5df8d1aaa30c45bf7a01755a95b215f56fe990feede9941d07fe3f7d06340023"
+    },
+    {
+      "sample": "D:\\MEngineNativeQA\\natures-blessing-1791339376401\\sample-1",
+      "comparedFiles": 6654,
+      "bundleSha256": "882b10cb421b535f2bf0479ec62ddf7f445a6f5e9161bb72e6955ca8b729a41f",
+      "sceneSha256": "5df8d1aaa30c45bf7a01755a95b215f56fe990feede9941d07fe3f7d06340023"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Frostbound Realms 交付证据
 
-最新玩法：[小精灵自爆](wisp-detonate.md)、[缠绕金矿](entangled-mining.md)、[通灵塔防御升级](ziggurat-upgrades.md)。
+最新玩法：[自然的祝福研究](natures-blessing.md)、[小精灵自爆](wisp-detonate.md)、[缠绕金矿](entangled-mining.md)、[通灵塔防御升级](ziggurat-upgrades.md)。
 
 最新景物：[原版季节树木、岩石与金矿](classic-scenery.md)。
 

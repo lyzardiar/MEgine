@@ -1,0 +1,1 @@
+Nature's Blessing research/unit data and command icons: Blizzard Entertainment, original Warcraft III game asset terms apply. Source paths, archive identities, hashes and selected rows are recorded in natures-blessing-sources.json and natures-blessing.json.
