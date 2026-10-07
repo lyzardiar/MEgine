@@ -31,7 +31,7 @@ def png(image):
 
 
 def raster(frame, race, read, name, files):
-    canvas = Image.new('RGBA', (1280, 720))
+    canvas = Image.new('RGBA', (960, 720))
     blocks = re.findall(r'Texture\s*\{([^}]+)\}', frame)
     assert len(blocks) == 9
     layout = []
@@ -43,9 +43,9 @@ def raster(frame, race, read, name, files):
         x = dx if anchor.endswith('LEFT') else .8+dx-width; y = -dy if anchor.startswith('TOP') else .6-dy-height
         image = Image.fromarray(decode_texture(read('UI/Console/'+race+'/'+race+'UITile'+tile+'.blp')))
         crop = image.crop((round(uv[0]*image.width), round(uv[2]*image.height), round(uv[1]*image.width), round(uv[3]*image.height)))
-        crop = crop.resize((round(width*1600), round(height*1200)), Image.Resampling.LANCZOS); canvas.alpha_composite(crop, (round(x*1600), round(y*1200)))
+        crop = crop.resize((round(width*1200), round(height*1200)), Image.Resampling.LANCZOS); canvas.alpha_composite(crop, (round(x*1200), round(y*1200)))
         files['Assets/Art/console-'+name+'-'+str(index)+'.png'] = png(crop)
-        layout.append(dict(anchor=[0 if anchor.endswith('LEFT') else 1, 0 if anchor.startswith('TOP') else 1], position=[(dx+(width/2 if anchor.endswith('LEFT') else -width/2))*1600, (-dy+(height/2 if anchor.startswith('TOP') else -height/2))*1200], size=[width*1600, height*1200]))
+        layout.append(dict(anchor=[0 if anchor.endswith('LEFT') else 1, 0 if anchor.startswith('TOP') else 1], position=[(dx+(width/2 if anchor.endswith('LEFT') else -width/2))*1200, (-dy+(height/2 if anchor.startswith('TOP') else -height/2))*1200], size=[width*1200, height*1200]))
     return png(canvas), layout
 
 
@@ -65,7 +65,7 @@ def main():
             files['Assets/Art/console-'+name+'-'+label+'.png'] = png(Image.fromarray(decode_texture(read('UI/Console/'+race+'/'+race+'UITile-'+suffix+'.blp'))))
         path = 'SourceAssets/WarcraftIII/UI/Widgets/Console/'+race+'/'+race.lower()+'-console-buttonstates2.blp'; image = Image.fromarray(decode_texture(files[path]))
         for label, y in [('normal', 0), ('pressed', 64), ('disabled', 128), ('highlight', 192)]: files['Assets/Art/console-'+name+'-button-'+label+'.png'] = png(image.crop((0, y, 170, y+44)))
-    files['console-layout.json'] = (json.dumps(dict(author='MiYu', pieces=layout), separators=(',', ':'))+'\n').encode()
+    files['console-layout.json'] = (json.dumps(dict(author='MiYu', reference=[960,720], pieces=layout), separators=(',', ':'))+'\n').encode()
     for label in ['Gold', 'Lumber', 'Supply']: files['Assets/Art/console-'+label.lower()+'.png'] = png(Image.fromarray(decode_texture(files['SourceAssets/WarcraftIII/UI/Feedback/Resources/Resource'+label+'.blp'])))
     path = output/'console-sources.json'; old = {f['path']: f['sha256'] for f in json.loads(path.read_bytes())['files']} if path.exists() else {}
     for relative, raw in files.items():
@@ -74,7 +74,7 @@ def main():
     for relative, raw in files.items():
         target = output/relative; target.parent.mkdir(parents=True, exist_ok=True)
         if not target.exists() or target.read_bytes() != raw: target.write_bytes(raw)
-    generator = 'scripts/import-frost-console.py'; result = dict(author='MiYu', generator=generator, generatorSha256=sha((ROOT/generator).read_bytes()), sourceReceiptSha256=sha((library/'asset-sources.json').read_bytes()), sourceFiles=inputs, frameReceiptSha256=sha(frame_receipt), projection=dict(source=[.8, .6], output=[1280, 720]), files=[dict(path=p, bytes=len(raw), sha256=sha(raw)) for p, raw in files.items()])
+    generator = 'scripts/import-frost-console.py'; result = dict(author='MiYu', generator=generator, generatorSha256=sha((ROOT/generator).read_bytes()), sourceReceiptSha256=sha((library/'asset-sources.json').read_bytes()), sourceFiles=inputs, frameReceiptSha256=sha(frame_receipt), projection=dict(source=[.8, .6], output=[960, 720]), files=[dict(path=p, bytes=len(raw), sha256=sha(raw)) for p, raw in files.items()])
     path.write_bytes((json.dumps(result, ensure_ascii=False, separators=(',', ':'))+'\n').encode()); print('PASS original console frame definitions:', len(RACES), 'races;', len(inputs), 'signed sources')
 
 

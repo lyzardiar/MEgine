@@ -14,6 +14,7 @@ scripts/extract-frost-classic.py -text whitespace=cr-at-eol
 scripts/warcraft-assets/*.cs text eol=lf
 scripts/warcraft-assets/*.csproj text eol=lf
 third_party/mpyq/** -text
+third_party/blast/** -text whitespace=cr-at-eol
 asset-library/**/Licenses/HIVE/** -text
 asset-library/warcraft-iii/game-ready/** -text whitespace=cr-at-eol
 asset-library/warcraft-iii/community-ready/** -text whitespace=cr-at-eol

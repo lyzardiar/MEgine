@@ -1,12 +1,24 @@
 """Author: MiYu. Read MPQ sectors, including encrypted Warcraft map dependencies."""
 import bz2
+import os
 import struct
+import subprocess
 import sys
 import zlib
 from pathlib import Path, PureWindowsPath
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'third_party/mpyq'))
 import mpyq
+
+
+def explode(data, expected):
+    binary = Path(os.environ.get('MENGINE_BLAST_EXECUTABLE', Path(__file__).resolve().parents[1] / 'tmp/warcraft-compression/blast.exe'))
+    if not binary.is_file():
+        raise ValueError('Build the PKWARE reader with scripts/build-warcraft-blast.ps1 or set MENGINE_BLAST_EXECUTABLE')
+    result = subprocess.run([str(binary), str(expected)], input=data, capture_output=True)
+    if result.returncode or len(result.stdout) != expected:
+        raise ValueError('PKWARE decode rejected: ' + result.stderr.decode('utf-8', errors='replace').strip())
+    return result.stdout
 
 
 def read_archive(archive, path):
@@ -28,8 +40,8 @@ def read_archive(archive, path):
         return archive._decrypt(data[:count], key & 0xffffffff) + data[count:]
 
     def expand(data, expected):
-        if block.flags & mpyq.MPQ_FILE_IMPLODE:
-            raise ValueError(f'{path}: PKWARE implode requires a supported decoder')
+        if len(data) < expected and block.flags & mpyq.MPQ_FILE_IMPLODE:
+            data = explode(data, expected)
         if len(data) < expected and block.flags & mpyq.MPQ_FILE_COMPRESS:
             if not data:
                 raise ValueError(f'{path}: missing compressed sector')
@@ -38,6 +50,8 @@ def read_archive(archive, path):
                 data = zlib.decompress(data)
             elif mask == 16:
                 data = bz2.decompress(data)
+            elif mask == 8:
+                data = explode(data, expected)
             else:
                 raise ValueError(f'{path}: unsupported compression mask {mask}')
         if len(data) != expected:

@@ -224,3 +224,7 @@ Author: MiYu。协议 44、productionAncientVersion 1／ancientProduction 1。�
 双客户端通过实际 TCP 大厅加入／准备／开局、HUD 命令、完整权威切换、双方可见自然加成、敌方订单隐私与客机断线重连。按下和抬起均等待原生单帧执行完成，再恢复编辑器连续播放。两端控制台错误和材质管线拒绝为 0。两份测试工程各 6,660 个产品文件字节一致，仅允许工程标识、临时 TCP 地址和 qaUnits 观察字段差异。已查看五张最终截图。证据 production-ancients.md、native-production-ancients-qa.json、production-ancient-native-bundle-validation.json、production-ancient-art-validation.json、production-ancient-index-validation.json。
 
 建筑继续保留源网格体量和 modelScale；四族原版控制台、多宽高比布局沿用已验证实现，新古树命令和状态信息使用同一 HUD。场景仍为 28,383 实体／243 模型条目。指向位置的 Root、准确原版路径贴图／碰撞、完整战争古树训练／研究列表、风／知识古树、完整单位／英雄／战役／经典地图及全部编辑器功能仍需完善。物理键鼠、听感及跨机 LAN 尚未验收。完整复刻目标保持 active；Ponytail 禁用，资产库只读，原有脏 QA／图片与无关草稿保留，无 Rust／C# 修改或子代理委派。
+
+2026-10-07：控制台使用原版 FDF 统一比例投影，游戏参考分辨率 960×720；命令、物品、资源、编队图标与小地图保持源正方形，编辑器命令按面板实际宽度排列。四族游戏画面、四种分辨率的游戏／编辑器输入和面板验收通过，材质拒绝 0。人族 Scout/Guard 使用各自源阶段，Guard Attack 保持 Upgrade First 几何体；四族 38 建筑、主城三级体量、血条高度与两塔阶段通过原生验收。新增投刃车与三种投射物资产，133 次 GLB/pose 加载、5,125 文件签名、客户端回归与源比例测试通过，新增单位玩法尚未接入。PKWARE MPQ 六项测试及三个原始归档文件读取通过。
+
+本阶段按用户要求并行进行了迁移、配置归档、候选整合、比例审核与时间审计。工作树、临时生成缓存和后台配置档案迁至 E:/work/codex；全部复制文件双 SHA 校验通过，已清理验证后的 C 副本和 1,098 个后台配置。旧 C 根目录保留当前会话兼容入口，子目录指向 E。QA 的运行目录与临时工程受实例所有权限制，正常退出后清理；其他存档保留。时间报告位于 E:/work/codex/migration/MEgine-1339/timing-audit.md，实施和验收入口见 asset-proportions-and-qa.md。场景为 28,383 实体／248 模型条目。完整目标继续 active；资产库只读，Ponytail 禁用，原有无关图片和 QA 改动保留。

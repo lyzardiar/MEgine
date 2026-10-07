@@ -23,7 +23,7 @@ UNITS = {
     'RealDawnPaladin': 'HeroPaladin', 'RealWolf': 'DireWolf', 'RealBear': 'PolarBear',
     'RealCatapult': 'Catapult', 'ClassicMeatwagon': 'Meatwagon', 'ClassicMortarTeam': 'MortarTeam',
     'ClassicGryphon': 'GryphonRider', 'ClassicWyvern': 'WyvernRider', 'ClassicChimaera': 'Chimaera',
-    'ClassicFrostWyrm': 'FrostWyrm',
+    'ClassicFrostWyrm': 'FrostWyrm', 'ClassicGlaiveThrower': 'Ballista',
 }
 BUILDINGS = {
     'Kingdom': ['TownHall', 'HumanBarracks', 'Farm', 'HumanTower', 'AltarOfKings', 'Workshop', 'ArcaneVault'],
@@ -49,18 +49,23 @@ def main():
     parser.add_argument('--pose-probe', default=os.environ.get('MENGINE_POSE_PROBE_EXECUTABLE'))
     parser.add_argument('--billboard-library', type=pathlib.Path, default=LIBRARY / 'classic-attachment-ready')
     parser.add_argument('--output', type=pathlib.Path, default=SAMPLE)
+    parser.add_argument('--keys', nargs='+', help='Update only named bindings and retain other catalog entries and signed files')
     args = parser.parse_args()
     sample = args.output.resolve()
     assert args.pose_probe and pathlib.Path(args.pose_probe).is_file(), 'Pass --pose-probe with the current gltf_bounds executable (cargo build --release -p mengine-assets --example gltf_bounds)'
     catalog_path = sample / 'model-catalog.json'
     catalog = load(catalog_path)
     previous = sample / 'classic-sources.json'
+    retained = load(previous) if previous.exists() else {}
+    requested = set(args.keys or [])
     old = {x['path'].lower(): x['sha256'] for x in load(previous).get('files', [])} if previous.exists() else {}
     for relative, expected in old.items():
         assert digest((sample / relative).read_bytes()) == expected, f'Preserve modified classic asset: {relative}'
     node_billboards = importlib.import_module('convert-frost-classic-billboards')
     overrides, billboard_receipt, billboard_manifest = node_billboards.load_overlay(args.billboard_library)
-    files, sources = {}, []
+    files = {x['path']: x for x in retained.get('files', [])} if requested else {}
+    sources = [x for x in retained.get('models', []) if x['key'] not in requested] if requested else []
+    bound = set()
     libraries = {key: LIBRARY / key for key in ['game-ready', 'community-ready', 'remaining-ready', 'tree-skins-ready']}
     models = {key: {m['id'].lower(): m for m in load(root / 'Assets/WarcraftIII/model-catalog.json')['models']} for key, root in libraries.items()}
 
@@ -98,6 +103,9 @@ def main():
         files[relative] = dict(path=relative, sha256=digest(raw), bytes=len(raw))
 
     def bind(key, identifier, pack='game-ready', tier=1, building=False, environment=False, skin=None):
+        if requested and key not in requested:
+            return
+        bound.add(key)
         root = libraries[pack]
         model = models[pack][identifier.lower()]
         tracks = load(root / model['stateTracks'])
@@ -181,14 +189,17 @@ def main():
         sources.append(dict(key=key, source=identifier, pack=pack, model=model['source'], tier=tier, **(dict(skinPack=skin[0], skinTexture=skin[1]) if skin else {})))
 
     for key, model in UNITS.items():
-        bind(key, model)
+        bind(key, model, 'remaining-ready' if model == 'Ballista' else 'game-ready')
+    for key, model in {'ClassicNightArrow': 'ArrowMissile', 'ClassicMoonGlaive': 'SentinelMissile', 'ClassicGlaiveMissile': 'GlaiveMissile'}.items():
+        bind(key, model, 'remaining-ready', environment=True)
     for faction, values in BUILDINGS.items():
         for suffix, model in zip(['Hall', 'Barracks', 'Lodge', 'Tower', 'Altar', 'Workshop', 'Shop'], values):
-            bind(faction + suffix, model, building=True)
+            bind(faction + suffix, model, tier=2 if model == 'HumanTower' else 1, building=True)
         for tier in [2, 3]:
             bind(faction + 'Hall' + str(tier), values[0], tier=tier, building=True)
     for key, model in {'KingdomArcaneVault': 'ArcaneVault', 'HauntedMine': 'HauntedMine', 'ClassicEntangledMine': 'EntangledGoldmine', 'RealTemple': 'TempleOfTheDamned', 'RevenantTower': 'Ziggurat', 'ClassicSpiritLodge': 'SpiritLodge'}.items():
         bind(key, model, building=True)
+    bind('KingdomScoutTower', 'HumanTower', building=True)
     for key, tier in [('RevenantSpiritTower', 2), ('RevenantNerubianTower', 3)]:
         bind(key, 'Ziggurat', tier=tier, building=True)
     winter_skin = ('tree-skins-ready', 'Assets/WarcraftIII/Textures/ReplaceableTextures/LordaeronTree/LordaeronSnowTree.png')
@@ -201,11 +212,18 @@ def main():
             bind(prefix + str(i), source + str(i), 'remaining-ready', environment=True)
     bind('ClassicGoldMine', 'Goldmine', 'remaining-ready', environment=True)
     for key in ['RealWorker', 'ClassicPeon', 'ClassicWisp', 'RealAcolyte', 'RealGhoul']:
+        if requested and key not in requested:
+            continue
         for activity in ['Mine', 'Wood', 'Build']:
             catalog[key + activity] = dict(catalog[key], classicWork=activity)
+            bound.add(key + activity)
     for key in ['WildwoodHall', 'WildwoodHall2', 'WildwoodHall3']:
+        if requested and key not in requested:
+            continue
         catalog[key + 'Uprooted'] = dict(catalog[key], classicUprooted=True)
-    classic = {k: v for k, v in catalog.items() if v.get('classic')}
+        bound.add(key + 'Uprooted')
+    assert not requested or requested <= bound, 'Unknown requested classic binding'
+    classic = {k: v for k, v in catalog.items() if v.get('classic') and (not requested or k in bound)}
     select = "global.Frost={ancient:u=>u.ancient};global.FrostArt={};const V=require('./samples/frostbound-realms/game/visuals.js');let raw='';process.stdin.on('data',b=>raw+=b);process.stdin.on('end',()=>console.log(JSON.stringify(Object.fromEntries(Object.entries(JSON.parse(raw)).map(([k,a])=>[k,V.classicClip(a,'Stand',{ancient:k.startsWith('WildwoodHall'),uprooted:!!a.classicUprooted})])))));"
     clips = json.loads(subprocess.check_output(['node', '-e', select], input=json.dumps(classic).encode('utf-8'), cwd=ROOT))
     probe = subprocess.Popen([args.pose_probe, '--stdin'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, encoding='utf-8')

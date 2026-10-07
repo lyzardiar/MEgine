@@ -1,0 +1,36 @@
+{
+  "upstream": "https://github.com/madler/zlib",
+  "tag": "v1.3.1",
+  "files": [
+    {
+      "path": "blast.c",
+      "url": "https://raw.githubusercontent.com/madler/zlib/v1.3.1/contrib/blast/blast.c",
+      "sha256": "1ab3e479d342bfc144167b808fb00142264bc50f24a110ca88cc774e351c218e",
+      "bytes": 18162
+    },
+    {
+      "path": "blast.h",
+      "url": "https://raw.githubusercontent.com/madler/zlib/v1.3.1/contrib/blast/blast.h",
+      "sha256": "9c1c422b76311d4cb06863ffc056668b6240f3dd998bc02e89ee590d482bfdc2",
+      "bytes": 3864
+    },
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/madler/zlib/v1.3.1/LICENSE",
+      "sha256": "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243",
+      "bytes": 1002
+    },
+    {
+      "path": "test.pk",
+      "url": "https://raw.githubusercontent.com/madler/zlib/v1.3.1/contrib/blast/test.pk",
+      "sha256": "5f5c262c545574a5c221132d5ef832478d222d70b015341795b3860204140d7c",
+      "bytes": 8
+    },
+    {
+      "path": "test.txt",
+      "url": "https://raw.githubusercontent.com/madler/zlib/v1.3.1/contrib/blast/test.txt",
+      "sha256": "9679b2c98e1283222d0782b25a1c198dc64ba9ebd1addd6dc6f643a45947cda3",
+      "bytes": 13
+    }
+  ]
+}

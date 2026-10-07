@@ -8,7 +8,7 @@ import argparse
 
 base = importlib.import_module('import-frost-building-scales')
 ROOT = base.ROOT
-IDS = dict(footman='hfoo', peasant='hpea', archer='earc', catapult='ocat', knight='hkni', heropaladin='Hpal', heroarchmage='Hamg', herobloodelf='Hblm', heromoonpriestess='Emoo', rifleman='hrif', direwolf='nwld', polarbear='nplb', ent='efon', grunt='ogru', skeletonarcher='nska', necromancer='unec', skeleton='uske', shaman='oshm', skeletonmage='uskm', acolyte='uaco', ghoul='ugho', abomination='uabo', peon='opeo', wisp='ewsp', headhunter='ohun', huntress='esen', druidoftheclaw='edoc', meatwagon='umtw', mortarteam='hmtm', gryphonrider='hgry', wyvernrider='owyv', chimaera='echm', frostwyrm='ufro')
+IDS = dict(footman='hfoo', peasant='hpea', archer='earc', catapult='ocat', knight='hkni', heropaladin='Hpal', heroarchmage='Hamg', herobloodelf='Hblm', heromoonpriestess='Emoo', rifleman='hrif', direwolf='nwld', polarbear='nplb', ent='efon', grunt='ogru', skeletonarcher='nska', necromancer='unec', skeleton='uske', shaman='oshm', skeletonmage='uskm', acolyte='uaco', ghoul='ugho', abomination='uabo', peon='opeo', wisp='ewsp', headhunter='ohun', huntress='esen', druidoftheclaw='edoc', meatwagon='umtw', mortarteam='hmtm', gryphonrider='hgry', wyvernrider='owyv', chimaera='echm', frostwyrm='ufro', ballista='ebal')
 
 
 def sha(raw): return hashlib.sha256(raw).hexdigest()

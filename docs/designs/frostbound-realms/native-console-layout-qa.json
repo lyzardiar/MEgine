@@ -1,8 +1,8 @@
 {
   "author": "MiYu",
   "passed": true,
-  "sample": "D:\\MEngineNativeQA\\console-layout-1791314977242\\sample",
-  "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\console-layout-1791366776988\\sample",
+  "editorSha256": "79ac76db830fbe37d072815c38314ff8f64fe1cb8b764441f4b3cce3f292754a",
   "factions": [
     {
       "faction": 0,
@@ -35,7 +35,7 @@
         1024,
         768
       ],
-      "scale": 0.8,
+      "scale": 1.0666666666666667,
       "menuClick": true,
       "minimapClick": true,
       "commandClick": true
@@ -125,17 +125,28 @@
       "h": 200
     },
     "first": {
-      "x": 218.3333282470703,
+      "x": -161.75,
       "y": 214,
-      "w": 137,
+      "w": 277.1666564941406,
       "h": 42
     },
     "last": {
-      "x": 659.3333129882812,
+      "x": 699.75,
       "y": 314,
-      "w": 137,
+      "w": 277.1666564941406,
       "h": 42
     }
   },
-  "shaderRejections": 0
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 172260,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true,
+    "method": "verified completed fixture cleanup"
+  }
 }

@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
+import { EventEmitter } from 'node:events';
+import { setTimeout as delay } from 'node:timers/promises';
 import { pathToFileURL } from 'node:url';
 import {
   backgroundEditorExecutableCandidates,
@@ -77,6 +79,8 @@ test('Agent background launch is hidden, isolated, and single-owner', () => {
   assert.equal(calls[0].options.detached, true);
   assert.equal(calls[0].options.env.MENGINE_EDITOR_BACKGROUND, '1');
   assert.equal(calls[0].options.env.MENGINE_AGENT_BRIDGE_FILE, discoveryFile);
+  assert.equal(calls[0].options.env.WEBVIEW2_USER_DATA_FOLDER, undefined);
+  assert.equal(calls[0].options.env.MENGINE_EDITOR_CONFIG_DIR, undefined);
   assert.equal(fs.existsSync(path.join(root, 'agent-background-launch.lock')), true);
   assert.deepEqual(launchBackgroundEditor({
     discoveryFile,
@@ -84,5 +88,64 @@ test('Agent background launch is hidden, isolated, and single-owner', () => {
     platform: 'win32',
     spawnProcess: () => { throw new Error('must not spawn'); },
   }), { launched: false, waitingForOwner: true });
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('Task-owned background config, WebView and temporary data are isolated and cleaned on exit', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mengine-agent-runtime-'));
+  const runtimeRoot = path.join(root, 'runtime');
+  const executable = path.join(root, 'mengine-editor-tauri.exe');
+  fs.writeFileSync(executable, 'test');
+  const children = [];
+  const env = {
+    MENGINE_EDITOR_EXECUTABLE: executable,
+    MENGINE_AGENT_RUNTIME_ROOT: runtimeRoot,
+    MENGINE_EDITOR_CONFIG_DIR: 'shared-config',
+    APPDATA: 'shared-roaming', LOCALAPPDATA: 'shared-local', TEMP: 'shared-temp', TMP: 'shared-temp',
+    WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: '--disable-background-timer-throttling',
+  };
+  let childEnv;
+  const launch = () => launchBackgroundEditor({
+    discoveryFile: path.join(root, 'discovery-' + fs.readdirSync(runtimeRoot).length, 'agent.json'),
+    env,
+    spawnProcess: (_file, _args, options) => { childEnv = options.env; const child = Object.assign(new EventEmitter(), { pid: process.pid, unref() {} }); children.push(child); return child; },
+  });
+  fs.mkdirSync(runtimeRoot);
+  const first = launch();
+  assert.equal(path.dirname(first.runtimeDirectory), runtimeRoot);
+  for (const [name, folder] of [['MENGINE_EDITOR_CONFIG_DIR', 'config'], ['WEBVIEW2_USER_DATA_FOLDER', 'webview'], ['TEMP', 'temp'], ['TMP', 'temp']]) {
+    assert.equal(childEnv[name], path.join(first.runtimeDirectory, folder));
+    assert.equal(fs.statSync(childEnv[name]).isDirectory(), true);
+  }
+  assert.equal(env.APPDATA, 'shared-roaming');
+  assert.equal(childEnv.APPDATA, 'shared-roaming');
+  assert.equal(childEnv.LOCALAPPDATA, 'shared-local');
+  assert.equal(childEnv.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS, '--disable-background-timer-throttling --disk-cache-size=67108864');
+  const second = launch();
+  assert.notEqual(first.runtimeDirectory, second.runtimeDirectory);
+  children[0].emit('exit', 0, null);
+  for (let i = 0; i < 100 && fs.existsSync(first.runtimeDirectory); i++) await delay(20);
+  assert.equal(fs.existsSync(first.runtimeDirectory), false);
+  assert.equal(fs.existsSync(second.runtimeDirectory), true);
+  children[1].emit('exit', 0, null);
+  for (let i = 0; i < 100 && fs.existsSync(second.runtimeDirectory); i++) await delay(20);
+  assert.equal(fs.existsSync(second.runtimeDirectory), false);
+  assert.equal(fs.existsSync(executable), true);
+  fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('Task-owned runtime rejects relative roots and cleans a failed spawn', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mengine-agent-runtime-failure-'));
+  const discoveryFile = path.join(root, 'agent.json');
+  const executable = path.join(root, 'mengine-editor-tauri.exe');
+  fs.writeFileSync(executable, 'test');
+  const env = { MENGINE_EDITOR_EXECUTABLE: executable, MENGINE_AGENT_RUNTIME_ROOT: 'relative' };
+  assert.throws(() => launchBackgroundEditor({ discoveryFile, env }), /must be an absolute path/);
+  const runtimeRoot = path.join(root, 'runtime');
+  env.MENGINE_AGENT_RUNTIME_ROOT = runtimeRoot;
+  assert.throws(() => launchBackgroundEditor({ discoveryFile, env, spawnProcess() { throw new Error('spawn failed'); } }), /spawn failed/);
+  for (let i = 0; i < 100 && fs.readdirSync(runtimeRoot).length; i++) await delay(20);
+  assert.deepEqual(fs.readdirSync(runtimeRoot), []);
+  assert.equal(fs.existsSync(path.join(root, 'agent-background-launch.lock')), false);
   fs.rmSync(root, { recursive: true, force: true });
 });

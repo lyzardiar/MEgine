@@ -13,6 +13,7 @@ import mpyq
 IDS = dict(townhall='htow', humanbarracks='hbar', farm='hhou', humantower='hgtw', altarofkings='halt', workshop='harm', arcanevault='hvlt', greathall='ogre', orcbarracks='obar', trollburrow='otrb', watchtower='owtw', altarofstorms='oalt', warmill='ofor', voodoolounge='ovln', treeoflife='etol', ancientofwar='eaom', moonwell='emow', ancientprotector='etrp', altarofelders='eate', huntershall='edob', ancientofwonder='eden', necropolis='unpl', crypt='usep', ziggurat='uzig', altarofdarkness='uaod', slaughterhouse='uslh', tombofrelics='utom', templeofthedamned='utod', hauntedmine='ugol', spiritlodge='osld')
 IDS['entangledgoldmine'] = 'egol'
 TIERS = dict(townhall=['htow', 'hkee', 'hcas'], greathall=['ogre', 'ostr', 'ofrt'], treeoflife=['etol', 'etoa', 'etoe'], necropolis=['unpl', 'unp1', 'unp2'], ziggurat=['uzig', 'uzg1', 'uzg2'])
+TIERS['humantower'] = ['hwtw', 'hgtw']
 
 
 def rows(raw):

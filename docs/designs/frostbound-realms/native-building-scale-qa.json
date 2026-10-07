@@ -1,8 +1,8 @@
 {
   "author": "MiYu",
   "passed": true,
-  "sample": "D:\\MEngineNativeQA\\building-scale-1791264868965\\sample",
-  "editorSha256": "c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\building-scale-1791368282009\\sample",
+  "editorSha256": "79ac76db830fbe37d072815c38314ff8f64fe1cb8b764441f4b3cce3f292754a",
   "models": [
     {
       "faction": 0,
@@ -86,9 +86,9 @@
       "scale": 2,
       "visibleParts": 2,
       "worldSize": [
-        2.310615599155426,
-        5.096329510211945,
-        2.045525074005127
+        2.5813640356063843,
+        5.379284501075745,
+        2.548650026321411
       ]
     },
     {
@@ -113,6 +113,30 @@
         3.85685932636261,
         8.502852201461792,
         4.8032190799713135
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "scouttower",
+      "key": "KingdomScoutTower",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        2.310615599155426,
+        5.096329510211945,
+        2.045525074005127
+      ]
+    },
+    {
+      "faction": 0,
+      "kind": "guardtower",
+      "key": "KingdomTower",
+      "scale": 2,
+      "visibleParts": 2,
+      "worldSize": [
+        2.5813640356063843,
+        5.379284501075745,
+        2.548650026321411
       ]
     },
     {
@@ -451,5 +475,17 @@
   ],
   "physicalInput": false,
   "audioListening": false,
-  "shaderRejections": 0
+  "towerStages": 2,
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 120568,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true,
+    "method": "verified completed fixture cleanup"
+  }
 }
