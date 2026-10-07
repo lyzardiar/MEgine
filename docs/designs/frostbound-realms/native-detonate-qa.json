@@ -1,0 +1,754 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\detonate-1791330222083\\sample",
+  "editorSha256": "79ac76db830fbe37d072815c38314ff8f64fe1cb8b764441f4b3cce3f292754a",
+  "physicalInput": false,
+  "audioListening": false,
+  "protocol": 42,
+  "soloEffects": [
+    {
+      "name": "Classic detonate 0",
+      "clip": 1,
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/DispelMagic/DispelMagicTarget.mfx",
+      "looping": false,
+      "playing": false,
+      "speed": 1,
+      "time_seconds": 0.6000000238418579
+    },
+    {
+      "name": "Classic detonate 1",
+      "clip": 1,
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/DispelMagic/DispelMagicTarget.mfx",
+      "looping": false,
+      "playing": false,
+      "speed": 1,
+      "time_seconds": 0.6000000238418579
+    },
+    {
+      "name": "Classic detonate 2",
+      "clip": 1,
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Human/DispelMagic/DispelMagicTarget.mfx",
+      "looping": false,
+      "playing": false,
+      "speed": 1,
+      "time_seconds": 0.6000000238418579
+    },
+    {
+      "name": "Classic detonate 3",
+      "clip": 0,
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Units/NightElf/Wisp/WispExplode.mfx",
+      "looping": false,
+      "playing": false,
+      "speed": 1,
+      "time_seconds": 0.6000000238418579
+    }
+  ],
+  "solo": {
+    "originalCommandSlot": true,
+    "actualClickAndHotkey": true,
+    "destinationTravel": true,
+    "saveResume": true,
+    "stopCancels": true,
+    "friendlyAndEnemyMana": true,
+    "summonDamage": true,
+    "noCasterCorpse": true,
+    "originalGeometryAndParticles": true,
+    "pauseFreezesEffects": true,
+    "transientExpiry": true
+  },
+  "castEvidence": {
+    "before": {
+      "frame": 555,
+      "enemyMana": 137.0184999999985,
+      "allyMana": 160,
+      "bloodlust": 4.499999999999417,
+      "summonHp": 600
+    },
+    "after": {
+      "frame": 556,
+      "enemyMana": 87.08519999999851,
+      "allyMana": 110.2,
+      "bloodlust": 0,
+      "summonHp": 375
+    }
+  },
+  "tcp": {
+    "actualNativeCommand": true,
+    "bothCasterConsumption": true,
+    "authoritativeManaAndSummonDamage": true,
+    "dispel": true,
+    "reconnectKeepsSacrifice": true
+  },
+  "shaderRejections": [
+    0,
+    0
+  ],
+  "bundles": [
+    "bc2831a1b127308e302fe7ef2e1070acb7336f7a9e02dddbd9b441bf840133bf",
+    "bc2831a1b127308e302fe7ef2e1070acb7336f7a9e02dddbd9b441bf840133bf"
+  ],
+  "bundleMatchesProduct": true,
+  "events": [
+    {
+      "seconds": 436.668,
+      "id": 1,
+      "type": "connected"
+    },
+    {
+      "seconds": 442.119,
+      "id": 1,
+      "type": "hello"
+    },
+    {
+      "seconds": 442.12,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 442.824,
+      "id": 1,
+      "type": "create"
+    },
+    {
+      "seconds": 445.905,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 451.132,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 454.255,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 459.649,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 462.191,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 465.013,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 470.175,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 475.389,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 475.529,
+      "id": 2,
+      "type": "connected"
+    },
+    {
+      "seconds": 477.996,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 480.684,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 480.774,
+      "id": 2,
+      "type": "hello"
+    },
+    {
+      "seconds": 480.775,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 483.624,
+      "id": 2,
+      "type": "list"
+    },
+    {
+      "seconds": 483.625,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 485.902,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 486.697,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 488.637,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 490.338,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 491.242,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 493.389,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 496.349,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 498.354,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 498.912,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 501.531,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 504.124,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 504.279,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 506.997,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 508.489,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 509.696,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 512.247,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 516.024,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 516.025,
+      "id": 2,
+      "type": "join"
+    },
+    {
+      "seconds": 517.372,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 518.82,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 519.949,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 522.048,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 522.469,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 525.1,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 526.05,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 527.904,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 529.149,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 530.563,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 533.476,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 536.583,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 536.585,
+      "id": 2,
+      "type": "ready"
+    },
+    {
+      "seconds": 538.465,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 539.355,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 540.996,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 542.492,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 543.502,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 546.698,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 548.476,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 551.512,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 552.123,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 552.124,
+      "id": 1,
+      "type": "ready"
+    },
+    {
+      "seconds": 556.745,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 558.139,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 559.348,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 561.906,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 561.915,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 564.97,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 566.961,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 570.054,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 572.643,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 572.647,
+      "id": 1,
+      "type": "start"
+    },
+    {
+      "seconds": 574.794,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 578.348,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 578.606,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 581.833,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 585.065,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 585.485,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 589.018,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 591.479,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 591.903,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 594.406,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 594.747,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 597.291,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 597.573,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 600.126,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 600.381,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 603.772,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 605.863,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 608.777,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 611.612,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 611.805,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 614.385,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 614.648,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 617.185,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 617.842,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 620.942,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 622.838,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 623.457,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 626.193,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 626.799,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 631.472,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 632.845,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 636.274,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 637.995,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 639.074,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 641.172,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 641.928,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 647.07,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 647.082,
+      "id": 1,
+      "type": "order"
+    },
+    {
+      "seconds": 647.647,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 649.917,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 650.471,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 653.279,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 655.489,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 658.897,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 659.129,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 662.126,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 664.198,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 665.116,
+      "id": 2,
+      "type": "ping"
+    },
+    {
+      "seconds": 666.653,
+      "id": 2,
+      "type": "closed"
+    },
+    {
+      "seconds": 668.545,
+      "id": 3,
+      "type": "connected"
+    },
+    {
+      "seconds": 669.301,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 672.045,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 673.392,
+      "id": 3,
+      "type": "hello"
+    },
+    {
+      "seconds": 673.393,
+      "id": 3,
+      "type": "ping"
+    },
+    {
+      "seconds": 675.989,
+      "id": 3,
+      "type": "resume"
+    },
+    {
+      "seconds": 675.991,
+      "id": 3,
+      "type": "ping"
+    },
+    {
+      "seconds": 677.264,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 678.642,
+      "id": 3,
+      "type": "ping"
+    },
+    {
+      "seconds": 680.581,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 681.505,
+      "id": 3,
+      "type": "ping"
+    },
+    {
+      "seconds": 685.394,
+      "id": 1,
+      "type": "ping"
+    },
+    {
+      "seconds": 687.587,
+      "id": 3,
+      "type": "ping"
+    }
+  ]
+}

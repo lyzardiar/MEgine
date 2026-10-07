@@ -47,6 +47,8 @@ import './test-frost-town-portal-network.mjs';
 import './test-frost-construction.mjs';
 import './test-frost-undead-economy.mjs';
 import './test-frost-wisp-harvest.mjs';
+import './test-frost-detonate.mjs';
+import './test-frost-detonate-network.mjs';
 import './test-frost-entangled-rules.mjs';
 import './test-frost-wisp-client.mjs';
 import './test-frost-undead-network.mjs';

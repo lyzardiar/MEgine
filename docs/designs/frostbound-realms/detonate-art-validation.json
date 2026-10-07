@@ -1,0 +1,14 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "verifiedFiles": 61,
+  "originalModels": 2,
+  "geometryParts": 7,
+  "nativeLoads": 54,
+  "terminalHolds": 7,
+  "reproducibleWithoutInstalledGame": true,
+  "preservesModifiedOutputAtomically": true,
+  "originalGeometryAndAnimationBuffersUnchanged": true,
+  "probeSha256": "3dc7b9752d743ee3e8e1931e206fec2eed17149f1b838a2d46914eea0d427e6b",
+  "scope": "Source signatures, byte-identical reproduction, protected edits, original GLB binary and native finite poses/particles; rendered gameplay is verified separately."
+}

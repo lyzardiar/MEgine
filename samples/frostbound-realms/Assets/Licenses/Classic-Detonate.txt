@@ -1,0 +1,1 @@
+Original Warcraft III Detonate data, command portrait, WispExplode and DispelMagicTarget: Blizzard Entertainment. Original game asset terms apply. Source bytes and conversion hashes are recorded in detonate-sources.json.
