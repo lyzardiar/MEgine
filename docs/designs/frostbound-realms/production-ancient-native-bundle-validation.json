@@ -1,0 +1,23 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "allowedChanges": [
+    "project id/storageId",
+    "temporary local TCP port",
+    "qaUnits observation field"
+  ],
+  "peers": [
+    {
+      "sample": "D:\\MEngineNativeQA\\production-ancients-1791348347475\\sample",
+      "comparedFiles": 6660,
+      "bundleSha256": "769becec56909bad1bb79893f91b2f721a3100367ccd6d52180afd680a663349",
+      "sceneSha256": "5df8d1aaa30c45bf7a01755a95b215f56fe990feede9941d07fe3f7d06340023"
+    },
+    {
+      "sample": "D:\\MEngineNativeQA\\production-ancients-1791348347475\\sample-1",
+      "comparedFiles": 6660,
+      "bundleSha256": "769becec56909bad1bb79893f91b2f721a3100367ccd6d52180afd680a663349",
+      "sceneSha256": "5df8d1aaa30c45bf7a01755a95b215f56fe990feede9941d07fe3f7d06340023"
+    }
+  ]
+}

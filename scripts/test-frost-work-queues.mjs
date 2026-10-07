@@ -19,7 +19,7 @@ for(let f=0;f<4;f++){
  const {s,w}=game(1);ok(s,w,'build',{kind:'farm',x:-5,z:3});step(s,30);assert.ok(w.inside);ok(s,w,'build',{kind:'farm',x:2,z:3,append:true});ok(s,w,'gather',{resource:0,append:true});const saved=S.restore(s);step(s,350);step(saved,350);assert.deepEqual(s.units,saved.units);assert.equal(w.order.type,'gather');assert.ok(!w.inside);
 }
 {
- const {s,w}=game(2);ok(s,w,'build',{kind:'barracks',x:-5,z:3});ok(s,w,'gather',{resource:0,append:true});step(s,30);assert.ok(w.consumed);assert.equal(w.waypoints.length,0);assert.match(order(s,w,'build',{kind:'farm',x:2,z:3,append:true}),/worker/);assert.doesNotThrow(()=>S.restore(s));step(s,150);assert.ok(!s.units.includes(w));
+ const {s,w}=game(2);ok(s,w,'build',{kind:'barracks',x:-5,z:3});ok(s,w,'gather',{resource:0,append:true});step(s,30);assert.ok(w.consumed);assert.equal(w.waypoints.length,0);assert.match(order(s,w,'build',{kind:'farm',x:2,z:3,append:true}),/worker/);assert.doesNotThrow(()=>S.restore(s));step(s,600);assert.ok(!s.units.includes(w));
 }
 {
  const {s,w}=game();ok(s,w,'move',{x:-8,z:-3});ok(s,w,'build',{kind:'farm',x:-5,z:3,append:true});ok(s,w,'gather',{resource:0,append:true});S.spawn(s,'tower',0,-5,3);const gold=s.teams[0].gold;step(s,80);assert.equal(s.units.filter(u=>u.kind==='farm').length,0);assert.match(s.announcements[0],/Queued build skipped/);assert.ok(s.teams[0].gold>=gold);assert.equal(w.order.type,'gather');

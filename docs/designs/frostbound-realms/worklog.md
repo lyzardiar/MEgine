@@ -213,3 +213,14 @@ Author: MiYu。Ponytail 保持禁用。协议 43、natureVersion 1。原版 Renb
 最终完整规则／客户端／真实 TCP 回归 83 条 PASS、退出 0。11 个文件签名、7 个原始源文件、脱离游戏安装重生成与修改保护通过。双原生 Release QuickJS 独立工程通过实际按钮／N、完整 14 秒训练和 60 秒研究、重复拒绝、退款、暂停、精确菜单存读档、原版护甲和移动数值、真实大厅准备开局与联机 HUD 研究。权威接受 frame 254、完成 frame 854，完整 600 tick；敌方队列私有、双方可见护甲同步、客机重连保留升级。材质拒绝与控制台错误均为 0。两份工程各 6,654 产品文件逐文件一致，允许差异仅为工程标识、临时 TCP 地址和 qaUnits 观察字段。场景仍为 28,383 实体／243 模型条目。已查看三张最终截图。证据 natures-blessing.md、natures-blessing-art-validation.json、native-natures-blessing-qa.json、natures-blessing-native-bundle-validation.json。
 
 四族控制台与多宽高比布局沿用已验证实现。当前只有三种主树支持完整拔根形态，风／知识古树独立兵种树、完整单位基础属性、全部原版排队细节与建筑捕获仍需完善。树人沿用已有基础属性并施加原版增量。物理键鼠、听感及跨机器 LAN 未验收。完整四族、战役、经典地图和编辑器目标保持 active；资产库只读，既有经济草稿、QA 文件和其他无关改动保留，无 Rust／C# 修改或子代理委派。
+
+
+## 2026-10-07：原版生产古树形态与命令栏
+
+Author: MiYu。协议 44、productionAncientVersion 1／ancientProduction 1。战争古树、远古守护者和奇迹古树采用 eaom／etrp／eden 的原版费用、完整 60 秒施工、生命、护甲、形态武器、夜间恢复和自然的祝福增量。三种古树支持完整 2.5 秒拔根／原地扎根、移动、吃树、暂停、存档和重连；生产队列、商店交易及补货在拔根／切换形态时暂停，扎根后恢复。守护者投石继承原版地空目标、地面溅射及发射时的武器形态。在途保存与源单位死亡／变形保留弹道。原版 Root／Uproot 在 (3,2)、Eat Tree 在 (0,2)，使用真实 BLP、R／E 和源动画。主树科技、缠绕金矿仍独立于生产古树。旧存档行为与源 Alternate 模型选择得到保留。
+
+完整规则／客户端／真实 TCP 回归 86 条 PASS、退出 0，视觉、移动和主树形态针对性回归通过。14 个文件签名、9 个原始源文件、脱离安装重生成与修改保护通过；Git index 和 Windows 实际检出的全部签名及生成器哈希一致。最终双原生 Release QuickJS 独立工程通过三个实际 Wisp 的 B/B、B/T、B/V 建造落点；frame 0 支付 375 金／170 木，frame 599 尚未建成，frame 600 三者完成并消耗三个小精灵。完整施工时间保留在 600 个权威 tick 内。原版三模型／图标／命令位置、完整切换计时、移动／Walk、付款队列暂停与恢复、精确暂停／菜单存读档及实际吃树／Wonders 源动画通过。
+
+双客户端通过实际 TCP 大厅加入／准备／开局、HUD 命令、完整权威切换、双方可见自然加成、敌方订单隐私与客机断线重连。按下和抬起均等待原生单帧执行完成，再恢复编辑器连续播放。两端控制台错误和材质管线拒绝为 0。两份测试工程各 6,660 个产品文件字节一致，仅允许工程标识、临时 TCP 地址和 qaUnits 观察字段差异。已查看五张最终截图。证据 production-ancients.md、native-production-ancients-qa.json、production-ancient-native-bundle-validation.json、production-ancient-art-validation.json、production-ancient-index-validation.json。
+
+建筑继续保留源网格体量和 modelScale；四族原版控制台、多宽高比布局沿用已验证实现，新古树命令和状态信息使用同一 HUD。场景仍为 28,383 实体／243 模型条目。指向位置的 Root、准确原版路径贴图／碰撞、完整战争古树训练／研究列表、风／知识古树、完整单位／英雄／战役／经典地图及全部编辑器功能仍需完善。物理键鼠、听感及跨机 LAN 尚未验收。完整复刻目标保持 active；Ponytail 禁用，资产库只读，原有脏 QA／图片与无关草稿保留，无 Rust／C# 修改或子代理委派。

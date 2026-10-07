@@ -1,0 +1,170 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sample": "D:\\MEngineNativeQA\\production-ancients-1791348347475\\sample",
+  "protocol": 44,
+  "editorSha256": "79ac76db830fbe37d072815c38314ff8f64fe1cb8b764441f4b3cce3f292754a",
+  "physicalInput": false,
+  "audioListening": false,
+  "inputDelivery": "native step completion before resume",
+  "models": [
+    {
+      "kind": "barracks",
+      "action": "rooted",
+      "clip": 8,
+      "name": "stand alternate",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientofWar/AncientofWar/geoset-00-animated.glb#pose=8:40@30"
+    },
+    {
+      "kind": "tower",
+      "action": "rooted",
+      "clip": 11,
+      "name": "Stand Walk Alternate",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientProtector/AncientProtector/geoset-05-animated.glb#pose=11:25@30"
+    },
+    {
+      "kind": "shop",
+      "action": "rooted",
+      "clip": 5,
+      "name": "stand alternate",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientOfWonder/AncientOfWonder/geoset-00-animated.glb#pose=5:0@30"
+    },
+    {
+      "kind": "barracks",
+      "action": "uprooting",
+      "clip": 9,
+      "name": "Morph Alternate",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientofWar/AncientofWar/geoset-00-animated.glb#pose=9:0@30"
+    },
+    {
+      "kind": "barracks",
+      "action": "uprooted",
+      "clip": 2,
+      "name": "Stand- 2",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientofWar/AncientofWar/geoset-06-animated.glb#pose=2:46@30"
+    },
+    {
+      "kind": "tower",
+      "action": "uprooting",
+      "clip": 13,
+      "name": "Morph Alternate",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientProtector/AncientProtector/geoset-05-animated.glb#pose=13:0@30"
+    },
+    {
+      "kind": "tower",
+      "action": "uprooted",
+      "clip": 0,
+      "name": "Stand",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientProtector/AncientProtector/geoset-07-animated.glb#pose=0:26@30"
+    },
+    {
+      "kind": "shop",
+      "action": "uprooting",
+      "clip": 8,
+      "name": "morph alternate",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientOfWonder/AncientOfWonder/geoset-00-animated.glb#pose=8:0@30"
+    },
+    {
+      "kind": "shop",
+      "action": "uprooted",
+      "clip": 0,
+      "name": "stand",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientOfWonder/AncientOfWonder/geoset-01-animated.glb#pose=0:27@30"
+    },
+    {
+      "kind": "barracks",
+      "action": "walk",
+      "clip": 3,
+      "name": "Walk",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientofWar/AncientofWar/geoset-06-animated.glb#pose=3:46@30"
+    },
+    {
+      "kind": "barracks",
+      "action": "rooting",
+      "clip": 7,
+      "name": "Morph",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientofWar/AncientofWar/geoset-06-animated.glb#pose=7:0@30"
+    },
+    {
+      "kind": "barracks",
+      "action": "rooted",
+      "clip": 8,
+      "name": "stand alternate",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientofWar/AncientofWar/geoset-00-animated.glb#pose=8:1@30"
+    },
+    {
+      "kind": "tower",
+      "action": "rooting",
+      "clip": 10,
+      "name": "Morph",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientProtector/AncientProtector/geoset-07-animated.glb#pose=10:0@30"
+    },
+    {
+      "kind": "tower",
+      "action": "rooted",
+      "clip": 11,
+      "name": "Stand Walk Alternate",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientProtector/AncientProtector/geoset-05-animated.glb#pose=11:29@30"
+    },
+    {
+      "kind": "shop",
+      "action": "rooting",
+      "clip": 4,
+      "name": "Morph",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientOfWonder/AncientOfWonder/geoset-00-animated.glb#pose=4:0@30"
+    },
+    {
+      "kind": "shop",
+      "action": "rooted",
+      "clip": 5,
+      "name": "stand alternate",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientOfWonder/AncientOfWonder/geoset-00-animated.glb#pose=5:11@30"
+    },
+    {
+      "kind": "shop",
+      "action": "eat",
+      "clip": 15,
+      "name": "Spell EatTree",
+      "mesh": "Assets/WarcraftIII/Models/Buildings/NightElf/AncientOfWonder/AncientOfWonder/geoset-01-animated.glb#pose=15:0@30"
+    }
+  ],
+  "construction": {
+    "actualWorkerBuildHotkeysAndSiteClicks": true,
+    "sourceCosts": {
+      "gold": 375,
+      "wood": 170
+    },
+    "startFrame": 0,
+    "completedFrame": 600,
+    "nativeRenderSteps": 301,
+    "full60Seconds": true,
+    "threeConsumedWisps": true
+  },
+  "solo": {
+    "sourceModels": true,
+    "actualIconsSlotsClicksAndR": true,
+    "fullFormTimers": true,
+    "paidQueuePauseAndFullResume": true,
+    "moveAndSourceWalk": true,
+    "pauseAndExactMenuSave": true,
+    "actualEatTreeAndOriginalClip": true
+  },
+  "lobby": {
+    "twoReadyPlayers": true,
+    "guestReadyFeedback": true,
+    "hostStartFeedback": true,
+    "authorityStarted": true
+  },
+  "tcp": {
+    "actualLobbyAndHudUproot": true,
+    "fullFormTimer": true,
+    "bothNatureArmorAndSpeed": true,
+    "privateEnemyOrders": true,
+    "reconnectRetainsForm": true
+  },
+  "shaderRejections": [
+    0,
+    0
+  ],
+  "bundleMatchesProduct": true
+}

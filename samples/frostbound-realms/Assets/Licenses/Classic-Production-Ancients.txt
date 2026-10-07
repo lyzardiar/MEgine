@@ -1,0 +1,1 @@
+Ancient unit/ability data and Root/Uproot/Eat Tree icons: Blizzard Entertainment, original Warcraft III game asset terms apply. Archive paths, hashes and selected rows are in production-ancient-sources.json and production-ancients.json.

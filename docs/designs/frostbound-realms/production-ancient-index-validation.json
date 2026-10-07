@@ -1,0 +1,9 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "signedFiles": 14,
+  "importerSignature": true,
+  "actualGitCheckout": true,
+  "platform": "Windows",
+  "binaryNulDelimitedPaths": true
+}

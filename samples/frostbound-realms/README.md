@@ -260,9 +260,11 @@ Skirmish 开始时为 500 金币、150 木材；Kingdom / Warclan / Wildwood 各
 
 TCP 心跳、连接期限和断线重连使用实际时间。原生双客户端菜单创建／浏览／加入／开局、16 秒大厅空闲及客机重连验收见 `docs/designs/frostbound-realms/network-clock.md`；运行 `node scripts/test-frost-network-clock.mjs` 与 `node scripts/qa-frost-menu-network.mjs` 可复验。
 
-暗夜新近战开局绑定原版缠绕金矿。扎根主树按 G 或右键目标矿井进行 3 秒缠绕施法，再生长 60 秒；金矿最多容纳五个小精灵，按实际人数播放原版工作序列和 EntangleWisp 挂接模型。选择金矿后，L 装载、U 全部卸载，也可分别卸载驻矿单位；面板显示人数与剩余黄金。源数据、共享轮转收入、退出阻挡、绑定解除、存档、真实 TCP 和原生截图见 [缠绕金矿](../../docs/designs/frostbound-realms/entangled-mining.md)。当前协议 43。
+暗夜新近战开局绑定原版缠绕金矿。扎根主树按 G 或右键目标矿井进行 3 秒缠绕施法，再生长 60 秒；金矿最多容纳五个小精灵，按实际人数播放原版工作序列和 EntangleWisp 挂接模型。选择金矿后，L 装载、U 全部卸载，也可分别卸载驻矿单位；面板显示人数与剩余黄金。源数据、共享轮转收入、退出阻挡、绑定解除、存档、真实 TCP 和原生截图见 [缠绕金矿](../../docs/designs/frostbound-realms/entangled-mining.md)。当前协议 44。
 
 
 近战小精灵按 D 或点击原版自爆图标，再指定地面位置，走近后牺牲；范围内友敌单位驱散已实现的魔法状态并失去最多 50 法力，召唤单位承受 225 伤害。原版爆炸与目标驱散网格／粒子播放 Birth，单机暂停冻结效果。S 可取消行走中的施放，驻矿单位需先卸载；存档和重连延续目标，迷雾与隐形单位保持特效隐私。数据、边界、原生运行及重建入口见 [小精灵自爆](../../docs/designs/frostbound-realms/wisp-detonate.md)。
 
 暗夜主树在二级科技后按 N 或点击原版图标研究自然的祝福，消耗 150 金、200 木，60 秒完成。研究与小精灵训练共用生产队列，支持取消退款、存档及联机重连；完成后，当前绑定古树与树人增加 5 点护甲，远古守护者增加 2 点，拔根主树移动速度变为 0.8。受益单位和实现范围见 [自然的祝福](../../docs/designs/frostbound-realms/natures-blessing.md)。
+
+新近战的战争古树、远古守护者和奇迹古树支持 R 拔根／原地扎根、E 吃树、原版形态动画和源数值。三者施工均为完整 60 秒，拔根速度 0.4，自然的祝福完成后为 0.8；形态切换暂停生产和商店功能。远古守护者扎根时使用对空／对地投石，拔根后改为地面近战。原版 Root／Uproot／Eat Tree 命令图标、存读档、联机与实现边界见 [生产古树](../../docs/designs/frostbound-realms/production-ancients.md)。战争古树的完整训练／研究列表和风／知识古树兵种树仍需补齐。

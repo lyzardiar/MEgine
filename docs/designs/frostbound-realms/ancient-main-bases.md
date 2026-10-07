@@ -1,31 +1,21 @@
-# Ancient main-base Root, Uproot and Eat Tree
+# 暗夜主树形态与能力
 
-Author: MiYu. Applies to completed canonical Night Elf Tree of Life / Ages / Eternity main bases in melee skirmish.
+作者：MiYu
 
-## Gameplay and controls
+生命之树、远古之树和永恒之树保留主城身份，使用原版 TreeofLife 模型、节点、材质动画和三级 modelScale。扎根使用原版 Alternate 序列，拔根、扎根、移动和吃树分别绑定 Morph Alternate、Morph、Walk 和 Spell Eat Tree。资产来源、原始网格和比例见经典模型与建筑比例收据。
 
-Select an Ancient and use the HUD Root/Uproot button or R. Both forms take 2.5 seconds. Orders are blocked during that transition. Rooted bases use fortified armor, occupy the full building footprint and produce workers. Uprooted bases use heavy armor and move at 0.4 world units per second with a 1.2-unit movement radius. The world-unit conversion is project-specific. Armor value remains two.
+完成的主树按 R 或点击原版命令图标进行 2.5 秒形态切换；切换期间不能下其他命令。扎根使用城甲并保留完整建筑占地，拔根使用重甲，移动速度为 0.4。原地扎根检查平坦干燥地面、树木、岩石、单位和建筑，在转换结束时再次检查；批量扎根检查各单位的占地。
 
-Paid worker queues pause during form changes and while uprooted, retaining payment and remaining time. Root resumes them. New training and main-base upgrades require the rooted form. Root checks the entire footprint for flat dry ground, trees, rocks, troops and other buildings, and checks again on completion. Batch Root reserves the footprint of every selected Ancient.
+已付款的小精灵与研究队列在形态切换和拔根期间暂停，扎根后继续。训练与主城升级要求扎根。拔根主树不会成为回城乘客或保存权杖目标，工人交货、回城及保存权杖目的地要求扎根主城。目的地失效时取消回城通道。
 
-While uprooted, use Eat Tree or E, then click a living visible tree. The Ancient walks into reach, consumes the actual resource, triggers its falling mesh and restores 500 HP over 30 seconds. Eating again refreshes that timer without adding another recovery rate. Recovery continues through Root. The HUD shows remaining recovery and suspended training.
+拔根后按 E 或点击原版吃树图标选择可见活树，主树走近并消耗真实树资源，在 30 秒内恢复 500 生命。重复吃树刷新恢复时间，恢复可以跨越扎根过程。树木使用已有倒伏网格与资源生命周期。
 
-Moving bases retain building identity and do not become Town Portal passengers or staff targets. Worker dropoff, Town Portal destinations and staff return destinations require a rooted base. A portal whose destination becomes unavailable cancels at channel completion. Save/load preserves forms, transitions, movement orders, healing and paid queues, including a pending portal whose destination has moved after Uproot. Older canonical saves without form metadata restore as rooted. Legacy base rules remain compatible. TCP protocol is 39; client and server must use the same version.
+新近战开局的[缠绕金矿](entangled-mining.md)使用实际 3 秒施法、60 秒生长和五个驻矿小精灵。拔根会解除金矿绑定并处理驻矿单位退出。[自然的祝福](natures-blessing.md)研究由实际已完成的二级／三级暗夜主树解锁，完成后主树护甲增加 5、拔根速度变为 0.8。
 
-## Assets
+存读档保留形态、转换、移动、恢复、生产队列和金矿绑定。旧主城存档恢复为扎根形态，旧版本规则继续兼容；TCP 客户端和服务器须使用同一协议，当前为 44。可见敌方保留实际模型形态与属性，队列及订单保持私有。
 
-Three moving GLBs use the existing attributed Ancient bodies/crowns and the 15-joint Entangled Roots rig. Skin weights are transferred from the actual weighted body mesh. Foundation rocks are removed and crowns follow Spine Upper. Idle, Walk, Attack and Death are attributed source clips; Uproot, Root and EatTree are project-authored clips. They are not original Warcraft animations. Model names/icons retain the existing main-base identity when the rendered mesh changes.
+`test-frost-ancients.mjs` 与 `test-frost-ancients-network.mjs` 检查完整形态工期、移动／占地、地形和单位阻挡、批量扎根、完整恢复、资源倒伏、生产暂停与保存重连。原生金矿、自爆及自然的祝福验收使用当前原版模型和命令，入口见各能力文档。
 
-`ancient-form-sources.json` records every input/output hash and clip. Attribution is in `Assets/Licenses/Entangled-Roots.txt` and `Wildwood-buildings.txt`. Reproduce with Blender 4.5.9 using `--background --factory-startup --disable-autoexec --python-exit-code 1 --python scripts/import-frost-ancient-forms.py`, then `node scripts/build-frostbound.mjs`. Two independent conversions produced identical hashes for all three GLBs.
+[生产古树](production-ancients.md)接入战争古树、远古守护者和奇迹古树的独立原版数据及形态。主树金矿能力、主城升级和研究前置不会扩展给这些生产古树。
 
-## Validation and scope
-
-`test-frost-ancients.mjs` checks exact timers, mobile clearance/static obstacle removal, production payment/pausing/resume, blocking terrain and bodies, late Root blockage, batch footprints, complete non-stacking recovery, tree fall, saved forms/orders/queues, legacy data and malformed metadata. It also checks named clip selection at 12/30 Hz for all tiers. `test-frost-ancients-network.mjs` uses real TCP sockets for complete form timers, rejected transition orders, private enemy queues/orders, mid-form and healing reconnection, actual resource consumption and rooted production. Its final production completion uses a controlled remaining timer; the two form durations run in real time. The combined rule/TCP suite reports 74 PASS checks.
-
-`validate-frost-ancient-forms.mjs` verifies actual weights on every joint and native sampled positions at start/mid/end for all seven clips on all three tiers. It checks moving legs and shoulders/crowns, world-vertical morph movement, finite bounds and a falling death pose. Native geometry evidence is `ancient-forms-validation.json`. The MEngine assets integration suite passes three tests.
-
-Native QA passed the actual Root/Uproot/Eat Tree HUD, walk and form pose bindings on all three tiers, blocked Root, resource fall/recovery, paused/resumed production, true-menu saves and editor F7 playtest. Material pipeline rejection count was zero. `ancients-native-qa.json` and `ancients-validation.json` record the exact accepted Main.js SHA. The packaged Player contains 905 files, preserves the original project storage identity and matches the native script and all 126 generated assets from the Ancient and user-supplied building manifests. The Player stayed alive and responsive for 30 seconds with zero logged errors; startup evidence is `ancients-player-smoke.json`. These automated checks do not constitute physical mouse or audio listening acceptance.
-
-Only the three main-base Ancients receive these abilities. Nature's Blessing, Entangle Gold Mine and other Night Elf production Ancients remain outside this stage. The in-game editor places a rooted main base, whose abilities work in F7 playtest; initial uprooted-form authoring is not added. The wider Warcraft recreation remains incomplete.
-
-References: https://classic.battle.net/war3/nightelf/buildings/treeoflife.shtml and https://warcraft.wiki.gg/wiki/Tree_of_Life_(Warcraft_III).
+当前扎根使用所在位置及圆形占地，原版指定地点扎根、准确路径贴图、全部古树／兵种／研究、完整地图与战役仍需完善。原版客户端的完整视觉时相、物理输入、听感及跨机器 LAN 未独立验收。完整 Warcraft III 复刻目标保持 active。

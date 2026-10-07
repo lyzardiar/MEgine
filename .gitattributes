@@ -67,3 +67,5 @@ samples/frostbound-realms/wisp-rules.json text eol=lf
 samples/frostbound-realms/SourceAssets/WarcraftIII/Units/*.slk -text whitespace=cr-at-eol
 scripts/import-frost-natures-blessing.py text eol=lf
 samples/frostbound-realms/natures-blessing*.json text eol=lf
+scripts/import-frost-production-ancients.py text eol=lf
+samples/frostbound-realms/production-ancient*.json text eol=lf

@@ -43,7 +43,7 @@ var FrostVisual=(()=>{
     const d=Frost.types[u.kind],f=u.kind==='hall'?(u.baseFaction??state.teams[u.team]?.faction??0):state.teams[u.team]?.faction||0,tier=Frost.clamp(u.upgradeTier??1,1,3);
     let key=f===0&&u.kind==='shop'?'KingdomArcaneVault':u.kind==='spirittower'?'RevenantSpiritTower':u.kind==='nerubiantower'?'RevenantNerubianTower':u.kind==='hauntedmine'?'HauntedMine':u.kind==='entangledmine'?'ClassicEntangledMine':u.kind==='temple'?'RealTemple':u.kind==='spiritlodge'?'ClassicSpiritLodge':buildings[u.kind]?Frost.factions[f]+buildings[u.kind]+(u.kind==='hall'&&tier>1?tier:''):u.kind==='hero'?Frost.unitType(u).art:u.tag==='boss'?'RealBear':u.kind==='frosttower'?'FrostTower':u.kind==='flametower'?'EmberTower':u.kind==='worker'?['RealWorker','ClassicPeon','ClassicWisp','RealAcolyte'][f]:u.kind==='soldier'?['RealFootman','RealOrc','ClassicHuntress','RealGhoul'][f]:u.kind==='hunter'?'ClassicHeadhunter':u.kind==='druid'?'ClassicDruid':u.kind==='emberdrake'?'ClassicWyvern':u.kind==='grovewyrm'?'ClassicChimaera':u.kind==='spectralwyrm'?'ClassicFrostWyrm':units[u.kind]||base[u.kind]||base[d.model];
     const original=FrostArt[key],activity=['RealWorker','ClassicPeon','ClassicWisp','RealAcolyte','RealGhoul'].includes(key)?work(state,u):null,phase=!original.classic&&(key==='RealArcher'||original.shotModel)&&!walking&&!u.stun?(castPhase(u,original,walking)??(u.cd>0?attackPhase(u,original):null)):null,loaded=phase!==null&&(original.ammoLoad<original.attackEvent?phase>=original.ammoLoad&&phase<original.attackEvent:phase<original.attackEvent||phase>=original.ammoLoad),variant=phase===null?key:original.shotModel?(loaded?original.loadedModel||key:original.shotModel):key+(loaded?'Loaded':'Shoot');
-    const asset=Frost.ancient(u)&&(u.uprooted||u.ancientShift)?FrostArt[key+'Uprooted']:FrostArt[activity?key+activity.animation:variant]||original,scale=asset.factionBuilding?Math.min((d.radius*2*.92)/Math.hypot(asset.size[0],asset.size[2]),(asset.maxWorldHeight??Infinity)/asset.size[1]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:asset.siegeModel?1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
+    const asset=Frost.ancient(u)&&(u.uprooted||u.ancientShift)?FrostArt[key+'Uprooted']||original:FrostArt[activity?key+activity.animation:variant]||original,scale=asset.factionBuilding?Math.min((d.radius*2*.92)/Math.hypot(asset.size[0],asset.size[2]),(asset.maxWorldHeight??Infinity)/asset.size[1]):u.tag==='boss'||u.tdBoss?1.5:d.flying?1.1:asset.siegeModel?1:d.attack==='siege'?2:key.startsWith('Skeleton_')?1.15:key==='Tribal'?.7:key==='Demon'?.8:key==='Ghost_Skull'?.8:d.speed?(u.kind==='hero'?1.1:d.model==='knight'?1:.85):3;
     const actualScale=asset.classic?classicScale(key,u):scale;
     return {key,asset,scale:actualScale,height:(asset.classic&&asset.bounds?Math.max(0,asset.bounds.max[1]):asset.size[1])*actualScale+.5,...(asset.classic?{selectionSpan:selectionSpan(key,u)}:{})};
   }
@@ -76,10 +76,10 @@ var FrostVisual=(()=>{
     let clip=asset.animations.findIndex(a=>desired.test(a.name));if(clip<0)clip=0;return mesh(clip,loop(clip,time));
   }
   function classicClip(asset,action,u={}){
-    const tier=asset.classicTier||1,alternate=Frost.ancient(u)?!u.uprooted:undefined,cargo=u.cargo>0?(u.cargoKind==='tree'?'lumber':'gold'):null;
+    const tier=asset.classicTier||1,alternate=Frost.ancient(u)||asset.classic&&asset.factionBuilding&&/\\(Ancient[^\\]+|TreeofLife)\\/i.test(asset.sourceModel||'')?!u.uprooted:undefined,cargo=u.cargo>0?(u.cargoKind==='tree'?'lumber':'gold'):null;
     let best=-1,score=-Infinity;
     for(let i=0;i<asset.animations.length;i++){
-      const name=asset.animations[i].name.toLowerCase(),base=action.toLowerCase();if(!name.startsWith(base))continue;
+      const name=asset.animations[i].name.toLowerCase().replace(/eattree/g,'eat tree'),base=action.toLowerCase();if(!name.startsWith(base)&&!(base==='attack'&&name==='alternate attack'))continue;
       let rank=0;
       if(/upgrade/.test(name))rank+=tier===1?-80:tier===2?(/first/.test(name)?40:-80):/second/.test(name)?40:-80;
       else if(tier>1)rank-=10;
