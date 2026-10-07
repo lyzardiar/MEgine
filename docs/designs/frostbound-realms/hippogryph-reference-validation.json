@@ -1,0 +1,72 @@
+{
+  "author": "MiYu",
+  "mapPreparation": {
+    "author": "MiYu",
+    "tag": "MEngineHippoReference-20261008-checked",
+    "map": "E:\\work\\codex\\cache\\mengine\\01a0e376-b930-72c2-aa80-4e9abcc8504f\\tmp\\MEngineHippoReference-20261008-checked\\MEngineHippoReference-20261008-checked.w3x",
+    "mapSha256": "7ca716b159751138ca2630d9721821b4d8175c2e3e7b8712d1803ef48f64406c",
+    "template": "E:\\Program Files (x86)\\dzclient\\Game\\Warcraft III Frozen Throne\\Maps\\FrozenThrone\\(2)EchoIsles.w3x",
+    "templateSha256": "081cf08ec48ace39670cc786a896ee1ede6c5bab0bab3f9fe3232160d1b5bf9a",
+    "templateLicense": "Original Blizzard map data; no free redistribution license established.",
+    "scriptSha256": "e16030de721c3ed0471f0cea5f7a6ba2e64e88620c9257a6eefa7f0cac051978",
+    "definitions": [
+      {
+        "path": "Scripts\\common.j",
+        "archive": "War3Patch.mpq",
+        "sha256": "9cb04da1c75dd30025d96fec12b4302c2f6a1f1a8c864b66d6cf52c65ecde924"
+      },
+      {
+        "path": "Scripts\\Blizzard.j",
+        "archive": "War3Patch.mpq",
+        "sha256": "d290865bd673f8394f4e6fb7b4d6720412fed3a447877523cec9e54e65b8e62c"
+      }
+    ],
+    "fileCount": 14,
+    "nativeCallsChecked": 59,
+    "start": [
+      -5184.0,
+      2944.0
+    ],
+    "result": "E:\\work\\codex\\cache\\mengine\\01a0e376-b930-72c2-aa80-4e9abcc8504f\\tmp\\MEngineHippoReference-20261008-checked\\MEngineHippoReference-20261008-checked.pld",
+    "relativeResult": "CustomMapData/MEngineHippoReference-20261008-checked.pld",
+    "cache": "MEngineHippoReference-20261008-checked.w3v",
+    "runtime": {
+      "War3.exe": "ea8f5192efede23f84bc60140c2d4a0085ea68b86f430c1d60c354a555922def",
+      "Game.dll": "e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a"
+    },
+    "runtimeAcceptance": "Unverified until original-game output is collected.",
+    "scriptSource": "E:\\work\\codex\\worktrees\\1339\\MEgine\\scripts\\warcraft-hippogryph-reference.j",
+    "scriptSourceSha256": "aa6c48fd229467252326317707c93ca9aa9671bcd86abfd0bb945f42aa62d401",
+    "jassCheck": {
+      "checker": "E:\\work\\codex\\cache\\mengine\\01a0e376-b930-72c2-aa80-4e9abcc8504f\\tmp\\hippo-pjass\\pjass.exe",
+      "checkerSha256": "e6384d68fbaf4950d68e174945377dbd8b3b7c310c59122651d5a95ec0fb37d6",
+      "passed": true,
+      "log": "Parse successful:     2418 lines: C:\\Users\\admin\\AppData\\Local\\Temp\\warcraft-jass-check-7rd3gllt\\common.j\r\nParse successful:    10230 lines: C:\\Users\\admin\\AppData\\Local\\Temp\\warcraft-jass-check-7rd3gllt\\Blizzard.j\r\nParse successful:      208 lines: C:\\Users\\admin\\AppData\\Local\\Temp\\warcraft-jass-check-7rd3gllt\\war3map.j\r\nParse successful:    12856 lines: <total>\r\n",
+      "originalRuntimeAcceptance": false
+    }
+  },
+  "existingReferenceJassCheck": {
+    "checker": "E:\\work\\codex\\cache\\mengine\\01a0e376-b930-72c2-aa80-4e9abcc8504f\\tmp\\hippo-pjass\\pjass.exe",
+    "checkerSha256": "e6384d68fbaf4950d68e174945377dbd8b3b7c310c59122651d5a95ec0fb37d6",
+    "passed": true,
+    "log": "Parse successful:     2418 lines: C:\\Users\\admin\\AppData\\Local\\Temp\\warcraft-jass-check-01kpya2b\\common.j\r\nParse successful:    10230 lines: C:\\Users\\admin\\AppData\\Local\\Temp\\warcraft-jass-check-01kpya2b\\Blizzard.j\r\nParse successful:      302 lines: C:\\Users\\admin\\AppData\\Local\\Temp\\warcraft-jass-check-01kpya2b\\war3map.j\r\nParse successful:    12950 lines: <total>\r\n",
+    "originalRuntimeAcceptance": false
+  },
+  "checkerDownload": {
+    "url": "https://github.com/lep/pjass/releases/download/release-2026-06-15/pjass.exe",
+    "sha256": "e6384d68fbaf4950d68e174945377dbd8b3b7c310c59122651d5a95ec0fb37d6",
+    "bytes": 136573
+  },
+  "syntheticTests": {
+    "hippogryphGate": 6,
+    "existingGate": 6,
+    "mpqWriter": 3
+  },
+  "originalMeasurementAvailable": false,
+  "sourceFiles": {
+    "scripts/create-warcraft-rule-reference.py": "ab0b4a5de489c6628525fd7b7df6977438736965b98c8eba45a103189598933b",
+    "scripts/warcraft-hippogryph-reference.j": "aa6c48fd229467252326317707c93ca9aa9671bcd86abfd0bb945f42aa62d401",
+    "scripts/analyze-warcraft-hippogryph-reference.py": "1e43b41cf90bb0db1f633a8bd89be80d6ccf787f5d476de8730aba7091809a12",
+    "scripts/test-warcraft-hippogryph-reference.py": "6aa2eace7394b0499a21e958f420910396bf67ffbde8b2733a43f1bf47266137"
+  }
+}

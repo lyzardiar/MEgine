@@ -7,3 +7,7 @@
 /import-frost-druid-spell-art.py text eol=lf
 /convert-frost-classic-billboards.py text eol=lf
 /convert-warcraft-effects.py text eol=lf
+/create-warcraft-rule-reference.py text eol=lf
+/warcraft-hippogryph-reference.j text eol=lf
+/analyze-warcraft-hippogryph-reference.py text eol=lf
+/test-warcraft-hippogryph-reference.py text eol=lf

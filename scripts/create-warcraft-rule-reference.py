@@ -6,6 +6,8 @@ import json
 import pathlib
 import re
 import struct
+import subprocess
+import tempfile
 import time
 from warcraft_mpq import mpyq, read_archive
 from warcraft_mpq_writer import build_archive
@@ -15,7 +17,7 @@ GAME = pathlib.Path('E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Th
 sha = lambda raw: hashlib.sha256(raw).hexdigest()
 
 
-def create(template, output, game, tag):
+def create(template, output, game, tag, script_path=None, jass_checker=None):
     raw = template.read_bytes(); offset = raw.find(b'MPQ\x1a')
     if offset < 0: raise ValueError('Missing template MPQ')
     archive = mpyq.MPQArchive(io.BytesIO(raw[offset:]), listfile=False)
@@ -26,22 +28,34 @@ def create(template, output, game, tag):
     if not start: raise ValueError('Missing template start location')
     output = output.resolve(); output.mkdir(parents=True, exist_ok=False)
     result = output / (tag + '.pld')
-    script = (ROOT / 'scripts/warcraft-rule-reference.j').read_text(encoding='utf-8')
+    script_path = script_path or ROOT / 'scripts/warcraft-rule-reference.j'
+    script = script_path.read_text(encoding='utf-8')
     script = script.replace('@X@', start[1]).replace('@Y@', start[2]).replace('@OUTPUT@', str(result).replace('\\', '\\\\')).replace('@TAG@', tag)
     if re.search(r'@[A-Z]+@', script): raise ValueError('Unresolved JASS placeholder')
     archives = [(name, mpyq.MPQArchive(str(game / name), listfile=False)) for name in ['war3.mpq', 'War3x.mpq', 'War3xLocal.mpq', 'War3Patch.mpq']]
     definitions = ''
     scripts = []
+    definition_files = []
     for source in ['Scripts\\common.j', 'Scripts\\Blizzard.j']:
         for name, pack in reversed(archives):
             try: data = read_archive(pack, source); break
             except FileNotFoundError: continue
         else: raise ValueError('Missing original JASS definitions: ' + source)
         definitions += data.decode('utf-8-sig') + '\n'; scripts.append({'path': source, 'archive': name, 'sha256': sha(data)})
+        definition_files.append(data)
     declared = set(re.findall(r'\b(?:native|function)\s+(\w+)\s+takes', definitions + script))
-    calls = set(re.findall(r'\bcall\s+(\w+)\s*\(', script))
+    calls = set(re.findall(r'\b([A-Za-z_]\w*)\s*\(', re.sub(r'"(?:\\.|[^"\\])*"|//[^\n]*', '', script))) - {'and', 'or', 'not', 'if', 'elseif', 'exitwhen', 'return'}
     if calls - declared: raise ValueError('Unknown original JASS calls: ' + repr(calls - declared))
     files['war3map.j'] = script.encode('ascii')
+    syntax = None
+    if jass_checker:
+        with tempfile.TemporaryDirectory(prefix='warcraft-jass-check-') as temp:
+            check_files = [pathlib.Path(temp) / name for name in ['common.j', 'Blizzard.j', 'war3map.j']]
+            for path, data in zip(check_files, [*definition_files, files['war3map.j']]): path.write_bytes(data)
+            checked = subprocess.run([str(jass_checker.resolve()), *map(str, check_files)], capture_output=True)
+            log = (checked.stdout + checked.stderr).decode('utf-8', 'replace')
+            if checked.returncode: raise ValueError('Original-definition JASS check failed:\n' + log)
+            syntax = dict(checker=str(jass_checker.resolve()), checkerSha256=sha(jass_checker.read_bytes()), passed=True, log=log, originalRuntimeAcceptance=False)
     header = b'HM3W' + struct.pack('<I', 0) + b'MEngine original-rule reference\0' + struct.pack('<2I', 0, 2)
     packed = header.ljust(512, b'\0') + build_archive(files)
     map_path = output / (tag + '.w3x'); map_path.write_bytes(packed)
@@ -49,6 +63,8 @@ def create(template, output, game, tag):
     for name, content in files.items():
         if read_archive(check, name) != content: raise ValueError('Map round-trip differs: ' + name)
     receipt = {'author': 'MiYu', 'tag': tag, 'map': str(map_path), 'mapSha256': sha(packed), 'template': str(template), 'templateSha256': sha(raw), 'templateLicense': 'Original Blizzard map data; no free redistribution license established.', 'scriptSha256': sha(files['war3map.j']), 'definitions': scripts, 'fileCount': len(files), 'nativeCallsChecked': len(calls), 'start': list(map(float, start.groups())), 'result': str(result), 'relativeResult': 'CustomMapData/' + tag + '.pld', 'cache': tag + '.w3v', 'runtime': {name: sha((game / name).read_bytes()) for name in ['War3.exe', 'Game.dll']}, 'runtimeAcceptance': 'Unverified until original-game output is collected.'}
+    receipt.update(scriptSource=str(script_path.resolve()), scriptSourceSha256=sha(script_path.read_bytes()))
+    if syntax: receipt['jassCheck'] = syntax
     (output / 'war3map.j').write_bytes(files['war3map.j'])
     (output / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(receipt))
@@ -61,6 +77,8 @@ if __name__ == '__main__':
     parser.add_argument('--template', type=pathlib.Path, default=GAME / 'Maps/FrozenThrone/(2)EchoIsles.w3x')
     parser.add_argument('--output', type=pathlib.Path)
     parser.add_argument('--tag', default='MEngineReference-' + str(int(time.time() * 1000)))
+    parser.add_argument('--script', type=pathlib.Path, help='Original-game measurement script')
+    parser.add_argument('--jass-checker', type=pathlib.Path, help='Optional pjass syntax and type checker using installed original definitions')
     args = parser.parse_args()
     if not re.fullmatch(r'[A-Za-z0-9-]+', args.tag): parser.error('Tag must contain ASCII letters, numbers and hyphens')
-    create(args.template, args.output or ROOT / 'tmp' / args.tag, args.game, args.tag)
+    create(args.template, args.output or ROOT / 'tmp' / args.tag, args.game, args.tag, args.script, args.jass_checker)
