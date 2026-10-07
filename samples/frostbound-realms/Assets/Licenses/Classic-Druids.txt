@@ -1,0 +1,1 @@
+Original Warcraft III Druid tables, models and icons belong to Blizzard Entertainment. Original game asset terms apply. Source archives, hashes and generator are recorded in druid-sources.json. Extraction does not establish a free redistribution license.

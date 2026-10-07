@@ -5,11 +5,11 @@ import crypto from 'node:crypto';
 import {createRequire} from 'node:module';
 import {battleFixture} from './frost-battle-fixture.mjs';
 const require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js'),root=new URL('../samples/frostbound-realms/',import.meta.url);
-globalThis.Frost=S;globalThis.FrostArt=JSON.parse(fs.readFileSync(new URL('model-catalog.json',root)));const V=require('../samples/frostbound-realms/game/visuals.js');
+globalThis.Frost=S;globalThis.FrostArt={...JSON.parse(fs.readFileSync(new URL('model-catalog.json',root))),...JSON.parse(fs.readFileSync(new URL('druid-models.json',root)))};const V=require('../samples/frostbound-realms/game/visuals.js');
 const source=JSON.parse(fs.readFileSync(new URL('classic-sources.json',root))),sha=data=>crypto.createHash('sha256').update(data).digest('hex');
 const buildingScales=JSON.parse(fs.readFileSync(new URL('building-scale-catalog.json',root))),buildingSources=JSON.parse(fs.readFileSync(new URL('building-scale-sources.json',root)));
 for(const file of buildingSources.files)assert.equal(sha(fs.readFileSync(new URL(file.path,root))),file.sha256,file.path);
-assert.equal(Object.keys(buildingScales.models).length,Object.values(FrostArt).filter(a=>a.classic&&a.factionBuilding).length);
+assert.equal(Object.keys(buildingScales.models).length+Object.keys(S.druidRules.buildings).length,Object.values(FrostArt).filter(a=>a.classic&&a.factionBuilding).length);
 for(const file of source.files)assert.equal(sha(fs.readFileSync(new URL(file.path,root))),file.sha256,file.path);
 let samples=0,teamLayers=0,hiddenLayers=0;
 for(const asset of Object.values(FrostArt).filter(a=>a.classic)){

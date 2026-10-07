@@ -1,0 +1,33 @@
+{
+  "author": "MiYu",
+  "regressionPassGroups": 119,
+  "signedAssetOutputs": 456,
+  "stagedAssetPaths": 458,
+  "nativeReport": "native-druids-qa.json",
+  "nativePassed": true,
+  "nativeStageMilliseconds": [
+    {
+      "name": "project open and ready",
+      "ms": 70179
+    },
+    {
+      "name": "source producer commands and human forms",
+      "ms": 119971
+    },
+    {
+      "name": "actual Bear and Storm Crow F transformations",
+      "ms": 146212
+    }
+  ],
+  "currentMainSha256": "b4e2211603377fbfee2056915d5f6bb7f7c2bbfe6afabc03f63f0f0499bbce1d",
+  "postNativeChanges": [
+    "Restored the original rock and shrub labels; all other generated runtime bytes match the native-tested Main.",
+    "Original MDX copy paths match signed source spelling and Git index."
+  ],
+  "postNativeValidation": "Byte-exact Main comparison excluding the two restored labels, unchanged scene/editor hashes, regenerated asset signatures, generated-client Druid test.",
+  "pending": [
+    "Roar, Rejuvenation, Faerie Fire, Cyclone and both Mark researches.",
+    "Original HP transfer and mana-regeneration semantics, flight-height transitions.",
+    "Physical mouse, audio listening and cross-machine LAN acceptance."
+  ]
+}

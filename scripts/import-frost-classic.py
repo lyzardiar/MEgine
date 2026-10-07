@@ -194,6 +194,10 @@ def main():
         bind(key, model, 'remaining-ready', environment=True)
     if requested and 'ClassicSentinelOwl' in requested:
         bind('ClassicSentinelOwl', 'Owl', 'remaining-ready', environment=True)
+    if requested:
+        bind('ClassicDruidTalon', 'DruidoftheTalon')
+        bind('ClassicAncientLore', 'AncientofLore', building=True)
+        bind('ClassicAncientWind', 'AncientofWind', building=True)
     for faction, values in BUILDINGS.items():
         for suffix, model in zip(['Hall', 'Barracks', 'Lodge', 'Tower', 'Altar', 'Workshop', 'Shop'], values):
             bind(faction + suffix, model, tier=2 if model == 'HumanTower' else 1, building=True)
