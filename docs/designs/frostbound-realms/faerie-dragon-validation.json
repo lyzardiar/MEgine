@@ -1,0 +1,30 @@
+{
+  "author": "MiYu",
+  "protocol": 54,
+  "faerieVersion": 1,
+  "signedOutputs": 289,
+  "assetRegeneration": true,
+  "modifiedOutputProtection": true,
+  "fullSuitePassGroups": 194,
+  "fullSuiteExitCode": 0,
+  "fullSuiteLog": "tmp/faerie-regression-final.log",
+  "nativeFullReport": "native-faerie-dragon-qa.json",
+  "nativeFinalReport": "native-faerie-dragon-focused-qa.json",
+  "nativeFullPassed": true,
+  "nativeFinalPassed": true,
+  "fullStageMainSha256": "08200f00cb5a657ba26e248a59f132410c8bc621474d49c46cf50b5996447daf",
+  "finalMainSha256": "cde5fd953f531a668d369e45c1a33bfeeab0e13adc4e0de2a20d0bc4562d1da7",
+  "generatedSceneSha256": "2bd8116bb83ea7fc2df01d2c63591b07dfeff5b0bcbdfda344434fba563cf693",
+  "preservedSceneSha256": "f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748",
+  "sceneRestoredByteForByte": true,
+  "independentReview": "Channel interruption through Staff/Sanctuary, public event delivery and finite target effect lifecycle repaired and covered.",
+  "evidenceScope": "Full production/channel/combat native run predates the final epsilon and target-effect fixes; focused native run validates the final generated artifact. Final authoritative/client regressions cover the complete final rules.",
+  "unverified": [
+    "Original Phase Shift trigger, cancellation and order/channel interactions",
+    "Original Mana Flare eligibility, proc interval, mitigation/cap order, splash and visual flight timing",
+    "Animated portrait camera playback",
+    "General Night Elf air-production AI strategy",
+    "Physical input, audio listening and cross-machine LAN",
+    "Complete original Warcraft III campaigns, editor and game parity"
+  ]
+}

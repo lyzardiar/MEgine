@@ -4,7 +4,7 @@ var FrostEffects=(()=>{
   const definitions=Object.assign({},...FrostEffectArt.artDefinitions.map(d=>d.sections)),stem=p=>{const name=p.split(/[\\/]/).pop().replace(/\.mdl$/i,'');return Object.keys(FrostEffectArt.effects).find(k=>k.toLowerCase()===name.toLowerCase());};
   const blood=definitions.Bblo.Targetart.split(',');
   const spellBindings={bloodlustLeft:stem(blood[0]),bloodlustRight:stem(blood[1]),shield:stem(definitions.Blsh.Targetart),shieldCast:stem(definitions.Blsh.Specialart),portalCaster:stem(definitions.AItp.Casterart),portalArea:stem(definitions.AItp.Areaeffectart),portalArrival:stem(definitions.AItp.Targetart)};
-  Object.assign(spellBindings,{roar:'RoarTarget',roarCaster:'RoarCaster',faerieFire:'FaerieFireTarget',cyclone:'CycloneTarget'});
+  Object.assign(spellBindings,{flareBase:'ManaFlareBase',flareImpact:'ManaFlareBoltImpact',flareTarget:'ManaFlareTarget',phaseShift:'FaerieDragon_Invis',roar:'RoarTarget',roarCaster:'RoarCaster',faerieFire:'FaerieFireTarget',cyclone:'CycloneTarget'});
   function anchors(mesh,facing=0,scale=1){
     const pitch=-Math.atan2(FrostVisual.camera.height,FrostVisual.camera.depth),c=Math.cos(facing)*scale,s=Math.sin(facing)*scale;
     const camera={model:[c,0,-s,0,0,scale,0,0,s,0,c,0,0,0,0,1],look:[0,Math.sin(pitch),-Math.cos(pitch)],up:[0,Math.cos(pitch),Math.sin(pitch)]};let nodes;
@@ -72,11 +72,15 @@ var FrostEffects=(()=>{
       const birth=art.animations.findIndex(a=>/^birth$/i.test(a.name)),stand=art.animations.findIndex(a=>/^stand$/i.test(a.name));
       let clip=birth>=0&&elapsed<art.animations[birth].duration?birth:stand>=0?stand:birth,seconds=elapsed;
       if(clip<0)return;if(clip!==birth&&birth>=0)seconds-=art.animations[birth].duration;
-      const animation=art.animations[clip];if(!animation.loop&&seconds>=animation.duration)return;if(animation.loop)seconds%=animation.duration;
+      if(slot==='flareTarget'){let remaining=elapsed;clip=-1;for(const name of ['Birth','Stand','Death']){const i=art.animations.findIndex(a=>a.name.toLowerCase()===name.toLowerCase());if(i<0)continue;if(remaining<art.animations[i].duration){clip=i;seconds=remaining;break;}remaining-=art.animations[i].duration;}if(clip<0)return;}
+      const animation=art.animations[clip];if(!animation.loop&&seconds>=animation.duration)return;if(animation.loop&&slot!=='flareTarget')seconds%=animation.duration;
       if(!destination)point??=at(/^Origin Ref$/i)||[0,0,0];
       const c=Math.cos(facing),s=Math.sin(facing),world=destination||[position.x+(point[0]*c+point[2]*s)*scale,position.y+point[1]*scale,position.z+(-point[0]*s+point[2]*c)*scale];
-      result.push({slot,name,component:{effect:art.effect,clip,playing:false,looping:animation.loop,speed:1,time_seconds:seconds},parts:FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+Math.floor(seconds*30)+'@30'),position:world,scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});
+      result.push({slot,name,component:{effect:art.effect,clip,playing:false,looping:animation.loop&&slot!=='flareTarget',speed:1,time_seconds:seconds},parts:art.parts.length?FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+Math.floor(seconds*30)+'@30'):[],position:world,scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});
     }
+    if(u.flareLeft>0)add('flareBase',Frost.faerieRules.abilities.Amfl.duration-u.flareLeft);
+    if(u.phaseLeft>0)add('phaseShift',Frost.faerieRules.abilities.Apsh.duration-u.phaseLeft);
+    if(u.manaFlareHitFrame!==undefined){add('flareImpact',clock-u.manaFlareHitFrame*Frost.DT);add('flareTarget',clock-u.manaFlareHitFrame*Frost.DT);}
     if(u.bloodlust>0){const age=Frost.casterSpells.bloodlust.duration-u.bloodlust;add('bloodlustLeft',age,at(/^Hand Left Ref$/i));add('bloodlustRight',age,at(/^Hand Right Ref$/i));}
     if(u.roar>0)add('roar',Frost.druidRules.commands.Aroa.duration-u.roar,at(/^Overhead Ref$/i)||[0,visual.height/scale,0]);
     if(u.faerieFire>0)add('faerieFire',(u.kind==='hero'?Frost.druidRules.commands.Afae.heroDuration:Frost.druidRules.commands.Afae.duration)-u.faerieFire,at(/^Head Ref$/i)||at(/^Overhead Ref$/i)||[0,(visual.height-.5)/scale,0]);

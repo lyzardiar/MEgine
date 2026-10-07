@@ -1,0 +1,313 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-07T23:47:40.403Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\faerie-dragon-focused-1791416845972\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 50283
+    },
+    {
+      "name": "final source rendering, cooldown expiry and target effect lifecycle",
+      "ms": 147647
+    }
+  ],
+  "preflightMs": 1367,
+  "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+  "productMainSha256": "cde5fd953f531a668d369e45c1a33bfeeab0e13adc4e0de2a20d0bc4562d1da7",
+  "productSceneSha256": "2bd8116bb83ea7fc2df01d2c63591b07dfeff5b0bcbdfda344434fba563cf693",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2445
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 15898
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 4791
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 1955
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 12967
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 8300
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3919
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3939
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 324
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5311
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3984
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4611
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3769
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 289
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4566
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4032
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4260
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4054
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4440
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3999
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4618
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3852
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 305
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4353
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4098
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4463
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3711
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 298
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4675
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4486
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4672
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3772
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 151
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 284
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4672
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3709
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 296
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6060
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3601
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 289
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4368
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 4089
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 275
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6657
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3712
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 285
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5791
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3687
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 288
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4365
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 4150
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 49
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 33
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 376
+    }
+  ],
+  "finalLifecycle": {
+    "sourcePortrait": true,
+    "cooldownLastTwoTicks": true,
+    "targetStandNonlooping": true,
+    "targetDeath": true,
+    "targetExpired": true
+  },
+  "shaderRejections": 0,
+  "scope": "Final generated artifact: source portrait, cooldown expiry and finite target-effect lifecycle. Full production/combat evidence is in native-faerie-dragon-qa.json.",
+  "shutdown": {
+    "pid": 186172,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}
