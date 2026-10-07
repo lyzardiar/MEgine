@@ -29,7 +29,7 @@ The map measures Claw/Bear HP transfer, four-form mana regeneration, Crow takeof
 
 `scripts/analyze-warcraft-rule-reference.py INPUT --output REPORT` accepts a completed measurement only when form IDs, accepted morph orders, 60 flight samples, observation intervals and per-attacker poison counts agree. Its six tests use synthetic data solely to verify the acceptance gate. Four-second poison observations after the final impact do not represent the entire lifetime of all poison effects. Source-pause behavior and the direct-hit threshold still require inspection of the real damage trace.
 
-The installed reference build is the dzclient Warcraft III 1.27.0.52240 installation, with dzclient plugins. It is not described as an untouched retail installation. The default renderer failed with the original game's DirectX initialization dialog. An OpenGL launch created a responding Warcraft III process, but no measurement output or map-load confirmation was obtained. Desktop activation returned `0x80070005`; capture returned `0x80070057`. Consequently no original runtime measurements, JASS compile result or native Dryad visual acceptance are claimed.
+The installed reference build is the dzclient Warcraft III 1.27.0.52240 installation, with dzclient plugins. It is not described as an untouched retail installation. The default renderer failed with the original game's DirectX initialization dialog. An OpenGL launch created a responding Warcraft III process, but no measurement output or map-load confirmation was obtained. Desktop activation returned `0x80070005`; capture returned `0x80070057`. Consequently no original runtime measurements or JASS compile result are claimed. Subsequent native MEngine Dryad rendering and gameplay validation are recorded separately in `dryad-gameplay.md`.
 
 ## Validation
 
@@ -40,4 +40,4 @@ The installed reference build is the dzclient Warcraft III 1.27.0.52240 installa
 - Existing Druid rules and spells: 8 and 7 groups passed.
 - Full existing regression: 131 PASS groups; process exited successfully. This validates current MEngine behavior, not original-game equivalence.
 
-Remaining work: obtain accepted original measurements; implement Dryad production, researched Abolish Magic, poison, immunity and original missile/portrait/effect rendering; validate saved games, generated clients, TCP behavior and the native scene. The overall Warcraft III recreation remains incomplete.
+The subsequent partial gameplay stage implements Dryad production, researched Abolish Magic, immunity and original missile/portrait/effect rendering, with saved-game, generated-client, TCP and native MEngine validation documented in `dryad-gameplay.md`. Remaining work includes accepted original measurements, Slow Poison and original initial autocast equivalence. The overall Warcraft III recreation remains incomplete.

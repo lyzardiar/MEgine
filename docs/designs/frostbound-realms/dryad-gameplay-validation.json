@@ -1,0 +1,69 @@
+{
+  "author": "MiYu",
+  "baselineCommit": "34ba0056e03799cf6aa7a6a5ed888ec551d884a5",
+  "protocol": 49,
+  "sourceFiles": {
+    "samples/frostbound-realms/game/simulation.js": "e13cc11a0a5c63832ec4c8e240c9000e8614009279fe13c488449c7b09b8c55c",
+    "samples/frostbound-realms/game/client.js": "0300c6315ddd023080a72ab16b0b072eef1d39032bdaf0616d6cb62a39344243",
+    "samples/frostbound-realms/game/visuals.js": "7f61c90572c2767363eddad5dad5de218d7d6dc4788e2e743c61a6fd2741499a",
+    "samples/frostbound-realms/dryad-portrait.json": "49a714a8a7a0d0863d0efcfbf2ce25c1b001e7393054cc47e49bfbbff4adf130",
+    "scripts/import-frost-dryad-portrait.py": "4a5a7db66455d23bf752967606df6878b7d2b52a1245abd4c530e4258e2f80a8",
+    "scripts/build-frostbound.mjs": "a8b8c04b748a56825fdbe62d900fd2e3722d353001703ff7a3498aa20427c8e5",
+    "scripts/test-frost-dryad.mjs": "fd3b95571b2b0f825b28ceaab06451f593cd66c4b174eefb0e0d742abd552817",
+    "scripts/test-frost-dryad-client.mjs": "a3427ddb51c9b9989143be3cd6c608a63e21c0443b61c2aa928124334aa1f6f9",
+    "scripts/test-frost-dryad-network.mjs": "d0af4339467ac9f84c7f92743440a9b924d088a3541981b0e766df0a31e97759",
+    "scripts/test-frostbound.mjs": "db35553b37c85527c72df6d1eb2074640b328665ef479dedc26b6b1b0aacb70b",
+    "scripts/test-frost-druids.mjs": "01fab7e959bca59f944fdefaff4225aaf4b7ba89db33294925ce0b6867e8d847",
+    "scripts/test-frost-visuals.mjs": "f6be709e88609554e0d11be575400e9015cb65d0df5bf6d4b551621b709660ee",
+    "scripts/test-frost-corpses.mjs": "ecc6478a6cbaf16e075c78481f2091e8b7d218c0793489d4b050c437b9a94b4f",
+    "scripts/qa-frost-dryad.mjs": "701067f2c7d8b31e692e84c9cc7637366dc8c426761e39e1d16eaff9e17c081b"
+  },
+  "signedDryadOutputs": 235,
+  "cameraRegeneration": "python scripts/import-frost-dryad-portrait.py --check",
+  "corePassGroups": 8,
+  "generatedClientPassGroups": 2,
+  "tcpPassGroups": 1,
+  "fullRegression": {
+    "command": "node scripts/test-frostbound.mjs",
+    "exitCode": 0,
+    "passGroups": 142,
+    "logSha256": "b99312f504b8718a22d9328dc91bdace00d3965f70d0616ff4971d9221697a2b"
+  },
+  "native": {
+    "report": "docs/designs/frostbound-realms/native-dryad-gameplay-qa.json",
+    "reportSha256": "27445f0efa71bc72ddf26c36021c3664d0486c9bc3db0672f70119f6180fe5e0",
+    "productMainSha256": "f0529dbbe942fa19c659fea15872c6aadc51ea3f610f3246c07528e1c54da9ec",
+    "generatedSceneSha256": "012d1a3a5811586fd3d4bdf7f2cca9b870be58ed37f876533fc0f64f466c2d16",
+    "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+    "passed": true,
+    "shaderRejections": 0,
+    "originalPortraitCameraVisuallyChecked": true,
+    "steps": [
+      {
+        "name": "project open and ready",
+        "ms": 80616
+      },
+      {
+        "name": "original Dryad model, portrait, directional dispel and saved setting",
+        "ms": 199023
+      }
+    ],
+    "normalExit": true,
+    "fixtureRemoved": true
+  },
+  "screenshots": {
+    "dryad-gameplay-ready.png": "e39c32820dd2e7c969339519ce7f91cd06814ecefe0c6f49fd0ab46015bcbfab",
+    "dryad-gameplay-dispel.png": "c380097519f7c451da933377d73045c7887a4eacec4ed9182b7543cfbef15f11",
+    "dryad-gameplay-restored.png": "a23f5742d5ede8b9e97cc0978626c4013e81ebf728c8145d01312da44e01597e"
+  },
+  "scope": {
+    "slowPoisonImplemented": false,
+    "initialAutocastVerified": false,
+    "originalRuntimeMeasurements": false,
+    "nativeResearchProduction": false,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLan": false
+  },
+  "scenePreservation": "Preexisting dirty scene restored after generated-client and isolated native acceptance; regenerate with node scripts/build-frostbound.mjs."
+}

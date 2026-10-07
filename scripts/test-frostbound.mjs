@@ -2,6 +2,9 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-dryad.mjs';
+import './test-frost-dryad-client.mjs';
+import './test-frost-dryad-network.mjs';
 import './test-frost-terrain.mjs';
 import './test-frost-gentle-ramps.mjs';
 import './test-frost-cliff-clearance.mjs';
