@@ -1,0 +1,9 @@
+# Preserve the bytes used by signed actor import receipts.
+/import-frost-classic.py text eol=lf
+/import-frost-hippogryph.py text eol=lf
+/import-frost-dryad-portrait.py text eol=lf
+/import-frost-dryad-assets.py text eol=lf
+/import-frost-druid-models.py text eol=lf
+/import-frost-druid-spell-art.py text eol=lf
+/convert-frost-classic-billboards.py text eol=lf
+/convert-warcraft-effects.py text eol=lf

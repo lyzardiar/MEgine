@@ -1,0 +1,84 @@
+{
+  "author": "MiYu",
+  "tests": [
+    {
+      "script": "scripts/test-frostbound.mjs",
+      "passed": true,
+      "groups": 165,
+      "ms": 176291
+    },
+    {
+      "script": "scripts/test-frost-hippogryph-assets.py",
+      "passed": true,
+      "groups": 1,
+      "ms": 5273
+    },
+    {
+      "script": "scripts/test-frost-druid-assets.py",
+      "passed": true,
+      "groups": 4,
+      "ms": 3848
+    },
+    {
+      "script": "scripts/test-frost-druid-spell-art.py",
+      "passed": true,
+      "groups": 1,
+      "ms": 3925
+    },
+    {
+      "script": "scripts/test-frost-dryad-assets.py",
+      "passed": true,
+      "groups": 1,
+      "ms": 6206
+    }
+  ],
+  "passed": true,
+  "groups": 172,
+  "regressionGroups": 165,
+  "nativePassed": true,
+  "acceptedMainSha256": "b649f1ee348748e512a6f03300ed4fa4d2c80d0e836102ccb9333f5ab39ee85d",
+  "acceptedNativeSceneSha256": "fd48e896a50e1c72e8fadca6d45d9e010a4db14ac549f97934f2f34767d25c96",
+  "restoredProtectedSceneSha256": "f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748",
+  "sourceFiles": {
+    "samples/frostbound-realms/game/client.js": "f4e856b85a282d9448cd66a5fee6a8ec5aa1bc9855238d4101a68313e93bc728",
+    "samples/frostbound-realms/game/simulation.js": "6569393bd1534171e6adc60a3410651c86d624d19d6604198cf7a90310bb08f9",
+    "samples/frostbound-realms/game/visuals.js": "aa8b2366f9010043838d44bdb13b21b83cf79213f5faa33190587d3cdffb5991",
+    "samples/frostbound-realms/hippogryph-rules.json": "cc5c49c61d62cb0f461c6818dedaf4c2c8f56e4183f8810d353498abc0b930ce",
+    "scripts/build-frostbound.mjs": "0e2e585de7d72dbcbeceeddaeb00ed5f1233bb31dd9d6ee7e085b85af3929397",
+    "scripts/frost-hippogryph-fixture.mjs": "222f45e513ee0b0d6619e2b9b77646cd93281ad73110aeaa2097caf90f0a4067",
+    "scripts/import-frost-classic.py": "47555defde939e26de425c82c1b46c61858f20e006ea693f0c6b8ea18390d634",
+    "scripts/import-frost-hippogryph.py": "fd82ad3c9d69be6bfa5d65f484d0c51188fbf77e1c8c4180de0f3a5a9f5e4fed",
+    "scripts/qa-frost-hippogryph.mjs": "7e5983f94e24be88507829a87d5a1342ae8e013d9425882df66b1e0f96cbb449",
+    "scripts/test-frost-corpses.mjs": "bf4149d34d99c4db8e6675d203489b1e0a50d32142acfcb74a7c4557641a693e",
+    "scripts/test-frost-druids.mjs": "425b19182014ed2367e2a75b38d6f610dc313e37666c812476ae575aaf45e5d7",
+    "scripts/test-frost-dryad-network.mjs": "7ef7c86198afa1b17d36623dc2d137dbbdbaad0bdf8dbc851793f7d385bf7127",
+    "scripts/test-frost-hippogryph-assets.py": "2adceb764315b7aa36808d34f7d8339db74780ee269ffaf0d48e2d13fef05418",
+    "scripts/test-frost-hippogryph-client.mjs": "72a625c180924361487a1746ad7cb2a6201a0ef7b4dee4a9c8644cc4bc72a2c1",
+    "scripts/test-frost-hippogryph-network.mjs": "c903e6ba49e78a372a5e6a3e0e7d91cb03b4683fc2fd6bc25e70a38ae44635a5",
+    "scripts/test-frost-hippogryph.mjs": "aa4c953001473331b5e9d91aaa97393ef225abae44e04dbc4c832ed1a7bab522",
+    "scripts/test-frost-slow-poison-network.mjs": "349a073c4a56e41361998ad4422d1201b6e6dac3e00f337994e479dfa4d04d82",
+    "scripts/test-frost-visuals.mjs": "98d37c8236cc556495a69067ba6b54d7ed737e643af1f6ca5f5293d2e60f9d3d",
+    "scripts/test-frostbound.mjs": "6cb8a92cfd1b8437ea3d367660d3dfae1a628b1e0edd8a36e29912f66fae1404"
+  },
+  "workingSourceFiles": {
+    "samples/frostbound-realms/game/client.js": "f4e856b85a282d9448cd66a5fee6a8ec5aa1bc9855238d4101a68313e93bc728",
+    "samples/frostbound-realms/game/simulation.js": "6569393bd1534171e6adc60a3410651c86d624d19d6604198cf7a90310bb08f9",
+    "samples/frostbound-realms/game/visuals.js": "aa8b2366f9010043838d44bdb13b21b83cf79213f5faa33190587d3cdffb5991",
+    "samples/frostbound-realms/hippogryph-rules.json": "cc5c49c61d62cb0f461c6818dedaf4c2c8f56e4183f8810d353498abc0b930ce",
+    "scripts/build-frostbound.mjs": "0e2e585de7d72dbcbeceeddaeb00ed5f1233bb31dd9d6ee7e085b85af3929397",
+    "scripts/frost-hippogryph-fixture.mjs": "222f45e513ee0b0d6619e2b9b77646cd93281ad73110aeaa2097caf90f0a4067",
+    "scripts/import-frost-classic.py": "47555defde939e26de425c82c1b46c61858f20e006ea693f0c6b8ea18390d634",
+    "scripts/import-frost-hippogryph.py": "fd82ad3c9d69be6bfa5d65f484d0c51188fbf77e1c8c4180de0f3a5a9f5e4fed",
+    "scripts/qa-frost-hippogryph.mjs": "7e5983f94e24be88507829a87d5a1342ae8e013d9425882df66b1e0f96cbb449",
+    "scripts/test-frost-corpses.mjs": "bf4149d34d99c4db8e6675d203489b1e0a50d32142acfcb74a7c4557641a693e",
+    "scripts/test-frost-druids.mjs": "425b19182014ed2367e2a75b38d6f610dc313e37666c812476ae575aaf45e5d7",
+    "scripts/test-frost-dryad-network.mjs": "7ef7c86198afa1b17d36623dc2d137dbbdbaad0bdf8dbc851793f7d385bf7127",
+    "scripts/test-frost-hippogryph-assets.py": "2adceb764315b7aa36808d34f7d8339db74780ee269ffaf0d48e2d13fef05418",
+    "scripts/test-frost-hippogryph-client.mjs": "72a625c180924361487a1746ad7cb2a6201a0ef7b4dee4a9c8644cc4bc72a2c1",
+    "scripts/test-frost-hippogryph-network.mjs": "c903e6ba49e78a372a5e6a3e0e7d91cb03b4683fc2fd6bc25e70a38ae44635a5",
+    "scripts/test-frost-hippogryph.mjs": "aa4c953001473331b5e9d91aaa97393ef225abae44e04dbc4c832ed1a7bab522",
+    "scripts/test-frost-slow-poison-network.mjs": "349a073c4a56e41361998ad4422d1201b6e6dac3e00f337994e479dfa4d04d82",
+    "scripts/test-frost-visuals.mjs": "98d37c8236cc556495a69067ba6b54d7ed737e643af1f6ca5f5293d2e60f9d3d",
+    "scripts/test-frostbound.mjs": "6cb8a92cfd1b8437ea3d367660d3dfae1a628b1e0edd8a36e29912f66fae1404"
+  }
+}

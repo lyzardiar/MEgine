@@ -50,6 +50,7 @@ def main():
     parser.add_argument('--billboard-library', type=pathlib.Path, default=LIBRARY / 'classic-attachment-ready')
     parser.add_argument('--output', type=pathlib.Path, default=SAMPLE)
     parser.add_argument('--keys', nargs='+', help='Update only named bindings and retain other catalog entries and signed files')
+    parser.add_argument('--bindings', type=pathlib.Path, help='Additional explicit model bindings using the billboard binding schema')
     args = parser.parse_args()
     sample = args.output.resolve()
     assert args.pose_probe and pathlib.Path(args.pose_probe).is_file(), 'Pass --pose-probe with the current gltf_bounds executable (cargo build --release -p mengine-assets --example gltf_bounds)'
@@ -188,6 +189,12 @@ def main():
         catalog[key] = entry
         sources.append(dict(key=key, source=identifier, pack=pack, model=model['source'], tier=tier, **(dict(skinPack=skin[0], skinTexture=skin[1]) if skin else {})))
 
+    if args.bindings:
+        bindings = load(args.bindings)['models']
+        assert len({r['key'] for r in bindings}) == len(bindings), 'Duplicate classic binding'
+        assert all(r['pack'] in libraries and node_billboards.key(models[r['pack']][r['source'].lower()]['source']) == node_billboards.key(r['model']) for r in bindings), 'Classic binding source mismatch'
+        for r in bindings:
+            bind(r['key'], r['source'], r['pack'], building=r.get('building', False), environment=r.get('environment', False))
     for key, model in UNITS.items():
         bind(key, model, 'remaining-ready' if model == 'Ballista' else 'game-ready')
     for key, model in {'ClassicNightArrow': 'ArrowMissile', 'ClassicMoonGlaive': 'SentinelMissile', 'ClassicGlaiveMissile': 'GlaiveMissile'}.items():

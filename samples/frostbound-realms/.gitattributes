@@ -12,3 +12,8 @@ Assets/WarcraftIII/** -text whitespace=cr-at-eol
 effect-sources.json text eol=lf
 
 /console-*.json text eol=lf
+
+/hippogryph-*.json text eol=lf
+/druid-model-sources.json text eol=lf
+/druid-spell-art-sources.json text eol=lf
+/dryad-sources.json text eol=lf
