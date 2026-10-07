@@ -1,0 +1,26 @@
+{
+  "author": "MiYu",
+  "protocol": 53,
+  "chimaeraVersion": 1,
+  "sourceReceipt": "samples/frostbound-realms/chimaera-sources.json",
+  "signedOutputs": 219,
+  "assetRegeneration": true,
+  "modifiedOutputProtection": true,
+  "fullSuitePassGroups": 186,
+  "fullSuiteLog": "tmp/chimaera-full-tests.log",
+  "nativeReport": "native-chimaera-qa.json",
+  "nativePassed": true,
+  "nativeProductMainSha256": "a490004e8d88676d22f6ca0bd5566765e3cfb94c43e1be2c55e84031011d96bd",
+  "nativeGeneratedSceneSha256": "fd48e896a50e1c72e8fadca6d45d9e010a4db14ac549f97934f2f34767d25c96",
+  "preservedSceneSha256": "f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748",
+  "sceneRestoredByteForByte": true,
+  "independentReview": "Source slot target restriction, damage/armor derived state, source magic/siege armor multipliers verified; both reported save defects rejected after repair.",
+  "unverified": [
+    "Original runtime overlapping weapon priority, shared cooldown, acid homing and splash edge semantics",
+    "Debris/destructible attacks outside unit target system",
+    "Original acid attack animation selection and passive HUD icon",
+    "General AI Roost production strategy",
+    "Physical input, listening to audio, cross-machine LAN",
+    "Full Warcraft III, campaigns, editor and classic map parity"
+  ]
+}

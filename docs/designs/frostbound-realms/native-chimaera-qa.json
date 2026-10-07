@@ -1,0 +1,999 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-07T22:30:26.650Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\chimaera-1791412211964\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 79761
+    },
+    {
+      "name": "original Chimaera body, Roost and portrait camera",
+      "ms": 102559
+    },
+    {
+      "name": "C Roost source 60s production and F5 queue continuation",
+      "ms": 332905
+    },
+    {
+      "name": "B Corrosive Breath source 40s research and acid attack",
+      "ms": 305137
+    }
+  ],
+  "preflightMs": 1539,
+  "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+  "productMainSha256": "a490004e8d88676d22f6ca0bd5566765e3cfb94c43e1be2c55e84031011d96bd",
+  "productSceneSha256": "fd48e896a50e1c72e8fadca6d45d9e010a4db14ac549f97934f2f34767d25c96",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 3082
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 15203
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 5259
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 3382
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 38755
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 7809
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6263
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3057
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 297
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4550
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3351
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3836
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3007
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 278
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3832
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3323
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3618
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3192
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3714
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3270
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3578
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3215
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 297
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3548
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3225
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3605
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2997
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 272
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3727
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3202
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3848
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3014
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 34
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 303
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3495
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 3353
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 22
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 269
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3677
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3359
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3863
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3047
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 36
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 295
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3755
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 3158
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 19
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 31
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 294
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3545
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3405
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3578
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3388
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3716
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3362
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3650
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3004
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 270
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3482
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3507
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3809
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2904
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 264
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3533
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3133
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3509
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2961
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 290
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3718
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3260
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3393
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2933
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 269
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 30453
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 30537
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 30096
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3288
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3520
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3190
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3473
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3147
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 40
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 297
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3488
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3228
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3512
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3178
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3657
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3501
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3539
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2903
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 270
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3544
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3255
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3818
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3209
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 30525
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 30312
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 30130
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2886
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 36
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 302
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3750
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3126
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3512
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2958
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 284
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3447
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 3221
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 51
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 31
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 305
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3731
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3281
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3559
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3172
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3588
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3273
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3718
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2979
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 266
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3540
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3264
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3621
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2921
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 268
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3599
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3353
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3531
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3102
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 53
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 288
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3561
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3264
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3412
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2882
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 301
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 30626
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 30335
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3133
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3621
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3384
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3452
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2909
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 32
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 261
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3422
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3087
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3480
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3101
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3876
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3284
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3536
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2955
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 298
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3528
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3199
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3804
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3165
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 30343
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 30493
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3043
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 69
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 264
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3656
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3316
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3543
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2894
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 50
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 305
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3547
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3134
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3708
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3187
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5442
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2916
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 31
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 273
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3463
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 3445
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 248
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7392
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2914
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 82
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 29
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 534
+    }
+  ],
+  "art": {
+    "originalBody": true,
+    "originalPortrait": true,
+    "originalRoost": true,
+    "sourceScale": 1,
+    "chimaeraSelectionScale": 2,
+    "roostSelectionScale": 4,
+    "sourceFlightHeight": 2.8
+  },
+  "production": {
+    "CKey": true,
+    "sourceCosts": true,
+    "full60s": true,
+    "F5QueueRestore": true,
+    "originalStats": true
+  },
+  "research": {
+    "BKey": true,
+    "sourceCosts": true,
+    "full40s": true,
+    "F5QueueRestore": true,
+    "acidWeaponSlot": true,
+    "originalAcidModel": true,
+    "authoritativeDamage": true
+  },
+  "shaderRejections": 0,
+  "scope": "Native source Chimaera/Roost/portrait, C source 60s training, B source 40s research, F5 queue continuation and original acid missile damage. Weapon overlap priority, shared cooldown and acid homing policy are provisional pending original runtime measurements. Physical input, audio and cross-machine LAN remain unverified.",
+  "shutdown": {
+    "pid": 123868,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

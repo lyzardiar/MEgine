@@ -1,0 +1,19 @@
+import {chimaeraFixture} from './frost-chimaera-fixture.mjs';
+// Author: MiYu. Verify original Chimaera training, air-only attacks and reconnect over authoritative TCP.
+import assert from 'node:assert/strict';
+import net from 'node:net';
+import {createRequire} from 'node:module';
+import {createServer} from '../samples/frostbound-realms/server.mjs';
+const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),app=createServer({port:0}),address=await app.listening,sockets=[];
+async function peer(){const socket=net.connect(address.port,'127.0.0.1'),pending=[];let buffer='';sockets.push(socket);socket.setEncoding('utf8');socket.on('error',()=>{});socket.on('data',chunk=>{buffer+=chunk;let end;while((end=buffer.indexOf('\n'))>=0){const message=JSON.parse(buffer.slice(0,end));buffer=buffer.slice(end+1);for(const w of [...pending])if(w.check(message)){pending.splice(pending.indexOf(w),1);clearTimeout(w.timer);w.resolve(message);}}});await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('error',reject);});const send=message=>socket.write(JSON.stringify(message)+'\n'),next=check=>new Promise((resolve,reject)=>{const w={check,resolve,timer:setTimeout(()=>{pending.splice(pending.indexOf(w),1);reject(Error('Chimaera TCP timeout'));},12000)};pending.push(w);}),welcome=next(m=>m.type==='welcome');send({type:'hello',protocol:S.PROTOCOL});assert.equal((await welcome).protocol,S.PROTOCOL);let seq=0;return {socket,send,next,order:command=>send({type:'order',seq:++seq,command})};}
+const wait=(p,check)=>p.next(m=>m.type==='state'&&check(m.state)),unit=(s,id)=>s.units.find(u=>u.id===id);
+try{
+ const a=await peer(),b=await peer();let next=a.next(m=>m.type==='joined');a.send({type:'create',mode:'skirmish',faction:2});const joined=await next;next=b.next(m=>m.type==='joined');b.send({type:'join',code:joined.code,faction:0});await next;next=a.next(m=>m.type==='room'&&m.players.every(p=>p.ready));a.send({type:'ready',ready:true});b.send({type:'ready',ready:true});await next;next=wait(a,()=>true);a.send({type:'start'});await next;
+ const {s,roost,chimaera}=chimaeraFixture(S);const target=S.spawn(s,'tower',1,7,4,{damage:0,hp:5000,maxHp:5000});chimaera.order={type:'move',x:1,z:4};S.visibility(s);app.rooms.get(joined.code).state=s;
+ next=wait(a,state=>unit(state,roost.id)?.queue[0]?.research==='Recb');a.order({type:'chimaeraResearch',ids:[roost.id],upgrade:'Recb'});const paid=(await next).state;assert.equal(paid.teams[0].gold,9875);assert.equal(paid.teams[0].wood,9775);assert.ok(S.restore(s));
+ const closed=new Promise(resolve=>a.socket.once('close',resolve));a.socket.destroy();await closed;const c=await peer();next=c.next(m=>m.type==='joined');c.send({type:'resume',code:joined.code,token:joined.token});const resumed=(await next).state;assert.equal(unit(resumed,roost.id).queue[0].research,'Recb');roost.queue[0].left=.2;await wait(c,state=>state.teams[0].corrosiveBreath===1);assert.ok(S.restore(s));
+ next=b.next(m=>m.type==='error');b.order({type:'train',ids:[roost.id],kind:'chimaera'});await next;
+ next=wait(c,state=>unit(state,roost.id)?.queue[0]?.kind==='chimaera');c.order({type:'train',ids:[roost.id],kind:'chimaera'});await next;roost.queue[0].left=.2;await wait(c,state=>state.units.filter(u=>u.kind==='chimaera').length===2);
+ next=wait(c,state=>unit(state,target.id)?.hp<5000);c.order({type:'attack',ids:[chimaera.id],target:target.id});await next;assert.ok(S.restore(s));const enemy=(await wait(b,()=>true)).state;assert.equal(enemy.teams[0].corrosiveBreath,undefined);
+ console.log('PASS Chimaera TCP: protocol'+S.PROTOCOL+', source research/payment, disconnect/resume, ownership rejection, source training and authoritative acid combat; completion timers controlled in TCP fixture');
+}finally{for(const socket of sockets)socket.destroy();await app.close();}
