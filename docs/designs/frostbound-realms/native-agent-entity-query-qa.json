@@ -1,0 +1,106 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-07T12:14:05.935Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\entity-query-1791375225765\\sample",
+  "editorSha256": "b4dae5f6dfcbf4db15ed19356f71344c743b678a45b207c4c498bc1eed52272c",
+  "storeSha256": "07527276f32cb176b1538869bbde94c7bc11a4609a1e27d343a69f6bbcb1feb4",
+  "sceneSha256": "7e7b2644fc32e5353e4a3873634ae85a0563526fc4d781116f81bb6c081777c4",
+  "mainSha256": "e6d293c721d89829dcbadb5c2e594bac242076199db6139695db1cd5b6419163",
+  "entities": 28895,
+  "scope": "Native bridge scene.snapshot versus entity.get on the same paused world; excludes startup and full QA",
+  "steps": [
+    {
+      "name": "project open and editor ready",
+      "ms": 20666.6664
+    },
+    {
+      "name": "edit query parity and RPC measurements",
+      "ms": 33760.6374
+    },
+    {
+      "name": "play query parity and RPC measurements",
+      "ms": 63276.698099999994
+    }
+  ],
+  "executions": [
+    {
+      "name": "project.open",
+      "ms": 12462.247599999999
+    },
+    {
+      "name": "view.set_game_resolution",
+      "ms": 4536.481899999999
+    },
+    {
+      "name": "panel.focus",
+      "ms": 39666.080799999996
+    },
+    {
+      "name": "playback.play",
+      "ms": 7918.065800000011
+    },
+    {
+      "name": "playback.step",
+      "ms": 5449.607999999993
+    },
+    {
+      "name": "playback.stop",
+      "ms": 342.47649999998976
+    }
+  ],
+  "modes": [
+    {
+      "mode": "edit",
+      "samples": 3,
+      "warmups": 1,
+      "identicalEntityResults": true,
+      "fullSnapshotMedianMs": 5340.684999999998,
+      "entityQueryMedianMs": 4380.539899999996,
+      "fullSnapshotResultJsonBytes": 13104117,
+      "entityResultJsonBytes": 879,
+      "fullSamplesMs": [
+        5021.723899999997,
+        5453.137200000005,
+        5340.684999999998
+      ],
+      "entitySamplesMs": [
+        2415.470699999998,
+        4632.486899999996,
+        4380.539899999996
+      ]
+    },
+    {
+      "mode": "play",
+      "samples": 3,
+      "warmups": 1,
+      "identicalEntityResults": true,
+      "fullSnapshotMedianMs": 759.647100000002,
+      "entityQueryMedianMs": 34.49609999998938,
+      "fullSnapshotResultJsonBytes": 13326514,
+      "entityResultJsonBytes": 7472,
+      "fullSamplesMs": [
+        754.7488000000012,
+        759.647100000002,
+        816.6523000000161
+      ],
+      "entitySamplesMs": [
+        33.66229999999632,
+        35.694799999997485,
+        34.49609999998938
+      ]
+    }
+  ],
+  "physicalInput": false,
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 46528,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

@@ -673,7 +673,7 @@ function bridgeExecuteParams(command, args = {}, options = {}) {
 }
 
 async function bridgeExecute(command, args = {}, options = {}) {
-  const longRunning = command === 'build.verify' || (command === 'playback.step' && args.steps > 1);
+  const longRunning = command === 'build.verify' || command === 'playback.play' || (command === 'playback.step' && args.steps > 1);
   return await rpc(
     'execute',
     bridgeExecuteParams(command, args, options),

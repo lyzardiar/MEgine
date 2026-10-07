@@ -836,8 +836,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     }
   };
 
-  const snapshotEntities = () => {
-    const entities = list().map((e) => ({
+  const snapshotEntity = (e: EntityRec) => ({
       entity: e.entity,
       name: e.name,
       parent: e.parent,
@@ -846,7 +845,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       tag: e.tag,
       layer: e.layer,
       components: e.components,
-    }));
+    });
+  const snapshotEntities = () => {
+    const entities = list().map(snapshotEntity);
     if (mode !== 'edit') return structuredClone(entities);
     if (timelinePreview) return applyTimelineScenePreview(entities, timelinePreview);
     if (animationPreview) {
@@ -1018,6 +1019,13 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       };
       sceneCamera.pitch = Math.max(-89, Math.min(89, sceneCamera.pitch));
       sceneCamera.distance = clampSceneCameraDistance(sceneCamera.distance);
+    },
+    // MiYu: copy one active entity; hierarchical animation previews still require the full world.
+    entitySnapshot(idOrName: number | string) {
+      const matches = (e: { entity: number; name?: string | null }) => typeof idOrName === 'number' ? e.entity === idOrName : (e.name ?? '') === idOrName;
+      if (mode === 'edit' && (timelinePreview || animationPreview)) return snapshotEntities().find(matches);
+      const found = list().find(matches);
+      return found ? structuredClone(snapshotEntity(found)) : undefined;
     },
     snapshot(): WorldSnapshotView & { selectedIds: number[]; simulationTime: number } {
       return {

@@ -1645,10 +1645,7 @@ class AgentBridge {
 
   getEntity(idOrName: number | string): EntityView {
     const store = this.requireStore();
-    const entities = store.snapshot().entities as unknown as EntityView[];
-    const found = typeof idOrName === 'number'
-      ? entities.find((e) => e.entity === idOrName)
-      : entities.find((e) => (e.name ?? '') === idOrName);
+    const found = store.entitySnapshot(idOrName) as unknown as EntityView | undefined;
     if (!found) {
       throw new BridgeError('ENTITY_NOT_FOUND', `No entity matches "${String(idOrName)}"`);
     }
