@@ -41,7 +41,7 @@ def main():
         files['SourceAssets/WarcraftIII/' + path] = raw; sources[path] = record
         return raw
 
-    table = {name: rows(original('Units/' + name + '.slk')) for name in ['UnitBalance', 'UnitWeapons', 'UnitAbilities', 'unitUI', 'UpgradeData', 'AbilityData', 'AbilityMetaData']}
+    table = {name: rows(original('Units/' + name + '.slk')) for name in ['UnitBalance', 'UnitData', 'UnitWeapons', 'UnitAbilities', 'unitUI', 'UpgradeData', 'AbilityData', 'AbilityMetaData']}
     func, strings, upgrades, upgrade_strings, abilities, ability_strings = [original('Units/' + name + '.txt') for name in ['NightElfUnitFunc', 'NightElfUnitStrings', 'NightElfUpgradeFunc', 'NightElfUpgradeStrings', 'NightElfAbilityFunc', 'NightElfAbilityStrings']]
     armor = {'medium': 'medium', 'small': 'light', 'large': 'heavy', 'none': 'unarmored', 'fort': 'fortified'}
     units, buildings, scales = {}, {}, {}
@@ -55,6 +55,9 @@ def main():
         art, text = section(func, source), section(strings, source)
         alternate = kind in ['druidbear', 'druidcrow']
         units[kind] = dict(sourceUnit=source, label=label, model=model, hp=int(b['HP']), armor=armor[b['defType']], armorValue=float(b['def']), gold=int(b['goldcost']), wood=int(b['lumbercost']), food=int(b['fused']), time=float(b['bldtm']), damage=float(w['avgdmg1']), attack=w['atkType1'], range=float(w['rangeN1']) / 100, cooldown=float(w['cool1']), speed=float(b['spd']) / 100, collision=float(b['collision']) / 100, antiAir='air' in w['targs1'].split(','), flying=kind == 'druidcrow', airOnly=kind == 'druidcrow', organic=True, nightRegen=float(b['regenHP']), maxMana=float(b['manaN']), initialMana=float(b['mana0']), manaRegen=float(b['regenMana']), alternate=alternate, slot=sum(int(v) * f for v, f in zip(art['Buttonpos'].split(','), [1, 4])), hotkey=text['Hotkey'], research='Redc' if kind in ['druidclaw', 'druidbear'] else 'Redt', damagePoint=float(w['dmgpt1']), modelScale=float(ui['modelScale']), selectionScale=float(ui['scale']), sourceRows={name: table[name][source] for name in ['UnitBalance', 'UnitWeapons', 'UnitAbilities', 'unitUI']}, sourceFunc=art, sourceStrings=text, **icons(kind, art['Art']))
+        movement = table['UnitData'][source]
+        units[kind].update(flightHeight=float(movement['moveHeight']) / 100, flightFloor=float(movement['moveFloor']) / 100)
+        units[kind]['sourceRows']['UnitData'] = movement
         if w['weapTp1'] != 'normal': units[kind].update(missileSpeed=float(art['Missilespeed']) / 100, projectile='nature', missileArc=float(art.get('Missilearc', '0')))
         scales.setdefault(model, dict(unit=source, modelScale=float(ui['modelScale']), selectionScale=float(ui['scale'])))
     for kind, (source, label, model) in BUILDINGS.items():

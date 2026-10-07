@@ -1,0 +1,614 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-07T16:43:01.376Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\druid-flight-1791391357226\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 71932
+    },
+    {
+      "name": "source Crow height, air selection, Faerie Fire and saved landing",
+      "ms": 287603
+    }
+  ],
+  "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+  "productMainSha256": "b09a1a22afdb40dc3710a1b7b6bbc06a64fe25f79448676d4b29dddc4497e2f1",
+  "productSceneSha256": "f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 3643
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 13348
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 4247
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 4122
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 32437
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 7285
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6844
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3022
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 278
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4456
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3347
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3762
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3040
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 282
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3566
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3247
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3363
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3132
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3882
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3256
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3501
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3000
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 266
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3426
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3256
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3569
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2976
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 286
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3779
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3211
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3646
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3060
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 283
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3599
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3225
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3707
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3111
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7848
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3420
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4099
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2987
+    },
+    {
+      "kind": "query",
+      "name": "scene.snapshot",
+      "ms": 811
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 50
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 31
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 292
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3676
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3214
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3542
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3207
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 262
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3510
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3248
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3442
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3253
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3567
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3122
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3664
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3146
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5194
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3014
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 30
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 268
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3613
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3266
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3701
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3057
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 319
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3569
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 3278
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 250
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3649
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3259
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3794
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2907
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 88
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 289
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3461
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3299
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3590
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3287
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3725
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3302
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3888
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3014
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 260
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3679
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3329
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3561
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2990
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 30
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 290
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3698
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3258
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3501
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3003
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 282
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3668
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3302
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3507
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3109
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8228
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3213
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4290
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3619
+    },
+    {
+      "kind": "query",
+      "name": "scene.snapshot",
+      "ms": 868
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 251
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4221
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 3328
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 68
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 70
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 320
+    }
+  ],
+  "airMeshHeights": [
+    {
+      "name": "Unit 7 part 17",
+      "y": 2.4000000953674316
+    },
+    {
+      "name": "Unit 7 part 18",
+      "y": 2.4000000953674316
+    },
+    {
+      "name": "Unit 7 part 19",
+      "y": 2.4000000953674316
+    }
+  ],
+  "flight": {
+    "sourceHeight": 240,
+    "worldHeight": 2.4,
+    "sourceFloor": 90,
+    "actualFKey": true,
+    "airSelection": true,
+    "actualCrowFaerieFire": true,
+    "savedForm": true,
+    "returnedToGround": true
+  },
+  "shaderRejections": 0,
+  "scope": "Original UnitData Crow altitude (240 source units), native F transformations, airborne mouse targeting, Crow Faerie Fire, F5 form restoration and ground return. Agent input; exact original lift/landing interpolation, HP transfer, physical mouse, sound and cross-machine LAN remain unverified.",
+  "shutdown": {
+    "pid": 160240,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

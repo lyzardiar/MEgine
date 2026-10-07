@@ -438,7 +438,7 @@ var Frost = (() => {
     for(let cz=a[1];cz<=b[1];cz++)for(let cx=a[0];cx<=b[0];cx++){const i=cz*32+cx;if(map.terrain[i]===1||map.ramps?.[i]||(map.heights?.[i]||0)!==level)return false;for(const [dx,dz] of [[0,0],[2,0],[2,2],[0,2]]){const h=tileHeight(map,i,dx,dz);low=Math.min(low,h);high=Math.max(high,h);}}return high-low<=.25&&groundClear(map,x,z,x,z,radius);
   }
   const pickHeight=(map,x,z)=>elevation(map,x,z)+(map.terrain[index(x,z)]===1?.04:0);
-  const unitHeight=(s,u)=>{groundNavigation(s);return (groundSample(s.map,u.x,u.z,true)?.y??elevation(s.map,u.x,u.z))+(u.cyclone>0?4:types[u.kind]?.flying?4:0);};
+  const unitHeight=(s,u)=>{groundNavigation(s);return (groundSample(s.map,u.x,u.z,true)?.y??elevation(s.map,u.x,u.z))+(u.cyclone>0?4:types[u.kind]?.flying?types[u.kind].flightHeight??4:0);};
   function attackClear(s,u,v){
     if((attackRange(u,v)<=2||u.kind==='hall'&&u.baseRules===1&&u.baseFaction===2)&&!types[u.kind].flying&&!traversable(s.map,u.x,u.z,v.x,v.z))return false;
     const ay=unitHeight(s,u)+1.6,by=unitHeight(s,v)+1.6,dx=v.x-u.x,dz=v.z-u.z,cuts=[0,1];

@@ -1,0 +1,61 @@
+{
+  "author": "MiYu",
+  "druidRulePassGroups": 8,
+  "druidSpellPassGroups": 7,
+  "generatedClientPassed": true,
+  "generatedCrowSpellClientPassed": true,
+  "tcpDruidHeightPassed": true,
+  "tcpDruidSpellsPassed": true,
+  "signedDruidAssetOutputs": 457,
+  "verifiedStagedSignaturePaths": 568,
+  "fullRegressionBaseline": {
+    "groups": 128,
+    "commit": "f0b31e6a207b2ec6972efd8129a2898b58ef0081",
+    "currentChangeValidation": "Targeted Druid rules, generated-client mesh/ring/health-bar controls, air projectiles, both TCP suites, byte-exact asset regeneration and native Crow controls."
+  },
+  "nativeReport": "native-druid-flight-qa.json",
+  "nativePassed": true,
+  "nativeStageMilliseconds": [
+    {
+      "name": "project open and ready",
+      "ms": 71932
+    },
+    {
+      "name": "source Crow height, air selection, Faerie Fire and saved landing",
+      "ms": 287603
+    }
+  ],
+  "airMeshHeights": [
+    {
+      "name": "Unit 7 part 17",
+      "y": 2.4000000953674316
+    },
+    {
+      "name": "Unit 7 part 18",
+      "y": 2.4000000953674316
+    },
+    {
+      "name": "Unit 7 part 19",
+      "y": 2.4000000953674316
+    }
+  ],
+  "currentMainSha256": "b09a1a22afdb40dc3710a1b7b6bbc06a64fe25f79448676d4b29dddc4497e2f1",
+  "currentSceneSha256": "f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748",
+  "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+  "shutdown": {
+    "pid": 160240,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "pending": [
+    "Original current/max HP transfer and alternate-form training mana-regeneration semantics require original-game measurements.",
+    "Crow takeoff/landing and Cyclone fall interpolation.",
+    "Physical input, sound listening and cross-machine LAN.",
+    "Complete campaign, tower-defense, Dota and editor parity."
+  ]
+}
