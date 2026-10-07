@@ -34,6 +34,7 @@ var FrostVisual=(()=>{
   }
   function attackPhase(u,asset){return (asset.attackEvent+Frost.clamp(1-u.cd/(Frost.unitType(u).cooldown||1),0,1))%1;}
   function castPhase(u,asset,walking){
+    if(Frost.druidUnit(u)){const r=druidRules.units[u.kind].sourceRows.UnitWeapons,point=Number(r.castpt),back=Number(r.castbsw);return !walking&&!u.stun&&(u.order?.type==='druidSpell'&&u.order.castLeft!==undefined||u.druidCastLeft>0)?u.order?.type==='druidSpell'?(point-u.order.castLeft)/(point+back):(point+back-u.druidCastLeft)/(point+back):null;}
     if(u.kind==='shaman')return !walking&&!u.stun&&u.castLeft>0?1-u.castLeft/.8:null;
     if(u.kind==='necromancer')return !walking&&!u.stun&&(u.castLeft>0||u.raiseDeadCd>Frost.raiseDead.cooldown-.8)?u.castLeft>0?1-u.castLeft/.8:(Frost.raiseDead.cooldown-u.raiseDeadCd)/.8:null;
     if(u.kind!=='hero'||walking||u.stun||!asset.animations?.some(a=>asset.classic?/^spell|^stand channel/i.test(a.name):a.name==='Cast'))return null;
@@ -53,6 +54,7 @@ var FrostVisual=(()=>{
     if(!Frost.mobile(u))return Frost.ancient(u)&&(u.uprooted||u.ancientShift)?old?.yaw??u.yaw??Math.PI/6:Math.PI/6;
     if(Frost.feeding(u))return u.yaw??0;
     const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008;
+    if(Frost.druidUnit(u)&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[druidRules.units[u.kind].model],moved)!==null)return u.castYaw;
     if(['hero','necromancer','shaman'].includes(u.kind)&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[units[u.kind]||Frost.unitType(u).art],moved)!==null)return u.castYaw;
     const attacking=u.cd>(u.kind==='archer'?0:.25),hit=attacking&&(state.events||[]).find(e=>['hit','launch'].includes(e.type)&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),enemy=attacking&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0),inRange=enemy&&Math.hypot(Frost.distance(u,enemy),Frost.unitHeight(state,u)-Frost.unitHeight(state,enemy))<=Frost.unitType(u).range+(Frost.types[enemy.kind].radius||.3)&&Frost.attackClear(state,u,enemy),target=work(state,u)?.target||hit||(inRange&&enemy);
     return target?Math.atan2(target.x-u.x,target.z-u.z):moved?Math.atan2(u.x-old.x,u.z-old.z):old?.yaw??u.yaw??0;
@@ -103,7 +105,7 @@ var FrostVisual=(()=>{
       else if(u.kind==='entangledmine'&&u.workers>0)action='Stand Work '+['First','Second','Third','Fourth','Fifth'][Math.min(5,u.workers)-1];
       else if(Frost.ancient(u)&&(u.entangleCast||u.entangleCasting)){action='Spell';progress=1-(u.entangleCast?.left??u.entangleCasting)/Frost.entangledRules.castTime;}
       else if(walking)action='Walk';
-      else if(!u.stun&&casting!==null){action=Frost.portalLeft(u)>0?'Stand Channel':'Spell';progress=casting;}
+      else if(!u.stun&&casting!==null){action=Frost.druidUnit(u)&&(u.order?.spell??u.druidCastSpell)==='roar'?(u.kind==='druidbear'?'Attack Spell':'Spell Slam'):Frost.portalLeft(u)>0?'Stand Channel':'Spell';progress=casting;}
       else if(Frost.feeding(u)>0){action='Stand Channel';elapsed=Frost.cannibalize.duration-Frost.feeding(u);}
       else if(Frost.ancient(u)&&u.ancientRegen>0){action='Spell Eat Tree';elapsed=Frost.ancientRules.duration-u.ancientRegen;}
       else if(!u.stun&&asset.classicWork){action=asset.classicWork==='Wood'?'Attack Lumber':asset.classicWork==='Mine'&&classicClip(asset,'Stand Work Gold',u)>=0?'Stand Work Gold':'Stand Work';}

@@ -4,6 +4,7 @@ var FrostEffects=(()=>{
   const definitions=Object.assign({},...FrostEffectArt.artDefinitions.map(d=>d.sections)),stem=p=>{const name=p.split(/[\\/]/).pop().replace(/\.mdl$/i,'');return Object.keys(FrostEffectArt.effects).find(k=>k.toLowerCase()===name.toLowerCase());};
   const blood=definitions.Bblo.Targetart.split(',');
   const spellBindings={bloodlustLeft:stem(blood[0]),bloodlustRight:stem(blood[1]),shield:stem(definitions.Blsh.Targetart),shieldCast:stem(definitions.Blsh.Specialart),portalCaster:stem(definitions.AItp.Casterart),portalArea:stem(definitions.AItp.Areaeffectart),portalArrival:stem(definitions.AItp.Targetart)};
+  Object.assign(spellBindings,{roar:'RoarTarget',roarCaster:'RoarCaster',faerieFire:'FaerieFireTarget',cyclone:'CycloneTarget'});
   function anchors(mesh,facing=0,scale=1){
     const pitch=-Math.atan2(FrostVisual.camera.height,FrostVisual.camera.depth),c=Math.cos(facing)*scale,s=Math.sin(facing)*scale;
     const camera={model:[c,0,-s,0,0,scale,0,0,s,0,c,0,0,0,0,1],look:[0,Math.sin(pitch),-Math.cos(pitch)],up:[0,Math.cos(pitch),Math.sin(pitch)]};let nodes;
@@ -52,7 +53,7 @@ var FrostEffects=(()=>{
     if(u.itemRegen?.hp>0){const item=Frost.items.find(i=>i.regen?.hp&&Math.abs(i.regen.hp/i.regen.time-u.itemRegen.hp)<1e-7);add('recovery',item?.regen.radius?'Scroll_Regen_Target':'HealingSalveTarget');}
     if(u.itemRegen?.mana>0)add('clarity','ClarityTarget');
     if(u.sanctuary)add('sanctuary','Staff_Sanctuary_Target');
-    if(u.ancientRegen>0)add('rejuvenation','RejuvenationTarget');
+    if(u.ancientRegen>0||u.rejuvenation>0)add('rejuvenation','RejuvenationTarget',u.rejuvenation>0?at(/^Chest Ref$/i)||[0,(visual.height-.5)/scale*.6,0]:undefined);
     if(u.cripple>0)add('cripple','CrippleTarget');
     if(u.built===1&&!Frost.mobile(u)&&u.hp>0&&u.maxHp>0){
       const damage=u.hp/u.maxHp<.25?3:u.hp/u.maxHp<.5?2:u.hp/u.maxHp<.75?1:0;if(!damage)return effects;
@@ -76,6 +77,10 @@ var FrostEffects=(()=>{
       result.push({slot,name,component:{effect:art.effect,clip,playing:false,looping:animation.loop,speed:1,time_seconds:seconds},parts:FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+Math.floor(seconds*30)+'@30'),position:world,scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});
     }
     if(u.bloodlust>0){const age=Frost.casterSpells.bloodlust.duration-u.bloodlust;add('bloodlustLeft',age,at(/^Hand Left Ref$/i));add('bloodlustRight',age,at(/^Hand Right Ref$/i));}
+    if(u.roar>0)add('roar',Frost.druidRules.commands.Aroa.duration-u.roar,at(/^Overhead Ref$/i)||[0,visual.height/scale,0]);
+    if(u.faerieFire>0)add('faerieFire',(u.kind==='hero'?Frost.druidRules.commands.Afae.heroDuration:Frost.druidRules.commands.Afae.duration)-u.faerieFire,at(/^Head Ref$/i)||at(/^Overhead Ref$/i)||[0,(visual.height-.5)/scale,0]);
+    if(u.cyclone>0)add('cyclone',(u.kind==='hero'?Frost.druidRules.commands.Acyc.heroDuration:Frost.druidRules.commands.Acyc.duration)-u.cyclone,undefined,[position.x,Frost.elevation(state.map,u.x,u.z),position.z]);
+    if(u.druidLastSpell==='roar')add('roarCaster',clock-u.druidCastFrame*Frost.DT);
     if(u.lightningShield>0){const age=Frost.casterSpells.lightningShield.duration-u.lightningShield;add('shield',age);add('shieldCast',age);}
     const left=Frost.portalLeft(u);if(left>0){const age=Frost.townPortal.time-left;add('portalCaster',age);if(u.order?.type==='townPortal')add('portalArea',age,undefined,[u.order.x,Frost.elevation(state.map,u.order.x,u.order.z),u.order.z]);}
     if(u.portalArrivalFrame!==undefined)add('portalArrival',clock-u.portalArrivalFrame*Frost.DT);

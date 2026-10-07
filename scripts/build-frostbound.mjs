@@ -11,6 +11,7 @@ const buildingScales=JSON.parse(fs.readFileSync(path.join(root,'building-scale-c
 const consoleLayout=JSON.parse(fs.readFileSync(path.join(root,'console-layout.json'),'utf8'));
 const unitScales=JSON.parse(fs.readFileSync(path.join(root,'unit-scale-catalog.json'),'utf8'));
 const effects=JSON.parse(fs.readFileSync(path.join(root,'effect-catalog.json'),'utf8'));
+Object.assign(effects.effects,JSON.parse(fs.readFileSync(path.join(root,'druid-spell-art.json'),'utf8')));
 const detonation=JSON.parse(fs.readFileSync(path.join(root,'detonate-catalog.json'),'utf8'));
 const sentinel=JSON.parse(fs.readFileSync(path.join(root,'sentinel-catalog.json'),'utf8'));
 const construction=JSON.parse(fs.readFileSync(path.join(root,'construction-catalog.json'),'utf8'));construction.slots=Math.max(1,...Object.values(construction.owners).map(a=>a.length));

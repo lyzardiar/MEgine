@@ -198,6 +198,8 @@ def main():
         bind('ClassicDruidTalon', 'DruidoftheTalon')
         bind('ClassicAncientLore', 'AncientofLore', building=True)
         bind('ClassicAncientWind', 'AncientofWind', building=True)
+        for name in ['RoarCaster', 'RoarTarget', 'FaerieFireTarget', 'CycloneTarget']:
+            bind('Classic' + name, name, 'remaining-ready', environment=True)
     for faction, values in BUILDINGS.items():
         for suffix, model in zip(['Hall', 'Barracks', 'Lodge', 'Tower', 'Altar', 'Workshop', 'Shop'], values):
             bind(faction + suffix, model, tier=2 if model == 'HumanTower' else 1, building=True)

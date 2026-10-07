@@ -1,0 +1,102 @@
+{
+  "author": "MiYu",
+  "regressionPassGroups": 128,
+  "spellRulePassGroups": 7,
+  "druidProductionPassGroups": 6,
+  "generatedClientPassed": true,
+  "tcpSpellTestsPassed": true,
+  "signedNewAssetOutputs": 105,
+  "signedDruidAssetOutputs": 456,
+  "verifiedStagedPaths": 468,
+  "nativeReport": "native-druid-spells-qa.json",
+  "nativePassed": true,
+  "nativeStageMilliseconds": [
+    {
+      "name": "project open and ready",
+      "ms": 72816
+    },
+    {
+      "name": "four original spell keys and visible effects",
+      "ms": 272750
+    },
+    {
+      "name": "original Mark queues and animal spell unlocks",
+      "ms": 131730
+    }
+  ],
+  "nativeCommandTiming": {
+    "playback.step": {
+      "calls": 51,
+      "milliseconds": 252421
+    },
+    "playback.input": {
+      "calls": 49,
+      "milliseconds": 89679
+    },
+    "entity.get": {
+      "calls": 26,
+      "milliseconds": 60875
+    },
+    "panel.focus": {
+      "calls": 1,
+      "milliseconds": 32423
+    },
+    "project.open": {
+      "calls": 1,
+      "milliseconds": 13424
+    },
+    "project.state": {
+      "calls": 2,
+      "milliseconds": 10359
+    },
+    "playback.play": {
+      "calls": 1,
+      "milliseconds": 7235
+    },
+    "view.screenshot": {
+      "calls": 2,
+      "milliseconds": 6425
+    },
+    "view.set_game_resolution": {
+      "calls": 1,
+      "milliseconds": 3512
+    },
+    "scene.snapshot": {
+      "calls": 1,
+      "milliseconds": 837
+    },
+    "playback.stop": {
+      "calls": 1,
+      "milliseconds": 321
+    },
+    "profiler.get_samples": {
+      "calls": 1,
+      "milliseconds": 110
+    },
+    "console.get_logs": {
+      "calls": 1,
+      "milliseconds": 29
+    }
+  },
+  "currentMainSha256": "162bf29b70466862627b2ca87141d6e7952770882e59755851cbc984a9bb3b92",
+  "currentSceneSha256": "f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748",
+  "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+  "nativeInput": "Agent playback input with target clicks; physical input unverified",
+  "animalSpellValidation": "Generated client verifies Bear Roar and Storm Crow Faerie Fire controls and original animation clips; native run verifies Mark research queues and completion.",
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "shutdown": {
+    "pid": 142008,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "pending": [
+    "Original form HP transfer and training mana-regeneration semantics.",
+    "Storm Crow takeoff/landing and Cyclone fall/landing transition.",
+    "Physical mouse, audio listening, original-game comparison and cross-machine LAN.",
+    "Full campaign, tower-defense, Dota and map-editor parity."
+  ]
+}
