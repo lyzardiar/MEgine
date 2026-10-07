@@ -1,0 +1,55 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\ancient-war-1791371351441\\sample",
+  "steps": [
+    {
+      "name": "project open and editor ready",
+      "ms": 67331
+    },
+    {
+      "name": "locked prerequisite and native commands",
+      "ms": 170301
+    },
+    {
+      "name": "full source training timers and actors",
+      "ms": 274565
+    },
+    {
+      "name": "source animated multi-part missiles",
+      "ms": 42199
+    }
+  ],
+  "editorSha256": "79ac76db830fbe37d072815c38314ff8f64fe1cb8b764441f4b3cce3f292754a",
+  "productMainSha256": "e6d293c721d89829dcbadb5c2e594bac242076199db6139695db1cd5b6419163",
+  "productSceneSha256": "7e7b2644fc32e5353e4a3873634ae85a0563526fc4d781116f81bb6c081777c4",
+  "physicalInput": false,
+  "audioListening": false,
+  "training": {
+    "originalIconsAndSlots": true,
+    "actualArcherClickAndHuntressGlaiveHotkeys": true,
+    "sourceCosts": true,
+    "tier1": true
+  },
+  "actors": {
+    "originalArcherHuntressGlaive": true,
+    "sourceScales": true,
+    "full20_30_48SecondQueue": true
+  },
+  "missiles": {
+    "sourceMeshes": true,
+    "allVisibleGeosets": true,
+    "animatedStand": true
+  },
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 86696,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}
