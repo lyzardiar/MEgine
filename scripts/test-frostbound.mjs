@@ -2,6 +2,9 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-mountain-giant.mjs';
+import './test-frost-mountain-giant-client.mjs';
+import './test-frost-mountain-giant-network.mjs';
 import './test-frost-faerie-dragon.mjs';
 import './test-frost-faerie-dragon-client.mjs';
 import './test-frost-faerie-dragon-network.mjs';

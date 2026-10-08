@@ -12,12 +12,12 @@ assert.equal(rows.get(1).get(37),'modelScale');assert.equal(rows.get(1).get(22),
 const sha=raw=>crypto.createHash('sha256').update(raw).digest('hex');for(const file of source.files)assert.equal(sha(fs.readFileSync(new URL(file.path,root))),file.sha256,file.path);
 for(const [path,hash] of Object.entries(source.generators))assert.equal(sha(fs.readFileSync(new URL(path,new URL('../',import.meta.url)))),hash,path);
 for(const model of Object.values(catalog.models)){assert.equal(model.modelScale,Number(units.get(model.unit).get(37)));assert.equal(model.selectionScale,Number(units.get(model.unit).get(22)));}
-globalThis.Frost=require('../samples/frostbound-realms/game/simulation.js');globalThis.FrostArt=require('../samples/frostbound-realms/model-catalog.json');const V=require('../samples/frostbound-realms/game/visuals.js');let tested=0;
+globalThis.Frost=require('../samples/frostbound-realms/game/simulation.js');globalThis.FrostArt=Object.assign({},...['model-catalog','druid-models','dryad-models','hippogryph-models','chimaera-models','faerie-dragon-models','mountain-giant-models'].map(name=>JSON.parse(fs.readFileSync(new URL(name+'.json',root)))));const V=require('../samples/frostbound-realms/game/visuals.js');let tested=0;
 for(let faction=0;faction<4;faction++){
  const state={teams:[{faction},{faction}],units:[]};
  for(const kind of Object.keys(Frost.types)){
   const u={kind,team:0,built:1,cd:0},view=V.model(state,u);if(!view.asset.classic||view.asset.factionBuilding)continue;
-  const definition=catalog.models[view.key],original=Number(units.get(definition.unit).get(37));assert.equal(view.scale,original*catalog.worldScale);assert.equal(view.height,Math.max(0,view.asset.bounds.max[1])*view.scale+.5,'health bars use the source top rather than underground or wing extent');assert.equal(view.selectionSpan,catalog.circles[/^[A-Z]/.test(definition.unit)?'hero':'unit'].worldSpan*Number(units.get(definition.unit).get(22)));
+  const definition={unit:Frost.types[kind].sourceUnit??catalog.models[view.key].unit},original=Number(units.get(definition.unit).get(37));assert.equal(view.scale,original*catalog.worldScale);assert.equal(view.height,Math.max(0,view.asset.bounds.max[1])*view.scale+.5,'health bars use the source top rather than underground or wing extent');assert.equal(view.selectionSpan,catalog.circles[/^[A-Z]/.test(definition.unit)?'hero':'unit'].worldSpan*Number(units.get(definition.unit).get(22)),kind+' source selection scale');
   const height=view.asset.size[1];view.asset.size[1]*=2;assert.equal(V.model(state,u).scale,view.scale,'source scale is independent of pose bounds');view.asset.size[1]=height;tested++;
  }
 }

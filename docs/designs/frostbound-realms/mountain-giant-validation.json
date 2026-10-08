@@ -1,0 +1,39 @@
+{
+  "author": "MiYu",
+  "protocol": 55,
+  "giantVersion": 1,
+  "signedOutputs": 145,
+  "assetRegeneration": true,
+  "modifiedOutputProtection": true,
+  "fullSuitePassGroups": 204,
+  "fullSuiteExitCode": 0,
+  "fullSuiteLog": "tmp/mountain-full-regression.log",
+  "supplementalScriptsPassed": 104,
+  "supplementalPassGroups": 185,
+  "countsOverlap": true,
+  "historicalFailures": [
+    {
+      "path": "scripts/test-frost-biome-trees.mjs",
+      "status": "fails against both current and HEAD visuals",
+      "evidence": "tmp/mountain-biome-baseline.log",
+      "reason": "Legacy RealSpruce/RealJacaranda/RealQuiver expectation predates classic tree rendering."
+    }
+  ],
+  "nativeReport": "native-mountain-giant-qa.json",
+  "nativePassed": true,
+  "finalMainSha256": "ececcd165d6c5d50a300832c5550abeec2768e45aa35f8e616c4e4f65e7f3568",
+  "generatedSceneSha256": "6a3d245cee16c74874dd34a25c15022bfba3740d5da360c12291f75a52a3dde1",
+  "preservedSceneSha256": "f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748",
+  "sceneRestoredByteForByte": true,
+  "catalogPreserved": true,
+  "independentReview": "Taunt/morph save conflict and source EatTree animation fixed; research queue naming and original portrait routing verified; final review found no additional reproducible blocker.",
+  "unverified": [
+    "Original Taunt priority/visibility/second trigger and caster tree-attachment interruption",
+    "Original War Club attack-count edges, cancel/miss rules and upgraded Spell identity",
+    "Hardened Skin armor order and magic-attack classification",
+    "Resistant Skin complete immunity list and Purge/Slow Poison hero behavior",
+    "Original Night Elf AI strategy remains pending",
+    "Physical input, audio listening and cross-machine LAN",
+    "Complete Warcraft III campaigns, game/editor parity"
+  ]
+}
