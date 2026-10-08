@@ -1,0 +1,87 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "workingSourceHashes": {
+    "packages/editor/src/store.ts": "fddd20c4cd19fab781f7d6b1a5ac0171d5a09de846c771fbb74aec5dc236509e",
+    "packages/editor/src/agent/transport.ts": "2112c4aa98159157f463ea957f53f8c50848ec6224aa47f57acf94a67ed994d1",
+    "packages/editor/src-tauri/src/agent_bridge.rs": "eeb2bd990513e3c6e1b9016e658a5ee8a2bb0e5ece5bdce7e25dc80ac2cd1329",
+    "packages/agent/mcp/server.mjs": "9223d25c6c409eca0ab07cff438c13a252e91c6690038a115b726a91dd27f2c5",
+    "scripts/qa-agent-native-timing.mjs": "69c2b0ae0ec85e96a7d5bef2ba1edabd8eca2c77e615c261c28c19835797a9ad",
+    "scripts/native-qa-cpu-profile.mjs": "a3ff91ce17719a5d9c9a7e147d6cce2823a261e421394f7a313ab4311fc22950",
+    "scripts/benchmark-scene-hierarchy.mjs": "23725a9e3f6235f9a2b1f8f7a49f045a4f9de34885309c4f4cbe0389d4c77dd7"
+  },
+  "product": {
+    "mainSha256": "f3d16a626ccbd69432ef46984bef9158e0b34bf748e7e5a8338cdb21c25d8a3b",
+    "sceneSha256": "4f06ad00348f00d0b35f04c025ac652dee964dacc64c9690755bf0171cdd7c9c",
+    "entities": 48127
+  },
+  "native": {
+    "before": "native-agent-timing-qa.json",
+    "cpu": "native-agent-timing-cpu-qa.json",
+    "after": "native-agent-timing-optimized-qa.json",
+    "beforeEditorSha256": "4fecf5e05230d4277af68ee6aa7b483ccd3abddca4e1662d4d5fd4dbb30828c4",
+    "afterEditorSha256": "f7d3144beac059e3ac2601a0f9782f8f91716a4e0629b459865036f42b9c4514",
+    "sameMainAndScene": true,
+    "sameMeasuredCommandSequence": true,
+    "startupReadinessPollingExcluded": true,
+    "allOwnedInstancesStoppedAndCleaned": true,
+    "rows": [
+      {
+        "name": "playback.input",
+        "samples": 3,
+        "beforeMedianMs": 7557.419800000003,
+        "afterMedianMs": 1331.3111000000063,
+        "beforeFrontendDeliveryMedianMs": 7550,
+        "afterFrontendDeliveryMedianMs": 1328
+      },
+      {
+        "name": "entity.get",
+        "samples": 4,
+        "beforeMedianMs": 193.36789999999746,
+        "afterMedianMs": 129.59189999999944,
+        "beforeFrontendDeliveryMedianMs": 191,
+        "afterFrontendDeliveryMedianMs": 125
+      },
+      {
+        "name": "playback.step",
+        "samples": 3,
+        "beforeMedianMs": 903.8299000000115,
+        "afterMedianMs": 1036.7681000000011,
+        "beforeFrontendDeliveryMedianMs": 107,
+        "afterFrontendDeliveryMedianMs": 108
+      }
+    ],
+    "shaderPipelineRejections": 0
+  },
+  "sourceBenchmark": "scene-hierarchy-benchmark.json",
+  "tests": {
+    "transportAndProtocol": {
+      "passed": 20,
+      "failed": 0,
+      "log": "tmp/agent-timing-tests.log"
+    },
+    "bridgeAndSceneIntegration": {
+      "passed": 32,
+      "failed": 0,
+      "log": "tmp/agent-timing-regression.log"
+    },
+    "hierarchyFlags": {
+      "passed": 6,
+      "failed": 0,
+      "log": "tmp/scene-hierarchy-cost-tests.log"
+    },
+    "rustBridge": {
+      "passed": 22,
+      "failed": 0,
+      "log": "tmp/agent-timing-rust-tests.log"
+    }
+  },
+  "builds": {
+    "typescript": true,
+    "frontend": true,
+    "nativeRelease": true,
+    "initialNativeBuildSeconds": 319,
+    "optimizedNativeBuildSeconds": 270
+  },
+  "scope": "Editor hierarchy flags with empty restrictions and opt-in RPC diagnostics. Original ancestor checks retained for nonempty restrictions. Same published scene/Main and measured paused command sequence after startup; 3 input, 4 query and 3 single-step samples. Physical input, audio, full QA throughput, and complete Warcraft parity remain unverified."
+}

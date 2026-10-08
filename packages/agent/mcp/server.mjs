@@ -645,12 +645,13 @@ async function rpc(
 async function bridgeQuery(query, args = {}, options = {}) {
   const result = await rpc(
     'query',
-    { query, args },
+    { query, args, ...(options.traceTiming ? { traceTiming: true } : {}) },
     {
       retryAcrossEditorRestart: true,
       signal: options.signal,
     },
   );
+  if (options.onTiming) options.onTiming(result?.bridgeTiming);
   return result?.data;
 }
 
@@ -662,6 +663,7 @@ function bridgeExecuteParams(command, args = {}, options = {}) {
     screenshot: Boolean(options.screenshot),
     expectedSceneRevision: options.expectedSceneRevision,
   };
+  if (options.traceTiming) params.traceTiming = true;
   if (DANGEROUS_AGENT_COMMAND_SET.has(command)) {
     const approvalToken =
       options.approvalToken ?? process.env.MENGINE_AGENT_APPROVAL_TOKEN;

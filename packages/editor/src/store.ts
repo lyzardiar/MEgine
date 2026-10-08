@@ -1097,6 +1097,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         .filter((id) => sceneUnpickableIds.has(id));
     },
     sceneVisible(id: number) {
+      // MiYu: the unrestricted hierarchy needs no entity or ancestor lookup per row.
+      if (sceneHiddenIds.size === 0) return true;
       let current: number | null = id;
       const visited = new Set<number>();
       while (current != null && !visited.has(current)) {
@@ -1107,6 +1109,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return true;
     },
     scenePickable(id: number) {
+      if (sceneUnpickableIds.size === 0) return true;
       let current: number | null = id;
       const visited = new Set<number>();
       while (current != null && !visited.has(current)) {

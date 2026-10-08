@@ -12,6 +12,8 @@ Windows 工作区通过 C 盘路径映射到 E 盘。前端构建使用 E 盘实
 
 ## 守望者交接
 
+当前大场景的端到端响应优化见 `agent-main-thread-handoff.md`。原生请求分段计时和 CPU 采样定位到层级面板的空限制查询；同一场景的输入中位耗时由 7.56 秒降至 1.33 秒，单步执行仍约 1 秒。
+
 守望者已接入构建、客户端、模型与特效。最新规则、生成客户端、TCP 和原生证据记录于 `warden-handoff.md` 与 `warden-validation.json`。完整 Warcraft III 复刻仍在进行。
 
 ## 工程初始化

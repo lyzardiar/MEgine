@@ -1,0 +1,25 @@
+{
+  "author": "MiYu",
+  "entities": 48127,
+  "visibleRows": 48127,
+  "restrictionCount": 0,
+  "sceneSha256": "4f06ad00348f00d0b35f04c025ac652dee964dacc64c9690755bf0171cdd7c9c",
+  "storeSha256": "fddd20c4cd19fab781f7d6b1a5ac0171d5a09de846c771fbb74aec5dc236509e",
+  "samples": [
+    {
+      "beforeMs": 11292.5713,
+      "afterMs": 2.1336999999984982
+    },
+    {
+      "beforeMs": 9347.7845,
+      "afterMs": 1.6756999999997788
+    },
+    {
+      "beforeMs": 9681.7886,
+      "afterMs": 5.623999999999796
+    }
+  ],
+  "beforeMedianMs": 9681.7886,
+  "afterMedianMs": 2.1336999999984982,
+  "scope": "Node source benchmark: two Scene flag reads per visible row, empty restrictions. Previous array/ancestor algorithm versus current flags. Excludes React rendering, native execution and IPC; not an end-to-end speedup."
+}
