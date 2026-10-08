@@ -1,0 +1,261 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-08T03:29:21.459Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\demon-hunter-portrait-1791430142498\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 61921
+    },
+    {
+      "name": "final native source portrait and HUD",
+      "ms": 138401
+    }
+  ],
+  "preflightMs": 1258,
+  "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+  "productMainSha256": "16ed665b6d3ce8cbbb7eacd0ef369b17c3b29fe4d7278121a275e8ce58bd56a6",
+  "productSceneSha256": "58c70f61c5127fc111f491f8656f763e7289ac9f102f6d46df778e40f6a1e834",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 4864
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 16452
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2333
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 6288
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 17177
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 9868
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4933
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4475
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 412
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6104
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4533
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5250
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4178
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 334
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4847
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4426
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5046
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4509
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4894
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4562
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4722
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4203
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 580
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4903
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4585
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5010
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4700
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4724
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 4975
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 335
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5297
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4495
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4893
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4360
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 10981
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 5061
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 38
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 80
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 317
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6092
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 4448
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 90
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 34
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 398
+    }
+  ],
+  "finalPortrait": {
+    "originalAlternateClip2": true,
+    "sourceCamera": true,
+    "roundedArmor": true
+  },
+  "shaderRejections": 0,
+  "scope": "Native final original normal/alternate portrait, source camera and readable armor HUD on explicit level-six fixtures; no spell-input or original-runtime parity claim.",
+  "shutdown": {
+    "pid": 39356,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

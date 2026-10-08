@@ -1,0 +1,15 @@
+# Original Demon Hunter stage
+
+Author: MiYu
+
+New Night Elf skirmish games use original Edem for hero class 0. The body, alternate demon form, animated portrait, source camera, command icons, source skill hotkeys B/L/E/T and source rules are imported reproducibly. Q/W/E/R remain accepted aliases. Protocol 57 and demonHunterVersion 1 identify this stage; unversioned old saves retain prototype heroes. Other game modes and the other three Night Elf heroes retain their current definitions.
+
+Mana Burn requires a visible enemy with mana, charges on cast completion and releases delayed damage. Immolation pays its activation cost and seven mana per second, pulses against nearby organic ground enemies and supports manual shutdown. Its damage attachment expires after each one-second pulse. Evasion uses deterministic attack resolution. Metamorphosis pays mana, provides a timed 500-health bonus and switches to the original ranged chaos/air/splash weapon; launched projectiles retain their launch form after reversion. Hero attributes, level requirements, regeneration, vision, actual 55-second recruitment, paid revival and first/later AI skill arrays use the extracted source data.
+
+`demon-hunter-sources.json` signs 290 outputs and the generators. Original MiscGame.txt comes from War3Patch.mpq. Source assets remain Blizzard property; extraction is not a redistribution license. asset-library was read-only throughout this stage.
+
+Validation covers generated client input/targeting/icons, exact F5 continuation, paid lifecycle, level changes during historic cooldowns, deterministic evasion and form/projectile saves, strict malformed saves, atomic rejection of invalid commands without cancelling active spells, TCP ownership/payment/privacy/reconnect, source receipt verification and an independent identical rebuild. Native reports separate spell/form validation from the final portrait/HUD check. The final standard entry passes 225 groups, including a 24,000-frame AI economy run. That economy run reaches 97/100 food; Claw remains pending behind a verified source-priority Chimaera request blocked by the 100-food cap. Paid Claw training is covered separately by the Druid tests.
+
+Original Warcraft runtime equivalence remains unverified for attribute rounding, complete attack speed, cast/transform timing, transform current-health handling, Immolation mana-buffer timing, XP rewards and shield/orb/splash/evasion interactions. Original Mana Burn lightning beam integration is incomplete. Physical input, audio listening and cross-machine LAN are unverified. This is one hero stage of an unfinished full Warcraft recreation.
+
+Build: `node scripts/build-frostbound.mjs`. Rules/client/TCP: `node scripts/test-frost-demon-hunter.mjs`, `node scripts/test-frost-demon-hunter-client.mjs`, `node scripts/test-frost-demon-hunter-network.mjs`. Full regression: `node scripts/test-frostbound.mjs`. Native: `node scripts/qa-frost-demon-hunter.mjs`; final portrait check: add `--portrait-only`. Rebuild: `python scripts/import-frost-demon-hunter.py --output tmp/demon-hunter-rebuild`.

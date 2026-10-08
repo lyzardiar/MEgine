@@ -1,0 +1,89 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baselineCommit": "7d00527d19b0a4a9a25e6729e236b6988b0e0312",
+  "protocol": 57,
+  "demonHunterVersion": 1,
+  "standardRegression": {
+    "entry": "scripts/test-frostbound.mjs",
+    "exitCode": 0,
+    "passGroups": 225,
+    "logSha256": "aeb82be08fb87019f0c4f22e7827d5ff1a766be21f71e04f6e7e735abefc7683"
+  },
+  "source": {
+    "signedOutputs": 290,
+    "receiptSha256": "75121ce039a2fb3fc6018cc3e48e1e99ced3b1a31f79a680865e9172531c4408",
+    "exactWorkingBytes": true,
+    "independentRebuildIdentical": true
+  },
+  "economy": {
+    "author": "MiYu",
+    "passed": true,
+    "frames": 24000,
+    "simulatedSeconds": 2400,
+    "ms": 39972,
+    "milestones": {
+      "tier1": 1,
+      "altar": 99,
+      "barracks": 1218,
+      "shop": 1833,
+      "workshop": 2184,
+      "tier2": 4520,
+      "ancientwind": 6890,
+      "ancientlore": 7052,
+      "faeriedragon": 7150,
+      "tier3": 7680,
+      "mountaingiant": 7740,
+      "dryad": 8040,
+      "chimaeraroost": 8634
+    },
+    "resources": {
+      "gold": 14145,
+      "wood": 6100
+    },
+    "sourceFlags": {
+      "basic": false,
+      "archer": false
+    },
+    "armyCapacity": {
+      "used": 97,
+      "cap": 100
+    },
+    "clawReached": false,
+    "clawPendingAtSourceCapacity": true,
+    "scope": "Standard 500 gold/150 wood/5 Wisps, legal source AI commands and full timers. Custom mine/tree map; regroup/hold orders isolate economy. Claw either completes or remains behind a verified source-priority Chimaera request blocked by the actual 100-food cap; paid Claw production has separate Druid coverage. No injected income, free buildings, shortened timers or completion edits."
+  },
+  "finalProductMainSha256": "16ed665b6d3ce8cbbb7eacd0ef369b17c3b29fe4d7278121a275e8ce58bd56a6",
+  "native": {
+    "spellsReport": "native-demon-hunter-qa.json",
+    "spellEvidenceScope": "Earlier native bundle: source keys, paid target spell, Immolation, Metamorphosis and F5. Final Immolation attachment expiry and atomic command-rejection changes are covered by final Node regression.",
+    "finalPortraitReport": "native-demon-hunter-portrait-qa.json",
+    "finalPortraitBundleMatches": true,
+    "shaderRejections": 0,
+    "normalShutdown": true,
+    "ownedFixturesRemoved": true
+  },
+  "independentReview": {
+    "readOnly": true,
+    "resolved": [
+      "Immolation damage attachment expiry",
+      "Invalid command preserves pending Mana Burn"
+    ]
+  },
+  "physicalInput": false,
+  "audioListening": false,
+  "crossMachineLan": false,
+  "originalRuntimeVerified": false,
+  "gitStaging": {
+    "explicitManifestSha256": "2e709c3589041524db9ac6f29323e601afcf31f7db008754c70766bf73c28e28",
+    "changedPaths": 315,
+    "allSignedIndexBlobsExact": 291,
+    "diffCheckPassed": true,
+    "excludedUserDirtyAndAssetLibrary": true
+  },
+  "protectedWorkingFiles": {
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748",
+    "samples/frostbound-realms/model-catalog.json": "a89d7af34ab89c36236afb28109a4596519b2c3a3c8da3b013e5460877429aef",
+    ".gitattributes": "31363790be6d45c6c611e0c0d47708f2e75caf0f38d5243396b017e8adddb7a8"
+  }
+}

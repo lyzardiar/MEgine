@@ -1,0 +1,2 @@
+// Author: MiYu. Flat isolated source hero fixtures; resources and levels are explicit test inputs.
+export function demonFixture(S,level=1){const map=S.defaultMap();map.props=[];map.units=[];map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);const s=S.create('skirmish',{map,factions:[2,0],ai:[false,false]});s.units=[];s.resources=[];const h=S.spawn(s,'hero',0,0,0,{heroClass:0,level,skillPoints:level,order:{type:'hold'}});S.visibility(s);return {s,h};}

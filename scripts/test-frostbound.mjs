@@ -2,6 +2,9 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-demon-hunter.mjs';
+import './test-frost-demon-hunter-client.mjs';
+import './test-frost-demon-hunter-network.mjs';
 import './test-frost-night-elf-ai.mjs';
 import './test-frost-night-elf-ai-economy.mjs';
 import './test-frost-night-elf-ai-client.mjs';

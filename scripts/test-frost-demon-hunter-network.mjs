@@ -1,0 +1,19 @@
+import {demonFixture} from './frost-demon-hunter-fixture.mjs';
+// Author: MiYu. Verify source hero ownership, delayed spells, transform state and reconnect over actual TCP.
+import assert from 'node:assert/strict';
+import net from 'node:net';
+import {createRequire} from 'node:module';
+import {createServer} from '../samples/frostbound-realms/server.mjs';
+const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),app=createServer({port:0}),address=await app.listening,sockets=[];
+async function peer(){const socket=net.connect(address.port,'127.0.0.1'),pending=[];let buffer='';sockets.push(socket);socket.setEncoding('utf8');socket.on('error',()=>{});socket.on('data',chunk=>{buffer+=chunk;let end;while((end=buffer.indexOf('\n'))>=0){const message=JSON.parse(buffer.slice(0,end));buffer=buffer.slice(end+1);for(const w of [...pending])if(w.check(message)){pending.splice(pending.indexOf(w),1);clearTimeout(w.timer);w.resolve(message);}}});await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('error',reject);});const send=message=>socket.write(JSON.stringify(message)+'\n'),next=check=>new Promise((resolve,reject)=>{const w={check,resolve,timer:setTimeout(()=>{pending.splice(pending.indexOf(w),1);reject(Error('Demon Hunter TCP timeout'));},12000)};pending.push(w);}),welcome=next(m=>m.type==='welcome');send({type:'hello',protocol:S.PROTOCOL});assert.equal((await welcome).protocol,S.PROTOCOL);let seq=0;return {socket,send,next,order:command=>send({type:'order',seq:++seq,command})};}
+const wait=(p,check)=>p.next(m=>m.type==='state'&&check(m.state)),unit=(s,id)=>s.units.find(u=>u.id===id);
+try{
+ const a=await peer(),b=await peer();let next=a.next(m=>m.type==='joined');a.send({type:'create',mode:'skirmish',faction:2,heroClass:0});const joined=await next;next=b.next(m=>m.type==='joined');b.send({type:'join',code:joined.code,faction:0});await next;next=a.next(m=>m.type==='room'&&m.players.every(p=>p.ready));a.send({type:'ready',ready:true});b.send({type:'ready',ready:true});await next;next=wait(a,()=>true);a.send({type:'start'});await next;
+ const {s,h}=demonFixture(S,6),enemy=S.spawn(s,'shaman',1,2.5,0,{mana:100,damage:0,order:{type:'hold'}});for(const slot of [0,1,2,3])S.command(s,0,{type:'learn',ids:[h.id],slot});h.mana=300;S.visibility(s);app.rooms.get(joined.code).state=s;
+ next=b.next(m=>m.type==='error');b.order({type:'spell',ids:[h.id],slot:0,target:enemy.id});await next;
+ next=wait(a,state=>unit(state,enemy.id)?.manaBurnFrame!==undefined);a.order({type:'spell',ids:[h.id],slot:0,target:enemy.id});const burned=(await next).state;assert.ok(unit(burned,enemy.id).mana<60);assert.ok(unit(burned,h.id).spell[0]>0);assert.ok(S.restore(s));
+ next=wait(a,state=>unit(state,h.id)?.immolation===true);a.order({type:'spell',ids:[h.id],slot:1});await next;
+ next=wait(a,state=>unit(state,h.id)?.metamorphLeft>0);a.order({type:'spell',ids:[h.id],slot:3});const transformed=(await next).state;assert.equal(S.unitType(unit(transformed,h.id)).attack,'chaos');assert.equal(unit(transformed,h.id).sourceHero,'Edem');assert.equal(transformed.nightAI,undefined);assert.ok(S.restore(s));
+ const closed=new Promise(resolve=>a.socket.once('close',resolve));a.socket.destroy();await closed;const c=await peer();next=c.next(m=>m.type==='joined');c.send({type:'resume',code:joined.code,token:joined.token});const resumed=(await next).state;assert.ok(unit(resumed,h.id).metamorphLeft>0);assert.equal(unit(resumed,h.id).immolation,true);next=wait(c,state=>unit(state,h.id)?.immolation===false);c.order({type:'spell',ids:[h.id],slot:1});await next;assert.ok(S.restore(s));
+ console.log('PASS source Demon Hunter TCP: protocol'+S.PROTOCOL+', enemy ownership rejection, delayed paid Mana Burn, Immolation/form synchronization, private AI state and disconnect/reconnect retain source spells');
+}finally{for(const socket of sockets)socket.destroy();await app.close();}
