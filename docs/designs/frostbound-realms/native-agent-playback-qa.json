@@ -1,0 +1,190 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "scope": "Owned native editor: script input edges, paused batch stepping, live revision guards and requested scene capture. No Warcraft performance or physical input claim.",
+  "editorSha256": "9576d9f99b6c2eb51e6a5fdb841d428ce21569b311efaa7f0924703d88e6919d",
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 436.2655
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 547.0953999999999
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 3.0489000000000033
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 3.370200000000068
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 83.7482
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 1612.2478
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6.759600000000319
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3.6114000000002306
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 1.3859000000002197
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1.4524999999998727
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1.149199999999837
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1.2204000000001543
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1.2989999999999782
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4.399699999999939
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2.690100000000257
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6.296500000000378
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2.0767000000000735
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2.625300000000152
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2.2143999999998414
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3.3278000000000247
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1.8475000000003092
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 65.51250000000027
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6008.2147
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 3.208099999999831
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 5.411799999999857
+    }
+  ],
+  "lastProjectState": {
+    "phase": "ready",
+    "ready": true,
+    "busy": false,
+    "operation": null,
+    "error": null,
+    "project": {
+      "id": "c931fe2e-1a13-455a-9c02-1cfcb0d44cf2",
+      "name": "spinning-cube",
+      "root": "E:\\work\\codex\\cache\\mengine\\native-qa\\agent-playback-1791448811451\\sample",
+      "scenePath": "Assets/Scenes/Main.mscene",
+      "revision": 2
+    },
+    "recentCount": 1,
+    "recentLimit": 12,
+    "recentRevision": "recent-projects-v1-1-c83f6d850d9570f7",
+    "editorReady": true,
+    "eventSequence": 18
+  },
+  "initialTelemetry": {
+    "frame": 1,
+    "input": {
+      "keys": [],
+      "pressedKeys": [],
+      "releasedKeys": [],
+      "pointer": [
+        0,
+        0
+      ],
+      "pointerDelta": [
+        0,
+        0
+      ],
+      "pointerLocked": false,
+      "viewport": [
+        1,
+        1
+      ],
+      "buttons": [],
+      "pressedButtons": [],
+      "releasedButtons": []
+    }
+  },
+  "inputEdges": true,
+  "batchFrame": true,
+  "revisionGuard": true,
+  "sceneCapture": true,
+  "shutdown": {
+    "pid": 111600,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

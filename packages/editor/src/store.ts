@@ -972,6 +972,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     get simulationTime() {
       return playSpin;
     },
+    get frame() {
+      return frame;
+    },
     get sceneCamera() {
       return { ...sceneCamera, pivot: [...sceneCamera.pivot] as Vec3 };
     },

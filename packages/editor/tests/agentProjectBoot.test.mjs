@@ -1,8 +1,22 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
+
+// MiYu: execute the App boot callback with failed startup dependencies.
+const appSource=fs.readFileSync(fileURLToPath(new URL('../src/App.tsx',import.meta.url)),'utf8');
+const bootMarker=appSource.indexOf("let bootStage = 'scene library'");
+const effectPrefix='  useEffect(() => {';
+const bootBody=appSource.slice(appSource.lastIndexOf(effectPrefix,bootMarker)+effectPrefix.length,appSource.indexOf('\n  }, [props.detachedPanel, store]);',bootMarker)).replace('void (async () => {','return (async () => {');
+const runBoot=new Function('booted','initSceneLibrary','loadSortingLayers','refreshSprites','log','bumpScenes',bootBody);
+for(const stage of ['scene library','sprites','scene restore'])test(`failed ${stage} initialization reports the cause and releases the boot flag`,async()=>{
+ const booted={current:false},logs=[],failure=new Error('fixture failure');
+ const dependency=name=>async()=>{if(name===stage)throw failure;return {backend:'desktop',migrated:0,prefs:{}};};
+ await runBoot(booted,dependency('scene library'),dependency('sorting layers'),dependency('sprites'),(message,level)=>logs.push({message,level}),()=>{if(stage==='scene restore')throw failure;});
+ assert.equal(booted.current,false);assert.deepEqual(logs,[{message:`Editor initialization failed at ${stage}: Error: fixture failure`,level:'error'}]);
+});
 
 test('project boot reports the blocking dialog without resolving it or waiting for timeout', async () => {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

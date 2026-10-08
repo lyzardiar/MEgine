@@ -1,0 +1,122 @@
+{
+  "author": "MiYu",
+  "fixture": {
+    "entities": 42479,
+    "samplesPerVersion": 8
+  },
+  "scope": "Paused bridge and real EditorStore; refresh mirrors App scene observation. Excludes React rendering, native execution, IPC and external command queue.",
+  "before": {
+    "scope": "Paused bridge and real EditorStore; refresh mirrors App scene observation. Excludes React rendering, native execution, IPC and external command queue.",
+    "entityCount": 42479,
+    "samplesMs": [
+      321.3937000000001,
+      302.47749999999996,
+      309.56950000000006,
+      314.3579,
+      316.9542000000001,
+      308.02509999999984,
+      356.77080000000024,
+      306.47929999999997
+    ],
+    "medianMs": 311.9637,
+    "snapshotCalls": 16,
+    "snapshotsPerInput": 2,
+    "node": "v24.18.0",
+    "sourceHashes": {
+      "src/agent/AgentBridge.ts": "c233f803549af3e37ab035df4bec9adafd680f43afe1718c1294af4485784f3a",
+      "src/agent/commands.ts": "96adb7c36e5df8b35c5b3066a1e41ac0d7bf51ab8b0215b0d708585c8d11a6ec",
+      "src/store.ts": "07527276f32cb176b1538869bbde94c7bc11a4609a1e27d343a69f6bbcb1feb4"
+    }
+  },
+  "after": {
+    "scope": "Paused bridge and real EditorStore; refresh mirrors App scene observation. Excludes React rendering, native execution, IPC and external command queue.",
+    "entityCount": 42479,
+    "samplesMs": [
+      0.11170000000015534,
+      0.05759999999986576,
+      0.05219999999985703,
+      0.021999999999934516,
+      0.015899999999874126,
+      0.00909999999998945,
+      0.01040000000011787,
+      0.021600000000034925
+    ],
+    "medianMs": 0.02179999999998472,
+    "snapshotCalls": 0,
+    "snapshotsPerInput": 0,
+    "node": "v24.18.0",
+    "sourceHashes": {
+      "src/agent/AgentBridge.ts": "97edd021d55e7298f49ed59efbc48eb1a26878299ad639f3f795f9dd7603ee95",
+      "src/agent/commands.ts": "237e80a81d72af4cf46c42807ffea6a2c4451142ad302d94286b54942d7aea10",
+      "src/store.ts": "00071c6cacef5fdcbae76ae09379fec98d7443fd72f101452217039b1bc00e1b"
+    }
+  },
+  "tests": {
+    "agentRegression": {
+      "passed": 144,
+      "failed": 0
+    },
+    "targetedAgentAndPlayRuntime": {
+      "passed": 34,
+      "failed": 0,
+      "overlapsAgentRegression": true
+    },
+    "sceneWalker": {
+      "passed": 2,
+      "failed": 0,
+      "scope": "Actual standard-library Rust walker and two focused source tests compiled with rustc; not the full Tauri test suite"
+    }
+  },
+  "frontendBuild": {
+    "passed": true,
+    "command": "node packages/editor/node_modules/typescript/bin/tsc -b packages/editor/tsconfig.json; node packages/editor/node_modules/vite/bin/vite.js build E:/work/codex/worktrees/1339/MEgine/packages/editor"
+  },
+  "nativeBuildCommand": "cargo build --release --features tauri/custom-protocol --manifest-path packages/editor/src-tauri/Cargo.toml --target-dir D:/MEngineNativeQA/construction-build",
+  "nativeQA": "native-agent-playback-qa.json",
+  "sceneWalkReproduction": {
+    "secondsPerVersion": 2,
+    "before": {
+      "walks": 5062,
+      "fileNotFoundErrors": 1341,
+      "metadataWrites": 10496
+    },
+    "after": {
+      "walks": 16172,
+      "fileNotFoundErrors": 0,
+      "metadataWrites": 12528
+    },
+    "scope": "Concurrent temporary import metadata creation/deletion; differing write counts, no throughput ratio claim"
+  },
+  "nativeBuild": {
+    "passed": true,
+    "elapsedSeconds": 276,
+    "editorSha256": "9576d9f99b6c2eb51e6a5fdb841d428ce21569b311efaa7f0924703d88e6919d"
+  },
+  "nativeAcceptance": {
+    "passed": true,
+    "editorSha256": "9576d9f99b6c2eb51e6a5fdb841d428ce21569b311efaa7f0924703d88e6919d",
+    "inputEdges": true,
+    "batchFrame": true,
+    "revisionGuard": true,
+    "sceneCapture": true,
+    "shutdown": {
+      "pid": 111600,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    },
+    "cleanup": {
+      "fixtureRemoved": true,
+      "qaStorageRemoved": true
+    },
+    "scope": "Owned native editor: script input edges, paused batch stepping, live revision guards and requested scene capture. No Warcraft performance or physical input claim."
+  },
+  "sourceHashes": {
+    "packages/editor/src/agent/AgentBridge.ts": "97edd021d55e7298f49ed59efbc48eb1a26878299ad639f3f795f9dd7603ee95",
+    "packages/editor/src/agent/commands.ts": "237e80a81d72af4cf46c42807ffea6a2c4451142ad302d94286b54942d7aea10",
+    "packages/editor/src/store.ts": "00071c6cacef5fdcbae76ae09379fec98d7443fd72f101452217039b1bc00e1b",
+    "packages/editor/src/App.tsx": "e2250d4920be83c1278b250f09f4d676174d050c8dbe605a4b9a21b48eb27822",
+    "packages/editor/src-tauri/src/lib.rs": "b504cb944a7c6daf39e374023daae1bafe8b4a48c17422e9d43380822cf562af",
+    "scripts/qa-agent-playback.mjs": "9c50e990906fe32a754aa53f5a90175568b9ea80ae6d4b6d0f45790133e5667e"
+  }
+}

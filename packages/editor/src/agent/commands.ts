@@ -1245,7 +1245,7 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
       ok: true,
       data: {
         mode: ctx.store.mode,
-        frame: ctx.store.snapshot().frame,
+        frame: ctx.store.frame,
         deltaTime,
         steps,
       },

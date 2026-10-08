@@ -1,0 +1,1836 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "attempts": [
+    {
+      "author": "MiYu",
+      "passed": false,
+      "scope": "Owned native editor: script input edges, paused batch stepping, live revision guards and requested scene capture. No Warcraft performance or physical input claim.",
+      "editorSha256": "c673c5fdb13541022e56aef706e6676dc67ab106eb0b4a71925442eec5b1f52e",
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 41050.265
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 120010.3578
+        }
+      ],
+      "error": "BridgeConnectionError: Editor bridge request timed out (query)\n    at Timeout.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:540:14)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)",
+      "shutdown": {
+        "pid": 68988,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    },
+    {
+      "author": "MiYu",
+      "passed": false,
+      "scope": "Owned native editor: script input edges, paused batch stepping, live revision guards and requested scene capture. No Warcraft performance or physical input claim.",
+      "editorSha256": "77850db734aab1752f9d2b4d93fbfebc50d30de5ea08bdc7dd34e005cccd7898",
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1055.988
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 2.3773000000001048
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 1.7157000000001972
+        }
+      ],
+      "error": "BridgeRpcError: execute requires a 1 to 128 character params.requestId without surrounding whitespace or control characters\n    at WebSocket.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:266:24)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:14387:14)\n    at #onMessage (node:internal/deps/undici/undici:15710:9)\n    at Object.onMessage (node:internal/deps/undici/undici:15417:76)\n    at websocketMessageReceived (node:internal/deps/undici/undici:14391:15)\n    at ByteParser.run (node:internal/deps/undici/undici:15093:19)\n    at ByteParser._write (node:internal/deps/undici/undici:14969:14)\n    at writeOrBuffer (node:internal/streams/writable:570:12)",
+      "shutdown": {
+        "pid": 127264,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    },
+    {
+      "author": "MiYu",
+      "passed": false,
+      "scope": "Owned native editor: script input edges, paused batch stepping, live revision guards and requested scene capture. No Warcraft performance or physical input claim.",
+      "editorSha256": "77850db734aab1752f9d2b4d93fbfebc50d30de5ea08bdc7dd34e005cccd7898",
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 660.0699999999999
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 15024.5898
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.2207999999991443
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.194600000000719
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.9177999999992608
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.1349999999983993
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.5587000000014086
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.409700000000157
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.7612999999983003
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.1784000000006927
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.369699999999284
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.275599999997212
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.9557999999997264
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.230999999999767
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.3215999999993073
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.9750000000021828
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.8492999999980384
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.386099999999715
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.430099999997765
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.295000000001892
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.046800000000076
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.709999999999127
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.034199999998236
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0051000000021304
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.239400000002206
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.2576000000008207
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.339400000000751
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.254399999997986
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.6290999999982887
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.9490000000005239
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.933400000001711
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.2665000000015425
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.392100000000937
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.8225000000020373
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.822699999996985
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0354000000006636
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.559499999995751
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.1385000000009313
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.088599999995495
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.8241999999954714
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.704700000002049
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.930899999999383
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.246900000005553
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.1917000000030384
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.2471999999979744
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.727200000001176
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.646500000002561
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.6858999999967637
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.2681999999986147
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.3634000000020023
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.177400000000489
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.8909000000057858
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.903900000004796
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.717400000001362
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.2115000000048894
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.1951999999946565
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.343800000002375
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.5099999999947613
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.0147999999971944
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.0354000000006636
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.9081999999980326
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.379000000000815
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.772999999993772
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.294500000003609
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.8735000000015134
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.420400000002701
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.390800000001036
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.186099999998987
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.657399999996414
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.248599999998987
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.8932999999960884
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.970099999998638
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.3584999999948195
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.9648999999990338
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.380700000001525
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.907599999998638
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 7.088800000004994
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.767699999996694
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.58969999999681
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.008399999998801
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.7185000000026776
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.473699999995006
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5.58459999999468
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.376300000003539
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.4363999999986845
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.1054000000003725
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.165499999995518
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.027699999998731
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.6766999999963446
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.826999999997497
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.48519999999553
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.487300000000687
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.25279999999475
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.9706000000005588
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.6048999999984517
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.9451000000044587
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.270100000001548
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.9980999999970663
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.979299999999057
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.582799999996496
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.886800000000221
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.1423000000067987
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.030899999997928
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.2128999999986263
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.305000000007567
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.403200000000652
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.463499999998021
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0614999999961583
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5.23410000000149
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.5771999999997206
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.583100000003469
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.116599999993923
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.330900000000838
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0782000000035623
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.4777999999932945
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0148000000044703
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.099999999991269
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0287000000098487
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.072200000009616
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.7871000000013737
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5.255399999994552
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.744700000010198
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.8567000000039116
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.2084000000031665
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.4272000000055414
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.4142999999894528
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.21909999998752
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.8698000000003958
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.586600000009639
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.3361000000004424
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.943299999998999
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.362200000003213
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.7027000000089174
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.1334999999962747
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.2393000000010943
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.310700000001816
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.649799999999232
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.0283999999955995
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.345000000001164
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.938300000008894
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.775699999998324
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.6598999999987427
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.800199999997858
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.9707999999955064
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.549199999994016
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.9327999999950407
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.21129999999539
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 6.037700000000768
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.24989999999525
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.066399999996065
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.957499999989523
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.8654000000096858
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 6.225800000000163
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.9973000000027241
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.8865999999979977
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.043599999989965
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.672099999996135
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.6370000000024447
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.922800000000279
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.4253000000026077
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.5115000000078
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.1149999999906868
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.7709999999933643
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.279000000009546
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5.168700000009267
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.983699999997043
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5.526700000002165
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.7920000000012806
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5.134600000004866
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0239999999903375
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.5436999999947147
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.2431000000069616
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5.480199999990873
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.244800000000396
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.44110000001092
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.1728000000002794
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5.758199999996577
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.987200000003213
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5.091000000000349
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.8581000000122003
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.064200000007986
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0473999999958323
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.849300000001676
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.4628999999986263
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.181400000001304
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.5738000000128523
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.6033000000024913
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.149299999990035
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.3343000000022585
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.84320000000298
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.3605999999999767
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.1961000000010245
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.7497000000003027
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.849300000001676
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.789900000003399
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.9418000000005122
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.8968000000022585
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.420400000002701
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.537400000001071
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.1225999999878695
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.773300000000745
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.114300000001094
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.7960000000020955
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.066500000000815
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.5934000000124797
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0812000000005355
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.91370000000461
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.594599999996717
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.194100000007893
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.9394000000029337
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5.260399999999208
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.205100000006496
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.656399999992573
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.2013000000006286
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.3353000000061
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.2409999999945285
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.396900000007008
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.16019999999844
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.966199999995297
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0164999999979045
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.406300000002375
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.9924000000028173
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 5.434500000003027
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.914099999994505
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.396699999997509
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0653000000020256
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.40230000000156
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.519000000000233
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 6.820099999997183
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.0668000000005122
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.4891999999963446
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.2127999999793246
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.9879000000073574
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.1757999999972526
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.5416000000259373
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.94539999999688
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.348599999997532
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.1867999999958556
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.925799999997253
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2.969699999986915
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.757700000016484
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 2.8286000000080094
+        }
+      ],
+      "error": "Error: Project did not become ready\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-agent-playback.mjs:35:165\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "shutdown": {
+        "pid": 84236,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    },
+    {
+      "author": "MiYu",
+      "passed": false,
+      "scope": "Owned native editor: script input edges, paused batch stepping, live revision guards and requested scene capture. No Warcraft performance or physical input claim.",
+      "editorSha256": "7936a19059dc530c53107f56f3bb3070ffeff2231f79adc79437af2a03df7148",
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 904.8275
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 15036.412199999999
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.297099999999773
+        },
+        {
+          "kind": "query",
+          "name": "console.get_logs",
+          "ms": 3.0812999999998283
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 1.9010999999991327
+        }
+      ],
+      "lastProjectState": {
+        "phase": "ready",
+        "ready": true,
+        "busy": false,
+        "operation": null,
+        "error": null,
+        "project": {
+          "id": "86f057e8-b39a-4e9f-a4b4-2c4a427207aa",
+          "name": "spinning-cube",
+          "root": "E:\\work\\codex\\cache\\mengine\\native-qa\\agent-playback-1791447143145\\sample",
+          "scenePath": "Assets/Scenes/Main.mscene",
+          "revision": 1
+        },
+        "recentCount": 1,
+        "recentLimit": 12,
+        "recentRevision": "recent-projects-v1-1-3df24368b071edd8",
+        "editorReady": false,
+        "eventSequence": 11
+      },
+      "error": "Error: Editor initialization failed at scene library: \u7cfb\u7edf\u627e\u4e0d\u5230\u6307\u5b9a\u7684\u6587\u4ef6\u3002 (os error 2)\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-agent-playback.mjs:35:325\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "shutdown": {
+        "pid": 132168,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    },
+    {
+      "author": "MiYu",
+      "passed": false,
+      "scope": "Owned native editor: script input edges, paused batch stepping, live revision guards and requested scene capture. No Warcraft performance or physical input claim.",
+      "editorSha256": "7936a19059dc530c53107f56f3bb3070ffeff2231f79adc79437af2a03df7148",
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 724.8294999999999
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 554.7678999999999
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.6667999999999665
+        },
+        {
+          "kind": "execute",
+          "name": "playback.play",
+          "ms": 1800.4701000000002
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 20.753699999999753
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 7.20659999999998
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 7.237099999999828
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 7.120499999999993
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 7.445700000000215
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 6.771600000000035
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 11.234500000000025
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 3.8683999999998377
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 6.939600000000155
+        }
+      ],
+      "lastProjectState": {
+        "phase": "ready",
+        "ready": true,
+        "busy": false,
+        "operation": null,
+        "error": null,
+        "project": {
+          "id": "a1bcc91e-1e0a-4ee4-917a-568357f20dcb",
+          "name": "spinning-cube",
+          "root": "E:\\work\\codex\\cache\\mengine\\native-qa\\agent-playback-1791447472437\\sample",
+          "scenePath": "Assets/Scenes/Main.mscene",
+          "revision": 2
+        },
+        "recentCount": 1,
+        "recentLimit": 12,
+        "recentRevision": "recent-projects-v1-1-321322dae6bb4f0e",
+        "editorReady": true,
+        "eventSequence": 18
+      },
+      "error": "TypeError: Cannot read properties of undefined (reading 'pressedKeys')\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-agent-playback.mjs:45:27\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "shutdown": {
+        "pid": 81928,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    },
+    {
+      "author": "MiYu",
+      "passed": false,
+      "scope": "Owned native editor: script input edges, paused batch stepping, live revision guards and requested scene capture. No Warcraft performance or physical input claim.",
+      "editorSha256": "7936a19059dc530c53107f56f3bb3070ffeff2231f79adc79437af2a03df7148",
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 772.5231
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 537.8289
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 4.037600000000111
+        },
+        {
+          "kind": "execute",
+          "name": "playback.play",
+          "ms": 1689.3173
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 7.646499999999833
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 2.794499999999971
+        },
+        {
+          "kind": "query",
+          "name": "console.get_logs",
+          "ms": 1.5799999999999272
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 7.051300000000083
+        }
+      ],
+      "lastProjectState": {
+        "phase": "ready",
+        "ready": true,
+        "busy": false,
+        "operation": null,
+        "error": null,
+        "project": {
+          "id": "2a07bb36-bb75-443b-a44f-3ab1002a1338",
+          "name": "spinning-cube",
+          "root": "E:\\work\\codex\\cache\\mengine\\native-qa\\agent-playback-1791447808519\\sample",
+          "scenePath": "Assets/Scenes/Main.mscene",
+          "revision": 2
+        },
+        "recentCount": 1,
+        "recentLimit": 12,
+        "recentRevision": "recent-projects-v1-1-0bc0e813489e6cd5",
+        "editorReady": true,
+        "eventSequence": 18
+      },
+      "initialTelemetry": {},
+      "error": "AssertionError [ERR_ASSERTION]: {\"telemetry\":{},\"logs\":[{\"level\":\"info\",\"message\":\"MEngine Editor\",\"source\":\"editor\",\"time\":1791447809293},{\"level\":\"info\",\"message\":\"\u573a\u666f\u843d\u76d8\uff1apackages/editor/project/Assets/Scenes/*.mscene\",\"source\":\"editor\",\"time\":1791447809293},{\"level\":\"info\",\"message\":\"\u65b0\u5efa\u4f1a\u5f39\u51fa\u547d\u540d\uff1b\u53cc\u51fb .mscene \u6253\u5f00\uff1bCtrl+S \u4fdd\u5b58\",\"source\":\"editor\",\"time\":1791447809293},{\"level\":\"info\",\"message\":\"\u573a\u666f\u5b58\u50a8\uff1a\u78c1\u76d8 project/Assets/Scenes\",\"time\":1791447809806},{\"level\":\"info\",\"message\":\"\u5df2\u6062\u590d\u573a\u666f Main.mscene\",\"time\":1791447809818}]}\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-agent-playback.mjs:42:71\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "shutdown": {
+        "pid": 180128,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    },
+    {
+      "author": "MiYu",
+      "passed": false,
+      "scope": "Owned native editor: script input edges, paused batch stepping, live revision guards and requested scene capture. No Warcraft performance or physical input claim.",
+      "editorSha256": "7936a19059dc530c53107f56f3bb3070ffeff2231f79adc79437af2a03df7148",
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 701.8034
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 15023.5056
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1.842000000000553
+        },
+        {
+          "kind": "query",
+          "name": "console.get_logs",
+          "ms": 2.1754999999993743
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 2.528200000000652
+        }
+      ],
+      "lastProjectState": {
+        "phase": "ready",
+        "ready": true,
+        "busy": false,
+        "operation": null,
+        "error": null,
+        "project": {
+          "id": "3b8f6663-cc2b-4848-9b7e-a41a8a040aac",
+          "name": "spinning-cube",
+          "root": "E:\\work\\codex\\cache\\mengine\\native-qa\\agent-playback-1791447878856\\sample",
+          "scenePath": "Assets/Scenes/Main.mscene",
+          "revision": 1
+        },
+        "recentCount": 1,
+        "recentLimit": 12,
+        "recentRevision": "recent-projects-v1-1-98216d70a0505908",
+        "editorReady": false,
+        "eventSequence": 11
+      },
+      "error": "Error: Editor initialization failed at scene library: \u7cfb\u7edf\u627e\u4e0d\u5230\u6307\u5b9a\u7684\u6587\u4ef6\u3002 (os error 2)\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-agent-playback.mjs:40:325\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "shutdown": {
+        "pid": 52280,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    },
+    {
+      "author": "MiYu",
+      "passed": false,
+      "scope": "Owned native editor: script input edges, paused batch stepping, live revision guards and requested scene capture. No Warcraft performance or physical input claim.",
+      "editorSha256": "9576d9f99b6c2eb51e6a5fdb841d428ce21569b311efaa7f0924703d88e6919d",
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 1150.3943
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 521.8228999999999
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.95699999999988
+        },
+        {
+          "kind": "execute",
+          "name": "view.set_game_resolution",
+          "ms": 6.200599999999895
+        },
+        {
+          "kind": "execute",
+          "name": "panel.focus",
+          "ms": 74.37790000000018
+        },
+        {
+          "kind": "execute",
+          "name": "playback.play",
+          "ms": 1686.3176
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 5.381199999999808
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 4.615099999999984
+        },
+        {
+          "kind": "query",
+          "name": "console.get_logs",
+          "ms": 2.140600000000177
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 3.960900000000038
+        }
+      ],
+      "lastProjectState": {
+        "phase": "ready",
+        "ready": true,
+        "busy": false,
+        "operation": null,
+        "error": null,
+        "project": {
+          "id": "a2b69055-7b1b-4c74-b0da-dc2db28bf11b",
+          "name": "spinning-cube",
+          "root": "E:\\work\\codex\\cache\\mengine\\native-qa\\agent-playback-1791448658738\\sample",
+          "scenePath": "Assets/Scenes/Main.mscene",
+          "revision": 2
+        },
+        "recentCount": 1,
+        "recentLimit": 12,
+        "recentRevision": "recent-projects-v1-1-50e537b3f0ac8c35",
+        "editorReady": true,
+        "eventSequence": 18
+      },
+      "initialTelemetry": {},
+      "error": "AssertionError [ERR_ASSERTION]: {\"telemetry\":{},\"logs\":[{\"level\":\"info\",\"message\":\"MEngine Editor\",\"source\":\"editor\",\"time\":1791448659876},{\"level\":\"info\",\"message\":\"\u573a\u666f\u843d\u76d8\uff1apackages/editor/project/Assets/Scenes/*.mscene\",\"source\":\"editor\",\"time\":1791448659876},{\"level\":\"info\",\"message\":\"\u65b0\u5efa\u4f1a\u5f39\u51fa\u547d\u540d\uff1b\u53cc\u51fb .mscene \u6253\u5f00\uff1bCtrl+S \u4fdd\u5b58\",\"source\":\"editor\",\"time\":1791448659876},{\"level\":\"info\",\"message\":\"\u573a\u666f\u5b58\u50a8\uff1a\u78c1\u76d8 project/Assets/Scenes\",\"time\":1791448660395},{\"level\":\"info\",\"message\":\"\u5df2\u6062\u590d\u573a\u666f Main.mscene\",\"time\":1791448660403},{\"level\":\"info\",\"message\":\"Agent set Game View resolution to 1280 x 720\",\"time\":1791448660448}]}\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-agent-playback.mjs:40:71\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "shutdown": {
+        "pid": 86212,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    },
+    {
+      "author": "MiYu",
+      "passed": false,
+      "scope": "Owned native editor: script input edges, paused batch stepping, live revision guards and requested scene capture. No Warcraft performance or physical input claim.",
+      "editorSha256": "9576d9f99b6c2eb51e6a5fdb841d428ce21569b311efaa7f0924703d88e6919d",
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 446.8016
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 538.2168000000001
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3.8016000000000076
+        },
+        {
+          "kind": "execute",
+          "name": "view.set_game_resolution",
+          "ms": 3.81450000000018
+        },
+        {
+          "kind": "execute",
+          "name": "panel.focus",
+          "ms": 88.14989999999989
+        },
+        {
+          "kind": "execute",
+          "name": "playback.play",
+          "ms": 1644.7149
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 6.622100000000046
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 4.3288000000002285
+        },
+        {
+          "kind": "query",
+          "name": "console.get_logs",
+          "ms": 1.5574999999998909
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 2.2882999999997082
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 1.626800000000003
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 1.3813000000000102
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 1.5552999999999884
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 4.604700000000321
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 2.5065999999997075
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 5.5953999999996995
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 2.4075000000002547
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 2.31899999999996
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 1.4932000000003427
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 4.160600000000159
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 1.5307000000002517
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 6.432099999999991
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 4.098500000000058
+        }
+      ],
+      "lastProjectState": {
+        "phase": "ready",
+        "ready": true,
+        "busy": false,
+        "operation": null,
+        "error": null,
+        "project": {
+          "id": "acce8c44-763a-4e04-9bb0-5676fb53b33a",
+          "name": "spinning-cube",
+          "root": "E:\\work\\codex\\cache\\mengine\\native-qa\\agent-playback-1791448787657\\sample",
+          "scenePath": "Assets/Scenes/Main.mscene",
+          "revision": 2
+        },
+        "recentCount": 1,
+        "recentLimit": 12,
+        "recentRevision": "recent-projects-v1-1-fbeea52b92b81079",
+        "editorReady": true,
+        "eventSequence": 18
+      },
+      "initialTelemetry": {
+        "frame": 1,
+        "input": {
+          "keys": [],
+          "pressedKeys": [],
+          "releasedKeys": [],
+          "pointer": [
+            0,
+            0
+          ],
+          "pointerDelta": [
+            0,
+            0
+          ],
+          "pointerLocked": false,
+          "viewport": [
+            1,
+            1
+          ],
+          "buttons": [],
+          "pressedButtons": [],
+          "releasedButtons": []
+        }
+      },
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-agent-playback.mjs:52:83\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+      "shutdown": {
+        "pid": 146832,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    }
+  ]
+}

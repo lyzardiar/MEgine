@@ -5314,7 +5314,7 @@ class AgentBridge {
       };
       return this.finishAsyncCommand(result, options, 'main');
     }
-    return this.finishAsyncCommand(result, options);
+    return this.finishAsyncCommand(result, options, false, commandId !== 'playback.input');
   }
 
   // ── Unified query entry (called by transports) ────────────────────────
@@ -5686,10 +5686,12 @@ class AgentBridge {
     result: CommandResult,
     options: { screenshot?: boolean; expectedSceneRevision?: number },
     wholeWindow: boolean | string = false,
+    refreshScene = true,
   ): Promise<CommandResult> {
-    this.refreshProvider?.();
+    // MiYu: queued input does not change the scene; captures still refresh presentation and revision.
+    if (refreshScene || options.screenshot) this.refreshProvider?.();
     if (this.store && this.editorBootReady) {
-      this.observe(true);
+      if (refreshScene || options.screenshot) this.observe(true);
       result.sceneRevision = this.sceneChanges.revision;
     } else {
       this.observeProject();

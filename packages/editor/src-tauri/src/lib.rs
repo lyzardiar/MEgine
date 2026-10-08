@@ -3947,16 +3947,25 @@ fn collect_build_scene_paths(
     if !directory.is_dir() {
         return Ok(());
     }
-    for entry in std::fs::read_dir(directory).map_err(|error| error.to_string())? {
+    let entries = match std::fs::read_dir(directory) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(format!("Cannot list scene directory {}: {error}", directory.display())),
+    };
+    for entry in entries {
         let entry = entry.map_err(|error| error.to_string())?;
         let path = entry.path();
-        let metadata = std::fs::symlink_metadata(&path).map_err(|error| error.to_string())?;
-        if metadata.file_type().is_symlink() {
+        let file_type = match entry.file_type() {
+            Ok(file_type) => file_type,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) => return Err(format!("Cannot inspect scene entry {}: {error}", path.display())),
+        };
+        if file_type.is_symlink() {
             continue;
         }
-        if metadata.is_dir() {
+        if file_type.is_dir() {
             collect_build_scene_paths(project_root, &path, output)?;
-        } else if metadata.is_file()
+        } else if file_type.is_file()
             && path
                 .extension()
                 .and_then(|value| value.to_str())
@@ -4630,7 +4639,11 @@ fn list_project_scenes(state: State<'_, AppState>) -> Result<Vec<ProjectSceneInf
             .ok()
             .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
             .map_or(0, |duration| duration.as_millis() as u64);
-        let json = std::fs::read_to_string(&absolute).map_err(|error| error.to_string())?;
+        let json = match std::fs::read_to_string(&absolute) {
+            Ok(json) => json,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) => return Err(format!("Cannot read scene {}: {error}", absolute.display())),
+        };
         scenes.push(ProjectSceneInfo {
             name,
             updated_at,
@@ -7756,6 +7769,37 @@ mod tests {
             ]
         );
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn build_scene_scan_tolerates_concurrent_import_metadata_changes() {
+        let base = std::env::temp_dir();
+        let root = base.join(format!("mengine-scene-churn-{}-{}", std::process::id(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+        std::fs::create_dir(&root).unwrap();
+        let directory = root.join("Assets/Scenes");
+        std::fs::create_dir_all(&directory).unwrap();
+        std::fs::write(directory.join("Main.mscene"), "{}").unwrap();
+        let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let writer_stop = stop.clone();
+        let writer_directory = directory.clone();
+        let writer = std::thread::spawn(move || {
+            while !writer_stop.load(std::sync::atomic::Ordering::Relaxed) {
+                for index in 0..16 { std::fs::write(writer_directory.join(format!("import-{index}.tmp")), "metadata").unwrap(); }
+                for index in 0..16 { std::fs::remove_file(writer_directory.join(format!("import-{index}.tmp"))).unwrap(); }
+            }
+        });
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(1);
+        let mut failure = None;
+        while std::time::Instant::now() < deadline {
+            if let Err(error) = available_build_scenes(&root) { failure = Some(error); break; }
+        }
+        stop.store(true, std::sync::atomic::Ordering::Relaxed);
+        writer.join().unwrap();
+        let final_scenes = available_build_scenes(&root).unwrap();
+        assert!(root.canonicalize().unwrap().starts_with(base.canonicalize().unwrap()));
+        std::fs::remove_dir_all(&root).unwrap();
+        assert_eq!(failure, None);
+        assert_eq!(final_scenes, vec!["Assets/Scenes/Main.mscene"]);
     }
 
     #[test]

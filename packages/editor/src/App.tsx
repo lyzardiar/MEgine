@@ -2562,14 +2562,18 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
+    let bootStage = 'scene library';
     void (async () => {
       const { backend, migrated, prefs } = await initSceneLibrary();
+      bootStage = 'sorting layers';
       try {
         await loadSortingLayers();
       } catch (reason) {
         log(`Sorting layer settings could not be loaded: ${String(reason)}`, 'warn');
       }
+      bootStage = 'sprites';
       await refreshSprites();
+      bootStage = 'scene restore';
       bumpScenes();
       // A detached panel is a view of the main editor's in-memory scene. It must
       // never restore the last saved scene from disk, otherwise its boot refresh
@@ -2644,7 +2648,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       applyEditorPrefs(prefs);
       refresh();
       if (!props.detachedPanel) agentBridge.markEditorBootReady(store);
-    })();
+    })().catch((reason) => {
+      booted.current = false;
+      log(`Editor initialization failed at ${bootStage}: ${String(reason)}`, 'error');
+    });
   }, [props.detachedPanel, store]);
 
   useEffect(() => {
