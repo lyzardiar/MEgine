@@ -1,0 +1,212 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-08T20:51:19.444Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\blood-mage-assets-1791492679216\\sample",
+  "editorSha256": "643ad6f4e37a678ec4b775175f42c40bead6d669da63bbe2dce0f07e2bcc0c47",
+  "scriptSha256": "3c73aa5f6b3774f75ce27bbe1ab36abe3e2c67ab61b8b9fa6e2532d742180bc0",
+  "sceneSha256": "844f954268f454cccab31ad3af0b2b17a24f9ad4371adbaf56a432333724bb2e",
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 671
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 653
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 8
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 4
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 91
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 1669
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 16
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 5
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 5964
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 4
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 5
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 9
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 247
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 256
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 275
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 249
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 8
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 1
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 5
+    }
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "scope": "Isolated native original Blood Mage and Phoenix/egg models, portraits and sampled effects. No Blood Mage gameplay or original Warcraft runtime parity acceptance.",
+  "portraits": [
+    {
+      "name": "phoenix-source-portrait",
+      "key": "ClassicPhoenixPortrait",
+      "offset": 1000,
+      "sourceCamera": true,
+      "fullSourceGeometry": true
+    },
+    {
+      "name": "phoenix-portrait-without-teamglow-diagnostic",
+      "key": "ClassicPhoenixPortrait",
+      "offset": 1000,
+      "hideTeamGlow": true,
+      "sourceCamera": true,
+      "fullSourceGeometry": false
+    },
+    {
+      "name": "blood-mage-source-portrait",
+      "key": "ClassicBloodMagePortrait",
+      "offset": 2000,
+      "sourceCamera": true,
+      "fullSourceGeometry": true
+    },
+    {
+      "name": "phoenix-egg-source-portrait",
+      "key": "ClassicPhoenixEggPortrait",
+      "offset": 3000,
+      "sourceCamera": true,
+      "fullSourceGeometry": true
+    }
+  ],
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 135592,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

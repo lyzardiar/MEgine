@@ -1,0 +1,50 @@
+{
+  "author": "MiYu",
+  "scope": "Original Blood Mage source assets/rules and isolated native rendering; gameplay not integrated.",
+  "signedFiles": 580,
+  "modelBindings": 12,
+  "sampledEffects": 16,
+  "nativePoses": 810,
+  "sourceTestExitCode": 0,
+  "importerTestsPassed": 2,
+  "independentRebuild": {
+    "path": "E:/work/codex/cache/mengine/blood-mage-source-rebuild",
+    "identicalSignedFiles": 580,
+    "identicalReceipt": true
+  },
+  "sha256": {
+    "scripts/import-frost-blood-mage.py": "07a3bec2316b90dc8ca140fd96fb09dc289edb2532156a2f5245ff5f14f29cf0",
+    "scripts/test-frost-blood-mage-source.mjs": "5d2984c53001a4a821961781f255321565998bc628d7a621f8d709910d5e59a9",
+    "scripts/test-frost-blood-mage-assets.mjs": "a9826714de21685e91cec3ef9ee9d6f2f62e58db02e3e6a330ff69e41ef18941",
+    "scripts/test-frost-blood-mage-import.py": "3a3900e1c89c7c52c83c81da15dc3482fde8d00cd88a9e212261b09bb92dac1e",
+    "scripts/qa-frost-blood-mage-assets.mjs": "4731490c494980505c5eed192dd92c241c3476f3071df5d03036864fa62ef02b",
+    "samples/frostbound-realms/blood-mage-sources.json": "8b3a3be446d8b1bb256185d98f456596a0578813ab1f90ab368c9fd0eaee2dfd",
+    "docs/designs/frostbound-realms/native-blood-mage-assets-qa.json": "9bcab19ee578e83eda7fa46ba6d8c7862b70f7b5bc81198528b777f9e60160f2"
+  },
+  "images": {
+    "blood-mage-source-assets.png": "c0fac433fd9626416a114903f6bfdc7f852d40df48064f483e254637c1f23b5b",
+    "blood-mage-source-portrait.png": "1cd40d5e4c9282d7815e8ddeda272074d7e4cf19f839a89f2549afaae64bb268",
+    "phoenix-source-portrait.png": "e4db57d7789056786241a137e07c0e745dae6a8b701e2fc1a3b238cfd3f192e2",
+    "phoenix-egg-source-portrait.png": "2e540a150959304c47a77564ad42c88ff2b165869781c29a10deff5c98af25a5",
+    "phoenix-portrait-without-teamglow-diagnostic.png": "26bdcbd1abe3316b3adb7c675cbdb9ee20d88cf3e724e45b49737560851ddfba"
+  },
+  "nativeReport": "native-blood-mage-assets-qa.json",
+  "nativePassed": true,
+  "nativeNormalExit": true,
+  "nativeCleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "sourcePortraitCameras": true,
+  "independentReadOnlyReview": "No delivery-blocking source/import/preview issues; source TeamGlow backdrop confirmed by full-camera and hidden-plane comparison.",
+  "originalRuntimeVerified": false,
+  "physicalInput": false,
+  "audioListening": false,
+  "completeGameVerified": false,
+  "fullGameplayRegressionRerun": false,
+  "importSeconds": 8.495,
+  "stagedSignedBlobsVerified": 581,
+  "stagedChangedPaths": 578,
+  "stagedDiffCheckPassed": true,
+  "nativeCommandTotalMs": 10187
+}
