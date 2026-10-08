@@ -1,0 +1,24 @@
+// Author: MiYu. Original Archmage source rules, geometry, particle-only projectile and asset references.
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),A=require('../samples/frostbound-realms/game/archmage.js'),root=new URL('../samples/frostbound-realms/',import.meta.url),read=p=>fs.readFileSync(new URL(p,root)),json=p=>JSON.parse(read(p)),sha=b=>createHash('sha256').update(b).digest('hex'),receipt=json('archmage-sources.json'),signed=new Set(receipt.files.map(f=>f.path));
+for(const f of receipt.files){const raw=read(f.path);assert.equal(raw.length,f.bytes,f.path);assert.equal(sha(raw),f.sha256,f.path);}
+for(const [p,h] of Object.entries(receipt.generators))assert.equal(sha(fs.readFileSync(new URL('../'+p,import.meta.url)).toString('utf8').replace(/\r\n/g,'\n')),h,p);
+const h={kind:'hero',sourceHero:'Hamg',level:1,skills:[0,0,0,0],inventory:[]};assert.deepEqual(A.attributes(h),{strength:14,agility:17,intelligence:19});assert.equal(A.stats(h,[]).maxHp,450);assert.equal(A.stats(h,[]).damage,24);assert.equal(A.maxMana(h),285);assert.ok(Math.abs(A.healthRegen(h)-.95)<1e-9);assert.ok(Math.abs(A.manaRegen(h)-.96)<1e-9);assert.equal(A.definition(h).range,6);assert.equal(A.definition(h).attack,'hero');assert.equal(A.rules.units.Hamg.initialMana,100);
+h.level=6;assert.deepEqual(A.attributes(h),{strength:23,agility:22,intelligence:35});assert.equal(A.stats(h,[]).maxHp,675);assert.equal(A.stats(h,[]).damage,40);assert.equal(A.maxMana(h),525);assert.equal(A.xpNeed(h),700);
+assert.deepEqual(A.rules.abilities.AHbz.levels.map(r=>[r.waves,r.damage,r.shards,r.buildingFactor,r.maximumDamage,r.castTime,r.cost]),[[6,30,6,.5,150,1,75],[8,40,7,.5,200,1,75],[10,50,10,.5,250,1,75]]);
+assert.deepEqual(A.rules.abilities.AHwe.levels.map(r=>[r.unit,r.count,r.duration,r.cooldown,r.cost]),[['hwat',1,60,20,125],['hwt2',1,60,20,125],['hwt3',1,60,20,125]]);
+assert.deepEqual(['hwat','hwt2','hwt3'].map(k=>[A.rules.units[k].baseHp,A.rules.units[k].weapon.damage,A.rules.units[k].modelScale,A.rules.units[k].collision]),[[525,20,.9,.32],[675,35,1.1,.32],[900,45,1.3,.48]]);
+assert.deepEqual(A.rules.abilities.AHab.levels.map(r=>[r.manaRegen,r.percentage,r.radius]),[[.75,false,9],[1.5,false,9],[2.25,false,9]]);
+const mt=A.rules.abilities.AHmt;assert.equal(mt.levels.length,1);assert.deepEqual([mt.levels[0].unitLimit,mt.levels[0].delay,mt.levels[0].radius,mt.levels[0].cost],[24,3,7,100]);assert.match(mt.sourceStrings.Ubertip,/包括大魔法师在内/);
+assert.deepEqual(A.rules.skillBuilds,{first:[1,2,1,0,1,3,2,2,0,0],later:[1,2,1,0,1,3,2,2,0,0],third:[1,2,1,0,1,3,2,2,0,0]});assert.equal(A.rules.originalRuntimeVerified,false);
+const models=json('archmage-models.json'),art=json('archmage-art.json'),views=json('archmage-portraits.json');assert.equal(Object.keys(models).length,10);assert.equal(Object.keys(art).length,7);assert.deepEqual(Object.keys(views).sort(),['ClassicArchmagePortrait','ClassicWaterElementalPortrait']);
+for(const [key,model] of Object.entries(models)){assert.ok(model.parts.length,key);assert.ok(model.bounds.min.every(Number.isFinite));assert.ok(model.bounds.max.every(Number.isFinite));for(const p of model.parts){assert.ok(signed.has(p.mesh),p.mesh);assert.ok(signed.has(p.material),p.material);assert.equal(p.states.length,model.animations.length,key);}}
+assert.equal(models.ClassicArchmagePortrait.boundsSource,'nativeFirstVisible');assert.equal(models.ClassicArchmagePortrait.boundsClip,1);assert.match(models.ClassicArchmagePortrait.animations[1].name,/Portrait/);
+for(const f of receipt.files.filter(f=>f.path.endsWith('.mmat'))){const m=json(f.path);for(const key of ['base_color_texture','normal_texture','metallic_roughness_texture','occlusion_texture','emissive_texture'])if(m[key])assert.ok(signed.has(m[key]),f.path+' -> '+m[key]);}
+for(const [name,a] of Object.entries(art)){assert.ok(signed.has(a.effect),a.effect);const effect=json(a.effect);for(const m of effect.materials)assert.ok(signed.has(m.texture),name+' -> '+m.texture);assert.equal(a.animations.length,effect.clips.length,name);}
+const missile=json(art.WaterElementalMissile.effect);assert.equal(art.WaterElementalMissile.parts.length,0);assert.deepEqual(missile.clips.map(c=>c.name),['Birth','Death']);assert.ok(missile.clips.some(c=>c.frames.some(f=>f.particles.length&&f.quads.length)),'particle-only projectile retains original particles and trails');
+for(const [key,r] of Object.entries(A.rules.abilities)){assert.ok(signed.has(r.icon),key);assert.ok(signed.has(r.researchIcon),key);assert.ok(signed.has(r.disabledIcon),key);}
+console.log('PASS original Archmage: '+receipt.files.length+' signed outputs, INT attributes, three Water Elemental ranks/scales, all four source abilities, source AI skills, native Portrait clip bounds and particle-only missile references');

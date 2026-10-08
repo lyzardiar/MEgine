@@ -6,6 +6,7 @@ var FrostEffects=(()=>{
   const spellBindings={bloodlustLeft:stem(blood[0]),bloodlustRight:stem(blood[1]),shield:stem(definitions.Blsh.Targetart),shieldCast:stem(definitions.Blsh.Specialart),portalCaster:stem(definitions.AItp.Casterart),portalArea:stem(definitions.AItp.Areaeffectart),portalArrival:stem(definitions.AItp.Targetart)};
   Object.assign(spellBindings,{trueshotAura:'TrueshotAura',starfall:'StarfallCaster',starfallHit:'StarfallTarget',keeperRoots:'EntanglingRootsTarget',thornsAura:'ThornsAura',thornsHit:'ThornsAuraDamage',tranquility:'Tranquility',tranquilityHit:'TranquilityTarget',manaBurn:'ManaBurnTarget',immolation:'ImmolationTarget',immolationHit:'ImmolationDamage',taunt:'TauntCaster',flareBase:'ManaFlareBase',flareImpact:'ManaFlareBoltImpact',flareTarget:'ManaFlareTarget',phaseShift:'FaerieDragon_Invis',roar:'RoarTarget',roarCaster:'RoarCaster',faerieFire:'FaerieFireTarget',cyclone:'CycloneTarget'});
   Object.assign(spellBindings,{blinkCaster:'BlinkCaster',blinkTarget:'BlinkTarget',fanKnives:'FanOfKnivesCaster',shadowStrike:'shadowstrike',vengeanceBirth:'feralspiritdone',vengeanceSpiritBirth:'SpiritOfVengeanceBirthMissile'});
+  Object.assign(spellBindings,{brillianceAura:'Brilliance',massTeleportCaster:'MassTeleportCaster',massTeleportTo:'MassTeleportTo',massTeleportArrival:'MassTeleportTarget'});
   for(let i=1;i<=6;i++)spellBindings['vengeanceOrbs'+i]='SpiritOfVengeanceOrbs'+i;
   function anchors(mesh,facing=0,scale=1){
     const pitch=-Math.atan2(FrostVisual.camera.height,FrostVisual.camera.depth),c=Math.cos(facing)*scale,s=Math.sin(facing)*scale;
@@ -75,11 +76,14 @@ var FrostEffects=(()=>{
       let clip=birth>=0&&elapsed<art.animations[birth].duration?birth:stand>=0?stand:birth,seconds=elapsed;
       if(clip<0)return;if(clip!==birth&&birth>=0)seconds-=art.animations[birth].duration;
       if(slot==='flareTarget'){let remaining=elapsed;clip=-1;for(const name of ['Birth','Stand','Death']){const i=art.animations.findIndex(a=>a.name.toLowerCase()===name.toLowerCase());if(i<0)continue;if(remaining<art.animations[i].duration){clip=i;seconds=remaining;break;}remaining-=art.animations[i].duration;}if(clip<0)return;}
-      const animation=art.animations[clip];if(!animation.loop&&seconds>=animation.duration)return;if(animation.loop&&slot!=='flareTarget')seconds%=animation.duration;
+      const animation=art.animations[clip];if(slot==='massTeleportCaster')seconds%=animation.duration;if(!animation.loop&&seconds>=animation.duration)return;if(animation.loop&&slot!=='flareTarget')seconds%=animation.duration;
       if(!destination)point??=at(/^Origin Ref$/i)||[0,0,0];
       const c=Math.cos(facing),s=Math.sin(facing),world=destination||[position.x+(point[0]*c+point[2]*s)*scale,position.y+point[1]*scale,position.z+(-point[0]*s+point[2]*c)*scale];
       result.push({slot,name,component:{effect:art.effect,clip,playing:false,looping:animation.loop&&slot!=='flareTarget',speed:1,time_seconds:seconds},parts:art.parts.length?FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+Math.floor(seconds*30)+'@30'):[],position:world,scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});
     }
+    if(Frost.brillianceAura(state,u)>0)add('brillianceAura',clock);
+    if(u.massTeleport){const age=clock-u.massTeleport.frame*Frost.DT,target=state.units.find(v=>v.id===u.massTeleport.target);add('massTeleportCaster',age);if(target)add('massTeleportTo',age,undefined,[target.x,Frost.elevation(state.map,target.x,target.z),target.z]);}
+    if(u.massTeleportArrivalFrame!==undefined)add('massTeleportArrival',clock-u.massTeleportArrivalFrame*Frost.DT);
     if(u.wardenLastSlot===0&&u.wardenBlinkFrom){const elapsed=clock-u.wardenCastFrame*Frost.DT;add('blinkCaster',elapsed,undefined,[u.wardenBlinkFrom.x,Frost.elevation(state.map,u.wardenBlinkFrom.x,u.wardenBlinkFrom.z),u.wardenBlinkFrom.z]);add('blinkTarget',elapsed);}
     if(u.wardenLastSlot===1)add('fanKnives',clock-u.wardenCastFrame*Frost.DT);
     if(u.shadowStrike)add('shadowStrike',clock-u.shadowStrike.frame*Frost.DT,at(/^Head Ref$/i)||at(/^Overhead Ref$/i));

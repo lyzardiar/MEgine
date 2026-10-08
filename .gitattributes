@@ -94,3 +94,7 @@ samples/frostbound-realms/Assets/Scripts/Main.js -text
 samples/frostbound-realms/Assets/Scenes/Main.mscene text eol=lf
 docs/designs/frostbound-realms/native-info-panel-qa.json text eol=lf
 docs/designs/frostbound-realms/info-panel-validation.json text eol=lf
+scripts/import-frost-archmage.py text eol=lf
+samples/frostbound-realms/archmage-*.json text eol=lf
+samples/frostbound-realms/Assets/Licenses/Classic-Archmage.txt text eol=lf
+samples/frostbound-realms/SourceAssets/WarcraftIII/Units/Human*.txt -text whitespace=cr-at-eol,-blank-at-eol

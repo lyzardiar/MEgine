@@ -36,7 +36,7 @@ for(const kind of ['soldier','rifleman']){const {s,u,v}=arena(kind,1);S.tick(s);
  const legacy=S.clone(s);delete legacy.projectiles;delete legacy.projectileSerial;assert.deepEqual(S.restore(legacy).projectiles,[]);assert.equal(S.restore(legacy).projectileSerial,0);
 }
 {
- const {s}=launch(),p=s.projectiles[0];s.visible[0].fill(0);assert.deepEqual(S.publicState(s,0).projectiles,[]);s.visible[0][S.index(p.x,p.z)]=1;const seen=S.publicState(s,0);assert.equal(seen.projectiles.length,1);assert.deepEqual(Object.keys(seen.projectiles[0]).sort(),['art','id','team','vx','vy','vz','x','y','z']);assert.equal(seen.projectileSerial,undefined);assert.ok(!seen.events.some(e=>e.type==='launch'),'hidden target coordinates are not exposed by launch events');
+ const {s}=launch(),p=s.projectiles[0];s.visible[0].fill(0);assert.deepEqual(S.publicState(s,0).projectiles,[]);s.visible[0][S.index(p.x,p.z)]=1;const seen=S.publicState(s,0);assert.equal(seen.projectiles.length,1);assert.deepEqual(Object.keys(seen.projectiles[0]).sort(),['age','art','id','team','vx','vy','vz','x','y','z']);assert.equal(seen.projectileSerial,undefined);assert.ok(!seen.events.some(e=>e.type==='launch'),'hidden target coordinates are not exposed by launch events');
  s.visible[0].fill(0);s.visible[0][S.index(p.toX,p.toZ)]=1;assert.ok(!S.publicState(s,0).events.some(e=>e.type==='launch'),'hidden shooter coordinates are not exposed');
 }
 {

@@ -1,0 +1,2 @@
+// Author: MiYu. Isolated original Archmage fixture shared by simulation and native gameplay checks.
+export function archmageFixture(S,level=1){const map=S.defaultMap();map.props=[];map.units=[];map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);const s=S.create('skirmish',{map,factions:[0,1],ai:[false,false]});s.units=[];const h=S.spawn(s,'hero',0,0,0,{heroClass:0,level,skillPoints:level,cd:10000,order:{type:'hold'}});S.visibility(s);return {s,h};}

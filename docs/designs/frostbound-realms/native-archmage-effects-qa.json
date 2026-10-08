@@ -1,0 +1,377 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-08T15:15:50.687Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\archmage-effects-1791472529733\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 56628
+    },
+    {
+      "name": "native Blizzard visible shard geometry",
+      "ms": 50164
+    },
+    {
+      "name": "native particle-only Water Elemental missile",
+      "ms": 20654
+    }
+  ],
+  "preflightMs": 1568,
+  "editorSha256": "f7d3144beac059e3ac2601a0f9782f8f91716a4e0629b459865036f42b9c4514",
+  "productMainSha256": "ccd9831f3e8fcf6393294c754881e700bffaeb1cee030fb81ec8d2d4080067b9",
+  "productSceneSha256": "120210b4fa1aeac8600e45edc94644e2c5f9b7031770a8e45fa496fdddc599fe",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2729
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 16034
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2347
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2766
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 4080
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 15238
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 8502
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4425
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1284
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 208
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3660
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1353
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1290
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1496
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 167
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1351
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1632
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1017
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1301
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 947
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1233
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 927
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1604
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 103
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 925
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1385
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1080
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1577
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1187
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1479
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 874
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1271
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 111
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 986
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1284
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1374
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1319
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 9380
+    },
+    {
+      "kind": "query",
+      "name": "scene.snapshot",
+      "ms": 2729
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 283
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1245
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 2019
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 178
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 265
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 158
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1080
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1259
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1442
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1328
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1412
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1277
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1381
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1490
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 120
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1644
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1272
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1791
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1244
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 107
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 121
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1060
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 2001
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 149
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 109
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 545
+    }
+  ],
+  "blizzard": {
+    "sourceInstances": 6,
+    "geometryLayers": 3,
+    "visiblePhase": true
+  },
+  "waterMissile": {
+    "particleOnly": true,
+    "originalSampledAsset": true,
+    "nativeActive": true,
+    "savedMidflight": true
+  },
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Current generated product: native six Blizzard shard roots and three source mesh layers with their original visibility gates; original particle-only Water Elemental missile from a valid mid-flight save. Physical input and original Warcraft runtime parity remain unverified.",
+  "shutdown": {
+    "pid": 139964,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

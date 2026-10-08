@@ -1,0 +1,124 @@
+{
+  "author": "MiYu",
+  "stage": "Original Human Archmage integration",
+  "passed": true,
+  "assets": {
+    "signedOutputs": 598,
+    "independentRebuildDifferentFiles": [],
+    "receiptByteIdentical": true
+  },
+  "bundle": {
+    "Assets/Scripts/Main.js": true,
+    "Assets/Scenes/Main.mscene": true
+  },
+  "tests": {
+    "source": true,
+    "simulation": true,
+    "generatedClient": true,
+    "TCP": true,
+    "mainAcceptance": {
+      "sourceSha256": "31661ff2d327a0b664222f41328059376501e377ce4186c19fedb56eaaf7b2ba",
+      "method": "Exact main acceptance body after removing only static test-frost module imports; imported tests were measured separately",
+      "exitCode": 0,
+      "seconds": 56.70733439992182
+    },
+    "regressionMethod": "Full entry ran imported regression modules. One obsolete projectile field-list assertion failed in the main acceptance body; after correcting the protocol-61 age field, the exact main body was rerun without repeating imported modules and passed.",
+    "fullAttemptPassLines": 274
+  },
+  "nativeGameplay": {
+    "passed": true,
+    "editorSha256": "f7d3144beac059e3ac2601a0f9782f8f91716a4e0629b459865036f42b9c4514",
+    "testedMainSha256": "2cc5162046a6314646c30196999566b1c5fd07c522685bb74138c343d209fc4d",
+    "steps": [
+      {
+        "name": "project open and ready",
+        "ms": 56807
+      },
+      {
+        "name": "original Archmage body, INT cards and rank-three Water Elemental",
+        "ms": 50957
+      },
+      {
+        "name": "source Blizzard, channel animation, shards and F5 continuation",
+        "ms": 54783
+      },
+      {
+        "name": "Brilliance and three-second Mass Teleport with original effects",
+        "ms": 67687
+      }
+    ],
+    "shutdown": {
+      "pid": 19432,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    },
+    "cleanup": {
+      "fixtureRemoved": true,
+      "qaStorageRemoved": true
+    }
+  },
+  "originalWarcraftRuntimeParity": false,
+  "physicalInput": false,
+  "audioListening": false,
+  "crossMachineLAN": false,
+  "nativeEffects": {
+    "passed": true,
+    "steps": [
+      {
+        "name": "project open and ready",
+        "ms": 56628
+      },
+      {
+        "name": "native Blizzard visible shard geometry",
+        "ms": 50164
+      },
+      {
+        "name": "native particle-only Water Elemental missile",
+        "ms": 20654
+      }
+    ],
+    "editorSha256": "f7d3144beac059e3ac2601a0f9782f8f91716a4e0629b459865036f42b9c4514",
+    "productMainSha256": "ccd9831f3e8fcf6393294c754881e700bffaeb1cee030fb81ec8d2d4080067b9",
+    "productSceneSha256": "120210b4fa1aeac8600e45edc94644e2c5f9b7031770a8e45fa496fdddc599fe",
+    "shutdown": {
+      "pid": 139964,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    },
+    "cleanup": {
+      "fixtureRemoved": true,
+      "qaStorageRemoved": true
+    },
+    "blizzard": {
+      "sourceInstances": 6,
+      "geometryLayers": 3,
+      "visiblePhase": true
+    },
+    "waterMissile": {
+      "particleOnly": true,
+      "originalSampledAsset": true,
+      "nativeActive": true,
+      "savedMidflight": true
+    }
+  },
+  "finalProductSha256": {
+    "Assets/Scripts/Main.js": "3c5fd0c9821c5a652d4c67e512daa3be8e90850903c688f043fa9d97b94a1e50",
+    "Assets/Scenes/Main.mscene": "120210b4fa1aeac8600e45edc94644e2c5f9b7031770a8e45fa496fdddc599fe"
+  },
+  "nativeRevisionScope": "Native gameplay preceded editor placement validation and enemy teleport-target filtering. Native effects preceded only enemy teleport-target filtering. Final source/generated/TCP tests cover those changes; reports retain actual tested product fingerprints.",
+  "signedStagedFilesVerified": 598,
+  "whitespaceCheck": true,
+  "retainedFailedFixtures": {
+    "reason": "Automatic approval rejected recursive removal: blocked by policy",
+    "ownerProcessesStopped": true,
+    "discoveryAbsent": true,
+    "runtimeEmpty": true,
+    "paths": [
+      "E:/work/codex/cache/mengine/native-qa/archmage-1791470635529",
+      "E:/work/codex/cache/mengine/native-qa/archmage-effects-1791471414810",
+      "E:/work/codex/cache/mengine/native-qa/archmage-effects-1791472058467"
+    ]
+  }
+}

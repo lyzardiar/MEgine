@@ -2,6 +2,10 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-archmage-source.mjs';
+import './test-frost-archmage.mjs';
+import './test-frost-archmage-generated.mjs';
+import './test-frost-archmage-network.mjs';
 import './test-frost-warden-source.mjs';
 import './test-frost-warden.mjs';
 import './test-frost-warden-client.mjs';
@@ -228,7 +232,7 @@ try{
   const finishedWork=(await workResume.next(m=>m.type==='state'&&m.state.units.some(u=>u.kind==='farm'&&u.x===-6&&u.z===22&&u.built===1)&&m.state.units.find(u=>u.id===builder.id)?.order?.type==='gather',30000)).state;assert.equal(finishedWork.units.find(u=>u.id===builder.id).waypoints.length,0);console.log('PASS: TCP deferred worker construction, mixed queue reconnect and return to mining');
   const arrows=await peer();next=arrows.next(m=>m.type==='joined');arrows.send({type:'create',mode:'skirmish'});const arrowRoom=await next;next=arrows.next(m=>m.type==='room'&&m.players.every(p=>p.ready));arrows.send({type:'ready',ready:true});await next;next=arrows.next(m=>m.type==='state');arrows.send({type:'start'});await next;
   const authoritative=app.rooms.get(arrowRoom.code).state;authoritative.units=[];authoritative.map.terrain.fill(0);authoritative.map.heights.fill(0);authoritative.map.relief.fill(0);authoritative.map.ramps.fill(0);authoritative.resources=[];authoritative.teams.forEach(t=>t.ai=false);const shooter=S.spawn(authoritative,'archer',0,0,0),victim=S.spawn(authoritative,'neutral',1,0,8,{speed:0,damage:0});shooter.order={type:'hold'};shooter.cd=99;S.visibility(authoritative);
-  next=arrows.next(m=>m.type==='state'&&m.state.projectiles.length===1);shooter.cd=0;const released=(await next).state,shotId=released.projectiles[0].id;shooter.cd=99;assert.equal(released.units.find(u=>u.id===victim.id).hp,victim.maxHp);assert.deepEqual(Object.keys(released.projectiles[0]).sort(),['art','id','team','vx','vy','vz','x','y','z']);assert.equal(released.projectileSerial,undefined);
+  next=arrows.next(m=>m.type==='state'&&m.state.projectiles.length===1);shooter.cd=0;const released=(await next).state,shotId=released.projectiles[0].id;shooter.cd=99;assert.equal(released.units.find(u=>u.id===victim.id).hp,victim.maxHp);assert.deepEqual(Object.keys(released.projectiles[0]).sort(),['age','art','id','team','vx','vy','vz','x','y','z']);assert.equal(released.projectileSerial,undefined);
   arrows.socket.destroy();const arrowResume=await peer();next=arrowResume.next(m=>m.type==='joined');arrowResume.send({type:'resume',code:arrowRoom.code,token:arrowRoom.token});const midflight=(await next).state;assert.ok(midflight.projectiles.some(p=>p.id===shotId),'reconnect retains the same in-flight projectile');assert.equal(midflight.units.find(u=>u.id===victim.id).hp,victim.maxHp);
   const landed=(await arrowResume.next(m=>m.type==='state'&&m.state.projectiles.length===0)).state;assert.equal(landed.units.find(u=>u.id===victim.id).hp,victim.maxHp-S.weaponDamage(shooter,victim,shooter.damage));assert.equal(landed.events.filter(e=>e.type==='impact').length,1);const settled=(await arrowResume.next(m=>m.type==='state'&&m.state.frame>=landed.frame+3)).state;assert.equal(settled.units.find(u=>u.id===victim.id).hp,landed.units.find(u=>u.id===victim.id).hp);console.log('PASS: TCP redacted projectile snapshots, in-flight reconnect and exactly one delayed impact');
   authoritative.units=[];S.spawn(authoritative,'hall',0,-24,24,{damage:0});setTechnology(S,authoritative,0,2);authoritative.teams[0].gold=2000;authoritative.teams[0].wood=1000;const stable=S.spawn(authoritative,'barracks',0,-14,14);S.spawn(authoritative,'farm',0,-24,24);S.visibility(authoritative);

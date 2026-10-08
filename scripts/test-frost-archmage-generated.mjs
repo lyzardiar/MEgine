@@ -1,0 +1,35 @@
+// Author: MiYu. Source information-card provenance, FDF geometry and generated-client selection transitions.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import vm from 'node:vm';
+import {createHash} from 'node:crypto';
+import {createRequire} from 'node:module';
+import {fileURLToPath} from 'node:url';
+import {archmageFixture} from './frost-archmage-fixture.mjs';
+const require=createRequire(import.meta.url),source=fileURLToPath(new URL('../samples/frostbound-realms/',import.meta.url)),root=process.env.MENGINE_FROST_BUILD_OUTPUT||source,H=require('../samples/frostbound-realms/game/hud.js');
+const receipt=JSON.parse(fs.readFileSync(path.join(source,'info-panel-sources.json'))),icons=JSON.parse(fs.readFileSync(path.join(source,'info-panel-icons.json'))).icons,hash=raw=>createHash('sha256').update(raw).digest('hex');
+for(const f of receipt.files){const raw=fs.readFileSync(path.join(source,f.path));assert.equal(raw.length,f.bytes);assert.equal(hash(raw),f.sha256,f.path);}
+for(const [p,h] of Object.entries(receipt.sourceConfigHashes))assert.equal(hash(fs.readFileSync(path.join(source,p))),h,p);
+assert.equal(hash(fs.readFileSync(new URL('../'+receipt.generator,import.meta.url))),receipt.generatorSha256);
+assert.equal(hash(fs.readFileSync(new URL('./import-frost-console.py',import.meta.url))),receipt.decoderSha256);
+assert.equal(new Set(Object.values(icons)).size,27);assert.equal(Object.keys(icons).length,37);
+const frame=fs.readFileSync(path.join(source,'SourceAssets/WarcraftIII/UI/FrameDef/UI/InfoPanelUnitDetail.fdf'),'utf8'),attributeBlock=frame.slice(frame.indexOf('Frame "BACKDROP" "IconBackdrop1"')),size=Number(attributeBlock.match(/Width ([\d.]+)/)[1])*1200,gap=Number(attributeBlock.match(/SetPoint LEFT, "IconBackdrop1", RIGHT, ([\d.]+)/)[1])*1200;
+const world=JSON.parse(fs.readFileSync(path.join(root,'Assets/Scenes/Main.mscene'))).world,byName=new Map(world.entities.map(e=>[e.name,e])),values=new Map(),active=new Map(),storage=new Map(),copy=o=>JSON.parse(JSON.stringify(o));
+const engine={findEntitiesByName:names=>world.entities.filter(e=>names.includes(e.name)),network:{poll:()=>[],close(){},send(){}},storage:{load:k=>storage.has(k)?copy(storage.get(k)):null,save:(k,v)=>storage.set(k,copy(v))},setActive:(id,on)=>active.set(id,on),playAudio(){},pushCommandJson:raw=>{const c=JSON.parse(raw);values.set(c.entity+'/'+c.component,c.value);},assets:{sampleNodes:()=>[]}};
+const context=vm.createContext({engine});vm.runInContext(fs.readFileSync(path.join(root,'Assets/Scripts/Main.js'),'utf8'),context);vm.runInContext('const infoRestore=Frost.restore;Frost.restore=raw=>{globalThis.infoState=infoRestore(raw);return infoState;};',context);
+const S=context.Frost,component=(n,c)=>values.get(byName.get(n).entity+'/'+c)||byName.get(n).components[c],shown=n=>active.get(byName.get(n).entity)??byName.get(n).active,telemetry=()=>JSON.parse(component('Frost telemetry','Text').text);
+function tick(input={},dt=.001){engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};context.onTick(dt);}
+const key=k=>{tick({keys:[k],pressedKeys:[k]});tick();},click=(pointer,keys=[])=>{tick({pointer,keys,buttons:[0],pressedButtons:[0]});tick({pointer,keys,releasedButtons:[0]});};
+function ui(n,viewport=[1280,720]){const v=H.viewport({viewport}),r=H.rect(component(n,'RectTransform'),{viewport});return [viewport[0]/2+r.x*v.scale,viewport[1]/2+r.y*v.scale];}
+function load(s){storage.set('quicksave',copy(s));if(telemetry().mode==='title')key('F1');if(!telemetry().paused)key('F10');click(ui('pauseLoad box'));assert.ok(context.infoState,telemetry().notice);key('Space');return context.infoState;}
+function point(u){const t=telemetry(),a=Math.atan2(context.FrostVisual.camera.height,context.FrostVisual.camera.depth);return [640+(u.x-t.camera[0])/t.zoom*360,360+(u.z-t.camera[1])*Math.sin(a)/t.zoom*360];}
+tick();const f=archmageFixture(S,6);f.h.skills=[1,1,1,1];f.h.skillPoints=2;f.h.mana=500;const target=S.spawn(f.s,'farm',0,15,0),enemy=S.spawn(f.s,'soldier',1,3,-2,{damage:0,order:{type:'hold'}});S.visibility(f.s);let s=load(f.s),h=s.units[0];
+assert.equal(h.sourceHero,'Hamg');assert.equal(component('HUD Stat intelligence value','Text').text,'35');assert.equal(component('Portrait model mesh 0','MeshRenderer').mesh.split('#')[0],context.FrostArt.ClassicArchmagePortrait.parts[0].mesh);assert.ok(shown('HUD Live portrait'));
+for(const [slot,id] of [[8,'AHbz'],[9,'AHwe'],[10,'AHab'],[11,'AHmt']])assert.equal(component('action'+slot+' icon','Image').sprite,S.archmageRules.abilities[id].icon);
+key('KeyK');for(const slot of [0,1,2,3])assert.ok(component('action'+slot+' label','Text').text);key('KeyK');
+key('KeyW');assert.equal(h.archmageCast.slot,1);for(let i=0;i<3;i++)tick({},.1);const water=s.units.find(S.waterElemental);assert.ok(water);assert.equal(water.waterRank,1);tick();click(point(water));assert.equal(component('Portrait model mesh 0','MeshRenderer').mesh.split('#')[0],context.FrostArt.ClassicWaterElementalPortrait.parts[0].mesh);assert.equal(component('HUD Stat Attack icon','Image').sprite,icons.InfoPanelIconDamagePierce);assert.equal(shown('HUD Stat intelligence icon'),false);
+key('Space');key('KeyB');click(point(enemy));assert.equal(h.archmageCast.slot,0);for(let i=0;i<3;i++)tick({},.1);assert.ok(h.blizzard);const animation=context.FrostArt.ClassicArchmage.animations[context.FrostVisual.classicSample(h,context.FrostArt.ClassicArchmage,false,s.frame*S.DT).clip];assert.equal(animation.name,'Stand Channel');key('F5');const saved=copy(storage.get('quicksave'));assert.ok(saved.units[0].blizzard);s=load(saved);h=s.units[0];assert.ok(h.blizzard);key('KeyS');assert.equal(h.blizzard,undefined);
+key('KeyT');click(point(target));assert.equal(h.archmageCast.slot,3);for(let i=0;i<3;i++)tick({},.1);assert.ok(h.massTeleport);tick();assert.ok(shown('Classic spell 0 massTeleportCaster'));assert.ok(shown('Classic spell 0 massTeleportTo'));assert.ok(shown('Classic spell 0 brillianceAura'));key('F5');assert.ok(storage.get('quicksave').units[0].massTeleport);for(let i=0;i<30;i++)tick({},.1);assert.ok(h.x>10);assert.equal(h.massTeleport,undefined);assert.ok(shown('Classic spell 0 massTeleportArrival'));
+key('Space');const missile=S.spawn(s,'waterelemental',0,h.x+2,h.z,{waterRank:3,summoned:true,summoner:h.id,expires:s.frame+600,order:{type:'hold'}}),foe=S.spawn(s,'dragon',1,h.x+4,h.z,{damage:0,order:{type:'hold'}});S.visibility(s);assert.equal(S.fire(s,missile,foe),true);tick({},.1);assert.ok(shown('Classic Archmage missile 0'));assert.equal(component('Classic Archmage missile 0','SampledEffect').effect,context.FrostEffectArt.effects.WaterElementalMissile.effect);assert.equal(shown('Missile 0'),false,'particle-only projectile does not create substitute geometry');assert.ok(S.restore(s));
+console.log('PASS generated Archmage client: original B/W/R/T skills, research slots, INT cards, both source portraits, ranked Water Elemental, Blizzard channel/F5, Mass Teleport effects and actual particle-only projectile');
