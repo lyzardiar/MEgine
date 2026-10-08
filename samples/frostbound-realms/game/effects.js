@@ -7,6 +7,7 @@ var FrostEffects=(()=>{
   Object.assign(spellBindings,{trueshotAura:'TrueshotAura',starfall:'StarfallCaster',starfallHit:'StarfallTarget',keeperRoots:'EntanglingRootsTarget',thornsAura:'ThornsAura',thornsHit:'ThornsAuraDamage',tranquility:'Tranquility',tranquilityHit:'TranquilityTarget',manaBurn:'ManaBurnTarget',immolation:'ImmolationTarget',immolationHit:'ImmolationDamage',taunt:'TauntCaster',flareBase:'ManaFlareBase',flareImpact:'ManaFlareBoltImpact',flareTarget:'ManaFlareTarget',phaseShift:'FaerieDragon_Invis',roar:'RoarTarget',roarCaster:'RoarCaster',faerieFire:'FaerieFireTarget',cyclone:'CycloneTarget'});
   Object.assign(spellBindings,{blinkCaster:'BlinkCaster',blinkTarget:'BlinkTarget',fanKnives:'FanOfKnivesCaster',shadowStrike:'shadowstrike',vengeanceBirth:'feralspiritdone',vengeanceSpiritBirth:'SpiritOfVengeanceBirthMissile'});
   Object.assign(spellBindings,{brillianceAura:'Brilliance',massTeleportCaster:'MassTeleportCaster',massTeleportTo:'MassTeleportTo',massTeleportArrival:'MassTeleportTarget'});
+  Object.assign(spellBindings,{holyLight:'HolyBoltSpecialArt',divineShield:'DivineShieldTarget',devotionBearer:'DevotionAura',devotionBuff:'GeneralAuraTarget',resurrectionCaster:'Resurrectcaster',resurrectionTarget:'Resurrecttarget'});
   for(let i=1;i<=6;i++)spellBindings['vengeanceOrbs'+i]='SpiritOfVengeanceOrbs'+i;
   function anchors(mesh,facing=0,scale=1){
     const pitch=-Math.atan2(FrostVisual.camera.height,FrostVisual.camera.depth),c=Math.cos(facing)*scale,s=Math.sin(facing)*scale;
@@ -81,6 +82,12 @@ var FrostEffects=(()=>{
       const c=Math.cos(facing),s=Math.sin(facing),world=destination||[position.x+(point[0]*c+point[2]*s)*scale,position.y+point[1]*scale,position.z+(-point[0]*s+point[2]*c)*scale];
       result.push({slot,name,component:{effect:art.effect,clip,playing:false,looping:animation.loop&&slot!=='flareTarget',speed:1,time_seconds:seconds},parts:art.parts.length?FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+Math.floor(seconds*30)+'@30'):[],position:world,scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});
     }
+    if(u.holyLightFrame!==undefined)add('holyLight',clock-u.holyLightFrame*Frost.DT);
+    if(u.divineShield>0)add('divineShield',clock-u.divineShieldFrame*Frost.DT);
+    if(Frost.devotionAura(state,u)>0)add('devotionBuff',clock);
+    if(Frost.paladinUnit(u)&&u.hp>0&&u.skills[2]>0)add('devotionBearer',clock);
+    if(u.paladinLastSlot===3)add('resurrectionCaster',clock-u.paladinCastFrame*Frost.DT);
+    if(u.resurrectionFrame!==undefined)add('resurrectionTarget',clock-u.resurrectionFrame*Frost.DT);
     if(Frost.brillianceAura(state,u)>0)add('brillianceAura',clock);
     if(u.massTeleport){const age=clock-u.massTeleport.frame*Frost.DT,target=state.units.find(v=>v.id===u.massTeleport.target);add('massTeleportCaster',age);if(target)add('massTeleportTo',age,undefined,[target.x,Frost.elevation(state.map,target.x,target.z),target.z]);}
     if(u.massTeleportArrivalFrame!==undefined)add('massTeleportArrival',clock-u.massTeleportArrivalFrame*Frost.DT);

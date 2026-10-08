@@ -1,0 +1,116 @@
+{
+  "author": "MiYu",
+  "stage": "Original Human Paladin integration",
+  "passed": true,
+  "assets": {
+    "signedOutputs": 338,
+    "independentRebuildDifferentFiles": [],
+    "receiptByteIdentical": true
+  },
+  "scene": {
+    "previousEntities": 52709,
+    "currentEntities": 57509,
+    "preservedExistingEntityIds": 52709
+  },
+  "fingerprints": {
+    "scripts/import-frost-paladin.py": "52e8a3c15ad9ab3384252f826f60eeaa5aa581d05b145036ee257a9c0a3776e4",
+    "scripts/qa-frost-paladin.mjs": "dec1b7f99f462a79f8f5b3f2b3ca8073e94fe1053385f830c9bf596d2d3aa95b",
+    "scripts/test-frost-paladin-source.mjs": "041ce79047149cb49639eb692b463ae4ef962175f7644c94fcc30989d7c57f68",
+    "scripts/test-frost-paladin.mjs": "82b477d1387cc1cd875fdc3ffcd3f73eb9247867f148b2ddab263f8ab2ce4a56",
+    "scripts/test-frost-paladin-generated.mjs": "f458b3af5dc463853c25dc5c380225c4fdfe7864141a8df8c0894ce46c8083d5",
+    "scripts/test-frost-paladin-network.mjs": "4e67c168cf503bd4eaf8c0738461eb4506361719fd18c2ccf358a4df24e7e328",
+    "scripts/test-frostbound.mjs": "b0c14ec31b83e26d92cbc97ac295fdc61849711a787f3cf556d0d3588b426429",
+    "scripts/build-frostbound.mjs": "f1f129b29c99e7d51a0f8d897c5590453629802c0c84694ef7a376bd2d965d40",
+    "samples/frostbound-realms/paladin-sources.json": "f312cc48b59dffe5620a8a0244080c5c6d6a622e33f5d1517a7077b1213437f2",
+    "samples/frostbound-realms/game/paladin.js": "d792eeaa84afe2400250061e53d0cc59b3900252a3909c4c06db50b8cad2db19",
+    "samples/frostbound-realms/game/simulation.js": "2b52d1efd9d2f60347ef670eae41b8f153c3f5ac9e95ca61674a2b8c8dc5851a",
+    "samples/frostbound-realms/game/client.js": "f40a4029e17fcdbed4b5645344cf9325f997b0a6ddbd0de611231437e0fa47d3",
+    "samples/frostbound-realms/game/effects.js": "3d12fc4a2b5f4f5696e9d54d3ce3054c4ca254d98f052d5b83b8228610a40e32",
+    "samples/frostbound-realms/game/visuals.js": "23e833de2b0453caabd1d78083c139fd0041b79e72f501ddb2d0482a418a45b5"
+  },
+  "product": {
+    "Main.js": "aa2fdeaf8c564cca7f3f9513f4c0916401ff53ee888f5f95106f14530860e740",
+    "Main.mscene": "b007e75d1df112953c94fa2eb9d6dfbbfac27cc3c686fbb261c9e13793f24976"
+  },
+  "tests": {
+    "paladin-source-tests.log": {
+      "passed": true,
+      "logSha256": "7db0abbcdf284cb8f933c7b973c63c0eeb6c4363fad11b7d5383a159f3d7f088",
+      "passLines": 1
+    },
+    "paladin-simulation-tests.log": {
+      "passed": true,
+      "logSha256": "0cf8ad36b242c80f1075aff537ad03ff7f873e072b1618fb2f13e5548006cc67",
+      "passLines": 6
+    },
+    "paladin-generated-node-tests.log": {
+      "passed": true,
+      "logSha256": "4d994daf94839debf25f8622cbac650f491ed3c96ff534865492602f61ba548d",
+      "passLines": 1
+    },
+    "paladin-network-tests.log": {
+      "passed": true,
+      "logSha256": "da798c85d4a6d4df2e3e0c8cf339fabc4d53f29e5f081eee2feb0cf45a7ed72e",
+      "passLines": 1
+    },
+    "paladin-visual-regression.log": {
+      "passed": true,
+      "logSha256": "115c90a1409efcea76a5be9881e49d1e6351c0fe7268129803c9ed64a5493040",
+      "passLines": 1
+    },
+    "paladin-final-full-regression.log": {
+      "passed": true,
+      "logSha256": "622ce538bcb9ba6c6435dcb7d5f4f004cbe511152fb9b543c65fe645abf2a521",
+      "passLines": 297,
+      "exitCode": 0,
+      "method": "Complete unmodified scripts/test-frostbound.mjs entry, including all static module imports and final acceptance body"
+    }
+  },
+  "native": {
+    "report": "native-paladin-qa.json",
+    "reportSha256": "c2851dd816174b8eeac6d20aa997e274c91df61d34a32b4732781b341ac81d43",
+    "editorSha256": "b81ed131754eff6500f3b4341cfe0ac9117422d2711e75481e6b5fc06a0807df",
+    "passed": true,
+    "shaderRejections": 0,
+    "consoleErrors": 0,
+    "shutdown": {
+      "pid": 176988,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    },
+    "cleanup": {
+      "fixtureRemoved": true,
+      "qaStorageRemoved": true
+    },
+    "visualReview": {
+      "passed": true,
+      "images": [
+        "paladin-native-hero.png",
+        "paladin-native-holy-light.png",
+        "paladin-native-shield.png",
+        "paladin-native-resurrection.png"
+      ],
+      "imageSha256": {
+        "paladin-native-hero.png": "4607cc692085e4097d31ba0c2b23032ef07ec346f4f2324d96a02417a836f79e",
+        "paladin-native-holy-light.png": "01dc77a7a9868b2668726b2650984ed6d04bbbf2783f585cd3b0cf19945b7895",
+        "paladin-native-shield.png": "3d1c152220f6f9d6c1c27dbcfc8799f3881efced24be3f5bef40a2ba087583c8",
+        "paladin-native-resurrection.png": "bd8214218e3e2649209677de3aacf5d73209a3daaffd9e1baf08b279bc5b6054"
+      }
+    },
+    "executedScriptRawSha256": "dec1b7f99f462a79f8f5b3f2b3ca8073e94fe1053385f830c9bf596d2d3aa95b",
+    "scriptLfSha256": "dec1b7f99f462a79f8f5b3f2b3ca8073e94fe1053385f830c9bf596d2d3aa95b"
+  },
+  "protocol": 62,
+  "originalWarcraftRuntimeParity": false,
+  "physicalInput": false,
+  "audioListening": false,
+  "crossMachineLAN": false,
+  "corpseLifetimeSeconds": 20,
+  "scope": "Native original Paladin geometry and portrait, STR HUD, T/D/V/R cards, Holy Light target/impact, Divine Shield and Devotion effects, F5 shield continuation and target-free Resurrection. Source Warcraft runtime parity, physical input, audio listening, corpse-order parity and cross-machine LAN remain unverified.",
+  "retainedFailures": [
+    "native-paladin-pose-failure.json",
+    "native-paladin-camera-review.json"
+  ],
+  "sourceFingerprintMode": "lf-text; generated product and image fingerprints use exact bytes"
+}

@@ -1,0 +1,346 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-08T16:56:46.213Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\paladin-1791478587019\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 63337
+    },
+    {
+      "name": "original Paladin model, STR card, source portrait and T/D/V/R controls",
+      "ms": 30407
+    },
+    {
+      "name": "native Holy Light target and original impact",
+      "ms": 13955
+    }
+  ],
+  "preflightMs": 1204,
+  "editorSha256": "b81ed131754eff6500f3b4341cfe0ac9117422d2711e75481e6b5fc06a0807df",
+  "productMainSha256": "9445f737d540b591b83d32e5cb0c6f463ee1fe6daea952e94e74bbd9df33b713",
+  "productSceneSha256": "b007e75d1df112953c94fa2eb9d6dfbbfac27cc3c686fbb261c9e13793f24976",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2890
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 18536
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2755
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 3143
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 4570
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 17232
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 9389
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4312
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1612
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 152
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2880
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1530
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2027
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1429
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 110
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1120
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1418
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1144
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1716
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1094
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1396
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1122
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1451
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 111
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1492
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1396
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1835
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1346
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 109
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 121
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 57
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 120
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 63
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 119
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 60
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 166
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1397
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 1792
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 29
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1181
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1358
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1101
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1707
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 143
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 69
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1251
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1352
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1083
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1409
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3264
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 2284
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 12
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 615
+    }
+  ],
+  "presentation": {
+    "originalBody": true,
+    "sourcePortrait": true,
+    "strength": 35,
+    "sourceSkillCards": true
+  },
+  "error": "BridgeRpcError: js: Error: Node queries require a bounded #pose reference\n    at sampleNodes (eval_script:8:151)\n    at query (eval_script:3262:55)\n    at at (eval_script:3262:100)\n    at add (eval_script:3328:31)\n    at spells (eval_script:3334:57)\n    at renderUnits (eval_script:3887:122)\n    at tick (eval_script:3924:17)\n    at onTick (eval_script:3932:38)\n    at <anonymous> (eval_script:1:63)\n\n    at WebSocket.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:266:24)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:14387:14)\n    at #onMessage (node:internal/deps/undici/undici:15710:9)\n    at Object.onMessage (node:internal/deps/undici/undici:15417:76)\n    at websocketMessageReceived (node:internal/deps/undici/undici:14391:15)\n    at ByteParser.run (node:internal/deps/undici/undici:15093:19)\n    at ByteParser._write (node:internal/deps/undici/undici:14969:14)\n    at writeOrBuffer (node:internal/streams/writable:570:12)",
+  "logs": [
+    {
+      "level": "info",
+      "message": "MEngine Editor",
+      "source": "editor",
+      "time": 1791478609111
+    },
+    {
+      "level": "info",
+      "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
+      "source": "editor",
+      "time": 1791478609111
+    },
+    {
+      "level": "info",
+      "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
+      "source": "editor",
+      "time": 1791478609111
+    },
+    {
+      "level": "info",
+      "message": "场景存储：磁盘 project/Assets/Scenes",
+      "time": 1791478613517
+    },
+    {
+      "level": "info",
+      "message": "已恢复场景 Main.mscene",
+      "time": 1791478616108
+    },
+    {
+      "level": "info",
+      "message": "Agent set Game View resolution to 1280 x 720",
+      "time": 1791478637722
+    },
+    {
+      "level": "error",
+      "message": "Play Mode failed: js: Error: Node queries require a bounded #pose reference\n    at sampleNodes (eval_script:8:151)\n    at query (eval_script:3262:55)\n    at at (eval_script:3262:100)\n    at add (eval_script:3328:31)\n    at spells (eval_script:3334:57)\n    at renderUnits (eval_script:3887:122)\n    at tick (eval_script:3924:17)\n    at onTick (eval_script:3932:38)\n    at <anonymous> (eval_script:1:63)\n",
+      "time": 1791478713641
+    }
+  ],
+  "shutdown": {
+    "pid": 6732,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  }
+}

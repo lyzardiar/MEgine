@@ -1,0 +1,1 @@
+Original Warcraft III assets and rules belong to Blizzard Entertainment. Extraction does not establish a free redistribution license. Source hashes and generators: paladin-sources.json.

@@ -1,0 +1,116 @@
+{
+  "author": "MiYu",
+  "scope": "Final local native Paladin QA only; step totals overlap command totals and must not be added. No complete-task wall-clock estimate.",
+  "report": "native-paladin-qa.json",
+  "nativeSteps": [
+    {
+      "name": "project open and ready",
+      "ms": 61272
+    },
+    {
+      "name": "original Paladin model, STR card, source portrait and T/D/V/R controls",
+      "ms": 29865
+    },
+    {
+      "name": "native Holy Light target and original impact",
+      "ms": 18737
+    },
+    {
+      "name": "native Divine Shield, Devotion Aura and F5 continuation",
+      "ms": 40151
+    },
+    {
+      "name": "native target-free Resurrection and original corpse effects",
+      "ms": 16928
+    }
+  ],
+  "nativeStepTotalMs": 166953,
+  "preflightMs": 1703,
+  "commandGroups": {
+    "playback.step": {
+      "calls": 32,
+      "totalMs": 55846,
+      "maxMs": 4898
+    },
+    "playback.input": {
+      "calls": 31,
+      "totalMs": 25477,
+      "maxMs": 1854
+    },
+    "entity.get": {
+      "calls": 25,
+      "totalMs": 19920,
+      "maxMs": 1951
+    },
+    "project.open": {
+      "calls": 1,
+      "totalMs": 19899,
+      "maxMs": 19899
+    },
+    "panel.focus": {
+      "calls": 1,
+      "totalMs": 16239,
+      "maxMs": 16239
+    },
+    "playback.play": {
+      "calls": 1,
+      "totalMs": 8847,
+      "maxMs": 8847
+    },
+    "project.state": {
+      "calls": 3,
+      "totalMs": 8626,
+      "maxMs": 4502
+    },
+    "view.screenshot": {
+      "calls": 4,
+      "totalMs": 8239,
+      "maxMs": 2297
+    },
+    "view.set_game_resolution": {
+      "calls": 1,
+      "totalMs": 3281,
+      "maxMs": 3281
+    },
+    "playback.stop": {
+      "calls": 1,
+      "totalMs": 804,
+      "maxMs": 804
+    },
+    "profiler.get_samples": {
+      "calls": 1,
+      "totalMs": 313,
+      "maxMs": 313
+    },
+    "console.get_logs": {
+      "calls": 1,
+      "totalMs": 247,
+      "maxMs": 247
+    }
+  },
+  "workflowFindings": [
+    {
+      "finding": "Earlier negative pose frames and missing source portrait camera required native reruns",
+      "evidence": [
+        "native-paladin-pose-failure.json",
+        "native-paladin-camera-review.json"
+      ],
+      "implemented": "Generated client uses the real native glTF node probe and checks the selected source portrait camera; sampled elapsed time is nonnegative."
+    },
+    {
+      "finding": "Broad regression fixtures require explicit legacy rules when their assertions assume legacy hero behavior",
+      "implemented": "Compatibility battle fixtures and legacy Judgment/racial-item tests explicitly use paladinVersion=0."
+    },
+    {
+      "finding": "Editor query and dispatch costs are independently measured",
+      "evidence": "scene-interaction-timing.json",
+      "implemented": "Scene ancestor query batching is already delivered; the dispatch wait boundary is measured but its exact scheduling cause remains unconfirmed."
+    }
+  ],
+  "nextWorkflow": [
+    "Run source, simulation and real-node client checks before full native acceptance.",
+    "Run the complete regression when the final product is stable; repeat only checks affected by new changes or failures.",
+    "Reuse the validated Release binary and combine independent read-only queries where supported.",
+    "Preserve source/asset/product hashes and a small handoff at stage boundaries."
+  ]
+}

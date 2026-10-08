@@ -2,6 +2,10 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-paladin-source.mjs';
+import './test-frost-paladin.mjs';
+import './test-frost-paladin-generated.mjs';
+import './test-frost-paladin-network.mjs';
 import './test-frost-archmage-source.mjs';
 import './test-frost-archmage.mjs';
 import './test-frost-archmage-generated.mjs';

@@ -99,3 +99,6 @@ samples/frostbound-realms/archmage-*.json text eol=lf
 samples/frostbound-realms/Assets/Licenses/Classic-Archmage.txt text eol=lf
 samples/frostbound-realms/SourceAssets/WarcraftIII/Units/Human*.txt -text whitespace=cr-at-eol,-blank-at-eol
 packages/editor/src/store.ts whitespace=cr-at-eol
+scripts/import-frost-paladin.py text eol=lf
+samples/frostbound-realms/paladin-*.json text eol=lf
+samples/frostbound-realms/Assets/Licenses/Classic-Paladin.txt text eol=lf
