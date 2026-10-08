@@ -1,0 +1,118 @@
+{
+  "author": "MiYu",
+  "baseCommit": "0bd0010f3141d445a250d58be076fe30b730a3c5",
+  "scope": "Avatar presentation size, F5 and expiry; source-unit model/selection dimensions",
+  "visualIncrement": 0.5,
+  "factor": 1.5,
+  "sourceField": "mountain-king-rules.json: abilities.AHav.sourceRow.Area1",
+  "protocol": 63,
+  "sceneEntities": 61253,
+  "sceneBytesUnchanged": true,
+  "sha256": {
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "8f680b9082b75acc8187fb86eb0c7d85469be2d689da83e7c7fe21b35d4f2b5f",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "e3bf7845a1878efcfa8cabba64d3bd5ff7f61b9bed02e265bb26783247f54849",
+    "samples/frostbound-realms/project.json": "35b294bb5760f5cd88bb6ca5638da46d5a1b2e01e21f6680eea4c6a868a71bdd",
+    "samples/frostbound-realms/game/visuals.js": "bbfb30a51fd28fc676465c6847ed8207b5b6691d2aff91443b61dfb2148cf997",
+    "scripts/test-frost-mountain-king-source.mjs": "96469053ee2c2d6e76feef459bbcf908b172dbfbe5f28d52a4b2eaa1d0e392cc",
+    "scripts/test-frost-mountain-king-generated.mjs": "f0c5690c6e820cd62910a1c56862427161f8bbc0ff0395aaa636185531a2470c",
+    "scripts/test-frost-unit-scales.mjs": "22b455bb43ab3847f901c0deb0c06d38ae78eee922810bcb0e945b04f4b4c3a9",
+    "scripts/qa-frost-avatar-scale.mjs": "b4f940c2330be2ee5316d9cd10a220d397cb9d9177f5e3c9de721e9deef63084"
+  },
+  "rebuild": {
+    "path": "E:/work/codex/cache/mengine/avatar-scale-rebuild",
+    "byteIdentical": [
+      "samples/frostbound-realms/Assets/Scripts/Main.js",
+      "samples/frostbound-realms/Assets/Scenes/Main.mscene",
+      "samples/frostbound-realms/project.json"
+    ]
+  },
+  "checks": {
+    "sourceSignedOutputs": 323,
+    "sourceExitCode": 0,
+    "generatedClientExitCode": 0,
+    "unitScaleSourceRecords": 50,
+    "unitScaleTypeFactionMappings": 184,
+    "unitScaleExitCode": 0,
+    "combinedUnitScaleGeneratedExitCode": 0,
+    "fullRegressionRerun": false
+  },
+  "native": {
+    "session": 12786,
+    "exitCode": 0,
+    "passed": true,
+    "report": "docs/designs/frostbound-realms/native-avatar-scale-qa.json",
+    "reportSha256": "b11c89a37b236a64569a9483a7b126ac35acb00c78a6df4b8337dbbedf1abc66",
+    "fixturePrepareMs": 15937,
+    "steps": [
+      {
+        "name": "project open and ready",
+        "ms": 66238
+      },
+      {
+        "name": "normal body, selection and portrait baseline",
+        "ms": 30958
+      },
+      {
+        "name": "Avatar body and selection size with stable collision and portrait",
+        "ms": 14198
+      },
+      {
+        "name": "F5 retains Avatar size and expiry restores normal size",
+        "ms": 55403
+      }
+    ],
+    "normal": {
+      "bodyScale": [
+        2,
+        2,
+        2
+      ],
+      "ringScale": [
+        1.4909336566925049,
+        0.012000000104308128,
+        1.4909336566925049
+      ],
+      "portraitScale": [
+        1,
+        1,
+        1
+      ],
+      "hpY": 2.044558048248291,
+      "movementRadius": 0.32
+    },
+    "avatar": {
+      "factor": 1.5,
+      "bodyScale": [
+        3,
+        3,
+        3
+      ],
+      "ringScale": [
+        2.2364003658294678,
+        0.012000000104308128,
+        2.2364003658294678
+      ],
+      "collisionUnchanged": true,
+      "portraitFramingStable": true,
+      "healthBarRaised": true
+    },
+    "restore": {
+      "F5SizeRetained": true,
+      "expiryNormalBody": true,
+      "expiryNormalSelection": true,
+      "expiryNormalHealthBar": true
+    },
+    "normalExit": true,
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true,
+    "shaderRejections": 0,
+    "consoleErrors": 0
+  },
+  "originalRuntimeParityVerified": false,
+  "unverified": [
+    "Original Warcraft Area1 size semantics, selection scaling and transition timing",
+    "Original damage/immunity exceptions",
+    "Physical input/audio/cross-machine LAN",
+    "Full factions/campaign/editor/classic TD/Dota"
+  ]
+}

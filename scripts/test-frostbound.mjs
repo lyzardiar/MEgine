@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-unit-scales.mjs';
 import './test-frost-mountain-king-source.mjs';
 import './test-frost-mountain-king.mjs';
 import './test-frost-mountain-king-generated.mjs';
