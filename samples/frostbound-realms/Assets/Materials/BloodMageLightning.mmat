@@ -1,7 +1,8 @@
 {
   "version": 8,
   "name": "Blood Mage mana lightning",
-  "shader": "unlit",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/BloodMageLightning.mshader",
   "surface": "transparent",
   "blend_mode": "additive",
   "base_color": [

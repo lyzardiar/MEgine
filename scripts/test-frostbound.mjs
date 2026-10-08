@@ -4,6 +4,7 @@ import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
 import './test-frost-blood-mage-source.mjs';
 import './test-frost-blood-mage.mjs';
+import './test-frost-phoenix-fire.mjs';
 import './test-frost-blood-mage-generated.mjs';
 import './test-frost-blood-mage-network.mjs';
 import './test-frost-unit-scales.mjs';

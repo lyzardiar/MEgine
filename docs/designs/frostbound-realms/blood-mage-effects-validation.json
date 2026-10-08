@@ -1,0 +1,163 @@
+{
+  "author": "MiYu",
+  "protocol": 65,
+  "generatedClientExitCode": 0,
+  "simulationExitCode": 0,
+  "tcpExitCode": 0,
+  "originalRuntimeVerified": false,
+  "sha256": {
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "38b73eb13819d92cd4630cca8fc5acb96c712a758f5a6c2266f75eb51ef93052",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "8cca8bdba0d8d94157431a7afd47e29c1dfbed7838a5aedc9f5e3be77a5350d7",
+    "samples/frostbound-realms/game/simulation.js": "c8078e1af6edb9921c165498953c06142da2e2c90877abefcc4c6e694263de49",
+    "samples/frostbound-realms/game/client.js": "35fbb3b91a6421cc3b14f943b80939724df3d41f9c67039112e2781c7421f3d4",
+    "samples/frostbound-realms/game/effects.js": "a539fbe1c6d5c93e4fcd93653e0c80984df9ec1cc454659d6bb38a89de23395b",
+    "samples/frostbound-realms/game/visuals.js": "388f21827a17a3b1287dd4646bb6fa7797236a1d730902ab3d0614680b96f774",
+    "samples/frostbound-realms/Assets/Shaders/BloodMageLightning.mshader": "c1325e6001448fe06bf19ebabb61582e0c876288458e5a7ba8a2c285a49a6a89",
+    "samples/frostbound-realms/Assets/Materials/BloodMageLightning.mmat": "e3c19660777433d388d49a75e9518354ab75331d489e32d28a2d18277d16b337",
+    "scripts/frost-blood-mage-lightning.mjs": "868b107a8a641956dbf565e2c1c028802f9d1c59ea224cda2f9f68bedb4336c2",
+    "scripts/qa-frost-blood-mage-effects.mjs": "3d70c6d44a9edb64d290f55dcd3348269f924aae098850cb63f9b7ac3226a138",
+    "scripts/test-frost-phoenix-fire.mjs": "d37349c088b979a26f9982832559703c14c09c2efc933acc60172d52fefa9587",
+    "scripts/test-frost-blood-mage-generated.mjs": "eaa5baf068530557b5b0d2a53f4680b638cecbc9551b913cfe350dbed48cbea0",
+    "scripts/test-frost-blood-mage-network.mjs": "77de6018880a83f69f179680096ae2d68682c10224a140e58d3f6fb759951640",
+    "scripts/qa-frost-blood-mage-effects-visible.mjs": "f3533b17ab415fb787bb9da5c3a3771730612917b1be603f8ba876f26cb11175",
+    "scripts/build-frostbound.mjs": "1e4bfa2014f8f79329a2902b53dc5c9452f1db499e52bf02f808ceb10a40b63f",
+    "scripts/test-frost-blood-mage.mjs": "c07a779921fac57bad3bd285d0ab87683bb8be186fc71613e5a4b030dcfd1177",
+    "scripts/test-frostbound.mjs": "9e82f5cabddfd0e41fdff8cf0023536f9bdafeeec63ce5fa02791d656b737cc1",
+    "samples/frostbound-realms/Assets/Models/BloodMageLightning.glb": "3b3383fdda6d320f1b9e1ae83bdbd0174de8902c4fd54309fcd748de0bc04eb0"
+  },
+  "scope": "Source Phoenix Fire homing miniature missile, delayed impact/DOT, in-flight save and TCP reconnect; source mana-drain texture animation and frozen pause phase.",
+  "regression": {
+    "exitCode": 0,
+    "modules": [
+      "source",
+      "blood-mage",
+      "phoenix-fire",
+      "mountain-king",
+      "warden",
+      "priestess",
+      "visuals",
+      "projectiles"
+    ],
+    "mainBodyExitCode": 0,
+    "mainBodyScope": "Exact main acceptance body with previously verified bare imports excluded",
+    "temporaryWrappers": {
+      "scripts/.tmp-blood-mage-effects-regression.mjs": "7dcc7d077a8cea1cca2d543b43c8bf3b403f94a76761896310078ce065d1f7bf",
+      "scripts/.tmp-blood-mage-effects-main.mjs": "d94c6b51ad13dce55805fbfadf92dce13145f3539273ab7251886dccee396d71"
+    }
+  },
+  "localLogs": {
+    "tmp/blood-mage-effects-regression.log": "42c02cd04ac0c3bd5a6b1bce99cf557cef2d34bb4dc08f62a041cfd52dde2e1f",
+    "tmp/blood-mage-effects-main.log": "ce33ec584a45940d392b1c0a2c8a36b87825e0ea032482dca145c4486f5b9f70",
+    "tmp/blood-mage-effects-generated.log": "cb844265f1ad8168c5a69073ff2f1fa637477a632618999f68010abd981bf819",
+    "tmp/blood-mage-effects-network.log": "246bb997988c873d438a11a7af333c47cd595cdf96a7c7487865c6890349d423",
+    "tmp/blood-mage-effects-simulation.log": "8136c9e8078095099bd73cce7b5e07da85890ae7146a4908486588749079b524",
+    "tmp/blood-mage-effects-build.log": "3f377986b25becb9d1c6618eec892afaa58e900d3c4dc2b4a253784d2a228fdc",
+    "tmp/blood-mage-effects-repro.log": "3f377986b25becb9d1c6618eec892afaa58e900d3c4dc2b4a253784d2a228fdc",
+    "tmp/blood-mage-effects-native.log": "e47a06c8b87072d1a83c7f2a99f684897d7e0157f37a614ce2ed652e4bae8fed",
+    "tmp/blood-mage-effects-visible-native.log": "8a336fdc6ea10d19e0a93e7ca9e71de4b6b1566d6174b575646abe9de2d03bb7"
+  },
+  "native": {
+    "docs/designs/frostbound-realms/native-blood-mage-effects-qa.json": {
+      "exitCode": 0,
+      "sha256": "bc08fd7e112a9ccff4c3b8ad91ccb85fa3d4adf1b8ee85c05ea631423cf9aa73",
+      "passed": true,
+      "editorSha256": "643ad6f4e37a678ec4b775175f42c40bead6d669da63bbe2dce0f07e2bcc0c47",
+      "consoleErrors": 0,
+      "shaderRejections": 0,
+      "shutdown": {
+        "pid": 43796,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      },
+      "cleanup": {
+        "fixtureRemoved": true,
+        "qaStorageRemoved": true
+      },
+      "executedQaScriptSha256": "9a2c12fd9efd0fb290d095f88596b8864a2902e9effca88ed9cba19f9c6d435f"
+    },
+    "docs/designs/frostbound-realms/native-blood-mage-effects-visible-qa.json": {
+      "exitCode": 0,
+      "sha256": "a7ad2d9b9e628ff609fa1b98b6818b6d0d481a067753147351911baa77d34ae0",
+      "passed": true,
+      "editorSha256": "643ad6f4e37a678ec4b775175f42c40bead6d669da63bbe2dce0f07e2bcc0c47",
+      "consoleErrors": 0,
+      "shaderRejections": 0,
+      "shutdown": {
+        "pid": 105040,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      },
+      "cleanup": {
+        "fixtureRemoved": true,
+        "qaStorageRemoved": true
+      },
+      "executedQaScriptSha256": "8947adea8716fcb7f7dde4c3c7b60b55e563f721c7d670c9218ebb36651df427"
+    }
+  },
+  "reproduction": {
+    "exitCode": 0,
+    "isolatedOutput": "tmp/blood-mage-effects-repro",
+    "byteIdentical": {
+      "Assets/Scenes/Main.mscene": "8cca8bdba0d8d94157431a7afd47e29c1dfbed7838a5aedc9f5e3be77a5350d7",
+      "Assets/Scripts/Main.js": "38b73eb13819d92cd4630cca8fc5acb96c712a758f5a6c2266f75eb51ef93052",
+      "Assets/Models/BloodMageLightning.glb": "3b3383fdda6d320f1b9e1ae83bdbd0174de8902c4fd54309fcd748de0bc04eb0",
+      "Assets/Materials/BloodMageLightning.mmat": "e3c19660777433d388d49a75e9518354ab75331d489e32d28a2d18277d16b337"
+    }
+  },
+  "visualInspection": {
+    "passed": true,
+    "images": [
+      "docs/designs/frostbound-realms/blood-mage-effects-siphon-a.png",
+      "docs/designs/frostbound-realms/blood-mage-effects-siphon-b.png",
+      "docs/designs/frostbound-realms/blood-mage-effects-phoenix-flight.png",
+      "docs/designs/frostbound-realms/blood-mage-effects-phoenix-impact.png"
+    ],
+    "scope": "Visible source-texture ribbon, changed phase between captures, separated miniature in flight and damage on impact. Exact original runtime parity remains unverified."
+  },
+  "sha256TextLf": [
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene",
+    "samples/frostbound-realms/game/simulation.js",
+    "samples/frostbound-realms/game/client.js",
+    "samples/frostbound-realms/game/effects.js",
+    "samples/frostbound-realms/game/visuals.js",
+    "samples/frostbound-realms/Assets/Shaders/BloodMageLightning.mshader",
+    "samples/frostbound-realms/Assets/Materials/BloodMageLightning.mmat",
+    "scripts/frost-blood-mage-lightning.mjs",
+    "scripts/qa-frost-blood-mage-effects.mjs",
+    "scripts/test-frost-phoenix-fire.mjs",
+    "scripts/test-frost-blood-mage-generated.mjs",
+    "scripts/test-frost-blood-mage-network.mjs",
+    "scripts/qa-frost-blood-mage-effects-visible.mjs",
+    "scripts/build-frostbound.mjs",
+    "scripts/test-frost-blood-mage.mjs",
+    "scripts/test-frostbound.mjs"
+  ],
+  "worktreeSha256": {
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "38b73eb13819d92cd4630cca8fc5acb96c712a758f5a6c2266f75eb51ef93052",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "8cca8bdba0d8d94157431a7afd47e29c1dfbed7838a5aedc9f5e3be77a5350d7",
+    "samples/frostbound-realms/game/simulation.js": "2a112c2906d2dd2e80326f5a3e5dcfe9c53f250766afac0321c87112c4646b60",
+    "samples/frostbound-realms/game/client.js": "c781c665b34d01dd035c75c673ea4199aa01068a2791a2dd4a08c497082cd3bc",
+    "samples/frostbound-realms/game/effects.js": "56e1a553eabf6f697bc49ad35639fbb8e646062507260f8bdbbb8d2345ecff8f",
+    "samples/frostbound-realms/game/visuals.js": "25f12ce7b28cef52de3156877bba0d921cf77657ba2a4107bbf5e381c00ae3f0",
+    "samples/frostbound-realms/Assets/Shaders/BloodMageLightning.mshader": "5d832073f66679ff9c12739d922d825da0957460728244dc6f85e80ea2a1e490",
+    "samples/frostbound-realms/Assets/Materials/BloodMageLightning.mmat": "e3c19660777433d388d49a75e9518354ab75331d489e32d28a2d18277d16b337",
+    "scripts/frost-blood-mage-lightning.mjs": "868b107a8a641956dbf565e2c1c028802f9d1c59ea224cda2f9f68bedb4336c2",
+    "scripts/qa-frost-blood-mage-effects.mjs": "6bddf47e22235b8d314556e1e5e92b00b8a044ec4db380e650f81ef643e7c683",
+    "scripts/test-frost-phoenix-fire.mjs": "316ca2102eae2824f988583a1521b7149e908b4639b29815d8384183390d254a",
+    "scripts/test-frost-blood-mage-generated.mjs": "eaa5baf068530557b5b0d2a53f4680b638cecbc9551b913cfe350dbed48cbea0",
+    "scripts/test-frost-blood-mage-network.mjs": "77de6018880a83f69f179680096ae2d68682c10224a140e58d3f6fb759951640",
+    "scripts/qa-frost-blood-mage-effects-visible.mjs": "610b3eda4c34862de320d153287677342e0e7f9fbf032e2008dba336da0e7c58",
+    "scripts/build-frostbound.mjs": "cfd32e03dac3da8b6b94e143543e8b588d556295104c8087f75d8d3808f1a533",
+    "scripts/test-frost-blood-mage.mjs": "803ef79bafd82775c978bbcc8292e5a727aa8f75ea0b8e5c79292c14896005fe",
+    "scripts/test-frostbound.mjs": "cdc71983a7ec33ae7cc4aba262861a96ce6a1aa68af3c9093c895e2df0173f02",
+    "samples/frostbound-realms/Assets/Models/BloodMageLightning.glb": "3b3383fdda6d320f1b9e1ae83bdbd0174de8902c4fd54309fcd748de0bc04eb0"
+  },
+  "fingerprintScope": "Text source fingerprints normalize CRLF to LF; generated Main.js and binary model retain exact bytes. worktreeSha256 records the current local snapshot; executedQaScriptSha256 records native-run QA scripts before the preflight-only update.",
+  "qaPreflightUpdate": {
+    "scope": "After native runs, only source fingerprint preflight changed to LF normalization. Gameplay, assertions, generated artifacts and rendering are unchanged.",
+    "validation": "Both QA scripts pass node --check. All 18 staged fingerprints and current preflight hashes agree; generated production hashes and isolated reproduction remain unchanged.",
+    "nativeRerun": false
+  }
+}

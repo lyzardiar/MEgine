@@ -36,7 +36,7 @@ console.log('PASS friendly mana transfer, finite exchange, tether break and self
 }
 console.log('PASS Phoenix health decay, permanent summon, egg/rebirth, destructible egg and saved continuation');
 {
- const {s,h}=bloodMageFixture(S,6);learn(s,h,3);h.mana=S.maxMana(h);const v=target(s,'ghoul',1,4,{hp:2000,maxHp:2000});S.visibility(s);assert.equal(cmd(s,h,'spell',{slot:3}),null);step(s,7);const p=s.units.find(S.phoenixUnit);assert.ok(v.phoenixFire);assert.ok(v.hp<2000);p.cd=0;S.fire(s,p,v);assert.equal(s.projectiles.at(-1).art,'phoenix');const saved=S.restore(s);step(s,20);step(saved,20);assert.deepEqual(saved,s);assert.ok(S.restore(s));
+ const {s,h}=bloodMageFixture(S,6);learn(s,h,3);h.mana=S.maxMana(h);const v=target(s,'ghoul',1,4,{hp:2000,maxHp:2000});S.visibility(s);assert.equal(cmd(s,h,'spell',{slot:3}),null);step(s,7);const p=s.units.find(S.phoenixUnit);assert.ok(s.projectiles.some(p=>p.phoenixFireProjectile));assert.equal(v.phoenixFire,undefined);step(s,6);assert.ok(v.phoenixFire);assert.ok(v.hp<2000);p.cd=0;S.fire(s,p,v);assert.equal(s.projectiles.at(-1).art,'phoenix');const saved=S.restore(s);step(s,20);step(saved,20);assert.deepEqual(saved,s);assert.ok(S.restore(s));
 }
 console.log('PASS Phoenix automatic fire, original projectile and saved fire/flight');
 {
