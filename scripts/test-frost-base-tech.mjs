@@ -27,6 +27,6 @@ for(let faction=0;faction<4;faction++){
  const refund=S.restore(s),paid=[refund.teams[0].gold,refund.teams[0].wood];assert.equal(cancel(refund,refund.units.find(u=>u.id===a.id)),null);assert.deepEqual([refund.teams[0].gold,refund.teams[0].wood],[paid[0]+375,paid[1]+180]);assert.ok(S.restore(refund));
 }
 {
- const {s,a,b}=arena(2);a.upgradeTier=1;b.upgradeTier=3;S.updateTechnology(s);const h=S.spawn(s,'hero',0,0,0,{heroClass:1,inventory:[23],damage:0,order:{type:'hold'}}),v=S.spawn(s,'soldier',0,2,0,{damage:0,order:{type:'hold'}});S.visibility(s);assert.equal(S.command(s,0,{type:'useItem',ids:[h.id],slot:0,item:23,target:v.id}),null);assert.ok(S.distance(v,b)<5);assert.ok(S.distance(v,a)>5,'staff chooses the highest completed base');
+ const {s,a,b}=arena(2);a.upgradeTier=1;b.upgradeTier=3;S.updateTechnology(s);const h=S.spawn(s,'hero',0,0,0,{heroClass:3,inventory:[23],damage:0,order:{type:'hold'}}),v=S.spawn(s,'soldier',0,2,0,{damage:0,order:{type:'hold'}});S.visibility(s);assert.equal(S.command(s,0,{type:'useItem',ids:[h.id],slot:0,item:23,target:v.id}),null);assert.ok(S.distance(v,b)<5);assert.ok(S.distance(v,a)>5,'staff chooses the highest completed base');
 }
 console.log('PASS main-base technology: four Classic upgrade costs/times and HP gains, independent concurrent grades, expansion/cancel/refund/idle gates, exact saves, enemy privacy, destruction/technology loss with queued heroes and research retained, legacy progress/refund migration and highest-base staff destination');

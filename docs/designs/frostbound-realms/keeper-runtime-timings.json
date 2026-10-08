@@ -1,0 +1,115 @@
+{
+  "author": "MiYu",
+  "scope": "Measured owned native QA commands plus the recorded assertion repair attempt; excludes independent agents and full regression runtime.",
+  "nativeStartedAt": "2026-10-08T04:50:17.145Z",
+  "priorNativeAssertionRun": {
+    "projectOpenMs": 68180,
+    "sourceHeroCheckMs": 188410,
+    "reason": "QA level-six HP assertion corrected from 675 to source-derived 725; no runtime code change"
+  },
+  "preflightMs": 1412,
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 61799
+    },
+    {
+      "name": "native Keeper geometry, original hotkeys and targeted Roots",
+      "ms": 174934
+    },
+    {
+      "name": "native tree summons, original Treant body and portrait",
+      "ms": 106580
+    },
+    {
+      "name": "native Tranquility geometry, source channel and F5 continuation",
+      "ms": 256642
+    }
+  ],
+  "commands": [
+    {
+      "command": "execute: playback.step",
+      "count": 47,
+      "totalMs": 286191,
+      "medianMs": 5888,
+      "maxMs": 9382
+    },
+    {
+      "command": "execute: playback.input",
+      "count": 46,
+      "totalMs": 147014,
+      "medianMs": 5158.5,
+      "maxMs": 5613
+    },
+    {
+      "command": "query: entity.get",
+      "count": 23,
+      "totalMs": 76653,
+      "medianMs": 4885,
+      "maxMs": 5272
+    },
+    {
+      "command": "query: view.screenshot",
+      "count": 6,
+      "totalMs": 33319,
+      "medianMs": 5595.0,
+      "maxMs": 5804
+    },
+    {
+      "command": "execute: panel.focus",
+      "count": 1,
+      "totalMs": 17165,
+      "medianMs": 17165,
+      "maxMs": 17165
+    },
+    {
+      "command": "execute: project.open",
+      "count": 1,
+      "totalMs": 15773,
+      "medianMs": 15773,
+      "maxMs": 15773
+    },
+    {
+      "command": "execute: playback.play",
+      "count": 1,
+      "totalMs": 9891,
+      "medianMs": 9891,
+      "maxMs": 9891
+    },
+    {
+      "command": "query: project.state",
+      "count": 3,
+      "totalMs": 7099,
+      "medianMs": 2119,
+      "maxMs": 2872
+    },
+    {
+      "command": "execute: view.set_game_resolution",
+      "count": 1,
+      "totalMs": 6237,
+      "medianMs": 6237,
+      "maxMs": 6237
+    },
+    {
+      "command": "execute: playback.stop",
+      "count": 1,
+      "totalMs": 403,
+      "medianMs": 403,
+      "maxMs": 403
+    },
+    {
+      "command": "query: profiler.get_samples",
+      "count": 1,
+      "totalMs": 118,
+      "medianMs": 118,
+      "maxMs": 118
+    },
+    {
+      "command": "query: console.get_logs",
+      "count": 1,
+      "totalMs": 80,
+      "medianMs": 80,
+      "maxMs": 80
+    }
+  ]
+}

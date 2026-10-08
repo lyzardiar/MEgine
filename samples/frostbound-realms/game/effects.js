@@ -4,7 +4,7 @@ var FrostEffects=(()=>{
   const definitions=Object.assign({},...FrostEffectArt.artDefinitions.map(d=>d.sections)),stem=p=>{const name=p.split(/[\\/]/).pop().replace(/\.mdl$/i,'');return Object.keys(FrostEffectArt.effects).find(k=>k.toLowerCase()===name.toLowerCase());};
   const blood=definitions.Bblo.Targetart.split(',');
   const spellBindings={bloodlustLeft:stem(blood[0]),bloodlustRight:stem(blood[1]),shield:stem(definitions.Blsh.Targetart),shieldCast:stem(definitions.Blsh.Specialart),portalCaster:stem(definitions.AItp.Casterart),portalArea:stem(definitions.AItp.Areaeffectart),portalArrival:stem(definitions.AItp.Targetart)};
-  Object.assign(spellBindings,{manaBurn:'ManaBurnTarget',immolation:'ImmolationTarget',immolationHit:'ImmolationDamage',taunt:'TauntCaster',flareBase:'ManaFlareBase',flareImpact:'ManaFlareBoltImpact',flareTarget:'ManaFlareTarget',phaseShift:'FaerieDragon_Invis',roar:'RoarTarget',roarCaster:'RoarCaster',faerieFire:'FaerieFireTarget',cyclone:'CycloneTarget'});
+  Object.assign(spellBindings,{keeperRoots:'EntanglingRootsTarget',thornsAura:'ThornsAura',thornsHit:'ThornsAuraDamage',tranquility:'Tranquility',tranquilityHit:'TranquilityTarget',manaBurn:'ManaBurnTarget',immolation:'ImmolationTarget',immolationHit:'ImmolationDamage',taunt:'TauntCaster',flareBase:'ManaFlareBase',flareImpact:'ManaFlareBoltImpact',flareTarget:'ManaFlareTarget',phaseShift:'FaerieDragon_Invis',roar:'RoarTarget',roarCaster:'RoarCaster',faerieFire:'FaerieFireTarget',cyclone:'CycloneTarget'});
   function anchors(mesh,facing=0,scale=1){
     const pitch=-Math.atan2(FrostVisual.camera.height,FrostVisual.camera.depth),c=Math.cos(facing)*scale,s=Math.sin(facing)*scale;
     const camera={model:[c,0,-s,0,0,scale,0,0,s,0,c,0,0,0,0,1],look:[0,Math.sin(pitch),-Math.cos(pitch)],up:[0,Math.cos(pitch),Math.sin(pitch)]};let nodes;
@@ -78,6 +78,11 @@ var FrostEffects=(()=>{
       const c=Math.cos(facing),s=Math.sin(facing),world=destination||[position.x+(point[0]*c+point[2]*s)*scale,position.y+point[1]*scale,position.z+(-point[0]*s+point[2]*c)*scale];
       result.push({slot,name,component:{effect:art.effect,clip,playing:false,looping:animation.loop&&slot!=='flareTarget',speed:1,time_seconds:seconds},parts:art.parts.length?FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+Math.floor(seconds*30)+'@30'):[],position:world,scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});
     }
+    if(u.keeperRoots)add('keeperRoots',clock-u.keeperRoots.frame*Frost.DT);
+    if(Frost.keeperThorns(state,u)>0)add('thornsAura',clock);
+    if(u.thornsHitFrame!==undefined&&clock-u.thornsHitFrame*Frost.DT<.534)add('thornsHit',clock-u.thornsHitFrame*Frost.DT);
+    if(u.tranquility)add('tranquility',clock-u.tranquility.frame*Frost.DT);
+    if(u.tranquilityHitFrame!==undefined&&clock-u.tranquilityHitFrame*Frost.DT<1)add('tranquilityHit',clock-u.tranquilityHitFrame*Frost.DT);
     if(u.manaBurnFrame!==undefined)add('manaBurn',clock-u.manaBurnFrame*Frost.DT);
     if(u.immolation)add('immolation',clock-u.immolationFrame*Frost.DT);
     if(u.immolationHitFrame!==undefined&&clock-u.immolationHitFrame*Frost.DT<1)add('immolationHit',clock-u.immolationHitFrame*Frost.DT);
