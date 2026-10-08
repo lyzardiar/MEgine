@@ -11,7 +11,7 @@ export function createServer({host='127.0.0.1',port=7788}={}) {
   function roomInfo(r){return {type:'room',code:r.code,mode:r.map.mode,name:r.map.name,phase:r.phase,owner:r.owner,players:r.players.map(p=>({team:p.team,name:p.name,ready:p.ready,online:!!p.client,faction:p.faction,heroClass:p.heroClass}))};}
   function publish(r){for(const p of r.players)if(p.client)send(p.client,roomInfo(r));}
   function view(r,p){const state=S.publicState(r.state,p.team);for(const u of state.units){delete u.path;delete u.dest;delete u.route;delete u.home;}state.events=state.events.slice(-24);return state;}
-  function leave(c,retain=false){const r=c.room,p=c.player;if(!r||!p)return;c.room=null;c.player=null;p.client=null;p.expires=Date.now()+(retain?15000:0);if(!retain){r.players=r.players.filter(v=>v!==p);if(r.state)r.state.teams[p.team].ai=true;}if(!r.players.some(v=>v.client)&&!retain)rooms.delete(r.code);else {if(!r.players.some(v=>v.team===r.owner&&v.client))r.owner=r.players.find(v=>v.client)?.team??r.owner;publish(r);}}
+  function leave(c,retain=false){const r=c.room,p=c.player;if(!r||!p)return;c.room=null;c.player=null;p.client=null;p.expires=Date.now()+(retain?15000:0);if(!retain){r.players=r.players.filter(v=>v!==p);if(r.state)S.setAI(r.state,p.team,true);}if(!r.players.some(v=>v.client)&&!retain)rooms.delete(r.code);else {if(!r.players.some(v=>v.team===r.owner&&v.client))r.owner=r.players.find(v=>v.client)?.team??r.owner;publish(r);}}
   function join(c,r,p){leave(c);p.client=c;p.expires=0;c.room=r;c.player=p;c.lastSeq=0;send(c,{type:'joined',team:p.team,token:p.token,code:r.code,state:r.state?view(r,p):null});publish(r);}
   function handle(c,m){
     if(!m||typeof m!=='object'||Array.isArray(m))return fail(c,'Invalid message');
@@ -52,7 +52,7 @@ export function createServer({host='127.0.0.1',port=7788}={}) {
   });
   const interval=setInterval(()=>{
     for(const r of rooms.values()){
-      for(const p of [...r.players])if(!p.client&&p.expires<=Date.now()){r.players=r.players.filter(v=>v!==p);if(r.state)r.state.teams[p.team].ai=true;}
+      for(const p of [...r.players])if(!p.client&&p.expires<=Date.now()){r.players=r.players.filter(v=>v!==p);if(r.state)S.setAI(r.state,p.team,true);}
       if(!r.players.length){rooms.delete(r.code);continue;}if(r.phase!=='playing'&&!(r.phase==='finished'&&(r.state.corpses.length||r.state.resources.some(v=>v.felled?.age<S.TREE_FALL_LIFETIME))))continue;
       for(const q of r.queue){const err=S.command(r.state,q.team,q.command);if(err&&q.client.room===r)fail(q.client,err);}r.queue=[];S.tick(r.state);
       for(const p of r.players)if(p.client)send(p.client,{type:'state',state:view(r,p)});

@@ -1,0 +1,264 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-08T02:17:09.928Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\night-elf-ai-1791425814023\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 54636
+    },
+    {
+      "name": "late original AI economy checkpoint and native source army",
+      "ms": 128579
+    }
+  ],
+  "preflightMs": 1435,
+  "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+  "productMainSha256": "8e823eb0762d1131691451782f0d98315b107512225b7095e23a95331916ab06",
+  "productSceneSha256": "6a3d245cee16c74874dd34a25c15022bfba3740d5da360c12291f75a52a3dde1",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 1635
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 16339
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2501
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 5410
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 15168
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 8868
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4709
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4308
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 427
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6008
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4489
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4943
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4145
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 367
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4872
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4582
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4883
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4267
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4941
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4195
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5043
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4064
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 345
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5074
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4399
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5158
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4071
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 84
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 353
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4850
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4571
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4885
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4205
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 370
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4956
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 4620
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 336
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 14345
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4385
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 104
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 83
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 418
+    }
+  ],
+  "opening": {
+    "sourceStrategy": true,
+    "paidBuild": true,
+    "full120ticks": true,
+    "F5PlanClockRestore": true,
+    "continuation100ticks": true
+  },
+  "openingEvidence": {
+    "path": "docs/designs/frostbound-realms/native-night-elf-ai-opening-qa.json",
+    "sha256": "a7e240e7c1a1e46863459d84707fdac4cf8e9574b9ece11032c3a53a97ff9ac1"
+  },
+  "lateEconomy": {
+    "fundedCheckpoint": true,
+    "sourceArmy": true,
+    "Eternity": true,
+    "nativeContinuation": true,
+    "checkpointFrame": 11340
+  },
+  "shaderRejections": 0,
+  "scope": "Native bundled source AI opening and F5 plan/clock continuation; full funded Node economy checkpoint loads and continues with source late army. Does not claim original captain/hero/difficulty parity, physical input, audio listening or cross-machine LAN.",
+  "shutdown": {
+    "pid": 127816,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

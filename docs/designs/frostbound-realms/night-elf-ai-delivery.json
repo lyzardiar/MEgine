@@ -1,0 +1,136 @@
+{
+  "schema": 1,
+  "baselineCommit": "a13a0fd2ce047ad05d9a6d7e2f5116f06bf9ee3a",
+  "files": [
+    {
+      "path": "samples/frostbound-realms/game/simulation.js",
+      "sha256": "bcd55ebd2ade869eb982c8ffd9e3b952e2cc271f2097a5f147129c103b5a4b26",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "samples/frostbound-realms/game/night-elf-ai.js",
+      "sha256": "d94e08e28a258e5914b31b6c4e369c7973268268d6eb3ab5fa794fe9dbc58a33",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "samples/frostbound-realms/game/night-elf-ai-source.js",
+      "sha256": "129d1fed319b4cac6767d1314d58b33d814aca18a4ef8debb51240f8f86a3e03",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "samples/frostbound-realms/night-elf-ai-sources.json",
+      "sha256": "3d30c738eeb6af0529bd7254af70ba40e77d95b95863925326515005352f1d93",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "samples/frostbound-realms/server.mjs",
+      "sha256": "d40f02706ef946a8ae7fcd907870534e9d95d74eed3cb4a859cf0aaa158c3bff",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "samples/frostbound-realms/README.md",
+      "sha256": "d946cf6b41c79742c4b1415d3a06bc62ca2eed832b4737492a9f269b455d5743",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "scripts/import-frost-night-elf-ai.py",
+      "sha256": "f2f71082739177ab5659131bed6d1abecb0f7d752fab97fccca57de66c96b970",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "scripts/test-frost-night-elf-ai-compiler.py",
+      "sha256": "f015e567708604c2f7c12def81290fe78102f75b10f68a77863a2fc4b66d7e5a",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "scripts/build-frostbound.mjs",
+      "sha256": "8efb4ee5e9a258ac4999fa9c13c818526e12d5c56e0d1cbb4cb0cb9198c19c16",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "scripts/test-frostbound.mjs",
+      "sha256": "c7216e6df54c88ed00e6e8b9a408053d384184046e1a8d5db27b42006fc57d16",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "scripts/test-frost-melee-opening.mjs",
+      "sha256": "0ad822d1b4a2ad46a8467523529ef1ede7abab1374f72b144deb3adaa786f16d",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "scripts/test-frost-night-elf-ai.mjs",
+      "sha256": "4a06b449522b7e896aa5cee3d57b130b13e3fe229c4c6852f9210dc1ff04f8a2",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "scripts/test-frost-night-elf-ai-economy.mjs",
+      "sha256": "9d952aab0704235ef77979b2bedf26c853aab4d7adff28920aa9ee107c51d729",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "scripts/frost-night-elf-ai-fixture.mjs",
+      "sha256": "5855762946a50c6e68a632d0f9f60a57a05f5bc1e49563965bd32385dc947ade",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "scripts/test-frost-night-elf-ai-client.mjs",
+      "sha256": "43cea93ea13e7023b72fbaebc25e31b111944e04899fcda63e95e57684815efe",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "scripts/test-frost-night-elf-ai-network.mjs",
+      "sha256": "94b25747375c4c3ca8a21e38a1f486f228725a7e4d5fec46330c667dc029bc77",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "scripts/qa-frost-night-elf-ai.mjs",
+      "sha256": "38ad74e266d8c1999c44afbb86f553326a703687bdb4f09c0ea269a83c82a915",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/night-elf-ai.md",
+      "sha256": "8ec6c249cfdafad20601c25234a7bf1a93f14cb0380deb6dce8ec89b8dd80b6f",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/night-elf-ai-validation.json",
+      "sha256": "dbf88fc7be938d4bd46a5e0a224be5551200592c5eab3eab2b5176455b182562",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/night-elf-ai-timings.md",
+      "sha256": "d3766676060b50ad330dbe24aa14291ee7cf812270878bbf54aa7acc7c489568",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/night-elf-ai-handoff.md",
+      "sha256": "e3533501340fa51e9fa24e709d9ec83b8e809e7888061fca6be9503035127679",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/native-night-elf-ai-qa.json",
+      "sha256": "7fb3d6e97b45917563e26c38ab83266637f5f62056a6a779f15166027fc877cb",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/native-night-elf-ai-opening-qa.json",
+      "sha256": "a7e240e7c1a1e46863459d84707fdac4cf8e9574b9ece11032c3a53a97ff9ac1",
+      "hashMode": "lf-text"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/night-elf-ai-opening.png",
+      "sha256": "1a44038bc53718e2571c62acc4a92aa5613d2341da3aac7f69161f132da41df4",
+      "hashMode": "binary"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/night-elf-ai-late-army.png",
+      "sha256": "524b597cf80afaa7679e866e36848e5f76a959095cf1b89dc41a0fbfce31c169",
+      "hashMode": "binary"
+    }
+  ],
+  "protected": {
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748",
+    "samples/frostbound-realms/model-catalog.json": "a89d7af34ab89c36236afb28109a4596519b2c3a3c8da3b013e5460877429aef",
+    ".gitattributes": "31363790be6d45c6c611e0c0d47708f2e75caf0f38d5243396b017e8adddb7a8"
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baselineCommit": "a13a0fd2ce047ad05d9a6d7e2f5116f06bf9ee3a",
+  "protocol": 56,
+  "sourceFunctions": 5,
+  "standardRegression": {
+    "passGroups": 214,
+    "exitCode": 0,
+    "logSha256": "b6e5c5e50e9da1f9fc50655b03a80026bd7ca8dae2aca696050dad13fc8dc8b0"
+  },
+  "targetedCoreAndCompiler": {
+    "passed": true,
+    "groups": 7,
+    "rerunAfterCompilerTestIntegration": true
+  },
+  "economy": {
+    "author": "MiYu",
+    "passed": true,
+    "frames": 11340,
+    "simulatedSeconds": 1134,
+    "ms": 9900,
+    "milestones": {
+      "tier1": 1,
+      "altar": 99,
+      "barracks": 1218,
+      "shop": 1833,
+      "workshop": 2184,
+      "tier2": 4180,
+      "ancientwind": 6523,
+      "ancientlore": 6657,
+      "tier3": 7320,
+      "mountaingiant": 7380,
+      "dryad": 7680,
+      "chimaeraroost": 8534,
+      "faeriedragon": 11210,
+      "druidclaw": 11340
+    },
+    "resources": {
+      "gold": 4930,
+      "wood": 10
+    },
+    "sourceFlags": {
+      "basic": false,
+      "archer": false
+    },
+    "scope": "Standard 500 gold/150 wood/5 Wisps, legal source AI commands and full native timers. Custom mine/tree map; legal military regroup/hold orders isolate economy and keep production exits free. No injected income, free buildings, shortened timers or completion edits."
+  },
+  "native": {
+    "report": "docs/designs/frostbound-realms/native-night-elf-ai-qa.json",
+    "openingEvidence": "docs/designs/frostbound-realms/native-night-elf-ai-opening-qa.json",
+    "shaderRejections": 0,
+    "normalShutdown": true,
+    "ownedFixturesRemoved": true,
+    "physicalInput": false,
+    "audioListening": false,
+    "crossMachineLAN": false
+  },
+  "independentReview": {
+    "readOnly": true,
+    "remainingConfirmedP1P2": 0,
+    "covered": [
+      "source semantics",
+      "harvest recovery",
+      "controller takeover",
+      "construction approach",
+      "hero revival cost"
+    ]
+  },
+  "remainingOriginalParity": [
+    "Night Elf hero identities and skills",
+    "full captain creep/retreat/attack/transport logic",
+    "Zeppelin purchasing",
+    "difficulty-specific timing and economy",
+    "original native counting/production equivalence"
+  ],
+  "fullWarcraftGoalComplete": false
+}

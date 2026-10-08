@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "functions": [
+    "init_vars",
+    "basics",
+    "do_upgrades",
+    "build_sequence",
+    "force_level"
+  ],
+  "generatorHashMode": "lf-text",
+  "generator": "scripts/import-frost-night-elf-ai.py",
+  "generatorSha256": "f2f71082739177ab5659131bed6d1abecb0f7d752fab97fccca57de66c96b970",
+  "sources": [
+    {
+      "path": "samples/frostbound-realms/SourceAssets/WarcraftIII/Scripts/elf.ai",
+      "sha256": "f9f72c306936e531c120ce068aaed9457b9213528f3513aae543f206c828b427"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/WarcraftIII/Scripts/common.ai",
+      "sha256": "29f51929ff3c09988a77748dbefea319b72b32bf4bb1a5f6997760a621454818"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "samples/frostbound-realms/game/night-elf-ai-source.js",
+      "sha256": "129d1fed319b4cac6767d1314d58b33d814aca18a4ef8debb51240f8f86a3e03"
+    }
+  ],
+  "scope": "Five pure source strategy functions; native production/counting/harvest/combat remain explicit MEngine adapters."
+}
