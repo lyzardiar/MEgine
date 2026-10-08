@@ -1,0 +1,87 @@
+{
+  "author": "MiYu",
+  "sourceHashes": {
+    "game/warden.js": "4b66d0aae637aed9864cd374a3424daae94d8221d121f1a0a3dcd6dea84eef7b",
+    "game/simulation.js": "c8d09a2b0fc2ad78ac5d6dc691c5744e658dbb91f3cc3d219cad16d1edb16d4e",
+    "game/client.js": "250b1521a75d191b6a8d9ac5c68d43dbe97047cb5133680f4b7097e27fbeee46",
+    "game/visuals.js": "6e125b4209a9fb332f05fe706799c4c0bdff2029dacd35caf068041365b0da1a",
+    "game/effects.js": "117a722c412f374a0373131998a09d796d9d4c6778e9954fb36e6125b2e16cf0",
+    "Assets/Scripts/Main.js": "f3d16a626ccbd69432ef46984bef9158e0b34bf748e7e5a8338cdb21c25d8a3b",
+    "Assets/Scenes/Main.mscene": "4f06ad00348f00d0b35f04c025ac652dee964dacc64c9690755bf0171cdd7c9c",
+    "warden-sources.json": "21260fce3292364ef3873c42d93975a3d5a10babf3c3a5ddfbdf686232eef76f"
+  },
+  "rules": {
+    "groupsPassed": 13,
+    "failed": 0,
+    "scope": "Independent current-source rule groups; Node JavaScript, not original Warcraft runtime"
+  },
+  "generatedClient": {
+    "passed": true,
+    "scope": "Current published generated Main with VM engine adapter: command/research slots, B/F/D/V, right-click autocast, F5 round trip, published public counts and expiry cleanup"
+  },
+  "tcp": {
+    "passed": true,
+    "scope": "Actual local TCP server, ownership checks, four source control paths, summons and reconnect; cross-machine LAN untested"
+  },
+  "fullRegression": {
+    "passed": true,
+    "log": "tmp/warden-base-regression.log",
+    "scope": "Complete scripts/test-frostbound.mjs process exited zero; PASS lines are groups, not a unit-test case count"
+  },
+  "independentAssetRebuild": {
+    "passed": true,
+    "signedOutputs": 587,
+    "sourceRecords": 79,
+    "generators": 11,
+    "allBytesAndReceiptIdentical": true
+  },
+  "independentGameRebuild": {
+    "passed": true,
+    "sceneEntities": 48127,
+    "modelBindings": 321,
+    "sceneScriptAndProjectIdentical": true
+  },
+  "nativeGameplay": "native-warden-qa.json",
+  "nativeTextures": "native-warden-textures-qa.json",
+  "nativeCurrentProduct": {
+    "passed": true,
+    "mainAndSceneMatchPublished": true,
+    "fourTexturedSourceSpells": true,
+    "F5Continuation": true,
+    "shaderRejections": 0,
+    "normalExit": true,
+    "fixtureAndStorageRemoved": true,
+    "report": "native-warden-textures-qa.json",
+    "timingReport": "execution-timing.md"
+  },
+  "unverified": [
+    "Exact original Warcraft particle solver and skill timing parity",
+    "Physical keyboard/mouse input and audio listening",
+    "Cross-machine LAN"
+  ],
+  "generationSnapshot": "tmp/warden-before-generation/snapshot.json",
+  "nativeGameplayTiming": {
+    "inputCount": 57,
+    "medianInputMs": 9129,
+    "totalInputMs": 333089,
+    "steps": [
+      {
+        "name": "project open and ready",
+        "ms": 88075
+      },
+      {
+        "name": "source Warden body, portrait and hotkeys",
+        "ms": 241726
+      },
+      {
+        "name": "Blink origins and source skill research positions",
+        "ms": 175103
+      },
+      {
+        "name": "Vengeance source summons, autocast and F5 continuation",
+        "ms": 226330
+      }
+    ],
+    "scope": "Includes native rendering, command queue and IPC on the large scene; not comparable to the paused bridge-only benchmark."
+  }
+}

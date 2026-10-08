@@ -1,0 +1,627 @@
+{
+  "author": "MiYu",
+  "attempts": [
+    {
+      "author": "MiYu",
+      "passed": false,
+      "startedAt": "2026-10-08T08:54:13.965Z",
+      "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\warden-1791449632824\\sample",
+      "steps": [
+        {
+          "name": "project open and ready",
+          "ms": 93976
+        },
+        {
+          "name": "source Warden body, portrait and hotkeys",
+          "ms": 128496
+        }
+      ],
+      "preflightMs": 70,
+      "editorSha256": "9576d9f99b6c2eb51e6a5fdb841d428ce21569b311efaa7f0924703d88e6919d",
+      "productMainSha256": "04f0557e00abad1aa5d3b935c0e29869f35eea17de48bf06b87b7bfc94789318",
+      "productSceneSha256": "4f06ad00348f00d0b35f04c025ac652dee964dacc64c9690755bf0171cdd7c9c",
+      "physicalInput": false,
+      "audioListening": false,
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3199
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 28348
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 2067
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 9242
+        },
+        {
+          "kind": "execute",
+          "name": "view.set_game_resolution",
+          "ms": 4005
+        },
+        {
+          "kind": "execute",
+          "name": "panel.focus",
+          "ms": 25379
+        },
+        {
+          "kind": "execute",
+          "name": "playback.play",
+          "ms": 12624
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 7813
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 7943
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 192
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1571
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 7953
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1117
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 8404
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 52
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 955
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 8068
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1160
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 8178
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 951
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 7794
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 982
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 7837
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 105
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1307
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 7938
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1016
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 8174
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 59
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 74
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1083
+        },
+        {
+          "kind": "query",
+          "name": "view.screenshot",
+          "ms": 8287
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 72
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1483
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 8267
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 996
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 7786
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 121
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 119
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1446
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 7839
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1079
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 8058
+        },
+        {
+          "kind": "query",
+          "name": "console.get_logs",
+          "ms": 183
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 111
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 885
+        },
+        {
+          "kind": "query",
+          "name": "view.screenshot",
+          "ms": 8699
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 500
+        }
+      ],
+      "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n15 !== 16\n\n    at select (file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-warden.mjs:30:621)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-warden.mjs:38:70\n    at async timed (file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-warden.mjs:28:147)\n    at async file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-warden.mjs:35:2",
+      "logs": [
+        {
+          "level": "info",
+          "message": "MEngine Editor",
+          "source": "editor",
+          "time": 1791449657181
+        },
+        {
+          "level": "info",
+          "message": "\u573a\u666f\u843d\u76d8\uff1apackages/editor/project/Assets/Scenes/*.mscene",
+          "source": "editor",
+          "time": 1791449657181
+        },
+        {
+          "level": "info",
+          "message": "\u65b0\u5efa\u4f1a\u5f39\u51fa\u547d\u540d\uff1b\u53cc\u51fb .mscene \u6253\u5f00\uff1bCtrl+S \u4fdd\u5b58",
+          "source": "editor",
+          "time": 1791449657181
+        },
+        {
+          "level": "info",
+          "message": "\u573a\u666f\u5b58\u50a8\uff1a\u78c1\u76d8 project/Assets/Scenes",
+          "time": 1791449667789
+        },
+        {
+          "level": "info",
+          "message": "\u5df2\u6062\u590d\u573a\u666f Main.mscene",
+          "time": 1791449669771
+        },
+        {
+          "level": "info",
+          "message": "Agent set Game View resolution to 1280 x 720",
+          "time": 1791449701223
+        }
+      ],
+      "shutdown": {
+        "pid": 46052,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    },
+    {
+      "author": "MiYu",
+      "passed": false,
+      "startedAt": "2026-10-08T09:04:00.541Z",
+      "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\warden-1791450216695\\sample",
+      "steps": [
+        {
+          "name": "project open and ready",
+          "ms": 90549
+        },
+        {
+          "name": "source Warden body, portrait and hotkeys",
+          "ms": 154460
+        }
+      ],
+      "preflightMs": 1295,
+      "editorSha256": "9576d9f99b6c2eb51e6a5fdb841d428ce21569b311efaa7f0924703d88e6919d",
+      "productMainSha256": "a55033f11dbc50a34d1a78b3d9b3d2fc6c860beb41ea38ebd355f092e2111b4a",
+      "productSceneSha256": "4f06ad00348f00d0b35f04c025ac652dee964dacc64c9690755bf0171cdd7c9c",
+      "physicalInput": false,
+      "audioListening": false,
+      "commands": [
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3978
+        },
+        {
+          "kind": "execute",
+          "name": "project.open",
+          "ms": 21153
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3307
+        },
+        {
+          "kind": "query",
+          "name": "project.state",
+          "ms": 3587
+        },
+        {
+          "kind": "execute",
+          "name": "view.set_game_resolution",
+          "ms": 10510
+        },
+        {
+          "kind": "execute",
+          "name": "panel.focus",
+          "ms": 28392
+        },
+        {
+          "kind": "execute",
+          "name": "playback.play",
+          "ms": 11657
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 7457
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 9474
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 150
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 3046
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 8743
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1235
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 9661
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 138
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1273
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 8520
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1136
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 9113
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1098
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 9147
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1273
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 8773
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 112
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 916
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 9222
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 959
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 8436
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 21
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 60
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 868
+        },
+        {
+          "kind": "query",
+          "name": "view.screenshot",
+          "ms": 9411
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 70
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 976
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 8606
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 926
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 8983
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 103
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 130
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1013
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 8676
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 953
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 8776
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 3527
+        },
+        {
+          "kind": "query",
+          "name": "entity.get",
+          "ms": 8899
+        },
+        {
+          "kind": "query",
+          "name": "console.get_logs",
+          "ms": 85
+        },
+        {
+          "kind": "execute",
+          "name": "playback.input",
+          "ms": 171
+        },
+        {
+          "kind": "execute",
+          "name": "playback.step",
+          "ms": 1784
+        },
+        {
+          "kind": "query",
+          "name": "view.screenshot",
+          "ms": 9157
+        },
+        {
+          "kind": "execute",
+          "name": "playback.stop",
+          "ms": 485
+        }
+      ],
+      "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(t.qaUnits.find(u=>u.id===target.id).shadowStrike)\n\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-warden.mjs:38:245\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async timed (file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-warden.mjs:28:147)\n    at async file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-warden.mjs:35:2",
+      "logs": [
+        {
+          "level": "info",
+          "message": "MEngine Editor",
+          "source": "editor",
+          "time": 1791450244535
+        },
+        {
+          "level": "info",
+          "message": "\u573a\u666f\u843d\u76d8\uff1apackages/editor/project/Assets/Scenes/*.mscene",
+          "source": "editor",
+          "time": 1791450244535
+        },
+        {
+          "level": "info",
+          "message": "\u65b0\u5efa\u4f1a\u5f39\u51fa\u547d\u540d\uff1b\u53cc\u51fb .mscene \u6253\u5f00\uff1bCtrl+S \u4fdd\u5b58",
+          "source": "editor",
+          "time": 1791450244535
+        },
+        {
+          "level": "info",
+          "message": "\u573a\u666f\u5b58\u50a8\uff1a\u78c1\u76d8 project/Assets/Scenes",
+          "time": 1791450248459
+        },
+        {
+          "level": "info",
+          "message": "\u5df2\u6062\u590d\u573a\u666f Main.mscene",
+          "time": 1791450250735
+        },
+        {
+          "level": "info",
+          "message": "Agent set Game View resolution to 1280 x 720",
+          "time": 1791450282740
+        }
+      ],
+      "shutdown": {
+        "pid": 126916,
+        "normalExit": true,
+        "runtimeRemoved": true,
+        "discoveryRemoved": true
+      }
+    }
+  ]
+}

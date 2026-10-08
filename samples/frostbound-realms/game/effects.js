@@ -5,6 +5,8 @@ var FrostEffects=(()=>{
   const blood=definitions.Bblo.Targetart.split(',');
   const spellBindings={bloodlustLeft:stem(blood[0]),bloodlustRight:stem(blood[1]),shield:stem(definitions.Blsh.Targetart),shieldCast:stem(definitions.Blsh.Specialart),portalCaster:stem(definitions.AItp.Casterart),portalArea:stem(definitions.AItp.Areaeffectart),portalArrival:stem(definitions.AItp.Targetart)};
   Object.assign(spellBindings,{trueshotAura:'TrueshotAura',starfall:'StarfallCaster',starfallHit:'StarfallTarget',keeperRoots:'EntanglingRootsTarget',thornsAura:'ThornsAura',thornsHit:'ThornsAuraDamage',tranquility:'Tranquility',tranquilityHit:'TranquilityTarget',manaBurn:'ManaBurnTarget',immolation:'ImmolationTarget',immolationHit:'ImmolationDamage',taunt:'TauntCaster',flareBase:'ManaFlareBase',flareImpact:'ManaFlareBoltImpact',flareTarget:'ManaFlareTarget',phaseShift:'FaerieDragon_Invis',roar:'RoarTarget',roarCaster:'RoarCaster',faerieFire:'FaerieFireTarget',cyclone:'CycloneTarget'});
+  Object.assign(spellBindings,{blinkCaster:'BlinkCaster',blinkTarget:'BlinkTarget',fanKnives:'FanOfKnivesCaster',shadowStrike:'shadowstrike',vengeanceBirth:'feralspiritdone',vengeanceSpiritBirth:'SpiritOfVengeanceBirthMissile'});
+  for(let i=1;i<=6;i++)spellBindings['vengeanceOrbs'+i]='SpiritOfVengeanceOrbs'+i;
   function anchors(mesh,facing=0,scale=1){
     const pitch=-Math.atan2(FrostVisual.camera.height,FrostVisual.camera.depth),c=Math.cos(facing)*scale,s=Math.sin(facing)*scale;
     const camera={model:[c,0,-s,0,0,scale,0,0,s,0,c,0,0,0,0,1],look:[0,Math.sin(pitch),-Math.cos(pitch)],up:[0,Math.cos(pitch),Math.sin(pitch)]};let nodes;
@@ -69,7 +71,7 @@ var FrostEffects=(()=>{
     const result=[];
     function add(slot,elapsed,point,destination=null){
       const name=spellBindings[slot],art=FrostEffectArt.effects[name];if(!art||elapsed<0)return;
-      const birth=art.animations.findIndex(a=>/^birth$/i.test(a.name)),stand=art.animations.findIndex(a=>/^stand$/i.test(a.name));
+      const birth=art.animations.findIndex(a=>/^birth(?: - \d+)?$/i.test(a.name)),stand=art.animations.findIndex(a=>/^stand$/i.test(a.name));
       let clip=birth>=0&&elapsed<art.animations[birth].duration?birth:stand>=0?stand:birth,seconds=elapsed;
       if(clip<0)return;if(clip!==birth&&birth>=0)seconds-=art.animations[birth].duration;
       if(slot==='flareTarget'){let remaining=elapsed;clip=-1;for(const name of ['Birth','Stand','Death']){const i=art.animations.findIndex(a=>a.name.toLowerCase()===name.toLowerCase());if(i<0)continue;if(remaining<art.animations[i].duration){clip=i;seconds=remaining;break;}remaining-=art.animations[i].duration;}if(clip<0)return;}
@@ -78,6 +80,11 @@ var FrostEffects=(()=>{
       const c=Math.cos(facing),s=Math.sin(facing),world=destination||[position.x+(point[0]*c+point[2]*s)*scale,position.y+point[1]*scale,position.z+(-point[0]*s+point[2]*c)*scale];
       result.push({slot,name,component:{effect:art.effect,clip,playing:false,looping:animation.loop&&slot!=='flareTarget',speed:1,time_seconds:seconds},parts:art.parts.length?FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+Math.floor(seconds*30)+'@30'):[],position:world,scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});
     }
+    if(u.wardenLastSlot===0&&u.wardenBlinkFrom){const elapsed=clock-u.wardenCastFrame*Frost.DT;add('blinkCaster',elapsed,undefined,[u.wardenBlinkFrom.x,Frost.elevation(state.map,u.wardenBlinkFrom.x,u.wardenBlinkFrom.z),u.wardenBlinkFrom.z]);add('blinkTarget',elapsed);}
+    if(u.wardenLastSlot===1)add('fanKnives',clock-u.wardenCastFrame*Frost.DT);
+    if(u.shadowStrike)add('shadowStrike',clock-u.shadowStrike.frame*Frost.DT,at(/^Head Ref$/i)||at(/^Overhead Ref$/i));
+    if(Frost.vengeanceAvatar(u)){if(u.vengeanceBornFrame!==undefined)add('vengeanceBirth',clock-u.vengeanceBornFrame*Frost.DT);const count=u.vengeanceSpirits??Frost.vengeanceCount(state,u);if(count)add('vengeanceOrbs'+count,clock,at(/^Overhead Ref$/i));}
+    if(Frost.vengeanceSpirit(u)&&u.vengeanceBornFrame!==undefined)add('vengeanceSpiritBirth',clock-u.vengeanceBornFrame*Frost.DT);
     if(Frost.priestessTrueshot(state,u)>0)add('trueshotAura',clock);
     if(u.starfall)add('starfall',clock-u.starfall.frame*Frost.DT);
     if(u.starfallHitFrame!==undefined)add('starfallHit',clock-u.starfallHitFrame*Frost.DT);

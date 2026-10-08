@@ -1,0 +1,590 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-08T09:52:40.608Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\warden-textures-1791453143497\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 80106
+    },
+    {
+      "name": "four textured source spells and F5 restore",
+      "ms": 246724
+    }
+  ],
+  "preflightMs": 1398,
+  "editorSha256": "9576d9f99b6c2eb51e6a5fdb841d428ce21569b311efaa7f0924703d88e6919d",
+  "productMainSha256": "f3d16a626ccbd69432ef46984bef9158e0b34bf748e7e5a8338cdb21c25d8a3b",
+  "productSceneSha256": "4f06ad00348f00d0b35f04c025ac652dee964dacc64c9690755bf0171cdd7c9c",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 3096
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 21564
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 1790
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 8627
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 2993
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 23356
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 12171
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6002
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 8356
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2825
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 8317
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1468
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 8403
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 849
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 8407
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1214
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8638
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 393
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1315
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8980
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 98
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 887
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 12695
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8379
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 94
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1403
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 8879
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 154
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1282
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 13529
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8962
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 158
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1115
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 9100
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 197
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1467
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8623
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 156
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1152
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 12130
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8610
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 98
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 162
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 197
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1483
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 8687
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 155
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1330
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 19456
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8647
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 93
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1473
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 8737
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 94
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1007
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 8359
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1090
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 8472
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1189
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 8357
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 998
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8355
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 108
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 549
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 602
+    }
+  ],
+  "lastState": {
+    "frame": 38,
+    "mode": "playing",
+    "selected": [
+      15
+    ],
+    "targeting": null,
+    "units": [
+      {
+        "agility": 28,
+        "armorValue": 6.4,
+        "built": 1,
+        "cargo": 0,
+        "cd": 9994.071999999967,
+        "damage": 40,
+        "heroClass": 3,
+        "hp": 850,
+        "id": 15,
+        "intelligence": 25,
+        "inventory": [],
+        "itemCooldown": 0,
+        "kind": "hero",
+        "level": 6,
+        "mana": 4.157999999999877,
+        "maxHp": 850,
+        "order": {
+          "type": "hold"
+        },
+        "path": [],
+        "pathAt": -100,
+        "queue": [],
+        "respawn": 0,
+        "shield": 0,
+        "skillPoints": 2,
+        "skills": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "slow": 0,
+        "sourceHero": "Ewar",
+        "speed": 3.2,
+        "spell": [
+          8.200000000000006,
+          6.500000000000009,
+          4.700000000000012,
+          178.90000000000006
+        ],
+        "strength": 30,
+        "team": 0,
+        "wardenBlinkFrom": {
+          "x": 0,
+          "z": 0
+        },
+        "wardenCastFrame": 27,
+        "wardenLastSlot": 3,
+        "waypoints": [],
+        "x": -4,
+        "xp": 0,
+        "z": 6.874212621581612e-7
+      },
+      {
+        "built": 1,
+        "cargo": 0,
+        "cd": 9996.199999999986,
+        "damage": 0,
+        "hp": 9822,
+        "id": 16,
+        "inventory": [],
+        "kind": "soldier",
+        "level": 1,
+        "mana": 157.59999999999957,
+        "maxHp": 10000,
+        "order": {
+          "type": "hold"
+        },
+        "path": [],
+        "pathAt": -100,
+        "queue": [],
+        "respawn": 0,
+        "shadowStrike": {
+          "frame": 7,
+          "left": 12.00000000000001,
+          "pulse": 0.10000000000000134,
+          "rank": 1,
+          "source": 15,
+          "team": 0
+        },
+        "shield": 0,
+        "slow": 0,
+        "speed": 3.8,
+        "spell": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "team": 1,
+        "waypoints": [],
+        "x": 2,
+        "xp": 0,
+        "z": 0
+      },
+      {
+        "built": 1,
+        "cargo": 0,
+        "cd": 0,
+        "damage": 100000,
+        "hp": 260,
+        "id": 18,
+        "inventory": [],
+        "kind": "soldier",
+        "level": 1,
+        "mana": 157.59999999999957,
+        "maxHp": 260,
+        "order": {
+          "type": "hold"
+        },
+        "path": [],
+        "pathAt": -100,
+        "queue": [],
+        "respawn": 0,
+        "shield": 0,
+        "slow": 0,
+        "speed": 3.8,
+        "spell": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "team": 1,
+        "waypoints": [],
+        "x": 20,
+        "xp": 0,
+        "yaw": -2.3318090810196264,
+        "z": 20
+      },
+      {
+        "armorValue": 2,
+        "built": 1,
+        "cargo": 0,
+        "cd": 0,
+        "damage": 30.5,
+        "expires": 1827,
+        "hp": 1200,
+        "id": 19,
+        "inventory": [],
+        "kind": "vengeanceavatar",
+        "level": 1,
+        "mana": 376.5999999999999,
+        "maxHp": 1200,
+        "order": {
+          "type": "hold"
+        },
+        "path": [],
+        "pathAt": -100,
+        "queue": [],
+        "respawn": 0,
+        "shield": 0,
+        "slow": 0,
+        "speed": 3.2,
+        "spell": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "summoned": true,
+        "summoner": 15,
+        "team": 0,
+        "vengeanceAuto": true,
+        "vengeanceBornFrame": 27,
+        "vengeanceCastFrame": 30,
+        "vengeanceCd": 1.1999999999999993,
+        "waypoints": [],
+        "x": -2.8,
+        "xp": 0,
+        "z": 6.874212621581612e-7
+      },
+      {
+        "armorValue": 5,
+        "built": 1,
+        "cargo": 0,
+        "cd": 0.5499999999999999,
+        "damage": 19,
+        "expires": 530,
+        "hp": 500,
+        "id": 20,
+        "inventory": [],
+        "kind": "vengeancespirit",
+        "level": 1,
+        "mana": 0,
+        "maxHp": 500,
+        "order": {
+          "type": "hold"
+        },
+        "path": [],
+        "pathAt": -100,
+        "queue": [],
+        "respawn": 0,
+        "shield": 0,
+        "slow": 0,
+        "speed": 2.7,
+        "spell": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "summoned": true,
+        "summoner": 19,
+        "team": 0,
+        "vengeanceBornFrame": 30,
+        "waypoints": [],
+        "x": -1,
+        "xp": 0,
+        "yaw": 1.5707963267948966,
+        "z": 0
+      }
+    ],
+    "projectiles": []
+  },
+  "shadowStrike": true,
+  "fanKnives": true,
+  "blink": true,
+  "vengeance": true,
+  "F5Continuation": true,
+  "shaderRejections": 0,
+  "scope": "Current generated Main and repaired sampled-effect textures: original D/F/B/V casts, poison, Fan, Blink origin/destination effects, both Vengeance summons and F5 restore. Cross-machine LAN, physical input, audio and exact Warcraft solver parity remain unverified.",
+  "shutdown": {
+    "pid": 111360,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

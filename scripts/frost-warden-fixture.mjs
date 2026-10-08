@@ -1,0 +1,2 @@
+// Author: MiYu. Flat isolated source Warden fixture for deterministic skills and native rendering.
+export function wardenFixture(S,level=1,factions=[2,0]){const map=S.defaultMap();map.props=[];map.units=[];map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);const s=S.create('skirmish',{map,factions,ai:[false,false]});s.units=[];const h=S.spawn(s,'hero',0,0,0,{heroClass:3,level,skillPoints:level,cd:10000,order:{type:'hold'}});S.visibility(s);return {s,h};}

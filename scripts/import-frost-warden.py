@@ -121,7 +121,7 @@ def main():
   for record in effect_receipt['generatedFiles']:
    if not record['path'].startswith('Assets/') or record['path'].endswith('effect-catalog.json'):continue
    raw=(effects/record['path']).read_bytes();assert sha(raw)==record['sha256'];target=record['path'].replace('Assets/WarcraftIII/','Assets/Warden/')
-   if target.endswith(('.meffect','.json')):raw=raw.replace(b'Assets/WarcraftIII/',b'Assets/Warden/')
+   if target.endswith(('.mfx','.meffect','.json')):raw=raw.replace(b'Assets/WarcraftIII/',b'Assets/Warden/')
    files[target]=raw
   meshes=json.loads(files['warden-models.json']);art={}
   for effect in json.loads((effects/'Assets/WarcraftIII/effect-catalog.json').read_bytes())['models']:
@@ -130,6 +130,16 @@ def main():
    assert [c['name'] for c in effect['clips']]==[c['name'] for c in mesh['animations']]
    art[name]=dict(effect=effect['effect'].replace('Assets/WarcraftIII/','Assets/Warden/'),parts=mesh['parts'],animations=mesh['animations'])
   files['warden-art.json']=encode(art);files['SourceAssets/Warden/effect-conversion.json']=encode(effect_receipt)
+  spelling={name.lower():name for name in files}
+  def effect_reference(value):
+   if isinstance(value,str) and value.startswith('Assets/'):
+    assert value.lower() in spelling,'Unresolved Warden effect asset: '+value
+    return spelling[value.lower()]
+   if isinstance(value,list):return [effect_reference(v) for v in value]
+   if isinstance(value,dict):return {k:effect_reference(v) for k,v in value.items()}
+   return value
+  for name in list(files):
+   if name.endswith('.mfx'):files[name]=encode(effect_reference(json.loads(files[name])))
   for r in effect_receipt['sourceFiles']:
    raw=(effects/'SourceAssets'/r['path']).read_bytes();assert sha(raw)==r['sha256'] and len(raw)==r['bytes'];path=r['path'].split('/',1)[1];files['SourceAssets/WarcraftIII/'+path]=raw;sources.append(dict(path=path,pack=r['path'].split('/',1)[0],sha256=r['sha256'],bytes=r['bytes']))
  tables={n:base.rows(original('Units/'+n+'.slk')) for n in ['UnitBalance','UnitData','UnitWeapons','UnitAbilities','unitUI','AbilityData','AbilityMetaData']}

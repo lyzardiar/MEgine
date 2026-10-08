@@ -2,6 +2,11 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-warden-source.mjs';
+import './test-frost-warden.mjs';
+import './test-frost-warden-client.mjs';
+import './test-frost-warden-generated.mjs';
+import './test-frost-warden-network.mjs';
 import './test-frost-priestess-source.mjs';
 import './test-frost-priestess.mjs';
 import './test-frost-priestess-client.mjs';

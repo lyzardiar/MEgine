@@ -11,12 +11,12 @@ for(const r of receipt.files){const raw=read(r.path);assert.equal(raw.length,r.b
 for(const [name,hash] of Object.entries(receipt.generators))assert.equal(sha(fs.readFileSync(path.join(root,name)).toString('utf8').replace(/\r\n/g,'\n')),hash,name);
 for(const r of receipt.sources){const raw=read('SourceAssets/WarcraftIII/'+r.path.replace(/\\/g,'/'));assert.equal(raw.length,r.bytes,r.path);assert.equal(sha(raw),r.sha256,r.path);}
 function references(v){
- if(typeof v==='string'&&v.startsWith('Assets/Warden/'))assert.ok(paths.has(v),v);
+ if(typeof v==='string'&&v.startsWith('Assets/'))assert.ok(paths.has(v),v);
  else if(Array.isArray(v))v.forEach(references);
  else if(v&&typeof v==='object')Object.values(v).forEach(references);
 }
 const models=json('warden-models.json');references(models);
-for(const p of paths)if(p.endsWith('.mmat'))references(json(p));
+for(const p of paths)if(p.endsWith('.mmat')||p.endsWith('.mfx'))references(json(p));
 for(const key of ['ClassicWarden','ClassicWardenPortrait','ClassicVengeanceAvatar','ClassicVengeanceAvatarPortrait','ClassicVengeanceSpirit','ClassicVengeanceSpiritPortrait'])assert.ok(models[key].parts.length>0,key);
 for(const key of ['BlinkCaster','BlinkTarget']){const m=models['ClassicWarden'+key];assert.equal(m.boundsSource,'nativeVisiblePose');assert.ok(m.boundsPose.frame>0,'preserve transparent initial frames and measure a visible source pose');assert.ok(m.parts.some(p=>p.states.some(clip=>clip.some(state=>state[4]===0))),'transparent source state remains present');}
 for(let i=1;i<=6;i++)assert.ok(models['ClassicWardenSpiritOfVengeanceOrbs'+i].parts.length>0);
