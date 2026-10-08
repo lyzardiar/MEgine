@@ -8,6 +8,7 @@ var FrostEffects=(()=>{
   Object.assign(spellBindings,{blinkCaster:'BlinkCaster',blinkTarget:'BlinkTarget',fanKnives:'FanOfKnivesCaster',shadowStrike:'shadowstrike',vengeanceBirth:'feralspiritdone',vengeanceSpiritBirth:'SpiritOfVengeanceBirthMissile'});
   Object.assign(spellBindings,{brillianceAura:'Brilliance',massTeleportCaster:'MassTeleportCaster',massTeleportTo:'MassTeleportTo',massTeleportArrival:'MassTeleportTarget'});
   Object.assign(spellBindings,{holyLight:'HolyBoltSpecialArt',divineShield:'DivineShieldTarget',devotionBearer:'DevotionAura',devotionBuff:'GeneralAuraTarget',resurrectionCaster:'Resurrectcaster',resurrectionTarget:'Resurrecttarget'});
+  Object.assign(spellBindings,{mountainClapCaster:'ThunderClapCaster',mountainAvatarCaster:'AvatarCaster',mountainStun:'ThunderclapTarget',mountainClap:'StasisTotemTarget'});
   for(let i=1;i<=6;i++)spellBindings['vengeanceOrbs'+i]='SpiritOfVengeanceOrbs'+i;
   function anchors(mesh,facing=0,scale=1){
     const pitch=-Math.atan2(FrostVisual.camera.height,FrostVisual.camera.depth),c=Math.cos(facing)*scale,s=Math.sin(facing)*scale;
@@ -75,13 +76,17 @@ var FrostEffects=(()=>{
       const name=spellBindings[slot],art=FrostEffectArt.effects[name];if(!art||elapsed<0)return;
       const birth=art.animations.findIndex(a=>/^birth(?: - \d+)?$/i.test(a.name)),stand=art.animations.findIndex(a=>/^stand$/i.test(a.name));
       let clip=birth>=0&&elapsed<art.animations[birth].duration?birth:stand>=0?stand:birth,seconds=elapsed;
-      if(clip<0)return;if(clip!==birth&&birth>=0)seconds-=art.animations[birth].duration;
+      if(slot==='mountainAvatarCaster'){clip=art.animations.findIndex(a=>/^spell$/i.test(a.name));seconds=elapsed;}if(clip<0)return;if(clip!==birth&&birth>=0)seconds-=art.animations[birth].duration;
       if(slot==='flareTarget'){let remaining=elapsed;clip=-1;for(const name of ['Birth','Stand','Death']){const i=art.animations.findIndex(a=>a.name.toLowerCase()===name.toLowerCase());if(i<0)continue;if(remaining<art.animations[i].duration){clip=i;seconds=remaining;break;}remaining-=art.animations[i].duration;}if(clip<0)return;}
       const animation=art.animations[clip];if(slot==='massTeleportCaster')seconds%=animation.duration;if(!animation.loop&&seconds>=animation.duration)return;if(animation.loop&&slot!=='flareTarget')seconds%=animation.duration;
       if(!destination)point??=at(/^Origin Ref$/i)||[0,0,0];
       const c=Math.cos(facing),s=Math.sin(facing),world=destination||[position.x+(point[0]*c+point[2]*s)*scale,position.y+point[1]*scale,position.z+(-point[0]*s+point[2]*c)*scale];
       result.push({slot,name,component:{effect:art.effect,clip,playing:false,looping:animation.loop&&slot!=='flareTarget',speed:1,time_seconds:seconds},parts:art.parts.length?FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+Math.floor(seconds*30)+'@30'):[],position:world,scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});
     }
+    if(u.mountainKingLastSlot===1)add('mountainClapCaster',clock-u.mountainKingCastFrame*Frost.DT);
+    if(u.mountainAvatarFrame!==undefined)add('mountainAvatarCaster',clock-u.mountainAvatarFrame*Frost.DT);
+    if(u.mountainStun||u.mountainStunLeft>0)add('mountainStun',clock,at(/^Overhead Ref$/i));
+    if(u.mountainClap||u.mountainClapLeft>0)add('mountainClap',clock,at(/^Overhead Ref$/i));
     if(u.holyLightFrame!==undefined)add('holyLight',clock-u.holyLightFrame*Frost.DT);
     if(u.divineShield>0)add('divineShield',clock-u.divineShieldFrame*Frost.DT);
     if(Frost.devotionAura(state,u)>0)add('devotionBuff',clock);

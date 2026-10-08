@@ -1,0 +1,2 @@
+// Author: MiYu. Original Mountain King battle fixture shared by simulation, TCP and native acceptance.
+export function mountainKingFixture(S,level=1){const map=S.defaultMap();map.props=[];map.units=[];map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);const s=S.create('skirmish',{map,factions:[0,3],ai:[false,false]});s.units=[];const h=S.spawn(s,'hero',0,0,0,{heroClass:1,level,skillPoints:level,cd:10000,order:{type:'hold'}});S.visibility(s);return {s,h};}

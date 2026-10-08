@@ -1,0 +1,10 @@
+{
+  "author": "MiYu",
+  "generatedClientExitCode": 0,
+  "verifiedAt": "2026-10-08T19:32:41.869958+00:00",
+  "sha256": {
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "870910b7b06eafebb8ea049c4ac3b8f1955a47cb263a22c7e8e47908cf06685e",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "e3bf7845a1878efcfa8cabba64d3bd5ff7f61b9bed02e265bb26783247f54849",
+    "scripts/test-frost-mountain-king-generated.mjs": "6e5e8e1ba859fa33d1603e64313d067a3f68da0f9b75d670548f6bccffb1612a"
+  }
+}

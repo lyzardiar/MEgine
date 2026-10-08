@@ -1,0 +1,779 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-08T19:16:23.824Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\mountain-king-1791486963897\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 67029
+    },
+    {
+      "name": "original Mountain King body, portrait camera, STR card and T/C/B/V controls",
+      "ms": 34070
+    },
+    {
+      "name": "native homing Storm Bolt and original stun effect",
+      "ms": 26719
+    },
+    {
+      "name": "native Thunder Clap damage, slow and original caster/overhead effects",
+      "ms": 13848
+    },
+    {
+      "name": "native additive Avatar, Alternate body/portrait and F5 continuation",
+      "ms": 49978
+    },
+    {
+      "name": "native Bash through actual attack windup and strict F5 save",
+      "ms": 43560
+    }
+  ],
+  "preflightMs": 31,
+  "editorSha256": "643ad6f4e37a678ec4b775175f42c40bead6d669da63bbe2dce0f07e2bcc0c47",
+  "productMainSha256": "870910b7b06eafebb8ea049c4ac3b8f1955a47cb263a22c7e8e47908cf06685e",
+  "productSceneSha256": "e3bf7845a1878efcfa8cabba64d3bd5ff7f61b9bed02e265bb26783247f54849",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2526
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 20615
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2478
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 5351
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 4145
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 17295
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 9655
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4432
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1690
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 116
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3776
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1713
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2095
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1486
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 501
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1279
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1526
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1270
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1553
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1503
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1659
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1287
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1538
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 107
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1176
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1952
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1982
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1541
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 116
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 148
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 62
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 136
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 61
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 127
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 109
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 178
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 64
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1083
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 2214
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 102
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1226
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1448
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1112
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1837
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 122
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 138
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1171
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1458
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1242
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1492
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3215
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1452
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 116
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 137
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 64
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1215
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 2345
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 36
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4808
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1770
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 198
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 139
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1160
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1387
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1170
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1585
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3253
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1449
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 109
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 135
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 69
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1216
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 2169
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 38
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1230
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1391
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1108
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1493
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3868
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1490
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 195
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 151
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1229
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 2198
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 39
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1307
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1458
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1129
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1502
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 118
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 415
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1332
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1466
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1200
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1478
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1463
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1585
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1321
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1867
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 152
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1263
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1861
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1221
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1906
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6280
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1395
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 104
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 130
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 58
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1590
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 1914
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 81
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 58
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 125
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1037
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1416
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1260
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1932
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1099
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1578
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1271
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2276
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 30
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1114
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1549
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1351
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1651
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 13868
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1836
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 200
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1266
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1494
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1372
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1848
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1558
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 2256
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 190
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 173
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 759
+    }
+  ],
+  "presentation": {
+    "originalBody": true,
+    "sourcePortraitCamera": true,
+    "strength": 39,
+    "sourceSkillCards": true
+  },
+  "stormBolt": {
+    "originalHotkey": true,
+    "realProjectile": true,
+    "originalGeometryAndEmitter": true,
+    "stun": true
+  },
+  "thunderClap": {
+    "originalHotkey": true,
+    "rank": 1,
+    "originalCasterEffect": true,
+    "originalSlowEffect": true
+  },
+  "avatar": {
+    "additiveHealth": 500,
+    "additiveDamage": 20,
+    "additiveArmor": 5,
+    "alternateBody": true,
+    "alternatePortrait": true,
+    "F5Continuation": true
+  },
+  "bash": {
+    "actualAttackWindup": true,
+    "originalStunEffect": true,
+    "F5Valid": true
+  },
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Native original Mountain King body/portrait camera, STR HUD and T/C/B/V cards, homing hammer geometry and sampled emitter, Thunder Clap caster/slow effects, additive Avatar with Alternate body/portrait and F5 continuation, actual Bash attack windup and strict saved state. Original Warcraft damage/immunity/scale execution parity, physical input, audio listening and cross-machine LAN remain unverified.",
+  "shutdown": {
+    "pid": 172520,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}
