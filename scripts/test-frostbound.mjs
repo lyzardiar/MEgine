@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-keeper-source.mjs';
 import './test-frost-demon-hunter.mjs';
 import './test-frost-demon-hunter-client.mjs';
 import './test-frost-demon-hunter-network.mjs';

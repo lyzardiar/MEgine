@@ -1,0 +1,22 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "scope": "Source import and standalone profile verification; no game integration, native gameplay, TCP or original Warcraft runtime equivalence claim.",
+  "baselineCommit": "43f1d5c8d6cfb59077d2f8997652c49c89fac2ee",
+  "signedOutputs": 547,
+  "models": 10,
+  "originalPortraitCameras": 2,
+  "effects": 5,
+  "independentRebuildIdentical": true,
+  "sourceTestPassGroups": 4,
+  "existingDemonHunterPassGroups": 9,
+  "nativeGeometryBounds": "Keeper/Treant/effect source models; Tranquility first visible clip/frame including all three layers",
+  "assetLibraryReadOnly": true,
+  "originalRuntimeVerified": false,
+  "canonicalReceiptSha256": "38bf312619ddb58f80bc2025a7c091cd8c631a3759f6a3a827b26e29f6474283",
+  "staging": {
+    "changedPaths": 538,
+    "exactSignedBlobs": 547,
+    "diffCheckPassed": true
+  }
+}

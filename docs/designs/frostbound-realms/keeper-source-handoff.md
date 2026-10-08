@@ -1,0 +1,17 @@
+# Keeper of the Grove source handoff
+
+Author: MiYu
+
+Source assets and rule profiles are imported on codex/frostbound-realms, baseline 43f1d5c8d6cfb59077d2f8997652c49c89fac2ee. Use Git history of this file for the source delivery commit. This stage does not replace the current game hero or claim working original Keeper skills. The full Warcraft recreation remains active.
+
+547 signed outputs include ten complete model bindings, original Keeper/Treant portrait cameras, five effect bindings, command icons, patched source rows, efon Treant rows and first/later source AI learning sequences. Independent output-directory rebuild is identical. Four source/profile/visual PASS groups and the nine existing Demon Hunter groups pass. No C# changes. Existing scene, catalog and root attributes retained exactly; asset-library stayed read-only.
+
+Tranquility has three source geometry layers hidden at the first Stand frame. The Keeper importer imports every original layer and its alpha tracks, and computes native bounds at the first visible clip/frame. Its separate verified node overlay keeps the existing generic importer and all previous signed recipes unchanged. The source-signed assets do not establish original-runtime equivalence or redistribution permission.
+
+Build source: python scripts/import-frost-keeper.py. Independently rebuild: python scripts/import-frost-keeper.py --output tmp/keeper-rebuild. Verify: node scripts/test-frost-keeper-source.mjs. This source check is included in test-frostbound.mjs. keeper-sources.json signs files, original source packages and six canonical generators; keeper-rules.json retains originalRuntimeVerified=false and unresolved runtime semantics.
+
+Next implementation: class1/sourceHero Ekee and keeperVersion1 only in new Night Elf skirmishes; old saves retain the prototype. Wire source profile attributes, projectiles, regeneration/vision, lifecycle and AI into simulation.js; then E/F/R/T commands, tree targeting, original actor/portrait/effect slots and native input. Complete source-root DOT with ordinary/hero duration and dispel handling, source efon summon/tree conversion, melee Thorns reflection and interruptible self-inclusive Tranquility. Integrate strict state/projectile/status validation, F5 and real TCP ownership/privacy/reconnect. Do not mark gameplay complete until these paths run and are verified.
+
+Source constants: Ekee 500HP, initial100/max270 mana, INT primary, 600 attack range, 0.7 cast point/0.8 backswing. Roots: 15/15/25 DPS, 9/24/36s ordinary and 3/4/5s hero, 75mana/8s cooldown/800range. Force: efon 2/3/4, radius150/225/300, lifetime60s, 125mana/20s/800range. Thorns: 10/20/30%, percentage mode, range900, direct melee according to source tooltip. Tranquility: one rank, level6, 20 per1s, duration30s, range900, 125mana/60s, self in target flags. Treant: 300HP, 0armor, 15-17 ordinary melee, source upgrades Reuv/Renb (Nature armor bonus5).
+
+Still unverified in original Warcraft: attribute rounding/complete attack speed, Roots attack/spell restrictions, sparse-tree selection/count/placement, Thorns damage basis/type/aura linger, Tranquility first pulse/interrupt/stacking and XP parity. Original source rows and skill descriptions constrain implementation but do not resolve these runtime rules. The independent source review found no eent row: use efon. Tranquility has only one valid rank despite residual level2/3 SLK columns.
