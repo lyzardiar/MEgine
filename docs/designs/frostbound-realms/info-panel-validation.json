@@ -1,0 +1,43 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "tests": [
+    "test-frost-info-panel.mjs",
+    "test-frost-console-layout.mjs",
+    "test-frost-warden-generated.mjs",
+    "test-frost-production-ancients-client.mjs"
+  ],
+  "independentAssets": {
+    "files": 57,
+    "byteIdentical": true,
+    "modifiedOutputProtected": true
+  },
+  "independentBundle": {
+    "mainSha256": "6d441d1df081631b8eccb77d9bfc232e1c72f2620b8c504f5290c4fe5c315af8",
+    "sceneSha256": "5092a6ed79398a16600aae714cd004358175e24a897ce47e315574a5e8cb4ee5"
+  },
+  "scope": {
+    "existingEntityIdsPreserved": true,
+    "changedExistingHudFrames": 13,
+    "appendedHudFrames": 6,
+    "assetLibraryChanged": false
+  },
+  "nativeReportSha256": "c202cd65db659e11038431d2018aa5ed663334a879a2140ba7ea01307f375ed6",
+  "visualInspection": {
+    "accepted": true,
+    "images": [
+      "info-panel-Emoo.png",
+      "info-panel-1024x768.png",
+      "info-panel-2560x1080.png",
+      "info-panel-attribute-tooltip.png"
+    ]
+  },
+  "initialQa": {
+    "totalMs": 199879.9972,
+    "observation": "Default 2048 screenshot limit caused the 2560 dimension assertion to fail; maxSize is now explicit.",
+    "endedNormally": true,
+    "fixtureRetained": "E:/work/codex/cache/mengine/native-qa/info-panel-1791460326725",
+    "cleanup": "Automatic approval review rejected recursive cleanup; fixture and its isolated save are retained."
+  },
+  "nativeBuildRequired": false
+}

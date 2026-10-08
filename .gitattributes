@@ -86,3 +86,11 @@ scripts/test-frost-sentinel-assets.py text eol=lf
 samples/frostbound-realms/sentinel-*.json text eol=lf
 samples/frostbound-realms/SourceAssets/Sentinel/*.json -text whitespace=cr-at-eol
 samples/frostbound-realms/Assets/Licenses/Classic-Sentinel.txt text eol=lf
+
+scripts/import-frost-info-panel.py text eol=lf
+samples/frostbound-realms/info-panel-*.json text eol=lf
+samples/frostbound-realms/Assets/Licenses/warcraft-info-panel.txt text eol=lf
+samples/frostbound-realms/Assets/Scripts/Main.js -text
+samples/frostbound-realms/Assets/Scenes/Main.mscene text eol=lf
+docs/designs/frostbound-realms/native-info-panel-qa.json text eol=lf
+docs/designs/frostbound-realms/info-panel-validation.json text eol=lf

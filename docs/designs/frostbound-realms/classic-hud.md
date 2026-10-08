@@ -10,9 +10,17 @@ The primary portrait renders the selected classic model through an independent c
 
 The day/night dial follows simulation time and daylight. Its hover text shows the current hour. HUD task and gathering status use a separate row above movement and resident information. Multi-line status occupies that space until it ends; movement information then returns. HUD statistics show health, mana, attack, armor and movement; hero selection also shows experience, skill points and inventory. The editor has its own panel layout, terrain controls, save and page navigation.
 
+The information card uses original attack and armor textures selected by the unit's damage and armor types. The Warden, Priestess of the Moon, Keeper of the Grove and Demon Hunter show their source strength, agility and intelligence values in that order. Attribute icons retain the FDF's 38.4 px square size, 2.8125 px gap and numeric overlay at the bottom right. Experience and skill points occupy the remaining space beside the attributes. Attack/armor text has a separate bounded rectangle; hover text provides the attack range. Health and mana numbers fit inside their portrait bars. Ordinary units, multiple selection and editor mode retain their own information layout.
+
+The source archive contains 27 information-card BLPs. The skin configuration's three `human-attribute-*` paths resolve to the installed archives' `infocard-heroattributes-*` assets; its neutral hero-armor binding resolves to the original hero-armor texture. These four mappings are recorded explicitly in info-panel-icons.json. Original archive origins and hashes are in info-panel-source-archives.json, and converted PNG/source hashes are in info-panel-sources.json. `python scripts/import-frost-info-panel.py` rebuilds from retained sources without an installed game. Blizzard's original asset terms apply.
+
 ![Original human console](console-layout-human.png)
 ![Original night elf console](console-layout-night-elf.png)
 ![Wide viewport](console-layout-2560x1080.png)
+
+![Source Warden information panel](info-panel-Ewar.png)
+
+Generated-client checks cover all four source heroes, level changes, attribute hover, attack/armor mappings, production-queue footer ownership, ordinary unit selection, multiple selection and editor mode. Native acceptance for the four heroes, four resolutions and attribute tooltip is recorded in native-info-panel-qa.json. Screenshot dimensions are requested explicitly to retain the full 2560×1080 image.
 
 Source paths, archives, original bytes and SHA-256 records are retained in console-frame-sources.json, console-sources.json and SourceAssets/WarcraftIII. Original game asset terms apply to the Blizzard console assets. Rendering, input scaling and source composition are described in [console-layout.md](console-layout.md). Native input and screenshot acceptance is recorded in native-console-layout-qa.json; editor layout acceptance is included for 1280×720, 1024×768, 1920×1080 and 2560×1080.
 

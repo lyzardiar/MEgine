@@ -1,0 +1,203 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "root": "E:\\work\\codex\\cache\\mengine\\native-qa\\info-panel-1791460752526",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\info-panel-1791460752526\\sample",
+  "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\a4ff8b288ca1d226",
+  "editorSha256": "f7d3144beac059e3ac2601a0f9782f8f91716a4e0629b459865036f42b9c4514",
+  "mainSha256": "6d441d1df081631b8eccb77d9bfc232e1c72f2620b8c504f5290c4fe5c315af8",
+  "sceneSha256": "5092a6ed79398a16600aae714cd004358175e24a897ce47e315574a5e8cb4ee5",
+  "sourceReceiptSha256": "5f55cd2f7066a1d15bd2768c096017bbf51a8a814b082a08f6558ae5f895747e",
+  "heroes": [
+    {
+      "sourceHero": "Edem",
+      "level": 6,
+      "attributes": {
+        "strength": 31,
+        "agility": 29,
+        "intelligence": 26
+      }
+    },
+    {
+      "sourceHero": "Ekee",
+      "level": 6,
+      "attributes": {
+        "strength": 25,
+        "agility": 22,
+        "intelligence": 31
+      }
+    },
+    {
+      "sourceHero": "Emoo",
+      "level": 6,
+      "attributes": {
+        "strength": 27,
+        "agility": 26,
+        "intelligence": 28
+      }
+    },
+    {
+      "sourceHero": "Ewar",
+      "level": 6,
+      "attributes": {
+        "strength": 30,
+        "agility": 28,
+        "intelligence": 25
+      }
+    }
+  ],
+  "viewports": [
+    {
+      "input": [
+        1280,
+        720
+      ],
+      "sourceHero": "Ewar",
+      "separateFrames": true
+    },
+    {
+      "input": [
+        1024,
+        768
+      ],
+      "sourceHero": "Ewar",
+      "separateFrames": true
+    },
+    {
+      "input": [
+        1920,
+        1080
+      ],
+      "sourceHero": "Ewar",
+      "separateFrames": true
+    },
+    {
+      "input": [
+        2560,
+        1080
+      ],
+      "sourceHero": "Ewar",
+      "separateFrames": true
+    }
+  ],
+  "timings": [
+    {
+      "name": "native project startup",
+      "ms": 55647.43090000001
+    },
+    {
+      "name": "source hero 0",
+      "ms": 30677.0882
+    },
+    {
+      "name": "source hero 1",
+      "ms": 21341.8793
+    },
+    {
+      "name": "source hero 2",
+      "ms": 20030.61970000001
+    },
+    {
+      "name": "source hero 3",
+      "ms": 21501.69099999999
+    },
+    {
+      "name": "viewport 1024x768",
+      "ms": 9957.669599999994
+    },
+    {
+      "name": "viewport 1920x1080",
+      "ms": 10214.31150000001
+    },
+    {
+      "name": "viewport 2560x1080",
+      "ms": 9837.044200000004
+    },
+    {
+      "name": "attribute tooltip",
+      "ms": 3620.430400000012
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "info-panel-Edem.png",
+      "sha256": "b1a1053f00bb09d9829ea0928bec83c4eaf3d5a7c0d26960858692c924a7ed73",
+      "resolution": [
+        1280,
+        720
+      ]
+    },
+    {
+      "path": "info-panel-Ekee.png",
+      "sha256": "71bdc6e8312cd132b807bc3f070eeef402355f79aedd62b8409bb4e4dcbf6370",
+      "resolution": [
+        1280,
+        720
+      ]
+    },
+    {
+      "path": "info-panel-Emoo.png",
+      "sha256": "01f8d39a3bf647b92d876c7ff3e4a06f0bbc539e71328ad4e9a7a30fed31dd2e",
+      "resolution": [
+        1280,
+        720
+      ]
+    },
+    {
+      "path": "info-panel-Ewar.png",
+      "sha256": "4ba01789a1dfab8da1f30d59292a520c62b245c97b9157db53a7f1feafd9be14",
+      "resolution": [
+        1280,
+        720
+      ]
+    },
+    {
+      "path": "info-panel-1024x768.png",
+      "sha256": "bb8677d638d11bd9e27fb56a4759aa949b67f2d627f66b502384213a9d596b64",
+      "resolution": [
+        1024,
+        768
+      ]
+    },
+    {
+      "path": "info-panel-1920x1080.png",
+      "sha256": "1ec6e5ceb5cae4cae0fd56f3dec3f26dd5e7f3569b66ca89b4175de5a8ee3515",
+      "resolution": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "path": "info-panel-2560x1080.png",
+      "sha256": "ba9fc7640141e2d2f09fddc3cbccdd51a597335ed813c5b0cc21b366dfe4d702",
+      "resolution": [
+        2560,
+        1080
+      ]
+    },
+    {
+      "path": "info-panel-attribute-tooltip.png",
+      "sha256": "85f6bd03addc3860191b6f37c336c051156dd4c39a25eea2114418aa9cafe6f9",
+      "resolution": [
+        2560,
+        1080
+      ]
+    }
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "attributeHover": true,
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 43432,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "totalMs": 227153.1613
+}

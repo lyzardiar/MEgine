@@ -1,0 +1,3 @@
+Warcraft III information-card and hero-attribute textures: Blizzard Entertainment. These assets are not CC0 or MIT. Use is subject to the original Warcraft III terms.
+Original archive paths, precedence and SHA-256 are recorded in info-panel-source-archives.json. Source aliases are explicit in info-panel-icons.json. Retained BLP files are in SourceAssets/WarcraftIII. Generated PNG and source hashes are in info-panel-sources.json.
+Author: MiYu. Conversion: scripts/import-frost-info-panel.py and the paletted BLP1 decoder in scripts/import-frost-console.py.
