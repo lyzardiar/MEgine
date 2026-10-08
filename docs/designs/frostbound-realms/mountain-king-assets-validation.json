@@ -1,0 +1,89 @@
+{
+  "author": "MiYu",
+  "stage": "Original Mountain King assets and signed MDX timeline support",
+  "passed": true,
+  "sourceFingerprintMode": "lf-text",
+  "sourceSha256": {
+    "crates/mengine-assets/src/gltf_mdx.rs": "acc41c51781e2659ff01145ddc7b7beb70a5a0f89a277294f6955a4b9ae641d5",
+    "crates/mengine-assets/src/gltf_pose.rs": "7aa90a43684f90e8c5f1e73590da0e667e4b090a383ba554a16c5ef932c314ad",
+    "scripts/import-frost-mountain-king.py": "06cc941122f841a5423a88c544a36321ee1c76c0dd63921f944949c02ee0408e",
+    "scripts/test-frost-mountain-king-assets.mjs": "91f0a2f5592874c3ef1e7ff73c4accf947eb2b23f9b00eea73f7cb64aaf9f8c9",
+    "scripts/qa-frost-mountain-king-assets.mjs": "ee6451b28114c3144d6c1f53fa4bb92d071b6cdc86ec6f832b5583dc16074e16"
+  },
+  "assets": {
+    "signedOutputs": 323,
+    "independentRebuildDifferentFiles": [],
+    "receiptByteIdentical": true,
+    "receiptSha256": "20240600464fdc73522be720633a10e88b752267f48a0d1e35c5ca45ea8ab28d",
+    "geometryBindings": 7,
+    "sampledEffects": 5,
+    "sourceSequence": {
+      "model": "ThunderclapCaster",
+      "name": "nothing",
+      "startMs": -400,
+      "endMs": 400
+    }
+  },
+  "tests": {
+    "assetModule": {
+      "passed": 86,
+      "failed": 0,
+      "exitCode": 0
+    },
+    "realNativePoseSamples": 1419,
+    "existingVisualRegression": {
+      "passed": true,
+      "poseSamples": 5125
+    },
+    "sourceRulesAndHashes": true,
+    "logsSha256": {
+      "mountain-king-assets-tests.log": "325cf81c8f45759c20dcddeb7d57a75ea1c4f8cc019df7a0a2b7efac473bd197",
+      "mountain-king-native-assets-qa.log": "ffb67f787ad8293108617d1d3a5eeaa51f9451b767460e5007f2bf3bd09184cb",
+      "mountain-king-existing-visual-regression.log": "115c90a1409efcea76a5be9881e49d1e6351c0fe7268129803c9ed64a5493040",
+      "mountain-king-native-build.log": "3ae228593dab7f0dfae9a0b08a211e52921cc320f81bca06971b70320a9ea6b1",
+      "mountain-king-pose-probe-build.log": "f63609453c64df5541937417f52040a77b9139885ea393d1dfaa800f6d9de3a9"
+    }
+  },
+  "native": {
+    "passed": true,
+    "editorSha256": "643ad6f4e37a678ec4b775175f42c40bead6d669da63bbe2dce0f07e2bcc0c47",
+    "poseProbeSha256": "f66a0eaac9c38aab23dff12638d9690c8e3b0fcd23283275b0e11d67550204ca",
+    "report": "native-mountain-king-assets-qa.json",
+    "reportSha256": "3b8afd3cd409e0f6747f5b128bae1b67870fe210b754528880cef868e8a74653",
+    "scriptSha256": "d58341ee1386b73f4f2429e1594936cf6822687856772f6cb29e6cae1de91b71",
+    "sceneSha256": "35981ad7261c2a6227c71c04a55bdccb3f2864cbd11c8983ee4d8e2f3e1d518d",
+    "visualReview": {
+      "passed": true,
+      "image": "mountain-king-source-assets.png",
+      "imageSha256": "169c8f8450575b2d4445935d62720507188ab7b4ca633ddad518c160c0edb426",
+      "scope": "Body and Alternate texture forms, raw ordinary/Alternate portrait geometry and visible source effects in an isolated authoring preview. Uniform authoring scales and raw portrait backdrop geometry are not in-game presentation."
+    },
+    "shutdown": {
+      "pid": 120476,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    },
+    "cleanup": {
+      "fixtureRemoved": true,
+      "qaStorageRemoved": true
+    },
+    "commandTotalMs": 9083
+  },
+  "independentReadOnlyReview": {
+    "sourceRules": true,
+    "signedTimelineOverflowAndClockOrigins": true
+  },
+  "gameplayIntegrated": false,
+  "originalWarcraftRuntimeParity": false,
+  "physicalInput": false,
+  "audioListening": false,
+  "scope": "Isolated native source-asset rendering: ordinary and Alternate body and portrait, original missile and sampled effects, signed source sequence loading. No Mountain King gameplay, source Warcraft runtime parity or physical input acceptance.",
+  "remaining": [
+    "Hmkg four abilities, attributes, AI, HUD source camera, strict saves and TCP integration",
+    "Bash damage type, armor and immunity semantics",
+    "Avatar health adjustment, immunity exceptions and scale execution",
+    "Warcraft global clock continuity across source animation clips",
+    "Complete factions, campaigns, editor and classic TD/Dota content"
+  ]
+}

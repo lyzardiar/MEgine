@@ -102,3 +102,7 @@ packages/editor/src/store.ts whitespace=cr-at-eol
 scripts/import-frost-paladin.py text eol=lf
 samples/frostbound-realms/paladin-*.json text eol=lf
 samples/frostbound-realms/Assets/Licenses/Classic-Paladin.txt text eol=lf
+scripts/import-frost-mountain-king.py text eol=lf
+samples/frostbound-realms/mountain-king-*.json text eol=lf
+samples/frostbound-realms/Assets/Licenses/Classic-MountainKing.txt text eol=lf
+samples/frostbound-realms/SourceAssets/WarcraftIII/Units/CommonAbilityFunc.txt -text whitespace=cr-at-eol,-blank-at-eol

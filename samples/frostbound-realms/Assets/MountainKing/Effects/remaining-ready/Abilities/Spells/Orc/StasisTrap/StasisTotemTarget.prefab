@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "StasisTotemTarget",
+  "root": {
+    "id": "root",
+    "name": "StasisTotemTarget",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "SampledEffect": {
+        "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/Orc/StasisTrap/StasisTotemTarget.mfx",
+        "clip": 1,
+        "playing": true,
+        "looping": true,
+        "speed": 1,
+        "time_seconds": 0
+      }
+    },
+    "children": []
+  }
+}

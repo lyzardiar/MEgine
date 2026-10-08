@@ -4,20 +4,21 @@ use glam::{Mat4, Vec3, Vec4};
 use serde::Deserialize;
 
 fn fail(message: &str) -> AssetError { AssetError::Gltf(format!("MDX transform metadata: {message}")) }
+fn source_time_valid(time: i64) -> bool { (i32::MIN as i64..=u32::MAX as i64).contains(&time) }
 
 #[derive(Deserialize)]
 #[serde(rename_all="camelCase")]
 struct Track {
     interpolation: u32,
     global_sequence: i32,
-    times: Vec<u32>,
+    times: Vec<i64>,
     values: Vec<Vec<f32>>,
     in_tangents: Option<Vec<Vec<f32>>>,
     out_tangents: Option<Vec<Vec<f32>>>,
     #[serde(default)] collapse_outside: bool,
 }
 #[derive(Deserialize)]
-struct Sequence { name: String, start: u32, end: u32 }
+struct Sequence { name: String, start: i64, end: i64 }
 #[derive(Deserialize)]
 #[serde(rename_all="camelCase")]
 struct Node {
@@ -37,17 +38,17 @@ pub(crate) struct MdxAnimation { sequences: Vec<Sequence>, global_sequences: Vec
 impl Track {
     fn validate(&self, width: usize, globals: usize) -> Result<(),AssetError> {
         let values_valid=|values: &[Vec<f32>]| values.len()==self.times.len() && values.iter().all(|v|v.len()==width && v.iter().all(|n|n.is_finite()));
-        if self.interpolation>3 || self.global_sequence < -1 || self.global_sequence>=0 && self.global_sequence as usize>=globals || self.times.windows(2).any(|w|w[0]>w[1]) || !values_valid(&self.values) { return Err(fail("invalid key values, times or global sequence")); }
+        if self.interpolation>3 || self.global_sequence < -1 || self.global_sequence>=0 && self.global_sequence as usize>=globals || self.times.iter().any(|t|!source_time_valid(*t)) || self.times.windows(2).any(|w|w[0]>w[1]) || !values_valid(&self.values) { return Err(fail("invalid key values, times or global sequence")); }
         if self.interpolation>=2 && (!self.in_tangents.as_deref().is_some_and(values_valid) || !self.out_tangents.as_deref().is_some_and(values_valid)) { return Err(fail("missing or invalid cubic tangents")); }
         Ok(())
     }
     fn value(values: &[Vec<f32>], index: usize) -> Vec4 {
         let v=&values[index];Vec4::new(v[0],v.get(1).copied().unwrap_or(0.0),v.get(2).copied().unwrap_or(0.0),if v.len()==4 {v[3]} else {0.0})
     }
-    fn sample(&self, sequence: &Sequence, wall: u32, globals: &[u32], rest: Vec4, rotation: bool) -> Vec4 {
+    fn sample(&self, sequence: &Sequence, wall: i64, globals: &[u32], rest: Vec4, rotation: bool) -> Vec4 {
         if self.times.is_empty() { return rest; }
         let (lo,hi,time)=if self.global_sequence>=0 {
-            let period=globals[self.global_sequence as usize];(0,self.times.len(),if period>0 {wall%period} else {0})
+            let period=globals[self.global_sequence as usize] as i64;(0,self.times.len(),if period>0 {wall%period} else {0})
         } else {
             (self.times.partition_point(|t|*t<sequence.start),self.times.partition_point(|t|*t<=sequence.end),sequence.start+wall)
         };
@@ -85,7 +86,7 @@ impl MdxAnimation {
         let animations=document.animations().collect::<Vec<_>>();let nodes=document.nodes().collect::<Vec<_>>();
         if result.sequences.len()!=animations.len() { return Err(fail("sequence count differs from glTF")); }
         for (sequence,animation) in result.sequences.iter().zip(animations) {
-            if sequence.end<=sequence.start || sequence.end-sequence.start>600_000 || sequence.name!=animation.name().unwrap_or("") { return Err(fail("invalid source sequence")); }
+            if !source_time_valid(sequence.start) || !source_time_valid(sequence.end) || sequence.end<=sequence.start || sequence.end-sequence.start>600_000 || sequence.name!=animation.name().unwrap_or("") { return Err(fail("invalid source sequence")); }
         }
         let mut seen=vec![false;nodes.len()];
         for node in &result.nodes {
@@ -104,7 +105,7 @@ impl MdxAnimation {
     }
     pub(crate) fn apply(&self, clip: usize, time: f32, matrices: &mut [Mat4]) -> Result<(),AssetError> {
         let sequence=self.sequences.get(clip).ok_or_else(||fail("source clip is missing"))?;
-        let wall=((time*1000.0).round_ties_even() as u32).min(sequence.end-sequence.start);
+        let wall=((time*1000.0).round_ties_even() as u32 as i64).min(sequence.end-sequence.start);
         for node in &self.nodes {
             let sample=|track: &Option<Track>, rest, rotation| track.as_ref().map_or(rest,|t|t.sample(sequence,wall,&self.global_sequences,rest,rotation));
             let translation=Vec3::from_array(node.rest_translation)+sample(&node.translation,Vec4::ZERO,false).truncate();
@@ -118,7 +119,7 @@ impl MdxAnimation {
     pub(crate) fn attachment(&self, node: usize, clip: usize, time: f32) -> Option<(u32,&str,f32)> {
         let attachment=self.nodes.get(node).filter(|n|n.node==node).or_else(||self.nodes.iter().find(|n|n.node==node))?.attachment.as_ref()?;
         let sequence=self.sequences.get(clip)?;
-        let wall=((time*1000.0).round_ties_even() as u32).min(sequence.end-sequence.start);
+        let wall=((time*1000.0).round_ties_even() as u32 as i64).min(sequence.end-sequence.start);
         let visibility=attachment.visibility.as_ref().map_or(1.0,|t|t.sample(sequence,wall,&self.global_sequences,Vec4::X,false).x);
         Some((attachment.id,&attachment.path,visibility))
     }
@@ -127,7 +128,7 @@ impl MdxAnimation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    fn track(mode: u32, global: i32, times: Vec<u32>, values: Vec<Vec<f32>>) -> Track { Track {interpolation:mode,global_sequence:global,times,values,in_tangents:None,out_tangents:None,collapse_outside:false} }
+    fn track(mode: u32, global: i32, times: Vec<i64>, values: Vec<Vec<f32>>) -> Track { Track {interpolation:mode,global_sequence:global,times,values,in_tangents:None,out_tangents:None,collapse_outside:false} }
     fn sequence() -> Sequence { Sequence {name:"walk".into(),start:1000,end:2134} }
     #[test]
     fn exact_keys_keep_motion_at_fractional_loop_boundaries() {
@@ -159,6 +160,19 @@ mod tests {
         assert!(track(1,0,vec![0],vec![vec![0.0;3]]).validate(3,0).is_err());
         assert!(track(2,-1,vec![0],vec![vec![0.0;3]]).validate(3,0).is_err());
         assert!(track(1,-1,vec![0],vec![vec![f32::NAN;3]]).validate(3,0).is_err());
+        for time in [i32::MIN as i64-1,u32::MAX as i64+1] { assert!(track(1,-1,vec![time],vec![vec![0.0;3]]).validate(3,0).is_err()); }
+    }
+    #[test]
+    fn signed_sequence_windows_and_global_keys_keep_the_source_time_origin() {
+        let sequence=Sequence {name:"nothing".into(),start:-400,end:400};
+        let mut t=track(1,-1,vec![-800,-400,0,400,800],vec![vec![-20.0;3],vec![0.0;3],vec![10.0;3],vec![20.0;3],vec![40.0;3]]);
+        assert!(t.validate(3,0).is_ok());
+        for (wall,expected) in [(0,0.0),(200,5.0),(400,10.0),(800,20.0)] { assert_eq!(t.sample(&sequence,wall,&[],Vec4::ONE,false).x,expected); }
+        t.global_sequence=0;t.times=vec![-400,600];t.values=vec![vec![0.0;3],vec![1.0;3]];
+        assert!(t.validate(3,1).is_ok());assert_eq!(t.sample(&sequence,0,&[1000],Vec4::ONE,false).x,0.4);assert_eq!(t.sample(&sequence,1100,&[1000],Vec4::ONE,false).x,0.5);
+        t.global_sequence=-1;t.times=vec![u32::MAX as i64-100,u32::MAX as i64];t.values=vec![vec![0.0;3],vec![1.0;3]];
+        let positive=Sequence {name:"legacy".into(),start:u32::MAX as i64-100,end:u32::MAX as i64};
+        assert!(t.validate(3,0).is_ok());assert_eq!(t.sample(&positive,50,&[],Vec4::ONE,false).x,0.5);
     }
     #[test]
     fn source_matrix_keeps_nonuniform_and_collapsed_scales() {

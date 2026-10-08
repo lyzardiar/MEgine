@@ -335,4 +335,18 @@ mod tests {
         assert_eq!(source.sample_nodes(0,30,60,None).unwrap()[1].matrix.w_axis.truncate(),Vec3::new(12.0,0.0,0.0));
         assert!(source.sample_nodes(1,0,60,None).is_err());assert!(source.sample_nodes(0,0,0,None).is_err());
     }
+    #[test]
+    fn signed_source_sequence_samples_motion_and_attachment_visibility() {
+        let value=serde_json::json!({"asset":{"version":"2.0"},"nodes":[{}],"animations":[{"name":"nothing","samplers":[],"channels":[],"extras":{"menginePlayback":{"durationSeconds":0.8,"loop":false}}}]});
+        let gltf=gltf::Gltf::from_slice(&serde_json::to_vec(&value).unwrap()).unwrap();
+        let metadata=serde_json::json!({"sequences":[{"name":"nothing","start":-400,"end":400}],"globalSequences":[],"nodes":[{"node":0,"restTranslation":[0,0,0],"translation":{"interpolation":1,"globalSequence":-1,"times":[-400,0,400],"values":[[0,0,0],[10,0,0],[20,0,0]]},"attachment":{"id":0,"path":"effect.mdx","visibility":{"interpolation":0,"globalSequence":-1,"times":[-400,0,400],"values":[[0],[1],[0]]}}}]});
+        let mdx=crate::gltf_mdx::MdxAnimation::parse(metadata.clone(),&gltf.document).unwrap();
+        let source=GltfPoseSource {document:gltf.document,buffers:vec![],billboards:vec![0],mesh_billboards:false,mdx:Some(mdx)};
+        for (frame,x,visible) in [(0,0.0,0.0),(12,5.0,0.0),(24,10.0,1.0),(48,20.0,0.0),(60,20.0,0.0)] {
+            let poses=source.sample_nodes(0,frame,60,None).unwrap();assert_eq!(poses[0].matrix.w_axis.x,x);assert_eq!(poses[0].attachment.as_ref().unwrap().visibility,visible);
+        }
+        for invalid in [serde_json::json!(-2147483649i64),serde_json::json!(4294967296i64)] {
+            let mut bad=metadata.clone();bad["sequences"][0]["start"]=invalid;assert!(crate::gltf_mdx::MdxAnimation::parse(bad,&source.document).is_err());
+        }
+    }
 }

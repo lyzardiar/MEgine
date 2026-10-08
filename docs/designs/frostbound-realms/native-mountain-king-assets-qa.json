@@ -1,0 +1,102 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-08T18:29:29.085Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\mountain-king-assets-1791484168955\\sample",
+  "editorSha256": "643ad6f4e37a678ec4b775175f42c40bead6d669da63bbe2dce0f07e2bcc0c47",
+  "scriptSha256": "d58341ee1386b73f4f2429e1594936cf6822687856772f6cb29e6cae1de91b71",
+  "sceneSha256": "35981ad7261c2a6227c71c04a55bdccb3f2864cbd11c8983ee4d8e2f3e1d518d",
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 683
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 607
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 4
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 5
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 84
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 1645
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 13
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 6018
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 2
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 5
+    }
+  ],
+  "physicalInput": false,
+  "audioListening": false,
+  "scope": "Isolated native source-asset rendering: ordinary and Alternate body and portrait, original missile and sampled effects, signed source sequence loading. No Mountain King gameplay, source Warcraft runtime parity or physical input acceptance.",
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 120476,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "visualReview": {
+    "passed": true,
+    "image": "mountain-king-source-assets.png",
+    "imageSha256": "169c8f8450575b2d4445935d62720507188ab7b4ca633ddad518c160c0edb426",
+    "scope": "Body and Alternate texture forms, raw ordinary/Alternate portrait geometry and visible source effects in an isolated authoring preview. Uniform authoring scales and raw portrait backdrop geometry are not in-game presentation."
+  }
+}
