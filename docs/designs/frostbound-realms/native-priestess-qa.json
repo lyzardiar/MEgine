@@ -1,0 +1,680 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-08T05:39:57.056Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\priestess-1791437989060\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 66463
+    },
+    {
+      "name": "native Priestess original body, source Scout and Owl portrait",
+      "ms": 231327
+    },
+    {
+      "name": "native Searing Arrows manual target and autocast button",
+      "ms": 198190
+    },
+    {
+      "name": "native Starfall source channel, all geometry and F5 continuation",
+      "ms": 134944
+    }
+  ],
+  "preflightMs": 1442,
+  "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+  "productMainSha256": "3e88eec8efffb64bc70e9142c6e1bd67495c4f380f078438c24e7d3ee6cabcce",
+  "productSceneSha256": "d00b83262d56cdab59a0869722d7e94819accd5d51d3e6cd109cff11e738c420",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 662
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 18084
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2575
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 7015
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 20346
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 12080
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5493
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6336
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 417
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8016
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6691
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7351
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6336
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 423
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7389
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6785
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6916
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6392
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7042
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 7606
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8013
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 5970
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 442
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7137
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6467
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6905
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6123
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 80
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 414
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6720
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 6559
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 427
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6893
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6385
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6770
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6613
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8466
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 5945
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 406
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7117
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 7285
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 131
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 472
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7255
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6608
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7199
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6582
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 108
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 423
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7112
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 6565
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 106
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 99
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 427
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7422
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 7009
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7268
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6707
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7283
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6845
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7313
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6177
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 414
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6988
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6714
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7633
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6645
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7069
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6754
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7347
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6634
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 429
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7357
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6554
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7400
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6758
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7903
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6160
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 407
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7286
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 6929
+    },
+    {
+      "kind": "query",
+      "name": "scene.snapshot",
+      "ms": 1281
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 72
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 362
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7050
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6385
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6897
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6078
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 80
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 95
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 368
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6823
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6307
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6904
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6800
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7088
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6324
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7109
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 5863
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 414
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6826
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6424
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6779
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6538
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6723
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6364
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6672
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6426
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8160
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 5892
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 417
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6843
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 6536
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 143
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 201
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 444
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6967
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 6613
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 448
+    }
+  ],
+  "scout": {
+    "sourceHotkey": true,
+    "sourceOwl": true,
+    "sourceCamera": true,
+    "paidCast": true
+  },
+  "searing": {
+    "manualHotkey": true,
+    "sourceArrow": true,
+    "rightClickAutocast": true
+  },
+  "error": "AssertionError [ERR_ASSERTION]: Assets/Priestess/Models/Abilities/Spells/NightElf/Starfall/StarfallCaster/geoset-00-animated.glb\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-priestess.mjs:46:293\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async timed (file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-priestess.mjs:27:147)\n    at async file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-priestess.mjs:44:2",
+  "logs": [
+    {
+      "level": "info",
+      "message": "MEngine Editor",
+      "source": "editor",
+      "time": 1791437997719
+    },
+    {
+      "level": "info",
+      "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
+      "source": "editor",
+      "time": 1791437997719
+    },
+    {
+      "level": "info",
+      "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
+      "source": "editor",
+      "time": 1791437997719
+    },
+    {
+      "level": "info",
+      "message": "场景存储：磁盘 project/Assets/Scenes",
+      "time": 1791438001082
+    },
+    {
+      "level": "info",
+      "message": "已恢复场景 Main.mscene",
+      "time": 1791438002234
+    },
+    {
+      "level": "info",
+      "message": "Agent set Game View resolution to 1280 x 720",
+      "time": 1791438024754
+    }
+  ],
+  "shutdown": {
+    "pid": 76944,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  }
+}

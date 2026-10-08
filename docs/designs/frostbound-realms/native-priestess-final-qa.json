@@ -1,0 +1,238 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-08T06:24:40.917Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\priestess-final-1791440670888\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 81213
+    },
+    {
+      "name": "final terrain cold start, source Priestess/Owl HUD and F5",
+      "ms": 166860
+    }
+  ],
+  "preflightMs": 1268,
+  "editorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+  "productMainSha256": "6110cd17639314a2aa1f9839841e57b4d4602bb67bb6d04dbd7bd8be728e35d4",
+  "productSceneSha256": "d00b83262d56cdab59a0869722d7e94819accd5d51d3e6cd109cff11e738c420",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 652
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 19432
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2889
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 3165
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 9449
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 26043
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 13101
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5965
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6413
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 439
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7633
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 7291
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7604
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6479
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 431
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7333
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6881
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7643
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6827
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7177
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6860
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7677
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6763
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 419
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7466
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 6879
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7706
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6597
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 93
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 460
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7561
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 7263
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7533
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 7110
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 7287
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 6996
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 66
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 49
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 510
+    }
+  ],
+  "finalProduct": {
+    "coldTerrainEntry": true,
+    "sourceHero": true,
+    "sourceOwl": true,
+    "auraHud": true,
+    "F5Validated": true
+  },
+  "shaderRejections": 0,
+  "scope": "Final generated product cold terrain entry, source Priestess/Owl HUD and F5 save validation. Complete Starfall/autocast/F5 continuation acceptance is recorded separately in native-priestess-incremental-qa.json; original Warcraft parity and physical input/audio remain unverified.",
+  "shutdown": {
+    "pid": 10116,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

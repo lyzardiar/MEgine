@@ -5,6 +5,21 @@ import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 globalThis.Frost=S;const T=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
+{
+  const fullMap=S.defaultMap(),incrementalMap=S.clone(fullMap);let samples=0,elevations=0,totalSamples=0;
+  const independentDetails=map=>{const other=S.clone(map);other.terrain.fill(1);T.details(other);return T.details(S.clone(map));};
+  globalThis.Frost={...S,groundSample:(...args)=>{samples++;return S.groundSample(...args);},elevation:(...args)=>{elevations++;return S.elevation(...args);}};
+  try{
+    let values;
+    for(let i=0;i<T.detailCount;i+=8){samples=0;elevations=0;const next=T.details(incrementalMap,8);if(values)assert.equal(next,values,'incremental details retain array identity');values=next;assert.ok(samples<=8,'at most eight candidate samples per frame');assert.ok(elevations<=32,'at most four normal samples per candidate');totalSamples+=samples;}
+    assert.ok(totalSamples>8,'test exercises cold work over multiple frames');assert.deepEqual(values,independentDetails(fullMap),'incremental decoration converges to independent complete geometry and normals');samples=0;elevations=0;assert.equal(T.details(incrementalMap,8),values);assert.equal(samples+elevations,0,'completed decoration performs no new sampling');
+    const networkMap=S.defaultMap();networkMap.surfaces[19]=2;let networkValues;
+    for(let i=0;i<T.detailCount;i+=8){samples=0;const next=T.details(S.clone(networkMap),8);if(networkValues)assert.equal(next,networkValues,'identical TCP map snapshots retain decoration progress');networkValues=next;assert.ok(samples<=8);}
+    assert.deepEqual(networkValues,independentDetails(networkMap),'changing map identity still converges to independent complete decorations');assert.ok(networkValues.filter(Boolean).length>8,'later candidates survive network snapshots');
+    incrementalMap.terrain.fill(1);const changed=T.details(incrementalMap,8);assert.notEqual(changed,values,'map edits invalidate the decoration cache');assert.deepEqual(T.details(incrementalMap),T.details(S.clone(incrementalMap)),'edited map rebuild matches synchronous sampling');assert.ok(changed.every(v=>v===null),'water removes stale decorations');
+  }finally{globalThis.Frost=S;}
+  console.log('PASS: bounded incremental terrain decorations, deterministic completion, stable cache and map-edit invalidation');
+}
 const ridge=S.defaultMap();assert.ok(ridge.heights.filter(h=>h>0).length>=100);for(let i=0;i<1024;i++){assert.equal(ridge.heights[i],ridge.heights[1023-i]);}for(const spawn of ridge.spawns)assert.ok(S.flatSite(ridge,...spawn,3));assert.ok(S.traversable(ridge,-5,-7,-11,-7),'west ridge is reached over its ramp');assert.ok(S.traversable(ridge,5,7,11,7),'east ridge is reached over its mirrored ramp');assert.ok(!S.traversable(ridge,-19,-9,-17,-9),'cliff face blocks ground travel');
 {
   assert.equal(ridge.ramps.filter(Boolean).length,20);assert.ok(!S.traversable(ridge,-5,-13,-9,-13),'ridge sides retain exposed cliffs');

@@ -1,0 +1,77 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "recordedAt": "2026-10-08T06:32:01.802104+00:00",
+  "baseline": "53a02c300de0f8ff258ed29793b4204e0a559f04",
+  "protocol": 59,
+  "sourceHero": "Emoo",
+  "sourceOwlRanks": [
+    "nowl",
+    "now2",
+    "now3"
+  ],
+  "priestessVersion": 1,
+  "legacyPriestessVersion": 0,
+  "fullRegressionPassGroups": 259,
+  "fullRegressionLogSha256": "ffc754c6b8d7a65c1c8c28d2ad02997ea1ca9fd9cf9ef6b4e1e913c12a68366f",
+  "additionalFinalTerrainValidation": "bounded work, independent synchronous equality, cross-snapshot progress and map edits passed after final cache update",
+  "sourceOutputCount": 404,
+  "generatorHashCount": 11,
+  "sourceReceiptVerified": true,
+  "independentRebuildByteIdentical": true,
+  "nativeReport": "native-priestess-final-qa.json",
+  "initialNativeReport": "native-priestess-qa.json",
+  "initialNativePassed": false,
+  "nativePassed": true,
+  "nativeFinalProduct": {
+    "coldTerrainEntry": true,
+    "sourceHero": true,
+    "sourceOwl": true,
+    "auraHud": true,
+    "F5Validated": true
+  },
+  "nativeSkillIntegrationReport": "native-priestess-incremental-qa.json",
+  "nativeSkillIntegrationPassed": true,
+  "nativeSkillIntegrationProduct": {
+    "sourceHero": true,
+    "sourceOwl": true,
+    "auraHud": true,
+    "autocastLabel": true,
+    "sourceStarfall": true,
+    "sevenVisibleBirthLayers": true,
+    "enemyPulses": true,
+    "F5Validated": true,
+    "F5Continuation": true,
+    "stopInterruption": true
+  },
+  "nativeShaderRejections": 0,
+  "nativeNormalExit": true,
+  "ownedQaFixtureRemoved": true,
+  "oldOwnedQaCleanup": {
+    "ownedExitedFixturesRemoved": [
+      "priestess-1791437989060",
+      "priestess-final-1791438845914",
+      "priestess-final-1791439463060"
+    ]
+  },
+  "protectedSha256": {
+    ".gitattributes": "31363790be6d45c6c611e0c0d47708f2e75caf0f38d5243396b017e8adddb7a8",
+    "samples/frostbound-realms/model-catalog.json": "a89d7af34ab89c36236afb28109a4596519b2c3a3c8da3b013e5460877429aef",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "f305cea6876e8e452cef5826e6054679053c9b77bb42d8a92c918c57e787d748"
+  },
+  "generatedMainSha256": "6110cd17639314a2aa1f9839841e57b4d4602bb67bb6d04dbd7bd8be728e35d4",
+  "generatedSceneSha256": "d00b83262d56cdab59a0869722d7e94819accd5d51d3e6cd109cff11e738c420",
+  "nativeEditorSha256": "3730de4e8348b859a4d3509c08e8b4933b79b609231e5df7cf0013fabebc8772",
+  "assetLibraryReadOnly": true,
+  "csharpChanges": false,
+  "originalWarcraftRuntimeVerified": false,
+  "physicalInputVerified": false,
+  "audioListeningVerified": false,
+  "crossMachineLanVerified": false,
+  "prototypeDecisions": {
+    "starfallFirstPulseSeconds": 1.5,
+    "starfallChannelSeconds": 45,
+    "liveOwlRepeatedSummon": "reject until existing live Owl expires"
+  },
+  "deliveryCommit": "Use the Git history of this file; remote confirmation is reported after push."
+}

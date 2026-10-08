@@ -1,0 +1,38 @@
+{
+  "version": 2,
+  "name": "TrueshotAura",
+  "root": {
+    "id": "root",
+    "name": "TrueshotAura",
+    "active": true,
+    "components": {
+      "Transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      },
+      "SampledEffect": {
+        "effect": "Assets/WarcraftIII/Effects/remaining-ready/Abilities/Spells/NightElf/TrueshotAura/TrueshotAura.mfx",
+        "clip": 0,
+        "playing": true,
+        "looping": true,
+        "speed": 1,
+        "time_seconds": 0
+      }
+    },
+    "children": []
+  }
+}
