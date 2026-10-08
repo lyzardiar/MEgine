@@ -1,0 +1,31 @@
+{
+  "author": "MiYu",
+  "entities": 52709,
+  "visibleRows": 52709,
+  "hiddenIds": [
+    1
+  ],
+  "unpickableIds": [
+    52709
+  ],
+  "samples": [
+    {
+      "beforeMs": 5378.8184,
+      "afterMs": 39.38330000000042
+    },
+    {
+      "beforeMs": 5550.452400000001,
+      "afterMs": 29.581500000000233
+    },
+    {
+      "beforeMs": 5796.091499999999,
+      "afterMs": 48.10729999999967
+    }
+  ],
+  "beforeMedianMs": 5550.452400000001,
+  "afterMedianMs": 39.38330000000042,
+  "sceneSha256": "120210b4fa1aeac8600e45edc94644e2c5f9b7031770a8e45fa496fdddc599fe",
+  "storeSha256": "c9393a119fa097a1bc9bc705432d1e019c6b2c7f2dfdd0a915e3eaacdc096746",
+  "querySha256": "8411ec8021a35ab573023e6ad1afe6a6d797c9b42c903c86b342cd09b5194cea",
+  "scope": "Node source benchmark; two inherited flag reads per visible hierarchy row with one hidden and one unpickable root. Compares existing live scalar queries with a freshly constructed immutable batch including its index cost. Asserts identical results for every row. Excludes React rendering, native execution, IPC and physical input."
+}

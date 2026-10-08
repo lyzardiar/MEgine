@@ -1,0 +1,69 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "variant": "baseline",
+  "startedAt": "2026-10-08T15:49:40.269Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\scene-interaction-1791474563942\\sample",
+  "editorSha256": "f7d3144beac059e3ac2601a0f9782f8f91716a4e0629b459865036f42b9c4514",
+  "mainSha256": "3c5fd0c9821c5a652d4c67e512daa3be8e90850903c688f043fa9d97b94a1e50",
+  "sceneSha256": "5482b841db7ae2d65963eb39393dec14c85e133732e03f42ffc4e2dc2145d641",
+  "entities": 52712,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "phase": "startup",
+      "ms": 3105.887300000002,
+      "timing": {
+        "nativeReceivedAtMs": 1791474581138,
+        "frontendReceivedAtMs": 1791474583407,
+        "operationMs": 0.3000001907348633,
+        "handlerMs": 0.40000009536743164,
+        "responseReadyAtMs": 1791474583407
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "phase": "startup",
+      "ms": 17346.5423
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "phase": "startup",
+      "ms": 2691.2522000000026,
+      "timing": {
+        "nativeReceivedAtMs": 1791474600758,
+        "frontendReceivedAtMs": 1791474603447,
+        "operationMs": 0,
+        "handlerMs": 0,
+        "responseReadyAtMs": 1791474603447
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "phase": "setup",
+      "ms": 4214.790799999995,
+      "timing": {
+        "nativeReceivedAtMs": 1791474603449,
+        "frontendReceivedAtMs": 1791474607145,
+        "queueMs": 0,
+        "operationMs": 515.6000001430511,
+        "handlerMs": 515.9000000953674,
+        "responseReadyAtMs": 1791474607661
+      }
+    },
+    {
+      "kind": "query",
+      "name": "window.ui_snapshot",
+      "phase": "setup",
+      "ms": 40005.64779999999
+    }
+  ],
+  "scope": "Owned unfocused native editor; same published Warcraft scene with three deterministic empty QA entities. Real semantic UI clicks hide a parent and disable picking for another root. Three selection/query cycles use nonempty restrictions. Includes frontend scheduling, rendering and bridge overhead; does not measure physical mouse/keyboard or gameplay FPS.",
+  "phase": "setup",
+  "error": "BridgeConnectionError: Editor bridge request timed out (query)\n    at Timeout.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:540:14)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)",
+  "shutdownError": "Native QA editor or runtime data remained after normal close: E:\\work\\codex\\cache\\mengine\\native-qa\\scene-interaction-1791474563942"
+}

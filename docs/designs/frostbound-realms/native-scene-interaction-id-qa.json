@@ -1,0 +1,100 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-08T16:14:01.029Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\scene-interaction-1791476024843\\sample",
+  "editorSha256": "b81ed131754eff6500f3b4341cfe0ac9117422d2711e75481e6b5fc06a0807df",
+  "qaSha256": "9e59c8e346cff1bb0d375b2c534a676f1857bbf1279824458768768d1154f133",
+  "mainSha256": "3c5fd0c9821c5a652d4c67e512daa3be8e90850903c688f043fa9d97b94a1e50",
+  "sceneSha256": "5482b841db7ae2d65963eb39393dec14c85e133732e03f42ffc4e2dc2145d641",
+  "entities": 52712,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "phase": "startup",
+      "ms": 2829.296300000002,
+      "timing": {
+        "nativeReceivedAtMs": 1791476042310,
+        "frontendReceivedAtMs": 1791476043891,
+        "operationMs": 0.39999985694885254,
+        "handlerMs": 0.5999999046325684,
+        "responseReadyAtMs": 1791476043892
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "phase": "startup",
+      "ms": 16559.204899999997
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "phase": "startup",
+      "ms": 1164.2658999999985,
+      "timing": {
+        "nativeReceivedAtMs": 1791476060455,
+        "frontendReceivedAtMs": 1791476061616,
+        "operationMs": 0.10000014305114746,
+        "handlerMs": 0.10000014305114746,
+        "responseReadyAtMs": 1791476061616
+      }
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "phase": "startup",
+      "ms": 1609.1707000000024,
+      "timing": {
+        "nativeReceivedAtMs": 1791476062621,
+        "frontendReceivedAtMs": 1791476064227,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791476064228
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "phase": "setup",
+      "ms": 4094.1658000000025,
+      "timing": {
+        "nativeReceivedAtMs": 1791476064230,
+        "frontendReceivedAtMs": 1791476067829,
+        "queueMs": 0,
+        "operationMs": 491,
+        "handlerMs": 491.2000000476837,
+        "responseReadyAtMs": 1791476068320
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "setup",
+      "ms": 2066.824499999995,
+      "timing": {
+        "nativeReceivedAtMs": 1791476068324,
+        "frontendReceivedAtMs": 1791476070066,
+        "operationMs": 322.40000009536743,
+        "handlerMs": 322.5,
+        "responseReadyAtMs": 1791476070388
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_scene_visibility",
+      "phase": "setup",
+      "ms": 3924.6304999999993
+    }
+  ],
+  "scope": "Owned unfocused native editor; published Warcraft scene with three deterministic empty QA entities. Scene bridge commands hide a parent and disable picking for another root. Three selection/query cycles use nonempty restrictions. Checks state counts, branch clearing and unchanged authored-scene revisions. Includes frontend scheduling, rendering and bridge overhead; does not measure physical mouse/keyboard, semantic full-window snapshots, UI button clicks or gameplay FPS.",
+  "phase": "setup",
+  "error": "BridgeRpcError: Entity 52710 does not exist\n    at WebSocket.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:266:24)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:14387:14)\n    at #onMessage (node:internal/deps/undici/undici:15710:9)\n    at Object.onMessage (node:internal/deps/undici/undici:15417:76)\n    at websocketMessageReceived (node:internal/deps/undici/undici:14391:15)\n    at ByteParser.run (node:internal/deps/undici/undici:15093:19)\n    at ByteParser._write (node:internal/deps/undici/undici:14969:14)\n    at writeOrBuffer (node:internal/streams/writable:570:12)",
+  "shutdown": {
+    "pid": 106424,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  }
+}

@@ -850,6 +850,8 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Zero-based output display index (0 is Display 1)',
     },
   }, ['display']),
+  'view.set_scene_visibility': objectSchema({ id: entityId(), visible: booleanValue('Scene visibility for this entity branch; editor-only') }, ['id', 'visible']),
+  'view.set_scene_pickability': objectSchema({ id: entityId(), pickable: booleanValue('Scene picking for this entity branch; editor-only') }, ['id', 'pickable']),
   'view.set_scene_preferences': objectSchema({
     mode2D: booleanValue('Lock the Scene view to its 2D canvas plane'),
     gridVisible: booleanValue('Show the Scene 2D pixel grid'),

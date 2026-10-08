@@ -1,0 +1,27 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-08T16:05:17.164Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\scene-interaction-1791475496499\\sample",
+  "editorSha256": "dfaba990ef4fee3ef3dd3fe8e20facd571ea9a12afeea12f323bbdb48511d8b5",
+  "qaSha256": "64277cb9d419c06cfc2f7e425c28a7257d65c32549dd82d08e54eb49256fcee1",
+  "mainSha256": "3c5fd0c9821c5a652d4c67e512daa3be8e90850903c688f043fa9d97b94a1e50",
+  "sceneSha256": "5482b841db7ae2d65963eb39393dec14c85e133732e03f42ffc4e2dc2145d641",
+  "entities": 52712,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "phase": "startup",
+      "ms": 41670.3165
+    }
+  ],
+  "scope": "Owned unfocused native editor; published Warcraft scene with three deterministic empty QA entities. Scene bridge commands hide a parent and disable picking for another root. Three selection/query cycles use nonempty restrictions. Checks state counts, branch clearing and unchanged authored-scene revisions. Includes frontend scheduling, rendering and bridge overhead; does not measure physical mouse/keyboard, semantic full-window snapshots, UI button clicks or gameplay FPS.",
+  "error": "BridgeConnectionError: Editor bridge request timed out (query)\n    at Timeout.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:540:14)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)",
+  "shutdown": {
+    "pid": 79464,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  }
+}

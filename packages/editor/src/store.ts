@@ -1,3 +1,4 @@
+// Author: MiYu. Editor scene state, hierarchy and runtime interaction.
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, type PlayInput, type PlayRuntimeDriver } from './playRuntime';
 import {
@@ -14,6 +15,7 @@ import {
   quatNormalize,
 } from './math3d';
 import { clampSceneCameraDistance } from './sceneZoom';
+import { createSceneInteractionQuery } from './sceneInteractionQuery';
 import {
   componentRemovalBlockers,
   componentRequirements,
@@ -1095,6 +1097,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return editEntities
         .map((entity) => entity.entity)
         .filter((id) => sceneUnpickableIds.has(id));
+    },
+    sceneInteractionQuery() {
+      return createSceneInteractionQuery(list(), sceneHiddenIds, sceneUnpickableIds);
     },
     sceneVisible(id: number) {
       // MiYu: the unrestricted hierarchy needs no entity or ancestor lookup per row.

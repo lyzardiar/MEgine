@@ -1,3 +1,4 @@
+// Author: MiYu. Hierarchy authoring and inherited Scene interaction controls.
 import {
   useEffect,
   useMemo,
@@ -142,6 +143,7 @@ export function Hierarchy(props: {
   );
   const hiddenCount = props.store.sceneHiddenIds.length;
   const unpickableCount = props.store.sceneUnpickableIds.length;
+  const sceneInteraction = props.store.sceneInteractionQuery();
 
   useEffect(() => {
     if (!createOpen) return;
@@ -693,8 +695,8 @@ export function Hierarchy(props: {
           const prefabRoot = prefabLink?.root === true;
           const Icon = prefabRoot ? Package : iconFor(n.entity);
           const match = matchingIds.has(id);
-          const sceneVisible = props.store.sceneVisible(id);
-          const scenePickable = props.store.scenePickable(id);
+          const sceneVisible = sceneInteraction.sceneVisible(id);
+          const scenePickable = sceneInteraction.scenePickable(id);
           return (
             <div
               key={id}

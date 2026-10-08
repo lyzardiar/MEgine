@@ -1,6 +1,7 @@
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+// Author: MiYu. Editor workspace and scene presentation.
 import {
   createEditorStore,
   type EditorMode,
@@ -2843,16 +2844,17 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const treeNodes = useMemo(() => store.getVisibleFlat(), [store, snap, treeTick]);
   const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(snap.entities), [snap.entities]);
   const sceneHiddenIds = store.sceneHiddenIds;
+  const sceneInteraction = store.sceneInteractionQuery();
   const viewportEntities = viewTab === 'scene' && sceneHiddenIds.length
-    ? snap.entities.filter((entity) => store.sceneVisible(entity.entity))
+    ? snap.entities.filter((entity) => sceneInteraction.sceneVisible(entity.entity))
     : snap.entities;
   const viewportSelected = viewTab === 'scene'
     && selected != null
-    && (!store.sceneVisible(selected) || !store.scenePickable(selected))
+    && (!sceneInteraction.sceneVisible(selected) || !sceneInteraction.scenePickable(selected))
     ? null
     : selected;
   const viewportSelectedIds = viewTab === 'scene'
-    ? selectedIds.filter((id) => store.sceneVisible(id) && store.scenePickable(id))
+    ? selectedIds.filter((id) => sceneInteraction.sceneVisible(id) && sceneInteraction.scenePickable(id))
     : selectedIds;
   const timelinePreviewActive = store.timelinePreviewActive();
   const authoredInspectorEntities = timelinePreviewActive
@@ -2995,9 +2997,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 refresh();
               }}
               onMarqueeSelect={(ids, selectionMode) => {
+                const interaction = store.sceneInteractionQuery();
                 const next = combineMarqueeSelection(
                   store.selectedIds,
-                  ids.filter((id) => store.scenePickable(id)),
+                  ids.filter((id) => interaction.scenePickable(id)),
                   selectionMode,
                 );
                 store.selectMany(next, 'replace');

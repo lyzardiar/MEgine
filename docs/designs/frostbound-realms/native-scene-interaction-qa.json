@@ -1,0 +1,471 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-08T16:28:06.047Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\scene-interaction-1791476866103\\sample",
+  "editorSha256": "b81ed131754eff6500f3b4341cfe0ac9117422d2711e75481e6b5fc06a0807df",
+  "qaSha256": "dddeeea170f590b7cacef1ab3311be06391a535b32f4c8ec60c21f703f436582",
+  "mainSha256": "3c5fd0c9821c5a652d4c67e512daa3be8e90850903c688f043fa9d97b94a1e50",
+  "sceneSha256": "f51f4b168e831aa9abbeeea853d1a4fea7fef4d8488a388ed2aa8d680c20a052",
+  "entities": 52712,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "phase": "startup",
+      "ms": 2568.9085000000014,
+      "timing": {
+        "nativeReceivedAtMs": 1791476887323,
+        "frontendReceivedAtMs": 1791476888648,
+        "operationMs": 0.40000009536743164,
+        "handlerMs": 0.5,
+        "responseReadyAtMs": 1791476888649
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "phase": "startup",
+      "ms": 17924.505999999998
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "phase": "startup",
+      "ms": 2003.6137999999992,
+      "timing": {
+        "nativeReceivedAtMs": 1791476906577,
+        "frontendReceivedAtMs": 1791476908577,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.09999990463256836,
+        "responseReadyAtMs": 1791476908577
+      }
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "phase": "startup",
+      "ms": 4137.495600000002,
+      "timing": {
+        "nativeReceivedAtMs": 1791476909582,
+        "frontendReceivedAtMs": 1791476913593,
+        "operationMs": 0,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791476913593
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "phase": "setup",
+      "ms": 1731.2167000000045,
+      "timing": {
+        "nativeReceivedAtMs": 1791476913719,
+        "frontendReceivedAtMs": 1791476914918,
+        "queueMs": 0,
+        "operationMs": 528.5999999046326,
+        "handlerMs": 528.8999998569489,
+        "responseReadyAtMs": 1791476915447
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "setup",
+      "ms": 3809.099900000001,
+      "timing": {
+        "nativeReceivedAtMs": 1791476915451,
+        "frontendReceivedAtMs": 1791476919255,
+        "operationMs": 1.5,
+        "handlerMs": 1.5,
+        "responseReadyAtMs": 1791476919256
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "setup",
+      "ms": 1268.847600000001,
+      "timing": {
+        "nativeReceivedAtMs": 1791476919261,
+        "frontendReceivedAtMs": 1791476920525,
+        "operationMs": 1.2000000476837158,
+        "handlerMs": 1.2000000476837158,
+        "responseReadyAtMs": 1791476920526
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "setup",
+      "ms": 1110.1806999999972,
+      "timing": {
+        "nativeReceivedAtMs": 1791476920530,
+        "frontendReceivedAtMs": 1791476921541,
+        "operationMs": 1.0999999046325684,
+        "handlerMs": 1.0999999046325684,
+        "responseReadyAtMs": 1791476921542
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "setup",
+      "ms": 1501.1312000000034,
+      "timing": {
+        "nativeReceivedAtMs": 1791476921641,
+        "frontendReceivedAtMs": 1791476922795,
+        "operationMs": 343.5,
+        "handlerMs": 343.5,
+        "responseReadyAtMs": 1791476923139
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_scene_visibility",
+      "phase": "setup",
+      "ms": 1930.3499999999985,
+      "timing": {
+        "nativeReceivedAtMs": 1791476923142,
+        "frontendReceivedAtMs": 1791476924404,
+        "queueMs": 0,
+        "operationMs": 666.2999999523163,
+        "handlerMs": 666.2999999523163,
+        "responseReadyAtMs": 1791476925070
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_scene_pickability",
+      "phase": "setup",
+      "ms": 3677.7845000000016,
+      "timing": {
+        "nativeReceivedAtMs": 1791476925073,
+        "frontendReceivedAtMs": 1791476928116,
+        "queueMs": 0,
+        "operationMs": 632.7999999523163,
+        "handlerMs": 633,
+        "responseReadyAtMs": 1791476928749
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "setup",
+      "ms": 2149.341699999997,
+      "timing": {
+        "nativeReceivedAtMs": 1791476928752,
+        "frontendReceivedAtMs": 1791476930561,
+        "operationMs": 335.59999990463257,
+        "handlerMs": 335.59999990463257,
+        "responseReadyAtMs": 1791476930897
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "selection.set",
+      "phase": "restricted",
+      "ms": 4354.573100000001,
+      "timing": {
+        "nativeReceivedAtMs": 1791476930902,
+        "frontendReceivedAtMs": 1791476934593,
+        "queueMs": 0,
+        "operationMs": 660.7000000476837,
+        "handlerMs": 660.9000000953674,
+        "responseReadyAtMs": 1791476935254
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "restricted",
+      "ms": 1810.5035999999964,
+      "timing": {
+        "nativeReceivedAtMs": 1791476935257,
+        "frontendReceivedAtMs": 1791476937061,
+        "operationMs": 1.4000000953674316,
+        "handlerMs": 1.5,
+        "responseReadyAtMs": 1791476937062
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "restricted",
+      "ms": 2743.068299999999,
+      "timing": {
+        "nativeReceivedAtMs": 1791476937068,
+        "frontendReceivedAtMs": 1791476939478,
+        "operationMs": 329.5,
+        "handlerMs": 329.5,
+        "responseReadyAtMs": 1791476939807
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "selection.set",
+      "phase": "restricted",
+      "ms": 2918.8982000000105,
+      "timing": {
+        "nativeReceivedAtMs": 1791476939811,
+        "frontendReceivedAtMs": 1791476942019,
+        "queueMs": 0.09999990463256836,
+        "operationMs": 681.6000001430511,
+        "handlerMs": 681.8000001907349,
+        "responseReadyAtMs": 1791476942701
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "restricted",
+      "ms": 2921.5901999999915,
+      "timing": {
+        "nativeReceivedAtMs": 1791476942731,
+        "frontendReceivedAtMs": 1791476945648,
+        "operationMs": 1.0999999046325684,
+        "handlerMs": 1.2000000476837158,
+        "responseReadyAtMs": 1791476945649
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "restricted",
+      "ms": 1785.4962999999989,
+      "timing": {
+        "nativeReceivedAtMs": 1791476945652,
+        "frontendReceivedAtMs": 1791476947117,
+        "operationMs": 317.30000019073486,
+        "handlerMs": 317.30000019073486,
+        "responseReadyAtMs": 1791476947434
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "selection.set",
+      "phase": "restricted",
+      "ms": 2643.5409999999974,
+      "timing": {
+        "nativeReceivedAtMs": 1791476947439,
+        "frontendReceivedAtMs": 1791476949391,
+        "queueMs": 0,
+        "operationMs": 651.1999998092651,
+        "handlerMs": 651.2999999523163,
+        "responseReadyAtMs": 1791476950042
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "restricted",
+      "ms": 3327.7698999999993,
+      "timing": {
+        "nativeReceivedAtMs": 1791476950083,
+        "frontendReceivedAtMs": 1791476953405,
+        "operationMs": 1.1000001430511475,
+        "handlerMs": 1.1000001430511475,
+        "responseReadyAtMs": 1791476953406
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "restricted",
+      "ms": 1621.2940999999992,
+      "timing": {
+        "nativeReceivedAtMs": 1791476953414,
+        "frontendReceivedAtMs": 1791476954702,
+        "operationMs": 327.5,
+        "handlerMs": 327.5,
+        "responseReadyAtMs": 1791476955030
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_scene_visibility",
+      "phase": "verify",
+      "ms": 1301.7330999999976,
+      "timing": {
+        "nativeReceivedAtMs": 1791476955034,
+        "frontendReceivedAtMs": 1791476955706,
+        "queueMs": 0,
+        "operationMs": 626.5,
+        "handlerMs": 626.6999998092651,
+        "responseReadyAtMs": 1791476956333
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_scene_pickability",
+      "phase": "verify",
+      "ms": 3594.674700000003,
+      "timing": {
+        "nativeReceivedAtMs": 1791476956380,
+        "frontendReceivedAtMs": 1791476959315,
+        "queueMs": 0,
+        "operationMs": 614.2000000476837,
+        "handlerMs": 614.2999999523163,
+        "responseReadyAtMs": 1791476959929
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "verify",
+      "ms": 1998.6854999999923,
+      "timing": {
+        "nativeReceivedAtMs": 1791476959931,
+        "frontendReceivedAtMs": 1791476961630,
+        "operationMs": 295.59999990463257,
+        "handlerMs": 295.59999990463257,
+        "responseReadyAtMs": 1791476961926
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "phase": "playing",
+      "ms": 3884.8947000000044,
+      "timing": {
+        "nativeReceivedAtMs": 1791476961930,
+        "frontendReceivedAtMs": 1791476964577,
+        "queueMs": 0,
+        "operationMs": 1235.4000000953674,
+        "handlerMs": 1235.4000000953674,
+        "responseReadyAtMs": 1791476965813
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "phase": "playing",
+      "ms": 13368.807100000005,
+      "timing": {
+        "nativeReceivedAtMs": 1791476965816,
+        "frontendReceivedAtMs": 1791476968363,
+        "queueMs": 0,
+        "operationMs": 10818,
+        "handlerMs": 10818.100000143051,
+        "responseReadyAtMs": 1791476979181
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "phase": "playing",
+      "ms": 7356.4905,
+      "timing": {
+        "nativeReceivedAtMs": 1791476979187,
+        "frontendReceivedAtMs": 1791476980752,
+        "queueMs": 0,
+        "operationMs": 5787,
+        "handlerMs": 5787.200000047684,
+        "responseReadyAtMs": 1791476986539
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "phase": "playing",
+      "ms": 3480.70640000001,
+      "timing": {
+        "nativeReceivedAtMs": 1791476986543,
+        "frontendReceivedAtMs": 1791476987996,
+        "queueMs": 0.10000014305114746,
+        "operationMs": 2024.6999998092651,
+        "handlerMs": 2024.7999999523163,
+        "responseReadyAtMs": 1791476990021
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "phase": "playing",
+      "ms": 1355.7687000000005,
+      "timing": {
+        "nativeReceivedAtMs": 1791476990024,
+        "frontendReceivedAtMs": 1791476991376,
+        "queueMs": 0,
+        "operationMs": 0.20000004768371582,
+        "handlerMs": 0.3000001907348633,
+        "responseReadyAtMs": 1791476991376
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "phase": "playing",
+      "ms": 2921.0671,
+      "timing": {
+        "nativeReceivedAtMs": 1791476991380,
+        "frontendReceivedAtMs": 1791476991502,
+        "queueMs": 0,
+        "operationMs": 2796.7999999523163,
+        "handlerMs": 2796.7999999523163,
+        "responseReadyAtMs": 1791476994299
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "playing",
+      "ms": 1364.6840000000084,
+      "timing": {
+        "nativeReceivedAtMs": 1791476994302,
+        "frontendReceivedAtMs": 1791476995663,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791476995663
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "phase": "playing",
+      "ms": 981.129700000005,
+      "timing": {
+        "nativeReceivedAtMs": 1791476995667,
+        "frontendReceivedAtMs": 1791476995901,
+        "queueMs": 0,
+        "operationMs": 744,
+        "handlerMs": 744,
+        "responseReadyAtMs": 1791476996645
+      }
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "phase": "playing",
+      "ms": 2487.785499999998,
+      "timing": {
+        "nativeReceivedAtMs": 1791476996649,
+        "frontendReceivedAtMs": 1791476998787,
+        "operationMs": 0,
+        "handlerMs": 0.09999990463256836,
+        "responseReadyAtMs": 1791476998787
+      }
+    }
+  ],
+  "scope": "Owned unfocused native editor; published Warcraft scene with three deterministic empty QA entities. Scene bridge commands hide a parent and disable picking for another root. Three selection/query cycles use nonempty restrictions. Checks state counts, branch clearing and unchanged authored-scene revisions. Includes frontend scheduling, rendering and bridge overhead; does not measure physical mouse/keyboard, semantic full-window snapshots, UI button clicks or gameplay FPS.",
+  "phase": "playing",
+  "nativeIds": {
+    "parent": 4295020005,
+    "child": 4295020006,
+    "other": 4295020007
+  },
+  "branchCleared": true,
+  "authoredSceneRevisionUnchanged": true,
+  "gameMode": "playing",
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 28024,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

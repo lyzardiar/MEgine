@@ -1,0 +1,78 @@
+{
+  "author": "MiYu",
+  "scope": "Measured local Scene query and native QA costs for this editor optimization stage. Not the entire task, gameplay FPS or developer typing time.",
+  "query": {
+    "entities": 52709,
+    "beforeMedianMs": 5550.452400000001,
+    "afterMedianMs": 39.38330000000042,
+    "report": "scene-interaction-benchmark.json"
+  },
+  "nativeFailedRun": {
+    "report": "native-scene-interaction-play-timeout.json",
+    "passed": false,
+    "phases": [
+      {
+        "phase": "startup",
+        "commands": 3,
+        "totalMs": 23501.39189999999
+      },
+      {
+        "phase": "setup",
+        "commands": 8,
+        "totalMs": 19058.0743
+      },
+      {
+        "phase": "restricted",
+        "commands": 9,
+        "totalMs": 22226.531100000007
+      },
+      {
+        "phase": "verify",
+        "commands": 3,
+        "totalMs": 6710.766499999998
+      },
+      {
+        "phase": "playing",
+        "commands": 2,
+        "totalMs": 49604.29740000001
+      }
+    ],
+    "tracedCommands": 23,
+    "roundTripMs": 63238.56910000001,
+    "nativeToFrontendDispatchMs": 47001,
+    "handlerMs": 13898.599999904633,
+    "note": "Dispatch delay includes waiting between native receipt and frontend handler start; exact scheduling cause remains unconfirmed."
+  },
+  "build": {
+    "acceptedReleaseSeconds": 262,
+    "configurationReworkSeconds": 385,
+    "evidence": [
+      "tmp/scene-interaction-native-release-build.log",
+      "tmp/scene-interaction-native-build.log"
+    ]
+  },
+  "tests": {
+    "uniquePassed": 64,
+    "queryFinal": 8,
+    "existingCommandSchema": 27,
+    "existingRegressions": 29
+  },
+  "nextChecks": [
+    "Native Play first frame after focusing Game View",
+    "Viewport live hit checks",
+    "Full-window semantic snapshot collection"
+  ],
+  "nativeAcceptedRun": {
+    "report": "native-scene-interaction-qa.json",
+    "passed": true,
+    "commands": 33,
+    "commandTotalMs": 112035.63790000003,
+    "tracedCommands": 32,
+    "roundTripMs": 94111.13190000002,
+    "nativeToFrontendDispatchMs": 61664,
+    "handlerMs": 30427.50000023842,
+    "firstPlayStepMs": 3480.70640000001,
+    "consoleErrors": 0,
+    "normalExit": true
+  }
+}

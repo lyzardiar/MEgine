@@ -1,0 +1,102 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "validatedAt": "2026-10-08T16:30:54.176Z",
+  "scope": "Editor inherited Scene query optimization and native bridge state verification on published Warcraft scene. Native paused Play and F1 skirmish startup. Does not certify physical picking, rendered hidden pixels, audio, gameplay FPS or full Warcraft fidelity.",
+  "tests": {
+    "uniquePassed": 64,
+    "queryFinal": 8,
+    "existingCommandSchema": 27,
+    "regressions": 29,
+    "logs": [
+      "tmp/scene-interaction-query-tests.log",
+      "tmp/scene-interaction-command-tests.log",
+      "tmp/scene-interaction-regression.log"
+    ]
+  },
+  "frontendBuild": {
+    "passed": true,
+    "log": "tmp/scene-interaction-frontend-build.log"
+  },
+  "nativeBuild": {
+    "passed": true,
+    "command": "cargo build -p mengine-editor-tauri --release --features tauri/custom-protocol --target-dir D:/MEngineNativeQA/construction-build",
+    "seconds": 262,
+    "executable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+    "sha256": "b81ed131754eff6500f3b4341cfe0ac9117422d2711e75481e6b5fc06a0807df",
+    "log": "tmp/scene-interaction-native-release-build.log"
+  },
+  "nativeAcceptance": {
+    "passed": true,
+    "report": "native-scene-interaction-qa.json",
+    "branchCleared": true,
+    "authoredSceneRevisionUnchanged": true,
+    "gameMode": "playing",
+    "consoleErrors": 0,
+    "shutdown": {
+      "pid": 28024,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    },
+    "cleanup": {
+      "fixtureRemoved": true,
+      "qaStorageRemoved": true
+    }
+  },
+  "fingerprints": {
+    "packages/editor/src/sceneInteractionQuery.ts": "8411ec8021a35ab573023e6ad1afe6a6d797c9b42c903c86b342cd09b5194cea",
+    "packages/editor/src/store.ts": "c9393a119fa097a1bc9bc705432d1e019c6b2c7f2dfdd0a915e3eaacdc096746",
+    "packages/editor/src/App.tsx": "243bec4c94b265b0919c195db6e039f0b7f4d9bf7ae2ba6c76d8e6651a36606b",
+    "packages/editor/src/panels/Hierarchy.tsx": "df3a0f5c7853d8e11b481ced630909976ad2b4faca8af2e2c60226ac37ff7e09",
+    "packages/editor/src/agent/commands.ts": "9e2d81dca7e6b80e01594eaed85c6bf4260475845244710436ab15063e739212",
+    "packages/editor/src/agent/commandSchemas.ts": "640bd16856ecc66d1576c09d561fd0e2f2777abc1786ee8eada3c8ad7fbb1f47",
+    "packages/editor/vite.config.ts": "08bcd092ed2b170b2fa66b10076aab6df193328503d6c8e0df3d3fd112318347",
+    "packages/editor/tests/sceneInteractionQuery.test.mjs": "6eb16ba0b54f06803f82b56c21c10a8a2f66d257d4fefa9235621049a8626398",
+    "scripts/qa-scene-interaction.mjs": "dddeeea170f590b7cacef1ab3311be06391a535b32f4c8ec60c21f703f436582",
+    "scripts/benchmark-scene-interaction.mjs": "045f5ea3648eefc608d1e85f68c57f4e511236ea4d0030040439e37702599ae2",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "3c5fd0c9821c5a652d4c67e512daa3be8e90850903c688f043fa9d97b94a1e50",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "120210b4fa1aeac8600e45edc94644e2c5f9b7031770a8e45fa496fdddc599fe",
+    "docs/designs/frostbound-realms/scene-interaction-benchmark.json": "adfb9510d9f85ccb66de67dcd373a0774670b3511b26ca8d182fc8141a8ccbac",
+    "docs/designs/frostbound-realms/native-scene-interaction-qa.json": "85b27eca18d146ff37277142839b0e5ca712d770d5274881f975b1088fe6bd59",
+    "docs/designs/frostbound-realms/scene-interaction-timing.json": "7e48d1e21677e1f4f478845ffbebe2cc8d2b6366c805582e365fd25ce4bc6563"
+  },
+  "preservedFailedReports": [
+    "native-scene-interaction-ui-timeout.json",
+    "native-scene-interaction-startup-timeout.json",
+    "native-scene-interaction-id-qa.json",
+    "native-scene-interaction-play-timeout.json"
+  ],
+  "preservedFailedFixtures": [
+    "scene-interaction-1791474563942",
+    "scene-interaction-1791475496499",
+    "scene-interaction-1791476024843",
+    "scene-interaction-1791476403724"
+  ],
+  "remainingPerformancePaths": [
+    "Viewport live scalar hit checks",
+    "Large hidden-ID filters",
+    "Full-window semantic snapshot collection"
+  ],
+  "fingerprintScope": "fingerprints are verified local build/QA bytes; stagedFingerprints record Git index bytes for delivery.",
+  "stagedFingerprints": {
+    "packages/editor/src/sceneInteractionQuery.ts": "8411ec8021a35ab573023e6ad1afe6a6d797c9b42c903c86b342cd09b5194cea",
+    "packages/editor/src/store.ts": "c9393a119fa097a1bc9bc705432d1e019c6b2c7f2dfdd0a915e3eaacdc096746",
+    "packages/editor/src/App.tsx": "243bec4c94b265b0919c195db6e039f0b7f4d9bf7ae2ba6c76d8e6651a36606b",
+    "packages/editor/src/panels/Hierarchy.tsx": "df3a0f5c7853d8e11b481ced630909976ad2b4faca8af2e2c60226ac37ff7e09",
+    "packages/editor/src/agent/commands.ts": "9e2d81dca7e6b80e01594eaed85c6bf4260475845244710436ab15063e739212",
+    "packages/editor/src/agent/commandSchemas.ts": "62f61416eff1841e4ede08a152fb58e47d42840309c60d874be2f292f719c015",
+    "packages/editor/vite.config.ts": "08bcd092ed2b170b2fa66b10076aab6df193328503d6c8e0df3d3fd112318347",
+    "packages/editor/tests/sceneInteractionQuery.test.mjs": "6eb16ba0b54f06803f82b56c21c10a8a2f66d257d4fefa9235621049a8626398",
+    "scripts/qa-scene-interaction.mjs": "dddeeea170f590b7cacef1ab3311be06391a535b32f4c8ec60c21f703f436582",
+    "scripts/benchmark-scene-interaction.mjs": "045f5ea3648eefc608d1e85f68c57f4e511236ea4d0030040439e37702599ae2",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "3c5fd0c9821c5a652d4c67e512daa3be8e90850903c688f043fa9d97b94a1e50",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "120210b4fa1aeac8600e45edc94644e2c5f9b7031770a8e45fa496fdddc599fe",
+    "docs/designs/frostbound-realms/scene-interaction-benchmark.json": "adfb9510d9f85ccb66de67dcd373a0774670b3511b26ca8d182fc8141a8ccbac",
+    "docs/designs/frostbound-realms/native-scene-interaction-qa.json": "85b27eca18d146ff37277142839b0e5ca712d770d5274881f975b1088fe6bd59",
+    "docs/designs/frostbound-realms/scene-interaction-timing.json": "7e48d1e21677e1f4f478845ffbebe2cc8d2b6366c805582e365fd25ce4bc6563"
+  },
+  "lineEndingNormalization": [
+    "packages/editor/src/agent/commandSchemas.ts"
+  ]
+}

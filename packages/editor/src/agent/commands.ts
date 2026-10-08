@@ -1278,6 +1278,20 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     ctx.store.frameSelected();
     return { ok: true, data: { sceneCamera: ctx.store.sceneCamera } };
   },
+  'view.set_scene_visibility': (ctx, args) => {
+    requireEditMode(ctx);
+    const id = entityId(args, 'id'), visible = bool(args, 'visible');
+    requireEntity(ctx, id);
+    ctx.store.setSceneVisibility(id, visible);
+    return { ok: true, data: { entity: id, visible: ctx.store.sceneVisible(id) } };
+  },
+  'view.set_scene_pickability': (ctx, args) => {
+    requireEditMode(ctx);
+    const id = entityId(args, 'id'), pickable = bool(args, 'pickable');
+    requireEntity(ctx, id);
+    ctx.store.setScenePickability(id, pickable);
+    return { ok: true, data: { entity: id, pickable: ctx.store.scenePickable(id) } };
+  },
   'view.set_camera': (ctx, args) => {
     const yaw = optionalFiniteNumber(args, 'yaw');
     const pitch = optionalFiniteNumber(args, 'pitch');
@@ -1416,6 +1430,8 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'history.redo', category: 'history', description: 'Redo the last undone edit', readOnly: false },
   { id: 'gizmo.set', category: 'view', description: 'Set the active transform gizmo (translate/rotate/scale/rect)', readOnly: false },
   { id: 'view.frame_selected', category: 'view', description: 'Frame the selected object in the scene view', readOnly: false },
+  { id: 'view.set_scene_visibility', category: 'view', description: 'Set editor-only inherited Scene visibility for an entity branch', readOnly: false },
+  { id: 'view.set_scene_pickability', category: 'view', description: 'Set editor-only inherited Scene picking for an entity branch', readOnly: false },
   { id: 'view.set_camera', category: 'view', description: 'Set the background-safe Scene view orbit camera', readOnly: false },
   { id: 'view.set_game_resolution', category: 'view', description: 'Persist an exact Game View resolution or Free Aspect', readOnly: false },
   { id: 'view.set_game_display', category: 'view', description: 'Select the zero-based Game View output display', readOnly: false },

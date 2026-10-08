@@ -1,0 +1,344 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-08T16:20:21.375Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\scene-interaction-1791476403724\\sample",
+  "editorSha256": "b81ed131754eff6500f3b4341cfe0ac9117422d2711e75481e6b5fc06a0807df",
+  "qaSha256": "ecb56b2ec6ed4cd5f1770076aa7266c0e60ef09f6cdf262796b9d5e0b9f16cb2",
+  "mainSha256": "3c5fd0c9821c5a652d4c67e512daa3be8e90850903c688f043fa9d97b94a1e50",
+  "sceneSha256": "f51f4b168e831aa9abbeeea853d1a4fea7fef4d8488a388ed2aa8d680c20a052",
+  "entities": 52712,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "phase": "startup",
+      "ms": 2777.6238999999987,
+      "timing": {
+        "nativeReceivedAtMs": 1791476423445,
+        "frontendReceivedAtMs": 1791476424186,
+        "operationMs": 0.39999985694885254,
+        "handlerMs": 0.5999999046325684,
+        "responseReadyAtMs": 1791476424186
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "phase": "startup",
+      "ms": 17831.134499999996
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "phase": "startup",
+      "ms": 2892.6334999999963,
+      "timing": {
+        "nativeReceivedAtMs": 1791476442074,
+        "frontendReceivedAtMs": 1791476444961,
+        "operationMs": 0.10000014305114746,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791476444961
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "phase": "setup",
+      "ms": 3602.5657999999967,
+      "timing": {
+        "nativeReceivedAtMs": 1791476444967,
+        "frontendReceivedAtMs": 1791476448046,
+        "queueMs": 0,
+        "operationMs": 519.7999999523163,
+        "handlerMs": 520,
+        "responseReadyAtMs": 1791476448566
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "setup",
+      "ms": 1818.4208999999973,
+      "timing": {
+        "nativeReceivedAtMs": 1791476448570,
+        "frontendReceivedAtMs": 1791476450283,
+        "operationMs": 1.2000000476837158,
+        "handlerMs": 1.2999999523162842,
+        "responseReadyAtMs": 1791476450285
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "setup",
+      "ms": 3073.2955,
+      "timing": {
+        "nativeReceivedAtMs": 1791476450389,
+        "frontendReceivedAtMs": 1791476453458,
+        "operationMs": 1.3000001907348633,
+        "handlerMs": 1.3000001907348633,
+        "responseReadyAtMs": 1791476453459
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "setup",
+      "ms": 1586.5571000000054,
+      "timing": {
+        "nativeReceivedAtMs": 1791476453462,
+        "frontendReceivedAtMs": 1791476454920,
+        "operationMs": 1,
+        "handlerMs": 1,
+        "responseReadyAtMs": 1791476454921
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "setup",
+      "ms": 1426.270000000004,
+      "timing": {
+        "nativeReceivedAtMs": 1791476455050,
+        "frontendReceivedAtMs": 1791476456149,
+        "operationMs": 323,
+        "handlerMs": 323,
+        "responseReadyAtMs": 1791476456472
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_scene_visibility",
+      "phase": "setup",
+      "ms": 1845.6081999999951,
+      "timing": {
+        "nativeReceivedAtMs": 1791476456476,
+        "frontendReceivedAtMs": 1791476457667,
+        "queueMs": 0,
+        "operationMs": 652.9000000953674,
+        "handlerMs": 653,
+        "responseReadyAtMs": 1791476458320
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_scene_pickability",
+      "phase": "setup",
+      "ms": 3625.6621000000014,
+      "timing": {
+        "nativeReceivedAtMs": 1791476458324,
+        "frontendReceivedAtMs": 1791476461317,
+        "queueMs": 0,
+        "operationMs": 629.5,
+        "handlerMs": 629.6000001430511,
+        "responseReadyAtMs": 1791476461947
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "setup",
+      "ms": 2079.6947,
+      "timing": {
+        "nativeReceivedAtMs": 1791476461950,
+        "frontendReceivedAtMs": 1791476463701,
+        "operationMs": 325.40000009536743,
+        "handlerMs": 325.59999990463257,
+        "responseReadyAtMs": 1791476464027
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "selection.set",
+      "phase": "restricted",
+      "ms": 4152.843499999995,
+      "timing": {
+        "nativeReceivedAtMs": 1791476464031,
+        "frontendReceivedAtMs": 1791476467551,
+        "queueMs": 0,
+        "operationMs": 630,
+        "handlerMs": 630.2000000476837,
+        "responseReadyAtMs": 1791476468181
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "restricted",
+      "ms": 1748.586700000007,
+      "timing": {
+        "nativeReceivedAtMs": 1791476468184,
+        "frontendReceivedAtMs": 1791476469928,
+        "operationMs": 1.0999999046325684,
+        "handlerMs": 1.0999999046325684,
+        "responseReadyAtMs": 1791476469930
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "restricted",
+      "ms": 2667.3608999999997,
+      "timing": {
+        "nativeReceivedAtMs": 1791476469933,
+        "frontendReceivedAtMs": 1791476472274,
+        "operationMs": 323.2999999523163,
+        "handlerMs": 323.39999985694885,
+        "responseReadyAtMs": 1791476472597
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "selection.set",
+      "phase": "restricted",
+      "ms": 2856.8557999999903,
+      "timing": {
+        "nativeReceivedAtMs": 1791476472601,
+        "frontendReceivedAtMs": 1791476474793,
+        "queueMs": 0,
+        "operationMs": 662.1000001430511,
+        "handlerMs": 662.2000000476837,
+        "responseReadyAtMs": 1791476475455
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "restricted",
+      "ms": 2817.6732000000047,
+      "timing": {
+        "nativeReceivedAtMs": 1791476475458,
+        "frontendReceivedAtMs": 1791476478272,
+        "operationMs": 1.0999999046325684,
+        "handlerMs": 1.2000000476837158,
+        "responseReadyAtMs": 1791476478273
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "restricted",
+      "ms": 1617.4861999999994,
+      "timing": {
+        "nativeReceivedAtMs": 1791476478276,
+        "frontendReceivedAtMs": 1791476479575,
+        "operationMs": 314.90000009536743,
+        "handlerMs": 315,
+        "responseReadyAtMs": 1791476479890
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "selection.set",
+      "phase": "restricted",
+      "ms": 1137.8457000000053,
+      "timing": {
+        "nativeReceivedAtMs": 1791476479895,
+        "frontendReceivedAtMs": 1791476480383,
+        "queueMs": 0,
+        "operationMs": 645.5,
+        "handlerMs": 645.5,
+        "responseReadyAtMs": 1791476481028
+      }
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "phase": "restricted",
+      "ms": 3365.375800000009,
+      "timing": {
+        "nativeReceivedAtMs": 1791476481042,
+        "frontendReceivedAtMs": 1791476484395,
+        "operationMs": 0.9000000953674316,
+        "handlerMs": 1,
+        "responseReadyAtMs": 1791476484396
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "restricted",
+      "ms": 1862.5032999999967,
+      "timing": {
+        "nativeReceivedAtMs": 1791476484399,
+        "frontendReceivedAtMs": 1791476485928,
+        "operationMs": 329.59999990463257,
+        "handlerMs": 329.59999990463257,
+        "responseReadyAtMs": 1791476486257
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_scene_visibility",
+      "phase": "verify",
+      "ms": 863.8254000000015,
+      "timing": {
+        "nativeReceivedAtMs": 1791476486262,
+        "frontendReceivedAtMs": 1791476486468,
+        "queueMs": 0,
+        "operationMs": 655.4000000953674,
+        "handlerMs": 655.7000000476837,
+        "responseReadyAtMs": 1791476487124
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_scene_pickability",
+      "phase": "verify",
+      "ms": 3606.872199999998,
+      "timing": {
+        "nativeReceivedAtMs": 1791476487126,
+        "frontendReceivedAtMs": 1791476490099,
+        "queueMs": 0,
+        "operationMs": 631.4000000953674,
+        "handlerMs": 631.5,
+        "responseReadyAtMs": 1791476490730
+      }
+    },
+    {
+      "kind": "query",
+      "name": "editor.state",
+      "phase": "verify",
+      "ms": 2240.0688999999984,
+      "timing": {
+        "nativeReceivedAtMs": 1791476490733,
+        "frontendReceivedAtMs": 1791476492674,
+        "operationMs": 295.59999990463257,
+        "handlerMs": 295.59999990463257,
+        "responseReadyAtMs": 1791476492970
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "phase": "playing",
+      "ms": 9572.939800000007,
+      "timing": {
+        "nativeReceivedAtMs": 1791476492974,
+        "frontendReceivedAtMs": 1791476495594,
+        "queueMs": 0.09999990463256836,
+        "operationMs": 6950.700000047684,
+        "handlerMs": 6951,
+        "responseReadyAtMs": 1791476502545
+      }
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "phase": "playing",
+      "ms": 40031.3576
+    }
+  ],
+  "scope": "Owned unfocused native editor; published Warcraft scene with three deterministic empty QA entities. Scene bridge commands hide a parent and disable picking for another root. Three selection/query cycles use nonempty restrictions. Checks state counts, branch clearing and unchanged authored-scene revisions. Includes frontend scheduling, rendering and bridge overhead; does not measure physical mouse/keyboard, semantic full-window snapshots, UI button clicks or gameplay FPS.",
+  "phase": "playing",
+  "nativeIds": {
+    "parent": 4295020005,
+    "child": 4295020006,
+    "other": 4295020007
+  },
+  "branchCleared": true,
+  "authoredSceneRevisionUnchanged": true,
+  "error": "BridgeConnectionError: Editor bridge request timed out (execute)\n    at Timeout.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:540:14)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)",
+  "shutdownError": "Native QA editor or runtime data remained after normal close: E:\\work\\codex\\cache\\mengine\\native-qa\\scene-interaction-1791476403724"
+}
