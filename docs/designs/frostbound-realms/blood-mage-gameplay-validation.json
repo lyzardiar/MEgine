@@ -1,0 +1,96 @@
+{
+  "author": "MiYu",
+  "generatedClientExitCode": 0,
+  "simulationExitCode": 0,
+  "tcpExitCode": 0,
+  "protocol": 64,
+  "originalRuntimeVerified": false,
+  "sha256": {
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "347ad8dff8c0fae3af614aef10f084c3088dad21dcd4bb9f0f92c21836a181ac",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "7ae5ba52fb5cef2449bae5e5c137782c409256292fba2ed3776f3dc103e73a16",
+    "samples/frostbound-realms/game/blood-mage.js": "1ac751c69c22bc2baf4afbdb85ec8326f69e2464aa9c0483ef3f1ac3484f9559",
+    "samples/frostbound-realms/game/simulation.js": "81780ae19319680283f70280890c47102c0d7c697040a334b082f920376f804c",
+    "samples/frostbound-realms/game/client.js": "539c1cbe7e5d835cf192af049a05a64ada11c75533a20f70d31edb11b0fbe960",
+    "samples/frostbound-realms/game/visuals.js": "3d1337e429e01f1c48e9f03f602a9b8c64d02278d616245b0dc48716fa8606ec",
+    "samples/frostbound-realms/game/effects.js": "cdf22e75b3947d44b47d309943e76d7a06b097329402d3695f10afa5cafc5fb6",
+    "scripts/build-frostbound.mjs": "8867f4978c3ecc2a88e4e1d351bce665dae737b0c3f792967a0f5dc18020ef49",
+    "scripts/frost-blood-mage-lightning.mjs": "e04acdac86da38b425d24ac2f4545fc9185631b4174125718b40e90629fe0339",
+    "scripts/test-frost-blood-mage.mjs": "9b04d5ef01b3cf8c21cb80babb98ee6972a819615f137ce9bbffe2eaa1f60984",
+    "scripts/test-frost-blood-mage-generated.mjs": "883b4f39d4b71111b0730ad5383474afb0ef59b79a580223085347fcc138c266",
+    "scripts/test-frost-blood-mage-network.mjs": "3a45af9ff304b0013034fb4441380043853939663318c14024a15cc1a19ae943",
+    "scripts/frost-blood-mage-fixture.mjs": "f47cdd97c53a21b049ec9ac75b4e1603571d3e3c5c5fca77d506ab5579b9822a",
+    "scripts/qa-frost-blood-mage.mjs": "75b1c8ed8a303bf5a6030bdd4d6427426a61b17a323221c31489693f970e815d"
+  },
+  "native": {
+    "passed": true,
+    "report": "docs/designs/frostbound-realms/native-blood-mage-gameplay-qa.json",
+    "normalExit": true,
+    "consoleErrors": 0,
+    "shaderRejections": 0,
+    "scope": "Native Blood Mage source body/portrait/INT/cards, Flame Strike/Banish, textured Siphon ribbon and F5 channel continuation, Phoenix/Alternate egg/F5/rebirth. Original Warcraft execution parity, lightning texture scrolling/noise, physical input, audio listening and cross-machine LAN remain unverified.",
+    "screenshotsInspected": [
+      "blood-mage-native-hero.png",
+      "blood-mage-native-egg.png",
+      "blood-mage-native-phoenix.png",
+      "blood-mage-native-siphon.png"
+    ]
+  },
+  "regression": {
+    "completed": true,
+    "singleFullEntryExitZero": false,
+    "importedModuleCount": 134,
+    "strategy": "First 73 imported modules passed before daynight failure; corrected middle 14 modules passed; remaining 47 imported modules passed; exact main acceptance body passed after generic ranger fixture correction.",
+    "mainExitCode": 0,
+    "middleExitCode": 0,
+    "logSha256": {
+      "tmp/blood-mage-gameplay-regression-final.log": "fa0b18b750e8bc4b019824d0cb91740e7b0bf67b55af18b7cb583d3b751fd36e",
+      "tmp/blood-mage-regression-middle.log": "76d81bc135faea5c9ba46360def41acb2be0e38541aa08ff043d20899e13c147",
+      "tmp/blood-mage-regression-resumed.log": "b18c946093c60d8de75930991cbd01bb57b3ebd28b31874e99386ddf9be5ffca",
+      "tmp/blood-mage-regression-main.log": "ce33ec584a45940d392b1c0a2c8a36b87825e0ea032482dca145c4486f5b9f70"
+    },
+    "mainAcceptanceSha256": "d94c6b51ad13dce55805fbfadf92dce13145f3539273ab7251886dccee396d71"
+  },
+  "rebuild": {
+    "scope": "Byte-identical rebuild in isolated output directory using current workspace inputs.",
+    "output": "tmp/blood-mage-repro-build",
+    "exitCode": 0,
+    "byteIdentical": [
+      "Assets/Scenes/Main.mscene",
+      "Assets/Scripts/Main.js",
+      "Assets/Models/BloodMageLightning.glb",
+      "Assets/Materials/BloodMageLightning.mmat"
+    ]
+  },
+  "limits": [
+    "Original Warcraft runtime execution parity remains unverified.",
+    "AHfs exact building damage and maximum-per-tick distribution, AHdr overflow decay/tether, Banish exceptions and Phoenix reward/fire stacking need original runtime comparison.",
+    "Phoenix automatic fire applies initial damage without original miniature missile travel.",
+    "Siphon lightning texture UV scrolling/noise, audio listening, physical input and cross-machine LAN remain unverified.",
+    "Full Warcraft campaign, editor parity and complete classic-map fidelity remain incomplete."
+  ],
+  "stagedInputSha256": {
+    "samples/frostbound-realms/game/blood-mage.js": "273385610c21b937ea6fb63e0e04a8351ada9a9b15825734e94e6715de0a3f1a",
+    "samples/frostbound-realms/game/simulation.js": "cab34d7ee4927b98e994cbe6fadc43b75c544734098b4549c207305168954b23",
+    "samples/frostbound-realms/game/client.js": "faed3dde370a4b091c5d428e9c062fb5f567e896892590ee5560113d426db175",
+    "samples/frostbound-realms/game/visuals.js": "43d7b2e150d6cb7f72c1eeb364a3f40269ae69e0e3299c60b54aeb7aa4fc7a70",
+    "samples/frostbound-realms/game/effects.js": "031e7a48697a707834be852b6c530e12549f7ea2a624734905a188be9c55b1cd",
+    "scripts/build-frostbound.mjs": "a91f6961c6d9c7adbf9d4b1a53051247ad750aa57432f20244c660f747dee58e",
+    "scripts/frost-battle-fixture.mjs": "cd58115d789c85a97553b3a2383d57db227f581566ea87a0a687201bbb2f7e55",
+    "scripts/frost-blood-mage-fixture.mjs": "f47cdd97c53a21b049ec9ac75b4e1603571d3e3c5c5fca77d506ab5579b9822a",
+    "scripts/frost-blood-mage-lightning.mjs": "e04acdac86da38b425d24ac2f4545fc9185631b4174125718b40e90629fe0339",
+    "scripts/test-frost-blood-mage.mjs": "2c429be4f6db48f06c857c5af97fd12706dcd8d8ad443574461e2e926ffdae7d",
+    "scripts/test-frost-blood-mage-generated.mjs": "7dfe8b381252f326d01fdf3d904e0217398d53b907c4505a154f6c0db9669406",
+    "scripts/test-frost-blood-mage-network.mjs": "025018099c4d1e1c32af5ddd8189d5e799903793b6adc2eef700a5d30fb378cf",
+    "scripts/qa-frost-blood-mage.mjs": "d7b3c21816cbee1c196a550591399f43dd12f330601ed8d1084b11d9a5c7320f",
+    "scripts/test-frostbound.mjs": "4dbbc2cea1054e173a61276c5d9f7af62e511ee0ed6f72dcb76b9b6f8a15d87f",
+    "scripts/test-frost-unit-scales.mjs": "c0cc4200e8c2dfb102e87a52553b320218f58674c1ad7a4f1471f5320f78bba7",
+    "scripts/test-frost-visuals.mjs": "4fcec65f04b79e84cee7a683d511a139021aec58dabd335a17f98db234d6dba4",
+    "scripts/test-frost-daynight.mjs": "48213f9cb871a27dcbd6292a0560b92929d9cdeca5b0c577b5741e592475b2bf",
+    "scripts/test-frost-corpses.mjs": "6be03189eb14a1a0ae364e522a7db2ef65293312b4fa1bee87fa64423b49379b",
+    "scripts/test-frost-racial-items.mjs": "6f3478332f8de41dcfd84e2fd44d8907f38c03884d9ca27f79d4f1a16dfc6e6a",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "347ad8dff8c0fae3af614aef10f084c3088dad21dcd4bb9f0f92c21836a181ac",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "7ae5ba52fb5cef2449bae5e5c137782c409256292fba2ed3776f3dc103e73a16",
+    "samples/frostbound-realms/Assets/Models/BloodMageLightning.glb": "3b3383fdda6d320f1b9e1ae83bdbd0174de8902c4fd54309fcd748de0bc04eb0",
+    "samples/frostbound-realms/Assets/Materials/BloodMageLightning.mmat": "2b12041ca5cbfabb2f5def790a948bf75ebec33ad66c854493a2f07c1b028229"
+  }
+}

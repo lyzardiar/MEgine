@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');globalThis.Frost=S;globalThis.FrostArt={...JSON.parse(fs.readFileSync(new URL('../samples/frostbound-realms/mountain-giant-models.json',import.meta.url))),...JSON.parse(fs.readFileSync(new URL('../samples/frostbound-realms/faerie-dragon-models.json',import.meta.url))),...JSON.parse(fs.readFileSync(new URL('../samples/frostbound-realms/chimaera-models.json',import.meta.url))),...JSON.parse(fs.readFileSync(new URL('../samples/frostbound-realms/model-catalog.json',import.meta.url))),...JSON.parse(fs.readFileSync(new URL('../samples/frostbound-realms/druid-models.json',import.meta.url))),...JSON.parse(fs.readFileSync(new URL('../samples/frostbound-realms/dryad-models.json',import.meta.url))),...JSON.parse(fs.readFileSync(new URL('../samples/frostbound-realms/hippogryph-models.json',import.meta.url)))};const V=createRequire(import.meta.url)('../samples/frostbound-realms/game/visuals.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
-function arena(mode='skirmish'){const map=S.defaultMap(mode);map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create(mode,{archmageVersion:0,map});s.units=[];return s;}
+function arena(mode='skirmish'){const map=S.defaultMap(mode);map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create(mode,{archmageVersion:0,bloodMageVersion:0,map});s.units=[];return s;}
 function kill(s,kind='soldier',extra={}){const u=S.spawn(s,'rifleman',0,0,0,{damage:100000,range:12}),v=S.spawn(s,kind,1,0,1,{hp:1,damage:0,speed:0,yaw:1.1,...extra});u.order={type:'attack',target:v.id};S.visibility(s);S.tick(s);assert.equal(v.hp,0);u.damage=0;u.order={type:'hold'};return {u,v,c:s.corpses.find(c=>c.id===v.id)};}
 {
  const s=arena(),{v,c}=kill(s);assert.ok(c);assert.equal(c.yaw,1.1);assert.equal(c.age,0);assert.ok(!s.units.some(u=>u.id===v.id));assert.equal(S.population(s,1).used,0);const body=S.clone(c);S.command(s,1,{type:'move',ids:[v.id],x:5,z:5});assert.deepEqual(c,body);
@@ -28,7 +28,7 @@ function kill(s,kind='soldier',extra={}){const u=S.spawn(s,'rifleman',0,0,0,{dam
 {
  const s=arena('moba'),{v,c}=kill(s,'hero');assert.ok(!c&&v.respawn>0);const copy=S.restore(s);step(copy,141);assert.ok(copy.units.find(u=>u.id===v.id).hp>0);assert.ok(!copy.corpses.some(c=>c.id===v.id),'reviving hero removes old body');
 }
-for(const kind of Object.keys(S.types).filter(k=>S.types[k].speed&&S.types[k].leavesCorpse!==false&&!S.types[k].mechanical&&S.types[k].attack!=='siege'&&k!=='hero')){
+for(const kind of Object.keys(S.types).filter(k=>S.types[k].speed&&S.types[k].leavesCorpse!==false&&!S.types[k].mechanical&&S.types[k].attack!=='siege'&&k!=='hero'&&!S.phoenixUnit({kind:k}))){
  for(const heroClass of kind==='hero'?[0,1,2,3]:[0]){const s=arena(),{c}=kill(s,kind,{heroClass});assert.ok(c,kind);for(let faction=0;faction<4;faction++){s.teams[1].faction=faction;assert.ok(V.corpse(s,c),kind+' faction '+faction+' has an authored death clip');}S.restore(s);if(S.types[kind].flying)assert.ok(V.corpse(s,{...c,age:4}).y<=.01,'flying body reaches ground');}
 }
 for(const kind of ['ballista','catapult','trebuchet','ram','critter','hippogryph','hippogryphrider']){const s=arena();assert.equal(kill(s,kind).c,undefined,'source unit leaves no persistent biological corpse');}
