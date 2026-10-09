@@ -1,7 +1,7 @@
 {
   "author": "MiYu",
   "generatedClientExitCode": 0,
-  "verifiedAt": "2026-10-09T02:45:46.246728+00:00",
+  "verifiedAt": "2026-10-09T04:22:03.632146+00:00",
   "sha256": {
     "scripts/build-frostbound.mjs": "5e3e50a2c1c3e26d457eb2a03873849a521c78421544fa0876a160cf52a0a7c3",
     "scripts/test-frost-blademaster-generated.mjs": "226a3a773408a03b43348e7df89c192f1ec5ffdc7a73e323aa65e7b2df02a6fb",
@@ -17,7 +17,7 @@
     "samples/frostbound-realms/orc-hero-rules.json": "9c4e2dd09cf66334f659aaf44e6e36d991b1eeb421505d531b5f03670b6a0905",
     "samples/frostbound-realms/game/effects.js": "0ed9f6094d3d33cdfd8f8e086f0a4ce0d7a0b366c1a2c59deefb7818defb0f5d",
     "samples/frostbound-realms/blademaster-effects.json": "ab67f1773172c810109823de5b6e66ce78d5162a51a27d0b39d4c0ff0f157771",
-    "samples/frostbound-realms/blademaster-effects-sources.json": "873011d6412ef0c5ea8a9ef96ab864e0d553b3f48c61f98c66383d5e32461e9e",
+    "samples/frostbound-realms/blademaster-effects-sources.json": "d955bdf6be111f16590d7fd2b8a7eb969f20abf7d91f3b9db72baf77cc40659c",
     "scripts/test-frost-blademaster-effects.mjs": "8cd0abda50b5cbfacdd06b245f03e4a3d98b5cc759ff034d0f202de899d76635"
   },
   "blademasterEffects": true

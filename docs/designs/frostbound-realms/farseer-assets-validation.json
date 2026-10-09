@@ -1,0 +1,24 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "hashVerifiedFiles": 428,
+  "metadataGuids": 162,
+  "bodyAndPortraitModels": 3,
+  "rankedWolfRules": 3,
+  "effectBindings": 10,
+  "modelParticleSamples": {
+    "Stand": 0,
+    "Death": 114,
+    "Birth": 0
+  },
+  "nativeGeometrySamples": 182,
+  "offlineByteIdentical": true,
+  "modifiedOutputRejected": true,
+  "corruptParticleDependencyRejected": true,
+  "gameplayIntegrated": false,
+  "pending": [
+    "Four Far Seer spells, wolf gameplay and TCP integration",
+    "Original-game solver parity"
+  ],
+  "scope": "Source data and model asset verification. Native GPU preview is a separate check; this is not playable Far Seer acceptance."
+}

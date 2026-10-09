@@ -6,19 +6,60 @@
  Descriptions: Sample classic MDX particles, ribbons and lights alongside geometry.
 *********************************************************************/
 using System.Numerics;
+using System.Text;
 using System.Text.Json;
 using Wc3ModelViewer.Core.Formats;
 
 internal static class EffectExport {
+    // PREM uses an inclusive outer record and an inclusive node, followed by six scalars and a model path.
+    private static Dictionary<int, string> RestoreModelEmitters(byte[] bytes, MdxModel model) {
+        var paths = new Dictionary<int, string>();
+        using var reader = new BinaryReader(new MemoryStream(bytes));
+        reader.BaseStream.Position = 4;
+        while (reader.BaseStream.Position < bytes.Length) {
+            string chunk = Encoding.ASCII.GetString(reader.ReadBytes(4)); int length = reader.ReadInt32(); long end = reader.BaseStream.Position + length;
+            if (length < 0 || end > bytes.Length) throw new InvalidDataException("Invalid MDX chunk bounds");
+            if (chunk == "PREM") while (reader.BaseStream.Position < end) {
+                long start = reader.BaseStream.Position; int size = reader.ReadInt32(); long node = reader.BaseStream.Position; int nodeSize = reader.ReadInt32();
+                if (size < 4 + nodeSize + 284 || nodeSize < 96 || start + size > end) throw new InvalidDataException("Invalid PREM bounds");
+                reader.BaseStream.Position = node + 84; int objectId = reader.ReadInt32();
+                reader.BaseStream.Position = node + nodeSize;
+                float emission = reader.ReadSingle(), gravity = reader.ReadSingle(), longitude = reader.ReadSingle(), latitude = reader.ReadSingle();
+                string path = Encoding.UTF8.GetString(reader.ReadBytes(260)).Split('\0')[0];
+                float life = reader.ReadSingle(), speed = reader.ReadSingle();
+                var tracks = new Dictionary<string, MdxTrack<float>>();
+                while (reader.BaseStream.Position < start + size) {
+                    string tag = Encoding.ASCII.GetString(reader.ReadBytes(4)); int count = reader.ReadInt32(), interpolation = reader.ReadInt32(), global = reader.ReadInt32();
+                    if (count < 0 || interpolation < 0 || interpolation > 3 || !new[] { "KPEE", "KPEG", "KPLN", "KPLT", "KPEL", "KPES", "KPEV" }.Contains(tag) || reader.BaseStream.Position + (long)count * (interpolation > 1 ? 16 : 8) > start + size) throw new InvalidDataException("Invalid PREM track: " + tag);
+                    var times = new int[count]; var values = new float[count]; var incoming = interpolation > 1 ? new float[count] : null; var outgoing = interpolation > 1 ? new float[count] : null;
+                    for (int i = 0; i < count; i++) { times[i] = reader.ReadInt32(); values[i] = reader.ReadSingle(); if (incoming is not null && outgoing is not null) { incoming[i] = reader.ReadSingle(); outgoing[i] = reader.ReadSingle(); } }
+                    tracks.Add(tag, new MdxTrack<float> { Tag = tag, Interpolation = (MdxInterpolation)interpolation, GlobalSequenceId = global, Times = times, Values = values, InTangents = incoming, OutTangents = outgoing });
+                }
+                int index = model.ParticleEmitters.FindIndex(e => e.NodeIndex >= 0 && model.Nodes[e.NodeIndex].ObjectId == objectId);
+                if (index < 0 || string.IsNullOrWhiteSpace(path)) throw new InvalidDataException("Unresolved PREM emitter");
+                if (tracks.ContainsKey("KPLN")) throw new InvalidDataException("Animated PREM longitude is unsupported");
+                var original = model.ParticleEmitters[index];
+                model.ParticleEmitters[index] = new MdxParticleEmitter2 { Name = original.Name, NodeIndex = original.NodeIndex, TextureId = -1, EmissionRate = emission, Gravity = gravity, Longitude = longitude, Latitude = latitude, Life = life, Speed = speed, VisibilityTrack = tracks.GetValueOrDefault("KPEV"), EmissionRateTrack = tracks.GetValueOrDefault("KPEE"), GravityTrack = tracks.GetValueOrDefault("KPEG"), LatitudeTrack = tracks.GetValueOrDefault("KPLT"), LifeTrack = tracks.GetValueOrDefault("KPEL"), SpeedTrack = tracks.GetValueOrDefault("KPES") };
+                paths.Add(index, path);
+            }
+            reader.BaseStream.Position = end;
+        }
+        return paths;
+    }
     public static void Write(string source, string target) {
-        var model = MdxReader.Read(File.ReadAllBytes(source));
+        var bytes = File.ReadAllBytes(source); var model = MdxReader.Read(bytes);
+        var modelPaths = RestoreModelEmitters(bytes, model);
         var animator = new MdxAnimator(model);
         var simulation = new MdxEffectSimulator(model);
         const float unit = 1f / 128;
         float[] Position(Vector3 v) => [v.X * unit, v.Z * unit, -v.Y * unit];
         float[] Color(Vector3 v, float alpha) => [v.X, v.Y, v.Z, alpha];
         var materials = new List<object>();
-        foreach (var e in model.ParticleEmitters) materials.Add(new { textureId = e.TextureId, replaceableId = e.ReplaceableId, blend = e.Blend switch { MdxParticleBlend.Add => "additive", MdxParticleBlend.Modulate or MdxParticleBlend.Modulate2X => "multiply", _ => "alpha" }, alphaCutoff = e.Blend == MdxParticleBlend.AlphaKey ? .75f : 0f });
+        foreach (var e in model.ParticleEmitters) {
+            int index = materials.Count;
+            if (modelPaths.TryGetValue(index, out string? modelPath)) materials.Add(new { modelPath, textureId = -1, replaceableId = 0, blend = "alpha", alphaCutoff = 0f });
+            else materials.Add(new { textureId = e.TextureId, replaceableId = e.ReplaceableId, blend = e.Blend switch { MdxParticleBlend.Add => "additive", MdxParticleBlend.Modulate or MdxParticleBlend.Modulate2X => "multiply", _ => "alpha" }, alphaCutoff = e.Blend == MdxParticleBlend.AlphaKey ? .75f : 0f });
+        }
         var ribbonMaterials = new List<int>();
         foreach (var e in model.RibbonEmitters) {
             if (e.MaterialId < 0 || e.MaterialId >= model.Materials.Count) throw new InvalidDataException($"Invalid ribbon material: {e.Name}");
@@ -33,11 +74,13 @@ internal static class EffectExport {
                 var (color, alpha, scale) = simulation.Appearance(p);
                 var uv = simulation.CellUv(p);
                 if (alpha <= 0 || scale <= 0) continue;
-                if (e.ParticleType != MdxParticleType.Tail) particles.Add(new { material = p.Emitter, position = Position(p.Position), size = scale * unit, color = Color(color, alpha), uv = new[] { uv.U0, uv.V0, uv.U1 - uv.U0, uv.V1 - uv.V0 } });
+                if (modelPaths.ContainsKey(p.Emitter)) particles.Add(new { material = p.Emitter, position = Position(p.Position), size = scale, age = p.Age, color = Color(color, alpha), uv = new[] { 0f, 0f, 1f, 1f } });
+                else if (e.ParticleType != MdxParticleType.Tail) particles.Add(new { material = p.Emitter, position = Position(p.Position), size = scale * unit, color = Color(color, alpha), uv = new[] { uv.U0, uv.V0, uv.U1 - uv.U0, uv.V1 - uv.V0 } });
             }
             var quads = new List<object>();
             foreach (var p in simulation.Particles) {
                 var e = model.ParticleEmitters[p.Emitter];
+                if (modelPaths.ContainsKey(p.Emitter)) continue;
                 if (e.ParticleType == MdxParticleType.Head) continue;
                 var (color, alpha, scale) = simulation.Appearance(p);
                 var uv = simulation.CellUv(p);

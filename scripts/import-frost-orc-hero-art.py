@@ -28,8 +28,8 @@ SOURCE_PREFIX = 'SourceAssets/OrcHeroes/art/'
 ASSET_PREFIX = 'Assets/OrcHeroes/'
 
 
-def owned_outputs(output):
-    receipt = json.loads((output / RECEIPT).read_bytes()) if (output / RECEIPT).exists() else {}
+def owned_outputs(output, receipt_name=RECEIPT):
+    receipt = json.loads((output / receipt_name).read_bytes()) if (output / receipt_name).exists() else {}
     signed = {r['path']: r for r in receipt.get('outputs', [])}
     for path, record in signed.items():
         target = output / c.relative(path)
@@ -38,15 +38,17 @@ def owned_outputs(output):
     return {path.lower(): record for path, record in signed.items()}
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+def main(config=None):
+    config = config or {}; defaults = globals()
+    BINDINGS, RECEIPT, SOURCE_PREFIX, ASSET_PREFIX = [config.get(k, defaults[n]) for k, n in [('bindings', 'BINDINGS'), ('receipt', 'RECEIPT'), ('raw', 'SOURCE_PREFIX'), ('prefix', 'ASSET_PREFIX')]]
+    parser = argparse.ArgumentParser(description=config.get('description', __doc__))
     parser.add_argument('--output', type=pathlib.Path, default=SAMPLE)
     parser.add_argument('--source-root', type=pathlib.Path)
     parser.add_argument('--game', type=pathlib.Path, default=pathlib.Path('E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne'))
     parser.add_argument('--sampler', type=pathlib.Path, default=ROOT / 'tmp/warcraft-effects/sentinel-bin/MdxExport.dll')
     parser.add_argument('--metadata-reader', type=pathlib.Path, default=ROOT / 'tmp/warcraft-effects/node-metadata/NodeMetadata.dll')
     parser.add_argument('--pose-probe', type=pathlib.Path, default=pathlib.Path('D:/MEngineNativeQA/attachment-build/release/examples/gltf_bounds.exe'))
-    args = parser.parse_args(); output = args.output.resolve(); owned = owned_outputs(output)
+    args = parser.parse_args(); output = args.output.resolve(); owned = owned_outputs(output, RECEIPT)
     signed = {}
     if args.source_root:
         prior = json.loads((args.source_root / RECEIPT).read_bytes())
@@ -57,7 +59,7 @@ def main():
     pin = ROOT / 'tmp/warcraft-converter' / c.COMMIT
     binary_paths = [args.sampler, args.sampler.with_name('Wc3ModelViewer.Core.dll'), args.sampler.with_suffix('.deps.json'), args.sampler.with_suffix('.runtimeconfig.json'), args.metadata_reader, args.metadata_reader.with_name('Wc3ModelViewer.Core.dll'), args.metadata_reader.with_suffix('.deps.json'), args.metadata_reader.with_suffix('.runtimeconfig.json'), args.pose_probe]
     binaries = [dict(path=p.relative_to(ROOT).as_posix() if p.is_relative_to(ROOT) else p.as_posix(), bytes=p.stat().st_size, sha256=sha(p.read_bytes())) for p in binary_paths]
-    tools = ['scripts/import-frost-orc-hero-art.py', 'scripts/convert-warcraft-assets.py', 'scripts/convert-frost-classic-billboards.py', 'scripts/import-frost-demon-hunter.py', 'scripts/import-frost-dryad-portrait.py', 'scripts/warcraft_mpq.py']
+    tools = ['scripts/import-frost-orc-hero-art.py', 'scripts/convert-warcraft-assets.py', 'scripts/convert-frost-classic-billboards.py', 'scripts/import-frost-demon-hunter.py', 'scripts/import-frost-dryad-portrait.py', 'scripts/warcraft_mpq.py'] + config.get('generators', [])
     files, sources, archives, models, views, binding_records, source_case = {}, {}, [], {}, {}, [], {}
 
     def original(path):
@@ -81,7 +83,7 @@ def main():
 
     try:
         for unit, key, stem in BINDINGS:
-            for is_portrait in [False, True]:
+            for is_portrait in ([False, True] if config.get('portraits', True) else [False]):
                 path = stem + ('_Portrait' if unit == 'Oshd' else '_portrait') + '.mdx' if is_portrait else stem + '.mdx'
                 raw = original(path); offset = 4; assert raw[:4] == b'MDLX'
                 while offset < len(raw):
@@ -178,9 +180,10 @@ def main():
         report = json.loads((geometry / 'Validation/conversion-checks.json').read_bytes())
         files[SOURCE_PREFIX + 'conversion-checks.json'] = encode(report)
         files[SOURCE_PREFIX + 'node-conversion.json'] = encode(dict(models=node_report))
-        files['orc-hero-models.json'] = encode(models); files['orc-hero-portraits.json'] = encode(views)
-        files['Assets/Licenses/Classic-Orc-Hero-Art.txt'] = b'Original Warcraft III geometry, animation, textures and cameras belong to Blizzard Entertainment. Extraction does not establish a free redistribution license. Sources and fingerprints: orc-hero-art-sources.json.\n'
-        files['Assets/Licenses/Orc-Hero-W3ModelViewer-MIT.txt'] = (pin / 'upstream/LICENSE').read_bytes()
+        files[config.get('modelsFile', 'orc-hero-models.json')] = encode(models)
+        if config.get('portraits', True): files[config.get('portraitsFile', 'orc-hero-portraits.json')] = encode(views)
+        files[config.get('sourceLicenseFile', 'Assets/Licenses/Classic-Orc-Hero-Art.txt')] = ('Original Warcraft III geometry, animation, textures and cameras belong to Blizzard Entertainment. Extraction does not establish a free redistribution license. Sources and fingerprints: ' + RECEIPT + '.\n').encode()
+        files[config.get('licenseFile', 'Assets/Licenses/Orc-Hero-W3ModelViewer-MIT.txt')] = (pin / 'upstream/LICENSE').read_bytes()
     for path, raw in files.items():
         target = output / c.relative(path)
         if target.exists() and path.lower() not in owned and target.read_bytes() != raw: raise ValueError('Unowned output collision: ' + path)

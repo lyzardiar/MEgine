@@ -14,10 +14,41 @@ pub struct SampledEffectAsset {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EffectMaterial {
+    #[serde(default)]
     pub texture: String,
     pub blend: String,
     #[serde(default)]
     pub alpha_cutoff: f32,
+    #[serde(default)]
+    pub model: Option<EffectParticleModel>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct EffectParticleModel {
+    pub clip: usize,
+    pub duration: f32,
+    pub fps: u32,
+    #[serde(rename = "loop")]
+    pub looping: bool,
+    pub parts: Vec<EffectModelPart>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EffectModelPart {
+    pub mesh: String,
+    pub texture: String,
+    pub blend: String,
+    #[serde(default)]
+    pub alpha_cutoff: f32,
+    pub states: Vec<EffectModelState>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct EffectModelState {
+    pub frame: u32,
+    pub color: [f32; 4],
+    pub texture: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -44,6 +75,8 @@ pub struct EffectParticle {
     pub size: f32,
     pub color: [f32; 4],
     pub uv: [f32; 4],
+    #[serde(default)]
+    pub age: f32,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -84,7 +117,19 @@ impl SampledEffectAsset {
         let asset: Self = serde_json::from_str(text).map_err(|e| e.to_string())?;
         if asset.schema_version != 1 || asset.fps == 0 || asset.fps > 120 || asset.clips.len() > 1024 || asset.materials.len() > 1024 { return Err("invalid sampled effect schema or limits".into()); }
         for material in &asset.materials {
-            if !effect_asset_path(&material.texture) || !matches!(material.blend.as_str(), "alpha" | "additive" | "multiply") || !material.alpha_cutoff.is_finite() || !(0.0..=1.0).contains(&material.alpha_cutoff) { return Err("invalid sampled effect material".into()); }
+            if !matches!(material.blend.as_str(), "alpha" | "additive" | "multiply") || !material.alpha_cutoff.is_finite() || !(0.0..=1.0).contains(&material.alpha_cutoff) { return Err("invalid sampled effect material".into()); }
+            if let Some(model) = &material.model {
+                if !material.texture.is_empty() || model.clip > 255 || !model.duration.is_finite() || model.duration <= 0. || model.duration > 600. || !(1..=60).contains(&model.fps) || model.parts.is_empty() || model.parts.len() > 128 { return Err("invalid sampled effect particle model".into()); }
+                for part in &model.parts {
+                    if !effect_asset_path(&part.mesh) || !part.mesh.ends_with(".glb") || !effect_asset_path(&part.texture) || !matches!(part.blend.as_str(), "alpha" | "additive" | "multiply") || !part.alpha_cutoff.is_finite() || !(0.0..=1.0).contains(&part.alpha_cutoff) || part.states.is_empty() || part.states.len() > 36_001 { return Err("invalid sampled effect model part".into()); }
+                    let mut previous = None;
+                    for state in &part.states {
+                        if previous.is_some_and(|p| state.frame <= p) || state.frame as f32 > model.duration * model.fps as f32 + 1. || !state.color.iter().all(|v| v.is_finite()) || !effect_asset_path(&state.texture) { return Err("invalid sampled effect model state".into()); }
+                        previous = Some(state.frame);
+                    }
+                    if part.states[0].frame != 0 { return Err("sampled effect model states must start at zero".into()); }
+                }
+            } else if !effect_asset_path(&material.texture) { return Err("invalid sampled effect material".into()); }
         }
         let mut samples = 0usize;
         for clip in &asset.clips {
@@ -95,10 +140,10 @@ impl SampledEffectAsset {
                 if samples > 2_000_000 || !frame.seconds.is_finite() || frame.seconds < 0. || frame.seconds <= previous || frame.seconds > clip.duration + 1e-4 || frame.particles.len() > 4000 || frame.quads.len() > 16000 || frame.lights.len() > 64 { return Err("invalid sampled effect frame".into()); }
                 previous = frame.seconds;
                 for p in &frame.particles {
-                    if p.material >= asset.materials.len() || !p.position.iter().chain(&p.color).chain(&p.uv).chain([&p.size]).all(|v| v.is_finite()) || p.size < 0. { return Err("invalid sampled effect particle".into()); }
+                    if p.material >= asset.materials.len() || !p.position.iter().chain(&p.color).chain(&p.uv).chain([&p.size, &p.age]).all(|v| v.is_finite()) || p.size < 0. || p.age < 0. || p.age > 600. { return Err("invalid sampled effect particle".into()); }
                 }
                 for q in &frame.quads {
-                    if q.material >= asset.materials.len() || q.corners.is_some() == q.tail.is_some() || !q.corners.iter().flatten().flatten().chain(q.tail.iter().flatten().flatten()).chain(&q.color).chain(&q.uv).chain([&q.width]).all(|v| v.is_finite()) || q.width < 0. { return Err("invalid sampled effect quad".into()); }
+                    if q.material >= asset.materials.len() || asset.materials[q.material].model.is_some() || q.corners.is_some() == q.tail.is_some() || !q.corners.iter().flatten().flatten().chain(q.tail.iter().flatten().flatten()).chain(&q.color).chain(&q.uv).chain([&q.width]).all(|v| v.is_finite()) || q.width < 0. { return Err("invalid sampled effect quad".into()); }
                 }
                 for l in &frame.lights {
                     if !matches!(l.kind.as_str(), "omni" | "directional" | "ambient") || !l.position.iter().chain(&l.color).chain(&l.ambient_color).chain([&l.intensity, &l.range]).all(|v| v.is_finite()) { return Err("invalid sampled effect light".into()); }
@@ -137,5 +182,19 @@ mod tests {
         let mut f=fixture(); f["clips"][0]["frames"][1]["particles"][0]["material"]=1.into(); assert!(SampledEffectAsset::parse(&f.to_string()).is_err());
         let mut f=fixture(); f["clips"][0]["frames"][1]["seconds"]=0.09.into(); assert!(SampledEffectAsset::parse(&f.to_string()).is_err());
         let mut f=fixture(); f["clips"][0]["frames"][0]["quads"]=serde_json::json!([{"material":0,"color":[1.,1.,1.,1.],"uv":[0.,0.,1.,1.]}]); assert!(SampledEffectAsset::parse(&f.to_string()).is_err());
+    }
+    #[test]
+    fn model_particles_validate_dependencies_age_and_animation_states() {
+        let mut f = fixture();
+        f["materials"][0] = serde_json::json!({"blend":"alpha","model":{"clip":0,"duration":1.,"fps":12,"loop":true,"parts":[{"mesh":"Assets/light.glb","texture":"Assets/light.png","blend":"additive","states":[{"frame":0,"color":[1.,1.,1.,1.],"texture":"Assets/light.png"}]}]}});
+        let asset = SampledEffectAsset::parse(&f.to_string()).unwrap();
+        assert_eq!(asset.clips[0].frames[1].particles[0].age, 0.);
+        for (field, value) in [("mesh", "../outside.glb"), ("texture", "C:/outside.png")] { let mut bad = f.clone(); bad["materials"][0]["model"]["parts"][0][field] = value.into(); assert!(SampledEffectAsset::parse(&bad.to_string()).is_err()); }
+        let mut bad = f.clone(); bad["materials"][0]["texture"] = "Assets/light.png".into(); assert!(SampledEffectAsset::parse(&bad.to_string()).is_err());
+        let mut bad = f.clone(); bad["clips"][0]["frames"][1]["particles"][0]["age"] = (-0.1).into(); assert!(SampledEffectAsset::parse(&bad.to_string()).is_err());
+        let mut bad = f.clone(); bad["materials"][0]["model"]["parts"][0]["states"][0]["frame"] = 1.into(); assert!(SampledEffectAsset::parse(&bad.to_string()).is_err());
+        let mut bad = f.clone(); bad["materials"][0]["model"]["parts"][0]["states"][0]["texture"] = "../outside.png".into(); assert!(SampledEffectAsset::parse(&bad.to_string()).is_err());
+        let mut bad = f.clone(); bad["materials"][0]["model"]["parts"][0]["states"].as_array_mut().unwrap().push(f["materials"][0]["model"]["parts"][0]["states"][0].clone()); assert!(SampledEffectAsset::parse(&bad.to_string()).is_err());
+        let mut bad = f; bad["clips"][0]["frames"][0]["quads"] = serde_json::json!([{"material":0,"tail":[[0.,0.,0.],[1.,0.,0.]],"color":[1.,1.,1.,1.],"uv":[0.,0.,1.,1.]}]); assert!(SampledEffectAsset::parse(&bad.to_string()).is_err());
     }
 }

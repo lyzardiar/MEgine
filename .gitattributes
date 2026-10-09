@@ -135,3 +135,12 @@ samples/frostbound-realms/game/simulation.js text eol=lf
 samples/frostbound-realms/game/client.js text eol=lf
 samples/frostbound-realms/game/effects.js text eol=lf
 samples/frostbound-realms/Assets/Licenses/Blademaster-Effects-W3ModelViewer-MIT.txt -text
+scripts/*farseer*.py text eol=lf
+scripts/qa-frost-farseer*.mjs text eol=lf
+samples/frostbound-realms/farseer-*.json text eol=lf
+samples/frostbound-realms/Assets/Farseer/** -text whitespace=cr-at-eol,-blank-at-eol
+samples/frostbound-realms/Assets/FarseerEffects/** -text whitespace=cr-at-eol,-blank-at-eol
+samples/frostbound-realms/Assets/FarseerParticles/** -text whitespace=cr-at-eol,-blank-at-eol
+samples/frostbound-realms/SourceAssets/Farseer/** -text whitespace=cr-at-eol,-blank-at-eol
+samples/frostbound-realms/Assets/Licenses/*Farseer* -text
+docs/designs/frostbound-realms/*farseer*.json text eol=lf

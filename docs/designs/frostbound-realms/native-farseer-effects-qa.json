@@ -1,0 +1,47 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T04:34:11.215Z",
+  "physicalInput": false,
+  "runtimeGameplayIntegrated": false,
+  "sourceDeathSnapshots": [
+    0.083333336,
+    0.25,
+    0.4
+  ],
+  "editorSha256": "72115c49eca08acbfe1b41e41802ba662ca2328720f341d41a767ad98eddc8ce",
+  "effectSha256": "f85cb2a9e33a834ede9ca2b38959544b98405cf2e7127dabcb86883cc400dba4",
+  "expectedModelTriangles": 512,
+  "nativeCounts": {
+    "billboardMeshes": 0,
+    "entities": 5,
+    "materialPipelineEvictions": 0,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 0,
+    "materialPipelinesRejected": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialSamplers": 0,
+    "materialTextureBindGroups": 0,
+    "materialTexturesColor": 0,
+    "materialTexturesData": 0,
+    "msaaSamples": 4,
+    "renderObjects": 0,
+    "sceneViews": 0,
+    "uiBatches": 284,
+    "uiDrawCalls": 284,
+    "uiPrimitives": 512
+  },
+  "consoleErrors": 0,
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 112088,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true
+  },
+  "elapsedMs": 11211,
+  "scope": "Native PREM child-model preview. Full Far Seer skills, wolf gameplay, TCP and original-game solver parity remain unverified."
+}

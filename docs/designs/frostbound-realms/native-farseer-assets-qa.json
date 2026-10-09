@@ -1,0 +1,25 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T03:55:44.944Z",
+  "physicalInput": false,
+  "sourceScales": [
+    0.9,
+    1.1,
+    1.3
+  ],
+  "runtimeGameplayIntegrated": false,
+  "consoleErrors": 0,
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 68204,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true
+  },
+  "elapsedMs": 12697,
+  "scope": "Native asset preview only; wolf gameplay, Far Seer skills, model-particle playback and original-game runtime parity are not yet verified."
+}
