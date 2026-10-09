@@ -1,0 +1,24 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "byteIdentical": true,
+  "outputs": {
+    "Assets/Scripts/Main.js": {
+      "bytes": 14843855,
+      "sha256": "b64b6ffa77eb411fae8e1ce84765f98de7f19b81e0f6dc05e62cb3b278524c97"
+    },
+    "Assets/Scenes/Main.mscene": {
+      "bytes": 74527783,
+      "sha256": "7eeaeed471998d8c0be6cd621a1fb0fdd3638c2cdc49310d6b757267a6651b8b"
+    }
+  },
+  "productDefaultCryptLordVersion": 0,
+  "protocol": 73,
+  "nativeElapsedMs": 4050,
+  "nativeReadyMs": 1168,
+  "targetedScripts": 14,
+  "targetedGroups": 106,
+  "targetedMs": 4776,
+  "nativeChecks": 4,
+  "scope": "Byte-identical final generated bundle/scene and matched opt-in authoritative test/native hashes; product presentation and full Crypt Lord gameplay remain pending."
+}

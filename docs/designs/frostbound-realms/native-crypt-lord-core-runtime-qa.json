@@ -1,0 +1,36 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T15:51:22.349Z",
+  "productMainSha256": "b64b6ffa77eb411fae8e1ce84765f98de7f19b81e0f6dc05e62cb3b278524c97",
+  "cryptLordEnabledByDefault": false,
+  "authoritativeSpells": [
+    "AUim",
+    "AUts"
+  ],
+  "productGameplayIntegrated": false,
+  "productSceneSha256": "7eeaeed471998d8c0be6cd621a1fb0fdd3638c2cdc49310d6b757267a6651b8b",
+  "simulationSha256": "13f03bdfe3381dfe7fba3419b1a0f8b641af9ac8c940b2c45501299dd9252f9e",
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "entityCount": 1,
+  "readyMs": 1168,
+  "protocol": 73,
+  "checks": [
+    "Native source recruitment, airborne invulnerability and private state",
+    "Landing damage, independent stun duration and native deterministic restore",
+    "Source armor and raw melee reflection without numerical attacker armor",
+    "Raw Carapace reflection through full absorption"
+  ],
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 175464,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "elapsedMs": 4050
+}
