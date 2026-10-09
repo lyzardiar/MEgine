@@ -1,0 +1,37 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T16:15:47.590Z",
+  "productMainSha256": "19c986598ee0236570e841de0556a3d3ad9d972ac3b5d271cde1bee742f6a79e",
+  "cryptLordEnabledByDefault": false,
+  "authoritativeSpells": [
+    "AUcb",
+    "Abu2",
+    "Abu3"
+  ],
+  "productGameplayIntegrated": false,
+  "productSceneSha256": "7eeaeed471998d8c0be6cd621a1fb0fdd3638c2cdc49310d6b757267a6651b8b",
+  "simulationSha256": "fb803b6ec75ac28f967672090787fe1056248f30d43943b36f5a2edec3959836",
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "entityCount": 1,
+  "readyMs": 1741,
+  "protocol": 73,
+  "checks": [
+    "Native source rank 3 permanent summon, delayed corpse consumption and mid-cast deterministic restore",
+    "Native timed source morph, permanent regeneration, invisibility and disabled weapon",
+    "Native unburrow restores source movement, weapon and visibility",
+    "Native oldest-of-five replacement and strict save restoration"
+  ],
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 181600,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "elapsedMs": 4999
+}
