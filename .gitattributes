@@ -144,3 +144,5 @@ samples/frostbound-realms/Assets/FarseerParticles/** -text whitespace=cr-at-eol,
 samples/frostbound-realms/SourceAssets/Farseer/** -text whitespace=cr-at-eol,-blank-at-eol
 samples/frostbound-realms/Assets/Licenses/*Farseer* -text
 docs/designs/frostbound-realms/*farseer*.json text eol=lf
+samples/frostbound-realms/game/farseer.js text eol=lf
+scripts/test-frost-farseer-profile.mjs text eol=lf
