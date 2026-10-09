@@ -1,0 +1,328 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T15:19:20.750Z",
+  "sha256": {
+    "crypt-lord-rules.json": "b9d1203a05193a86347b04584de4fa2126725807e660bf03b872df60902c7166",
+    "crypt-lord-portraits.json": "618582b0690001cb14a629e07001743aa0d2f6764fe5c15c2ea95807f3b035d6",
+    "crypt-lord-rules-sources.json": "77400f275845ba7bed61deff4c34e2c7b1d5edd9f216d412ecedfb39912c0e32",
+    "crypt-lord-effects.json": "0ad9977349ac9f86ec32c375d8bbb8b826480666a75220da6710f87afe95f056",
+    "crypt-lord-effect-models.json": "e8aa492d2b13ffb5e07aada29325bcf8f1eebc2a4b666ff7cad265ba3c872d83",
+    "crypt-lord-effects-sources.json": "af8d6b02e67071a41644c62283e8eea29f947bc3eda8ce6f7ea735be0b4a7e5e"
+  },
+  "bodyReceiptSha256": "e260cbf3af9bc1ad4554463ac269735aa3247f82c23dfb206aa92659fe9cb776",
+  "cameraSamplerSha256": "78013a2b582326ac138c4fa4f2b5188017c95b5c3304b86763fa420c2125d2bb",
+  "profileSha256": "d3509c61dfd1d71337626e6efd484a92a3ff230e47cf1c7d038da33f403ac5a8",
+  "sceneSha256": "aea3e97650c13a20d6cdf909ccaa872408cd3be3d3c6651b86c2cb0b7cde3e2a",
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "physicalInput": false,
+  "runtimeGameplayIntegrated": false,
+  "entityCount": 83,
+  "snapshots": [
+    {
+      "key": "ImpaleMissTarget",
+      "base": "ImpaleMissTarget",
+      "unit": null,
+      "position": [
+        -13.5,
+        0,
+        12
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.7411764705882352
+    },
+    {
+      "key": "ImpaleHitTarget",
+      "base": "ImpaleHitTarget",
+      "unit": null,
+      "position": [
+        -4.5,
+        0,
+        12
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.5628823529411764
+    },
+    {
+      "key": "ImpaleStunTarget",
+      "base": "ImpaleStunTarget",
+      "unit": null,
+      "position": [
+        4.5,
+        0,
+        12
+      ],
+      "scale": 2,
+      "clip": 1,
+      "time": 0.08162068965517241
+    },
+    {
+      "key": "ThornyShieldChestLeft",
+      "base": "ThornyShieldChestLeft",
+      "unit": null,
+      "position": [
+        13.5,
+        0,
+        12
+      ],
+      "scale": 2,
+      "clip": 1,
+      "time": 0
+    },
+    {
+      "key": "ThornyShieldChestRight",
+      "base": "ThornyShieldChestRight",
+      "unit": null,
+      "position": [
+        -13.5,
+        0,
+        4
+      ],
+      "scale": 2,
+      "clip": 1,
+      "time": 0
+    },
+    {
+      "key": "ThornyShieldChestMountLeft",
+      "base": "ThornyShieldChestMountLeft",
+      "unit": null,
+      "position": [
+        -4.5,
+        0,
+        4
+      ],
+      "scale": 2,
+      "clip": 1,
+      "time": 0
+    },
+    {
+      "key": "ThornyShieldChestMountRight",
+      "base": "ThornyShieldChestMountRight",
+      "unit": null,
+      "position": [
+        4.5,
+        0,
+        4
+      ],
+      "scale": 2,
+      "clip": 1,
+      "time": 0
+    },
+    {
+      "key": "ClassicCarrionBeetle",
+      "base": "ClassicCarrionBeetle",
+      "unit": "ucs1",
+      "position": [
+        13.5,
+        0,
+        4
+      ],
+      "scale": 1.8,
+      "clip": 0,
+      "time": 0
+    },
+    {
+      "key": "ClassicLocust",
+      "base": "ClassicLocust",
+      "unit": null,
+      "position": [
+        -13.5,
+        0,
+        -4
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.8333333333333334
+    },
+    {
+      "key": "LocustMissile",
+      "base": "LocustMissile",
+      "unit": null,
+      "position": [
+        -4.5,
+        0,
+        -4
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.133
+    },
+    {
+      "key": "ClassicCryptLordEmbedded",
+      "base": "ClassicCryptLordEmbedded",
+      "unit": null,
+      "position": [
+        4.5,
+        0,
+        -4
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.3
+    },
+    {
+      "key": "Beetle rank 2",
+      "base": "ClassicCarrionBeetle",
+      "unit": "ucs2",
+      "position": [
+        13.5,
+        0,
+        -4
+      ],
+      "scale": 2.2,
+      "clip": 0,
+      "time": 0
+    },
+    {
+      "key": "Beetle rank 3",
+      "base": "ClassicCarrionBeetle",
+      "unit": "ucs3",
+      "position": [
+        -13.5,
+        0,
+        -12
+      ],
+      "scale": 2.6,
+      "clip": 0,
+      "time": 0
+    },
+    {
+      "key": "Burrow rank 2",
+      "base": "ClassicCarrionBeetle",
+      "unit": "ucsB",
+      "alternate": true,
+      "position": [
+        -4.5,
+        0,
+        -12
+      ],
+      "scale": 2.2,
+      "clip": 8,
+      "time": 0
+    },
+    {
+      "key": "Burrow rank 3",
+      "base": "ClassicCarrionBeetle",
+      "unit": "ucsC",
+      "alternate": true,
+      "position": [
+        4.5,
+        0,
+        -12
+      ],
+      "scale": 2.6,
+      "clip": 8,
+      "time": 0
+    },
+    {
+      "key": "ClassicCryptLordPortrait",
+      "portrait": true,
+      "position": [
+        1000,
+        0,
+        0
+      ],
+      "scale": 1,
+      "clip": 0,
+      "time": 0.3
+    }
+  ],
+  "timings": [
+    {
+      "stage": "project open and ready",
+      "ms": 1853
+    },
+    {
+      "stage": "source effects, ranked forms, native profile and Bezier camera motion",
+      "ms": 7741,
+      "nativeCounts": {
+        "billboardMeshes": 0,
+        "entities": 83,
+        "materialPipelineEvictions": 0,
+        "materialPipelinesBuiltIn": 36,
+        "materialPipelinesCustom": 0,
+        "materialPipelinesRejected": 0,
+        "materialPipelinesResidentCustom": 0,
+        "materialSamplers": 1,
+        "materialTextureBindGroups": 8,
+        "materialTexturesColor": 8,
+        "materialTexturesData": 0,
+        "msaaSamples": 4,
+        "renderObjects": 30,
+        "sceneViews": 1,
+        "uiBatches": 12,
+        "uiDrawCalls": 12,
+        "uiPrimitives": 503
+      }
+    }
+  ],
+  "nativeProfileResult": {
+    "time": 0.0010000000474974513,
+    "stats": {
+      "strength": 26,
+      "agility": 14,
+      "intelligence": 14,
+      "maxHp": 675,
+      "damage": 31,
+      "speed": 2.7,
+      "armorValue": 5.2
+    },
+    "mana": 210,
+    "beetle": 1.3
+  },
+  "animatedCamera": {
+    "time": 0.501000007498078,
+    "before": {
+      "position": [
+        1001.313232421875,
+        0.6110600233078003,
+        -0.4623143672943115
+      ],
+      "rotation": [
+        0.07205967605113983,
+        0.867567777633667,
+        -0.13187190890312195,
+        0.47407102584838867
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "after": {
+      "position": [
+        1001.3059692382812,
+        0.6088857054710388,
+        -0.46678614616394043
+      ],
+      "rotation": [
+        0.07260511070489883,
+        0.8691401481628418,
+        -0.13413266837596893,
+        0.4704596996307373
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    }
+  },
+  "consoleErrors": 0,
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 139532,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "elapsedMs": 10741,
+  "scope": "Isolated native source geometry and emitters, distinct beetle scales/burrow poses, source profile execution and live Bezier portrait camera. Authoritative spell behavior, client HUD/commands, networking, physical input/audio and original Warcraft solver parity require separate acceptance."
+}

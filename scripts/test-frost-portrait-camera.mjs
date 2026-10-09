@@ -1,0 +1,20 @@
+// Author: MiYu. Verify camera curve interpolation, animation boundaries, source offsets and browser parity.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),C=require('../samples/frostbound-realms/game/portrait-camera.js'),data=require('../samples/frostbound-realms/crypt-lord-portraits.json').ClassicCryptLordPortrait,close=(a,b)=>{if(Array.isArray(a)){assert.equal(a.length,b.length);a.forEach((v,i)=>close(v,b[i]));}else assert.ok(Math.abs(a-b)<1e-10,`${a} != ${b}`);};
+const seq={start:1000,end:2000},make=(mode,globalSequence=-1)=>({dimensions:1,interpolation:mode,globalSequence,keys:[{time:0,value:[100],outTangent:[100],inTangent:[100]},{time:1000,value:[0],outTangent:[2],inTangent:[0]},{time:2000,value:[4],inTangent:[3],outTangent:[4]},{time:3000,value:[-100],outTangent:[-100],inTangent:[-100]}]});
+for(const [mode,value] of [[0,0],[1,2],[2,1.875],[3,2.375]])close(C.sample(make(mode),seq,1500),[value]);
+close(C.sample(make(1),seq,0),[0]);close(C.sample(make(1),seq,4000),[4]);close(C.sample(make(1),{start:3500,end:4500},4000),[0]);close(C.sample(make(1,0),seq,1500,[4000],2500),[-48]);close(C.sample(make(1,0),seq,1500,[0],2500),[100]);
+assert.deepEqual(data.sequences.map(s=>[s.name,s.start,s.end]),[['Portrait - 1',3333,5333],['Portrait Talk - 1',20000,23333]]);assert.equal(data.sourceCamera.tracks.KCTR.interpolation,3);assert.equal(data.sourceCamera.tracks.KTTR.interpolation,3);assert.equal(data.sourceCamera.tracks.KCRL.interpolation,0);assert.equal(data.sourceCamera.tracks.KCTR.keys.length,5);assert.equal(data.sourceCamera.tracks.KTTR.keys.length,5);
+const initial=C.view(data);close(initial.camera.position,data.view.camera.position);close(initial.camera.rotation,data.view.camera.rotation);close(initial.camera3D.fov_y_degrees,data.view.camera3D.fov_y_degrees);assert.deepEqual(initial.camera3D,data.view.camera3D);assert.notEqual(initial.camera.position[0],data.sourceCamera.position[0]/128);
+close(initial.camera.position,[(197.54200744628906-29.444599151611328)/128,(87.03810119628906-8.821430206298828)/128,-(41.03139877319336+18.142799377441406)/128]);
+for(const clip of [0,1])for(const time of [0,.083,.5,1,2,3.3,10]){const view=C.view(data,clip,time),q=view.camera.rotation;close(Math.hypot(...q),1);assert.ok(view.camera.position.every(Number.isFinite));}
+// The two source keys share positions but different Bezier control points, so motion inside the idle clip remains real.
+assert.notDeepEqual(C.view(data,0,.5).camera.position,initial.camera.position);assert.notDeepEqual(C.view(data,0,.5).camera.rotation,initial.camera.rotation);close(C.view(data,0,2).camera.position,initial.camera.position);assert.deepEqual(C.view(data,1,.5),C.view(data,1,1));
+const fixed=structuredClone(data);fixed.sequences[0].loop=false;close(C.view(fixed,0,9).camera.position,C.view(fixed,0,2).camera.position);assert.throws(()=>C.view(data,5),/sequence/);
+function rotate(q,v){const [x,y,z,w]=q,[a,b,c]=v,tx=2*(y*c-z*b),ty=2*(z*a-x*c),tz=2*(x*b-y*a);return [a+w*tx+y*tz-z*ty,b+w*ty+z*tx-x*tz,c+w*tz+x*ty-y*tx];}
+for(const t of [0,.5,1.4]){const v=C.view(data,0,t),s=data.sequences[0],o=C.sample(data.sourceCamera.tracks.KTTR,s,s.start+t*1000,data.globalSequences),p=data.sourceCamera.target,target=[(p[0]+o[0])/128,(p[2]+o[2])/128,-(p[1]+o[1])/128],direction=target.map((n,i)=>n-v.camera.position[i]),length=Math.hypot(...direction);close(rotate(v.camera.rotation,[0,0,-1]),direction.map(n=>n/length));}
+const context=vm.createContext({});vm.runInContext(fs.readFileSync(new URL('../samples/frostbound-realms/game/portrait-camera.js',import.meta.url),'utf8'),context);for(const clip of [0,1])for(const t of [0,.5,2])assert.deepEqual(JSON.parse(JSON.stringify(context.FrostPortraitCamera.view(data,clip,t))),C.view(data,clip,t));
+console.log('PASS original portrait camera Bezier motion, step/linear/Hermite curves, source sequence offsets, looping, global clocks, look direction and browser parity');

@@ -1,0 +1,45 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "verifiedFiles": 250,
+  "guids": 84,
+  "spellGeometryModels": 9,
+  "nativeEffects": 11,
+  "nativeGeometryPoseSamples": 102,
+  "sourcePortraitCameras": 1,
+  "pureParticleEffects": [
+    "LocustMissile"
+  ],
+  "offlineByteIdentical": true,
+  "modifiedOutputRejected": true,
+  "corruptSourceRejected": true,
+  "runtimeGameplayIntegrated": false,
+  "animatedPortraitTracksPreserved": true,
+  "malformedCameraRejected": true,
+  "originalRuntimeVerified": false,
+  "probeSha256": "f66a0eaac9c38aab23dff12638d9690c8e3b0fcd23283275b0e11d67550204ca",
+  "sha256": {
+    "crypt-lord-rules.json": "b9d1203a05193a86347b04584de4fa2126725807e660bf03b872df60902c7166",
+    "crypt-lord-portraits.json": "618582b0690001cb14a629e07001743aa0d2f6764fe5c15c2ea95807f3b035d6",
+    "crypt-lord-rules-sources.json": "77400f275845ba7bed61deff4c34e2c7b1d5edd9f216d412ecedfb39912c0e32",
+    "crypt-lord-effects.json": "0ad9977349ac9f86ec32c375d8bbb8b826480666a75220da6710f87afe95f056",
+    "crypt-lord-effect-models.json": "e8aa492d2b13ffb5e07aada29325bcf8f1eebc2a4b666ff7cad265ba3c872d83",
+    "crypt-lord-effects-sources.json": "af8d6b02e67071a41644c62283e8eea29f947bc3eda8ce6f7ea735be0b4a7e5e"
+  },
+  "scope": "Original fingerprinted rules/effects, source portrait cameras, native parsing and poses, offline reproduction; gameplay and GPU rendering require separate acceptance.",
+  "timings": [
+    {
+      "stage": "source hashes, GUIDs, profiles and texture references",
+      "ms": 149
+    },
+    {
+      "stage": "native effect parsing and geometry poses",
+      "ms": 70
+    },
+    {
+      "stage": "offline byte reproduction, modified output and corrupt source rejection",
+      "ms": 8380
+    }
+  ],
+  "elapsedMs": 8599
+}
