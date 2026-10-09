@@ -1,0 +1,24 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "importerSha256": "9b191275341ef880f730c0c5fb971c3efac18d43c1ddeeb4c01d2b82ff482376",
+  "offlineByteIdentical": true,
+  "packs": [
+    {
+      "receipt": "blademaster-effects-sources.json",
+      "outputs": 106,
+      "byteIdentical": true
+    },
+    {
+      "receipt": "farseer-effects-sources.json",
+      "outputs": 278,
+      "byteIdentical": true
+    },
+    {
+      "receipt": "tauren-effects-sources.json",
+      "outputs": 152,
+      "byteIdentical": true
+    }
+  ],
+  "scope": "Existing source assets reproduced byte-for-byte; gameplay and GPU rendering are separate checks."
+}

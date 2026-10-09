@@ -26,6 +26,8 @@ sha, encode = c.sha, nodes.encode
 def main(config=None):
     config = config or {}; defaults = globals()
     PREFIX, RAW, RECEIPT, BINDINGS = [config.get(k, defaults[n]) for k, n in [('prefix', 'PREFIX'), ('raw', 'RAW'), ('receipt', 'RECEIPT'), ('bindings', 'BINDINGS')]]
+    particle_only = set(config.get('particleOnly', []))
+    if not particle_only.issubset(key for key, _ in BINDINGS): raise ValueError('Unknown particle-only effect binding')
     parser = argparse.ArgumentParser(description=config.get('description', __doc__))
     parser.add_argument('--output', type=pathlib.Path, default=SAMPLE)
     parser.add_argument('--source-root', type=pathlib.Path)
@@ -100,10 +102,12 @@ def main(config=None):
         return raw
 
     try:
-        for _, path in BINDINGS:
-            raw = original(path); assert raw[:4] == b'MDLX'; offset = 4
+        for key, path in BINDINGS:
+            raw = original(path); assert raw[:4] == b'MDLX'; offset = 4; geometry_bytes = 0; emitter_bytes = 0
             while offset < len(raw):
                 tag, size = struct.unpack_from('<4sI', raw, offset); start = offset + 8; end = start + size; assert end <= len(raw)
+                if tag == b'GEOS': geometry_bytes += size
+                if tag in [b'PREM', b'PRE2', b'RIBB']: emitter_bytes += size
                 if tag == b'TEXS':
                     assert size % 268 == 0
                     for at in range(start, end, 268):
@@ -114,6 +118,8 @@ def main(config=None):
                         if replacement in [1, 2]: original(dependency.replace('00.blp', '01.blp'))
                 offset = end
             assert offset == len(raw)
+            if key in particle_only and (geometry_bytes or not emitter_bytes): raise ValueError('Particle-only binding requires emitters and no geosets: ' + key)
+            if not key.endswith('Embedded') and key not in particle_only and not geometry_bytes: raise ValueError('Declare particle-only effect binding: ' + key)
     finally:
         for _, archive in archives: archive.file.close()
     tools = ['scripts/import-frost-blademaster-effects.py', 'scripts/convert-warcraft-assets.py', 'scripts/convert-frost-classic-billboards.py', 'scripts/import-frost-blood-mage.py', 'scripts/import-frost-druids.py', 'scripts/warcraft_mpq.py'] + config.get('generators', [])
@@ -124,7 +130,7 @@ def main(config=None):
         work = pathlib.Path(temp); export = work / 'export'; geometry = work / 'geometry'
         for r in sources.values():
             target = export / 'raw' / c.relative(r['path']); target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(files[r['output']])
-        manifest = dict(source=config.get('source', 'Original Warcraft III Blademaster effects'), archives=[dict(archive=n) for n in ARCHIVES], precedence=ARCHIVES, files=[dict(path=r['path'].replace('/', '\\'), **{k: r[k] for k in ['archive', 'bytes', 'sha256']}) for r in sources.values()], modelSamples=[dict(path=p.replace('/', '\\'), textureSources={}) for key, p in BINDINGS if not key.endswith('Embedded')])
+        manifest = dict(source=config.get('source', 'Original Warcraft III Blademaster effects'), archives=[dict(archive=n) for n in ARCHIVES], precedence=ARCHIVES, files=[dict(path=r['path'].replace('/', '\\'), **{k: r[k] for k in ['archive', 'bytes', 'sha256']}) for r in sources.values()], modelSamples=[dict(path=p.replace('/', '\\'), textureSources={}) for key, p in BINDINGS if not key.endswith('Embedded') and key not in particle_only])
         (export / 'manifest.json').write_bytes(encode(manifest)); prior_sampler, prior_argv = c.sampler, sys.argv
         c.sampler = lambda: (args.sampler, pin / 'upstream/LICENSE', {'upstream.zip': sha((pin / 'upstream.zip').read_bytes())})
         try: sys.argv = ['convert-warcraft-assets', '--input', str(export), '--output', str(geometry)]; c.main()
@@ -163,7 +169,7 @@ def main(config=None):
             frames = [f for a in data['clips'] for f in a['frames']]
             statistics[key] = dict(clips=len(animations), frames=len(frames), particles=sum(len(f['particles']) for f in frames), quads=sum(len(f['quads']) for f in frames), lights=sum(len(f['lights']) for f in frames), sourceParticles=len(original_model['particleEmitters']), sourceRibbons=len(original_model['ribbonEmitters']))
             parts = []
-            if not key.endswith('Embedded'):
+            if not key.endswith('Embedded') and key not in particle_only:
                 model = catalog[path.lower()]; metadata_path = work / (key + '-nodes.json')
                 subprocess.run(['dotnet', str(args.metadata_reader), str(export / 'raw' / c.relative(path)), str(metadata_path)], check=True, capture_output=True)
                 metadata = json.loads(metadata_path.read_bytes()); files[RAW + 'nodes/' + key + '.json'] = encode(metadata)
@@ -195,6 +201,7 @@ def main(config=None):
                 for p in ps: bound_refs.append(str(geometry / p['mesh'].replace(PREFIX, 'Assets/WarcraftIII/')) + f'#pose={ci}:{fi}'); bounds_keys.append(key)
                 models[key] = dict(parts=parts, animations=animations, classic=True, realistic=True, sourceModel=path, material=parts[0]['material'], boundsClip=ci, boundsFrame=fi)
             art[key] = dict(effect=effect, clip=0, parts=parts, animations=animations, sourceModel=path, sourceSha256=sources[path.lower()]['sha256'], embedded=key.endswith('Embedded'))
+            if key in particle_only: art[key]['particleOnly'] = True
         boxes = [json.loads(line) for line in subprocess.check_output([str(args.pose_probe), '--stdin'], input=('\n'.join(bound_refs) + '\n').encode()).splitlines()]
         assert len(boxes) == len(bounds_keys)
         for key, model in models.items():

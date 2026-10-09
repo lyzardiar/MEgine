@@ -1,0 +1,28 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "signedFiles": 517,
+  "guids": 186,
+  "bodyModels": 17,
+  "spellGeometryModels": 4,
+  "nativeEffects": 8,
+  "nativeGeometryPoseSamples": 574,
+  "pureParticleEffects": [
+    "PolyMorphDoneGround",
+    "VoodooAuraTarget"
+  ],
+  "offlineByteIdentical": true,
+  "modifiedOutputRejected": true,
+  "corruptSourceRejected": true,
+  "runtimeGameplayIntegrated": false,
+  "originalRuntimeVerified": false,
+  "probeSha256": "f66a0eaac9c38aab23dff12638d9690c8e3b0fcd23283275b0e11d67550204ca",
+  "sha256": {
+    "shadowhunter-rules.json": "3163f516064220fc86e0e3c54e4c128b4ab8ef412c997f6378ee04e8d31ff807",
+    "shadowhunter-lightning.json": "d4c4341ee3eeb5132ef6c78d4a42b7358a75917470696cbb914243d0d724fd29",
+    "shadowhunter-models.json": "a38ac32d68f3b71df8bc7060c865a40e55e2aa03a0aab3c8ddf0942bcfe1c73f",
+    "shadowhunter-effects.json": "544a3413dea48fc97d59c4b506d67189db701873eb885efdf74fb54c45e1519f",
+    "shadowhunter-effect-models.json": "42d4da334cbd3cc65db870d5862675a49143a82e341eb2ed64dc67dd1f10c693"
+  },
+  "scope": "Original signed assets, native parsing and poses, offline reproduction; gameplay integration and GPU rendering require separate acceptance."
+}

@@ -1,0 +1,234 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-09T07:24:41.217Z",
+  "sha256": {
+    "shadowhunter-rules.json": "3163f516064220fc86e0e3c54e4c128b4ab8ef412c997f6378ee04e8d31ff807",
+    "shadowhunter-lightning.json": "d4c4341ee3eeb5132ef6c78d4a42b7358a75917470696cbb914243d0d724fd29",
+    "shadowhunter-models.json": "a38ac32d68f3b71df8bc7060c865a40e55e2aa03a0aab3c8ddf0942bcfe1c73f",
+    "shadowhunter-effects.json": "544a3413dea48fc97d59c4b506d67189db701873eb885efdf74fb54c45e1519f",
+    "shadowhunter-effect-models.json": "42d4da334cbd3cc65db870d5862675a49143a82e341eb2ed64dc67dd1f10c693"
+  },
+  "heroArtReceiptSha256": "f1c23a96c0a88f88f104f4034fbf8937b7df0f5350d0f9e06232e424ee0f22b5",
+  "sceneSha256": "444a115f309fdb39285d356580c547970d82d2773773492c5004ff67dc759a4e",
+  "editorSha256": "72115c49eca08acbfe1b41e41802ba662ca2328720f341d41a767ad98eddc8ce",
+  "physicalInput": false,
+  "runtimeGameplayIntegrated": false,
+  "sourceForms": [
+    {
+      "id": "npig",
+      "movement": "foot",
+      "modelScale": 1,
+      "selectionScale": 0.9
+    },
+    {
+      "id": "nsea",
+      "movement": "foot",
+      "modelScale": 1,
+      "selectionScale": 1
+    },
+    {
+      "id": "ncrb",
+      "movement": "foot",
+      "modelScale": 1,
+      "selectionScale": 0.9
+    },
+    {
+      "id": "nhmc",
+      "movement": "foot",
+      "modelScale": 1,
+      "selectionScale": 0.9
+    },
+    {
+      "id": "nrat",
+      "movement": "foot",
+      "modelScale": 1,
+      "selectionScale": 0.9
+    },
+    {
+      "id": "nfro",
+      "movement": "foot",
+      "modelScale": 1,
+      "selectionScale": 0.9
+    },
+    {
+      "id": "nech",
+      "movement": "foot",
+      "modelScale": 1,
+      "selectionScale": 0.9
+    },
+    {
+      "id": "necr",
+      "movement": "foot",
+      "modelScale": 1,
+      "selectionScale": 0.9
+    },
+    {
+      "id": "nrac",
+      "movement": "foot",
+      "modelScale": 1,
+      "selectionScale": 0.9
+    },
+    {
+      "id": "nalb",
+      "movement": "fly",
+      "modelScale": 1.2,
+      "selectionScale": 0.8
+    },
+    {
+      "id": "nvul",
+      "movement": "fly",
+      "modelScale": 1,
+      "selectionScale": 1
+    },
+    {
+      "id": "nsno",
+      "movement": "fly",
+      "modelScale": 1.2,
+      "selectionScale": 0.8
+    },
+    {
+      "id": "nsha",
+      "movement": "amph",
+      "modelScale": 1.2,
+      "selectionScale": 0.9
+    },
+    {
+      "id": "npng",
+      "movement": "amph",
+      "modelScale": 1,
+      "selectionScale": 0.9
+    },
+    {
+      "id": "nshw",
+      "movement": "float",
+      "modelScale": 1.2,
+      "selectionScale": 0.9
+    },
+    {
+      "id": "npnw",
+      "movement": "float",
+      "modelScale": 1,
+      "selectionScale": 0.9
+    }
+  ],
+  "snapshots": [
+    {
+      "key": "HealingWaveTarget",
+      "position": [
+        -6,
+        0,
+        1
+      ],
+      "clip": 0,
+      "time": 0.5
+    },
+    {
+      "key": "PolyMorphDoneGround",
+      "position": [
+        -2,
+        0,
+        1
+      ],
+      "clip": 0,
+      "time": 0.5
+    },
+    {
+      "key": "VoodooAura",
+      "position": [
+        2,
+        0,
+        1
+      ],
+      "clip": 0,
+      "time": 0.4
+    },
+    {
+      "key": "VoodooAuraTarget",
+      "position": [
+        6,
+        0,
+        1
+      ],
+      "clip": 1,
+      "time": 1
+    },
+    {
+      "key": "ShadowHunterMissile",
+      "position": [
+        4,
+        0,
+        -5
+      ],
+      "clip": 1,
+      "time": 0.4
+    },
+    {
+      "key": "SerpentWardMissile",
+      "position": [
+        6,
+        0,
+        -5
+      ],
+      "clip": 1,
+      "time": 0.4
+    }
+  ],
+  "timings": [
+    {
+      "stage": "project open and ready",
+      "ms": 1507
+    },
+    {
+      "stage": "sixteen source Hex forms",
+      "ms": 8006,
+      "nativeCounts": {
+        "billboardMeshes": 0,
+        "entities": 87,
+        "materialPipelineEvictions": 0,
+        "materialPipelinesBuiltIn": 36,
+        "materialPipelinesCustom": 0,
+        "materialPipelinesRejected": 0,
+        "materialPipelinesResidentCustom": 0,
+        "materialSamplers": 1,
+        "materialTextureBindGroups": 16,
+        "materialTexturesColor": 16,
+        "materialTexturesData": 0,
+        "msaaSamples": 4,
+        "renderObjects": 22,
+        "sceneViews": 0,
+        "uiBatches": 0,
+        "uiDrawCalls": 0,
+        "uiPrimitives": 0
+      }
+    },
+    {
+      "stage": "hero, ward and source spell effects",
+      "ms": 1648,
+      "nativeCounts": {
+        "billboardMeshes": 11,
+        "entities": 87,
+        "materialPipelineEvictions": 0,
+        "materialPipelinesBuiltIn": 36,
+        "materialPipelinesCustom": 0,
+        "materialPipelinesRejected": 0,
+        "materialPipelinesResidentCustom": 0,
+        "materialSamplers": 1,
+        "materialTextureBindGroups": 16,
+        "materialTexturesColor": 16,
+        "materialTexturesData": 0,
+        "msaaSamples": 4,
+        "renderObjects": 22,
+        "sceneViews": 0,
+        "uiBatches": 82,
+        "uiDrawCalls": 82,
+        "uiPrimitives": 167
+      }
+    }
+  ],
+  "consoleErrors": 0,
+  "shaderRejections": 0,
+  "shutdownError": "Native QA editor or runtime data remained after normal close: E:\\work\\codex\\cache\\mengine\\native-qa\\shadowhunter-assets-1791530681015",
+  "elapsedMs": 42246,
+  "scope": "Native source asset snapshots. Shadow Hunter spell execution, ward combat, Hex lifecycle, gameplay integration, audio, physical input and original-game solver parity require separate acceptance."
+}
