@@ -1,0 +1,441 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T10:34:43.424Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\death-knight-variants-1791542060419\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 102586
+    },
+    {
+      "name": "final source revived Huntress and Bear form with native F5 continuation",
+      "ms": 165878
+    }
+  ],
+  "preflightMs": 3084,
+  "editorSha256": "e01a18cdc2a0f9fc122f447c19a9a12f501375466671a6fb3f15c9822bc33334",
+  "productMainSha256": "968f1ff6920bbc9db04bfb445ea14954fc24bd06a3c27e3ed7eb57145f82a115",
+  "productSceneSha256": "215716b258e7284cb07c6008e9e03965697b6326e966d4b85cb45dc4704d951c",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 3127
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 31157
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 5612
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 7109
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 5239
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 28309
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 12844
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8682
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2577
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 216
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4040
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2619
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4073
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2688
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 223
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2908
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3146
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2501
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2835
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1839
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2120
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2570
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2216
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 189
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2415
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2232
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2308
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2737
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1957
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2660
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2176
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2113
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6256
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2547
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 172
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 193
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 95
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1905
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2611
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1911
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2159
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 287
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2450
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2371
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2120
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2391
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 174
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1957
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2689
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2123
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2187
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 29083
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2171
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 175
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2363
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 2796
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 230
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1709
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2633
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1887
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2606
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 177
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 287
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1896
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2104
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2399
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2222
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2504
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2234
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2414
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2677
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 184
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2006
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2641
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2294
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2148
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 219
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 283
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 1579
+    }
+  ],
+  "variants": {
+    "enemyHuntressOriginalModel": true,
+    "enemyBearOriginalIdentity": true,
+    "nativeDruidMorph": true,
+    "sourceUnitUpdated": true,
+    "noTrainingInherited": true,
+    "F5DuringMorph": true,
+    "F5CompletedMorph": true
+  },
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Final generated product hash: native original enemy Huntress body, Bear transformation to original Claw form with source identity/base health, F5 during morph and completed unit restoration. Four-skill gameplay and UI evidence is retained in native-death-knight-qa.json from the preceding product hash.",
+  "shutdown": {
+    "pid": 74904,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

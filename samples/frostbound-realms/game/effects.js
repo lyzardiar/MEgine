@@ -10,6 +10,7 @@ var FrostEffects=(()=>{
   Object.assign(spellBindings,{shadowhunterActor:'ClassicShadowHunterEmbedded',wardActor:'ClassicSerpentWardEmbedded',healingWave:'HealingWaveTarget',hexTransform:'PolyMorphDoneGround',voodooCaster:'VoodooAura',voodooTarget:'VoodooAuraTarget'});
   Object.assign(spellBindings,{taurenActor:'ClassicTaurenChieftainEmbedded',taurenStomp:'WarStompCaster',enduranceAura:'CommandAura',reincarnation:'ReincarnationTarget'});
   Object.assign(spellBindings,{farseerActor:'ClassicFarSeerEmbedded',wolfActor:'ClassicSpiritWolfEmbedded',wolfBirth:'FeralSpiritTarget',wolfBirthDone:'FeralSpiritDone',farseerImpact:'BoltImpact',farseerBolt:'LightningBoltMissile',earthquake:'EarthquakeTarget',earthquakeSlow:'StasisTotemTarget'});
+  Object.assign(spellBindings,{deathKnightActor:'ClassicDeathKnightEmbedded',deathCoilImpact:'DeathCoilSpecialArt',deathPactCaster:'DeathPactCaster',unholyBearer:'UnholyAura',unholyBuff:'GeneralAuraTarget',animateDeadTarget:'AnimateDeadTarget'});
   Object.assign(spellBindings,{holyLight:'HolyBoltSpecialArt',divineShield:'DivineShieldTarget',devotionBearer:'DevotionAura',devotionBuff:'GeneralAuraTarget',resurrectionCaster:'Resurrectcaster',resurrectionTarget:'Resurrecttarget'});
   Object.assign(spellBindings,{mountainClapCaster:'ThunderClapCaster',mountainAvatarCaster:'AvatarCaster',mountainStun:'ThunderclapTarget',mountainClap:'StasisTotemTarget'});
   Object.assign(spellBindings,{bloodBanish:'BanishTarget',bloodSiphonCaster:'ManaDrainCaster',bloodSiphonTarget:'ManaDrainTarget',phoenixFire:'FlameStrikeDamageTarget',bloodActor:'ClassicBloodMageEmbedded',phoenixActor:'ClassicPhoenixEmbedded',bloodSphere0:'BloodElfBall',bloodSphere1:'BloodElfBall',bloodSphere2:'BloodElfBall'});
@@ -92,7 +93,7 @@ var FrostEffects=(()=>{
     if(u.phoenixFire||u.phoenixFireLeft>0)add('phoenixFire',clock,at(/^Chest Ref$/i));
     if(u.siphonMana||u.siphonManaLeft>0){add('bloodSiphonCaster',clock,at(/^Chest Ref$/i));const v=u.siphonTarget||state.units.find(v=>v.id===u.siphonMana?.target);if(v)add('bloodSiphonTarget',clock,undefined,[v.x,v.y??Frost.unitHeight(state,v)+1.3,v.z]);}
     if(Frost.bloodMageUnit(u))for(const [i,name] of ['First','Second','Third'].entries()){const point=at(new RegExp('^Sprite '+name+' Ref$','i'));if(point)add('bloodSphere'+i,clock,point);}
-    if(!(u.hex||u.hexLeft>0)&&(Frost.shadowhunterUnit(u)||Frost.serpentward(u)||Frost.taurenUnit(u)||Frost.farseerUnit(u)||Frost.spiritwolf(u)||Frost.bloodMageUnit(u)||Frost.phoenixUnit(u)||Frost.blademasterUnit(u)||Frost.bladeIllusion(u))){const slot=Frost.shadowhunterUnit(u)?'shadowhunterActor':Frost.serpentward(u)?'wardActor':Frost.taurenUnit(u)?'taurenActor':Frost.farseerUnit(u)?'farseerActor':Frost.spiritwolf(u)?'wolfActor':Frost.bloodMageUnit(u)?'bloodActor':Frost.phoenixUnit(u)?'phoenixActor':'bladeActor',art=FrostEffectArt.effects[spellBindings[slot]],pose=mesh.match(/#pose=(\d+):(\d+)(?:@(\d+))?$/);if(pose){const clip=Number(pose[1]),seconds=Number(pose[2])/Number(pose[3]||12);result.push({slot,name:spellBindings[slot],component:{effect:art.effect,clip,playing:false,looping:false,speed:1,time_seconds:seconds},parts:[],position:[position.x,position.y,position.z],scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});}}
+    if(!(u.hex||u.hexLeft>0)&&(Frost.deathKnightUnit(u)||Frost.shadowhunterUnit(u)||Frost.serpentward(u)||Frost.taurenUnit(u)||Frost.farseerUnit(u)||Frost.spiritwolf(u)||Frost.bloodMageUnit(u)||Frost.phoenixUnit(u)||Frost.blademasterUnit(u)||Frost.bladeIllusion(u))){const slot=Frost.deathKnightUnit(u)?'deathKnightActor':Frost.shadowhunterUnit(u)?'shadowhunterActor':Frost.serpentward(u)?'wardActor':Frost.taurenUnit(u)?'taurenActor':Frost.farseerUnit(u)?'farseerActor':Frost.spiritwolf(u)?'wolfActor':Frost.bloodMageUnit(u)?'bloodActor':Frost.phoenixUnit(u)?'phoenixActor':'bladeActor',art=FrostEffectArt.effects[spellBindings[slot]],pose=mesh.match(/#pose=(\d+):(\d+)(?:@(\d+))?$/);if(pose){const clip=Number(pose[1]),seconds=Number(pose[2])/Number(pose[3]||12);result.push({slot,name:spellBindings[slot],component:{effect:art.effect,clip,playing:false,looping:false,speed:1,time_seconds:seconds},parts:[],position:[position.x,position.y,position.z],scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});}}
     if(Frost.spiritwolf(u)&&u.wolfBornFrame!==undefined){add('wolfBirth',clock-u.wolfBornFrame*Frost.DT);add('wolfBirthDone',clock-u.wolfBornFrame*Frost.DT);}
     if(u.healingWaveFrame!==undefined)add('healingWave',clock-u.healingWaveFrame*Frost.DT,at(/^Origin Ref$/i));
     if(u.hex||u.hexLeft>0)add('hexTransform',clock-(u.hex?.frame??u.hexFrame)*Frost.DT);
@@ -110,6 +111,11 @@ var FrostEffects=(()=>{
     if(u.mountainAvatarFrame!==undefined)add('mountainAvatarCaster',clock-u.mountainAvatarFrame*Frost.DT);
     if(u.mountainStun||u.mountainStunLeft>0)add('mountainStun',clock,at(/^Overhead Ref$/i));
     if(u.mountainClap||u.mountainClapLeft>0)add('mountainClap',clock,at(/^Overhead Ref$/i));
+    if(u.deathCoilFrame!==undefined)add('deathCoilImpact',clock-u.deathCoilFrame*Frost.DT);
+    if(u.deathKnightLastSlot===1)add('deathPactCaster',clock-u.deathKnightCastFrame*Frost.DT);
+    if(u.unholyMove>0)add('unholyBuff',clock);
+    if(Frost.deathKnightUnit(u)&&u.hp>0&&u.skills[2]>0)add('unholyBearer',clock);
+    if(u.animateDeadFrame!==undefined)add('animateDeadTarget',clock-u.animateDeadFrame*Frost.DT);
     if(u.holyLightFrame!==undefined)add('holyLight',clock-u.holyLightFrame*Frost.DT);
     if(u.divineShield>0)add('divineShield',clock-u.divineShieldFrame*Frost.DT);
     if(Frost.devotionAura(state,u)>0)add('devotionBuff',clock);

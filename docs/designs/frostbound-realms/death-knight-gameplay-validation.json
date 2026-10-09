@@ -1,0 +1,82 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 71,
+  "mainSha256": "968f1ff6920bbc9db04bfb445ea14954fc24bd06a3c27e3ed7eb57145f82a115",
+  "sceneSha256": "215716b258e7284cb07c6008e9e03965697b6326e966d4b85cb45dc4704d951c",
+  "reproduction": {
+    "root": "E:/work/codex/cache/mengine/death-knight-gameplay-reproduction",
+    "mainByteEqual": true,
+    "sceneByteEqual": true
+  },
+  "checks": [
+    "source profile",
+    "authoritative four-skill gameplay and strict saves including forged seventh body",
+    "generated client using native GLB node sampling",
+    "actual local TCP and reconnect",
+    "Paladin and Mountain King gameplay",
+    "final-hash Far Seer, Shadow Hunter and Tauren generated-client regression"
+  ],
+  "broadRegression": {
+    "mode": "Retained prefix passes and sequential continuation from failed modules; a complete single invocation has not passed.",
+    "logs": [
+      {
+        "file": "death-knight-regression.log",
+        "passMessages": 268,
+        "stoppedAt": "at file:///E:/work/codex/worktrees/1339/MEgine/scripts/test-frost-visuals.mjs:33:52",
+        "error": "Error: Cannot read properties of undefined (reading 'classic')",
+        "completed": false
+      },
+      {
+        "file": "death-knight-regression-tail.log",
+        "passMessages": 19,
+        "stoppedAt": "at file:///E:/work/codex/worktrees/1339/MEgine/scripts/test-frost-racial-items.mjs:55:16",
+        "error": "Error: Invalid saved Shadow Hunter identity",
+        "completed": false
+      },
+      {
+        "file": "death-knight-regression-final-tail.log",
+        "passMessages": 5,
+        "stoppedAt": "at file:///E:/work/codex/worktrees/1339/MEgine/scripts/test-frost-base-tech.mjs:21:363",
+        "error": "Error: Invalid saved Death Knight identity",
+        "completed": false
+      },
+      {
+        "file": "death-knight-regression-base-tail.log",
+        "passMessages": 2,
+        "stoppedAt": "at file:///E:/work/codex/worktrees/1339/MEgine/scripts/test-frost-town-portal.mjs:28:367",
+        "error": "Error: Invalid saved Death Knight identity",
+        "completed": false
+      },
+      {
+        "file": "death-knight-regression-portal-tail.log",
+        "passMessages": 58,
+        "stoppedAt": "at file:///E:/work/codex/worktrees/1339/MEgine/scripts/test-frost-detonate-network.mjs:10:570",
+        "error": "Error: Invalid saved Death Knight state",
+        "completed": false
+      },
+      {
+        "file": "death-knight-regression-detonate-tail.log",
+        "passMessages": 85,
+        "stoppedAt": null,
+        "error": null,
+        "completed": true
+      }
+    ]
+  },
+  "native": [
+    {
+      "report": "native-death-knight-qa.json",
+      "scope": "Four-skill native acceptance on preceding Main fingerprint."
+    },
+    {
+      "report": "native-death-knight-variants-qa.json",
+      "scope": "Final Main fingerprint: native Huntress body, Bear-to-Claw identity, F5 morph and completed restoration."
+    }
+  ],
+  "limitations": [
+    "Original Warcraft runtime parity for Pact life basis and hidden undead target restrictions, Aura stacking/linger, exact corpse selection",
+    "Standalone player, physical input/audio and cross-machine LAN acceptance not run",
+    "Full Warcraft recreation remains incomplete"
+  ]
+}
