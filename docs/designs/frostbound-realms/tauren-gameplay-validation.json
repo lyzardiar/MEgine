@@ -1,0 +1,47 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 69,
+  "runtimeIntegrated": true,
+  "mainSha256": "85646aa30a6c736eb8d460a686739bb2cf94f674d595b274f9746417c6fe85eb",
+  "sceneSha256": "6248a4446fcce65c4efa37077c80545f6ca664f47b1fda299d69fc42cb253053",
+  "gameplayGroups": 15,
+  "generatedClient": true,
+  "actualLocalhostTcp": true,
+  "byteIdenticalGeneratedFiles": 13,
+  "regression": {
+    "firstSegmentPassMessages": 252,
+    "continuationPassMessages": 102,
+    "singleFullEntrySucceeded": false,
+    "continuationExitCode": 0,
+    "failure": "Generic racial item fixture opted into Otch while overriding source damage; now uses taurenVersion 0",
+    "logs": [
+      "tmp/tauren-regression.log",
+      "tmp/tauren-regression-continuation.log"
+    ]
+  },
+  "nativeGameplayPending": false,
+  "originalRuntimeVerified": false,
+  "sourceEvidence": {
+    "reincarnationDelaySeconds": 7,
+    "cooldownSeconds": 240,
+    "fullManaAndNoExperience": "https://classic.battle.net/war3/orc/units/taurenchieftain.shtml"
+  },
+  "runtimeChoicesNotOriginalMeasured": [
+    "Full health after Reincarnation",
+    "Cooldown begins at fatal hit",
+    "No gold or kill count for reincarnating death"
+  ],
+  "unverified": [
+    "Original Warcraft solver parity",
+    "Physical mouse and keyboard",
+    "Audio listening",
+    "Cross-machine LAN",
+    "Full campaign/editor/TD/Dota parity"
+  ],
+  "nativeGameplay": "native-tauren-qa.json",
+  "nativeDurationSeconds": 366.217,
+  "consoleErrors": 0,
+  "shaderRejections": 0,
+  "normalExitAndCleanup": true
+}
