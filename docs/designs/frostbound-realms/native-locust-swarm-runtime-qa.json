@@ -1,0 +1,35 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T16:46:11.682Z",
+  "productMainSha256": "3320f229e3fbc3d83ac70ae558187b94a8a99251955ff5e71554a219e8848e27",
+  "cryptLordEnabledByDefault": false,
+  "authoritativeSpells": [
+    "AUls"
+  ],
+  "productGameplayIntegrated": false,
+  "productSceneSha256": "7eeaeed471998d8c0be6cd621a1fb0fdd3638c2cdc49310d6b757267a6651b8b",
+  "simulationSha256": "acde0a440222d52d62819c93f7f41022e16c0dfddf5e15e80ecedb3f34b5aabe",
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "entityCount": 1,
+  "readyMs": 1286,
+  "protocol": 73,
+  "checks": [
+    "Native source cast point, twenty staggered actors, contact damage and separate population",
+    "Native moving caster, deterministic active save and private projection with forgery rejection",
+    "Native delayed missile arc, moving target and deterministic in-flight save",
+    "Native common expiry, returned healing and final deterministic retirement"
+  ],
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 49956,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "elapsedMs": 4835
+}
