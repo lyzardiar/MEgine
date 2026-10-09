@@ -1,0 +1,2 @@
+// Author: MiYu. Deterministic source Shadow Hunter combat fixture.
+export function shadowhunterFixture(S,level=10,factions=[1,0]){const map=S.defaultMap();map.props=[];map.units=[];map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);const s=S.create('skirmish',{map,factions,heroes:[3,0],ai:[false,false]});s.units=[];s.resources=[];s.clearedResources=[[],[]];const h=S.spawn(s,'hero',0,0,0,{heroClass:3,level,skillPoints:level,mana:300,cd:10000,order:{type:'hold'}});S.visibility(s);return {s,h};}

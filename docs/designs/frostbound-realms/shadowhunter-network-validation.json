@@ -1,0 +1,12 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 70,
+  "transport": "actual localhost TCP",
+  "ownershipRejected": true,
+  "healingPrivacy": true,
+  "hexControlRejected": true,
+  "wardRestored": true,
+  "voodooReconnectAndImmediateStop": true,
+  "scope": "Authoritative localhost TCP rules and reconnect; cross-machine LAN and native client remain separate acceptance."
+}

@@ -4,6 +4,10 @@ samples/frostbound-realms/Assets/ShadowHunterEffects/** -text whitespace=cr-at-e
 samples/frostbound-realms/SourceAssets/ShadowHunter/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
 samples/frostbound-realms/shadowhunter-*.json text eol=lf
 samples/frostbound-realms/game/shadowhunter.js text eol=lf
+scripts/*shadowhunter*.mjs text eol=lf
+docs/designs/frostbound-realms/*shadowhunter*.json text eol=lf
+samples/frostbound-realms/Assets/Materials/ShadowHunterLightning*.mmat text eol=lf
+samples/frostbound-realms/Assets/Shaders/ShadowHunterLightning*.mshader text eol=lf
 scripts/import-frost-shadowhunter-*.py text eol=lf
 asset-library/**/*.png binary
 asset-library/**/*.blp binary

@@ -1,0 +1,7 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "groups": 20,
+  "protocol": 70,
+  "scope": "Authoritative Shadow Hunter gameplay, save validation and visibility projection; generated client/native gameplay and actual TCP are separate acceptance."
+}

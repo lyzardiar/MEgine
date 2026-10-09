@@ -1,0 +1,388 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T08:20:08.541Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\shadowhunter-hex-1791533992741\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 88064
+    },
+    {
+      "name": "source hero, original portrait and E/X/W/V cards",
+      "ms": 35140
+    },
+    {
+      "name": "Hex native animal body, source scale and saved restoration",
+      "ms": 69610
+    }
+  ],
+  "preflightMs": 38,
+  "reusedPreflight": true,
+  "editorSha256": "72115c49eca08acbfe1b41e41802ba662ca2328720f341d41a767ad98eddc8ce",
+  "productMainSha256": "92967d2310857ec8131e6d2276b173e25ce75d6f13d57c9f95639aaae882e8ac",
+  "productSceneSha256": "e26e5beaf7c04cc0d87eca61fb00897a1043173c525a9894ef7cf391e472230b",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2662
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 27628
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 4041
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 5114
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 6261
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 24711
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 11507
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5634
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2391
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 154
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2327
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2224
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2454
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2414
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 188
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1877
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2045
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2201
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2086
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1856
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2450
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1780
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1978
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 334
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1968
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2051
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2350
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2457
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1708
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1996
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2155
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2134
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 162
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1831
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2480
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1834
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2061
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4541
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1984
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 287
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 289
+    },
+    {
+      "kind": "query",
+      "name": "scene.snapshot",
+      "ms": 2730
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 241
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1610
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 3145
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 226
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1738
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1976
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2609
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2140
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 355
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 372
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1872
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2399
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1978
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1932
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2551
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2015
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2391
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2607
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 344
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1767
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2364
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 2304
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1980
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 298
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 266
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 881
+    }
+  ],
+  "hex": {
+    "form": "nrac",
+    "nativeBody": true,
+    "sourceScale": true,
+    "F5Continuation": true
+  },
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Final generated client native Hex animal model, source scale, original sampled transformation, suppression of generic particles and F5 continuation. Other skills were validated in the full native report before the Hex event filter change.",
+  "shutdown": {
+    "pid": 145468,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

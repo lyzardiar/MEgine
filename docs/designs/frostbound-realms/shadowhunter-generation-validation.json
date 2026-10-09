@@ -1,0 +1,13 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "files": {
+    "Assets/Scripts/Main.js": "92967d2310857ec8131e6d2276b173e25ce75d6f13d57c9f95639aaae882e8ac",
+    "Assets/Scenes/Main.mscene": "e26e5beaf7c04cc0d87eca61fb00897a1043173c525a9894ef7cf391e472230b",
+    "Assets/Materials/ShadowHunterLightningHWPB.mmat": "6eadf070ba74a545a993aa877f778b58d33efa39ffb942a5566a1600334fab72",
+    "Assets/Shaders/ShadowHunterLightningHWPB.mshader": "0612effa7244e6ff894f11c96825529323ed5d4dc7839d8e978fb39a6279a606",
+    "Assets/Materials/ShadowHunterLightningHWSB.mmat": "13c46eb546cee269dcc48ba6c73b01ac686b7d366c1f5e329cede699df5749c7",
+    "Assets/Shaders/ShadowHunterLightningHWSB.mshader": "f2afc6436e3b0d409f6e8d2346889cc388d35ef7b649757adb7c0add52259a01"
+  },
+  "scope": "Independent output root reproduces generated Main script, complete scene, original HWPB/HWSB shaders and materials byte-for-byte."
+}

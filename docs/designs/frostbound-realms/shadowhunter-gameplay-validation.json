@@ -1,0 +1,62 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 70,
+  "mainSha256": "92967d2310857ec8131e6d2276b173e25ce75d6f13d57c9f95639aaae882e8ac",
+  "sceneSha256": "e26e5beaf7c04cc0d87eca61fb00897a1043173c525a9894ef7cf391e472230b",
+  "checks": {
+    "shadowhunter-gameplay-tests.log": {
+      "sha256": "eb907ded2b19165e93583feb8d03f6b2204bab5db7ec9b02ea2db6242fbc504c",
+      "passLines": 21
+    },
+    "shadowhunter-network-tests.log": {
+      "sha256": "e29c9bd84ccd6b6f8287d55c9da176a3d42730593a8bcc03ceeeb0e86b9a2e0f",
+      "passLines": 1
+    },
+    "shadowhunter-generated-tests.log": {
+      "sha256": "964991e7b2a66a8137b91cafd17ee01a4ee16f58b7a418e35816943743a047f8",
+      "passLines": 1
+    },
+    "shadowhunter-tauren-generated-regression.log": {
+      "sha256": "5da83a751a8d3d7dd4426b7cf08150a2341a69c7329daf590e8da67eeb703718",
+      "passLines": 1
+    },
+    "shadowhunter-farseer-generated-regression.log": {
+      "sha256": "c047cb264a5beb7f2a4e90e82fe65c35acf0cf395b5dfb759821e23bf8b24c20",
+      "passLines": 1
+    },
+    "shadowhunter-blademaster-generated-regression.log": {
+      "sha256": "8515c2f3d20eed896c5394b8e79c12e92f5e9449dbecd17abbe780d78a01e847",
+      "passLines": 1
+    },
+    "shadowhunter-farseer-regression.log": {
+      "sha256": "132c4bae042bec5a4cad2d228c80c49ca9b8b065c3575c484e711dfbb58e8c64",
+      "passLines": 16
+    },
+    "shadowhunter-blademaster-regression.log": {
+      "sha256": "5ae522e3e353a97b23d502a17a919a87c25e3836a21338ae365519ae5e46a08f",
+      "passLines": 6
+    },
+    "shadowhunter-main-regression.log": {
+      "sha256": "cadd7dd2a8c44d273ed3818c6c904dc12263c488030d17918c91776bfcd311e0",
+      "passLines": 19
+    },
+    "shadowhunter-scale-regression.log": {
+      "sha256": "24ed72607dca1507b7b17f24f19fb7cf606c20d88de8ff20ca2317e5fa084f0c",
+      "passLines": 1
+    },
+    "shadowhunter-lifecycle-regression.log": {
+      "sha256": "661ac62d1bf5fbdda2dfb7ab1aee3a4fba3809e99794df753e63ec5742f966f5",
+      "passLines": 1
+    },
+    "shadowhunter-profile-final.log": {
+      "sha256": "bd6ef07f14f0c909d50ca59a0f3e450dfbfccb7928aa5bbb9939c0aeac55afd9",
+      "passLines": 1
+    }
+  },
+  "nativeReports": [
+    "native-shadowhunter-qa.json",
+    "native-shadowhunter-hex-qa.json"
+  ],
+  "scope": "20 authoritative gameplay groups, source profile, actual localhost TCP, generated client/native nodes, source scales, hero lifecycle, prior Orc hero gameplay/presentation and main economy/editor-data/TD/MOBA/TCP regression. Full native report precedes only the Hex generic-event suppression; final-hash native Hex report covers that change. Original solver parity, campaign, full editor, cross-machine LAN and full classic-map parity remain unverified."
+}

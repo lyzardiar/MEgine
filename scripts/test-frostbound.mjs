@@ -2,6 +2,10 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-shadowhunter-profile.mjs';
+import './test-frost-shadowhunter.mjs';
+import './test-frost-shadowhunter-generated.mjs';
+import './test-frost-shadowhunter-network.mjs';
 import './test-frost-farseer-profile.mjs';
 import './test-frost-tauren-profile.mjs';
 import './test-frost-tauren.mjs';
