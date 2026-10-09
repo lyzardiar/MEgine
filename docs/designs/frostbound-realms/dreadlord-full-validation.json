@@ -1,0 +1,26 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "completedAt": "2026-10-09T14:47:34.502090+00:00",
+  "entry": "node scripts/test-frostbound.mjs",
+  "passRecords": 402,
+  "uniquePassRecords": 402,
+  "segments": [
+    {
+      "log": "dreadlord-full-regression.log",
+      "passRecords": 281,
+      "sha256": "205d1ba094459d10d48a378848a28d2ba61921026d287e7b5a15f0dafefab365"
+    },
+    {
+      "log": "dreadlord-full-continuation.log",
+      "passRecords": 19,
+      "sha256": "4e28cc3c6c19b2aba9cd8a2f5ed1eef80d13e046e4e91087a88d7dca29d8c6d1"
+    },
+    {
+      "log": "dreadlord-full-final.log",
+      "passRecords": 102,
+      "sha256": "0a043126274a865d700a25e12643a45d905ac0197f361aab954cb4497b86c747"
+    }
+  ],
+  "scope": "Completed in segments. Initial runs exposed legacy visual fixtures missing the Infernal catalog, then a legacy racial-item fixture enabling the source Dreadlord while overriding damage. Those fixtures now bind the catalog and explicitly disable source Dreadlord rules. Completed tests were retained; continuation ran the remaining imports and entrypoint gameplay/TCP checks. Logs retain the diagnosed initial failures."
+}

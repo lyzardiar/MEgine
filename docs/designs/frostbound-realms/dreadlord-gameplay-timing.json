@@ -1,0 +1,40 @@
+{
+  "author": "MiYu",
+  "recordedAt": "2026-10-09T14:45:08.599265+00:00",
+  "fullClientNative": {
+    "totalStageMs": 424549,
+    "steps": [
+      {
+        "name": "project open and ready",
+        "ms": 117018
+      },
+      {
+        "name": "source Dreadlord body, portrait, scales and cards",
+        "ms": 47425
+      },
+      {
+        "name": "native traveling Swarm and hit effects",
+        "ms": 48284
+      },
+      {
+        "name": "native Sleep, protection and Vampiric Aura",
+        "ms": 92277
+      },
+      {
+        "name": "native Inferno landing, Infernal and independent portrait",
+        "ms": 119545
+      }
+    ]
+  },
+  "finalAuthoritativeNative": {
+    "ms": 4211,
+    "projectReadyMs": 1186,
+    "entities": 1
+  },
+  "targetedRegression": {
+    "ms": 10444,
+    "groups": 80,
+    "workers": 3
+  },
+  "scope": "Full-client rendering, final isolated authoritative-runtime, and targeted-suite timings cover different checks; no equivalent-work speedup is inferred."
+}

@@ -1,0 +1,317 @@
+PASS original Dreadlord profile, ranked Swarm/Sleep/Aura/Inferno, source AI/cards, Infernal passives and browser parity; gameplay integration is separate
+PASS Dreadlord source recruitment, strength stats, version gate and forged identity
+PASS ranked traveling conical Swarm damage budget, alliance/immunity and deterministic restore
+PASS Swarm expanding cone edges, air targets and independence from subsequent movement
+PASS ranked Sleep, initial protection, damage wakeup, allied wake attacks and private projection
+PASS Sleep interrupts an enemy hero cast and uses hero duration
+PASS strongest ranked melee Vampiric Aura, effective damage, ranged exclusion and passive command
+PASS delayed Inferno landing, hero/structure/air rules, saved continuation and original Infernal lifetime/passives
+PASS accepted/rejected order interruption and forged Swarm state rejection
+PASS Sleep blocks immediate caster/items without consuming mana/items; allied dispel and queued movement
+PASS Inferno-stunned Tauren death/reincarnation restores within the same tick and continues deterministically
+PASS released Inferno reserves unit capacity until landing; persistent impact restore and forged clock rejection
+PASS generated Dreadlord: source body/portraits/scales, C/E/V/N cards and research, Swarm/Sleep/Aura/Infernal effects, F5 pending landing and hidden-caster world rendering
+PASS Shadow Hunter original attributes/growth, E/X/W/V cards, ranked healing/Hex/wards, Voodoo, sixteen form identities, source lightning and browser/CommonJS parity
+PASS Shadow Hunter source registration and stats, cancellable cast, legacy version and invalid input
+PASS Shadow Hunter altar recruitment creates original fourth Orc hero
+PASS Shadow Hunter rank 1 Healing Wave unique injured organic bounces, decay, immune target and save
+PASS Shadow Hunter rank 2 Healing Wave unique injured organic bounces, decay, immune target and save
+PASS Shadow Hunter rank 3 Healing Wave unique injured organic bounces, decay, immune target and save
+PASS Shadow Hunter rank 1 Hex ordinary/hero durations, movement, disabled windup and expiry
+PASS Shadow Hunter rank 2 Hex ordinary/hero durations, movement, disabled windup and expiry
+PASS Shadow Hunter rank 3 Hex ordinary/hero durations, movement, disabled windup and expiry
+PASS Shadow Hunter Hex interrupts existing Blizzard and caster autocast, preserves flying form, rejects mechanical and immune targets
+PASS Shadow Hunter rank 1 stationary magic-immune ward, source projectile and lifespan/save
+PASS Shadow Hunter rank 2 stationary magic-immune ward, source projectile and lifespan/save
+PASS Shadow Hunter rank 3 stationary magic-immune ward, source projectile and lifespan/save
+PASS Shadow Hunter Voodoo protects allied ground/air/buildings and invulnerable public state, excluding caster/enemy/outside
+PASS Shadow Hunter Voodoo stop removes protection before same-frame next hit
+PASS Shadow Hunter Voodoo move removes protection before same-frame next hit
+PASS Shadow Hunter Voodoo spell removes protection before same-frame next hit
+PASS Shadow Hunter Voodoo death removes protection before same-frame next hit
+PASS Shadow Hunter Voodoo displacement removes protection before same-frame next hit
+PASS Shadow Hunter War Stomp and Hex immediately end Voodoo and expose following allied victims
+PASS Shadow Hunter save rejects forged Hex, ward, wave and protection while public snapshots redact attribution/casts
+PASS 20 Shadow Hunter gameplay groups / protocol 73
+PASS generated Shadow Hunter E/X/W/V cards, source body/portrait/scales, native sixteen Hex forms, HWPB/HWSB healing ribbons, ward Birth and embedded particles, Voodoo channel/protection/Stop and F5 continuation
+PASS Far Seer source profile, level growth, four command cards, exact skill field meanings, three wolf ranks and browser/CommonJS parity
+PASS original Tauren source attributes/growth, W/T/E/R cards, ranked wave/stomp/aura, seven-second reincarnation field and browser/CommonJS parity
+PASS Tauren original registration, initial mana, passive rejection and cancellable 0.47-second cast
+PASS Tauren rank 1 wave travels, hits once, ignores air/friend/immunity and survives source death/save
+PASS Tauren rank 2 wave travels, hits once, ignores air/friend/immunity and survives source death/save
+PASS Tauren rank 3 wave travels, hits once, ignores air/friend/immunity and survives source death/save
+PASS Tauren wave total damage cap and ordered targets
+PASS Tauren stomp organic ground and distinct hero duration with delayed cost
+PASS Tauren stomp immediately interrupts an active Blizzard channel
+PASS Tauren learned aura updates immediately and death clears the bearer and friendly recipients
+PASS Tauren strongest endurance aura, air/friend/self, additive attack bonus, speed cap, range/death and forged save
+PASS Tauren reincarnation seven seconds, no kill rewards/XP, no altar revival, full health/mana, save continuation and cooldown death
+PASS Tauren save rejects forged wave geometry, damage budget and cast
+PASS Tauren save rejects forged stun ownership, duration and target classification
+PASS Tauren save rejects forged reincarnation clock, cooldown and altar queue, while Stop cannot cancel rebirth
+PASS Tauren original altar recruitment, combat experience growth and paid revival retain identity and inventory
+PASS Tauren public wave and stun hide private attribution, enemy cast and damage budget
+PASS 15 original Tauren gameplay groups / protocol 73
+PASS generated Tauren W/T/E/R cards, original body/portrait/scale/ring, Attack Slam/Spell Slam, travelling geometry, Stomp, aura geometry, Death/Stand/Birth reincarnation and F5 continuation
+PASS source identity, level growth, mana, recruitment, default and legacy versions
+PASS rank one chain: four distinct organic enemies, attenuation and casting delay
+PASS chain air target, spell immunity, hero spell reduction, cancellation and target invalidation
+PASS Far Sight reveals unexplored remote ground, detects invisible enemies, expires and survives caster death
+PASS two rank 1 Spiritwolves, exact stats, replacement, no air attacks and timed expiry
+PASS two rank 2 Spiritwolves, exact stats, replacement, no air attacks and timed expiry
+PASS two rank 3 Spiritwolves, exact stats, replacement, no air attacks and timed expiry
+PASS resummon removes old wolves before their pending weapon hit in the same frame
+PASS wolf summon capacity and cast completion are atomic
+PASS shadow wolf hides after two seconds, stays hidden while moving, acquires targets and reveals on attack windup
+PASS wolf critical strike is deterministic, doubles one normal hit and does not grant wind-walk damage
+PASS Earthquake delay, 50 building DPS, friendly structures, ground slow, channel stop and source duration
+PASS Earthquake full 25s channel, simultaneous save continuation, stun and death cleanup
+PASS Mountain King Bash immediately interrupts Far Seer channel and clears area slow
+PASS save rejects forged hero, cast, reveal, quake, wolf rank, expiry and invisibility
+PASS 15 original Far Seer gameplay groups / protocol 73
+PASS generated Far Seer C/F/T/E cards, source body/portrait, exact Chain Lightning animation/primary ribbon/PREM Death particles, Far Sight, rank-three wolf scale/portrait/birth/embedded effects, Earthquake and F5 continuation
+PASS source Blademaster stats, command layout and legacy saves
+PASS all Wind Walk ranks, source fade, capped speed, movement, attack-time break and exact backstab
+PASS Mirror Image ranks, delay, cleansing, invulnerability, inherited stats, zero outgoing/twice incoming damage, disguise, regeneration and replacement
+PASS deterministic Critical Strike, passive card, structure exclusion and melee air restriction
+PASS exact seven-second Bladestorm, magic immunity targets, structure/ground mask, no air/allied hits and save continuation
+PASS forged image rejection, duration expiry and original Orc AI learning order
+PASS generated Blademaster W/R/C/B cards, source stats, original portrait camera/native nodes, controllable original-model image, exact spin body/portrait clips, F5 cast/storm/images and pause-load recovery
+PASS original Blood Mage source: 580 signed files, 12 bindings, 16 effects and exact effective source rules
+PASS Blood Mage source attributes, four hotkeys and legacy identity
+PASS Flame Strike ranks, delay, full/residual damage, friendly fire, air/magic exclusions and saved continuation
+PASS interrupted Flame Strike spends no mana and invalid saved fire is rejected
+PASS Banish ranks, ethereal attack restrictions, movement, restored duration and public effect
+PASS Siphon Mana ranks, overflow retention, stop/decay, saved channels and public privacy
+PASS friendly mana transfer, finite exchange, tether break and self-target rejection
+PASS Phoenix health decay, permanent summon, egg/rebirth, destructible egg and saved continuation
+PASS Phoenix automatic fire, original projectile and saved fire/flight
+PASS Phoenix source weapon dice, full/half/quarter splash and magic-immune exclusion
+PASS forged Phoenix owners/duplicates/egg timers and off-schedule Flame Strike saves rejected
+PASS source 900-speed homing Phoenix Fire, delayed impact and DOT, exact in-flight saves, target reservation, egg transition, immunity/lost targets, provenance and privacy
+PASS generated Blood Mage client: F/B/N/X source cards, INT HUD, original portrait camera, fire/Banish/Siphon effects and ribbon, embedded emitters, Phoenix/egg body and F5 continuation
+PASS generated moving Siphon UV phase/pause and original miniature Phoenix Fire sampled emitter
+PASS source miniature Death clip, impact position/direction, particle-only pool reuse, pause freeze and expiry
+PASS original geometry effect after particle-only impact slot reuse
+PASS Flame Strike viewer fog, eight initial slots and lossless dynamic pool growth
+PASS source unit scales: 50 source actor records; 208 rendered type/faction mappings; source relative height, selection sizes, bounds independence and rifle muzzle scale
+PASS original Mountain King source: 323 signed outputs, effective 3/3/3/1 ability ranks, source AI/buttons and exact stun/slow effect dependencies
+PASS original Mountain King stats, source hotkeys/slots and legacy identity
+PASS all Storm Bolt ranks, flying targets, no melee anti-air restriction, homing and saved flight continuation
+PASS cast interruption, target range recheck, immune impact and forged flight rejection
+PASS all Thunder Clap ranks, ground organic mask, exact slow/attack reduction, expiry and save continuation
+PASS additive Avatar stats, health transition, no cancellation, expiry, death reset and strict saves
+PASS deterministic Bash on real hits, magic-immune stun and no proc through invulnerability
+PASS Bash through the actual attack windup/tick loop and restore on every frame
+PASS Avatar generic root cleansing and subsequent physical attack debuff immunity
+PASS Storm Bolt actual caster identity and learned rank validation
+PASS anti-magic potion hostile-effect cleansing and immediately valid save
+PASS original Mountain King AI learning order
+PASS generated Mountain King client: T/C/B/V command and research cards, STR, real portrait camera and native nodes, homing hammer geometry/effect, Clap/Stun effects, Alternate body/portrait, source 50% size change, stable collision, expiry and F5 restoration
+PASS Death Knight original growth/stats, C/E/U/D cards, ranked Coil/Pact/Aura/Animate data, source upgrade gate, classifications, AI and browser/CommonJS parity
+PASS source Death Knight recruitment profile, protocol, original stats and legacy save gate
+PASS ranked traveling homing Death Coil, allegiance, cast point, interruption, projectile validation and save continuation
+PASS Death Pact sacrifice, current-life conversion, cast continuation and no kill reward
+PASS strongest-source Unholy Aura, fixed regeneration, movement and immediate range/death update
+PASS six original allied/enemy bodies, baseline stats, no inherited research, ownership, invulnerability, source workers and 40-second expiry
+PASS original Huntress bounce/save validation and revived Bear transformation with preserved source profile, mana and health fraction
+PASS Death Pact excludes phased targets before spending resources
+PASS original Death Knight AI learning order
+PASS generated Death Knight: original body/portrait/scales, C/E/U/D command and research cards, Shift+U learning, homing missile, original sampled effects, enemy body/worker identity and F5 continuation
+PASS original Paladin source: 338 signed outputs, eight geometry bindings, six sampled effects, source icons and four ranked abilities
+PASS original Paladin stats, command/research slots, hotkeys, AI source order and legacy identity
+PASS ranked Holy Light, undead allegiance, self exclusion, mana at impact, interrupted casts and save continuation
+PASS source Divine Shield duration/cooldown, damage immunity, continued orders and expiry
+PASS fixed Devotion armor, strongest-source stacking, source ordinary/hero linger and public state
+PASS source six-unit Resurrection, original corpse identities, consumption, full health and saved cast continuation
+PASS Paladin AI learning and strict saved state rejection
+PASS generated Paladin client: T/D/V/R cards, source research slots, STR card, original live portrait, Holy Light, shield/aura effects, target-free Resurrection and F5 saved cast
+PASS original Archmage: 598 signed outputs, INT attributes, three Water Elemental ranks/scales, all four source abilities, source AI skills, native Portrait clip bounds and particle-only missile references
+PASS Archmage identity, source INT values, passive/ultimate learning, strict state and legacy/MOBA isolation
+PASS Blizzard .3s cast, 1s wave timer, six waves, per-wave 150 cap, allied damage and exact saved continuation independent of unit order
+PASS Blizzard building reduction, air/immunity exclusions, friendly death without deny bounty, rejected-order preservation, Stop and stun cancellation
+PASS three Water Elemental ranks: source HP/damage/scale, anti-air missile snapshots and exact 60s expiry
+PASS Brilliance allied mana eligibility, strongest aura stacking, self regeneration, range/death removal and public buff
+PASS Mass Teleport .3s cast + 3s channel, moving target, 24-unit limit including caster, ground-only passengers and collision-aware clustered arrival
+PASS Mass Teleport invalid target rejection, paid channel cancellation, destroyed destination and strict saved continuation
+PASS original Human AI skill order, model/icon selection and generated native simulation parity
+PASS generated Archmage client: original B/W/R/T skills, research slots, INT cards, both source portraits, ranked Water Elemental, Blizzard channel/F5, Mass Teleport effects and actual particle-only projectile
+PASS Warden source: 587 signed outputs, 79 original sources, 11 generators, canonical paths, transparent Blink poses and source rules
+PASS Warden identity: source AGI stats, learning, strict hero fields and legacy/MOBA isolation
+PASS Blink: source rank distances/minimum, delayed atomic payment, invalid targets and exact save continuation
+PASS Blink terrain and interruption: real cliff landing, dry/collision checks and immediate Stop cancellation
+PASS Fan of Knives: all source ranks, aggregate damage cap, real missiles, air targets, immunity/building/ally exclusion and forged saves
+PASS Shadow Strike: homing air missile, source initial damage, five three-second pulses, slowing decay and saved continuation
+PASS Shadow-only friendly dispel: researched Dryad selects the debuff, clears slowing and prevents future poison pulses
+PASS Vengeance source summons: paid deferred allied corpse consumption, source stats, invulnerable child, strict owner, fifty-second expiration and parent-death cleanup
+PASS Vengeance autocast: six-child cap, saved exact continuation, allied corpse eligibility, enemy exclusion and malformed controls
+PASS Vengeance source night vision and public-state privacy: original sight radius, owned controls and hidden enemy cast/autocast decisions
+PASS Warden AI: original ten-level skill order and legal source ultimate decisions
+PASS both Vengeance source attack windups, deterministic damage and exact saved continuation
+PASS Avatar lifetime expiration immediately removes its living children and preserves valid saves
+PASS public Avatar orb count includes hidden children without exposing their units or accepting forged save fields
+PASS Warden presentation: source scales and icons, four casting clips, both summons, five source missile geometries, Blink origins, Fan Birth, poison and summon orbs
+PASS generated Warden client: source command/research slots, research button learning, original B/F/D/V targeting, debuff effect activation, Avatar autocast right-click and F5 round trip
+PASS generated runtime: hidden-child orb counts and Avatar-expiry child cleanup
+PASS source Priestess: 404 exact receipts, generator hashes, AGI attributes, three invulnerable Owl ranks, 900 detection radius and single-rank 45s Starfall
+PASS source Priestess visuals: nine original bindings, source hero/Owl cameras, both original arrows and complete 8/7/2 spell geometry layers
+PASS Priestess identity: source AGI weapon/HP/mana/armor, learning gates, strict saves and legacy/MOBA isolation
+PASS Scout: .5s deferred payment, all three source ranks, flight/control, independent 900 detection, invulnerability, exact lifetime and saved continuation
+PASS Scout recast: one owned Owl replacement, no premature cost or duplicate summon on rejected command
+PASS Searing Arrows: manual/autocast, one 8-mana payment at launch, source bonus and speed, low-mana normal arrow and saved projectile snapshot
+PASS Trueshot: source percentage/radius, ranged allies and self, enemy/melee exclusion and public aura state
+PASS Starfall: .5s paid cast, first 1.5s pulse, 45s/30 pulses, building multiplier, ally exclusion, stop/stun interruption and exact saved continuation
+PASS hostile Priestess saves: entity missile fields, non-Priestess summoner, duplicate Owl, excessive Scout rank and forged mana rejected
+PASS Staff transport: interrupts ally Scout windup and Starfall immediately, with valid same-frame saves
+PASS Town Portal passenger transport: cancels Priestess pending cast atomically before valid saved arrival
+PASS source Priestess AI: first hero original Searing/Trueshot/Starfall skill order, autocast and multi-enemy channel decisions
+PASS Priestess Altar recruitment and paid revival: source attributes, Town Portal inventory, learned skills and saved queue continuation
+PASS generated Priestess client: source hero/Owl portraits, C Scout, R manual arrow, right-click autocast, T passive priority, source Starfall channel, complete spell geometry and F5 continuation
+PASS source Starfall alpha: transparent Birth start and all seven expected visible layers at two seconds
+PASS indexed Priestess UI: one initial scene-name scan, no repeated full-scene enumeration across targeting, autocast, portraits and F5
+PASS Keeper source receipts: 547 exact output hashes/lengths and six canonical generator hashes; original runtime remains unverified
+PASS source Keeper profile: 500HP, 100/270 mana source, INT weapon growth, original ranged/air profile, version/mode gates and original first/later AI skill arrays
+PASS source ability rows: exact root ordinary/hero timers, efon 2/3/4 summons, percentage Thorns, single-rank self-inclusive Tranquility and E/F/R/T hotkeys
+PASS imported source visuals: 10 models, Keeper/Treant source cameras, five complete effect bindings and all three Tranquility geometry layers despite invisible Stand start
+PASS Keeper identity: source INT attributes, HP/mana/armor/ranged weapon, learning gates, strict save and legacy/MOBA isolation
+PASS Entangling Roots: .7s deferred payment, complete 9s/135 damage, unit-order independence and exact per-stage saved continuation
+PASS hero Roots duration and rank snapshot, invalid-order preservation and paid-cast cancellation
+PASS Force of Nature: deterministic two-tree summons, source Treant stats, same-frame Nature armor and 60s expiry, blocked-space atomicity
+PASS Tranquility: delayed payment, first 1s pulse, full 30s/600 healing, self/allies, enemy exclusion, channel interruption and save continuation
+PASS Thorns Aura: source percentage on direct melee HP damage, ranged exclusion, public aura state and nonrecursive saved effects
+PASS immediate Roots dispel saves: friendly Purge, Wisp Detonate and learned Dryad Abolish remove source DOT immediately
+PASS Thorns lethal damage clamp and complete shield absorption, with magic-immune attackers and immediate death saves
+PASS source Keeper AI first-hero skill order, valid organic targeting and deterministic saved spell decisions
+PASS original Keeper Altar recruitment, paid revival with retained skills/items and independent saved original missile snapshots
+PASS generated Keeper client: original INT hero/HUD/icons, E/R priority, tree-targeted F summons, T channel animation, all three Tranquility geosets, Treant portrait and F5 continuation
+PASS Demon Hunter source identity: Edem, 575HP, 100/240 mana, AGI damage/armor/speed, original regen, XP thresholds and versioned legacy/MOBA isolation
+PASS original hero growth, 1/3/5/6 skill gates, passive command rejection and strict source identity/stat/status validation
+PASS actual Mana Burn: visible enemy/mana/range/ownership gates, .3s cast then .25s release, paid mana, capped drain/damage, cooldown, cancellation and exact save continuation
+PASS Immolation: 25 activation mana, 7 mana/sec, original 160 radius and 1s 10-damage pulses, air/building exclusion, off command, exhaustion and exact continuation
+PASS Metamorphosis: paid 150 mana/180s cooldown, 500HP bonus and retained attributes/inventory, 60s Edmm weapon/air/splash profile, revert-safe missile snapshots and original alternate animation selection
+PASS seeded attack-impact Evasion: source 10% rank, deterministic RNG, no attack damage on evade and saved continuation
+PASS reviewed hero regressions: historical rank cooldown/damage survives learning, Cyclone cancels a pending cast, and actual kill XP applies source attribute growth
+PASS paid Altar lifecycle: complete 55s free-first recruitment, real supply, original identity and portal item, owned-type rejection, death cleanup and full paid revival timer retaining skills/items
+PASS Demon Hunter provenance: exact signed source/generated bytes, LF-canonical generators, patched TFT hero constants and original first/later AI skill builds
+PASS generated Demon Hunter client: correct source hero/HUD/icons, pointer-targeted Mana Burn, learned hotkeys, Immolation toggle art, demon-form animation and F5 spell/form continuation
+PASS original AI opening: all 31 source priorities, integer division, statement ordering, permanent flags and force weights
+PASS original AI late game: upgraded Tree/form aliases, Giant/Dryad/Druids/Faerie and factory caps, exact legacy Repd intent
+PASS native AI production: paid queues, whole-deficit virtual budget, unit blocking and research nonblocking
+PASS AI save and privacy: deterministic continuation, rejected malformed clocks/variables/plan, legacy saves and other modes
+PASS AI late production adapters: paid Talon/Chimaera from seeded legal facilities, source full timers and strict saves
+PASS AI recovery: legal reassignment of all-lumber/all-gold workers, mine unload, gold and wood income, controller takeover
+PASS exact reproducible original Night Elf source compilation and strict compiler rejection
+AI economy frame 1 tier 1 gold 20 wood 10 milestones 1
+AI economy frame 1001 tier 1 gold 390 wood 20 milestones 2
+AI economy frame 2001 tier 1 gold 90 wood 110 milestones 4
+AI economy frame 3001 tier 1 gold 215 wood 610 milestones 5
+AI economy frame 4001 tier 1 gold 555 wood 830 milestones 5
+AI economy frame 5001 tier 2 gold 470 wood 1100 milestones 6
+AI economy frame 6001 tier 2 gold 445 wood 660 milestones 6
+AI economy frame 7001 tier 2 gold 785 wood 240 milestones 7
+AI economy frame 8001 tier 3 gold 1640 wood 40 milestones 11
+AI economy frame 9001 tier 3 gold 3240 wood 60 milestones 13
+AI economy frame 10001 tier 3 gold 4535 wood 140 milestones 13
+AI economy frame 11001 tier 3 gold 4145 wood 25 milestones 13
+AI economy frame 12001 tier 3 gold 4445 wood 20 milestones 13
+AI economy frame 13001 tier 3 gold 5220 wood 125 milestones 13
+AI economy frame 14001 tier 3 gold 5445 wood 95 milestones 13
+AI economy frame 15001 tier 3 gold 6445 wood 705 milestones 13
+AI economy frame 16001 tier 3 gold 7755 wood 1105 milestones 13
+AI economy frame 17001 tier 3 gold 8555 wood 1730 milestones 13
+AI economy frame 18001 tier 3 gold 9355 wood 2355 milestones 13
+AI economy frame 19001 tier 3 gold 10155 wood 2980 milestones 13
+AI economy frame 20001 tier 3 gold 10955 wood 3605 milestones 13
+AI economy frame 21001 tier 3 gold 11755 wood 4230 milestones 13
+AI economy frame 22001 tier 3 gold 12555 wood 4855 milestones 13
+AI economy frame 23001 tier 3 gold 13355 wood 5480 milestones 13
+PASS original AI paid economy: opening, Ages/Eternity, expansions, Lore/Wind/Roost, Giant/Dryad/Faerie, exact saved continuation and source-priority 100-food gate; Claw reached=false
+PASS generated original AI client: bundled source/native adapters, actual paid opening, F5 source flags/plan/clock, saved continuation and indexed scene lookup
+PASS source Giant production: tier-two Lore and completed Wonders, 425/100/7/50s, full training and exact saved continuation
+PASS Giant skin research: source Eternity/Wonders gates, 100/175/40s and 50/100/75s, uniqueness, refund, future units and save continuation
+PASS source War Club: .8s attach and falling tree, actual 15 melee siege attacks, d8 research damage, no projectile/splash, 2.5s removal and restored normal weapon
+PASS Taunt: source 10-target/4.5-radius/15s, eligible mobile enemies, public effect, no invented control lock and player override
+PASS Giant defenses: attack-only 12 reduction/minimum3 without amplifying tiny hits, spells deal damage, source hero-duration Cyclone/Faerie Fire/Purge and no blanket immunity
+PASS strict Giant saves and corpses: derived weapon/skins, timer bounds, foreign fields, legacy version zero and source non-usable decaying corpse
+PASS Taunt preserves uninterruptible Druid transformation and exact save continuation
+PASS current Taunt during tree attachment: retains caster order/timer and exact save continuation; original interruption semantics unverified
+PASS generated Giant client: source Lore slots and G/H/T research keys, full timers, W tree click/F5, EatTree/Upgrade animation, original portrait and scale, T and finite source Taunt geometry
+PASS source Faerie production: completed eden gate, tier-two Wind, 155/25/2/25s and exact save continuation
+PASS Phase Shift: impact autocast, 20 mana/1.5s/6.5s, hidden/invulnerable interval, manual cooldown, movement and saved continuation
+PASS Mana Flare: .75s cast/50mana/30s channel/20s cooldown, +12 armor, actual spell expenditure, ordinary/hero caps, immunity rejection and movement cancellation
+PASS strict Faerie saves: no automatic channel restart, source ranges, state ownership, derived stats and legacy version zero
+PASS source Faerie weapon: air targeting, 14-16 dice, .5s windup, 900-speed/.15 arc, source upgrades and night regeneration
+PASS reviewed Faerie boundaries: Staff cancels channel immediately, Sanctuary blocks both skills, manual events persist and invalid ground attacks spend no phase mana
+PASS generated Faerie client: F training/25s/F5, E shift/F channel keys, source icons and slots, original portrait/scale/missile, vanished actor, native effect bindings and channel save
+PASS Chimaera production: Eternity/Wind gates, stationary Roost, 330/70/5/60 source training, saved continuation and full cancellation refund
+PASS Corrosive Breath: 125/225/40 source research, duplicate rejection, shared queue, completion on existing/new units and private enemy technology
+PASS source lightning: horizontal 450 range, 0.5s front swing, shared 2.5s cycle, 1500 speed, zero arc and saved slot-2 flight
+PASS source acid: researched structure slot, 850 range, 0.7s front swing, 1200 speed, siege damage and saved flight
+PASS lightning splash: 50/125/200 bands, ground-only victims, structure/air/magic-immune exclusions and immutable in-flight weapon after research
+PASS Chimaera upgrades: 17-sided primary dice, slot-specific Strength of the Wild, Reinforced Hides, night regeneration and zero mana
+PASS strict Chimaera saves: legacy version, research identities, invalid fields, producers, source timers and historical projectile slots
+PASS source Roost construction: 140/190/80 payment, Wisp consumption, source stats, saved growth and locked slot-2 front swing across research completion
+PASS generated Chimaera client: B research/C training, source icons/slots/costs, F5 research continuation, original body/portrait/scales/circles and both missile bindings
+PASS Hippogryph production: Wind H roster, 160/20 payment, 30s queue, original HP/speed/food/height, saved continuation and no direct rider/altar flight production
+PASS shared ancient queue: Uproot suspension, saved paused production, Root resumption and cancellation refund
+PASS aerial melee: ground rejection, differing visual flight heights, original 0.6s windup, saved windup and direct damage without a missile
+PASS mounted source form: independent 765HP, ground/air targeting, original Arrow missile, source launch/speed and saved flight continuation
+PASS source upgrade families, idempotence, Improved Bows, night-only HP regeneration, zero mana and no aerial corpse
+PASS strict saves: source/version/mana/speed/HP/producer bounds, genuine legacy Wind roster and legacy altar production
+PASS generated Hippogryph client: H production, source icon/costs/queue, aerial selection, original two bodies/scales/circles, original portrait cameras and F5 continuation
+PASS Hippogryph Taming: original 75/75/30 queue, duplicate/ownership gates, Root suspension, exact saved completion, private research and refund
+PASS paired lifecycle: 2+2 to 4 to 2+2, selected identity, reserved partner identity, correct upgrade families, shared cooldown and provisional weighted-life continuation
+PASS Hippogryph partner approach: deterministic nearest partner, original move-to-partner flag, saved movement and Stop interruption
+PASS interrupted approach: stunned save resumes exactly, dead initiator drops order and escaped partner cancels safely
+PASS atomic dismount: illegal ground and full capacity leave life/IDs/population untouched; exact capacity boundary succeeds
+PASS mounted death: paired identity discarded, no dismount revival or aerial biological corpse
+PASS strict coupling saves: missing/foreign research, reserved ID aliasing, invalid cooldown and paired state rejected; genuine version-1 standalone air saves retained
+PASS reserved pair identities: existing biological corpse cannot be reassigned to a dismounted partner
+PASS in-flight source arrows: Archer- and Hippogryph-initiated fusion retains signed launch damage and exact saved projectile continuation
+PASS generated coupling client: I source research, Archer U target click, original command icons, mounted portrait/selection, F5 pair/cooldown restore, U dismount and Hippogryph U approach
+PASS source Slow Poison: signed art/editor inputs, 4 DPS, 5s/1s, 50%/25%, damage-only stacking mask, nonlethal flag and configured initial autocast
+PASS actual missile poison: no early ticking, ordinary/hero source lifetime, full duration damage, 50% move/25% attack slowdown and exact saved continuation
+PASS implemented stacking contract: independent repeated and multi-attacker impacts, retained original timers, additive damage and non-stacking slows; original runtime comparison pending
+PASS nonlethal poison and death: source kill flag caps at 1 HP without reward/corpse, ordinary attacks still kill and remove poison
+PASS poison source lifecycle/privacy: exact saves after caster removal, retained DOT, displayed remaining time and slow rates without caster/projectile identity
+PASS current dispel/immunity integration: friendly Abolish/Wisp clear poison; innate/item immunity and mechanical targets excluded; original runtime comparison pending
+PASS legal Anti-magic Potion: poisoned hero consumes item25, clears poison synchronously and saves immediately with exact continuation
+PASS legal poisoned Wisp mining: actual gather entry keeps poison damage/timer active, expires after 5s inside mine and preserves saved income/continuation
+PASS poisoned unit consumption: legal Wisp Detonate/build completion and summon expiry synchronously clear poison for immediate valid saves
+PASS strict poison saves/legacy: forged times/sources/impacts/teams/rules and duplicate impacts rejected, prior Dryad-version games preserve their attack rules
+PASS generated poison card: source slot9/icon/Chinese passive tooltip with resolved values, source-default autocast and passive click without orders
+PASS generated poison impact/F5: actual attack missile activates original sampled particles, saved DOT/timer resumes exactly and expiration hides effect
+PASS generated poison dispel: friendly researched Abolish removes actual impact state and hides original status particles
+PASS final native fixture/control rehearsal: distinct B target, exact poisoned F5, caster Move after spell and expiration with no further impact
+PASS Dryad original production: Lore roster, costs, 30s shared queue, source HP/speed/mana/food/regen and non-morphable identity
+PASS researched Abolish Magic: source payment/time, duplicate gate, Root suspension, cancellation refund, saved completion and opponent privacy
+PASS directional dispel: cast-point interruption without payment, 50 mana, friendly harmful/enemy beneficial clearing, preserved opposing effects and exact save continuation
+PASS manual autocast setting: automatic in-range summoned target, repeated 300 summon damage, mana payment and private setting
+PASS autocast command continuity: preserved Shift queue and saved cast, competing casts restore Attack Move/Hold without charging invalid targets
+PASS beneficial item dispel: legal Scroll/Salve/Clarity use cleared manually, enemy regeneration selected by autocast
+PASS original ranged combat: magic immunity, air targets, 17-19 deterministic dice, source windup, original missile kind and saved flight
+PASS strict Dryad saves: versions, missing/foreign research, invalid autocast, forged spell targets and research ranks rejected
+PASS generated Dryad client: S research, B target clicks, source icons/portrait/missile/scales, directional dispel effect, right-click setting and F5 save/load
+PASS original Dryad portrait camera: source perspective/FOV/clips, identity model rotation, target-facing quaternion and orthographic camera restoration
+PASS: bounded incremental terrain decorations, deterministic completion, stable cache and map-edit invalidation
+PASS: terrain legacy/save/network data, mesh corners, ramps, cliff navigation/fallback, flying, building footprint and combat occlusion
+PASS: four gentle directions, native half-height encoding, eight siege traversals, flat-ground preservation, steep/gentle editing, atomic rejection, save/public state and mirrored defaults
+PASS: curved rims, swept body clearance, enclosed cliffs, safe recovery, footprint placement, flying, saves and narrow/wide ramps; 72 native surface fixtures
+PASS: sculpt raise/lower/smooth/plateau, quantization/bounds, shoreline/borders, legacy/save/privacy payload, signed unit heights, encoded halos and interior terrain occlusion
+PASS: exact single movement, 40-unit mixed formation arrival, selection determinism/save restore, rows, blockers, ramps, sealed cliffs, air/ground, edge bounds and atomic rejection
+PASS: opposing traffic, hold, narrow passage/head-on, flying layers, exact saves, melee surround, fog privacy, stacked TD recovery, base exit and speed limits
+PASS: ordered route arrival, group queues/save replay, eight-waypoint atomic limit, command/work/blink/death cancellation, busy rejection, legacy/malformed saves and opponent privacy
+PASS: four-faction queued construction, deferred payment, gathering delivery, distant site, repair/cancel, inside worker, consumed worker, invalid site skip, queue capacity/privacy and exact save replay
+PASS: stationary hold combat/range/occlusion, stop release, six-unit patrol roundtrips/save replay, combat resumption, ramps, route overrides, privacy and invalid saves
+E:\work\codex\worktrees\1339\MEgine\samples\frostbound-realms\game\visuals.js:80
+    const original=FrostArt[key],activity=['RealWorker','ClassicPeon','ClassicWisp','RealAcolyte','RealGhoul'].includes(key)?work(state,u):null,phase=!original.classic&&(key==='RealArcher'||original.shotModel)&&!walking&&!u.stun?(castPhase(u,original,walking)??(u.cd>0?attackPhase(u,original):null)):null,loaded=phase!==null&&(original.ammoLoad<original.attackEvent?phase>=original.ammoLoad&&phase<original.attackEvent:phase<original.attackEvent||phase>=original.ammoLoad),variant=phase===null?key:original.shotModel?(loaded?original.loadedModel||key:original.shotModel):key+(loaded?'Loaded':'Shoot');
+                                                                                                                                                                ^
+
+TypeError: Cannot read properties of undefined (reading 'classic')
+    at Object.model (E:\work\codex\worktrees\1339\MEgine\samples\frostbound-realms\game\visuals.js:80:161)
+    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/test-frost-visuals.mjs:34:52
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.18.0

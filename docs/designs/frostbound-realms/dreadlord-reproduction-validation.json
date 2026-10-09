@@ -1,0 +1,17 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "outputRoot": "E:\\work\\codex\\cache\\mengine\\native-qa\\dreadlord-rebuild-4wuu_6bw",
+  "files": [
+    {
+      "path": "Assets/Scripts/Main.js",
+      "bytes": 14755651,
+      "sha256": "c3b3767c1ae94366cb48706ad32e8de06a0594ff5f36945ffc8ce50416b57149"
+    },
+    {
+      "path": "Assets/Scenes/Main.mscene",
+      "bytes": 74527783,
+      "sha256": "7eeaeed471998d8c0be6cd621a1fb0fdd3638c2cdc49310d6b757267a6651b8b"
+    }
+  ]
+}

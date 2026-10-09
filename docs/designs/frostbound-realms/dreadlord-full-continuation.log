@@ -1,0 +1,32 @@
+PASS: classic asset hashes 5125 pose samples 7480 team layers 352 hidden layers 820 four rosters, tiers, worker cycles, spells, terminal deaths and complete render slots
+PASS Ancients: exact 2.5s forms, heavy/fortified armor, moving collision and static footprint removal, suspended paid production, root terrain/body rejection, full non-stacking 500HP/30s Eat Tree, native tree fall, exact saves and invalid metadata
+PASS: delayed single impact, homing, posthumous credit/lifesteal, lost targets, artillery/splash, shields, immediate melee/rifle, exact save continuation, legacy/malformed saves, fog redaction, capacity and lifetime
+PASS: MOBA half-health eligibility, invalid allies/self, other modes, melee/ranged denies, shared reduced enemy XP, no gold/kill credit/lifesteal, explicit-only targeting, healing cancellation, fog, corpses and in-flight save/dead-shooter continuation
+PASS: six complete balanced lanes, periodic siege, safe spawn spacing/movement, atomic capacity/blocked entrances, MOBA control ownership, legacy rally saves, summons, ranged/siege denies and realistic models
+PASS: 480-second clock, starting-hour validation/editor data, exact dusk/dawn sight, fog privacy, neutral sleep/group wake/return to rest, scripted orders, saves and client night lighting/title reset
+PASS: client retains one deny label across two simulation ticks or batched/duplicate network states, with fog filtering at receipt
+PASS: per-frame movement, walking, picking, immediate HUD, pause, camera, new-game reset, network interpolation, hidden units, snapshot rewind/gap, blink and rejoin
+PASS: authored death clips for every mobile biological roster, one-shot death, decay/capacity, movement/population/selection, hero revival, exact saves, legacy/malformed saves, fog privacy and post-victory cleanup
+PASS: Raise Dead consumes one body for two sword/shield warriors; mana, cooldown, fog/ownership, atomic capacity/terrain rejection, autocast, save continuity, expiry and death
+PASS: Cannibalize research/refund, corpse reservation, injured priority, walking, exact healing, group protection, interruption, completion, save validation and privacy
+PASS: caster rules and saves; realistic shaman cast pose/direction, movement/stun interruption and restored animation
+PASS: Spirit Lodge training/gates/refunds/legacy queues; Lightning Shield friendly fire, exclusions, expiry and private kill attribution; Bloodlust rates, dispel, autocast and exact save continuity
+PASS: skeleton research costs, cancellation, tier/ownership/queue gates, destruction, mixed summons, lifetime, piercing air missiles, Purge, saves, AI fallback and privacy
+PASS Ziggurat: two timed branches, costs/refunds, supply and IDs, HP fraction, invalid commands/saves, private progress, actual projectile damage/anti-air, cold movement/cooldown/expiry and save roundtrip
+PASS: ten projectile styles, impact art, legacy migration, bounded interpolation, frozen clock, hidden/removed shots and reconnect reset
+PASS: Kingdom-only tier-2 cavalry, cost, saved production/rally, movement, heavy armor and melee attack
+PASS: six slots, atomic recipes, health-ratio invariance, sell value/shop range, potions/cooldown, real pickup/transfer/race, fog, saved routes and malformed saves
+PASS item shops: four faction construction, friendly completed range/path checks, shared finite stock, nearest stocked shop, atomic rejection, timed refill/caps, winner freeze, exact saves, malformed/legacy states, sell semantics and enemy privacy
+E:\work\codex\worktrees\1339\MEgine\samples\frostbound-realms\game\simulation.js:1325
+    if(dreadlordUnit(u)){const stats=dreadlord.stats(u,items);if(u.built!==1||u.inside||u.consumed||['strength','agility','intelligence','maxHp','damage','speed','armorValue'].some(k=>!finite(u[k])||Math.abs(u[k]-stats[k])>1e-6)||u.hp<0||u.hp>u.maxHp+1e-6||u.mana<0||u.mana>maxMana(u)+1e-6||u.spell.some((v,i)=>v<0||v>Math.max(...dreadlordRules.abilities[dreadlord.ids[i]].levels.map(r=>r.cooldown)))||!clock('dreadlordCastFrame')||u.dreadlordLastSlot!==undefined&&(![0,1,3].includes(u.dreadlordLastSlot)||u.dreadlordCastFrame===undefined)||u.hp<=0&&u.dreadlordCast)throw Error('Invalid saved Dreadlord state');
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ^
+
+Error: Invalid saved Dreadlord state
+    at validateDreadlordState (E:\work\codex\worktrees\1339\MEgine\samples\frostbound-realms\game\simulation.js:1325:573)
+    at Object.restore (E:\work\codex\worktrees\1339\MEgine\samples\frostbound-realms\game\simulation.js:2273:250)
+    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/test-frost-racial-items.mjs:16:21
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.18.0

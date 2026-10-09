@@ -1,0 +1,137 @@
+{
+  "author": "MiYu",
+  "startedAt": "2026-10-09T14:23:07.834Z",
+  "ms": 10444,
+  "passed": true,
+  "groups": 80,
+  "results": [
+    {
+      "script": "scripts/test-frost-blademaster.mjs",
+      "passed": true,
+      "groups": 6,
+      "stdout": "PASS source Blademaster stats, command layout and legacy saves\nPASS all Wind Walk ranks, source fade, capped speed, movement, attack-time break and exact backstab\nPASS Mirror Image ranks, delay, cleansing, invulnerability, inherited stats, zero outgoing/twice incoming damage, disguise, regeneration and replacement\nPASS deterministic Critical Strike, passive card, structure exclusion and melee air restriction\nPASS exact seven-second Bladestorm, magic immunity targets, structure/ground mask, no air/allied hits and save continuation\nPASS forged image rejection, duration expiry and original Orc AI learning order\n",
+      "stderr": "",
+      "ms": 318
+    },
+    {
+      "script": "scripts/test-frost-death-knight-generated.mjs",
+      "passed": true,
+      "groups": 1,
+      "stdout": "PASS generated Death Knight: original body/portrait/scales, C/E/U/D command and research cards, Shift+U learning, homing missile, original sampled effects, enemy body/worker identity and F5 continuation\n",
+      "stderr": "",
+      "ms": 3481
+    },
+    {
+      "script": "scripts/test-frost-death-knight.mjs",
+      "passed": true,
+      "groups": 8,
+      "stdout": "PASS source Death Knight recruitment profile, protocol, original stats and legacy save gate\nPASS ranked traveling homing Death Coil, allegiance, cast point, interruption, projectile validation and save continuation\nPASS Death Pact sacrifice, current-life conversion, cast continuation and no kill reward\nPASS strongest-source Unholy Aura, fixed regeneration, movement and immediate range/death update\nPASS six original allied/enemy bodies, baseline stats, no inherited research, ownership, invulnerability, source workers and 40-second expiry\nPASS original Huntress bounce/save validation and revived Bear transformation with preserved source profile, mana and health fraction\nPASS Death Pact excludes phased targets before spending resources\nPASS original Death Knight AI learning order\n",
+      "stderr": "",
+      "ms": 271
+    },
+    {
+      "script": "scripts/test-frost-dreadlord-generated.mjs",
+      "passed": true,
+      "groups": 1,
+      "stdout": "PASS generated Dreadlord: source body/portraits/scales, C/E/V/N cards and research, Swarm/Sleep/Aura/Infernal effects, F5 pending landing and hidden-caster world rendering\n",
+      "stderr": "",
+      "ms": 5009
+    },
+    {
+      "script": "scripts/test-frost-dreadlord-network.mjs",
+      "passed": true,
+      "groups": 1,
+      "stdout": "PASS Dreadlord actual TCP: protocol 73, ownership, pending-cast privacy, source-free traveling Swarm, protected Sleep/item rejection, Inferno reconnect and Infernal projection\n",
+      "stderr": "",
+      "ms": 2233
+    },
+    {
+      "script": "scripts/test-frost-dreadlord-profile.mjs",
+      "passed": true,
+      "groups": 1,
+      "stdout": "PASS original Dreadlord profile, ranked Swarm/Sleep/Aura/Inferno, source AI/cards, Infernal passives and browser parity; gameplay integration is separate\n",
+      "stderr": "",
+      "ms": 92
+    },
+    {
+      "script": "scripts/test-frost-dreadlord.mjs",
+      "passed": true,
+      "groups": 11,
+      "stdout": "PASS Dreadlord source recruitment, strength stats, version gate and forged identity\nPASS ranked traveling conical Swarm damage budget, alliance/immunity and deterministic restore\nPASS Swarm expanding cone edges, air targets and independence from subsequent movement\nPASS ranked Sleep, initial protection, damage wakeup, allied wake attacks and private projection\nPASS Sleep interrupts an enemy hero cast and uses hero duration\nPASS strongest ranked melee Vampiric Aura, effective damage, ranged exclusion and passive command\nPASS delayed Inferno landing, hero/structure/air rules, saved continuation and original Infernal lifetime/passives\nPASS accepted/rejected order interruption and forged Swarm state rejection\nPASS Sleep blocks immediate caster/items without consuming mana/items; allied dispel and queued movement\nPASS Inferno-stunned Tauren death/reincarnation restores within the same tick and continues deterministically\nPASS released Inferno reserves unit capacity until landing; persistent impact restore and forged clock rejection\n",
+      "stderr": "",
+      "ms": 550
+    },
+    {
+      "script": "scripts/test-frost-dryad.mjs",
+      "passed": true,
+      "groups": 8,
+      "stdout": "PASS Dryad original production: Lore roster, costs, 30s shared queue, source HP/speed/mana/food/regen and non-morphable identity\nPASS researched Abolish Magic: source payment/time, duplicate gate, Root suspension, cancellation refund, saved completion and opponent privacy\nPASS directional dispel: cast-point interruption without payment, 50 mana, friendly harmful/enemy beneficial clearing, preserved opposing effects and exact save continuation\nPASS manual autocast setting: automatic in-range summoned target, repeated 300 summon damage, mana payment and private setting\nPASS autocast command continuity: preserved Shift queue and saved cast, competing casts restore Attack Move/Hold without charging invalid targets\nPASS beneficial item dispel: legal Scroll/Salve/Clarity use cleared manually, enemy regeneration selected by autocast\nPASS original ranged combat: magic immunity, air targets, 17-19 deterministic dice, source windup, original missile kind and saved flight\nPASS strict Dryad saves: versions, missing/foreign research, invalid autocast, forged spell targets and research ranks rejected\n",
+      "stderr": "",
+      "ms": 282
+    },
+    {
+      "script": "scripts/test-frost-lich-generated.mjs",
+      "passed": true,
+      "groups": 1,
+      "stdout": "PASS generated Lich: source body/portrait/hover/scales, N/F/R/D cards and research, Armor right-click border, original spells/missile and F5 cast/channel continuation\n",
+      "stderr": "",
+      "ms": 3017
+    },
+    {
+      "script": "scripts/test-frost-lich-network.mjs",
+      "passed": true,
+      "groups": 1,
+      "stdout": "PASS Lich actual TCP: protocol 73, ownership, pending-cast privacy, frost/armor projection, autocast, Ritual, Decay reconnect and Stop\n",
+      "stderr": "",
+      "ms": 2127
+    },
+    {
+      "script": "scripts/test-frost-lich-profile.mjs",
+      "passed": true,
+      "groups": 1,
+      "stdout": "PASS original Lich growth/weapon/cast point, ranked Nova/Armor/Ritual/Decay meanings, N/F/R/D cards, source frost/autocast/AI and browser parity; gameplay integration is separate\n",
+      "stderr": "",
+      "ms": 85
+    },
+    {
+      "script": "scripts/test-frost-lich.mjs",
+      "passed": true,
+      "groups": 12,
+      "stdout": "PASS Lich source recruitment, stats, hover, missile speed, version gate and forged identity rejection\nPASS ranked Nova primary/area/hero damage, alliance, cast point, frost duration, movement/attack and private sources\nPASS Armor mitigation, source bonus, melee-only chill, separate clocks, public projection and expiry\nPASS Frost Armor autocast and enemy Dryad dispel eligibility/removal\nPASS Ritual payment, ranked current-life mana conversion, shields, eligibility and no sacrifice rewards\nPASS Decay allied/enemy/building/magic-immune percent damage, tree felling, saved channel and accepted stop interruption\nPASS rejected-order retention, accepted-order and stun interruption, channel clock forgery\nPASS idle/attack/attack-move/move autocast, pending save, toggle-off and route continuation\nPASS Stop interrupts an idle automatic Armor cast even when the order remains null\nPASS hidden enemies receive Nova area damage but cannot be chosen as the primary target\nPASS Avatar frost cleansing and chilled Tauren reincarnation save/replay\nPASS visible Decay areas project without hidden caster identity and disappear outside vision\n",
+      "stderr": "",
+      "ms": 306
+    },
+    {
+      "script": "scripts/test-frost-mountain-king.mjs",
+      "passed": true,
+      "groups": 11,
+      "stdout": "PASS original Mountain King stats, source hotkeys/slots and legacy identity\nPASS all Storm Bolt ranks, flying targets, no melee anti-air restriction, homing and saved flight continuation\nPASS cast interruption, target range recheck, immune impact and forged flight rejection\nPASS all Thunder Clap ranks, ground organic mask, exact slow/attack reduction, expiry and save continuation\nPASS additive Avatar stats, health transition, no cancellation, expiry, death reset and strict saves\nPASS deterministic Bash on real hits, magic-immune stun and no proc through invulnerability\nPASS Bash through the actual attack windup/tick loop and restore on every frame\nPASS Avatar generic root cleansing and subsequent physical attack debuff immunity\nPASS Storm Bolt actual caster identity and learned rank validation\nPASS anti-magic potion hostile-effect cleansing and immediately valid save\nPASS original Mountain King AI learning order\n",
+      "stderr": "",
+      "ms": 334
+    },
+    {
+      "script": "scripts/test-frost-shadowhunter-generated.mjs",
+      "passed": true,
+      "groups": 1,
+      "stdout": "PASS generated Shadow Hunter E/X/W/V cards, source body/portrait/scales, native sixteen Hex forms, HWPB/HWSB healing ribbons, ward Birth and embedded particles, Voodoo channel/protection/Stop and F5 continuation\n",
+      "stderr": "",
+      "ms": 4314
+    },
+    {
+      "script": "scripts/test-frost-tauren-generated.mjs",
+      "passed": true,
+      "groups": 1,
+      "stdout": "PASS generated Tauren W/T/E/R cards, original body/portrait/scale/ring, Attack Slam/Spell Slam, travelling geometry, Stomp, aura geometry, Death/Stand/Birth reincarnation and F5 continuation\n",
+      "stderr": "",
+      "ms": 5657
+    },
+    {
+      "script": "scripts/test-frost-tauren.mjs",
+      "passed": true,
+      "groups": 15,
+      "stdout": "PASS Tauren original registration, initial mana, passive rejection and cancellable 0.47-second cast\nPASS Tauren rank 1 wave travels, hits once, ignores air/friend/immunity and survives source death/save\nPASS Tauren rank 2 wave travels, hits once, ignores air/friend/immunity and survives source death/save\nPASS Tauren rank 3 wave travels, hits once, ignores air/friend/immunity and survives source death/save\nPASS Tauren wave total damage cap and ordered targets\nPASS Tauren stomp organic ground and distinct hero duration with delayed cost\nPASS Tauren stomp immediately interrupts an active Blizzard channel\nPASS Tauren learned aura updates immediately and death clears the bearer and friendly recipients\nPASS Tauren strongest endurance aura, air/friend/self, additive attack bonus, speed cap, range/death and forged save\nPASS Tauren reincarnation seven seconds, no kill rewards/XP, no altar revival, full health/mana, save continuation and cooldown death\nPASS Tauren save rejects forged wave geometry, damage budget and cast\nPASS Tauren save rejects forged stun ownership, duration and target classification\nPASS Tauren save rejects forged reincarnation clock, cooldown and altar queue, while Stop cannot cancel rebirth\nPASS Tauren original altar recruitment, combat experience growth and paid revival retain identity and inventory\nPASS Tauren public wave and stun hide private attribution, enemy cast and damage budget\nPASS 15 original Tauren gameplay groups / protocol 73\n",
+      "stderr": "",
+      "ms": 328
+    }
+  ]
+}

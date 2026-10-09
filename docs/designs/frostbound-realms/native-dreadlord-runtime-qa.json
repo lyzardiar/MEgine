@@ -1,0 +1,29 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T14:35:26.708Z",
+  "productMainSha256": "c3b3767c1ae94366cb48706ad32e8de06a0594ff5f36945ffc8ce50416b57149",
+  "productSceneSha256": "7eeaeed471998d8c0be6cd621a1fb0fdd3638c2cdc49310d6b757267a6651b8b",
+  "simulationSha256": "ce33877105073e87bba60f7e0fc33c4c71f2dfa432321624c02e1e17fe84c826",
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "entityCount": 1,
+  "readyMs": 1186,
+  "protocol": 73,
+  "checks": [
+    "Sleep protection, item rejection and deterministic restore",
+    "Inferno reserved landing, persistent effect and strict native restore",
+    "Source-free Swarm projection and native restore"
+  ],
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 113308,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "elapsedMs": 4211
+}

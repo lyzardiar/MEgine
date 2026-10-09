@@ -1,0 +1,8 @@
+// Author: MiYu. Bounded final Dreadlord and affected hero/dispel regression report.
+import fs from 'node:fs';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+const exec=promisify(execFile),names=['dreadlord','dreadlord-profile','dreadlord-generated','dreadlord-network','lich','lich-profile','lich-generated','lich-network','death-knight','death-knight-generated','tauren','tauren-generated','mountain-king','blademaster','dryad','shadowhunter-generated'],results=[],startedAt=new Date().toISOString(),started=performance.now();
+let next=0;
+await Promise.all(Array.from({length:3},async()=>{while(next<names.length){const name=names[next++],script='scripts/test-frost-'+name+'.mjs',start=performance.now();let result;try{const {stdout,stderr}=await exec(process.execPath,[script],{windowsHide:true,maxBuffer:1024*1024});result={script,passed:true,groups:stdout.split('\n').filter(l=>l.startsWith('PASS')&&!/^PASS \d+ /.test(l)).length,stdout,stderr};}catch(e){result={script,passed:false,stdout:e.stdout,stderr:e.stderr,error:e.message};}results.push({...result,ms:Math.round(performance.now()-start)});console.log((result.passed?'PASS ':'FAIL ')+script);}}));
+const report={author:'MiYu',startedAt,ms:Math.round(performance.now()-started),passed:results.every(r=>r.passed),groups:results.reduce((n,r)=>n+(r.groups||0),0),results:results.sort((a,b)=>a.script.localeCompare(b.script))};fs.writeFileSync('docs/designs/frostbound-realms/dreadlord-gameplay-validation.json',JSON.stringify(report,null,2)+'\n');console.log(report.groups+' groups / '+report.ms+'ms');if(!report.passed)process.exitCode=1;

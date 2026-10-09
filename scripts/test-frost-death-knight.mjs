@@ -5,7 +5,7 @@ import {deathKnightFixture} from './frost-death-knight-fixture.mjs';
 const require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js'),D=require('../samples/frostbound-realms/game/death-knight.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},cmd=(s,h,type,args={})=>S.command(s,h.team,{type,ids:[h.id],...args}),learn=(s,h,slot,n=1)=>{for(let i=0;i<n;i++)assert.equal(cmd(s,h,'learn',{slot}),null);},hold={cd:10000,order:{type:'hold'}};
 {
- const {s,h}=deathKnightFixture(S);assert.equal(S.PROTOCOL,72);assert.equal(h.sourceHero,'Udea');assert.equal(h.maxHp,675);assert.equal(h.damage,30);assert.equal(S.maxMana(h),255);assert.equal(h.mana,100);assert.ok(Math.abs(h.armorValue-2.6)<1e-8);assert.deepEqual(S.unitType(h).spells.map(r=>r.hotkey),['C','E','U','D']);assert.ok(S.restore(s));
+ const {s,h}=deathKnightFixture(S);assert.equal(S.PROTOCOL,73);assert.equal(h.sourceHero,'Udea');assert.equal(h.maxHp,675);assert.equal(h.damage,30);assert.equal(S.maxMana(h),255);assert.equal(h.mana,100);assert.ok(Math.abs(h.armorValue-2.6)<1e-8);assert.deepEqual(S.unitType(h).spells.map(r=>r.hotkey),['C','E','U','D']);assert.ok(S.restore(s));
  const legacy=S.create('skirmish',{deathKnightVersion:0,factions:[3,0],ai:[false,false]});delete legacy.deathKnightVersion;assert.equal(S.restore(legacy).deathKnightVersion,0);assert.equal(S.spawn(legacy,'hero',0,0,0,{heroClass:0}).sourceHero,undefined);assert.throws(()=>S.create('skirmish',{deathKnightVersion:2}),/Death Knight/);
  const bad=S.clone(s);bad.units[0].maxHp++;assert.throws(()=>S.restore(bad),/Death Knight/);bad.units[0].maxHp--;bad.deathKnightVersion=0;assert.throws(()=>S.restore(bad),/Death Knight/);
 }

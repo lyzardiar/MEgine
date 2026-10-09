@@ -1,0 +1,102 @@
+PASS racial items: 22 classic offers, all race/tier/lumber gates, stock continuation, charged drop/pickup/sell, interrupted recovery, potions, speed/night/hide/dust, reusable staff/sanctuary, actual deployment/upgrade/cancel, disguised scout, blight/building/regen, corpse summons, magic immunity, four orb combat/air projectiles/RNG replay and malformed/legacy saves
+PASS item shop client: real HUD buy commands, shared depletion notice/no payment, nearby buyer cycling, select hero/backpack, hero shop, saved/restored stock, refill and non-melee build hotkey gating
+PASS: four heroes / 16 skills, learning gates, status effects, timed areas/summons, targeting, hero saves and legacy migration
+PASS: hero classes, three/tier limits, first free, exact refunds, retained death/supply, altar revival identity/items/skills, cancellation/destruction, malformed/legacy saves, capacity and shared XP
+PASS: actual four-faction idle starts, 500/150 resources, faction supply, explicit gathering, legal altars/free heroes, exact saves, preferred AI hero and full AI opening
+PASS main-base technology: four Classic upgrade costs/times and HP gains, independent concurrent grades, expansion/cancel/refund/idle gates, exact saves, enemy privacy, destruction/technology loss with queued heroes and research retained, legacy progress/refund migration and highest-base staff destination
+PASS main-base rules: four racial costs/full construction times, occupants/cancellation/repair, worker pause/paid assistance, rooted tree melee/armor, passive Human/Orc/Necropolis, ground-air frost and launch snapshots, deterministic saves and legacy construction/projectiles
+PASS: first altar scroll, 350-gold repurchase, full 5s channel, immunity/action lock, surviving army/idle workers, busy/rooted exclusions, disconnected terrain, safe arrivals, cancellation/destruction, exact saves and enemy redaction
+PASS construction art: 80 source poses; 59 visible and 41 hidden embedded nodes; exact path identities, full transforms, actual build/cancel, pause, fog, save and authoritative clients
+PASS: Haunted Mine summoning, five unique stations, direct gold, depletion, destruction, ghoul lumber/queues, saves, privacy and both starting economies
+PASS Wisp: source stats, full 8s/5 direct non-destructive lumber, travel/blocked paths, stop/stun/queue, night healing, 14s training/refund, gold cargo, exact/legacy/malformed saves and original Stand Lumber/private enemy animation
+PASS Detonate: source values, friendly/enemy mana and dispel, summoned ground/air damage, immunity, no sacrifice bounty/corpse, travel/stop/stun/blocked paths, gather/resident cleanup, atomic invalid commands, single group caster, exact save and fog privacy
+PASS production Ancients: original stats/full form timers, paid training and shop suspension, source form weapons/Protector splash/in-flight save, complete Eat Tree/night regen, legacy/privacy guards and original alternate/morph/walk/eat clips
+PASS bundled production Ancient HUD: all three actual Uproot/Root clicks and R, original icons/(3,2)/(0,2), heavy/fortified stats, independent main-only abilities and exact pause/menu save/restore
+PASS Ancient of War: tier-1 source roster/costs/food/full timers/refunds, full Hunter's Hall construction/prerequisite, no faction stat multipliers, source windup/missiles/armor, one half-damage bounce, siege minimum range/three splash bands/friendly fire, night regen/meld, exact saves and legacy production
+PASS Night Elf research gates: original building rosters, completed source prerequisites, original costs/time, exact completion/refund, duplicate prevention and save continuation
+PASS all 19 research ranks: exact costs/full timers, maximum levels, future-unit upgrades, archer/huntress dice and armor, +200 range, +3 damage, three targets and Moon Well capacity
+PASS original random weapon dice: complete range, deterministic saved RNG, blocked-shot RNG, source-grade averages and shared training/research queue
+PASS source night vision and Moon Well: source day/night sight, Ultravision, 100 initial mana, night-only 1.25/1.9 regen, 425 cap, organic-friendly range and 2 HP/.5 target mana per well mana
+PASS Sentinel: source research, per-Huntress one use, 1500-speed flight, perched vision/detection, exact in-flight save, dispel and retained used state
+PASS source tree HP and weapon 2: research gating, 50 HP independent of wood, original splash bands, no penetration tree damage, exact in-flight save and tree fall
+PASS Vorpal Blades: actual unit penetration, original attack damage and armor, frozen launch metadata, Attack Ground splash without penetration and exact saves
+PASS Attack Ground range boundary: a point at 12 is outside original 11.5 range and requires movement
+PASS strict research saves: invalid versions/grades/faction/queue metadata/unit snapshots/unused ability/well mana and tree-life tampering rejected
+PASS Sentinel dispel lifecycle: flying owl rejects Purge without payment and survives Detonate, perched owl can be dispelled for 75 mana while retaining its consumed use
+PASS bundled research prerequisites: original disabled cards and all six Hunter slots, rejected payment, Ultravision U does not issue generic upgrade
+PASS bundled paid queues: A training/S Sentinel research, source names, exact pause/menu save, Hunter M without movement, cancellation button and exact refund
+PASS bundled Sentinel: original E/slot8, tree target, one-use disabled card, flying/perched continuation and actual menu save
+PASS bundled Moon Well: original R/slot0, manual health recharge and resource debit, actual right-click autocast on/off icons and mana status
+PASS bundled Glaive commands: G fixed ground targeting, A-tree targeting and right-click tree attack with Vorpal Blades
+PASS bundled mobile Ancient controls: uprooted form hides research and restores Move/Stop without paying for research
+PASS generated original Owl: Walk/Stand geometry and particles, source perching height, pause, save/load, current fog and same-frame removal
+PASS generated Shaman Q: select enemy Owl at rendered height, source target after Huntress death, 75 mana, cooldown, cast pose/event and removal; flying Owl rejected
+PASS generated dynamic Owl pool: 161 persistent Sentinels with no living owners, parented overflow geometry, slot reuse and title cleanup
+PASS generated finished-world Owl persistence and frozen animation phase
+PASS generated network presentation: joined authoritative Owl, frozen world during close/reconnect, resume reset and same-frame authoritative removal
+PASS source Druid producers: faction/tier/Hunter gates, original costs/times/population, human-only rosters and refund
+PASS four source training ranks: exact shared queues, payment, duplicate/tier gates, rank propagation, source HP/damage/mana and deterministic saves
+PASS transformations: paid original timers, uninterruptibility, saved mid-morph, HP ratio, form-only Wild grades and air-only Storm Crow/clear landing
+PASS production Ancient reuse: original rooted/uprooted models/rules, research suspension/resumption and opponent privacy
+PASS source combat integration: actual training dice range, armor tables, attack windup/projectile saves and death during transformation
+PASS strict Druid saves: invalid versions/research ranks/factions/producer queues/form ranks and transformation targets rejected
+PASS original Crow flight height: 240 source units, raised terrain, generic flyer preservation, saved/public-state height and return to ground
+PASS Crow combat height: sourced projectile launch/target altitude, actual air damage and deterministic in-flight continuation
+PASS generated Druid client: source command slots/icons, real training/research keys, master unlock, actual F morph, human/bear/crow clips and mid-morph save/load
+PASS Druid Marks: exact producer/master gates, payment/time, duplicate rejection, refund, save continuation and animal-only abilities
+PASS source Roar: 0.5s cast point, 100 mana, 5-unit radius, refreshed 45s buff and actual non-stacking +25% weapon damage
+PASS Rejuvenation: Adept/human/organic ownership gates, interruption before payment, 125 mana, exact 400 healing and restored fixed-step completion
+PASS Faerie Fire: actual -4 armor, 45 mana, hero/ordinary timers, live remote vision and private autocast/research state
+PASS Cyclone: master/ground gates, 150 mana, actual suspension/invulnerability, no commands, saved continuation, 6s heroes and Purge landing
+PASS original Faerie Fire autocast: combat/idle selection, no repeated rebuff, manual toggle and Wisp dispel of all four effects
+PASS strict Druid spell saves: invalid durations, vision ownership, autocast types, spells/cast points and animation frames rejected
+PASS generated Druid spells: source icons/slots, R/E/C and target clicks, native effect bindings, right-click autocast, F5 effect persistence, actual M Mark queues and animal spell clips
+PASS bundled Ancient of War: original top-row icons/disabled prerequisite, A/H/T training without combat orders, source costs/full three-unit queue at tier 1, Root suspension/exact menu save, source actor/portrait routing and animated multi-part missile styles
+PASS Nature's Blessing: original 150/200/60s and per-unit bonuses, shared paid Wisp queue, exact completion/save, cancellation/duplicates/death, rooted and mobile armor/speed, future units, full-capacity completion, legacy and enemy privacy
+PASS bundled Nature's Blessing HUD: original (2,0) enabled/disabled icon, tier lock, cost/time tooltip, actual click/N/cancel, mixed Wisp queue, pause/save/resume, armor 7 and uprooted speed 0.8
+PASS Entangle: 3+60s, five cargo seats, shared rotating income, original work/child art, queued exit, cleanup, save cursor, privacy, buffs, legacy and four factions
+PASS bundled Wisp HUD: source gather/training and multi-line layout; original Detonate icon/slot, actual click, D/Stop, mana drain, caster consumption, original Birth geometry/particles and complete transient expiry
+PASS: region filters, all/any conditions, atomic ordered actions, saved repeat clocks, relative delays, dependency edits, legacy maps and legal Supply Road chain
+PASS: three tilesets, invalid palette rejection, exact geometry/water/fog preservation, save/public state and six legacy map roundtrips
+PASS client: 60 Hz fall progression, complete classic material parts, frozen fractional pause, solo fog privacy and complete deactivation
+PASS doodad client: real placement/select/move/rotate/scale/delete, undo, map storage, rule-colored overlay, model transforms, playtest return, template undo and explored fog rendering
+PASS: three biomes, three lumber factions and intact Wisp trees, root pivot/direction, LOD parity, continuation, saves, legacy saves, invalid metadata and private fog
+PASS forest: three sealed biomes, air bypass, swept trunks and body radii, detours, embedded recovery, immediate harvest opening, building rejection/acceptance, exact save replay and private persistent discovery
+PASS doodads: scaled swept rocks, three sealed biomes, air, decoration bypass, detours, embedded escape, building costs, rule-derived pathing, exact save continuation, authored template and malformed maps
+PASS TCP item shops: same-stock purchase race, single payment, private enemy stock, exact inventory and refill timer across reconnect, authoritative refill and hostile buyer rejection
+PASS TCP Detonate: actual point command and area results, one-shot duplicate delivery, friendly privacy, moving-order reconnect, Stop cancellation and second sacrifice
+PASS TCP: Revenant start, direct income, rejected acolyte lumber, stop/restaff, private treasury and mining-slot reconnect
+PASS TCP main bases: independent concurrent authoritative upgrades, duplicate-sequence single debit, enemy progress/technology privacy, busy training gate, exact reconnect, actual cancel/refund and independent completion
+PASS TCP main-base rules: authoritative zero-lumber Necropolis build, duplicate single payment, enemy construction privacy, exact cost/style reconnect, actual cancel/refund, completion and fractional repair debit
+PASS TCP racial items: actual targeted recovery, duplicate-sequence single charge, enemy charge/cooldown privacy, charged ground item/pickup across reconnect, partial use continuation and shared potion cooldown across reconnect
+PASS TCP Ancient of War: tier-1 prerequisite/cost/ownership gates, private original three-unit queue, real disconnect/resume, full authoritative completion, source missile art and enemy windup/order privacy
+PASS TCP Nature's Blessing: mixed paid Wisp/research queue, repeated sequence charged once, cross-player and duplicate rejection, private enemy progress, cancel refund, mid-queue reconnect, authoritative visible armor/speed and completed reconnect
+PASS TCP Night Elf technology: protocol46, paid original queue/grade, ownership rejection, real reconnect, authoritative completion/effect/refund, Sentinel privacy and enemy Shaman Purge ownership/payment/removal
+PASS Druid TCP: actual source research/payment/refund, ownership rejection, hidden research, saved morph and reconnect to original Bear stats
+PASS Druid TCP: original Crow flight height in authoritative public snapshots
+PASS TCP doodads: authored map on both clients, authoritative rock obstruction and exact transforms on reconnect
+PASS Druid spell TCP: actual four spells/payment, ownership rejection, remote Faerie Fire vision, private Mark/autocast state and live effect/research reconnect/refund
+PASS TCP forest: sealed movement, actual harvest opening, private discovery, persisted reconnect and passage crossing
+PASS TCP: consumed scroll, full channel, action rejection, private enemy target, mid-channel reconnect and single army arrival
+PASS TCP production Ancients: full three-unit batch forms, original source stats/Nature bonuses, mid-form reconnect, paid queue and shop suspension, enemy order/queue/stock privacy, ownership rejection and rooted production resume
+PASS TCP: real gather command, same fall on both peers, mid-fall reconnect, hidden metadata and post-victory completion with frozen battle time
+PASS TCP Entangle: actual five-seat gather/load/unload, duplicate order, shared income, cargo/clock reconnect, enemy privacy and final deposit release
+PASS: symmetric river, dry crossing, spawn connectivity and unchanged TD/MOBA/RPG water
+PASS: four licensed siege rosters, legal economy/tech/build/production, cancellation/refund, saved rally, armor classes and production privacy
+PASS: four faction rosters and tech gates, one-shot map triggers, fog privacy, full RPG legal-order quest/loot/growth/save roundtrip (577 ticks)
+PASS: legacy TCP inventory recipe, drop, pickup, reconnect and sell
+PASS: TCP deferred worker construction, mixed queue reconnect and return to mining
+PASS: TCP redacted projectile snapshots, in-flight reconnect and exactly one delayed impact
+PASS: TCP tier-2 cavalry cost, production queue reconnect and mounted unit rally
+PASS: TCP learned ranger spell, authoritative cast direction and mid-cast reconnect
+PASS: TCP actual rifle kill, authoritative corpse direction/age, mid-death reconnect and fog disappearance/reappearance
+PASS: TCP post-victory corpse expiry without advancing battle time
+PASS: TCP authoritative corpse consumption, summoned sword/shield pair, mana/autocast and reconnect lifetime continuity
+PASS: TCP Temple research/rank completion, targeted Frenzy, private attribution and effect/research reconnect
+PASS: TCP Spirit Lodge upgrades, master-research reconnect, shield friendly damage/private source, Bloodlust/autocast reconnect and Purge
+PASS: TCP skeleton research, private enemy state, mid-research reconnect, mixed summons and 55s lifetime reconnect
+PASS TCP: Cannibalize research cost, research reconnect, two real corpses, exclusive feeding, healing reconnect and individual stop
+PASS: TCP authored night start, sleeping camp, explicit wake and authoritative reconnect clock
+PASS: TCP lane control rejection, half-health rejection, explicit allied attack, in-flight deny reconnect, deny event, no own reward and reduced enemy XP
+PASS TCP: class-specific recruitment, duplicate rejection, hidden queues/dead heroes, paid queue reconnect, retained level/items/skills and altar revival reconnect; controlled production timers
+PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect
