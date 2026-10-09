@@ -147,3 +147,11 @@ docs/designs/frostbound-realms/*farseer*.json text eol=lf
 samples/frostbound-realms/game/farseer.js text eol=lf
 samples/frostbound-realms/Assets/Materials/FarseerLightning*.mmat text eol=lf
 samples/frostbound-realms/Assets/Shaders/FarseerLightning*.mshader text eol=lf
+scripts/*tauren*.py text eol=lf
+scripts/*tauren*.mjs text eol=lf
+samples/frostbound-realms/tauren-*.json text eol=lf
+samples/frostbound-realms/game/tauren.js text eol=lf
+samples/frostbound-realms/Assets/TaurenEffects/** -text whitespace=cr-at-eol,-blank-at-eol
+samples/frostbound-realms/SourceAssets/Tauren/** -text whitespace=cr-at-eol,-blank-at-eol
+samples/frostbound-realms/Assets/Licenses/*Tauren* -text
+docs/designs/frostbound-realms/*tauren*.json text eol=lf

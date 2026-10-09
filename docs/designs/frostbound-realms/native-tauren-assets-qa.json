@@ -1,0 +1,88 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T05:54:56.302Z",
+  "sha256": {
+    "tauren-rules.json": "ae3ecb66806f177a0991ff7c7addcee52f7a49e40c3ff72853c5e15edb72bd21",
+    "tauren-effects.json": "2ff3748235bfe4369fb86f4c46197029e208be7fa5b0bc66d467df0d550f4d5d",
+    "tauren-effect-models.json": "8ed0fb5fd92aa40db5e4743cfe584e9776a2df0c5bc49fbc828af1b15ec387b2"
+  },
+  "heroArtReceiptSha256": "f1c23a96c0a88f88f104f4034fbf8937b7df0f5350d0f9e06232e424ee0f22b5",
+  "physicalInput": false,
+  "runtimeGameplayIntegrated": false,
+  "snapshots": [
+    {
+      "key": "ShockwaveMissile",
+      "position": [
+        -6,
+        0,
+        0
+      ],
+      "clip": 1,
+      "time": 0.5
+    },
+    {
+      "key": "WarStompCaster",
+      "position": [
+        -2,
+        0,
+        0
+      ],
+      "clip": 0,
+      "time": 0.25
+    },
+    {
+      "key": "CommandAura",
+      "position": [
+        2,
+        0,
+        0
+      ],
+      "clip": 0,
+      "time": 0.6
+    },
+    {
+      "key": "ReincarnationTarget",
+      "position": [
+        6,
+        0,
+        0
+      ],
+      "clip": 1,
+      "time": 0.7
+    }
+  ],
+  "nativeCounts": {
+    "billboardMeshes": 5,
+    "entities": 25,
+    "materialPipelineEvictions": 0,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 0,
+    "materialPipelinesRejected": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialSamplers": 1,
+    "materialTextureBindGroups": 11,
+    "materialTexturesColor": 11,
+    "materialTexturesData": 0,
+    "msaaSamples": 4,
+    "renderObjects": 16,
+    "sceneViews": 0,
+    "uiBatches": 35,
+    "uiDrawCalls": 35,
+    "uiPrimitives": 75
+  },
+  "consoleErrors": 0,
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 132896,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "elapsedMs": 10779,
+  "scope": "Native source asset snapshots. Tauren spell execution, unit death/reincarnation, gameplay integration, audio, physical input and original-game solver parity remain unverified."
+}

@@ -1,0 +1,16 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "signedFiles": 157,
+  "guids": 57,
+  "geometryPoseSamples": 54,
+  "offlineByteIdentical": true,
+  "modifiedOutputRejected": true,
+  "corruptSourceRejected": true,
+  "runtimeGameplayIntegrated": false,
+  "sha256": {
+    "tauren-rules.json": "ae3ecb66806f177a0991ff7c7addcee52f7a49e40c3ff72853c5e15edb72bd21",
+    "tauren-effects.json": "2ff3748235bfe4369fb86f4c46197029e208be7fa5b0bc66d467df0d550f4d5d",
+    "tauren-effect-models.json": "8ed0fb5fd92aa40db5e4743cfe584e9776a2df0c5bc49fbc828af1b15ec387b2"
+  }
+}
