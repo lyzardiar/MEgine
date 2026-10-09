@@ -4,7 +4,7 @@ import {setTechnology} from './frost-battle-fixture.mjs';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
-function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{mountainKingVersion:0,map});s.units=[];S.spawn(s,'hall',0,-8,0,{damage:0});S.spawn(s,'farm',0,-8,-8);S.spawn(s,'shop',0,-8,4);const altar=S.spawn(s,'altar',0,0,0),other=S.spawn(s,'altar',0,10,0);S.visibility(s);return {s,altar,other,train:(heroClass,building=altar)=>S.command(s,0,{type:'train',ids:[building.id],kind:'hero',heroClass}),revive:(h,building=altar)=>S.command(s,0,{type:'revive',ids:[building.id],target:h.id})};}
+function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{blademasterVersion:0,mountainKingVersion:0,map});s.units=[];S.spawn(s,'hall',0,-8,0,{damage:0});S.spawn(s,'farm',0,-8,-8);S.spawn(s,'shop',0,-8,4);const altar=S.spawn(s,'altar',0,0,0),other=S.spawn(s,'altar',0,10,0);S.visibility(s);return {s,altar,other,train:(heroClass,building=altar)=>S.command(s,0,{type:'train',ids:[building.id],kind:'hero',heroClass}),revive:(h,building=altar)=>S.command(s,0,{type:'revive',ids:[building.id],target:h.id})};}
 {
  const {s,altar,other,train}=arena(),gold=s.teams[0].gold,wood=s.teams[0].wood;
  for(const invalid of [-1,4,'0','constructor',null])assert.match(train(invalid),/Invalid hero/);

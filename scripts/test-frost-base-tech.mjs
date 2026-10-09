@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
-function arena(faction=0){const map=S.defaultMap();for(const k of ['terrain','heights','relief','ramps'])map[k].fill(0);map.props=[];map.units=[];map.triggers=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{archmageVersion:0,map,factions:[faction,0],ai:[false,false]});s.units=[];s.teams[0].gold=10000;s.teams[0].wood=10000;const a=S.spawn(s,'hall',0,-20,14,{damage:0}),b=S.spawn(s,'hall',0,-8,14,{damage:0}),enemy=S.spawn(s,'hall',1,24,-24,{damage:0});S.visibility(s);return {s,a,b,enemy};}
+function arena(faction=0){const map=S.defaultMap();for(const k of ['terrain','heights','relief','ramps'])map[k].fill(0);map.props=[];map.units=[];map.triggers=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{blademasterVersion:0,archmageVersion:0,map,factions:[faction,0],ai:[false,false]});s.units=[];s.teams[0].gold=10000;s.teams[0].wood=10000;const a=S.spawn(s,'hall',0,-20,14,{damage:0}),b=S.spawn(s,'hall',0,-8,14,{damage:0}),enemy=S.spawn(s,'hall',1,24,-24,{damage:0});S.visibility(s);return {s,a,b,enemy};}
 const upgrade=(s,u)=>S.command(s,0,{type:'tech',ids:[u.id]}),cancel=(s,u)=>S.command(s,0,{type:'cancelTech',ids:[u.id]});
 for(let faction=0;faction<4;faction++){
  const {s,a,b}=arena(faction),r=S.mainBase(s,a,2),budget=[s.teams[0].gold,s.teams[0].wood],hp=[a.hp,a.maxHp];assert.equal(a.maxHp,S.mainBases[faction][0].hp);a.hp-=100;

@@ -1,0 +1,19 @@
+{
+  "author": "MiYu",
+  "generatedClientExitCode": 0,
+  "verifiedAt": "2026-10-09T01:56:10.743258+00:00",
+  "sha256": {
+    "scripts/build-frostbound.mjs": "6fe6e7d983140a0532e016c584d400dfca0f11d9d5ccc25b5e7a1089bbcfffd5",
+    "scripts/test-frost-blademaster-generated.mjs": "9585862323b5c098a03af631c480416745d92c9cf8ac42da3967b46e2a99701d",
+    "scripts/frost-blademaster-fixture.mjs": "0d46838a09e61fae14472c053efee38a00106684ff9c2e8bc6a637bca90f287d",
+    "samples/frostbound-realms/game/blademaster.js": "c428df9d2317ca926b360a97f06ce97ba67a007989e523190789fb5c2f2bcb3b",
+    "samples/frostbound-realms/game/simulation.js": "45f3352388eb6c994c346130a497a3703544961c2396e3c8c49b01068be346c2",
+    "samples/frostbound-realms/game/client.js": "784e45a026c61aca776fecfc299030623f6af40c47b4f3fa36b336c94aec88cf",
+    "samples/frostbound-realms/game/visuals.js": "192789009178ac18c105336473be6ad0a2911ea558cc2fd1ce5c0a8234b05f88",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "8841fbf92dcd390e79dda100f201c8250cad48f81b4e5e1f0d2706214ba0dec2",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "8cca8bdba0d8d94157431a7afd47e29c1dfbed7838a5aedc9f5e3be77a5350d7",
+    "samples/frostbound-realms/orc-hero-models.json": "e598274a100cd57fb3a509e6760008f00e6bd4f2be731f3a59d541eddf6fcc73",
+    "samples/frostbound-realms/orc-hero-portraits.json": "e7f587e44b27e0fa9ee623f5eab1ad212d02269b90619ffd0e3e7242e5910a3d",
+    "samples/frostbound-realms/orc-hero-rules.json": "9c4e2dd09cf66334f659aaf44e6e36d991b1eeb421505d531b5f03670b6a0905"
+  }
+}

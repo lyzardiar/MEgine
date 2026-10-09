@@ -1,0 +1,29 @@
+{
+  "author": "MiYu",
+  "protocol": 66,
+  "sourceHero": "Obla",
+  "rulesExitCode": 0,
+  "generatedClientExitCode": 0,
+  "tcpExitCode": 0,
+  "nativePassed": true,
+  "nativeMainMatchesCurrent": true,
+  "regression": {
+    "fullEntryExitCode": 1,
+    "prefixImportedModulesPassed": 77,
+    "middleImportedModulesPassed": 6,
+    "remainingImportedModules": 55,
+    "remainingEntryExitCode": 0,
+    "remainingMainAcceptancePassed": true,
+    "method": "Segmented imported-module coverage and resumed original main acceptance body; not a single full entry exit 0",
+    "fullEntrySourceSha256": "58c761763cf62d0fe570ddeaa1f483437da457b7df4646d9bd6d9bf0492b0a43",
+    "remainingEntrySha256": "8fe67b975f782798e9acf1d52beb0cfdb2816ebce64fa2678755d189e889f615"
+  },
+  "pending": [
+    "Original Mirror Image emitter conversion",
+    "Original body particles and ribbons",
+    "Dynamic original portrait camera playback",
+    "Original game execution parity",
+    "Other three Orc hero gameplay integration",
+    "Complete campaigns, editor, classic TD/Dota and cross-machine LAN parity"
+  ]
+}
