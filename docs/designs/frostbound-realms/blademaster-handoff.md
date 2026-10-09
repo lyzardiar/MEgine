@@ -1,23 +1,47 @@
-# 原版剑圣玩法与模型接入
+# 剑圣阶段交接
 
-Author: MiYu
+剑圣 Obla 使用原版身体、肖像相机、属性成长、攻击骰子、技能图标和 W/R/C/B 技能栏。疾风步保留渐隐、单位交通穿越与背刺；镜像保留 0.5 秒延迟、1/2/3 个可控制分身、继承属性和装备、零输出、双倍承伤与敌方伪装；致命一击及七秒剑刃风暴使用来源规则。
 
-剑圣 Obla 已接入兽族单机遭遇战和权威 TCP 对局，使用原版身体、肖像相机、属性成长、攻击骰子、技能图标、技能栏位置及热键 W/R/C/B。镜像使用相同模型、属性、装备快照和英雄选择圈，单独接受移动与攻击命令；攻击不造成伤害，承受伤害为两倍，击杀不给奖励、不产生尸体、不进入英雄招募或复活流程。敌方公开状态显示为普通剑圣，并移除召唤归属与寿命字段。
+镜像使用原版 MirrorImageCaster、MirrorImageMissile 和 LevelupCaster。施法光效留在原位置，光带以原表速度 1000/100 飞往分身的初始出生点，出生光效附着角色 Origin 并按非循环动画结束。剑圣及镜像的身体粒子、丝带使用原模型采样数据，与身体动画的 clip/time 同步，不重复身体几何。来源位置受迷雾检查，隐藏起点不会经公开状态泄露。
 
-疾风步保留 0.6 秒渐隐、20/35/50 秒持续时间和 40/70/100 点背刺伤害，在实际攻击时现身；隐身移动绕过单位交通，保留地形与建筑限制。正向移动加速取最大值，并使用来源表的 150–400 速度上下限。镜像施法后有 0.5 秒分身延迟及该阶段的无敌状态，清理魔法效果，生成 1/2/3 个持续 60 秒的镜像，并替换旧镜像。致命一击使用确定性随机数，15% 概率、2/3/4 倍普通攻击伤害，不对建筑触发。剑刃风暴持续七秒、半径 2、每秒 110 点伤害，覆盖敌方地面单位和建筑，使用独立伤害路径及原版 `Attack Walk Stand Spin` 身体动画。
-
-保存与网络协议为 66。缺少版本字段的旧存档保留通用兽族英雄。新增状态验证覆盖施法、渐隐、分身、旋转和镜像来源、属性及寿命。既有通用英雄测试夹具显式使用旧英雄规则；完整来源属性与新技能由独立剑圣测试覆盖。
+协议为 67。新增 bladeMirrorEffect 保存起点、施法帧、等级、出生帧及初始目的地；校验身份、时间、范围和镜像一致性。旧存档允许缺少该字段。共享 asset-library 保持只读；本阶段未修改 C#。
 
 ## 验证
 
-`node scripts/test-frost-blademaster.mjs`、`node scripts/test-frost-blademaster-generated.mjs` 和 `node scripts/test-frost-blademaster-network.mjs` 均退出 0。规则覆盖各等级、施法中保存后的确定性续跑、镜像控制/替换/再生/奖励限制、伪造状态拒绝、原版 AI 学习顺序。生成客户端使用已编译的原生节点求值器，验证技能栏、热键、真实模型与相机、选择圈、旋转动画和暂停载入。TCP 验证所有权、隐身可见性、镜像伪装和控制，以及施法中真实断线重连。
+以下均退出 0：
 
-全入口在旧夹具依赖通用英雄属性处停止，修正相关夹具并分段续跑：前 77 个导入模块通过，中间六个模块通过，剩余 55 个导入模块及原有主验收正文退出 0。修改的旧夹具另行定向通过。这是分段覆盖，不是一次完整入口退出 0。范围和指纹见 `blademaster-validation.json`。
+- `node scripts/test-frost-blademaster.mjs`
+- `node scripts/test-frost-blademaster-effects.mjs`
+- `node scripts/test-frost-blademaster-generated.mjs`
+- `node scripts/test-frost-blademaster-network.mjs`
+- `node scripts/test-frost-effects.mjs`
+- `node scripts/test-frost-blood-mage-generated.mjs`
+- `python scripts/validate-frost-blademaster-effects.py`
+- `node scripts/qa-frost-blademaster.mjs`
 
-`node scripts/qa-frost-blademaster.mjs` 复用现有原生编辑器，最终验收通过，Main 和场景指纹与当前产物一致；确认身体、头像相机、英雄选择圈、技能图标、疾风步渐隐、镜像选中控制、旋转动画、地面伤害和 F5 保存/恢复。控制台错误与材质拒绝均为零。五阶段分别耗时 73.451、40.348、21.672、57.399、63.966 秒，总计 256.836 秒；仅为原生验收阶段计时。实例正常退出，隔离工程与 QA 存档已清理。完整命令计时和截图见 `native-blademaster-qa.json`。
+转换校验覆盖 20 个原始来源、106 个输出、38 个 GUID、4 个原生效果和 21 个几何采样；离线重建逐字节一致，修改过的生成文件及损坏来源被拒绝。来源覆盖顺序为 war3.mpq、War3x.mpq、War3xLocal.mpq、War3Patch.mpq，包含来源、工具和二进制哈希。W3ModelViewer MIT 文本对应转换工具。
+
+原生验收检查施法、飞行与出生特效，身体效果与旋转动画绑定，镜像控制，伤害和 F5 保存恢复。Main、场景哈希与当前产物一致，控制台错误和材质拒绝均为零。原生实例正常退出，隔离工程和 QA 存档已清理。截图见 `blademaster-native-mirror-caster.png`、`blademaster-native-mirror-missile.png`、`blademaster-native-mirror.png`、`blademaster-native-bladestorm.png`。
+
+前一阶段的 138 个导入模块及主正文分段结果留在 blademaster-validation.json 中，明确标记为历史记录；本阶段没有重新运行完整入口，也不声称完整入口退出 0。
+
+## 原生验收时间
+
+以下是当前原生 QA 的墙钟时间，不包含实现、转换及其他测试。命令耗时包含桥接等待与运行时间，不能直接当作引擎 CPU 时间。
+
+| 步骤 | 秒 |
+|---|---:|
+| project open and ready | 89.263 |
+| original Blademaster body, portrait camera, source stats and W/R/C/B cards | 42.302 |
+| native Wind Walk fade and saved invisible state | 26.077 |
+| native Mirror Image models, player control and F5 continuation | 104.414 |
+| native Bladestorm spin animation, ground damage and saved continuation | 91.041 |
+| 合计 | 353.097 |
+
+规则、TCP 和资产校验在原生验收期间并行完成。完整命令计时见 native-blademaster-qa.json；playback.step 合计 148.764 秒，playback.input 合计 63.171 秒，是本次原生流程中耗时最多的两类调用。
 
 ## 接续
 
-镜像原版发射特效、身体粒子与丝带、动态肖像相机尚未接入；原版执行中的伤害、免疫等一致性也未由原游戏运行比较证明。当前原生画面验证仅证明已接入的模型与玩法路径。其余三名兽族英雄已转换模型，还需接入对应玩法。完整战役、原版地图编辑器能力、经典 TD/Dota 内容、音频及跨机器 LAN 的完整复刻仍需继续完成。
+当前证据证明 MEngine 内的原版资源绑定和采样效果运行，尚未通过原游戏执行逐帧比较证明完整 Warcraft 求解器一致性。动态肖像相机、物理输入、音频、跨机器 LAN，以及其余三名兽族英雄玩法仍待完成。完整战役、原版地图编辑器和经典 TD/Dota 内容仍属于持续目标。
 
-下一阶段转换原版镜像特效并接入节点、粒子与丝带，再扩展其余兽族英雄。共享 asset-library 保持只读；未修改 C#。只提交本阶段源码、生成 Main、测试与验收证据。
+下一阶段接入其余兽族英雄的原版技能、召唤物与特效。使用现有转换工具及原生程序，保持按阶段验收、提交和推送。

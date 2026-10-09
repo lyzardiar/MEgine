@@ -1,0 +1,13 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "hashVerifiedFiles": 126,
+  "metadataGuids": 38,
+  "nativeEffects": 4,
+  "nativeGeometrySamples": 21,
+  "offlineByteIdentical": true,
+  "modifiedOutputRejected": true,
+  "corruptSourceRejected": true,
+  "probeSha256": "f66a0eaac9c38aab23dff12638d9690c8e3b0fcd23283275b0e11d67550204ca",
+  "scope": "Native effect parsing and geometry poses, fingerprints and offline generation; GPU rendering is verified separately."
+}

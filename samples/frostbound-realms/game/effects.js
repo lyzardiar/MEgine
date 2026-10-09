@@ -10,6 +10,7 @@ var FrostEffects=(()=>{
   Object.assign(spellBindings,{holyLight:'HolyBoltSpecialArt',divineShield:'DivineShieldTarget',devotionBearer:'DevotionAura',devotionBuff:'GeneralAuraTarget',resurrectionCaster:'Resurrectcaster',resurrectionTarget:'Resurrecttarget'});
   Object.assign(spellBindings,{mountainClapCaster:'ThunderClapCaster',mountainAvatarCaster:'AvatarCaster',mountainStun:'ThunderclapTarget',mountainClap:'StasisTotemTarget'});
   Object.assign(spellBindings,{bloodBanish:'BanishTarget',bloodSiphonCaster:'ManaDrainCaster',bloodSiphonTarget:'ManaDrainTarget',phoenixFire:'FlameStrikeDamageTarget',bloodActor:'ClassicBloodMageEmbedded',phoenixActor:'ClassicPhoenixEmbedded',bloodSphere0:'BloodElfBall',bloodSphere1:'BloodElfBall',bloodSphere2:'BloodElfBall'});
+  Object.assign(spellBindings,{bladeMirrorCaster:'MirrorImageCaster',bladeMirrorMissile:'MirrorImageMissile',bladeMirrorTarget:'LevelupCaster',bladeActor:'ClassicBladeMasterEmbedded'});
   for(let i=1;i<=6;i++)spellBindings['vengeanceOrbs'+i]='SpiritOfVengeanceOrbs'+i;
   function anchors(mesh,facing=0,scale=1){
     const pitch=-Math.atan2(FrostVisual.camera.height,FrostVisual.camera.depth),c=Math.cos(facing)*scale,s=Math.sin(facing)*scale;
@@ -71,7 +72,7 @@ var FrostEffects=(()=>{
     }
     return effects;
   }
-  function spells(state,u,visual,mesh,position,facing,scale,clock,at=visual.asset.classic?anchors(mesh,facing,scale):()=>null){
+  function spells(state,u,visual,mesh,position,facing,scale,clock,at=visual.asset.classic?anchors(mesh,facing,scale):()=>null,viewerTeam=0){
     const result=[];
     function add(slot,elapsed,point,destination=null){
       const name=spellBindings[slot],art=FrostEffectArt.effects[name];if(!art||elapsed<0)return;
@@ -88,7 +89,8 @@ var FrostEffects=(()=>{
     if(u.phoenixFire||u.phoenixFireLeft>0)add('phoenixFire',clock,at(/^Chest Ref$/i));
     if(u.siphonMana||u.siphonManaLeft>0){add('bloodSiphonCaster',clock,at(/^Chest Ref$/i));const v=u.siphonTarget||state.units.find(v=>v.id===u.siphonMana?.target);if(v)add('bloodSiphonTarget',clock,undefined,[v.x,v.y??Frost.unitHeight(state,v)+1.3,v.z]);}
     if(Frost.bloodMageUnit(u))for(const [i,name] of ['First','Second','Third'].entries()){const point=at(new RegExp('^Sprite '+name+' Ref$','i'));if(point)add('bloodSphere'+i,clock,point);}
-    if(Frost.bloodMageUnit(u)||Frost.phoenixUnit(u)){const slot=Frost.bloodMageUnit(u)?'bloodActor':'phoenixActor',art=FrostEffectArt.effects[spellBindings[slot]],pose=mesh.match(/#pose=(\d+):(\d+)(?:@(\d+))?$/);if(pose){const clip=Number(pose[1]),seconds=Number(pose[2])/Number(pose[3]||12);result.push({slot,name:spellBindings[slot],component:{effect:art.effect,clip,playing:false,looping:false,speed:1,time_seconds:seconds},parts:[],position:[position.x,position.y,position.z],scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});}}
+    if(Frost.bloodMageUnit(u)||Frost.phoenixUnit(u)||Frost.blademasterUnit(u)||Frost.bladeIllusion(u)){const slot=Frost.bloodMageUnit(u)?'bloodActor':Frost.phoenixUnit(u)?'phoenixActor':'bladeActor',art=FrostEffectArt.effects[spellBindings[slot]],pose=mesh.match(/#pose=(\d+):(\d+)(?:@(\d+))?$/);if(pose){const clip=Number(pose[1]),seconds=Number(pose[2])/Number(pose[3]||12);result.push({slot,name:spellBindings[slot],component:{effect:art.effect,clip,playing:false,looping:false,speed:1,time_seconds:seconds},parts:[],position:[position.x,position.y,position.z],scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});}}
+    const mirror=u.bladeMirrorEffect;if(mirror){const source=[mirror.x,Frost.elevation(state.map,mirror.x,mirror.z),mirror.z],sourceVisible=state.visible[viewerTeam]?.[Frost.index(mirror.x,mirror.z)];if(sourceVisible&&u.bladeCastFrame===mirror.frame)add('bladeMirrorCaster',clock-mirror.frame*Frost.DT,undefined,source);if(mirror.born!==undefined){const elapsed=clock-mirror.born*Frost.DT,dx=mirror.toX-mirror.x,dz=mirror.toZ-mirror.z,length=Math.hypot(dx,dz),speed=Number(Frost.blademasterRules.abilities.AOmi.sourceFunc.Missilespeed)/100;if(sourceVisible&&elapsed>=0&&length>0&&elapsed<length/speed){const t=elapsed*speed/length,y=Frost.elevation(state.map,mirror.toX,mirror.toZ);add('bladeMirrorMissile',elapsed,undefined,[mirror.x+dx*t,source[1]+(y-source[1])*t,mirror.z+dz*t]);const effect=result.at(-1),yaw=Math.atan2(-dz,dx);if(effect?.slot==='bladeMirrorMissile')effect.rotation=[0,Math.sin(yaw/2),0,Math.cos(yaw/2)];}add('bladeMirrorTarget',elapsed);}}
     if(u.mountainKingLastSlot===1)add('mountainClapCaster',clock-u.mountainKingCastFrame*Frost.DT);
     if(u.mountainAvatarFrame!==undefined)add('mountainAvatarCaster',clock-u.mountainAvatarFrame*Frost.DT);
     if(u.mountainStun||u.mountainStunLeft>0)add('mountainStun',clock,at(/^Overhead Ref$/i));

@@ -1,6 +1,6 @@
 {
   "author": "MiYu",
-  "protocol": 66,
+  "protocol": 67,
   "sourceHero": "Obla",
   "rulesExitCode": 0,
   "generatedClientExitCode": 0,
@@ -16,14 +16,19 @@
     "remainingMainAcceptancePassed": true,
     "method": "Segmented imported-module coverage and resumed original main acceptance body; not a single full entry exit 0",
     "fullEntrySourceSha256": "58c761763cf62d0fe570ddeaa1f483437da457b7df4646d9bd6d9bf0492b0a43",
-    "remainingEntrySha256": "8fe67b975f782798e9acf1d52beb0cfdb2816ebce64fa2678755d189e889f615"
+    "remainingEntrySha256": "8fe67b975f782798e9acf1d52beb0cfdb2816ebce64fa2678755d189e889f615",
+    "scope": "Earlier Blademaster gameplay stage at 3e3d29d; segmented regression retained as historical evidence. This effects stage reran Blademaster rules, generated client, effects and TCP, common effects and Blood Mage generated client."
   },
   "pending": [
-    "Original Mirror Image emitter conversion",
-    "Original body particles and ribbons",
-    "Dynamic original portrait camera playback",
-    "Original game execution parity",
-    "Other three Orc hero gameplay integration",
-    "Complete campaigns, editor, classic TD/Dota and cross-machine LAN parity"
-  ]
+    "Dynamic portrait cameras",
+    "Physical input and audio listening",
+    "Original Warcraft runtime parity",
+    "Cross-machine LAN",
+    "Other Orc hero gameplay",
+    "Full campaigns, original editor and classic TD/Dota content"
+  ],
+  "effectsExitCode": 0,
+  "conversionExitCode": 0,
+  "commonEffectsExitCode": 0,
+  "bloodMageGeneratedExitCode": 0
 }

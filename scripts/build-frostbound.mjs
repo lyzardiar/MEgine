@@ -17,6 +17,7 @@ const infoIcons=JSON.parse(fs.readFileSync(path.join(root,'info-panel-icons.json
 const unitScales=JSON.parse(fs.readFileSync(path.join(root,'unit-scale-catalog.json'),'utf8'));
 const effects=JSON.parse(fs.readFileSync(path.join(root,'effect-catalog.json'),'utf8'));
 Object.assign(effects.effects,JSON.parse(fs.readFileSync(path.join(root,'blood-mage-art.json'),'utf8')));
+Object.assign(effects.effects,JSON.parse(fs.readFileSync(path.join(root,'blademaster-effects.json'),'utf8')));
 Object.assign(effects.effects,JSON.parse(fs.readFileSync(path.join(root,'warden-art.json'),'utf8')));
 Object.assign(effects.effects,JSON.parse(fs.readFileSync(path.join(root,'mountain-giant-art.json'),'utf8')));
 Object.assign(effects.effects,JSON.parse(fs.readFileSync(path.join(root,'demon-hunter-art.json'),'utf8')));
