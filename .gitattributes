@@ -190,3 +190,8 @@ samples/frostbound-realms/Assets/Licenses/*Lich* -text
 scripts/*lich*.py text eol=lf
 scripts/*lich*.mjs text eol=lf
 docs/designs/frostbound-realms/*lich*.json text eol=lf
+samples/frostbound-realms/dreadlord-*.json text eol=lf
+samples/frostbound-realms/game/dreadlord.js text eol=lf
+scripts/*dreadlord*.py text eol=lf
+scripts/*dreadlord*.mjs text eol=lf
+docs/designs/frostbound-realms/*dreadlord*.json text eol=lf

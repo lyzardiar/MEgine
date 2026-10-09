@@ -1,0 +1,73 @@
+{
+  "author": "MiYu",
+  "stages": [
+    {
+      "stage": "Final artwork conversion using cached binaries",
+      "ms": 9762,
+      "source": "exec_command wall time, final complete effect conversion"
+    },
+    {
+      "stage": "source hashes, GUIDs, profiles and texture references",
+      "ms": 276
+    },
+    {
+      "stage": "native effect parsing and geometry poses",
+      "ms": 111
+    },
+    {
+      "stage": "offline byte reproduction, modified output and corrupt source rejection",
+      "ms": 11591
+    },
+    {
+      "stage": "project open and ready",
+      "ms": 1394
+    },
+    {
+      "stage": "source geometry, emitters and original body",
+      "ms": 7775,
+      "nativeCounts": {
+        "billboardMeshes": 20,
+        "entities": 77,
+        "materialPipelineEvictions": 0,
+        "materialPipelinesBuiltIn": 36,
+        "materialPipelinesCustom": 0,
+        "materialPipelinesRejected": 0,
+        "materialPipelinesResidentCustom": 0,
+        "materialSamplers": 2,
+        "materialTextureBindGroups": 17,
+        "materialTexturesColor": 17,
+        "materialTexturesData": 0,
+        "msaaSamples": 4,
+        "renderObjects": 34,
+        "sceneViews": 1,
+        "uiBatches": 149,
+        "uiDrawCalls": 149,
+        "uiPrimitives": 556
+      }
+    }
+  ],
+  "assetValidationElapsedMs": 11978,
+  "nativeElapsedMs": 10405,
+  "rustRebuilt": false,
+  "fullSceneLaunched": false,
+  "nativeEntities": 77,
+  "retries": [
+    {
+      "stage": "rules AI symbol",
+      "reason": "Source uses DREAD_LORD; corrected symbol matching"
+    },
+    {
+      "stage": "Immolation effect classification",
+      "reason": "MDX has emitters and no geosets; declared particle-only"
+    },
+    {
+      "stage": "preview runner creation",
+      "reason": "Windows GBK default read rejected UTF-8 text; used explicit UTF-8"
+    },
+    {
+      "stage": "portrait preview",
+      "reason": "Original opaque portrait backdrop requires independent source camera viewport"
+    }
+  ],
+  "scope": "Measured tool and test stages, not an estimate of full task/model thinking time. Native startup here is for a small asset fixture, not full-client gameplay acceptance."
+}

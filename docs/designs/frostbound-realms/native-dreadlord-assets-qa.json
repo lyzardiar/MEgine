@@ -1,0 +1,209 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T13:49:08.690Z",
+  "sha256": {
+    "dreadlord-rules.json": "11d70ba4617f5ba1ac3811f2950ce1293409e8ac86cfce34acc5b133cd9deb32",
+    "dreadlord-portraits.json": "cd0d2bb4d0b8c6b02b77258599e5d2abcf1966cce8ca326158db0b71109fdb0c",
+    "dreadlord-rules-sources.json": "0d7acc6fdccfc2dec0404097d24abedc60ebb87536b9e64b322f5999c61c7c7c",
+    "dreadlord-effects.json": "b911dc6a8f87d2a78abde104f54b1d80d96f6e0c254c6876951e4fbe2fee91f7",
+    "dreadlord-effect-models.json": "e47517f6b0a4f18df06d33bf9257408d87e988e8ae53e0b7ad9ffdac0f12d969",
+    "dreadlord-effects-sources.json": "92b6f86090a95e1797ec59c7ebc4e902bb9e2c1be3c40c67886df8ab3d71b8ce"
+  },
+  "bodyReceiptSha256": "e260cbf3af9bc1ad4554463ac269735aa3247f82c23dfb206aa92659fe9cb776",
+  "rendererSourceSha256": "80998851cadc1418e1a710ba91737088f98603b1f17e52007f0b42d26bd38b19",
+  "sceneSha256": "979a084bfe19078094f0f304a5932429a3515c1a8c40cb0b0f8af9f6d2fa92b4",
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "physicalInput": false,
+  "runtimeGameplayIntegrated": false,
+  "entityCount": 77,
+  "snapshots": [
+    {
+      "key": "CarrionSwarmMissile",
+      "position": [
+        -12,
+        0,
+        9
+      ],
+      "scale": 2,
+      "clip": 1,
+      "time": 1.166,
+      "portrait": false
+    },
+    {
+      "key": "CarrionSwarmDamage",
+      "position": [
+        -4,
+        0,
+        9
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.24545454545454545,
+      "portrait": false
+    },
+    {
+      "key": "SleepTarget",
+      "position": [
+        4,
+        0,
+        9
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.24123529411764708,
+      "portrait": false
+    },
+    {
+      "key": "SleepSpecialArt",
+      "position": [
+        12,
+        0,
+        9
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.16000000000000003,
+      "portrait": false
+    },
+    {
+      "key": "VampiricAura",
+      "position": [
+        -12,
+        0,
+        0
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0,
+      "portrait": false
+    },
+    {
+      "key": "GeneralAuraTarget",
+      "position": [
+        -4,
+        0,
+        0
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0,
+      "portrait": false
+    },
+    {
+      "key": "VampiricAuraTarget",
+      "position": [
+        4,
+        0,
+        0
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.6665454545454546,
+      "portrait": false
+    },
+    {
+      "key": "ImmolationDamage",
+      "position": [
+        12,
+        0,
+        0
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.8076923076923078,
+      "portrait": false
+    },
+    {
+      "key": "InfernalBirth",
+      "position": [
+        -12,
+        0,
+        -9
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.659578947368421,
+      "portrait": false
+    },
+    {
+      "key": "ClassicInfernal",
+      "position": [
+        -4,
+        0,
+        -9
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 1.3494761904761905,
+      "portrait": false
+    },
+    {
+      "key": "ClassicInfernalPortrait",
+      "position": [
+        1000,
+        0,
+        0
+      ],
+      "scale": 1,
+      "clip": 0,
+      "time": 1.433,
+      "portrait": true
+    },
+    {
+      "key": "ClassicDreadLordEmbedded",
+      "position": [
+        12,
+        0,
+        -9
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.3,
+      "portrait": false
+    }
+  ],
+  "timings": [
+    {
+      "stage": "project open and ready",
+      "ms": 1394
+    },
+    {
+      "stage": "source geometry, emitters and original body",
+      "ms": 7775,
+      "nativeCounts": {
+        "billboardMeshes": 20,
+        "entities": 77,
+        "materialPipelineEvictions": 0,
+        "materialPipelinesBuiltIn": 36,
+        "materialPipelinesCustom": 0,
+        "materialPipelinesRejected": 0,
+        "materialPipelinesResidentCustom": 0,
+        "materialSamplers": 2,
+        "materialTextureBindGroups": 17,
+        "materialTexturesColor": 17,
+        "materialTexturesData": 0,
+        "msaaSamples": 4,
+        "renderObjects": 34,
+        "sceneViews": 1,
+        "uiBatches": 149,
+        "uiDrawCalls": 149,
+        "uiPrimitives": 556
+      }
+    }
+  ],
+  "consoleErrors": 0,
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 109352,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "elapsedMs": 10405,
+  "scope": "Native original Dreadlord spells, Infernal body/portrait and embedded emitter snapshots at source scales. Traveling cone damage, Sleep control/wakeup, vampiric hits, Inferno delay/lifetime/passives, gameplay, audio, physical input and original-game solver parity require separate acceptance."
+}

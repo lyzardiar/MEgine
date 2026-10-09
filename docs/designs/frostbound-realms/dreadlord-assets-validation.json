@@ -1,0 +1,44 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "verifiedFiles": 405,
+  "guids": 154,
+  "spellGeometryModels": 9,
+  "nativeEffects": 12,
+  "nativeGeometryPoseSamples": 258,
+  "sourcePortraitCameras": 2,
+  "pureParticleEffects": [
+    "CarrionSwarmDamage",
+    "ImmolationDamage"
+  ],
+  "offlineByteIdentical": true,
+  "modifiedOutputRejected": true,
+  "corruptSourceRejected": true,
+  "runtimeGameplayIntegrated": false,
+  "originalRuntimeVerified": false,
+  "probeSha256": "f66a0eaac9c38aab23dff12638d9690c8e3b0fcd23283275b0e11d67550204ca",
+  "sha256": {
+    "dreadlord-rules.json": "11d70ba4617f5ba1ac3811f2950ce1293409e8ac86cfce34acc5b133cd9deb32",
+    "dreadlord-portraits.json": "cd0d2bb4d0b8c6b02b77258599e5d2abcf1966cce8ca326158db0b71109fdb0c",
+    "dreadlord-rules-sources.json": "0d7acc6fdccfc2dec0404097d24abedc60ebb87536b9e64b322f5999c61c7c7c",
+    "dreadlord-effects.json": "b911dc6a8f87d2a78abde104f54b1d80d96f6e0c254c6876951e4fbe2fee91f7",
+    "dreadlord-effect-models.json": "e47517f6b0a4f18df06d33bf9257408d87e988e8ae53e0b7ad9ffdac0f12d969",
+    "dreadlord-effects-sources.json": "92b6f86090a95e1797ec59c7ebc4e902bb9e2c1be3c40c67886df8ab3d71b8ce"
+  },
+  "scope": "Original fingerprinted rules/effects, source portrait cameras, native parsing and poses, offline reproduction; gameplay and GPU rendering require separate acceptance.",
+  "timings": [
+    {
+      "stage": "source hashes, GUIDs, profiles and texture references",
+      "ms": 276
+    },
+    {
+      "stage": "native effect parsing and geometry poses",
+      "ms": 111
+    },
+    {
+      "stage": "offline byte reproduction, modified output and corrupt source rejection",
+      "ms": 11591
+    }
+  ],
+  "elapsedMs": 11978
+}
