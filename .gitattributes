@@ -120,3 +120,7 @@ scripts/import-frost-orc-heroes.py text eol=lf
 scripts/test-frost-orc-heroes-import.py text eol=lf
 samples/frostbound-realms/orc-hero-*.json text eol=lf
 samples/frostbound-realms/Assets/Licenses/Classic-Orc-Heroes.txt text eol=lf
+scripts/import-frost-orc-hero-art.py text eol=lf
+scripts/test-frost-orc-hero-art.py text eol=lf
+samples/frostbound-realms/Assets/Licenses/Classic-Orc-Hero-Art.txt text eol=lf
+samples/frostbound-realms/Assets/Licenses/Orc-Hero-W3ModelViewer-MIT.txt -text
