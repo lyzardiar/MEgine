@@ -1,0 +1,12 @@
+// Author: MiYu. Original CLSB Chain Lightning texture with source UV and noise parameters.
+/* MENGINE_PARAMETERS
+{"parameters":[{"name":"ribbon","type":"vector4","default":[1,-0.8,0,2]},{"name":"noise","type":"vector4","default":[0.01,0.5,0,0]}],"textures":[{"name":"lightning","type":"color","default":"Assets/Farseer/Lightning/Lightning.png"}]}
+*/
+fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
+    var s=surface;let ribbon=mengine_param_ribbon();let noise=mengine_param_noise();
+    let phase=ribbon.z/max(ribbon.w,0.001);let along=uv.x*ribbon.x/max(noise.y,0.001);
+    let wave=sin(along*6.2831853-phase*6.2831853)*noise.x*sin(uv.x*3.1415927);
+    let sample_uv=vec2<f32>(along*ribbon.y+phase,uv.y+wave);
+    let pixel=textureSampleGrad(mengine_custom_texture_0,material_sampler,sample_uv,dpdx(sample_uv),dpdy(sample_uv));
+    s.base_color=vec3<f32>(0.0);s.emissive=pixel.rgb;s.alpha=pixel.a;return s;
+}

@@ -1,0 +1,20 @@
+{
+  "version": 8,
+  "name": "Far Seer CLPB lightning",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/FarseerLightningCLPB.mshader",
+  "surface": "transparent",
+  "blend_mode": "additive",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "base_color_texture": "Assets/Farseer/Lightning/Lightning.png",
+  "double_sided": true,
+  "transparent_depth_write": false,
+  "render_queue": 3000,
+  "wrap_u": "repeat",
+  "wrap_v": "clamp"
+}

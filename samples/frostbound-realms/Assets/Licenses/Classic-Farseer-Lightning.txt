@@ -1,0 +1,1 @@
+Original Warcraft III CLPB/CLSB lightning parameters and BLP texture belong to Blizzard Entertainment. Extraction does not establish a free redistribution license. Sources, archive names, generator fingerprints and output hashes: farseer-lightning-sources.json. Generated ribbon materials and shaders use the recorded source parameters and texture.

@@ -1,0 +1,91 @@
+{
+  "author": "MiYu",
+  "verifiedAt": "2026-10-09T05:34:51.398734+00:00",
+  "protocol": 68,
+  "singleUninterruptedFullRegression": false,
+  "regressionSegments": [
+    {
+      "log": "tmp/farseer-full-regression.log",
+      "sha256": "7d2dee3c6e0c449cb47c0d8ce54726b5434695c95cbe636225d9777dbb9dd0ad",
+      "passLines": 42,
+      "scope": "entry imports before test-frost-unit-scales.mjs",
+      "processExitCode": 1
+    },
+    {
+      "log": "tmp/farseer-regression-tail.log",
+      "sha256": "bb033510405c12d15cf2b167bb72d48c57e4a63d9514de70e73171ecf9458922",
+      "passLines": 175,
+      "scope": "test-frost-unit-scales.mjs through imports before test-frost-visuals.mjs",
+      "processExitCode": 1
+    },
+    {
+      "log": "tmp/farseer-regression-final.log",
+      "sha256": "7b73e774cf9577be111887865613ec9fa16714bf6ba48d469dcfceae852466d6",
+      "passLines": 122,
+      "scope": "test-frost-visuals.mjs through remaining imports and entry acceptance body",
+      "processExitCode": 0
+    }
+  ],
+  "finalFocusedChecks": [
+    "15 Far Seer rule groups",
+    "Far Seer generated client, source missile launch and in-flight restoration",
+    "Far Seer real localhost TCP",
+    "original lightning offline reconstruction and tamper rejection",
+    "visual asset/pose catalogue",
+    "Blademaster generated-client refresh"
+  ],
+  "rebuild": {
+    "byteIdentical": true,
+    "entities": 71077,
+    "models": 369,
+    "sha256": {
+      "Assets/Scripts/Main.js": "52ca0c3586a16dbddd111fe83653b789210398e59ca26f69f6f033a421a6c851",
+      "Assets/Scenes/Main.mscene": "f6771dbfe5186b0e3c6797fd082739ddfa1a24c25ad461c86b10d21cafa8451c",
+      "Assets/Materials/FarseerLightningCLPB.mmat": "dfe4b6180d3dc43f3aa97b977899e13a38905f2fac7595e3c0eafbc61a9b89f4",
+      "Assets/Shaders/FarseerLightningCLPB.mshader": "b953a5506539c237d211cbd63887c500cce2eb7c6a1999c1ca4b4a8d1d15ec31",
+      "Assets/Materials/FarseerLightningCLSB.mmat": "b1eb4cea11d127977f4b2f58d5b4878a6f7a80c546865a0c153ff5d7de3285ab",
+      "Assets/Shaders/FarseerLightningCLSB.mshader": "b3acff91f9e4ca36704eb10f6d3390d1199a1f82785a4215a73e3874081c30db"
+    },
+    "stagedBlobsVerified": true,
+    "shaderLineEndings": "LF, normalized by the generator"
+  },
+  "nativeReport": "native-farseer-qa.json",
+  "nativePassed": true,
+  "nativePreflightReused": true,
+  "nativeStages": [
+    {
+      "name": "project open and ready",
+      "ms": 82598
+    },
+    {
+      "name": "original hero, C/F/T/E cards and rank-three Spiritwolves",
+      "ms": 78410
+    },
+    {
+      "name": "Chain Lightning original ribbon and PREM hit particles, Far Sight on fogged ground",
+      "ms": 58966
+    },
+    {
+      "name": "Earthquake building damage, original area and F5 continuation",
+      "ms": 99541
+    }
+  ],
+  "nativeShutdown": {
+    "pid": 117752,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "nativeCleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "validationScope": "Source Far Seer gameplay and original models/effects with segmented existing-game regressions. Historical segment checks precede the final isolated Far Seer missile launch correction; final Far Seer client and native checks cover the final product.",
+  "remainingAcceptance": [
+    "Full Warcraft III game parity",
+    "Original Warcraft III solver parity",
+    "Physical input",
+    "Audio listening",
+    "Cross-machine LAN"
+  ]
+}

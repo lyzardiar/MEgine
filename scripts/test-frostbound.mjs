@@ -2,6 +2,10 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-farseer-profile.mjs';
+import './test-frost-farseer.mjs';
+import './test-frost-farseer-generated.mjs';
+import './test-frost-farseer-network.mjs';
 import './test-frost-blademaster.mjs';
 import './test-frost-blademaster-generated.mjs';
 import './test-frost-blademaster-network.mjs';
