@@ -1,0 +1,101 @@
+{
+  "author": "MiYu",
+  "protocol": 65,
+  "generatedClientExitCode": 0,
+  "simulationExitCode": 0,
+  "tcpExitCode": 0,
+  "detonateRegressionExitCode": 0,
+  "visualRegressionExitCode": 0,
+  "originalRuntimeVerified": false,
+  "sha256TextLf": [
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene",
+    "samples/frostbound-realms/game/client.js",
+    "samples/frostbound-realms/game/simulation.js",
+    "scripts/build-frostbound.mjs",
+    "scripts/test-frost-blood-mage-generated.mjs",
+    "scripts/test-frost-blood-mage-network.mjs",
+    "scripts/test-frost-phoenix-fire.mjs",
+    "scripts/qa-frost-phoenix-fire-impact.mjs"
+  ],
+  "sha256": {
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "b42cbba8665f29eda44095f14807c94eb7def45be32d63b422887c08af8e5aef",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "8cca8bdba0d8d94157431a7afd47e29c1dfbed7838a5aedc9f5e3be77a5350d7",
+    "samples/frostbound-realms/game/client.js": "9dd584d31f14778ea619a944a82aecb19cf9ef17e8a88c91a90f21636f32b725",
+    "samples/frostbound-realms/game/simulation.js": "da7ee775fee5fd2f7c7cf6e52dc83d026a53afaf51f86d18722d6bd9fa8948e1",
+    "scripts/build-frostbound.mjs": "ce5f3071fea2a6b4ff44a28a20e20c2daf067fa0b5ba034a00e16dbe4afe27d6",
+    "scripts/test-frost-blood-mage-generated.mjs": "6dc10d3af42146adac248a1e3344cf6f438867491c6ab88625dd3d5e9ee89ec4",
+    "scripts/test-frost-blood-mage-network.mjs": "3f0ef8c5740399f35ee2808f8a2f5e27346a5b126c27a7e0d182684ab080a637",
+    "scripts/test-frost-phoenix-fire.mjs": "4b19568074f3842bb5315f86c7f3e4275a0d01809778c7e841c8c9103f0b5d80",
+    "scripts/qa-frost-phoenix-fire-impact.mjs": "2bef16ce0a5d53ca50349b859edf080505a584f3392d435cda094d53d656c231",
+    "samples/frostbound-realms/Assets/BloodMage/Effects/remaining-ready/Abilities/Weapons/PhoenixMissile/Phoenix_Missile_mini.mfx": "81bd0f6ba84102232b14c4819a9297450b324e49b4aa46f34bd67016ed949f51"
+  },
+  "reproduction": {
+    "exitCode": 0,
+    "byteIdentical": {
+      "Assets/Scenes/Main.mscene": "8cca8bdba0d8d94157431a7afd47e29c1dfbed7838a5aedc9f5e3be77a5350d7",
+      "Assets/Scripts/Main.js": "b42cbba8665f29eda44095f14807c94eb7def45be32d63b422887c08af8e5aef",
+      "Assets/Models/BloodMageLightning.glb": "3b3383fdda6d320f1b9e1ae83bdbd0174de8902c4fd54309fcd748de0bc04eb0",
+      "Assets/Materials/BloodMageLightning.mmat": "e3c19660777433d388d49a75e9518354ab75331d489e32d28a2d18277d16b337"
+    }
+  },
+  "native": {
+    "report": "docs/designs/frostbound-realms/native-phoenix-fire-impact-qa.json",
+    "sha256": "06c836fe4681f742bc51e3400635abc6ae43df726f3bcaa8c4b713cc4e8592a4",
+    "exitCode": 0,
+    "editorSha256": "643ad6f4e37a678ec4b775175f42c40bead6d669da63bbe2dce0f07e2bcc0c47",
+    "productMainSha256": "b42cbba8665f29eda44095f14807c94eb7def45be32d63b422887c08af8e5aef",
+    "productSceneSha256": "8cca8bdba0d8d94157431a7afd47e29c1dfbed7838a5aedc9f5e3be77a5350d7",
+    "deathImpact": {
+      "clip": 0,
+      "duration": 2.333,
+      "sampleSeconds": 0.20000000298023224,
+      "position": [
+        6,
+        1.600000023841858,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        -0.15423335134983063,
+        0.9880344271659851
+      ],
+      "quadOnly": true,
+      "paused": true,
+      "expired": true
+    },
+    "errors": 0,
+    "rejections": 0,
+    "shutdown": {
+      "pid": 95092,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    },
+    "cleanup": {
+      "fixtureRemoved": true,
+      "qaStorageRemoved": true
+    }
+  },
+  "screenshot": {
+    "path": "docs/designs/frostbound-realms/phoenix-fire-original-death.png",
+    "sha256": "694b3bc994c1227484d791552b9733995e69871d7b7dc0fe1dc816987731de40",
+    "inspected": true
+  },
+  "logs": {
+    "tmp/phoenix-impact-build.log": "3f377986b25becb9d1c6618eec892afaa58e900d3c4dc2b4a253784d2a228fdc",
+    "tmp/phoenix-impact-generated.log": "dfb522440b239af0750aebfc7ce185fe735feb747137abd2fc5a252f80ec65fd",
+    "tmp/phoenix-impact-simulation.log": "8a5a2f63e78c470da33fe47e9c55aa49d03d5dbadb994c1fafd1c05f37624596",
+    "tmp/phoenix-impact-network.log": "246bb997988c873d438a11a7af333c47cd595cdf96a7c7487865c6890349d423",
+    "tmp/phoenix-impact-detonate.log": "03b975ecc4327ef42f8cf0fc102f79827d5cbbe77d8d92a7ed055f033cbb1e34",
+    "tmp/phoenix-impact-visuals.log": "2438079785101843b9f2c0645bf342cb09b357585a3df385fd437224a5ec878d",
+    "tmp/phoenix-impact-repro.log": "3f377986b25becb9d1c6618eec892afaa58e900d3c4dc2b4a253784d2a228fdc",
+    "tmp/phoenix-impact-native.log": "da195b76bda7af3ec7b8ce7807ce5860af59b85056947d38d776536f981360b8"
+  },
+  "initialNativePositionAssertion": {
+    "report": "tmp/phoenix-impact-native-float-failure.json",
+    "sha256": "739fd6611a65e0d31c0b20200f01ca1823389109e5329365148a387d58f7be0b",
+    "reason": "Float32 position precision; production unchanged before complete rerun."
+  },
+  "scope": "Original miniature Phoenix Fire Death effect, source duration, impact orientation/position, pause/expiry, generic emitter suppression and geometry pool reuse. Original game runtime comparison remains unverified."
+}

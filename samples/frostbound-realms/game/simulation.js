@@ -1593,7 +1593,7 @@ var Frost = (() => {
         if(sourceSplash)glaiveImpact(s,p,point,attacker,target,direct);
         else if(bands)for(const v of s.units)if((unitType(p).splashEnemiesOnly===false||v.team!==p.team)&&v.hp>0&&(!direct||v.id!==target.id)&&(!types[v.kind].flying||phoenixUnit(p)||demonHunterUnit(p))&&(!chimaeraUnit(p)||types[v.kind].speed>0)&&canAttack(p,v)){const band=bands.find(([radius])=>distance(v,point)<=radius);if(band)damage(s,attacker,v,weaponDamage(p,v,p.damage*band[1],s),'splash',undefined,p);}
         if(!p.phoenixFireProjectile&&types[p.kind].splash)for(const v of s.units)if(v.team!==p.team&&v.hp>0&&(!direct||v.id!==target.id)&&canAttack(p,v)&&distance(v,point)<types[p.kind].splash)damage(s,attacker,v,weaponDamage(p,v,p.splashDamage,s));
-        s.events.push({type:'impact',x:p.toX,y:p.toY,z:p.toZ,team:p.team,art:p.art});
+        s.events.push({type:'impact',x:p.toX,y:p.toY,z:p.toZ,team:p.team,art:p.art,...(p.phoenixFireProjectile?{velocity:[p.vx,p.vy,p.vz]}:{})});
         if(direct&&p.bounceLeft>0){p.bounceHits.push(target.id);const next=s.units.filter(v=>v.hp>0&&v.team!==p.team&&!p.bounceHits.includes(v.id)&&canAttack(p,v)&&distance(v,point)<=unitType(p).bounceRadius).sort((a,b)=>distance(a,point)-distance(b,point)||a.id-b.id)[0];if(next){p.bounceLeft--;p.damage*=1-unitType(p).bounceLoss;p.target=next.id;p.x=p.toX;p.y=p.toY;p.z=p.toZ;p.baseY=p.y;p.toX=next.x;p.toY=unitHeight(s,next)+1.6;p.toZ=next.z;p.segmentTravel=0;p.flightDistance=Math.hypot(p.toX-p.x,p.toY-p.y,p.toZ-p.z);return true;}}return false;
       }
       const oldY=p.y;p.x+=dx/d*step;p.baseY+=dy/d*step;p.z+=dz/d*step;p.travel+=step;

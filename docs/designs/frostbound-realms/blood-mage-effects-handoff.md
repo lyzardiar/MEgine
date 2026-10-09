@@ -10,4 +10,4 @@ Author: MiYu
 
 验证指纹见 `blood-mage-effects-validation.json`，原生断言和画面计时分别见 `native-blood-mage-effects-qa.json`、`native-blood-mage-effects-visible-qa.json`，耗时分析见 `blood-mage-effects-timings.md`。
 
-原版 UV/noise 与粒子执行算法、目标选择/失效/叠加行为尚未运行对照；微型火球命中仍使用现有通用命中特效，下一步可接原始 Death 片段。音频、物理输入、跨机器 LAN 未验收。完整战役、地图编辑器及经典地图复刻仍未完成。
+原版 UV/noise 与粒子执行算法、目标选择/失效/叠加行为尚未运行对照；微型火球命中采用原始 Death 片段，实现与验收见 `phoenix-fire-impact-handoff.md`。音频、物理输入、跨机器 LAN 未验收。完整战役、地图编辑器及经典地图复刻仍未完成。

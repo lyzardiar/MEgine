@@ -1,0 +1,335 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-08T23:46:11.552Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\phoenix-fire-impact-1791503150168\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 68832
+    },
+    {
+      "name": "Original miniature Death impact, pause and expiry",
+      "ms": 90552
+    }
+  ],
+  "preflightMs": 98,
+  "editorSha256": "643ad6f4e37a678ec4b775175f42c40bead6d669da63bbe2dce0f07e2bcc0c47",
+  "productMainSha256": "b42cbba8665f29eda44095f14807c94eb7def45be32d63b422887c08af8e5aef",
+  "productSceneSha256": "8cca8bdba0d8d94157431a7afd47e29c1dfbed7838a5aedc9f5e3be77a5350d7",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 3576
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 21716
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2756
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 3902
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 4503
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 18058
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 9607
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 4204
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1751
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 267
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 3195
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1677
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1797
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1897
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 113
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1331
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1571
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1279
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1616
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1623
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1516
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1201
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1568
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 159
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1496
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1625
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1960
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1519
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8013
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1932
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 205
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 219
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 282
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1616
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 2151
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 161
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1309
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2008
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1408
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1788
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 9736
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1950
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 203
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1442
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1567
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1466
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 1907
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 19966
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2021
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 154
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 216
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 804
+    }
+  ],
+  "deathImpact": {
+    "clip": 0,
+    "duration": 2.333,
+    "sampleSeconds": 0.20000000298023224,
+    "position": [
+      6,
+      1.600000023841858,
+      0
+    ],
+    "rotation": [
+      0,
+      0,
+      -0.15423335134983063,
+      0.9880344271659851
+    ],
+    "quadOnly": true,
+    "paused": true,
+    "expired": true
+  },
+  "nativeCounts": {
+    "billboardMeshes": 4,
+    "entities": 63877,
+    "materialPipelineEvictions": 0,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 4,
+    "materialPipelinesRejected": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialSamplers": 2,
+    "materialTextureBindGroups": 15,
+    "materialTexturesColor": 20,
+    "materialTexturesData": 5,
+    "msaaSamples": 4,
+    "renderObjects": 259,
+    "sceneViews": 1,
+    "uiBatches": 48,
+    "uiDrawCalls": 48,
+    "uiPrimitives": 669
+  },
+  "consoleErrors": 0,
+  "shaderRejections": 0,
+  "scope": "Native original miniature Phoenix Fire Death clip at target position and source flight direction, source duration, frozen pause phase, expiry and suppressed generic emitter. Exact Warcraft particle solver, audio, physical input and cross-machine LAN remain unverified.",
+  "shutdown": {
+    "pid": 95092,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

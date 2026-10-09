@@ -26,6 +26,7 @@ Object.assign(effects.effects,JSON.parse(fs.readFileSync(path.join(root,'druid-s
 Object.assign(effects.effects,JSON.parse(fs.readFileSync(path.join(root,'slow-poison-art.json'),'utf8')));
 const detonation=JSON.parse(fs.readFileSync(path.join(root,'detonate-catalog.json'),'utf8'));detonation.effects['dryad-dispel']=JSON.parse(fs.readFileSync(path.join(root,'dryad-spell-art.json'),'utf8')).DispelMagicTarget;
 detonation.effects['mana-flare-missile']=JSON.parse(fs.readFileSync(path.join(root,'faerie-dragon-art.json'),'utf8')).ManaFlareMissile;
+const phoenixFireDeath=effects.effects.Phoenix_Missile_mini,phoenixFireDeathClip=phoenixFireDeath.animations.findIndex(a=>a.name==='Death');if(phoenixFireDeathClip<0)throw Error('Missing source Phoenix Fire Death clip');detonation.effects['phoenix-fire']={...phoenixFireDeath,clip:phoenixFireDeathClip,duration:phoenixFireDeath.animations[phoenixFireDeathClip].duration,sourceXAxis:true};
 const sentinel=JSON.parse(fs.readFileSync(path.join(root,'sentinel-catalog.json'),'utf8'));
 const construction=JSON.parse(fs.readFileSync(path.join(root,'construction-catalog.json'),'utf8'));construction.slots=Math.max(1,...Object.values(construction.owners).map(a=>a.length));
 Object.assign(effects.effects,JSON.parse(fs.readFileSync(path.join(root,'mountain-king-art.json'),'utf8')),JSON.parse(fs.readFileSync(path.join(root,'archmage-art.json'),'utf8')),JSON.parse(fs.readFileSync(path.join(root,'paladin-art.json'),'utf8')));
