@@ -181,3 +181,12 @@ samples/frostbound-realms/Assets/Licenses/*Undead-Hero* -text
 scripts/*undead-hero*.py text eol=lf
 scripts/*undead-hero*.mjs text eol=lf
 docs/designs/frostbound-realms/*undead*.json text eol=lf
+
+samples/frostbound-realms/Assets/Lich/** -text whitespace=cr-at-eol,-blank-at-eol
+samples/frostbound-realms/SourceAssets/Lich/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+samples/frostbound-realms/lich-*.json text eol=lf
+samples/frostbound-realms/game/lich.js text eol=lf
+samples/frostbound-realms/Assets/Licenses/*Lich* -text
+scripts/*lich*.py text eol=lf
+scripts/*lich*.mjs text eol=lf
+docs/designs/frostbound-realms/*lich*.json text eol=lf

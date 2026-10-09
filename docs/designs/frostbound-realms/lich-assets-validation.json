@@ -1,0 +1,30 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "guids": 70,
+  "spellGeometryModels": 4,
+  "nativeEffects": 10,
+  "nativeGeometryPoseSamples": 42,
+  "pureParticleEffects": [
+    "DarkRitualCaster",
+    "DeathAndDecayDamage",
+    "DeathAndDecayTarget",
+    "FrostArmorDamage",
+    "FrostDamage"
+  ],
+  "offlineByteIdentical": true,
+  "modifiedOutputRejected": true,
+  "corruptSourceRejected": true,
+  "runtimeGameplayIntegrated": false,
+  "originalRuntimeVerified": false,
+  "probeSha256": "f66a0eaac9c38aab23dff12638d9690c8e3b0fcd23283275b0e11d67550204ca",
+  "sha256": {
+    "lich-rules.json": "f61d0e0b342bbcd9cb18872a11c8d2d8e3e0b063effed4c2d58886ab8fe92a06",
+    "lich-rules-sources.json": "7ef00e0210daac4caf6e6adbc0dfbb484cb33b17bb12c5280f9000ffdfa69817",
+    "lich-effects.json": "48053056df2b768de6cf66803954ded2929d68fba7038073385d0cd7a6a6c528",
+    "lich-effect-models.json": "bfe8c0e9c419917fd88b51370b26d373c982ad1578f83a247d7b1bdab7199920",
+    "lich-effects-sources.json": "3d7769f11eda09749027dec025a02b1a0b252044c67297abd840e96d0c4012ba"
+  },
+  "scope": "Original fingerprinted rules/effects, native parsing and poses, offline reproduction; gameplay and GPU rendering require separate acceptance.",
+  "verifiedFiles": 202
+}

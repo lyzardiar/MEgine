@@ -1,0 +1,174 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T11:15:55.980Z",
+  "sha256": {
+    "lich-rules.json": "f61d0e0b342bbcd9cb18872a11c8d2d8e3e0b063effed4c2d58886ab8fe92a06",
+    "lich-rules-sources.json": "7ef00e0210daac4caf6e6adbc0dfbb484cb33b17bb12c5280f9000ffdfa69817",
+    "lich-effects.json": "48053056df2b768de6cf66803954ded2929d68fba7038073385d0cd7a6a6c528",
+    "lich-effect-models.json": "bfe8c0e9c419917fd88b51370b26d373c982ad1578f83a247d7b1bdab7199920",
+    "lich-effects-sources.json": "3d7769f11eda09749027dec025a02b1a0b252044c67297abd840e96d0c4012ba"
+  },
+  "bodyReceiptSha256": "e260cbf3af9bc1ad4554463ac269735aa3247f82c23dfb206aa92659fe9cb776",
+  "rendererSourceSha256": "80998851cadc1418e1a710ba91737088f98603b1f17e52007f0b42d26bd38b19",
+  "sceneSha256": "e4d112d15eef32f11259d8020a0b005cd08dddbcaa40c8aee441e778aa593aea",
+  "editorSha256": "e01a18cdc2a0f9fc122f447c19a9a12f501375466671a6fb3f15c9822bc33334",
+  "physicalInput": false,
+  "runtimeGameplayIntegrated": false,
+  "entityCount": 47,
+  "snapshots": [
+    {
+      "key": "LichMissile",
+      "position": [
+        -12,
+        0,
+        9
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 1.1438
+    },
+    {
+      "key": "FrostNovaTarget",
+      "position": [
+        -4,
+        0,
+        9
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.4166666666666667
+    },
+    {
+      "key": "FrostDamage",
+      "position": [
+        4,
+        0,
+        9
+      ],
+      "scale": 2,
+      "clip": 1,
+      "time": 0.25
+    },
+    {
+      "key": "FrostArmorTarget",
+      "position": [
+        12,
+        0,
+        9
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0
+    },
+    {
+      "key": "FrostArmorDamage",
+      "position": [
+        -12,
+        0,
+        0
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.25
+    },
+    {
+      "key": "DarkRitualCaster",
+      "position": [
+        -4,
+        0,
+        0
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 1.373076923076923
+    },
+    {
+      "key": "DarkRitualTarget",
+      "position": [
+        4,
+        0,
+        0
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.40159090909090905
+    },
+    {
+      "key": "DeathAndDecayTarget",
+      "position": [
+        12,
+        0,
+        0
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.6493913043478261
+    },
+    {
+      "key": "DeathAndDecayDamage",
+      "position": [
+        -12,
+        0,
+        -9
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.8864166666666666
+    },
+    {
+      "key": "ClassicLichEmbedded",
+      "position": [
+        -4,
+        0,
+        -9
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.3
+    }
+  ],
+  "timings": [
+    {
+      "stage": "project open and ready",
+      "ms": 1508
+    },
+    {
+      "stage": "source geometry, emitters and original body",
+      "ms": 8308,
+      "nativeCounts": {
+        "billboardMeshes": 4,
+        "entities": 47,
+        "materialPipelineEvictions": 0,
+        "materialPipelinesBuiltIn": 36,
+        "materialPipelinesCustom": 0,
+        "materialPipelinesRejected": 0,
+        "materialPipelinesResidentCustom": 0,
+        "materialSamplers": 1,
+        "materialTextureBindGroups": 11,
+        "materialTexturesColor": 11,
+        "materialTexturesData": 0,
+        "msaaSamples": 4,
+        "renderObjects": 15,
+        "sceneViews": 0,
+        "uiBatches": 128,
+        "uiDrawCalls": 128,
+        "uiPrimitives": 290
+      }
+    }
+  ],
+  "consoleErrors": 0,
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 162076,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "elapsedMs": 11070,
+  "scope": "Native original effect and body snapshots. Spell targeting, traveling missiles, Frost Armor autocast, channel damage, gameplay, audio, physical input and original-game solver parity require separate acceptance."
+}
