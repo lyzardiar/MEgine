@@ -1,0 +1,176 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-09T12:44:43.460Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\lich-1791549859607\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 101217
+    },
+    {
+      "name": "original Lich presentation and source command cards",
+      "ms": 29058
+    }
+  ],
+  "preflightMs": 2279,
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "productMainSha256": "e6a8503c36154c6df80d3e95c8d27f1a6b57e460be7222ca87334cf9194582d4",
+  "productSceneSha256": "b361832407a2981e7abfe76c456b6aebaa0527562ca5de311bb3e00309e7e961",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2934
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 32969
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 6973
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 8110
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 5023
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 26727
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 11514
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6460
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2459
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4026
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2217
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4380
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5754
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2121
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4026
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2299
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1156
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 607
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 98
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 2166
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 2653
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 1659
+    }
+  ],
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n+ actual - expected\n\n+ 1.4936015605926514\n- 1.4936015754938126\n           ^\n\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-lich.mjs:36:476\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async timed (file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-lich.mjs:28:147)\n    at async file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-lich.mjs:36:2",
+  "logs": [
+    {
+      "level": "info",
+      "message": "MEngine Editor",
+      "source": "editor",
+      "time": 1791549886419
+    },
+    {
+      "level": "info",
+      "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
+      "source": "editor",
+      "time": 1791549886419
+    },
+    {
+      "level": "info",
+      "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
+      "source": "editor",
+      "time": 1791549886419
+    },
+    {
+      "level": "info",
+      "message": "场景存储：磁盘 project/Assets/Scenes",
+      "time": 1791549893365
+    },
+    {
+      "level": "info",
+      "message": "已恢复场景 Main.mscene",
+      "time": 1791549895965
+    },
+    {
+      "level": "info",
+      "message": "Agent set Game View resolution to 1280 x 720",
+      "time": 1791549938555
+    }
+  ],
+  "shutdown": {
+    "pid": 15836,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  }
+}

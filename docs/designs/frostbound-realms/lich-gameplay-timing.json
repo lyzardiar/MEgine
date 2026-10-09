@@ -1,0 +1,83 @@
+{
+  "author": "MiYu",
+  "regressionMs": 7903,
+  "groups": 66,
+  "nativeRuns": [
+    {
+      "file": "native-lich-first-attempt.json",
+      "passed": false,
+      "stageTotalMs": 130275,
+      "steps": [
+        {
+          "name": "project open and ready",
+          "ms": 101217
+        },
+        {
+          "name": "original Lich presentation and source command cards",
+          "ms": 29058
+        }
+      ]
+    },
+    {
+      "file": "native-lich-startup-interruption.json",
+      "passed": false,
+      "stageTotalMs": 101136,
+      "steps": [
+        {
+          "name": "project open and ready",
+          "ms": 101136
+        }
+      ]
+    },
+    {
+      "file": "native-lich-presentation-validation.json",
+      "passed": false,
+      "stageTotalMs": 263798,
+      "steps": [
+        {
+          "name": "project open and ready",
+          "ms": 112435
+        },
+        {
+          "name": "original Lich presentation and source command cards",
+          "ms": 42456
+        },
+        {
+          "name": "native Nova and original target frost",
+          "ms": 32680
+        },
+        {
+          "name": "native Armor targeting and autocast border",
+          "ms": 47190
+        },
+        {
+          "name": "native Ritual sacrifice and source effects",
+          "ms": 29037
+        }
+      ]
+    },
+    {
+      "file": "native-lich-qa.json",
+      "passed": true,
+      "stageTotalMs": 264082,
+      "steps": [
+        {
+          "name": "project open and ready",
+          "ms": 108296
+        },
+        {
+          "name": "final source load and original body",
+          "ms": 34150
+        },
+        {
+          "name": "native Ritual sacrifice and source effects",
+          "ms": 28207
+        },
+        {
+          "name": "native Decay channel and F5 continuation",
+          "ms": 93429
+        }
+      ]
+    }
+  ]
+}

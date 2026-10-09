@@ -1,0 +1,350 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T13:05:02.064Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\lich-1791551072089\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 108296
+    },
+    {
+      "name": "final source load and original body",
+      "ms": 34150
+    },
+    {
+      "name": "native Ritual sacrifice and source effects",
+      "ms": 28207
+    },
+    {
+      "name": "native Decay channel and F5 continuation",
+      "ms": 93429
+    }
+  ],
+  "preflightMs": 2230,
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "productMainSha256": "1fad2e2f2d209aa18a0bf295d0cfbd9f3c99e5b77f4de534953b62c2dae77420",
+  "productSceneSha256": "b361832407a2981e7abfe76c456b6aebaa0527562ca5de311bb3e00309e7e961",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 1827
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 33100
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 5931
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 5835
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 8400
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 31006
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 12701
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8987
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2483
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5566
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3393
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 6747
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 7390
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2154
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4159
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2250
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4345
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2186
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 3985
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2237
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5604
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2079
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 297
+    },
+    {
+      "kind": "query",
+      "name": "entity.find",
+      "ms": 915
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 2825
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 3721
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 236
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 211
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 3870
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 6507
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2859
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5220
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 6376
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2216
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4102
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2183
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 3907
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2296
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8603
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2655
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 321
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 399
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 2981
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 4039
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4340
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2306
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 378
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4698
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 6647
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2260
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4478
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2188
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4759
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2149
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 204
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 337
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 205
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 1697
+    }
+  ],
+  "priorPresentationEvidence": "native-lich-presentation-validation.json",
+  "ritual": {
+    "originalHotkey": true,
+    "sacrifice": true,
+    "originalCasterEffect": true,
+    "originalTargetEffect": true
+  },
+  "decay": {
+    "originalHotkey": true,
+    "originalAreaEffect": true,
+    "originalDamageEffect": true,
+    "F5PendingCast": true,
+    "F5ChannelContinuation": true,
+    "stopInterruption": true
+  },
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Continuation on final product hash: native source body, Ritual effects, Decay and F5. Original portrait/cards, Nova and Armor native evidence is retained in native-lich-presentation-validation.json; subsequent product change only rejects public area fields in authoritative saves. Native generated client: original Lich body/portrait/scales, N/F/R/D cards, Nova, Armor right-click autocast, Ritual, sampled effects, Decay channel and F5 pending/channel restore. Source Warcraft runtime parity, physical input, audio listening, standalone player and cross-machine LAN remain unverified.",
+  "shutdown": {
+    "pid": 104452,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "output": "E:\\work\\codex\\cache\\mengine\\lich-generated-reproduction-1791550100000",
+  "hashes": {
+    "Assets/Scripts/Main.js": "1fad2e2f2d209aa18a0bf295d0cfbd9f3c99e5b77f4de534953b62c2dae77420",
+    "Assets/Scenes/Main.mscene": "b361832407a2981e7abfe76c456b6aebaa0527562ca5de311bb3e00309e7e961",
+    "project.json": "35b294bb5760f5cd88bb6ca5638da46d5a1b2e01e21f6680eea4c6a868a71bdd"
+  }
+}

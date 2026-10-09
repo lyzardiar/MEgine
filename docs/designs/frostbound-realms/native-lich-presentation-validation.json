@@ -1,0 +1,397 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-09T12:54:06.384Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\lich-1791550415024\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 112435
+    },
+    {
+      "name": "original Lich presentation and source command cards",
+      "ms": 42456
+    },
+    {
+      "name": "native Nova and original target frost",
+      "ms": 32680
+    },
+    {
+      "name": "native Armor targeting and autocast border",
+      "ms": 47190
+    },
+    {
+      "name": "native Ritual sacrifice and source effects",
+      "ms": 29037
+    }
+  ],
+  "preflightMs": 2234,
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "productMainSha256": "bb1657b12de7c7b98da77f3edf7816888b0d6de77ac4c02bb8610abdf33a0441",
+  "productSceneSha256": "b361832407a2981e7abfe76c456b6aebaa0527562ca5de311bb3e00309e7e961",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2798
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 31053
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 6700
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 9197
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 6310
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 33839
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 13112
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8896
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2640
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5042
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3001
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4689
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 7030
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2995
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4512
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3287
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 778
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 725
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 304
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 213
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 206
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 205
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 3163
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 3653
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4483
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2590
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5444
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2289
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 398
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 6510
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3045
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 404
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 294
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 2837
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 4376
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5497
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2804
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5849
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2483
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 9259
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3243
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 330
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 474
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 6382
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2620
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 336
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 3462
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 4440
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5936
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2550
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 6190
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2577
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8062
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2977
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 323
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 414
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 407
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4204
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 4152
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 1265
+    }
+  ],
+  "presentation": {
+    "originalBody": true,
+    "originalPortrait": true,
+    "sourceSelectionScale": true,
+    "sourceCards": true
+  },
+  "nova": {
+    "originalHotkey": true,
+    "delayedDamage": true,
+    "originalNovaEffect": true,
+    "originalFrostEffect": true
+  },
+  "armor": {
+    "originalHotkey": true,
+    "sourceArmorBonus": true,
+    "originalTargetEffect": true,
+    "rightClickAuto": true,
+    "autoBorder": true
+  },
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-lich.mjs:39:307\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async timed (file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-lich.mjs:28:147)\n    at async file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-lich.mjs:39:2",
+  "logs": [
+    {
+      "level": "info",
+      "message": "MEngine Editor",
+      "source": "editor",
+      "time": 1791550449211
+    },
+    {
+      "level": "info",
+      "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
+      "source": "editor",
+      "time": 1791550449211
+    },
+    {
+      "level": "info",
+      "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
+      "source": "editor",
+      "time": 1791550449211
+    },
+    {
+      "level": "info",
+      "message": "场景存储：磁盘 project/Assets/Scenes",
+      "time": 1791550455753
+    },
+    {
+      "level": "info",
+      "message": "已恢复场景 Main.mscene",
+      "time": 1791550458230
+    },
+    {
+      "level": "info",
+      "message": "Agent set Game View resolution to 1280 x 720",
+      "time": 1791550500520
+    }
+  ],
+  "shutdown": {
+    "pid": 3812,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  }
+}

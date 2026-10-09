@@ -1,0 +1,117 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-09T12:49:01.535Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\lich-1791550110776\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 101136
+    }
+  ],
+  "preflightMs": 2282,
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "productMainSha256": "cf147e2adc6188a28cd14fc978c7354adba19e463e14cd7c71b44071aef06575",
+  "productSceneSha256": "b361832407a2981e7abfe76c456b6aebaa0527562ca5de311bb3e00309e7e961",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 2415
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 32723
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 6942
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 9171
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 6563
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 31049
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 11740
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 3220
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 2055
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 2285
+    }
+  ],
+  "error": "BridgeRpcError: js: Error: interrupted\n    at defaultMap (eval_script:1786:17)\n    at <anonymous> (eval_script:3977:17)\n    at <eval> (eval_script:4522:1)\n\n    at WebSocket.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:266:24)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:14387:14)\n    at #onMessage (node:internal/deps/undici/undici:15710:9)\n    at Object.onMessage (node:internal/deps/undici/undici:15417:76)\n    at websocketMessageReceived (node:internal/deps/undici/undici:14391:15)\n    at ByteParser.run (node:internal/deps/undici/undici:15093:19)\n    at ByteParser._write (node:internal/deps/undici/undici:14969:14)\n    at writeOrBuffer (node:internal/streams/writable:570:12)",
+  "logs": [
+    {
+      "level": "info",
+      "message": "MEngine Editor",
+      "source": "editor",
+      "time": 1791550143987
+    },
+    {
+      "level": "info",
+      "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
+      "source": "editor",
+      "time": 1791550143987
+    },
+    {
+      "level": "info",
+      "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
+      "source": "editor",
+      "time": 1791550143987
+    },
+    {
+      "level": "info",
+      "message": "场景存储：磁盘 project/Assets/Scenes",
+      "time": 1791550150315
+    },
+    {
+      "level": "info",
+      "message": "已恢复场景 Main.mscene",
+      "time": 1791550152922
+    },
+    {
+      "level": "info",
+      "message": "Agent set Game View resolution to 1280 x 720",
+      "time": 1791550198053
+    },
+    {
+      "level": "error",
+      "message": "Play Mode failed: js: Error: interrupted\n    at defaultMap (eval_script:1786:17)\n    at <anonymous> (eval_script:3977:17)\n    at <eval> (eval_script:4522:1)\n",
+      "time": 1791550242068
+    }
+  ],
+  "shutdown": {
+    "pid": 166696,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  }
+}

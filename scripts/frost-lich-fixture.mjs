@@ -1,0 +1,2 @@
+// Author: MiYu. Source Lich fixture for authoritative, generated and native client checks.
+export function lichFixture(S,level=1){const map=S.defaultMap();map.props=[];map.units=[];map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);const s=S.create('skirmish',{map,factions:[3,0],ai:[false,false]});s.units=[];const h=S.spawn(s,'hero',0,0,0,{heroClass:1,level,skillPoints:level,cd:10000,order:{type:'hold'}});S.visibility(s);return {s,h};}
