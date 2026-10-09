@@ -1,0 +1,12 @@
+Author: MiYu
+
+Original Warcraft III Death Knight spell models, textures, geometry, emitter data
+and converted derivatives remain the property of Blizzard Entertainment.
+Sources were extracted from the locally installed Warcraft III archives; exact
+archive names, source paths, byte lengths and SHA-256 fingerprints are recorded
+in death-knight-effects-sources.json. Extraction and conversion do not establish
+free redistribution rights. The signed original rules reference the ownership
+notice in Classic-Undead-Heroes.txt.
+
+The conversion tool's separate MIT license is retained in
+DeathKnight-Effects-W3ModelViewer-MIT.txt and applies to the tool, not the assets.

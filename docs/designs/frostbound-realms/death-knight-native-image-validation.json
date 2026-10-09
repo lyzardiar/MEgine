@@ -1,0 +1,36 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sceneSha256": "db8aea7c30d322d05fa0c35044f98022d14a2c24035b9c27c16b8212ed897c32",
+  "editorBeforeSha256": "72115c49eca08acbfe1b41e41802ba662ca2328720f341d41a767ad98eddc8ce",
+  "editorAfterSha256": "e01a18cdc2a0f9fc122f447c19a9a12f501375466671a6fb3f15c9822bc33334",
+  "rendererSourceSha256": "80998851cadc1418e1a710ba91737088f98603b1f17e52007f0b42d26bd38b19",
+  "imageSha256": {
+    "death-knight-native-source-effects-baseline.png": "05ce85a615b5b269e95c598f80f3f8501103eeed2de75bf17cf2a710cd9c0070",
+    "death-knight-native-source-effects.png": "7a848ea1c0f88a8d3370a5f5877712f0e15791105c8719b77b61a9f13e9e55e8"
+  },
+  "regions": {
+    "animateCloud": {
+      "rect": [
+        285,
+        250,
+        365,
+        365
+      ],
+      "beforeWhitePixels": 4002,
+      "afterWhitePixels": 0
+    },
+    "coilCloud": {
+      "rect": [
+        575,
+        530,
+        660,
+        615
+      ],
+      "beforeWhitePixels": 1183,
+      "afterWhitePixels": 20
+    }
+  },
+  "unaffectedHeroPixelsIdentical": true,
+  "scope": "Same source assets, scene, selected frames and camera; native cloud rectangles no longer brighten to white. This does not establish full original Warcraft particle-solver equivalence."
+}

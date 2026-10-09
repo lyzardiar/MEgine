@@ -159,8 +159,9 @@ fn push_polygon(corners: [Vec3;4], color: [f32;4], uv: [f32;4], vertex_uv: Optio
     if let Some(uv0) = vertex_uv { primitive.shader_channel_data = Some(Arc::new(UiShaderChannelData { uv0, ..UiShaderChannelData::default() })); }
     primitive.key.texture = material.texture.clone(); primitive.key.material = "sampled-effect".into();
     primitive.key.blend = match material.blend.as_str() { "additive" => UiBlendMode::Additive, "multiply" => UiBlendMode::Multiply, _ => UiBlendMode::Alpha };
-    if material.alpha_cutoff > 0. {
-        let shader = format!("fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {{ let color = mengine_ui_main_texture(input.uv0) * input.vertex_color; if color.a < {} {{ discard; }} return color; }}", material.alpha_cutoff);
+    if material.alpha_cutoff > 0. || primitive.key.blend == UiBlendMode::Multiply {
+        let result = if primitive.key.blend == UiBlendMode::Multiply { "vec4<f32>(color.rgb * color.a, color.a)" } else { "color" };
+        let shader = format!("fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {{ let color = mengine_ui_main_texture(input.uv0) * input.vertex_color; if color.a < {} {{ discard; }} return {}; }}", material.alpha_cutoff, result);
         primitive.render_material = Some(Arc::new(UiRenderMaterial { shader: shader.into(), blend: primitive.key.blend, ..UiRenderMaterial::default() }));
     }
     primitive.key.depth_test = true;
@@ -171,6 +172,26 @@ fn push_polygon(corners: [Vec3;4], color: [f32;4], uv: [f32;4], vertex_uv: Optio
 mod tests {
     use super::*;
     use mengine_core::generated::Transform;
+    #[test]
+    fn original_cloud_particles_apply_opacity_before_multiply_blending() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+        let asset = SampledEffectAsset::load(&root.join("Assets/DeathKnightEffects/Effects/DeathCoilSpecialArt.mfx")).unwrap();
+        let material = asset.materials.iter().position(|m| m.blend == "multiply").unwrap();
+        let frame = asset.clips[0].frames.iter().find(|f| f.particles.iter().any(|p| p.material == material)).unwrap();
+        let mut single = frame.clone(); single.particles.retain(|p| p.material == material); single.particles.truncate(1); single.quads.clear();
+        let mut world = World::new(); let entity = world.spawn_empty(); world.insert_component(entity, Transform::default());
+        let camera = FrameCamera { view: mengine_rhi::look_at(Vec3::new(0.,0.,10.), Vec3::ZERO, Vec3::Y), proj: mengine_rhi::orthographic(10.,1.,0.1,100.), position: Vec3::new(0.,0.,10.) };
+        let mut output = Vec::new(); collect_frame(&single, &asset.materials, TransformHierarchy::build(&world).get(entity).unwrap(), camera, &mut FrameLighting::default(), &mut output);
+        assert_eq!(output.len(), 1); let primitive = &output[0].primitive;
+        assert_eq!(primitive.key.blend, UiBlendMode::Multiply);
+        let render_material = primitive.render_material.as_ref().expect("multiply requires premultiplied texture opacity");
+        assert_eq!(render_material.blend, UiBlendMode::Multiply); assert!(render_material.shader.contains("color.rgb * color.a"));
+        for blend in ["alpha", "additive"] {
+            let mut materials = asset.materials.clone(); materials[material].blend = blend.into(); output.clear();
+            collect_frame(&single, &materials, TransformHierarchy::build(&world).get(entity).unwrap(), camera, &mut FrameLighting::default(), &mut output);
+            assert!(output[0].primitive.render_material.is_none());
+        }
+    }
     #[test]
     fn original_model_particle_replays_mesh_layers_age_uvs_and_unit_scale() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");

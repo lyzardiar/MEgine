@@ -1,0 +1,26 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "signedFiles": 183,
+  "guids": 61,
+  "spellGeometryModels": 7,
+  "nativeEffects": 9,
+  "nativeGeometryPoseSamples": 36,
+  "pureParticleEffects": [
+    "DeathPactCaster"
+  ],
+  "offlineByteIdentical": true,
+  "modifiedOutputRejected": true,
+  "corruptSourceRejected": true,
+  "runtimeGameplayIntegrated": false,
+  "originalRuntimeVerified": false,
+  "probeSha256": "f66a0eaac9c38aab23dff12638d9690c8e3b0fcd23283275b0e11d67550204ca",
+  "sha256": {
+    "death-knight-rules.json": "ec9b5987e13688324093acb74761b90a8a60c249ea486e089497984b6e5531be",
+    "death-knight-rules-sources.json": "cafadc5a21e4f186c0643d49e95696d7e07b78f1a5a47220979c8ca7c4e2c0ed",
+    "death-knight-effects.json": "66ae8ad9e11f774e73ef1a1f5d468353ec941f4c83553531ecf76ff8543b933d",
+    "death-knight-effect-models.json": "2d61722ae1ab54391872a8d783fd27688e6509fd6f07d35f3eb85f49b207e4d9",
+    "death-knight-effects-sources.json": "fea368f79e92eff3cdd3c7a2a1fa4d74c67106d5b7e567e824b66d58795d8d79"
+  },
+  "scope": "Original signed rules/effects, native parsing and poses, offline reproduction; gameplay and GPU rendering require separate acceptance."
+}

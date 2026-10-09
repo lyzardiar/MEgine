@@ -1,0 +1,68 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "runtimeGameplayIntegrated": false,
+  "fullGoalComplete": false,
+  "tests": {
+    "sourceProfile": {
+      "command": "node scripts/test-frost-death-knight-profile.mjs",
+      "passed": true
+    },
+    "signedAssets": {
+      "command": "python -X utf8 scripts/test-frost-death-knight-assets.py",
+      "signedFiles": 183,
+      "offlineByteIdentical": true,
+      "modifiedOutputRejected": true,
+      "corruptSourceRejected": true,
+      "nativeEffects": 9,
+      "nativeGeometryPoseSamples": 36
+    },
+    "runtimeEffects": {
+      "command": "cargo test -p mengine-runtime --lib sampled_effects --target-dir D:/MEngineNativeQA/construction-build",
+      "passed": 4,
+      "failed": 0,
+      "buildSeconds": 88,
+      "testSeconds": 0.01
+    },
+    "nativeImage": {
+      "command": "python -X utf8 scripts/test-frost-death-knight-native-image.py",
+      "passed": true
+    }
+  },
+  "build": {
+    "command": "cargo build --release -p mengine-editor-tauri --features tauri/custom-protocol --target-dir D:/MEngineNativeQA/construction-build",
+    "passed": true,
+    "seconds": 441,
+    "editorSha256": "e01a18cdc2a0f9fc122f447c19a9a12f501375466671a6fb3f15c9822bc33334"
+  },
+  "native": {
+    "command": "node scripts/qa-frost-death-knight-assets.mjs",
+    "passed": true,
+    "report": "native-death-knight-assets-qa.json",
+    "elapsedMs": 11802,
+    "consoleErrors": 0,
+    "meshShaderRejections": 0,
+    "normalExit": true,
+    "fixtureRemoved": true,
+    "ownedStorageRemoved": true
+  },
+  "sourceHashes": {
+    "crates/mengine-runtime/src/sampled_effects.rs": "80998851cadc1418e1a710ba91737088f98603b1f17e52007f0b42d26bd38b19",
+    "samples/frostbound-realms/game/death-knight.js": "bb3367be2b6df3b0484efc32b0c65c8e5ce31f3ad67b64c0a730188958464a2b",
+    "scripts/qa-frost-death-knight-assets.mjs": "ea7e0167f2e9fd53bf45878781af41ae1ffd808cca967161cb2ca0d8c0cba43f",
+    "scripts/test-frost-death-knight-native-image.py": "614e555308dd6c67f3fcae1ab1564777c6d837661b607b8764a9db4d0c6f92b5"
+  },
+  "limitations": [
+    "Death Knight source abilities are not integrated into playable simulation/Main/client yet",
+    "Original runtime solver and targeting parity unverified",
+    "Standalone player native acceptance not run in this stage",
+    "Sampled effects currently have no soft clips"
+  ],
+  "scope": "Signed Death Knight rules/base resurrection profiles and spell assets; original source-scale native preview; shared sampled-effect multiply opacity repair and same-scene pixel regression.",
+  "gitStagedBlobVerification": {
+    "files": 196,
+    "signedGeneratedOutputs": 174,
+    "allBytesIdenticalToWorktree": true,
+    "explicitPathsOnly": true
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T09:56:18.958Z",
+  "sha256": {
+    "death-knight-rules.json": "ec9b5987e13688324093acb74761b90a8a60c249ea486e089497984b6e5531be",
+    "death-knight-rules-sources.json": "cafadc5a21e4f186c0643d49e95696d7e07b78f1a5a47220979c8ca7c4e2c0ed",
+    "death-knight-effects.json": "66ae8ad9e11f774e73ef1a1f5d468353ec941f4c83553531ecf76ff8543b933d",
+    "death-knight-effect-models.json": "2d61722ae1ab54391872a8d783fd27688e6509fd6f07d35f3eb85f49b207e4d9",
+    "death-knight-effects-sources.json": "fea368f79e92eff3cdd3c7a2a1fa4d74c67106d5b7e567e824b66d58795d8d79"
+  },
+  "bodyReceiptSha256": "e260cbf3af9bc1ad4554463ac269735aa3247f82c23dfb206aa92659fe9cb776",
+  "rendererSourceSha256": "80998851cadc1418e1a710ba91737088f98603b1f17e52007f0b42d26bd38b19",
+  "sceneSha256": "db8aea7c30d322d05fa0c35044f98022d14a2c24035b9c27c16b8212ed897c32",
+  "editorSha256": "e01a18cdc2a0f9fc122f447c19a9a12f501375466671a6fb3f15c9822bc33334",
+  "physicalInput": false,
+  "runtimeGameplayIntegrated": false,
+  "entityCount": 40,
+  "snapshots": [
+    {
+      "key": "DeathCoilMissile",
+      "position": [
+        -8,
+        0,
+        7
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 1.16655
+    },
+    {
+      "key": "DeathCoilSpecialArt",
+      "position": [
+        0,
+        0,
+        7
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.6588235294117647
+    },
+    {
+      "key": "DeathPactCaster",
+      "position": [
+        8,
+        0,
+        7
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 1.373076923076923
+    },
+    {
+      "key": "DeathPactTarget",
+      "position": [
+        -8,
+        0,
+        0
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.8552500000000001
+    },
+    {
+      "key": "UnholyAura",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0
+    },
+    {
+      "key": "GeneralAuraTarget",
+      "position": [
+        8,
+        0,
+        0
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0
+    },
+    {
+      "key": "AnimateDeadTarget",
+      "position": [
+        -8,
+        0,
+        -7
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.8332142857142858
+    },
+    {
+      "key": "UndeadLargeDeathExplode",
+      "position": [
+        0,
+        0,
+        -7
+      ],
+      "scale": 2,
+      "clip": 0,
+      "time": 0.24579661016949153
+    },
+    {
+      "key": "ClassicDeathKnightEmbedded",
+      "position": [
+        8,
+        0,
+        -7
+      ],
+      "scale": 2,
+      "clip": 1,
+      "time": 0.3
+    }
+  ],
+  "timings": [
+    {
+      "stage": "project open and ready",
+      "ms": 1474
+    },
+    {
+      "stage": "source geometry, emitters and original body",
+      "ms": 9016,
+      "nativeCounts": {
+        "billboardMeshes": 5,
+        "entities": 40,
+        "materialPipelineEvictions": 0,
+        "materialPipelinesBuiltIn": 36,
+        "materialPipelinesCustom": 0,
+        "materialPipelinesRejected": 0,
+        "materialPipelinesResidentCustom": 0,
+        "materialSamplers": 2,
+        "materialTextureBindGroups": 13,
+        "materialTexturesColor": 13,
+        "materialTexturesData": 0,
+        "msaaSamples": 4,
+        "renderObjects": 15,
+        "sceneViews": 0,
+        "uiBatches": 91,
+        "uiDrawCalls": 91,
+        "uiPrimitives": 330
+      }
+    }
+  ],
+  "consoleErrors": 0,
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 81136,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "elapsedMs": 11802,
+  "scope": "Native original effect and body snapshots. Spell targeting, traveling missiles, corpse resurrection, gameplay, audio, physical input and original-game solver parity require separate acceptance."
+}
