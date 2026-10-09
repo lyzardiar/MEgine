@@ -1645,6 +1645,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     setPlayRuntime(driver: PlayRuntimeDriver | null) { playRuntime = driver; },
     async waitForPlayRuntime() { await playPending; if (playError) throw playError; },
     get playBusy() { return playBusy; },
+    get playGeneration() { return playGeneration; },
     setPlayInput(input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'pointerDelta' | 'pointerLocked' | 'viewport' | 'buttons'>>) {
       if (mode === 'edit') return;
       for (const [field, pressed, released] of [['keys', 'pressedKeys', 'releasedKeys'], ['buttons', 'pressedButtons', 'releasedButtons']] as const) {

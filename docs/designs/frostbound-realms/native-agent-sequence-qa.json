@@ -1,0 +1,419 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T11:53:20.254Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\agent-sequence-1791546800237\\sample",
+  "entityCount": 4,
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "sourceMainSha256": null,
+  "sourceSceneSha256": "ce56958066140b28b6ee6d0f25381ba03a4f1a57ac5d2b9ce870f81b76a7ef37",
+  "fixtureMainSha256": "29feeda69123efb9b2aa8268960a74f190c44741912bb771203cb1b44a15d641",
+  "commands": [
+    {
+      "name": "project.open",
+      "ms": 465.7008000000001,
+      "timing": {
+        "nativeReceivedAtMs": 1791546800880,
+        "frontendReceivedAtMs": 1791546800882,
+        "queueMs": 0.09999990463256836,
+        "operationMs": 461.80000019073486,
+        "handlerMs": 462.2000000476837,
+        "responseReadyAtMs": 1791546801344
+      }
+    },
+    {
+      "name": "view.set_game_resolution",
+      "ms": 3.2724000000000615,
+      "timing": {
+        "nativeReceivedAtMs": 1791546801351,
+        "frontendReceivedAtMs": 1791546801351,
+        "queueMs": 0,
+        "operationMs": 1.0999999046325684,
+        "handlerMs": 1.1999998092651367,
+        "responseReadyAtMs": 1791546801353
+      }
+    },
+    {
+      "name": "panel.focus",
+      "ms": 74.38239999999996,
+      "timing": {
+        "nativeReceivedAtMs": 1791546801354,
+        "frontendReceivedAtMs": 1791546801356,
+        "queueMs": 0,
+        "operationMs": 70.79999995231628,
+        "handlerMs": 70.79999995231628,
+        "responseReadyAtMs": 1791546801427
+      }
+    },
+    {
+      "name": "playback.play",
+      "ms": 1587.9007000000001,
+      "timing": {
+        "nativeReceivedAtMs": 1791546801430,
+        "frontendReceivedAtMs": 1791546801431,
+        "queueMs": 0,
+        "operationMs": 1583,
+        "handlerMs": 1583,
+        "responseReadyAtMs": 1791546803014
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 6.672700000000077,
+      "timing": {
+        "nativeReceivedAtMs": 1791546803018,
+        "frontendReceivedAtMs": 1791546803018,
+        "queueMs": 0,
+        "operationMs": 3.4000000953674316,
+        "handlerMs": 3.5999999046325684,
+        "responseReadyAtMs": 1791546803022
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2.556799999999839,
+      "timing": {
+        "nativeReceivedAtMs": 1791546803025,
+        "frontendReceivedAtMs": 1791546803026,
+        "queueMs": 0.09999990463256836,
+        "operationMs": 0.10000014305114746,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791546803026
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 3.5961999999999534,
+      "timing": {
+        "nativeReceivedAtMs": 1791546803028,
+        "frontendReceivedAtMs": 1791546803029,
+        "queueMs": 0,
+        "operationMs": 2.0999999046325684,
+        "handlerMs": 2.0999999046325684,
+        "responseReadyAtMs": 1791546803031
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 6.176600000000235,
+      "timing": {
+        "nativeReceivedAtMs": 1791546803032,
+        "frontendReceivedAtMs": 1791546803033,
+        "queueMs": 0,
+        "operationMs": 3.700000047683716,
+        "handlerMs": 3.700000047683716,
+        "responseReadyAtMs": 1791546803037
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 3.99980000000005,
+      "timing": {
+        "nativeReceivedAtMs": 1791546803039,
+        "frontendReceivedAtMs": 1791546803041,
+        "queueMs": 0,
+        "operationMs": 0,
+        "handlerMs": 0.09999990463256836,
+        "responseReadyAtMs": 1791546803042
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 4.191400000000158,
+      "timing": {
+        "nativeReceivedAtMs": 1791546803044,
+        "frontendReceivedAtMs": 1791546803044,
+        "queueMs": 0,
+        "operationMs": 2.4000000953674316,
+        "handlerMs": 2.4000000953674316,
+        "responseReadyAtMs": 1791546803047
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 11.070300000000316,
+      "timing": {
+        "nativeReceivedAtMs": 1791546803051,
+        "frontendReceivedAtMs": 1791546803051,
+        "queueMs": 0,
+        "operationMs": 9.800000190734863,
+        "handlerMs": 9.900000095367432,
+        "responseReadyAtMs": 1791546803061
+      }
+    },
+    {
+      "name": "playback.stop",
+      "ms": 3.1679999999996653,
+      "timing": {
+        "nativeReceivedAtMs": 1791546803085,
+        "frontendReceivedAtMs": 1791546803085,
+        "queueMs": 0,
+        "operationMs": 1.4000000953674316,
+        "handlerMs": 1.4000000953674316,
+        "responseReadyAtMs": 1791546803086
+      }
+    }
+  ],
+  "samples": [],
+  "scope": "Owned native input probe: same per-frame input edges and deltas with serial and batched input/step, full validation and revision guards.",
+  "readyMs": 2753.8648,
+  "serialTrace": [
+    {
+      "dt": 0.009999999776482582,
+      "frame": 2,
+      "input": {
+        "keys": [
+          "KeyB"
+        ],
+        "pressedKeys": [
+          "KeyB"
+        ],
+        "releasedKeys": [],
+        "pointer": [
+          30,
+          40
+        ],
+        "pointerDelta": [
+          4,
+          -2
+        ],
+        "pointerLocked": false,
+        "viewport": [
+          1280,
+          720
+        ],
+        "buttons": [
+          0
+        ],
+        "pressedButtons": [
+          0
+        ],
+        "releasedButtons": []
+      }
+    },
+    {
+      "dt": 0.019999999552965164,
+      "frame": 3,
+      "input": {
+        "keys": [
+          "KeyB"
+        ],
+        "pressedKeys": [],
+        "releasedKeys": [],
+        "pointer": [
+          30,
+          40
+        ],
+        "pointerDelta": [
+          0,
+          0
+        ],
+        "pointerLocked": false,
+        "viewport": [
+          1280,
+          720
+        ],
+        "buttons": [
+          0
+        ],
+        "pressedButtons": [],
+        "releasedButtons": []
+      }
+    },
+    {
+      "dt": 0.019999999552965164,
+      "frame": 4,
+      "input": {
+        "keys": [
+          "KeyB"
+        ],
+        "pressedKeys": [],
+        "releasedKeys": [],
+        "pointer": [
+          30,
+          40
+        ],
+        "pointerDelta": [
+          0,
+          0
+        ],
+        "pointerLocked": false,
+        "viewport": [
+          1280,
+          720
+        ],
+        "buttons": [
+          0
+        ],
+        "pressedButtons": [],
+        "releasedButtons": []
+      }
+    },
+    {
+      "dt": 0.029999999329447746,
+      "frame": 5,
+      "input": {
+        "keys": [],
+        "pressedKeys": [],
+        "releasedKeys": [
+          "KeyB"
+        ],
+        "pointer": [
+          30,
+          40
+        ],
+        "pointerDelta": [
+          3,
+          1
+        ],
+        "pointerLocked": false,
+        "viewport": [
+          1280,
+          720
+        ],
+        "buttons": [],
+        "pressedButtons": [],
+        "releasedButtons": [
+          0
+        ]
+      }
+    }
+  ],
+  "batchTrace": [
+    {
+      "dt": 0.009999999776482582,
+      "frame": 6,
+      "input": {
+        "keys": [
+          "KeyB"
+        ],
+        "pressedKeys": [
+          "KeyB"
+        ],
+        "releasedKeys": [],
+        "pointer": [
+          30,
+          40
+        ],
+        "pointerDelta": [
+          4,
+          -2
+        ],
+        "pointerLocked": false,
+        "viewport": [
+          1280,
+          720
+        ],
+        "buttons": [
+          0
+        ],
+        "pressedButtons": [
+          0
+        ],
+        "releasedButtons": []
+      }
+    },
+    {
+      "dt": 0.019999999552965164,
+      "frame": 7,
+      "input": {
+        "keys": [
+          "KeyB"
+        ],
+        "pressedKeys": [],
+        "releasedKeys": [],
+        "pointer": [
+          30,
+          40
+        ],
+        "pointerDelta": [
+          0,
+          0
+        ],
+        "pointerLocked": false,
+        "viewport": [
+          1280,
+          720
+        ],
+        "buttons": [
+          0
+        ],
+        "pressedButtons": [],
+        "releasedButtons": []
+      }
+    },
+    {
+      "dt": 0.019999999552965164,
+      "frame": 8,
+      "input": {
+        "keys": [
+          "KeyB"
+        ],
+        "pressedKeys": [],
+        "releasedKeys": [],
+        "pointer": [
+          30,
+          40
+        ],
+        "pointerDelta": [
+          0,
+          0
+        ],
+        "pointerLocked": false,
+        "viewport": [
+          1280,
+          720
+        ],
+        "buttons": [
+          0
+        ],
+        "pressedButtons": [],
+        "releasedButtons": []
+      }
+    },
+    {
+      "dt": 0.029999999329447746,
+      "frame": 9,
+      "input": {
+        "keys": [],
+        "pressedKeys": [],
+        "releasedKeys": [
+          "KeyB"
+        ],
+        "pointer": [
+          30,
+          40
+        ],
+        "pointerDelta": [
+          3,
+          1
+        ],
+        "pointerLocked": false,
+        "viewport": [
+          1280,
+          720
+        ],
+        "buttons": [],
+        "pressedButtons": [],
+        "releasedButtons": [
+          0
+        ]
+      }
+    }
+  ],
+  "validationBeforeMutation": true,
+  "revisionGuard": true,
+  "consoleErrors": 0,
+  "shaderRejections": null,
+  "shutdown": {
+    "pid": 143540,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "finishedAt": "2026-10-09T11:53:24.269Z"
+}

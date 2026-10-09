@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MEngine Editor MCP server.
+ * MEngine Editor MCP server. Author: MiYu.
  *
  * A self-contained Model Context Protocol server that lets any MCP client
  * (Claude Desktop, Cursor, QoderWork, …) observe the running MEngine editor.
@@ -675,7 +675,7 @@ function bridgeExecuteParams(command, args = {}, options = {}) {
 }
 
 async function bridgeExecute(command, args = {}, options = {}) {
-  const longRunning = command === 'build.verify' || command === 'playback.play' || (command === 'playback.step' && args.steps > 1);
+  const longRunning = command === 'build.verify' || command === 'playback.play' || command === 'playback.sequence' || (command === 'playback.step' && args.steps > 1);
   const timeoutMs = options.timeoutMs ?? (longRunning ? BUILD_ARTIFACT_REQUEST_TIMEOUT_MS : REQUEST_TIMEOUT_MS);
   if (!Number.isFinite(timeoutMs) || timeoutMs < 1 || timeoutMs > BUILD_ARTIFACT_REQUEST_TIMEOUT_MS) throw new ToolInputValidationError('Execution timeout must be between 1 and 300000 milliseconds');
   return await rpc(
@@ -1028,6 +1028,15 @@ function validateToolArguments(tool, args) {
   validateSchemaValue(args, tool.inputSchema, '$', issues);
   if (issues.length > 0) throw new ToolInputValidationError(tool.name, issues);
 }
+
+const PLAYBACK_INPUT_PROPERTIES = {
+    keys: { type: 'array', maxItems: 128, uniqueItems: true, items: { type: 'string', pattern: '^[A-Za-z][A-Za-z0-9]{0,39}$' }, description: 'Complete held KeyboardEvent.code set; [] releases all' },
+    buttons: { type: 'array', maxItems: 3, uniqueItems: true, items: { type: 'integer', minimum: 0, maximum: 2 }, description: 'Held pointer buttons: 0 left, 1 middle, 2 right' },
+    pointer: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'number' }, description: 'Game content coordinates in pixels from the top-left' },
+    pointerDelta: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'number' }, description: 'Relative mouse motion accumulated for the next simulation frame' },
+    pointerLocked: { type: 'boolean', description: 'Whether relative mouse capture is active' },
+    viewport: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'integer', minimum: 1, maximum: 16384 }, description: 'Game content width and height in pixels' },
+  };
 
 /** Build a tool that invokes a bridge `execute` command. */
 function execTool(
@@ -3844,14 +3853,10 @@ const TOOLS = [
     },
   ),
   execTool('play', 'Enter play mode; optionally start paused before the first simulation frame.', 'playback.play', { paused: { type: 'boolean', description: 'Start paused before the first simulation frame for deterministic stepping' } }, []),
-  execTool('set_game_input', 'Set held project-game keys and pointer buttons. Pause and step frames for deterministic input.', 'playback.input', {
-    keys: { type: 'array', maxItems: 128, uniqueItems: true, items: { type: 'string', pattern: '^[A-Za-z][A-Za-z0-9]{0,39}$' }, description: 'Complete held KeyboardEvent.code set; [] releases all' },
-    buttons: { type: 'array', maxItems: 3, uniqueItems: true, items: { type: 'integer', minimum: 0, maximum: 2 }, description: 'Held pointer buttons: 0 left, 1 middle, 2 right' },
-    pointer: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'number' }, description: 'Game content coordinates in pixels from the top-left' },
-    pointerDelta: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'number' }, description: 'Relative mouse motion accumulated for the next simulation frame' },
-    pointerLocked: { type: 'boolean', description: 'Whether relative mouse capture is active' },
-    viewport: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'integer', minimum: 1, maximum: 16384 }, description: 'Game content width and height in pixels' },
-  }, []),
+  execTool('set_game_input', 'Set held project-game keys and pointer buttons. Pause and step frames for deterministic input.', 'playback.input', PLAYBACK_INPUT_PROPERTIES, []),
+  execTool('playback_sequence', 'Apply ordered project-game inputs and paused simulation steps in one request. Validates the entire sequence before applying input; at most 120 phases and 600 total steps. Input edges are consumed in order. Runtime errors stop the sequence without rolling back completed frames.', 'playback.sequence', {
+    phases: { type: 'array', minItems: 1, maxItems: 120, items: { type: 'object', additionalProperties: false, properties: { input: { type: 'object', additionalProperties: false, properties: PLAYBACK_INPUT_PROPERTIES }, steps: { type: 'integer', minimum: 1, maximum: 600 }, deltaTime: { type: 'number', exclusiveMinimum: 0, maximum: 1 } } } },
+  }, ['phases']),
   execTool('pause', 'Toggle pause during playback.', 'playback.pause', {}, []),
   execTool('stop', 'Stop playback and return to edit mode.', 'playback.stop', {}, []),
   execTool(
@@ -3874,6 +3879,8 @@ const TOOLS = [
   execTool('set_gizmo', 'Set the active transform gizmo.', 'gizmo.set', {
     mode: { type: 'string', enum: ['translate', 'rotate', 'scale', 'rect'], description: 'Gizmo mode' },
   }, ['mode']),
+  execTool('set_scene_visibility', 'Set editor-only inherited Scene visibility for an entity branch.', 'view.set_scene_visibility', { id: ENTITY_ID_SCHEMA, visible: { type: 'boolean' } }, ['id', 'visible']),
+  execTool('set_scene_pickability', 'Set editor-only inherited Scene picking for an entity branch.', 'view.set_scene_pickability', { id: ENTITY_ID_SCHEMA, pickable: { type: 'boolean' } }, ['id', 'pickable']),
   execTool('focus_panel', 'Activate an editor panel by kind without raising or focusing its native window, and return only after layout state confirms it is active. If activation would change a visible or focused host, the command refuses; already-active panels return unchanged.', 'panel.focus', {
     kind: { ...PANEL_KIND_SCHEMA, description: 'Panel kind' },
   }, ['kind']),

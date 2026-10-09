@@ -1,5 +1,5 @@
 /**
- * AgentBridge write Dispatcher (Phase 2).
+ * AgentBridge write Dispatcher (Phase 2). Author: MiYu.
  *
  * Maps agent command ids onto `EditorStore` methods — the SAME path the UI and
  * menus use — so there is a single source of truth (the store), which then
@@ -1251,6 +1251,7 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
       },
     };
   },
+  'playback.sequence': async (ctx, args) => (await import('./playbackSequence.ts')).runPlaybackSequence(ctx, args),
   'history.undo': (ctx) => {
     if (ctx.store.mode !== 'edit' && ctx.store.undoScope === 'scene') {
       throw new BridgeError('READONLY', 'Stop playback before undoing a scene edit');
@@ -1425,6 +1426,7 @@ const COMMAND_SUMMARIES: CommandSummary[] = [
   { id: 'playback.pause', category: 'playback', description: 'Toggle pause', readOnly: false },
   { id: 'playback.stop', category: 'playback', description: 'Stop playback and return to edit mode', readOnly: false },
   { id: 'playback.step', category: 'playback', description: 'Advance paused Play Mode by 1–600 deterministic steps', readOnly: false },
+  { id: 'playback.sequence', category: 'playback', description: 'Apply ordered input and paused steps in one request; at most 120 phases and 600 total steps', readOnly: false },
   { id: 'playback.input', category: 'playback', description: 'Set held physical keys and pointer buttons for the project script; use paused playback.step for deterministic input', readOnly: false },
   { id: 'history.undo', category: 'history', description: 'Undo the last edit', readOnly: false },
   { id: 'history.redo', category: 'history', description: 'Redo the last undone edit', readOnly: false },

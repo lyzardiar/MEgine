@@ -1,0 +1,79 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "date": "2026-10-09",
+  "workingSourceSha256": {
+    "packages/editor/src/agent/playbackSequence.ts": "68587fdbf91868a42b9f5c2e834ed0d2cec20a7355311a97799e06149aab93e3",
+    "packages/editor/src/agent/commands.ts": "2d97df60d4b8e2c354bf9841d0c8f25c4aa8e93d2daab9b8955c65f3d7700699",
+    "packages/editor/src/agent/commandSchemas.ts": "24e89340c80203b5a5d56511d93c6250426833dd09a68cba068bc354d2ed6308",
+    "packages/editor/src/store.ts": "e2be01feb0d0174773d6a2fe50caafd4a48ab11e1bcb9515ec5c18a5887b06c5",
+    "packages/editor/vite/chunkStrategy.ts": "aab9b8f63291b818aec17c2ebc9c11f9c16273e31806c087e88a869e5c17bfde",
+    "packages/agent/mcp/server.mjs": "000abeec2b0a1f4b6cb1cd1a3efd064af6733efb632c235f276ed0ddf18a1d7a",
+    "packages/editor/tests/agentPlaybackSequence.test.mjs": "7786bd7a1783a67189f0106b80e420e66cbaf36b198e83fab63eae545c298b4a",
+    "packages/editor/tests/agentJsonSchemaValidation.test.mjs": "58aed74ddf04bcbbc48ddf2bdbdada0cad656b0c887b72e5d6b716fd132de2cb",
+    "packages/editor/tests/chunkStrategy.test.mjs": "4ee0dd594a62f8b08e063c163e87419caf2e775802835fa0b534167c9fdedb78",
+    "scripts/frost-native-input.mjs": "f91c7bf3e0c3e8e7a624bc143b7d293455975660570d2a53550f1cd5afe3a1fb",
+    "scripts/qa-agent-playback-sequence.mjs": "b8c4c8a6af8c0811321810359fe6266403d11dc6e192fce5439d0b3a5a8febeb",
+    "scripts/qa-frost-death-knight.mjs": "edf244bd8aec754def43c9642264bd08715faa89cd7c43803bccfa5146708026"
+  },
+  "tests": {
+    "passed": 91,
+    "failed": 0,
+    "log": "tmp/agent-sequence-tests.log"
+  },
+  "review": {
+    "readOnly": true,
+    "sessionRestartReproFixed": true,
+    "recheckPassed": true
+  },
+  "builds": {
+    "typescript": true,
+    "frontend": true,
+    "chunkBudgetBytes": 500000,
+    "entryApproxBytes": 417160,
+    "schemaChunkApproxBytes": 88620,
+    "initialNativeSeconds": 374,
+    "finalNativeSeconds": 315,
+    "initialLog": "tmp/agent-sequence-native-build.log",
+    "finalLog": "tmp/agent-sequence-native-final-build.log",
+    "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6"
+  },
+  "native": {
+    "probe": "native-agent-sequence-qa.json",
+    "integration": "native-agent-sequence-warcraft-qa.json",
+    "timing": "native-agent-sequence-warcraft-timing-qa.json",
+    "samePublishedMain": true,
+    "samePublishedScene": true,
+    "sameInstrumentedFixtureMain": true,
+    "sameEditor": true,
+    "entityCount": 80149,
+    "gameplay": {
+      "pauseResume": true,
+      "selectAndHold": true,
+      "F5Save": true,
+      "menuLoadClick": true
+    },
+    "consoleErrors": 0,
+    "shaderRejections": 0,
+    "successfulOwnedInstancesClosedAndCleaned": true,
+    "initialProbeFailure": "native-agent-sequence-initial-qa.json",
+    "initialGameFailure": "native-agent-sequence-warcraft-initial-qa.json",
+    "timingRunLaterFailure": "The timing run completed all three pairs, then failed a fixture assertion that incorrectly expected UI selection to persist after loading. Integration was resumed with an actual click and passed; timing report is not labeled a passing complete QA run."
+  },
+  "pairedTiming": {
+    "pairs": 3,
+    "stepsPerSample": 4,
+    "serialRpcPerSample": 8,
+    "batchRpcPerSample": 1,
+    "serialMedianMs": 17915.0827,
+    "batchMedianMs": 6459.376499999984,
+    "reductionPercent": 63.944478470088306,
+    "order": "serial,batch; batch,serial; serial,batch",
+    "startupAndQueriesExcluded": true
+  },
+  "product": {
+    "mainSha256": "968f1ff6920bbc9db04bfb445ea14954fc24bd06a3c27e3ed7eb57145f82a115",
+    "sceneSha256": "215716b258e7284cb07c6008e9e03965697b6326e966d4b85cb45dc4704d951c"
+  },
+  "scope": "Ordered paused input batching and native client save/load interaction. No whole-task speedup, complete Death Knight skill rerun, physical input, audio, standalone player or full Warcraft parity claim."
+}

@@ -1,0 +1,142 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-09T12:05:24.709Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\agent-sequence-warcraft-1791547496482\\sample",
+  "entityCount": 80149,
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "sourceMainSha256": "968f1ff6920bbc9db04bfb445ea14954fc24bd06a3c27e3ed7eb57145f82a115",
+  "sourceSceneSha256": "215716b258e7284cb07c6008e9e03965697b6326e966d4b85cb45dc4704d951c",
+  "fixtureMainSha256": "b8092124cecab29ac4cef29e1df06a8470127704226db9473ba5bb4a23f59717",
+  "commands": [
+    {
+      "name": "view.set_game_resolution",
+      "ms": 6077.026599999997,
+      "timing": {
+        "nativeReceivedAtMs": 1791547576198,
+        "frontendReceivedAtMs": 1791547578769,
+        "queueMs": 0,
+        "operationMs": 3500.2999999523163,
+        "handlerMs": 3500.600000143051,
+        "responseReadyAtMs": 1791547582270
+      }
+    },
+    {
+      "name": "panel.focus",
+      "ms": 27702.356199999995,
+      "timing": {
+        "nativeReceivedAtMs": 1791547602279,
+        "frontendReceivedAtMs": 1791547606104,
+        "handlerMs": 3870.5,
+        "responseReadyAtMs": 1791547609974
+      }
+    },
+    {
+      "name": "playback.play",
+      "ms": 11016.41260000001,
+      "timing": {
+        "nativeReceivedAtMs": 1791547609978,
+        "frontendReceivedAtMs": 1791547612463,
+        "queueMs": 0.10000014305114746,
+        "operationMs": 8529,
+        "handlerMs": 8529.200000047684,
+        "responseReadyAtMs": 1791547620992
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 5447.326799999995,
+      "timing": {
+        "nativeReceivedAtMs": 1791547620996,
+        "frontendReceivedAtMs": 1791547623191,
+        "queueMs": 0,
+        "operationMs": 3249.399999856949,
+        "handlerMs": 3249.5,
+        "responseReadyAtMs": 1791547626441
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 5874.67300000001,
+      "timing": {
+        "nativeReceivedAtMs": 1791547626444,
+        "frontendReceivedAtMs": 1791547628685,
+        "queueMs": 0,
+        "operationMs": 3608.7999999523163,
+        "handlerMs": 3609,
+        "responseReadyAtMs": 1791547632294
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 7264.800399999978,
+      "timing": {
+        "nativeReceivedAtMs": 1791547634472,
+        "frontendReceivedAtMs": 1791547634806,
+        "queueMs": 0,
+        "operationMs": 6891.200000047684,
+        "handlerMs": 6891.200000047684,
+        "responseReadyAtMs": 1791547641698
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 6783.757899999997,
+      "timing": {
+        "nativeReceivedAtMs": 1791547644163,
+        "frontendReceivedAtMs": 1791547644320,
+        "queueMs": 0,
+        "operationMs": 6622.899999856949,
+        "handlerMs": 6623.200000047684,
+        "responseReadyAtMs": 1791547650943
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 3362.1247999999905,
+      "timing": {
+        "nativeReceivedAtMs": 1791547652988,
+        "frontendReceivedAtMs": 1791547653099,
+        "queueMs": 0,
+        "operationMs": 3248.699999809265,
+        "handlerMs": 3248.699999809265,
+        "responseReadyAtMs": 1791547656348
+      }
+    },
+    {
+      "name": "playback.stop",
+      "ms": 1000.1324000000022,
+      "timing": {
+        "nativeReceivedAtMs": 1791547658783,
+        "frontendReceivedAtMs": 1791547658959,
+        "queueMs": 0,
+        "operationMs": 820.2999999523163,
+        "handlerMs": 820.3999998569489,
+        "responseReadyAtMs": 1791547659780
+      }
+    }
+  ],
+  "samples": [],
+  "pairedTimingsMeasured": false,
+  "scope": "Same owned published Warcraft scene and editor: serial and batched pause/resume input, selection, hold, native F5 save and menu-load click. Startup and queries excluded from paired input timings. No whole-task speedup, physical input, audio or full Warcraft parity claim.",
+  "readyMs": 101632.1805,
+  "gameplay": {
+    "pauseResume": true,
+    "selectAndHold": true,
+    "F5Save": true,
+    "menuLoadClick": true
+  },
+  "consoleErrors": 0,
+  "shaderRejections": 0,
+  "shutdown": {
+    "pid": 157640,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "finishedAt": "2026-10-09T12:07:47.808Z"
+}

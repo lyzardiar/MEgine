@@ -1,3 +1,4 @@
+// Author: MiYu.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
@@ -34,6 +35,7 @@ test('direct AgentBridge schema validation matches MCP for valid command argumen
     ['rect.set', { entity: 1, pivot: [0.5, 0.5], sizeDelta: [100, 40] }],
     ['playback.step', { deltaTime: 1 / 60 }],
     ['playback.step', { deltaTime: .02, steps: 600 }],
+    ['playback.sequence', { phases: [{ input: { keys: ['KeyB'], buttons: [0], pointer: [30, 40] }, deltaTime: .01 }, { input: { keys: [], buttons: [] }, steps: 2 }] }],
     ['window.ui_press_key', {
       selector: '#dialog-input',
       key: 'Enter',
@@ -140,6 +142,11 @@ test('direct AgentBridge schema validation matches MCP for malformed or extra ar
     ['playback.step', { deltaTime: 0 }],
     ['playback.step', { steps: 601 }],
     ['playback.step', { steps: 1.5 }],
+    ['playback.sequence', { phases: [] }],
+    ['playback.sequence', { phases: [{ input: { keys: ['KeyB'] } }, { input: { buttons: [3] } }] }],
+    ['playback.sequence', { phases: [{ deltaTime: 0 }] }],
+    ['playback.sequence', { phases: [{ steps: 601 }] }],
+    ['playback.sequence', { phases: [{ input: { arbitrary: true } }] }],
     ['window.ui_press_key', {
       selector: '#dialog-input',
       key: 'AB',

@@ -1,0 +1,491 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-09T11:59:39.144Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\agent-sequence-warcraft-1791547153159\\sample",
+  "entityCount": 80149,
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "sourceMainSha256": "968f1ff6920bbc9db04bfb445ea14954fc24bd06a3c27e3ed7eb57145f82a115",
+  "sourceSceneSha256": "215716b258e7284cb07c6008e9e03965697b6326e966d4b85cb45dc4704d951c",
+  "fixtureMainSha256": "b8092124cecab29ac4cef29e1df06a8470127704226db9473ba5bb4a23f59717",
+  "commands": [
+    {
+      "name": "view.set_game_resolution",
+      "ms": 8303.359299999996,
+      "timing": {
+        "nativeReceivedAtMs": 1791547227596,
+        "frontendReceivedAtMs": 1791547232874,
+        "queueMs": 0,
+        "operationMs": 3020.9000000953674,
+        "handlerMs": 3021.199999809265,
+        "responseReadyAtMs": 1791547235895
+      }
+    },
+    {
+      "name": "panel.focus",
+      "ms": 31356.763600000006,
+      "timing": {
+        "nativeReceivedAtMs": 1791547255905,
+        "frontendReceivedAtMs": 1791547258730,
+        "handlerMs": 8522.900000095367,
+        "responseReadyAtMs": 1791547267253
+      }
+    },
+    {
+      "name": "playback.play",
+      "ms": 12111.926599999992,
+      "timing": {
+        "nativeReceivedAtMs": 1791547267258,
+        "frontendReceivedAtMs": 1791547270151,
+        "queueMs": 0.09999990463256836,
+        "operationMs": 9215,
+        "handlerMs": 9215.199999809265,
+        "responseReadyAtMs": 1791547279366
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 8870.041599999997,
+      "timing": {
+        "nativeReceivedAtMs": 1791547279370,
+        "frontendReceivedAtMs": 1791547282947,
+        "queueMs": 0,
+        "operationMs": 5273.599999904633,
+        "handlerMs": 5273.799999952316,
+        "responseReadyAtMs": 1791547288221
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 7559.914499999984,
+      "timing": {
+        "nativeReceivedAtMs": 1791547288241,
+        "frontendReceivedAtMs": 1791547291175,
+        "queueMs": 0,
+        "operationMs": 4623.799999952316,
+        "handlerMs": 4624,
+        "responseReadyAtMs": 1791547295799
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 287.872000000003,
+      "timing": {
+        "nativeReceivedAtMs": 1791547298906,
+        "frontendReceivedAtMs": 1791547299190,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.09999990463256836,
+        "responseReadyAtMs": 1791547299190
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2685.4260000000068,
+      "timing": {
+        "nativeReceivedAtMs": 1791547299193,
+        "frontendReceivedAtMs": 1791547299551,
+        "queueMs": 0,
+        "operationMs": 2297.2999999523163,
+        "handlerMs": 2297.399999856949,
+        "responseReadyAtMs": 1791547301849
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2983.0822000000044,
+      "timing": {
+        "nativeReceivedAtMs": 1791547301879,
+        "frontendReceivedAtMs": 1791547304859,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.2999999523162842,
+        "responseReadyAtMs": 1791547304859
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2077.7288000000117,
+      "timing": {
+        "nativeReceivedAtMs": 1791547304863,
+        "frontendReceivedAtMs": 1791547305062,
+        "queueMs": 0,
+        "operationMs": 1872.7000000476837,
+        "handlerMs": 1872.9000000953674,
+        "responseReadyAtMs": 1791547306935
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2363.664699999994,
+      "timing": {
+        "nativeReceivedAtMs": 1791547306941,
+        "frontendReceivedAtMs": 1791547309302,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791547309302
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2526.326699999976,
+      "timing": {
+        "nativeReceivedAtMs": 1791547309307,
+        "frontendReceivedAtMs": 1791547309494,
+        "queueMs": 0,
+        "operationMs": 2334.600000143051,
+        "handlerMs": 2334.7000000476837,
+        "responseReadyAtMs": 1791547311829
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2432.616000000009,
+      "timing": {
+        "nativeReceivedAtMs": 1791547311833,
+        "frontendReceivedAtMs": 1791547314262,
+        "queueMs": 0,
+        "operationMs": 0,
+        "handlerMs": 0.10000014305114746,
+        "responseReadyAtMs": 1791547314262
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2552.5897000000114,
+      "timing": {
+        "nativeReceivedAtMs": 1791547314268,
+        "frontendReceivedAtMs": 1791547314671,
+        "queueMs": 0,
+        "operationMs": 2144.699999809265,
+        "handlerMs": 2144.699999809265,
+        "responseReadyAtMs": 1791547316816
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 6877.050999999978,
+      "timing": {
+        "nativeReceivedAtMs": 1791547319833,
+        "frontendReceivedAtMs": 1791547320099,
+        "queueMs": 0,
+        "operationMs": 6607.799999952316,
+        "handlerMs": 6607.799999952316,
+        "responseReadyAtMs": 1791547326707
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 6382.588599999988,
+      "timing": {
+        "nativeReceivedAtMs": 1791547329230,
+        "frontendReceivedAtMs": 1791547329527,
+        "queueMs": 0,
+        "operationMs": 6080.700000047684,
+        "handlerMs": 6080.800000190735,
+        "responseReadyAtMs": 1791547335608
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 206.32300000000396,
+      "timing": {
+        "nativeReceivedAtMs": 1791547338362,
+        "frontendReceivedAtMs": 1791547338564,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.2999999523162842,
+        "responseReadyAtMs": 1791547338565
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2164.3680999999924,
+      "timing": {
+        "nativeReceivedAtMs": 1791547338569,
+        "frontendReceivedAtMs": 1791547338852,
+        "queueMs": 0,
+        "operationMs": 1877.9000000953674,
+        "handlerMs": 1878.0999999046326,
+        "responseReadyAtMs": 1791547340730
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2562.1057999999903,
+      "timing": {
+        "nativeReceivedAtMs": 1791547340734,
+        "frontendReceivedAtMs": 1791547343292,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.09999990463256836,
+        "responseReadyAtMs": 1791547343292
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2671.3194000000076,
+      "timing": {
+        "nativeReceivedAtMs": 1791547343298,
+        "frontendReceivedAtMs": 1791547343504,
+        "queueMs": 0,
+        "operationMs": 2461.5,
+        "handlerMs": 2461.5,
+        "responseReadyAtMs": 1791547345965
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2466.347000000009,
+      "timing": {
+        "nativeReceivedAtMs": 1791547345969,
+        "frontendReceivedAtMs": 1791547348431,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791547348432
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2765.328199999989,
+      "timing": {
+        "nativeReceivedAtMs": 1791547348437,
+        "frontendReceivedAtMs": 1791547348631,
+        "queueMs": 0,
+        "operationMs": 2566.7999999523163,
+        "handlerMs": 2566.899999856949,
+        "responseReadyAtMs": 1791547351198
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2358.815900000016,
+      "timing": {
+        "nativeReceivedAtMs": 1791547351202,
+        "frontendReceivedAtMs": 1791547353558,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.09999990463256836,
+        "responseReadyAtMs": 1791547353558
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2267.8991999999853,
+      "timing": {
+        "nativeReceivedAtMs": 1791547353563,
+        "frontendReceivedAtMs": 1791547353934,
+        "queueMs": 0,
+        "operationMs": 1893.6000001430511,
+        "handlerMs": 1893.7999999523163,
+        "responseReadyAtMs": 1791547355827
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 210.0292999999947,
+      "timing": {
+        "nativeReceivedAtMs": 1791547358635,
+        "frontendReceivedAtMs": 1791547358843,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791547358843
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2135.0455000000075,
+      "timing": {
+        "nativeReceivedAtMs": 1791547358846,
+        "frontendReceivedAtMs": 1791547359128,
+        "queueMs": 0,
+        "operationMs": 1850.7000000476837,
+        "handlerMs": 1850.7999999523163,
+        "responseReadyAtMs": 1791547360979
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2658.8470999999845,
+      "timing": {
+        "nativeReceivedAtMs": 1791547360982,
+        "frontendReceivedAtMs": 1791547363637,
+        "queueMs": 0,
+        "operationMs": 0,
+        "handlerMs": 0.10000014305114746,
+        "responseReadyAtMs": 1791547363637
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 3036.9516000000003,
+      "timing": {
+        "nativeReceivedAtMs": 1791547363642,
+        "frontendReceivedAtMs": 1791547364696,
+        "queueMs": 0,
+        "operationMs": 1980.9000000953674,
+        "handlerMs": 1981.0999999046326,
+        "responseReadyAtMs": 1791547366677
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2418.5092000000004,
+      "timing": {
+        "nativeReceivedAtMs": 1791547366679,
+        "frontendReceivedAtMs": 1791547369094,
+        "queueMs": 0,
+        "operationMs": 0.10000014305114746,
+        "handlerMs": 0.10000014305114746,
+        "responseReadyAtMs": 1791547369094
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 3028.261999999988,
+      "timing": {
+        "nativeReceivedAtMs": 1791547369099,
+        "frontendReceivedAtMs": 1791547369299,
+        "queueMs": 0,
+        "operationMs": 2826.5,
+        "handlerMs": 2826.5999999046326,
+        "responseReadyAtMs": 1791547372125
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2581.45630000002,
+      "timing": {
+        "nativeReceivedAtMs": 1791547372128,
+        "frontendReceivedAtMs": 1791547374705,
+        "queueMs": 0,
+        "operationMs": 0.10000014305114746,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791547374705
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2325.8496999999916,
+      "timing": {
+        "nativeReceivedAtMs": 1791547374711,
+        "frontendReceivedAtMs": 1791547375004,
+        "queueMs": 0,
+        "operationMs": 2029.2999999523163,
+        "handlerMs": 2029.3999998569489,
+        "responseReadyAtMs": 1791547377034
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 6458.484200000006,
+      "timing": {
+        "nativeReceivedAtMs": 1791547380036,
+        "frontendReceivedAtMs": 1791547380308,
+        "queueMs": 0,
+        "operationMs": 6184.100000143051,
+        "handlerMs": 6184.200000047684,
+        "responseReadyAtMs": 1791547386492
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 8770.825000000012,
+      "timing": {
+        "nativeReceivedAtMs": 1791547389055,
+        "frontendReceivedAtMs": 1791547389255,
+        "queueMs": 0,
+        "operationMs": 8568.299999952316,
+        "handlerMs": 8568.400000095367,
+        "responseReadyAtMs": 1791547397823
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 8109.293900000019,
+      "timing": {
+        "nativeReceivedAtMs": 1791547400244,
+        "frontendReceivedAtMs": 1791547400510,
+        "queueMs": 0,
+        "operationMs": 7840.5,
+        "handlerMs": 7840.799999952316,
+        "responseReadyAtMs": 1791547408351
+      }
+    },
+    {
+      "name": "playback.stop",
+      "ms": 1208.1236999999965,
+      "timing": {
+        "nativeReceivedAtMs": 1791547411339,
+        "frontendReceivedAtMs": 1791547411536,
+        "queueMs": 0.10000014305114746,
+        "operationMs": 1005.8999998569489,
+        "handlerMs": 1006.0999999046326,
+        "responseReadyAtMs": 1791547412542
+      }
+    }
+  ],
+  "samples": [
+    {
+      "pair": 0,
+      "kind": "serial",
+      "ms": 17915.0827,
+      "steps": 4,
+      "rpcCount": 8,
+      "frame": 7
+    },
+    {
+      "pair": 0,
+      "kind": "batch",
+      "ms": 6877.817500000005,
+      "steps": 4,
+      "rpcCount": 1,
+      "frame": 11
+    },
+    {
+      "pair": 1,
+      "kind": "batch",
+      "ms": 6383.2981000000145,
+      "steps": 4,
+      "rpcCount": 1,
+      "frame": 15
+    },
+    {
+      "pair": 1,
+      "kind": "serial",
+      "ms": 17468.676799999987,
+      "steps": 4,
+      "rpcCount": 8,
+      "frame": 19
+    },
+    {
+      "pair": 2,
+      "kind": "serial",
+      "ms": 18400.959900000016,
+      "steps": 4,
+      "rpcCount": 8,
+      "frame": 23
+    },
+    {
+      "pair": 2,
+      "kind": "batch",
+      "ms": 6459.376499999984,
+      "steps": 4,
+      "rpcCount": 1,
+      "frame": 27
+    }
+  ],
+  "scope": "Same owned published Warcraft scene and editor: serial and batched pause/resume input, selection, hold, native F5 save and menu-load click. Startup and queries excluded from paired input timings. No whole-task speedup, physical input, audio or full Warcraft parity claim.",
+  "readyMs": 108995.54680000001,
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nundefined !== 2\n\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-agent-playback-sequence.mjs:37:182\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+  "shutdown": {
+    "pid": 135024,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "finishedAt": "2026-10-09T12:03:39.467Z"
+}

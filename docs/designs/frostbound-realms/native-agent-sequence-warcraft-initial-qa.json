@@ -1,0 +1,479 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-09T11:53:55.550Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\agent-sequence-warcraft-1791546816423\\sample",
+  "entityCount": 80149,
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "sourceMainSha256": "968f1ff6920bbc9db04bfb445ea14954fc24bd06a3c27e3ed7eb57145f82a115",
+  "sourceSceneSha256": "215716b258e7284cb07c6008e9e03965697b6326e966d4b85cb45dc4704d951c",
+  "fixtureMainSha256": "b8092124cecab29ac4cef29e1df06a8470127704226db9473ba5bb4a23f59717",
+  "commands": [
+    {
+      "name": "view.set_game_resolution",
+      "ms": 6286.917799999996,
+      "timing": {
+        "nativeReceivedAtMs": 1791546886485,
+        "frontendReceivedAtMs": 1791546889156,
+        "queueMs": 0,
+        "operationMs": 3609.399999856949,
+        "handlerMs": 3609.5999999046326,
+        "responseReadyAtMs": 1791546892766
+      }
+    },
+    {
+      "name": "panel.focus",
+      "ms": 31729.497600000002,
+      "timing": {
+        "nativeReceivedAtMs": 1791546912820,
+        "frontendReceivedAtMs": 1791546915486,
+        "handlerMs": 9009.699999809265,
+        "responseReadyAtMs": 1791546924496
+      }
+    },
+    {
+      "name": "playback.play",
+      "ms": 10946.059999999998,
+      "timing": {
+        "nativeReceivedAtMs": 1791546924501,
+        "frontendReceivedAtMs": 1791546927102,
+        "queueMs": 0,
+        "operationMs": 8340.699999809265,
+        "handlerMs": 8340.799999952316,
+        "responseReadyAtMs": 1791546935443
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 5412.779800000004,
+      "timing": {
+        "nativeReceivedAtMs": 1791546935449,
+        "frontendReceivedAtMs": 1791546937670,
+        "queueMs": 0,
+        "operationMs": 3188.899999856949,
+        "handlerMs": 3188.899999856949,
+        "responseReadyAtMs": 1791546940859
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 6002.301299999992,
+      "timing": {
+        "nativeReceivedAtMs": 1791546940863,
+        "frontendReceivedAtMs": 1791546943225,
+        "queueMs": 0,
+        "operationMs": 3630.899999856949,
+        "handlerMs": 3631.0999999046326,
+        "responseReadyAtMs": 1791546946856
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 323.9277000000002,
+      "timing": {
+        "nativeReceivedAtMs": 1791546948987,
+        "frontendReceivedAtMs": 1791546949308,
+        "queueMs": 0,
+        "operationMs": 0,
+        "handlerMs": 0.10000014305114746,
+        "responseReadyAtMs": 1791546949308
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2394.547900000005,
+      "timing": {
+        "nativeReceivedAtMs": 1791546949311,
+        "frontendReceivedAtMs": 1791546949549,
+        "queueMs": 0,
+        "operationMs": 2154.2000000476837,
+        "handlerMs": 2154.2000000476837,
+        "responseReadyAtMs": 1791546951704
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2075.725400000025,
+      "timing": {
+        "nativeReceivedAtMs": 1791546951707,
+        "frontendReceivedAtMs": 1791546953779,
+        "queueMs": 0,
+        "operationMs": 0,
+        "handlerMs": 0.10000014305114746,
+        "responseReadyAtMs": 1791546953779
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 1884.6590999999898,
+      "timing": {
+        "nativeReceivedAtMs": 1791546953783,
+        "frontendReceivedAtMs": 1791546953940,
+        "queueMs": 0,
+        "operationMs": 1725.6000001430511,
+        "handlerMs": 1725.7000000476837,
+        "responseReadyAtMs": 1791546955666
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2430.4182000000146,
+      "timing": {
+        "nativeReceivedAtMs": 1791546955669,
+        "frontendReceivedAtMs": 1791546958096,
+        "queueMs": 0.10000014305114746,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791546958096
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 1788.40830000001,
+      "timing": {
+        "nativeReceivedAtMs": 1791546958100,
+        "frontendReceivedAtMs": 1791546958440,
+        "queueMs": 0,
+        "operationMs": 1445.3000001907349,
+        "handlerMs": 1445.4000000953674,
+        "responseReadyAtMs": 1791546959886
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2055.943899999984,
+      "timing": {
+        "nativeReceivedAtMs": 1791546959889,
+        "frontendReceivedAtMs": 1791546961942,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791546961943
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2249.2678000000014,
+      "timing": {
+        "nativeReceivedAtMs": 1791546961946,
+        "frontendReceivedAtMs": 1791546962108,
+        "queueMs": 0,
+        "operationMs": 2085.399999856949,
+        "handlerMs": 2085.5,
+        "responseReadyAtMs": 1791546964193
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 5450.769700000004,
+      "timing": {
+        "nativeReceivedAtMs": 1791546966156,
+        "frontendReceivedAtMs": 1791546966433,
+        "queueMs": 0,
+        "operationMs": 5171.899999856949,
+        "handlerMs": 5172,
+        "responseReadyAtMs": 1791546971605
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 5195.818400000018,
+      "timing": {
+        "nativeReceivedAtMs": 1791546973623,
+        "frontendReceivedAtMs": 1791546973782,
+        "queueMs": 0,
+        "operationMs": 5034.600000143051,
+        "handlerMs": 5034.600000143051,
+        "responseReadyAtMs": 1791546978816
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 170.1418999999878,
+      "timing": {
+        "nativeReceivedAtMs": 1791546981185,
+        "frontendReceivedAtMs": 1791546981353,
+        "queueMs": 0,
+        "operationMs": 0.10000014305114746,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791546981354
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 1799.8866999999736,
+      "timing": {
+        "nativeReceivedAtMs": 1791546981356,
+        "frontendReceivedAtMs": 1791546981555,
+        "queueMs": 0,
+        "operationMs": 1598.2999999523163,
+        "handlerMs": 1598.5,
+        "responseReadyAtMs": 1791546983154
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2138.5176999999967,
+      "timing": {
+        "nativeReceivedAtMs": 1791546983156,
+        "frontendReceivedAtMs": 1791546985291,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.19999980926513672,
+        "responseReadyAtMs": 1791546985291
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2357.122000000003,
+      "timing": {
+        "nativeReceivedAtMs": 1791546985296,
+        "frontendReceivedAtMs": 1791546985568,
+        "queueMs": 0.10000014305114746,
+        "operationMs": 2082.5999999046326,
+        "handlerMs": 2082.7999999523163,
+        "responseReadyAtMs": 1791546987651
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 1949.3385999999882,
+      "timing": {
+        "nativeReceivedAtMs": 1791546987654,
+        "frontendReceivedAtMs": 1791546989597,
+        "queueMs": 0,
+        "operationMs": 0,
+        "handlerMs": 0.09999990463256836,
+        "responseReadyAtMs": 1791546989597
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 1852.1625000000058,
+      "timing": {
+        "nativeReceivedAtMs": 1791546989604,
+        "frontendReceivedAtMs": 1791546989953,
+        "queueMs": 0,
+        "operationMs": 1500.1999998092651,
+        "handlerMs": 1500.2999999523163,
+        "responseReadyAtMs": 1791546991454
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2502.45689999999,
+      "timing": {
+        "nativeReceivedAtMs": 1791546991457,
+        "frontendReceivedAtMs": 1791546993956,
+        "queueMs": 0,
+        "operationMs": 0,
+        "handlerMs": 0.10000014305114746,
+        "responseReadyAtMs": 1791546993956
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 1771.8470999999845,
+      "timing": {
+        "nativeReceivedAtMs": 1791546993963,
+        "frontendReceivedAtMs": 1791546994229,
+        "queueMs": 0,
+        "operationMs": 1503.6000001430511,
+        "handlerMs": 1503.7000000476837,
+        "responseReadyAtMs": 1791546995733
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 170.5181000000157,
+      "timing": {
+        "nativeReceivedAtMs": 1791546998123,
+        "frontendReceivedAtMs": 1791546998292,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.09999990463256836,
+        "responseReadyAtMs": 1791546998292
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 1780.8226999999897,
+      "timing": {
+        "nativeReceivedAtMs": 1791546998295,
+        "frontendReceivedAtMs": 1791546998554,
+        "queueMs": 0,
+        "operationMs": 1520.3999998569489,
+        "handlerMs": 1520.3999998569489,
+        "responseReadyAtMs": 1791547000074
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2049.7105000000156,
+      "timing": {
+        "nativeReceivedAtMs": 1791547000077,
+        "frontendReceivedAtMs": 1791547002124,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.09999990463256836,
+        "responseReadyAtMs": 1791547002124
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 2265.74059999999,
+      "timing": {
+        "nativeReceivedAtMs": 1791547002127,
+        "frontendReceivedAtMs": 1791547002398,
+        "queueMs": 0,
+        "operationMs": 1992.2000000476837,
+        "handlerMs": 1992.3000001907349,
+        "responseReadyAtMs": 1791547004391
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2037.4317999999912,
+      "timing": {
+        "nativeReceivedAtMs": 1791547004394,
+        "frontendReceivedAtMs": 1791547006428,
+        "queueMs": 0,
+        "operationMs": 0.09999990463256836,
+        "handlerMs": 0.09999990463256836,
+        "responseReadyAtMs": 1791547006428
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 1684.0212000000174,
+      "timing": {
+        "nativeReceivedAtMs": 1791547006433,
+        "frontendReceivedAtMs": 1791547006590,
+        "queueMs": 0,
+        "operationMs": 1524.7999999523163,
+        "handlerMs": 1524.9000000953674,
+        "responseReadyAtMs": 1791547008115
+      }
+    },
+    {
+      "name": "playback.input",
+      "ms": 2529.524999999994,
+      "timing": {
+        "nativeReceivedAtMs": 1791547008118,
+        "frontendReceivedAtMs": 1791547010643,
+        "queueMs": 0,
+        "operationMs": 0,
+        "handlerMs": 0.20000004768371582,
+        "responseReadyAtMs": 1791547010643
+      }
+    },
+    {
+      "name": "playback.step",
+      "ms": 1810.1943000000028,
+      "timing": {
+        "nativeReceivedAtMs": 1791547010649,
+        "frontendReceivedAtMs": 1791547010921,
+        "queueMs": 0,
+        "operationMs": 1534.5,
+        "handlerMs": 1534.5,
+        "responseReadyAtMs": 1791547012456
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 5238.698900000018,
+      "timing": {
+        "nativeReceivedAtMs": 1791547014455,
+        "frontendReceivedAtMs": 1791547014618,
+        "queueMs": 0,
+        "operationMs": 5073.700000047684,
+        "handlerMs": 5073.700000047684,
+        "responseReadyAtMs": 1791547019692
+      }
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 6669.124299999996,
+      "timing": {
+        "nativeReceivedAtMs": 1791547022192,
+        "frontendReceivedAtMs": 1791547022357,
+        "queueMs": 0,
+        "operationMs": 6501,
+        "handlerMs": 6501.100000143051,
+        "responseReadyAtMs": 1791547028858
+      }
+    },
+    {
+      "name": "playback.stop",
+      "ms": 1450.7954000000027,
+      "timing": {
+        "nativeReceivedAtMs": 1791547030826,
+        "frontendReceivedAtMs": 1791547031016,
+        "queueMs": 0,
+        "operationMs": 1257.9000000953674,
+        "handlerMs": 1257.9000000953674,
+        "responseReadyAtMs": 1791547032274
+      }
+    }
+  ],
+  "samples": [
+    {
+      "pair": 0,
+      "kind": "serial",
+      "ms": 15211.07130000001,
+      "steps": 4,
+      "rpcCount": 8,
+      "frame": 7
+    },
+    {
+      "pair": 0,
+      "kind": "batch",
+      "ms": 5451.525699999998,
+      "steps": 4,
+      "rpcCount": 1,
+      "frame": 11
+    },
+    {
+      "pair": 1,
+      "kind": "batch",
+      "ms": 5196.641000000003,
+      "steps": 4,
+      "rpcCount": 1,
+      "frame": 15
+    },
+    {
+      "pair": 1,
+      "kind": "serial",
+      "ms": 14550.39480000001,
+      "steps": 4,
+      "rpcCount": 8,
+      "frame": 19
+    },
+    {
+      "pair": 2,
+      "kind": "serial",
+      "ms": 14335.249500000005,
+      "steps": 4,
+      "rpcCount": 8,
+      "frame": 23
+    },
+    {
+      "pair": 2,
+      "kind": "batch",
+      "ms": 5239.515000000014,
+      "steps": 4,
+      "rpcCount": 1,
+      "frame": 27
+    }
+  ],
+  "scope": "Same owned published Warcraft scene and editor: serial and batched pause/resume input, selection, hold, native F5 save and menu-load click. Startup and queries excluded from paired input timings. No whole-task speedup, physical input, audio or full Warcraft parity claim.",
+  "readyMs": 105207.76340000001,
+  "error": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(saved.units.some(u=>u.kind==='hero'&&u.order.type==='hold'))\n\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-agent-playback-sequence.mjs:36:270\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+  "shutdown": {
+    "pid": 100868,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "finishedAt": "2026-10-09T11:57:17.258Z"
+}

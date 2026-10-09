@@ -133,6 +133,25 @@ const panelKind: AgentJsonSchema = {
   ],
   description: 'Core editor panel kind',
 };
+// Author: MiYu. Share input and step constraints with ordered playback sequences.
+const playbackInputSchema = objectSchema({
+    keys: { type: 'array', maxItems: 128, uniqueItems: true, items: { type: 'string', pattern: '^[A-Za-z][A-Za-z0-9]{0,39}$' }, description: 'Complete held KeyboardEvent.code set, e.g. KeyA, ArrowLeft, Space; [] releases all' },
+    buttons: { type: 'array', maxItems: 3, uniqueItems: true, items: { type: 'integer', minimum: 0, maximum: 2 }, description: 'Held pointer buttons: 0 left, 1 middle, 2 right; [] releases all' },
+    pointer: finiteTuple(2, 'Game content coordinates in pixels from the top-left'),
+    pointerDelta: finiteTuple(2, 'Relative mouse motion accumulated for the next simulation frame'),
+    pointerLocked: { type: 'boolean', description: 'Whether relative mouse capture is active' },
+    viewport: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'integer', minimum: 1, maximum: 16384 }, description: 'Width and height of the Game content in pixels' },
+  });
+const playbackStepSchema = objectSchema({
+    steps: { type: 'integer', minimum: 1, maximum: 600, description: 'Number of sequential deterministic steps; default 1. Held input continues; press/release edges are consumed once.' },
+    deltaTime: {
+      type: 'number',
+      exclusiveMinimum: 0,
+      maximum: 1,
+      description: 'Simulation seconds for the step; default 1/60',
+    },
+  });
+
 const emptySchema = objectSchema();
 const uiInteractionContext: SchemaProperties = {
   windowLabel: stringValue('Window label; default main'),
@@ -782,23 +801,11 @@ export const COMMAND_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
   'playback.play': objectSchema({ paused: { type: 'boolean', description: 'Start paused before the first simulation frame for deterministic stepping' } }),
   'playback.pause': emptySchema,
   'playback.stop': emptySchema,
-  'playback.input': objectSchema({
-    keys: { type: 'array', maxItems: 128, uniqueItems: true, items: { type: 'string', pattern: '^[A-Za-z][A-Za-z0-9]{0,39}$' }, description: 'Complete held KeyboardEvent.code set, e.g. KeyA, ArrowLeft, Space; [] releases all' },
-    buttons: { type: 'array', maxItems: 3, uniqueItems: true, items: { type: 'integer', minimum: 0, maximum: 2 }, description: 'Held pointer buttons: 0 left, 1 middle, 2 right; [] releases all' },
-    pointer: finiteTuple(2, 'Game content coordinates in pixels from the top-left'),
-    pointerDelta: finiteTuple(2, 'Relative mouse motion accumulated for the next simulation frame'),
-    pointerLocked: { type: 'boolean', description: 'Whether relative mouse capture is active' },
-    viewport: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'integer', minimum: 1, maximum: 16384 }, description: 'Width and height of the Game content in pixels' },
-  }),
-  'playback.step': objectSchema({
-    steps: { type: 'integer', minimum: 1, maximum: 600, description: 'Number of sequential deterministic steps; default 1. Held input continues; press/release edges are consumed once.' },
-    deltaTime: {
-      type: 'number',
-      exclusiveMinimum: 0,
-      maximum: 1,
-      description: 'Simulation seconds for the step; default 1/60',
-    },
-  }),
+  'playback.input': playbackInputSchema,
+  'playback.step': playbackStepSchema,
+  'playback.sequence': objectSchema({
+    phases: { type: 'array', minItems: 1, maxItems: 120, items: objectSchema({ input: playbackInputSchema, ...playbackStepSchema.properties as SchemaProperties }), description: 'Ordered input and paused stepping phases; each defaults to one 1/60-second step. At most 600 total steps.' },
+  }, ['phases']),
   'history.undo': emptySchema,
   'history.redo': emptySchema,
   'gizmo.set': objectSchema({
