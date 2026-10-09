@@ -112,7 +112,7 @@ def main(config=None):
         work = pathlib.Path(temp); export = work / 'export'; geometry = work / 'geometry'
         for record in sources.values():
             target = export / 'raw' / c.relative(record['path']); target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(files[record['output']])
-        manifest = dict(source='Bundled original Warcraft III Orc hero sources', archives=[dict(archive=n) for n in ARCHIVES], precedence=ARCHIVES, files=[dict(path=r['path'].replace('/', '\\'), **{k: r[k] for k in ['archive', 'bytes', 'sha256']}) for r in sources.values()], modelSamples=[dict(path=b['path'].replace('/', '\\'), textureSources={}) for b in binding_records])
+        manifest = dict(source=config.get('sourceDescription', 'Bundled original Warcraft III Orc hero sources'), archives=[dict(archive=n) for n in ARCHIVES], precedence=ARCHIVES, files=[dict(path=r['path'].replace('/', '\\'), **{k: r[k] for k in ['archive', 'bytes', 'sha256']}) for r in sources.values()], modelSamples=[dict(path=b['path'].replace('/', '\\'), textureSources={}) for b in binding_records])
         (export / 'manifest.json').write_bytes(encode(manifest))
         previous_sampler, previous_argv = c.sampler, sys.argv
         c.sampler = lambda: (args.sampler, pin / 'upstream/LICENSE', {'upstream.zip': sha((pin / 'upstream.zip').read_bytes())})
@@ -192,7 +192,7 @@ def main(config=None):
         target = output / c.relative(path); target.parent.mkdir(parents=True, exist_ok=True)
         if not target.exists() or target.read_bytes() != raw: target.write_bytes(raw)
     output.mkdir(parents=True, exist_ok=True); (output / RECEIPT).write_bytes(encode(receipt))
-    print('PASS original Orc art:', len(models), 'body/portrait models,', len(sources), 'sources,', len(files), 'signed outputs; batched native bounds:', len(boxes))
+    print('PASS original ' + config.get('race', 'Orc') + ' art:', len(models), 'body/portrait models,', len(sources), 'sources,', len(files), 'signed outputs; batched native bounds:', len(boxes))
 
 
 if __name__ == '__main__': main()

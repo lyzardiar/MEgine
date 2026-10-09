@@ -1,0 +1,1 @@
+Original Warcraft III geometry, animation, textures and cameras belong to Blizzard Entertainment. Extraction does not establish a free redistribution license. Sources and fingerprints: undead-hero-art-sources.json.

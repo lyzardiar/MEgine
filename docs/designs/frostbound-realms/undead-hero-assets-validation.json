@@ -1,0 +1,40 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "heroes": [
+    "Udea",
+    "Ulic",
+    "Udre",
+    "Ucrl"
+  ],
+  "sourceAbilities": 16,
+  "sourceRanks": 40,
+  "bodyAndPortraitModels": 8,
+  "clips": 55,
+  "renderParts": 54,
+  "nativePoseSamples": 1380,
+  "signedOutputFiles": 574,
+  "originalHeroCards": 72,
+  "sha256": {
+    "undead-hero-rules.json": "5bade283f9c61890736676019e2c57a79c0f66411982da54b7997bfb496bddf7",
+    "undead-hero-models.json": "f79f148e68626891490ec99ca14d41523c1174fdc5d0aa338c86a516584a5484",
+    "undead-hero-portraits.json": "98cf5981d9c15aee8cadb4e74a95963da25a52a970ce2f627a4eb17779f927ef",
+    "undead-hero-sources.json": "ec16303d44247ada2c04d9257d8fbecd388ed274132fffc8c5190610bce7b003",
+    "undead-hero-art-sources.json": "e260cbf3af9bc1ad4554463ac269735aa3247f82c23dfb206aa92659fe9cb776"
+  },
+  "sourceModelsOfflineByteIdentical": true,
+  "sourceRulesOfflineByteIdentical": true,
+  "existingOrcPacksOfflineByteIdentical": true,
+  "sourceAndModifiedOutputProtection": true,
+  "nativeReport": "native-undead-hero-assets-qa.json",
+  "logs": {
+    "undead-hero-rules-tests.log": "f7d26fed05b82af76ed13f3dbba6528e44e4244573fc3248343eaa00573f6c31",
+    "undead-hero-art-tests.log": "d4d34164eefb65384c702b652afe747eb856a955de15982d54f069e3ffc8495e",
+    "undead-orc-rules-regression.log": "fc388eedda2694edab1054bbff4d5bab9545709cceea6138eefcaadb1557f970",
+    "undead-orc-art-regression.log": "52df6c6f201d6146f617ce167807644c40e6782c6e21163c9a9631567f1a0d86",
+    "undead-import-compatibility.log": "a935d386f4fdc43f91051d1736573c4c06ed403e024f8bd1422ba148ea8f27ba",
+    "undead-native-assets.log": "be238f7cbabed6e529d09df7d28f8c6423473555f0926fc6b296ff8854bf8dab"
+  },
+  "runtimeGameplayIntegrated": false,
+  "originalRuntimeVerified": false
+}

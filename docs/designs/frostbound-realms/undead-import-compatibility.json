@@ -1,0 +1,86 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "verifiedSignedOutputs": {
+    "farseer-art-sources.json": 102,
+    "farseer-lightning-sources.json": 4,
+    "farseer-particle-sources.json": 35,
+    "farseer-rules-sources.json": 1,
+    "orc-hero-art-sources.json": 353,
+    "orc-hero-sources.json": 138,
+    "shadowhunter-art-sources.json": 323,
+    "shadowhunter-lightning-sources.json": 4,
+    "shadowhunter-rules-sources.json": 4,
+    "tauren-rules-sources.json": 2,
+    "undead-hero-art-sources.json": 432,
+    "undead-hero-sources.json": 142
+  },
+  "reproducedExistingPacks": {
+    "orc-hero-sources.json": 138,
+    "orc-hero-art-sources.json": 353
+  },
+  "provenanceChanges": [
+    {
+      "receipt": "farseer-art-sources.json",
+      "generator": "scripts/import-frost-orc-hero-art.py",
+      "before": "43de1bce152b5f5e93ba92533e887373694e66dbc961fd0f0383b338c20313e8",
+      "after": "fe05246337eaa803c8181ec027ff5ee1e4b71ae21257cc5e605d735feae986cd"
+    },
+    {
+      "receipt": "farseer-lightning-sources.json",
+      "generator": "scripts/import-frost-orc-heroes.py",
+      "before": "f9ac914024fdc9e25435d6ce5afa103602da497a3faa1e19ad50e0354518cb63",
+      "after": "fdfc38a1f9abfef9788a8a9d4fa80fd178db843ef6d2a37519772f28fc9b5f7b"
+    },
+    {
+      "receipt": "farseer-particle-sources.json",
+      "generator": "scripts/import-frost-orc-hero-art.py",
+      "before": "43de1bce152b5f5e93ba92533e887373694e66dbc961fd0f0383b338c20313e8",
+      "after": "fe05246337eaa803c8181ec027ff5ee1e4b71ae21257cc5e605d735feae986cd"
+    },
+    {
+      "receipt": "farseer-rules-sources.json",
+      "generator": "scripts/import-frost-orc-heroes.py",
+      "before": "f9ac914024fdc9e25435d6ce5afa103602da497a3faa1e19ad50e0354518cb63",
+      "after": "fdfc38a1f9abfef9788a8a9d4fa80fd178db843ef6d2a37519772f28fc9b5f7b"
+    },
+    {
+      "receipt": "orc-hero-art-sources.json",
+      "generator": "scripts/import-frost-orc-hero-art.py",
+      "before": "43de1bce152b5f5e93ba92533e887373694e66dbc961fd0f0383b338c20313e8",
+      "after": "fe05246337eaa803c8181ec027ff5ee1e4b71ae21257cc5e605d735feae986cd"
+    },
+    {
+      "receipt": "orc-hero-sources.json",
+      "generator": "scripts/import-frost-orc-heroes.py",
+      "before": "f9ac914024fdc9e25435d6ce5afa103602da497a3faa1e19ad50e0354518cb63",
+      "after": "fdfc38a1f9abfef9788a8a9d4fa80fd178db843ef6d2a37519772f28fc9b5f7b"
+    },
+    {
+      "receipt": "shadowhunter-art-sources.json",
+      "generator": "scripts/import-frost-orc-hero-art.py",
+      "before": "43de1bce152b5f5e93ba92533e887373694e66dbc961fd0f0383b338c20313e8",
+      "after": "fe05246337eaa803c8181ec027ff5ee1e4b71ae21257cc5e605d735feae986cd"
+    },
+    {
+      "receipt": "shadowhunter-lightning-sources.json",
+      "generator": "scripts/import-frost-orc-heroes.py",
+      "before": "f9ac914024fdc9e25435d6ce5afa103602da497a3faa1e19ad50e0354518cb63",
+      "after": "fdfc38a1f9abfef9788a8a9d4fa80fd178db843ef6d2a37519772f28fc9b5f7b"
+    },
+    {
+      "receipt": "shadowhunter-rules-sources.json",
+      "generator": "scripts/import-frost-orc-heroes.py",
+      "before": "f9ac914024fdc9e25435d6ce5afa103602da497a3faa1e19ad50e0354518cb63",
+      "after": "fdfc38a1f9abfef9788a8a9d4fa80fd178db843ef6d2a37519772f28fc9b5f7b"
+    },
+    {
+      "receipt": "tauren-rules-sources.json",
+      "generator": "scripts/import-frost-orc-heroes.py",
+      "before": "f9ac914024fdc9e25435d6ce5afa103602da497a3faa1e19ad50e0354518cb63",
+      "after": "fdfc38a1f9abfef9788a8a9d4fa80fd178db843ef6d2a37519772f28fc9b5f7b"
+    }
+  ],
+  "refreshed": true,
+  "scope": "All referenced signed outputs verified unchanged; existing four Orc hero rules and art packs independently reproduced byte-for-byte. Other consumers use unchanged helper functions or the verified default art conversion; their packs were not independently regenerated in this check."
+}

@@ -23,21 +23,22 @@ def number(value): return float(value) if value.strip() not in ['', '-', '_'] el
 def slot(value): return sum(int(v) * multiplier for v, multiplier in zip(value.split(','), [1, 4]))
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+def main(config=None):
+    config = config or {}; race = config.get('race', 'Orc'); heroes = config.get('heroes', HEROES); name = config.get('name', 'orc-hero'); asset_group = config.get('assetGroup', 'OrcHeroes'); altar_id = config.get('altar', 'oalt')
+    parser = argparse.ArgumentParser(description=config.get('description', __doc__))
     parser.add_argument('--output', type=pathlib.Path, default=SAMPLE)
     parser.add_argument('--source-root', type=pathlib.Path)
     parser.add_argument('--game', type=pathlib.Path, default=pathlib.Path('E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne'))
     args = parser.parse_args(); output = args.output.resolve(); source_root = (args.source_root or SAMPLE).resolve()
-    receipt_path = source_root / 'orc-hero-sources.json'
+    receipt_path = source_root / (name + '-sources.json')
     receipt = json.loads(receipt_path.read_bytes()) if receipt_path.exists() else {}
-    if args.source_root and not receipt: raise ValueError('Signed Orc hero source receipt is required')
+    if args.source_root and not receipt: raise ValueError('Signed ' + race + ' hero source receipt is required')
     signed = {r['path']: r for r in receipt.get('sources', [])}; sources, files, archives = {}, {}, []
 
     def original(path):
         path = path.replace('\\', '/')
         if path in sources: return files[sources[path]['output']]
-        target = 'SourceAssets/OrcHeroes/raw/' + path
+        target = 'SourceAssets/' + asset_group + '/raw/' + path
         if signed:
             record = signed.get(path)
             if not record: raise ValueError('Missing signed source: ' + path)
@@ -54,20 +55,20 @@ def main():
         return raw
 
     tables = {n: rows(original('Units/' + n + '.slk')) for n in ['UnitBalance', 'UnitData', 'UnitWeapons', 'UnitAbilities', 'unitUI', 'AbilityData', 'AbilityMetaData', 'AbilityBuffData']}
-    texts = {n: original('Units/Orc' + n + '.txt') for n in ['UnitFunc', 'UnitStrings', 'AbilityFunc', 'AbilityStrings']}
+    texts = {n: original('Units/' + race + n + '.txt') for n in ['UnitFunc', 'UnitStrings', 'AbilityFunc', 'AbilityStrings']}
     common_func = original('Units/CommonAbilityFunc.txt'); misc = section(original('Units/MiscGame.txt'), 'Misc')
-    original('Scripts/orc.ai'); original('Scripts/common.ai')
+    original('Scripts/' + race.lower() + '.ai'); original('Scripts/common.ai')
 
     def icons(key, path):
         result = {}
         disabled = path.replace('\\CommandButtons\\BTN', '\\CommandButtonsDisabled\\DISBTN').replace('\\PassiveButtons\\PASBTN', '\\CommandButtonsDisabled\\DISPASBTN')
         for field, source in [('icon', path), ('disabledIcon', disabled)]:
-            target = 'Assets/OrcHeroes/Icons/' + key + ('-disabled' if field == 'disabledIcon' else '') + '.png'
+            target = 'Assets/' + asset_group + '/Icons/' + key + ('-disabled' if field == 'disabledIcon' else '') + '.png'
             files[target] = base.decode_icon(original(source)); result[field] = target
         return result
 
     units, abilities, buffs = {}, {}, {}
-    for key in HEROES:
+    for key in heroes:
         b, d, w, a, ui = [tables[n][key] for n in ['UnitBalance', 'UnitData', 'UnitWeapons', 'UnitAbilities', 'unitUI']]
         f, text = section(texts['UnitFunc'], key), section(texts['UnitStrings'], key)
         ability_ids = a['heroAbilList'].split(',')
@@ -84,14 +85,17 @@ def main():
             for level in levels:
                 for buff in level['buffs']:
                     if buff not in ['', '_', '-'] and buff not in buffs:
-                        buffs[buff] = dict(sourceRow=tables['AbilityBuffData'][buff], sourceFunc=section(texts['AbilityFunc'], buff) or section(common_func, buff))
+                        aliases = [key for key in tables['AbilityBuffData'] if key.lower() == buff.lower()] if buff not in tables['AbilityBuffData'] else [buff]
+                        if len(aliases) != 1: raise ValueError('Unresolved original buff reference: ' + buff)
+                        alias = aliases[0]; buffs[buff] = dict(sourceRow=tables['AbilityBuffData'][alias], sourceFunc=section(texts['AbilityFunc'], buff) or section(texts['AbilityFunc'], alias) or section(common_func, buff) or section(common_func, alias))
+                        if alias != buff: buffs[buff]['sourceAlias'] = alias
         units[key]['commandOrder'] = sorted(ability_ids, key=lambda k: abilities[k]['researchSlot'])
-    altar = dict(sourceRows={n: tables[n]['oalt'] for n in ['UnitBalance', 'UnitData', 'UnitWeapons', 'UnitAbilities', 'unitUI']}, sourceFunc=section(texts['UnitFunc'], 'oalt'), sourceStrings=section(texts['UnitStrings'], 'oalt'))
-    files['orc-hero-rules.json'] = encode(dict(author='MiYu',schemaVersion=1,heroes=HEROES,units=units,abilities=abilities,buffs=buffs,altar=altar,misc=misc,originalRuntimeVerified=False,runtimeIntegrated=False,scope='Original four Orc hero attributes, exact skill bindings and source level fields, command cards, disabled/research icons, buff records and AI scripts. Hero geometry and playable abilities are separate integration stages.'))
-    files['Assets/OrcHeroes/.gitattributes'] = b'* -text whitespace=cr-at-eol\n'
-    files['SourceAssets/OrcHeroes/.gitattributes'] = b'* -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof\n'
-    files['Assets/Licenses/Classic-Orc-Heroes.txt'] = b'Original Warcraft III rules and icons belong to Blizzard Entertainment. Extraction does not establish a free redistribution license. Source archives, hashes and generator: orc-hero-sources.json.\n'
-    previous_path = output / 'orc-hero-sources.json'
+    altar = dict(sourceRows={n: tables[n][altar_id] for n in ['UnitBalance', 'UnitData', 'UnitWeapons', 'UnitAbilities', 'unitUI']}, sourceFunc=section(texts['UnitFunc'], altar_id), sourceStrings=section(texts['UnitStrings'], altar_id))
+    files[name + '-rules.json'] = encode(dict(author='MiYu',schemaVersion=1,heroes=heroes,units=units,abilities=abilities,buffs=buffs,altar=altar,misc=misc,originalRuntimeVerified=False,runtimeIntegrated=False,scope='Original four ' + race + ' hero attributes, exact skill bindings and source level fields, command cards, disabled/research icons, buff records and AI scripts. Hero geometry and playable abilities are separate integration stages.'))
+    files['Assets/' + asset_group + '/.gitattributes'] = b'* -text whitespace=cr-at-eol\n'
+    files['SourceAssets/' + asset_group + '/.gitattributes'] = b'* -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof\n'
+    files['Assets/Licenses/Classic-' + race + '-Heroes.txt'] = ('Original Warcraft III rules and icons belong to Blizzard Entertainment. Extraction does not establish a free redistribution license. Source archives, hashes and generator: ' + name + '-sources.json.\n').encode()
+    previous_path = output / (name + '-sources.json')
     previous = json.loads(previous_path.read_bytes()) if previous_path.exists() else {}
     for record in previous.get('outputs', []):
         target = output / record['path']
@@ -99,12 +103,12 @@ def main():
     for path, raw in files.items():
         target = output / path
         if target.exists() and path not in {r['path'] for r in previous.get('outputs', [])} and target.read_bytes() != raw: raise ValueError('Unowned output collision: ' + path)
-    tools = ['scripts/import-frost-orc-heroes.py','scripts/import-frost-entangled-assets.py','scripts/import-frost-wisp-rules.py','scripts/warcraft_mpq.py']
+    tools = ['scripts/import-frost-orc-heroes.py','scripts/import-frost-entangled-assets.py','scripts/import-frost-wisp-rules.py','scripts/warcraft_mpq.py'] + config.get('generators', [])
     manifest = dict(author='MiYu',sources=list(sources.values()),outputs=[dict(path=p,bytes=len(raw),sha256=sha(raw)) for p,raw in files.items()],generators=[dict(path=p,sha256=sha((ROOT / p).read_bytes())) for p in tools],originalRuntimeVerified=False,runtimeIntegrated=False)
     for path, raw in files.items():
         target = output / path; target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(raw)
-    output.mkdir(parents=True, exist_ok=True); (output / 'orc-hero-sources.json').write_bytes(encode(manifest))
-    print('Imported four Orc heroes:', len(abilities), 'skills,', sum(len(a['levels']) for a in abilities.values()), 'skill ranks,', len(sources), 'source files,', len(files), 'signed outputs')
+    output.mkdir(parents=True, exist_ok=True); (output / (name + '-sources.json')).write_bytes(encode(manifest))
+    print('Imported four ' + race + ' heroes:', len(abilities), 'skills,', sum(len(a['levels']) for a in abilities.values()), 'skill ranks,', len(sources), 'source files,', len(files), 'signed outputs')
 
 
 if __name__ == '__main__': main()

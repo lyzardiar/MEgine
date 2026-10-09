@@ -1,0 +1,55 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-09T08:57:51.661Z",
+  "sha256": {
+    "undead-hero-rules.json": "5bade283f9c61890736676019e2c57a79c0f66411982da54b7997bfb496bddf7",
+    "undead-hero-models.json": "f79f148e68626891490ec99ca14d41523c1174fdc5d0aa338c86a516584a5484",
+    "undead-hero-portraits.json": "98cf5981d9c15aee8cadb4e74a95963da25a52a970ce2f627a4eb17779f927ef",
+    "undead-hero-sources.json": "ced9b5d7c1578c10bf033b3a561a2cb88535d47ca3737b028359ab690a2d75c4",
+    "undead-hero-art-sources.json": "5016264c927025d9d2eebe8fc554cc59519e97722a4ac7fe56d9033dd8dd2148"
+  },
+  "sceneSha256": "39dc1a6632a8c6b163e69c89881d2ff3399515fcf81eeaec2f174643f4733476",
+  "editorSha256": "72115c49eca08acbfe1b41e41802ba662ca2328720f341d41a767ad98eddc8ce",
+  "physicalInput": false,
+  "runtimeGameplayIntegrated": false,
+  "entityCount": 84,
+  "timings": [
+    {
+      "stage": "project open and ready",
+      "ms": 2364
+    },
+    {
+      "stage": "four original source bodies",
+      "ms": 9344,
+      "nativeCounts": {
+        "billboardMeshes": 3,
+        "entities": 84,
+        "materialPipelineEvictions": 0,
+        "materialPipelinesBuiltIn": 36,
+        "materialPipelinesCustom": 0,
+        "materialPipelinesRejected": 0,
+        "materialPipelinesResidentCustom": 0,
+        "materialSamplers": 1,
+        "materialTextureBindGroups": 9,
+        "materialTexturesColor": 9,
+        "materialTexturesData": 0,
+        "msaaSamples": 4,
+        "renderObjects": 29,
+        "sceneViews": 0,
+        "uiBatches": 1,
+        "uiDrawCalls": 1,
+        "uiPrimitives": 30
+      }
+    }
+  ],
+  "error": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'' !== '4294967313'\n\n    at file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-undead-hero-assets.mjs:39:372\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+  "shutdown": {
+    "pid": 149296,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "elapsedMs": 14973,
+  "scope": "Native source body and portrait-camera snapshots; particles, abilities, live gameplay, dynamic portrait cameras, audio, physical input and original-game solver parity require separate acceptance."
+}

@@ -1,0 +1,5 @@
+"""Author: MiYu. Reproduce original Death Knight, Lich, Dreadlord and Crypt Lord bodies and portraits."""
+import importlib
+
+if __name__ == '__main__':
+    importlib.import_module('import-frost-orc-hero-art').main({'description': __doc__, 'race': 'Undead', 'sourceDescription': 'Bundled original Warcraft III Undead hero sources', 'bindings': [('Udea', 'ClassicDeathKnight', 'Units/Undead/HeroDeathKnight/HeroDeathKnight'), ('Ulic', 'ClassicLich', 'Units/Undead/HeroLich/HeroLich'), ('Udre', 'ClassicDreadLord', 'Units/Undead/HeroDreadLord/HeroDreadLord'), ('Ucrl', 'ClassicCryptLord', 'Units/Undead/HeroCryptLord/HeroCryptLord')], 'receipt': 'undead-hero-art-sources.json', 'prefix': 'Assets/UndeadHeroes/', 'raw': 'SourceAssets/UndeadHeroes/art/', 'modelsFile': 'undead-hero-models.json', 'portraitsFile': 'undead-hero-portraits.json', 'sourceLicenseFile': 'Assets/Licenses/Classic-Undead-Hero-Art.txt', 'licenseFile': 'Assets/Licenses/Undead-Hero-W3ModelViewer-MIT.txt', 'generators': ['scripts/import-frost-undead-hero-art.py']})
