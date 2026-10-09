@@ -1,0 +1,34 @@
+{
+  "author": "MiYu",
+  "importExitCode": 0,
+  "verificationExitCode": 0,
+  "sourceCount": 62,
+  "signedOutputCount": 138,
+  "heroCount": 4,
+  "skillCount": 16,
+  "skillRanks": 40,
+  "iconCount": 72,
+  "offlineReproduction": true,
+  "modifiedOutputProtection": true,
+  "damagedSourceRejection": true,
+  "originalRuntimeVerified": false,
+  "runtimeIntegrated": false,
+  "production": {
+    "samples/frostbound-realms/Assets/Scripts/Main.js": {
+      "sha256": "b42cbba8665f29eda44095f14807c94eb7def45be32d63b422887c08af8e5aef",
+      "unchangedFromCommit": "c6cbb6dcd3d37d1423b8b89cd0b8313514ef4566"
+    },
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": {
+      "sha256": "8cca8bdba0d8d94157431a7afd47e29c1dfbed7838a5aedc9f5e3be77a5350d7",
+      "unchangedFromCommit": "c6cbb6dcd3d37d1423b8b89cd0b8313514ef4566"
+    }
+  },
+  "sha256": {
+    "scripts/import-frost-orc-heroes.py": "f9ac914024fdc9e25435d6ce5afa103602da497a3faa1e19ad50e0354518cb63",
+    "scripts/test-frost-orc-heroes-import.py": "c2beac93b628151f7a8b74aa94affc01467eecb37180fd18c229bdb1ce1aff70",
+    "samples/frostbound-realms/orc-hero-rules.json": "9c4e2dd09cf66334f659aaf44e6e36d991b1eeb421505d531b5f03670b6a0905",
+    "samples/frostbound-realms/orc-hero-sources.json": "21b99321ec3768bd15e8cf7fcc7d754b3868a4d8f60d109a4515c93f7ee31461",
+    "tmp/orc-hero-import.log": "3944fa35484b5f285ce056e30b8194f30768b09401b36519397a8f062321d0e2",
+    "tmp/orc-hero-validation.log": "fc388eedda2694edab1054bbff4d5bab9545709cceea6138eefcaadb1557f970"
+  }
+}

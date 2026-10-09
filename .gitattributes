@@ -116,3 +116,7 @@ samples/frostbound-realms/Assets/Licenses/Classic-BloodMage.txt text eol=lf
 samples/frostbound-realms/SourceAssets/WarcraftIII/Units/Neutral*.txt -text whitespace=cr-at-eol,-blank-at-eol
 samples/frostbound-realms/SourceAssets/WarcraftIII/Units/CommonAbilityStrings.txt -text whitespace=cr-at-eol,-blank-at-eol
 samples/frostbound-realms/SourceAssets/WarcraftIII/Splats/LightningData.slk -text whitespace=cr-at-eol
+scripts/import-frost-orc-heroes.py text eol=lf
+scripts/test-frost-orc-heroes-import.py text eol=lf
+samples/frostbound-realms/orc-hero-*.json text eol=lf
+samples/frostbound-realms/Assets/Licenses/Classic-Orc-Heroes.txt text eol=lf
