@@ -24,9 +24,14 @@ export function planHierarchyMove(
   const byId = new Map(items.map((item) => [item.id, item]));
   if (parent != null && !byId.has(parent)) return null;
 
-  const childrenOf = (parentId: number | null) => items
-    .filter((item) => item.parent === parentId)
-    .sort((a, b) => a.siblingIndex - b.siblingIndex || a.id - b.id);
+  const children = new Map<number | null, HierarchyMoveItem[]>();
+  for (const item of items) {
+    const siblings = children.get(item.parent);
+    if (siblings) siblings.push(item);
+    else children.set(item.parent, [item]);
+  }
+  for (const siblings of children.values()) siblings.sort((a, b) => a.siblingIndex - b.siblingIndex || a.id - b.id);
+  const childrenOf = (parentId: number | null) => children.get(parentId) ?? [];
   const moving = [...new Set(ids)].filter((id) => byId.has(id));
   const movingSet = new Set(moving);
 

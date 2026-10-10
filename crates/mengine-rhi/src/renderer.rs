@@ -3,6 +3,7 @@ use crate::mesh::{MeshGpu, Vertex};
 use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
 use crate::render_graph::RenderGraph;
 use crate::sky::SkyBackground;
+use crate::spatial::{Frustum, SpatialIndex};
 use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer, UiTextureError};
 use crate::RhiError;
 use glam::{Mat4, Vec3, Vec4};
@@ -607,6 +608,9 @@ fn material_has_missing_textures(
         .any(|(path, srgb)| !path.is_empty() && !available(path, srgb))
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SpatialCullingStats { pub total: usize, pub camera_visible: usize, pub shadow_visible: usize, pub submitted: usize }
+
 pub struct Renderer {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
@@ -623,6 +627,8 @@ pub struct Renderer {
     depth_view: wgpu::TextureView,
     depth_texture: wgpu::Texture,
     meshes: HashMap<String, MeshGpu>,
+    spatial_index: SpatialIndex,
+    spatial_stats: SpatialCullingStats,
     bind_layout: wgpu::BindGroupLayout,
     pipeline_layout: wgpu::PipelineLayout,
     global_buf: wgpu::Buffer,
@@ -1246,6 +1252,8 @@ impl Renderer {
             depth_view,
             depth_texture,
             meshes,
+            spatial_index: SpatialIndex::default(),
+            spatial_stats: SpatialCullingStats::default(),
             bind_layout,
             pipeline_layout,
             global_buf,
@@ -1480,7 +1488,7 @@ impl Renderer {
         };
         self.ensure_render_size(target_size);
         self.material_pipeline_epoch = self.material_pipeline_epoch.wrapping_add(1);
-        self.ensure_object_capacity(objects.len().max(1));
+
         let environment_key = lighting.environment.texture.trim();
         let has_environment_texture = !environment_key.is_empty()
             && self.environment_bind_groups.contains_key(environment_key);
@@ -1506,12 +1514,27 @@ impl Renderer {
             .write_buffer(&self.shadow_uniform_buf, 0, bytemuck::bytes_of(&shadow));
         self.post_process
             .write_settings(&self.queue, lighting.environment.exposure, lighting.environment.tone_mapping);
-        if !objects.is_empty() {
-            let mut packed = vec![0_u8; self.object_stride as usize * objects.len()];
-            for (index, object) in objects.iter().enumerate() {
-                let uniform = make_object_uniforms(object);
+        // Mesh bounds are measured after skeletal/effect/billboard sampling and transformed by
+        // the final world matrix. Main and shadow queries must remain independent.
+        self.spatial_index.update(objects.iter().map(|object| self.meshes.get(&object.mesh_key).and_then(|mesh| mesh.bounds).and_then(|bounds| bounds.transformed(object.model))).collect());
+        let mut draw_order = self.spatial_index.query(&Frustum::from_wgpu_matrix(camera.proj * camera.view));
+        sort_render_indices(&mut draw_order, objects, camera.position);
+        let shadow_order: Vec<_> = if shadow.params[3] > 0.5 {
+            self.spatial_index.query(&Frustum::from_wgpu_matrix(Mat4::from_cols_array_2d(&shadow.light_view_proj))).into_iter().filter(|&i| objects[i].cast_shadows && (!objects[i].material.transparent || objects[i].material.alpha_cutoff > 0.0)).collect()
+        } else { vec![] };
+        let mut submitted = draw_order.clone();
+        submitted.extend_from_slice(&shadow_order);
+        submitted.sort_unstable(); submitted.dedup();
+        self.spatial_stats = SpatialCullingStats { total: objects.len(), camera_visible: draw_order.len(), shadow_visible: shadow_order.len(), submitted: submitted.len() };
+        self.ensure_object_capacity(submitted.len().max(1));
+        let mut uniform_slots = vec![0_usize; objects.len()];
+        if !submitted.is_empty() {
+            let mut packed = vec![0_u8; self.object_stride as usize * submitted.len()];
+            for (slot, &index) in submitted.iter().enumerate() {
+                uniform_slots[index] = slot;
+                let uniform = make_object_uniforms(&objects[index]);
                 let bytes = bytemuck::bytes_of(&uniform);
-                let start = index * self.object_stride as usize;
+                let start = slot * self.object_stride as usize;
                 packed[start..start + bytes.len()].copy_from_slice(bytes);
             }
             self.queue.write_buffer(&self.object_buf, 0, &packed);
@@ -1520,8 +1543,8 @@ impl Renderer {
         let empty_ui = UiBatchPlan::default();
         let ui_plan = ui.unwrap_or(&empty_ui);
         self.ui.prepare(&self.device, &self.queue, ui_plan);
-        let draw_order = sorted_render_indices(objects, camera.position);
-        for object in objects {
+        for &index in &submitted {
+            let object = &objects[index];
             self.ensure_material_pipeline(&object.material);
             let missing_texture = material_has_missing_textures(&object.material, |key, srgb| {
                 if srgb {
@@ -1581,7 +1604,7 @@ impl Renderer {
                 ..Default::default()
             });
             pass.set_pipeline(&self.shadow_pipeline);
-            for &index in &draw_order {
+            for &index in &shadow_order {
                 let object = &objects[index];
                 if !object.cast_shadows
                     || (object.material.transparent && object.material.alpha_cutoff <= 0.0)
@@ -1594,7 +1617,7 @@ impl Renderer {
                 pass.set_bind_group(
                     0,
                     &self.shadow_pass_bind_group,
-                    &[(index as u64 * self.object_stride) as u32],
+                    &[(uniform_slots[index] as u64 * self.object_stride) as u32],
                 );
                 let texture_key = MaterialTextureSetKey::from(&object.material);
                 let texture_set = self
@@ -1706,7 +1729,7 @@ impl Renderer {
                 pass.set_bind_group(
                     0,
                     &self.bind_group,
-                    &[(index as u64 * self.object_stride) as u32],
+                    &[(uniform_slots[index] as u64 * self.object_stride) as u32],
                 );
                 let texture_key = MaterialTextureSetKey::from(&object.material);
                 let texture_set = self
@@ -2328,6 +2351,8 @@ impl Renderer {
         self.config.width as f32 / self.config.height.max(1) as f32
     }
 
+    pub fn spatial_culling_stats(&self) -> SpatialCullingStats { self.spatial_stats }
+
     pub fn register_mesh(&mut self, key: &str, mesh: MeshGpu) {
         self.meshes.insert(key.to_string(), mesh);
     }
@@ -2554,8 +2579,14 @@ fn make_shadow_uniforms(camera: FrameCamera, lighting: &FrameLighting) -> Shadow
     }
 }
 
+#[cfg(test)]
 fn sorted_render_indices(objects: &[RenderObject], camera_position: Vec3) -> Vec<usize> {
     let mut indices: Vec<usize> = (0..objects.len()).collect();
+    sort_render_indices(&mut indices, objects, camera_position);
+    indices
+}
+
+fn sort_render_indices(indices: &mut [usize], objects: &[RenderObject], camera_position: Vec3) {
     indices.sort_by(|left, right| {
         let left_object = &objects[*left];
         let right_object = &objects[*right];
@@ -2581,7 +2612,6 @@ fn sorted_render_indices(objects: &[RenderObject], camera_position: Vec3) -> Vec
             })
             .then_with(|| left.cmp(right))
     });
-    indices
 }
 
 fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
@@ -4031,6 +4061,37 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn spatial_culling_submits_camera_shadow_union_and_refreshes_mesh_bounds() {
+        let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).expect("GPU adapter for spatial acceptance");
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let target = renderer.create_offscreen_target(PhysicalSize::new(32, 32));
+        let clear = ClearColor { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+        let camera = FrameCamera { view: Mat4::look_at_rh(Vec3::new(0.0, 0.0, 5.0), Vec3::ZERO, Vec3::Y), proj: Mat4::perspective_rh(1.0, 1.0, 0.1, 100.0), position: Vec3::new(0.0, 0.0, 5.0) };
+        let object = |x, color| RenderObject { mesh_key: "cube".into(), model: Mat4::from_translation(Vec3::new(x, 0.0, 0.0)), material: RenderMaterial { unlit: true, base_color: color, ..Default::default() }, cast_shadows: true, receive_shadows: true };
+        let mut objects: Vec<_> = (0..10000).map(|i| object(1000.0 + i as f32, [0.0, 0.0, 1.0, 1.0])).collect();
+        objects.push(object(0.0, [1.0, 0.0, 0.0, 1.0]));
+        objects.push(object(10.0, [0.0, 1.0, 0.0, 1.0]));
+        let mut lighting = FrameLighting::default();
+        lighting.directional = Some(DirectionalLightData { direction: Vec3::new(0.0, -1.0, -1.0), color: [1.0; 3], intensity: 1.0, cast_shadows: true, shadow_strength: 1.0, shadow_bias: 0.001, shadow_normal_bias: 0.001, shadow_distance: 60.0 });
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        assert_eq!(renderer.spatial_culling_stats(), SpatialCullingStats { total: 10002, camera_visible: 1, shadow_visible: 2, submitted: 2 });
+        let pixels = renderer.read_offscreen_rgba8(&target).unwrap();
+        assert!(pixels.chunks_exact(4).any(|p| p[0] > 100 && p[1] == 0 && p[2] == 0), "visible source index maps to its compact uniform slot");
+        lighting.directional = None;
+        let shifted = FrameCamera { view: Mat4::look_at_rh(Vec3::new(10.0, 0.0, 5.0), Vec3::new(10.0, 0.0, 0.0), Vec3::Y), position: Vec3::new(10.0, 0.0, 5.0), ..camera };
+        renderer.submit_frame_to(&RenderFrame { clear, camera: shifted, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        assert_eq!(renderer.spatial_culling_stats().submitted, 1);
+        assert!(renderer.read_offscreen_rgba8(&target).unwrap().chunks_exact(4).any(|p| p[1] > 100 && p[0] == 0), "camera motion reveals the other object");
+        let vertices = [[-10.5, -0.5, 0.0], [-9.5, -0.5, 0.0], [-10.0, 0.5, 0.0]].map(|position| Vertex { position, normal: [0.0, 0.0, 1.0], uv: [0.0; 2] });
+        renderer.upload_gltf_static("sampled", &vertices, &[0, 1, 2]);
+        let mut sampled = object(10.0, [0.0, 1.0, 0.0, 1.0]); sampled.mesh_key = "sampled".into();
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &[sampled], lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        assert_eq!(renderer.spatial_culling_stats().camera_visible, 1, "replacement vertex bounds are used");
+        renderer.read_offscreen_rgba8(&target).unwrap();
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+    }
 
     #[test]
     fn scene_msaa_requires_color_resolve_and_matching_depth_support() {

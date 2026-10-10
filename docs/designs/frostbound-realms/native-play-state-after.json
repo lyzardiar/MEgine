@@ -1,0 +1,25 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "variant": "after",
+  "startedAt": "2026-10-10T06:48:36.507Z",
+  "scope": "One full native client, identical published Main.js/Main.mscene, actual F1 skirmish input, continuous 45-second playback sample, pause/step/stop. Native viewport sampling includes rendering and scheduling; this is not a two-client networking or full-fidelity acceptance.",
+  "editorExecutable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+  "editorSha256": "f41b018f0cc2991b3bb68ddbab7295aa90004cb66c6532562b4cb05e0dd8c05a",
+  "sourceMainSha256": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
+  "sourceSceneSha256": "f6a4f63b377e6eeb3cf885c37bd23252d77ee5cc450e5fd026f421f4e552fd1e",
+  "steps": [
+    {
+      "name": "full native scene readiness",
+      "ms": 41283
+    }
+  ],
+  "error": "BridgeConnectionError: Editor bridge request timed out (query)\n    at Timeout.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:540:14)\n    at listOnTimeout (node:internal/timers:605:17)\n    at process.processTimers (node:internal/timers:541:7)",
+  "shutdown": {
+    "pid": 143568,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "elapsedMs": 282949
+}

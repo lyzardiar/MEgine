@@ -1,0 +1,80 @@
+{
+  "author": "MiYu",
+  "at": "2026-10-10T08:08:20.981Z",
+  "scope": "Real Frostbound Main.mscene in real EditorStore, retained-runtime fixture and real applyPlayWorldUpdate; excludes native execution, IPC, React and rendering. No native FPS claim.",
+  "entityCount": 90179,
+  "samples": [
+    {
+      "stepMs": 186.74389999999994,
+      "sessionLookupMs": 59.06830000000036,
+      "fingerprintMs": []
+    },
+    {
+      "stepMs": 222.1233000000002,
+      "sessionLookupMs": 90.33359999999993,
+      "fingerprintMs": []
+    },
+    {
+      "stepMs": 173.6241,
+      "sessionLookupMs": 50.45010000000002,
+      "fingerprintMs": []
+    },
+    {
+      "stepMs": 145.68330000000014,
+      "sessionLookupMs": 47.789000000000215,
+      "fingerprintMs": []
+    },
+    {
+      "stepMs": 154.82290000000012,
+      "sessionLookupMs": 54.21050000000014,
+      "fingerprintMs": []
+    },
+    {
+      "stepMs": 153.91759999999977,
+      "sessionLookupMs": 45.04520000000048,
+      "fingerprintMs": []
+    },
+    {
+      "stepMs": 160.21820000000025,
+      "sessionLookupMs": 45.48480000000018,
+      "fingerprintMs": []
+    },
+    {
+      "stepMs": 131.34100000000035,
+      "sessionLookupMs": 44.13220000000001,
+      "fingerprintMs": []
+    }
+  ],
+  "medianStepMs": 157.52055000000018,
+  "medianSessionLookupMs": 49.11955000000012,
+  "medianFingerprintMs": null,
+  "deltaSamplesMs": [
+    13.449800000000323,
+    12.374799999999595,
+    14.493399999999383,
+    11.284299999999348,
+    11.710199999999531,
+    12.389199999999619,
+    13.057600000000093,
+    11.962500000000546
+  ],
+  "medianDeltaMs": 12.381999999999607,
+  "retainedDeltaSamplesMs": [
+    20.30490000000009,
+    1.4835000000002765,
+    0.7352000000000771,
+    0.49839999999949214,
+    0.4007999999994354,
+    0.4411000000000058,
+    0.42960000000039145,
+    0.43659999999999854
+  ],
+  "medianRetainedDeltaMs": 0.4411000000000058,
+  "sourceHashes": {
+    "packages/editor/src/store.ts": "fd36ab3eb02c4b6d656c4d17232ea65be75611e8f780a5e6d409aa48ea962067",
+    "packages/editor/src/playRuntime.ts": "dc1081bddf2b988078c3663de2f755b7b0864e947e385473e5ee609772fb1101",
+    "packages/editor/src/playWorldSync.ts": "ad27b8c227c6779db8feb9ab061549bc5f7c9c795471899e38e3f97aecf3e0dc",
+    "packages/behaviour/src/runner.ts": "bd9a2b1441ebc21c9326d6fb1460cc1892bf1fde5fb4291599faa8f042eea7b8",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8"
+  }
+}

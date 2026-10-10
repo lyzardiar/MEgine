@@ -20,12 +20,21 @@ export async function closeNativeQa(root){
   if(!fs.existsSync(discovery))return {launched:false};
   const record=JSON.parse(fs.readFileSync(discovery,'utf8'));
   if(!record.background||!Number.isSafeInteger(record.pid))throw new Error('Native QA editor ownership mismatch');
-  await exec(process.env.MENGINE_QA_POWERSHELL||'pwsh.exe',['-NoProfile','-File',fileURLToPath(new URL('./close-native-qa.ps1',import.meta.url)),'-EditorPid',String(record.pid),'-DiscoveryFile',discovery],{windowsHide:true});
+  await exec(process.env.MENGINE_QA_POWERSHELL||'pwsh.exe',['-NoProfile','-File',fileURLToPath(new URL('./close-native-qa.ps1',import.meta.url)),'-EditorPid',String(record.pid),'-DiscoveryFile',discovery,...(process.env.MENGINE_EDITOR_EXECUTABLE?['-ExpectedExecutable',process.env.MENGINE_EDITOR_EXECUTABLE]:[])],{windowsHide:true});
   const alive=()=>{try{process.kill(record.pid,0);return true;}catch(e){return e.code==='EPERM';}};
-  const deadline=Date.now()+30000;
-  while(Date.now()<deadline&&(alive()||fs.existsSync(discovery)||fs.readdirSync(path.join(root,'runtime')).length))await sleep(200);
-  if(alive()||fs.existsSync(discovery)||fs.readdirSync(path.join(root,'runtime')).length)throw new Error('Native QA editor or runtime data remained after normal close: '+root);
-  return {pid:record.pid,normalExit:true,runtimeRemoved:true,discoveryRemoved:true};
+  const deadline=Date.now()+60000;
+  while(Date.now()<deadline&&(alive()||fs.existsSync(discovery)))await sleep(200);
+  if(alive()||fs.existsSync(discovery))throw new Error('Native QA editor remained after normal close: '+root);
+  // WebView cache locks may outlive its window. Retry only inside this verified disposable fixture.
+  const owner=JSON.parse(fs.readFileSync(path.join(root,'qa-owner.json'),'utf8')),runtime=path.resolve(root,'runtime');
+  if(owner.root!==path.resolve(root)||fs.lstatSync(root).isSymbolicLink()||fs.lstatSync(runtime).isSymbolicLink())throw new Error('Native QA runtime ownership mismatch');
+  let runtimeRemovalError;
+  for(const entry of fs.readdirSync(runtime)){
+    const target=path.resolve(runtime,entry);
+    if(path.dirname(target)!==runtime||!entry.startsWith('com.mengine.editor.agent-')||fs.lstatSync(target).isSymbolicLink())throw new Error('Native QA runtime boundary mismatch');
+    try{fs.rmSync(target,{recursive:true,force:true,maxRetries:8,retryDelay:200});}catch(error){if(!['EPERM','EBUSY','ENOTEMPTY'].includes(error.code))throw error;runtimeRemovalError=error.message;}
+  }
+  return {pid:record.pid,normalExit:true,runtimeRemoved:!runtimeRemovalError,discoveryRemoved:true,...(runtimeRemovalError?{runtimeRemovalError}: {})};
 }
 export function removeNativeQaFixture(root,storage){
   const owner=JSON.parse(fs.readFileSync(path.join(root,'qa-owner.json'),'utf8'));

@@ -648,6 +648,8 @@ export function Profiler() {
             />
             <Metric label="Simulation" value={latestNative?.simulationMs != null ? formatMs(latestNative.simulationMs) : '—'} hint="Native world update, script and snapshot export" />
             <Metric label="Native Draw Calls" value={latestNative ? formatCount(latestNative.counts.uiDrawCalls) : '—'} />
+            <Metric label="World Visible" value={latestNative?.counts.cameraVisibleObjects != null ? formatCount(latestNative.counts.cameraVisibleObjects) : '—'} />
+            <Metric label="Shadow Casters" value={latestNative?.counts.shadowVisibleObjects != null ? formatCount(latestNative.counts.shadowVisibleObjects) : '—'} />
             <Metric label="Resident Estimate" value={formatBytes(latestNative?.residentMemoryEstimateBytes)} hint="provenance in Memory" />
             <Metric label="Render Resources" value={latestNative ? formatCount(latestNative.resources.length) : '—'} />
           </div>}

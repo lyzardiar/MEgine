@@ -46,7 +46,8 @@ import {
   quatRotateVec,
   scale as vscale,
 } from '../math3d';
-import { clearModelPreview, modelPreview } from '../modelPreview';
+import { clearModelPreview, modelPreview, type PreviewMesh } from '../modelPreview';
+import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
 import { nativeGamePreviewSize, requiresBrowserViewportSnapshot, uploadNativeViewportFrame } from '../nativeViewportFrame';
 import { releaseNativeViewportFrame, requestNativeViewportFrame } from '../nativeViewportTransport';
 import {
@@ -225,6 +226,7 @@ import {
 } from '../worldDrawOrder';
 import { getSortingLayerRank } from '../sortingLayers';
 import { buildWorldTransforms, resolvedTransform } from '../worldTransform';
+import { viewportActiveLookup } from '../hierarchyActivation';
 import {
   modulateLight2DColor,
   prepareLight2DLights,
@@ -496,6 +498,33 @@ type Ent = {
   components: Record<string, unknown>;
 };
 
+const previewBounds = new WeakMap<PreviewMesh, Bounds | null>();
+function browserEntityBounds(entity: Ent, transform: TransformData): Bounds | null {
+  const components = entity.components;
+  // Helpers, complex batches and sampled effects retain their existing visibility and picking.
+  if (['Camera3D', 'Camera2D', 'DirectionalLight', 'PointLight', 'SpotLight', 'Light2D', 'RectTransform', 'Tilemap', 'Line2D', 'SpriteBatch2D', 'SpineSkeleton', 'ParticleEmitter2D', 'ParticleEmitter3D', 'TrailRenderer2D', 'SampledEffect', 'BoxCollider3D', 'SphereCollider3D', 'BoxCollider2D', 'CircleCollider2D', 'PolygonCollider2D', 'EdgeCollider2D', 'TargetJoint2D'].some((key) => components[key])) return null;
+  let local: Bounds | null = null;
+  const mesh = components.MeshRenderer as Record<string, unknown> | undefined;
+  if (mesh) {
+    const path = String(mesh.mesh ?? 'cube');
+    const preview = /\.(?:gltf|glb)$/i.test(path) ? modelPreview(path) : null;
+    if (preview) {
+      if (!previewBounds.has(preview)) previewBounds.set(preview, pointBounds(preview.positions));
+      local = previewBounds.get(preview) ?? null;
+    } else local = { min: [-0.5, -0.5, -0.5], max: [0.5, 0.5, 0.5] };
+  } else {
+    const sprite = (components.AnimatedSprite2D ?? components.SpriteRenderer) as { size?: number[]; pivot?: number[] } | undefined;
+    if (sprite) {
+      const size = [0, 1].map((axis) => Number.isFinite(Number(sprite.size?.[axis])) ? Math.abs(Number(sprite.size![axis])) : 1);
+      const pivot = [0, 1].map((axis) => Number.isFinite(Number(sprite.pivot?.[axis])) ? Number(sprite.pivot![axis]) : 0.5);
+      // Mirror signs and authored pivots may offset the quad from its origin.
+      const radius = size.map((v, axis) => v * Math.max(Math.abs(pivot[axis]), Math.abs(1 - pivot[axis])));
+      local = { min: [-radius[0], -radius[1], 0], max: [radius[0], radius[1], 0] };
+    }
+  }
+  return local ? transformBounds(local, transform) : null;
+}
+
 type TilemapTool = 'paint' | 'erase' | 'box' | 'fill' | 'picker';
 
 function rectHandlePivotForSelection(
@@ -668,6 +697,7 @@ export function Viewport(props: {
   ) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const spatialIndexRef = useRef(createViewportSpatialIndex());
   const nativeGameFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
     width: number;
@@ -1345,8 +1375,9 @@ export function Viewport(props: {
       ctx.fillRect(0, 0, pw, ph);
     }
 
+    const isActive = viewportActiveLookup(p.entities, !!p.playing, isGame, p.sceneHiddenIds, p.activeInHierarchy);
     const gameCamera = isGame
-      ? timelineGameCamera(p.entities, p.timelineCameraPreview, p.activeInHierarchy, p.gameDisplay)
+      ? timelineGameCamera(p.entities, p.timelineCameraPreview, isActive, p.gameDisplay)
       : null;
     if (isGame && document.pointerLockElement === canvasRef.current && !(p.entities.find(entity => entity.entity === gameCamera?.entity)?.components.Camera3D as Camera3DData | undefined)?.capture_pointer) document.exitPointerLock();
     const selectedCamera = !isGame && p.selected != null
@@ -1495,8 +1526,6 @@ export function Viewport(props: {
         request.ready = null;
       });
     }
-    const isActive = (id: number) =>
-      p.activeInHierarchy ? p.activeInHierarchy(id) : true;
     const environment = p.entities.find(
       (entity) => entity.components.EnvironmentLight && isActive(entity.entity),
     )?.components.EnvironmentLight as EnvironmentBackground | undefined;
@@ -1705,11 +1734,16 @@ export function Viewport(props: {
         });
     }
 
-    const drawn = (isGame && !gameCamera ? [] : p.entities
-      .flatMap((e, hierarchyOrder) => {
-        if ((nativeGameReady && !e.components.SpineSkeleton) || !isActive(e.entity)) return null;
-        const t = resolvedTransform(worldTransforms, e.entity) ?? undefined;
-        if (!t) return null;
+    const worldEntries = p.entities.flatMap((e, hierarchyOrder) => {
+      if ((nativeGameReady && !e.components.SpineSkeleton) || !isActive(e.entity)) return [];
+      const t = resolvedTransform(worldTransforms, e.entity);
+      return t ? [{ e, t, hierarchyOrder }] : [];
+    });
+    spatialIndexRef.current.update(worldEntries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : browserEntityBounds(e, t)));
+    const spatialCandidates = spatialIndexRef.current.query(viewportPlanes(cam, vp.w / Math.max(1, vp.h)));
+    const drawn = (isGame && !gameCamera ? [] : spatialCandidates
+      .flatMap((index) => {
+        const { e, t, hierarchyOrder } = worldEntries[index];
         const pr = project(t.position as Vec3, cam, vp);
         // Keep cameras/lights even if origin is barely off-screen — frustum/rays may still show
         const camComp = e.components.Camera3D ?? e.components.Camera2D;

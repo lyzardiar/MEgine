@@ -1,0 +1,100 @@
+{
+  "author": "MiYu",
+  "at": "2026-10-10T06:19:41.449Z",
+  "scope": "Real Frostbound Main.mscene in real EditorStore, retained-runtime fixture and real applyPlayWorldUpdate; excludes native execution, IPC, React and rendering. No native FPS claim.",
+  "entityCount": 89853,
+  "samples": [
+    {
+      "stepMs": 276.24149999999963,
+      "sessionLookupMs": 114.30230000000029,
+      "fingerprintMs": [
+        100.66229999999996,
+        110.03690000000006,
+        104.70200000000023
+      ]
+    },
+    {
+      "stepMs": 268.79359999999997,
+      "sessionLookupMs": 113.13900000000012,
+      "fingerprintMs": [
+        106.5273000000002,
+        103.25960000000032,
+        103.48979999999983
+      ]
+    },
+    {
+      "stepMs": 296.2096999999999,
+      "sessionLookupMs": 114.84249999999975,
+      "fingerprintMs": [
+        123.7802999999999,
+        113.51559999999972,
+        105.73199999999997
+      ]
+    },
+    {
+      "stepMs": 278.7366000000002,
+      "sessionLookupMs": 112.95029999999997,
+      "fingerprintMs": [
+        110.35359999999991,
+        107.68719999999985,
+        103.70759999999973
+      ]
+    },
+    {
+      "stepMs": 266.2320000000004,
+      "sessionLookupMs": 113.30169999999998,
+      "fingerprintMs": [
+        104.97929999999997,
+        102.73939999999948,
+        102.65729999999985
+      ]
+    },
+    {
+      "stepMs": 315.9843000000001,
+      "sessionLookupMs": 123.3768,
+      "fingerprintMs": [
+        108.64720000000034,
+        121.11380000000008,
+        113.38870000000043
+      ]
+    },
+    {
+      "stepMs": 271.3855999999996,
+      "sessionLookupMs": 113.59100000000035,
+      "fingerprintMs": [
+        108.07320000000072,
+        111.73040000000037,
+        104.28030000000035
+      ]
+    },
+    {
+      "stepMs": 274.1281999999992,
+      "sessionLookupMs": 115.6904999999997,
+      "fingerprintMs": [
+        102.03289999999924,
+        113.98760000000038,
+        106.82930000000033
+      ]
+    }
+  ],
+  "medianStepMs": 275.1848499999994,
+  "medianSessionLookupMs": 113.94665000000032,
+  "medianFingerprintMs": 106.67830000000026,
+  "deltaSamplesMs": [
+    17.658900000000358,
+    11.184799999999996,
+    10.765300000000025,
+    10.037899999999354,
+    10.81750000000011,
+    17.948899999999412,
+    10.750900000000001,
+    10.055199999999786
+  ],
+  "medianDeltaMs": 10.791400000000067,
+  "sourceHashes": {
+    "packages/editor/src/store.ts": "e2be01feb0d0174773d6a2fe50caafd4a48ab11e1bcb9515ec5c18a5887b06c5",
+    "packages/editor/src/playRuntime.ts": "8580a8e2ec992478b9466b3f0f20f67b1a2c53fcea300b08c6f3a9314bdeda3f",
+    "packages/behaviour/src/runner.ts": "bd9a2b1441ebc21c9326d6fb1460cc1892bf1fde5fb4291599faa8f042eea7b8",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "f6a4f63b377e6eeb3cf885c37bd23252d77ee5cc450e5fd026f421f4e552fd1e"
+  }
+}

@@ -12,6 +12,7 @@ pub struct MeshGpu {
     pub vertex_buffer: wgpu::Buffer,
     pub index_buffer: wgpu::Buffer,
     pub index_count: u32,
+    pub(crate) bounds: Option<crate::spatial::Aabb>,
 }
 
 type CubeFace = ([f32; 3], [f32; 3], [[f32; 3]; 4]);
@@ -33,6 +34,7 @@ impl MeshGpu {
             vertex_buffer,
             index_buffer,
             index_count: indices.len() as u32,
+            bounds: crate::spatial::Aabb::from_points(vertices.iter().map(|v| glam::Vec3::from_array(v.position))),
         }
     }
 

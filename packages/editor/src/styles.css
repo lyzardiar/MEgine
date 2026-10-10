@@ -886,9 +886,9 @@ button, input, select {
   cursor: grab;
   white-space: nowrap;
   transition: background 0.1s ease, color 0.1s ease;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 22px;
-  min-height: 23px;
+  box-sizing: border-box;
+  height: 24px;
+  min-height: 24px;
 }
 
 .hier-row:hover { background: var(--u-hover); }
@@ -10010,3 +10010,5 @@ input[type='search']::-webkit-search-decoration { -webkit-appearance: none; }
     width: 58px;
   }
 }
+
+.hier-window { position: relative; width: 100%; }

@@ -38,3 +38,17 @@ test('rejects cycles and supports moving a child back to the root', () => {
   assert.deepEqual(rootPlan?.destinationOrder, [1, 3]);
   assert.deepEqual(rootPlan?.oldParents, [2]);
 });
+
+test('moving a leaf in a 90,000-node scene reads parents linearly', () => {
+  let reads = 0;
+  const count = 90_000;
+  const items = Array.from({ length: count }, (_, index) => ({
+    id: index + 1,
+    get parent() { reads++; return null; },
+    siblingIndex: index,
+  }));
+  const plan = planHierarchyMove(items, [count], 1);
+  assert.deepEqual(plan?.roots, [count]);
+  assert.deepEqual(plan?.destinationOrder, [count]);
+  assert.ok(reads <= count * 3, `Expected linear parent reads, got ${reads}`);
+});

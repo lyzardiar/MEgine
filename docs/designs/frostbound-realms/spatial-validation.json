@@ -1,0 +1,64 @@
+{
+  "author": "MiYu",
+  "at": "2026-10-10T09:17:27.007Z",
+  "passed": true,
+  "scope": "Source and headless GPU verification; native full-scene UI/game acceptance is recorded separately in native-play-state-spatial.json.",
+  "grouping": {
+    "original": 89853,
+    "total": 90179,
+    "newIdentityFolders": 326,
+    "oldRoots": 41825,
+    "roots": 8,
+    "preservedOriginalRecords": true,
+    "preservedInheritedActiveAndWorldTransforms": true
+  },
+  "checks": {
+    "nodeTests": {
+      "passed": 53,
+      "failed": 0
+    },
+    "rhiTests": {
+      "passed": 57,
+      "failed": 0
+    },
+    "heroRuleScripts": {
+      "passed": 24,
+      "groups": 159
+    },
+    "editorProductionBuild": true,
+    "hierarchyMoveRegression": {
+      "passed": 4,
+      "failed": 0,
+      "nodes": 90000,
+      "maximumParentReads": 270000
+    },
+    "hierarchyActivation": {
+      "passed": 3,
+      "failed": 0,
+      "deepChainNodes": 90000,
+      "parentReads": 90000
+    },
+    "latestTargetedNodeTests": {
+      "passed": 21,
+      "failed": 0
+    }
+  },
+  "sourceHashes": {
+    "packages/editor/src/store.ts": "fd36ab3eb02c4b6d656c4d17232ea65be75611e8f780a5e6d409aa48ea962067",
+    "packages/editor/src/playRuntime.ts": "dc1081bddf2b988078c3663de2f755b7b0864e947e385473e5ee609772fb1101",
+    "packages/editor/src/playWorldSync.ts": "ad27b8c227c6779db8feb9ab061549bc5f7c9c795471899e38e3f97aecf3e0dc",
+    "packages/editor/src/panels/Hierarchy.tsx": "96bb0cf5cd562fed379e711d529d09dac923e0db92379aea1a30d940f89a21c0",
+    "packages/editor/src/hierarchyWindow.ts": "4766f8265d1bf562a411bd9a72dabc87d9633889919694bddd47bcdd524c7771",
+    "packages/editor/src/viewportSpatial.ts": "a8cd92de2febafa484823b63512b88216e425c80d7ac1f1defec576358a8a754",
+    "packages/editor/src/panels/Viewport.tsx": "1b8344152eeb8cc9826c5e222e2c99f497a95f96e0b7f3744e10b40b58fddd68",
+    "crates/mengine-rhi/src/spatial.rs": "0ff3f9f22852b8794e459b1f5895903bd53e5233f1d7cb5f59267c5def97ead2",
+    "crates/mengine-rhi/src/mesh.rs": "f0b517414ea2292ce6f7c5be922190c04e3e4758a887cd3e11c7f95b2434398c",
+    "crates/mengine-rhi/src/renderer.rs": "a59a58a5dbcd2e9573ecc19874ed11bae013a60460458b8f82c8e18956b350cf",
+    "crates/mengine-editor-host/src/viewport.rs": "619877b7e2c024bc91cf0f00a44e52161a38425e93cba412dc10b96891811f16",
+    "scripts/frost-scene-groups.mjs": "715bb4b2d80b7809e2d25c95a127bfedb11aaa33ec2642d0aba779eae85e1917",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
+    "packages/editor/src/hierarchyMove.ts": "79ccd35a254b7fa062e8726b9f9913332f930bce0e7881bcd5809e20c98c513f",
+    "packages/editor/src/hierarchyActivation.ts": "6903ead8f53c4e9e1b8c2bc7ccc1b8084ba6b98205dcc97e8efe5353def06f26"
+  }
+}

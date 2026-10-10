@@ -1,6 +1,7 @@
 // Author: MiYu. Hierarchy authoring and inherited Scene interaction controls.
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -49,6 +50,7 @@ import {
 import { filterHierarchyCreateItems } from '../hierarchyCreateMenu';
 import { filterHierarchyTree, hierarchyEntityMatches } from '../hierarchySearch';
 import { readPrefabLink } from '../prefabAsset';
+import { HIERARCHY_ROW_HEIGHT, hierarchyWindow, hierarchyScrollTo } from '../hierarchyWindow';
 
 function iconFor(e: EntityRec): LucideIcon {
   const c = e.components;
@@ -123,7 +125,7 @@ export function Hierarchy(props: {
     refresh: props.onRefresh,
     log: props.onLog,
   };
-  const selectedInUi = (() => {
+  const selectedInUi = useMemo(() => {
     const byId = new Map(props.nodes.map((node) => [node.entity.entity, node.entity]));
     const visited = new Set<number>();
     let current = props.store.selected;
@@ -135,15 +137,18 @@ export function Hierarchy(props: {
       current = entity.parent ?? null;
     }
     return false;
-  })();
+  }, [props.nodes, props.store.selected]);
   const createItems = filterHierarchyCreateItems(
     listMenuItems('GameObject'),
     createSearch,
     selectedInUi,
   );
-  const hiddenCount = props.store.sceneHiddenIds.length;
-  const unpickableCount = props.store.sceneUnpickableIds.length;
-  const sceneInteraction = props.store.sceneInteractionQuery();
+  const selectedSet = useMemo(() => new Set(props.selectedIds), [props.selectedIds]);
+  const { hiddenCount, unpickableCount, sceneInteraction } = useMemo(() => ({
+    hiddenCount: props.store.sceneHiddenIds.length,
+    unpickableCount: props.store.sceneUnpickableIds.length,
+    sceneInteraction: props.store.sceneInteractionQuery(),
+  }), [props.nodes, props.store]);
 
   useEffect(() => {
     if (!createOpen) return;
@@ -167,40 +172,65 @@ export function Hierarchy(props: {
     };
   }, [createOpen]);
 
-  useEffect(() => {
-    return subscribePing((e) => {
-      if (e.kind !== 'entity') return;
-      props.store.revealEntity(e.id);
-      props.onRefresh();
-      setPingId(e.id);
-      window.setTimeout(() => setPingId((cur) => (cur === e.id ? null : cur)), 900);
-      requestAnimationFrame(() => {
-        rowRefs.current.get(e.id)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      });
-    });
-  }, [props.store, props.onRefresh]);
-
-  const filtered = useMemo(() => {
+  const search = useMemo(() => {
     const q = props.filter.trim();
-    if (!q) return props.nodes;
-    return filterHierarchyTree(props.store.authoredEntities(), q);
+    if (!q) return { nodes: props.nodes, matches: new Set<number>() };
+    const source = props.store.hierarchySearchSource();
+    return { nodes: filterHierarchyTree(source, q), matches: new Set(source.filter((entity) => hierarchyEntityMatches(entity, q)).map((entity) => entity.entity)) };
   }, [props.nodes, props.filter, props.store]);
-
-  const matchingIds = useMemo(() => {
-    const q = props.filter.trim();
-    if (!q) return new Set<number>();
-    return new Set(
-      props.store.authoredEntities()
-        .filter((entity) => hierarchyEntityMatches(entity, q))
-        .map((entity) => entity.entity),
-    );
-  }, [props.filter, props.store, props.nodes]);
-
+  const filtered = search.nodes, matchingIds = search.matches;
+  const indicesById = useMemo(() => new Map(filtered.map((node, index) => [node.entity.entity, index])), [filtered]);
+  const [viewport, setViewport] = useState({ top: 0, height: 400 });
+  const savedScroll = useRef(0);
+  const searching = useRef(false);
+  const pendingScroll = useRef<{ id: number; focus: boolean } | null>(null);
+  const pinnedId = editing ?? dragId;
+  const windowRows = hierarchyWindow(filtered.length, viewport.top, viewport.height, pinnedId == null ? -1 : indicesById.get(pinnedId) ?? -1);
+  const scrollRow = (id: number, focus = false) => {
+    const body = hierarchyBodyRef.current, index = indicesById.get(id);
+    if (!body || index == null) { pendingScroll.current = { id, focus }; return; }
+    body.scrollTop = hierarchyScrollTo(index, body.scrollTop, body.clientHeight);
+    setViewport({ top: body.scrollTop, height: body.clientHeight });
+    if (focus) requestAnimationFrame(() => rowRefs.current.get(id)?.focus({ preventScroll: true }));
+  };
+  useLayoutEffect(() => {
+    const body = hierarchyBodyRef.current;
+    if (!body) return;
+    const measure = () => setViewport({ top: body.scrollTop, height: body.clientHeight });
+    const observer = new ResizeObserver(measure);
+    observer.observe(body);
+    measure();
+    return () => observer.disconnect();
+  }, []);
+  useLayoutEffect(() => {
+    const body = hierarchyBodyRef.current;
+    if (!body) return;
+    const nowSearching = !!props.filter.trim();
+    if (nowSearching && !searching.current) { savedScroll.current = viewport.top; body.scrollTop = 0; }
+    else if (!nowSearching && searching.current) body.scrollTop = savedScroll.current;
+    else body.scrollTop = Math.min(body.scrollTop, Math.max(0, filtered.length * HIERARCHY_ROW_HEIGHT - body.clientHeight));
+    searching.current = nowSearching;
+    setViewport({ top: body.scrollTop, height: body.clientHeight });
+    const pending = pendingScroll.current;
+    if (pending && indicesById.has(pending.id)) { pendingScroll.current = null; scrollRow(pending.id, pending.focus); }
+  }, [filtered, props.filter]);
+  const scrollRowRef = useRef(scrollRow);
+  scrollRowRef.current = scrollRow;
+  useEffect(() => subscribePing((e) => {
+    if (e.kind !== 'entity') return;
+    props.store.revealEntity(e.id);
+    pendingScroll.current = { id: e.id, focus: false };
+    props.onRefresh();
+    setPingId(e.id);
+    window.setTimeout(() => setPingId((cur) => cur === e.id ? null : cur), 900);
+  }), [props.store, props.onRefresh]);
   useEffect(() => {
     const selected = props.store.selected;
-    if (selected == null || props.filter.trim()) return;
-    requestAnimationFrame(() => rowRefs.current.get(selected)?.scrollIntoView({ block: 'nearest' }));
-  }, [props.store.selected, props.filter, props.nodes]);
+    if (selected != null && !props.filter.trim()) {
+      if (props.store.revealEntityAncestors(selected)) props.onRefresh();
+      scrollRowRef.current(selected);
+    }
+  }, [props.store.selected]);
 
   useEffect(() => {
     if (props.pendingRenameId == null) return;
@@ -427,7 +457,6 @@ export function Hierarchy(props: {
       startY: ev.clientY,
       active: false,
     };
-    ev.currentTarget.setPointerCapture(ev.pointerId);
   };
 
   const onPointerMove = (ev: ReactPointerEvent) => {
@@ -436,11 +465,17 @@ export function Hierarchy(props: {
     if (!drag.active) {
       if (Math.hypot(ev.clientX - drag.startX, ev.clientY - drag.startY) < 4) return;
       drag.active = true;
+      if (ev.isTrusted) hierarchyBodyRef.current?.setPointerCapture(ev.pointerId);
       setDragId(drag.id);
     }
     ev.preventDefault();
 
     const body = hierarchyBodyRef.current;
+    if (body) {
+      const rect = body.getBoundingClientRect();
+      if (ev.clientY < rect.top + 24) body.scrollTop -= HIERARCHY_ROW_HEIGHT;
+      else if (ev.clientY > rect.bottom - 24) body.scrollTop += HIERARCHY_ROW_HEIGHT;
+    }
     const hit = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null;
     const row = hit?.closest<HTMLElement>('.hier-row') ?? null;
     if (row && body?.contains(row)) {
@@ -631,12 +666,13 @@ export function Hierarchy(props: {
         aria-label="Scene hierarchy"
         tabIndex={0}
         title="Drop onto a row to reparent, onto an edge to reorder, or into empty space for root"
+        onScroll={(event) => setViewport({ top: event.currentTarget.scrollTop, height: event.currentTarget.clientHeight })}
         onContextMenu={(e) => onContext(e, null)}
         onKeyDown={(event) => {
           if (event.target !== event.currentTarget) return;
           if (event.key === 'ArrowDown' && filtered.length) {
             event.preventDefault();
-            rowRefs.current.get(filtered[0].entity.entity)?.focus();
+            scrollRow(filtered[0].entity.entity, true);
           }
         }}
         onPointerMove={onPointerMove}
@@ -686,9 +722,11 @@ export function Hierarchy(props: {
           if (ids.length) finishDrop(ids, null);
         }}
       >
-        {filtered.map((n) => {
+        <div className="hier-window" style={{ height: filtered.length * HIERARCHY_ROW_HEIGHT }}>
+        {windowRows.indices.map((rowIndex) => {
+          const n = filtered[rowIndex];
           const id = n.entity.entity;
-          const selected = props.selectedIds.includes(id);
+          const selected = selectedSet.has(id);
           const inactive = !n.entity.active;
           const drop = dropTarget?.id === id ? dropTarget.pos : null;
           const prefabLink = readPrefabLink(n.entity);
@@ -721,7 +759,7 @@ export function Hierarchy(props: {
               ]
                 .filter(Boolean)
                 .join(' ')}
-              style={{ paddingLeft: 8 + n.depth * 14 }}
+              style={{ paddingLeft: 8 + n.depth * 14, position: 'absolute', top: rowIndex * HIERARCHY_ROW_HEIGHT, left: 0, right: 0 }}
               data-entity-id={id}
               data-depth={n.depth}
               data-agent-scope={`Entity ${id}`}
@@ -751,23 +789,23 @@ export function Hierarchy(props: {
                   props.onRefresh();
                 } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
                   event.preventDefault();
-                  const index = filtered.findIndex((candidate) => candidate.entity.entity === id);
+                  const index = indicesById.get(id) ?? 0;
                   const next = event.key === 'ArrowDown' ? index + 1 : index - 1;
                   const target = filtered[Math.max(0, Math.min(filtered.length - 1, next))];
-                  rowRefs.current.get(target.entity.entity)?.focus();
+                  scrollRow(target.entity.entity, true);
                 } else if (event.key === 'Home' || event.key === 'End') {
                   event.preventDefault();
                   const target = event.key === 'Home' ? filtered[0] : filtered.at(-1);
-                  if (target) rowRefs.current.get(target.entity.entity)?.focus();
+                  if (target) scrollRow(target.entity.entity, true);
                 } else if (event.key === 'ArrowRight') {
                   event.preventDefault();
                   if (n.hasChildren && !n.expanded && !props.filter.trim()) {
                     props.store.expand(id);
                     props.onRefresh();
                   } else {
-                    const index = filtered.findIndex((candidate) => candidate.entity.entity === id);
+                    const index = indicesById.get(id) ?? 0;
                     const child = filtered[index + 1];
-                    if (child?.depth === n.depth + 1) rowRefs.current.get(child.entity.entity)?.focus();
+                    if (child?.depth === n.depth + 1) scrollRow(child.entity.entity, true);
                   }
                 } else if (event.key === 'ArrowLeft') {
                   event.preventDefault();
@@ -775,15 +813,12 @@ export function Hierarchy(props: {
                     props.store.collapse(id);
                     props.onRefresh();
                   } else if (n.entity.parent != null) {
-                    rowRefs.current.get(n.entity.parent)?.focus();
+                    scrollRow(n.entity.parent, true);
                   }
                 }
               }}
               onContextMenu={(e) => onContext(e, id)}
               onPointerDown={(e) => onPointerDown(e, id)}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={clearPointerDrag}
               onDragOver={(e) => onDragOver(e, id)}
               onDragLeave={(e) => {
                 if (!(e.currentTarget as HTMLElement).contains(e.relatedTarget as Node | null)) {
@@ -887,6 +922,7 @@ export function Hierarchy(props: {
             </div>
           );
         })}
+        </div>
         {filtered.length === 0 && <div className="empty-state">No GameObjects</div>}
       </div>
       {ctx && (

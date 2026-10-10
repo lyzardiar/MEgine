@@ -1,0 +1,28 @@
+# Large-scene hierarchy and viewport performance
+
+Author: MiYu
+
+The Frostbound scene contains 89,853 original entities and 326 identity folders. Root entities drop from 41,825 to 8. Folders organize terrain into 16-unit regions and pooled units, projectiles, environment models and effects into type/32-slot groups. Canvas and its sibling order stay intact. Existing entity IDs, names, components, active flags, body/effect parent chains and world transforms remain unchanged. The generator adds folders after the client initialization lists are captured.
+
+New scene imports start collapsed. Same-scene replacement and remote snapshots preserve folds. Loading a saved selection reveals its ancestor path; selecting a different object from Scene/Inspector reveals it without changing multi-selection. Ping has an indexed, cycle-safe ancestor walk. Search reads the authored hierarchy without cloning mesh/component payloads.
+
+Hierarchy rows are fixed at 24 pixels. Only viewport rows plus eight overscan rows per side are mounted, with one extra pinned row while renaming or dragging. Full ordered rows remain available for selection, reorder and keyboard navigation. Navigation scrolls a destination into the window before focusing it. Search restores the previous scroll when cleared. Pointer dragging captures the stable tree body and supports edge scrolling. Move planning builds one sorted parent-to-children index, and reparenting uses one entity index. A 90,000-node regression bounds parent reads linearly instead of repeatedly scanning the full scene. During Play, complete viewport entity lists also use a per-paint activation index with cached ancestor results; Edit and filtered Scene lists preserve their existing callbacks. A 90,000-deep chain is resolved without recursive stack growth.
+
+Native Scene, Game and RawImage camera views use independent octree queries. Mesh uploads measure current vertex AABBs, including sampled pose/effect/billboard geometry. Final world matrices transform all eight corners, retaining parent shear and negative scale. Unknown bounds stay visible. Main-camera and directional-shadow frusta use wgpu 0..1 depth and produce separate visible lists. Their union controls uniform upload and material preparation; each pass uses compact uniform slots. UI remains separate and offscreen simulation continues. The native Profiler exposes camera-visible, shadow-visible and submitted object counts.
+
+The browser world renderer also queries an octree before creating draw/sort/picking entries for meshes and sprites. Bounds use its actual preview geometry and sprite size/pivot. Selected objects, cameras, lights, colliders, unknown or complex batches and effects retain conservative visibility. Browser and native rendering retain their respective existing supported geometry paths.
+
+## Verification
+
+- Grouping checks compare all original scene records against the Git HEAD scene and verify every inserted ancestor is active with identity TRS. Repeated grouping is idempotent.
+- 53 distinct Node tests pass across hierarchy windowing, 90k-node real-store/SSR rendering, search, move, selection, Scene restrictions, browser frustum/oracle checks, Play synchronization and runtime authoring/lifecycle.
+- 57 RHI tests pass, including real GPU camera/shadow union, compact uniform slot colors, camera movement, uploaded vertex-bound replacement, independent UI cameras and MSAA.
+- 24 affected hero/gameplay scripts pass, totaling 159 groups.
+- TypeScript/Vite production build and final standalone custom-protocol Release build pass. The final embedded executable SHA-256 is 69af5ea537259253f69a30bd2eed8fb3c4cfaee455d35f1c4a0316c7ae9e131a.
+- Packaged hierarchy acceptance verifies 14 initial rows, 30 mounted rows after expanding 90,179 entities, End navigation, search restoration, external selection, rename and pointer reparent. Final viewport acceptance additionally verifies a fresh Scene frame in Play, 45 seconds of Game sampling, pause/step/stop restoration and zero console errors. Scene camera visibility is 85/265; Game is 162/277, with 188 shadow-visible and 236 uploaded objects. Native completion details and the separate hierarchy binary are explicit in native-spatial-completion.json. The native harness retained its WebView cache EPERM failure; process exit and subsequent runtime cleanup were verified separately. Bulk fixture deletion was rejected by automatic approval review, so test copies remain.
+
+## Remaining costs
+
+The final run measures 49.343 seconds for cold readiness, 14.937 seconds for pointer drag plus bridge state verification, 87.045 ms average WebView paint and 792.867 ms average native present interval (about 1.26 FPS). These different timings identify the remaining responsiveness cost; this milestone does not claim smooth gameplay. The frame compiler still scans active scene state, and mesh/texture cache synchronization still receives the complete compiled resource set. Octree bounds refresh scans current render objects and rebuilds when bounds/order change; unchanged collections reuse the tree. The browser keeps conservative complex effect/helper candidates. These are performance limits of this implementation, rather than a claim that every engine stage is now sublinear. Full Warcraft III parity remains outside this performance milestone.
+
+Receipts: `spatial-validation.json`, `native-spatial-completion.json and native-play-state-spatial-viewport.json`, `play-state-optimized.json` and `play-state-handoff.md`.

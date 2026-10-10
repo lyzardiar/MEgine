@@ -43,6 +43,26 @@ export function applyPlayWorldUpdate(previous: WorldSnapshotView, revision: numb
   }) };
 }
 
+/** MiYu: reuse validated entity indices while preserving direct live-world edits and reset semantics. */
+export function createPlayWorldUpdater() {
+  let ids: number[] | null = null;
+  let indices = new Map<number, number>();
+  return (previous: WorldSnapshotView, revision: number, update: PlayWorldUpdate): WorldSnapshotView => {
+    if (update.baseRevision !== revision || update.revision !== revision + 1) throw new Error('Play snapshot revision mismatch');
+    let stable = !update.reset && ids !== null && ids.length === previous.entities.length && ids.length === update.entityOrder.length;
+    if (stable) for (let i = 0; i < ids!.length; i++) if (previous.entities[i].entity !== ids![i] || update.entityOrder[i] !== ids![i]) { stable = false; break; }
+    if (stable) {
+      const changed = toWorldSnapshotView(update.snapshot), entities = previous.entities.slice();
+      for (const entity of changed.entities) { const index = indices.get(entity.entity); if (index !== undefined) entities[index] = entity; }
+      return { ...changed, entities };
+    }
+    const result = applyPlayWorldUpdate(previous, revision, update);
+    ids = result.entities.map(entity => entity.entity);
+    indices = new Map(ids.map((id, index) => [id, index]));
+    return result;
+  };
+}
+
 export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): PlayRuntimeDriver {
   let sessionId: number | null = null;
   let generation = 0;
@@ -51,6 +71,7 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
   let backendSessionId: number | null = null;
   let lifecycle: Promise<void> = Promise.resolve();
   let quitRequested = false;
+  let applyUpdate = createPlayWorldUpdater();
   return {
     retainsWorld: true,
     get sessionId() { return sessionId; },
@@ -66,14 +87,14 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
       });
       lifecycle = starting.then(() => {}, () => {});
       const result = await starting;
-      if (result && current === generation) { sessionId = result.sessionId; revision = 0; world = toWorldSnapshotView(result.snapshot); return world; }
+      if (result && current === generation) { sessionId = result.sessionId; revision = 0; world = toWorldSnapshotView(result.snapshot); applyUpdate = createPlayWorldUpdater(); return world; }
     },
     async step(snapshot, input, dt) {
       if (sessionId === null || world === null) throw new Error('Play Mode is initializing');
       const current = generation;
       const update = await invoke<PlayWorldUpdate>('step_editor_play', { sessionId, snapshot, input, dt });
       if (current !== generation || world === null) throw new Error('Play session expired');
-      world = applyPlayWorldUpdate(world, revision, update);
+      world = applyUpdate(world, revision, update);
       revision = update.revision;
       quitRequested = update.quitRequested === true;
       return world;
@@ -81,6 +102,7 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
     stop() {
       quitRequested = false;
       generation++; sessionId = null; world = null; revision = 0;
+      applyUpdate = createPlayWorldUpdater();
       lifecycle = lifecycle.then(async () => {
         const stopped = backendSessionId;
         backendSessionId = null;

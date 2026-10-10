@@ -1,0 +1,71 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "variant": "spatial",
+  "startedAt": "2026-10-10T08:14:44.869Z",
+  "scope": "One full native client using the published Main.js/Main.mscene, actual F1 skirmish input, continuous 45-second playback sample, pause/step/stop. Spatial variant also verifies grouped hierarchy UI, virtual End navigation, search scroll restoration, external selection and rename. Native viewport sampling includes rendering and scheduling; separate source-scene hashes identify the identity-group addition.",
+  "editorExecutable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+  "editorSha256": "28ffd19a4b4eba6a59f98edaa46b9b023a593fdf98802540bc5c28db23c530f4",
+  "sourceMainSha256": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
+  "sourceSceneSha256": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+  "steps": [
+    {
+      "name": "full native scene readiness",
+      "ms": 54868
+    },
+    {
+      "name": "large hierarchy native UI interaction",
+      "ms": 190374
+    },
+    {
+      "name": "native Scene spatial query",
+      "ms": 31710
+    }
+  ],
+  "hierarchy": {
+    "initialDom": 1730,
+    "initialRows": 14,
+    "entities": 90179,
+    "expanded": {
+      "dom": 1972,
+      "rows": 30,
+      "scrollHeight": 2164296
+    },
+    "end": {
+      "scrollTop": 2163788,
+      "rows": 30,
+      "active": "Missile aura 255"
+    },
+    "searchRestore": true,
+    "externalSelectionReveal": true,
+    "rename": true,
+    "pointerDrag": true,
+    "pointerDragMs": 14937
+  },
+  "frontendUrl": "http://tauri.localhost/",
+  "sceneSpatialCounts": {
+    "billboardMeshes": 0,
+    "cameraVisibleObjects": 28,
+    "entities": 90179,
+    "materialPipelineEvictions": 0,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 1,
+    "materialPipelinesRejected": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialSamplers": 1,
+    "materialTextureBindGroups": 1,
+    "materialTexturesColor": 7,
+    "materialTexturesData": 1,
+    "msaaSamples": 4,
+    "renderObjects": 65,
+    "sceneViews": 0,
+    "shadowVisibleObjects": 65,
+    "submittedObjects": 65,
+    "uiBatches": 1,
+    "uiDrawCalls": 1,
+    "uiPrimitives": 53
+  },
+  "error": "BridgeRpcError: Viewport \"scene\" canvas is not available yet\n    at WebSocket.<anonymous> (file:///E:/work/codex/worktrees/1339/MEgine/packages/agent/mcp/server.mjs:266:24)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:14387:14)\n    at #onMessage (node:internal/deps/undici/undici:15710:9)\n    at Object.onMessage (node:internal/deps/undici/undici:15417:76)\n    at websocketMessageReceived (node:internal/deps/undici/undici:14391:15)\n    at ByteParser.run (node:internal/deps/undici/undici:15093:19)\n    at ByteParser._write (node:internal/deps/undici/undici:14969:14)\n    at writeOrBuffer (node:internal/streams/writable:570:12)",
+  "shutdownError": "Native QA editor remained after normal close: E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-1791620047311",
+  "elapsedMs": 318345
+}

@@ -1,10 +1,13 @@
 # Author: MiYu. Close the unique main window of one verified background QA editor.
-param([int]$EditorPid,[Parameter(Mandatory=$true)][string]$DiscoveryFile)
+param([int]$EditorPid,[Parameter(Mandatory=$true)][string]$DiscoveryFile,[string]$ExpectedExecutable)
 $ErrorActionPreference='Stop'
 if(-not [IO.Path]::IsPathFullyQualified($DiscoveryFile)){throw 'DiscoveryFile must be absolute'}
 $record=Get-Content -LiteralPath $DiscoveryFile -Raw | ConvertFrom-Json
 if($record.pid -ne $EditorPid -or $record.background -ne $true -or $record.runtimeIdentifier -notlike 'com.mengine.editor.agent-*'){throw 'Editor ownership mismatch'}
-if((Get-Process -Id $EditorPid).ProcessName -ne 'mengine-editor-tauri'){throw 'Editor PID was reused'}
+if($ExpectedExecutable){
+    if(-not [IO.Path]::IsPathFullyQualified($ExpectedExecutable)){throw 'ExpectedExecutable must be absolute'}
+    if((Get-Process -Id $EditorPid).Path -ne [IO.Path]::GetFullPath($ExpectedExecutable)){throw 'Editor executable ownership mismatch'}
+}elseif((Get-Process -Id $EditorPid).ProcessName -ne 'mengine-editor-tauri'){throw 'Editor PID was reused'}
 Add-Type @'
 using System;
 using System.Runtime.InteropServices;

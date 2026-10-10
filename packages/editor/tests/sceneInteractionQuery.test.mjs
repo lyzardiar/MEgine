@@ -95,6 +95,7 @@ test('Scene bridge commands validate requests, preserve authored data and expose
 test('Hierarchy renders inherited controls from a batch without scalar row queries', async () => {
   const {Hierarchy} = await server.ssrLoadModule('/src/panels/Hierarchy.tsx');
   const store = createStore(); store.loadSceneJson(scene([{entity:1,name:'Parent',components:{}},{entity:2,name:'Child',parent:1,components:{}}])); store.setSceneInteractionState([1],[1]);
+  store.expand(1);
   store.sceneVisible = store.scenePickable = () => {throw Error('Scalar query in hierarchy row');};
   const noop = () => {}, markup = renderToStaticMarkup(createElement(Hierarchy,{store,nodes:store.getVisibleFlat(),selectedIds:[],filter:'',pendingRenameId:null,onFilter:noop,onPendingRenameConsumed:noop,onRefresh:noop,onLog:noop,onFrame:noop}));
   assert.match(markup,/Show Child in Scene View/); assert.match(markup,/Enable Scene picking for Child/);

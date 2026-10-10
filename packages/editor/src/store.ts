@@ -1,6 +1,7 @@
 // Author: MiYu. Editor scene state, hierarchy and runtime interaction.
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, type PlayInput, type PlayRuntimeDriver } from './playRuntime';
+import { createPlayWorldSync } from './playWorldSync';
 import {
   createBehaviourRunner,
   getBehaviour,
@@ -229,11 +230,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let playError: unknown = null;
   let playInput = emptyPlayInput();
   let playClearColor: [number, number, number, number] | null = null;
-  let playSyncedFingerprint = '';
+  const playWorldSync = createPlayWorldSync();
   let playStepRequestMs = 0;
   let remotePlaySessionId: number | undefined;
-  const playFingerprint = () => JSON.stringify([playEntities, playClearColor ?? clearColor]);
-  const nativePlaySessionId = () => mode !== 'edit' && playFingerprint() === playSyncedFingerprint ? playRuntime?.sessionId ?? remotePlaySessionId : undefined;
+  const playWorldMatches = () => playWorldSync.matches(playEntities, playClearColor ?? clearColor);
+  const nativePlaySessionId = () => mode !== 'edit' && playWorldMatches() ? playRuntime?.sessionId ?? remotePlaySessionId : undefined;
 
   const trackPlayOperation = (operation: Promise<void>, generation: number) => {
     playBusy = true;
@@ -244,6 +245,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       behaviourRunner.unmount();
       playEntities = null;
       playClearColor = null;
+      playWorldSync.reset();
       playRuntime?.stop();
       playRuntime?.onError(error);
     }).finally(() => { if (generation === playGeneration) playBusy = false; });
@@ -257,7 +259,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     playInput = emptyPlayInput();
     playClearColor = null;
     remotePlaySessionId = undefined;
-    playSyncedFingerprint = '';
+    playWorldSync.reset();
     behaviourRunner.unmount();
     playEntities = null;
     mode = 'edit';
@@ -273,7 +275,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     const input = structuredClone(playInput);
     playInput.pressedKeys = []; playInput.releasedKeys = [];
     playInput.pressedButtons = []; playInput.releasedButtons = []; playInput.pointerDelta = [0, 0];
-    const snapshot = playRuntime.retainsWorld && playFingerprint() === playSyncedFingerprint ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: playClearColor ?? clearColor, selected: primarySelected() };
+    const snapshot = playRuntime.retainsWorld && playWorldMatches() ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: playClearColor ?? clearColor, selected: primarySelected() };
     trackPlayOperation(playRuntime.step(snapshot, input, dt).then((result) => {
       if (generation !== playGeneration || mode === 'edit') return;
       if (playRuntime?.quitRequested) { stopPlay(); return; }
@@ -281,7 +283,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       playClearColor = result.clearColor;
       playSpin = result.simulationTime ?? playSpin;
       frame = result.frame;
-      playSyncedFingerprint = playFingerprint();
+      playWorldSync.capture(playEntities, playClearColor ?? clearColor);
       playStepRequestMs = performance.now() - started;
     }), generation);
   };
@@ -887,6 +889,18 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     2,
   );
 
+  const revealEntityAncestors = (id: number) => {
+    const byId = new Map(list().map((e) => [e.entity, e]));
+    const visited = new Set<number>();
+    let cur = byId.get(id)?.parent ?? null, changed = false;
+    while (cur != null && !visited.has(cur)) {
+      visited.add(cur);
+      if (!expanded.has(cur)) { expanded.add(cur); changed = true; }
+      cur = byId.get(cur)?.parent ?? null;
+    }
+    return changed;
+  };
+
   const applySceneJson = (
     json: string,
     targetMode: EditorMode,
@@ -930,7 +944,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         : legacyGameResolution(data.gameAspect, data.gameOrientation);
       gameDisplay = normalizeGameDisplay(data.gameDisplay);
     }
-    expanded = new Set(editEntities.map((e) => e.entity));
+    // New scenes start collapsed; remote snapshots retain the user's existing folds.
+    const loadedIds = new Set(editEntities.map((e) => e.entity));
+    const newScene = recordUndo && applyScenePreferences;
+    expanded = newScene ? new Set() : new Set([...expanded].filter((id) => loadedIds.has(id)));
     sceneHiddenIds = new Set();
     sceneUnpickableIds = new Set();
     selectedIds = restoreSceneSelection(
@@ -939,6 +956,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       data.world?.selected,
     );
     selectionAnchor = selectedIds[selectedIds.length - 1] ?? null;
+    const loadedById = new Map(editEntities.map((e) => [e.entity, e]));
+    for (const id of newScene ? selectedIds : []) {
+      let parent = loadedById.get(id)?.parent ?? null;
+      const visited = new Set<number>();
+      while (parent != null && !visited.has(parent)) { visited.add(parent); expanded.add(parent); parent = loadedById.get(parent)?.parent ?? null; }
+    }
     playEntities = targetMode === 'edit' ? null : structuredClone(editEntities);
     mode = targetMode;
     playClearColor = targetMode === 'edit' ? null : clearColor;
@@ -1052,6 +1075,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     authoredEntities() {
       return structuredClone(editEntities);
     },
+    /** Read-only hierarchy search source, without copying large mesh/component payloads. */
+    hierarchySearchSource(): readonly EntityRec[] { return editEntities; },
     sceneContentFingerprint() {
       return sceneContentFingerprint(editEntities, clearColor);
     },
@@ -1182,14 +1207,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     /** Select entity and expand all ancestors (Unity Ping). */
     revealEntity(id: number) {
-      let cur = find(id)?.parent ?? null;
-      while (cur != null) {
-        expanded.add(cur);
-        cur = find(cur)?.parent ?? null;
-      }
+      revealEntityAncestors(id);
       selectedIds = [id];
       selectionAnchor = id;
     },
+    revealEntityAncestors,
     selectMany(ids: number[], selMode: SelectMode, clicked?: number) {
       selectInternal(ids, selMode, clicked);
     },
@@ -1278,6 +1300,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     setParent(ids: number[], parent: number | null, atIndex?: number, withUndo = true) {
       const current = list();
+      const currentById = new Map(current.map((entity) => [entity.entity, entity]));
       const plan = planHierarchyMove(
         current.map((entity) => ({
           id: entity.entity,
@@ -1292,7 +1315,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
 
       if (withUndo) pushUndo('Reparent GameObject');
       const rectIds = new Set(plan.roots.filter((id) => {
-        const entity = find(id);
+        const entity = currentById.get(id);
         return entity?.components.RectTransform && (entity.parent ?? null) !== plan.parent;
       }));
       const canvasSize = sceneCanvasLogicalSize(gameResolution, { w: 800, h: 600 });
@@ -1300,34 +1323,34 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const before = buildWorldTransforms(current);
       const preservedWorld = new Map(
         plan.roots.flatMap((id) => {
-          const entity = current.find((candidate) => candidate.entity === id);
+          const entity = currentById.get(id);
           if ((entity?.parent ?? null) === plan.parent) return [];
           const transform = resolvedTransform(before, id);
           return transform ? [[id, transform] as const] : [];
         }),
       );
       for (const id of plan.roots) {
-        const entity = find(id);
+        const entity = currentById.get(id);
         if (entity) entity.parent = plan.parent;
       }
       if (preservedWorld.size) {
         const after = buildWorldTransforms(current);
         for (const [id, worldTransform] of preservedWorld) {
-          const entity = find(id);
+          const entity = currentById.get(id);
           const parentTransform = parentWorldTransform(current, after, id);
           if (!entity?.components.Transform || !parentTransform) continue;
           entity.components.Transform = worldTransformToLocal(parentTransform, worldTransform);
         }
       }
       plan.destinationOrder.forEach((id, index) => {
-        const entity = find(id);
+        const entity = currentById.get(id);
         if (entity) entity.siblingIndex = index;
       });
       if (beforeRects.size) {
         const afterRects = captureUiRectLayouts(current, rectIds, canvasSize);
         for (const [id, beforeRect] of beforeRects) {
           const afterRect = afterRects.get(id);
-          const entity = find(id);
+          const entity = currentById.get(id);
           if (!entity?.components.RectTransform || !afterRect || afterRect.driven || afterRect.canvas !== beforeRect.canvas) continue;
           entity.components.RectTransform = reparentRectKeepingVisualRect(readRectTransform(entity.components.RectTransform), beforeRect.rect, afterRect.parent, afterRect.scale);
         }
@@ -1593,6 +1616,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       animationPreview = null;
       timelinePreview = null;
       playEntities = structuredClone(editEntities);
+      playWorldSync.reset();
       mode = 'play';
       playSpin = 0;
       if (!playRuntime) behaviourRunner.mount(playEntities);
@@ -1606,7 +1630,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
             playClearColor = result.clearColor;
             playSpin = result.simulationTime ?? playSpin;
             frame = result.frame;
-            playSyncedFingerprint = playFingerprint();
+            playWorldSync.capture(playEntities, playClearColor ?? clearColor);
           }
           if (playEntities) behaviourRunner.mount(playEntities);
         }
@@ -2838,7 +2862,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     loadRemoteSceneJson(json: string, remoteMode: EditorMode, nativeSessionId?: number) {
       applySceneJson(json, remoteMode, false);
       remotePlaySessionId = nativeSessionId;
-      playSyncedFingerprint = playFingerprint();
+      playWorldSync.capture(playEntities, playClearColor ?? clearColor);
     },
   };
 }
