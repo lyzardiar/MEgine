@@ -2,12 +2,12 @@
   "author": "MiYu",
   "passed": true,
   "isolatedOutput": true,
-  "elapsedMs": 2776,
+  "elapsedMs": 1902,
   "outputs": [
     {
       "path": "Assets/Scripts/Main.js",
-      "bytes": 14983829,
-      "sha256": "890ee81c8f4bd7c0f82c20e61a49455b03d22814c753697f0be5b43e8ee48259",
+      "bytes": 14984077,
+      "sha256": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
       "identical": true
     },
     {

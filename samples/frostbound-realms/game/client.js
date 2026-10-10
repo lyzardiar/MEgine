@@ -102,18 +102,15 @@ var FrostClient=(()=>{
     try{editorState();if(JSON.stringify(before)!==JSON.stringify(editMap)&&(editorPage!==7||!sculptSaved)){undo.push(before);if(undo.length>20)undo.shift();if(editorPage===7)sculptSaved=true;}}catch(e){editMap=before;editorState();message(e.message);}
   }
   function connect(action){const now=Date.now()/1000;stopNetwork();online=true;intent=action;mode='connecting';retry=now;reconnectUntil=now+8;message('Connecting to '+address);}
+  function disconnected(now){connected=false;if(online&&token){mode='reconnecting';intent='resume';retry=now+.5;reconnectUntil=now+12;message('Connection lost. Reconnecting...');}else if(online){online=false;mode='network';message('Connection failed. Start server.mjs and check the address.');}}
+  function handshake(){engine.network.send({type:'hello',protocol:S.PROTOCOL,name:'Commander'});if(intent==='create')engine.network.send({type:'create',mode:editMap.mode==='moba'?'moba':'skirmish',map:editMap.mode==='td'?S.defaultMap():editMap,faction,heroClass});if(intent==='browse'){engine.network.send({type:'list'});mode='rooms';}if(intent==='resume')engine.network.send({type:'resume',code,token});}
   function collectEvents(){if(lastFrame===state.frame)return;for(const e of state.events||[])if((e.audience===undefined||e.audience&(1<<team))&&state.visible[team]?.[S.index(e.x,e.z)])pendingFx.push(e);if(pendingFx.length>48)pendingFx.splice(0,pendingFx.length-48);lastFrame=state.frame;}
   function receive(){
     const now=Date.now()/1000;
     for(const e of engine.network.poll()){
-      if(e.type==='connected'){connected=true;lastReceive=now;engine.network.send({type:'hello',protocol:S.PROTOCOL,name:'Commander'});}
-      if(e.type==='closed'){connected=false;if(online&&token){mode='reconnecting';intent='resume';retry=now+.5;reconnectUntil=now+12;message('Connection lost. Reconnecting...');}else if(online){online=false;mode='network';message('Connection failed. Start server.mjs and check the address.');}}
+      if(e.type==='connected'){connected=true;lastReceive=now;handshake();}
+      if(e.type==='closed')disconnected(now);
       if(e.type!=='message')continue;const m=e.data;lastReceive=now;
-      if(m.type==='welcome'){
-        if(intent==='create')engine.network.send({type:'create',mode:editMap.mode==='moba'?'moba':'skirmish',map:editMap.mode==='td'?S.defaultMap():editMap,faction,heroClass});
-        if(intent==='browse'){engine.network.send({type:'list'});mode='rooms';}
-        if(intent==='resume')engine.network.send({type:'resume',code,token});
-      }
       if(m.type==='joined'){
         missileView.reset();sentinelView.reset();sentinelPositions.clear();unitView.reset();unitPositions.clear();for(const id of Object.keys(previous))delete previous[id];
         const resumed=intent==='resume'&&!!m.state;team=m.team;token=m.token;code=m.code;seq=0;if(m.state){state=m.state;collectEvents();mode=state.winner===null?'playing':'finished';}else mode='lobby';
@@ -127,7 +124,7 @@ var FrostClient=(()=>{
     }
     if(online&&!connected&&now>=retry){if(now>reconnectUntil){stopNetwork();mode='network';message('Connection timed out');}else {engine.network.connect(address);retry=now+3;}}
     if(connected&&Math.floor(now/3)!==receive.lastPing){receive.lastPing=Math.floor(now/3);engine.network.send({type:'ping',nonce:now});}
-    if(connected&&now-lastReceive>8)engine.network.close();
+    if(connected&&now-lastReceive>8){engine.network.close();disconnected(now);}
   }
   function hudRect(name){const r=authored[name].RectTransform;return mode==='editor'?FrostHUD.editorRect(name,r):r;}
   function inBattlefield(p){const v=FrostHUD.viewport(engine.input||{});return p.y<v.height/2-(mode==='editor'?200:212)&&p.y>-v.height/2+38;}
@@ -157,7 +154,7 @@ var FrostClient=(()=>{
     else if(['musicVolume','sfxVolume','menuSnow'].includes(id)){if(id==='menuSnow')settings.snow=!settings.snow;else{const key=id==='musicVolume'?'music':'sfx';settings[key]=settings[key]<=0?1:Math.max(0,settings[key]-.25);}applySettings();if(persist('settings',settings))message('设置已保存');}
     else if(id==='quitConfirm'){stopNetwork();mode='exited';engine.quit();}
     else if(id==='multiplayer')mode='network';else if(id==='netSkirmish'){editMap=S.defaultMap('skirmish');connect('create');}else if(id==='netMoba'){editMap=S.defaultMap('moba');connect('create');}else if(id==='netBrowse')connect('browse');else if(id==='netAddress'){mode='address';edit=address;}else if(id==='roomRefresh')engine.network.send({type:'list'});else if(id==='lobbyHero'){const choice=room?.players.find(p=>p.team===team)?.heroClass??heroClass;engine.network.send({type:'pick',heroClass:(choice+1)%S.heroes.length});}
-    else if(id==='heroChoice'){heroClass=(heroClass+1)%S.heroes.length;message(S.heroDefinition({mode:'skirmish',shadowhunterVersion:1,taurenVersion:1,farseerVersion:1,blademasterVersion:1,mountainKingVersion:1,lichVersion:1,dreadlordVersion:1,deathKnightVersion:1,paladinVersion:1,archmageVersion:1,bloodMageVersion:1,wardenVersion:1,priestessVersion:1,keeperVersion:1,demonHunterVersion:1,teams:[{faction}]},0,heroClass).label+' / '+S.heroes[heroClass].role);}
+    else if(id==='heroChoice'){heroClass=(heroClass+1)%S.heroes.length;message(S.heroDefinition({mode:'skirmish',shadowhunterVersion:1,taurenVersion:1,farseerVersion:1,blademasterVersion:1,mountainKingVersion:1,cryptLordVersion:1,lichVersion:1,dreadlordVersion:1,deathKnightVersion:1,paladinVersion:1,archmageVersion:1,bloodMageVersion:1,wardenVersion:1,priestessVersion:1,keeperVersion:1,demonHunterVersion:1,teams:[{faction}]},0,heroClass).label+' / '+S.heroes[heroClass].role);}
     else if(id==='editor')enterEditor();else if(id==='network'){mode='network';}else if(id==='faction'){faction=(faction+1)%4;message(S.factions[faction]+': '+['balanced army','12% more health','12% faster movement','10% more attack damage'][faction]);}
     else if(id==='continue'){const saved=load('quicksave');if(saved){try{const restored=S.restore(saved);stopNetwork();state=restored;team=0;shopHero=0;heroPanel='skills';inventoryAction='useItem';groups={};lastFrame=-1;mode=state.winner===null?'playing':'finished';paused=false;accumulator=0;armed=null;returnEditor=false;camera=state.map.spawns[0].map(v=>S.clamp(v,-18,18));zoom=16;selected=[];}catch(e){message('Invalid saved game: '+e.message);}}else message('No saved game. F5 saves a single-player match.');}
     else if(id==='hudMenu'){if(mode==='editor')title();else paused=true;}else if(id==='pauseResume')paused=false;else if(id==='pauseSave'){if(online)message('联机对局由服务器保留重连状态');else persist('quicksave',state);}else if(id==='pauseLoad'){if(!online){action('continue');paused=false;}}else if(id==='pauseExit'){if(returnEditor)enterEditor();else title();}else if(id==='hudQuest')message(state.mode==='rpg'?(S.questNames[state.quest.stage]||'Quest complete'):state.map.name+' / Destroy the opposing stronghold');else if(id==='hudHero')selectHero();else if(id.startsWith('item')){const u=state.units.find(u=>u.id===selected[0]&&u.kind==='hero');const slot=Number(id.slice(4));if(u?.inventory[slot]!==undefined&&(S.items[u.inventory[slot]].restoreHp||S.items[u.inventory[slot]].restoreMana||S.items[u.inventory[slot]].townPortal||u.inventory[slot]>=9&&!S.items[u.inventory[slot]].orb))useItem(slot);}else if(id==='modalPrimary')primary();else if(id==='modalBack'){if(mode==='address')mode='network';else title();}else if(id.startsWith('action')){const a=actions[Number(id.slice(6))];if(a)a.run();}
@@ -353,8 +350,8 @@ var FrostClient=(()=>{
     for(const id of ['hudMenu','hudQuest','hudHero']){const over=hovered(FrostButtons.find(b=>b.id===id),hover);set(id+' box','Image',{sprite:'Assets/Art/console-'+hudSkin+'-button-'+(over?'pressed':'normal')+'.png',color:[1,1,1,1],raycast_target:false});show(id+' border',false);}
     show('HUD Daynight dial',world);if(world)set('HUD Daynight dial','Image',{...authored['HUD Daynight dial'].Image,color:[S.timeOfDay(state)/24,S.daylight(state),0,1]});
     for(const n of ['Gold','Lumber','Supply']){show('HUD '+n+' icon',world&&!editing);show('HUD '+n+' value',world&&!editing);}
-    show('Hero preview',mode==='custom');set('Hero preview','Image',{...authored['Hero preview'].Image,sprite:FrostVisual.heroPortrait(heroClass,false,faction===1?{kind:'hero',sourceHero:['Obla','Ofar','Otch','Oshd'][heroClass]}:faction===0&&[0,1,3].includes(heroClass)?{kind:'hero',sourceHero:{0:'Hamg',1:'Hmkg',3:'Hpal'}[heroClass]}:faction===2&&heroClass<3?{kind:'hero',sourceHero:['Edem','Ekee','Emoo'][heroClass]}:faction===3&&heroClass<3?{kind:'hero',sourceHero:['Udea','Ulic','Udre'][heroClass]}:null)});
-    label('heroChoice label','英雄：'+S.heroDefinition({mode:'skirmish',shadowhunterVersion:1,taurenVersion:1,farseerVersion:1,blademasterVersion:1,mountainKingVersion:1,lichVersion:1,dreadlordVersion:1,deathKnightVersion:1,paladinVersion:1,archmageVersion:1,bloodMageVersion:1,wardenVersion:1,priestessVersion:1,keeperVersion:1,demonHunterVersion:1,teams:[{faction}]},0,heroClass).label);label('faction label','种族：'+['人类','兽人','暗夜精灵','不死族'][faction]);
+    show('Hero preview',mode==='custom');set('Hero preview','Image',{...authored['Hero preview'].Image,sprite:FrostVisual.heroPortrait(heroClass,false,faction===1?{kind:'hero',sourceHero:['Obla','Ofar','Otch','Oshd'][heroClass]}:faction===0&&[0,1,3].includes(heroClass)?{kind:'hero',sourceHero:{0:'Hamg',1:'Hmkg',3:'Hpal'}[heroClass]}:faction===2&&heroClass<3?{kind:'hero',sourceHero:['Edem','Ekee','Emoo'][heroClass]}:faction===3?{kind:'hero',sourceHero:['Udea','Ulic','Udre','Ucrl'][heroClass]}:null)});
+    label('heroChoice label','英雄：'+S.heroDefinition({mode:'skirmish',shadowhunterVersion:1,taurenVersion:1,farseerVersion:1,blademasterVersion:1,mountainKingVersion:1,cryptLordVersion:1,lichVersion:1,dreadlordVersion:1,deathKnightVersion:1,paladinVersion:1,archmageVersion:1,bloodMageVersion:1,wardenVersion:1,priestessVersion:1,keeperVersion:1,demonHunterVersion:1,teams:[{faction}]},0,heroClass).label);label('faction label','种族：'+['人类','兽人','暗夜精灵','不死族'][faction]);
 
     const map=editing?editMap:state.map;
     const ground=FrostTerrain.cells(state,team,allVisible);

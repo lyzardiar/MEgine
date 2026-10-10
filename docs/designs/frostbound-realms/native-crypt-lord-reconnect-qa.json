@@ -1,0 +1,126 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-10T05:56:27.459Z",
+  "steps": [
+    {
+      "name": "two native full-scene readiness",
+      "ms": 121177
+    },
+    {
+      "name": "actual default network create join ready start",
+      "ms": 219590
+    },
+    {
+      "name": "controlled hero skill setup",
+      "ms": 60316
+    },
+    {
+      "name": "controlled twenty-Locust projection on both native clients",
+      "ms": 18020
+    },
+    {
+      "name": "actual guest TCP reconnect with ongoing effects",
+      "ms": 31466
+    }
+  ],
+  "protocol": 74,
+  "scope": "Focused two-full-native-client reconnect and twenty-Locust retention with normal server limits. Default rooms use seeded hero/faction choices; level/skills and source swarm are controlled setup. Actual network menu create/browse/join/ready/start and real socket destruction are exercised; prior same-source full UI/effect evidence remains separate.",
+  "physicalInput": false,
+  "audioListening": false,
+  "sourceMainSha256": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
+  "wire": [
+    {
+      "id": 1,
+      "type": "connection",
+      "at": 1791611946579
+    },
+    {
+      "id": 1,
+      "type": "hello",
+      "at": 1791611952855
+    },
+    {
+      "id": 2,
+      "type": "connection",
+      "at": 1791611999500
+    },
+    {
+      "id": 2,
+      "type": "hello",
+      "at": 1791612001849
+    },
+    {
+      "id": 2,
+      "type": "close",
+      "at": 1791612207001
+    },
+    {
+      "id": 3,
+      "type": "connection",
+      "at": 1791612213869
+    },
+    {
+      "id": 3,
+      "type": "hello",
+      "at": 1791612218909
+    },
+    {
+      "id": 3,
+      "type": "resume",
+      "at": 1791612218911
+    },
+    {
+      "id": 3,
+      "type": "close",
+      "at": 1791612243430
+    },
+    {
+      "id": 1,
+      "type": "close",
+      "at": 1791612243430
+    }
+  ],
+  "reusedFixtures": [
+    "E:\\work\\codex\\cache\\mengine\\native-qa\\crypt-lord-network-1791611187066\\peer-0\\sample",
+    "E:\\work\\codex\\cache\\mengine\\native-qa\\crypt-lord-network-1791611187066\\peer-1\\sample"
+  ],
+  "defaultLobby": {
+    "create": true,
+    "browse": true,
+    "join": true,
+    "readyStart": true,
+    "sourceHero": true,
+    "originalPreview": false
+  },
+  "controls": {
+    "controlledSkillSetup": true,
+    "twentyLocustsBothClients": true
+  },
+  "reconnect": {
+    "realSocketDestroyed": true,
+    "roomResumed": true,
+    "effectsRetained": true,
+    "twentyLocusts": true,
+    "serverResumeMs": 12037,
+    "nativeResumeMs": 25336
+  },
+  "consoleErrors": 0,
+  "checksPassed": true,
+  "shutdown": [
+    {
+      "pid": 171852,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    },
+    {
+      "pid": 92896,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    }
+  ],
+  "fixtureRemoved": true,
+  "elapsedMs": 479509
+}

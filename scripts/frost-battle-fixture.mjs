@@ -9,7 +9,7 @@ export function battleFixture(S,mode='skirmish',options={},actors=[]){
   if(actors.includes('hero'))placed.push({kind:'hero',heroClass,team,x:x+(team?-4:4),z:z+(faction===3?(team?5:-5):(team?2:-2))});
   if(actors.includes('guard')&&faction!==3)placed.push({kind:S.armies[faction].units[0],team,x,z:z+(team?6:-6)});
  }
- for(const u of placed){u.x=S.clamp(u.x,-27,27);u.z=S.clamp(u.z,-27,27);}map.units=[...placed,...map.units];map.startingWood=250;const s=S.create(mode,{lichVersion:0,dreadlordVersion:0,deathKnightVersion:0,shadowhunterVersion:0,taurenVersion:0,farseerVersion:0,blademasterVersion:0,mountainKingVersion:0,paladinVersion:0,archmageVersion:0,bloodMageVersion:0,...options,map});
+ for(const u of placed){u.x=S.clamp(u.x,-27,27);u.z=S.clamp(u.z,-27,27);}map.units=[...placed,...map.units];map.startingWood=250;const s=S.create(mode,{cryptLordVersion:0,lichVersion:0,dreadlordVersion:0,deathKnightVersion:0,shadowhunterVersion:0,taurenVersion:0,farseerVersion:0,blademasterVersion:0,mountainKingVersion:0,paladinVersion:0,archmageVersion:0,bloodMageVersion:0,...options,map});
  if(actors.includes('harvest'))for(let team=0;team<2;team++){let i=0;for(const u of s.units.filter(u=>u.team===team&&['worker','ghoul'].includes(u.kind))){const kind=u.kind==='ghoul'?'tree':s.teams[team].faction===3?'mine':i++<2?'mine':'tree',resource=s.resources.findIndex(r=>r.kind===kind&&S.distance(r,u)<14);if(resource>=0)S.command(s,team,{type:'gather',ids:[u.id],resource});}}
  return s;
 }

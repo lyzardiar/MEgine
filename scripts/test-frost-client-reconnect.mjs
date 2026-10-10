@@ -1,0 +1,12 @@
+// Author: MiYu. Generated client reconnects after remote closure and a silent transport timeout.
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {context,engine,component,tick,key,click,ui} from './test-frost-crypt-lord-generated.mjs';
+const frame=()=>tick({},.1),telemetry=()=>JSON.parse(component('Frost telemetry','Text').text),events=[],calls={connect:[],close:0,send:[]};context.qaNow=1_000_000;vm.runInContext('Date.now=()=>qaNow',context);
+engine.network={poll:()=>events.splice(0),connect:address=>{calls.connect.push(address);return true;},send:data=>{calls.send.push(data);return true;},close:()=>{calls.close++;events.length=0;}};
+if(!telemetry().paused)key('F10');key('KeyX');assert.equal(telemetry().mode,'title');click(ui('network box'));click(ui('netBrowse box'));
+const state=context.Frost.publicState(context.Frost.create(),0),joined={type:'message',data:{type:'joined',team:0,token:'qa-token',code:'QA0001',state}},welcome={type:'message',data:{type:'welcome',protocol:context.Frost.PROTOCOL}};
+events.push({type:'connected'},welcome,joined);frame();assert.equal(telemetry().mode,'playing');assert.equal(telemetry().online,true);
+function reconnect(){const baseline=calls.connect.length;context.qaNow+=501;frame();assert.equal(calls.connect.length,baseline+1,'one retry after the disconnect delay');const sent=calls.send.length;events.push({type:'connected'});frame();assert.deepEqual(calls.send.slice(sent,sent+2).map(m=>m.type),['hello','resume'],'resume is pipelined before welcome');assert.equal(calls.send[sent+1].code,'QA0001');const resumed=calls.send.filter(m=>m.type==='resume').length;events.push(welcome,joined);frame();assert.equal(calls.send.filter(m=>m.type==='resume').length,resumed,'welcome does not repeat the room request');assert.equal(telemetry().mode,'playing');assert.equal(telemetry().notice,'Connection restored.');}
+events.push({type:'closed'});frame();assert.equal(telemetry().mode,'reconnecting');reconnect();console.log('PASS generated client remote closure resumes the same room through hello/resume');
+const baseline=calls.close;context.qaNow+=8_001;frame();assert.equal(calls.close,baseline+1);assert.equal(telemetry().mode,'reconnecting','active timeout must enter reconnecting without a transport closed event');reconnect();assert.equal(calls.close,baseline+1,'timeout closes exactly once');console.log('PASS generated client silent timeout closes once and reconnects without a transport closed event');

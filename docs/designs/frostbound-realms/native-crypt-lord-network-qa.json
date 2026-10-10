@@ -1,0 +1,317 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "startedAt": "2026-10-10T05:24:14.516Z",
+  "steps": [
+    {
+      "name": "two native full-scene readiness",
+      "ms": 130287
+    },
+    {
+      "name": "actual default lobby and source hero preview",
+      "ms": 397136
+    },
+    {
+      "name": "native learning and four Carapace attachments",
+      "ms": 229968
+    },
+    {
+      "name": "E Impale ground hit stun on both native clients",
+      "ms": 67053
+    },
+    {
+      "name": "C beetles B burrow and L swarm through native controls",
+      "ms": 141383
+    },
+    {
+      "name": "actual guest TCP reconnect with ongoing effects",
+      "ms": 20239
+    }
+  ],
+  "protocol": 74,
+  "scope": "Two full native clients, real menu create/browse/join/ready/start, default source hero, UI skill learning/casting, actual TCP reconnect and source effect rendering. Test clock holds authoritative frames for simultaneous inspection; both native clients run continuously with normal TCP idle and backpressure limits; authored flat map and level-six setup only.",
+  "physicalInput": false,
+  "audioListening": false,
+  "sourceMainSha256": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
+  "wire": [
+    {
+      "id": 1,
+      "type": "connection",
+      "at": 1791610208714
+    },
+    {
+      "id": 1,
+      "type": "hello",
+      "at": 1791610213088
+    },
+    {
+      "id": 2,
+      "type": "connection",
+      "at": 1791610256037
+    },
+    {
+      "id": 2,
+      "type": "hello",
+      "at": 1791610259046
+    },
+    {
+      "id": 2,
+      "type": "close",
+      "at": 1791610821076
+    },
+    {
+      "id": 3,
+      "type": "connection",
+      "at": 1791610828189
+    },
+    {
+      "id": 3,
+      "type": "hello",
+      "at": 1791610834583
+    },
+    {
+      "id": 3,
+      "type": "resume",
+      "at": 1791610834585
+    },
+    {
+      "id": 3,
+      "type": "close",
+      "at": 1791610844249
+    },
+    {
+      "id": 1,
+      "type": "close",
+      "at": 1791610844249
+    }
+  ],
+  "reusedFixtures": [
+    "E:\\work\\codex\\cache\\mengine\\native-qa\\crypt-lord-network-1791608619284\\peer-0\\sample",
+    "E:\\work\\codex\\cache\\mengine\\native-qa\\crypt-lord-network-1791608619284\\peer-1\\sample"
+  ],
+  "defaultLobby": {
+    "create": true,
+    "browse": true,
+    "join": true,
+    "readyStart": true,
+    "sourceHero": true,
+    "originalPreview": true
+  },
+  "controls": {
+    "learnedViaUI": true,
+    "carapaceBothClients": true,
+    "CBeetles": true,
+    "BBurrow": true,
+    "burrowHiddenFromOpponent": true,
+    "LSwarm": true,
+    "twentyLocustsBothClients": true
+  },
+  "impale": {
+    "EControl": true,
+    "sevenProjectedSpikes": true,
+    "sourceGroundStunBothClients": true,
+    "originsHidden": true
+  },
+  "error": "Error: Native timeout TCP resume\n    at until (file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-crypt-lord-network.mjs:37:149)\n    at async file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-crypt-lord-network.mjs:61:100\n    at async stage (file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-crypt-lord-network.mjs:15:131)\n    at async file:///E:/work/codex/worktrees/1339/MEgine/scripts/qa-frost-crypt-lord-network.mjs:60:2",
+  "failurePeers": [
+    {
+      "peer": 0,
+      "mode": "playing",
+      "room": "C8F40C",
+      "notice": "",
+      "netStates": 4645,
+      "network": {
+        "events": [
+          {
+            "op": "connect",
+            "result": true,
+            "at": 1791610208710
+          },
+          {
+            "op": "poll",
+            "type": "connected",
+            "at": 1791610213085
+          },
+          {
+            "op": "send",
+            "type": "hello",
+            "result": true,
+            "at": 1791610213085
+          },
+          {
+            "op": "poll",
+            "type": "message",
+            "message": "welcome",
+            "at": 1791610217121
+          },
+          {
+            "op": "poll",
+            "type": "message",
+            "message": "joined",
+            "at": 1791610217121
+          }
+        ],
+        "clock": 1791610833.46,
+        "connected": true,
+        "retry": 1791610211.709,
+        "reconnectUntil": 1791610214.197
+      },
+      "logs": [
+        {
+          "level": "info",
+          "message": "MEngine Editor",
+          "source": "editor",
+          "time": 1791609856399
+        },
+        {
+          "level": "info",
+          "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
+          "source": "editor",
+          "time": 1791609856399
+        },
+        {
+          "level": "info",
+          "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
+          "source": "editor",
+          "time": 1791609856399
+        },
+        {
+          "level": "info",
+          "message": "场景存储：磁盘 project/Assets/Scenes",
+          "time": 1791609865960
+        },
+        {
+          "level": "info",
+          "message": "已恢复场景 Main.mscene",
+          "time": 1791609870106
+        },
+        {
+          "level": "info",
+          "message": "Agent set Game View resolution to 1280 x 720",
+          "time": 1791609921329
+        }
+      ]
+    },
+    {
+      "peer": 1,
+      "mode": "reconnecting",
+      "room": "C8F40C",
+      "notice": "Connection lost. Reconnecting...",
+      "netStates": 4525,
+      "network": {
+        "events": [
+          {
+            "op": "connect",
+            "result": true,
+            "at": 1791610256031
+          },
+          {
+            "op": "poll",
+            "type": "connected",
+            "at": 1791610259041
+          },
+          {
+            "op": "send",
+            "type": "hello",
+            "result": true,
+            "at": 1791610259041
+          },
+          {
+            "op": "poll",
+            "type": "message",
+            "message": "welcome",
+            "at": 1791610263433
+          },
+          {
+            "op": "poll",
+            "type": "message",
+            "message": "joined",
+            "at": 1791610300505
+          },
+          {
+            "op": "poll",
+            "type": "closed",
+            "error": null,
+            "at": 1791610821521
+          },
+          {
+            "op": "connect",
+            "result": true,
+            "at": 1791610828186
+          },
+          {
+            "op": "poll",
+            "type": "connected",
+            "at": 1791610834579
+          },
+          {
+            "op": "send",
+            "type": "hello",
+            "result": true,
+            "at": 1791610834579
+          },
+          {
+            "op": "send",
+            "type": "resume",
+            "result": true,
+            "at": 1791610834579
+          }
+        ],
+        "clock": 1791610834.63,
+        "connected": true,
+        "retry": 1791610831.186,
+        "reconnectUntil": 1791610833.489
+      },
+      "logs": [
+        {
+          "level": "info",
+          "message": "MEngine Editor",
+          "source": "editor",
+          "time": 1791609856419
+        },
+        {
+          "level": "info",
+          "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
+          "source": "editor",
+          "time": 1791609856419
+        },
+        {
+          "level": "info",
+          "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
+          "source": "editor",
+          "time": 1791609856419
+        },
+        {
+          "level": "info",
+          "message": "场景存储：磁盘 project/Assets/Scenes",
+          "time": 1791609865918
+        },
+        {
+          "level": "info",
+          "message": "已恢复场景 Main.mscene",
+          "time": 1791609870121
+        },
+        {
+          "level": "info",
+          "message": "Agent set Game View resolution to 1280 x 720",
+          "time": 1791609919747
+        }
+      ]
+    }
+  ],
+  "shutdown": [
+    {
+      "pid": 124768,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    },
+    {
+      "pid": 90704,
+      "normalExit": true,
+      "runtimeRemoved": true,
+      "discoveryRemoved": true
+    }
+  ],
+  "elapsedMs": 1010593
+}
