@@ -1075,6 +1075,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         selectedIds: [...selectedIds],
       };
     },
+    /** Read-only panel data shares immutable retained records; explicit snapshots remain independent copies. */
+    presentationSnapshot(): WorldSnapshotView & { selectedIds: number[]; simulationTime: number } {
+      const retained = mode !== 'edit' ? playWorldSync.presentationSnapshot(playEntities, playClearColor ?? clearColor) : undefined;
+      if (!retained) { const snapshot = this.snapshot(); return { ...snapshot, clearColor: [...snapshot.clearColor] }; }
+      return { ...retained, frame, simFrame: frame, simulationTime: playSpin, selected: primarySelected(), selectedIds: [...selectedIds] };
+    },
     /** Live presentation data; verify the retained native world only when a render request reads its session ID. */
     playViewportSnapshot() {
       return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected(), get nativeSessionId() { return nativePlaySessionId(); }, get nativeWorldReference() { return nativeWorldReference(); }, runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs } : null;

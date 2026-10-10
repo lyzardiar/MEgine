@@ -361,7 +361,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const resourceDirtyRef = useRef(resourceDirty);
   const unsavedChangesRef = useRef(false);
   const editorCloseState = useRef(createEditorCloseState());
-  const savedSceneFingerprint = useRef(store.sceneContentFingerprint());
+  const [initialSceneFingerprint] = useState(() => store.sceneContentFingerprint());
+  const savedSceneFingerprint = useRef(initialSceneFingerprint);
   const remoteSceneFingerprint = useRef(savedSceneFingerprint.current);
   const remoteSceneDirty = useRef(false);
   const syncSender = useRef(crypto.randomUUID());
@@ -780,7 +781,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const refresh = (publish = true) => {
-    const snapshot = store.snapshot();
+    const snapshot = store.presentationSnapshot();
     setSnap(snapshot);
     setMode(store.mode);
     setGizmo(store.gizmo);

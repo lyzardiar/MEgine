@@ -29,6 +29,15 @@ function plainJson(value: unknown, ancestors = new Set<object>()): boolean {
   return result;
 }
 
+// MiYu: retained records can be shared by presentation and native revisions without allowing writes.
+function freezeJson<T>(value: T): T {
+  if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
+    for (const child of Object.values(value)) freezeJson(child);
+    Object.freeze(value);
+  }
+  return value;
+}
+
 export function createPlayWorldSync() {
   type Entities = WorldSnapshotView['entities'] | null;
   type Color = WorldSnapshotView['clearColor'];
@@ -37,11 +46,16 @@ export function createPlayWorldSync() {
   const fullCapture = (entities: Entities, color: Color) => {
     serialized = JSON.stringify([entities, color]);
     baseline = JSON.parse(serialized) as [Entities, Color];
+    if (Array.isArray(baseline[0])) for (const entity of baseline[0]) freezeJson(entity);
   };
   return {
     reset() { baseline = null; serialized = undefined; },
     /** Retain immutable JSON records across later captures; only the pointer list is copied. */
     viewportSnapshot() { return baseline?.[0] ? { entities: baseline[0].slice(), clearColor: baseline[1].slice() as Color } : undefined; },
+    /** Presentation preserves structured data, so it cannot use the serialization fallback in matches(). */
+    presentationSnapshot(entities: Entities, color: Color) {
+      return baseline && equalJson(entities, baseline[0]) && equalJson(color, baseline[1]) ? this.viewportSnapshot() : undefined;
+    },
     matches(entities: Entities, color: Color) {
       if (!baseline) return false;
       if (equalJson(entities, baseline[0]) && equalJson(color, baseline[1])) return true;
@@ -54,7 +68,7 @@ export function createPlayWorldSync() {
       for (let i = 0; i < entities.length; i++) if (!equalJson(entities[i], baseline[0][i])) changed.push(i);
       const colorChanged = !equalJson(color, baseline[1]);
       if (changed.some(i => !plainJson(entities[i])) || colorChanged && !plainJson(color)) { fullCapture(entities, color); return; }
-      for (const i of changed) baseline[0][i] = JSON.parse(JSON.stringify(entities[i]));
+      for (const i of changed) baseline[0][i] = freezeJson(JSON.parse(JSON.stringify(entities[i])));
       if (colorChanged) baseline[1] = JSON.parse(JSON.stringify(color));
       if (changed.length || colorChanged) serialized = undefined;
     },

@@ -10,6 +10,7 @@
  *
  * The read-only Observer and revision-guarded write Dispatcher both route
  * through the same services and `EditorStore` methods used by the visible UI.
+ * Author: MiYu. Observations share immutable presentation data with editor panels.
  */
 import { invoke } from '@tauri-apps/api/core';
 import { INTENT_DEFINITIONS } from '@mengine/agent';
@@ -2236,7 +2237,7 @@ class AgentBridge {
       || this.sceneChanges.revision === 0
       || now - this.lastPlaySceneObservationAt >= 100
     );
-    const snapshot = shouldObserveScene ? preparedSnapshot ?? store.snapshot() : null;
+    const snapshot = shouldObserveScene ? preparedSnapshot ?? store.presentationSnapshot() : null;
     const sceneDelta = shouldObserveScene
       ? this.sceneChanges.observe(
         sceneName,
