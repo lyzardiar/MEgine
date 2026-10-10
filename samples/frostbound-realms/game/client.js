@@ -30,7 +30,12 @@ var FrostClient=(()=>{
   function set(n,c,v){if(FrostEffectPool.pooled(n)){effectPool.setComponent(n,c,v);return;}const e=entityFor(n);if(!e)return;const json=JSON.stringify(v),key=n+'/'+c;if(sent[key]===json)return;sent[key]=json;engine.pushCommandJson('{"op":"setComponent","entity":'+e.entity+',"component":'+JSON.stringify(c)+',"value":'+json+'}');}
   function activate(n,on){if(FrostEffectPool.pooled(n)){effectPool.setActive(n,on);return;}if(active[n]===on)return;const e=entityFor(n);if(!e)return;active[n]=on;engine.setActive(e.entity,on);}
   function transform(n,position,scale=[1,1,1],rotation=[0,0,0,1]){activate(n,position!==hidden);if(position!==hidden)set(n,'Transform',{position,scale,rotation});}
-  function environment(n,visual,position=hidden){for(let i=0;i<environmentParts;i++){const name=n+(i?' part '+i:''),part=visual?.parts[i];if(!part||part.visible===false){transform(name,hidden);continue;}set(name,'MeshRenderer',{mesh:part.mesh,material:part.material});if(part.color)set(name,'MaterialPropertyBlock',{override_base_color:true,base_color:part.color});transform(name,position,[visual.scale,visual.scale,visual.scale],visual.rotation||[0,Math.sin(visual.yaw/2),0,Math.cos(visual.yaw/2)]);}}
+  const environmentCounts={};
+  function environment(n,visual,position=hidden){
+    const count=Math.min(visual?.parts.length||0,environmentParts);
+    for(let i=0;i<Math.max(count,environmentCounts[n]??environmentParts);i++){const name=n+(i?' part '+i:''),part=visual?.parts[i];if(!part||part.visible===false){transform(name,hidden);continue;}set(name,'MeshRenderer',{mesh:part.mesh,material:part.material});if(part.color)set(name,'MaterialPropertyBlock',{override_base_color:true,base_color:part.color});transform(name,position,[visual.scale,visual.scale,visual.scale],visual.rotation||[0,Math.sin(visual.yaw/2),0,Math.cos(visual.yaw/2)]);}
+    environmentCounts[n]=count;
+  }
   const actorCounts={};
   function actor(n,parts,position=hidden,scale=[1,1,1],rotation=[0,0,0,1],color=[1,1,1,1],portrait=false){
     if(portrait)transform(n,parts?position:hidden,scale,rotation);
@@ -484,6 +489,7 @@ var FrostClient=(()=>{
       const working=playing&&r.kind==='mine'&&state.visible[team]?.[S.index(r.x,r.z)]&&state.units.some(u=>u.hp>0&&u.built===1&&u.order?.type==='gather'&&u.order.resource===i&&r.amount>0&&u.cargo<20&&(!u.cargo||!u.cargoKind||u.cargoKind===r.kind)&&Math.hypot(u.x-r.x,u.z-r.z)<=3&&S.traversable(map,u.x,u.z,r.x,r.z)),v=FrostVisual.resource(r,zoom,map.tileset??0,elapsed,playing?state.frame*S.DT+elapsed:0,working);environment('Prop '+i,v,[r.x,S.elevation(map,r.x,r.z)-(v?.sink||0),r.z]);
     }
   }
+  let renderedUnitSlots=S.LIMIT;
   function renderUnits(input){
     const playing=['playing','finished','reconnecting'].includes(mode),allVisible=!playing;
     const chains=playing?(state.chainLightnings||[]).filter(c=>allVisible||state.visible[team]?.[S.index(c.x,c.z)]&&state.visible[team]?.[S.index(c.fromX,c.fromZ)]):[],sights=playing?(state.farSights||[]).filter(c=>c.team===team):[],farseerClock=state.frame*S.DT+(online?0:accumulator);
@@ -491,11 +497,12 @@ var FrostClient=(()=>{
     for(let i=0;i<Math.max(sights.length,farSightCount);i++)spell('Classic Far Sight '+i,i<sights.length?FrostEffects.farSight(sights[i],farseerClock,state.map):null);farSightCount=sights.length;
     const waves=playing?(state.shockwaves||[]).filter(c=>allVisible||state.visible[team]?.[S.index(c.x,c.z)]):[];for(let i=0;i<Math.max(waves.length,shockwaveCount);i++)spell('Classic Shockwave '+i,i<waves.length?FrostEffects.shockwave(waves[i],farseerClock):null);shockwaveCount=waves.length;
     const healing=playing?FrostEffects.healingRibbons(state,farseerClock,team):[];for(let i=0;i<Math.max(healing.length,healingRibbonCount);i++){const ribbon=healing[i];actor('Classic Healing Wave '+i,ribbon?.parts,ribbon?.position,ribbon?.scale,ribbon?.rotation);if(ribbon)set('Classic Healing Wave '+i,'MaterialPropertyBlock',ribbon.materialPropertyBlock);}healingRibbonCount=healing.length;
-    if(!playing&&mode!=='editor'){unitView.reset();unitPositions.clear();for(let i=0;i<S.LIMIT;i++){actor('Classic Siphon '+i,null);actor('Unit '+i,null);for(const n of ['Ring ','HP ','Flag '])transform(n+i,hidden);show('Sleep '+i,false);show('Unit aura '+i,false);for(const slot of FrostEffects.slots)transform('Classic status '+i+' '+slot,hidden);for(const slot of Object.keys(FrostEffects.spellBindings).filter(slot=>!['deathDecayArea','carrionSwarm','infernalImpact'].includes(slot)))transform('Classic spell '+i+' '+slot,hidden);for(let j=0;j<FrostConstructionArt.slots;j++)transform('Classic attachment '+i+' '+j,hidden);}return;}
+    if(!playing&&mode!=='editor'){unitView.reset();unitPositions.clear();for(let i=0;i<renderedUnitSlots;i++){actor('Classic Siphon '+i,null);actor('Unit '+i,null);for(const n of ['Ring ','HP ','Flag '])transform(n+i,hidden);show('Sleep '+i,false);show('Unit aura '+i,false);for(const slot of FrostEffects.slots)transform('Classic status '+i+' '+slot,hidden);for(const slot of Object.keys(FrostEffects.spellBindings).filter(slot=>!['deathDecayArea','carrionSwarm','infernalImpact'].includes(slot)))transform('Classic spell '+i+' '+slot,hidden);for(let j=0;j<FrostConstructionArt.slots;j++)transform('Classic attachment '+i+' '+j,hidden);}renderedUnitSlots=0;return;}
     if(!playing)unitView.reset();
     const visible=state.units.filter(u=>u.hp>0&&!u.inside&&(allVisible||S.isVisible(state,team,u)));
     unitPositions=new Map(unitView.sample(visible.map(u=>({id:u.id,x:u.x,y:S.unitHeight(state,u),z:u.z})),state.frame,unitTime).map(p=>[p.id,p]));
-    for(let i=0;i<S.LIMIT;i++){
+    const count=Math.min(S.LIMIT,state.units.length);
+    for(let i=0;i<Math.max(count,renderedUnitSlots);i++){
       const u=state.units[i],visible=u&&u.hp>0&&!u.inside&&(allVisible||S.isVisible(state,team,u));if(!visible){actor('Classic Siphon '+i,null);actor('Unit '+i,null);for(const n of ['Ring ','HP ','Flag '])transform(n+i,hidden);show('Sleep '+i,false);show('Unit aura '+i,false);for(const slot of FrostEffects.slots)transform('Classic status '+i+' '+slot,hidden);for(const slot of Object.keys(FrostEffects.spellBindings).filter(slot=>!['deathDecayArea','carrionSwarm','infernalImpact'].includes(slot)))transform('Classic spell '+i+' '+slot,hidden);for(let j=0;j<FrostConstructionArt.slots;j++)transform('Classic attachment '+i+' '+j,hidden);if(u?.reincarnation&&(u.team===team||allVisible||state.visible[team]?.[S.index(u.x,u.z)])){const visual=FrostVisual.model(state,u),clock=state.frame*S.DT+(online?0:accumulator),mesh=FrostVisual.pose(u,visual.asset,false,clock,30),facing=(u.yaw||0)+(visual.asset.classicYaw||0);actor('Unit '+i,FrostVisual.parts(visual.asset,mesh,u.team),[u.x,S.unitHeight(state,u),u.z],[visual.scale,visual.scale,visual.scale],[0,Math.sin(facing/2),0,Math.cos(facing/2)]);spell('Classic spell '+i+' reincarnation',FrostEffects.reincarnation(u,clock,state.map,visual.scale));}continue;}
       const old=previous[u.id],walking=playing&&(old?.frame===state.frame?old.walking:!!old&&Math.hypot(u.x-old.x,u.z-old.z)>.008),position=unitPositions.get(u.id)||{x:u.x,y:S.unitHeight(state,u),z:u.z},visual=FrostVisual.model(state,u,walking),{key,asset}=visual,scale=visual.scale*(u.bloodlust>0?1.15:1),yaw=FrostVisual.heading(state,u,old);previous[u.id]={x:u.x,z:u.z,yaw,frame:state.frame,walking};
       const sleeping=playing&&(online?u.sleeping:S.asleep(state,u));show('Sleep '+i,sleeping);if(sleeping){const p=screenWorld({...u,y:position.y+visual.height+.4},input),r=authored['Sleep '+i].RectTransform;set('Sleep '+i,'RectTransform',{...r,anchored_position:[p.x,p.y]});}
@@ -509,6 +516,7 @@ var FrostClient=(()=>{
       const picked=selected.includes(u.id),flight=S.types[u.kind].flying?(S.unitType(u).flightHeight??4):0,height=asset.classic?visual.height:S.types[u.kind].flying?3:asset.factionBuilding||asset.mountedModel||u.kind==='treant'||asset.realistic&&u.kind==='hero'||S.unitType(u).attack==='siege'?visual.height:S.types[u.kind].speed?3.25:visual.height,span=visual.selectionSpan?visual.selectionSpan*(u.bloodlust>0?1.15:1):S.ancient(u)&&u.uprooted?(S.movementRadius(u)+.2)*2:S.types[u.kind].speed?2.5:(S.types[u.kind].radius+.2)*2;transform('Ring '+i,picked?[position.x,position.y-flight+.04,position.z]:hidden,[span,.012,span]);transform('HP '+i,[position.x,position.y+height,position.z],[1.7*u.hp/u.maxHp,.1,.17]);set('HP '+i,'PbrMaterial',{base_color:u.team===team?[.18,.82,.47,1]:u.kind==='critter'||u.tag==='critter'?[.7,.7,.6,1]:[.9,.2,.18,1],roughness:1});transform('Flag '+i,S.mobile(u)||S.phoenixUnit(u)||u.ancientShift?hidden:[position.x+.5,position.y+height-.6,position.z],[1.5,1.5,1.5]);set('Flag '+i,'MaterialPropertyBlock',{override_base_color:true,base_color:u.team===0?[.35,.68,1,1]:[1,.3,.2,1]});
 
     }
+    renderedUnitSlots=count;
   }
   function renderMissiles(dt){
     if(mode==='playing'&&(!paused||online))flightTime+=dt;

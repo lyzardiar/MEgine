@@ -28,13 +28,13 @@ var FrostTerrain=(()=>{
   function details(map,budget=detailCount){
     const key=[map.terrain,map.surfaces,map.heights,map.ramps,map.relief].map(v=>v?.join(',')).join(';');let cached=detailCache.get(map);
     if(cached?.key!==key){cached=recentDetails?.key===key?recentDetails:{key,values:Array(detailCount).fill(null),next:0};detailCache.set(map,cached);}recentDetails=cached;
-    const end=Math.min(detailCount,cached.next+Math.max(0,Math.floor(budget)));
+    const end=Math.min(detailCount,cached.next+Math.max(0,Math.floor(budget))),regions=end>cached.next?Frost.prepareGround(map):null;
     // MiYu: spread cold decorative sampling over frames while retaining deterministic candidate slots.
     for(;cached.next<end;cached.next++){
       const i=cached.next,tile=(i*37+19)%1024,surface=map.surfaces?.[tile]||0;if(map.terrain[tile]!==0||surface!==0&&surface!==3)continue;
       const x=tile%32*2-31.5+(i*17%101)/101,z=Math.floor(tile/32)*2-31.5+(i*29%101)/101;
-      const p=Frost.groundSample(map,x,z);if(p?.i!==tile||!Frost.groundClear(map,x,z,x,z,.55))continue;
-      const dx=(Frost.elevation(map,x+.25,z)-Frost.elevation(map,x-.25,z))*2,dz=(Frost.elevation(map,x,z+.25)-Frost.elevation(map,x,z-.25))*2,n=Math.hypot(dx,1,dz);
+      const p=Frost.groundSample(map,x,z,true);if(p?.i!==tile||!Frost.groundClear(map,x,z,x,z,.55,regions))continue;
+      const dx=(Frost.elevation(map,x+.25,z,true)-Frost.elevation(map,x-.25,z,true))*2,dz=(Frost.elevation(map,x,z+.25,true)-Frost.elevation(map,x,z-.25,true))*2,n=Math.hypot(dx,1,dz);
       cached.values[i]={x,z,y:p.y-.02,tile,normal:[-dx/n,1/n,-dz/n]};
     }return cached.values;
   }
