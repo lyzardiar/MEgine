@@ -1,3 +1,4 @@
+// Author: MiYu. Editor Scene/Game drawing and interaction with owned native frame presentation.
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import {
@@ -48,7 +49,7 @@ import {
 } from '../math3d';
 import { clearModelPreview, modelPreview, type PreviewMesh } from '../modelPreview';
 import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
-import { createNativeViewportWorldArgs, nativeGamePreviewSize, nativeViewportFrameWorldCurrent, requiresBrowserViewportSnapshot, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
+import { createNativeViewportWorldArgs, nativeGamePreviewSize, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
 import { releaseNativeViewportFrame, requestRevisionedNativeViewportFrame } from '../nativeViewportTransport';
 import {
   clearMaterialPreviews,
@@ -227,6 +228,7 @@ import {
 import { getSortingLayerRank } from '../sortingLayers';
 import { buildWorldTransforms, resolvedTransform } from '../worldTransform';
 import { createHierarchyActiveLookup, viewportActiveLookup } from '../hierarchyActivation';
+import { createNativeViewportPresentationReader } from '../nativeViewportPresentation';
 import {
   modulateLight2DColor,
   prepareLight2DLights,
@@ -749,6 +751,7 @@ export function Viewport(props: {
   const linePointHitsRef = useRef<LinePointHit[]>([]);
   const uiItemsRef = useRef<UiDrawItem[]>([]);
   const uiFrameWorldRef = useRef<NativeViewportFrameWorld<Ent> | null>(null);
+  const nativePresentationRef = useRef(createNativeViewportPresentationReader<Ent>());
   const canvasWorkspaceActiveRef = useRef(false);
   const canvasWorkspaceEntityRef = useRef<number | null>(null);
   const artboardFramesRef = useRef<CanvasArtboardFrame[]>([]);
@@ -1555,12 +1558,13 @@ export function Viewport(props: {
       });
     }
     const displayedWorld = isGame ? nativeGameFrameRef.current?.world : !scene2DActive && nativeSceneFrameRef.current?.key === nativeSceneIdentity?.key ? nativeSceneFrameRef.current?.world : undefined;
+    const displayedPresentation = displayedWorld ? nativePresentationRef.current(displayedWorld) : undefined;
     if (displayedWorld) {
       // Browser drawing and hit regions use the same owned entity records as the decoded image.
       p = Object.assign(Object.create(requestedProps), { entities: displayedWorld.entities, clearColor: displayedWorld.clearColor, simulationTime: displayedWorld.simulationTime });
-      isActive = createHierarchyActiveLookup(p.entities);
+      isActive = displayedPresentation!.active;
       if (isGame) {
-        gameCamera = timelineGameCamera(p.entities, p.timelineCameraPreview, isActive, p.gameDisplay);
+        gameCamera = displayedPresentation!.gameCamera(p.timelineCameraPreview, p.gameDisplay);
         cam = gameCamera ?? { eye: [0, 1.5, 4], target: [0, 0.5, 0], fovYDeg: 60 };
       }
     }
@@ -1617,7 +1621,7 @@ export function Viewport(props: {
       if (!scene2DActive) drawGroundGrid(ctx, cam, vp, sc.pivot, sc.distance);
     }
 
-    const worldTransforms = buildWorldTransforms(nativeGameReady && !p.entities.some(entity => entity.components.SpineSkeleton) ? [] : p.entities);
+    const worldTransforms = buildWorldTransforms(nativeGameReady && !(displayedPresentation?.hasSpine ?? p.entities.some(entity => entity.components.SpineSkeleton)) ? [] : p.entities);
     const lights2D = prepareLight2DLights((nativeGameReady ? [] : p.entities).flatMap<Light2DInstance>((entity) => {
       if (!isActive(entity.entity)) return [];
       const component = entity.components.Light2D as Light2DComponent | undefined;
@@ -2730,7 +2734,7 @@ export function Viewport(props: {
         const logicalUiSize = p.gameResolution
           ? { w: p.gameResolution.width, h: p.gameResolution.height }
           : { w: uiRoot.w, h: uiRoot.h };
-        const uiItems = nativeGameReady && !(displayedWorld ? requiresBrowserViewportSnapshot(p.entities) : nativeWorld.requiresBrowserSnapshot()) ? [] : [
+        const uiItems = nativeGameReady && !(displayedPresentation?.requiresBrowserSnapshot ?? nativeWorld.requiresBrowserSnapshot()) ? [] : [
           ...(gameCamera
             ? layoutUiWorldSpace(p.entities, cam, vp, selSet, textMeasurement)
             : []),

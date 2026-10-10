@@ -1,0 +1,152 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "788413f04086a2c0c4bb440994ef2aaebad427c0",
+  "scope": "Reuse hierarchy activity, browser flags and resolved camera for a browser-owned displayed native frame. Live editable worlds remain compared; Timeline source/target/weight/presence and display retain raw-value invalidation.",
+  "sourceHashes": {
+    "packages/editor/src/nativeViewportPresentation.ts": "db833a356965d9b5a8c1bc794f95afedb550fd37d2dd3e8d9b6e571a6d489ce7",
+    "packages/editor/src/panels/Viewport.tsx": "dc6212f4bd5a548a0a3e9defb5d994e458b292c1cdd1ff514492812163415223",
+    "packages/editor/tests/nativeViewportPresentation.test.mjs": "7598e3448fc6598700f18b39b2d619d1630048194402525af0a7e74addc5672c",
+    "scripts/benchmark-frost-native-presentation.mjs": "e77013b0a1d84b78010f373b26c385e6f5bc1d360e4f28a454814160756ebefe",
+    "scripts/qa-frost-play-state.mjs": "db1b5ca577f76159158465db8b36d8e4940af85df59890c50c4de2ea1b0e749f"
+  },
+  "benchmark": {
+    "author": "MiYu",
+    "scope": "Node/Vite repeated presentation preparation over identical owned real-store frames, three paints per decoded frame. Excludes live-world comparison, React, scripts, IPC, GPU and native FPS.",
+    "entities": 24671,
+    "sourceSceneSha256": "970d436ca3c562e9c3aac5a0263fdcfe9e843ec13f03262df593cb60199cef42",
+    "iterations": 20,
+    "warmups": 2,
+    "paintsPerFrame": 3,
+    "fullOutputComparisons": 22,
+    "outputEqual": true,
+    "mediansMs": {
+      "before": 9.653800000000047,
+      "after": 3.394900000000007
+    },
+    "samplesMs": {
+      "before": [
+        9.772400000000061,
+        9.432700000000068,
+        9.083500000000186,
+        17.03780000000006,
+        9.653800000000047,
+        9.716499999999996,
+        9.322099999999864,
+        9.812200000000075,
+        15.674600000000055,
+        9.875600000000077,
+        9.259000000000015,
+        9.454700000000003,
+        9.155899999999974,
+        8.969500000000153,
+        9.25649999999996,
+        9.34900000000016,
+        9.767200000000003,
+        14.537000000000035,
+        9.347500000000082,
+        9.665199999999913
+      ],
+      "after": [
+        3.35129999999981,
+        3.724100000000135,
+        3.355600000000095,
+        3.6421000000000276,
+        3.1485999999999876,
+        3.3717000000001462,
+        3.6634999999998854,
+        3.350099999999884,
+        3.1835000000000946,
+        3.211699999999837,
+        4.489399999999932,
+        3.569400000000087,
+        3.394900000000007,
+        8.724699999999984,
+        3.1174999999998363,
+        3.564399999999978,
+        3.261099999999942,
+        3.274599999999964,
+        3.522699999999986,
+        3.8016000000000076
+      ]
+    }
+  },
+  "verification": {
+    "focusedTestsPassed": 35,
+    "frontendBuildPassed": true,
+    "independentReadOnlyReview": "No owned-frame or cached-camera writes found in Viewport/UI/math consumers; existing session, resolution, Scene camera and hidden-set invalidation remain in place.",
+    "nativeBuildAndAcceptance": "passed",
+    "nativeBuildSeconds": 249
+  },
+  "logs": [
+    "tmp/native-presentation-regressions.log",
+    "tmp/native-presentation-build.log",
+    "tmp/native-presentation-native-build.log"
+  ],
+  "native": {
+    "receipt": "docs/designs/frostbound-realms/native-play-state-spatial-frame-presentation.json",
+    "executable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+    "sha256": "8043c33d40e0bb18c052df039403eb8c263833943120dd2ee6467409b0b2c900",
+    "elapsedMs": 203818,
+    "consoleErrors": 0,
+    "sourceScriptAndSceneUnchanged": true,
+    "spatialCountsUnchanged": true,
+    "summary": {
+      "intervals": 240,
+      "averagePresentIntervalMs": 66.72749999960264,
+      "p95PresentIntervalMs": 90.5,
+      "presentedFps": 14.986324978546401,
+      "averageRequestMs": 55.843749994039534,
+      "averageRenderMs": 13.098796666666667,
+      "averageCommandMs": 24.341137083333333,
+      "averageUploadMs": 0.8304166714350383,
+      "averageWorldSyncMs": 2.394138333333333,
+      "averageSimulationMs": 22.4722475,
+      "averageSimulationRequestMs": 57.29916666746139
+    },
+    "browserPaintSummary": {
+      "latest": {
+        "source": "game",
+        "timestamp": 142942.90000009537,
+        "sampleCount": 12,
+        "frameMs": 25.191666682561237,
+        "frameMaxMs": 56.30000019073486,
+        "paintMs": 6.574999968210856,
+        "paintMaxMs": 18.799999952316284,
+        "entities": 24671,
+        "drawItems": 0,
+        "uiPrimitives": 550,
+        "uiBatches": 32,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      "samples": 172,
+      "averageFrameMs": 22.27739091977768,
+      "p95FrameMs": 25.260000014305113,
+      "peakFrameMs": 96.90000009536743,
+      "averagePaintMs": 6.670798791320265,
+      "p95PaintMs": 8.108333309491476,
+      "peakPaintMs": 41.90000009536743
+    },
+    "shutdown": {
+      "pid": 139072,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-frame-presentation-1791666622035\\runtime\\com.mengine.editor.agent-yqzNlN '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-frame-presentation-1791666622035\\runtime\\com.mengine.editor.agent-yqzNlN'"
+    }
+  },
+  "comparison": {
+    "beforeReceipt": "docs/designs/frostbound-realms/native-play-state-spatial-ui-worldspace.json",
+    "averageBrowserPaintMs": {
+      "before": 8.675253552138784,
+      "after": 6.670798791320265
+    },
+    "presentedFps": {
+      "before": 14.777506172600699,
+      "after": 14.986324978546401
+    },
+    "scope": "Separate complete 45-second native playback runs with matching script, scene, output dimensions, spatial and UI counts. Browser paint CPU decreases; actual FPS remains below smooth gameplay."
+  }
+}
