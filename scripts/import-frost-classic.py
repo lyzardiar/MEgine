@@ -8,6 +8,7 @@ import pathlib
 import shutil
 import struct
 import importlib
+import uuid
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SAMPLE = ROOT / 'samples/frostbound-realms'
@@ -43,6 +44,23 @@ def write(path, value):
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
+
+def material_meta(sample, files, relative):
+    if pathlib.PurePosixPath(relative).suffix not in ('.mmat', '.mat'):
+        return
+    meta = relative + '.meta'
+    target = sample / meta
+    if not target.exists():
+        write(target, dict(schemaVersion=1, guid=str(uuid.uuid5(uuid.NAMESPACE_URL, 'mengine/frostbound-realms/' + relative)), importer='material'))
+    raw = target.read_bytes()
+    files[meta] = dict(path=meta, sha256=digest(raw), bytes=len(raw))
+
+def remap_material_meta(target, raw):
+    if not target.endswith(('.mmat.meta', '.mat.meta')):
+        return raw
+    metadata = json.loads(raw)
+    metadata['guid'] = str(uuid.uuid5(uuid.NAMESPACE_URL, 'mengine/frostbound-realms/' + target[:-5]))
+    return (json.dumps(metadata, ensure_ascii=False, separators=(',', ':')) + '\n').encode('utf-8')
 
 def main():
     parser = argparse.ArgumentParser()
@@ -102,6 +120,7 @@ def main():
         if not target.exists() or target.read_bytes() != raw:
             target.write_bytes(raw)
         files[relative] = dict(path=relative, sha256=digest(raw), bytes=len(raw))
+        material_meta(sample, files, relative)
 
     def bind(key, identifier, pack='game-ready', tier=1, building=False, environment=False, skin=None):
         if requested and key not in requested:
@@ -159,6 +178,7 @@ def main():
             write(destination, placement)
             raw = (sample / placement_path).read_bytes()
             files[placement_path] = dict(path=placement_path, sha256=digest(raw), bytes=len(raw))
+            material_meta(sample, files, placement_path)
             p['placementMaterial'] = placement_path
             parts.append(p)
         boxes = []

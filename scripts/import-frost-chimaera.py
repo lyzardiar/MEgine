@@ -1,6 +1,7 @@
 """Author: MiYu. Import original Chimaera bodies, portraits, icons and source rules."""
 import argparse
 import importlib
+material_meta = importlib.import_module('import-frost-classic').remap_material_meta
 import json
 import pathlib
 import subprocess
@@ -39,7 +40,7 @@ def main():
             raw = (geometry / record['path']).read_bytes(); assert sha(raw) == record['sha256'] and len(raw) == record['bytes']
             target = record['path'].replace('Assets/WarcraftIII/', 'Assets/Chimaera/')
             if target.endswith('.mmat'): raw = raw.replace(b'Assets/WarcraftIII/', b'Assets/Chimaera/')
-            files[target] = raw
+            files[target] = material_meta(target, raw)
         files['chimaera-models.json'] = (geometry / 'model-catalog.json').read_bytes().replace(b'Assets/WarcraftIII/', b'Assets/Chimaera/')
         files['SourceAssets/Chimaera/node-conversion.json'] = (overlay / 'asset-sources.json').read_bytes()
         portraits = {}

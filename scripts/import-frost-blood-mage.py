@@ -1,6 +1,7 @@
 """Author: MiYu. Reproduce signed original Blood Mage geometry, portraits, icons and rules."""
 import argparse
 import importlib
+material_meta = importlib.import_module('import-frost-classic').remap_material_meta
 import io
 import json
 import pathlib
@@ -56,7 +57,7 @@ def actor_effect(binding,sampler,work,files):
   tid=material['textureId'];texture=textures[tid] if 0<=tid<len(textures) else {};replace=material['replaceableId'] or texture.get('replaceableId',0);name=converter.REPLACEMENTS.get(replace,texture.get('fileName','')).replace('\\','/')
   assert name,name
   texture_source=sources[name.lower()];png='Assets/WarcraftIII/Textures/'+pathlib.PureWindowsPath(texture_source['path']).with_suffix('.png').as_posix();signed=generated[png.lower()];raw=(library/signed['path']).read_bytes();assert sha(raw)==signed['sha256']
-  target=png.replace('Assets/WarcraftIII/','Assets/BloodMage/Embedded/');files[target]=raw;material['texture']=target
+  target=png.replace('Assets/WarcraftIII/','Assets/BloodMage/Embedded/');files[target]=material_meta(target, raw);material['texture']=target
  effect='Assets/BloodMage/Embedded/'+binding['key']+'.mfx';files[effect]=encode(data)
  import uuid
  files[effect+'.meta']=encode(dict(schemaVersion=1,guid=str(uuid.uuid5(uuid.NAMESPACE_URL,'mengine/frostbound/'+effect)),importer='sampled-effect'))
@@ -151,7 +152,7 @@ def main():
    raw=(geometry/record['path']).read_bytes();assert sha(raw)==record['sha256'] and len(raw)==record['bytes']
    target=record['path'].replace('Assets/WarcraftIII/','Assets/BloodMage/')
    if target.endswith('.mmat'):raw=raw.replace(b'Assets/WarcraftIII/',b'Assets/BloodMage/')
-   files[target]=raw
+   files[target]=material_meta(target, raw)
   files['blood-mage-models.json']=(geometry/'model-catalog.json').read_bytes().replace(b'Assets/WarcraftIII/',b'Assets/BloodMage/')
   files['SourceAssets/BloodMage/node-conversion.json']=(overlay/'asset-sources.json').read_bytes();views={}
   for binding in BINDINGS:
@@ -166,7 +167,7 @@ def main():
    if not record['path'].startswith('Assets/') or record['path'].endswith('effect-catalog.json'):continue
    raw=(effects/record['path']).read_bytes();assert sha(raw)==record['sha256'];target=record['path'].replace('Assets/WarcraftIII/','Assets/BloodMage/')
    if target.endswith(('.meffect','.mfx','.json')):raw=raw.replace(b'Assets/WarcraftIII/',b'Assets/BloodMage/')
-   files[target]=raw
+   files[target]=material_meta(target, raw)
   meshes=json.loads(files['blood-mage-models.json']);art={}
   for effect in json.loads((effects/'Assets/WarcraftIII/effect-catalog.json').read_bytes())['models']:
    source_name=pathlib.PureWindowsPath(effect['source']).stem;name=next(n for n,_ in SPELLS if n.lower()==source_name.lower())

@@ -1,6 +1,7 @@
 """Author: MiYu. Reproduce signed original Priestess of the Moon geometry, portraits, icons and rules."""
 import argparse
 import importlib
+material_meta = importlib.import_module('import-frost-classic').remap_material_meta
 import json
 import pathlib
 import re
@@ -42,7 +43,7 @@ def main():
    raw=(geometry/record['path']).read_bytes();assert sha(raw)==record['sha256'] and len(raw)==record['bytes']
    target=record['path'].replace('Assets/WarcraftIII/','Assets/Priestess/')
    if target.endswith('.mmat'):raw=raw.replace(b'Assets/WarcraftIII/',b'Assets/Priestess/')
-   files[target]=raw
+   files[target]=material_meta(target, raw)
   files['priestess-models.json']=(geometry/'model-catalog.json').read_bytes().replace(b'Assets/WarcraftIII/',b'Assets/Priestess/')
   files['SourceAssets/Priestess/node-conversion.json']=(overlay/'asset-sources.json').read_bytes();views={}
   for binding in BINDINGS:
@@ -57,7 +58,7 @@ def main():
    if not record['path'].startswith('Assets/') or record['path'].endswith('effect-catalog.json'):continue
    raw=(effects/record['path']).read_bytes();assert sha(raw)==record['sha256'];target=record['path'].replace('Assets/WarcraftIII/','Assets/Priestess/')
    if target.endswith(('.meffect','.json')):raw=raw.replace(b'Assets/WarcraftIII/',b'Assets/Priestess/')
-   files[target]=raw
+   files[target]=material_meta(target, raw)
   meshes=json.loads(files['priestess-models.json']);art={}
   for effect in json.loads((effects/'Assets/WarcraftIII/effect-catalog.json').read_bytes())['models']:
    name=pathlib.PureWindowsPath(effect['source']).stem

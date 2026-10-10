@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url),K=require('../samples/frostbound-realms/game/keeper.js'),root=new URL('../samples/frostbound-realms/',import.meta.url),read=p=>fs.readFileSync(new URL(p,root)),json=p=>JSON.parse(read(p)),sha=b=>createHash('sha256').update(b).digest('hex');
-const receipt=json('keeper-sources.json');assert.equal(receipt.files.length,547);
+const receipt=json('keeper-sources.json');assert.equal(receipt.files.length,606);
+const signed=new Set(receipt.files.map(file=>file.path));for(const file of receipt.files)if(file.path.endsWith('.mmat'))assert.ok(signed.has(file.path+'.meta'),file.path);
 for(const f of receipt.files){const raw=read(f.path);assert.equal(raw.length,f.bytes,f.path);assert.equal(sha(raw),f.sha256,f.path);}
 for(const [p,digest] of Object.entries(receipt.generators))assert.equal(sha(fs.readFileSync(new URL('../'+p,import.meta.url)).toString('utf8').replace(/\r\n/g,'\n')),digest,p);
 assert.equal(json('keeper-rules.json').originalRuntimeVerified,false);
