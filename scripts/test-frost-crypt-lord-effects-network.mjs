@@ -1,0 +1,19 @@
+// Author: MiYu. Opt-in source Impale effects over actual two-client TCP, ownership, projection and reconnect.
+import assert from 'node:assert/strict';
+import net from 'node:net';
+import {createRequire} from 'node:module';
+import {createServer} from '../samples/frostbound-realms/server.mjs';
+import {cryptLordFixture} from './frost-crypt-lord-fixture.mjs';
+const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),app=createServer({port:0}),address=await app.listening,sockets=[];
+async function peer(){const socket=net.connect(address.port,'127.0.0.1'),pending=[];let buffer='';sockets.push(socket);socket.setEncoding('utf8');socket.on('error',()=>{});socket.on('data',chunk=>{buffer+=chunk;let end;while((end=buffer.indexOf('\n'))>=0){const message=JSON.parse(buffer.slice(0,end));buffer=buffer.slice(end+1);for(const w of [...pending])if(w.check(message)){pending.splice(pending.indexOf(w),1);clearTimeout(w.timer);w.resolve(message);}}});await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('error',reject);});const send=message=>socket.write(JSON.stringify(message)+'\n'),next=check=>new Promise((resolve,reject)=>{const w={check,resolve,timer:setTimeout(()=>{pending.splice(pending.indexOf(w),1);reject(Error('Impale TCP timeout'));},12000)};pending.push(w);}),welcome=next(m=>m.type==='welcome');send({type:'hello',protocol:S.PROTOCOL});assert.equal((await welcome).protocol,S.PROTOCOL);let seq=0;return {socket,send,next,order:command=>send({type:'order',seq:++seq,command})};}
+const wait=(p,check)=>p.next(m=>m.type==='state'&&check(m.state)),unit=(s,id)=>s.units.find(u=>u.id===id);
+try{
+ const a=await peer(),b=await peer();let next=a.next(m=>m.type==='joined');a.send({type:'create',mode:'skirmish',faction:3,heroClass:3});const joined=await next;next=b.next(m=>m.type==='joined');b.send({type:'join',code:joined.code,faction:0});await next;next=a.next(m=>m.type==='room'&&m.players.every(p=>p.ready));a.send({type:'ready',ready:true});b.send({type:'ready',ready:true});await next;next=wait(a,()=>true);a.send({type:'start'});assert.equal((await next).state.cryptLordVersion,0);
+ const {s,h}=cryptLordFixture(S,6);for(const slot of [0,1])assert.equal(S.command(s,0,{type:'learn',ids:[h.id],slot}),null);h.mana=S.maxMana(h);const hold={cd:10000,order:{type:'hold'}},enemy=S.spawn(s,'soldier',1,4,0,{...hold,hp:10000,maxHp:10000});S.visibility(s);app.rooms.get(joined.code).state=s;
+ next=b.next(m=>m.type==='error');b.order({type:'spell',ids:[h.id],slot:0,x:6,z:0});assert.match((await next).message,/hero|Select/);
+ next=wait(a,state=>state.impaleSpikes?.length>0);a.order({type:'spell',ids:[h.id],slot:0,x:6,z:0});const own=(await next).state;assert.ok(own.impaleSpikes.length>0);assert.equal(own.impaleTrails,undefined);assert.ok(own.impaleSpikes.every(p=>Object.keys(p).sort().join(',')==='born,x,y,yaw,z'));assert.ok(S.restore(s));
+ next=wait(b,state=>state.impaleSpikes?.length>0&&unit(state,enemy.id)?.impaleLeft>0);const enemyView=(await next).state;assert.equal(enemyView.impaleTrails,undefined);assert.equal(unit(enemyView,enemy.id).impaled,undefined);assert.ok(unit(enemyView,enemy.id).impaleHitFrame!==undefined);assert.equal(unit(enemyView,h.id).cryptLordCast,undefined);
+ const closed=new Promise(resolve=>a.socket.once('close',resolve));a.socket.destroy();await closed;const c=await peer();next=c.next(m=>m.type==='joined');c.send({type:'resume',code:joined.code,token:joined.token});const resumed=(await next).state;assert.ok(resumed.impaleSpikes.length>0);assert.equal(resumed.impaleTrails,undefined);assert.ok(S.restore(s));
+ next=wait(c,state=>state.impaleSpikes?.length===0);await next;assert.equal(s.impaleTrails.length,0);assert.ok(S.restore(s));
+ console.log('PASS Impale actual TCP: ownership, delayed spikes, hit/stun frame projection, hidden trail origins, reconnect and expiration');
+}finally{for(const socket of sockets)socket.destroy();await app.close();}

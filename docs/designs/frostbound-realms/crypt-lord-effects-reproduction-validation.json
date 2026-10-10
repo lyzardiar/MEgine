@@ -1,0 +1,21 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "isolatedOutput": true,
+  "elapsedMs": 2776,
+  "outputs": [
+    {
+      "path": "Assets/Scripts/Main.js",
+      "bytes": 14983829,
+      "sha256": "890ee81c8f4bd7c0f82c20e61a49455b03d22814c753697f0be5b43e8ee48259",
+      "identical": true
+    },
+    {
+      "path": "Assets/Scenes/Main.mscene",
+      "bytes": 76397389,
+      "sha256": "f6a4f63b377e6eeb3cf885c37bd23252d77ee5cc450e5fd026f421f4e552fd1e",
+      "identical": true
+    }
+  ],
+  "temporaryOutputRemoved": true
+}

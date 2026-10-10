@@ -1,0 +1,154 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baselineCommit": "6fcfc368ad1a379ad0dedaab7d5cf8c206962b21",
+  "parts": [
+    {
+      "mesh": "Assets/UndeadHeroes/Models/Units/Undead/HeroCryptLord/HeroCryptLord/geoset-00-animated.glb",
+      "binarySha256": "3f29c48dc91afc311e7ced62587e15cf564f78e8f08437e23f3c357404100fe3",
+      "geometryAndSkinPreserved": true
+    },
+    {
+      "mesh": "Assets/UndeadHeroes/Models/Units/Undead/HeroCryptLord/HeroCryptLord/geoset-01-animated.glb",
+      "binarySha256": "b2597038427a8be06aaeafce9c5cb9b5982ac8e7695850ee269acedefde44046",
+      "geometryAndSkinPreserved": true
+    },
+    {
+      "mesh": "Assets/UndeadHeroes/Models/Units/Undead/HeroCryptLord/HeroCryptLord/geoset-02-animated.glb",
+      "binarySha256": "c8e1b4852b77cfd9e9847b701a29ca46a20c4a1d6356a5339f80d76dbeb5f928",
+      "geometryAndSkinPreserved": true
+    },
+    {
+      "mesh": "Assets/UndeadHeroes/Models/Units/Undead/HeroCryptLord/HeroCryptLord/geoset-02-animated.glb",
+      "binarySha256": "c8e1b4852b77cfd9e9847b701a29ca46a20c4a1d6356a5339f80d76dbeb5f928",
+      "geometryAndSkinPreserved": true
+    },
+    {
+      "mesh": "Assets/UndeadHeroes/Models/Units/Undead/HeroCryptLord/HeroCryptLord/geoset-03-animated.glb",
+      "binarySha256": "cac579f0b7c1972ba0b2d5507e19774a096c6f02a35206fc3582b7c430271694",
+      "geometryAndSkinPreserved": true
+    },
+    {
+      "mesh": "Assets/UndeadHeroes/Models/Units/Undead/HeroCryptLord/HeroCryptLord/geoset-04-animated.glb",
+      "binarySha256": "b3800b16e0fbb6db12e025c81bd6a67e01f7f3ce6187f57bb43b4e37c8447614",
+      "geometryAndSkinPreserved": true
+    },
+    {
+      "mesh": "Assets/UndeadHeroes/Models/Units/Undead/HeroCryptLord/HeroCryptLord/geoset-04-animated.glb",
+      "binarySha256": "b3800b16e0fbb6db12e025c81bd6a67e01f7f3ce6187f57bb43b4e37c8447614",
+      "geometryAndSkinPreserved": true
+    },
+    {
+      "mesh": "Assets/UndeadHeroes/Models/Units/Undead/HeroCryptLord/HeroCryptLord/geoset-05-animated.glb",
+      "binarySha256": "b6f4b839364e210d969a344ac9b40df37b9e43293561fa15033aac5da24967f3",
+      "geometryAndSkinPreserved": true
+    },
+    {
+      "mesh": "Assets/UndeadHeroes/Models/Units/Undead/HeroCryptLord/HeroCryptLord/geoset-06-animated.glb",
+      "binarySha256": "9d2f5c322f0205568a87d423909e2b8a19e5ac5d9e51bbe7cce38505a3a85b61",
+      "geometryAndSkinPreserved": true
+    },
+    {
+      "mesh": "Assets/UndeadHeroes/Models/Units/Undead/HeroCryptLord/HeroCryptLord/geoset-07-animated.glb",
+      "binarySha256": "6194999c711dc95d165468c3bf77b94923ddc9d3fbc867fa9797224c608e4963",
+      "geometryAndSkinPreserved": true
+    }
+  ],
+  "pairedNativeGeometryPoses": 510,
+  "maxNativeBoundsDifference": 0,
+  "nativeLocatorPoses": [
+    {
+      "clip": 0,
+      "frame": 0,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 0,
+      "frame": 10,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 0,
+      "frame": 29,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 2,
+      "frame": 0,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 2,
+      "frame": 10,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 2,
+      "frame": 29,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 8,
+      "frame": 0,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 8,
+      "frame": 10,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 8,
+      "frame": 29,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 11,
+      "frame": 0,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 11,
+      "frame": 10,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 11,
+      "frame": 29,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 14,
+      "frame": 0,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 14,
+      "frame": 10,
+      "nodes": 140,
+      "locators": 15
+    },
+    {
+      "clip": 14,
+      "frame": 29,
+      "nodes": 140,
+      "locators": 15
+    }
+  ],
+  "sourceNodes": 139,
+  "sourceLocators": 15,
+  "scope": "Original geometry/skin buffers and native bounds preserved; complete original locator hierarchy, tracks and visibility available. Rendered attachment behavior is validated separately."
+}

@@ -1,0 +1,364 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-10T03:16:17.297Z",
+  "sample": "E:\\work\\codex\\cache\\mengine\\native-qa\\crypt-lord-effects-1791602130921\\sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 116416
+    },
+    {
+      "name": "four source Carapace locators and learned appearance",
+      "ms": 41638
+    },
+    {
+      "name": "E targeted Impale source spikes hit stun and native F5 save",
+      "ms": 71349
+    },
+    {
+      "name": "concurrent native Impale pool parent registration and retirement",
+      "ms": 67018
+    }
+  ],
+  "preflightMs": 10530,
+  "editorSha256": "1e9c1386c1b504133a597fe9feff901fd2f57120635e79d3f91e1aa12cbcc2a6",
+  "productMainSha256": "890ee81c8f4bd7c0f82c20e61a49455b03d22814c753697f0be5b43e8ee48259",
+  "productSceneSha256": "f6a4f63b377e6eeb3cf885c37bd23252d77ee5cc450e5fd026f421f4e552fd1e",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 1698
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 17183
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 27016
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 7197
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 7896
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 31395
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 14641
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 8853
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2364
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 6371
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3325
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5030
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 6730
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2365
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4546
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2565
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 402
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 736
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 806
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 2608
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 3775
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4004
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3221
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4684
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2477
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 11887
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2538
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 321
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 424
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 434
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4397
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 4393
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4403
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3074
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 324
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5655
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 7988
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2517
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5598
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2987
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 527
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 122
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4638
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 8014
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3073
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5790
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2572
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 5917
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2808
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 490
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 4057
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 4124
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 366
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 584
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5260
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 7340
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2606
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 5667
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3035
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 306
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 1604
+    }
+  ],
+  "carapace": {
+    "fourSourceLocators": true,
+    "originalGeometry": true
+  },
+  "impale": {
+    "sourceSpikes": true,
+    "sourceHitStun": true,
+    "EControl": true,
+    "F5Continuation": true
+  },
+  "dynamicPool": {
+    "twentyOneSpikes": true,
+    "asynchronousParentRegistration": true,
+    "retirementHidden": true
+  },
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 127832,
+    "normalExit": true,
+    "runtimeRemoved": true,
+    "discoveryRemoved": true
+  },
+  "cleanup": {
+    "fixtureRemoved": true,
+    "qaStorageRemoved": true
+  },
+  "elapsedMs": 354854
+}

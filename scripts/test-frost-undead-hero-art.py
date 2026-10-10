@@ -61,8 +61,21 @@ def main():
             part_count += 1; raw = (SAMPLE / part['mesh']).read_bytes(); doc, _ = nodes.read_glb(raw)
             assert part['mesh'] == part['animatedMesh'] and len(doc['skins']) == 1
             assert [a['name'] for a in doc['animations']] == [c['name'] for c in model['animations']]
-            reannotated, billboards = nodes.annotate(raw, metadata, part['geoset']); assert reannotated == raw
-            billboard_count += len(billboards)
+            if metadata.get('attachments'):
+                assert len(doc['nodes']) == len(metadata['nodes']) + 1
+                mapped = {n['extras']['mengineSourceNode']['index']: i for i, n in enumerate(doc['nodes'][:-1])}
+                assert set(mapped) == set(range(len(metadata['nodes'])))
+                tracks_by_node = {t['node']: t for t in doc['extras']['mengineMdxAnimation']['nodes']}
+                for definition in metadata['attachments']:
+                    assert tracks_by_node[mapped[definition['sourceNode']]]['attachment'] == {f: definition[f] for f in ['id', 'path', 'visibility']}
+                for source_node in metadata['nodes']:
+                    actual = doc['nodes'][mapped[source_node['index']]]
+                    assert actual['name'] == source_node['name'] and actual['extras']['mengineSourceNode']['objectId'] == source_node['objectId']
+                    assert actual.get('children', []) == [mapped[n['index']] for n in metadata['nodes'] if n['parent'] == source_node['index']]
+                billboard_count += sum('mengineBillboard' in n.get('extras', {}) for n in doc['nodes'])
+            else:
+                reannotated, billboards = nodes.annotate(raw, metadata, part['geoset']); assert reannotated == raw
+                billboard_count += len(billboards)
             assert len(part['states']) == len(model['animations'])
             for ci, clip in enumerate(tracks['clips']):
                 assert model['animations'][ci]['frames'] == len(clip['frames']) - 1
