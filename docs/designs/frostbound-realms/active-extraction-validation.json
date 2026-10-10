@@ -1,0 +1,571 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "0e5426f2f1b15a0f6e6f19cea06ac32d5d8b923f",
+  "scope": "Eligibility before pooled MeshRenderer reads and indexed single-component queries; fixed authored-scene CPU benchmark and complete native acceptance.",
+  "sourceHashes": {
+    "crates/mengine-core/src/world.rs": "40a186ddac5048f93f586e170e4429a257ffb91ec903f6ff98b83e2a5b2f9b4d",
+    "crates/mengine-runtime/src/frame_compiler.rs": "985f99f4012c2340905f24600308e686fd668799dbf31222ea49d92aedcde619",
+    "crates/mengine-runtime/examples/benchmark_frame_compile.rs": "914cefa9f01a2fe447977052aab5cf4d8f715a2e0ca96f888ee34beb56f18bee",
+    "scripts/qa-frost-play-state.mjs": "11a88e6c9b08f5b846f95b41ebc35dabb6011597354c13231e5017d17e2ca331"
+  },
+  "benchmark": {
+    "before": {
+      "compileMs": [
+        41.0169,
+        41.2642,
+        41.3333,
+        41.3418,
+        41.4524,
+        41.517199999999995,
+        41.5294,
+        41.5528,
+        41.6051,
+        41.6071,
+        41.6775,
+        41.9239,
+        41.9399,
+        41.9552,
+        41.9929,
+        41.998,
+        42.0414,
+        42.0567,
+        42.253899999999994,
+        42.2616,
+        42.3915,
+        42.4023,
+        42.445499999999996,
+        42.521,
+        42.742599999999996,
+        43.2683,
+        43.2836,
+        43.4331,
+        43.4591,
+        43.742000000000004
+      ],
+      "completeOutputSha256": "0ea5f78f1043bcf953721ea5b0d1ce9e93038b418d4155788f43d29cfa9ef445",
+      "counts": {
+        "activeMeshCandidates": 65,
+        "controls": 1,
+        "entities": 90179,
+        "meshCandidates": 66165,
+        "objects": 65,
+        "sceneViews": 1,
+        "uiBatches": 102,
+        "uiPrimitives": 2254
+      },
+      "hierarchyMs": [
+        2.9131,
+        2.9401,
+        2.9406,
+        2.9407,
+        2.949,
+        2.9532,
+        2.9598,
+        2.9598,
+        2.9627999999999997,
+        2.9743,
+        2.9783,
+        2.9818000000000002,
+        2.9966,
+        2.997,
+        3.0071,
+        3.0116,
+        3.0229,
+        3.0271999999999997,
+        3.0512,
+        3.0629,
+        3.0777,
+        3.0999,
+        3.1161000000000003,
+        3.1184,
+        3.1235,
+        3.1635999999999997,
+        3.1738999999999997,
+        3.1845,
+        3.4229,
+        3.5279000000000003
+      ],
+      "iterations": 30,
+      "medianCompileMs": 41.998,
+      "medianHierarchyMs": 3.0116,
+      "medianStagesMs": {
+        "Camera, meshes and lighting": 20.7344,
+        "Canvas layout and text": 4.867500000000001,
+        "Particles, trails and sorting": 0.0292,
+        "Sprite regions and materials": 13.871400000000001,
+        "UI batching": 2.4768,
+        "World sprites": 0.0015
+      },
+      "outputSha256": "f6374761fb190963c1379034850f4e3c8df3211dbac56ade025e5646a551daed",
+      "scope": "Release CPU extraction from authored Main.mscene; no scripts, GPU, IPC or gameplay FPS"
+    },
+    "after": {
+      "compileMs": [
+        12.1732,
+        12.410400000000001,
+        12.4963,
+        12.6112,
+        12.819799999999999,
+        12.8939,
+        13.0332,
+        13.042200000000001,
+        13.1028,
+        13.3141,
+        13.5015,
+        13.519,
+        13.522599999999999,
+        13.5431,
+        13.742600000000001,
+        13.7927,
+        13.889800000000001,
+        14.0635,
+        14.0935,
+        14.1038,
+        14.1333,
+        14.1729,
+        14.2871,
+        14.2895,
+        14.4408,
+        14.489500000000001,
+        14.8177,
+        15.0977,
+        16.4913,
+        16.813100000000002
+      ],
+      "completeOutputSha256": "0ea5f78f1043bcf953721ea5b0d1ce9e93038b418d4155788f43d29cfa9ef445",
+      "counts": {
+        "activeMeshCandidates": 65,
+        "controls": 1,
+        "entities": 90179,
+        "meshCandidates": 66165,
+        "objects": 65,
+        "sceneViews": 1,
+        "uiBatches": 102,
+        "uiPrimitives": 2254
+      },
+      "hierarchyMs": [
+        2.6812,
+        2.7009,
+        2.7368,
+        2.7612,
+        2.7984,
+        2.805,
+        2.8306,
+        2.8444,
+        2.8687,
+        2.8693,
+        2.8817999999999997,
+        2.8929,
+        2.8951,
+        2.9139999999999997,
+        2.9154,
+        2.9406,
+        2.9488000000000003,
+        2.9687,
+        2.9793,
+        2.984,
+        2.9844,
+        2.9845,
+        2.9948,
+        3.0148,
+        3.0528,
+        3.0637,
+        3.1061,
+        3.1071,
+        3.1632000000000002,
+        3.2506000000000004
+      ],
+      "iterations": 30,
+      "medianCompileMs": 13.7927,
+      "medianHierarchyMs": 2.9406,
+      "medianStagesMs": {
+        "Camera, meshes and lighting": 3.5032,
+        "Canvas layout and text": 4.6589,
+        "Particles, trails and sorting": 0.0263,
+        "Sprite regions and materials": 3.2756,
+        "UI batching": 2.4361,
+        "World sprites": 0.0013
+      },
+      "outputSha256": "f6374761fb190963c1379034850f4e3c8df3211dbac56ade025e5646a551daed",
+      "scope": "Release CPU extraction from authored Main.mscene; no scripts, GPU, IPC or gameplay FPS"
+    },
+    "warmups": 2,
+    "viewport": [
+      1280,
+      720
+    ],
+    "countsEqual": true,
+    "mainOutputEqual": true,
+    "completeOutputEqual": true
+  },
+  "tests": {
+    "corePassed": 16,
+    "hostPassed": 36,
+    "runtimePassed": 220,
+    "scenePassed": 22,
+    "totalPassed": 294,
+    "failed": 0,
+    "ignored": 3,
+    "log": "tmp/active-extraction-tests.log"
+  },
+  "releaseBuild": {
+    "passed": true,
+    "elapsedSeconds": 300,
+    "log": "tmp/active-extraction-native-build.log",
+    "executable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+    "sha256": "bc57b5494f5ebdd715a37f9c4ae17df3013d9fd47657fc8651a3cfab7fe5110f"
+  },
+  "native": {
+    "receipt": "native-play-state-spatial-active-extraction.json",
+    "elapsedMs": 328802,
+    "steps": [
+      {
+        "name": "full native scene readiness",
+        "ms": 43470
+      },
+      {
+        "name": "native Scene spatial query",
+        "ms": 55715
+      },
+      {
+        "name": "actual F1 skirmish start",
+        "ms": 20619
+      },
+      {
+        "name": "native Scene activation in Play",
+        "ms": 36965
+      },
+      {
+        "name": "continuous native playback sample",
+        "ms": 52377
+      },
+      {
+        "name": "owned WebView CPU profile",
+        "ms": 14242
+      },
+      {
+        "name": "paused Scene editing and selection",
+        "ms": 69378
+      },
+      {
+        "name": "pause step and authored restoration",
+        "ms": 4744
+      }
+    ],
+    "hierarchyReceipt": {
+      "path": "C:/Users/admin/.codex/worktrees/1339/MEgine/docs/designs/frostbound-realms/native-play-state-spatial-revision.json",
+      "startedAt": "2026-10-10T11:13:52.271Z",
+      "editorSha256": "6c30ff40c5e755cc5ce7932866996d9048f36ccef08fcb4d938072547fff6d6f",
+      "scope": "Completed hierarchy interaction from the identical scene; separate viewport build with unchanged hierarchy sources"
+    },
+    "sourceMainSha256": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
+    "sourceSceneSha256": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+    "renderSize": [
+      850,
+      478
+    ],
+    "sameSourcesAndRenderSizeAsPrior": true,
+    "summary": {
+      "intervals": 102,
+      "averagePresentIntervalMs": 455.4078431363199,
+      "p95PresentIntervalMs": 689.7000000476837,
+      "presentedFps": 2.195833943291715,
+      "averageRequestMs": 353.99902912713947,
+      "averageRenderMs": 29.495384466019424,
+      "averageCommandMs": 51.30936893203885,
+      "averageUploadMs": 0.8407766865295114,
+      "averageWorldSyncMs": 4.9892805825242705,
+      "averageSimulationMs": 73.96479417475726,
+      "averageSimulationRequestMs": 555.9145631211476
+    },
+    "priorSummary": {
+      "intervals": 90,
+      "averagePresentIntervalMs": 514.9777777777778,
+      "p95PresentIntervalMs": 712.4000000953674,
+      "presentedFps": 1.9418313627340986,
+      "averageRequestMs": 380.47142857771655,
+      "averageRenderMs": 47.5505054945055,
+      "averageCommandMs": 69.52320439560441,
+      "averageUploadMs": 0.8549450544210581,
+      "averageWorldSyncMs": 5.964701098901097,
+      "averageSimulationMs": 74.10119999999999,
+      "averageSimulationRequestMs": 467.9384615683294
+    },
+    "counts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 90179,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 550
+    },
+    "exactWorldRevision": 47,
+    "pausedInspector": true,
+    "pauseStepStop": true,
+    "consoleErrors": 0,
+    "shutdown": {
+      "pid": 68504,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-active-extraction-1791646086182\\runtime\\com.mengine.editor.agent-5ueC48 '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-active-extraction-1791646086182\\runtime\\com.mengine.editor.agent-5ueC48'"
+    }
+  },
+  "browserCpuProfile": {
+    "scope": "Separate 10-second owned-QA Game playback after the canonical 45-second sample; leaf CPU time includes native/idle nodes and profiler overhead.",
+    "targetUrl": "http://tauri.localhost/",
+    "samples": 5880,
+    "durationMs": 11311.12,
+    "topSelf": [
+      {
+        "functionName": "hn",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 106,
+        "columnNumber": 23552,
+        "selfMs": 2433.752000000004
+      },
+      {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 967.6249999999999
+      },
+      {
+        "functionName": "ml",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 106,
+        "columnNumber": 8190,
+        "selfMs": 804.0190000000001
+      },
+      {
+        "functionName": "(garbage collector)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 775.4119999999997
+      },
+      {
+        "functionName": "_i",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CzwKPEGU.js",
+        "lineNumber": 1,
+        "columnNumber": 145455,
+        "selfMs": 654.9499999999991
+      },
+      {
+        "functionName": "observe",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CzwKPEGU.js",
+        "lineNumber": 1,
+        "columnNumber": 75500,
+        "selfMs": 511.2470000000002
+      },
+      {
+        "functionName": "",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 106,
+        "columnNumber": 8161,
+        "selfMs": 346.1850000000002
+      },
+      {
+        "functionName": "Vr",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 106,
+        "columnNumber": 8018,
+        "selfMs": 340.389
+      },
+      {
+        "functionName": "tick",
+        "scriptId": "14",
+        "url": "http://tauri.localhost/assets/agent-schemas-Cr-O_d4Z.js",
+        "lineNumber": 0,
+        "columnNumber": 11710,
+        "selfMs": 293.48600000000005
+      },
+      {
+        "functionName": "dn",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 86,
+        "columnNumber": 2630,
+        "selfMs": 292.045
+      },
+      {
+        "functionName": "gt",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-HMOI515F.js",
+        "lineNumber": 32,
+        "columnNumber": 43324,
+        "selfMs": 249.5239999999999
+      },
+      {
+        "functionName": "Ze",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CzwKPEGU.js",
+        "lineNumber": 1,
+        "columnNumber": 144533,
+        "selfMs": 232.50499999999997
+      },
+      {
+        "functionName": "Ge",
+        "scriptId": "28",
+        "url": "http://tauri.localhost/assets/uiLayout-ByTeu6_2.js",
+        "lineNumber": 0,
+        "columnNumber": 24937,
+        "selfMs": 226.8310000000002
+      },
+      {
+        "functionName": "Li",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-HMOI515F.js",
+        "lineNumber": 32,
+        "columnNumber": 20216,
+        "selfMs": 204.98999999999998
+      },
+      {
+        "functionName": "dn",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 86,
+        "columnNumber": 2630,
+        "selfMs": 195.50200000000004
+      },
+      {
+        "functionName": "Li",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-HMOI515F.js",
+        "lineNumber": 32,
+        "columnNumber": 20216,
+        "selfMs": 187.03899999999996
+      },
+      {
+        "functionName": "dn",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 86,
+        "columnNumber": 2630,
+        "selfMs": 137.35100000000003
+      },
+      {
+        "functionName": "dn",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 86,
+        "columnNumber": 2630,
+        "selfMs": 115.751
+      },
+      {
+        "functionName": "capture",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 86,
+        "columnNumber": 3890,
+        "selfMs": 106.22
+      },
+      {
+        "functionName": "dn",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 86,
+        "columnNumber": 2630,
+        "selfMs": 105.47399999999996
+      },
+      {
+        "functionName": "",
+        "scriptId": "43",
+        "url": "http://tauri.localhost/assets/Project-7G57bg2T.js",
+        "lineNumber": 35,
+        "columnNumber": 6165,
+        "selfMs": 102.752
+      },
+      {
+        "functionName": "dn",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 86,
+        "columnNumber": 2630,
+        "selfMs": 101.72600000000004
+      },
+      {
+        "functionName": "dn",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 86,
+        "columnNumber": 2630,
+        "selfMs": 98.414
+      },
+      {
+        "functionName": "dn",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/App-BC5-9fWm.js",
+        "lineNumber": 86,
+        "columnNumber": 2630,
+        "selfMs": 85.86500000000001
+      },
+      {
+        "functionName": "_a",
+        "scriptId": "28",
+        "url": "http://tauri.localhost/assets/uiLayout-ByTeu6_2.js",
+        "lineNumber": 0,
+        "columnNumber": 37200,
+        "selfMs": 85.131
+      }
+    ],
+    "rawProfile": "E:\\work\\codex\\worktrees\\1339\\MEgine\\tmp\\spatial-active-extraction-browser-cpu-profile.json"
+  },
+  "browserFindings": [
+    {
+      "function": "hn",
+      "source": "packages/editor/src/store.ts:snapshotEntities",
+      "selfMs": 2433.752,
+      "behavior": "maps entity records and structuredClone of the complete Play collection"
+    },
+    {
+      "function": "ml/Vr",
+      "source": "packages/editor/src/sceneFingerprint.ts:sceneContentFingerprint",
+      "selfMs": 1490.593,
+      "behavior": "stable key sorting and JSON serialization of full scene data"
+    },
+    {
+      "function": "dn",
+      "source": "packages/editor/src/playWorldSync.ts:equalJson",
+      "behavior": "recursive JSON comparison across owned live-world baselines"
+    }
+  ],
+  "limitations": [
+    "CPU benchmark excludes scripts, GPU, IPC and gameplay FPS.",
+    "Native observations include scheduling and overlapping stages; same scene and dimensions do not constitute an isolated causal FPS experiment.",
+    "Hierarchy interactions reuse a separate prior binary receipt with unchanged hierarchy sources.",
+    "Smooth gameplay and full Warcraft III parity remain incomplete.",
+    "Owned editor exited normally; WebView cache cleanup returned EPERM and the fixture remains."
+  ],
+  "stagedSourceHashes": {
+    "crates/mengine-core/src/world.rs": "eb88c9938d2abd24db217da44de67996f93e4fa134c098441907f2182fc2f3ed",
+    "crates/mengine-runtime/src/frame_compiler.rs": "d8b0487ffadea52b57b82ec32bf85feca3803088091f8bb6639c3891d129bedc",
+    "crates/mengine-runtime/examples/benchmark_frame_compile.rs": "914cefa9f01a2fe447977052aab5cf4d8f715a2e0ca96f888ee34beb56f18bee",
+    "scripts/qa-frost-play-state.mjs": "ec1e4cb76f9304941b181c5a891207351b7a56e85e79b94b16f10c500f192a5a"
+  },
+  "sourceHashScope": "sourceHashes are tested checkout bytes; stagedSourceHashes are Git-normalized blobs"
+}

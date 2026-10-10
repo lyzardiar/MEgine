@@ -297,7 +297,8 @@ impl World {
         let candidates = available.then(|| type_names.iter().filter_map(|name| self.component_entities.get(*name)).min_by_key(|entities| entities.len())).flatten();
         let indexed = candidates.into_iter().flatten().filter_map(move |&index| {
             let record = &self.entities[index as usize];
-            (record.alive && type_names.iter().all(|name| record.components.contains_key(*name))).then_some(Entity::new(index, record.generation))
+            // MiYu: the membership index already proves a single component's presence.
+            (record.alive && (type_names.len() == 1 || type_names.iter().all(|name| record.components.contains_key(*name)))).then_some(Entity::new(index, record.generation))
         });
         self.iter_entities().take(if type_names.is_empty() { usize::MAX } else { 0 }).chain(indexed)
     }
@@ -611,11 +612,14 @@ mod tests {
             world.set_component_value(recycled, name, serde_json::json!({}));
             world.set_component_value(recycled, name, serde_json::json!({}));
             assert!(world.has_component_type(name), "{name}");
+            assert_eq!(world.entities_with_components(&[name]).collect::<Vec<_>>(), vec![recycled], "{name}");
             world.remove_component_by_name(recycled, name);
             assert!(!world.has_component_type(name), "{name}");
+            assert_eq!(world.entities_with_components(&[name]).count(), 0, "{name}");
         }
         world.set_parent(recycled, Some(first));
         assert!(world.has_component_type("Parent"));
+        assert_eq!(world.entities_with_components(&["Parent"]).collect::<Vec<_>>(), vec![recycled]);
         world.despawn(first);
         assert!(!world.has_component_type("Parent"));
         assert!(!world.has_component_type("Children"));

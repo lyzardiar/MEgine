@@ -138,7 +138,7 @@ impl CompiledFrame {
         }
     }
 
-    /// Main extraction includes every scene mesh. UI-only frames need the view meshes as well.
+    /// Main extraction includes active scene meshes. UI-only frames need the view meshes as well.
     pub fn resource_objects(&self) -> std::borrow::Cow<'_, [RenderObject]> {
         if self.view_resources.is_empty() { std::borrow::Cow::Borrowed(&self.objects) }
         else { std::borrow::Cow::Owned(self.objects.iter().chain(&self.view_resources).cloned().collect()) }
@@ -540,17 +540,18 @@ pub fn collect_objects(
     hierarchy: &TransformHierarchy,
     materials: &mut RuntimeMaterialCache,
 ) -> Vec<RenderObject> {
-    collect_mesh_objects(world, hierarchy, materials, None, false)
+    collect_mesh_objects(world, hierarchy, materials, None)
 }
 
 fn collect_view_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>) -> Vec<RenderObject> {
-    collect_mesh_objects(world, hierarchy, materials, root, true)
+    collect_mesh_objects(world, hierarchy, materials, root)
 }
 
-fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>, active_only: bool) -> Vec<RenderObject> {
+fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>) -> Vec<RenderObject> {
     let mut out = Vec::new();
     for entity in world.entities_with_components(&["MeshRenderer"]) {
-        if active_only && !hierarchy.is_active(entity) { continue; }
+        // MiYu: resolve eligibility before reading pooled renderer components.
+        let Some(transform) = hierarchy.get(entity) else { continue; };
         if let Some(root) = root {
             let mut current = entity;
             let mut matches = current == root;
@@ -562,10 +563,7 @@ fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials
             }
             if !matches { continue; }
         }
-        if let (Some(transform), Some(mesh)) = (
-            hierarchy.get(entity),
-            world.get_component::<MeshRenderer>(entity),
-        ) {
+        if let Some(mesh) = world.get_component::<MeshRenderer>(entity) {
             let mut material = world
                 .get_component::<PbrMaterial>(entity)
                 .map(render_material_from_component)
@@ -705,6 +703,27 @@ fn safe_rotation(value: [f32; 4]) -> Quat {
 #[cfg(test)]
 mod lighting_tests {
     use super::*;
+
+    #[test]
+    fn mesh_extraction_reactivates_pools_and_preserves_parent_transforms_and_slot_reuse() {
+        use mengine_core::generated::Transform;
+        let mut world = World::new();
+        let root = world.spawn_empty(); world.insert_component(root, Transform { position: [7.0, 0.0, 0.0], ..Default::default() });
+        let mesh = world.spawn_empty(); world.insert_component(mesh, Transform { position: [2.0, 0.0, 0.0], ..Default::default() });
+        world.insert_component(mesh, MeshRenderer { mesh: "pooled".into(), ..Default::default() }); world.set_parent(mesh, Some(root));
+        let untransformed = world.spawn_empty(); world.insert_component(untransformed, MeshRenderer { mesh: "no-transform".into(), ..Default::default() });
+        let mut materials = RuntimeMaterialCache::new(None);
+        let objects = |world: &World, materials: &mut RuntimeMaterialCache| collect_objects(world, &TransformHierarchy::build(world), materials);
+        let visible = objects(&world, &mut materials); assert_eq!(visible.len(), 1); assert_eq!(visible[0].model.transform_point3(Vec3::ZERO), Vec3::new(9.0, 0.0, 0.0));
+        world.set_editor_state(root, 0, false); assert!(objects(&world, &mut materials).is_empty());
+        world.set_editor_state(root, 0, true); world.set_editor_state(mesh, 0, false); assert!(objects(&world, &mut materials).is_empty());
+        world.get_component_mut::<MeshRenderer>(mesh).unwrap().mesh = "updated-pool".into();
+        world.set_editor_state(mesh, 0, true); assert_eq!(objects(&world, &mut materials)[0].mesh_key, "updated-pool");
+        world.despawn(mesh); let recycled = world.spawn_empty(); assert_eq!(mesh.index, recycled.index); assert_ne!(mesh, recycled);
+        world.insert_component(recycled, Transform::default()); world.insert_component(recycled, MeshRenderer { mesh: "recycled".into(), ..Default::default() });
+        let visible = objects(&world, &mut materials); assert_eq!(visible.len(), 1); assert_eq!(visible[0].mesh_key, "recycled");
+        world.remove_component_by_name(recycled, "MeshRenderer"); assert!(objects(&world, &mut materials).is_empty());
+    }
 
     #[test]
     fn scene_environment_does_not_require_a_spatial_transform() {
