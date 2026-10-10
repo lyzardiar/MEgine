@@ -55,3 +55,14 @@ export function requestNativeViewportFrame(command: string, args: Record<string,
     }).catch(fail);
   });
 }
+
+/** Only an evicted revision falls back to the same owned browser snapshot; other failures propagate. */
+export async function requestRevisionedNativeViewportFrame(command: string, args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>): Promise<ArrayBuffer> {
+  try { return await requestNativeViewportFrame(command, args); }
+  catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (args.playRevision == null || !message.includes('Play viewport revision expired')) throw error;
+    const { playSessionId: _session, playRevision: _revision, ...view } = args;
+    return requestNativeViewportFrame(command, { ...view, ...snapshotFallback() });
+  }
+}

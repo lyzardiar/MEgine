@@ -197,43 +197,45 @@ fn apply_snapshot_inner(world: &mut World, snap: &WorldSnapshot, preserve_entiti
         if let Some(name) = &ent.name { world.set_component_value(child, "Name", serde_json::json!({"value":name})); }
     }
 
-    for ent in &snap.entities {
-        let Some(&child) = entity_map.get(&ent.entity) else {
-            continue;
-        };
-        world.set_editor_state(child, ent.sibling_index, ent.active);
-        world.set_entity_metadata(child, ent.tag.clone(), ent.layer);
-        world.set_parent(child, ent.parent.and_then(|id| entity_map.get(&id)).copied());
-        let mut components = serde_json::Value::Object(
-            ent.components
-                .iter()
-                .map(|(name, value)| (name.clone(), value.clone()))
-                .collect(),
-        );
-        match remap_scene_entity_references(&mut components, &entity_map) {
-            Ok(()) => {
-                if let Some(components) = components.as_object() {
-                    for (name, value) in components {
-                        world.set_component_value(child, name, value.clone());
-                    }
+    for ent in &snap.entities { apply_snapshot_entity(world, ent, &entity_map, true); }
+
+    world.selected = snap.selected.and_then(|id| entity_map.get(&id)).copied();
+}
+
+pub(crate) fn apply_snapshot_entity(world: &mut World, ent: &mengine_core::snapshot::EntitySnapshot, entity_map: &HashMap<u64, mengine_core::Entity>, refresh_parent: bool) {
+    let Some(&child) = entity_map.get(&ent.entity) else {
+        return;
+    };
+    world.set_editor_state(child, ent.sibling_index, ent.active);
+    world.set_entity_metadata(child, ent.tag.clone(), ent.layer);
+    if refresh_parent { world.set_parent(child, ent.parent.and_then(|id| entity_map.get(&id)).copied()); }
+    let mut components = serde_json::Value::Object(
+        ent.components
+            .iter()
+            .map(|(name, value)| (name.clone(), value.clone()))
+            .collect(),
+    );
+    match remap_scene_entity_references(&mut components, &entity_map) {
+        Ok(()) => {
+            if let Some(components) = components.as_object() {
+                for (name, value) in components {
+                    world.set_component_value(child, name, value.clone());
                 }
             }
-            Err(error) => log::warn!(
-                "scene entity references on {} could not be remapped: {error}",
-                ent.entity
-            ),
         }
-        if let Some(director) = world.get_component_mut::<TimelineDirector>(child) {
-            if let Ok(mut bindings) = parse_timeline_binding_table(&director.bindings_json) {
-                bindings.remap_entities(&entity_map);
-                if let Ok(serialized) = serialize_timeline_binding_table(bindings) {
-                    director.bindings_json = serialized;
-                }
+        Err(error) => log::warn!(
+            "scene entity references on {} could not be remapped: {error}",
+            ent.entity
+        ),
+    }
+    if let Some(director) = world.get_component_mut::<TimelineDirector>(child) {
+        if let Ok(mut bindings) = parse_timeline_binding_table(&director.bindings_json) {
+            bindings.remap_entities(&entity_map);
+            if let Ok(serialized) = serialize_timeline_binding_table(bindings) {
+                director.bindings_json = serialized;
             }
         }
     }
-
-    world.selected = snap.selected.and_then(|id| entity_map.get(&id)).copied();
 }
 
 #[cfg(test)]

@@ -102,6 +102,10 @@ pub struct EditorViewportProfile {
     pub total_ms: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub simulation_ms: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub world_revision: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub world_sync_ms: Option<f64>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub simulation_stages: Vec<EditorViewportProfileNode>,
     pub call_tree: EditorViewportProfileNode,
@@ -799,6 +803,8 @@ fn build_viewport_profile(
     let texture_stats = renderer.material_texture_stats();
     EditorViewportProfile {
         simulation_ms: None,
+        world_revision: None,
+        world_sync_ms: None,
         simulation_stages: Vec::new(),
         schema_version: 1,
         total_ms,

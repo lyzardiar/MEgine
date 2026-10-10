@@ -142,7 +142,7 @@ test('retained runtime omits unchanged worlds and synchronizes Inspector edits b
     assert.equal(incoming[2], undefined);
     const detached = createEditorStore();
     detached.loadRemoteSceneJson(store.saveSessionSceneJson(), 'pause', 42);
-    assert.equal(detached.playViewportSnapshot().nativeSessionId, 42);
+    assert.equal(detached.playViewportSnapshot().nativeSessionId, undefined);
     assert.equal(detached.simulationTime, store.simulationTime);
     assert.deepEqual(detached.snapshot().clearColor, store.snapshot().clearColor);
     assert.equal(detached.playSessionId, 42);

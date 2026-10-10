@@ -80,6 +80,8 @@ export type NativeViewportProfile = {
   transportMs?: number;
   commandMs?: number;
   simulationMs?: number;
+  worldRevision?: number;
+  worldSyncMs?: number;
   simulationRequestMs?: number;
   resourceSampleAgeMs?: number;
   uploadMs?: number;
@@ -286,6 +288,7 @@ export function summarizeNativeViewportProfiles(profiles: readonly NativeViewpor
   const simulations = profiles.map(profile => profile.simulationMs).filter((value): value is number => value != null && Number.isFinite(value));
   const simulationRequests = profiles.map(profile => profile.simulationRequestMs).filter((value): value is number => value != null && Number.isFinite(value));
   const commands = profiles.map(profile => profile.commandMs).filter((value): value is number => value != null && Number.isFinite(value));
+  const worldSyncs = profiles.map(profile => profile.worldSyncMs).filter((value): value is number => value != null && Number.isFinite(value));
   const uploads = profiles.map(profile => profile.uploadMs).filter((value): value is number => value != null && Number.isFinite(value));
   return {
     intervals: intervals.length,
@@ -296,6 +299,7 @@ export function summarizeNativeViewportProfiles(profiles: readonly NativeViewpor
     averageRenderMs: profiles.length ? profiles.reduce((sum, value) => sum + value.totalMs, 0) / profiles.length : 0,
     averageCommandMs: commands.length ? commands.reduce((sum, value) => sum + value, 0) / commands.length : null,
     averageUploadMs: uploads.length ? uploads.reduce((sum, value) => sum + value, 0) / uploads.length : null,
+    averageWorldSyncMs: worldSyncs.length ? worldSyncs.reduce((sum, value) => sum + value, 0) / worldSyncs.length : null,
     averageSimulationMs: simulations.length ? simulations.reduce((sum, value) => sum + value, 0) / simulations.length : null,
     averageSimulationRequestMs: simulationRequests.length ? simulationRequests.reduce((sum, value) => sum + value, 0) / simulationRequests.length : null,
   };

@@ -4294,6 +4294,15 @@ fn world_from_snapshot(snapshot: &WorldSnapshot) -> mengine_core::World {
     world
 }
 
+// Filter browser entity IDs before snapshot reconstruction allocates native IDs.
+fn filter_scene_view_snapshot(snapshot: &mut WorldSnapshot, request: &mut NativeSceneViewRequest) {
+    if request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() {
+        let hidden: HashSet<u64> = request.hidden_entity_ids.iter().copied().collect();
+        snapshot.entities.retain(|entity| !hidden.contains(&entity.entity));
+        request.hidden_entity_ids.clear();
+    }
+}
+
 async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: &str, shared_request: Option<String>, window: tauri::WebviewWindow, started: Instant) -> Result<tauri::ipc::Response, String> {
     if !raw {
         let label = label.to_owned();
@@ -4356,6 +4365,7 @@ async fn render_native_game_view(
     height: u32,
     snapshot: Option<WorldSnapshot>,
     play_session_id: Option<u64>,
+    play_revision: Option<u64>,
     raw: Option<bool>,
     shared_request: Option<String>,
     window: tauri::WebviewWindow,
@@ -4396,7 +4406,7 @@ async fn render_native_game_view(
         };
         match (snapshot, play_session_id) {
             (Some(snapshot), _) => render(&world_from_snapshot(&snapshot)),
-            (None, Some(id)) => runtime.render(id, render),
+            (None, Some(id)) => runtime.render_revision(id, play_revision, render),
             _ => Err("viewport world is unavailable".into()),
         }
     })
@@ -4407,9 +4417,10 @@ async fn render_native_game_view(
 
 #[tauri::command]
 async fn render_native_scene_view(
-    request: NativeSceneViewRequest,
+    mut request: NativeSceneViewRequest,
     snapshot: Option<WorldSnapshot>,
     play_session_id: Option<u64>,
+    play_revision: Option<u64>,
     raw: Option<bool>,
     shared_request: Option<String>,
     window: tauri::WebviewWindow,
@@ -4426,6 +4437,9 @@ async fn render_native_scene_view(
             snapshot.or_else(|| play_session_id.is_none().then(|| WorldSnapshot::from_world(session.active_world()))),
         )
     };
+    let mut snapshot = snapshot;
+    if let Some(snapshot) = snapshot.as_mut() { filter_scene_view_snapshot(snapshot, &mut request); }
+    else if play_revision.is_some() && request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() { return Err("Hidden entities require a browser viewport snapshot".into()); }
     let runtime = state.play_runtime.clone();
     let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
         let render = move |world: &mengine_core::World| -> Result<EditorViewportFrame, String> {
@@ -4506,7 +4520,7 @@ async fn render_native_scene_view(
         };
         match (snapshot, play_session_id) {
             (Some(snapshot), _) => render(&world_from_snapshot(&snapshot)),
-            (None, Some(id)) => runtime.render(id, render),
+            (None, Some(id)) => runtime.render_revision(id, play_revision, render),
             _ => Err("viewport world is unavailable".into()),
         }
     })
@@ -6465,6 +6479,24 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn scene_hidden_ids_filter_source_snapshot_before_native_id_allocation() {
+        let mut snapshot: WorldSnapshot = serde_json::from_value(serde_json::json!({"entities":[
+            {"entity":4294967297u64,"name":"Hidden reused slot","components":{}},
+            {"entity":42,"name":"Visible","components":{}}
+        ]})).unwrap();
+        let mut request: NativeSceneViewRequest = serde_json::from_value(serde_json::json!({"width":320,"height":180,"eye":[0,1,2],"target":[0,0,0],"orthographic":false,"orthographicSize":5,"fovYDegrees":60,"hiddenEntityIds":[4294967297u64]})).unwrap();
+        filter_scene_view_snapshot(&mut snapshot, &mut request);
+        assert!(request.hidden_entity_ids.is_empty());
+        let world = world_from_snapshot(&snapshot);
+        let names: Vec<_> = world.iter_entities().filter_map(|entity| world.get_component::<mengine_core::generated::Name>(entity).map(|name| name.value.as_str())).collect();
+        assert_eq!(names, vec!["Visible"]);
+        request.camera_entity = Some(42); request.hidden_entity_ids = vec![42];
+        filter_scene_view_snapshot(&mut snapshot, &mut request);
+        assert_eq!(snapshot.entities.len(), 1);
+        assert_eq!(request.hidden_entity_ids, vec![42]);
+    }
 
     #[test]
     fn project_font_assets_are_indexed_with_parse_validation() {

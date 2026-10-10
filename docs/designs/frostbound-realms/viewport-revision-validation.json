@@ -1,0 +1,184 @@
+{
+  "author": "MiYu",
+  "scope": "Exact retained Play revisions, incremental historical world materialization, sparse camera transforms and matching browser UI/native presentation. Includes earlier grouping, virtual hierarchy and spatial-query acceptance by explicit receipt.",
+  "functionalAcceptancePassed": true,
+  "editorExecutable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+  "editorSha256": "31169ccad2f1b7a451b56aa1ddcb39308b66c2ebfc896c8c5ba2dbe9965b1f25",
+  "regressions": {
+    "editorPassed": 78,
+    "hostPassed": 35,
+    "hostIgnored": 1,
+    "scenePassed": 22,
+    "failed": 0,
+    "editorBuildPassed": true,
+    "releaseBuildPassed": true
+  },
+  "testLogs": [
+    "tmp/viewport-shared-world-rust-tests.log",
+    "tmp/viewport-revision-sparse-tests.log",
+    "tmp/viewport-revision-sparse-integration.log",
+    "tmp/viewport-shared-world-profiler-tests.log",
+    "tmp/viewport-shared-world-build.log",
+    "tmp/viewport-shared-world-release.log"
+  ],
+  "sourceSha256": {
+    "crates/mengine-editor-host/src/play_runtime.rs": "26b42824a5adaa8cd282def8ee0f3837ba96ad4aad03ad53076393ef07367f93",
+    "crates/mengine-editor-host/src/viewport.rs": "e059f40825137acbf7e5e1ab9eba1907f1ad16a548ad9fcb1f2fe626b85dedb3",
+    "crates/mengine-scene/src/lib.rs": "6c3b6aa36de26f25d6206c5b441271b812c53fef3a053bc9ee74495dc0b30dba",
+    "crates/mengine-scene/src/scene_file.rs": "04c3c8f360e767f0eb4db60e999104a8bbf14b6ff43b40fd752232838ade37ee",
+    "crates/mengine-scene/src/snapshot_world.rs": "3b30b46029e9091080ba6433c9f0b80a1b3dd6732177f197936ab357b8968545",
+    "packages/editor/src-tauri/src/lib.rs": "8a5bf4f3584302cf45adb3b54a67d6953d9209d61a911304218136c91e94dc0d",
+    "packages/editor/src/App.tsx": "e312f4d73e8293f9a721d60da2024ae578118a27ff7513d0dfd7515cf8aed81d",
+    "packages/editor/src/editorProfiler.ts": "38e805bfa00509547b46c98944528e02a8d6b8355e27c73864e530ef5d8778cc",
+    "packages/editor/src/gameCamera.ts": "7382087a10e5b76d9f0624becf1d8f8960d6db551fc56bd721bc4bfe938db32a",
+    "packages/editor/src/nativeViewportFrame.ts": "28081bf43b3ec6b05ed5b2427d18c07a74b7186442d322733d6f7fc15cac1db2",
+    "packages/editor/src/nativeViewportTransport.ts": "697150924bc41c7f6358fbf5adcd75b6323086dd936ec5a2774d62309c312d71",
+    "packages/editor/src/panels/Viewport.tsx": "18372d6d8b331435b928a3cbc4669de9dc2ef55e8beb93bc33373f3466fd3a4f",
+    "packages/editor/src/playRuntime.ts": "48051bc0fff30b8b109aeac313b017a3f12cb19ed54135f0fca993367cf7ce6d",
+    "packages/editor/src/playWorldSync.ts": "722a1c02a1c616cc55b87fe68d504547c47a6f0592da982c981f431a1b5c81dc",
+    "packages/editor/src/store.ts": "8847a8d5b641734b6999ad54c083012fdb9c36f8e7643eb4d1ef561c7c9120dc",
+    "packages/editor/src/worldTransform.ts": "65cc13356b9fb7a9c7b97584dfb175ba556ae7e3a71b94847583a92f15ec5872",
+    "scripts/qa-frost-play-state.mjs": "a3fef97cb6de94a2237ced7cafd9d3fcfa89d6e203bacd11fb7b93533a2cc71d"
+  },
+  "nativeAcceptance": {
+    "coreReceipt": "native-play-state-spatial-revision-incremental.json",
+    "coreReceiptPassed": false,
+    "coreReceiptLimitation": "Completed rendering/play/hidden/camera probes; later UI harness used unsupported canvas semantic click. Original failure remains recorded.",
+    "uiReceipt": "native-play-state-spatial-revision-ui.json",
+    "uiReceiptPassed": true,
+    "hierarchyReceipt": {
+      "path": "C:/Users/admin/.codex/worktrees/1339/MEgine/docs/designs/frostbound-realms/native-play-state-spatial-revision.json",
+      "startedAt": "2026-10-10T11:13:52.271Z",
+      "editorSha256": "6c30ff40c5e755cc5ce7932866996d9048f36ccef08fcb4d938072547fff6d6f",
+      "scope": "Completed hierarchy interaction from the identical scene; separate viewport build with unchanged hierarchy sources"
+    },
+    "hierarchy": {
+      "initialDom": 1730,
+      "initialRows": 14,
+      "entities": 90179,
+      "expanded": {
+        "dom": 1972,
+        "rows": 30,
+        "scrollHeight": 2164296
+      },
+      "end": {
+        "scrollTop": 2163788,
+        "rows": 30,
+        "active": "Missile aura 255"
+      },
+      "searchRestore": true,
+      "externalSelectionReveal": true,
+      "rename": true,
+      "pointerDrag": true,
+      "pointerDragMs": 16689
+    },
+    "hierarchyScope": "Separate binary with unchanged hierarchy sources; not represented as a complete hierarchy rerun of the current executable.",
+    "sceneCounts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 85,
+      "entities": 90179,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 265,
+      "sceneViews": 0,
+      "shadowVisibleObjects": 176,
+      "submittedObjects": 212,
+      "uiBatches": 1,
+      "uiDrawCalls": 1,
+      "uiPrimitives": 84
+    },
+    "gameCounts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 90179,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 547
+    },
+    "exactWorldRevision": 48,
+    "pauseSceneEditing": true,
+    "pauseStepStop": true,
+    "hiddenScene": {
+      "shown": 66,
+      "hidden": 65,
+      "freshNativeFrame": true
+    },
+    "cameraPreview": {
+      "authoredSizeChange": true,
+      "changedPixels": true,
+      "overlayCanvasDisabledDuringProbe": true
+    },
+    "nativeInteractiveUi": {
+      "toggleClick": true,
+      "inputEdit": true,
+      "stepRetainsEdits": true,
+      "restartRestoresAuthored": true,
+      "revision": 2
+    },
+    "cameraImagesInspected": [
+      "spatial-revision-incremental-camera-before.png",
+      "spatial-revision-incremental-camera-after.png"
+    ],
+    "consoleErrors": 0,
+    "timing": {
+      "intervals": 77,
+      "averagePresentIntervalMs": 607.4636363642556,
+      "p95PresentIntervalMs": 716.2000000476837,
+      "presentedFps": 1.6461890722959527,
+      "averageRequestMs": 518.8679487216167,
+      "averageRenderMs": 122.79168076923072,
+      "averageCommandMs": 144.51745000000008,
+      "averageUploadMs": 1.574358961521051,
+      "averageWorldSyncMs": 6.904673076923075,
+      "averageSimulationMs": 79.67644743589742,
+      "averageSimulationRequestMs": 559.4858974432334,
+      "averageBrowserPaintMs": 37.97887754951205
+    },
+    "timingScope": "Observed complete-scene native playback; timings overlap and are not additive or isolated causal comparisons.",
+    "shutdown": {
+      "core": {
+        "pid": 92336,
+        "normalExit": true,
+        "runtimeRemoved": false,
+        "discoveryRemoved": true,
+        "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-revision-incremental-1791634503721\\runtime\\com.mengine.editor.agent-OowPaT '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-revision-incremental-1791634503721\\runtime\\com.mengine.editor.agent-OowPaT'"
+      },
+      "ui": {
+        "pid": 80856,
+        "normalExit": true,
+        "runtimeRemoved": false,
+        "discoveryRemoved": true,
+        "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-revision-ui-1791640312144\\runtime\\com.mengine.editor.agent-nzq4NF '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-revision-ui-1791640312144\\runtime\\com.mengine.editor.agent-nzq4NF'"
+      }
+    }
+  },
+  "remainingCosts": [
+    "Full hierarchy construction during frame compilation",
+    "Play snapshot serialization/comparison and browser UI work",
+    "IPC scheduling, worker queueing and renderer locks",
+    "Spatial bounds refresh and resource synchronization"
+  ],
+  "limitation": "About 1.65 FPS in this run; smooth large-scene gameplay and complete Warcraft III parity are not established. QA WebView cache cleanup returned EPERM; owned editors exited normally and fixtures remain."
+}

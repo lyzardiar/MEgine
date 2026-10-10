@@ -4,6 +4,56 @@ import test from 'node:test';
 import {createServer} from 'vite';
 import {fileURLToPath} from 'node:url';
 
+test('viewport snapshots retain prior entity, hierarchy and UI values across captures and resets', async () => {
+  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
+  try {
+    const {createPlayWorldSync}=await server.ssrLoadModule('/src/playWorldSync.ts'),sync=createPlayWorldSync();
+    const entities=[{entity:1,components:{Button:{label:'first'}}},{entity:2,parent:1,components:{}}],color=[0,0,0,1];
+    sync.capture(entities,color);const first=sync.viewportSnapshot();
+    entities[0].components.Button.label='second';entities[1].parent=null;color[0]=.5;sync.capture(entities,color);
+    const second=sync.viewportSnapshot();
+    assert.equal(first.entities[0].components.Button.label,'first');assert.equal(first.entities[1].parent,1);assert.equal(first.clearColor[0],0);
+    assert.equal(second.entities[0].components.Button.label,'second');assert.equal(second.entities[1].parent,null);assert.equal(second.clearColor[0],.5);
+    entities.push({entity:3,components:{}});sync.capture(entities,color);sync.reset();
+    assert.equal(second.entities.length,2);assert.equal(first.entities.length,2);assert.equal(sync.viewportSnapshot(),undefined);
+  } finally {await server.close();}
+});
+
+test('store publishes native session and revision with their world and validates detached pairs', async () => {
+  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
+  try {
+    const {createEditorStore}=await server.ssrLoadModule('/src/store.ts'),store=createEditorStore();
+    let sessionId=41,revision=0,world;
+    store.setPlayRuntime({retainsWorld:true,get sessionId(){return sessionId;},start:async snapshot=>{world={...snapshot,nativeSessionId:41,nativeRevision:0};return world;},step:async snapshot=>{world={...(snapshot??world),nativeSessionId:sessionId,nativeRevision:++revision};return world;},stop(){},onError(error){throw error;}});
+    store.play();await store.waitForPlayRuntime();store.pause();
+    const first=store.playViewportSnapshot().nativeWorldReference;assert.equal(first.sessionId,41);assert.equal(first.revision,0);
+    sessionId=42;assert.equal(store.playViewportSnapshot().nativeWorldReference,undefined);assert.equal(store.nativePlayRevision,undefined);
+    sessionId=41;store.step(.1);await store.waitForPlayRuntime();assert.equal(store.playViewportSnapshot().nativeWorldReference.revision,1);assert.equal(first.revision,0);
+    const detached=createEditorStore();detached.loadRemoteSceneJson(store.saveSessionSceneJson(),'pause',41,1);
+    assert.equal(detached.playViewportSnapshot().nativeWorldReference.sessionId,41);assert.equal(detached.nativePlayRevision,1);
+    detached.loadRemoteSceneJson(store.saveSessionSceneJson(),'pause',41);
+    assert.equal(detached.playViewportSnapshot().nativeWorldReference,undefined);assert.equal(detached.nativePlaySessionId,undefined);
+    const entity=store.playViewportSnapshot().entities[0];entity.name='local edit';assert.equal(store.playViewportSnapshot().nativeWorldReference,undefined);
+    store.stop();assert.equal(store.nativePlayRevision,undefined);
+  } finally {await server.close();}
+});
+
+test('pending native steps keep the committed simulation clock paired with their viewport revision', async () => {
+  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
+  try {
+    const {createEditorStore}=await server.ssrLoadModule('/src/store.ts'),store=createEditorStore();let world,release;
+    store.loadSceneJson(JSON.stringify({version:1,name:'Committed clock',world:{entities:[{entity:1,name:'Root',components:{}}]}}));
+    store.setPlayRuntime({retainsWorld:true,sessionId:7,start:async snapshot=>{world={...snapshot,nativeSessionId:7,nativeRevision:0,simulationTime:0};return world;},step:async()=>new Promise(resolve=>{release=()=>resolve({...world,nativeSessionId:7,nativeRevision:1,simulationTime:.25});}),stop(){},onError(error){throw error;}});
+    store.play();await store.waitForPlayRuntime();store.pause();store.step(.25);
+    const pending=store.playViewportSnapshot().nativeWorldReference;
+    assert.equal(pending.revision,0);assert.equal(pending.simulationTime,0);
+    assert.equal(JSON.parse(store.saveSessionSceneJson()).world.simulationTime,0);
+    release();await store.waitForPlayRuntime();
+    assert.equal(store.playViewportSnapshot().nativeWorldReference.revision,1);assert.equal(store.playViewportSnapshot().nativeWorldReference.simulationTime,.25);
+    store.stop();
+  } finally {await server.close();}
+});
+
 test('Play synchronization preserves JSON semantics and owns its baseline', async () => {
   const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
   try {

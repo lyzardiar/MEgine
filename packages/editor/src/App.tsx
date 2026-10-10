@@ -228,6 +228,7 @@ type WorkspaceSyncMessage =
       sceneName: string | null;
       sceneJson: string;
       playSessionId?: number;
+      playRevision?: number;
       selectedIds: number[];
       sceneHiddenIds?: number[];
       sceneUnpickableIds?: number[];
@@ -751,6 +752,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         mode: store.mode,
         sceneJson: store.saveSessionSceneJson(sceneNameRef.current ?? 'Untitled'),
         playSessionId: store.playSessionId,
+        playRevision: store.nativePlayRevision,
         selectedIds: store.selectedIds,
         sceneHiddenIds: store.sceneHiddenIds,
         sceneUnpickableIds: store.sceneUnpickableIds,
@@ -1393,7 +1395,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         applyingRemote.current = true;
         syncReady.current = true;
         lastRemoteTimestamp.current = message.timestamp;
-        store.loadRemoteSceneJson(message.sceneJson, message.mode, message.playSessionId);
+        store.loadRemoteSceneJson(message.sceneJson, message.mode, message.playSessionId, message.playRevision);
         store.selectMany(message.selectedIds, 'replace');
         store.setSceneInteractionState(
           message.sceneHiddenIds ?? [],
@@ -2845,9 +2847,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(mode === 'edit' ? snap.entities : []), [mode, snap.entities]);
   const sceneHiddenIds = store.sceneHiddenIds;
   const sceneInteraction = store.sceneInteractionQuery();
-  const viewportEntities = viewTab === 'scene' && sceneHiddenIds.length
+  const sceneHiddenKey = JSON.stringify(sceneHiddenIds);
+  const viewportEntities = useMemo(() => viewTab === 'scene' && sceneHiddenIds.length
     ? snap.entities.filter((entity) => sceneInteraction.sceneVisible(entity.entity))
-    : snap.entities;
+    : snap.entities, [snap.entities, viewTab, sceneHiddenKey]);
   const viewportSelected = viewTab === 'scene'
     && selected != null
     && (!sceneInteraction.sceneVisible(selected) || !sceneInteraction.scenePickable(selected))

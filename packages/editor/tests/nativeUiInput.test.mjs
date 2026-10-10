@@ -3,9 +3,20 @@ import test from 'node:test';
 import {createServer} from 'vite';
 import {fileURLToPath} from 'node:url';
 import {solveRectTransform} from '../src/ui/rectLayout.ts';
+import {createNativeViewportWorldArgs} from '../src/nativeViewportFrame.ts';
 const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),appType:'custom',logLevel:'silent',server:{middlewareMode:true}});
 const {layoutUiOverlay,hitTestUi}=await server.ssrLoadModule('/src/ui/uiLayout.ts');
 test.after(()=>server.close());
+test('displayed native UI layout and hits keep captured values until the next frame arrives',()=>{
+  const entities=[{entity:1,components:{Canvas:{render_mode:'ScreenSpaceOverlay'},GraphicRaycaster:{enabled:true}}},{entity:2,parent:1,components:{RectTransform:{anchored_position:[0,0],size_delta:[200,64]},InputField:{text:'first'}}}];
+  const world=createNativeViewportWorldArgs({entities,clearColor:[0,0,0,1],simulationTime:0}).frameWorld();
+  entities[1].components.RectTransform.anchored_position[0]=400;entities[1].components.InputField.text='second';
+  const layout=source=>layoutUiOverlay(source,{x:0,y:0,w:1280,h:720},new Set(),undefined,undefined,0,undefined,true);
+  const displayed=layout(world.entities),current=layout(entities),field=displayed.find(item=>item.input),x=field.rect.x+100,y=field.rect.y+32;
+  assert.equal(world.entities[1].components.InputField.text,'first');
+  assert.equal(hitTestUi(displayed,x,y,{entities:world.entities,viewport:{x:0,y:0,w:1280,h:720}})?.entity,2);
+  assert.equal(hitTestUi(current,x,y,{entities,viewport:{x:0,y:0,w:1280,h:720}}),null);
+});
 test('native Game hit regions and input proxy placement match native screen coordinates',()=>{
   const entities=[{entity:1,parent:null,components:{Canvas:{render_mode:'ScreenSpaceOverlay'},GraphicRaycaster:{enabled:true}}},{entity:2,parent:1,components:{RectTransform:{anchored_position:[0,-28],size_delta:[800,64]},InputField:{font:'Assets/Fonts/NotoSansSC.ttf',text:'霜境'}}}];
   const native=layoutUiOverlay(entities,{x:0,y:0,w:1280,h:720},new Set(),undefined,undefined,0,undefined,true);

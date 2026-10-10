@@ -40,6 +40,8 @@ export function createPlayWorldSync() {
   };
   return {
     reset() { baseline = null; serialized = undefined; },
+    /** Retain immutable JSON records across later captures; only the pointer list is copied. */
+    viewportSnapshot() { return baseline?.[0] ? { entities: baseline[0].slice(), clearColor: baseline[1].slice() as Color } : undefined; },
     matches(entities: Entities, color: Color) {
       if (!baseline) return false;
       if (equalJson(entities, baseline[0]) && equalJson(color, baseline[1])) return true;

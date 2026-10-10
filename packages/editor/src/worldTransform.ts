@@ -82,6 +82,7 @@ function compose(parent: TransformData, local: TransformData): TransformData {
 
 export function buildWorldTransforms(
   entities: readonly WorldTransformEntity[],
+  roots?: Iterable<number>,
 ): Map<number, ResolvedWorldTransform> {
   const byId = new Map(entities.map((entity) => [entity.entity, entity]));
   const states = new Map<number, ResolveState>();
@@ -107,7 +108,8 @@ export function buildWorldTransforms(
     return value;
   };
 
-  for (const entity of entities) resolve(entity.entity);
+  if (roots) { for (const id of roots) resolve(id); }
+  else { for (const entity of entities) resolve(entity.entity); }
   return new Map(
     [...states.entries()].flatMap(([id, state]) => state.visiting ? [] : [[id, state.value]]),
   );

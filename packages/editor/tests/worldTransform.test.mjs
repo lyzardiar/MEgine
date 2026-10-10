@@ -64,3 +64,19 @@ test('inactive and cyclic hierarchy branches resolve inactive', () => {
   assert.equal(nodes.get(2).active, false);
   assert.equal(nodes.get(4).active, false);
 });
+
+test('requested world transforms resolve only their ancestors and preserve hierarchy validity', () => {
+  const entities = [
+    { entity: 1, active: false, components: { Transform: transform([10, 0, 0]) } },
+    { entity: 2, parent: 1, components: { Transform: transform([2, 3, 4]) } },
+    { entity: 3, parent: 999, components: { Transform: transform([4, 5, 6]) } },
+    { entity: 4, parent: 5, components: { Transform: transform([1, 0, 0]) } },
+    { entity: 5, parent: 4, components: { Transform: transform([2, 0, 0]) } },
+  ];
+  const full = buildWorldTransforms(entities), sparse = buildWorldTransforms(entities, [2, 3, 5]);
+  for (const id of [1, 2, 3]) assert.deepEqual(sparse.get(id), full.get(id));
+  for (const id of [4, 5]) assert.equal(sparse.get(id).active, false);
+  assert.equal(buildWorldTransforms(entities, []).size, 0);
+  const unused = { entity: 6, components: { get Transform() { throw new Error('unrelated transform resolved'); } } };
+  assert.deepEqual(buildWorldTransforms([...entities, unused], [2]).get(2), full.get(2));
+});

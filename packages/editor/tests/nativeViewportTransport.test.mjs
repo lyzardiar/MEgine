@@ -49,3 +49,18 @@ test('unsupported shared transport falls back to binary IPC for subsequent reque
   assert.equal(requests[1].sharedRequest, undefined);
   assert.equal(transport.isSharedNativeViewportFrame(bytes), false);
 });
+
+test('evicted revision falls back to its owned snapshot and other errors propagate', async t => {
+  const original=globalThis.window,requests=[],bytes=new ArrayBuffer(24);
+  let error='Play viewport revision expired',fallbacks=0;
+  globalThis.window={__TAURI_INTERNALS__:{invoke:async(command,args)=>{requests.push({command,args});if(args.playRevision!=null)throw Error(error);return bytes;}}};
+  t.after(()=>{globalThis.window=original;});
+  const transport=await import('../src/nativeViewportTransport.ts?revision-test');
+  const snapshot={entities:[{entity:1,components:{Button:{label:'frame 4'}}}],simulationTime:4,clearColor:[0,0,0,1]},fallback=()=>{fallbacks++;return {snapshot};};
+  assert.equal(await transport.requestRevisionedNativeViewportFrame('game',{width:1920,height:1080,playSessionId:7,playRevision:4},fallback),bytes);
+  assert.equal(fallbacks,1);assert.equal(requests[1].args.snapshot,snapshot);
+  assert.equal(requests[1].args.playSessionId,undefined);assert.equal(requests[1].args.playRevision,undefined);
+  assert.deepEqual([requests[1].args.width,requests[1].args.height],[1920,1080]);
+  error='Play session expired';await assert.rejects(transport.requestRevisionedNativeViewportFrame('game',{playSessionId:7,playRevision:4},fallback),/session expired/);
+  assert.equal(fallbacks,1);
+});

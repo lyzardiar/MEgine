@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createNativeViewportWorldArgs, nativeGamePreviewSize, parseNativeViewportFrame, requiresBrowserViewportSnapshot } from '../src/nativeViewportFrame.ts';
+import { createNativeViewportWorldArgs, nativeGamePreviewSize, nativeViewportFrameWorldCurrent, parseNativeViewportFrame, requiresBrowserViewportSnapshot } from '../src/nativeViewportFrame.ts';
 
 test('browser overlays and interactive UI retain a matching snapshot', () => {
   assert.equal(requiresBrowserViewportSnapshot([{ components: { Text: {}, SpriteRenderer: {} } }]), false);
@@ -51,12 +51,42 @@ test('interactive snapshot skips session fingerprint and refreshes after UI chan
   let reads=0;
   const props={entities:[{components:{Button:{}}}],clearColor:[0,0,0,1],simulationTime:1,get nativeSessionId(){reads++;return 12;}};
   const paint=createNativeViewportWorldArgs(props);
-  assert.equal(paint.worldArgs().snapshot.entities,props.entities);
+  assert.deepEqual(paint.worldArgs().snapshot.entities,props.entities);
+  assert.notEqual(paint.worldArgs().snapshot.entities,props.entities);
   assert.equal(paint.requiresBrowserSnapshot(),true);
   assert.equal(reads,0);
   props.entities=[{components:{}}];
   assert.deepEqual(createNativeViewportWorldArgs(props).worldArgs(),{playSessionId:12});
   assert.equal(reads,1);
   const detached=createNativeViewportWorldArgs({...props,nativeSessionId:undefined});
-  assert.equal(detached.worldArgs().snapshot.entities,props.entities);
+  assert.deepEqual(detached.worldArgs().snapshot.entities,props.entities);
+  assert.notEqual(detached.worldArgs().snapshot.entities,props.entities);
+});
+
+test('revisioned interactive frames retain one owned world and reject a different runtime session', () => {
+  let reads=0;
+  const retained={sessionId:12,revision:0,entities:[{components:{Button:{label:'first'}}}],clearColor:[0,0,0,1],simulationTime:1};
+  const props={entities:[{components:{Button:{label:'first'}}}],clearColor:[0,0,0,1],simulationTime:1,runtimeSessionId:12,get nativeWorldReference(){reads++;return retained;},get nativeSessionId(){throw Error('legacy lookup');}};
+  const paint=createNativeViewportWorldArgs(props);
+  assert.deepEqual(paint.worldArgs(),{playSessionId:12,playRevision:0});
+  const frame=paint.frameWorld();assert.equal(frame.entities,retained.entities);assert.equal(reads,1);
+  props.entities[0].components.Button.label='second';props.simulationTime=2;
+  assert.equal(paint.snapshotArgs().snapshot.entities[0].components.Button.label,'first');
+  assert.equal(paint.snapshotArgs().snapshot.simulationTime,1);
+  assert.equal(nativeViewportFrameWorldCurrent(frame,props),true);
+  assert.equal(nativeViewportFrameWorldCurrent(frame,{entities:props.entities,runtimeSessionId:13}),false);
+  assert.equal(nativeViewportFrameWorldCurrent(frame,{entities:props.entities,runtimeSessionId:undefined}),false);
+  const detached=createNativeViewportWorldArgs(Object.assign(Object.create(props),{runtimeSessionId:undefined})).frameWorld();
+  assert.equal(detached.runtimeSessionId,12);
+});
+
+test('full snapshot captures own deep UI values and preserve explicit capture dimensions', () => {
+  const props={entities:[{components:{InputField:{text:'first'}}}],clearColor:[0,0,0,1],simulationTime:1};
+  const paint=createNativeViewportWorldArgs(props),frame=paint.frameWorld();
+  props.entities[0].components.InputField.text='second';props.clearColor[0]=1;
+  assert.equal(frame.entities[0].components.InputField.text,'first');assert.equal(frame.clearColor[0],0);
+  const request={width:1920,height:1080,...paint.snapshotArgs()};
+  assert.deepEqual([request.width,request.height],[1920,1080]);
+  assert.equal(nativeViewportFrameWorldCurrent(frame,props),true);
+  assert.equal(nativeViewportFrameWorldCurrent(frame,{...props,entities:props.entities.slice()}),false);
 });

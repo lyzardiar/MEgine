@@ -6,17 +6,37 @@ export function requiresBrowserViewportSnapshot(entities: readonly { active?: bo
   return entities.some(({ active, components: c }) => active !== false && (c.SpineSkeleton || c.Button || c.Toggle || c.Slider || c.Scrollbar || c.InputField || c.Dropdown || c.ListView || c.ScrollView || c.TabView));
 }
 
-/** One synchronous paint shares lazy world selection across native views and browser UI. */
-export function createNativeViewportWorldArgs<E extends { active?: boolean; components: Record<string, unknown> }>(props: { entities: E[]; clearColor: [number, number, number, number]; simulationTime: number; readonly nativeSessionId?: number }) {
-  let browserSnapshot: boolean | undefined;
-  let args: { playSessionId: number } | { snapshot: { entities: E[]; clearColor: [number, number, number, number]; simulationTime: number } } | undefined;
+export type NativeViewportWorld<E> = { entities: E[]; clearColor: [number, number, number, number]; simulationTime: number };
+export type NativeViewportWorldReference<E> = NativeViewportWorld<E> & { sessionId: number; revision: number };
+export type NativeViewportFrameWorld<E> = NativeViewportWorld<E> & { runtimeSessionId?: number; sourceEntities: E[] };
+
+export function nativeViewportFrameWorldCurrent<E>(frame: NativeViewportFrameWorld<E>, props: { entities: E[]; runtimeSessionId?: number }): boolean {
+  return frame.runtimeSessionId != null ? frame.runtimeSessionId === props.runtimeSessionId : props.runtimeSessionId == null && frame.sourceEntities === props.entities;
+}
+
+/** One synchronous paint shares its exact owned browser world and lazy native revision selection. */
+export function createNativeViewportWorldArgs<E extends { active?: boolean; components: Record<string, unknown> }>(props: NativeViewportWorld<E> & { readonly nativeSessionId?: number; readonly nativeWorldReference?: NativeViewportWorldReference<E>; runtimeSessionId?: number }) {
+  let browserSnapshot: boolean | undefined, referenceRead = false;
+  let reference: NativeViewportWorldReference<E> | undefined;
+  let captured: NativeViewportFrameWorld<E> | undefined;
+  let args: { playSessionId: number; playRevision?: number } | { snapshot: NativeViewportWorld<E> } | undefined;
   const requiresBrowserSnapshot = () => browserSnapshot ??= requiresBrowserViewportSnapshot(props.entities);
+  const worldReference = () => { if (!referenceRead) { reference = props.nativeWorldReference; referenceRead = true; } return reference; };
+  const frameWorld = () => {
+    if (captured) return captured;
+    const retained = worldReference();
+    const world = retained ? { entities: retained.entities, clearColor: retained.clearColor, simulationTime: retained.simulationTime } : JSON.parse(JSON.stringify({ entities: props.entities, clearColor: props.clearColor, simulationTime: props.simulationTime })) as NativeViewportWorld<E>;
+    return captured = { ...world, runtimeSessionId: props.runtimeSessionId ?? retained?.sessionId, sourceEntities: props.entities };
+  };
+  const snapshotArgs = () => { const world = frameWorld(); return { snapshot: { entities: world.entities, clearColor: world.clearColor, simulationTime: world.simulationTime } }; };
   const worldArgs = () => {
     if (args) return args;
+    const retained = worldReference();
+    if (retained) return args = { playSessionId: retained.sessionId, playRevision: retained.revision };
     const sessionId = requiresBrowserSnapshot() ? undefined : props.nativeSessionId;
-    return args = sessionId != null ? { playSessionId: sessionId } : { snapshot: { entities: props.entities, clearColor: props.clearColor, simulationTime: props.simulationTime } };
+    return args = sessionId != null ? { playSessionId: sessionId } : snapshotArgs();
   };
-  return { worldArgs, requiresBrowserSnapshot };
+  return { worldArgs, snapshotArgs, frameWorld, requiresBrowserSnapshot };
 }
 
 /** Match the pixels actually displayed; explicit captures still render at the requested output size. */

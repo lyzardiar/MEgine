@@ -3,11 +3,14 @@
 mod entity_reference;
 mod prefab;
 mod scene_file;
+mod snapshot_world;
 
 pub use prefab::{
     expand_prefab, instantiate_prefab, load_prefab, save_prefab, Prefab, PrefabInstance,
     PrefabNode, PREFAB_VERSION,
 };
+pub use snapshot_world::SharedSnapshotWorld;
+
 pub use scene_file::{apply_snapshot, reconcile_snapshot, load_scene, save_scene, SceneFile, SCENE_VERSION};
 
 use thiserror::Error;
