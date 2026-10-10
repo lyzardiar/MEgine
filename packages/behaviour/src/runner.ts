@@ -51,7 +51,7 @@ function makeCtx(
  * Creates Behaviour instances from entity component blobs for Play mode.
  * Syncs serializable fields from instance → blob after each update so Inspector stays live.
  */
-export function createBehaviourRunner() {
+export function createBehaviourRunner(onMutableEntity?: (entity: EntityLike) => void) {
   let instances: BehaviourInstance[] = [];
 
   const hasComponent = (entity: EntityLike, type: string) => (
@@ -80,6 +80,7 @@ export function createBehaviourRunner() {
   };
 
   const syncBlob = (inst: BehaviourInstance, entity: EntityLike, entry: BehaviourEntry) => {
+    onMutableEntity?.(entity);
     const blob: Record<string, unknown> = {};
     const obj = inst.instance as Behaviour & Record<string, unknown>;
     for (const f of entry.fields) {
@@ -92,6 +93,7 @@ export function createBehaviourRunner() {
 
   /** Inspector / 外部改 blob 后，在 onUpdate 前拉回实例字段 */
   const pullFromBlob = (inst: BehaviourInstance, entity: EntityLike, entry: BehaviourEntry) => {
+    onMutableEntity?.(entity);
     const data = entity.components[inst.type];
     if (!data || typeof data !== 'object') return;
     const src = data as Record<string, unknown>;
@@ -119,6 +121,7 @@ export function createBehaviourRunner() {
     preserveComponent: boolean,
   ) => {
     if (!inst.enabled) return;
+    onMutableEntity?.(entity);
     if (hasComponent(entity, inst.type)) pullFromBlob(inst, entity, entry);
     try {
       inst.instance.onDisable(makeCtx(entity, 0, () => {}));
@@ -139,6 +142,7 @@ export function createBehaviourRunner() {
     entry: BehaviourEntry,
     active: boolean,
   ) => {
+    onMutableEntity?.(entity);
     const instance = new entry.ctor();
     if (data && typeof data === 'object') {
       Object.assign(instance, structuredClone(data));

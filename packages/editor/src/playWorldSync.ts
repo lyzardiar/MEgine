@@ -31,6 +31,29 @@ function equalJson(value: unknown, baseline: unknown): boolean {
   return true;
 }
 
+// MiYu: private JSON copies have no accessors; exposed records still execute the original comparison.
+type PrivatePlayCopies = { owns(entities: unknown): boolean; unchanged(entity: object, baseline: object): boolean; expose(): void };
+const descriptor = Object.getOwnPropertyDescriptor, prototype = Object.getPrototypeOf, keys = Object.keys, isArray = Array.isArray;
+const nativeComparison = [descriptor, prototype, keys, isArray].every(fn => Function.prototype.toString.call(fn).includes('[native code]'));
+function ordinaryComparison(): boolean {
+  return nativeComparison && descriptor(Object, 'keys')?.value === keys && descriptor(Object, 'getPrototypeOf')?.value === prototype && descriptor(Array, 'isArray')?.value === isArray && !descriptor(Object.prototype, 'toJSON') && !descriptor(Array.prototype, 'toJSON') && prototype(Array.prototype) === Object.prototype;
+}
+function equalEntities(value: unknown, baseline: unknown, copies?: PrivatePlayCopies): boolean {
+  if (!copies?.owns(value)) return equalJson(value, baseline);
+  if (!ordinaryComparison()) { copies.expose(); return equalJson(value, baseline); }
+  if (!Array.isArray(value) || !Array.isArray(baseline)) return equalJson(value, baseline);
+  if (value.length !== baseline.length) return false;
+  let privateComparison = true;
+  for (let i = 0; i < value.length; i++) {
+    const child = value[i], saved = baseline[i];
+    if (child === saved || privateComparison && copies.unchanged(child, saved)) continue;
+    if (!equalJson(child, saved)) return false;
+    // An exposed getter or Proxy can change global serialization behaviour during comparison.
+    if (privateComparison && !ordinaryComparison()) { copies.expose(); privateComparison = false; }
+  }
+  return true;
+}
+
 function plainJson(value: unknown, ancestors = new Set<object>()): boolean {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') return true;
   if (typeof value === 'number') return Number.isFinite(value);
@@ -64,7 +87,7 @@ export function retainPlayWorld(world: WorldSnapshotView, previous?: RetainedPla
   return owned;
 }
 
-export function createPlayWorldSync() {
+export function createPlayWorldSync(copies?: PrivatePlayCopies) {
   type Entities = WorldSnapshotView['entities'] | null;
   type Color = WorldSnapshotView['clearColor'];
   let baseline: [Entities, Color] | null = null;
@@ -86,11 +109,11 @@ export function createPlayWorldSync() {
     viewportSnapshot() { return baseline?.[0] ? { entities: baseline[0].slice(), clearColor: baseline[1].slice() as Color } : undefined; },
     /** Presentation preserves structured data, so it cannot use the serialization fallback in matches(). */
     presentationSnapshot(entities: Entities, color: Color) {
-      return baseline && equalJson(entities, baseline[0]) && equalJson(color, baseline[1]) ? this.viewportSnapshot() : undefined;
+      return baseline && equalEntities(entities, baseline[0], copies) && equalJson(color, baseline[1]) ? this.viewportSnapshot() : undefined;
     },
     matches(entities: Entities, color: Color) {
       if (!baseline) return false;
-      if (equalJson(entities, baseline[0]) && equalJson(color, baseline[1])) return true;
+      if (equalEntities(entities, baseline[0], copies) && equalJson(color, baseline[1])) return true;
       serialized ??= JSON.stringify(baseline);
       return JSON.stringify([entities, color]) === serialized;
     },

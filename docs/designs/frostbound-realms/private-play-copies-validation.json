@@ -1,0 +1,787 @@
+{
+  "author": "MiYu",
+  "baseCommit": "1221323ec85595d59ba84ba0e1cff9631917733d",
+  "scope": "Compare private native editable records by their owned source identities. Continue deep comparison of exposed or potentially modified records and colors. Frozen native render snapshots preserve stable arrays within each publication.",
+  "sourceHashes": {
+    "packages/editor/src/store.ts": "8b0fa7f599317e86df5fed729cdac823ce7683671df2ec25f76df430b3857570",
+    "packages/editor/src/playWorldSync.ts": "9fa3357c37f3d8942dc3b944d7991fea2fd8707a1d4c4436f3f429ff4007c749",
+    "packages/editor/src/App.tsx": "8f248601e2bc5578bdd22790d011e7816f51ed986c07364ae10213616b72cdc5",
+    "packages/behaviour/src/runner.ts": "03c59078453a068175527b90c41faeed83d863274bf07c9ec2f8886ba4610bdd",
+    "packages/editor/tests/nativePlayOwnership.test.mjs": "eaf8bffc0959ffc00b13478b225b0ad0bddadd933a5dbb8b3628f98f13729b03",
+    "scripts/benchmark-frost-native-publication.mjs": "6f76686e529d00caad4e7e2323a43fcd26a9928397aec0cb6d286933dd3079a8",
+    "scripts/qa-frost-play-state.mjs": "748eb70643d175f5d1e041ea2f0cff8ea664a5f02d48b7040d262ed6e22bfd57"
+  },
+  "verification": {
+    "focusedTests": {
+      "passed": 43,
+      "failed": 0,
+      "logs": [
+        "tmp/private-copies-tests.log",
+        "tmp/private-copies-ownership-final.log"
+      ]
+    },
+    "frontendBuild": {
+      "passed": true,
+      "log": "tmp/private-copies-frontend.log"
+    },
+    "renderBenchmark": {
+      "author": "MiYu",
+      "baseCommit": "1221323ec85595d59ba84ba0e1cff9631917733d",
+      "scope": "Real 24,671-entity Frostbound EditorStore and createNativePlayRuntime with mocked IPC deltas affecting four records; includes Behaviour tick, live equality, updater and publication. Excludes native scripts, IPC transport, React, GPU and native FPS.",
+      "sourceSceneSha256": "970d436ca3c562e9c3aac5a0263fdcfe9e843ec13f03262df593cb60199cef42",
+      "entities": 24671,
+      "changedRecordsPerDelta": 4,
+      "iterations": 20,
+      "warmups": 2,
+      "fullWorldComparisons": 22,
+      "outputEqual": true,
+      "mediansMs": {
+        "before": {
+          "publication": 19.74039999999968,
+          "sessionLookup": 14.347499999999854
+        },
+        "after": {
+          "publication": 4.855500000000575,
+          "sessionLookup": 0.3599999999996726
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "publicationMs": 19.846399999999903,
+            "sessionLookupMs": 14.343600000000151,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 23.7537999999995,
+            "sessionLookupMs": 14.293399999999565,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.57250000000022,
+            "sessionLookupMs": 16.13220000000001,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 21.6891999999998,
+            "sessionLookupMs": 14.268000000000029,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.497299999999996,
+            "sessionLookupMs": 14.85400000000027,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.215000000000146,
+            "sessionLookupMs": 17.72649999999976,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.54620000000068,
+            "sessionLookupMs": 13.941100000000006,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.564500000000407,
+            "sessionLookupMs": 13.911799999999857,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 23.527900000000045,
+            "sessionLookupMs": 14.693900000000212,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 23.408300000000054,
+            "sessionLookupMs": 13.704999999999927,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.344500000000153,
+            "sessionLookupMs": 13.908200000000761,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.027399999999943,
+            "sessionLookupMs": 13.58429999999953,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 22.286000000000058,
+            "sessionLookupMs": 14.347499999999854,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.74039999999968,
+            "sessionLookupMs": 18.013700000000426,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 20.365099999999984,
+            "sessionLookupMs": 14.09860000000026,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 24.924800000000687,
+            "sessionLookupMs": 14.79410000000098,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.85989999999947,
+            "sessionLookupMs": 16.54120000000148,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.67579999999907,
+            "sessionLookupMs": 14.403400000001056,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.67360000000008,
+            "sessionLookupMs": 15.821900000000824,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 24.689000000000306,
+            "sessionLookupMs": 13.773400000000038,
+            "reusedEditableRecords": 24667
+          }
+        ],
+        "after": [
+          {
+            "publicationMs": 4.815499999999702,
+            "sessionLookupMs": 0.3599999999996726,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 4.855500000000575,
+            "sessionLookupMs": 0.3528999999998632,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 4.753899999999703,
+            "sessionLookupMs": 0.3603999999995722,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 5.400899999999638,
+            "sessionLookupMs": 0.3431000000000495,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 5.9582000000000335,
+            "sessionLookupMs": 0.35060000000066793,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 5.212900000000445,
+            "sessionLookupMs": 0.3749000000007072,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 5.072300000000723,
+            "sessionLookupMs": 0.3562000000001717,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 5.431599999999889,
+            "sessionLookupMs": 0.3683000000000902,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 5.595999999999549,
+            "sessionLookupMs": 0.3698999999996886,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 5.643799999999828,
+            "sessionLookupMs": 0.42770000000018626,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 8.654000000000451,
+            "sessionLookupMs": 0.36899999999968713,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 5.135699999999815,
+            "sessionLookupMs": 0.3363999999992302,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 4.558999999999287,
+            "sessionLookupMs": 0.35829999999987194,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 4.835399999999936,
+            "sessionLookupMs": 0.36019999999916763,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 4.762499999999818,
+            "sessionLookupMs": 0.35710000000017317,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 4.687799999999697,
+            "sessionLookupMs": 0.3603999999995722,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 4.67870000000039,
+            "sessionLookupMs": 0.37330000000110886,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 4.616299999999683,
+            "sessionLookupMs": 0.339799999999741,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 4.6098000000001775,
+            "sessionLookupMs": 0.3567000000002736,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 4.656399999999849,
+            "sessionLookupMs": 0.35720000000037544,
+            "reusedEditableRecords": 24667
+          }
+        ]
+      },
+      "access": "render"
+    },
+    "mutableBenchmark": {
+      "author": "MiYu",
+      "baseCommit": "1221323ec85595d59ba84ba0e1cff9631917733d",
+      "access": "mutable",
+      "scope": "Real 24,671-entity Frostbound EditorStore and createNativePlayRuntime with mocked IPC deltas affecting four records; includes collapsed hierarchy exposure, Behaviour tick, live equality, updater and publication. Excludes native scripts, IPC transport, React, GPU and native FPS.",
+      "sourceSceneSha256": "970d436ca3c562e9c3aac5a0263fdcfe9e843ec13f03262df593cb60199cef42",
+      "entities": 24671,
+      "changedRecordsPerDelta": 4,
+      "iterations": 20,
+      "warmups": 2,
+      "fullWorldComparisons": 22,
+      "outputEqual": true,
+      "mediansMs": {
+        "before": {
+          "publication": 16.592999999999847,
+          "sessionLookup": 11.72990000000027
+        },
+        "after": {
+          "publication": 18.730900000000474,
+          "sessionLookup": 13.399000000000342
+        }
+      },
+      "samples": {
+        "before": [
+          {
+            "publicationMs": 16.400300000000243,
+            "sessionLookupMs": 11.161399999999958,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.592999999999847,
+            "sessionLookupMs": 15.230599999999868,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.717200000000048,
+            "sessionLookupMs": 11.72990000000027,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 21.553600000000188,
+            "sessionLookupMs": 10.910300000000461,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.382400000000416,
+            "sessionLookupMs": 13.560699999999997,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.974500000000262,
+            "sessionLookupMs": 11.460299999999734,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.249499999999898,
+            "sessionLookupMs": 12.146700000000237,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 20.53350000000046,
+            "sessionLookupMs": 11.853799999999865,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.504699999999502,
+            "sessionLookupMs": 11.47569999999996,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 21.371299999999792,
+            "sessionLookupMs": 11.46560000000045,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.325400000000627,
+            "sessionLookupMs": 13.382299999999304,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.223299999999654,
+            "sessionLookupMs": 13.793799999999464,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.976700000000164,
+            "sessionLookupMs": 11.176299999999173,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.17859999999928,
+            "sessionLookupMs": 15.15979999999945,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.992099999999482,
+            "sessionLookupMs": 11.235199999999168,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.070799999999508,
+            "sessionLookupMs": 14.811200000000099,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.1234000000004,
+            "sessionLookupMs": 11.061900000000605,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.475099999999657,
+            "sessionLookupMs": 15.714399999998932,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 16.586100000000442,
+            "sessionLookupMs": 11.171400000001086,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 21.394099999999526,
+            "sessionLookupMs": 11.64010000000053,
+            "reusedEditableRecords": 24667
+          }
+        ],
+        "after": [
+          {
+            "publicationMs": 18.730900000000474,
+            "sessionLookupMs": 16.613900000000285,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.730499999999665,
+            "sessionLookupMs": 12.51050000000032,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.116500000000087,
+            "sessionLookupMs": 16.776700000000346,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.193599999999606,
+            "sessionLookupMs": 13.399000000000342,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 24.465499999999338,
+            "sessionLookupMs": 11.972600000000057,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.637700000000223,
+            "sessionLookupMs": 14.713200000000143,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.886199999999917,
+            "sessionLookupMs": 16.424199999999473,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.152000000000044,
+            "sessionLookupMs": 12.280699999999342,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 24.054799999999886,
+            "sessionLookupMs": 13.345800000000054,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.80499999999938,
+            "sessionLookupMs": 14.002700000000004,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 24.365600000000086,
+            "sessionLookupMs": 12.173699999999371,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 21.21190000000024,
+            "sessionLookupMs": 12.006900000000314,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.67069999999967,
+            "sessionLookupMs": 14.987299999999777,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.66699999999946,
+            "sessionLookupMs": 12.240200000000186,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 19.95139999999992,
+            "sessionLookupMs": 16.706599999999526,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.27050000000054,
+            "sessionLookupMs": 12.40429999999833,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.328700000000026,
+            "sessionLookupMs": 16.476300000000265,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.107200000000375,
+            "sessionLookupMs": 12.093600000000151,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.33129999999983,
+            "sessionLookupMs": 17.74909999999909,
+            "reusedEditableRecords": 24667
+          },
+          {
+            "publicationMs": 18.818100000000413,
+            "sessionLookupMs": 12.11239999999998,
+            "reusedEditableRecords": 24667
+          }
+        ]
+      }
+    },
+    "review": "Independent read-only review found no required corrections. All public live entity exits, internal reparent writers and Behaviour callbacks were checked.",
+    "limitations": "The mutable-public-API fixture exposes every record and falls back to full comparison. Its measured publication median is 18.731 ms versus 16.593 ms, and session lookup is 13.399 ms versus 11.730 ms; no improvement is claimed for this mode. Separate browser/native acceptance is required for frame-rate conclusions.",
+    "materialSidecars": {
+      "trackedMaterials": 3151,
+      "missing": 0,
+      "untracked": 0,
+      "duplicateGuids": 0,
+      "repairCommit": "2c555fa"
+    },
+    "ownershipRegressionRerun": {
+      "passed": 9,
+      "failed": 0,
+      "log": "tmp/private-copies-ownership-final.log"
+    }
+  },
+  "nativeAcceptance": {
+    "passed": true,
+    "receipt": "docs/designs/frostbound-realms/native-play-state-spatial-private-copies.json",
+    "editorSha256": "2c90170ba302347986f833ddbd4112b49453d1cf6232a27563989f39c734ce2e",
+    "releaseBuildSeconds": 254,
+    "receiptSeconds": 221.05,
+    "setupBeforeReceiptSeconds": 56.317475,
+    "processWindow": {
+      "exitCode": 0,
+      "observedWindowSeconds": 277.5328491,
+      "launchUtc": "2026-10-10T22:31:00.3185563Z",
+      "finishUtc": "2026-10-10T22:35:37.8502258Z"
+    },
+    "shutdown": {
+      "pid": 127692,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-private-copies-1791671460392\\runtime\\com.mengine.editor.agent-WYykT7 '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-private-copies-1791671460392\\runtime\\com.mengine.editor.agent-WYykT7'"
+    },
+    "counts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 24671,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 550
+    },
+    "consoleErrors": 0,
+    "comparison": {
+      "beforeNativeSummary": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 63.53291666607062,
+        "p95PresentIntervalMs": 89,
+        "presentedFps": 15.73987237601582,
+        "averageRequestMs": 53.287499993046126,
+        "averageRenderMs": 12.672320416666668,
+        "averageCommandMs": 22.059349583333322,
+        "averageUploadMs": 0.8091666668653488,
+        "averageWorldSyncMs": 2.375404166666667,
+        "averageSimulationMs": 20.39765083333333,
+        "averageSimulationRequestMs": 48.390833329161005
+      },
+      "afterNativeSummary": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 34.967916666467985,
+        "p95PresentIntervalMs": 55.5,
+        "presentedFps": 28.59764307774551,
+        "averageRequestMs": 28.70166665315628,
+        "averageRenderMs": 10.871268333333326,
+        "averageCommandMs": 21.296157083333334,
+        "averageUploadMs": 0.8233333239952724,
+        "averageWorldSyncMs": 2.0452908333333353,
+        "averageSimulationMs": 15.42708208333334,
+        "averageSimulationRequestMs": 27.51333332558473
+      },
+      "beforeAverageBrowserPaintMs": 6.96404261927858,
+      "afterAverageBrowserPaintMs": 4.030424054619425,
+      "sameSceneAndScriptHashes": true,
+      "sameRenderCounts": true,
+      "scope": "Separate complete native runs, same source scene and game script. Observed timings do not guarantee FPS on other machines or establish per-stage causality."
+    },
+    "browserCpuProfile": {
+      "scope": "Separate 10-second owned-QA Game playback after the canonical 45-second sample; leaf CPU time includes native/idle nodes and profiler overhead.",
+      "targetUrl": "http://tauri.localhost/",
+      "samples": 5752,
+      "durationMs": 10354.813,
+      "topSelf": [
+        {
+          "functionName": "(idle)",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 3525.621000000008
+        },
+        {
+          "functionName": "(program)",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 747.9739999999997
+        },
+        {
+          "functionName": "Ge",
+          "scriptId": "23",
+          "url": "http://tauri.localhost/assets/App-DXXThIZS.js",
+          "lineNumber": 106,
+          "columnNumber": 14790,
+          "selfMs": 566.7360000000001
+        },
+        {
+          "functionName": "xt",
+          "scriptId": "38",
+          "url": "http://tauri.localhost/assets/Viewport-TuLtMfYS.js",
+          "lineNumber": 32,
+          "columnNumber": 43923,
+          "selfMs": 542.5609999999999
+        },
+        {
+          "functionName": "observe",
+          "scriptId": "16",
+          "url": "http://tauri.localhost/assets/index-Cm29YR86.js",
+          "lineNumber": 1,
+          "columnNumber": 83399,
+          "selfMs": 375.58299999999986
+        },
+        {
+          "functionName": "ng",
+          "scriptId": "16",
+          "url": "http://tauri.localhost/assets/index-Cm29YR86.js",
+          "lineNumber": 1,
+          "columnNumber": 79107,
+          "selfMs": 342.35799999999995
+        },
+        {
+          "functionName": "r",
+          "scriptId": "38",
+          "url": "http://tauri.localhost/assets/Viewport-TuLtMfYS.js",
+          "lineNumber": 32,
+          "columnNumber": 20814,
+          "selfMs": 308.186
+        },
+        {
+          "functionName": "Ge",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/uiLayout-DyZgvmvi.js",
+          "lineNumber": 0,
+          "columnNumber": 24937,
+          "selfMs": 249.61900000000003
+        },
+        {
+          "functionName": "Wi",
+          "scriptId": "38",
+          "url": "http://tauri.localhost/assets/Viewport-TuLtMfYS.js",
+          "lineNumber": 32,
+          "columnNumber": 20216,
+          "selfMs": 223.0139999999999
+        },
+        {
+          "functionName": "Ks",
+          "scriptId": "16",
+          "url": "http://tauri.localhost/assets/index-Cm29YR86.js",
+          "lineNumber": 1,
+          "columnNumber": 78225,
+          "selfMs": 206.68300000000002
+        },
+        {
+          "functionName": "tick",
+          "scriptId": "14",
+          "url": "http://tauri.localhost/assets/agent-schemas-BW1im2vd.js",
+          "lineNumber": 0,
+          "columnNumber": 11769,
+          "selfMs": 187.63099999999991
+        },
+        {
+          "functionName": "",
+          "scriptId": "23",
+          "url": "http://tauri.localhost/assets/App-DXXThIZS.js",
+          "lineNumber": 86,
+          "columnNumber": 1128,
+          "selfMs": 179.85799999999995
+        },
+        {
+          "functionName": "(garbage collector)",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 177.35699999999997
+        },
+        {
+          "functionName": "presentationSnapshot",
+          "scriptId": "16",
+          "url": "http://tauri.localhost/assets/index-Cm29YR86.js",
+          "lineNumber": 1,
+          "columnNumber": 79836,
+          "selfMs": 163.17400000000006
+        },
+        {
+          "functionName": "_a",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/uiLayout-DyZgvmvi.js",
+          "lineNumber": 0,
+          "columnNumber": 37200,
+          "selfMs": 159.64499999999995
+        },
+        {
+          "functionName": "putImageData",
+          "scriptId": "0",
+          "url": "",
+          "lineNumber": -1,
+          "columnNumber": -1,
+          "selfMs": 153.57199999999997
+        },
+        {
+          "functionName": "Fc",
+          "scriptId": "16",
+          "url": "http://tauri.localhost/assets/index-Cm29YR86.js",
+          "lineNumber": 4,
+          "columnNumber": 15202,
+          "selfMs": 105.09900000000002
+        },
+        {
+          "functionName": "m",
+          "scriptId": "38",
+          "url": "http://tauri.localhost/assets/Viewport-TuLtMfYS.js",
+          "lineNumber": 32,
+          "columnNumber": 43807,
+          "selfMs": 103.92099999999998
+        },
+        {
+          "functionName": "Ks",
+          "scriptId": "16",
+          "url": "http://tauri.localhost/assets/index-Cm29YR86.js",
+          "lineNumber": 1,
+          "columnNumber": 78225,
+          "selfMs": 93.853
+        },
+        {
+          "functionName": "presentationSnapshot",
+          "scriptId": "16",
+          "url": "http://tauri.localhost/assets/index-Cm29YR86.js",
+          "lineNumber": 1,
+          "columnNumber": 79836,
+          "selfMs": 90.20699999999998
+        },
+        {
+          "functionName": "matches",
+          "scriptId": "16",
+          "url": "http://tauri.localhost/assets/index-Cm29YR86.js",
+          "lineNumber": 1,
+          "columnNumber": 79916,
+          "selfMs": 79.99
+        },
+        {
+          "functionName": "Qt",
+          "scriptId": "51",
+          "url": "http://tauri.localhost/assets/Inspector-CQccJ2is.js",
+          "lineNumber": 10,
+          "columnNumber": 44876,
+          "selfMs": 73.51900000000002
+        },
+        {
+          "functionName": "processIpcMessage",
+          "scriptId": "6",
+          "url": "",
+          "lineNumber": 19,
+          "columnNumber": 10,
+          "selfMs": 73.07900000000001
+        },
+        {
+          "functionName": "Rd",
+          "scriptId": "23",
+          "url": "http://tauri.localhost/assets/App-DXXThIZS.js",
+          "lineNumber": 111,
+          "columnNumber": 3879,
+          "selfMs": 64.116
+        },
+        {
+          "functionName": "kr",
+          "scriptId": "27",
+          "url": "http://tauri.localhost/assets/uiLayout-DyZgvmvi.js",
+          "lineNumber": 0,
+          "columnNumber": 35604,
+          "selfMs": 63.23199999999999
+        }
+      ],
+      "rawProfile": "E:\\work\\codex\\worktrees\\1339\\MEgine\\tmp\\spatial-private-copies-browser-cpu-profile.json"
+    }
+  },
+  "passed": true
+}
