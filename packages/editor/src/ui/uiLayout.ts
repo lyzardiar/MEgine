@@ -2019,7 +2019,6 @@ export function layoutUiWorldSpace(
   selectedIds: Set<number>,
   textMeasurement?: UiTextLayoutMeasurement,
 ): UiDrawItem[] {
-  const transforms = buildWorldTransforms(entities);
   const canvases = entities
     .filter((entity) => {
       if (!entity.components.Canvas
@@ -2036,6 +2035,8 @@ export function layoutUiWorldSpace(
       const rightKey = canvasSortKey(entities, right);
       return leftKey[1] - rightKey[1] || leftKey[2] - rightKey[2];
     });
+  if (!canvases.length) return [];
+  const transforms = buildWorldTransforms(entities);
   const output: UiDrawItem[] = [];
 
   for (const canvas of canvases) {

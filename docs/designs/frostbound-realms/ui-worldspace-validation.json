@@ -1,0 +1,144 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "cf46014a35dd7261a5f2c96fcdaa507e48f6dc1c",
+  "scope": "WorldSpace UI only resolves scene transforms when an enabled WorldSpace Canvas layout root exists. Live Canvas mode, hierarchy/activity and transform edits remain evaluated on every layout.",
+  "sourceHashes": {
+    "packages/editor/src/ui/uiLayout.ts": "a3d2ca3fda181e940263184034f3ccae0403e1b2037df0845af9a58d1e84b54d",
+    "packages/editor/tests/canvasRenderModes.test.mjs": "d9bc5b3a2d6a35a5587bd825e86823d4ceb9bfffc2cedd72f0d018567fdbd197",
+    "scripts/benchmark-frost-ui-worldspace.mjs": "79ebd6bdc586d6af65a5b09741a8b8b3f9ae1d1fcd983a580bd9e2242711fa29",
+    "scripts/qa-frost-play-state.mjs": "6d50bfc49e4864dd63ab49b7d0576e688699f399f3aa90c718a53348856c7de0"
+  },
+  "benchmark": {
+    "author": "MiYu",
+    "scope": "Alternating Node/Vite real-store WorldSpace layout; excludes React, IPC, GPU and native FPS. Complete output equality across live Canvas mode, activity and transform edits.",
+    "baseline": "cf46014",
+    "sourceSceneSha256": "970d436ca3c562e9c3aac5a0263fdcfe9e843ec13f03262df593cb60199cef42",
+    "entities": 24671,
+    "iterations": 20,
+    "warmups": 2,
+    "fullOutputComparisons": 6,
+    "outputEqual": true,
+    "mediansMs": {
+      "before": 12.607600000000048,
+      "after": 0.2514000000001033
+    },
+    "samplesMs": {
+      "before": [
+        13.428300000000036,
+        11.563799999999901,
+        13.15319999999997,
+        11.705999999999904,
+        12.906600000000026,
+        11.675200000000132,
+        12.816699999999855,
+        11.315800000000081,
+        13.097500000000082,
+        12.083899999999858,
+        12.842000000000098,
+        11.814100000000053,
+        12.663800000000037,
+        11.404500000000098,
+        13.137899999999945,
+        11.626899999999978,
+        12.607600000000048,
+        11.7804000000001,
+        22.71479999999997,
+        10.417999999999893
+      ],
+      "after": [
+        0.4280999999998585,
+        0.15850000000000364,
+        0.27929999999992106,
+        0.16769999999996799,
+        0.29539999999997235,
+        0.15820000000007894,
+        0.32560000000012224,
+        0.16650000000004184,
+        0.2514000000001033,
+        0.17069999999989705,
+        0.38229999999998654,
+        0.16250000000013642,
+        0.31290000000012697,
+        0.16529999999988831,
+        0.2680000000000291,
+        0.1611000000000331,
+        0.29950000000008004,
+        0.17229999999995016,
+        0.5483999999999014,
+        0.19900000000006912
+      ]
+    }
+  },
+  "verification": {
+    "canvasTestsPassed": 46,
+    "playSyncAndFrameTestsPassed": 21,
+    "layoutAndCanvasTestsPassed": 39,
+    "frontendBuildPassed": true,
+    "nativeBuildAndAcceptance": "passed",
+    "nativeBuildSeconds": 298
+  },
+  "logs": [
+    "tmp/ui-worldspace-tests.log",
+    "tmp/ui-worldspace-sync-tests.log",
+    "tmp/ui-worldspace-layout-tests.log",
+    "tmp/ui-worldspace-build.log",
+    "tmp/ui-worldspace-native-build.log"
+  ],
+  "native": {
+    "receipt": "docs/designs/frostbound-realms/native-play-state-spatial-ui-worldspace.json",
+    "executable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+    "sha256": "50fdf113e2f77ca9d631bb2db75c1a16e87e8a586ae5e718d01d760d201a9a39",
+    "elapsedMs": 186531,
+    "consoleErrors": 0,
+    "sourceMainAndSceneUnchanged": true,
+    "summary": {
+      "intervals": 240,
+      "averagePresentIntervalMs": 67.67041666706403,
+      "p95PresentIntervalMs": 95.40000009536743,
+      "presentedFps": 14.777506172600699,
+      "averageRequestMs": 59.53208334048589,
+      "averageRenderMs": 12.853492499999986,
+      "averageCommandMs": 23.413549166666677,
+      "averageUploadMs": 0.8295833359162013,
+      "averageWorldSyncMs": 2.2337679166666655,
+      "averageSimulationMs": 24.208786666666647,
+      "averageSimulationRequestMs": 60.16416667103768
+    },
+    "counts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 24671,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 550
+    },
+    "shutdown": {
+      "pid": 131324,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-ui-worldspace-1791665647228\\runtime\\com.mengine.editor.agent-YvAiUY '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-ui-worldspace-1791665647228\\runtime\\com.mengine.editor.agent-YvAiUY'"
+    }
+  },
+  "nativeComparison": {
+    "beforeReceipt": "docs/designs/frostbound-realms/native-play-state-spatial-ground-display.json",
+    "beforePresentedFps": 15.582290726685715,
+    "afterPresentedFps": 14.777506172600699,
+    "scope": "Separate 45-second native playback runs with identical game script and scene. This run does not establish an overall gameplay FPS gain; the isolated layout benchmark is not a full-game throughput measurement."
+  }
+}
