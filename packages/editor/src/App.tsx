@@ -2842,7 +2842,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, [store]);
 
   const treeNodes = useMemo(() => store.getVisibleFlat(), [store, snap, treeTick]);
-  const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(snap.entities), [snap.entities]);
+  const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(mode === 'edit' ? snap.entities : []), [mode, snap.entities]);
   const sceneHiddenIds = store.sceneHiddenIds;
   const sceneInteraction = store.sceneInteractionQuery();
   const viewportEntities = viewTab === 'scene' && sceneHiddenIds.length

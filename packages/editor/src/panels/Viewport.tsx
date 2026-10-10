@@ -48,7 +48,7 @@ import {
 } from '../math3d';
 import { clearModelPreview, modelPreview, type PreviewMesh } from '../modelPreview';
 import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
-import { nativeGamePreviewSize, requiresBrowserViewportSnapshot, uploadNativeViewportFrame } from '../nativeViewportFrame';
+import { createNativeViewportWorldArgs, nativeGamePreviewSize, uploadNativeViewportFrame } from '../nativeViewportFrame';
 import { releaseNativeViewportFrame, requestNativeViewportFrame } from '../nativeViewportTransport';
 import {
   clearMaterialPreviews,
@@ -830,13 +830,6 @@ export function Viewport(props: {
     return { ...p, get nativeSessionId() { return live.nativeSessionId; }, simulationRequestMs: live.simulationRequestMs, entities: hidden.length ? live.entities.filter(entity => !hidden.includes(entity.entity)) : live.entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime };
   };
 
-  const nativeWorldArgs = (p: ReturnType<typeof currentViewportProps>) => {
-    const sessionId = p.nativeSessionId;
-    return sessionId != null && !requiresBrowserViewportSnapshot(p.entities)
-      ? { playSessionId: sessionId }
-      : { snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime } };
-  };
-
   const closeGameInput = (focusCanvas = false) => {
     focusedInputRef.current = null;
     inputCompositionRef.current = false;
@@ -939,7 +932,7 @@ export function Viewport(props: {
         const height = Math.max(1, Math.round(sourceHeight * scale));
         // Render the current world at the requested output size. The Game View's
         // display label and letterbox are editor chrome, not game pixels.
-        const frame = await invoke<{ pngBase64: string }>('render_native_game_view', { width, height, ...nativeWorldArgs(p) });
+        const frame = await invoke<{ pngBase64: string }>('render_native_game_view', { width, height, ...createNativeViewportWorldArgs(p).worldArgs() });
         let dataUrl = `data:image/png;base64,${frame.pngBase64}`;
         if (format === 'image/jpeg') {
           const image = await decodeNativeFrame(frame.pngBase64);
@@ -1282,6 +1275,7 @@ export function Viewport(props: {
       return;
     }
     const p = currentViewportProps();
+    const nativeWorld = createNativeViewportWorldArgs(p);
     const frameIntervalMs = lastProfilerFrameRef.current > 0
       ? now - lastProfilerFrameRef.current
       : 0;
@@ -1338,7 +1332,7 @@ export function Viewport(props: {
       // Fixed-pixel Canvas layouts depend on the selected resolution, even in a small panel.
       const fixedPixelCanvas = p.entities.some(entity => entity.components.Canvas && (entity.components.Canvas as Record<string, unknown>).render_mode !== 'WorldSpace' && (entity.components.CanvasScaler as Record<string, unknown> | undefined)?.ui_scale_mode !== 'ScaleWithScreenSize' && (p.activeInHierarchy?.(entity.entity) ?? true));
       const { width: nativeWidth, height: nativeHeight } = nativeGamePreviewSize(p.gameResolution?.width ?? vp.w * dpr, p.gameResolution?.height ?? vp.h * dpr, vp.w * dpr, vp.h * dpr, fixedPixelCanvas);
-      request.ready = requestNativeViewportFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight, ...nativeWorldArgs(p) })
+      request.ready = requestNativeViewportFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight, ...nativeWorld.worldArgs() })
         .then((buffer) => {
           const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
           recordNativeViewportProfile('game', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
@@ -1431,7 +1425,7 @@ export function Viewport(props: {
       request.inFlight = true;
       request.lastRequestAt = now;
       request.ready = requestNativeViewportFrame('render_native_scene_view', {
-        ...nativeWorldArgs(p),
+        ...nativeWorld.worldArgs(),
         request: {
           width: nativeSceneIdentity!.width,
           height: nativeSceneIdentity!.height,
@@ -1486,7 +1480,7 @@ export function Viewport(props: {
       const previewWidth = 320;
       const previewHeight = Math.max(120, Math.round(previewWidth / Math.max(0.5, Math.min(2.5, aspect))));
       request.ready = requestNativeViewportFrame('render_native_scene_view', {
-        ...nativeWorldArgs(p),
+        ...nativeWorld.worldArgs(),
         request: {
           width: previewWidth,
           height: previewHeight,
@@ -2680,7 +2674,7 @@ export function Viewport(props: {
         const logicalUiSize = p.gameResolution
           ? { w: p.gameResolution.width, h: p.gameResolution.height }
           : { w: uiRoot.w, h: uiRoot.h };
-        const uiItems = nativeGameReady && !requiresBrowserViewportSnapshot(p.entities) ? [] : [
+        const uiItems = nativeGameReady && !nativeWorld.requiresBrowserSnapshot() ? [] : [
           ...(gameCamera
             ? layoutUiWorldSpace(p.entities, cam, vp, selSet, textMeasurement)
             : []),

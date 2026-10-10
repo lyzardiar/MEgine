@@ -94,9 +94,12 @@ pub struct TransformHierarchy {
 }
 
 impl TransformHierarchy {
-    pub fn build(world: &World) -> Self {
+    pub fn build(world: &World) -> Self { Self::build_for_entities(world, world.iter_entities()) }
+
+    /// Resolves the requested entities and their ancestors without traversing unrelated branches.
+    pub fn build_for_entities(world: &World, entities: impl IntoIterator<Item = Entity>) -> Self {
         let mut states = HashMap::new();
-        for entity in world.iter_entities() {
+        for entity in entities {
             resolve_node(world, entity, &mut states);
         }
         let nodes = states
@@ -213,6 +216,35 @@ mod tests {
             position,
             rotation: [rotation.x, rotation.y, rotation.z, rotation.w],
             scale,
+        }
+    }
+
+    #[test]
+    fn subset_resolves_ancestors_and_matches_full_hierarchy_in_sparse_world() {
+        let mut world = World::new();
+        let child = world.spawn_empty();
+        let group = world.spawn_empty();
+        let root = world.spawn_empty();
+        world.insert_component(root, transform([3.0, 4.0, 5.0], Quat::from_rotation_y(0.8), [2.0, 3.0, -1.0]));
+        world.insert_component(child, transform([1.0, 2.0, 3.0], Quat::from_rotation_z(0.4), [1.0; 3]));
+        world.set_parent(child, Some(group));
+        world.set_parent(group, Some(root));
+        for _ in 0..90_000 { let unrelated = world.spawn_empty(); world.insert_component(unrelated, Transform::default()); }
+        let subset = TransformHierarchy::build_for_entities(&world, [child, child]);
+        let full = TransformHierarchy::build(&world);
+        assert_eq!(subset.nodes.len(), 3);
+        assert_eq!(subset.get(child), full.get(child));
+        assert_eq!(subset.parent_world(&world, child), full.parent_world(&world, child));
+        assert_eq!(subset.get(group), None);
+        for state in 0..3 {
+            world.set_editor_state(root, 0, state != 0);
+            if state == 1 { world.insert_component(root, Parent { entity: child }); }
+            if state == 2 { world.insert_component(root, Parent { entity: Entity::new(900_000, 0) }); }
+            let subset = TransformHierarchy::build_for_entities(&world, [child]);
+            let full = TransformHierarchy::build(&world);
+            assert_eq!(subset.is_active(child), full.is_active(child));
+            assert_eq!(subset.get(child), full.get(child));
+            assert!(!subset.is_active(child));
         }
     }
 

@@ -6,6 +6,19 @@ export function requiresBrowserViewportSnapshot(entities: readonly { active?: bo
   return entities.some(({ active, components: c }) => active !== false && (c.SpineSkeleton || c.Button || c.Toggle || c.Slider || c.Scrollbar || c.InputField || c.Dropdown || c.ListView || c.ScrollView || c.TabView));
 }
 
+/** One synchronous paint shares lazy world selection across native views and browser UI. */
+export function createNativeViewportWorldArgs<E extends { active?: boolean; components: Record<string, unknown> }>(props: { entities: E[]; clearColor: [number, number, number, number]; simulationTime: number; readonly nativeSessionId?: number }) {
+  let browserSnapshot: boolean | undefined;
+  let args: { playSessionId: number } | { snapshot: { entities: E[]; clearColor: [number, number, number, number]; simulationTime: number } } | undefined;
+  const requiresBrowserSnapshot = () => browserSnapshot ??= requiresBrowserViewportSnapshot(props.entities);
+  const worldArgs = () => {
+    if (args) return args;
+    const sessionId = requiresBrowserSnapshot() ? undefined : props.nativeSessionId;
+    return args = sessionId != null ? { playSessionId: sessionId } : { snapshot: { entities: props.entities, clearColor: props.clearColor, simulationTime: props.simulationTime } };
+  };
+  return { worldArgs, requiresBrowserSnapshot };
+}
+
 /** Match the pixels actually displayed; explicit captures still render at the requested output size. */
 export function nativeGamePreviewSize(width: number, height: number, displayWidth: number, displayHeight: number, fixedPixelCanvas = false) {
   const scale = Math.min(1, fixedPixelCanvas ? 1 : displayWidth / width, fixedPixelCanvas ? 1 : displayHeight / height, 4096 / width, 4096 / height);

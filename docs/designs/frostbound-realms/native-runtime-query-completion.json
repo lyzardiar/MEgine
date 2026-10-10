@@ -1,0 +1,35 @@
+{
+  "author": "MiYu",
+  "functionalAcceptancePassed": true,
+  "priorReceipt": "native-play-state-spatial-runtime.json",
+  "editorSha256": "0bcffa162a354994ccc06d595b67b6cac799b95a6a3ccac4788e6440ade5d030",
+  "scope": "Prior receipt retains hierarchy, camera/shadow and continuous playback assertions, the rejected edit-mode-only bridge probe and first shutdown failure. This receipt checks the real paused Inspector, step/stop restoration and normal owned-editor exit.",
+  "steps": [
+    {
+      "name": "reopen owned QA scene",
+      "ms": 37983
+    },
+    {
+      "name": "paused skirmish input",
+      "ms": 21955
+    },
+    {
+      "name": "paused Inspector activation and Scene selection",
+      "ms": 65202
+    },
+    {
+      "name": "step stop and authored restoration",
+      "ms": 14033
+    }
+  ],
+  "pauseSceneEditing": true,
+  "consoleErrors": 0,
+  "pauseStepStop": true,
+  "shutdown": {
+    "pid": 126680,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-runtime-1791626645466\\runtime\\com.mengine.editor.agent-erxwMS '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-runtime-1791626645466\\runtime\\com.mengine.editor.agent-erxwMS'"
+  }
+}

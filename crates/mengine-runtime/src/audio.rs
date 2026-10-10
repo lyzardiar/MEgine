@@ -66,13 +66,13 @@ impl AudioRuntime {
     }
 
     pub fn update(&mut self, world: &mut World) -> Vec<AudioLoadFailure> {
-        let hierarchy = TransformHierarchy::build(world);
+        let audio_entities = world.entities_with_components(&["AudioSource"]).chain(world.entities_with_components(&["AudioMixer"])).chain(world.entities_with_components(&["AudioListener"]));
+        let hierarchy = TransformHierarchy::build_for_entities(world, audio_entities);
         self.sync_mixer(world, &hierarchy);
         self.sync_listener(world, &hierarchy);
 
         let all_source_entities: Vec<_> = world
-            .iter_entities()
-            .filter(|entity| world.get_component::<AudioSource>(*entity).is_some())
+            .entities_with_components(&["AudioSource"])
             .collect();
         let source_entity_set: HashSet<_> = all_source_entities.iter().copied().collect();
         self.initialized_sources
@@ -171,7 +171,7 @@ impl AudioRuntime {
 
     fn sync_mixer(&mut self, world: &World, hierarchy: &TransformHierarchy) {
         let mixer = world
-            .iter_entities()
+            .entities_with_components(&["AudioMixer"])
             .filter(|entity| hierarchy.is_active(*entity))
             .find_map(|entity| world.get_component::<AudioMixer>(entity));
         let settings = mixer.map_or_else(AudioMixerSettings::default, |mixer| AudioMixerSettings {
@@ -187,7 +187,7 @@ impl AudioRuntime {
 
     fn sync_listener(&mut self, world: &World, hierarchy: &TransformHierarchy) {
         let listener = world
-            .iter_entities()
+            .entities_with_components(&["AudioListener"])
             .filter(|entity| hierarchy.is_active(*entity))
             .filter_map(|entity| {
                 world
@@ -235,6 +235,33 @@ impl AudioRuntime {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn inherited_activation_and_component_lifetimes_survive_sparse_queries() {
+        let mut runtime = AudioRuntime::new(None);
+        let mut world = World::new();
+        let parent = world.spawn_empty();
+        let source = world.spawn_empty();
+        world.set_parent(source, Some(parent));
+        world.insert_component(source, AudioSource { playing: true, play_on_awake: false, ..AudioSource::default() });
+        world.set_editor_state(parent, 0, false);
+        runtime.update(&mut world);
+        assert!(world.get_component::<AudioSource>(source).unwrap().playing);
+        assert!(!runtime.initialized_sources.contains(&source));
+        world.set_editor_state(parent, 0, true);
+        runtime.update(&mut world);
+        assert!(!world.get_component::<AudioSource>(source).unwrap().playing);
+        world.remove_component_by_name(source, "AudioSource");
+        runtime.update(&mut world);
+        assert!(!runtime.initialized_sources.contains(&source));
+        world.despawn(source);
+        let recycled = world.spawn_empty();
+        world.insert_component(recycled, AudioSource { playing: true, play_on_awake: false, ..AudioSource::default() });
+        runtime.update(&mut world);
+        assert!(!world.get_component::<AudioSource>(recycled).unwrap().playing);
+        assert!(!runtime.initialized_sources.contains(&source));
+        assert!(runtime.initialized_sources.contains(&recycled));
+    }
 
     #[test]
     fn first_update_honors_play_on_awake_false_even_headless() {

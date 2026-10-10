@@ -1,0 +1,119 @@
+{
+  "author": "MiYu",
+  "scope": "Sparse component membership, requested-entity audio hierarchy, Play transform memo and lazy per-paint native viewport world selection. Full-scene native acceptance pending.",
+  "regressions": {
+    "corePassed": 14,
+    "runtimePassed": 219,
+    "manualBenchmarkPassed": 1,
+    "editorPassed": 14,
+    "editorBuildPassed": true
+  },
+  "benchmark": {
+    "entities": 90000,
+    "matches": 100,
+    "iterations": 100,
+    "linearScanMs": 137.029,
+    "indexedQueryMs": 0.155,
+    "scope": "Release CPU component-query microbenchmark; excludes native IPC, scene compilation, rendering and gameplay."
+  },
+  "sourceSha256": {
+    "crates/mengine-core/src/world.rs": "17ee946e55447ce2241cc03f98bd29acbfc3cc0ffcdd3666b0d4d6ed5c800bb6",
+    "crates/mengine-core/src/transform_hierarchy.rs": "1184dfdf5cd859c84b35db53030912266ee6c601b1d80734fa0a56e0a5d678aa",
+    "crates/mengine-runtime/src/animation.rs": "2d57061d062447a4f9e1f5251fa57b7ef37aeb346debb59935132524a4be549f",
+    "crates/mengine-runtime/src/timeline.rs": "e0938c10d6059974adcb98c5d05eae4e60dad8c82aad7d73780645bed947ab62",
+    "crates/mengine-runtime/src/audio.rs": "1579be2b32cc13feb61680e7275f1caa8857e3db7605908eaaa673f3d905ee8a",
+    "packages/editor/src/App.tsx": "072e1ae045b1165b23cb06b7d186ed91d150f32f99d543b1c929baa7c19cc760",
+    "packages/editor/src/nativeViewportFrame.ts": "659ee074619910dbb5816569da3f0bd8176ba72c666dfc8ee9b0ed24d47e199f",
+    "packages/editor/src/panels/Viewport.tsx": "ec565e5853e4633157a10189d7ab70508ee9faaf385f877eea42c4f29a81ac30",
+    "packages/editor/tests/nativeViewportFrame.test.mjs": "ec92ca8e5b48724b7ffef4b35f64f9e6fdd32b842e8b1b64a2f8a16ea0a92a70",
+    "scripts/qa-frost-play-state.mjs": "0b954376c55799d6f8550aa3b1537f468804132550de60b983e9ed9f75d27e8a",
+    "scripts/qa-frost-runtime-query-completion.mjs": "56463713c00e8fb05651222d5481462ae822144ea9abe6f501d05eb8fd8f27ce"
+  },
+  "nativeAcceptance": {
+    "functionalAcceptancePassed": true,
+    "nativeReceipt": "native-play-state-spatial-runtime.json",
+    "completionReceipt": "native-runtime-query-completion.json",
+    "editorSha256": "0bcffa162a354994ccc06d595b67b6cac799b95a6a3ccac4788e6440ade5d030",
+    "hierarchy": {
+      "initialDom": 1730,
+      "initialRows": 14,
+      "entities": 90179,
+      "expanded": {
+        "dom": 1972,
+        "rows": 30,
+        "scrollHeight": 2164296
+      },
+      "end": {
+        "scrollTop": 2163788,
+        "rows": 30,
+        "active": "Missile aura 255"
+      },
+      "searchRestore": true,
+      "externalSelectionReveal": true,
+      "rename": true,
+      "pointerDrag": true,
+      "pointerDragMs": 15616
+    },
+    "sceneCounts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 85,
+      "entities": 90179,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 3,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 265,
+      "sceneViews": 0,
+      "shadowVisibleObjects": 176,
+      "submittedObjects": 212,
+      "uiBatches": 1,
+      "uiDrawCalls": 1,
+      "uiPrimitives": 84
+    },
+    "gameCounts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 90179,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 550
+    },
+    "summary": {
+      "intervals": 76,
+      "averagePresentIntervalMs": 630.2973684197977,
+      "p95PresentIntervalMs": 854.2000000476837,
+      "presentedFps": 1.5865527132170552,
+      "averageRequestMs": 485.07532467160905,
+      "averageRenderMs": 124.2147961038961,
+      "averageCommandMs": 137.69366883116876,
+      "averageUploadMs": 1.6545454712657186,
+      "averageSimulationMs": 82.24245974025979,
+      "averageSimulationRequestMs": 656.3493506289147
+    },
+    "coldReadinessMs": 50073,
+    "releaseBuildSeconds": 370,
+    "normalQaEditorExit": true,
+    "runtimeCacheRemoved": false,
+    "comparisonScope": "Observed same-scene native runs, not an isolated causal FPS benchmark. Prior native viewport receipt measured 1.261 FPS; this run measures 1.587 FPS."
+  }
+}
