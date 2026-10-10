@@ -7,7 +7,9 @@ const file='samples/frostbound-realms/Assets/Scenes/Main.mscene',baseline=proces
 const byName=new Map(after.map(e=>[e.name,e])),removed=[];
 assert.equal(byName.size,after.length);
 for(const e of before){const current=byName.get(e.name);if(current)assert.deepEqual(current,e,'retained node '+e.name);else{const pool=/^Classic (spell|status|attachment) (\d+)(?: |$)/.exec(e.name);assert.ok(pool&&Number(pool[2])>0,'only duplicated effect slots removed: '+e.name);removed.push(e.name);}}
-assert.equal(before.length-after.length,removed.length);
+const originalNames=new Set(before.map(e=>e.name)),added=after.filter(e=>!originalNames.has(e.name));
+assert.deepEqual(added.map(e=>e.name),['HUD Upkeep value']);assert.equal(added[0].parent,byName.get('HUD Gold value').parent);assert.ok(added[0].components.Text);
+assert.equal(before.length-after.length+added.length,removed.length);
 function references(entities){const paths=new Set();function visit(value){if(typeof value==='string'&&value.startsWith('Assets/'))paths.add(value);else if(value&&typeof value==='object')for(const child of Object.values(value))visit(child);}for(const e of entities)visit(e.components);return [...paths].sort();}
 const oldReferences=references(before),newReferences=references(after);assert.deepEqual(newReferences,oldReferences);
 const ids=new Set(after.map(e=>e.entity));for(const e of after)if(e.parent!=null)assert.ok(ids.has(e.parent),'live retained parent '+e.name);

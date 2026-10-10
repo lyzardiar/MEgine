@@ -1,5 +1,6 @@
 // Author: MiYu. Generated Death Knight command cards, hotkeys, original portrait/models/effects and F5 continuation.
 import fs from 'node:fs';
+import {clientWorldFixture} from './frost-client-world-fixture.mjs';
 import path from 'node:path';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -8,11 +9,11 @@ import {fileURLToPath} from 'node:url';
 import {nativeNodeQueries} from './frost-native-node-fixture.mjs';
 import {deathKnightFixture} from './frost-death-knight-fixture.mjs';
 const require=createRequire(import.meta.url),root=fileURLToPath(new URL('../samples/frostbound-realms/',import.meta.url)),H=require('../samples/frostbound-realms/game/hud.js');
-const world=JSON.parse(fs.readFileSync(path.join(root,'Assets/Scenes/Main.mscene'))).world,byName=new Map(world.entities.map(e=>[e.name,e])),values=new Map(),active=new Map(),storage=new Map(),copy=o=>JSON.parse(JSON.stringify(o)),nodeQueries=nativeNodeQueries();
-const engine={findEntitiesByName:names=>{const wanted=new Set(names);return world.entities.filter(e=>wanted.has(e.name));},network:{poll:()=>[],close(){},send(){}},storage:{load:k=>storage.has(k)?copy(storage.get(k)):null,save:(k,v)=>storage.set(k,copy(v))},setActive:(id,on)=>active.set(id,on),playAudio(){},pushCommandJson:raw=>{const c=JSON.parse(raw);values.set(c.entity+'/'+c.component,c.value);},assets:{sampleNodes:(reference,options)=>nodeQueries.sampleNodes(reference,options)}};
+const native=clientWorldFixture(JSON.parse(fs.readFileSync(path.join(root,'Assets/Scenes/Main.mscene'))).world),world=native.snapshot,byName={get:n=>native.entity(n)},values=native.values,active=native.active,storage=new Map(),copy=o=>JSON.parse(JSON.stringify(o)),nodeQueries=nativeNodeQueries();
+const engine=Object.assign(native.engine,{network:{poll:()=>[],close(){},send(){}},storage:{load:k=>storage.has(k)?copy(storage.get(k)):null,save:(k,v)=>storage.set(k,copy(v))},playAudio(){},assets:{sampleNodes:(reference,options)=>nodeQueries.sampleNodes(reference,options)}});
 const context=vm.createContext({engine});vm.runInContext(fs.readFileSync(path.join(root,'Assets/Scripts/Main.js'),'utf8'),context);vm.runInContext('const deathKnightRestore=Frost.restore;Frost.restore=raw=>{globalThis.deathKnightState=deathKnightRestore(raw);return deathKnightState;};',context);
-const S=context.Frost,component=(n,c)=>values.get(byName.get(n).entity+'/'+c)||byName.get(n).components[c],shown=n=>active.get(byName.get(n).entity)??byName.get(n).active,telemetry=()=>JSON.parse(component('Frost telemetry','Text').text);
-function tick(input={},dt=.001){engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};context.onTick(dt);}
+const S=context.Frost,component=(n,c)=>values.get(byName.get(n).entity+'/'+c)||byName.get(n).components[c],shown=n=>{const e=byName.get(n);return e?(active.get(e.entity)??e.active):false;},telemetry=()=>JSON.parse(component('Frost telemetry','Text').text);
+function tick(input={},dt=.001){engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};native.render(dt=>context.onTick(dt),dt);}
 const key=k=>{tick({keys:[k],pressedKeys:[k]});tick();},click=pointer=>{tick({pointer,buttons:[0],pressedButtons:[0]});tick({pointer,releasedButtons:[0]});},advance=n=>{for(let i=0;i<n;i++)tick({},.1);};
 function ui(n){const r=H.rect(component(n,'RectTransform'),{viewport:[1280,720]});return [640+r.x,360+r.y];}
 function point(u){const t=telemetry(),a=Math.atan2(context.FrostVisual.camera.height,context.FrostVisual.camera.depth);return [640+(u.x-t.camera[0])/t.zoom*360,360+(u.z-t.camera[1])*Math.sin(a)/t.zoom*360];}

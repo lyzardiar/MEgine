@@ -35,7 +35,7 @@ for(const setup of [({n})=>n.casterRank=0,({n})=>n.mana=49,({n})=>n.stun=1,({n})
 }
 {
  const {s,n,h}=arena();const summoned=S.spawn(s,'skeletonwarrior',1,1,0,{summoned:true,expires:400});S.visibility(s);assert.equal(cast(s,h,'purge',summoned),null);assert.equal(s.pendingEvents.filter(e=>e.type==='death').length,1);step(s,1);assert.equal(s.events.filter(e=>e.type==='death').length,1);step(s,1);assert.equal(s.events.filter(e=>e.type==='death').length,0);
- const crypt=S.spawn(s,'barracks',0,-9,9,{queue:[{kind:'necromancer',left:2}]});assert.equal(S.restore(S.clone(s)).units.find(u=>u.id===crypt.id).queue[0].kind,'necromancer','existing crypt training queues survive the Temple migration');
+ const crypt=S.spawn(s,'barracks',0,-9,9,{queue:[{kind:'necromancer',left:2}]}),legacy=S.clone(s);delete legacy.upkeepVersion;assert.equal(S.restore(legacy).units.find(u=>u.id===crypt.id).queue[0].kind,'necromancer','legacy crypt training queues survive the Temple migration');
  const worker=S.spawn(s,'worker',0,-14,14);S.spawn(s,'hall',0,-22,22);setTechnology(S,s,0,1);assert.ok(S.command(s,0,{type:'build',ids:[worker.id],kind:'temple',x:-12,z:14}));setTechnology(S,s,0,2);assert.equal(S.command(s,0,{type:'build',ids:[worker.id],kind:'temple',x:-12,z:14}),null);const site=s.units.find(u=>u.kind==='temple');assert.ok(site.built<1);assert.equal(S.command(s,0,{type:'cancelBuild',ids:[site.id]}),null);
 }
 {

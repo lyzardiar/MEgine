@@ -12,7 +12,12 @@ export function clientWorldFixture(source,normalize=false){
       const typed=value=>typeof value==='number'?Math.fround(value):Array.isArray(value)?value.map(typed):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,typed(value[k])])):value;
       const value=normalize?typed(c.value):structuredClone(c.value);if(normalize&&c.component==='MaterialPropertyBlock')Object.assign(value,{unusedNativeDefault:0});
       ids.get(c.entity).components[c.component]=value;values.set(c.entity+'/'+c.component,value);
-    }
+    }else throw Error('unsupported command '+c.op);
   }}
-  return {engine,snapshot,values,active,commit,entity:name=>names.get(name),queries:()=>queries};
+  function render(tick,deltaTime){
+    tick(deltaTime);commit();
+    // A 10 Hz simulation step also presents two frames with no simulation time; pooled nodes acknowledge deferred native creation.
+    if(deltaTime>=.08)for(let i=0;i<2;i++){engine.input={...engine.input,pressedKeys:[],pressedButtons:[],releasedButtons:[]};tick(0);commit();}
+  }
+  return {engine,snapshot,values,active,commit,render,entity:name=>names.get(name),queries:()=>queries};
 }

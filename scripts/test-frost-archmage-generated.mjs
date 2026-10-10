@@ -1,6 +1,7 @@
 // Author: MiYu. Source information-card provenance, FDF geometry and generated-client selection transitions.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {clientWorldFixture} from './frost-client-world-fixture.mjs';
 import path from 'node:path';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
@@ -15,11 +16,11 @@ assert.equal(hash(fs.readFileSync(new URL('../'+receipt.generator,import.meta.ur
 assert.equal(hash(fs.readFileSync(new URL('./import-frost-console.py',import.meta.url))),receipt.decoderSha256);
 assert.equal(new Set(Object.values(icons)).size,27);assert.equal(Object.keys(icons).length,37);
 const frame=fs.readFileSync(path.join(source,'SourceAssets/WarcraftIII/UI/FrameDef/UI/InfoPanelUnitDetail.fdf'),'utf8'),attributeBlock=frame.slice(frame.indexOf('Frame "BACKDROP" "IconBackdrop1"')),size=Number(attributeBlock.match(/Width ([\d.]+)/)[1])*1200,gap=Number(attributeBlock.match(/SetPoint LEFT, "IconBackdrop1", RIGHT, ([\d.]+)/)[1])*1200;
-const world=JSON.parse(fs.readFileSync(path.join(root,'Assets/Scenes/Main.mscene'))).world,byName=new Map(world.entities.map(e=>[e.name,e])),values=new Map(),active=new Map(),storage=new Map(),copy=o=>JSON.parse(JSON.stringify(o));
-const engine={findEntitiesByName:names=>world.entities.filter(e=>names.includes(e.name)),network:{poll:()=>[],close(){},send(){}},storage:{load:k=>storage.has(k)?copy(storage.get(k)):null,save:(k,v)=>storage.set(k,copy(v))},setActive:(id,on)=>active.set(id,on),playAudio(){},pushCommandJson:raw=>{const c=JSON.parse(raw);values.set(c.entity+'/'+c.component,c.value);},assets:{sampleNodes:()=>[]}};
+const native=clientWorldFixture(JSON.parse(fs.readFileSync(path.join(root,'Assets/Scenes/Main.mscene'))).world),world=native.snapshot,byName={get:n=>native.entity(n)},values=native.values,active=native.active,storage=new Map(),copy=o=>JSON.parse(JSON.stringify(o));
+const engine=Object.assign(native.engine,{network:{poll:()=>[],close(){},send(){}},storage:{load:k=>storage.has(k)?copy(storage.get(k)):null,save:(k,v)=>storage.set(k,copy(v))},playAudio(){},assets:{sampleNodes:()=>[]}});
 const context=vm.createContext({engine});vm.runInContext(fs.readFileSync(path.join(root,'Assets/Scripts/Main.js'),'utf8'),context);vm.runInContext('const infoRestore=Frost.restore;Frost.restore=raw=>{globalThis.infoState=infoRestore(raw);return infoState;};',context);
-const S=context.Frost,component=(n,c)=>values.get(byName.get(n).entity+'/'+c)||byName.get(n).components[c],shown=n=>active.get(byName.get(n).entity)??byName.get(n).active,telemetry=()=>JSON.parse(component('Frost telemetry','Text').text);
-function tick(input={},dt=.001){engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};context.onTick(dt);}
+const S=context.Frost,component=(n,c)=>values.get(byName.get(n).entity+'/'+c)||byName.get(n).components[c],shown=n=>{const e=byName.get(n);return e?(active.get(e.entity)??e.active):false;},telemetry=()=>JSON.parse(component('Frost telemetry','Text').text);
+function tick(input={},dt=.001){engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};native.render(dt=>context.onTick(dt),dt);}
 const key=k=>{tick({keys:[k],pressedKeys:[k]});tick();},click=(pointer,keys=[])=>{tick({pointer,keys,buttons:[0],pressedButtons:[0]});tick({pointer,keys,releasedButtons:[0]});};
 function ui(n,viewport=[1280,720]){const v=H.viewport({viewport}),r=H.rect(component(n,'RectTransform'),{viewport});return [viewport[0]/2+r.x*v.scale,viewport[1]/2+r.y*v.scale];}
 function load(s){storage.set('quicksave',copy(s));if(telemetry().mode==='title')key('F1');if(!telemetry().paused)key('F10');click(ui('pauseLoad box'));assert.ok(context.infoState,telemetry().notice);key('Space');return context.infoState;}

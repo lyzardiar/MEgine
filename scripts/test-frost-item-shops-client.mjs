@@ -1,12 +1,13 @@
 // Author: MiYu. Actual client shop selection, buyer cycling, inventory delivery, refill labels and mode gating.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {clientWorldFixture} from './frost-client-world-fixture.mjs';
 import vm from 'node:vm';
-const root=new URL('../samples/frostbound-realms/',import.meta.url),world=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world,values=new Map(),active=new Map(),storage=new Map(),copy=o=>JSON.parse(JSON.stringify(o));
-const engine={snapshot:structuredClone(world),network:{poll:()=>[],close(){},send(){}},storage:{load:k=>storage.has(k)?copy(storage.get(k)):null,save:(k,v)=>storage.set(k,copy(v))},setActive:(id,on)=>active.set(id,on),playAudio(){},pushCommandJson:raw=>{const c=JSON.parse(raw);values.set(c.entity+'/'+c.component,c.value);}};
+const root=new URL('../samples/frostbound-realms/',import.meta.url),native=clientWorldFixture(JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world),world=native.snapshot,values=native.values,active=native.active,storage=new Map(),copy=o=>JSON.parse(JSON.stringify(o));
+const engine=Object.assign(native.engine,{network:{poll:()=>[],close(){},send(){}},storage:{load:k=>storage.has(k)?copy(storage.get(k)):null,save:(k,v)=>storage.set(k,copy(v))},playAudio(){}});
 const context=vm.createContext({engine});vm.runInContext(fs.readFileSync(new URL('Assets/Scripts/Main.js',root),'utf8'),context);vm.runInContext(`const shopCreate=Frost.create;Frost.create=(mode,options)=>{globalThis.shopState=shopCreate(mode,options);return shopState;};`,context);
 const id=name=>world.entities.find(e=>e.name===name).entity,component=(name,c)=>values.get(id(name)+'/'+c)||world.entities.find(e=>e.name===name).components[c],telemetry=()=>JSON.parse(component('Frost telemetry','Text').text);
-function tick(input={},dt=.001){engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};context.onTick(dt);}
+function tick(input={},dt=.001){engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};native.render(dt=>context.onTick(dt),dt);}
 const key=(k,keys=[])=>{tick({pressedKeys:[k],keys:[...keys,k]});tick();},point=(x,z)=>{const t=telemetry(),angle=Math.atan2(context.FrostVisual.camera.height,context.FrostVisual.camera.depth);return [640+(x-t.camera[0])/t.zoom*360,360+((z-t.camera[1])*Math.sin(angle)-context.Frost.elevation(context.shopState.map,x,z)*Math.cos(angle))/t.zoom*360];},click=(x,z)=>{const pointer=point(x,z);tick({pointer,buttons:[0],pressedButtons:[0]});tick({pointer,releasedButtons:[0]});tick({},.1);},save=()=>{key('F5');return storage.get('map1');};
 
 const S=context.Frost,map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.players.forEach(p=>p.ai=false);map.startingGold=3000;map.units=[{kind:'hero',heroClass:0,team:0,x:-18,z:18},{kind:'hero',heroClass:1,team:0,x:-18,z:14},{kind:'shop',team:0,x:-13,z:18}];storage.set('map1',copy(map));
