@@ -1,0 +1,675 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "3e8fa41b6408e9cbe4805cb3773ac7fa903b547f",
+  "scope": "Native sprite thumbnail URL requests return their existing null result before resolving the catalogue. Browser sprite names, texture slices, normalized paths and encoded URLs retain their original resolution.",
+  "sourceHashes": {
+    "packages/editor/src/spriteLibrary.ts": "e10204b61150fbca53f66b7253b50aa66663e4251e64998c121cf51e38919a66",
+    "packages/editor/tests/spriteLibrary.test.mjs": "6f25d78ee5d1ee39497423b64cbc9961e2ba4ba78cc1dd1cdf039f6ac0a990b4",
+    "scripts/benchmark-frost-sprite-urls.mjs": "8b70dae7c0b44d8039c68f6b82cda37edcd83d3152627e283a61aefb707c386e",
+    "scripts/qa-frost-play-state.mjs": "7c9527961ba090dad5ad92678cdf88f65f5fbd790bc44d9ba10d873b93ea3223"
+  },
+  "benchmark": {
+    "author": "MiYu",
+    "scope": "One native spriteAssetUrl lookup per tracked PNG/JPEG/WebP/GIF descriptor, matching Project thumbnail enumeration; reconstructed descriptors exclude sliced import records. Node/Vite CPU only, excluding React, scripts, GPU, IPC and native FPS.",
+    "baseline": "3e8fa41",
+    "baselineSourceSha256": "923c66aac0d28712b4afe364bc6cfbc40e40bac4818bc3fe7d6b5c9e6430ae9a",
+    "catalogueSha256": "48922b6fee978c22212cda4e8e1577dc4806329f17fe97e43eef0459856e64cc",
+    "sprites": 1809,
+    "iterations": 20,
+    "warmups": 2,
+    "medianBeforeMs": 267.6316000000006,
+    "medianAfterMs": 0.028800000000046566,
+    "nativeOutputsAllNull": true,
+    "browserOutputsEqual": true,
+    "nativeOutputSha256": "b1000ff08172a888b211669b9b49632f4a08b8a0c1cbc56c3eb4e2ed26cf4655",
+    "browserOutputSha256": "a66fcb5ec68d726861b70745e40acdc6d044b36026f778af8e8a24bd8e0a72ec",
+    "samplesMs": {
+      "before": [
+        281.9209999999998,
+        282.08460000000014,
+        278.3249999999998,
+        277.96939999999995,
+        266.90650000000005,
+        269.68560000000025,
+        268.8150999999998,
+        264.2957000000001,
+        267.56880000000046,
+        267.6316000000006,
+        266.9407000000001,
+        264.5438000000004,
+        264.1876999999995,
+        266.09189999999944,
+        265.6832999999997,
+        268.35709999999926,
+        267.8829999999998,
+        267.40470000000005,
+        267.741,
+        266.4524000000001
+      ],
+      "after": [
+        0.029399999999895954,
+        0.026400000000194268,
+        0.07789999999977226,
+        0.02820000000019718,
+        0.029199999999946158,
+        0.026000000000294676,
+        0.029899999999997817,
+        0.027299999999740976,
+        0.06520000000000437,
+        0.027700000000550062,
+        0.028800000000046566,
+        0.026200000000244472,
+        0.029500000000552973,
+        0.026700000000346336,
+        0.029499999999643478,
+        0.026799999999639113,
+        0.0316000000002532,
+        0.0294000000003507,
+        0.028599999999642023,
+        0.0261000000000422
+      ]
+    }
+  },
+  "tests": {
+    "passed": 27,
+    "failed": 0,
+    "log": "tmp/sprite-url-regressions.log",
+    "scope": "Native/browser sprite library, atlas/import/creation/batch command regressions and canvas renderer"
+  },
+  "frontendBuild": {
+    "passed": true,
+    "log": "tmp/sprite-url-frontend-build.log"
+  },
+  "nativeBuild": {
+    "passed": true,
+    "elapsedSeconds": 250.584,
+    "exitCode": 0,
+    "log": "tmp/sprite-url-native-build.log",
+    "executable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+    "sha256": "c71667b20534b282eb446fc8449644b1e16a8b78dda69282e45af18d63a01522"
+  },
+  "native": {
+    "receipt": "native-play-state-spatial-sprite-urls.json",
+    "elapsedMs": 372836,
+    "steps": [
+      {
+        "name": "full native scene readiness",
+        "ms": 41536
+      },
+      {
+        "name": "native Scene spatial query",
+        "ms": 54432
+      },
+      {
+        "name": "actual F1 skirmish start",
+        "ms": 15951
+      },
+      {
+        "name": "native Scene activation in Play",
+        "ms": 28593
+      },
+      {
+        "name": "continuous native playback sample",
+        "ms": 48367
+      },
+      {
+        "name": "owned WebView CPU profile",
+        "ms": 11521
+      },
+      {
+        "name": "paused Scene editing and selection",
+        "ms": 68210
+      },
+      {
+        "name": "pause step and authored restoration",
+        "ms": 4017
+      },
+      {
+        "name": "native Toggle InputField and restart session",
+        "ms": 87609
+      }
+    ],
+    "sourceMainSha256": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
+    "sourceSceneSha256": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+    "renderSize": [
+      850,
+      478
+    ],
+    "sameSourcesAndRenderSizeAsPrior": true,
+    "summary": {
+      "intervals": 232,
+      "averagePresentIntervalMs": 194.21637931055037,
+      "p95PresentIntervalMs": 379.90000009536743,
+      "presentedFps": 5.148896316314333,
+      "averageRequestMs": 161.9476394847739,
+      "averageRenderMs": 24.215294849785415,
+      "averageCommandMs": 41.50822017167379,
+      "averageUploadMs": 0.8420600911578395,
+      "averageWorldSyncMs": 5.161079828326189,
+      "averageSimulationMs": 67.45251502145926,
+      "averageSimulationRequestMs": 391.8214592370864
+    },
+    "priorSummary": {
+      "intervals": 197,
+      "averagePresentIntervalMs": 233.65279187889874,
+      "p95PresentIntervalMs": 352.2000000476837,
+      "presentedFps": 4.279854702178333,
+      "averageRequestMs": 183.7388888862398,
+      "averageRenderMs": 26.34527626262625,
+      "averageCommandMs": 39.756207070707084,
+      "averageUploadMs": 0.8358585846544516,
+      "averageWorldSyncMs": 4.506828282828285,
+      "averageSimulationMs": 69.23938737373737,
+      "averageSimulationRequestMs": 475.63030303487875
+    },
+    "counts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 90179,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 550
+    },
+    "exactWorldRevision": 98,
+    "sceneObservation": {
+      "changed": true,
+      "unchangedRevisionStable": true,
+      "restored": true,
+      "mutation": "Inspector Active checkbox in paused Play",
+      "fromRevision": 121,
+      "toRevision": 123
+    },
+    "nativeInteractiveUi": {
+      "toggleClick": true,
+      "inputEdit": true,
+      "stepRetainsEdits": true,
+      "restartRestoresAuthored": true,
+      "revision": 2
+    },
+    "pauseSceneEditing": true,
+    "pauseStepStop": true,
+    "consoleErrors": 0,
+    "shutdown": {
+      "pid": 190480,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-sprite-urls-1791650605101\\runtime\\com.mengine.editor.agent-DLhngg '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-sprite-urls-1791650605101\\runtime\\com.mengine.editor.agent-DLhngg'"
+    },
+    "hierarchyReceipt": {
+      "path": "C:/Users/admin/.codex/worktrees/1339/MEgine/docs/designs/frostbound-realms/native-play-state-spatial-revision.json",
+      "startedAt": "2026-10-10T11:13:52.271Z",
+      "editorSha256": "6c30ff40c5e755cc5ce7932866996d9048f36ccef08fcb4d938072547fff6d6f",
+      "scope": "Completed hierarchy interaction from the identical scene; separate viewport build with unchanged hierarchy sources"
+    }
+  },
+  "browserCpuProfile": {
+    "scope": "Separate 10-second owned-QA Game playback after the canonical 45-second sample; leaf CPU time includes native/idle nodes and profiler overhead.",
+    "targetUrl": "http://tauri.localhost/",
+    "samples": 5798,
+    "durationMs": 10688.418,
+    "topSelf": [
+      {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 768.8820000000005
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 764.0619999999999
+      },
+      {
+        "functionName": "tick",
+        "scriptId": "14",
+        "url": "http://tauri.localhost/assets/agent-schemas-Cr-O_d4Z.js",
+        "lineNumber": 0,
+        "columnNumber": 11710,
+        "selfMs": 621.0450000000008
+      },
+      {
+        "functionName": "Ge",
+        "scriptId": "26",
+        "url": "http://tauri.localhost/assets/uiLayout-BRkcNB2m.js",
+        "lineNumber": 0,
+        "columnNumber": 24937,
+        "selfMs": 457.97100000000023
+      },
+      {
+        "functionName": "gt",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-ClPfV_Ch.js",
+        "lineNumber": 32,
+        "columnNumber": 43324,
+        "selfMs": 443.1610000000003
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 437.64099999999996
+      },
+      {
+        "functionName": "Li",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-ClPfV_Ch.js",
+        "lineNumber": 32,
+        "columnNumber": 20216,
+        "selfMs": 408.504
+      },
+      {
+        "functionName": "observe",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 77553,
+        "selfMs": 369.08
+      },
+      {
+        "functionName": "Li",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-ClPfV_Ch.js",
+        "lineNumber": 32,
+        "columnNumber": 20216,
+        "selfMs": 351.7139999999999
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 314.7570000000001
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 302.762
+      },
+      {
+        "functionName": "(garbage collector)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 297.769
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 292.428
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 276.9319999999999
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 232.53800000000007
+      },
+      {
+        "functionName": "capture",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 74177,
+        "selfMs": 231.71100000000007
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 226.69599999999994
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 221.2619999999999
+      },
+      {
+        "functionName": "_a",
+        "scriptId": "26",
+        "url": "http://tauri.localhost/assets/uiLayout-BRkcNB2m.js",
+        "lineNumber": 0,
+        "columnNumber": 37200,
+        "selfMs": 176.68200000000004
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 167.71599999999995
+      },
+      {
+        "functionName": "Qt",
+        "scriptId": "49",
+        "url": "http://tauri.localhost/assets/Inspector-qkXMPv-o.js",
+        "lineNumber": 10,
+        "columnNumber": 44876,
+        "selfMs": 134.607
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 134.161
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 128.937
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 115.23500000000004
+      },
+      {
+        "functionName": "p",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-ClPfV_Ch.js",
+        "lineNumber": 32,
+        "columnNumber": 43208,
+        "selfMs": 112.515
+      }
+    ],
+    "rawProfile": "E:\\work\\codex\\worktrees\\1339\\MEgine\\tmp\\spatial-sprite-urls-browser-cpu-profile.json",
+    "aggregatedSelfByCallFrame": [
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 4389.165999999998
+      },
+      {
+        "functionName": "Li",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-ClPfV_Ch.js",
+        "lineNumber": 32,
+        "columnNumber": 20216,
+        "selfMs": 944.3469999999998
+      },
+      {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 768.8820000000005
+      },
+      {
+        "functionName": "tick",
+        "scriptId": "14",
+        "url": "http://tauri.localhost/assets/agent-schemas-Cr-O_d4Z.js",
+        "lineNumber": 0,
+        "columnNumber": 11710,
+        "selfMs": 621.0450000000008
+      },
+      {
+        "functionName": "Ge",
+        "scriptId": "26",
+        "url": "http://tauri.localhost/assets/uiLayout-BRkcNB2m.js",
+        "lineNumber": 0,
+        "columnNumber": 24937,
+        "selfMs": 582.6380000000003
+      },
+      {
+        "functionName": "gt",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-ClPfV_Ch.js",
+        "lineNumber": 32,
+        "columnNumber": 43324,
+        "selfMs": 558.6460000000003
+      },
+      {
+        "functionName": "observe",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 77553,
+        "selfMs": 369.08
+      },
+      {
+        "functionName": "(garbage collector)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 297.769
+      },
+      {
+        "functionName": "capture",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-CLmt6ere.js",
+        "lineNumber": 1,
+        "columnNumber": 74177,
+        "selfMs": 231.71100000000007
+      },
+      {
+        "functionName": "_a",
+        "scriptId": "26",
+        "url": "http://tauri.localhost/assets/uiLayout-BRkcNB2m.js",
+        "lineNumber": 0,
+        "columnNumber": 37200,
+        "selfMs": 229.63400000000004
+      },
+      {
+        "functionName": "kr",
+        "scriptId": "26",
+        "url": "http://tauri.localhost/assets/uiLayout-BRkcNB2m.js",
+        "lineNumber": 0,
+        "columnNumber": 35604,
+        "selfMs": 139.22799999999998
+      },
+      {
+        "functionName": "Qt",
+        "scriptId": "49",
+        "url": "http://tauri.localhost/assets/Inspector-qkXMPv-o.js",
+        "lineNumber": 10,
+        "columnNumber": 44876,
+        "selfMs": 134.607
+      },
+      {
+        "functionName": "p",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-ClPfV_Ch.js",
+        "lineNumber": 32,
+        "columnNumber": 43208,
+        "selfMs": 112.515
+      },
+      {
+        "functionName": "get sceneHiddenIds",
+        "scriptId": "27",
+        "url": "http://tauri.localhost/assets/App-D84BWHs6.js",
+        "lineNumber": 106,
+        "columnNumber": 28129,
+        "selfMs": 92.26100000000001
+      },
+      {
+        "functionName": "Jt",
+        "scriptId": "27",
+        "url": "http://tauri.localhost/assets/App-D84BWHs6.js",
+        "lineNumber": 106,
+        "columnNumber": 18167,
+        "selfMs": 90.815
+      },
+      {
+        "functionName": "du",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-ClPfV_Ch.js",
+        "lineNumber": 32,
+        "columnNumber": 20535,
+        "selfMs": 88.41
+      },
+      {
+        "functionName": "",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-ClPfV_Ch.js",
+        "lineNumber": 32,
+        "columnNumber": 68989,
+        "selfMs": 77.779
+      },
+      {
+        "functionName": "",
+        "scriptId": "26",
+        "url": "http://tauri.localhost/assets/uiLayout-BRkcNB2m.js",
+        "lineNumber": 0,
+        "columnNumber": 37234,
+        "selfMs": 73.25599999999999
+      },
+      {
+        "functionName": "",
+        "scriptId": "26",
+        "url": "http://tauri.localhost/assets/uiLayout-BRkcNB2m.js",
+        "lineNumber": 0,
+        "columnNumber": 24965,
+        "selfMs": 66.60300000000001
+      },
+      {
+        "functionName": "get sceneUnpickableIds",
+        "scriptId": "27",
+        "url": "http://tauri.localhost/assets/App-D84BWHs6.js",
+        "lineNumber": 106,
+        "columnNumber": 28201,
+        "selfMs": 57.16
+      }
+    ]
+  },
+  "limitations": [
+    "Isolated CPU benchmark reconstructs image descriptors from tracked PNG/JPEG/WebP/GIF paths and excludes sliced import records, React, gameplay scripts, GPU, IPC and native FPS.",
+    "Catalogue resolution for the browser and native byte loading keeps its existing behavior and complexity.",
+    "Native timings include overlapping stages and scheduling and do not prove an isolated causal FPS gain.",
+    "Hierarchy interaction uses the preceding receipt with identical scene and unchanged hierarchy sources.",
+    "Full Warcraft III parity and smooth large-scene playback remain incomplete."
+  ],
+  "identifiedBrowserHotspots": {
+    "scope": "Source identities checked against packaged bundle URL, line and column; sampled self CPU times aggregate recursive/context-specific nodes and are not isolated frame durations.",
+    "mappings": [
+      {
+        "bundle": "index-CLmt6ere.js",
+        "line": 1,
+        "column": 72634,
+        "symbol": "ft",
+        "source": "packages/editor/src/playWorldSync.ts",
+        "function": "equalJson"
+      },
+      {
+        "bundle": "agent-schemas-Cr-O_d4Z.js",
+        "line": 0,
+        "column": 11710,
+        "symbol": "tick",
+        "source": "packages/behaviour/src/runner.ts",
+        "function": "tick"
+      },
+      {
+        "bundle": "uiLayout-BRkcNB2m.js",
+        "line": 0,
+        "column": 24937,
+        "symbol": "Ge",
+        "source": "packages/editor/src/worldTransform.ts",
+        "function": "buildWorldTransforms"
+      },
+      {
+        "bundle": "Viewport-ClPfV_Ch.js",
+        "line": 32,
+        "column": 20216,
+        "symbol": "Li",
+        "source": "packages/editor/src/hierarchyActivation.ts",
+        "function": "createHierarchyActiveLookup"
+      },
+      {
+        "bundle": "Viewport-ClPfV_Ch.js",
+        "line": 32,
+        "column": 43324,
+        "symbol": "gt",
+        "source": "packages/editor/src/panels/Viewport.tsx",
+        "function": "paint"
+      },
+      {
+        "bundle": "index-CLmt6ere.js",
+        "line": 1,
+        "column": 77553,
+        "symbol": "observe",
+        "source": "packages/editor/src/agent/eventJournal.ts",
+        "function": "SceneChangeTracker.observe"
+      }
+    ]
+  },
+  "stagedSourceHashes": {
+    "packages/editor/src/spriteLibrary.ts": {
+      "sha256": "e10204b61150fbca53f66b7253b50aa66663e4251e64998c121cf51e38919a66",
+      "gitBlob": "fa7969b9ab07ac8e04f62c1c41bc431e0554a9ee",
+      "sameAsCheckoutBytes": true
+    },
+    "packages/editor/tests/spriteLibrary.test.mjs": {
+      "sha256": "6f25d78ee5d1ee39497423b64cbc9961e2ba4ba78cc1dd1cdf039f6ac0a990b4",
+      "gitBlob": "6d0b4fbd05a50dd43b25b48846691f290cb7f45b",
+      "sameAsCheckoutBytes": true
+    },
+    "scripts/benchmark-frost-sprite-urls.mjs": {
+      "sha256": "c4220b95f1a889e1d6ec01f667b751d8a2512c174bcb0a24401554b586d55aa7",
+      "gitBlob": "35e3e72971de80e9ee6dbd06767a486475ef45e3",
+      "sameAsCheckoutBytes": false
+    },
+    "scripts/qa-frost-play-state.mjs": {
+      "sha256": "a096094b0957cdea4b9cadf43a49c58cee3df1b933f7fc0c84ff33863e1c507b",
+      "gitBlob": "9c4ef103b7d1f7220e07c79fee9808645d4790f5",
+      "sameAsCheckoutBytes": false
+    }
+  },
+  "hashScope": "sourceHashes describe tested checkout bytes; stagedSourceHashes describe actual index blobs. Each blob matches checkout bytes or their CRLF-to-LF conversion, retaining existing Git line-ending behavior."
+}
