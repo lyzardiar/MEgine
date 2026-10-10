@@ -1,0 +1,86 @@
+{
+  "author": "MiYu",
+  "protocol": 75,
+  "ruleChecks": 27,
+  "nativePassed": true,
+  "nativeConsoleErrors": 0,
+  "nativeReceipt": "upkeep-native-qa.json",
+  "generation": {
+    "isolatedCatalog": "committed parent HEAD model catalog",
+    "byteEqual": true,
+    "preservedSceneRecords": 24671,
+    "newSceneRecords": 1
+  },
+  "passedScripts": [
+    "test-frost-upkeep.mjs",
+    "test-frost-upkeep-network.mjs",
+    "test-frost-hero-lifecycle.mjs",
+    "test-frost-undead-economy.mjs",
+    "test-frost-night-elf-ai-economy.mjs",
+    "test-frost-hippogryph.mjs",
+    "test-frost-chimaera.mjs",
+    "test-frost-faerie-dragon.mjs",
+    "test-frost-mountain-giant.mjs",
+    "test-frost-construction.mjs"
+  ],
+  "ai": {
+    "author": "MiYu",
+    "passed": true,
+    "frames": 24000,
+    "simulatedSeconds": 2400,
+    "ms": 119447,
+    "milestones": {
+      "tier1": 1,
+      "altar": 99,
+      "barracks": 1218,
+      "shop": 1833,
+      "workshop": 2184,
+      "tier2": 4520,
+      "ancientwind": 6670,
+      "ancientlore": 6832,
+      "faeriedragon": 6950,
+      "tier3": 7460,
+      "mountaingiant": 7760,
+      "dryad": 8060,
+      "chimaeraroost": 9774
+    },
+    "resources": {
+      "gold": 2754,
+      "wood": 3445
+    },
+    "sourceFlags": {
+      "basic": false,
+      "archer": false
+    },
+    "armyCapacity": {
+      "used": 96,
+      "cap": 100
+    },
+    "clawReached": false,
+    "clawPendingAtSourceCapacity": true,
+    "scope": "Standard 500 gold/150 wood/5 Wisps, legal source AI commands and full timers. Custom mine/tree map; regroup/hold orders isolate economy. Claw either completes or remains behind a verified source-priority Chimaera request blocked by the actual 100-food cap; paid Claw production has separate Druid coverage. No injected income, free buildings, shortened timers or completion edits."
+  },
+  "independentReview": "Read-only reviewer found no required correction; primary agent verified key paths and ran tests.",
+  "historicalFailures": [
+    {
+      "script": "test-frostbound.mjs",
+      "trigger": "test-frost-dreadlord-generated.mjs",
+      "error": "Classic spell 0 dreadlordActor visibility assertion",
+      "baseline": "Observed before current production edits in the continuation."
+    },
+    {
+      "script": "test-frost-night-elf-economy.mjs",
+      "error": "Immediate Entangled Mine fixture accesses undefined built field",
+      "baseline": "Reproduced from parent HEAD simulation in same JS realm."
+    },
+    {
+      "script": "test-frost-druids.mjs",
+      "error": "4.4 != 2.4 speed assertion",
+      "baseline": "Reproduced from parent HEAD simulation in same JS realm."
+    }
+  ],
+  "parityLimits": [
+    "No original executable acceptance for mineral-tail floor rounding, active-head reservation or fallen-hero food.",
+    "Prototype stage; not full Warcraft III, Dota, campaign, multiplayer-service or standalone-package acceptance."
+  ]
+}

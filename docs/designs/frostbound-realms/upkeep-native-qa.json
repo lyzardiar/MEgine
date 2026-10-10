@@ -1,0 +1,69 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 75,
+  "startedAt": "2026-10-10T22:59:21.160Z",
+  "editorExecutable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+  "editorSha256": "2c90170ba302347986f833ddbd4112b49453d1cf6232a27563989f39c734ce2e",
+  "sourceMainSha256": "ba21de223e4423c54e1e11f6a267cda2065580e277c227d8132c5658ee3b6c4b",
+  "sourceSceneSha256": "3e5e31b35e414256b70683806aba5dfabb65fa566eb79a6a3f1609268770888b",
+  "scope": "Unmodified generated sample in native Release QuickJS. Agent playback input, actual F10 load/F5 save, deterministic fixtures and rendered HUD at 1280x720/1920x1080. No physical mouse or original Warcraft acceptance.",
+  "checks": [
+    {
+      "used": 50,
+      "tier": 0,
+      "percent": 100,
+      "gold": 5020,
+      "text": "无维护费\n采金 100%"
+    },
+    {
+      "used": 51,
+      "tier": 1,
+      "percent": 70,
+      "gold": 5014,
+      "text": "低维护费\n采金 70%"
+    },
+    {
+      "used": 81,
+      "tier": 2,
+      "percent": 40,
+      "gold": 5008,
+      "text": "高维护费\n采金 40%"
+    },
+    {
+      "savedContinuation": true
+    },
+    {
+      "legacyUntaxed": true,
+      "legacyHudHidden": true
+    }
+  ],
+  "steps": [
+    {
+      "name": "native scene readiness",
+      "ms": 25556
+    },
+    {
+      "name": "native tax tiers and HUD",
+      "ms": 15250
+    },
+    {
+      "name": "wide layout and saved continuation",
+      "ms": 7382
+    },
+    {
+      "name": "legacy HUD and resource rules",
+      "ms": 3549
+    }
+  ],
+  "lastCommand": "playback.stop",
+  "consoleErrors": 0,
+  "cleanup": {
+    "pid": 69780,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\upkeep-1791673105104\\runtime\\com.mengine.editor.agent-zQNWMO '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\upkeep-1791673105104\\runtime\\com.mengine.editor.agent-zQNWMO'"
+  },
+  "elapsedMs": 54030
+}

@@ -245,6 +245,7 @@ for(let i=0;i<S.LIMIT;i++){const art=effects.effects.FarSight,name='Classic Far 
 for(const e of E)if(e.components.Transform?.position?.[1]===-100)e.active=false;
 for(let i=0;i<S.PROJECTILE_LIMIT;i++){const art=effects.effects.ShockwaveMissile,name='Classic Shockwave '+i,id=entity(name,{Transform:T([0,-100,0]),SampledEffect:{effect:art.effect,clip:0,playing:false,looping:false,speed:1,time_seconds:0}});E.at(-1).active=false;for(let j=0;j<art.parts.length;j++){entity(name+' mesh '+j,{Transform:T(),MeshRenderer:{mesh:art.parts[j].mesh,material:art.parts[j].material,cast_shadows:false,receive_shadows:false}},id);E.at(-1).active=false;}}
 groupFrostScene(E);
+text('HUD Upkeep value','',-57,15,105,30,11,C.gold,'Center');E.at(-1).components.RectTransform.anchor_min=[1,0];E.at(-1).components.RectTransform.anchor_max=[1,0];
 let retained=0;for(const e of E){const slot=/^Classic (?:spell|status|attachment) (\d+)(?: |$)/.exec(e.name);if(!slot||Number(slot[1])===0)E[retained++]=e;}E.length=retained;
 const effectPoolTemplates=E.filter(e=>/^Classic (?:spell|status|attachment) 0(?: |$)/.test(e.name)).map(e=>e.name);
 const sceneInitNames=E.filter(e=>!/(?: part | mesh )\d+$/.test(e.name)&&!/^Classic (?:spell|status|attachment) /.test(e.name)).map(e=>e.name),sceneInactive=E.filter(e=>e.active===false).map(e=>e.name);

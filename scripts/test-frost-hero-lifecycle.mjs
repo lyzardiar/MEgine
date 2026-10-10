@@ -22,11 +22,11 @@ function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0
  const {s,altar,other,train,revive}=arena();assert.equal(train(1),null);step(s,551);const h=S.heroRoster(s,0)[0];h.x=4;h.z=0;h.order={type:'hold'};h.level=4;h.skillPoints=4;h.xp=70;
  assert.equal(S.command(s,0,{type:'learn',ids:[h.id],slot:0}),null);h.x=-4;assert.equal(S.command(s,0,{type:'buy',ids:[h.id],item:9}),null);h.x=4;
  h.spell[0]=5;h.itemCooldown=8;h.slow=3;h.hp=1;const killer=S.spawn(s,'soldier',1,4,1,{damage:9999,speed:0,order:{type:'attack',target:h.id}});S.visibility(s);step(s,1);killer.damage=0;killer.order={type:'hold'};
- assert.equal(h.hp,0);assert.ok(s.units.includes(h));assert.equal(h.order,null);assert.equal(s.corpses.some(c=>c.id===h.id),false);assert.equal(S.population(s,0).used,5);assert.match(s.announcements[0],/fallen/);
+ assert.equal(h.hp,0);assert.ok(s.units.includes(h));assert.equal(h.order,null);assert.equal(s.corpses.some(c=>c.id===h.id),false);assert.equal(S.population(s,0).used,0);assert.match(s.announcements[0],/fallen/);
  s.visible[1].fill(1);assert.ok(!S.publicState(s,1).units.some(u=>u.id===h.id),'opponent never receives retained dead hero state');assert.ok(S.publicState(s,0).units.some(u=>u.id===h.id));
  assert.match(revive(killer),/fallen hero/);assert.ok(S.command(s,1,{type:'revive',ids:[altar.id],target:h.id}));s.teams[0].gold=2000;
  assert.deepEqual(S.heroRevival(h),{gold:298,wood:0,time:110});assert.equal(S.heroRevival({...h,level:1}).gold,170);assert.equal(S.heroRevival({...h,level:10}).gold,550);
- assert.equal(revive(h),null);assert.equal(s.teams[0].gold,1702);assert.equal(S.population(s,0).used,5,'revival does not reserve supply twice');assert.match(revive(h,other),/awaiting revival/);
+ assert.equal(revive(h),null);assert.equal(s.teams[0].gold,1702);assert.equal(S.population(s,0).used,5,'revival reserves the fallen hero food once');assert.match(revive(h,other),/awaiting revival/);
  const queued=S.restore(s);assert.equal(queued.units.find(u=>u.id===altar.id).queue[0].revive,h.id);
  for(const patch of [{revive:killer.id},{revive:0},{heroClass:2},{paidGold:1},{paidWood:10},{left:111}]){const bad=S.clone(s);Object.assign(bad.units.find(u=>u.id===altar.id).queue[0],patch);assert.throws(()=>S.restore(bad),/hero|production/);}
  const duplicate=S.clone(s);duplicate.units.find(u=>u.id===other.id).queue=[S.clone(altar.queue[0])];assert.throws(()=>S.restore(duplicate),/revival/);
@@ -41,7 +41,7 @@ function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0
  assert.equal(S.command(migrated,0,{type:'cancelTrain',ids:[altar.id],index:0}),null);assert.equal(migrated.teams[0].gold,before+300);
 }
 {
- const {s,altar,train,revive}=arena(),h=S.spawn(s,'hero',0,20,20,{hp:0,order:null});for(let i=s.units.length;i<S.LIMIT;i++)S.spawn(s,'soldier',0,-25,25,{order:{type:'hold'}});s.teams[0].gold=1000;
+ const {s,altar,train,revive}=arena(),h=S.spawn(s,'hero',0,20,20,{hp:0,order:null});for(let i=s.units.length;i<S.LIMIT;i++)S.spawn(s,'soldier',0,-25,25,{summoned:true,order:{type:'hold'}});s.teams[0].gold=1000;
  assert.equal(train(1).includes('tier 2'),true);assert.equal(revive(h),null);altar.queue[0].left=.1;step(s,1);assert.equal(h.hp,h.maxHp,'revival reuses identity even at unit capacity');assert.equal(s.units.length,S.LIMIT);
 }
 {
@@ -50,4 +50,4 @@ function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0
 {
  const {s}=arena(),hero=S.spawn(s,'hero',0,4,0,{heroClass:0,order:{type:'hold'}}),target=S.spawn(s,'soldier',1,4,1,{hp:1000,maxHp:1000,damage:0,speed:0,order:{type:'hold'}});s.teams[0].upgrade=3;S.visibility(s);S.command(s,0,{type:'attack',ids:[hero.id],target:target.id});step(s,10);assert.equal(target.hp,1000-hero.damage,'ordinary weapon research never increases hero damage');
 }
-console.log('PASS: hero classes, three/tier limits, first free, exact refunds, retained death/supply, altar revival identity/items/skills, cancellation/destruction, malformed/legacy saves, capacity and shared XP');
+console.log('PASS: hero classes, three/tier limits, first free, exact refunds, retained identity, released death food, altar revival identity/items/skills, cancellation/destruction, malformed/legacy saves, capacity and shared XP');
