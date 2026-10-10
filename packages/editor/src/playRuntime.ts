@@ -1,6 +1,8 @@
+// Author: MiYu. Native Play lifecycle, delta validation and immutable publication.
 import { invoke } from '@tauri-apps/api/core';
 import type { WorldSnapshotView } from '@mengine/api';
 import { toWorldSnapshotView, type HostWorldSnapshot } from './transport/editorTransport';
+import { retainPlayWorld, type RetainedPlayWorld } from './playWorldSync';
 
 export type PlayInput = {
   keys: string[]; pressedKeys: string[]; releasedKeys: string[];
@@ -11,6 +13,14 @@ export type PlayInput = {
 export const emptyPlayInput = (): PlayInput => ({ keys: [], pressedKeys: [], releasedKeys: [], pointer: [0, 0], pointerDelta: [0, 0], pointerLocked: false, viewport: [1, 1], buttons: [], pressedButtons: [], releasedButtons: [] });
 
 export type PlayRuntimeWorld = WorldSnapshotView & { nativeSessionId?: number; nativeRevision?: number };
+const nativePublications = new WeakSet<object>();
+export function retainedNativePlayWorld(world: PlayRuntimeWorld): RetainedPlayWorld | undefined { return nativePublications.has(world) ? world as RetainedPlayWorld : undefined; }
+
+function publishNativeWorld(world: PlayRuntimeWorld, previous?: PlayRuntimeWorld): PlayRuntimeWorld {
+  const owned = retainPlayWorld(world, previous && retainedNativePlayWorld(previous));
+  nativePublications.add(owned);
+  return owned;
+}
 
 export type PlayRuntimeDriver = {
   readonly retainsWorld?: boolean;
@@ -98,14 +108,14 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
       });
       lifecycle = starting.then(() => {}, () => {});
       const result = await starting;
-      if (result && current === generation) { sessionId = result.sessionId; revision = 0; world = { ...toWorldSnapshotView(result.snapshot), nativeSessionId: result.sessionId, nativeRevision: 0 }; applyUpdate = createPlayWorldUpdater(); return world; }
+      if (result && current === generation) { sessionId = result.sessionId; revision = 0; world = publishNativeWorld({ ...toWorldSnapshotView(result.snapshot), nativeSessionId: result.sessionId, nativeRevision: 0 }); applyUpdate = createPlayWorldUpdater(); return world; }
     },
     async step(snapshot, input, dt) {
       if (sessionId === null || world === null) throw new Error('Play Mode is initializing');
       const current = generation;
       const update = await invoke<PlayWorldUpdate>('step_editor_play', { sessionId, snapshot, input, dt });
       if (current !== generation || world === null) throw new Error('Play session expired');
-      world = { ...applyUpdate(world, revision, update), nativeSessionId: sessionId, nativeRevision: update.revision };
+      world = publishNativeWorld({ ...applyUpdate(world, revision, update), nativeSessionId: sessionId, nativeRevision: update.revision }, world);
       revision = update.revision;
       quitRequested = update.quitRequested === true;
       return world;

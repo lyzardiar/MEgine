@@ -1,0 +1,426 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "428f4d8d92db832780c5599fbe3fb7ee30ac8089",
+  "scope": "Immutable native JSON publication with independent mutable EditorStore records; authoritative baseline adoption skips response-time scene comparison. Full live equality remains before native upload/reference.",
+  "sourceHashes": {
+    "packages/editor/src/entityRecord.ts": "6dbbe483f4e5ff3bb77517d4cf594de9dda1ea5f1c860d45d0ad5159f4fe0bce",
+    "packages/editor/src/playRuntime.ts": "4c710a4eba0b2e6eca969eece630195655d44a05580b13c1e2300aa77712c2b1",
+    "packages/editor/src/playWorldSync.ts": "101b8febfaf046e8856218a070699b43251792326da986a09e3186420296e2a9",
+    "packages/editor/src/store.ts": "443ac8f641fbc2461b2cbfa3771069e9ad86e5f4040fe2b7d9c129d5992e3b0b",
+    "packages/editor/tests/nativePlayOwnership.test.mjs": "1551561b7bef92a33d664567c9d09831ca57a11b57bd8a82f4fdd195d08d78c5",
+    "scripts/benchmark-frost-native-publication.mjs": "7cb97b2d4225865fee8ce0b2d1b49ee1b364cbda7ed6bd5daa2ca108c1f98767",
+    "scripts/qa-frost-play-state.mjs": "f9ac9d98b0833c2bc39d58e444c44f6414ea9dde00b9a7d0954747c8fe4e501a"
+  },
+  "benchmark": {
+    "author": "MiYu",
+    "baseCommit": "428f4d8d92db832780c5599fbe3fb7ee30ac8089",
+    "scope": "Real 24,671-entity Frostbound EditorStore and createNativePlayRuntime with mocked IPC deltas affecting four records; includes Behaviour tick, live equality, updater and publication. Excludes native scripts, IPC transport, React, GPU and native FPS.",
+    "sourceSceneSha256": "970d436ca3c562e9c3aac5a0263fdcfe9e843ec13f03262df593cb60199cef42",
+    "entities": 24671,
+    "changedRecordsPerDelta": 4,
+    "iterations": 20,
+    "warmups": 2,
+    "fullWorldComparisons": 22,
+    "outputEqual": true,
+    "mediansMs": {
+      "before": {
+        "publication": 24.174600000000282,
+        "sessionLookup": 9.73739999999998
+      },
+      "after": {
+        "publication": 16.523699999999735,
+        "sessionLookup": 11.43159999999989
+      }
+    },
+    "samples": {
+      "before": [
+        {
+          "publicationMs": 22.625,
+          "sessionLookupMs": 9.685500000000047,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 25.86830000000009,
+          "sessionLookupMs": 13.230100000000675,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 24.300600000000486,
+          "sessionLookupMs": 9.736700000000383,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 24.994399999999587,
+          "sessionLookupMs": 9.743999999999687,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 21.65349999999944,
+          "sessionLookupMs": 9.459999999999127,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 24.97060000000056,
+          "sessionLookupMs": 9.666699999999764,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 21.60149999999976,
+          "sessionLookupMs": 11.146600000000035,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 25.790900000000875,
+          "sessionLookupMs": 12.557399999999689,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 23.977899999999863,
+          "sessionLookupMs": 9.601700000000164,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 24.57089999999971,
+          "sessionLookupMs": 9.845999999999549,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 21.83510000000024,
+          "sessionLookupMs": 9.492199999999684,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 24.70890000000054,
+          "sessionLookupMs": 11.932800000000498,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 24.135699999999815,
+          "sessionLookupMs": 9.590500000000247,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 24.096700000000055,
+          "sessionLookupMs": 9.567299999999705,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 20.755599999999504,
+          "sessionLookupMs": 10.128399999999601,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 24.780500000000757,
+          "sessionLookupMs": 9.863600000000588,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 22.15849999999955,
+          "sessionLookupMs": 9.73739999999998,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 26.081200000000536,
+          "sessionLookupMs": 9.679799999999886,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 24.174600000000282,
+          "sessionLookupMs": 9.701700000001438,
+          "reusedEditableRecords": 0
+        },
+        {
+          "publicationMs": 20.82760000000053,
+          "sessionLookupMs": 13.393699999998717,
+          "reusedEditableRecords": 0
+        }
+      ],
+      "after": [
+        {
+          "publicationMs": 16.220600000000104,
+          "sessionLookupMs": 11.289400000000114,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 15.707300000000032,
+          "sessionLookupMs": 13.88799999999992,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 15.955299999999625,
+          "sessionLookupMs": 14.729100000000471,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 18.528000000000247,
+          "sessionLookupMs": 11.144000000000233,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 16.221400000000358,
+          "sessionLookupMs": 15.300699999999779,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 15.852000000000771,
+          "sessionLookupMs": 10.857999999999265,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 18.919600000000173,
+          "sessionLookupMs": 11.599099999999453,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 18.474700000000666,
+          "sessionLookupMs": 11.309400000000096,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 18.355400000000373,
+          "sessionLookupMs": 14.824400000000423,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 16.55069999999978,
+          "sessionLookupMs": 10.80749999999989,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 16.27050000000054,
+          "sessionLookupMs": 10.971999999999753,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 19.053200000000288,
+          "sessionLookupMs": 11.273300000000745,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 15.855499999999665,
+          "sessionLookupMs": 14.940300000000207,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 15.928100000000086,
+          "sessionLookupMs": 10.750600000000304,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 21.38810000000103,
+          "sessionLookupMs": 11.753600000000006,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 16.523699999999735,
+          "sessionLookupMs": 11.43159999999989,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 20.833600000001752,
+          "sessionLookupMs": 10.88590000000113,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 15.656999999999243,
+          "sessionLookupMs": 13.422599999999875,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 15.79649999999856,
+          "sessionLookupMs": 14.299699999999575,
+          "reusedEditableRecords": 24667
+        },
+        {
+          "publicationMs": 19.101800000000367,
+          "sessionLookupMs": 11.11449999999968,
+          "reusedEditableRecords": 24667
+        }
+      ]
+    }
+  },
+  "fixtureUpdateAndLookupMediansMs": {
+    "before": 33.956800000001294,
+    "after": 29.94014999999945
+  },
+  "verification": {
+    "focusedTestsPassed": 39,
+    "frontendBuild": true,
+    "nativeReleaseBuild": true,
+    "embeddedFrontendEntry": "index-DFYlYMaf.js",
+    "independentReadOnlyReview": "No required corrections; store-level ID reuse coverage included",
+    "sampleMainSceneProjectUnchanged": true
+  },
+  "timings": {
+    "focusedTestsMs": 6591.4475,
+    "viteBuildOnlyMs": 3230,
+    "nativeReleaseCargoReportedSeconds": [
+      254,
+      251
+    ],
+    "nativeReleaseBuildNote": "First pass and final frontend embedding; cargo durations are rounded to seconds. Frontend TypeScript wall time was not measured separately.",
+    "qaProcessStartedAt": "2026-10-10T21:40:35.1773050Z",
+    "qaPreparationBeforeReceiptMs": 48089,
+    "qaMeasuredWindowMs": 215868,
+    "qaTotalFromProcessStartMs": 263957,
+    "qaStages": [
+      {
+        "name": "full native scene readiness",
+        "ms": 16664
+      },
+      {
+        "name": "large hierarchy native UI interaction",
+        "ms": 36339
+      },
+      {
+        "name": "native Scene spatial query",
+        "ms": 15090
+      },
+      {
+        "name": "actual F1 skirmish start",
+        "ms": 9730
+      },
+      {
+        "name": "native Scene activation in Play",
+        "ms": 7558
+      },
+      {
+        "name": "continuous native playback sample",
+        "ms": 46207
+      },
+      {
+        "name": "owned WebView CPU profile",
+        "ms": 10654
+      },
+      {
+        "name": "paused Scene editing and selection",
+        "ms": 7653
+      },
+      {
+        "name": "pause step and authored restoration",
+        "ms": 1230
+      },
+      {
+        "name": "native Toggle InputField and restart session",
+        "ms": 30733
+      },
+      {
+        "name": "native Behaviour activation and restoration",
+        "ms": 26671
+      }
+    ]
+  },
+  "native": {
+    "receipt": "docs/designs/frostbound-realms/native-play-state-spatial-native-publication.json",
+    "executable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+    "sha256": "196a1f7f6080b740840f5f5073b36bf335a5de0558393077b0fe3c1f65cab72f",
+    "consoleErrors": 0,
+    "renderSize": [
+      850,
+      478
+    ],
+    "counts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 24671,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 550
+    },
+    "presentation": {
+      "intervals": 240,
+      "averagePresentIntervalMs": 65.11416666607062,
+      "p95PresentIntervalMs": 95.20000004768372,
+      "presentedFps": 15.357641066472794,
+      "averageRequestMs": 55.36999999284744,
+      "averageRenderMs": 12.657140833333331,
+      "averageCommandMs": 22.304488333333346,
+      "averageUploadMs": 0.8391666720310847,
+      "averageWorldSyncMs": 2.347006249999999,
+      "averageSimulationMs": 22.14575208333332,
+      "averageSimulationRequestMs": 50.981250014901164
+    },
+    "browserPaintSummary": {
+      "latest": {
+        "source": "game",
+        "timestamp": 129089,
+        "sampleCount": 12,
+        "frameMs": 22.533333321412403,
+        "frameMaxMs": 48.10000014305115,
+        "paintMs": 6.833333313465118,
+        "paintMaxMs": 19.40000009536743,
+        "entities": 24671,
+        "drawItems": 0,
+        "uiPrimitives": 550,
+        "uiBatches": 32,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      "samples": 171,
+      "averageFrameMs": 22.328314875573774,
+      "p95FrameMs": 26.27000000476837,
+      "peakFrameMs": 80.79999995231628,
+      "averagePaintMs": 7.1179917646636115,
+      "p95PaintMs": 8.659999990463257,
+      "peakPaintMs": 63
+    },
+    "nativeInteractiveUi": {
+      "toggleClick": true,
+      "inputEdit": true,
+      "stepRetainsEdits": true,
+      "restartRestoresAuthored": true,
+      "revision": 2
+    },
+    "nativeBehaviour": {
+      "updatesNativeWorld": true,
+      "inactiveDoesNotUpdate": true,
+      "reactivatedUpdates": true,
+      "stopRestoresAuthored": true
+    },
+    "shutdown": {
+      "pid": 164392,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-native-publication-1791668435237\\runtime\\com.mengine.editor.agent-7sFBer '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-native-publication-1791668435237\\runtime\\com.mengine.editor.agent-7sFBer'"
+    }
+  },
+  "comparison": {
+    "priorReceipt": "docs/designs/frostbound-realms/native-play-state-spatial-frame-presentation.json",
+    "presentedFps": {
+      "before": 14.986324978546401,
+      "after": 15.357641066472794
+    },
+    "averageBrowserPaintMs": {
+      "before": 6.670798791320265,
+      "after": 7.1179917646636115
+    },
+    "scope": "Separate complete runs with equal source script/scene hashes, native render size and spatial/UI counts. FPS remains below smooth gameplay and browser paint did not decrease; the fixture timing reduction is not a causal FPS claim."
+  },
+  "materialMetadata": {
+    "repairCommit": "2c555fa",
+    "trackedMaterials": 3151,
+    "missing": 0,
+    "untracked": 0,
+    "invalid": 0,
+    "duplicateGuids": 0,
+    "otherComputer2736ListIndividuallyIdentified": false
+  },
+  "fullWarcraftParityComplete": false
+}

@@ -1,7 +1,10 @@
 // Author: MiYu. Compare live Play data with an owned JSON baseline, including direct reference edits.
 import type { WorldSnapshotView } from '@mengine/api';
+import { normalizeEntity, type EntityRec } from './entityRecord';
 
 const retainedRecords = new WeakSet<object>();
+const retainedWorlds = new WeakSet<object>();
+export type RetainedPlayWorld = Omit<WorldSnapshotView, 'entities'> & { entities: EntityRec[] };
 /** Only JSON-owned frozen records created here can share serialization results. */
 export function isRetainedPlayRecord(value: object): boolean { return retainedRecords.has(value); }
 
@@ -50,6 +53,17 @@ function freezeJson<T>(value: T): T {
   return value;
 }
 
+/** Own native JSON data once; unchanged immutable records and colors retain their identity. */
+export function retainPlayWorld(world: WorldSnapshotView, previous?: RetainedPlayWorld): RetainedPlayWorld {
+  const entities = world.entities.map(entity => isRetainedPlayRecord(entity) ? entity as EntityRec : freezeJson(JSON.parse(JSON.stringify(normalizeEntity(entity))) as EntityRec));
+  const color = JSON.parse(JSON.stringify(world.clearColor)) as WorldSnapshotView['clearColor'];
+  const clearColor = previous && equalJson(color, previous.clearColor) ? previous.clearColor : freezeJson(color);
+  const { entities: inputEntities, clearColor: inputColor, ...metadata } = world;
+  const owned = Object.freeze({ ...freezeJson(JSON.parse(JSON.stringify(metadata))), entities: Object.freeze(entities) as EntityRec[], clearColor }) as RetainedPlayWorld;
+  retainedWorlds.add(owned);
+  return owned;
+}
+
 export function createPlayWorldSync() {
   type Entities = WorldSnapshotView['entities'] | null;
   type Color = WorldSnapshotView['clearColor'];
@@ -62,6 +76,12 @@ export function createPlayWorldSync() {
   };
   return {
     reset() { baseline = null; serialized = undefined; },
+    /** Only a factory-owned immutable world can bypass comparison with editable data. */
+    captureRetained(world: RetainedPlayWorld) {
+      if (!retainedWorlds.has(world)) throw new Error('Play baseline must be an owned world');
+      baseline = [world.entities.slice(), world.clearColor];
+      serialized = undefined;
+    },
     /** Retain immutable JSON records across later captures; only the pointer list is copied. */
     viewportSnapshot() { return baseline?.[0] ? { entities: baseline[0].slice(), clearColor: baseline[1].slice() as Color } : undefined; },
     /** Presentation preserves structured data, so it cannot use the serialization fallback in matches(). */
