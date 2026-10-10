@@ -138,7 +138,7 @@ impl EffekseerWorld {
         let screen_aspect = viewport[0].max(1) as f32 / viewport[1].max(1) as f32;
         let mut live = HashSet::new();
         let mut failures = Vec::new();
-        for entity in world.iter_entities() {
+        for entity in world.entities_with_components(&["EffekseerEffect"]) {
             let Some(component) = world.get_component::<EffekseerEffect>(entity) else {
                 continue;
             };

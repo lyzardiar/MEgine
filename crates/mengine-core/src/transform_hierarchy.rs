@@ -94,7 +94,8 @@ pub struct TransformHierarchy {
 }
 
 impl TransformHierarchy {
-    pub fn build(world: &World) -> Self { Self::build_for_entities(world, world.iter_entities()) }
+    /// MiYu: Inactive records need no own transform; referenced ancestors are still resolved.
+    pub fn build(world: &World) -> Self { Self::build_for_entities(world, world.iter_entities().filter(|entity| world.entity_active(*entity))) }
 
     /// Resolves the requested entities and their ancestors without traversing unrelated branches.
     pub fn build_for_entities(world: &World, entities: impl IntoIterator<Item = Entity>) -> Self {
@@ -270,6 +271,33 @@ mod tests {
         assert!((resolved.scale - Vec3::new(1.0, 1.5, 0.5)).length() < 0.0001);
         let transformed_origin = resolved.matrix.transform_point3(Vec3::ZERO);
         assert!((transformed_origin - resolved.position).length() < 0.0001);
+    }
+
+    #[test]
+    fn active_build_matches_full_cache_for_inactive_pools_and_reactivation() {
+        let mut world = World::new();
+        let root = world.spawn_empty(); let group = world.spawn_empty(); let child = world.spawn_empty();
+        world.insert_component(root, transform([3.0, 4.0, 5.0], Quat::from_rotation_z(0.6), [2.0, 3.0, 1.0]));
+        world.insert_component(child, transform([2.0, 1.0, 0.0], Quat::from_rotation_y(0.4), [-1.0, 2.0, 1.0]));
+        world.set_parent(group, Some(root)); world.set_parent(child, Some(group));
+        for _ in 0..10_000 {
+            let pooled = world.spawn_empty(); world.insert_component(pooled, Transform::default());
+            world.set_parent(pooled, Some(root)); world.set_editor_state(pooled, 0, false);
+        }
+        let pooled = world.iter_entities().last().unwrap();
+        for phase in 0..4 {
+            world.set_editor_state(group, 0, phase != 1);
+            world.set_editor_state(pooled, 0, phase == 2);
+            let compact = TransformHierarchy::build(&world);
+            let all = TransformHierarchy::build_for_entities(&world, world.iter_entities());
+            for entity in world.iter_entities() {
+                assert_eq!(compact.is_active(entity), all.is_active(entity));
+                assert_eq!(compact.get(entity), all.get(entity));
+                assert_eq!(compact.parent_world(&world, entity), all.parent_world(&world, entity));
+            }
+            assert!(compact.nodes.len() <= 4);
+            assert_eq!(all.nodes.len(), 10_003);
+        }
     }
 
     #[test]

@@ -35,7 +35,7 @@ impl SampledEffectWorld {
         self.failures.clear();
         let Some(root) = self.root.as_ref() else { return Vec::new(); };
         let mut live = HashSet::new(); let mut used = HashSet::new(); let mut used_models = HashSet::new(); let mut output = Vec::new();
-        for entity in world.iter_entities() {
+        for entity in world.entities_with_components(&["SampledEffect"]) {
             if !hierarchy.is_active(entity) { continue; }
             let (Some(component), Some(transform)) = (world.get_component::<SampledEffect>(entity), hierarchy.get(entity)) else { continue; };
             let key = component.effect.trim().replace('\\', "/");

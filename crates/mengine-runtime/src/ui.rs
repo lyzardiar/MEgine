@@ -242,7 +242,7 @@ pub fn update_ui_button_tints(
     } else {
         0.0
     };
-    for entity in world.iter_entities() {
+    for entity in world.entities_with_components(&["Button"]) {
         let Some(button) = world.get_component::<Button>(entity) else {
             continue;
         };
@@ -854,7 +854,7 @@ pub fn set_toggle_value(world: &mut World, target: Entity, requested_on: bool) -
         .get_component::<ToggleGroup>(group_entity)
         .is_some_and(|group| group.allow_switch_off);
     let members: Vec<(Entity, bool)> = world
-        .iter_entities()
+        .entities_with_components(&["Toggle"])
         .filter(|entity| {
             hierarchy.is_active(*entity)
                 && world.get_component::<Toggle>(*entity).is_some()
@@ -1147,7 +1147,7 @@ pub(crate) fn collect_ui_primitives(
         height: height.max(1) as f32,
     };
     let mut canvases: Vec<Entity> = world
-        .iter_entities()
+        .entities_with_components(&["Canvas"])
         .filter(|entity| {
             hierarchy.is_active(*entity)
                 && world.get_component::<Canvas>(*entity).is_some()

@@ -302,6 +302,15 @@ impl World {
         self.iter_entities().take(if type_names.is_empty() { usize::MAX } else { 0 }).chain(indexed)
     }
 
+    /// MiYu: Ordered, deduplicated union of component memberships, including inactive entities.
+    pub fn entities_with_any_component(&self, type_names: &[&str]) -> impl Iterator<Item = Entity> + '_ {
+        let indices: BTreeSet<_> = type_names.iter().filter_map(|name| self.component_entities.get(*name)).flat_map(|entities| entities.iter().copied()).collect();
+        indices.into_iter().filter_map(move |index| {
+            let record = &self.entities[index as usize];
+            record.alive.then_some(Entity::new(index, record.generation))
+        })
+    }
+
     pub fn set_parent(&mut self, entity: Entity, parent: Option<Entity>) {
         if !self.is_alive(entity) {
             return;
@@ -655,6 +664,33 @@ mod tests {
         let begin = Instant::now();
         for _ in 0..100 { assert_eq!(world.entities_with_components(&["Name"]).count(), 100); }
         println!("sparse_query entities=90000 matches=100 iterations=100 scan_ms={scan_ms:.3} index_ms={:.3}", begin.elapsed().as_secs_f64() * 1000.0);
+    }
+
+    #[test]
+    fn component_union_matches_ordered_scan_after_removal_and_slot_reuse() {
+        use super::*;
+        let mut world = World::new();
+        let entities: Vec<_> = (0..300).map(|_| world.spawn_empty()).collect();
+        for (index, &entity) in entities.iter().enumerate() {
+            if index % 3 == 0 { world.insert_component(entity, Transform::default()); }
+            if index % 5 == 0 { world.insert_component(entity, Name { value: index.to_string() }); }
+            if index % 7 == 0 { world.set_editor_state(entity, 0, false); }
+        }
+        let verify = |world: &World| {
+            let expected: Vec<_> = world.iter_entities().filter(|entity| world.get_component::<Transform>(*entity).is_some() || world.get_component::<Name>(*entity).is_some()).collect();
+            assert_eq!(world.entities_with_any_component(&["Missing", "Name", "Transform", "Name"]).collect::<Vec<_>>(), expected);
+            assert_eq!(world.entities_with_any_component(&[]).count(), 0);
+            assert_eq!(world.entities_with_any_component(&["Missing"]).count(), 0);
+        };
+        verify(&world);
+        world.remove_component_by_name(entities[15], "Transform");
+        world.remove_component_by_name(entities[15], "Name");
+        world.despawn(entities[0]); let recycled = world.spawn_empty();
+        world.set_component_value(recycled, "Name", serde_json::json!({"value":"recycled"}));
+        assert_ne!(recycled, entities[0]);
+        world.insert_component(entities[0], Transform::default());
+        verify(&world);
+        assert_eq!(world.entities_with_any_component(&["Name"]).next(), Some(recycled));
     }
 
     #[test]

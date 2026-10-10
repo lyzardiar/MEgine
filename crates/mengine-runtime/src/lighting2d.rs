@@ -50,7 +50,7 @@ pub fn apply_2d_lighting(
 
 fn collect_lights(world: &World, hierarchy: &TransformHierarchy) -> Vec<RuntimeLight2D> {
     world
-        .iter_entities()
+        .entities_with_components(&["Light2D"])
         .filter_map(|entity| {
             let transform = hierarchy.get(entity)?;
             let light = world.get_component::<Light2D>(entity)?;

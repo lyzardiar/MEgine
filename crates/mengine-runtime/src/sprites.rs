@@ -41,7 +41,7 @@ pub fn collect_world_primitives_with_hierarchy(
 pub fn collect_world_primitives_with_materials(world: &World, hierarchy: &TransformHierarchy, camera: FrameCamera, viewport: [u32; 2], mut materials: Option<&mut RuntimeMaterialCache>) -> Vec<WorldPrimitive> {
     let mut resolved_materials = HashMap::new();
     let mut sprites = Vec::new();
-    for entity in world.iter_entities() {
+    for entity in world.entities_with_any_component(&["Tilemap", "Line2D", "SpriteBatch2D", "AnimatedSprite2D", "SpriteRenderer"]) {
         let Some(transform) = hierarchy.get(entity).map(|value| value.to_transform()) else {
             continue;
         };

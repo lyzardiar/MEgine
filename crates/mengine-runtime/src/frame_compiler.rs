@@ -339,7 +339,7 @@ fn primary_camera_definition(
     hierarchy: &TransformHierarchy,
     target_display: i32,
 ) -> Option<CameraDefinition> {
-    for entity in world.iter_entities() {
+    for entity in world.entities_with_components(&["Camera2D"]) {
         if world
             .get_component::<Camera2D>(entity)
             .is_some_and(|camera| {
@@ -351,7 +351,7 @@ fn primary_camera_definition(
             }
         }
     }
-    for entity in world.iter_entities() {
+    for entity in world.entities_with_components(&["Camera3D"]) {
         if world
             .get_component::<Camera3D>(entity)
             .is_some_and(|camera| {
@@ -549,7 +549,7 @@ fn collect_view_objects(world: &World, hierarchy: &TransformHierarchy, materials
 
 fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>, active_only: bool) -> Vec<RenderObject> {
     let mut out = Vec::new();
-    for entity in world.iter_entities() {
+    for entity in world.entities_with_components(&["MeshRenderer"]) {
         if active_only && !hierarchy.is_active(entity) { continue; }
         if let Some(root) = root {
             let mut current = entity;
@@ -597,7 +597,7 @@ pub fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameL
         spots: Vec::new(),
     };
     let mut environment_found = false;
-    for entity in world.iter_entities() {
+    for entity in world.entities_with_any_component(&["EnvironmentLight", "DirectionalLight", "PointLight", "SpotLight"]) {
         if !hierarchy.is_active(entity) { continue; }
         if !environment_found {
             if let Some(environment) = world.get_component::<EnvironmentLight>(entity) {

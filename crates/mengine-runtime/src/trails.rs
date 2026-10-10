@@ -37,7 +37,7 @@ impl TrailWorld {
     ) -> Vec<WorldPrimitive> {
         let mut live = HashSet::new();
         let mut output = Vec::new();
-        for entity in world.iter_entities() {
+        for entity in world.entities_with_components(&["TrailRenderer2D"]) {
             let Some(component) = world.get_component::<TrailRenderer2D>(entity) else {
                 continue;
             };
