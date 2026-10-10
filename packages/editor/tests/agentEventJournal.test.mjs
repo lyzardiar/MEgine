@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {createPlayWorldSync} from '../src/playWorldSync.ts';
 import {
   AgentEventJournal,
   MAX_AGENT_EVENT_WAITERS,
@@ -227,4 +228,59 @@ test('scene signatures detect live nested edits and isolate returned payloads ac
   assert.deepEqual(tracker.diff(2, entities).changed, [1]);
   assert.throws(() => tracker.observe('Main', [...entities, entities[0]]), /duplicate entity id/);
   assert.equal(tracker.observe('Main', entities), null);
+});
+
+test('immutable Play signatures reuse records, retain independent tracker caches and reset across ID reuse', () => {
+  const sync=createPlayWorldSync(),live=[{entity:1,components:{Custom:{value:1}}},{entity:2,components:{}}],color=[0,0,0,1];
+  sync.capture(live,color);const first=sync.viewportSnapshot().entities,tracker=new SceneChangeTracker(),calls=new Map(),stringify=JSON.stringify;
+  JSON.stringify=function(value,...args){if(first.includes(value)||value===changed)calls.set(value,(calls.get(value)||0)+1);return stringify.call(this,value,...args);};
+  let changed;
+  try {
+    tracker.observe('Main',first);assert.equal(tracker.observe('Main',first),null);assert.equal(calls.get(first[0]),1);assert.equal(calls.get(first[1]),1);
+    live[0].components.Custom.value=3;sync.capture(live,color);const second=sync.viewportSnapshot().entities;changed=second[0];
+    assert.deepEqual(tracker.observe('Main',second).changed,[1]);assert.equal(calls.get(first[1]),1);assert.equal(calls.get(changed),1);assert.equal(tracker.observe('Main',second),null);
+    const diff=tracker.diff(1,second);assert.equal(diff.entities[0].components.Custom.value,3);diff.entities[0].components.Custom.value=9;assert.equal(changed.components.Custom.value,3);
+    assert.equal(tracker.observe('Other',second).resetRequired,true);assert.equal(calls.get(changed),1);
+    assert.equal(tracker.observe('Other',second,{clearColor:[.2,0,0,1]}).sceneStateChanged,true);
+    assert.throws(()=>tracker.observe('Other',[...second,second[0]]),/duplicate entity id/);
+    assert.throws(()=>tracker.observe('Other',[{entity:NaN}]),/invalid.*entity id/);
+    assert.deepEqual(tracker.observe('Other',[second[1]]).removed,[1]);assert.deepEqual(tracker.observe('Other',second).added,[1]);
+    const another=new SceneChangeTracker();another.observe('Main',second);assert.equal(calls.get(changed),2);
+    tracker.reset();assert.equal(tracker.revision,0);tracker.observe('Main',second);assert.equal(calls.get(changed),3);
+    assert.equal(first[0].components.Custom.value,1);
+  } finally {JSON.stringify=stringify;}
+});
+
+test('ordinary and shallow-frozen records still detect nested edits, getters and custom JSON values', () => {
+  const tracker=new SceneChangeTracker(),nested={value:1},record=Object.freeze({entity:1,components:{Custom:nested}});let getterValue=1,jsonValue=1;
+  const getter=Object.freeze({entity:2,get name(){return 'Value '+getterValue;}}),custom=Object.freeze({entity:3,toJSON(){return {entity:3,name:'JSON '+jsonValue};}});
+  const entities=[record,getter,custom];tracker.observe('Main',entities);assert.equal(tracker.observe('Main',entities),null);
+  nested.value=4;getterValue=2;jsonValue=3;assert.deepEqual(tracker.observe('Main',entities).changed,[1,2,3]);assert.equal(tracker.observe('Main',entities),null);
+});
+
+test('prototype JSON hooks cannot make retained serialization caches hide changes', () => {
+  const sync=createPlayWorldSync();sync.capture([{entity:1,components:{Custom:{values:[1]}}}],[0,0,0,1]);const entities=sync.viewportSnapshot().entities,record=entities[0],array=record.components.Custom.values,tracker=new SceneChangeTracker();
+  tracker.observe('Main',entities);let value=2;
+  const objectHook=Object.getOwnPropertyDescriptor(Object.prototype,'toJSON'),arrayHook=Object.getOwnPropertyDescriptor(Array.prototype,'toJSON');
+  try {
+    Object.defineProperty(Object.prototype,'toJSON',{configurable:true,value(){return this===record?{entity:1,name:'Object '+value}:this;}});
+    assert.deepEqual(tracker.observe('Main',entities).changed,[1]);value=3;assert.deepEqual(tracker.observe('Main',entities).changed,[1]);
+    if(objectHook)Object.defineProperty(Object.prototype,'toJSON',objectHook);else delete Object.prototype.toJSON;
+    assert.deepEqual(tracker.observe('Main',entities).changed,[1]);
+    Object.defineProperty(Array.prototype,'toJSON',{configurable:true,value(){return this===array?[value]:this;}});
+    assert.deepEqual(tracker.observe('Main',entities).changed,[1]);value=4;assert.deepEqual(tracker.observe('Main',entities).changed,[1]);
+  } finally {
+    if(objectHook)Object.defineProperty(Object.prototype,'toJSON',objectHook);else delete Object.prototype.toJSON;
+    if(arrayHook)Object.defineProperty(Array.prototype,'toJSON',arrayHook);else delete Array.prototype.toJSON;
+  }
+  assert.deepEqual(tracker.observe('Main',entities).changed,[1]);assert.equal(tracker.observe('Main',entities),null);
+});
+
+test('mutable record serialization can change prototype JSON hooks before a retained record in the same batch', () => {
+  const sync=createPlayWorldSync();sync.capture([{entity:1,name:'Retained'}],[0,0,0,1]);const record=sync.viewportSnapshot().entities[0],tracker=new SceneChangeTracker();let install=false;
+  const hook=Object.getOwnPropertyDescriptor(Object.prototype,'toJSON');
+  const installer={entity:2,toJSON(){if(install)Object.defineProperty(Object.prototype,'toJSON',{configurable:true,value(){return this===record?{entity:1,name:'Hook value'}:this;}});return {entity:2};}};
+  try {
+    tracker.observe('Main',[installer,record]);install=true;assert.deepEqual(tracker.observe('Main',[installer,record]).changed,[1]);
+  } finally {if(hook)Object.defineProperty(Object.prototype,'toJSON',hook);else delete Object.prototype.toJSON;}
 });

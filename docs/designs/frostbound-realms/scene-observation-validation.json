@@ -1,0 +1,551 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "f690b6520596f60878f1947e168bd47d5de3eeae",
+  "scope": "SceneChangeTracker signature reuse for JSON-owned frozen Play records; mutable and custom serialization observations retain per-call evaluation.",
+  "sourceHashes": {
+    "packages/editor/src/playWorldSync.ts": "ca2870824b01aefae7ab2964ec248f2666dd5ff2b3f7cd194b76eb5b45397c4a",
+    "packages/editor/src/agent/eventJournal.ts": "cf1dae479168f6c4f6487a9ce91b8eac8b48e593469e62b09eb49a04af31ba89",
+    "packages/editor/tests/agentEventJournal.test.mjs": "0cc65ed7f20c0bb2eb90b19bd86deebf8112c666eb14e69c58c1a04ae2e09275",
+    "scripts/benchmark-frost-observation.mjs": "a2e35bb40048c19524f2836f5f5e67528f7f8064ed250dfdfda6b0f1450be078",
+    "scripts/qa-frost-play-state.mjs": "5dd3544c6304570618ae91052afb059fe3e3b10df9c1eeee66a92e3dc4720e76"
+  },
+  "benchmark": {
+    "author": "MiYu",
+    "scope": "Real store authored scene converted to immutable Play records; identical one-record changes and two trackers in Node/Vite, excluding React, scripts, GPU, IPC and native FPS",
+    "baseline": "f690b65",
+    "baselineSourceSha256": "a91002d40e3a11cff0ab3eddcfb9cecd60965ce78dde66523ab1169567cb4a3b",
+    "sourceSceneSha256": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+    "entities": 90179,
+    "iterations": 30,
+    "warmups": 2,
+    "allRetained": true,
+    "coldObserveMs": {
+      "before": 100.83860000000004,
+      "after": 128.57319999999982
+    },
+    "medianBeforeMs": 113.67650000000049,
+    "medianAfterMs": 21.531600000000253,
+    "deltasAndDiffEqual": true,
+    "outputSha256": "e7661c5f3edef13d0e27b4cd6c09eacfc47f4fab96ab721f2aa9a81b24946cc9",
+    "samplesMs": {
+      "before": [
+        117.48779999999988,
+        112.92210000000023,
+        123.31750000000011,
+        113.86649999999963,
+        122.02049999999963,
+        112.42319999999972,
+        110.91229999999996,
+        111.70870000000014,
+        121.63920000000053,
+        111.70489999999972,
+        120.94409999999971,
+        111.5020999999997,
+        113.67650000000049,
+        110.57729999999992,
+        111.78819999999996,
+        114.20569999999952,
+        121.94880000000012,
+        111.0622000000003,
+        124.0697999999993,
+        110.92669999999998,
+        114.59570000000076,
+        111.49290000000019,
+        121.34619999999995,
+        111.2469000000001,
+        125.45769999999993,
+        110.96949999999924,
+        118.34949999999935,
+        111.10339999999997,
+        122.2469000000001,
+        112.75889999999981
+      ],
+      "after": [
+        31.534000000000106,
+        21.531600000000253,
+        21.41989999999987,
+        30.61409999999978,
+        90.2179000000001,
+        29.310699999999997,
+        30.050900000000183,
+        20.731700000000274,
+        21.22150000000056,
+        21.157899999999245,
+        20.06750000000011,
+        26.052700000000186,
+        21.16730000000007,
+        29.595299999999952,
+        28.69750000000022,
+        21.608400000000074,
+        20.12750000000051,
+        20.428799999999683,
+        20.26470000000063,
+        28.498999999999796,
+        30.353500000000167,
+        20.015199999999822,
+        21.134299999999712,
+        19.091599999999744,
+        20.759000000000015,
+        26.174799999999777,
+        22.194499999999607,
+        30.50579999999991,
+        21.243099999999686,
+        20.64300000000003
+      ]
+    }
+  },
+  "tests": {
+    "passed": 34,
+    "failed": 0,
+    "ignored": 0,
+    "log": "tmp/scene-observation-regressions.log"
+  },
+  "frontendBuild": {
+    "passed": true,
+    "log": "tmp/scene-observation-frontend-build.log"
+  },
+  "nativeBuild": {
+    "passed": true,
+    "elapsedSeconds": 255,
+    "log": "tmp/scene-observation-native-build.log",
+    "executable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+    "sha256": "e504a85fe421d6471bcdd5ac65801142796ca8fbaa475206c5c95ef0d3f30839"
+  },
+  "native": {
+    "receipt": "native-play-state-spatial-observation.json",
+    "elapsedMs": 406677,
+    "steps": [
+      {
+        "name": "full native scene readiness",
+        "ms": 42321
+      },
+      {
+        "name": "native Scene spatial query",
+        "ms": 54622
+      },
+      {
+        "name": "actual F1 skirmish start",
+        "ms": 16616
+      },
+      {
+        "name": "native Scene activation in Play",
+        "ms": 30241
+      },
+      {
+        "name": "continuous native playback sample",
+        "ms": 49337
+      },
+      {
+        "name": "owned WebView CPU profile",
+        "ms": 12310
+      },
+      {
+        "name": "paused Scene editing and selection",
+        "ms": 68565
+      },
+      {
+        "name": "pause step and authored restoration",
+        "ms": 4470
+      },
+      {
+        "name": "native Toggle InputField and restart session",
+        "ms": 91953
+      }
+    ],
+    "hierarchyReceipt": {
+      "path": "C:/Users/admin/.codex/worktrees/1339/MEgine/docs/designs/frostbound-realms/native-play-state-spatial-revision.json",
+      "startedAt": "2026-10-10T11:13:52.271Z",
+      "editorSha256": "6c30ff40c5e755cc5ce7932866996d9048f36ccef08fcb4d938072547fff6d6f",
+      "scope": "Completed hierarchy interaction from the identical scene; separate viewport build with unchanged hierarchy sources"
+    },
+    "sourceMainSha256": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
+    "sourceSceneSha256": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+    "renderSize": [
+      850,
+      478
+    ],
+    "sameSourcesAndRenderSizeAsPrior": true,
+    "summary": {
+      "intervals": 197,
+      "averagePresentIntervalMs": 233.65279187889874,
+      "p95PresentIntervalMs": 352.2000000476837,
+      "presentedFps": 4.279854702178333,
+      "averageRequestMs": 183.7388888862398,
+      "averageRenderMs": 26.34527626262625,
+      "averageCommandMs": 39.756207070707084,
+      "averageUploadMs": 0.8358585846544516,
+      "averageWorldSyncMs": 4.506828282828285,
+      "averageSimulationMs": 69.23938737373737,
+      "averageSimulationRequestMs": 475.63030303487875
+    },
+    "priorSummary": {
+      "intervals": 150,
+      "averagePresentIntervalMs": 310.8753333330154,
+      "p95PresentIntervalMs": 581.7999999523163,
+      "presentedFps": 3.216723531193713,
+      "averageRequestMs": 256.927814565747,
+      "averageRenderMs": 27.303923178807953,
+      "averageCommandMs": 42.810815231788084,
+      "averageUploadMs": 0.8423841046971201,
+      "averageWorldSyncMs": 3.9662450331125836,
+      "averageSimulationMs": 72.89491523178806,
+      "averageSimulationRequestMs": 609.6986754919519
+    },
+    "counts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 90179,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 550
+    },
+    "exactWorldRevision": 77,
+    "sceneObservation": {
+      "changed": true,
+      "unchangedRevisionStable": true,
+      "restored": true,
+      "mutation": "Inspector Active checkbox in paused Play",
+      "fromRevision": 95,
+      "toRevision": 97
+    },
+    "nativeInteractiveUi": {
+      "toggleClick": true,
+      "inputEdit": true,
+      "stepRetainsEdits": true,
+      "restartRestoresAuthored": true,
+      "revision": 2
+    },
+    "pausedInspector": true,
+    "pauseStepStop": true,
+    "consoleErrors": 0,
+    "shutdown": {
+      "pid": 157568,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-observation-1791649401078\\runtime\\com.mengine.editor.agent-Y8eJJT '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-observation-1791649401078\\runtime\\com.mengine.editor.agent-Y8eJJT'"
+    }
+  },
+  "browserCpuProfile": {
+    "scope": "Separate 10-second owned-QA Game playback after the canonical 45-second sample; leaf CPU time includes native/idle nodes and profiler overhead.",
+    "targetUrl": "http://tauri.localhost/",
+    "samples": 6012,
+    "durationMs": 11504.098,
+    "topSelf": [
+      {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 1237.4479999999996
+      },
+      {
+        "functionName": "Ai",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 147668,
+        "selfMs": 1218.107999999998
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 527.2810000000001
+      },
+      {
+        "functionName": "tick",
+        "scriptId": "14",
+        "url": "http://tauri.localhost/assets/agent-schemas-Cr-O_d4Z.js",
+        "lineNumber": 0,
+        "columnNumber": 11710,
+        "selfMs": 526.0120000000001
+      },
+      {
+        "functionName": "(garbage collector)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 455.2450000000002
+      },
+      {
+        "functionName": "gt",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-BxVQY4r2.js",
+        "lineNumber": 32,
+        "columnNumber": 43324,
+        "selfMs": 374.84099999999984
+      },
+      {
+        "functionName": "Ge",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/uiLayout-D0bE_VR6.js",
+        "lineNumber": 0,
+        "columnNumber": 24937,
+        "selfMs": 371.017
+      },
+      {
+        "functionName": "Li",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-BxVQY4r2.js",
+        "lineNumber": 32,
+        "columnNumber": 20216,
+        "selfMs": 365.27299999999985
+      },
+      {
+        "functionName": "Ze",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 146746,
+        "selfMs": 360.7589999999998
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 329.8929999999999
+      },
+      {
+        "functionName": "observe",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 77553,
+        "selfMs": 298.97899999999987
+      },
+      {
+        "functionName": "Li",
+        "scriptId": "37",
+        "url": "http://tauri.localhost/assets/Viewport-BxVQY4r2.js",
+        "lineNumber": 32,
+        "columnNumber": 20216,
+        "selfMs": 270.1180000000001
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 259.03199999999987
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 250.55099999999987
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 247.44899999999996
+      },
+      {
+        "functionName": "",
+        "scriptId": "47",
+        "url": "http://tauri.localhost/assets/Project-N6gf7oJY.js",
+        "lineNumber": 35,
+        "columnNumber": 6165,
+        "selfMs": 211.11799999999997
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 211.091
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 182.16200000000012
+      },
+      {
+        "functionName": "_a",
+        "scriptId": "25",
+        "url": "http://tauri.localhost/assets/uiLayout-D0bE_VR6.js",
+        "lineNumber": 0,
+        "columnNumber": 37200,
+        "selfMs": 173.062
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 163.13799999999995
+      },
+      {
+        "functionName": "capture",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 74177,
+        "selfMs": 153.037
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 149.33100000000002
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 146.096
+      },
+      {
+        "functionName": "Qt",
+        "scriptId": "51",
+        "url": "http://tauri.localhost/assets/Inspector-DPyC-39g.js",
+        "lineNumber": 10,
+        "columnNumber": 44876,
+        "selfMs": 119.53800000000001
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DKBTiTWI.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 115.09999999999997
+      }
+    ],
+    "rawProfile": "E:\\work\\codex\\worktrees\\1339\\MEgine\\tmp\\spatial-observation-browser-cpu-profile.json"
+  },
+  "review": {
+    "independentReadOnly": true,
+    "determinedRegression": false,
+    "scope": "Brand provenance, deep immutability, weak lifetimes, reset/ID reuse, mutable/getter/custom JSON and prototype hooks changed within an observation batch."
+  },
+  "limitations": [
+    "Benchmark compares two trackers over the same real-store retained records and one changed record per observation; it excludes React, scripts, GPU, IPC and native FPS.",
+    "Cold observation incurs cache population cost; both before and after cold timings are preserved.",
+    "Only internally JSON-owned deep-frozen records reuse signatures; mutable values and active prototype JSON hooks continue to serialize.",
+    "ID validation, per-observation Map construction and diff membership comparisons still visit all entities.",
+    "Native timings include overlapping stages and scheduling and are not an isolated causal FPS experiment.",
+    "Hierarchy interactions reuse a preceding binary receipt with unchanged hierarchy sources.",
+    "Smooth gameplay and full Warcraft III parity remain incomplete."
+  ],
+  "identifiedBrowserHotspots": {
+    "scope": "Source identities checked against packaged bundle URL, line and column; leaf CPU samples are not isolated frame durations.",
+    "mappings": [
+      {
+        "bundle": "index-DKBTiTWI.js",
+        "line": 1,
+        "column": 147668,
+        "symbol": "Ai",
+        "source": "packages/editor/src/spriteLibrary.ts",
+        "function": "spriteAssetUrl"
+      },
+      {
+        "bundle": "index-DKBTiTWI.js",
+        "line": 1,
+        "column": 146746,
+        "symbol": "Ze",
+        "source": "packages/editor/src/spriteLibrary.ts",
+        "function": "resolveSpriteId"
+      },
+      {
+        "bundle": "index-DKBTiTWI.js",
+        "line": 1,
+        "column": 72634,
+        "symbol": "ft",
+        "source": "packages/editor/src/playWorldSync.ts",
+        "function": "equalJson"
+      },
+      {
+        "bundle": "agent-schemas-Cr-O_d4Z.js",
+        "line": 0,
+        "column": 11710,
+        "symbol": "tick",
+        "source": "packages/behaviour/src/runner.ts",
+        "function": "tick"
+      },
+      {
+        "bundle": "uiLayout-D0bE_VR6.js",
+        "line": 0,
+        "column": 24937,
+        "symbol": "Ge",
+        "source": "packages/editor/src/worldTransform.ts",
+        "function": "buildWorldTransforms"
+      },
+      {
+        "bundle": "Viewport-BxVQY4r2.js",
+        "line": 32,
+        "column": 20216,
+        "symbol": "Li",
+        "source": "packages/editor/src/hierarchyActivation.ts",
+        "function": "createHierarchyActiveLookup"
+      },
+      {
+        "bundle": "Viewport-BxVQY4r2.js",
+        "line": 32,
+        "column": 43324,
+        "symbol": "gt",
+        "source": "packages/editor/src/panels/Viewport.tsx",
+        "function": "paint"
+      }
+    ]
+  },
+  "stagedSourceHashes": {
+    "packages/editor/src/playWorldSync.ts": {
+      "sha256": "ca2870824b01aefae7ab2964ec248f2666dd5ff2b3f7cd194b76eb5b45397c4a",
+      "gitBlob": "2568dda7423588de968af718bb156ab95c1ea0be"
+    },
+    "packages/editor/src/agent/eventJournal.ts": {
+      "sha256": "b88c0190f12d066abfb0ba34213b9cbac4725343e919649f781171aef96201ea",
+      "gitBlob": "d5f139fb7d409d211d49859ab583f370d56fc060"
+    },
+    "packages/editor/tests/agentEventJournal.test.mjs": {
+      "sha256": "8f66741bc2f5a95ad52c4290fa6482e7759611e8cf64002b7abe3e34ad09e3a6",
+      "gitBlob": "84b3b45e701d943e5e2556e48d6341c35b43efc3"
+    },
+    "scripts/benchmark-frost-observation.mjs": {
+      "sha256": "a2e35bb40048c19524f2836f5f5e67528f7f8064ed250dfdfda6b0f1450be078",
+      "gitBlob": "433ebab5181f07de87c531b0cc99015548f2b463"
+    },
+    "scripts/qa-frost-play-state.mjs": {
+      "sha256": "41737245f8d6030b1d9976fc3f02558e1fce5270669ba73cabfb2241897940f2",
+      "gitBlob": "eb61c9920848f0cb38b888897c60ffd7aa78647f"
+    }
+  },
+  "hashScope": "sourceHashes describe tested checkout bytes; stagedSourceHashes describe Git-normalized blobs. The executable embeds the same production editor sources; QA script was validated by this native receipt."
+}

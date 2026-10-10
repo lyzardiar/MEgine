@@ -1,6 +1,10 @@
 // Author: MiYu. Compare live Play data with an owned JSON baseline, including direct reference edits.
 import type { WorldSnapshotView } from '@mengine/api';
 
+const retainedRecords = new WeakSet<object>();
+/** Only JSON-owned frozen records created here can share serialization results. */
+export function isRetainedPlayRecord(value: object): boolean { return retainedRecords.has(value); }
+
 function equalJson(value: unknown, baseline: unknown): boolean {
   if (value === baseline) return true;
   if (value === null || baseline === null || typeof value !== 'object' || typeof baseline !== 'object') return false;
@@ -34,6 +38,7 @@ function freezeJson<T>(value: T): T {
   if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
     for (const child of Object.values(value)) freezeJson(child);
     Object.freeze(value);
+    retainedRecords.add(value);
   }
   return value;
 }

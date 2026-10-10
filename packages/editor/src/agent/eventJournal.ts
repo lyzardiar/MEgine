@@ -1,3 +1,6 @@
+// Author: MiYu. Editor event cursors and scene changes, including immutable Play record signatures.
+import { isRetainedPlayRecord } from '../playWorldSync.ts';
+
 export const AGENT_EVENT_TOPICS = [
   'scene.changed',
   'selection.changed',
@@ -222,6 +225,7 @@ export class SceneChangeTracker {
   private sceneName: string | null = null;
   private sceneStateSignature = '';
   private entities = new Map<number, string>();
+  private immutableSignatures = new WeakMap<SceneEntityView, string>();
   private readonly deltas: SceneDelta[] = [];
   private readonly capacity: number;
 
@@ -241,6 +245,7 @@ export class SceneChangeTracker {
     this.sceneName = null;
     this.sceneStateSignature = '';
     this.entities.clear();
+    this.immutableSignatures = new WeakMap();
     this.deltas.splice(0);
   }
 
@@ -249,7 +254,7 @@ export class SceneChangeTracker {
     entities: readonly SceneEntityView[],
     sceneState: SceneStateView = {},
   ): SceneDelta | null {
-    const current = entitySignatures(entities);
+    const current = entitySignatures(entities, this.immutableSignatures);
     const currentSceneStateSignature = JSON.stringify(clone(sceneState));
     if (this.revisionValue === 0) {
       this.revisionValue = 1;
@@ -383,6 +388,7 @@ export class SceneChangeTracker {
 
 function entitySignatures(
   entities: readonly SceneEntityView[],
+  immutableSignatures: WeakMap<SceneEntityView, string>,
 ): Map<number, string> {
   const records = new Map<number, string>();
   for (const entity of entities) {
@@ -390,7 +396,13 @@ function entitySignatures(
       throw new Error(`Scene contains an invalid or duplicate entity id: ${String(entity.entity)}`);
     }
     // Scene payloads are JSON data; diff() clones the requested values at the return boundary.
-    records.set(entity.entity, JSON.stringify(entity));
+    const retained = isRetainedPlayRecord(entity) && !('toJSON' in Object.prototype) && !('toJSON' in Array.prototype);
+    let signature = retained ? immutableSignatures.get(entity) : undefined;
+    if (signature === undefined) {
+      signature = JSON.stringify(entity);
+      if (retained) immutableSignatures.set(entity, signature);
+    }
+    records.set(entity.entity, signature);
   }
   return records;
 }
