@@ -1,3 +1,4 @@
+// Author: MiYu. Reconcile live Behaviour components and lifecycle state during Play.
 import type { Behaviour } from './Behaviour.js';
 import type { BehaviourContext, BehaviourEntry } from './types.js';
 import { componentTypeName, type ComponentType } from './components.js';
@@ -57,8 +58,7 @@ export function createBehaviourRunner() {
     Object.prototype.hasOwnProperty.call(entity.components, type)
   );
 
-  const activeInHierarchy = (entities: EntityLike[]) => {
-    const byId = new Map(entities.map((entity) => [entity.entity, entity]));
+  const activeInHierarchy = (entities: EntityLike[], byId = new Map(entities.map((entity) => [entity.entity, entity]))) => {
     const result = new Map<number, boolean>();
     const visiting = new Set<number>();
     const resolve = (entity: EntityLike): boolean => {
@@ -168,8 +168,6 @@ export function createBehaviourRunner() {
     },
 
     tick(entities: EntityLike[], dt: number) {
-      const byId = new Map(entities.map((e) => [e.entity, e]));
-      const activeStates = activeInHierarchy(entities);
       const liveKeys = new Set<string>();
       const keyOf = (entity: number, type: string) => `${entity}\u0000${type}`;
       for (const entity of entities) {
@@ -177,6 +175,9 @@ export function createBehaviourRunner() {
           if (getBehaviour(type)) liveKeys.add(keyOf(entity.entity, type));
         }
       }
+      if (!instances.length && !liveKeys.size) return;
+      const byId = new Map(entities.map((e) => [e.entity, e]));
+      const activeStates = activeInHierarchy(entities, byId);
 
       const retained: BehaviourInstance[] = [];
       for (const inst of instances) {

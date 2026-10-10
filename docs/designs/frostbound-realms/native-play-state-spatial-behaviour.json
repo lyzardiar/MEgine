@@ -1,0 +1,66 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "variant": "spatial-behaviour",
+  "focusedBehaviour": true,
+  "startedAt": "2026-10-10T17:50:21.058Z",
+  "scope": "Focused AutoRotate update, inactive/reactivation and authored restoration through retained native Play; excludes full gameplay and continuous performance sampling.",
+  "editorExecutable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+  "editorSha256": "6d51e90e0513dc4c838deeaecc12cc8fbb6a81553e7fae9be2bc95a59548b71c",
+  "sourceMainSha256": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
+  "sourceSceneSha256": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+  "steps": [
+    {
+      "name": "full native scene readiness",
+      "ms": 40694
+    },
+    {
+      "name": "native Behaviour activation and restoration",
+      "ms": 117210
+    }
+  ],
+  "hierarchy": {
+    "initialDom": 1730,
+    "initialRows": 14,
+    "entities": 90179,
+    "expanded": {
+      "dom": 1972,
+      "rows": 30,
+      "scrollHeight": 2164296
+    },
+    "end": {
+      "scrollTop": 2163788,
+      "rows": 30,
+      "active": "Missile aura 255"
+    },
+    "searchRestore": true,
+    "externalSelectionReveal": true,
+    "rename": true,
+    "pointerDrag": true,
+    "pointerDragMs": 16689
+  },
+  "hierarchyReceipt": {
+    "path": "C:/Users/admin/.codex/worktrees/1339/MEgine/docs/designs/frostbound-realms/native-play-state-spatial-revision.json",
+    "startedAt": "2026-10-10T11:13:52.271Z",
+    "editorSha256": "6c30ff40c5e755cc5ce7932866996d9048f36ccef08fcb4d938072547fff6d6f",
+    "scope": "Completed hierarchy interaction from the identical scene; separate viewport build with unchanged hierarchy sources"
+  },
+  "nativeBehaviourIds": {
+    "authored": 4295057475,
+    "play": 4295057475
+  },
+  "nativeBehaviour": {
+    "updatesNativeWorld": true,
+    "inactiveDoesNotUpdate": true,
+    "reactivatedUpdates": true,
+    "stopRestoresAuthored": true
+  },
+  "shutdown": {
+    "pid": 115696,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-behaviour-1791654574637\\runtime\\com.mengine.editor.agent-vrPQ2l '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-behaviour-1791654574637\\runtime\\com.mengine.editor.agent-vrPQ2l'"
+  },
+  "elapsedMs": 193865
+}
