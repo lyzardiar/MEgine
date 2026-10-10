@@ -28,3 +28,20 @@ test('edit, filtered Scene and absent callbacks retain their existing activation
   assert.equal(viewportActiveLookup(entities,true,false,[],fallback)(1),false);
   assert.equal(viewportActiveLookup(entities,true,false,[])(99),true);
 });
+
+test('unused viewport activation builds no index and first use reads the current paint source', () => {
+  let ids=0;
+  const root={get entity(){ids++;return 1;},active:true},entities=[root];
+  const active=viewportActiveLookup(entities,true,true,[],()=>true);
+  assert.equal(ids,0);
+  root.active=false;assert.equal(active(1),false);assert.ok(ids>0);
+  root.active=true;assert.equal(active(1),true,'self-inactive nodes remain live within the same lookup');
+});
+
+test('inactive starts read no parents and activation still captures membership at construction', () => {
+  let parents=0;
+  const entity={entity:1,active:false,get parent(){parents++;return null;}},entities=[entity],active=createHierarchyActiveLookup(entities);
+  for(let i=0;i<5;i++)assert.equal(active(1),false);
+  assert.equal(parents,0);entity.active=true;assert.equal(active(1),true);assert.equal(parents,1);
+  entities.push({entity:2});assert.equal(active(2),false);assert.equal(createHierarchyActiveLookup(entities)(2),true);
+});

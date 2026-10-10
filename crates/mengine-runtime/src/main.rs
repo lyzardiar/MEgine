@@ -339,7 +339,7 @@ impl App {
             "lighting-materials" => self.bootstrap_lighting_materials(),
             _ => {
                 // spinning-cube default, also used behind the UI controls sample.
-                self.world.commands.push(WorldCommand::Spawn {
+                self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                     name: Some("MainCamera".into()),
                     components: json!({
                         "Transform": {
@@ -355,7 +355,7 @@ impl App {
                         }
                     }),
                 });
-                self.world.commands.push(WorldCommand::Spawn {
+                self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                     name: Some("Directional Light".into()),
                     components: json!({
                         "Transform": {
@@ -366,7 +366,7 @@ impl App {
                         "DirectionalLight": { "color": [1.0, 0.96, 0.9, 1.0], "intensity": 1.25 }
                     }),
                 });
-                self.world.commands.push(WorldCommand::Spawn {
+                self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                     name: Some("Cube".into()),
                     components: json!({
                         "Transform": {
@@ -386,7 +386,7 @@ impl App {
                     }),
                 });
                 if self.args.sample == "particles" {
-                    self.world.commands.push(WorldCommand::Spawn {
+                    self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                         name: Some("Fire Particles 2D".into()),
                         components: json!({
                             "Transform": {
@@ -401,7 +401,7 @@ impl App {
                             }
                         }),
                     });
-                    self.world.commands.push(WorldCommand::Spawn {
+                    self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                         name: Some("Energy Particles 3D".into()),
                         components: json!({
                             "Transform": {
@@ -507,7 +507,7 @@ impl App {
             ),
         ];
         for (name, components) in entities {
-            self.world.commands.push(WorldCommand::Spawn {
+            self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: Some(name.into()),
                 components,
             });
@@ -714,7 +714,7 @@ impl App {
             ),
         ];
         for (name, value) in components {
-            self.world.commands.push(WorldCommand::Spawn {
+            self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: Some(name.into()),
                 components: value,
             });
@@ -2811,7 +2811,7 @@ mod tests {
 
     fn world_with_material(reference: &str) -> World {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Material validation".into()),
             components: json!({
                 "MeshRenderer": { "mesh": "cube", "material": reference }
@@ -2823,7 +2823,7 @@ mod tests {
 
     fn world_with_text_font(reference: &str) -> World {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Font validation".into()),
             components: json!({
                 "Text": { "text": "Agent UI", "font": reference }
@@ -2891,14 +2891,14 @@ mod tests {
     #[test]
     fn primary_2d_camera_wins_and_uses_orthographic_size() {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Main Camera".into()),
             components: json!({
                 "Transform": { "position": [0, 0, 4], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
                 "Camera3D": { "primary": true, "projection": "perspective" }
             }),
         });
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Camera 2D".into()),
             components: json!({
                 "Transform": { "position": [2, 3, 10], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
@@ -2919,14 +2919,14 @@ mod tests {
     #[test]
     fn player_selects_only_primary_cameras_routed_to_display_one() {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Secondary 2D".into()),
             components: json!({
                 "Transform": { "position": [8, 0, 10], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
                 "Camera2D": { "size": 4, "primary": true, "target_display": 1 }
             }),
         });
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Display 1 Camera".into()),
             components: json!({
                 "Transform": { "position": [3, 0, 10], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
@@ -3118,7 +3118,7 @@ mod tests {
     #[test]
     fn packaged_asset_validation_rejects_unsafe_model_references() {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Unsafe model".into()),
             components: json!({
                 "MeshRenderer": { "mesh": "../outside.gltf", "material": "default" }
@@ -3134,7 +3134,7 @@ mod tests {
     #[test]
     fn packaged_asset_validation_rejects_unsafe_environment_textures() {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Unsafe environment".into()),
             components: json!({
                 "EnvironmentLight": { "texture": "../outside.png" }
@@ -3250,7 +3250,7 @@ mod tests {
         write_test_bmp(&texture_path);
 
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Custom UI material".into()),
             components: json!({
                 "Image": {
@@ -3504,7 +3504,7 @@ mod tests {
         )
         .unwrap();
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Layered animator".into()),
             components: json!({
                 "Animator": { "controller": "Assets/Animations/Hero.mcontroller" }
@@ -3559,7 +3559,7 @@ mod tests {
         let nested_source = r#"{"version":1,"name":"Nested","duration":2,"tracks":[{"type":"activation","id":"actor","name":"Actor","target":"Actor","clips":[]}]}"#;
         std::fs::write(timelines.join("Nested.mtimeline"), nested_source).unwrap();
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Timeline director".into()),
             components: json!({
                 "Animator": {},
@@ -3663,7 +3663,7 @@ mod tests {
             .unwrap();
 
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("HDR environment".into()),
             components: json!({
                 "EnvironmentLight": { "texture": "Assets/studio.hdr" }
@@ -3678,7 +3678,7 @@ mod tests {
     #[test]
     fn packaged_asset_validation_scans_tilemap_sprite_dependencies() {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Unsafe tilemap".into()),
             components: json!({
                 "Tilemap": {
@@ -3716,7 +3716,7 @@ mod tests {
             ),
         ] {
             let mut world = World::new();
-            world.commands.push(WorldCommand::Spawn {
+            world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: Some("Unsafe UI sprite".into()),
                 components: component,
             });
@@ -3761,7 +3761,7 @@ mod tests {
                 "SpotLight": { "outer_angle_degrees": 55 }
             }),
         ] {
-            world.commands.push(WorldCommand::Spawn {
+            world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: None,
                 components,
             });

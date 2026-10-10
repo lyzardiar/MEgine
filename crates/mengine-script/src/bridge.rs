@@ -526,6 +526,39 @@ mod tests {
     use super::*;
 
     #[test]
+    fn lazy_effect_pool_commits_hidden_children_and_recovers_failed_script_ticks() {
+        use mengine_core::command::WorldCommand;
+        use mengine_core::hierarchy::Parent;
+        let mut world = World::new();
+        let names = ["Scene / Effects/Classic spell", "Scene / Effects/Classic spell/Slots 0-31", "Classic spell 0 holyLight", "Classic spell 0 holyLight mesh 0"];
+        for name in names {
+            world.apply_command(serde_json::from_value::<WorldCommand>(serde_json::json!({"op":"spawn","name":name,"components":{"Transform":{"position":[0,0,0],"rotation":[0,0,0,1],"scale":[1,1,1]}}})).unwrap());
+        }
+        let mut host = ScriptHost::new().unwrap();
+        host.eval(include_str!("../../../samples/frostbound-realms/game/effect-pool.js")).unwrap();
+        host.eval("var records={},authored={},pool=null,visible=true,fail=true; function register(names){for(const e of engine.findEntitiesByName(names)){records[e.name]=e;authored[e.name]=e.components;}} function onTick(){if(!pool){register(['Scene / Effects/Classic spell','Scene / Effects/Classic spell/Slots 0-31','Classic spell 0 holyLight','Classic spell 0 holyLight mesh 0']);pool=FrostEffectPool.create(engine,records,authored,register);}pool.beginFrame();if(pool.ensure('Classic spell 2 holyLight',1)){engine.setActive(records['Classic spell 2 holyLight'].entity,visible);engine.setActive(records['Classic spell 2 holyLight mesh 0'].entity,true);}if(fail){fail=false;throw Error('discard first spawn');}}").unwrap();
+        assert!(host.tick(&mut world, 0.016).is_err());
+        assert_eq!(world.iter_entities().count(), 4);
+        for _ in 0..3 { host.tick(&mut world, 0.016).unwrap(); }
+        let find = |world: &World, name: &str| world.iter_entities().find(|entity| world.entity_name(*entity) == Some(name)).unwrap();
+        let root = find(&world, "Classic spell 2 holyLight");
+        let child = find(&world, "Classic spell 2 holyLight mesh 0");
+        assert!(!world.entity_active(root));
+        assert!(!world.entity_active(child));
+        host.tick(&mut world, 0.016).unwrap();
+        assert!(!world.entity_active(root));
+        host.tick(&mut world, 0.016).unwrap();
+        assert!(mengine_core::TransformHierarchy::build(&world).is_active(child));
+        assert_eq!(world.get_component::<Parent>(child).unwrap().entity, root);
+        let count = world.iter_entities().count();
+        host.eval("visible=false;").unwrap();host.tick(&mut world, 0.016).unwrap();
+        assert!(!mengine_core::TransformHierarchy::build(&world).is_active(child));
+        host.eval("visible=true;").unwrap();host.tick(&mut world, 0.016).unwrap();
+        assert!(mengine_core::TransformHierarchy::build(&world).is_active(child));
+        assert_eq!(world.iter_entities().count(), count);
+    }
+
+    #[test]
     fn named_entity_queries_follow_spawn_parent_and_despawn_without_full_snapshot_json() {
         use mengine_core::generated::Name;
         let mut host = ScriptHost::new().unwrap();

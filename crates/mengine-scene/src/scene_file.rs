@@ -324,7 +324,7 @@ mod tests {
     fn preserves_unknown_components_and_editor_fields() {
         let (dir, path) = temp_scene("unknown.mscene");
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Custom".into()),
             components: json!({
                 "Transform": {
@@ -369,7 +369,7 @@ mod tests {
     fn preserves_hierarchy_when_reusing_entity_slots_in_reverse_order() {
         let mut source = World::new();
         for name in ["Canvas", "Panel", "Image", "Text", "Badge"] {
-            source.commands.push(WorldCommand::Spawn {
+            source.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: Some(name.into()),
                 components: json!({}),
             });
@@ -388,7 +388,7 @@ mod tests {
         // ascending slot order, causing Spawn to reuse the slots in reverse.
         let mut loaded = World::new();
         for index in 0..8 {
-            loaded.commands.push(WorldCommand::Spawn {
+            loaded.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: Some(format!("Old {index}")),
                 components: json!({}),
             });
@@ -446,7 +446,7 @@ mod tests {
     fn round_trips_canvas_controls_lights_and_materials() {
         let (dir, path) = temp_scene("rendering.mscene");
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Rendered".into()),
             components: json!({
                 "Transform": {
@@ -639,7 +639,7 @@ mod tests {
     fn round_trips_typed_2d_physics_components() {
         let (dir, path) = temp_scene("physics2d.mscene");
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Physics 2D".into()),
             components: json!({
                 "Transform": {
@@ -679,7 +679,7 @@ mod tests {
     fn round_trips_grid_and_sparse_tilemap_components() {
         let (dir, path) = temp_scene("tilemap.mscene");
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Ground".into()),
             components: json!({
                 "Grid": {
@@ -713,7 +713,7 @@ mod tests {
     fn generated_loader_restores_particle_and_spine_runtime_types() {
         let (dir, path) = temp_scene("generated-runtime-components.mscene");
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Runtime Components".into()),
             components: json!({
                 "Transform": {},

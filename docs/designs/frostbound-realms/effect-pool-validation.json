@@ -1,0 +1,945 @@
+{
+  "author": "MiYu",
+  "poolChecksPassed": true,
+  "fullRegressionPassed": false,
+  "baseCommit": "728b389e61b76d5124d1d0e0934b43c2de034e9c",
+  "scope": "Retain complete slot-zero spell/status/attachment templates and folders; create inactive slots on demand, acknowledge native hierarchy and presentation writes, reuse slots and disable old parts. Initial authored scene compaction preserves every retained node and resource reference.",
+  "sourceHashes": {
+    "crates/mengine-core/src/command.rs": "b6c0b03ce91e342483486c9808ca74777a98ddbc439c449a33b8ee504ae288f9",
+    "crates/mengine-core/src/world.rs": "7d5a5a107caaaa7e0a87bd13eabea94d79c81814132c5da28716547feb9d7122",
+    "crates/mengine-script/src/bridge.rs": "11e2d41acb78adab98daceb40c1a07eb3aa7185ca9d38fbb299009c4357e4819",
+    "crates/mengine-editor-host/src/project.rs": "063172cd49e0efbfc4609832069f2cf897c8caa0ca755d1f28dddf1c30540e4f",
+    "crates/mengine-editor-host/tests/frost_sample.rs": "59c6a86a8ee6318b30d3d65857aa5be933330ed27162191e86e933427d37962b",
+    "crates/mengine-runtime/src/main.rs": "3d5c37d37e740f33824d09af833dbb7edebe95d2609966216ef1407945d18bcc",
+    "crates/mengine-runtime/src/prefabs.rs": "e630817e5bf459d6d18ae05253fef49b3dffc00b7acc31b3074f22c14d32e1e5",
+    "crates/mengine-scene/src/prefab.rs": "555a784aba1104712053ffc2f59c55654d7649c0e7247ce294adca6ecad8f798",
+    "crates/mengine-scene/src/scene_file.rs": "7c095d281331e48717a24094ae6ec07c0764ce3d2c215e54b5bbd078ac29d52d",
+    "packages/editor/src/hierarchyActivation.ts": "29196e3fe66b9764754d02a333e66ff62851f4f4abb32ee808d458babe48e370",
+    "packages/editor/tests/hierarchyActivation.test.mjs": "c267546b67c8c4634a68c6ef1c838a438f6707fc4362de1575a1403d0de3288e",
+    "samples/frostbound-realms/game/client.js": "a700238b00b83a5f7c54d29180c01fcd7c53fd310af073c2640b8bf2e40c4e4d",
+    "samples/frostbound-realms/game/effect-pool.js": "176dc0910ac985bbd9ad9c23f901ebfc4b3f1ded58f02b97cb89341c4ec87e6f",
+    "scripts/build-frostbound.mjs": "a4141277b88fc2dc94e63b66cc551cdfcbd8fbd4d216bde681face21500e5a9c",
+    "scripts/benchmark-frost-activation.mjs": "059c7a07cd726e3e48bb6e49f8fcedb74bf6fe071af5c4ad42a1635dca991d84",
+    "scripts/benchmark-frost-effect-pools.mjs": "009f826e2bc997eff2ad330c458e931c5ce4da79e3150ff87609f73fe9deae5c",
+    "scripts/qa-frost-play-state.mjs": "626ae720ce9d4da3f33c4422621f4a81eed39b457b2cdd81b2d86caf6f38a1fa",
+    "scripts/frost-client-world-fixture.mjs": "3e373a9d1cade7879481736c7bf748304e537ca7a4ecac1d3210245d01e4e517",
+    "scripts/test-frost-effect-pool.mjs": "a9da276b3c1bd5a2272906a82c82e4c8d155f1c13d16a55f31ff69783bd87079",
+    "scripts/test-frost-effect-pool-client.mjs": "050ff775aa947b256f62ee3df3e5eec4312929bc7a907de20c8eb4e76e523d67",
+    "scripts/test-frost-effect-pool-scene.mjs": "a153a109b765f9dacd067df499f3525dbd91eb08764e7d530d1edf27d83777fd",
+    "scripts/test-frost-construction.mjs": "bf08d340aac6a906714d21482d7c9f7975a37411a7f60390c11113dde0596521",
+    "scripts/test-frost-effects.mjs": "ce99964f7509ea7a3f8019d32ab8e1d474fd794601f0d7e0259e57da52397aef",
+    "scripts/test-frost-demon-hunter-client.mjs": "4153481bfd45ef74f3ec7b858103ecaa8d704368f901a6febbe1e00fb3f857af"
+  },
+  "scene": {
+    "author": "MiYu",
+    "passed": true,
+    "baseline": "728b389",
+    "beforeEntities": 90179,
+    "afterEntities": 24671,
+    "removed": 65508,
+    "reductionPercent": 72.64218942325819,
+    "resources": 681,
+    "retainedNodesEqual": true,
+    "resourceReferencesEqual": true,
+    "sceneSha256": "970d436ca3c562e9c3aac5a0263fdcfe9e843ec13f03262df593cb60199cef42"
+  },
+  "sceneBenchmark": {
+    "author": "MiYu",
+    "baseline": "728b389",
+    "iterations": 20,
+    "warmups": 2,
+    "scope": "Same current implementations and Vite SSR server, two real-store authored worlds. Visible authored node components match; removed invisible pools are intentionally absent. CPU only, excluding gameplay, React, transforms, GPU, IPC and native FPS.",
+    "beforeEntities": 90179,
+    "afterEntities": 24671,
+    "visibleNodes": 1927,
+    "visibleAuthoredOutputEqual": true,
+    "beforeSceneSha256": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+    "afterSceneSha256": "970d436ca3c562e9c3aac5a0263fdcfe9e843ec13f03262df593cb60199cef42",
+    "mediansMs": {
+      "matches": {
+        "before": 45.559499999999844,
+        "after": 9.693299999999908
+      },
+      "capture": {
+        "before": 43.28740000000016,
+        "after": 9.456900000000132
+      },
+      "activation": {
+        "before": 8.723199999999906,
+        "after": 1.7445999999999913
+      }
+    },
+    "samplesMs": {
+      "before": {
+        "matches": [
+          45.747899999999845,
+          44.63369999999986,
+          46.22599999999966,
+          45.47950000000037,
+          45.5641999999998,
+          45.17860000000019,
+          44.727499999999964,
+          45.6235999999999,
+          45.559499999999844,
+          46.13630000000012,
+          45.175300000000334,
+          45.828899999999976,
+          44.996599999999944,
+          45.91010000000006,
+          45.91570000000047,
+          45.39649999999983,
+          45.19539999999961,
+          45.34059999999954,
+          46.1244999999999,
+          44.46069999999963
+        ],
+        "capture": [
+          46.45609999999988,
+          43.08860000000004,
+          42.565500000000156,
+          42.86760000000004,
+          43.23770000000013,
+          43.91519999999991,
+          43.361599999999726,
+          43.49510000000009,
+          43.31930000000011,
+          42.81939999999986,
+          42.19939999999997,
+          50.08349999999973,
+          43.28740000000016,
+          43.36360000000059,
+          42.91899999999987,
+          43.08429999999953,
+          42.55580000000009,
+          43.30969999999979,
+          42.697299999999814,
+          44.505699999999706
+        ],
+        "activation": [
+          8.624899999999798,
+          8.837500000000091,
+          8.785300000000007,
+          9.75500000000011,
+          8.285899999999856,
+          9.972200000000157,
+          8.524200000000292,
+          8.349700000000212,
+          8.723199999999906,
+          8.164200000000164,
+          8.526800000000094,
+          8.590799999999945,
+          8.433099999999286,
+          8.445999999999913,
+          8.34820000000036,
+          9.24369999999999,
+          9.11279999999988,
+          8.733100000000377,
+          9.157100000000355,
+          8.788000000000466
+        ]
+      },
+      "after": {
+        "matches": [
+          9.66229999999996,
+          10.526899999999841,
+          9.693299999999908,
+          9.668099999999868,
+          9.431099999999788,
+          9.866300000000138,
+          10.176100000000133,
+          9.628299999999854,
+          10.12960000000021,
+          9.583799999999883,
+          10.009800000000268,
+          9.659500000000207,
+          9.850899999999456,
+          9.753399999999601,
+          9.798899999999776,
+          9.835100000000239,
+          9.547899999999572,
+          9.56750000000011,
+          9.646099999999933,
+          9.515900000000329
+        ],
+        "capture": [
+          9.454999999999927,
+          9.76070000000027,
+          9.115600000000086,
+          9.58600000000024,
+          9.25630000000001,
+          9.115999999999985,
+          9.24770000000035,
+          9.459699999999884,
+          9.456900000000132,
+          9.191299999999956,
+          9.604699999999866,
+          10.839199999999892,
+          9.855199999999968,
+          10.001200000000608,
+          9.673799999999574,
+          9.129899999999907,
+          9.53060000000005,
+          9.14759999999933,
+          9.294499999999971,
+          9.194400000000314
+        ],
+        "activation": [
+          1.988999999999578,
+          1.9293000000002394,
+          1.6608000000001084,
+          1.9242999999996755,
+          1.834100000000035,
+          1.7354999999997744,
+          1.7445999999999913,
+          1.7660000000000764,
+          1.71100000000024,
+          1.7085000000001855,
+          1.7276999999999134,
+          2.0001000000002023,
+          1.6956999999993059,
+          1.8392000000003463,
+          1.6908999999996013,
+          1.8315000000002328,
+          1.7016999999996187,
+          1.7347000000008848,
+          1.6682000000000698,
+          2.432400000000598
+        ]
+      }
+    }
+  },
+  "activationBenchmark": {
+    "author": "MiYu",
+    "scope": "One unused requested-world activation lookup followed by displayed-world activation, matching native paint handoff. Game queries actual camera/environment/interactive candidates; Scene performs three all-entity query passes. Same Vite SSR server and real-store scene; CPU only, excluding transforms, drawing, GPU, IPC, scripts and native FPS.",
+    "baseline": "728b389",
+    "baselineSourceSha256": "6903ead8f53c4e9e1b8c2bc7ccc1b8084ba6b98205dcc97e8efe5353def06f26",
+    "sourceSceneSha256": "970d436ca3c562e9c3aac5a0263fdcfe9e843ec13f03262df593cb60199cef42",
+    "entities": 24671,
+    "iterations": 30,
+    "warmups": 2,
+    "mediansMs": {
+      "nativeGame": {
+        "before": 2.4304000000001906,
+        "after": 1.2469999999998436,
+        "queriedIds": 5,
+        "passes": 1,
+        "activeResults": 5,
+        "outputEqual": true,
+        "outputSha256": "07992e8cb501c42f56a579fa0818cbe8562cb6decffcfb6a6e122cb4d9084dcd"
+      },
+      "nativeScene": {
+        "before": 6.093499999999949,
+        "after": 3.563799999999901,
+        "queriedIds": 24671,
+        "passes": 3,
+        "activeResults": 5781,
+        "outputEqual": true,
+        "outputSha256": "d4ff6909e3dee418c0e74f26a668fcb51d2fe1ebba5685cd4a92c3bd7475324f"
+      }
+    },
+    "samplesMs": {
+      "nativeGame": {
+        "before": [
+          2.3541000000000167,
+          2.3293999999998505,
+          2.2604999999998654,
+          2.4861000000000786,
+          2.4989999999997963,
+          2.8540999999997894,
+          2.4190000000000964,
+          2.4196999999999207,
+          2.4304000000001906,
+          2.630899999999883,
+          2.42470000000003,
+          7.752800000000207,
+          2.8080999999999676,
+          2.067600000000084,
+          2.038200000000188,
+          2.0404000000000906,
+          2.386799999999994,
+          2.1450999999999567,
+          2.0652000000000044,
+          2.0960999999999785,
+          2.1684999999999945,
+          2.748800000000074,
+          2.5826999999999316,
+          2.652599999999893,
+          2.6503000000000156,
+          9.04970000000003,
+          2.69179999999983,
+          2.5213999999998578,
+          2.471499999999878,
+          2.1736000000000786
+        ],
+        "after": [
+          1.3560999999999694,
+          1.2799999999999727,
+          1.1534999999998945,
+          1.1800000000000637,
+          1.251700000000028,
+          1.4402000000000044,
+          1.207400000000007,
+          1.2666999999999007,
+          1.3411000000000968,
+          1.658200000000079,
+          1.2853000000000065,
+          1.2097000000001117,
+          1.082300000000032,
+          1.0527000000001863,
+          1.0376000000001113,
+          1.0636999999999261,
+          1.2877999999998337,
+          1.1815999999998894,
+          1.0718999999999141,
+          1.0531000000000859,
+          1.2469999999998436,
+          1.384800000000041,
+          1.309400000000096,
+          1.336999999999989,
+          1.3843000000001666,
+          1.5015000000000782,
+          1.1041000000000167,
+          1.0623000000000502,
+          1.1213000000000193,
+          1.0708999999999378
+        ]
+      },
+      "nativeScene": {
+        "before": [
+          8.796599999999899,
+          5.495799999999917,
+          5.611699999999928,
+          8.810600000000022,
+          5.988599999999906,
+          5.944700000000012,
+          6.889000000000124,
+          7.007899999999836,
+          6.813199999999824,
+          5.619100000000117,
+          7.806699999999864,
+          6.093499999999949,
+          5.399499999999989,
+          8.269400000000132,
+          5.376400000000103,
+          5.4164999999998145,
+          7.221499999999878,
+          5.9827000000000226,
+          5.440500000000156,
+          7.864100000000008,
+          5.869100000000117,
+          6.216499999999996,
+          8.108899999999949,
+          7.920100000000048,
+          5.356599999999844,
+          5.29970000000003,
+          7.22810000000004,
+          5.327399999999898,
+          5.791400000000067,
+          7.598399999999856
+        ],
+        "after": [
+          3.623600000000124,
+          3.361599999999953,
+          4.335100000000011,
+          3.8278000000000247,
+          3.500400000000127,
+          3.350300000000061,
+          3.575700000000097,
+          5.339500000000044,
+          3.563799999999901,
+          3.4594999999999345,
+          3.5023000000001048,
+          3.5549999999998363,
+          3.5819000000001324,
+          3.8911000000000513,
+          3.6140000000000327,
+          3.3864000000000942,
+          3.552699999999959,
+          3.29950000000008,
+          3.574000000000069,
+          3.36850000000004,
+          3.5007000000000517,
+          5.152399999999943,
+          6.969200000000001,
+          3.6820999999999913,
+          4.177400000000034,
+          3.4715000000001055,
+          3.7701999999999316,
+          3.3590999999998985,
+          3.4452000000001135,
+          3.4815000000000964
+        ]
+      }
+    }
+  },
+  "generatedClient": {
+    "author": "MiYu",
+    "passed": true,
+    "checks": 16,
+    "initialEntities": 24671,
+    "finalEntities": 24679,
+    "scope": "Generated Main.js with deferred commits; all three pool kinds, slots beyond LIMIT, identity child transforms, part growth/shrink, hide/reuse, absent-hide lookup suppression, discarded command recovery and native-normalized snapshot acknowledgement."
+  },
+  "reproduction": {
+    "Assets/Scenes/Main.mscene": true,
+    "Assets/Scripts/Main.js": true,
+    "project.json": true
+  },
+  "tests": {
+    "poolUnitPassed": 5,
+    "editorPassed": 18,
+    "coreSceneScriptReleasePassed": 66,
+    "coreSceneScriptIgnored": 2,
+    "editorHostLibraryPassed": 36,
+    "editorHostLibraryIgnored": 2,
+    "actualSampleIntegrationPassed": 3,
+    "knownActualSampleIntegrationFailed": 1,
+    "actualSampleMenuBaselineFailed": true,
+    "statusConstructionDemonHunterClientPassed": true,
+    "runtimeReleaseCheckPassed": true,
+    "independentReadOnlyReview": "No remaining blocker after failed-write recovery and native-normalized acknowledgement fixes."
+  },
+  "knownFailures": [
+    {
+      "test": "classic_menu_clicks_route_maps_settings_save_and_quit",
+      "scope": "Fails both compact sample and prior accepted 90,179-node scene/script; does not count as a passing regression.",
+      "error": "QuickJS Error: interrupted in groundPlane → groundSample → groundClear → routeSearch → path → Night Elf AI building/produce/execute/step → stepTick.",
+      "baselineReceipt": "native-play-state-spatial-behaviour-base.json",
+      "baselineMainSha256": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
+      "baselineSceneSha256": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+      "baselineTestSeconds": 108.03,
+      "currentTestReceipt": "tmp/effect-pool-rust-serial.log",
+      "baselineTestReceipt": "tmp/effect-pool-menu-baseline.log"
+    }
+  ],
+  "nativeBuild": {
+    "seconds": 198.7786795,
+    "exitCode": 0,
+    "executable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+    "sha256": "67334c4efa6773810c4bc437c9a7cbe6d6d0b04b20ea0074871c39eab81d6761"
+  },
+  "native": {
+    "receipt": "native-play-state-spatial-effect-pools.json",
+    "passed": true,
+    "elapsedMs": 209070,
+    "steps": [
+      {
+        "name": "full native scene readiness",
+        "ms": 19410
+      },
+      {
+        "name": "large hierarchy native UI interaction",
+        "ms": 48323
+      },
+      {
+        "name": "native Scene spatial query",
+        "ms": 17271
+      },
+      {
+        "name": "actual F1 skirmish start",
+        "ms": 10070
+      },
+      {
+        "name": "native Scene activation in Play",
+        "ms": 7627
+      },
+      {
+        "name": "continuous native playback sample",
+        "ms": 46077
+      },
+      {
+        "name": "owned WebView CPU profile",
+        "ms": 11058
+      },
+      {
+        "name": "paused Scene editing and selection",
+        "ms": 9137
+      },
+      {
+        "name": "pause step and authored restoration",
+        "ms": 1261
+      },
+      {
+        "name": "native Toggle InputField and restart session",
+        "ms": 31855
+      }
+    ],
+    "hierarchy": {
+      "initialDom": 1730,
+      "initialRows": 14,
+      "entities": 24671,
+      "expanded": {
+        "dom": 1972,
+        "rows": 30,
+        "scrollHeight": 592104
+      },
+      "end": {
+        "scrollTop": 591596,
+        "rows": 30,
+        "active": "Missile aura 255"
+      },
+      "searchRestore": true,
+      "externalSelectionReveal": true,
+      "rename": true,
+      "pointerDrag": true,
+      "pointerDragMs": 3704
+    },
+    "summary": {
+      "intervals": 240,
+      "averagePresentIntervalMs": 116.02416666646799,
+      "p95PresentIntervalMs": 140.10000014305115,
+      "presentedFps": 8.618894052259622,
+      "averageRequestMs": 100.03333334227403,
+      "averageRenderMs": 16.648700833333343,
+      "averageCommandMs": 64.37429791666669,
+      "averageUploadMs": 0.8391666601101557,
+      "averageWorldSyncMs": 2.9745733333333346,
+      "averageSimulationMs": 64.6148629166667,
+      "averageSimulationRequestMs": 96.45250000754992
+    },
+    "priorSummary": {
+      "intervals": 222,
+      "averagePresentIntervalMs": 203.69594594594594,
+      "p95PresentIntervalMs": 356,
+      "presentedFps": 4.909277871761701,
+      "averageRequestMs": 171.28385649989005,
+      "averageRenderMs": 26.013148878923765,
+      "averageCommandMs": 50.112681614349796,
+      "averageUploadMs": 0.8278026837404533,
+      "averageWorldSyncMs": 6.7533565022421564,
+      "averageSimulationMs": 66.10210717488788,
+      "averageSimulationRequestMs": 309.68161434336093
+    },
+    "uiRefreshSummary": {
+      "latest": {
+        "source": "game",
+        "timestamp": 146675.19999980927,
+        "sampleCount": 10,
+        "frameMs": 26.72999999523163,
+        "frameMaxMs": 62.5,
+        "paintMs": 6.540000009536743,
+        "paintMaxMs": 18.100000143051147,
+        "entities": 24671,
+        "drawItems": 0,
+        "uiPrimitives": 547,
+        "uiBatches": 32,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      "samples": 173,
+      "averageFrameMs": 22.304730356236703,
+      "p95FrameMs": 25.5,
+      "peakFrameMs": 110.70000004768372,
+      "averagePaintMs": 6.5131687733969335,
+      "p95PaintMs": 7.51666663090388,
+      "peakPaintMs": 19.399999856948853
+    },
+    "renderSize": [
+      850,
+      478
+    ],
+    "counts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 24671,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 548
+    },
+    "visibleCountsMatchPrior": {
+      "cameraVisibleObjects": true,
+      "shadowVisibleObjects": true,
+      "submittedObjects": true,
+      "renderObjects": true
+    },
+    "exactWorldRevision": 351,
+    "sceneObservation": {
+      "changed": true,
+      "unchangedRevisionStable": true,
+      "restored": true,
+      "mutation": "Inspector Active checkbox in paused Play",
+      "fromRevision": 434,
+      "toRevision": 436
+    },
+    "pauseStepStop": true,
+    "nativeInteractiveUi": {
+      "toggleClick": true,
+      "inputEdit": true,
+      "stepRetainsEdits": true,
+      "restartRestoresAuthored": true,
+      "revision": 2
+    },
+    "consoleErrors": 0,
+    "shutdown": {
+      "pid": 95580,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-effect-pools-1791657916474\\runtime\\com.mengine.editor.agent-oWipUB '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-effect-pools-1791657916474\\runtime\\com.mengine.editor.agent-oWipUB'"
+    }
+  },
+  "browserCpuProfile": {
+    "scope": "Separate 10-second owned-QA Game playback after the canonical 45-second sample; leaf CPU time includes native/idle nodes and profiler overhead.",
+    "targetUrl": "http://tauri.localhost/",
+    "samples": 5557,
+    "durationMs": 10886.074,
+    "topSelf": [
+      {
+        "functionName": "(idle)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 2458.7450000000013
+      },
+      {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 1174.457
+      },
+      {
+        "functionName": "observe",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 77608,
+        "selfMs": 418.3160000000001
+      },
+      {
+        "functionName": "Ge",
+        "scriptId": "23",
+        "url": "http://tauri.localhost/assets/uiLayout-D9WxEVPa.js",
+        "lineNumber": 0,
+        "columnNumber": 24937,
+        "selfMs": 409.15099999999984
+      },
+      {
+        "functionName": "Li",
+        "scriptId": "44",
+        "url": "http://tauri.localhost/assets/Viewport-CaXBlx0D.js",
+        "lineNumber": 32,
+        "columnNumber": 20216,
+        "selfMs": 401.708
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 340.5259999999999
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 333.1690000000001
+      },
+      {
+        "functionName": "gt",
+        "scriptId": "44",
+        "url": "http://tauri.localhost/assets/Viewport-CaXBlx0D.js",
+        "lineNumber": 32,
+        "columnNumber": 43502,
+        "selfMs": 322.85599999999994
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 321.26199999999983
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 287.7430000000001
+      },
+      {
+        "functionName": "(garbage collector)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 268.836
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 205.02700000000002
+      },
+      {
+        "functionName": "capture",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 74232,
+        "selfMs": 185.39299999999992
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 184.31299999999993
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 164.10800000000006
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 161.944
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 161.68699999999998
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 155.57700000000003
+      },
+      {
+        "functionName": "_a",
+        "scriptId": "23",
+        "url": "http://tauri.localhost/assets/uiLayout-D9WxEVPa.js",
+        "lineNumber": 0,
+        "columnNumber": 37200,
+        "selfMs": 150.89300000000006
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 140.04999999999998
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 122.20699999999997
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 115.68299999999998
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-DMuQRYhv.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 115.59599999999999
+      },
+      {
+        "functionName": "kr",
+        "scriptId": "23",
+        "url": "http://tauri.localhost/assets/uiLayout-D9WxEVPa.js",
+        "lineNumber": 0,
+        "columnNumber": 35604,
+        "selfMs": 108.663
+      },
+      {
+        "functionName": "p",
+        "scriptId": "44",
+        "url": "http://tauri.localhost/assets/Viewport-CaXBlx0D.js",
+        "lineNumber": 32,
+        "columnNumber": 43386,
+        "selfMs": 106.25099999999999
+      }
+    ],
+    "rawProfile": "E:\\work\\codex\\worktrees\\1339\\MEgine\\tmp\\spatial-effect-pools-browser-cpu-profile.json"
+  },
+  "limitations": [
+    "Native presentedFps counts native pixel deliveries; UI refresh averageFrameMs is a separate frontend rate. The current native presentation is 8.619 FPS, not 44.834 FPS.",
+    "Native and browser stage timings overlap; the single-run comparison does not establish isolated causal FPS gains.",
+    "The full sample regression includes an unresolved baseline AI route-search timeout.",
+    "The QA-owned editor exits normally; WebView cache cleanup returns EPERM, so its owned fixture remains.",
+    "Full Warcraft III feature parity and smooth large-scene gameplay remain incomplete."
+  ],
+  "stagedSourceHashes": {
+    "crates/mengine-core/src/command.rs": {
+      "sha256": "476d5e2471aeee07ec08cf7fa3346d3cd2103ce64ca11a1565d089bbcdaebcc4",
+      "gitBlob": "85cde7168233fa7a336837f585191712c5de3357",
+      "sameAsCheckoutBytes": false
+    },
+    "crates/mengine-core/src/world.rs": {
+      "sha256": "65bd444bfd712618674616602104609010cd6741be285dbf3320c7201b452500",
+      "gitBlob": "6f4e77a86f44e5fd97920788873b8248d59fdbc7",
+      "sameAsCheckoutBytes": false
+    },
+    "crates/mengine-script/src/bridge.rs": {
+      "sha256": "11e2d41acb78adab98daceb40c1a07eb3aa7185ca9d38fbb299009c4357e4819",
+      "gitBlob": "6e243e8155ae696ad7b91f8d435a78c77841cf3f",
+      "sameAsCheckoutBytes": true
+    },
+    "crates/mengine-editor-host/src/project.rs": {
+      "sha256": "b7acaf33f9e947ba803785dc060b8e0b0fe747dcde63d6910db0403e119ec641",
+      "gitBlob": "cc1987fbec703d60561c15ba1761dee833b34df7",
+      "sameAsCheckoutBytes": false
+    },
+    "crates/mengine-editor-host/tests/frost_sample.rs": {
+      "sha256": "da9ef4d969ab97009535ec01522ca05f82bc401181f4e450ac9ff782a0d9c67f",
+      "gitBlob": "cdb7a652e60903c5db1c21c4c89c43b43591c737",
+      "sameAsCheckoutBytes": false
+    },
+    "crates/mengine-runtime/src/main.rs": {
+      "sha256": "3d5c37d37e740f33824d09af833dbb7edebe95d2609966216ef1407945d18bcc",
+      "gitBlob": "bbfa74ddcff150bb703aec227e264260984cd788",
+      "sameAsCheckoutBytes": true
+    },
+    "crates/mengine-runtime/src/prefabs.rs": {
+      "sha256": "6efb0dba44b2b5d45118958c9a275713d596f2ba6f8714abb476656646a4e560",
+      "gitBlob": "50f998a21204da7c11ea0f7a373fff61365e5e3e",
+      "sameAsCheckoutBytes": false
+    },
+    "crates/mengine-scene/src/prefab.rs": {
+      "sha256": "853f5c56d5f61bf3f38a24358bb34f6a0b85100501daac67c92141f71999b23b",
+      "gitBlob": "68019ca2de20339bac25df8ecfdf2f9939154802",
+      "sameAsCheckoutBytes": false
+    },
+    "crates/mengine-scene/src/scene_file.rs": {
+      "sha256": "1a440a1a112018fbc65c463efa4b5ff7f7094b860b61762d017d35811afa0791",
+      "gitBlob": "6bba5a7d2948a30258d12eb9f7463978db3a1e7c",
+      "sameAsCheckoutBytes": false
+    },
+    "packages/editor/src/hierarchyActivation.ts": {
+      "sha256": "29196e3fe66b9764754d02a333e66ff62851f4f4abb32ee808d458babe48e370",
+      "gitBlob": "5fcfc2846dcc2b4c78e29dd33d64b99e39e31ef3",
+      "sameAsCheckoutBytes": true
+    },
+    "packages/editor/tests/hierarchyActivation.test.mjs": {
+      "sha256": "c267546b67c8c4634a68c6ef1c838a438f6707fc4362de1575a1403d0de3288e",
+      "gitBlob": "1b3433cb87e83db0e2376b1abda1d7aeebea5632",
+      "sameAsCheckoutBytes": true
+    },
+    "samples/frostbound-realms/game/client.js": {
+      "sha256": "962905497907944f0587c3ca3107b2cf8519cca0467c97cac365f99c80b26634",
+      "gitBlob": "b70a026a0a781057e79e3d17c738b9d01138a925",
+      "sameAsCheckoutBytes": false
+    },
+    "samples/frostbound-realms/game/effect-pool.js": {
+      "sha256": "176dc0910ac985bbd9ad9c23f901ebfc4b3f1ded58f02b97cb89341c4ec87e6f",
+      "gitBlob": "d5f622b53aab1ee6f5e180377b88b805aa3b6c74",
+      "sameAsCheckoutBytes": true
+    },
+    "scripts/build-frostbound.mjs": {
+      "sha256": "a4141277b88fc2dc94e63b66cc551cdfcbd8fbd4d216bde681face21500e5a9c",
+      "gitBlob": "5b9ba7877a75a1f0bd0ae413c7b57401267245b1",
+      "sameAsCheckoutBytes": true
+    },
+    "scripts/benchmark-frost-activation.mjs": {
+      "sha256": "059c7a07cd726e3e48bb6e49f8fcedb74bf6fe071af5c4ad42a1635dca991d84",
+      "gitBlob": "df3032724e59a34634c7ff17c851de6f113f8bd3",
+      "sameAsCheckoutBytes": true
+    },
+    "scripts/benchmark-frost-effect-pools.mjs": {
+      "sha256": "009f826e2bc997eff2ad330c458e931c5ce4da79e3150ff87609f73fe9deae5c",
+      "gitBlob": "6151f4d0790bc2324c21794aa574070c3a8a5ff3",
+      "sameAsCheckoutBytes": true
+    },
+    "scripts/qa-frost-play-state.mjs": {
+      "sha256": "749a1bb38e21e4015665e60936cb9687117538175e910a535d519c7b839f410d",
+      "gitBlob": "ccae08be2d1e853c38a47d74eaa5f97edcc2edb2",
+      "sameAsCheckoutBytes": false
+    },
+    "scripts/frost-client-world-fixture.mjs": {
+      "sha256": "3e373a9d1cade7879481736c7bf748304e537ca7a4ecac1d3210245d01e4e517",
+      "gitBlob": "76f244b63f3bf01c3e17e3c7b85e869c44a75037",
+      "sameAsCheckoutBytes": true
+    },
+    "scripts/test-frost-effect-pool.mjs": {
+      "sha256": "a9da276b3c1bd5a2272906a82c82e4c8d155f1c13d16a55f31ff69783bd87079",
+      "gitBlob": "87d076e6e4ebd14d992b249dc2747389527b1880",
+      "sameAsCheckoutBytes": true
+    },
+    "scripts/test-frost-effect-pool-client.mjs": {
+      "sha256": "050ff775aa947b256f62ee3df3e5eec4312929bc7a907de20c8eb4e76e523d67",
+      "gitBlob": "87ab86be6fef79a478d049c2ae1da8bddcfa94c2",
+      "sameAsCheckoutBytes": true
+    },
+    "scripts/test-frost-effect-pool-scene.mjs": {
+      "sha256": "a153a109b765f9dacd067df499f3525dbd91eb08764e7d530d1edf27d83777fd",
+      "gitBlob": "434732254f2cf50716c1747987d40cf7a10600c4",
+      "sameAsCheckoutBytes": true
+    },
+    "scripts/test-frost-construction.mjs": {
+      "sha256": "f9eab22e6de873e505c9a4631f2c11b7e98c8076e6b3019292b268adc3e44820",
+      "gitBlob": "93e54417182098b4f05d9a0cf781967a5922bfc2",
+      "sameAsCheckoutBytes": false
+    },
+    "scripts/test-frost-effects.mjs": {
+      "sha256": "ce99964f7509ea7a3f8019d32ab8e1d474fd794601f0d7e0259e57da52397aef",
+      "gitBlob": "076470116720f891d790b9d6b740ccee14a96489",
+      "sameAsCheckoutBytes": true
+    },
+    "scripts/test-frost-demon-hunter-client.mjs": {
+      "sha256": "4153481bfd45ef74f3ec7b858103ecaa8d704368f901a6febbe1e00fb3f857af",
+      "gitBlob": "d99adb06ab131a67501f0fee7e08e4b04c25237d",
+      "sameAsCheckoutBytes": true
+    },
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": {
+      "sha256": "970d436ca3c562e9c3aac5a0263fdcfe9e843ec13f03262df593cb60199cef42",
+      "gitBlob": "915591803d2b127dedbf9fdcfb0451073cf9d84c",
+      "sameAsCheckoutBytes": true
+    },
+    "samples/frostbound-realms/Assets/Scripts/Main.js": {
+      "sha256": "b9add58bb8cbb48ca1919d995ebbfa1465c25c66f0d6227b9d63c87d3f55bf92",
+      "gitBlob": "1ab3bcd96fdd52f84c66f3d2da5a850a5cb1c6ab",
+      "sameAsCheckoutBytes": true
+    }
+  },
+  "hashScope": "Source hashes describe tested checkout bytes; stagedSourceHashes describe index blobs, equal to checkout or CRLF-to-LF normalization."
+}

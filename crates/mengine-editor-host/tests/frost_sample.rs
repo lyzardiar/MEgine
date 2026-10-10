@@ -6,7 +6,7 @@ use std::path::PathBuf;
 fn telemetry(s: &WorldSnapshot) -> Value { serde_json::from_str(s.entities.iter().find(|e|e.name.as_deref()==Some("Frost telemetry")).unwrap().components["Text"]["text"].as_str().unwrap()).unwrap() }
 #[test]
 fn classic_menu_clicks_route_maps_settings_save_and_quit() {
-    let source_root=PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    let source_root=std::env::var_os("MENGINE_FROST_TEST_SOURCE").map(PathBuf::from).unwrap_or_else(||PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms"));
     let root=std::env::temp_dir().join(format!("mengine-classic-menu-{}-{}",std::process::id(),std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));std::fs::create_dir_all(&root).unwrap();
     let source=std::fs::read_to_string(source_root.join("Assets/Scripts/Main.js")).unwrap();
     let scene:Value=serde_json::from_slice(&std::fs::read(source_root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();

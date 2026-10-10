@@ -4,8 +4,15 @@ export function createHierarchyActiveLookup(entities: readonly Entity[]) {
   const byId = new Map<number, Entity>(), active = new Map<number, boolean>();
   for (const entity of entities) if (!byId.has(entity.entity)) byId.set(entity.entity, entity);
   return (id: number): boolean => {
-    const path: number[] = [], visiting = new Set<number>();
-    let current: number | null | undefined = id, result = true;
+    const cached = active.get(id);
+    if (cached !== undefined) return cached;
+    const first = byId.get(id);
+    if (!first || first.active === false) return false;
+    const parent = first.parent;
+    if (parent == null) { active.set(id, true); return true; }
+    const path: number[] = [id], visiting = new Set<number>();
+    visiting.add(id);
+    let current: number | null | undefined = parent, result = true;
     while (current != null) {
       if (active.has(current)) { result = active.get(current)!; break; }
       const entity = byId.get(current);
@@ -18,5 +25,7 @@ export function createHierarchyActiveLookup(entities: readonly Entity[]) {
   };
 }
 export function viewportActiveLookup(entities: readonly Entity[], playing: boolean, isGame: boolean, hiddenIds: readonly number[] | undefined, fallback?: (id: number) => boolean) {
-  return playing && fallback && (isGame || !hiddenIds?.length) ? createHierarchyActiveLookup(entities) : fallback ?? (() => true);
+  if (!playing || !fallback || !isGame && hiddenIds?.length) return fallback ?? (() => true);
+  let active: ReturnType<typeof createHierarchyActiveLookup> | undefined;
+  return (id: number) => (active ??= createHierarchyActiveLookup(entities))(id);
 }

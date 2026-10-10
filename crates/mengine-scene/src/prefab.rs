@@ -240,7 +240,7 @@ pub fn instantiate_prefab(
     let mut pending = Vec::new();
     flatten(&prefab.root, None, 0, &mut pending);
     for entry in &pending {
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some(entry.node.name.clone()),
             components: entry.node.components.clone(),
         });

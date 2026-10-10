@@ -361,7 +361,7 @@ impl World {
 
     pub fn apply_command(&mut self, cmd: WorldCommand) {
         match cmd {
-            WorldCommand::Spawn { name, components } => {
+            WorldCommand::Spawn { name, components, active, parent } => {
                 let e = self.spawn_empty();
                 if let Some(n) = name.clone() {
                     self.entities[e.index as usize].name = Some(n.clone());
@@ -372,6 +372,8 @@ impl World {
                         self.apply_set_component(e, &key, val);
                     }
                 }
+                self.set_parent(e, parent.map(Entity::from_u64));
+                self.set_editor_state(e, self.sibling_index(e), active);
                 self.last_spawned.push(e);
             }
             WorldCommand::Despawn { entity } => {
@@ -583,6 +585,36 @@ impl Transform {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn spawn_preserves_legacy_defaults_and_initial_hierarchy_state() {
+        use super::*;
+        let mut world = World::new();
+        let legacy: WorldCommand = serde_json::from_value(serde_json::json!({"op":"spawn","name":"legacy","components":{}})).unwrap();
+        world.apply_command(legacy);
+        let parent = *world.last_spawned.last().unwrap();
+        assert!(world.entity_active(parent));
+        assert!(world.get_component::<Parent>(parent).is_none());
+        let hidden: WorldCommand = serde_json::from_value(serde_json::json!({"op":"spawn","active":false,"parent":parent.to_u64(),"components":{"Transform":{"position":[0,0,0]}}})).unwrap();
+        world.apply_command(hidden);
+        let child = *world.last_spawned.last().unwrap();
+        assert!(!world.entity_active(child));
+        assert_eq!(world.get_component::<Parent>(child).unwrap().entity, parent);
+        assert!(world.get_component::<Children>(parent).unwrap().entities.contains(&child));
+        world.apply_command(WorldCommand::SetActive { entity: child.to_u64(), active: true });
+        assert!(world.entity_active(child));
+        world.despawn(parent);
+        let replacement = world.spawn_empty();
+        assert_eq!(replacement.index, parent.index);
+        assert_ne!(replacement.generation, parent.generation);
+        for id in [parent.to_u64(), u64::MAX] {
+            let invalid: WorldCommand = serde_json::from_value(serde_json::json!({"op":"spawn","parent":id,"components":{}})).unwrap();
+            let before = world.last_spawned.len();
+            world.apply_command(invalid);
+            assert_eq!(world.last_spawned.len(), before + 1);
+            assert!(world.get_component::<Parent>(*world.last_spawned.last().unwrap()).is_none());
+        }
+    }
+
     #[test]
     fn component_presence_tracks_typed_serialized_and_entity_lifecycles() {
         use super::*;

@@ -3051,7 +3051,7 @@ declare function onTimelineSignal(event: EngineTimelineSignalInfo): void;
             }),
         ),
     ] {
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some(entity_name.into()),
             components,
         });
