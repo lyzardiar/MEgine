@@ -1,0 +1,5214 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "1955996be78889656aeb26f8bcfd3e4bc4a57a31",
+  "scope": "Derive visible stationary units once per HUD draw for scenery and grass distance tests. Rebuild on every render; no cache survives a draw or hides direct state changes.",
+  "sourceHashes": {
+    "samples/frostbound-realms/game/client.js": "b5678e99388e1d95cb6619cf1260697387a76be243e0aef4b778574c8975ae92",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "9e56f4bcc468871986c344b8b42697caac65b6a92bed1062db4e059edcaf382b",
+    "scripts/test-frost-ground-blockers.mjs": "fbd5f17afd8b73061bd1bd17a83d91695f82f03f55871b31bb1c260a54a94613",
+    "scripts/qa-frost-play-state.mjs": "431181fe7ea631c4bc1867d782933bc91684547e4c9490badd5095b2eed0acf6"
+  },
+  "verification": {
+    "fullWorldEquivalence": {
+      "author": "MiYu",
+      "passed": true,
+      "baseline": "1955996",
+      "completeWorldsCompared": 90,
+      "entities": 24671,
+      "scope": "Three map families, four viewport shapes, retained frames, live editor geometry/water/surface/doodad/tileset edits, animated water clocks, fog reveal/hide, menu/editor/game reactivation and native-normalized component values."
+    },
+    "stationaryUnitAndFogEquivalence": {
+      "author": "MiYu",
+      "passed": true,
+      "baseline": "1955996be78889656aeb26f8bcfd3e4bc4a57a31",
+      "completeWorldsCompared": 36,
+      "entities": 24671,
+      "callCounts": [
+        {
+          "label": "defaultMap mobile units",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "defaultMap stationary inside",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "defaultMap exact radius",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "defaultMap outside radius",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "defaultMap enemy hidden",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "defaultMap enemy revealed",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "defaultMap stationary removed",
+          "before": 25984,
+          "after": 512
+        },
+        {
+          "label": "defaultMap stationary recreated",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "defaultMap dead stationary",
+          "before": 26184,
+          "after": 513
+        },
+        {
+          "label": "defaultMap editor",
+          "before": 0,
+          "after": 0
+        },
+        {
+          "label": "defaultMap title",
+          "before": 0,
+          "after": 0
+        },
+        {
+          "label": "defaultMap playing",
+          "before": 26184,
+          "after": 513
+        },
+        {
+          "label": "highlandMap mobile units",
+          "before": 25542,
+          "after": 516
+        },
+        {
+          "label": "highlandMap stationary inside",
+          "before": 25542,
+          "after": 516
+        },
+        {
+          "label": "highlandMap exact radius",
+          "before": 25542,
+          "after": 516
+        },
+        {
+          "label": "highlandMap outside radius",
+          "before": 25542,
+          "after": 516
+        },
+        {
+          "label": "highlandMap enemy hidden",
+          "before": 25542,
+          "after": 516
+        },
+        {
+          "label": "highlandMap enemy revealed",
+          "before": 25542,
+          "after": 516
+        },
+        {
+          "label": "highlandMap stationary removed",
+          "before": 25344,
+          "after": 512
+        },
+        {
+          "label": "highlandMap stationary recreated",
+          "before": 25542,
+          "after": 516
+        },
+        {
+          "label": "highlandMap dead stationary",
+          "before": 25539,
+          "after": 513
+        },
+        {
+          "label": "highlandMap editor",
+          "before": 0,
+          "after": 0
+        },
+        {
+          "label": "highlandMap title",
+          "before": 0,
+          "after": 0
+        },
+        {
+          "label": "highlandMap playing",
+          "before": 25539,
+          "after": 513
+        },
+        {
+          "label": "siegeMap mobile units",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "siegeMap stationary inside",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "siegeMap exact radius",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "siegeMap outside radius",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "siegeMap enemy hidden",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "siegeMap enemy revealed",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "siegeMap stationary removed",
+          "before": 25984,
+          "after": 512
+        },
+        {
+          "label": "siegeMap stationary recreated",
+          "before": 26187,
+          "after": 516
+        },
+        {
+          "label": "siegeMap dead stationary",
+          "before": 26184,
+          "after": 513
+        },
+        {
+          "label": "siegeMap editor",
+          "before": 0,
+          "after": 0
+        },
+        {
+          "label": "siegeMap title",
+          "before": 0,
+          "after": 0
+        },
+        {
+          "label": "siegeMap playing",
+          "before": 26184,
+          "after": 513
+        }
+      ],
+      "scope": "Full native-normalized client worlds over three maps: 128 mobile units, stationary blockers moving across the exact radius, enemy fog hide/reveal, removal/recreation, dead blockers and editor/menu/game transitions. Visibility call counts include all client phases. Excludes native rendering, assets and IPC."
+    },
+    "completeWorldsCompared": 126,
+    "existingDoodadClientPassed": true,
+    "existingTreeFellingClientPassed": true,
+    "nativeQuickJsBeforeAndAfterPassed": true,
+    "clientSyntaxPassed": true,
+    "generatedClientIncludedExactly": true,
+    "mainSceneProjectUnchanged": true,
+    "editorSourcesUnchanged": true
+  },
+  "quickJsCpu": {
+    "before": {
+      "rows": [
+        {
+          "phases": {
+            "activation": {
+              "calls": 34,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 117,
+              "characters": 70649,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 30
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 57.8609
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68302,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 29
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 56.7446
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68306,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 61
+            },
+            "hudGround": {
+              "ms": 3
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 88.6685
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 34,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 118,
+              "characters": 69922,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 33
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 61.5703
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 115,
+              "characters": 69509,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 10
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 39.0705
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69514,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 24
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 52.0674
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 2
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68315,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 34
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 7
+            }
+          },
+          "stepMs": 61.3591
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 1
+            },
+            "commands": {
+              "calls": 114,
+              "characters": 70073,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 24
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 7
+            }
+          },
+          "stepMs": 53.1246
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68297,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 25
+            },
+            "hudGround": {
+              "ms": 5
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 54.4369
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68932,
+              "ms": 2
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 27
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 7
+            }
+          },
+          "stepMs": 55.091300000000004
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 34,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 117,
+              "characters": 70684,
+              "ms": 2
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 27
+            },
+            "hudGround": {
+              "ms": 5
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 54.9368
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68288,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 18
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 47.513600000000004
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69512,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 34
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 62.379400000000004
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 115,
+              "characters": 69359,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 25
+            },
+            "hudGround": {
+              "ms": 3
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 2
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 53.8316
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 115,
+              "characters": 69517,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 15
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 43.414500000000004
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68312,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 17
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 2
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 44.5158
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 114,
+              "characters": 70071,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 1
+            },
+            "hud": {
+              "ms": 32
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 59.889900000000004
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 114,
+              "characters": 70084,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 17
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 44.655
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68315,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 32.7819
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68941,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 7
+            }
+          },
+          "stepMs": 33.9936
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68306,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 33.933
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69515,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 32.4371
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69505,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 33.015299999999996
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68775,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 33.1803
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68933,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 32.7588
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68282,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 32.4375
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69497,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 32.556000000000004
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 1
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69503,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 2
+            },
+            "hudScenery": {
+              "ms": 3
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 32.29280000000001
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68293,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 2
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 32.8036
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68937,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 33.228899999999996
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68312,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 32.3709
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69500,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 6
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 7
+            }
+          },
+          "stepMs": 32.9476
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69516,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 7
+            }
+          },
+          "stepMs": 33.6404
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68791,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 19
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 51.6984
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 70140,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 5
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 33.67959999999999
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68315,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 3
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 3
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 33.5697
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68307,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 33.5173
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68293,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 5
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 7
+            }
+          },
+          "stepMs": 35.5882
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68289,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 3
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 2
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 35.5989
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 70131,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 1
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 3
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 33.709999999999994
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68298,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 1
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 3
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 33.3778
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69416,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 33.4441
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 1
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68313,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 2
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 33.4512
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68778,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 34.345800000000004
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 70013,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 3
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 34.3124
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68176,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 33.166000000000004
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69298,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 32.8374
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68179,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 33.8106
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 1
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68181,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 33.3292
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69366,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 5
+            },
+            "units": {
+              "ms": 6
+            }
+          },
+          "stepMs": 36.6648
+        }
+      ],
+      "scope": "Actual native QuickJS client with the full authored world and native incremental update path; 50 measured frames after 5 warmups. JS phases use millisecond wall-clock timestamps. Native API wrapper times are included in phases. Excludes renderer and IPC; step includes snapshot deltas and profiling storage.",
+      "mediansMs": {
+        "activation": 0.0,
+        "commands": 0.0,
+        "controls": 0.0,
+        "effects": 0.0,
+        "hud": 5.0,
+        "hudGround": 4.0,
+        "hudHeader": 2.0,
+        "hudMinimap": 1.0,
+        "hudScenery": 5.0,
+        "missiles": 0.0,
+        "resources": 1.0,
+        "simulation": 2.0,
+        "units": 6.0
+      },
+      "medianStepMs": 33.963300000000004
+    },
+    "after": {
+      "rows": [
+        {
+          "phases": {
+            "activation": {
+              "calls": 34,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 117,
+              "characters": 70649,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 30
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 56.0955
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68302,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 26
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 52.527699999999996
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68306,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 60
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 86.8307
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 34,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 118,
+              "characters": 69922,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 33
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 58.7865
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 115,
+              "characters": 69509,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 10
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 35.2847
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69514,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 22
+            },
+            "hudGround": {
+              "ms": 3
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 2
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 47.6695
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68315,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 32
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 57.886399999999995
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 114,
+              "characters": 70073,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 22
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 47.5266
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68297,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 23
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 49.481700000000004
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68932,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 26
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 51.729
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 34,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 117,
+              "characters": 70684,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 26
+            },
+            "hudGround": {
+              "ms": 5
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 50.7427
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68288,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 1
+            },
+            "hud": {
+              "ms": 18
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 43.2588
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 1
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69512,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 34
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 59.744899999999994
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 115,
+              "characters": 69359,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 24
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 50.1707
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 115,
+              "characters": 69517,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 15
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 41.709
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 1
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68312,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 16
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 41.6942
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 114,
+              "characters": 70071,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 31
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 56.4313
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 33,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 114,
+              "characters": 70084,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 15
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 40.6085
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68315,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 3
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 28.8442
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68941,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 1
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.2305
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68306,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 3
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.9147
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69515,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 3
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 1
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 28.9481
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69505,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 1
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.1245
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68775,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 1
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.642000000000003
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68933,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 28.9822
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68282,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 3
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 2
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.5262
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69497,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 3
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 2
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 30.7986
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69503,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.2095
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68293,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.4701
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68937,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 1
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.775
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68312,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.5895
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69500,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 3
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.0398
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69516,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 3
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.7713
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68791,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 1
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 19
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 47.012499999999996
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 70140,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 3
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.721600000000002
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68315,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 3
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 30.7133
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68307,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 30.8541
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68293,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 30.6106
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68289,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 3
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 3
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 30.9987
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 70131,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 3
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 2
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 31.046
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68298,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 3
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 2
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 30.4933
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69416,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 3
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 31.437600000000003
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68313,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 5
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 31.452099999999998
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 68778,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 5
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 30.552200000000003
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 112,
+              "characters": 70013,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 30.9976
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68176,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.945
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69298,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 3
+            },
+            "hudGround": {
+              "ms": 3
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 2
+            },
+            "hudScenery": {
+              "ms": 5
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 29.657
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68179,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 1
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 1
+            },
+            "simulation": {
+              "ms": 2
+            },
+            "units": {
+              "ms": 4
+            }
+          },
+          "stepMs": 30.1675
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 68181,
+              "ms": 1
+            },
+            "controls": {
+              "ms": 1
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 1
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 29.408
+        },
+        {
+          "phases": {
+            "activation": {
+              "calls": 32,
+              "characters": 0,
+              "ms": 0
+            },
+            "commands": {
+              "calls": 111,
+              "characters": 69366,
+              "ms": 0
+            },
+            "controls": {
+              "ms": 0
+            },
+            "effects": {
+              "ms": 0
+            },
+            "hud": {
+              "ms": 4
+            },
+            "hudGround": {
+              "ms": 4
+            },
+            "hudHeader": {
+              "ms": 2
+            },
+            "hudMinimap": {
+              "ms": 1
+            },
+            "hudScenery": {
+              "ms": 4
+            },
+            "missiles": {
+              "ms": 0
+            },
+            "resources": {
+              "ms": 0
+            },
+            "simulation": {
+              "ms": 4
+            },
+            "units": {
+              "ms": 5
+            }
+          },
+          "stepMs": 32.3874
+        }
+      ],
+      "scope": "Actual native QuickJS client with the full authored world and native incremental update path; 50 measured frames after 5 warmups. JS phases use millisecond wall-clock timestamps. Native API wrapper times are included in phases. Excludes renderer and IPC; step includes snapshot deltas and profiling storage.",
+      "mediansMs": {
+        "activation": 0.0,
+        "commands": 0.0,
+        "controls": 0.0,
+        "effects": 0.0,
+        "hud": 4.0,
+        "hudGround": 4.0,
+        "hudHeader": 2.0,
+        "hudMinimap": 1.0,
+        "hudScenery": 4.0,
+        "missiles": 0.0,
+        "resources": 1.0,
+        "simulation": 2.0,
+        "units": 4.0
+      },
+      "medianStepMs": 30.925849999999997
+    }
+  },
+  "native": {
+    "receipt": "docs/designs/frostbound-realms/native-play-state-spatial-ground-blockers.json",
+    "sha256": "196a1f7f6080b740840f5f5073b36bf335a5de0558393077b0fe3c1f65cab72f",
+    "executable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+    "releaseRebuildNeeded": false,
+    "releaseRebuildReason": "Only external game script and QA harness changed; Editor and Rust sources match the previously validated packaged binary.",
+    "consoleErrors": 0,
+    "presentation": {
+      "intervals": 240,
+      "averagePresentIntervalMs": 63.53291666607062,
+      "p95PresentIntervalMs": 89,
+      "presentedFps": 15.73987237601582,
+      "averageRequestMs": 53.287499993046126,
+      "averageRenderMs": 12.672320416666668,
+      "averageCommandMs": 22.059349583333322,
+      "averageUploadMs": 0.8091666668653488,
+      "averageWorldSyncMs": 2.375404166666667,
+      "averageSimulationMs": 20.39765083333333,
+      "averageSimulationRequestMs": 48.390833329161005
+    },
+    "browserPaintSummary": {
+      "latest": {
+        "source": "game",
+        "timestamp": 135016,
+        "sampleCount": 11,
+        "frameMs": 24.054545467550103,
+        "frameMaxMs": 48.39999985694885,
+        "paintMs": 7.2727272510528564,
+        "paintMaxMs": 19.5,
+        "entities": 24671,
+        "drawItems": 0,
+        "uiPrimitives": 550,
+        "uiBatches": 32,
+        "particles": 0,
+        "spineSkeletons": 0,
+        "viewportPixels": 432650
+      },
+      "samples": 171,
+      "averageFrameMs": 21.885694836457745,
+      "p95FrameMs": 25.35999999046326,
+      "peakFrameMs": 95.80000019073486,
+      "averagePaintMs": 6.96404261927858,
+      "p95PaintMs": 8.291666626930237,
+      "peakPaintMs": 32.5
+    },
+    "renderSize": [
+      850,
+      478
+    ],
+    "counts": {
+      "cameraVisibleObjects": 162,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "renderObjects": 277,
+      "uiPrimitives": 550,
+      "uiBatches": 32
+    },
+    "interactiveUi": {
+      "toggleClick": true,
+      "inputEdit": true,
+      "stepRetainsEdits": true,
+      "restartRestoresAuthored": true,
+      "revision": 2
+    },
+    "behaviour": {
+      "updatesNativeWorld": true,
+      "inactiveDoesNotUpdate": true,
+      "reactivatedUpdates": true,
+      "stopRestoresAuthored": true
+    },
+    "shutdown": {
+      "pid": 173916,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-ground-blockers-1791669558074\\runtime\\com.mengine.editor.agent-VA7K02 '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-ground-blockers-1791669558074\\runtime\\com.mengine.editor.agent-VA7K02'"
+    }
+  },
+  "timing": {
+    "qaPreparationBeforeReceiptMs": 54530,
+    "qaReceiptWindowMs": 221515,
+    "qaTotalFromObservedProcessStartMs": 276045,
+    "qaStages": [
+      {
+        "name": "full native scene readiness",
+        "ms": 17811
+      },
+      {
+        "name": "large hierarchy native UI interaction",
+        "ms": 40091
+      },
+      {
+        "name": "native Scene spatial query",
+        "ms": 16169
+      },
+      {
+        "name": "actual F1 skirmish start",
+        "ms": 9720
+      },
+      {
+        "name": "native Scene activation in Play",
+        "ms": 7359
+      },
+      {
+        "name": "continuous native playback sample",
+        "ms": 46236
+      },
+      {
+        "name": "owned WebView CPU profile",
+        "ms": 11121
+      },
+      {
+        "name": "paused Scene editing and selection",
+        "ms": 7430
+      },
+      {
+        "name": "pause step and authored restoration",
+        "ms": 1202
+      },
+      {
+        "name": "native Toggle InputField and restart session",
+        "ms": 31101
+      },
+      {
+        "name": "native Behaviour activation and restoration",
+        "ms": 26190
+      }
+    ],
+    "nativeBuildSeconds": 0
+  },
+  "comparison": {
+    "priorReceipt": "docs/designs/frostbound-realms/native-play-state-spatial-native-publication.json",
+    "presentedFps": {
+      "before": 15.357641066472794,
+      "after": 15.73987237601582
+    },
+    "averageBrowserPaintMs": {
+      "before": 7.1179917646636115,
+      "after": 6.96404261927858
+    },
+    "scope": "Separate native runs using the identical editor, scene, render size and submitted counts, with changed game script proven equivalent by 126 complete normalized world comparisons. FPS remains below smooth gameplay; isolated QuickJS differences are not a causal FPS claim."
+  },
+  "remainingPerformanceEvidence": {
+    "priorBrowserProfile": "docs/designs/frostbound-realms/native-play-state-spatial-native-publication.json",
+    "function": "playWorldSync.equalJson",
+    "sampledSelfMs": 5011.66,
+    "profileDurationMs": 10466.478,
+    "note": "Live reference comparison remains unchanged and must continue to preserve direct edits."
+  },
+  "fullWarcraftParityComplete": false
+}

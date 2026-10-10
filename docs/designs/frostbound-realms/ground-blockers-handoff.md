@@ -1,0 +1,17 @@
+# Ground decoration blockers
+
+Author: MiYu.
+
+The client derives visible stationary units once per HUD render and shares that list between 140 scenery slots and 192 grass patches. Each patch still performs its own distance test. The list is rebuilt on every draw, so moving, removal, recreation, fog changes, editor transitions and unit state changes remain visible. The original visibility predicate and type speed are preserved. Source game/client.js and its exact generated Main.js fragment are updated; other generated content, scene and project data remain unchanged.
+
+There are 126 equal complete native-normalized world comparisons: 90 existing ground/display comparisons and 36 new comparisons over three map families with 128 mobile units, stationary blockers across the exact radius, fog hide/reveal, deletion/recreation, dead blockers and editor/menu/game transitions. The default-map pressure case reduces all-client visibility calls from 26,187 to 516 without changing its world output. Existing doodad editor and tree-felling client checks pass. Syntax and exact source inclusion are verified.
+
+Two independent QuickJS runs over the real 24,671-entity authored scene pass, each with 50 measured updates after five warmups. Update median is 33.963 ms before and 30.926 ms after; scenery phase median is 5 ms before and 4 ms after. This fixture uses millisecond wall-clock JS phase markers, an isolated asset root, snapshot deltas and profiling storage, and excludes rendering and IPC. The separate runs and coarse phase clock do not establish a causal FPS improvement.
+
+Full packaged native acceptance passes, including hierarchy interaction, Scene/Game spatial queries, F1 skirmish, continuous playback, paired revisions, paused edits, step/stop, Toggle/InputField gestures, restart and Behaviour activation. Console errors are zero. Native presentation is 15.740 FPS versus 15.358 FPS in the preceding independent run, and browser paint mean is 6.964 ms versus 7.118 ms. The editor executable, scene, native 850x478 output and camera/shadow/submitted/render counts 162/188/236/277 and UI primitives/batches 550/32 match; the source game script hash changes. Both measurements remain below smooth gameplay.
+
+The previously validated editor executable is reused because frontend and Rust sources are unchanged; no Release rebuild is needed for this external game script. Its SHA-256 is 196a1f7f6080b740840f5f5073b36bf335a5de0558393077b0fe3c1f65cab72f. The native QA receipt records its measurement window and stage timings, and ground-blockers-validation.json additionally records preparation before that window. The owned editor exits normally and removes discovery; an EPERM runtime-cache removal retains the disposable fixture.
+
+Evidence: ground-blockers-validation.json, native-play-state-spatial-ground-blockers.json and the corresponding Game/hierarchy/Scene screenshots. scripts/test-frost-ground-blockers.mjs reproduces the pressure and boundary comparisons against fixed baseline 1955996. The existing manual frost_script_cpu test supports MENGINE_FROST_SCRIPT_SOURCE for separate source fixtures.
+
+Unrelated catalog, images and reports are preserved. Full Warcraft III single-player, multiplayer, map editor, TD and Dota parity remains incomplete. Continue from actual profiles: live deep comparison accounts for about 5.0 seconds of self CPU time in the preceding 10.5-second browser sample; inspection and viewport consumers must preserve direct-reference edits when changing this path.

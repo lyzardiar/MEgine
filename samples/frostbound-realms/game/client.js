@@ -373,9 +373,11 @@ var FrostClient=(()=>{
     const mini=hudRect('Minimap'),layout=editing?JSON.stringify(mini):'authored',layoutChanged=minimapLayout!==layout;
     for(let j=0;j<256;j++){const v=ground[Math.floor(j/16)*64+(j%16)*2],encoded=Math.floor(v/2),kind=encoded%3,surface=Math.floor(encoded/3),factor=v-encoded*2,c=kind===1?[.04,.2,.27,1]:kind===2?[.43,.37,.25,1]:surface===1?[.38,.31,.23,1]:surface===2?[.75,.8,.85,1]:surface===3?[.22,.40,.13,1]:surface===4?[.43,.46,.48,1]:FrostTerrain.tilesetColors[map.tileset??0];show('Mini tile '+j,world);const r=authored['Mini tile '+j].RectTransform;if(layoutChanged)set('Mini tile '+j,'RectTransform',editing?{...r,anchor_min:mini.anchor_min,anchor_max:mini.anchor_max,anchored_position:[mini.anchored_position[0]+((j%16+.5)/16-.5)*mini.size_delta[0],mini.anchored_position[1]+((Math.floor(j/16)+.5)/16-.5)*mini.size_delta[1]],size_delta:[mini.size_delta[0]/16,mini.size_delta[1]/16]}:r);set('Mini tile '+j,'Image',{color:c.map((n,k)=>k===3?n:n*factor*(1+(map.heights[Math.floor(j/16)*64+(j%16)*2]||0)*.12)),raycast_target:false});}
     minimapLayout=layout;
+    // MiYu: stationary visible blockers are shared by scenery and grass for this render.
+    const groundBlockers=world?state.units.filter(u=>(allVisible||S.isVisible(state,team,u))&&!S.types[u.kind].speed):[];
     for(let i=0;i<140;i++){
       const edge=i<72,angle=i*2.399963,x=edge?Math.cos(angle)*(35+i%4*2):((i*17.71)%54)-27,z=edge?Math.sin(angle)*(35+i%4*2):((i*23.19)%54)-27,idx=S.index(x,z);
-      const seen=edge||allVisible||state.explored[team]?.[idx],clear=edge||map.terrain[idx]===0&&(map.doodads||[]).every(d=>Math.hypot(x-d.x,z-d.z)>1.2+d.scale)&&state.units.every(u=>(!allVisible&&!S.isVisible(state,team,u))||S.types[u.kind].speed||Math.hypot(x-u.x,z-u.z)>4)&&!(state.mode==='td'&&Math.floor(ground[idx]/2)%3===2);
+      const seen=edge||allVisible||state.explored[team]?.[idx],clear=edge||map.terrain[idx]===0&&(map.doodads||[]).every(d=>Math.hypot(x-d.x,z-d.z)>1.2+d.scale)&&groundBlockers.every(u=>Math.hypot(x-u.x,z-u.z)>4)&&!(state.mode==='td'&&Math.floor(ground[idx]/2)%3===2);
       if(!world||!seen||!clear){environment('Scenery '+i,null);continue;}
       environment('Scenery '+i,FrostVisual.scenery(i,edge,zoom,map.tileset??0),[x,groundY(x,z)-.02,z]);
     }
@@ -384,7 +386,7 @@ var FrostClient=(()=>{
     const d=editing&&editorPage===9&&editorTool!=='new'?map.doodads?.[doodadIndex]:null;transform('Doodad selection',d?[d.x,groundY(d.x,d.z)+.08,d.z]:hidden,d?[(S.doodads[d.kind].radius*d.scale||d.scale)*2,.035,(S.doodads[d.kind].radius*d.scale||d.scale)*2]:[1,1,1]);
     const details=world?FrostTerrain.details(map,8):[];
     for(let i=0;i<FrostTerrain.detailCount;i++){
-      const p=details[i],seen=p&&(allVisible||state.explored[team]?.[p.tile]),clear=p&&Math.floor(ground[p.tile]/2)%3===0&&(map.doodads||[]).every(d=>Math.hypot(p.x-d.x,p.z-d.z)>S.doodads[d.kind].radius*d.scale+.55)&&state.units.every(u=>(!allVisible&&!S.isVisible(state,team,u))||S.types[u.kind].speed||Math.hypot(p.x-u.x,p.z-u.z)>4);
+      const p=details[i],seen=p&&(allVisible||state.explored[team]?.[p.tile]),clear=p&&Math.floor(ground[p.tile]/2)%3===0&&(map.doodads||[]).every(d=>Math.hypot(p.x-d.x,p.z-d.z)>S.doodads[d.kind].radius*d.scale+.55)&&groundBlockers.every(u=>Math.hypot(p.x-u.x,p.z-u.z)>4);
       if(!world||!seen||!clear){transform('Grass patch '+i,hidden);continue;}
       const v=FrostVisual.groundDetail(i,zoom,map.tileset===1||map.surfaces?.[p.tile]===3,p.normal),fog=allVisible||state.visible[team]?.[p.tile]?1:.28;
       set('Grass patch '+i,'MeshRenderer',{mesh:v.mesh,material:v.material});set('Grass patch '+i,'MaterialPropertyBlock',{override_base_color:true,base_color:[fog,fog,fog,1]});transform('Grass patch '+i,[p.x,p.y,p.z],[v.scale,v.scale,v.scale],v.rotation);
