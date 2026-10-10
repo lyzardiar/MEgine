@@ -1734,7 +1734,7 @@ var Frost = (() => {
     }
     return map;
   }
-  const groundMeshes=new WeakMap(),groundFrames=new WeakMap(),groundGraphs=new WeakMap();
+  const groundMeshes=new WeakMap(),groundPlanes=new WeakMap(),groundFrames=new WeakMap(),groundGraphs=new WeakMap(),groundRoutes=new WeakMap();
   const mix=(a,b,t)=>a+(b-a)*t;
   const tierCorners=(map,x,z)=>{const i=clamp(z,0,31)*32+clamp(x,0,31);return [[0,0],[2,0],[2,2],[0,2]].map(([u,v])=>tierHeight(map,i,u,v));};
   // MiYu: these boundaries and triangle subdivisions mirror mengine-assets/terrain_mesh.rs.
@@ -1768,12 +1768,13 @@ var Frost = (() => {
     for(const [dx,dz,a,b,na,nb] of [[0,-1,0,1,3,2],[1,0,1,2,0,3],[0,1,2,3,1,0],[-1,0,3,0,2,1]]){const nx=clamp(cx+dx,0,31),nz=clamp(cz+dz,0,31),nh=tierCorners(map,nx,nz);if(Math.abs(h[a]-nh[na])<.01&&Math.abs(h[b]-nh[nb])<.01)continue;const ts=[0,.25,.5,.75,1],cut=cuts[a];if(cut!==null&&!ts.includes(cut))ts.push(cut);ts.sort((a,b)=>a-b);for(let k=1;k<ts.length;k++)edges.push([boundary(vertices[a],h[a],vertices[b],h[b],ts[k-1]),boundary(vertices[a],h[a],vertices[b],h[b],ts[k])]);}
     return cache[i]={key,triangles,edges};
   }
-  function groundPlane(map,cx,cz){
+  function groundPlane(map,cx,cz,trusted=false){
+    if(trusted){let planes=groundPlanes.get(map);if(!planes){planes=[];groundPlanes.set(map,planes);}const i=cz*32+cx;return planes[i]!==undefined?planes[i]:planes[i]=groundPlane(map,cx,cz);}
     const height=map.heights?.[cz*32+cx]||0;for(let z=cz-1;z<=cz+1;z++)for(let x=cx-1;x<=cx+1;x++){const i=clamp(z,0,31)*32+clamp(x,0,31);if((map.heights?.[i]||0)!==height||map.ramps?.[i])return null;}
     const value=(x,z)=>map.relief?.[clamp(cz+z-1,0,32)*33+clamp(cx+x-1,0,32)]||0,a=value(0,0),dx=value(1,0)-a,dz=value(0,1)-a;for(let z=0;z<4;z++)for(let x=0;x<4;x++)if(Math.abs(value(x,z)-a-x*dx-z*dz)>1e-7)return null;return height*2;
   }
   function groundSample(map,x,z,trusted=false){
-    const [cx,cz]=cell(x,z),plane=groundPlane(map,cx,cz);if(plane!==null&&Math.abs(x)<30&&Math.abs(z)<30)return {i:cz*32+cx,y:plane+reliefHeight(map,x,z)};const px=x-(cx*2-32),pz=z-(cz*2-32),xs=px<.75?[-1,0]:px>1.25?[0,1]:[0],zs=pz<.75?[-1,0]:pz>1.25?[0,1]:[0];let found=null;
+    const [cx,cz]=cell(x,z),plane=groundPlane(map,cx,cz,trusted);if(plane!==null&&Math.abs(x)<30&&Math.abs(z)<30)return {i:cz*32+cx,y:plane+reliefHeight(map,x,z)};const px=x-(cx*2-32),pz=z-(cz*2-32),xs=px<.75?[-1,0]:px>1.25?[0,1]:[0],zs=pz<.75?[-1,0]:pz>1.25?[0,1]:[0];let found=null;
     for(const dz of zs)for(const dx of xs){const ix=cx+dx,iz=cz+dz;if(ix<0||iz<0||ix>31||iz>31)continue;const i=iz*32+ix;for(const [a,b,c] of groundTile(map,ix,iz,trusted).triangles){const det=(b[2]-c[2])*(a[0]-c[0])+(c[0]-b[0])*(a[2]-c[2]);if(Math.abs(det)<1e-10)continue;const u=((b[2]-c[2])*(x-c[0])+(c[0]-b[0])*(z-c[2]))/det,v=((c[2]-a[2])*(x-c[0])+(a[0]-c[0])*(z-c[2]))/det;if(u< -1e-7||v< -1e-7||u+v>1+1e-7)continue;const y=u*a[1]+v*b[1]+(1-u-v)*c[1];if(!found||y>found.y+1e-7)found={i,y};}}
     return found;
   }
@@ -1788,7 +1789,15 @@ var Frost = (() => {
     groundGraphs.set(map,{key,regions});return regions;
   }
   function groundNavigation(s){
-    let cache=groundFrames.get(s);if(!cache||cache.map!==s.map||cache.frame!==s.frame){const tiers=(s.map.heights||[]).join(',')+';'+(s.map.ramps||[]).join(','),key=tiers+';'+(s.map.relief||[]).join(','),same=cache?.map===s.map&&cache.key===key;if(!same)groundMeshes.delete(s.map);cache={map:s.map,frame:s.frame,key,regions:same?cache.regions:groundRegions(s.map,tiers),routeEdges:same?cache.routeEdges:new Map()};groundFrames.set(s,cache);}return cache.regions;
+    let cache=groundFrames.get(s),routes=groundRoutes.get(s.map);
+    if(!cache||cache.map!==s.map||cache.frame!==s.frame||cache.routes!==routes){
+      const tiers=(s.map.heights||[]).join(',')+';'+(s.map.ramps||[]).join(','),geometryKey=tiers+';'+(s.map.relief||[]).join(','),key=geometryKey+';'+s.map.terrain.join(',');
+      // MiYu: AI placement probes share terrain edges; obstacles remain specific to each state and team.
+      if(!routes||routes.geometryKey!==geometryKey){groundMeshes.delete(s.map);groundPlanes.delete(s.map);}
+      if(!routes||routes.key!==key){routes={key,geometryKey,regions:groundRegions(s.map,tiers),routeEdges:new Map()};groundRoutes.set(s.map,routes);}
+      cache={map:s.map,frame:s.frame,routes,regions:routes.regions,routeEdges:routes.routeEdges};groundFrames.set(s,cache);
+    }
+    return cache.regions;
   }
   function groundClear(map,ax,az,bx,bz,radius=0,regions){
     const trusted=!!regions;regions??=groundRegions(map);
@@ -1797,7 +1806,7 @@ var Frost = (() => {
     if(!regions.cliffs)return true;
     const start=groundSample(map,ax,az,trusted),end=groundSample(map,bx,bz,trusted);if(!start||!end||regions[start.i]!==regions[end.i])return false;
     const first=cell(Math.min(ax,bx)-radius-1,Math.min(az,bz)-radius-1),last=cell(Math.max(ax,bx)+radius+1,Math.max(az,bz)+radius+1),group=regions[start.i];
-    for(let z=first[1];z<=last[1];z++)for(let x=first[0];x<=last[0];x++){if(regions[z*32+x]!==group||segmentDistance(x*2-31,z*2-31,[ax,az],[bx,bz])>radius+2.2||groundPlane(map,x,z)!==null)continue;for(const [a,b] of groundTile(map,x,z,trusted).edges){const A=[a[0],a[2]],B=[b[0],b[2]],C=[ax,az],D=[bx,bz],cross=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]),ab=cross(A,B,C)*cross(A,B,D),cd=cross(C,D,A)*cross(C,D,B);if(ab<0&&cd<0)return false;const before=segmentDistance(...C,A,B),after=segmentDistance(...D,A,B),distance=Math.min(before,after,segmentDistance(...A,C,D),segmentDistance(...B,C,D));if(distance<Math.max(radius,1e-5)-1e-7&&!(before<radius&&distance>=before-1e-7&&after>before+.0001))return false;}}
+    for(let z=first[1];z<=last[1];z++)for(let x=first[0];x<=last[0];x++){if(regions[z*32+x]!==group||segmentDistance(x*2-31,z*2-31,[ax,az],[bx,bz])>radius+2.2||groundPlane(map,x,z,trusted)!==null)continue;for(const [a,b] of groundTile(map,x,z,trusted).edges){const A=[a[0],a[2]],B=[b[0],b[2]],C=[ax,az],D=[bx,bz],cross=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]),ab=cross(A,B,C)*cross(A,B,D),cd=cross(C,D,A)*cross(C,D,B);if(ab<0&&cd<0)return false;const before=segmentDistance(...C,A,B),after=segmentDistance(...D,A,B),distance=Math.min(before,after,segmentDistance(...A,C,D),segmentDistance(...B,C,D));if(distance<Math.max(radius,1e-5)-1e-7&&!(before<radius&&distance>=before-1e-7&&after>before+.0001))return false;}}
     return true;
   }
   const traversable=(map,ax,az,bx,bz)=>groundClear(map,ax,az,bx,bz);
@@ -1973,7 +1982,11 @@ var Frost = (() => {
   }
   function routeSearch(s,u,goal=-1){
     const start=index(u.x,u.z),blocked=navigation(s,u.team),regions=groundNavigation(s),edgeCache=groundFrames.get(s).routeEdges,radius=movementRadius(u);let edges=edgeCache.get(radius);if(!edges){edges=new Uint8Array(4096);edgeCache.set(radius,edges);}const prev=new Int16Array(1024);prev.fill(-1);prev[start]=start;const cells=[start];
-    for(let k=0;k<cells.length;k++){const n=cells[k],x=n%32,z=Math.floor(n/32);if(n===goal)break;
+    const gx=goal%32,gz=Math.floor(goal/32),goalDistance=n=>(n%32-gx)**2+(Math.floor(n/32)-gz)**2;let nearest=goalDistance(start);
+    // MiYu: stop at the first reachable cell attaining the minimum possible goal distance, preserving BFS ties.
+    if(goal>=0&&blocked[goal])for(let z=1;z<=30;z++)for(let x=1;x<=30;x++){const n=z*32+x;if(!blocked[n]&&regions[n]===regions[start])nearest=Math.min(nearest,goalDistance(n));}
+    else nearest=0;
+    for(let k=0;k<cells.length;k++){const n=cells[k],x=n%32,z=Math.floor(n/32);if(goal>=0&&goalDistance(n)===nearest)break;
       for(const [direction,[dx,dz]] of [[1,0],[-1,0],[0,1],[0,-1]].entries()){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j]||!terrainEdge(s.map,n,j))continue;const edge=n*4+direction;edges[edge]||=groundClear(s.map,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,regions)?1:2;if(edges[edge]===2||!obstacleClear(s,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,u.team,true))continue;prev[j]=n;cells.push(j);}}
     return {start,prev,cells};
   }

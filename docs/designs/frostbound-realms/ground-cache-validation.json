@@ -1,0 +1,401 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseline": "46a296bb7c79cdcb11efffb7e1222c35212a4c5d",
+  "scope": "Shared geometry and directed terrain edges for AI probes, trusted plane caching and exact closest-approach BFS stopping. Preserve dynamic state/team obstacles and gameplay deadlines. CPU timings are not presentation FPS. Full Warcraft III parity remains incomplete.",
+  "nodeBenchmark": {
+    "author": "MiYu",
+    "baseline": "46a296b",
+    "iterations": 8,
+    "warmups": 2,
+    "scope": "Node CPU only; alternating fresh simulation modules, 24 AI-style hypothetical building states share a map; exact paths compared. Excludes native QuickJS, rendering and IPC.",
+    "results": {
+      "default": {
+        "completeRoutesEqual": true,
+        "probes": 24,
+        "mediansMs": {
+          "before": 2372.2590999999993,
+          "after": 59.17539999999917
+        },
+        "counters": {
+          "before": {
+            "tileCalls": 147620,
+            "tileBuilds": 17039,
+            "planeCalls": 183788,
+            "planeBuilds": 183788,
+            "groundChecks": 18650,
+            "meshInvalidations": 24,
+            "regionBuilds": 1,
+            "routeSearches": 24
+          },
+          "after": {
+            "tileCalls": 2027,
+            "tileBuilds": 282,
+            "planeCalls": 3201,
+            "planeBuilds": 381,
+            "groundChecks": 282,
+            "meshInvalidations": 1,
+            "regionBuilds": 1,
+            "routeSearches": 24
+          }
+        },
+        "samplesMs": {
+          "before": [
+            2394.4721,
+            2368.0621999999994,
+            2377.492900000001,
+            2369.7529000000013,
+            2373.922200000001,
+            2372.2590999999993,
+            2366.654699999999,
+            2358.584200000001
+          ],
+          "after": [
+            59.063500000000204,
+            59.17539999999917,
+            59.396199999999226,
+            60.32879999999932,
+            59.43890000000101,
+            58.267900000002555,
+            57.837100000000646,
+            57.78220000000147
+          ]
+        }
+      },
+      "highland": {
+        "completeRoutesEqual": true,
+        "probes": 24,
+        "mediansMs": {
+          "before": 2383.7203999999983,
+          "after": 68.5560000000005
+        },
+        "counters": {
+          "before": {
+            "tileCalls": 152928,
+            "tileBuilds": 17136,
+            "planeCalls": 188856,
+            "planeBuilds": 188856,
+            "groundChecks": 19104,
+            "meshInvalidations": 24,
+            "regionBuilds": 1,
+            "routeSearches": 24
+          },
+          "after": {
+            "tileCalls": 2581,
+            "tileBuilds": 322,
+            "planeCalls": 3784,
+            "planeBuilds": 420,
+            "groundChecks": 338,
+            "meshInvalidations": 1,
+            "regionBuilds": 1,
+            "routeSearches": 24
+          }
+        },
+        "samplesMs": {
+          "before": [
+            2383.7203999999983,
+            2372.2245999999977,
+            2379.459799999997,
+            2409.2594000000026,
+            2388.966800000002,
+            2382.7782000000007,
+            2368.5819000000047,
+            2386.512299999995
+          ],
+          "after": [
+            68.5560000000005,
+            65.16309999999794,
+            69.47830000000249,
+            67.0708999999988,
+            67.45899999999529,
+            67.89180000000488,
+            70.6788000000015,
+            68.80780000000232
+          ]
+        }
+      },
+      "sealed-cliffs": {
+        "completeRoutesEqual": true,
+        "probes": 24,
+        "mediansMs": {
+          "before": 1945.1273999999976,
+          "after": 56.990299999990384
+        },
+        "counters": {
+          "before": {
+            "tileCalls": 119106,
+            "tileBuilds": 14543,
+            "planeCalls": 155274,
+            "planeBuilds": 155274,
+            "groundChecks": 15794,
+            "meshInvalidations": 24,
+            "regionBuilds": 1,
+            "routeSearches": 24
+          },
+          "after": {
+            "tileCalls": 1995,
+            "tileBuilds": 265,
+            "planeCalls": 3152,
+            "planeBuilds": 364,
+            "groundChecks": 282,
+            "meshInvalidations": 1,
+            "regionBuilds": 1,
+            "routeSearches": 24
+          }
+        },
+        "samplesMs": {
+          "before": [
+            1941.1693999999989,
+            1948.6676999999981,
+            1961.364800000003,
+            1937.0028999999995,
+            1945.1273999999976,
+            1940.6719999999987,
+            1940.3356000000058,
+            1976.7523000000074
+          ],
+          "after": [
+            58.0457000000024,
+            56.294300000001385,
+            57.27810000000318,
+            57.18269999999757,
+            56.55800000000454,
+            55.84389999999985,
+            55.75990000000456,
+            56.990299999990384
+          ]
+        }
+      }
+    }
+  },
+  "nativeQuickjsCpu": {
+    "before": {
+      "rows": [
+        {
+          "map": "orc-night-elf-default",
+          "medianMs": 2799.6693,
+          "runs": 5,
+          "samplesMs": [
+            2792.2173,
+            2796.4855000000002,
+            2799.6693,
+            2804.5982,
+            2834.8323
+          ],
+          "warmups": 2
+        },
+        {
+          "map": "siege",
+          "medianMs": 123.6201,
+          "runs": 5,
+          "samplesMs": [
+            122.0348,
+            123.4387,
+            123.6201,
+            124.1248,
+            178.2085
+          ],
+          "warmups": 2
+        },
+        {
+          "map": "orc-night-elf-highland",
+          "medianMs": 1.3803999999999998,
+          "runs": 5,
+          "samplesMs": [
+            1.3769,
+            1.3799000000000001,
+            1.3803999999999998,
+            1.3934,
+            1.4223000000000001
+          ],
+          "warmups": 2
+        }
+      ],
+      "scope": "Native QuickJS simulation CPU for the first AI tick on independent cold map instances. Excludes editor, world commands, rendering and IPC."
+    },
+    "after": {
+      "rows": [
+        {
+          "map": "orc-night-elf-default",
+          "medianMs": 55.9326,
+          "runs": 5,
+          "samplesMs": [
+            55.2867,
+            55.845,
+            55.9326,
+            56.0697,
+            57.3938
+          ],
+          "warmups": 2
+        },
+        {
+          "map": "siege",
+          "medianMs": 123.9393,
+          "runs": 5,
+          "samplesMs": [
+            122.97139999999999,
+            123.3479,
+            123.9393,
+            124.25659999999999,
+            124.3767
+          ],
+          "warmups": 2
+        },
+        {
+          "map": "orc-night-elf-highland",
+          "medianMs": 1.4549999999999998,
+          "runs": 5,
+          "samplesMs": [
+            1.3864,
+            1.4137,
+            1.4549999999999998,
+            1.57,
+            1.7822
+          ],
+          "warmups": 2
+        }
+      ],
+      "scope": "Native QuickJS simulation CPU for the first AI tick on independent cold map instances. Excludes editor, world commands, rendering and IPC."
+    }
+  },
+  "routeAndAiEquivalence": {
+    "author": "MiYu",
+    "baseline": "46a296b",
+    "passed": true,
+    "completePathsCompared": 144,
+    "completeAiStatesCompared": 315,
+    "scope": "Exact previous search equivalence on immutable maps: both teams, four collision profiles, trees, ramps, sealed cliffs, boundary targets, hypothetical building footprints and 35 actual AI frames for each of nine map/faction combinations."
+  },
+  "nodeTests": [
+    "scripts/test-frost-ground-cache.mjs",
+    "scripts/test-frost-ground-cache-equivalence.mjs",
+    "scripts/test-frost-terrain.mjs",
+    "scripts/test-frost-ground-detail.mjs",
+    "scripts/test-frost-forest-pathing.mjs",
+    "scripts/test-frost-night-elf-ai.mjs",
+    "scripts/test-frost-night-elf-ai-economy.mjs",
+    "scripts/test-frost-night-elf-ai-client.mjs",
+    "scripts/test-frost-night-elf-ai-network.mjs"
+  ],
+  "nativeSampleTests": {
+    "passed": 4,
+    "failed": 0,
+    "menuElapsedSeconds": 57.94,
+    "remainingElapsedSeconds": 53.78
+  },
+  "nativeAcceptance": {
+    "receipt": "docs/designs/frostbound-realms/native-play-state-spatial-ground-cache.json",
+    "passed": true,
+    "elapsedMs": 207449,
+    "editorSha256": "67334c4efa6773810c4bc437c9a7cbe6d6d0b04b20ea0074871c39eab81d6761",
+    "mainSha256": "027b91b408c32ebbf27b116dad096cd7b0df89ede86a6c3c592c88138aecf812",
+    "sceneSha256": "970d436ca3c562e9c3aac5a0263fdcfe9e843ec13f03262df593cb60199cef42",
+    "consoleErrors": 0,
+    "spatialCounts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 24671,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 550
+    },
+    "nativeTiming": {
+      "intervals": 240,
+      "averagePresentIntervalMs": 110.69083333313465,
+      "p95PresentIntervalMs": 138.90000009536743,
+      "presentedFps": 9.034171754678225,
+      "averageRequestMs": 95.75041666527589,
+      "averageRenderMs": 15.452708749999996,
+      "averageCommandMs": 59.53248958333338,
+      "averageUploadMs": 0.8262500057617823,
+      "averageWorldSyncMs": 2.8268570833333317,
+      "averageSimulationMs": 63.330344583333314,
+      "averageSimulationRequestMs": 97.58875000278155
+    },
+    "shutdown": {
+      "pid": 94996,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-ground-cache-1791660114102\\runtime\\com.mengine.editor.agent-QUG2Zc '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-ground-cache-1791660114102\\runtime\\com.mengine.editor.agent-QUG2Zc'"
+    }
+  },
+  "reproduction": {
+    "Assets/Scripts/Main.js": {
+      "sha256": "027b91b408c32ebbf27b116dad096cd7b0df89ede86a6c3c592c88138aecf812",
+      "reproducedByteExactly": true
+    },
+    "Assets/Scenes/Main.mscene": {
+      "sha256": "970d436ca3c562e9c3aac5a0263fdcfe9e843ec13f03262df593cb60199cef42",
+      "reproducedByteExactly": true
+    },
+    "project.json": {
+      "sha256": "35b294bb5760f5cd88bb6ca5638da46d5a1b2e01e21f6680eea4c6a868a71bdd",
+      "reproducedByteExactly": true
+    }
+  },
+  "authoredSceneAndProjectUnchanged": true,
+  "materialSidecars": {
+    "materials": 3151,
+    "missing": 0,
+    "untracked": 0,
+    "duplicateGuids": 0
+  },
+  "stagedSourceBlobs": [
+    {
+      "path": "crates/mengine-editor-host/tests/frost_sample.rs",
+      "sha256": "21a05675eaf73704d69d455de5a2a03af7bc1fd281194d74f4094a7a4ca7d576"
+    },
+    {
+      "path": "crates/mengine-script/tests/frost_ground_cache.rs",
+      "sha256": "f3febf1e4ed38c3fae5c21ea993b3c6e9bb011ed353af899bc6235a2d3be56cd"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Scripts/Main.js",
+      "sha256": "027b91b408c32ebbf27b116dad096cd7b0df89ede86a6c3c592c88138aecf812"
+    },
+    {
+      "path": "samples/frostbound-realms/game/simulation.js",
+      "sha256": "a9db09e536d1cab970c5e0fa1346041b1589c487e7e820c87d38554bc390c9e9"
+    },
+    {
+      "path": "scripts/benchmark-frost-ground-cache.mjs",
+      "sha256": "d2ac9a8f9886a0d8cf824a5646fc68e9704537018722ee8ff27b5aa382aa0592"
+    },
+    {
+      "path": "scripts/qa-frost-play-state.mjs",
+      "sha256": "755594dee619a72a8ecee7c1bce47db88e02e564b56c569c99e1d11342aa5937"
+    },
+    {
+      "path": "scripts/test-frost-ground-cache-equivalence.mjs",
+      "sha256": "1fefc5bdb0db9b0d39d662115fe6a59c4c08e57f99c46cf17082e52bb863d963"
+    },
+    {
+      "path": "scripts/test-frost-ground-cache.mjs",
+      "sha256": "032d1ab617e7b6e9af51d303cdf7dc918ebaea28f1df5b280ab9a6d8c72e1ba7"
+    }
+  ],
+  "logs": [
+    "tmp/frost-ground-cache-node-tests.log",
+    "tmp/frost-ground-cache-equivalence-final.log",
+    "tmp/frost-ground-cache-native-menu-short-search.log",
+    "tmp/frost-ground-cache-native-remaining.log",
+    "tmp/frost-ground-cache-native-cpu-before.log",
+    "tmp/frost-ground-cache-native-cpu-after.log",
+    "tmp/frost-ground-cache-native-qa.log"
+  ]
+}

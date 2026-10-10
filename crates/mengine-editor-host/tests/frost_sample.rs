@@ -12,7 +12,7 @@ fn classic_menu_clicks_route_maps_settings_save_and_quit() {
     let scene:Value=serde_json::from_slice(&std::fs::read(source_root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
     let runtime=EditorPlayRuntime::default();let mut snapshot=runtime.start(runtime.begin(),source.clone(),serde_json::from_value(scene["world"].clone()).unwrap(),PlayProject{root:Some(root.clone()),..Default::default()}).unwrap();
     let mut input=ScriptInput::default();input.viewport=[1280,720];
-    let tick=|snapshot:WorldSnapshot,input:&mut ScriptInput| {let next=runtime.step(runtime.generation(),snapshot,input.clone(),0.1).unwrap();input.finish_frame();next};
+    let tick=|snapshot:WorldSnapshot,input:&mut ScriptInput| {let before=telemetry(&snapshot);let next=runtime.step(runtime.generation(),snapshot,input.clone(),0.1).unwrap_or_else(|error|panic!("classic menu step after mode={} kind={} frame={}: {error}",before["mode"],before["kind"],before["frame"]));input.finish_frame();next};
     let click=|mut snapshot:WorldSnapshot,input:&mut ScriptInput,id:&str| {let r=&snapshot.entities.iter().find(|e|e.name.as_deref()==Some(&format!("{id} box"))).unwrap().components["RectTransform"];input.pointer=[640.0+r["anchored_position"][0].as_f64().unwrap() as f32,360.0+r["anchored_position"][1].as_f64().unwrap() as f32];input.button(0,true);snapshot=tick(snapshot,input);input.button(0,false);tick(snapshot,input)};
     let key=|mut snapshot:WorldSnapshot,input:&mut ScriptInput,k:&str| {input.key(k.into(),true);snapshot=tick(snapshot,input);input.key(k.into(),false);tick(snapshot,input)};
     let visible=|s:&WorldSnapshot,n:&str|s.entities.iter().find(|e|e.name.as_deref()==Some(n)).unwrap().active;
