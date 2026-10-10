@@ -4,6 +4,53 @@ import test from 'node:test';
 import {createServer} from 'vite';
 import {fileURLToPath} from 'node:url';
 
+test('Play equality reads changing object and array getters once per structured comparison', async()=>{
+  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
+  try {
+    const {createPlayWorldSync}=await server.ssrLoadModule('/src/playWorldSync.ts'),color=[0,0,0,1];
+    for(const array of [false,true]){
+      const sync=createPlayWorldSync(),value=array?[1]:{field:{value:1}},entities=[{entity:1,components:{Custom:value}}];sync.capture(entities,color);sync.presentationSnapshot(entities,color);
+      let reads=0;Object.defineProperty(value,array?'0':'field',{enumerable:true,configurable:true,get(){return ++reads===1?(array?2:{value:2}):(array?1:{value:1});}});
+      assert.equal(sync.presentationSnapshot(entities,color),undefined);assert.equal(reads,1);
+    }
+  } finally {await server.close();}
+});
+
+test('Play comparison preserves schema order, null prototypes, capture identity and reset', async()=>{
+  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
+  try {
+    const {createPlayWorldSync}=await server.ssrLoadModule('/src/playWorldSync.ts'),sync=createPlayWorldSync(),custom=Object.assign(Object.create(null),{a:1,b:2}),entities=[{entity:1,components:{Custom:custom}}],color=[0,0,0,1];
+    sync.capture(entities,color);const first=sync.presentationSnapshot(entities,color);assert.ok(first);assert.ok(sync.presentationSnapshot(entities,color));
+    delete custom.a;custom.a=1;assert.equal(sync.presentationSnapshot(entities,color),undefined);assert.equal(sync.matches(entities,color),false);
+    sync.capture(entities,color);const second=sync.presentationSnapshot(entities,color);assert.notEqual(second.entities[0],first.entities[0]);assert.deepEqual(Object.keys(second.entities[0].components.Custom),['b','a']);assert.deepEqual(Object.keys(first.entities[0].components.Custom),['a','b']);
+    custom.next={nested:[3]};assert.equal(sync.matches(entities,color),false);sync.capture(entities,color);assert.ok(sync.presentationSnapshot(entities,color));custom.next.nested[0]=4;assert.equal(sync.presentationSnapshot(entities,color),undefined);sync.capture(entities,color);assert.ok(sync.presentationSnapshot(entities,color));
+    sync.reset();assert.equal(sync.presentationSnapshot(entities,color),undefined);entities[0]={entity:1,components:{Custom:{replacement:7}}};sync.capture(entities,color);assert.equal(sync.presentationSnapshot(entities,color).entities[0].components.Custom.replacement,7);assert.equal(first.entities[0].components.Custom.next,undefined);
+  } finally {await server.close();}
+});
+
+test('Play comparison follows Object.keys replacement within a Proxy ownKeys call', async()=>{
+  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'}),keys=Object.keys;
+  try {
+    const {createPlayWorldSync}=await server.ssrLoadModule('/src/playWorldSync.ts'),sync=createPlayWorldSync(),custom={value:1,other:2},entities=[{entity:1,components:{Custom:custom}}],color=[0,0,0,1];
+    sync.capture(entities,color);const first=sync.presentationSnapshot(entities,color);let savedReads=0;
+    const replacement=function(object){assert.equal(this,Object);if(Object.isFrozen(object)&&'value' in object&&'other' in object){savedReads++;return ['value'];}return keys(object);};
+    Object.keys=replacement;assert.equal(sync.presentationSnapshot(entities,color),undefined);assert.equal(savedReads,1);Object.keys=keys;assert.equal(sync.presentationSnapshot(entities,color).entities[0],first.entities[0]);
+    savedReads=0;let install=true;entities[0].components.Custom=new Proxy(custom,{ownKeys(target){if(install)Object.keys=replacement;return Reflect.ownKeys(target);}});
+    assert.equal(sync.presentationSnapshot(entities,color),undefined);assert.equal(savedReads,1);install=false;Object.keys=keys;assert.equal(sync.presentationSnapshot(entities,color).entities[0],first.entities[0]);
+  } finally {Object.keys=keys;await server.close();}
+});
+
+test('Play comparison preserves Object.keys accessor reads before field comparison', async()=>{
+  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'}),descriptor=Object.getOwnPropertyDescriptor(Object,'keys'),keys=Object.keys;
+  try {
+    const {createPlayWorldSync}=await server.ssrLoadModule('/src/playWorldSync.ts'),sync=createPlayWorldSync(),custom={value:1,other:2},entities=[{entity:1,components:{Custom:custom}}],color=[0,0,0,1];
+    sync.capture(entities,color);assert.ok(sync.presentationSnapshot(entities,color));let reads=0,mutate=false;
+    Object.defineProperty(Object,'keys',{configurable:true,get(){if(++reads===6&&mutate)custom.other=7;return keys;}});
+    assert.ok(sync.presentationSnapshot(entities,color));assert.equal(reads,6);reads=0;mutate=true;
+    assert.equal(sync.presentationSnapshot(entities,color),undefined);assert.equal(reads,6);
+  } finally {Object.defineProperty(Object,'keys',descriptor);await server.close();}
+});
+
 test('viewport snapshots retain prior entity, hierarchy and UI values across captures and resets', async () => {
   const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
   try {

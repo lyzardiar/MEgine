@@ -11,13 +11,20 @@ function equalJson(value: unknown, baseline: unknown): boolean {
   if (typeof (value as { toJSON?: unknown }).toJSON === 'function') return false;
   if (Array.isArray(value)) {
     if (!Array.isArray(baseline) || value.length !== baseline.length) return false;
-    for (let i = 0; i < value.length; i++) if (!equalJson(value[i], baseline[i])) return false;
+    for (let i = 0; i < value.length; i++) {
+      const child = value[i], savedChild = baseline[i];
+      if (child !== savedChild && !equalJson(child, savedChild)) return false;
+    }
     return true;
   }
   if (Array.isArray(baseline) || Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) return false;
   const object = value as Record<string, unknown>, saved = baseline as Record<string, unknown>, keys = Object.keys(object), savedKeys = Object.keys(saved);
   if (keys.length !== savedKeys.length) return false;
-  for (let i = 0; i < keys.length; i++) if (keys[i] !== savedKeys[i] || !equalJson(object[keys[i]], saved[keys[i]])) return false;
+  for (let i = 0; i < keys.length; i++) {
+    if (keys[i] !== savedKeys[i]) return false;
+    const child = object[keys[i]], savedChild = saved[keys[i]];
+    if (child !== savedChild && !equalJson(child, savedChild)) return false;
+  }
   return true;
 }
 

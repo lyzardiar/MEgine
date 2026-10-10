@@ -1,0 +1,751 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baseCommit": "802f49b91c6e777d5f43dc188b2cf7406bd7c4c2",
+  "scope": "Play compares each array or object child once, avoiding recursive calls for identical values while retaining live-reference edit detection, JSON fallback, key order and immutable displayed records.",
+  "sourceHashes": {
+    "packages/editor/src/playWorldSync.ts": "8176bb6787a82d7babe08e34c109eea58d65c83f8d6ae7ecffcd6585a50e021a",
+    "packages/editor/tests/playWorldSync.test.mjs": "3a73ad40ff94c95090c8592681189cbcf633a018c60e3807593cd0ffe75ddb64",
+    "scripts/benchmark-frost-comparison.mjs": "b859d9325c53cb43f001d0bc22b4c6d2f74fbf7609bb1f9b459347603af9d2c3",
+    "scripts/qa-frost-play-state.mjs": "579bf4ef8462271b5e4069db70ca45576e19f5d3e88b4380d06f06d3700fb251"
+  },
+  "benchmark": {
+    "author": "MiYu",
+    "scope": "Two Play sync implementations compare the identical 90k real-store mutable world with independent JSON-owned baselines. Alternating Node/Vite CPU measurements exclude React, scripts, GPU, IPC and native FPS.",
+    "baseline": "802f49b",
+    "baselineSourceSha256": "ca2870824b01aefae7ab2964ec248f2666dd5ff2b3f7cd194b76eb5b45397c4a",
+    "sourceSceneSha256": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+    "entities": 90179,
+    "iterations": 20,
+    "warmups": 2,
+    "coldCaptureMs": {
+      "before": 321.1275999999998,
+      "after": 355.5250000000001
+    },
+    "coldMatchesMs": {
+      "before": 42.415700000000015,
+      "after": 39.01330000000007
+    },
+    "changedCaptureMs": {
+      "before": 38.164600000000064,
+      "after": 42.28639999999905
+    },
+    "mediansMs": {
+      "matches": {
+        "before": 39.88220000000001,
+        "after": 37.470800000000054
+      },
+      "presentation": {
+        "before": 40.26749999999993,
+        "after": 37.258600000000115
+      },
+      "capture": {
+        "before": 38.50879999999961,
+        "after": 35.836599999999635
+      }
+    },
+    "reusedAfterOneTransform": {
+      "before": 90178,
+      "after": 90178
+    },
+    "directEditDetected": true,
+    "outputEqual": true,
+    "outputSha256": "96049aa49560c8dafbe3c3aca2ee4c31550484f15f243987970b1b6a9dfc01ec",
+    "samplesMs": {
+      "matches": {
+        "before": [
+          41.04449999999997,
+          39.88220000000001,
+          39.434799999999996,
+          39.19239999999991,
+          40.16539999999986,
+          39.41489999999976,
+          39.32129999999961,
+          39.453599999999824,
+          40.1251000000002,
+          39.28070000000025,
+          40.80689999999959,
+          39.912500000000364,
+          38.99589999999989,
+          39.51040000000012,
+          39.48739999999998,
+          40.26499999999942,
+          39.93329999999969,
+          39.40819999999985,
+          40.5021999999999,
+          39.98270000000048
+        ],
+        "after": [
+          37.19560000000001,
+          38.48160000000007,
+          37.10179999999991,
+          37.3711000000003,
+          37.973299999999654,
+          36.86290000000008,
+          38.11290000000008,
+          37.21299999999974,
+          40.198600000000624,
+          37.65509999999995,
+          37.450300000000425,
+          37.32809999999972,
+          36.79689999999937,
+          37.655400000000554,
+          38.39930000000004,
+          37.91019999999935,
+          37.470800000000054,
+          37.597500000000764,
+          37.38120000000072,
+          37.460299999999734
+        ]
+      },
+      "presentation": {
+        "before": [
+          39.83190000000013,
+          40.33140000000003,
+          40.364300000000185,
+          39.66560000000027,
+          39.169700000000375,
+          40.74039999999968,
+          40.480899999999565,
+          39.25250000000051,
+          39.47409999999945,
+          40.714200000000346,
+          39.79150000000027,
+          39.39050000000043,
+          39.683100000000195,
+          40.65219999999954,
+          40.35120000000006,
+          40.29199999999946,
+          38.99969999999939,
+          40.26749999999993,
+          39.50909999999931,
+          40.381900000000314
+        ],
+        "after": [
+          39.38740000000007,
+          37.49069999999983,
+          37.45040000000017,
+          36.86409999999978,
+          37.03030000000035,
+          37.053499999999985,
+          38.46779999999944,
+          37.01590000000033,
+          38.79860000000008,
+          38.009500000000116,
+          36.97659999999996,
+          38.82930000000033,
+          36.833299999999326,
+          38.09469999999965,
+          37.258600000000115,
+          37.07429999999931,
+          36.833700000000135,
+          37.193600000000515,
+          36.58320000000003,
+          37.45210000000043
+        ]
+      },
+      "capture": {
+        "before": [
+          39.09259999999995,
+          38.522500000000036,
+          37.79710000000023,
+          38.593400000000656,
+          38.461599999999635,
+          38.018299999999726,
+          38.558100000000195,
+          37.77150000000074,
+          38.38130000000001,
+          38.865999999999985,
+          38.50879999999961,
+          38.38259999999991,
+          38.251500000000306,
+          38.58390000000054,
+          38.76140000000032,
+          38.41659999999956,
+          38.4389000000001,
+          38.41200000000026,
+          38.57769999999982,
+          39.125
+        ],
+        "after": [
+          35.7542999999996,
+          36.27520000000004,
+          35.76589999999942,
+          35.52690000000075,
+          36.129399999999805,
+          36.597099999999955,
+          35.42579999999998,
+          35.53989999999976,
+          35.15239999999994,
+          35.865999999999985,
+          35.60699999999997,
+          35.88370000000032,
+          35.836599999999635,
+          35.199399999999514,
+          35.52390000000014,
+          35.85219999999936,
+          35.607600000000275,
+          35.983000000000175,
+          36.259000000000015,
+          36.294200000000274
+        ]
+      }
+    }
+  },
+  "tests": {
+    "passed": 26,
+    "failed": 0,
+    "log": "tmp/play-comparison-regressions.log"
+  },
+  "frontendBuild": {
+    "passed": true,
+    "log": "tmp/play-comparison-frontend-build.log"
+  },
+  "nativeBuild": {
+    "passed": true,
+    "elapsedSeconds": 252.2965495,
+    "exitCode": 0,
+    "log": "tmp/play-comparison-native-build.log",
+    "executable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+    "sha256": "428be0ab0cd871fa304e19f469c7294ab0a743d5d966b793a3e6f02e848cb115"
+  },
+  "independentReview": {
+    "passed": true,
+    "scope": "Read-only final source and regression diff; no identified correctness blocker; benchmark not repeated."
+  },
+  "native": {
+    "receipt": "native-play-state-spatial-comparison.json",
+    "elapsedMs": 382882,
+    "steps": [
+      {
+        "name": "full native scene readiness",
+        "ms": 42171
+      },
+      {
+        "name": "native Scene spatial query",
+        "ms": 55240
+      },
+      {
+        "name": "actual F1 skirmish start",
+        "ms": 16742
+      },
+      {
+        "name": "native Scene activation in Play",
+        "ms": 28901
+      },
+      {
+        "name": "continuous native playback sample",
+        "ms": 48502
+      },
+      {
+        "name": "owned WebView CPU profile",
+        "ms": 12137
+      },
+      {
+        "name": "paused Scene editing and selection",
+        "ms": 69341
+      },
+      {
+        "name": "pause step and authored restoration",
+        "ms": 3845
+      },
+      {
+        "name": "native Toggle InputField and restart session",
+        "ms": 89556
+      }
+    ],
+    "sourceMainSha256": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc",
+    "sourceSceneSha256": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+    "renderSize": [
+      850,
+      478
+    ],
+    "sameSourcesAndRenderSizeAsPrior": true,
+    "summary": {
+      "intervals": 233,
+      "averagePresentIntervalMs": 194.53175965706166,
+      "p95PresentIntervalMs": 387.5,
+      "presentedFps": 5.140548781149625,
+      "averageRequestMs": 162.26837607428558,
+      "averageRenderMs": 24.797907692307685,
+      "averageCommandMs": 43.51069102564104,
+      "averageUploadMs": 0.83632478550968,
+      "averageWorldSyncMs": 5.4008076923076915,
+      "averageSimulationMs": 67.669852991453,
+      "averageSimulationRequestMs": 349.0158119568458
+    },
+    "priorSummary": {
+      "intervals": 232,
+      "averagePresentIntervalMs": 194.21637931055037,
+      "p95PresentIntervalMs": 379.90000009536743,
+      "presentedFps": 5.148896316314333,
+      "averageRequestMs": 161.9476394847739,
+      "averageRenderMs": 24.215294849785415,
+      "averageCommandMs": 41.50822017167379,
+      "averageUploadMs": 0.8420600911578395,
+      "averageWorldSyncMs": 5.161079828326189,
+      "averageSimulationMs": 67.45251502145926,
+      "averageSimulationRequestMs": 391.8214592370864
+    },
+    "counts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 90179,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 550
+    },
+    "exactWorldRevision": 104,
+    "sceneObservation": {
+      "changed": true,
+      "unchangedRevisionStable": true,
+      "restored": true,
+      "mutation": "Inspector Active checkbox in paused Play",
+      "fromRevision": 127,
+      "toRevision": 129
+    },
+    "nativeInteractiveUi": {
+      "toggleClick": true,
+      "inputEdit": true,
+      "stepRetainsEdits": true,
+      "restartRestoresAuthored": true,
+      "revision": 2
+    },
+    "consoleErrors": 0,
+    "shutdown": {
+      "pid": 25444,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-comparison-1791652749571\\runtime\\com.mengine.editor.agent-khuve0 '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-comparison-1791652749571\\runtime\\com.mengine.editor.agent-khuve0'"
+    },
+    "hierarchyReceipt": {
+      "path": "C:/Users/admin/.codex/worktrees/1339/MEgine/docs/designs/frostbound-realms/native-play-state-spatial-revision.json",
+      "startedAt": "2026-10-10T11:13:52.271Z",
+      "editorSha256": "6c30ff40c5e755cc5ce7932866996d9048f36ccef08fcb4d938072547fff6d6f",
+      "scope": "Completed hierarchy interaction from the identical scene; separate viewport build with unchanged hierarchy sources"
+    }
+  },
+  "browserCpuProfile": {
+    "scope": "Separate 10-second owned-QA Game playback after the canonical 45-second sample; leaf CPU time includes native/idle nodes and profiler overhead.",
+    "targetUrl": "http://tauri.localhost/",
+    "samples": 5733,
+    "durationMs": 11374.802,
+    "topSelf": [
+      {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 1427.6919999999996
+      },
+      {
+        "functionName": "tick",
+        "scriptId": "14",
+        "url": "http://tauri.localhost/assets/agent-schemas-Cr-O_d4Z.js",
+        "lineNumber": 0,
+        "columnNumber": 11710,
+        "selfMs": 683.1689999999992
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 538.4319999999994
+      },
+      {
+        "functionName": "Ge",
+        "scriptId": "28",
+        "url": "http://tauri.localhost/assets/uiLayout-DW5m8LeN.js",
+        "lineNumber": 0,
+        "columnNumber": 24937,
+        "selfMs": 489.8599999999997
+      },
+      {
+        "functionName": "gt",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-BFFfRcSi.js",
+        "lineNumber": 32,
+        "columnNumber": 43324,
+        "selfMs": 478.67900000000014
+      },
+      {
+        "functionName": "Li",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-BFFfRcSi.js",
+        "lineNumber": 32,
+        "columnNumber": 20216,
+        "selfMs": 462.2320000000002
+      },
+      {
+        "functionName": "(garbage collector)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 443.22099999999983
+      },
+      {
+        "functionName": "observe",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 77608,
+        "selfMs": 423.1509999999999
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 409.93799999999965
+      },
+      {
+        "functionName": "Li",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-BFFfRcSi.js",
+        "lineNumber": 32,
+        "columnNumber": 20216,
+        "selfMs": 353.708
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 328.5950000000001
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 266.36500000000007
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 242.1959999999999
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 226.91500000000008
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 226.427
+      },
+      {
+        "functionName": "_a",
+        "scriptId": "28",
+        "url": "http://tauri.localhost/assets/uiLayout-DW5m8LeN.js",
+        "lineNumber": 0,
+        "columnNumber": 37200,
+        "selfMs": 214.369
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 199.585
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 179.913
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 176.51299999999998
+      },
+      {
+        "functionName": "capture",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 74232,
+        "selfMs": 173.418
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 171.18500000000006
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 161.23000000000008
+      },
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 144.055
+      },
+      {
+        "functionName": "p",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-BFFfRcSi.js",
+        "lineNumber": 32,
+        "columnNumber": 43208,
+        "selfMs": 128.58300000000003
+      },
+      {
+        "functionName": "Qt",
+        "scriptId": "51",
+        "url": "http://tauri.localhost/assets/Inspector-BtEUU7Ae.js",
+        "lineNumber": 10,
+        "columnNumber": 44876,
+        "selfMs": 112.65499999999999
+      }
+    ],
+    "rawProfile": "E:\\work\\codex\\worktrees\\1339\\MEgine\\tmp\\spatial-comparison-browser-cpu-profile.json",
+    "aggregatedSelfByCallFrame": [
+      {
+        "functionName": "ft",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 72634,
+        "selfMs": 3994.9220000000005
+      },
+      {
+        "functionName": "(program)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 1427.6919999999996
+      },
+      {
+        "functionName": "Li",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-BFFfRcSi.js",
+        "lineNumber": 32,
+        "columnNumber": 20216,
+        "selfMs": 967.3060000000003
+      },
+      {
+        "functionName": "tick",
+        "scriptId": "14",
+        "url": "http://tauri.localhost/assets/agent-schemas-Cr-O_d4Z.js",
+        "lineNumber": 0,
+        "columnNumber": 11710,
+        "selfMs": 683.1689999999992
+      },
+      {
+        "functionName": "Ge",
+        "scriptId": "28",
+        "url": "http://tauri.localhost/assets/uiLayout-DW5m8LeN.js",
+        "lineNumber": 0,
+        "columnNumber": 24937,
+        "selfMs": 584.8049999999996
+      },
+      {
+        "functionName": "gt",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-BFFfRcSi.js",
+        "lineNumber": 32,
+        "columnNumber": 43324,
+        "selfMs": 568.6390000000001
+      },
+      {
+        "functionName": "(garbage collector)",
+        "scriptId": "0",
+        "url": "",
+        "lineNumber": -1,
+        "columnNumber": -1,
+        "selfMs": 443.22099999999983
+      },
+      {
+        "functionName": "observe",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 77608,
+        "selfMs": 423.1509999999999
+      },
+      {
+        "functionName": "_a",
+        "scriptId": "28",
+        "url": "http://tauri.localhost/assets/uiLayout-DW5m8LeN.js",
+        "lineNumber": 0,
+        "columnNumber": 37200,
+        "selfMs": 258.743
+      },
+      {
+        "functionName": "capture",
+        "scriptId": "16",
+        "url": "http://tauri.localhost/assets/index-jpvmnW6O.js",
+        "lineNumber": 1,
+        "columnNumber": 74232,
+        "selfMs": 173.418
+      },
+      {
+        "functionName": "p",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-BFFfRcSi.js",
+        "lineNumber": 32,
+        "columnNumber": 43208,
+        "selfMs": 128.58300000000003
+      },
+      {
+        "functionName": "kr",
+        "scriptId": "28",
+        "url": "http://tauri.localhost/assets/uiLayout-DW5m8LeN.js",
+        "lineNumber": 0,
+        "columnNumber": 35604,
+        "selfMs": 118.46099999999996
+      },
+      {
+        "functionName": "Qt",
+        "scriptId": "51",
+        "url": "http://tauri.localhost/assets/Inspector-BtEUU7Ae.js",
+        "lineNumber": 10,
+        "columnNumber": 44876,
+        "selfMs": 112.65499999999999
+      },
+      {
+        "functionName": "",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-BFFfRcSi.js",
+        "lineNumber": 32,
+        "columnNumber": 68989,
+        "selfMs": 103.11200000000002
+      },
+      {
+        "functionName": "Jt",
+        "scriptId": "22",
+        "url": "http://tauri.localhost/assets/App-BZBrCPMs.js",
+        "lineNumber": 106,
+        "columnNumber": 18167,
+        "selfMs": 96.10100000000001
+      },
+      {
+        "functionName": "du",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-BFFfRcSi.js",
+        "lineNumber": 32,
+        "columnNumber": 20535,
+        "selfMs": 90.83099999999999
+      },
+      {
+        "functionName": "",
+        "scriptId": "22",
+        "url": "http://tauri.localhost/assets/App-BZBrCPMs.js",
+        "lineNumber": 106,
+        "columnNumber": 15816,
+        "selfMs": 85.15499999999999
+      },
+      {
+        "functionName": "",
+        "scriptId": "28",
+        "url": "http://tauri.localhost/assets/uiLayout-DW5m8LeN.js",
+        "lineNumber": 0,
+        "columnNumber": 37234,
+        "selfMs": 73.25300000000001
+      },
+      {
+        "functionName": "",
+        "scriptId": "28",
+        "url": "http://tauri.localhost/assets/uiLayout-DW5m8LeN.js",
+        "lineNumber": 0,
+        "columnNumber": 24965,
+        "selfMs": 63.05199999999999
+      },
+      {
+        "functionName": "",
+        "scriptId": "38",
+        "url": "http://tauri.localhost/assets/Viewport-BFFfRcSi.js",
+        "lineNumber": 32,
+        "columnNumber": 51043,
+        "selfMs": 61.77999999999999
+      }
+    ],
+    "comparisonSelfMs": 3994.9220000000005,
+    "comparisonSource": {
+      "bundle": "index-jpvmnW6O.js",
+      "symbol": "ft",
+      "source": "packages/editor/src/playWorldSync.ts",
+      "function": "equalJson"
+    }
+  },
+  "limitations": [
+    "CPU benchmark uses the identical real-store mutable scene with independent JSON-owned baselines, excluding React, scripts, GPU, IPC and native FPS.",
+    "Cold and changed capture values are single measurements, not repeated medians.",
+    "Native timings include overlapping stages and scheduling and do not prove an isolated causal FPS gain.",
+    "Hierarchy interaction reuses the preceding receipt for the identical scene with unchanged hierarchy sources.",
+    "Full Warcraft III parity and smooth large-scene playback remain incomplete."
+  ],
+  "stagedSourceHashes": {
+    "packages/editor/src/playWorldSync.ts": {
+      "sha256": "a2af8be40e93204129283b128a861e8ea4482136bbc13010401f10964f137bda",
+      "gitBlob": "27ad2b8545ab86c5688c52df45eb1d6b362104c2",
+      "sameAsCheckoutBytes": false
+    },
+    "packages/editor/tests/playWorldSync.test.mjs": {
+      "sha256": "14ba660cc69b64f4997b7aee8f003c96ff7a618c70205029f576c01b17a973ed",
+      "gitBlob": "afa589da1cf73ab57552bdcda2f592de71bcff56",
+      "sameAsCheckoutBytes": false
+    },
+    "scripts/benchmark-frost-comparison.mjs": {
+      "sha256": "7cfd590629f560334ec0ab1ba6dee8b09e5b20e4a8c47fe689511c4a60381649",
+      "gitBlob": "4c5ce1d665adf987351d3ec91d66938ef4eb27bc",
+      "sameAsCheckoutBytes": false
+    },
+    "scripts/qa-frost-play-state.mjs": {
+      "sha256": "b95a220e514437bf0a3b6ca0f9c8e9888f8216f734012efa118d4f0fff89c7c0",
+      "gitBlob": "35ed7a1a97082b0a8c06259f594ebe1e63dcb1f0",
+      "sameAsCheckoutBytes": false
+    }
+  },
+  "hashScope": "sourceHashes identify tested checkout bytes; stagedSourceHashes identify actual index blobs, matching checkout bytes or CRLF-to-LF conversion."
+}
