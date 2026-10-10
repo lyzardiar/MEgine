@@ -19,13 +19,14 @@ pub struct PlayProject {
     pub build_scenes: Vec<PathBuf>,
 }
 
-/// Complete frame metadata and ordered entity IDs, with only changed entity payloads.
+/// MiYu: fresh frame metadata and changed payloads; entity order is sent on structural changes or resets.
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayWorldUpdate {
     pub quit_requested: bool,
     pub snapshot: WorldSnapshot,
-    pub entity_order: Vec<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entity_order: Option<Vec<u64>>,
     pub base_revision: u64,
     pub revision: u64,
     pub reset: bool,
@@ -33,7 +34,7 @@ pub struct PlayWorldUpdate {
 
 #[derive(Default)]
 struct PlaySnapshotStream {
-    entities: HashMap<u64, Arc<EntitySnapshot>>,
+    entities: Vec<Arc<EntitySnapshot>>,
     revision: u64,
 }
 
@@ -41,14 +42,16 @@ impl PlaySnapshotStream {
     fn update(&mut self, mut snapshot: SharedWorldSnapshot, reset: bool) -> PlayWorldUpdate {
         let base_revision = self.revision;
         self.revision += 1;
-        let mut entity_order = Vec::with_capacity(snapshot.entities.len());
-        let mut current = HashMap::with_capacity(snapshot.entities.len());
-        let mut changed = Vec::new();
-        for entity in snapshot.entities.drain(..) {
-            entity_order.push(entity.entity);
-            if reset || !self.entities.get(&entity.entity).is_some_and(|previous| Arc::ptr_eq(previous, &entity) || previous == &entity) { changed.push(entity.clone()); }
-            current.insert(entity.entity, entity);
-        }
+        let current = std::mem::take(&mut snapshot.entities);
+        let stable = !reset && base_revision != 0 && current.len() == self.entities.len() && current.iter().zip(&self.entities).all(|(entity, previous)| entity.entity == previous.entity);
+        let same = |entity: &Arc<EntitySnapshot>, previous: &Arc<EntitySnapshot>| Arc::ptr_eq(previous, entity) || previous == entity;
+        let entity_order = (!stable).then(|| current.iter().map(|entity| entity.entity).collect());
+        let changed = if stable {
+            current.iter().zip(&self.entities).filter(|(entity, previous)| !same(entity, previous)).map(|(entity, _)| entity.clone()).collect()
+        } else {
+            let previous: HashMap<_, _> = self.entities.iter().map(|entity| (entity.entity, entity)).collect();
+            current.iter().filter(|entity| reset || !previous.get(&entity.entity).is_some_and(|previous| same(entity, previous))).cloned().collect()
+        };
         self.entities = current;
         snapshot.entities = changed;
         PlayWorldUpdate { snapshot: snapshot.into_owned(), entity_order, base_revision, revision: self.revision, reset, quit_requested: false }
@@ -404,6 +407,7 @@ mod tests {
         let mut stream = PlaySnapshotStream::default();
         let mut cache = WorldSnapshotCache::default();
         let mut reconstructed = HashMap::new();
+        let mut order = Vec::new();
         for step in 0..5 {
             world.time.frame += 1;
             if step == 2 {
@@ -420,10 +424,38 @@ mod tests {
             if step == 4 { assert_eq!(update.snapshot, expected); reconstructed.clear(); }
             let mut actual = update.snapshot;
             for entity in actual.entities.drain(..) { reconstructed.insert(entity.entity, entity); }
-            actual.entities = update.entity_order.iter().map(|id| reconstructed[id].clone()).collect();
+            if let Some(next) = update.entity_order { order = next; }
+            actual.entities = order.iter().map(|id| reconstructed[id].clone()).collect();
             assert_eq!(actual, expected);
-            reconstructed.retain(|id, _| update.entity_order.contains(id));
+            reconstructed.retain(|id, _| order.contains(id));
         }
+    }
+
+    #[test]
+    fn snapshot_stream_sends_order_on_reorder_removal_empty_and_reset() {
+        let mut world = World::new(); world.spawn_empty(); world.spawn_empty();
+        let mut cache = WorldSnapshotCache::default();
+        let initial = cache.capture(&world);
+        let mut stream = PlaySnapshotStream::default();
+        let first = stream.update(initial.clone(), false);
+        let ids: Vec<_> = initial.entities.iter().map(|entity| entity.entity).collect();
+        assert_eq!(first.entity_order, Some(ids.clone()));
+        let mut changed = initial.clone(); changed.entities[0] = Arc::new((*changed.entities[0]).clone());
+        let equal = stream.update(changed, false);
+        assert!(equal.snapshot.entities.is_empty()); assert!(equal.entity_order.is_none());
+        let mut reordered = initial.clone(); reordered.entities.reverse();
+        let update = stream.update(reordered, false);
+        assert_eq!(update.entity_order, Some(ids.iter().rev().copied().collect())); assert!(update.snapshot.entities.is_empty());
+        let mut removed = initial.clone(); removed.entities.pop();
+        let update = stream.update(removed, false);
+        assert_eq!(update.entity_order, Some(vec![ids[0]])); assert!(update.snapshot.entities.is_empty());
+        let mut empty = initial.clone(); empty.entities.clear();
+        let update = stream.update(empty.clone(), false);
+        assert_eq!(update.entity_order, Some(Vec::new())); assert!(update.snapshot.entities.is_empty());
+        assert!(stream.update(empty.clone(), false).entity_order.is_none());
+        assert_eq!(stream.update(empty, true).entity_order, Some(Vec::new()));
+        let restored = stream.update(initial, false);
+        assert_eq!(restored.entity_order, Some(ids)); assert_eq!(restored.snapshot.entities.len(), 2);
     }
 
     #[test]
@@ -434,13 +466,17 @@ mod tests {
         let initial = runtime.start(id, "function onTick() { engine.setClearColor(0.2,0.3,0.4,1); }".into(), initial, PlayProject::default()).unwrap();
         let first = runtime.advance_update(id, None, ScriptInput::default(), 0.1).unwrap();
         assert_eq!(first.snapshot.entities, initial.entities);
+        assert_eq!(first.entity_order, Some(initial.entities.iter().map(|entity| entity.entity).collect()));
         let second = runtime.advance_update(id, None, ScriptInput::default(), 0.1).unwrap();
         assert!(second.snapshot.entities.is_empty());
+        assert!(second.entity_order.is_none());
+        assert!(serde_json::to_value(&second).unwrap().get("entityOrder").is_none());
         assert_eq!((second.base_revision, second.revision, second.snapshot.frame), (1, 2, 2));
         let mut edited = initial;
         edited.entities[0].name = Some("Inspector edit".into());
         let result = runtime.advance_update(id, Some(edited), ScriptInput::default(), 0.1).unwrap();
         assert!(result.reset);
+        assert!(result.entity_order.is_some());
         assert_eq!(result.snapshot.entities[0].name.as_deref(), Some("Inspector edit"));
         runtime.stop();
         assert!(runtime.advance_update(id, None, ScriptInput::default(), 0.1).is_err());
@@ -468,6 +504,28 @@ mod tests {
         assert_eq!(retained.clear_color, [4.0, 0.75, 0.125, 1.0]);
         runtime.stop();
         assert!(runtime.advance(id, None, ScriptInput::default(), 0.125).is_err());
+    }
+
+    #[test]
+    #[ignore = "manual sample performance measurement; requires MENGINE_SAMPLE_ROOT"]
+    fn measure_sample_snapshot_stream() {
+        let root = PathBuf::from(std::env::var("MENGINE_SAMPLE_ROOT").expect("sample root"));
+        let mut world = World::new();
+        mengine_scene::load_scene(&root.join("Assets/Scenes/Main.mscene"), &mut world).unwrap();
+        let target = world.entities_with_components(&["Transform"]).next().unwrap();
+        let mut cache = WorldSnapshotCache::default();
+        let mut stream = PlaySnapshotStream::default();
+        let mut captures = Vec::new(); let mut deltas = Vec::new(); let mut serializations = Vec::new(); let mut sizes = Vec::new();
+        for iteration in 0..102 {
+            world.time.frame += 1;
+            world.get_component_mut::<mengine_core::generated::Transform>(target).unwrap().position[0] = iteration as f32;
+            let started = Instant::now(); let snapshot = cache.capture(&world); let capture_ms = started.elapsed().as_secs_f64() * 1000.0;
+            let started = Instant::now(); let update = stream.update(snapshot, false); let delta_ms = started.elapsed().as_secs_f64() * 1000.0;
+            let started = Instant::now(); let bytes = serde_json::to_vec(&update).unwrap(); let serialize_ms = started.elapsed().as_secs_f64() * 1000.0;
+            if iteration >= 2 { captures.push(capture_ms); deltas.push(delta_ms); serializations.push(serialize_ms); sizes.push(bytes.len()); }
+        }
+        captures.sort_by(f64::total_cmp); deltas.sort_by(f64::total_cmp); serializations.sort_by(f64::total_cmp); sizes.sort();
+        println!("{}", serde_json::json!({"scope":"Authored Main.mscene; 2 warmups and 100 updates changing one Transform; excludes scripts, IPC, browser and rendering", "entities":world.iter_entities().count(), "iterations":100, "medianCaptureMs":captures[50], "medianDeltaMs":deltas[50], "medianSerializationMs":serializations[50], "medianPayloadBytes":sizes[50]}));
     }
 
     #[test]

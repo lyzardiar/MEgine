@@ -24,7 +24,8 @@ export type PlayRuntimeDriver = {
 
 export type PlayWorldUpdate = {
   snapshot: HostWorldSnapshot;
-  entityOrder: number[];
+  /** MiYu: absent when the native entity set and order are unchanged. Resets always include it. */
+  entityOrder?: number[];
   baseRevision: number;
   revision: number;
   reset: boolean;
@@ -33,11 +34,15 @@ export type PlayWorldUpdate = {
 
 export function applyPlayWorldUpdate(previous: WorldSnapshotView, revision: number, update: PlayWorldUpdate): WorldSnapshotView {
   if (update.baseRevision !== revision || update.revision !== revision + 1) throw new Error('Play snapshot revision mismatch');
+  if (update.reset && update.entityOrder === undefined) throw new Error('Invalid Play snapshot entity order');
   const changed = toWorldSnapshotView(update.snapshot);
   const entities = new Map((update.reset ? [] : previous.entities).map(entity => [entity.entity, entity]));
-  for (const entity of changed.entities) entities.set(entity.entity, entity);
+  for (const entity of changed.entities) {
+    if (update.entityOrder === undefined && !entities.has(entity.entity)) throw new Error('Invalid Play snapshot entity order');
+    entities.set(entity.entity, entity);
+  }
   const seen = new Set<number>();
-  return { ...changed, entities: update.entityOrder.map(id => {
+  return { ...changed, entities: (update.entityOrder ?? previous.entities.map(entity => entity.entity)).map(id => {
     const entity = entities.get(id);
     if (!entity || seen.has(id)) throw new Error('Invalid Play snapshot entity order');
     seen.add(id);
@@ -51,11 +56,15 @@ export function createPlayWorldUpdater() {
   let indices = new Map<number, number>();
   return (previous: WorldSnapshotView, revision: number, update: PlayWorldUpdate): WorldSnapshotView => {
     if (update.baseRevision !== revision || update.revision !== revision + 1) throw new Error('Play snapshot revision mismatch');
-    let stable = !update.reset && ids !== null && ids.length === previous.entities.length && ids.length === update.entityOrder.length;
-    if (stable) for (let i = 0; i < ids!.length; i++) if (previous.entities[i].entity !== ids![i] || update.entityOrder[i] !== ids![i]) { stable = false; break; }
+    let stable = !update.reset && ids !== null && ids.length === previous.entities.length && (update.entityOrder === undefined || ids.length === update.entityOrder.length);
+    if (stable) for (let i = 0; i < ids!.length; i++) if (previous.entities[i].entity !== ids![i] || update.entityOrder !== undefined && update.entityOrder[i] !== ids![i]) { stable = false; break; }
     if (stable) {
       const changed = toWorldSnapshotView(update.snapshot), entities = previous.entities.slice();
-      for (const entity of changed.entities) { const index = indices.get(entity.entity); if (index !== undefined) entities[index] = entity; }
+      for (const entity of changed.entities) {
+        const index = indices.get(entity.entity);
+        if (index === undefined && update.entityOrder === undefined) throw new Error('Invalid Play snapshot entity order');
+        if (index !== undefined) entities[index] = entity;
+      }
       return { ...changed, entities };
     }
     const result = applyPlayWorldUpdate(previous, revision, update);

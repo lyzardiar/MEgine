@@ -1,0 +1,219 @@
+{
+  "author": "MiYu",
+  "status": "complete",
+  "baseCommit": "c9e801e167c00b4fb39793a90123f98fba8b8cb4",
+  "scope": "Compact Play IPC updates for stable entity sets; complete ordering for first update, structural changes and explicit resets. Complete retained checkpoints and direct live edits remain supported.",
+  "fixedCpuBenchmark": {
+    "before": {
+      "entities": 90179,
+      "iterations": 100,
+      "medianCaptureMs": 5.9672,
+      "medianDeltaMs": 8.4057,
+      "medianPayloadBytes": 992785,
+      "medianSerializationMs": 0.6973,
+      "scope": "Authored Main.mscene; 2 warmups and 100 updates changing one Transform; excludes scripts, IPC, browser and rendering"
+    },
+    "after": {
+      "entities": 90179,
+      "iterations": 100,
+      "medianCaptureMs": 5.6578,
+      "medianDeltaMs": 1.0762,
+      "medianPayloadBytes": 800,
+      "medianSerializationMs": 0.0070999999999999995,
+      "scope": "Authored Main.mscene; 2 warmups and 100 updates changing one Transform; excludes scripts, IPC, browser and rendering"
+    },
+    "command": "MENGINE_SAMPLE_ROOT=<sample> cargo test -p mengine-editor-host --release --lib measure_sample_snapshot_stream -- --ignored --nocapture"
+  },
+  "regressions": {
+    "editorTestsPassed": 15,
+    "hostTestsPassed": 36,
+    "hostManualTestsIgnored": 2,
+    "frostIntegrationTestsPassed": 1,
+    "typescriptViteBuild": true,
+    "customProtocolReleaseBuild": true,
+    "readOnlyReview": "No determined regression; first/empty/reordered/deleted/reused/reset states, direct edits, error recovery and exact checkpoints inspected."
+  },
+  "realSkirmishIpc": {
+    "deltaBytes": 7204336,
+    "fullSnapshotBytes": 1616533287,
+    "frames": 35,
+    "changedEntities": 3662
+  },
+  "nativeAcceptance": {
+    "beforeReceipt": "native-play-state-spatial-stream-before.json",
+    "afterReceipt": "native-play-state-spatial-stream.json",
+    "editorExecutable": "D:/MEngineNativeQA/construction-build/release/mengine-editor-tauri.exe",
+    "editorSha256": "119ca1c96f6c51db2d93228ee3a873f7b4fae743da9a8629729a10a758f7bf4d",
+    "renderSize": [
+      850,
+      478
+    ],
+    "sameSceneAndScript": true,
+    "gameCounts": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 162,
+      "entities": 90179,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 277,
+      "sceneViews": 1,
+      "shadowVisibleObjects": 188,
+      "submittedObjects": 236,
+      "uiBatches": 32,
+      "uiDrawCalls": 32,
+      "uiPrimitives": 550
+    },
+    "exactWorldRevision": 49,
+    "sceneDuringPlay": {
+      "billboardMeshes": 0,
+      "cameraVisibleObjects": 85,
+      "entities": 90179,
+      "materialPipelineEvictions": 0,
+      "materialPipelinesBuiltIn": 36,
+      "materialPipelinesCustom": 4,
+      "materialPipelinesRejected": 0,
+      "materialPipelinesResidentCustom": 0,
+      "materialSamplers": 2,
+      "materialTextureBindGroups": 18,
+      "materialTexturesColor": 26,
+      "materialTexturesData": 9,
+      "msaaSamples": 4,
+      "renderObjects": 265,
+      "sceneViews": 0,
+      "shadowVisibleObjects": 176,
+      "submittedObjects": 212,
+      "uiBatches": 1,
+      "uiDrawCalls": 1,
+      "uiPrimitives": 88
+    },
+    "pauseInspectorEditing": true,
+    "pauseStepStop": true,
+    "consoleErrors": 0,
+    "beforeTiming": {
+      "intervals": 88,
+      "averagePresentIntervalMs": 526.1568181812763,
+      "p95PresentIntervalMs": 986.1999998092651,
+      "presentedFps": 1.9005740597577336,
+      "averageRequestMs": 430.6471909967701,
+      "averageRenderMs": 51.46262359550558,
+      "averageCommandMs": 76.71996179775276,
+      "averageUploadMs": 0.8179775221963946,
+      "averageWorldSyncMs": 6.069024719101125,
+      "averageSimulationMs": 80.80860674157307,
+      "averageSimulationRequestMs": 595.970786525962
+    },
+    "afterTiming": {
+      "intervals": 90,
+      "averagePresentIntervalMs": 514.9777777777778,
+      "p95PresentIntervalMs": 712.4000000953674,
+      "presentedFps": 1.9418313627340986,
+      "averageRequestMs": 380.47142857771655,
+      "averageRenderMs": 47.5505054945055,
+      "averageCommandMs": 69.52320439560441,
+      "averageUploadMs": 0.8549450544210581,
+      "averageWorldSyncMs": 5.964701098901097,
+      "averageSimulationMs": 74.10119999999999,
+      "averageSimulationRequestMs": 467.9384615683294
+    },
+    "beforeShutdown": {
+      "pid": 52704,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-stream-before-1791643174936\\runtime\\com.mengine.editor.agent-jzJkFy '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-stream-before-1791643174936\\runtime\\com.mengine.editor.agent-jzJkFy'"
+    },
+    "afterShutdown": {
+      "pid": 18668,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-stream-1791643866747\\runtime\\com.mengine.editor.agent-3XKPAR '\\\\?\\E:\\work\\codex\\cache\\mengine\\native-qa\\play-state-spatial-stream-1791643866747\\runtime\\com.mengine.editor.agent-3XKPAR'"
+    },
+    "beforeStepTimes": [
+      {
+        "name": "full native scene readiness",
+        "ms": 43087
+      },
+      {
+        "name": "native Scene spatial query",
+        "ms": 55477
+      },
+      {
+        "name": "actual F1 skirmish start",
+        "ms": 19355
+      },
+      {
+        "name": "native Scene activation in Play",
+        "ms": 41210
+      },
+      {
+        "name": "continuous native playback sample",
+        "ms": 52575
+      },
+      {
+        "name": "paused Scene editing and selection",
+        "ms": 67947
+      },
+      {
+        "name": "pause step and authored restoration",
+        "ms": 4818
+      }
+    ],
+    "afterStepTimes": [
+      {
+        "name": "full native scene readiness",
+        "ms": 42508
+      },
+      {
+        "name": "native Scene spatial query",
+        "ms": 56968
+      },
+      {
+        "name": "actual F1 skirmish start",
+        "ms": 19983
+      },
+      {
+        "name": "native Scene activation in Play",
+        "ms": 41798
+      },
+      {
+        "name": "continuous native playback sample",
+        "ms": 51748
+      },
+      {
+        "name": "paused Scene editing and selection",
+        "ms": 70167
+      },
+      {
+        "name": "pause step and authored restoration",
+        "ms": 5562
+      }
+    ]
+  },
+  "remainingCosts": "WebView live-world deep comparisons, full ordered snapshot capture, script execution and complete frame compilation still run. Observed native FPS includes scheduling and overlapping stages; the CPU benchmark does not prove gameplay FPS. Full Warcraft III parity and smooth large-scene gameplay remain incomplete.",
+  "sourceHashes": {
+    "crates/mengine-editor-host/src/play_runtime.rs": "0ed945257d2faa19c6386384f377947fd5821416bf8ce7b5e140f95633984830",
+    "crates/mengine-editor-host/tests/frost_sample.rs": "8fbfba4f8a2f2e058ebcfb864255dccb78a46263a28290220a450eb2cc6df811",
+    "packages/editor/src/playRuntime.ts": "cc8764bd375f1657e9bf3693e2e224d5ff87a7ee062105fe2d53d84bfe3298e4",
+    "packages/editor/tests/playRuntimeUpdate.test.mjs": "0169bf8fffc688fdd206554299d821019a68a76eb003667ac499d737be02e2a6",
+    "scripts/qa-frost-play-state.mjs": "b7c9b1a773a746f96d7f8db40179fb68263392ead9ddab412051aade83aa5cb9",
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "c39a77f39d1b23ba2d43b078019488b86ae048bf4ebc23ed9af58f665ad74bc8",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "d9830c5d97a70432392f1e4abc69a03e5232efc3d1348443e7f2a6f2ceae0ebc"
+  },
+  "stagedSourceHashes": {
+    "crates/mengine-editor-host/src/play_runtime.rs": "0ed945257d2faa19c6386384f377947fd5821416bf8ce7b5e140f95633984830",
+    "crates/mengine-editor-host/tests/frost_sample.rs": "6a000d51740a4595ca11a79f3c0485036da09827c1fae40cb3152b43a0d94653",
+    "packages/editor/src/playRuntime.ts": "cc8764bd375f1657e9bf3693e2e224d5ff87a7ee062105fe2d53d84bfe3298e4",
+    "packages/editor/tests/playRuntimeUpdate.test.mjs": "0169bf8fffc688fdd206554299d821019a68a76eb003667ac499d737be02e2a6",
+    "scripts/qa-frost-play-state.mjs": "9992f763f38ea3b4ebb9b57cd9771b0ba59c9112aa2375bce828e0622514ef46"
+  },
+  "sourceHashScope": "sourceHashes records tested checkout bytes; stagedSourceHashes records the Git-normalized bytes of the committed implementation and test files."
+}

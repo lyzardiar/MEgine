@@ -60,6 +60,7 @@ fn native_snapshot_deltas_keep_game_state_and_reduce_payload() {
     let scene:Value=serde_json::from_slice(&std::fs::read(root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
     let runtime=EditorPlayRuntime::default();
     let initial=runtime.start(runtime.begin(),source,serde_json::from_value(scene["world"].clone()).unwrap(),PlayProject{root:Some(root),..Default::default()}).unwrap();
+    let mut order=initial.entities.iter().map(|e|e.entity).collect::<Vec<_>>();
     let mut entities=initial.entities.into_iter().map(|e|(e.entity,e)).collect::<std::collections::HashMap<_,_>>();
     let (mut full_bytes,mut delta_bytes,mut changed)=(0,0,0);
     for frame in 0..40 {
@@ -71,8 +72,8 @@ fn native_snapshot_deltas_keep_game_state_and_reduce_payload() {
         let count=update.snapshot.entities.len();
         let mut snapshot=update.snapshot;
         for entity in snapshot.entities.drain(..) { entities.insert(entity.entity,entity); }
-        snapshot.entities=update.entity_order.iter().map(|id|entities[id].clone()).collect();
-        entities.retain(|id,_|update.entity_order.contains(id));
+        if let Some(next)=update.entity_order { order=next; let live=order.iter().copied().collect::<std::collections::HashSet<_>>(); entities.retain(|id,_|live.contains(id)); }
+        snapshot.entities=order.iter().map(|id|entities[id].clone()).collect();
         if frame>4 {
             assert_eq!(telemetry(&snapshot)["kind"],"skirmish");
             assert_eq!(telemetry(&snapshot)["mode"],"playing");
