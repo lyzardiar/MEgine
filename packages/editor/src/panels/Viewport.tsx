@@ -104,6 +104,11 @@ import {
 import {
   canvasUiTextLayoutMeasurement,
   drawUiItems,
+  drawSceneCanvasSurface,
+  drawSceneUiSelection,
+  sceneUiEntities,
+  type SceneCanvasSurface,
+  type SceneUiOverlayLayout,
   hitTestUi,
   hitTestUiSelect,
   layoutUiOverlay,
@@ -205,7 +210,7 @@ import {
   sceneOrientationLabel,
   type SceneOrientationView,
 } from '../sceneOrientation';
-import { nativeSceneFrameRequestIdentity } from '../nativeSceneFrame';
+import { nativeSceneFrameRequestIdentity, pendingNativeScenePaintUnchanged, type NativeScenePaintState } from '../nativeSceneFrame';
 import {
   rectAxisTranslationAmount,
   rectTranslationAlongAxis,
@@ -776,6 +781,7 @@ export function Viewport(props: {
     counts: new Map(),
     diagnostics: new Map(),
   });
+  const sceneCanvasSurfaceRef = useRef<{ source: Ent[]; key: string; updatedAt: number; canvas: HTMLCanvasElement; stats: ReturnType<typeof drawUiItems> } | null>(null);
   const uiLayoutScaleRef = useRef(1);
   const usingRectGizmoRef = useRef(false);
   const uiHoverRef = useRef<number | null>(null);
@@ -813,6 +819,13 @@ export function Viewport(props: {
     performance.now(),
   ));
   const lastProfilerFrameRef = useRef(0);
+  const scenePaintEpochRef = useRef(0);
+  const previousScenePaintRef = useRef<NativeScenePaintState | null>(null);
+  const sceneWorldArgsRef = useRef<{ source: Ent[]; key: string; args: ReturnType<typeof createNativeViewportWorldArgs<Ent>> } | null>(null);
+  const sceneTransformsRef = useRef<{ source: Ent[]; transforms: ReturnType<typeof buildWorldTransforms> } | null>(null);
+  const sceneUiEntitiesRef = useRef<{ source: Ent[]; entities: Ent[] } | null>(null);
+  const sceneOverlayLayoutRef = useRef<{ source: Ent[]; key: string; updatedAt: number; layout: SceneUiOverlayLayout } | null>(null);
+  scenePaintEpochRef.current++;
   const hoverGizmoRef = useRef<GizmoPart | null>(null);
   const activeGizmoRef = useRef<GizmoPart | null>(null);
   const lastVpRef = useRef({ x: 0, y: 0, w: 1, h: 1 });
@@ -1272,11 +1285,16 @@ export function Viewport(props: {
       nativeGameFrameRef.current = null;
       nativeSceneFrameRef.current = null;
       nativeCameraPreviewFrameRef.current = null;
+      sceneWorldArgsRef.current = null;
+      sceneCanvasSurfaceRef.current = null;
+      sceneOverlayLayoutRef.current = null;
       reportedMaterialErrorsRef.current.clear();
       invalidateEnvironmentPreviews();
     };
+    const clearUiLayout = () => { sceneOverlayLayoutRef.current = null; sceneCanvasSurfaceRef.current = null; };
     window.addEventListener('mengine:project-assets-changed', clear);
-    return () => window.removeEventListener('mengine:project-assets-changed', clear);
+    window.addEventListener('mengine-ui-font-loaded', clearUiLayout);
+    return () => { window.removeEventListener('mengine:project-assets-changed', clear); window.removeEventListener('mengine-ui-font-loaded', clearUiLayout); };
   }, []);
 
   // Continuous render loop
@@ -1304,13 +1322,23 @@ export function Viewport(props: {
       lastProfilerFrameRef.current = 0;
       return;
     }
+    const editScene = propsRef.current.tab === 'scene' && !propsRef.current.playing && !scene2DRef.current && '__TAURI_INTERNALS__' in window;
+    const scenePaintState = { key: JSON.stringify([sc, rect.width, rect.height, window.devicePixelRatio, hoverGizmoRef.current, activeGizmoRef.current, uiHoverRef.current, uiPressRef.current]), epoch: scenePaintEpochRef.current, frame: nativeSceneFrameRef.current, preview: nativeCameraPreviewFrameRef.current };
+    const browserAnimation = editScene && propsRef.current.entities.some(entity => (entity.components.SpineSkeleton || entity.components.EffekseerEffect || entity.components.ParticleEmitter2D || entity.components.ParticleEmitter3D || entity.components.TrailRenderer2D || entity.components.AnimatedSprite2D) && (propsRef.current.activeInHierarchy?.(entity.entity) ?? entity.active !== false));
+    if (animationFrame && editScene && !browserAnimation && nativeSceneRequestRef.current.inFlight && pendingNativeScenePaintUnchanged(previousScenePaintRef.current, scenePaintState)) return;
+    previousScenePaintRef.current = scenePaintState;
     const requestedProps = currentViewportProps();
     let p = requestedProps;
-    const nativeWorld = createNativeViewportWorldArgs(requestedProps);
+    const worldKey = JSON.stringify([requestedProps.clearColor, requestedProps.simulationTime]);
+    const cachedWorld = editScene && requestedProps.runtimeSessionId == null ? sceneWorldArgsRef.current : null;
+    const nativeWorld = cachedWorld?.source === requestedProps.entities && cachedWorld.key === worldKey ? cachedWorld.args : createNativeViewportWorldArgs(requestedProps, requestedProps.tab === 'scene');
+    if (editScene && requestedProps.runtimeSessionId == null) sceneWorldArgsRef.current = { source: requestedProps.entities, key: worldKey, args: nativeWorld };
+    else sceneWorldArgsRef.current = null;
     const requestWorldFrame = (command: string, args: Record<string, unknown>) => {
-      const worldArgs = nativeWorld.worldArgs();
+      const retainedScene = editScene && command === 'render_native_scene_view';
+      const worldArgs = retainedScene ? nativeWorld.sceneWorldArgs() : nativeWorld.worldArgs();
       nativeWorld.frameWorld();
-      return requestRevisionedNativeViewportFrame(command, { ...args, ...worldArgs }, nativeWorld.snapshotArgs);
+      return requestRevisionedNativeViewportFrame(command, { ...args, ...worldArgs }, nativeWorld.snapshotArgs).then(buffer => { if (retainedScene) nativeWorld.markSceneWorldUploaded(); return buffer; });
     };
     const presentationKey = JSON.stringify([p.gameResolution, p.gameDisplay]);
     if (nativeGameFrameRef.current && (!nativeViewportFrameWorldCurrent(nativeGameFrameRef.current.world, requestedProps) || nativeGameFrameRef.current.presentationKey !== presentationKey)) nativeGameFrameRef.current = null;
@@ -1452,7 +1480,7 @@ export function Viewport(props: {
       && !scene2DActive
       && '__TAURI_INTERNALS__' in window
       && !nativeSceneRequestRef.current.inFlight
-      && (draggingRef.current || p.playing || now - nativeSceneRequestRef.current.lastRequestAt >= 200)
+      && (draggingRef.current || p.playing || (!nativeSceneRequestRef.current.reportedError && nativeSceneFrameRef.current?.key !== nativeSceneIdentity?.key) || now - nativeSceneRequestRef.current.lastRequestAt >= 200)
     ) {
       const request = nativeSceneRequestRef.current;
       const generation = ++request.generation;
@@ -1621,7 +1649,9 @@ export function Viewport(props: {
       if (!scene2DActive) drawGroundGrid(ctx, cam, vp, sc.pivot, sc.distance);
     }
 
-    const worldTransforms = buildWorldTransforms(nativeGameReady && !(displayedPresentation?.hasSpine ?? p.entities.some(entity => entity.components.SpineSkeleton)) ? [] : p.entities);
+    const transformSource = nativeGameReady && !(displayedPresentation?.hasSpine ?? p.entities.some(entity => entity.components.SpineSkeleton)) ? [] : p.entities;
+    const worldTransforms = editScene && sceneTransformsRef.current?.source === transformSource ? sceneTransformsRef.current.transforms : buildWorldTransforms(transformSource);
+    sceneTransformsRef.current = editScene ? { source: transformSource, transforms: worldTransforms } : null;
     const lights2D = prepareLight2DLights((nativeGameReady ? [] : p.entities).flatMap<Light2DInstance>((entity) => {
       if (!isActive(entity.entity)) return [];
       const component = entity.components.Light2D as Light2DComponent | undefined;
@@ -2358,6 +2388,16 @@ export function Viewport(props: {
       if (!pr) continue;
       const half: Vec3 = [0.5 * t.scale[0], 0.5 * t.scale[1], 0.5 * t.scale[2]];
       const rot = t.rotation as [number, number, number, number] | undefined;
+      // The native Scene image owns mesh pixels; preserve only the existing projected selection region.
+      if (!isGame && !scene2DActive && '__TAURI_INTERNALS__' in window && !nativeSceneRequestRef.current.reportedError) {
+        const meshPath = String((mesh as Record<string, unknown>).mesh ?? 'cube');
+        const imported = /\.(?:gltf|glb)$/i.test(meshPath) ? modelPreview(meshPath) : null;
+        const hit = imported
+          ? drawTriangleMesh(ctx, cam, vp, t.position as Vec3, t.scale as Vec3, imported.positions, imported.indices, selected, rot, undefined, true)
+          : drawSolidCube(ctx, cam, vp, t.position as Vec3, half, selected, rot, undefined, true);
+        if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+        continue;
+      }
       const materialPath = String((mesh as Record<string, unknown>).material ?? 'default');
       const materialPreview = materialAssetPreviewState(materialPath);
       if (materialPreview.error && !e.components.PbrMaterial) {
@@ -2801,9 +2841,15 @@ export function Viewport(props: {
           ctx.restore();
         }
       } else {
+        let uiSource = p.entities;
+        if (editScene) {
+          if (sceneUiEntitiesRef.current?.source !== p.entities) sceneUiEntitiesRef.current = { source: p.entities, entities: sceneUiEntities(p.entities) };
+          uiSource = sceneUiEntitiesRef.current.entities;
+        }
         let uiItems: UiDrawItem[];
         let layoutScale: number;
         let workspaceFrames: CanvasArtboardFrame[] = [];
+        let sceneSurface: SceneCanvasSurface | undefined;
         if (canvasWorkspaceActive && workspaceCanvasEntity != null) {
           ctx.fillStyle = '#171a1f';
           ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
@@ -2918,17 +2964,30 @@ export function Viewport(props: {
           // Scene Canvas is a world quad whose authored size is the logical Game resolution.
           const gameBox = letterbox(pw, ph, p.gameResolution);
           const sceneCanvasSize = sceneCanvasLogicalSize(p.gameResolution, gameBox);
+          let overlayLayout: SceneUiOverlayLayout | undefined;
+          const overlayCanvases = uiSource.filter(entity => entity.components.Canvas);
+          if (editScene && overlayCanvases.length === 1 && String((overlayCanvases[0].components.Canvas as { render_mode?: string; renderMode?: string }).render_mode ?? (overlayCanvases[0].components.Canvas as { renderMode?: string }).renderMode ?? 'ScreenSpaceOverlay') === 'ScreenSpaceOverlay') {
+            const key = JSON.stringify([sceneCanvasSize, [...selSet].sort((a, b) => a - b)]);
+            let cached = sceneOverlayLayoutRef.current;
+            if (!cached || cached.source !== uiSource || cached.key !== key || now - cached.updatedAt >= 250) {
+              cached = { source: uiSource, key, updatedAt: now, layout: { items: layoutUiOverlay(uiSource, { x: 0, y: 0, w: sceneCanvasSize.w, h: sceneCanvasSize.h }, selSet, undefined, cam, null, textMeasurement) } };
+              sceneOverlayLayoutRef.current = cached;
+            }
+            overlayLayout = cached.layout;
+          } else sceneOverlayLayoutRef.current = null;
           const screenLayout = layoutUiScene3D(
-            p.entities,
+            uiSource,
             cam,
             vp,
             selSet,
             sceneCanvasSize,
             textMeasurement,
+            overlayLayout,
           );
           layoutScale = screenLayout.layoutScale;
+          if (editScene) sceneSurface = screenLayout.surface;
           uiItems = [
-            ...layoutUiWorldSpace(p.entities, cam, vp, selSet, textMeasurement),
+            ...layoutUiWorldSpace(uiSource, cam, vp, selSet, textMeasurement),
             ...screenLayout.items,
           ];
         }
@@ -2950,7 +3009,7 @@ export function Viewport(props: {
           }
         }
 
-        if (uiItems.length) {
+        if (uiItems.length || sceneSurface) {
           if (scene2DRef.current && sceneGridRef.current) {
             const gridRects = canvasWorkspaceActive
               ? workspaceFrames.filter((frame) => frame.active).map((frame) => ({
@@ -2969,12 +3028,27 @@ export function Viewport(props: {
               );
             }
           }
-          const stats = drawUiItems(ctx, uiItems, null, null, {
-            sceneLabel: true,
-            customDraw: (context, item) => {
-              drawCanvasHostedRenderer(context, item, simulationDelta);
-            },
-          });
+          let stats: ReturnType<typeof drawUiItems>;
+          if (sceneSurface) {
+            const key = JSON.stringify([sceneSurface.bounds, sceneSurface.items.map(item => item.entity)]);
+            let cached = sceneCanvasSurfaceRef.current;
+            if (!cached || cached.source !== p.entities || cached.key !== key || now - cached.updatedAt >= 250) {
+              const layer = cached?.canvas ?? document.createElement('canvas');
+              layer.width = Math.ceil(sceneSurface.bounds.w); layer.height = Math.ceil(sceneSurface.bounds.h);
+              const context = layer.getContext('2d')!;
+              context.translate(-sceneSurface.bounds.x, -sceneSurface.bounds.y);
+              const localStats = drawUiItems(context, sceneSurface.items.filter(item => item.role !== 'canvas'), null, null);
+              cached = { source: p.entities, key, updatedAt: now, canvas: layer, stats: localStats };
+              sceneCanvasSurfaceRef.current = cached;
+            }
+            drawSceneCanvasSurface(ctx, sceneSurface, cached.canvas, cached.updatedAt);
+            drawSceneUiSelection(ctx, uiItems);
+            drawUiItems(ctx, uiItems.filter(item => item.role === 'canvas'), null, null, { sceneLabel: true });
+            stats = cached.stats;
+          } else {
+            sceneCanvasSurfaceRef.current = null;
+            stats = drawUiItems(ctx, uiItems, null, null, { sceneLabel: true, customDraw: (context, item) => { drawCanvasHostedRenderer(context, item, simulationDelta); } });
+          }
           profilerUiPrimitives = stats.primitives;
           profilerUiBatches = stats.batches;
 

@@ -1,4 +1,4 @@
-// Author: MiYu
+// Author: MiYu. Resolve Canvas ancestry per layout and project visible overlay textures.
 
 /** Build screen-space / Scene-world rects for UI trees (Canvas Overlay). */
 
@@ -53,7 +53,8 @@ import {
   type ButtonSpriteState,
 } from './buttonSpriteSwap';
 import { resolveSpriteId } from '../spriteLibrary';
-import { add, cross, lookBasis, norm, project, quatRotateVec, scale as scaleVec3, sub, type Camera, type Quat, type Vec3 } from '../math3d';
+import { projectSceneCanvasTexture } from './sceneCanvasProjection';
+import { add, cross, dot, lookBasis, norm, project, quatRotateVec, scale as scaleVec3, sub, type Camera, type Quat, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
 import { buildWorldTransforms } from '../worldTransform';
 import { getSortingLayerRank } from '../sortingLayers';
@@ -846,24 +847,48 @@ function scaleSceneVisuals(item: UiDrawItem, scale: number): UiDrawItem {
   };
 }
 
-function inCanvasTree(entities: UiEnt[], entityId: number, canvasId: number): boolean {
+// Index each layout call so live hierarchy edits are visible without scanning the entire scene per ancestor.
+function indexUiEntities(entities: UiEnt[]): ReadonlyMap<number, UiEnt> {
+  const byId = new Map<number, UiEnt>();
+  for (const entity of entities) if (!byId.has(entity.entity)) byId.set(entity.entity, entity);
+  return byId;
+}
+
+/** Keep Canvas descendants and their activation/transform ancestors; unrelated models never enter UI layout. */
+export function sceneUiEntities<E extends UiEnt>(entities: E[]): E[] {
+  const byId = indexUiEntities(entities), children = new Map<number, number[]>();
+  for (const entity of entities) if (entity.parent != null) { const list = children.get(entity.parent) ?? []; list.push(entity.entity); children.set(entity.parent, list); }
+  const retained = new Set<number>(), queue = entities.filter(entity => entity.components.Canvas || entity.components.Camera2D || entity.components.Camera3D).map(entity => entity.entity);
+  while (queue.length) {
+    const id = queue.pop()!;
+    if (retained.has(id)) continue;
+    retained.add(id); queue.push(...(children.get(id) ?? []));
+  }
+  for (const id of [...retained]) {
+    let parent = byId.get(id)?.parent;
+    while (parent != null && !retained.has(parent)) { retained.add(parent); parent = byId.get(parent)?.parent; }
+  }
+  return entities.filter(entity => retained.has(entity.entity));
+}
+
+function inCanvasTree(byId: ReadonlyMap<number, UiEnt>, entityId: number, canvasId: number): boolean {
   let cur: number | null = entityId;
   const guard = new Set<number>();
   while (cur != null) {
     if (cur === canvasId) return true;
     if (guard.has(cur)) break;
     guard.add(cur);
-    cur = entities.find((e) => e.entity === cur)?.parent ?? null;
+    cur = byId.get(cur)?.parent ?? null;
   }
   return false;
 }
 
-function hasCanvasAncestor(entities: UiEnt[], entity: UiEnt): boolean {
+function hasCanvasAncestor(byId: ReadonlyMap<number, UiEnt>, entity: UiEnt): boolean {
   let current = entity.parent ?? null;
   const guard = new Set<number>();
   while (current != null && !guard.has(current)) {
     guard.add(current);
-    const parent = entities.find((candidate) => candidate.entity === current);
+    const parent = byId.get(current);
     if (!parent) break;
     if (parent.components.Canvas != null) return true;
     current = parent.parent ?? null;
@@ -871,14 +896,14 @@ function hasCanvasAncestor(entities: UiEnt[], entity: UiEnt): boolean {
   return false;
 }
 
-function isCanvasLayoutRoot(entities: UiEnt[], entity: UiEnt): boolean {
+function isCanvasLayoutRoot(byId: ReadonlyMap<number, UiEnt>, entity: UiEnt): boolean {
   const canvas = entity.components.Canvas as { override_sorting?: boolean; overrideSorting?: boolean };
-  return !hasCanvasAncestor(entities, entity)
+  return !hasCanvasAncestor(byId, entity)
     || canvas.override_sorting === true
     || canvas.overrideSorting === true;
 }
 
-function isActiveInHierarchy(entities: UiEnt[], entity: UiEnt): boolean {
+function isActiveInHierarchy(byId: ReadonlyMap<number, UiEnt>, entity: UiEnt): boolean {
   let current: UiEnt | undefined = entity;
   const guard = new Set<number>();
   while (current) {
@@ -887,13 +912,13 @@ function isActiveInHierarchy(entities: UiEnt[], entity: UiEnt): boolean {
     if (current.active === false) return false;
     const parentId: number | null = current.parent ?? null;
     if (parentId == null) return true;
-    current = entities.find((candidate) => candidate.entity === parentId);
+    current = byId.get(parentId);
     if (!current) return false;
   }
   return false;
 }
 
-function canvasChainEnabled(entities: UiEnt[], entity: UiEnt): boolean {
+function canvasChainEnabled(byId: ReadonlyMap<number, UiEnt>, entity: UiEnt): boolean {
   let current: UiEnt | undefined = entity;
   const guard = new Set<number>();
   while (current) {
@@ -903,18 +928,18 @@ function canvasChainEnabled(entities: UiEnt[], entity: UiEnt): boolean {
     if (canvas?.enabled === false) return false;
     const parentId: number | null = current.parent ?? null;
     if (parentId == null) return true;
-    current = entities.find((candidate) => candidate.entity === parentId);
+    current = byId.get(parentId);
     if (!current) return false;
   }
   return false;
 }
 
-function canvasRenderRootEnabled(entities: UiEnt[], entity: UiEnt): boolean {
-  return isActiveInHierarchy(entities, entity) && canvasChainEnabled(entities, entity);
+function canvasRenderRootEnabled(byId: ReadonlyMap<number, UiEnt>, entity: UiEnt): boolean {
+  return isActiveInHierarchy(byId, entity) && canvasChainEnabled(byId, entity);
 }
 
-function canvasLayoutRootForEntity(entities: UiEnt[], entityId: number): UiEnt | undefined {
-  let current = entities.find((entity) => entity.entity === entityId);
+function canvasLayoutRootForEntity(byId: ReadonlyMap<number, UiEnt>, entityId: number): UiEnt | undefined {
+  let current = byId.get(entityId);
   let outermost: UiEnt | undefined;
   const guard = new Set<number>();
   while (current && !guard.has(current.entity)) {
@@ -931,18 +956,18 @@ function canvasLayoutRootForEntity(entities: UiEnt[], entityId: number): UiEnt |
     const parent = current.parent ?? null;
     current = parent == null
       ? undefined
-      : entities.find((entity) => entity.entity === parent);
+      : byId.get(parent);
   }
   return outermost;
 }
 
-function outermostCanvas(entities: UiEnt[], entity: UiEnt): UiEnt {
+function outermostCanvas(byId: ReadonlyMap<number, UiEnt>, entity: UiEnt): UiEnt {
   let result = entity;
   let current = entity.parent ?? null;
   const guard = new Set<number>();
   while (current != null && !guard.has(current)) {
     guard.add(current);
-    const parent = entities.find((candidate) => candidate.entity === current);
+    const parent = byId.get(current);
     if (!parent) break;
     if (parent.components.Canvas != null) result = parent;
     current = parent.parent ?? null;
@@ -950,7 +975,7 @@ function outermostCanvas(entities: UiEnt[], entity: UiEnt): UiEnt {
   return result;
 }
 
-function canvasSortingOrder(entities: UiEnt[], entity: UiEnt): number {
+function canvasSortingOrder(byId: ReadonlyMap<number, UiEnt>, entity: UiEnt): number {
   const authored = entity.components.Canvas as {
     override_sorting?: boolean;
     overrideSorting?: boolean;
@@ -959,12 +984,12 @@ function canvasSortingOrder(entities: UiEnt[], entity: UiEnt): number {
   };
   const source = authored.override_sorting === true || authored.overrideSorting === true
     ? entity
-    : outermostCanvas(entities, entity);
+    : outermostCanvas(byId, entity);
   const canvas = source.components.Canvas as { sorting_order?: number; sortingOrder?: number };
   return number(canvas.sorting_order ?? canvas.sortingOrder, 0);
 }
 
-function canvasPixelPerfect(entities: UiEnt[], entity: UiEnt): boolean {
+function canvasPixelPerfect(byId: ReadonlyMap<number, UiEnt>, entity: UiEnt): boolean {
   const chain: UiEnt[] = [];
   let current: UiEnt | undefined = entity;
   const guard = new Set<number>();
@@ -974,7 +999,7 @@ function canvasPixelPerfect(entities: UiEnt[], entity: UiEnt): boolean {
     const parentId: number | null = current.parent ?? null;
     current = parentId == null
       ? undefined
-      : entities.find((candidate) => candidate.entity === parentId);
+      : byId.get(parentId);
   }
   let pixelPerfect = false;
   chain.reverse().forEach((canvasEntity, index) => {
@@ -992,8 +1017,8 @@ function canvasPixelPerfect(entities: UiEnt[], entity: UiEnt): boolean {
   return pixelPerfect;
 }
 
-function canvasSortKey(entities: UiEnt[], entity: UiEnt): [number, number, number] {
-  const inherited = outermostCanvas(entities, entity);
+function canvasSortKey(byId: ReadonlyMap<number, UiEnt>, entity: UiEnt): [number, number, number] {
+  const inherited = outermostCanvas(byId, entity);
   const authored = entity.components.Canvas as {
     override_sorting?: boolean;
     overrideSorting?: boolean;
@@ -1010,7 +1035,7 @@ function canvasSortKey(entities: UiEnt[], entity: UiEnt): [number, number, numbe
   return [
     modeRank,
     getSortingLayerRank(sourceData.sorting_layer ?? sourceData.sortingLayer ?? 'default'),
-    canvasSortingOrder(entities, entity),
+    canvasSortingOrder(byId, entity),
   ];
 }
 
@@ -1027,6 +1052,7 @@ export function layoutUiOverlay(
   textMeasurement?: UiTextLayoutMeasurement,
   nativeCoordinates = false,
 ): UiDrawItem[] {
+  const byId = indexUiEntities(entities);
   // Rebuild per layout so in-place hierarchy, activity and sibling edits remain visible.
   const childrenByParent = new Map<number | null, UiEnt[]>();
   for (const entity of entities) {
@@ -1039,11 +1065,11 @@ export function layoutUiOverlay(
   for (const siblings of childrenByParent.values()) siblings.sort((a, b) => (a.siblingIndex ?? 0) - (b.siblingIndex ?? 0));
   const canvases = entities
     .filter((e) => e.components.Canvas
-      && canvasRenderRootEnabled(entities, e)
-      && isCanvasLayoutRoot(entities, e))
+      && canvasRenderRootEnabled(byId, e)
+      && isCanvasLayoutRoot(byId, e))
     .sort((a, b) => {
-      const left = canvasSortKey(entities, a);
-      const right = canvasSortKey(entities, b);
+      const left = canvasSortKey(byId, a);
+      const right = canvasSortKey(byId, b);
       return left[0] - right[0] || left[1] - right[1] || left[2] - right[2];
     });
 
@@ -1054,7 +1080,7 @@ export function layoutUiOverlay(
   for (const canvas of canvases) {
     const canvasOutputStart = out.length;
     let paintOrder = 0;
-    const inheritedCanvas = outermostCanvas(entities, canvas);
+    const inheritedCanvas = outermostCanvas(byId, canvas);
     const mode =
       (inheritedCanvas.components.Canvas as { render_mode?: string; renderMode?: string })?.render_mode
       ?? (inheritedCanvas.components.Canvas as { renderMode?: string })?.renderMode
@@ -1913,7 +1939,7 @@ export function layoutUiOverlay(
       const guard = new Set<number>();
       while (current != null && current !== inheritedCanvas.entity && !guard.has(current)) {
         guard.add(current);
-        const ancestor = entities.find((candidate) => candidate.entity === current);
+        const ancestor = byId.get(current);
         if (!ancestor) break;
         chain.push(ancestor);
         current = ancestor.parent ?? null;
@@ -1941,7 +1967,7 @@ export function layoutUiOverlay(
       ignoreReversedGraphics: true,
       blockingObjects: 'None',
       blockingMask: -1,
-      pixelPerfect: canvasPixelPerfect(entities, canvas),
+      pixelPerfect: canvasPixelPerfect(byId, canvas),
       visualMasks: [] as number[],
       maskRegions: [] as UiMaskRegion[],
       softClips: [] as UiSoftClip[],
@@ -1983,12 +2009,12 @@ export function captureUiRectLayouts(entities: UiEnt[], ids: Set<number>, size: 
   const result = new Map<number, { rect: Rect; parent: Rect; canvas: number; scale: number; driven: boolean }>();
   if (!ids.size) return result;
   const items = layoutUiOverlay(entities, { x: 0, y: 0, ...size }, ids, undefined, undefined, null);
-  const byId = new Map(entities.map((entity) => [entity.entity, entity]));
+  const byId = indexUiEntities(entities);
   for (const item of items) {
     if (!ids.has(item.entity) || !item.anchorParentRect) continue;
     const entity = byId.get(item.entity);
     if (!entity) continue;
-    const canvas = outermostCanvas(entities, entity);
+    const canvas = outermostCanvas(byId, entity);
     result.set(item.entity, {
       rect: item.rect,
       parent: item.anchorParentRect,
@@ -2019,20 +2045,21 @@ export function layoutUiWorldSpace(
   selectedIds: Set<number>,
   textMeasurement?: UiTextLayoutMeasurement,
 ): UiDrawItem[] {
+  const byId = indexUiEntities(entities);
   const canvases = entities
     .filter((entity) => {
       if (!entity.components.Canvas
-        || !canvasRenderRootEnabled(entities, entity)
-        || !isCanvasLayoutRoot(entities, entity)) {
+        || !canvasRenderRootEnabled(byId, entity)
+        || !isCanvasLayoutRoot(byId, entity)) {
         return false;
       }
-      const inherited = outermostCanvas(entities, entity);
+      const inherited = outermostCanvas(byId, entity);
       const canvas = inherited.components.Canvas as { render_mode?: string; renderMode?: string };
       return (canvas.render_mode ?? canvas.renderMode) === 'WorldSpace';
     })
     .sort((left, right) => {
-      const leftKey = canvasSortKey(entities, left);
-      const rightKey = canvasSortKey(entities, right);
+      const leftKey = canvasSortKey(byId, left);
+      const rightKey = canvasSortKey(byId, right);
       return leftKey[1] - rightKey[1] || leftKey[2] - rightKey[2];
     });
   if (!canvases.length) return [];
@@ -2047,7 +2074,7 @@ export function layoutUiWorldSpace(
       transforms,
       textMeasurement,
     );
-    const inheritedCanvas = outermostCanvas(entities, canvas);
+    const inheritedCanvas = outermostCanvas(byId, canvas);
     const raycastCamera = canvasEventCamera(
       entities,
       transforms,
@@ -2134,7 +2161,8 @@ function worldCanvasLayoutContext(
   transforms = buildWorldTransforms(entities),
   textMeasurement?: UiTextLayoutMeasurement,
 ): { items: UiDrawItem[]; pixelToWorld: (px: number, py: number) => Vec3 } {
-  const inheritedCanvas = outermostCanvas(entities, canvas);
+  const byId = indexUiEntities(entities);
+  const inheritedCanvas = outermostCanvas(byId, canvas);
   const rectTransform = readRectTransform(inheritedCanvas.components.RectTransform);
   const scaler = inheritedCanvas.components.CanvasScaler as Record<string, unknown> | undefined;
   const reference = canvasReferenceSize(scaler);
@@ -2146,7 +2174,7 @@ function worldCanvasLayoutContext(
     : reference.h;
   const layoutEntities = entities.map((entity) => {
     const isCanvasAncestor = entity.components.Canvas != null
-      && inCanvasTree(entities, canvas.entity, entity.entity);
+      && inCanvasTree(byId, canvas.entity, entity.entity);
     return isCanvasAncestor
       ? {
         ...entity,
@@ -2190,7 +2218,7 @@ function worldCanvasLayoutContext(
     undefined,
     null,
     textMeasurement,
-  ).filter((item) => canvasLayoutRootForEntity(entities, item.entity)?.entity === canvas.entity);
+  ).filter((item) => canvasLayoutRootForEntity(byId, item.entity)?.entity === canvas.entity);
   const authoredDynamicPixelsPerUnit = number(
     scaler?.dynamic_pixels_per_unit ?? scaler?.dynamicPixelsPerUnit,
     1,
@@ -2237,6 +2265,9 @@ function worldCanvasLayoutContext(
  * Scene view: screen-space UI projected as a resolution-sized quad on the world XY plane.
  * `canvasSize` is the logical Game resolution, not the Scene panel's letterbox size.
  */
+export type SceneUiOverlayLayout = { items: UiDrawItem[]; bounds?: Rect };
+export type SceneCanvasSurface = { items: UiDrawItem[]; corners: { x: number; y: number }[]; inverseW: number[]; pixels: { x: number; y: number }[]; bounds: Rect };
+
 export function layoutUiScene3D(
   entities: UiEnt[],
   cam: Camera,
@@ -2244,11 +2275,13 @@ export function layoutUiScene3D(
   selectedIds: Set<number>,
   canvasSize: { w: number; h: number },
   textMeasurement?: UiTextLayoutMeasurement,
-): { items: UiDrawItem[]; layoutScale: number } {
+  overlayLayout?: SceneUiOverlayLayout,
+): { items: UiDrawItem[]; layoutScale: number; surface?: SceneCanvasSurface } {
+  const byId = indexUiEntities(entities);
   const canvases = entities.filter(
     (e) => e.components.Canvas
-      && canvasRenderRootEnabled(entities, e)
-      && isCanvasLayoutRoot(entities, e),
+      && canvasRenderRootEnabled(byId, e)
+      && isCanvasLayoutRoot(byId, e),
   );
   if (!canvases.length) return { items: [], layoutScale: 1 };
 
@@ -2259,9 +2292,10 @@ export function layoutUiScene3D(
   const out: UiDrawItem[] = [];
   let layoutScale = 1;
   let depthBase = 0;
+  let surface: SceneCanvasSurface | undefined;
 
   for (const canvas of canvases) {
-    const inheritedCanvas = outermostCanvas(entities, canvas);
+    const inheritedCanvas = outermostCanvas(byId, canvas);
     const mode =
       (inheritedCanvas.components.Canvas as { render_mode?: string; renderMode?: string })?.render_mode
       ?? (inheritedCanvas.components.Canvas as { renderMode?: string })?.renderMode
@@ -2287,7 +2321,7 @@ export function layoutUiScene3D(
         )
       : (px: number, py: number) => uiPixelToWorld(px, py, cw, ch);
 
-    const laid = layoutUiOverlay(
+    const laid = (overlayLayout?.items ?? layoutUiOverlay(
       entities,
       pixelRoot,
       selectedIds,
@@ -2295,7 +2329,53 @@ export function layoutUiScene3D(
       cam,
       null,
       textMeasurement,
-    ).filter((item) => canvasLayoutRootForEntity(entities, item.entity)?.entity === canvas.entity);
+    )).filter((item) => canvasLayoutRootForEntity(byId, item.entity)?.entity === canvas.entity);
+
+    const canvasMaskSources = new Set(laid.filter(item => item.role === 'canvas').map(item => item.entity));
+    if (canvases.length === 1 && mode === 'ScreenSpaceOverlay' && !entities.some(entity => (entity.components.Canvas as { render_mode?: string } | undefined)?.render_mode === 'WorldSpace') && !laid.some(item => item.spine || item.effekseer || item.dropdown?.expanded || item.maskStack?.some(id => canvasMaskSources.has(id)))) {
+      let bounds: Rect = { ...(overlayLayout?.bounds ?? pixelRoot) };
+      if (!overlayLayout?.bounds) for (const item of laid) {
+        let padding = Math.max(4, ...[item.shadow, item.outline].flatMap(effect => effect ? [Math.hypot(...effect.distance) + 4] : []));
+        if (item.text) {
+          const text = item.text;
+          const measured = layoutUiText(text.text, { ...text, width: item.rect.w, height: item.rect.h, measureGlyph: text.font && textMeasurement ? glyph => textMeasurement.measureGlyph(text.font, glyph) : undefined, measurePairKerning: text.font && textMeasurement ? (left, right) => textMeasurement.measurePairKerning(text.font, left, right) : undefined });
+          padding += Math.max(0, measured.blockHeight - item.rect.h, ...measured.lines.map(line => line.width - item.rect.w)) + text.fontSize * 2;
+        }
+        const points = pixelCorners(item.rect, item.rotation, item.pivot);
+        const rect = screenRect(points.map(([x, y]) => ({ x, y })));
+        const right = Math.max(bounds.x + bounds.w, rect.x + rect.w + padding), bottom = Math.max(bounds.y + bounds.h, rect.y + rect.h + padding);
+        bounds.x = Math.min(bounds.x, rect.x - padding); bounds.y = Math.min(bounds.y, rect.y - padding);
+        bounds.w = right - bounds.x; bounds.h = bottom - bounds.y;
+      }
+      if (overlayLayout && !overlayLayout.bounds) overlayLayout.bounds = { ...bounds };
+      let pixels = pixelCorners(bounds, 0, [0, 0]).map(([x, y]) => ({ x, y }));
+      const basis = lookBasis(cam.eye, cam.target, cam.up), tanY = Math.tan(cam.fovYDeg * Math.PI / 360), tanX = tanY * viewport.w / Math.max(1, viewport.h);
+      const near = Math.max(0.000001, cam.near ?? 0.08) * 1.0001;
+      const viewPoint = (point: { x: number; y: number }) => { const rel = sub(pixelToWorld(point.x, point.y), cam.eye); return { x: dot(rel, basis.right), y: dot(rel, basis.up), z: dot(rel, basis.forward) }; };
+      const halfHeight = Math.max(0.001, cam.orthographicSize ?? 5), halfWidth = halfHeight * viewport.w / Math.max(1, viewport.h);
+      const planes = [(p: { x: number; y: number; z: number }) => p.z - near, (p: { x: number; y: number; z: number }) => (cam.projection === 'orthographic' ? halfWidth : p.z * tanX) + p.x, (p: { x: number; y: number; z: number }) => (cam.projection === 'orthographic' ? halfWidth : p.z * tanX) - p.x, (p: { x: number; y: number; z: number }) => (cam.projection === 'orthographic' ? halfHeight : p.z * tanY) + p.y, (p: { x: number; y: number; z: number }) => (cam.projection === 'orthographic' ? halfHeight : p.z * tanY) - p.y];
+      if (Number.isFinite(cam.far)) planes.push(p => cam.far! - p.z);
+      for (const plane of planes) {
+        const clipped: { x: number; y: number }[] = [];
+        for (let index = 0; index < pixels.length; index++) {
+          const a = pixels[index], b = pixels[(index + 1) % pixels.length], da = plane(viewPoint(a)), db = plane(viewPoint(b));
+          if (da >= 0) clipped.push(a);
+          if ((da >= 0) !== (db >= 0)) { const t = da / (da - db); clipped.push({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }); }
+        }
+        pixels = clipped;
+      }
+      if (pixels.length >= 3) {
+        const visible = screenRect(pixels), tileSize = 128;
+        const sourceMargin = Math.max(8, ...laid.flatMap(item => [item.shadow, item.outline].flatMap(effect => effect ? [Math.hypot(...effect.distance) + 4] : [])));
+        const left = Math.max(bounds.x, Math.floor((visible.x - sourceMargin) / tileSize) * tileSize), top = Math.max(bounds.y, Math.floor((visible.y - sourceMargin) / tileSize) * tileSize);
+        const right = Math.min(bounds.x + bounds.w, Math.ceil((visible.x + visible.w + sourceMargin) / tileSize) * tileSize), bottom = Math.min(bounds.y + bounds.h, Math.ceil((visible.y + visible.h + sourceMargin) / tileSize) * tileSize);
+        bounds = { x: left, y: top, w: right - left, h: bottom - top };
+      }
+      const projected = pixels.map(point => project(pixelToWorld(point.x, point.y), cam, viewport));
+      if (bounds.w <= 4096 && bounds.h <= 4096 && pixels.length >= 3 && projected.every(Boolean)) {
+        surface = { items: laid, bounds, pixels, corners: projected.map(point => ({ x: point!.x, y: point!.y })), inverseW: projected.map(point => point!.inverseW) };
+      }
+    }
 
     let sceneScale = 1;
     const c0 = project(pixelToWorld(cw * 0.5, ch * 0.5), cam, viewport);
@@ -2406,7 +2486,11 @@ export function layoutUiScene3D(
   }
 
   out.sort((a, b) => a.depth - b.depth);
-  return { items: out, layoutScale };
+  if (surface) {
+    const projectedIds = new Set(out.map(item => item.entity));
+    surface.items = surface.items.filter(item => projectedIds.has(item.entity)).map(item => ({ ...item, selected: false }));
+  }
+  return { items: out, layoutScale, surface };
 }
 
 /**
@@ -2434,9 +2518,10 @@ export function uiEntityWorldPivot(
   entityId: number,
   canvasSize?: { w: number; h: number },
 ): { position: Vec3; size: number } | null {
-  const renderRoot = canvasLayoutRootForEntity(entities, entityId);
+  const byId = indexUiEntities(entities);
+  const renderRoot = canvasLayoutRootForEntity(byId, entityId);
   if (renderRoot) {
-    const inherited = outermostCanvas(entities, renderRoot);
+    const inherited = outermostCanvas(byId, renderRoot);
     const canvas = inherited.components.Canvas as Record<string, unknown>;
     const mode = String(canvas.render_mode ?? canvas.renderMode ?? 'ScreenSpaceOverlay');
     if (mode === 'WorldSpace') {
@@ -2467,7 +2552,7 @@ export function uiEntityWorldPivot(
       undefined,
       undefined,
       null,
-    ).filter((item) => canvasLayoutRootForEntity(entities, item.entity)?.entity === renderRoot.entity);
+    ).filter((item) => canvasLayoutRootForEntity(byId, item.entity)?.entity === renderRoot.entity);
     const it = laid.find((item) => item.entity === entityId);
     if (!it) return null;
     const rawCamera = canvas.render_camera ?? canvas.renderCamera;
@@ -3271,6 +3356,39 @@ export function projectedQuadPoint(
   return { x: x / denominator, y: y / denominator };
 }
 
+/** Choose projected UI tessellation from sampled pixel error within the existing draw budget. */
+export function projectedQuadSubdivisions(corners: readonly { x: number; y: number }[], inverseW: readonly number[] | undefined, uMin = 0, uMax = 1, vMin = 0, vMax = 1, tolerance = 0.35, maxSubdivisions = 12): number {
+  const point = (u: number, v: number) => projectedQuadPoint(corners, inverseW, u, v);
+  for (const count of [1, 2, 3, 4, 6, 8].filter(value => value < maxSubdivisions)) {
+    let acceptable = true;
+    for (let row = 0; row < count && acceptable; row++) {
+      const v0 = vMin + (vMax - vMin) * row / count, v1 = vMin + (vMax - vMin) * (row + 1) / count;
+      for (let column = 0; column < count && acceptable; column++) {
+        const u0 = uMin + (uMax - uMin) * column / count, u1 = uMin + (uMax - uMin) * (column + 1) / count;
+        const vertices = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]];
+        const projected = vertices.map(([u, v]) => point(u, v));
+        if (projected.some(value => !value)) { acceptable = false; break; }
+        for (const triangle of [[0, 1, 2], [0, 2, 3]]) {
+          const actual = point(triangle.reduce((sum, index) => sum + vertices[index][0], 0) / 3, triangle.reduce((sum, index) => sum + vertices[index][1], 0) / 3);
+          const x = triangle.reduce((sum, index) => sum + projected[index]!.x, 0) / 3, y = triangle.reduce((sum, index) => sum + projected[index]!.y, 0) / 3;
+          if (!actual || Math.hypot(actual.x - x, actual.y - y) > tolerance) { acceptable = false; break; }
+        }
+        if (!acceptable) break;
+        for (const [start, end] of [[0, 1], [1, 2], [2, 3], [3, 0], [0, 2]]) {
+          for (const t of [0.25, 0.5, 0.75]) {
+            const actual = point(vertices[start][0] * (1 - t) + vertices[end][0] * t, vertices[start][1] * (1 - t) + vertices[end][1] * t);
+            const a = projected[start]!, b = projected[end]!;
+            if (!actual || Math.hypot(actual.x - a.x * (1 - t) - b.x * t, actual.y - a.y * (1 - t) - b.y * t) > tolerance) { acceptable = false; break; }
+          }
+          if (!acceptable) break;
+        }
+      }
+    }
+    if (acceptable) return count;
+  }
+  return maxSubdivisions;
+}
+
 function drawImageTriangle(
   ctx: CanvasRenderingContext2D,
   image: HTMLCanvasElement,
@@ -3315,6 +3433,45 @@ function drawImageTriangle(
     vertical.offset,
   );
   ctx.drawImage(image, 0, 0);
+  ctx.restore();
+}
+
+/** Project a complete static overlay Canvas while its per-Graphic hit plan remains independent. */
+export function drawSceneCanvasSurface(ctx: CanvasRenderingContext2D, surface: SceneCanvasSurface, image: HTMLCanvasElement, revision?: number): void {
+  if (projectSceneCanvasTexture(ctx, surface, image, revision)) return;
+  const transform = ctx.getTransform(), pixelScale = Math.max(1, Math.hypot(transform.a, transform.b), Math.hypot(transform.c, transform.d));
+  type Vertex = { source: { x: number; y: number }; target: { x: number; y: number }; w: number };
+  const vertices: Vertex[] = surface.pixels.map((point, index) => ({ source: { x: (point.x - surface.bounds.x) * image.width / surface.bounds.w, y: (point.y - surface.bounds.y) * image.height / surface.bounds.h }, target: surface.corners[index], w: 1 / surface.inverseW[index] }));
+  const midpoint = (a: Vertex, b: Vertex): Vertex => ({ source: { x: (a.source.x + b.source.x) / 2, y: (a.source.y + b.source.y) / 2 }, target: { x: (a.target.x * a.w + b.target.x * b.w) / (a.w + b.w), y: (a.target.y * a.w + b.target.y * b.w) / (a.w + b.w) }, w: (a.w + b.w) / 2 });
+  const error = (a: Vertex, b: Vertex, mid: Vertex) => Math.hypot(mid.target.x - (a.target.x + b.target.x) / 2, mid.target.y - (a.target.y + b.target.y) / 2) * pixelScale;
+  const draw = (a: Vertex, b: Vertex, c: Vertex, depth: number) => {
+    const ab = midpoint(a, b), bc = midpoint(b, c), ca = midpoint(c, a);
+    const errors = [error(a, b, ab), error(b, c, bc), error(c, a, ca)];
+    if (depth < 12 && Math.max(...errors) > 0.5) {
+      const edge = errors.indexOf(Math.max(...errors));
+      if (edge === 0) { draw(a, ab, c, depth + 1); draw(ab, b, c, depth + 1); }
+      else if (edge === 1) { draw(a, b, bc, depth + 1); draw(a, bc, c, depth + 1); }
+      else { draw(a, b, ca, depth + 1); draw(ca, b, c, depth + 1); }
+    } else drawImageTriangle(ctx, image, [a.source, b.source, c.source], [a.target, b.target, c.target]);
+  };
+  for (let index = 1; index + 1 < vertices.length; index++) draw(vertices[0], vertices[index], vertices[index + 1], 0);
+}
+
+/** Keep selection strokes in screen pixels when a Canvas texture is projected. */
+export function drawSceneUiSelection(ctx: CanvasRenderingContext2D, items: UiDrawItem[]): void {
+  ctx.save();
+  ctx.filter = 'none';
+  ctx.setLineDash([]);
+  ctx.strokeStyle = 'rgba(100, 180, 255, 0.95)';
+  ctx.lineWidth = 2;
+  for (const item of items) {
+    if (!item.selected || item.role === 'canvas' || !item.screenCorners?.length) continue;
+    ctx.beginPath();
+    ctx.moveTo(item.screenCorners[0].x, item.screenCorners[0].y);
+    for (const corner of item.screenCorners.slice(1)) ctx.lineTo(corner.x, corner.y);
+    ctx.closePath();
+    ctx.stroke();
+  }
   ctx.restore();
 }
 
@@ -3391,6 +3548,22 @@ export function drawUiItems(
     const dropdownOverflow = item.dropdown?.expanded
       ? item.dropdown.options.length * localHeight
       : 0;
+    const uMin = -padding / localWidth, uMax = 1 + padding / localWidth;
+    const vMin = -padding / localHeight, vMax = 1 + (padding + dropdownOverflow) / localHeight;
+    const transform = ctx.getTransform();
+    const inverse = transform.inverse?.();
+    const clipPoints = inverse ? [[0, 0], [ctx.canvas.width, 0], [ctx.canvas.width, ctx.canvas.height], [0, ctx.canvas.height]].map(([x, y]) => inverse.transformPoint({ x, y })) : [];
+    const paddedCorners = [[uMin, vMin], [uMax, vMin], [uMax, vMax], [uMin, vMax]].map(([u, v]) => projectedQuadPoint(corners, item.screenCornerInverseW, u, v));
+    const positiveDepth = [[uMin, vMin], [uMax, vMin], [uMax, vMax], [uMin, vMax]].every(([u, v]) => [((1 - u) * (1 - v)), u * (1 - v), u * v, (1 - u) * v].reduce((sum, weight, index) => sum + weight * (item.screenCornerInverseW?.[index] ?? 1), 0) > Number.EPSILON);
+    if (clipPoints.length && positiveDepth && paddedCorners.every(point => point && Number.isFinite(point.x) && Number.isFinite(point.y))) {
+      const points = paddedCorners as { x: number; y: number }[];
+      if (Math.max(...points.map(point => point.x)) < Math.min(...clipPoints.map(point => point.x)) || Math.min(...points.map(point => point.x)) > Math.max(...clipPoints.map(point => point.x)) || Math.max(...points.map(point => point.y)) < Math.min(...clipPoints.map(point => point.y)) || Math.min(...points.map(point => point.y)) > Math.max(...clipPoints.map(point => point.y))) return true;
+    }
+    const pixelScale = Math.max(1, Math.hypot(transform.a ?? 1, transform.b ?? 0), Math.hypot(transform.c ?? 0, transform.d ?? 1));
+    const reciprocals = item.screenCornerInverseW?.filter(value => Number.isFinite(value) && value > 0) ?? [];
+    const ratio = reciprocals.length === 4 ? Math.max(...reciprocals) / Math.max(Number.EPSILON, Math.min(...reciprocals)) : 1;
+    const limit = ratio > 1.02 ? Math.max(2, Math.min(12, Math.ceil((ratio - 1) * 8))) : 1;
+    const subdivisions = projectedQuadSubdivisions(corners, item.screenCornerInverseW, uMin, uMax, vMin, vMax, 0.5 / pixelScale, limit);
     const logicalWidth = localWidth + padding * 2;
     const logicalHeight = localHeight + padding * 2 + dropdownOverflow;
     const rasterScale = Math.min(1.5, 1_024 / Math.max(logicalWidth, logicalHeight, 1));
@@ -3425,19 +3598,6 @@ export function drawUiItems(
       opts,
     );
 
-    const uMin = -padding / localWidth;
-    const uMax = 1 + padding / localWidth;
-    const vMin = -padding / localHeight;
-    const vMax = 1 + (padding + dropdownOverflow) / localHeight;
-    const reciprocals = item.screenCornerInverseW?.filter(
-      (value) => Number.isFinite(value) && value > 0,
-    ) ?? [];
-    const perspectiveRatio = reciprocals.length === 4
-      ? Math.max(...reciprocals) / Math.max(Number.EPSILON, Math.min(...reciprocals))
-      : 1;
-    const subdivisions = perspectiveRatio > 1.02
-      ? Math.max(2, Math.min(12, Math.ceil((perspectiveRatio - 1) * 8)))
-      : 1;
     const sourcePoint = (u: number, v: number) => ({
       x: ((u - uMin) / (uMax - uMin)) * rasterWidth,
       y: ((v - vMin) / (vMax - vMin)) * rasterHeight,

@@ -1,4 +1,6 @@
+// Author: MiYu. Keep browser frame ownership complete while pruning inactive Scene render payloads.
 import type { NativeViewportProfilePayload } from './editorProfiler';
+import { createHierarchyActiveLookup } from './hierarchyActivation.ts';
 import { isSharedNativeViewportFrame, releaseNativeViewportFrame } from './nativeViewportTransport.ts';
 
 /** Browser-owned drawing and UI hit testing require the same snapshot as the native base image. */
@@ -15,11 +17,13 @@ export function nativeViewportFrameWorldCurrent<E>(frame: NativeViewportFrameWor
 }
 
 /** One synchronous paint shares its exact owned browser world and lazy native revision selection. */
-export function createNativeViewportWorldArgs<E extends { active?: boolean; components: Record<string, unknown> }>(props: NativeViewportWorld<E> & { readonly nativeSessionId?: number; readonly nativeWorldReference?: NativeViewportWorldReference<E>; runtimeSessionId?: number }) {
+export function createNativeViewportWorldArgs<E extends { entity?: number; parent?: number | null; active?: boolean; components: Record<string, unknown> }>(props: NativeViewportWorld<E> & { readonly nativeSessionId?: number; readonly nativeWorldReference?: NativeViewportWorldReference<E>; runtimeSessionId?: number }, activeSceneOnly = false) {
   let browserSnapshot: boolean | undefined, referenceRead = false;
   let reference: NativeViewportWorldReference<E> | undefined;
   let captured: NativeViewportFrameWorld<E> | undefined;
   let args: { playSessionId: number; playRevision?: number } | { snapshot: NativeViewportWorld<E> } | undefined;
+  let snapshot: NativeViewportWorld<E> | undefined;
+  let sceneWorldKey: string | undefined, sceneWorldUploaded = false;
   const requiresBrowserSnapshot = () => browserSnapshot ??= requiresBrowserViewportSnapshot(props.entities);
   const worldReference = () => { if (!referenceRead) { reference = props.nativeWorldReference; referenceRead = true; } return reference; };
   const frameWorld = () => {
@@ -28,7 +32,14 @@ export function createNativeViewportWorldArgs<E extends { active?: boolean; comp
     const world = retained ? { entities: retained.entities, clearColor: retained.clearColor, simulationTime: retained.simulationTime } : JSON.parse(JSON.stringify({ entities: props.entities, clearColor: props.clearColor, simulationTime: props.simulationTime })) as NativeViewportWorld<E>;
     return captured = { ...world, runtimeSessionId: props.runtimeSessionId ?? retained?.sessionId, sourceEntities: props.entities };
   };
-  const snapshotArgs = () => { const world = frameWorld(); return { snapshot: { entities: world.entities, clearColor: world.clearColor, simulationTime: world.simulationTime } }; };
+  const snapshotArgs = () => {
+    if (!snapshot) {
+      const world = frameWorld();
+      const active = activeSceneOnly ? createHierarchyActiveLookup(world.entities as (E & { entity: number })[]) : undefined;
+      snapshot = { entities: active ? world.entities.filter(entity => entity.entity == null || active(entity.entity)) : world.entities, clearColor: world.clearColor, simulationTime: world.simulationTime };
+    }
+    return { snapshot };
+  };
   const worldArgs = () => {
     if (args) return args;
     const retained = worldReference();
@@ -36,7 +47,9 @@ export function createNativeViewportWorldArgs<E extends { active?: boolean; comp
     const sessionId = requiresBrowserSnapshot() ? undefined : props.nativeSessionId;
     return args = sessionId != null ? { playSessionId: sessionId } : snapshotArgs();
   };
-  return { worldArgs, snapshotArgs, frameWorld, requiresBrowserSnapshot };
+  const sceneWorldArgs = () => ({ sceneWorldKey: sceneWorldKey ??= crypto.randomUUID(), ...(!sceneWorldUploaded ? snapshotArgs() : {}) });
+  const markSceneWorldUploaded = () => { sceneWorldUploaded = true; };
+  return { worldArgs, snapshotArgs, frameWorld, requiresBrowserSnapshot, sceneWorldArgs, markSceneWorldUploaded };
 }
 
 /** Match the pixels actually displayed; explicit captures still render at the requested output size. */

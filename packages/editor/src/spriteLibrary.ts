@@ -22,6 +22,20 @@ let _sprites: SpriteAsset[] = [];
 let _folders: string[] = [];
 let _ready = false;
 let _refreshPromise: Promise<SpriteAsset[]> | null = null;
+let indexedSprites: SpriteAsset[] | undefined;
+let spritesById = new Map<string, SpriteAsset>();
+
+function spriteIndex(): ReadonlyMap<string, SpriteAsset> {
+  if (indexedSprites !== _sprites) {
+    spritesById = new Map();
+    for (const sprite of _sprites) {
+      const key = sprite.id.toLowerCase();
+      if (!spritesById.has(key)) spritesById.set(key, sprite);
+    }
+    indexedSprites = _sprites;
+  }
+  return spritesById;
+}
 
 export function listSprites(): SpriteAsset[] {
   return _sprites;
@@ -113,7 +127,7 @@ export function resolveSpriteId(raw: string): string {
   const n = normalizeSpriteRef(raw);
   if (!n || n === 'white') return 'white';
   const lower = n.toLowerCase();
-  const exact = _sprites.find((sprite) => sprite.id.toLowerCase() === lower);
+  const exact = spriteIndex().get(lower);
   if (exact) return exact.id;
   if (n.toLowerCase().startsWith('assets/')) return n;
   const withPng = lower.endsWith('.png') ? lower : `${lower}.png`;
@@ -129,7 +143,7 @@ export function resolveSpriteId(raw: string): string {
 
 export function resolveSpriteAsset(raw: string): SpriteAsset | null {
   const id = resolveSpriteId(raw);
-  return _sprites.find((sprite) => sprite.id.toLowerCase() === id.toLowerCase()) ?? null;
+  return spriteIndex().get(id.toLowerCase()) ?? null;
 }
 
 export function resolveSpriteTextureId(raw: string): string {

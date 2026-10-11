@@ -61,6 +61,7 @@ export async function requestRevisionedNativeViewportFrame(command: string, args
   try { return await requestNativeViewportFrame(command, args); }
   catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    if (args.sceneWorldKey != null && message.includes('Scene viewport revision expired')) return requestNativeViewportFrame(command, { ...args, ...snapshotFallback() });
     if (args.playRevision == null || !message.includes('Play viewport revision expired')) throw error;
     const { playSessionId: _session, playRevision: _revision, ...view } = args;
     return requestNativeViewportFrame(command, { ...view, ...snapshotFallback() });

@@ -6,6 +6,8 @@ mod play_runtime;
 mod session;
 mod undo;
 mod viewport;
+mod scene_snapshot_world;
+pub use scene_snapshot_world::SceneSnapshotWorld;
 
 pub use gizmo::{GizmoMode, GizmoState};
 pub use play_runtime::{EditorPlayRuntime, PlayProject, PlayWorldUpdate, ScriptInput};

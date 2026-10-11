@@ -14,12 +14,14 @@ const server = await createServer({
 });
 const {
   buildUiBatches,
+  drawSceneUiSelection,
   effectiveCanvasShaderChannels,
   hitTestUi,
   layoutUiOverlay,
   layoutUiScene3D,
   layoutUiWorldSpace,
   projectedQuadPoint,
+  projectedQuadSubdivisions,
   uiPixelToWorld,
   uiEntityWorldPivot,
 } = await server.ssrLoadModule(
@@ -56,6 +58,94 @@ test('projected quad interpolation preserves corners and perspective depth', () 
   assert.ok(center);
   assert.ok(Math.abs(center.x - 36.6666666667) < 1e-6);
   assert.equal(center.y, 40);
+});
+
+test('projected UI tessellation follows pixel error for tiny, large, padded and high-DPI quads', () => {
+  const corners = [{ x: 0, y: 0 }, { x: 120, y: 0 }, { x: 90, y: 80 }, { x: 10, y: 80 }];
+  const depth = [1, 0.6, 0.45, 0.75];
+  assert.ok(projectedQuadSubdivisions(corners, [1, 1, 1, 1]) > 1, 'non-affine quads still need tessellation');
+  const affine = [{ x: 0, y: 0 }, { x: 120, y: 0 }, { x: 130, y: 80 }, { x: 10, y: 80 }];
+  assert.equal(projectedQuadSubdivisions(affine, [1, 1, 1, 1]), 1);
+  assert.equal(projectedQuadSubdivisions(corners, depth, 0, 1, 0, 1, .01, 2), 2, 'retain the authored renderer tessellation ceiling');
+  assert.equal(projectedQuadSubdivisions(corners.map(p => ({ x: p.x * .005, y: p.y * .005 })), depth), 1);
+  for (const [scale, range, tolerance] of [[1, [0, 1, 0, 1], .5], [1, [-.1, 1.1, -.1, 1.6], .5], [2, [0, 1, 0, 1], .125]]) {
+    const quad = corners.map(p => ({ x: p.x * scale, y: p.y * scale }));
+    const [uMin, uMax, vMin, vMax] = range;
+    const n = projectedQuadSubdivisions(quad, depth, ...range, tolerance);
+    assert.ok(n > 1 && n <= 12);
+    const at = (u, v) => projectedQuadPoint(quad, depth, u, v);
+    let error = 0;
+    for (let row = 0; row < n; row++) for (let col = 0; col < n; col++) {
+      const u0 = uMin + (uMax - uMin) * col / n, v0 = vMin + (vMax - vMin) * row / n;
+      const du = (uMax - uMin) / n, dv = (vMax - vMin) / n;
+      const points = [at(u0, v0), at(u0 + du, v0), at(u0 + du, v0 + dv), at(u0, v0 + dv)];
+      for (let y = 0; y <= 10; y++) for (let x = 0; x <= 10; x++) {
+        const u = x / 10, v = y / 10;
+        const weights = u >= v ? [1 - u, u - v, v, 0] : [1 - v, 0, u, v - u];
+        const actual = at(u0 + du * u, v0 + dv * v);
+        const linear = { x: points.reduce((sum, p, i) => sum + p.x * weights[i], 0), y: points.reduce((sum, p, i) => sum + p.y * weights[i], 0) };
+        error = Math.max(error, Math.hypot(actual.x - linear.x, actual.y - linear.y));
+      }
+    }
+    if (n < 12) assert.ok(error <= tolerance * 1.1, `dense triangle samples deviate ${error}px at grid ${n}`);
+    else assert.ok(error < 1.3, `legacy 12-grid cap retains subpixel-to-one-pixel error in this fixture: ${error}`);
+  }
+});
+
+test('single overlay Canvas surfaces retain local masks, overflow padding and exact projected Graphic coordinates', () => {
+  const entities = [{ entity: 1, components: { Canvas: { render_mode: 'ScreenSpaceOverlay' }, RectTransform: rect() } }, { entity: 2, parent: 1, components: { RectTransform: rect({ anchored_position: [100, 40], size_delta: [100, 30] }), Text: { text: 'Overflow beyond a very narrow label', font_size: 24, horizontal_overflow: 'Overflow' }, Shadow: { effect_distance: [30, 20] } } }];
+  const cam = { eye: [2000, 1500, 4000], target: [0, 0, 0], fovYDeg: 60 };
+  const { surface, items } = layoutUiScene3D(entities, cam, { x: 0, y: 0, w: 800, h: 600 }, new Set([2]), { w: 1280, h: 720 });
+  assert.ok(surface); assert.equal(surface.items.length, items.length);
+  assert.ok(surface.bounds.x < 0 && surface.bounds.y < 0 && surface.bounds.w > 1280 && surface.bounds.h > 720);
+  assert.ok(surface.items.every(item => !item.selected), 'selection is drawn in screen pixels');
+  assert.equal(items.find(item => item.entity === 2).selected, true);
+  const local = surface.items.find(item => item.entity === 2), projected = items.find(item => item.entity === 2);
+  const u = (local.rect.x - surface.bounds.x) / surface.bounds.w, v = (local.rect.y - surface.bounds.y) / surface.bounds.h;
+  const mapped = projectedQuadPoint(surface.corners, surface.inverseW.map(value => 1 / value), u, v);
+  assert.ok(Math.hypot(mapped.x - projected.screenCorners[0].x, mapped.y - projected.screenCorners[0].y) < 1e-6, 'texture and individual hit coordinates share the authored plane');
+  const clipped = layoutUiScene3D(entities, { eye: [0, 40, 30], target: [0, 0, 0], fovYDeg: 60 }, { x: 0, y: 0, w: 800, h: 600 }, new Set(), { w: 1280, h: 720 }).surface;
+  assert.ok(clipped && clipped.corners.length >= 3);
+  assert.ok(clipped.corners.every(p => p.x >= -1e-6 && p.x <= 800.000001 && p.y >= -1e-6 && p.y <= 600.000001));
+  entities[1].components.SpineSkeleton = {};
+  assert.equal(layoutUiScene3D(entities, cam, { x: 0, y: 0, w: 800, h: 600 }, new Set(), { w: 1280, h: 720 }).surface, undefined);
+});
+
+test('large offscreen text does not prevent visible Canvas surface rasterization', () => {
+  const entities = [{ entity: 1, components: { Canvas: { render_mode: 'ScreenSpaceOverlay' }, RectTransform: rect() } }, { entity: 2, parent: 1, components: { RectTransform: rect({ size_delta: [10, 20] }), Text: { text: 'Wide overflow '.repeat(300), font_size: 24, horizontal_overflow: 'Overflow', vertical_overflow: 'Overflow' } } }];
+  const { surface } = layoutUiScene3D(entities, { eye: [0, 40, 30], target: [0, 0, 0], fovYDeg: 60 }, { x: 0, y: 0, w: 800, h: 600 }, new Set(), { w: 1280, h: 720 });
+  assert.ok(surface);
+  assert.ok(surface.bounds.w < 1280 && surface.bounds.h < 720);
+  assert.ok(surface.pixels.every(p => p.x >= surface.bounds.x && p.x <= surface.bounds.x + surface.bounds.w && p.y >= surface.bounds.y && p.y <= surface.bounds.y + surface.bounds.h));
+  entities[1].components.Shadow = { effect_distance: [300, -250], use_graphic_alpha: false };
+  const expanded = layoutUiScene3D(entities, { eye: [0, 40, 30], target: [0, 0, 0], fovYDeg: 60 }, { x: 0, y: 0, w: 800, h: 600 }, new Set(), { w: 1280, h: 720 }).surface;
+  const xs = expanded.pixels.map(p => p.x), ys = expanded.pixels.map(p => p.y), margin = Math.hypot(300, -250);
+  assert.ok(Math.min(...xs) - expanded.bounds.x >= margin && expanded.bounds.x + expanded.bounds.w - Math.max(...xs) >= margin, 'effect source support includes the rotated offset');
+  assert.ok(Math.min(...xs) - expanded.bounds.x >= 300 && expanded.bounds.x + expanded.bounds.w - Math.max(...xs) >= 300);
+  assert.ok(Math.min(...ys) - expanded.bounds.y >= 250 && expanded.bounds.y + expanded.bounds.h - Math.max(...ys) >= 250);
+});
+
+test('Canvas masks retain the individual renderer and near-plane raster items retain hit coverage', () => {
+  const entities = [{ entity: 1, components: { Canvas: { render_mode: 'ScreenSpaceOverlay' }, RectTransform: rect({ anchor_min: [0, 0], anchor_max: [1, 1], size_delta: [0, 0] }), Image: { sprite: 'white' }, Mask: {} } }, { entity: 2, parent: 1, components: { RectTransform: rect(), Image: { sprite: 'white' } } }];
+  const viewport = { x: 0, y: 0, w: 800, h: 600 }, size = { w: 1280, h: 720 };
+  const far = { eye: [0, 0, 4000], target: [0, 0, 0], fovYDeg: 60 };
+  const masked = layoutUiScene3D(entities, far, viewport, new Set(), size);
+  assert.ok(masked.items.find(item => item.entity === 2).maskStack.includes(1));
+  assert.equal(masked.surface, undefined);
+  delete entities[0].components.Mask;
+  const near = layoutUiScene3D(entities, { eye: [0, 40, 30], target: [0, 0, 0], fovYDeg: 60 }, viewport, new Set(), size);
+  assert.ok(near.surface);
+  assert.ok(!near.items.some(item => item.entity === 1));
+  assert.ok(near.surface.items.every(local => near.items.some(projected => projected.entity === local.entity)), 'a Graphic is rasterized only when its original hit geometry is projectable');
+});
+
+test('projected Canvas selection keeps a two-screen-pixel stroke', () => {
+  const strokes = [], points = [];
+  const ctx = { save() {}, restore() {}, setLineDash() {}, beginPath() {}, moveTo(x, y) { points.push([x, y]); }, lineTo(x, y) { points.push([x, y]); }, closePath() {}, stroke() { strokes.push(this.lineWidth); } };
+  const corners = [{ x: 10, y: 20 }, { x: 20, y: 20 }, { x: 18, y: 25 }, { x: 11, y: 25 }];
+  drawSceneUiSelection(ctx, [{ selected: true, role: 'image', screenCorners: corners }, { selected: false, role: 'image', screenCorners: corners }, { selected: true, role: 'canvas', screenCorners: corners }]);
+  assert.deepEqual(strokes, [2]);
+  assert.deepEqual(points, corners.map(p => [p.x, p.y]));
 });
 
 test('Canvas shader channels match Unity masks and camera/world defaults', () => {
@@ -2094,4 +2184,14 @@ test('Scene framing uses the transformed World Space Canvas coordinates', () => 
   assert.ok(Math.abs(framing.position[1] - 5) < 1e-9);
   assert.ok(Math.abs(framing.position[2] - 5) < 1e-9);
   assert.ok(Math.abs(framing.size - 2) < 1e-9);
+});
+
+test('cached overlay layout shares original selection geometry across changing Scene cameras', () => {
+  const entities = [{ entity: 1, components: { Canvas: { render_mode: 'ScreenSpaceOverlay' }, RectTransform: rect() } }, { entity: 2, parent: 1, components: { RectTransform: rect(), Text: { text: 'Static logical layout', font_size: 18 } } }];
+  const size = { w: 1280, h: 720 }, selected = new Set([2]), viewport = { x: 0, y: 0, w: 800, h: 600 };
+  const overlay = { items: layoutUiOverlay(entities, { x: 0, y: 0, w: size.w, h: size.h }, selected) };
+  for (const eye of [[2000, 1500, 4000], [1500, 1000, 3000], [0, 40, 30]]) {
+    const camera = { eye, target: [0, 0, 0], fovYDeg: 60 };
+    assert.deepEqual(layoutUiScene3D(entities, camera, viewport, selected, size, undefined, overlay), layoutUiScene3D(entities, camera, viewport, selected, size));
+  }
 });

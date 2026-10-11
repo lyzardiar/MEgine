@@ -1,3 +1,4 @@
+// Author: MiYu. Verify Canvas drawing and conservative projected viewport clipping.
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import test from 'node:test';
@@ -494,4 +495,22 @@ test('adding an authored Graphic creates and protects its CanvasRenderer depende
   assert.equal(restored.components.CanvasRenderer, undefined);
   assert.equal(restored.components.RectTransform, undefined);
   assert.equal(restored.components.Image, undefined);
+});
+
+test('projected UI outside the canvas skips raster allocation but shadow and partial overlaps remain visible', () => {
+  const { item } = imageItem({});
+  const document = new FakeDocument(), canvas = new FakeCanvas(document, 'output');
+  canvas.context.moveTo = (...args) => canvas.context.operations.push(['moveTo', ...args]);
+  canvas.context.lineTo = (...args) => canvas.context.operations.push(['lineTo', ...args]);
+  canvas.context.closePath = () => canvas.context.operations.push(['closePath']);
+  canvas.context.transform = (...args) => canvas.context.operations.push(['transform', ...args]);
+  canvas.context.getTransform = () => ({ a: 1, b: 0, c: 0, d: 1, inverse: () => ({ transformPoint: p => p }) });
+  const projected = (x, shadow) => ({ ...item, rect: { x, y: 20, w: 20, h: 20 }, unrotatedSize: { w: 20, h: 20 }, screenCorners: [{ x, y: 20 }, { x: x + 20, y: 20 }, { x: x + 20, y: 40 }, { x, y: 40 }], screenCornerInverseW: [1, 1, 1, 1], shadow });
+  drawUiItems(canvas.context, [projected(150)], null, null);
+  assert.equal(document.canvases.length, 0);
+  drawUiItems(canvas.context, [projected(95)], null, null);
+  assert.ok(canvas.context.operations.some(op => op[0] === 'drawImage'));
+  const before = canvas.context.operations.filter(op => op[0] === 'drawImage').length;
+  drawUiItems(canvas.context, [projected(110, { color: [0, 0, 0, .5], distance: [-20, 0], useGraphicAlpha: true })], null, null);
+  assert.ok(canvas.context.operations.filter(op => op[0] === 'drawImage').length > before);
 });
