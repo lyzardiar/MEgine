@@ -144,3 +144,24 @@ test('retained Play uploads deep Transform, hierarchy, color and external compon
     store.stop();assert.equal(store.nativePlaySessionId,undefined);
   } finally {await server.close();}
 });
+
+
+test('structured presentation verification tracks deep edits and never substitutes serialized equality', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  try {
+    const { createPlayWorldSync } = await server.ssrLoadModule('/src/playWorldSync.ts'), sync = createPlayWorldSync(), color = [0, 0, 0, 1];
+    const entities = [{ entity: 1, parent: null, components: { Transform: { position: [1, 2, 3] } } }];
+    assert.equal(sync.presentationMatches(entities, color), false); sync.capture(entities, color);
+    assert.equal(sync.presentationMatches(entities, color), true);
+    const displayed = sync.presentationSnapshot(entities, color);
+    entities[0].components.Transform.position[0] = 7;
+    assert.equal(sync.presentationMatches(entities, color), false); assert.equal(displayed.entities[0].components.Transform.position[0], 1);
+    entities[0].components.Transform.position[0] = 1; assert.equal(sync.presentationMatches(entities, color), true);
+    entities[0].parent = 9; assert.equal(sync.presentationMatches(entities, color), false);
+    entities[0].parent = null; color[0] = .5; assert.equal(sync.presentationMatches(entities, color), false); color[0] = 0;
+    const custom = [{ entity: 1, components: { Custom: { toJSON() { return { value: 2 }; } } } }];
+    sync.capture(custom, color); assert.equal(sync.matches(custom, color), true);
+    assert.equal(sync.presentationMatches(custom, color), false); assert.equal(sync.presentationSnapshot(custom, color), undefined);
+    sync.reset(); assert.equal(sync.presentationMatches(entities, color), false);
+  } finally { await server.close(); }
+});

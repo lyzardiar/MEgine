@@ -107,9 +107,11 @@ export function createPlayWorldSync(copies?: PrivatePlayCopies) {
     },
     /** Retain immutable JSON records across later captures; only the pointer list is copied. */
     viewportSnapshot() { return baseline?.[0] ? { entities: baseline[0].slice(), clearColor: baseline[1].slice() as Color } : undefined; },
+    /** Verify structured presentation data without copying the immutable pointer list. */
+    presentationMatches(entities: Entities, color: Color) { return baseline != null && equalEntities(entities, baseline[0], copies) && equalJson(color, baseline[1]); },
     /** Presentation preserves structured data, so it cannot use the serialization fallback in matches(). */
     presentationSnapshot(entities: Entities, color: Color) {
-      return baseline && equalEntities(entities, baseline[0], copies) && equalJson(color, baseline[1]) ? this.viewportSnapshot() : undefined;
+      return this.presentationMatches(entities, color) ? this.viewportSnapshot() : undefined;
     },
     matches(entities: Entities, color: Color) {
       if (!baseline) return false;
