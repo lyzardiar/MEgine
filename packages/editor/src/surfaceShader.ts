@@ -3,7 +3,7 @@ export const LIT_SURFACE_SHADER_HOOK_NAME = 'mengine_lit_surface_hook';
 export const UI_SHADER_HOOK_NAME = 'mengine_ui_hook';
 export const MAX_SURFACE_SHADER_PARAMETERS = 16;
 export const MAX_SURFACE_SHADER_KEYWORDS = 16;
-export const MAX_SURFACE_SHADER_TEXTURES = 4;
+export const MAX_SURFACE_SHADER_TEXTURES = 6;
 export const SURFACE_SHADER_PARAMETERS_MARKER = '/* MENGINE_PARAMETERS';
 
 export type SurfaceShaderParameterType = 'float' | 'vector2' | 'vector3' | 'vector4' | 'color';

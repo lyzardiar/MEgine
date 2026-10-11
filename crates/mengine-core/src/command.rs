@@ -11,9 +11,17 @@ pub enum WorldCommand {
         name: Option<String>,
         #[serde(default)]
         components: Value,
+        #[serde(default = "spawn_active")]
+        active: bool,
+        #[serde(default)]
+        parent: Option<u64>,
     },
     Despawn {
         entity: u64,
+    },
+    SetActive {
+        entity: u64,
+        active: bool,
     },
     SetComponent {
         entity: u64,
@@ -42,6 +50,8 @@ pub enum WorldCommand {
     },
 }
 
+fn spawn_active() -> bool { true }
+
 #[derive(Default, Clone, Debug)]
 pub struct CommandBuffer {
     commands: Vec<WorldCommand>,
@@ -60,6 +70,8 @@ impl CommandBuffer {
         self.push(WorldCommand::Spawn {
             name: name.map(|s| s.to_string()),
             components,
+            active: true,
+            parent: None,
         });
     }
 

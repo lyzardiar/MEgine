@@ -79,6 +79,7 @@ fn opaque_alpha_texture() -> Arc<UiAlphaTexture> {
 }
 
 impl RuntimeTextureCache {
+    pub fn project_root(&self) -> Option<&Path> { self.project_root.as_deref() }
     pub fn new(project_root: Option<PathBuf>) -> Self {
         Self {
             project_root,
@@ -266,6 +267,7 @@ impl RuntimeTextureCache {
             if key.is_empty()
                 || key.eq_ignore_ascii_case("white")
                 || key.starts_with("mengine-font://")
+                || key.starts_with("$scene-view:")
                 || !checked.insert(key)
             {
                 continue;

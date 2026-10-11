@@ -21,7 +21,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use futures_util::{SinkExt, StreamExt};
 use parking_lot::Mutex;
@@ -524,6 +524,8 @@ impl BridgeHub {
 struct BridgeRequestPayload {
     client_id: String,
     message: String,
+    // MiYu: correlate socket receipt with webview dispatch on this host's clock.
+    received_at_ms: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, serde::Serialize)]
@@ -871,6 +873,7 @@ async fn handle_connection(
                     BridgeRequestPayload {
                         client_id: client_id.clone(),
                         message: text.to_string(),
+                        received_at_ms: SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64,
                     },
                 );
             }
@@ -1098,6 +1101,7 @@ mod transport_tests {
         BridgeRequestPayload {
             client_id: client_id.to_string(),
             message: format!(r#"{{"jsonrpc":"2.0","id":{id},"method":"query"}}"#),
+            received_at_ms: 0,
         }
     }
 

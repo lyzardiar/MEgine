@@ -23,6 +23,7 @@ use tauri::{path::BaseDirectory, Emitter, Manager, State};
 
 mod agent_bridge;
 mod native_viewport_transport;
+mod play_compiler;
 use agent_bridge::{
     agent_bridge_broadcast, agent_bridge_respond, agent_bridge_set_transport_ready,
     capture_editor_window, capture_editor_window_element, cleanup_bridge_discovery,
@@ -42,6 +43,8 @@ struct AppState {
 }
 
 static VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
+static GAME_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_scene::SharedSnapshotWorld>> = OnceLock::new();
+static SCENE_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_scene::SharedSnapshotWorld>> = OnceLock::new();
 static SCENE_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
 static EFFEKSEER_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> =
     OnceLock::new();
@@ -3946,16 +3949,25 @@ fn collect_build_scene_paths(
     if !directory.is_dir() {
         return Ok(());
     }
-    for entry in std::fs::read_dir(directory).map_err(|error| error.to_string())? {
+    let entries = match std::fs::read_dir(directory) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(format!("Cannot list scene directory {}: {error}", directory.display())),
+    };
+    for entry in entries {
         let entry = entry.map_err(|error| error.to_string())?;
         let path = entry.path();
-        let metadata = std::fs::symlink_metadata(&path).map_err(|error| error.to_string())?;
-        if metadata.file_type().is_symlink() {
+        let file_type = match entry.file_type() {
+            Ok(file_type) => file_type,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) => return Err(format!("Cannot inspect scene entry {}: {error}", path.display())),
+        };
+        if file_type.is_symlink() {
             continue;
         }
-        if metadata.is_dir() {
+        if file_type.is_dir() {
             collect_build_scene_paths(project_root, &path, output)?;
-        } else if metadata.is_file()
+        } else if file_type.is_file()
             && path
                 .extension()
                 .and_then(|value| value.to_str())
@@ -4284,6 +4296,15 @@ fn world_from_snapshot(snapshot: &WorldSnapshot) -> mengine_core::World {
     world
 }
 
+// Filter browser entity IDs before snapshot reconstruction allocates native IDs.
+fn filter_scene_view_snapshot(snapshot: &mut WorldSnapshot, request: &mut NativeSceneViewRequest) {
+    if request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() {
+        let hidden: HashSet<u64> = request.hidden_entity_ids.iter().copied().collect();
+        snapshot.entities.retain(|entity| !hidden.contains(&entity.entity));
+        request.hidden_entity_ids.clear();
+    }
+}
+
 async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: &str, shared_request: Option<String>, window: tauri::WebviewWindow, started: Instant) -> Result<tauri::ipc::Response, String> {
     if !raw {
         let label = label.to_owned();
@@ -4292,18 +4313,13 @@ async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: 
     let mut metadata = serde_json::json!({"hasAuthoredCamera":frame.has_authored_camera,"profile":frame.profile});
     metadata["profile"]["commandMs"] = serde_json::json!(started.elapsed().as_secs_f64() * 1000.0);
     let metadata = serde_json::to_vec(&metadata).map_err(|error| error.to_string())?;
-    let mut bytes = Vec::with_capacity(16 + metadata.len() + frame.rgba.len());
-    for value in [0x3146474d_u32, frame.width, frame.height, metadata.len() as u32] { bytes.extend_from_slice(&value.to_le_bytes()); }
-    bytes.extend_from_slice(&metadata);
-    bytes.extend_from_slice(&frame.rgba);
+    let bytes = Arc::new(native_viewport_transport::FramePayload::new(frame.width, frame.height, metadata, frame.rgba)?);
     if let Some(request) = shared_request.filter(|request| request.len() <= 128) {
-        let shared = Arc::new(bytes);
-        if native_viewport_transport::share_frame(&window, Arc::clone(&shared), request).await.is_ok() {
+        if native_viewport_transport::share_frame(&window, Arc::clone(&bytes), request).await.is_ok() {
             return Ok(tauri::ipc::Response::new(Vec::<u8>::new()));
         }
-        bytes = Arc::try_unwrap(shared).unwrap_or_else(|bytes| (*bytes).clone());
     }
-    Ok(tauri::ipc::Response::new(bytes))
+    Ok(tauri::ipc::Response::new(bytes.encode()))
 }
 
 #[tauri::command]
@@ -4312,13 +4328,15 @@ async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state
     let generation = state.play_runtime.begin();
     let project_root = project.project_root.clone();
     let bundled_sdk = app.path().resolve("build-sdk", BaseDirectory::Resource).ok().filter(|path| path.join("sdk.json").is_file());
-    let source = tauri::async_runtime::spawn_blocking(move || -> Result<String, String> {
-        let output = history_patch_command(bundled_sdk, "release")?.arg("compile-play-script").arg(project_root).output().map_err(|error| error.to_string())?;
+    let source = {
+        let mut command = history_patch_command(bundled_sdk, "release")?;
+        command.arg("compile-play-script").arg(project_root);
+        let output = play_compiler::output(command, std::time::Duration::from_secs(30)).await?;
         if !output.status.success() { return Err(command_failure("Play script compilation", &output)); }
         if output.stdout.len() > 16 * 1024 * 1024 { return Err("Play script exceeds 16 MiB".into()); }
         let result: serde_json::Value = serde_json::from_slice(&output.stdout).map_err(|error| error.to_string())?;
-        result.get("source").and_then(serde_json::Value::as_str).map(str::to_owned).ok_or_else(|| "Play compiler did not return script source".into())
-    }).await.map_err(|error| error.to_string())??;
+        result.get("source").and_then(serde_json::Value::as_str).map(str::to_owned).ok_or_else(|| "Play compiler did not return script source".to_string())?
+    };
     if state.play_runtime.generation() != generation || !state.project.lock().as_ref().is_some_and(|session| session.snapshot().project_id == project.project_id) {
         return Err("Play initialization was superseded".into());
     }
@@ -4330,17 +4348,17 @@ async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state
 }
 
 #[tauri::command]
-async fn step_editor_play(session_id: u64, snapshot: Option<WorldSnapshot>, input: mengine_editor_host::ScriptInput, dt: f32, state: State<'_, AppState>) -> Result<WorldSnapshot, String> {
+async fn step_editor_play(session_id: u64, snapshot: Option<WorldSnapshot>, input: mengine_editor_host::ScriptInput, dt: f32, state: State<'_, AppState>) -> Result<mengine_editor_host::PlayWorldUpdate, String> {
     if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
     let runtime = state.play_runtime.clone();
-    let result = tauri::async_runtime::spawn_blocking(move || runtime.advance(session_id, snapshot, input, dt)).await.map_err(|error| error.to_string())??;
+    let result = tauri::async_runtime::spawn_blocking(move || runtime.advance_update(session_id, snapshot, input, dt)).await.map_err(|error| error.to_string())??;
     if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
     Ok(result)
 }
 
 #[tauri::command]
-fn stop_editor_play(state: State<'_, AppState>) {
-    state.play_runtime.stop();
+fn stop_editor_play(session_id: u64, state: State<'_, AppState>) {
+    state.play_runtime.stop_session(session_id);
 }
 
 #[tauri::command]
@@ -4349,6 +4367,7 @@ async fn render_native_game_view(
     height: u32,
     snapshot: Option<WorldSnapshot>,
     play_session_id: Option<u64>,
+    play_revision: Option<u64>,
     raw: Option<bool>,
     shared_request: Option<String>,
     window: tauri::WebviewWindow,
@@ -4388,8 +4407,12 @@ async fn render_native_game_view(
         Ok(frame)
         };
         match (snapshot, play_session_id) {
-            (Some(snapshot), _) => render(&world_from_snapshot(&snapshot)),
-            (None, Some(id)) => runtime.render(id, render),
+            (Some(snapshot), _) => {
+                let mut mirror = GAME_SNAPSHOT_WORLD.get_or_init(|| Mutex::new(mengine_scene::SharedSnapshotWorld::default())).lock();
+                let sync = Instant::now(); mirror.update_owned(snapshot); let sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
+                let mut frame = render(mirror.world())?; frame.profile.world_sync_ms = Some(sync_ms); Ok(frame)
+            },
+            (None, Some(id)) => runtime.render_revision(id, play_revision, render),
             _ => Err("viewport world is unavailable".into()),
         }
     })
@@ -4400,9 +4423,10 @@ async fn render_native_game_view(
 
 #[tauri::command]
 async fn render_native_scene_view(
-    request: NativeSceneViewRequest,
+    mut request: NativeSceneViewRequest,
     snapshot: Option<WorldSnapshot>,
     play_session_id: Option<u64>,
+    play_revision: Option<u64>,
     raw: Option<bool>,
     shared_request: Option<String>,
     window: tauri::WebviewWindow,
@@ -4419,6 +4443,9 @@ async fn render_native_scene_view(
             snapshot.or_else(|| play_session_id.is_none().then(|| WorldSnapshot::from_world(session.active_world()))),
         )
     };
+    let mut snapshot = snapshot;
+    if let Some(snapshot) = snapshot.as_mut() { filter_scene_view_snapshot(snapshot, &mut request); }
+    else if play_revision.is_some() && request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() { return Err("Hidden entities require a browser viewport snapshot".into()); }
     let runtime = state.play_runtime.clone();
     let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
         let render = move |world: &mengine_core::World| -> Result<EditorViewportFrame, String> {
@@ -4498,8 +4525,12 @@ async fn render_native_scene_view(
         Ok(frame)
         };
         match (snapshot, play_session_id) {
-            (Some(snapshot), _) => render(&world_from_snapshot(&snapshot)),
-            (None, Some(id)) => runtime.render(id, render),
+            (Some(snapshot), _) => {
+                let mut mirror = SCENE_SNAPSHOT_WORLD.get_or_init(|| Mutex::new(mengine_scene::SharedSnapshotWorld::default())).lock();
+                let sync = Instant::now(); mirror.update_owned(snapshot); let sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
+                let mut frame = render(mirror.world())?; frame.profile.world_sync_ms = Some(sync_ms); Ok(frame)
+            },
+            (None, Some(id)) => runtime.render_revision(id, play_revision, render),
             _ => Err("viewport world is unavailable".into()),
         }
     })
@@ -4632,7 +4663,11 @@ fn list_project_scenes(state: State<'_, AppState>) -> Result<Vec<ProjectSceneInf
             .ok()
             .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
             .map_or(0, |duration| duration.as_millis() as u64);
-        let json = std::fs::read_to_string(&absolute).map_err(|error| error.to_string())?;
+        let json = match std::fs::read_to_string(&absolute) {
+            Ok(json) => json,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) => return Err(format!("Cannot read scene {}: {error}", absolute.display())),
+        };
         scenes.push(ProjectSceneInfo {
             name,
             updated_at,
@@ -5922,21 +5957,27 @@ fn restore_project_asset(
 }
 
 #[tauri::command]
-fn list_project_assets(state: State<'_, AppState>) -> Result<Vec<ProjectAssetInfo>, String> {
+async fn list_project_assets(state: State<'_, AppState>) -> Result<Vec<ProjectAssetInfo>, String> {
     let project_root = state
         .project
         .lock()
         .as_ref()
         .map(|session| session.snapshot().project_root)
         .ok_or_else(|| no_project().message)?;
-    let root = Path::new(&project_root)
-        .canonicalize()
-        .map_err(|error| error.to_string())?;
-    let mut assets = Vec::new();
-    collect_project_assets(&root, &root.join("Assets"), &mut assets);
-    mark_duplicate_project_asset_guids(&mut assets);
-    assets.sort_by(|left, right| left.rel_path.cmp(&right.rel_path));
-    Ok(assets)
+    // Discovery may create and sync thousands of GUID sidecars on first open.
+    // Keep that disk work off the WebView thread so other IPC remains responsive.
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = Path::new(&project_root)
+            .canonicalize()
+            .map_err(|error| error.to_string())?;
+        let mut assets = Vec::new();
+        collect_project_assets(&root, &root.join("Assets"), &mut assets);
+        mark_duplicate_project_asset_guids(&mut assets);
+        assets.sort_by(|left, right| left.rel_path.cmp(&right.rel_path));
+        Ok(assets)
+    })
+    .await
+    .map_err(|error| format!("Asset discovery worker failed: {error}"))?
 }
 
 #[tauri::command]
@@ -6448,6 +6489,24 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn scene_hidden_ids_filter_source_snapshot_before_native_id_allocation() {
+        let mut snapshot: WorldSnapshot = serde_json::from_value(serde_json::json!({"entities":[
+            {"entity":4294967297u64,"name":"Hidden reused slot","components":{}},
+            {"entity":42,"name":"Visible","components":{}}
+        ]})).unwrap();
+        let mut request: NativeSceneViewRequest = serde_json::from_value(serde_json::json!({"width":320,"height":180,"eye":[0,1,2],"target":[0,0,0],"orthographic":false,"orthographicSize":5,"fovYDegrees":60,"hiddenEntityIds":[4294967297u64]})).unwrap();
+        filter_scene_view_snapshot(&mut snapshot, &mut request);
+        assert!(request.hidden_entity_ids.is_empty());
+        let world = world_from_snapshot(&snapshot);
+        let names: Vec<_> = world.iter_entities().filter_map(|entity| world.get_component::<mengine_core::generated::Name>(entity).map(|name| name.value.as_str())).collect();
+        assert_eq!(names, vec!["Visible"]);
+        request.camera_entity = Some(42); request.hidden_entity_ids = vec![42];
+        filter_scene_view_snapshot(&mut snapshot, &mut request);
+        assert_eq!(snapshot.entities.len(), 1);
+        assert_eq!(request.hidden_entity_ids, vec![42]);
+    }
 
     #[test]
     fn project_font_assets_are_indexed_with_parse_validation() {
@@ -7752,6 +7811,37 @@ mod tests {
             ]
         );
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn build_scene_scan_tolerates_concurrent_import_metadata_changes() {
+        let base = std::env::temp_dir();
+        let root = base.join(format!("mengine-scene-churn-{}-{}", std::process::id(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+        std::fs::create_dir(&root).unwrap();
+        let directory = root.join("Assets/Scenes");
+        std::fs::create_dir_all(&directory).unwrap();
+        std::fs::write(directory.join("Main.mscene"), "{}").unwrap();
+        let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let writer_stop = stop.clone();
+        let writer_directory = directory.clone();
+        let writer = std::thread::spawn(move || {
+            while !writer_stop.load(std::sync::atomic::Ordering::Relaxed) {
+                for index in 0..16 { std::fs::write(writer_directory.join(format!("import-{index}.tmp")), "metadata").unwrap(); }
+                for index in 0..16 { std::fs::remove_file(writer_directory.join(format!("import-{index}.tmp"))).unwrap(); }
+            }
+        });
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(1);
+        let mut failure = None;
+        while std::time::Instant::now() < deadline {
+            if let Err(error) = available_build_scenes(&root) { failure = Some(error); break; }
+        }
+        stop.store(true, std::sync::atomic::Ordering::Relaxed);
+        writer.join().unwrap();
+        let final_scenes = available_build_scenes(&root).unwrap();
+        assert!(root.canonicalize().unwrap().starts_with(base.canonicalize().unwrap()));
+        std::fs::remove_dir_all(&root).unwrap();
+        assert_eq!(failure, None);
+        assert_eq!(final_scenes, vec!["Assets/Scenes/Main.mscene"]);
     }
 
     #[test]

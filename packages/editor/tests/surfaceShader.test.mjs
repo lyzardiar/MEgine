@@ -18,6 +18,14 @@ test('default surface shader satisfies the editor contract', () => {
   assert.doesNotThrow(() => validateSurfaceShaderSource(DEFAULT_SURFACE_SHADER));
 });
 
+test('six surface textures are accepted and a seventh is rejected', () => {
+  const textures = Array.from({length: 6}, (_, i) => ({name: `layer${i}`, type: i < 3 ? 'color' : 'data'}));
+  const source = () => `/* MENGINE_PARAMETERS ${JSON.stringify({textures})} */\n${DEFAULT_SURFACE_SHADER}`;
+  assert.equal(parseSurfaceShaderTextures(source()).length, 6);
+  textures.push({name: 'overflow', type: 'data'});
+  assert.throws(() => parseSurfaceShaderTextures(source()), /more than 6/);
+});
+
 test('UI Shader is a valid exclusive Material Shader domain', () => {
   assert.deepEqual(surfaceShaderDiagnostics(DEFAULT_UI_SHADER), []);
   assert.doesNotThrow(() => validateSurfaceShaderSource(DEFAULT_UI_SHADER));

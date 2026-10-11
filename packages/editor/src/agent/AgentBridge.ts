@@ -10,6 +10,7 @@
  *
  * The read-only Observer and revision-guarded write Dispatcher both route
  * through the same services and `EditorStore` methods used by the visible UI.
+ * Author: MiYu. Observations share immutable presentation data with editor panels.
  */
 import { invoke } from '@tauri-apps/api/core';
 import { INTENT_DEFINITIONS } from '@mengine/agent';
@@ -1645,10 +1646,7 @@ class AgentBridge {
 
   getEntity(idOrName: number | string): EntityView {
     const store = this.requireStore();
-    const entities = store.snapshot().entities as unknown as EntityView[];
-    const found = typeof idOrName === 'number'
-      ? entities.find((e) => e.entity === idOrName)
-      : entities.find((e) => (e.name ?? '') === idOrName);
+    const found = store.entitySnapshot(idOrName) as unknown as EntityView | undefined;
     if (!found) {
       throw new BridgeError('ENTITY_NOT_FOUND', `No entity matches "${String(idOrName)}"`);
     }
@@ -2227,7 +2225,7 @@ class AgentBridge {
    * this after its normal refresh path, so UI and AgentBridge share one source
    * of truth without polling the foreground window.
    */
-  observe(forceScene = false): void {
+  observe(forceScene = false, preparedSnapshot?: ReturnType<EditorStore['snapshot']>): void {
     const store = this.store;
     if (!store) return;
     const sceneName = this.sceneMeta?.sceneName() ?? null;
@@ -2239,7 +2237,7 @@ class AgentBridge {
       || this.sceneChanges.revision === 0
       || now - this.lastPlaySceneObservationAt >= 100
     );
-    const snapshot = shouldObserveScene ? store.snapshot() : null;
+    const snapshot = shouldObserveScene ? preparedSnapshot ?? store.presentationSnapshot() : null;
     const sceneDelta = shouldObserveScene
       ? this.sceneChanges.observe(
         sceneName,
@@ -5317,7 +5315,7 @@ class AgentBridge {
       };
       return this.finishAsyncCommand(result, options, 'main');
     }
-    return this.finishAsyncCommand(result, options);
+    return this.finishAsyncCommand(result, options, false, commandId !== 'playback.input');
   }
 
   // ── Unified query entry (called by transports) ────────────────────────
@@ -5689,10 +5687,12 @@ class AgentBridge {
     result: CommandResult,
     options: { screenshot?: boolean; expectedSceneRevision?: number },
     wholeWindow: boolean | string = false,
+    refreshScene = true,
   ): Promise<CommandResult> {
-    this.refreshProvider?.();
+    // MiYu: queued input does not change the scene; captures still refresh presentation and revision.
+    if (refreshScene || options.screenshot) this.refreshProvider?.();
     if (this.store && this.editorBootReady) {
-      this.observe(true);
+      if (refreshScene || options.screenshot) this.observe(true);
       result.sceneRevision = this.sceneChanges.revision;
     } else {
       this.observeProject();

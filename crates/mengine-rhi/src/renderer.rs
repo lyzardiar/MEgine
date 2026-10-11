@@ -3,6 +3,7 @@ use crate::mesh::{MeshGpu, Vertex};
 use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
 use crate::render_graph::RenderGraph;
 use crate::sky::SkyBackground;
+use crate::spatial::{Frustum, SpatialIndex};
 use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer, UiTextureError};
 use crate::RhiError;
 use glam::{Mat4, Vec3, Vec4};
@@ -21,6 +22,13 @@ const DIRECTIONAL_SHADOW_MAP_SIZE: u32 = 2048;
 const MATERIAL_PIPELINE_GRACE_FRAMES: u64 = 300;
 const MATERIAL_PIPELINE_PRUNE_INTERVAL: u64 = 60;
 const MAX_DYNAMIC_MATERIAL_PIPELINES: usize = 256;
+
+// MiYu: HDR, tone-mapped color and shared scene/UI depth must use the same supported sample count.
+fn scene_sample_count(features: impl Fn(wgpu::TextureFormat) -> wgpu::TextureFormatFeatures, output: wgpu::TextureFormat) -> u32 {
+    let color = wgpu::TextureFormatFeatureFlags::MULTISAMPLE_X4 | wgpu::TextureFormatFeatureFlags::MULTISAMPLE_RESOLVE;
+    let supported = |format, flags| { let value = features(format); value.allowed_usages.contains(wgpu::TextureUsages::RENDER_ATTACHMENT) && value.flags.contains(flags) };
+    if [HDR_COLOR_FORMAT, output].iter().all(|format| supported(*format, color)) && supported(wgpu::TextureFormat::Depth24PlusStencil8, wgpu::TextureFormatFeatureFlags::MULTISAMPLE_X4) { 4 } else { 1 }
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct ClearColor {
@@ -91,6 +99,7 @@ pub struct RenderMaterial {
     pub transparent: bool,
     pub blend_mode: MaterialBlendMode,
     pub depth_write: bool,
+    pub depth_equal: bool,
     pub render_queue: i32,
     pub alpha_cutoff: f32,
     pub base_color_texture: String,
@@ -120,7 +129,7 @@ pub struct RenderMaterial {
     /// CPU-side reflection metadata used to apply named per-renderer overrides without parsing
     /// shader source every frame. This metadata is not uploaded or included in pipeline keys.
     pub custom_parameter_bindings: Arc<[SurfaceShaderParameterBinding]>,
-    /// Final custom texture paths packed in Surface Shader declaration order. Four fixed slots
+    /// Final custom texture paths packed in Surface Shader declaration order. Six fixed slots
     /// keep one stable material bind-group layout across all custom pipelines.
     pub custom_textures: [String; MAX_SURFACE_SHADER_TEXTURES],
     /// CPU-side names for matching MaterialPropertyBlock texture overrides to fixed slots.
@@ -206,6 +215,7 @@ impl Default for RenderMaterial {
             transparent: false,
             blend_mode: MaterialBlendMode::Alpha,
             depth_write: true,
+            depth_equal: false,
             render_queue: 2000,
             alpha_cutoff: 0.0,
             base_color_texture: String::new(),
@@ -347,6 +357,24 @@ pub struct RenderFrame<'a> {
     pub objects: &'a [RenderObject],
     pub lighting: &'a FrameLighting,
     pub ui: Option<&'a UiBatchPlan>,
+    pub scene_views: &'a [SceneTextureFrame],
+}
+
+/// Live scene meshes rendered into an independently sized UI texture before the main frame.
+pub struct SceneTextureFrame {
+    pub key: String,
+    pub size: [u32; 2],
+    pub clear: ClearColor,
+    pub camera: FrameCamera,
+    pub objects: Vec<RenderObject>,
+    pub lighting: FrameLighting,
+}
+
+struct SceneTextureGpu {
+    target: OffscreenRenderTarget,
+    depth_texture: wgpu::Texture,
+    depth_view: wgpu::TextureView,
+    post_process: HdrPostProcess,
 }
 
 /// A renderer-owned color target for editor viewports, capture, and headless rendering.
@@ -481,6 +509,7 @@ struct MaterialPipelineKey {
     blend: MaterialPipelineBlend,
     double_sided: bool,
     depth_write: bool,
+    depth_equal: bool,
     shader_fingerprint: u64,
 }
 
@@ -514,6 +543,7 @@ impl From<&RenderMaterial> for MaterialPipelineKey {
             },
             double_sided: material.double_sided,
             depth_write: !material.transparent || material.depth_write,
+            depth_equal: material.depth_equal,
             shader_fingerprint: surface_shader_fingerprint(
                 &material.surface_shader,
                 &material.surface_keywords,
@@ -578,11 +608,15 @@ fn material_has_missing_textures(
         .any(|(path, srgb)| !path.is_empty() && !available(path, srgb))
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct SpatialCullingStats { pub total: usize, pub camera_visible: usize, pub shadow_visible: usize, pub submitted: usize }
+
 pub struct Renderer {
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     surface: Option<wgpu::Surface<'static>>,
     config: wgpu::SurfaceConfiguration,
+    sample_count: u32,
     material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
     error_material_pipelines: HashMap<MaterialPipelineKey, wgpu::RenderPipeline>,
     material_pipeline_last_used: HashMap<MaterialPipelineKey, u64>,
@@ -593,6 +627,8 @@ pub struct Renderer {
     depth_view: wgpu::TextureView,
     depth_texture: wgpu::Texture,
     meshes: HashMap<String, MeshGpu>,
+    spatial_index: SpatialIndex,
+    spatial_stats: SpatialCullingStats,
     bind_layout: wgpu::BindGroupLayout,
     pipeline_layout: wgpu::PipelineLayout,
     global_buf: wgpu::Buffer,
@@ -633,9 +669,13 @@ pub struct Renderer {
     pub clear: ClearColor,
     pub graph: RenderGraph,
     size: PhysicalSize<u32>,
+    scene_textures: HashMap<String, SceneTextureGpu>,
 }
 
 impl Renderer {
+    /// Scene color, depth and UI coverage sample count; presentation and readback remain single-sampled.
+    pub fn sample_count(&self) -> u32 { self.sample_count }
+
     pub async fn new(window: Arc<winit::window::Window>) -> Result<Self, RhiError> {
         let size = window.inner_size();
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
@@ -700,6 +740,7 @@ impl Renderer {
                     .or_else(|| caps.formats.first().copied())
             })
             .unwrap_or(wgpu::TextureFormat::Rgba8UnormSrgb);
+        let sample_count = scene_sample_count(|format| adapter.get_texture_format_features(format), format);
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -852,6 +893,26 @@ impl Renderer {
                         },
                         count: None,
                     },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 10,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 11,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
+                    },
                 ],
             });
 
@@ -977,7 +1038,7 @@ impl Renderer {
                     },
                 ],
             });
-        let sky = SkyBackground::new(&device, &environment_texture_layout);
+        let sky = SkyBackground::new(&device, &environment_texture_layout, sample_count);
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("forward_pipeline_layout"),
@@ -991,33 +1052,37 @@ impl Renderer {
         });
         let mut material_pipelines = HashMap::new();
         for double_sided in [false, true] {
-            let opaque = MaterialPipelineKey {
-                blend: MaterialPipelineBlend::Replace,
-                double_sided,
-                depth_write: true,
-                shader_fingerprint: 0,
-            };
-            material_pipelines.insert(
-                opaque,
-                create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, opaque),
-            );
-            for blend in [
-                MaterialPipelineBlend::Alpha,
-                MaterialPipelineBlend::Premultiplied,
-                MaterialPipelineBlend::Additive,
-                MaterialPipelineBlend::Multiply,
-            ] {
-                for depth_write in [false, true] {
-                    let key = MaterialPipelineKey {
-                        blend,
-                        double_sided,
-                        depth_write,
-                        shader_fingerprint: 0,
-                    };
-                    material_pipelines.insert(
-                        key,
-                        create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, key),
-                    );
+            for depth_equal in [false, true] {
+                let opaque = MaterialPipelineKey {
+                    blend: MaterialPipelineBlend::Replace,
+                    double_sided,
+                    depth_write: true,
+                    depth_equal,
+                    shader_fingerprint: 0,
+                };
+                material_pipelines.insert(
+                    opaque,
+                    create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, opaque, sample_count),
+                );
+                for blend in [
+                    MaterialPipelineBlend::Alpha,
+                    MaterialPipelineBlend::Premultiplied,
+                    MaterialPipelineBlend::Additive,
+                    MaterialPipelineBlend::Multiply,
+                ] {
+                    for depth_write in [false, true] {
+                        let key = MaterialPipelineKey {
+                            blend,
+                            double_sided,
+                            depth_write,
+                            depth_equal,
+                            shader_fingerprint: 0,
+                        };
+                        material_pipelines.insert(
+                            key,
+                            create_pipeline(&device, HDR_COLOR_FORMAT, &shader, &pipeline_layout, key, sample_count),
+                        );
+                    }
                 }
             }
         }
@@ -1157,10 +1222,10 @@ impl Renderer {
             true,
         );
 
-        let (depth_texture, depth_view) = create_depth(&device, config.width, config.height);
+        let (depth_texture, depth_view) = create_depth(&device, config.width, config.height, sample_count);
         let mut meshes = HashMap::new();
         meshes.insert("cube".into(), MeshGpu::unit_cube(&device));
-        let post_process = HdrPostProcess::new(&device, format, config.width, config.height);
+        let post_process = HdrPostProcess::new(&device, format, config.width, config.height, sample_count);
         let ui = UiRenderer::new(
             &device,
             &queue,
@@ -1168,6 +1233,7 @@ impl Renderer {
             config.width,
             config.height,
             supports_anisotropy,
+            sample_count,
         );
 
         Ok(Self {
@@ -1175,6 +1241,7 @@ impl Renderer {
             queue,
             surface,
             config,
+            sample_count,
             material_pipelines,
             error_material_pipelines: HashMap::new(),
             material_pipeline_last_used: HashMap::new(),
@@ -1185,6 +1252,8 @@ impl Renderer {
             depth_view,
             depth_texture,
             meshes,
+            spatial_index: SpatialIndex::default(),
+            spatial_stats: SpatialCullingStats::default(),
             bind_layout,
             pipeline_layout,
             global_buf,
@@ -1230,6 +1299,7 @@ impl Renderer {
             },
             graph: RenderGraph::default_forward(),
             size,
+            scene_textures: HashMap::new(),
         })
     }
 
@@ -1251,7 +1321,7 @@ impl Renderer {
             return;
         }
         self.size = new_size;
-        let (tex, view) = create_depth(&self.device, new_size.width, new_size.height);
+        let (tex, view) = create_depth(&self.device, new_size.width, new_size.height, self.sample_count);
         self.depth_texture = tex;
         self.depth_view = view;
         self.post_process
@@ -1418,7 +1488,7 @@ impl Renderer {
         };
         self.ensure_render_size(target_size);
         self.material_pipeline_epoch = self.material_pipeline_epoch.wrapping_add(1);
-        self.ensure_object_capacity(objects.len().max(1));
+
         let environment_key = lighting.environment.texture.trim();
         let has_environment_texture = !environment_key.is_empty()
             && self.environment_bind_groups.contains_key(environment_key);
@@ -1444,12 +1514,27 @@ impl Renderer {
             .write_buffer(&self.shadow_uniform_buf, 0, bytemuck::bytes_of(&shadow));
         self.post_process
             .write_settings(&self.queue, lighting.environment.exposure, lighting.environment.tone_mapping);
-        if !objects.is_empty() {
-            let mut packed = vec![0_u8; self.object_stride as usize * objects.len()];
-            for (index, object) in objects.iter().enumerate() {
-                let uniform = make_object_uniforms(object);
+        // Mesh bounds are measured after skeletal/effect/billboard sampling and transformed by
+        // the final world matrix. Main and shadow queries must remain independent.
+        self.spatial_index.update(objects.iter().map(|object| self.meshes.get(&object.mesh_key).and_then(|mesh| mesh.bounds).and_then(|bounds| bounds.transformed(object.model))).collect());
+        let mut draw_order = self.spatial_index.query(&Frustum::from_wgpu_matrix(camera.proj * camera.view));
+        sort_render_indices(&mut draw_order, objects, camera.position);
+        let shadow_order: Vec<_> = if shadow.params[3] > 0.5 {
+            self.spatial_index.query(&Frustum::from_wgpu_matrix(Mat4::from_cols_array_2d(&shadow.light_view_proj))).into_iter().filter(|&i| objects[i].cast_shadows && (!objects[i].material.transparent || objects[i].material.alpha_cutoff > 0.0)).collect()
+        } else { vec![] };
+        let mut submitted = draw_order.clone();
+        submitted.extend_from_slice(&shadow_order);
+        submitted.sort_unstable(); submitted.dedup();
+        self.spatial_stats = SpatialCullingStats { total: objects.len(), camera_visible: draw_order.len(), shadow_visible: shadow_order.len(), submitted: submitted.len() };
+        self.ensure_object_capacity(submitted.len().max(1));
+        let mut uniform_slots = vec![0_usize; objects.len()];
+        if !submitted.is_empty() {
+            let mut packed = vec![0_u8; self.object_stride as usize * submitted.len()];
+            for (slot, &index) in submitted.iter().enumerate() {
+                uniform_slots[index] = slot;
+                let uniform = make_object_uniforms(&objects[index]);
                 let bytes = bytemuck::bytes_of(&uniform);
-                let start = index * self.object_stride as usize;
+                let start = slot * self.object_stride as usize;
                 packed[start..start + bytes.len()].copy_from_slice(bytes);
             }
             self.queue.write_buffer(&self.object_buf, 0, &packed);
@@ -1458,8 +1543,8 @@ impl Renderer {
         let empty_ui = UiBatchPlan::default();
         let ui_plan = ui.unwrap_or(&empty_ui);
         self.ui.prepare(&self.device, &self.queue, ui_plan);
-        let draw_order = sorted_render_indices(objects, camera.position);
-        for object in objects {
+        for &index in &submitted {
+            let object = &objects[index];
             self.ensure_material_pipeline(&object.material);
             let missing_texture = material_has_missing_textures(&object.material, |key, srgb| {
                 if srgb {
@@ -1519,7 +1604,7 @@ impl Renderer {
                 ..Default::default()
             });
             pass.set_pipeline(&self.shadow_pipeline);
-            for &index in &draw_order {
+            for &index in &shadow_order {
                 let object = &objects[index];
                 if !object.cast_shadows
                     || (object.material.transparent && object.material.alpha_cutoff <= 0.0)
@@ -1532,7 +1617,7 @@ impl Renderer {
                 pass.set_bind_group(
                     0,
                     &self.shadow_pass_bind_group,
-                    &[(index as u64 * self.object_stride) as u32],
+                    &[(uniform_slots[index] as u64 * self.object_stride) as u32],
                 );
                 let texture_key = MaterialTextureSetKey::from(&object.material);
                 let texture_set = self
@@ -1564,7 +1649,7 @@ impl Renderer {
                 let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("environment_background"),
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                        view: self.post_process.hdr_view(),
+                        view: self.post_process.scene_view(),
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -1586,8 +1671,8 @@ impl Renderer {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("forward_hdr"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: self.post_process.hdr_view(),
-                    resolve_target: None,
+                    view: self.post_process.scene_view(),
+                    resolve_target: self.post_process.scene_resolve_target(),
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Load,
                         store: wgpu::StoreOp::Store,
@@ -1644,7 +1729,7 @@ impl Renderer {
                 pass.set_bind_group(
                     0,
                     &self.bind_group,
-                    &[(index as u64 * self.object_stride) as u32],
+                    &[(uniform_slots[index] as u64 * self.object_stride) as u32],
                 );
                 let texture_key = MaterialTextureSetKey::from(&object.material);
                 let texture_set = self
@@ -1664,8 +1749,8 @@ impl Renderer {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("aces_tone_mapping"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view,
-                    resolve_target: None,
+                    view: self.post_process.output_view(view),
+                    resolve_target: if ui_plan.is_empty() { self.post_process.output_resolve_target(view) } else { None },
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                         store: wgpu::StoreOp::Store,
@@ -1681,8 +1766,8 @@ impl Renderer {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("ui_overlay"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view,
-                    resolve_target: None,
+                    view: self.post_process.output_view(view),
+                    resolve_target: self.post_process.output_resolve_target(view),
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Load,
                         store: wgpu::StoreOp::Store,
@@ -1720,6 +1805,11 @@ impl Renderer {
         frame: &RenderFrame<'_>,
         target: RenderTarget<'_>,
     ) -> Result<(), RhiError> {
+        let active: HashSet<&str> = frame.scene_views.iter().map(|view| view.key.as_str()).collect();
+        self.scene_textures.retain(|key, _| {
+            if active.contains(key.as_str()) { true } else { self.ui.remove_texture(key); false }
+        });
+        for view in frame.scene_views { self.render_scene_texture(view)?; }
         self.clear = frame.clear;
         self.render_lit_frame_to_target(
             frame.camera,
@@ -1728,6 +1818,33 @@ impl Renderer {
             frame.ui,
             target,
         )
+    }
+
+    fn render_scene_texture(&mut self, frame: &SceneTextureFrame) -> Result<(), RhiError> {
+        let size = PhysicalSize::new(frame.size[0].clamp(1, 2048), frame.size[1].clamp(1, 2048));
+        let cached = self.scene_textures.remove(&frame.key).filter(|cached| cached.target.size == size);
+        let mut gpu = cached.unwrap_or_else(|| {
+            let target = self.create_offscreen_target(size);
+            let (depth_texture, depth_view) = create_depth(&self.device, size.width, size.height, self.sample_count);
+            let post_process = HdrPostProcess::new(&self.device, self.config.format, size.width, size.height, self.sample_count);
+            self.ui.bind_texture_view(&self.device, &frame.key, &target.view);
+            SceneTextureGpu { target, depth_texture, depth_view, post_process }
+        });
+        let previous_size = self.size;
+        let previous_clear = self.clear;
+        std::mem::swap(&mut self.depth_texture, &mut gpu.depth_texture);
+        std::mem::swap(&mut self.depth_view, &mut gpu.depth_view);
+        std::mem::swap(&mut self.post_process, &mut gpu.post_process);
+        self.size = size;
+        self.clear = frame.clear;
+        let result = self.render_lit_frame_to_target(frame.camera, &frame.objects, &frame.lighting, None, RenderTarget::Offscreen(&gpu.target));
+        std::mem::swap(&mut self.depth_texture, &mut gpu.depth_texture);
+        std::mem::swap(&mut self.depth_view, &mut gpu.depth_view);
+        std::mem::swap(&mut self.post_process, &mut gpu.post_process);
+        self.size = previous_size;
+        self.clear = previous_clear;
+        self.scene_textures.insert(frame.key.clone(), gpu);
+        result
     }
 
     fn ensure_object_capacity(&mut self, required: usize) {
@@ -1808,6 +1925,7 @@ impl Renderer {
                 &shader,
                 &self.pipeline_layout,
                 key,
+                self.sample_count,
             ),
         );
         MaterialPipelinePrepareResult::Created
@@ -1834,6 +1952,7 @@ impl Renderer {
                 &shader,
                 &self.pipeline_layout,
                 key,
+                self.sample_count,
             ),
         );
     }
@@ -2232,6 +2351,8 @@ impl Renderer {
         self.config.width as f32 / self.config.height.max(1) as f32
     }
 
+    pub fn spatial_culling_stats(&self) -> SpatialCullingStats { self.spatial_stats }
+
     pub fn register_mesh(&mut self, key: &str, mesh: MeshGpu) {
         self.meshes.insert(key.to_string(), mesh);
     }
@@ -2458,8 +2579,14 @@ fn make_shadow_uniforms(camera: FrameCamera, lighting: &FrameLighting) -> Shadow
     }
 }
 
+#[cfg(test)]
 fn sorted_render_indices(objects: &[RenderObject], camera_position: Vec3) -> Vec<usize> {
     let mut indices: Vec<usize> = (0..objects.len()).collect();
+    sort_render_indices(&mut indices, objects, camera_position);
+    indices
+}
+
+fn sort_render_indices(indices: &mut [usize], objects: &[RenderObject], camera_position: Vec3) {
     indices.sort_by(|left, right| {
         let left_object = &objects[*left];
         let right_object = &objects[*right];
@@ -2485,7 +2612,6 @@ fn sorted_render_indices(objects: &[RenderObject], camera_position: Vec3) -> Vec
             })
             .then_with(|| left.cmp(right))
     });
-    indices
 }
 
 fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
@@ -2815,6 +2941,7 @@ fn create_pipeline(
     shader: &wgpu::ShaderModule,
     layout: &wgpu::PipelineLayout,
     key: MaterialPipelineKey,
+    sample_count: u32,
 ) -> wgpu::RenderPipeline {
     device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: Some("forward_material_pipeline"),
@@ -2849,11 +2976,11 @@ fn create_pipeline(
         depth_stencil: Some(wgpu::DepthStencilState {
             format: wgpu::TextureFormat::Depth24PlusStencil8,
             depth_write_enabled: key.depth_write,
-            depth_compare: wgpu::CompareFunction::Less,
+            depth_compare: if key.depth_equal { wgpu::CompareFunction::LessEqual } else { wgpu::CompareFunction::Less },
             stencil: Default::default(),
             bias: Default::default(),
         }),
-        multisample: wgpu::MultisampleState::default(),
+        multisample: wgpu::MultisampleState { count: sample_count, ..Default::default() },
         multiview: None,
         cache: None,
     })
@@ -3236,6 +3363,7 @@ fn create_depth(
     device: &wgpu::Device,
     width: u32,
     height: u32,
+    sample_count: u32,
 ) -> (wgpu::Texture, wgpu::TextureView) {
     let tex = device.create_texture(&wgpu::TextureDescriptor {
         label: Some("depth"),
@@ -3245,7 +3373,7 @@ fn create_depth(
             depth_or_array_layers: 1,
         },
         mip_level_count: 1,
-        sample_count: 1,
+        sample_count,
         dimension: wgpu::TextureDimension::D2,
         format: wgpu::TextureFormat::Depth24PlusStencil8,
         usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
@@ -3409,6 +3537,8 @@ struct ShadowUniforms {
 @group(1) @binding(7) var mengine_custom_texture_1: texture_2d<f32>;
 @group(1) @binding(8) var mengine_custom_texture_2: texture_2d<f32>;
 @group(1) @binding(9) var mengine_custom_texture_3: texture_2d<f32>;
+@group(1) @binding(10) var mengine_custom_texture_4: texture_2d<f32>;
+@group(1) @binding(11) var mengine_custom_texture_5: texture_2d<f32>;
 @group(2) @binding(0) var<uniform> shadow: ShadowUniforms;
 @group(2) @binding(1) var directional_shadow_map: texture_depth_2d;
 @group(2) @binding(2) var directional_shadow_sampler: sampler_comparison;
@@ -3426,9 +3556,9 @@ struct VsIn {
 
 struct VsOut {
     @builtin(position) clip: vec4<f32>,
-    @location(0) world_position: vec3<f32>,
-    @location(1) world_normal: vec3<f32>,
-    @location(2) uv: vec2<f32>,
+    @location(0) @interpolate(perspective, centroid) world_position: vec3<f32>,
+    @location(1) @interpolate(perspective, centroid) world_normal: vec3<f32>,
+    @location(2) @interpolate(perspective, centroid) uv: vec2<f32>,
 };
 
 @vertex
@@ -3933,6 +4063,154 @@ mod tests {
     use super::*;
 
     #[test]
+    fn spatial_culling_submits_camera_shadow_union_and_refreshes_mesh_bounds() {
+        let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).expect("GPU adapter for spatial acceptance");
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let target = renderer.create_offscreen_target(PhysicalSize::new(32, 32));
+        let clear = ClearColor { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+        let camera = FrameCamera { view: Mat4::look_at_rh(Vec3::new(0.0, 0.0, 5.0), Vec3::ZERO, Vec3::Y), proj: Mat4::perspective_rh(1.0, 1.0, 0.1, 100.0), position: Vec3::new(0.0, 0.0, 5.0) };
+        let object = |x, color| RenderObject { mesh_key: "cube".into(), model: Mat4::from_translation(Vec3::new(x, 0.0, 0.0)), material: RenderMaterial { unlit: true, base_color: color, ..Default::default() }, cast_shadows: true, receive_shadows: true };
+        let mut objects: Vec<_> = (0..10000).map(|i| object(1000.0 + i as f32, [0.0, 0.0, 1.0, 1.0])).collect();
+        objects.push(object(0.0, [1.0, 0.0, 0.0, 1.0]));
+        objects.push(object(10.0, [0.0, 1.0, 0.0, 1.0]));
+        let mut lighting = FrameLighting::default();
+        lighting.directional = Some(DirectionalLightData { direction: Vec3::new(0.0, -1.0, -1.0), color: [1.0; 3], intensity: 1.0, cast_shadows: true, shadow_strength: 1.0, shadow_bias: 0.001, shadow_normal_bias: 0.001, shadow_distance: 60.0 });
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        assert_eq!(renderer.spatial_culling_stats(), SpatialCullingStats { total: 10002, camera_visible: 1, shadow_visible: 2, submitted: 2 });
+        let pixels = renderer.read_offscreen_rgba8(&target).unwrap();
+        assert!(pixels.chunks_exact(4).any(|p| p[0] > 100 && p[1] == 0 && p[2] == 0), "visible source index maps to its compact uniform slot");
+        lighting.directional = None;
+        let shifted = FrameCamera { view: Mat4::look_at_rh(Vec3::new(10.0, 0.0, 5.0), Vec3::new(10.0, 0.0, 0.0), Vec3::Y), position: Vec3::new(10.0, 0.0, 5.0), ..camera };
+        renderer.submit_frame_to(&RenderFrame { clear, camera: shifted, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        assert_eq!(renderer.spatial_culling_stats().submitted, 1);
+        assert!(renderer.read_offscreen_rgba8(&target).unwrap().chunks_exact(4).any(|p| p[1] > 100 && p[0] == 0), "camera motion reveals the other object");
+        let vertices = [[-10.5, -0.5, 0.0], [-9.5, -0.5, 0.0], [-10.0, 0.5, 0.0]].map(|position| Vertex { position, normal: [0.0, 0.0, 1.0], uv: [0.0; 2] });
+        renderer.upload_gltf_static("sampled", &vertices, &[0, 1, 2]);
+        let mut sampled = object(10.0, [0.0, 1.0, 0.0, 1.0]); sampled.mesh_key = "sampled".into();
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &[sampled], lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        assert_eq!(renderer.spatial_culling_stats().camera_visible, 1, "replacement vertex bounds are used");
+        renderer.read_offscreen_rgba8(&target).unwrap();
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+    }
+
+    #[test]
+    fn scene_msaa_requires_color_resolve_and_matching_depth_support() {
+        use wgpu::TextureFormatFeatureFlags as F;
+        let color = F::MULTISAMPLE_X4 | F::MULTISAMPLE_RESOLVE;
+        let features = |flags| wgpu::TextureFormatFeatures { allowed_usages: wgpu::TextureUsages::RENDER_ATTACHMENT, flags };
+        assert_eq!(scene_sample_count(|_| features(color), wgpu::TextureFormat::Rgba8UnormSrgb), 4);
+        for missing in [HDR_COLOR_FORMAT, wgpu::TextureFormat::Rgba8UnormSrgb, wgpu::TextureFormat::Depth24PlusStencil8] {
+            assert_eq!(scene_sample_count(|format| features(if format == missing { F::empty() } else { color }), wgpu::TextureFormat::Rgba8UnormSrgb), 1);
+        }
+        assert_eq!(scene_sample_count(|_| features(F::MULTISAMPLE_X4), wgpu::TextureFormat::Rgba8UnormSrgb), 1);
+        assert_eq!(scene_sample_count(|_| wgpu::TextureFormatFeatures { allowed_usages: wgpu::TextureUsages::TEXTURE_BINDING, flags: color }, wgpu::TextureFormat::Rgba8UnormSrgb), 1);
+    }
+
+    #[test]
+    fn multisampled_scene_resolves_with_ui_depth_stencil_and_resize() {
+        use crate::{UiPrimitive, UiRenderMaterial, UiStencilMode};
+        let mut renderer = match pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))) {
+            Ok(renderer) => renderer,
+            Err(RhiError::NoAdapter) => { eprintln!("SKIP: no GPU adapter"); return; }
+            Err(error) => panic!("headless MSAA renderer: {error}"),
+        };
+        eprintln!("GPU scene sample count: {}", renderer.sample_count());
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let vertices = [[-1.0,-1.0,0.25],[1.0,-1.0,0.25],[-1.0,1.0,0.25]].map(|position| Vertex { position, normal: [0.0,0.0,1.0], uv: [0.0,0.0] });
+        renderer.upload_gltf_static("msaa_triangle", &vertices, &[0,1,2]);
+        let mut objects = [RenderObject { mesh_key: "msaa_triangle".into(), model: Mat4::IDENTITY, material: RenderMaterial { unlit: true, double_sided: true, base_color: [1.0;4], ..Default::default() }, cast_shadows: false, receive_shadows: false }];
+        let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+        let mut lighting = FrameLighting::default();lighting.environment.tone_mapping = false;
+        let clear = ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 };
+        for size in [32,48,32] {
+            let target = renderer.create_offscreen_target(PhysicalSize::new(size, size));
+            renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+            let data = renderer.read_offscreen_rgba8(&target).unwrap();
+            assert!(data.chunks_exact(4).any(|pixel| pixel[0] > 0 && pixel[0] < 255), "resolved diagonal has partial coverage");
+            let scale = size as f32 / 32.0;
+            let mut mask = UiPrimitive::solid([4.0,12.0,24.0,8.0].map(|v|v*scale), [1.0;4]);
+            mask.key.stencil = UiStencilMode::Push { reference: 0 };
+            let mut child = UiPrimitive::solid([0.0,8.0,32.0,16.0].map(|v|v*scale), [0.0,1.0,0.0,1.0]);
+            child.key.stencil = UiStencilMode::Test { reference: 1 };child.key.depth_test = true;
+            child.clip_corners = Some([[-1.0,0.5,0.6,1.0],[1.0,0.5,0.6,1.0],[1.0,-0.5,0.6,1.0],[-1.0,-0.5,0.6,1.0]]);
+            child.render_material = Some(Arc::new(UiRenderMaterial { shader: Arc::from("fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> { return input.vertex_color; }"), ..Default::default() }));
+            let mut pop = mask.clone();pop.key.stencil = UiStencilMode::Pop { reference: 1 };
+            let overlay = UiPrimitive::solid([8.0,3.0,4.0,4.0].map(|v|v*scale), [1.0,0.0,0.0,1.0]);
+            let ui = UiBatchPlan::build(vec![mask,child,pop,overlay]);
+            renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: Some(&ui), scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+            let data = renderer.read_offscreen_rgba8(&target).unwrap();
+            let pixel = |x: u32,y: u32| { let i = (((y as f32*scale) as u32*size+(x as f32*scale) as u32)*4) as usize; &data[i..i+3] };
+            assert_eq!(pixel(8,16), &[255,255,255], "foreground scene occludes world UI");
+            assert_eq!(pixel(24,16), &[0,255,0], "world UI is visible behind the empty scene");
+            assert_eq!(pixel(30,16), &[0,0,0], "stencil excludes pixels outside the mask");
+            assert_eq!(pixel(9,4), &[255,0,0], "screen UI is drawn after scene post processing");
+        }
+        let target = renderer.create_offscreen_target(PhysicalSize::new(32,32));
+        // Needle-width geometry must shade inside its covered portion of a pixel.
+        let needle = [([-0.91,-0.87,0.25],[0.0,0.0]),([0.83,0.91,0.25],[1.0,0.0]),([0.88,0.91,0.25],[0.0,1.0])].map(|(position,uv)| Vertex { position, normal: [0.0,0.0,1.0], uv });
+        renderer.upload_gltf_static("msaa_needle", &needle, &[0,1,2]);
+        objects[0].mesh_key = "msaa_needle".into();
+        objects[0].material.surface_shader = Arc::from("fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, position: vec3<f32>, normal: vec3<f32>) -> vec4<f32> { return select(vec4<f32>(0.0,1.0,0.0,1.0),vec4<f32>(1.0,0.0,0.0,1.0),uv.x < -0.001 || uv.y < -0.001 || uv.x + uv.y > 1.001); }");
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        let needle_pixels = renderer.read_offscreen_rgba8(&target).unwrap();
+        assert!(needle_pixels.chunks_exact(4).any(|pixel| pixel[1] > 0), "subpixel geometry remains visible");
+        assert!(needle_pixels.chunks_exact(4).all(|pixel| pixel[0] == 0), "centroid UVs stay inside thin triangles");
+        objects[0].mesh_key = "msaa_triangle".into();
+        objects[0].material.surface_shader = Arc::from("fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, position: vec3<f32>, normal: vec3<f32>) -> vec4<f32> { return color; }");
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        objects[0].material.is_error = true;
+        let mut error_ui = UiPrimitive::solid([0.0,0.0,4.0,4.0], [1.0;4]);
+        error_ui.render_material = Some(Arc::new(UiRenderMaterial { is_error: true, ..Default::default() }));
+        let ui = UiBatchPlan::build(vec![error_ui]);
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &objects, lighting: &lighting, ui: Some(&ui), scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        renderer.read_offscreen_rgba8(&target).unwrap();
+        let error = pollster::block_on(renderer.device.pop_error_scope());
+        assert!(error.is_none(), "scene/UI MSAA validation: {error:?}");
+    }
+
+    #[test]
+    fn live_scene_views_render_independently_and_restore_main_target() {
+        use crate::UiPrimitive;
+        let mut renderer = match pollster::block_on(Renderer::new_headless(PhysicalSize::new(64, 32))) {
+            Ok(renderer) => renderer,
+            Err(RhiError::NoAdapter) => { eprintln!("SKIP: no GPU adapter"); return; }
+            Err(error) => panic!("headless live view renderer: {error}"),
+        };
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let vertices = [[-1.0,-1.0,0.25],[1.0,-1.0,0.25],[-1.0,1.0,0.25],[1.0,1.0,0.25]].map(|position| Vertex { position, normal: [0.0,0.0,1.0], uv: [0.0,0.0] });
+        renderer.upload_gltf_static("portrait_quad", &vertices, &[0,1,2,2,1,3]);
+        let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+        let mut lighting = FrameLighting::default(); lighting.environment.tone_mapping = false;
+        let clear = ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 };
+        let make_view = |key: &str, color| SceneTextureFrame { key:key.into(), size:[16,16], clear, camera, lighting:lighting.clone(), objects:vec![RenderObject { mesh_key:"portrait_quad".into(), model:Mat4::IDENTITY, material:RenderMaterial { unlit:true, double_sided:true, base_color:color, ..Default::default() }, cast_shadows:false, receive_shadows:false }] };
+        let mut views = vec![make_view("$scene-view:red", [1.0,0.0,0.0,1.0]), make_view("$scene-view:blue", [0.0,0.0,1.0,1.0])];
+        let mut red = UiPrimitive::solid([0.0,0.0,32.0,32.0], [1.0;4]); red.key.texture = views[0].key.clone();
+        let mut blue = UiPrimitive::solid([32.0,0.0,32.0,32.0], [1.0;4]); blue.key.texture = views[1].key.clone();
+        let ui = UiBatchPlan::build(vec![red,blue]);
+        let target = renderer.create_offscreen_target(PhysicalSize::new(64,32));
+        let render = |renderer: &mut Renderer, views: &[SceneTextureFrame]| {
+            renderer.submit_frame_to(&RenderFrame { clear, camera, objects:&[], lighting:&lighting, ui:Some(&ui), scene_views:views }, RenderTarget::Offscreen(&target)).unwrap();
+            assert_eq!(renderer.size, PhysicalSize::new(64,32));
+            renderer.read_offscreen_rgba8(&target).unwrap()
+        };
+        let pixel = |data: &[u8], x: usize, y: usize| { let i = (y*64+x)*4; data[i..i+3].to_vec() };
+        let data = render(&mut renderer, &views);
+        assert_eq!(pixel(&data,16,16), [255,0,0]); assert_eq!(pixel(&data,48,16), [0,0,255]);
+        views[0].objects[0].model = Mat4::from_translation(Vec3::new(3.0,0.0,0.0));
+        views[1].size = [24,20];
+        let data = render(&mut renderer, &views);
+        assert_eq!(pixel(&data,16,16), [0,0,0]); assert_eq!(pixel(&data,48,16), [0,0,255]);
+        assert_eq!(renderer.scene_textures["$scene-view:blue"].target.size, PhysicalSize::new(24,20));
+        views[1].camera.view = Mat4::from_translation(Vec3::new(3.0,0.0,0.0));
+        assert_eq!(pixel(&render(&mut renderer, &views),48,16), [0,0,0]);
+        render(&mut renderer, &[]); assert!(renderer.scene_textures.is_empty());
+        views[0].objects[0].model = Mat4::IDENTITY;
+        assert_eq!(pixel(&render(&mut renderer, &views[..1]),16,16), [255,0,0]);
+        assert_eq!(renderer.scene_textures.len(), 1);
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none(), "live view GPU validation");
+    }
+
+    #[test]
     fn forward_shader_is_valid_wgsl() {
         let module = naga::front::wgsl::parse_str(FORWARD_WGSL)
             .expect("forward shader should parse as WGSL");
@@ -3958,6 +4236,7 @@ mod tests {
             blend: MaterialPipelineBlend::Additive,
             double_sided: true,
             depth_write: false,
+            depth_equal: false,
             shader_fingerprint: 42,
         };
         assert_eq!(
@@ -4209,8 +4488,10 @@ mod tests {
                     "mask.png".into(),
                     String::new(),
                     String::new(),
+                    String::new(),
+                    String::new(),
                 ],
-                custom_texture_srgb: [true, false, false, false],
+                custom_texture_srgb: [true, false, false, false, false, false],
                 ..Default::default()
             },
         };
@@ -4222,7 +4503,7 @@ mod tests {
         assert_eq!(key.emissive, "emissive.png");
         assert_eq!(key.custom[0], "detail.png");
         assert_eq!(key.custom[1], "mask.png");
-        assert_eq!(key.custom_srgb, [true, false, false, false]);
+        assert_eq!(key.custom_srgb, [true, false, false, false, false, false]);
         assert_eq!(key.sampler.wrap_u, MaterialWrap::Clamp);
         assert_eq!(key.sampler.wrap_v, MaterialWrap::Mirror);
         assert_eq!(key.sampler.filter, MaterialFilter::Nearest);
@@ -4304,6 +4585,7 @@ mod tests {
             transparent: true,
             blend_mode: MaterialBlendMode::Premultiplied,
             depth_write: false,
+            depth_equal: false,
             double_sided: true,
             ..Default::default()
         };
@@ -4313,6 +4595,7 @@ mod tests {
                 blend: MaterialPipelineBlend::Premultiplied,
                 double_sided: true,
                 depth_write: false,
+                depth_equal: false,
                 shader_fingerprint: 0,
             }
         );
@@ -4327,11 +4610,24 @@ mod tests {
     }
 
     #[test]
+    fn layered_material_has_a_distinct_equal_depth_pipeline() {
+        let base = RenderMaterial::default();
+        let overlay = RenderMaterial { depth_equal: true, ..base.clone() };
+        let base_key = MaterialPipelineKey::from(&base);
+        let overlay_key = MaterialPipelineKey::from(&overlay);
+        assert!(!base_key.depth_equal);
+        assert!(overlay_key.depth_equal);
+        assert_ne!(base_key, overlay_key);
+        assert!(error_material_pipeline_key(overlay_key).depth_equal);
+    }
+
+    #[test]
     fn material_pipeline_eviction_keeps_resident_and_current_frame_variants() {
         let key = |fingerprint| MaterialPipelineKey {
             blend: MaterialPipelineBlend::Replace,
             double_sided: false,
             depth_write: true,
+            depth_equal: false,
             shader_fingerprint: fingerprint,
         };
         let epoch = MATERIAL_PIPELINE_GRACE_FRAMES + 10;

@@ -1,0 +1,3 @@
+# Preserve existing mixed line endings in scoped engine updates.
+idl/components/core.idl whitespace=cr-at-eol
+packages/editor/src/store.ts whitespace=cr-at-eol

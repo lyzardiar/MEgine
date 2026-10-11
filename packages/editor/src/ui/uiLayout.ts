@@ -275,6 +275,7 @@ export type UiDrawItem = {
   };
   input?: {
     text: string;
+    font?: string;
     placeholder: string;
     textColor: [number, number, number, number];
     placeholderColor: [number, number, number, number];
@@ -703,12 +704,6 @@ function participatesInLayout(entity: UiEnt): boolean {
   return element?.ignore_layout !== true && element?.ignoreLayout !== true;
 }
 
-function childrenOf(entities: UiEnt[], parent: number | null): UiEnt[] {
-  return entities
-    .filter((e) => (e.parent ?? null) === parent && e.active !== false)
-    .sort((a, b) => (a.siblingIndex ?? 0) - (b.siblingIndex ?? 0));
-}
-
 /** Pixel (canvas y-down) → world XY plane (Y-up), canvas centered at origin. */
 export function uiPixelToWorld(
   px: number,
@@ -1030,7 +1025,18 @@ export function layoutUiOverlay(
   eventCamera?: Camera,
   targetDisplay: number | null = 0,
   textMeasurement?: UiTextLayoutMeasurement,
+  nativeCoordinates = false,
 ): UiDrawItem[] {
+  // Rebuild per layout so in-place hierarchy, activity and sibling edits remain visible.
+  const childrenByParent = new Map<number | null, UiEnt[]>();
+  for (const entity of entities) {
+    if (entity.active === false) continue;
+    const parent = entity.parent ?? null;
+    const siblings = childrenByParent.get(parent);
+    if (siblings) siblings.push(entity);
+    else childrenByParent.set(parent, [entity]);
+  }
+  for (const siblings of childrenByParent.values()) siblings.sort((a, b) => (a.siblingIndex ?? 0) - (b.siblingIndex ?? 0));
   const canvases = entities
     .filter((e) => e.components.Canvas
       && canvasRenderRootEnabled(entities, e)
@@ -1104,7 +1110,7 @@ export function layoutUiOverlay(
       if (nestedLayoutRaw) {
         const nextResolving = new Set(resolving).add(entity.entity);
         const nestedLayout = layoutMetrics(nestedLayoutRaw);
-        const nestedChildren = childrenOf(entities, entity.entity).filter(participatesInLayout);
+        const nestedChildren = (childrenByParent.get(entity.entity) ?? []).filter(participatesInLayout);
         let nestedMetrics = nestedChildren.map((child) => (
           metricsForLayoutChild(child, undefined, nextResolving)
         ));
@@ -1206,16 +1212,18 @@ export function layoutUiOverlay(
       }
       const hasRt = !!ent.components.RectTransform;
       const rt = hasRt ? readRectTransform(ent.components.RectTransform) : null;
+      // Browser geometry helpers use Y-up pivots; native Game pixels use Y-down pivots.
+      if (rt && nativeCoordinates) rt.pivot[1] = 1 - rt.pivot[1];
       let rect = forcedLayout?.rect ?? (isCanvasRoot
         ? parentRect
         : hasRt
-          ? solveRectTransform(parentRect, scaleRt(ent.components.RectTransform))
+          ? solveRectTransform(parentRect, scaleRt(ent.components.RectTransform), nativeCoordinates)
           : parentRect);
       const layout = ent.components.LayoutGroup as Record<string, unknown> | undefined;
       const contentFitter = ent.components.ContentSizeFitter as Record<string, unknown> | undefined;
       let drivenAxes: [boolean, boolean] = forcedLayout?.controlled ?? [false, false];
       if (contentFitter && layout && rt) {
-        const layoutChildren = childrenOf(entities, ent.entity).filter(participatesInLayout);
+        const layoutChildren = (childrenByParent.get(ent.entity) ?? []).filter(participatesInLayout);
         const resolvedLayout = layoutMetrics(layout);
         const horizontalFit = forcedLayout?.controlled[0]
           ? 'Unconstrained'
@@ -1729,6 +1737,7 @@ export function layoutUiOverlay(
           input: input
             ? {
                 text: String(input.text ?? ''),
+                font: String(input.font ?? '').trim().replaceAll('\\', '/'),
                 placeholder: String(input.placeholder ?? 'Enter text...'),
                 textColor: color4(input.text_color ?? input.textColor, [0.94, 0.95, 0.98, 1]),
                 placeholderColor: color4(input.placeholder_color ?? input.placeholderColor, [0.55, 0.58, 0.64, 1]),
@@ -1840,7 +1849,7 @@ export function layoutUiOverlay(
         };
       }
 
-      let children = childrenOf(entities, ent.entity);
+      let children = childrenByParent.get(ent.entity) ?? [];
       if (tabs && children.length) {
         const selected = Math.max(0, Math.min(children.length - 1, Math.trunc(number(tabs.selected_index ?? tabs.selectedIndex, 0))));
         children = [children[selected]];
@@ -1910,16 +1919,16 @@ export function layoutUiOverlay(
         current = ancestor.parent ?? null;
       }
       if (inheritedCanvas.components.RectTransform) {
-        canvasParent = solveRectTransform(root, scaleRt(inheritedCanvas.components.RectTransform));
+        canvasParent = solveRectTransform(root, scaleRt(inheritedCanvas.components.RectTransform), nativeCoordinates);
       }
       for (const ancestor of chain.reverse()) {
         if (ancestor.components.RectTransform) {
-          canvasParent = solveRectTransform(canvasParent, scaleRt(ancestor.components.RectTransform));
+          canvasParent = solveRectTransform(canvasParent, scaleRt(ancestor.components.RectTransform), nativeCoordinates);
         }
       }
     }
     const canvasRt = canvas.components.RectTransform
-      ? solveRectTransform(canvasParent, scaleRt(canvas.components.RectTransform))
+      ? solveRectTransform(canvasParent, scaleRt(canvas.components.RectTransform), nativeCoordinates)
       : canvasParent;
     walk(canvas, canvasRt, 0, true, undefined, {
       canvasBatchRoot: canvas.entity,
@@ -2010,7 +2019,6 @@ export function layoutUiWorldSpace(
   selectedIds: Set<number>,
   textMeasurement?: UiTextLayoutMeasurement,
 ): UiDrawItem[] {
-  const transforms = buildWorldTransforms(entities);
   const canvases = entities
     .filter((entity) => {
       if (!entity.components.Canvas
@@ -2027,6 +2035,8 @@ export function layoutUiWorldSpace(
       const rightKey = canvasSortKey(entities, right);
       return leftKey[1] - rightKey[1] || leftKey[2] - rightKey[2];
     });
+  if (!canvases.length) return [];
+  const transforms = buildWorldTransforms(entities);
   const output: UiDrawItem[] = [];
 
   for (const canvas of canvases) {
@@ -3858,7 +3868,7 @@ export function drawUiItems(
         const textColor = it.input.text ? it.input.textColor : it.input.placeholderColor;
         const fontSize = Math.max(8, it.input.fontSize);
         ctx.fillStyle = cssColor(textColor, it.input.interactable ? 1 : 0.45);
-        ctx.font = `${fontSize}px system-ui, sans-serif`;
+        ctx.font = uiTextFontCss(fontSize, 'Normal', it.input.font ?? '');
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         fillReadableText(value, x + 8, y + h * 0.5, Math.max(0, w - 16), textColor, fontSize);

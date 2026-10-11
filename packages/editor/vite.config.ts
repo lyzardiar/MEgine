@@ -31,6 +31,7 @@ function editorChunkBudgetPlugin(): Plugin {
 }
 
 export default defineConfig({
+  root: rootDir,
   plugins: [
     react(),
     mengineFsPlugin({ projectRoot, editorRoot: rootDir }),

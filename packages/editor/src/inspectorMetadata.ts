@@ -679,6 +679,8 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
     maskable: { label: 'Maskable' },
     material: materialAsset,
     texture: sprite,
+    render_camera: { kind: 'named-reference', referenceType: 'Camera', allowNone: true },
+    render_root: { kind: 'named-reference', referenceType: 'Entity', allowNone: true },
     uv_rect: { label: 'UV Rect' },
     raycast_padding: {
       label: 'Raycast Padding',
@@ -997,6 +999,7 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   InputField: {
     text: { kind: 'multiline' },
+    font: { kind: 'project-asset', assetKinds: ['font'], referenceType: 'Font', allowNone: true },
     font_size: { min: 1, step: 1 },
     character_limit: { min: 0, step: 1 },
     on_value_changed: event,

@@ -810,6 +810,7 @@ pub(crate) struct UiRenderer {
     rejected_shader_last_used: HashMap<u64, u64>,
     pipeline_layout: wgpu::PipelineLayout,
     format: wgpu::TextureFormat,
+    sample_count: u32,
     vertex_buffer: wgpu::Buffer,
     instance_buffer: wgpu::Buffer,
     soft_clip_buffer: wgpu::Buffer,
@@ -826,6 +827,7 @@ pub(crate) struct UiRenderer {
     sampler: wgpu::Sampler,
     fallback_texture: UiTextureGpu,
     textures: HashMap<String, UiTextureGpu>,
+    external_textures: HashMap<String, wgpu::BindGroup>,
     material_color_textures: HashMap<String, UiTextureGpu>,
     material_data_textures: HashMap<String, UiTextureGpu>,
     material_samplers: HashMap<UiMaterialSamplerKey, wgpu::Sampler>,
@@ -897,6 +899,7 @@ impl UiRenderer {
         width: u32,
         height: u32,
         supports_anisotropy: bool,
+        sample_count: u32,
     ) -> Self {
         const VERTICES: [UiVertex; 6] = [
             UiVertex {
@@ -1031,8 +1034,10 @@ impl UiRenderer {
                     material_texture_layout_entry(1),
                     material_texture_layout_entry(2),
                     material_texture_layout_entry(3),
+                    material_texture_layout_entry(4),
+                    material_texture_layout_entry(5),
                     wgpu::BindGroupLayoutEntry {
-                        binding: 4,
+                        binding: 6,
                         visibility: wgpu::ShaderStages::FRAGMENT,
                         ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                         count: None,
@@ -1086,7 +1091,7 @@ impl UiRenderer {
                     };
                     pipelines.insert(
                         key,
-                        create_ui_pipeline(device, &pipeline_layout, &shader, format, key),
+                        create_ui_pipeline(device, &pipeline_layout, &shader, format, key, sample_count),
                     );
                 }
             }
@@ -1100,7 +1105,7 @@ impl UiRenderer {
                 };
                 pipelines.insert(
                     key,
-                    create_ui_pipeline(device, &pipeline_layout, &shader, format, key),
+                    create_ui_pipeline(device, &pipeline_layout, &shader, format, key, sample_count),
                 );
             }
         }
@@ -1114,6 +1119,7 @@ impl UiRenderer {
             rejected_shader_last_used: HashMap::new(),
             pipeline_layout,
             format,
+            sample_count,
             vertex_buffer,
             instance_buffer,
             soft_clip_buffer,
@@ -1130,6 +1136,7 @@ impl UiRenderer {
             sampler,
             fallback_texture,
             textures: HashMap::new(),
+            external_textures: HashMap::new(),
             material_color_textures: HashMap::new(),
             material_data_textures: HashMap::new(),
             material_samplers: HashMap::new(),
@@ -1171,7 +1178,19 @@ impl UiRenderer {
     }
 
     pub fn remove_texture(&mut self, key: &str) -> bool {
-        self.textures.remove(key).is_some()
+        let external = self.external_textures.remove(key).is_some();
+        self.textures.remove(key).is_some() || external
+    }
+
+    pub fn bind_texture_view(&mut self, device: &wgpu::Device, key: &str, view: &wgpu::TextureView) {
+        let binding = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("ui_scene_texture"), layout: &self.texture_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry { binding: 0, resource: wgpu::BindingResource::TextureView(view) },
+                wgpu::BindGroupEntry { binding: 1, resource: wgpu::BindingResource::Sampler(&self.sampler) },
+            ],
+        });
+        self.external_textures.insert(key.to_owned(), binding);
     }
 
     pub fn upload_material_texture_rgba8(
@@ -1417,7 +1436,7 @@ impl UiRenderer {
         });
         self.custom_pipelines.insert(
             key,
-            create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state),
+            create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state, self.sample_count),
         );
     }
 
@@ -1433,7 +1452,7 @@ impl UiRenderer {
         });
         self.error_pipelines.insert(
             state,
-            create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state),
+            create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state, self.sample_count),
         );
     }
 
@@ -1524,7 +1543,7 @@ impl UiRenderer {
                 .textures
                 .get(&batch.key.texture)
                 .unwrap_or(&self.fallback_texture);
-            pass.set_bind_group(1, &texture.bind_group, &[]);
+            pass.set_bind_group(1, self.external_textures.get(&batch.key.texture).unwrap_or(&texture.bind_group), &[]);
             let material_texture_set = if use_error {
                 &self.fallback_material_texture_set
             } else if let Some(material) = material {
@@ -1620,6 +1639,7 @@ fn create_ui_pipeline(
     shader: &wgpu::ShaderModule,
     format: wgpu::TextureFormat,
     key: UiPipelineKey,
+    sample_count: u32,
 ) -> wgpu::RenderPipeline {
     let (compare, pass_op, color_write) = match key.stencil {
         UiStencilPipeline::Disabled => (
@@ -1727,7 +1747,7 @@ fn create_ui_pipeline(
             },
             bias: Default::default(),
         }),
-        multisample: wgpu::MultisampleState::default(),
+        multisample: wgpu::MultisampleState { count: sample_count, ..Default::default() },
         multiview: None,
         cache: None,
     })
@@ -1932,6 +1952,14 @@ fn create_ui_material_texture_set(
             },
             wgpu::BindGroupEntry {
                 binding: 4,
+                resource: wgpu::BindingResource::TextureView(views[4]),
+            },
+            wgpu::BindGroupEntry {
+                binding: 5,
+                resource: wgpu::BindingResource::TextureView(views[5]),
+            },
+            wgpu::BindGroupEntry {
+                binding: 6,
                 resource: wgpu::BindingResource::Sampler(sampler),
             },
         ],
@@ -2161,7 +2189,9 @@ struct UiMaterialInstance {
 @group(2) @binding(1) var mengine_custom_texture_1: texture_2d<f32>;
 @group(2) @binding(2) var mengine_custom_texture_2: texture_2d<f32>;
 @group(2) @binding(3) var mengine_custom_texture_3: texture_2d<f32>;
-@group(2) @binding(4) var ui_material_sampler: sampler;
+@group(2) @binding(4) var mengine_custom_texture_4: texture_2d<f32>;
+@group(2) @binding(5) var mengine_custom_texture_5: texture_2d<f32>;
+@group(2) @binding(6) var ui_material_sampler: sampler;
 
 struct VsIn {
     @builtin(instance_index) instance_index: u32,
@@ -2672,7 +2702,7 @@ mod tests {
             .get_downlevel_capabilities()
             .flags
             .contains(wgpu::DownlevelFlags::ANISOTROPIC_FILTERING);
-        let mut renderer = UiRenderer::new(&device, &queue, format, 16, 16, supports_anisotropy);
+        let mut renderer = UiRenderer::new(&device, &queue, format, 16, 16, supports_anisotropy, 1);
         let mut push = primitive("white", None);
         push.key.stencil = UiStencilMode::Push { reference: 0 };
         let mut child = primitive("white", None);
@@ -2684,9 +2714,10 @@ mod tests {
         child.key.material = "Assets/Materials/HeadlessUi.mmat".into();
         child.render_material = Some(Arc::new(UiRenderMaterial {
             shader: Arc::from(
-                r#"fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
+                r#"/* MENGINE_PARAMETERS {"textures":[{"name":"a","type":"data"},{"name":"b","type":"data"},{"name":"c","type":"data"},{"name":"d","type":"data"},{"name":"e","type":"data"},{"name":"f","type":"data"}]} */
+                fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {
                     let stream = clamp(input.uv2.x + abs(input.normal.z), 0.0, 1.0);
-                    return mengine_ui_main_texture(input.uv0) * input.vertex_color
+                    return mengine_ui_main_texture(input.uv0) * mengine_texture_f(input.uv0) * input.vertex_color
                         * mengine_ui_material_color(input.instance_index)
                         * vec4<f32>(stream, stream, stream, 1.0);
                 }"#,

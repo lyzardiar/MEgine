@@ -231,3 +231,11 @@ test('custom materials require a valid surface shader reference', () => {
   material.custom_shader = 'Assets/Shaders/Rim.wgsl';
   assert.match(materialReferenceDiagnostics(material, [])[0].message, /\.mshader/i);
 });
+
+test('material assets retain six custom textures and reject a seventh', () => {
+  const custom_textures = Object.fromEntries(Array.from({length: 6}, (_, i) => [`layer${i}`, `Assets/Textures/layer${i}.png`]));
+  const json = () => JSON.stringify({version: 10, shader: 'custom', custom_shader: 'Assets/Shaders/Ground.mshader', custom_textures});
+  assert.deepEqual(parseMaterialAsset(json()).custom_textures, custom_textures);
+  custom_textures.overflow = 'Assets/Textures/overflow.png';
+  assert.throws(() => parseMaterialAsset(json()), /more than 6/);
+});

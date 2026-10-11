@@ -423,6 +423,15 @@ export interface ParticleEmitter3D {
   seed: number;
 }
 
+export interface SampledEffect {
+  effect: string;
+  clip: number;
+  playing: boolean;
+  looping: boolean;
+  speed: number;
+  timeSeconds: number;
+}
+
 export interface EffekseerEffect {
   effect: string;
   playing: boolean;
@@ -558,6 +567,8 @@ export interface RawImage {
   maskable: boolean;
   material: string;
   texture: string;
+  renderCamera: string;
+  renderRoot: string;
   color: [number, number, number, number];
   uvRect: [number, number, number, number];
   raycastTarget: boolean;
@@ -732,6 +743,7 @@ export interface ProgressBar {
 
 export interface InputField {
   text: string;
+  font: string;
   placeholder: string;
   textColor: [number, number, number, number];
   placeholderColor: [number, number, number, number];
@@ -1181,6 +1193,14 @@ export type SerializedComponentMap = {
     billboard: boolean;
     seed: number;
   };
+  SampledEffect: {
+    effect: string;
+    clip: number;
+    playing: boolean;
+    looping: boolean;
+    speed: number;
+    time_seconds: number;
+  };
   EffekseerEffect: {
     effect: string;
     playing: boolean;
@@ -1305,6 +1325,8 @@ export type SerializedComponentMap = {
     maskable: boolean;
     material: string;
     texture: string;
+    render_camera: string;
+    render_root: string;
     color: [number, number, number, number];
     uv_rect: [number, number, number, number];
     raycast_target: boolean;
@@ -1464,6 +1486,7 @@ export type SerializedComponentMap = {
   };
   InputField: {
     text: string;
+    font: string;
     placeholder: string;
     text_color: [number, number, number, number];
     placeholder_color: [number, number, number, number];
@@ -1566,6 +1589,7 @@ export type ComponentName =
   | 'AutoRotate'
   | 'ParticleEmitter2D'
   | 'ParticleEmitter3D'
+  | 'SampledEffect'
   | 'EffekseerEffect'
   | 'SpineSkeleton'
   | 'Canvas'
@@ -1639,6 +1663,7 @@ export const COMPONENT_NAMES = [
   'AutoRotate',
   'ParticleEmitter2D',
   'ParticleEmitter3D',
+  'SampledEffect',
   'EffekseerEffect',
   'SpineSkeleton',
   'Canvas',

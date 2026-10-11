@@ -5,6 +5,7 @@ import {
   normalizeCameraClearFlags,
   primaryGameCamera,
   timelineGameCamera,
+  gameCameraForEntity,
 } from '../src/gameCamera.ts';
 import { project } from '../src/math3d.ts';
 
@@ -268,4 +269,20 @@ test('Timeline camera blend preserves roll through quaternion slerp', () => {
   const camera = timelineGameCamera(entities, { source: null, target: 2, weight: 0.5 });
   assert.ok(Math.abs(camera.up[0] + 1) < 1e-6);
   assert.ok(Math.abs(camera.up[1]) < 1e-6);
+});
+
+test('camera queries skip unrelated transforms and retain inactive authored Timeline targets', () => {
+  let unrelatedReads = 0;
+  const entities = [
+    { entity: 1, components: { Transform: transform([10, 0, 0]) } },
+    { entity: 2, parent: 1, components: { Transform: transform([2, 0, 5]), Camera3D: { primary: true } } },
+    { entity: 3, parent: 1, active: false, components: { Transform: transform([8, 0, 5]), Camera3D: { primary: false } } },
+    { entity: 4, parent: 1, components: { Camera3D: { primary: true } } },
+    ...Array.from({ length: 10000 }, (_, index) => ({ entity: index + 10, components: { get Transform() { unrelatedReads++; return transform(); } } })),
+  ];
+  assert.deepEqual(primaryGameCamera(entities).eye, [12, 0, 5]);
+  assert.deepEqual(timelineGameCamera(entities, { source: null, target: 3, weight: 1 }).eye, [18, 0, 5]);
+  assert.deepEqual(gameCameraForEntity(entities, 3).eye, [18, 0, 5]);
+  assert.equal(gameCameraForEntity(entities, 4), null);
+  assert.equal(unrelatedReads, 0);
 });

@@ -110,6 +110,7 @@ impl PhysicsWorld2D {
     }
 
     pub fn step(&mut self, world: &mut World, dt: f32) -> PhysicsStepEvents {
+        if self.bodies.is_empty() && !["Rigidbody2D", "BoxCollider2D", "CircleCollider2D", "EdgeCollider2D", "PolygonCollider2D"].iter().any(|name| world.has_component_type(name)) { return PhysicsStepEvents::default(); }
         let hierarchy = TransformHierarchy::build(world);
         let definitions = collect_definitions(world, &hierarchy);
         self.remove_stale_bodies(&definitions);
@@ -432,7 +433,7 @@ fn collect_definitions(
     world
         .iter_entities()
         .filter_map(|entity| {
-            let transform = hierarchy.get(entity)?.to_transform();
+            if !hierarchy.is_active(entity) { return None; }
             let rigid_body = world.get_component::<Rigidbody2D>(entity).cloned();
             let box_collider = world.get_component::<BoxCollider2D>(entity).cloned();
             let circle_collider = world.get_component::<CircleCollider2D>(entity).cloned();
@@ -441,6 +442,7 @@ fn collect_definitions(
             if rigid_body.is_none() && box_collider.is_none() && circle_collider.is_none() && edge_collider.is_none() && polygon_collider.is_none() {
                 return None;
             }
+            let transform = hierarchy.get(entity)?.to_transform();
             let kind = rigid_body
                 .as_ref()
                 .map_or(BodyKind::Fixed, |body| body_kind(&body.body_type));
@@ -591,6 +593,12 @@ fn finite_vec2(value: [f32; 2], fallback: [f32; 2]) -> [f32; 2] {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn inactive_parent_removes_and_reactivates_child_physics() {
+        let mut world = World::new();let parent = world.spawn_empty();let child = spawn_body(&mut world, [0.0;3], None, Some(BoxCollider2D::default()), None);world.set_parent(child, Some(parent));let mut physics = PhysicsWorld2D::new();
+        for (active, count) in [(true,1),(false,0),(true,1)] { world.set_editor_state(parent, 0, active);physics.step(&mut world, 0.016);assert_eq!(physics.body_count(), count);assert_eq!(physics.collider_count(), count); }
+    }
 
     #[test]
     fn polygon_preserves_concavity_mass_and_rejects_crossed_edges() {

@@ -1,5 +1,9 @@
+// Author: MiYu. Editor scene state, hierarchy and runtime interaction.
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
-import { emptyPlayInput, type PlayInput, type PlayRuntimeDriver } from './playRuntime';
+import { emptyPlayInput, retainedNativePlayWorld, type PlayInput, type PlayRuntimeDriver, type PlayRuntimeWorld } from './playRuntime';
+import { createPlayWorldSync } from './playWorldSync';
+import { normalizeEntity, type EntityRec } from './entityRecord';
+export type { EntityRec } from './entityRecord';
 import {
   createBehaviourRunner,
   getBehaviour,
@@ -14,6 +18,7 @@ import {
   quatNormalize,
 } from './math3d';
 import { clampSceneCameraDistance } from './sceneZoom';
+import { createSceneInteractionQuery } from './sceneInteractionQuery';
 import {
   componentRemovalBlockers,
   componentRequirements,
@@ -152,17 +157,6 @@ export interface SceneCamera {
   pivot: Vec3;
 }
 
-export interface EntityRec {
-  entity: number;
-  name?: string | null;
-  parent?: number | null;
-  siblingIndex: number;
-  active: boolean;
-  tag: string;
-  layer: number;
-  components: Record<string, unknown>;
-}
-
 export interface TreeNode {
   entity: EntityRec;
   depth: number;
@@ -173,19 +167,6 @@ export interface TreeNode {
 interface ClipboardPayload {
   roots: EntityRec[];
   cut: boolean;
-}
-
-function normalizeEntity(e: Partial<EntityRec> & { entity: number; components: Record<string, unknown> }): EntityRec {
-  return {
-    entity: e.entity,
-    name: e.name ?? 'GameObject',
-    parent: e.parent ?? null,
-    siblingIndex: e.siblingIndex ?? 0,
-    active: e.active ?? true,
-    tag: normalizeEntityTag(e.tag),
-    layer: normalizeGameLayerIndex(e.layer),
-    components: e.components,
-  };
 }
 
 export function createEditorStore(undoService: EditorUndoService = createEditorUndoService()) {
@@ -219,7 +200,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let renameRequestId: number | null = null;
   let animationPreview: { root: number; samples: AnimationPreviewSample[] } | null = null;
   let timelinePreview: TimelineScenePreview | null = null;
-  const behaviourRunner = createBehaviourRunner();
+  const exposedPlayRecords = new WeakSet<object>();
+  const exposePlayRecord = <T extends object | undefined>(entity: T): T => { if (entity) exposedPlayRecords.add(entity); return entity; };
+  const behaviourRunner = createBehaviourRunner(exposePlayRecord);
   let playRuntime: PlayRuntimeDriver | null = null;
   let playPending: Promise<void> = Promise.resolve();
   let playBusy = false;
@@ -227,11 +210,55 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let playError: unknown = null;
   let playInput = emptyPlayInput();
   let playClearColor: [number, number, number, number] | null = null;
-  let playSyncedFingerprint = '';
+  const editableNativeRecords = new WeakMap<EntityRec, EntityRec>();
+  const editableNativeColors = new WeakMap<WorldSnapshotView['clearColor'], WorldSnapshotView['clearColor']>();
+  let privatePlayEntities: EntityRec[] | null = null;
+  let ownedPlayWorld: ReturnType<typeof retainedNativePlayWorld>;
+  const exposePlayEntities = () => { privatePlayEntities = null; if (playEntities) for (const entity of playEntities) exposePlayRecord(entity); };
+  const playWorldSync = createPlayWorldSync({ owns: entities => entities === privatePlayEntities && privatePlayEntities != null, unchanged: (entity, baseline) => !exposedPlayRecords.has(entity) && editableNativeRecords.get(baseline as EntityRec) === entity, expose: exposePlayEntities });
+  const acceptRuntimeWorld = (result: PlayRuntimeWorld) => {
+    const owned = retainedNativePlayWorld(result);
+    ownedPlayWorld = owned;
+    if (owned) {
+      let privateRecords = 0;
+      playEntities = owned.entities.map(entity => {
+        let editable = editableNativeRecords.get(entity);
+        if (!editable) { editable = structuredClone(entity); editableNativeRecords.set(entity, editable); }
+        if (!exposedPlayRecords.has(editable)) privateRecords++;
+        return editable;
+      });
+      let color = editableNativeColors.get(owned.clearColor);
+      if (!color) { color = owned.clearColor.slice() as WorldSnapshotView['clearColor']; editableNativeColors.set(owned.clearColor, color); }
+      playClearColor = color;
+      privatePlayEntities = privateRecords > playEntities.length / 2 ? playEntities : null;
+      if (!privatePlayEntities) exposePlayEntities();
+      playWorldSync.captureRetained(owned);
+    } else {
+      privatePlayEntities = null;
+      playEntities = result.entities.map(normalizeEntity);
+      playClearColor = result.clearColor;
+      playWorldSync.capture(playEntities, playClearColor ?? clearColor);
+    }
+    playSpin = result.simulationTime ?? playSpin;
+    frame = result.frame;
+    playWorldRevision = result.nativeRevision; playWorldSessionId = result.nativeSessionId; playWorldSimulationTime = playSpin;
+  };
   let playStepRequestMs = 0;
   let remotePlaySessionId: number | undefined;
-  const playFingerprint = () => JSON.stringify([playEntities, playClearColor ?? clearColor]);
-  const nativePlaySessionId = () => mode !== 'edit' && playFingerprint() === playSyncedFingerprint ? playRuntime?.sessionId ?? remotePlaySessionId : undefined;
+  let playWorldRevision: number | undefined;
+  let playWorldSessionId: number | undefined;
+  let playWorldSimulationTime = 0;
+  const playWorldMatches = () => playWorldSync.matches(playEntities, playClearColor ?? clearColor);
+  const nativePlaySessionId = (verified?: boolean) => { const sessionId = playRuntime?.sessionId ?? remotePlaySessionId; return mode !== 'edit' && (playRuntime != null || playWorldRevision != null) && (playWorldRevision == null || playWorldSessionId === sessionId) && (verified ?? playWorldMatches()) ? sessionId : undefined; };
+  const nativeWorldReference = (verifiedWorld?: { entities: EntityRec[]; clearColor: WorldSnapshotView['clearColor'] }) => {
+    if (playWorldRevision == null || playWorldSessionId == null || playWorldSessionId !== (playRuntime?.sessionId ?? remotePlaySessionId)) return undefined;
+    const sessionId = nativePlaySessionId(verifiedWorld ? true : undefined), world = sessionId != null ? verifiedWorld ?? playWorldSync.viewportSnapshot() : undefined;
+    return world ? { sessionId: sessionId!, revision: playWorldRevision, ...world, simulationTime: playWorldSimulationTime } : undefined;
+  };
+  const mutablePlayViewportSnapshot = () => {
+    exposePlayEntities();
+    return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected(), get nativeSessionId() { return nativePlaySessionId(); }, get nativeWorldReference() { return nativeWorldReference(); }, runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs } : null;
+  };
 
   const trackPlayOperation = (operation: Promise<void>, generation: number) => {
     playBusy = true;
@@ -242,9 +269,27 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       behaviourRunner.unmount();
       playEntities = null;
       playClearColor = null;
+      playWorldSync.reset(); privatePlayEntities = null; ownedPlayWorld = undefined; playWorldRevision = undefined; playWorldSessionId = undefined;
       playRuntime?.stop();
       playRuntime?.onError(error);
     }).finally(() => { if (generation === playGeneration) playBusy = false; });
+  };
+
+  const stopPlay = () => {
+    playGeneration++;
+    playRuntime?.stop();
+    playBusy = false;
+    playError = null;
+    playInput = emptyPlayInput();
+    playClearColor = null;
+    remotePlaySessionId = undefined;
+    playWorldSync.reset(); privatePlayEntities = null; ownedPlayWorld = undefined; playWorldRevision = undefined; playWorldSessionId = undefined;
+    behaviourRunner.unmount();
+    playEntities = null;
+    mode = 'edit';
+    playSpin = 0;
+    animationPreview = null;
+    timelinePreview = null;
   };
 
   const runPlayFrame = (dt: number) => {
@@ -254,14 +299,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     const input = structuredClone(playInput);
     playInput.pressedKeys = []; playInput.releasedKeys = [];
     playInput.pressedButtons = []; playInput.releasedButtons = []; playInput.pointerDelta = [0, 0];
-    const snapshot = playRuntime.retainsWorld && playFingerprint() === playSyncedFingerprint ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: playClearColor ?? clearColor, selected: primarySelected() };
+    const snapshot = playRuntime.retainsWorld && playWorldMatches() ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: (playClearColor ?? clearColor).slice() as WorldSnapshotView['clearColor'], selected: primarySelected() };
     trackPlayOperation(playRuntime.step(snapshot, input, dt).then((result) => {
       if (generation !== playGeneration || mode === 'edit') return;
-      playEntities = result.entities.map(normalizeEntity);
-      playClearColor = result.clearColor;
-      playSpin = result.simulationTime ?? playSpin;
-      frame = result.frame;
-      playSyncedFingerprint = playFingerprint();
+      if (playRuntime?.quitRequested) { stopPlay(); return; }
+      acceptRuntimeWorld(result);
       playStepRequestMs = performance.now() - started;
     }), generation);
   };
@@ -371,7 +413,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     clearColor = restored.clearColor;
   };
 
-  const find = (id: number) => list().find((e) => e.entity === id);
+  const find = (id: number) => exposePlayRecord(list().find((e) => e.entity === id));
 
   const translateSelectedRectRoots = (dx: number, dy: number) => {
     if (!Number.isFinite(dx) || !Number.isFinite(dy)) return false;
@@ -398,6 +440,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   const childrenOf = (parent: number | null, source = list()) =>
     source
       .filter((e) => (e.parent ?? null) === parent)
+      .map(exposePlayRecord)
       .sort((a, b) => a.siblingIndex - b.siblingIndex || a.entity - b.entity);
 
   const isDescendant = (ancestor: number, node: number): boolean => {
@@ -434,13 +477,21 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     selectedIds.length ? selectedIds[selectedIds.length - 1] : null;
 
   const getVisibleFlat = (): TreeNode[] => {
+    const children = new Map<number | null, EntityRec[]>();
+    for (const entity of list()) {
+      const parent = entity.parent ?? null;
+      const siblings = children.get(parent);
+      if (siblings) siblings.push(entity);
+      else children.set(parent, [entity]);
+    }
+    for (const siblings of children.values()) siblings.sort((a, b) => a.siblingIndex - b.siblingIndex || a.entity - b.entity);
     const out: TreeNode[] = [];
     const walk = (parent: number | null, depth: number) => {
-      for (const e of childrenOf(parent)) {
-        const kids = childrenOf(e.entity);
+      for (const e of children.get(parent) ?? []) {
+        const kids = children.get(e.entity) ?? [];
         const exp = expanded.has(e.entity);
         out.push({
-          entity: e,
+          entity: exposePlayRecord(e),
           depth,
           hasChildren: kids.length > 0,
           expanded: exp,
@@ -810,8 +861,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     }
   };
 
-  const snapshotEntities = () => {
-    const entities = list().map((e) => ({
+  const snapshotEntity = (e: EntityRec) => ({
       entity: e.entity,
       name: e.name,
       parent: e.parent,
@@ -820,7 +870,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       tag: e.tag,
       layer: e.layer,
       components: e.components,
-    }));
+    });
+  const snapshotEntities = () => {
+    const entities = list().map(snapshotEntity);
     if (mode !== 'edit') return structuredClone(entities);
     if (timelinePreview) return applyTimelineScenePreview(entities, timelinePreview);
     if (animationPreview) {
@@ -846,7 +898,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         })),
         frame,
         clearColor: runtime ? playClearColor ?? clearColor : clearColor,
-        ...(runtime ? { simulationTime: playSpin } : {}),
+        ...(runtime ? { simulationTime: playWorldRevision != null ? playWorldSimulationTime : playSpin } : {}),
         selected: primarySelected(),
         selectedIds: [...selectedIds],
       },
@@ -857,6 +909,18 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     null,
     2,
   );
+
+  const revealEntityAncestors = (id: number) => {
+    const byId = new Map(list().map((e) => [e.entity, e]));
+    const visited = new Set<number>();
+    let cur = byId.get(id)?.parent ?? null, changed = false;
+    while (cur != null && !visited.has(cur)) {
+      visited.add(cur);
+      if (!expanded.has(cur)) { expanded.add(cur); changed = true; }
+      cur = byId.get(cur)?.parent ?? null;
+    }
+    return changed;
+  };
 
   const applySceneJson = (
     json: string,
@@ -884,6 +948,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     else undoService.clear('scene');
     behaviourRunner.unmount();
     const ents = (data.world?.entities ?? data.entities ?? []) as EntityRec[];
+    privatePlayEntities = null; ownedPlayWorld = undefined;
     editEntities = ents.map((e, i) =>
       normalizeEntity({
         ...e,
@@ -901,7 +966,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         : legacyGameResolution(data.gameAspect, data.gameOrientation);
       gameDisplay = normalizeGameDisplay(data.gameDisplay);
     }
-    expanded = new Set(editEntities.map((e) => e.entity));
+    // New scenes start collapsed; remote snapshots retain the user's existing folds.
+    const loadedIds = new Set(editEntities.map((e) => e.entity));
+    const newScene = recordUndo && applyScenePreferences;
+    expanded = newScene ? new Set() : new Set([...expanded].filter((id) => loadedIds.has(id)));
     sceneHiddenIds = new Set();
     sceneUnpickableIds = new Set();
     selectedIds = restoreSceneSelection(
@@ -910,6 +978,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       data.world?.selected,
     );
     selectionAnchor = selectedIds[selectedIds.length - 1] ?? null;
+    const loadedById = new Map(editEntities.map((e) => [e.entity, e]));
+    for (const id of newScene ? selectedIds : []) {
+      let parent = loadedById.get(id)?.parent ?? null;
+      const visited = new Set<number>();
+      while (parent != null && !visited.has(parent)) { visited.add(parent); expanded.add(parent); parent = loadedById.get(parent)?.parent ?? null; }
+    }
     playEntities = targetMode === 'edit' ? null : structuredClone(editEntities);
     mode = targetMode;
     playClearColor = targetMode === 'edit' ? null : clearColor;
@@ -944,6 +1018,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     get simulationTime() {
       return playSpin;
+    },
+    get frame() {
+      return frame;
     },
     get sceneCamera() {
       return { ...sceneCamera, pivot: [...sceneCamera.pivot] as Vec3 };
@@ -993,6 +1070,13 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       sceneCamera.pitch = Math.max(-89, Math.min(89, sceneCamera.pitch));
       sceneCamera.distance = clampSceneCameraDistance(sceneCamera.distance);
     },
+    // MiYu: copy one active entity; hierarchical animation previews still require the full world.
+    entitySnapshot(idOrName: number | string) {
+      const matches = (e: { entity: number; name?: string | null }) => typeof idOrName === 'number' ? e.entity === idOrName : (e.name ?? '') === idOrName;
+      if (mode === 'edit' && (timelinePreview || animationPreview)) return snapshotEntities().find(matches);
+      const found = list().find(matches);
+      return found ? structuredClone(snapshotEntity(found)) : undefined;
+    },
     snapshot(): WorldSnapshotView & { selectedIds: number[]; simulationTime: number } {
       return {
         entities: snapshotEntities(),
@@ -1004,15 +1088,28 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         selectedIds: [...selectedIds],
       };
     },
-    /** Read-only live data for viewport presentation; public snapshots remain isolated copies. */
-    playViewportSnapshot(): (WorldSnapshotView & { nativeSessionId?: number; simulationRequestMs: number }) | null {
-      return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected(), nativeSessionId: nativePlaySessionId(), simulationRequestMs: playStepRequestMs } : null;
+    /** Read-only panel data shares immutable retained records; explicit snapshots remain independent copies. */
+    presentationSnapshot(): WorldSnapshotView & { selectedIds: number[]; simulationTime: number } {
+      const retained = mode !== 'edit' ? playWorldSync.presentationSnapshot(playEntities, playClearColor ?? clearColor) : undefined;
+      if (!retained) { const snapshot = this.snapshot(); return { ...snapshot, clearColor: [...snapshot.clearColor] }; }
+      return { ...retained, frame, simFrame: frame, simulationTime: playSpin, selected: primarySelected(), selectedIds: [...selectedIds] };
+    },
+    /** Live presentation data; verify the retained native world only when a render request reads its session ID. */
+    playViewportSnapshot: mutablePlayViewportSnapshot,
+    /** Frozen native render data keeps private editable copies inside the store. */
+    playRenderSnapshot() {
+      if (!ownedPlayWorld || !playWorldSync.presentationSnapshot(playEntities, playClearColor ?? clearColor)) return mutablePlayViewportSnapshot();
+      const { entities, clearColor: color } = ownedPlayWorld;
+      return { entities, frame, simFrame: frame, simulationTime: playSpin, clearColor: color, selected: primarySelected(), nativeSessionId: nativePlaySessionId(true), nativeWorldReference: nativeWorldReference({ entities, clearColor: color }), runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs };
     },
     get nativePlaySessionId() { return nativePlaySessionId(); },
+    get nativePlayRevision() { return nativePlaySessionId() === playWorldSessionId ? playWorldRevision : undefined; },
     get playSessionId() { return mode === 'edit' ? undefined : playRuntime?.sessionId ?? remotePlaySessionId; },
     authoredEntities() {
       return structuredClone(editEntities);
     },
+    /** Read-only hierarchy search source, without copying large mesh/component payloads. */
+    hierarchySearchSource(): readonly EntityRec[] { return editEntities; },
     sceneContentFingerprint() {
       return sceneContentFingerprint(editEntities, clearColor);
     },
@@ -1059,7 +1156,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         .map((entity) => entity.entity)
         .filter((id) => sceneUnpickableIds.has(id));
     },
+    sceneInteractionQuery() {
+      return createSceneInteractionQuery(list(), sceneHiddenIds, sceneUnpickableIds);
+    },
     sceneVisible(id: number) {
+      // MiYu: the unrestricted hierarchy needs no entity or ancestor lookup per row.
+      if (sceneHiddenIds.size === 0) return true;
       let current: number | null = id;
       const visited = new Set<number>();
       while (current != null && !visited.has(current)) {
@@ -1070,6 +1172,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return true;
     },
     scenePickable(id: number) {
+      if (sceneUnpickableIds.size === 0) return true;
       let current: number | null = id;
       const visited = new Set<number>();
       while (current != null && !visited.has(current)) {
@@ -1137,14 +1240,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     /** Select entity and expand all ancestors (Unity Ping). */
     revealEntity(id: number) {
-      let cur = find(id)?.parent ?? null;
-      while (cur != null) {
-        expanded.add(cur);
-        cur = find(cur)?.parent ?? null;
-      }
+      revealEntityAncestors(id);
       selectedIds = [id];
       selectionAnchor = id;
     },
+    revealEntityAncestors,
     selectMany(ids: number[], selMode: SelectMode, clicked?: number) {
       selectInternal(ids, selMode, clicked);
     },
@@ -1233,6 +1333,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     setParent(ids: number[], parent: number | null, atIndex?: number, withUndo = true) {
       const current = list();
+      const currentById = new Map(current.map((entity) => [entity.entity, entity]));
       const plan = planHierarchyMove(
         current.map((entity) => ({
           id: entity.entity,
@@ -1247,7 +1348,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
 
       if (withUndo) pushUndo('Reparent GameObject');
       const rectIds = new Set(plan.roots.filter((id) => {
-        const entity = find(id);
+        const entity = exposePlayRecord(currentById.get(id));
         return entity?.components.RectTransform && (entity.parent ?? null) !== plan.parent;
       }));
       const canvasSize = sceneCanvasLogicalSize(gameResolution, { w: 800, h: 600 });
@@ -1255,34 +1356,34 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const before = buildWorldTransforms(current);
       const preservedWorld = new Map(
         plan.roots.flatMap((id) => {
-          const entity = current.find((candidate) => candidate.entity === id);
+          const entity = exposePlayRecord(currentById.get(id));
           if ((entity?.parent ?? null) === plan.parent) return [];
           const transform = resolvedTransform(before, id);
           return transform ? [[id, transform] as const] : [];
         }),
       );
       for (const id of plan.roots) {
-        const entity = find(id);
+        const entity = exposePlayRecord(currentById.get(id));
         if (entity) entity.parent = plan.parent;
       }
       if (preservedWorld.size) {
         const after = buildWorldTransforms(current);
         for (const [id, worldTransform] of preservedWorld) {
-          const entity = find(id);
+          const entity = exposePlayRecord(currentById.get(id));
           const parentTransform = parentWorldTransform(current, after, id);
           if (!entity?.components.Transform || !parentTransform) continue;
           entity.components.Transform = worldTransformToLocal(parentTransform, worldTransform);
         }
       }
       plan.destinationOrder.forEach((id, index) => {
-        const entity = find(id);
+        const entity = exposePlayRecord(currentById.get(id));
         if (entity) entity.siblingIndex = index;
       });
       if (beforeRects.size) {
         const afterRects = captureUiRectLayouts(current, rectIds, canvasSize);
         for (const [id, beforeRect] of beforeRects) {
           const afterRect = afterRects.get(id);
-          const entity = find(id);
+          const entity = exposePlayRecord(currentById.get(id));
           if (!entity?.components.RectTransform || !afterRect || afterRect.driven || afterRect.canvas !== beforeRect.canvas) continue;
           entity.components.RectTransform = reparentRectKeepingVisualRect(readRectTransform(entity.components.RectTransform), beforeRect.rect, afterRect.parent, afterRect.scale);
         }
@@ -1548,6 +1649,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       animationPreview = null;
       timelinePreview = null;
       playEntities = structuredClone(editEntities);
+      playWorldSync.reset(); privatePlayEntities = null; ownedPlayWorld = undefined; playWorldRevision = undefined; playWorldSessionId = undefined;
       mode = 'play';
       playSpin = 0;
       if (!playRuntime) behaviourRunner.mount(playEntities);
@@ -1557,32 +1659,13 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (playRuntime) trackPlayOperation(playRuntime.start(this.snapshot()).then(result => {
         if (generation === playGeneration && mode !== 'edit') {
           if (result) {
-            playEntities = result.entities.map(normalizeEntity);
-            playClearColor = result.clearColor;
-            playSpin = result.simulationTime ?? playSpin;
-            frame = result.frame;
-            playSyncedFingerprint = playFingerprint();
+            acceptRuntimeWorld(result);
           }
           if (playEntities) behaviourRunner.mount(playEntities);
         }
       }), generation);
     },
-    stop() {
-      playGeneration++;
-      playRuntime?.stop();
-      playBusy = false;
-      playError = null;
-      playInput = emptyPlayInput();
-      playClearColor = null;
-      remotePlaySessionId = undefined;
-      playSyncedFingerprint = '';
-      behaviourRunner.unmount();
-      playEntities = null;
-      mode = 'edit';
-      playSpin = 0;
-      animationPreview = null;
-      timelinePreview = null;
-    },
+    stop: stopPlay,
     pause() {
       mode = mode === 'play' ? 'pause' : mode === 'pause' ? 'play' : mode;
     },
@@ -1615,6 +1698,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     setPlayRuntime(driver: PlayRuntimeDriver | null) { playRuntime = driver; },
     async waitForPlayRuntime() { await playPending; if (playError) throw playError; },
     get playBusy() { return playBusy; },
+    get playGeneration() { return playGeneration; },
     setPlayInput(input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'pointerDelta' | 'pointerLocked' | 'viewport' | 'buttons'>>) {
       if (mode === 'edit') return;
       for (const [field, pressed, released] of [['keys', 'pressedKeys', 'releasedKeys'], ['buttons', 'pressedButtons', 'releasedButtons']] as const) {
@@ -2804,10 +2888,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       applySceneJson(json, 'edit', true, false);
       return true;
     },
-    loadRemoteSceneJson(json: string, remoteMode: EditorMode, nativeSessionId?: number) {
+    loadRemoteSceneJson(json: string, remoteMode: EditorMode, nativeSessionId?: number, nativeRevision?: number) {
       applySceneJson(json, remoteMode, false);
       remotePlaySessionId = nativeSessionId;
-      playSyncedFingerprint = playFingerprint();
+      playWorldRevision = nativeRevision; playWorldSessionId = nativeSessionId; playWorldSimulationTime = playSpin;
+      playWorldSync.capture(playEntities, playClearColor ?? clearColor);
     },
   };
 }

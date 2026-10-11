@@ -29,6 +29,17 @@ import { SerialTaskQueue } from './serialQueue';
 interface BridgeRequestEvent {
   clientId: string;
   message: string;
+  receivedAtMs?: number;
+}
+
+// MiYu: opt-in diagnostics keep queueing separate from the operation and webview delivery.
+interface BridgeRequestTiming {
+  nativeReceivedAtMs?: number;
+  frontendReceivedAtMs: number;
+  responseReadyAtMs?: number;
+  handlerMs?: number;
+  queueMs?: number;
+  operationMs?: number;
 }
 
 interface BridgeCancelEvent {
@@ -67,18 +78,28 @@ const executeQueue = new SerialTaskQueue();
 const activeRequestControllers = new Map<string, AbortController>();
 const cancelledRequestKeys = new Set<string>();
 
-async function respondToRequest({ clientId, message }: BridgeRequestEvent): Promise<void> {
+async function respondToRequest({ clientId, message, receivedAtMs }: BridgeRequestEvent): Promise<void> {
+  const frontendReceivedAtMs = Date.now(), started = performance.now();
+  let timing: BridgeRequestTiming | undefined;
+  try {
+    if (JSON.parse(message).params?.traceTiming === true) timing = { nativeReceivedAtMs: receivedAtMs, frontendReceivedAtMs };
+  } catch { /* Malformed requests retain their usual protocol error. */ }
   const requestKey = bridgeRequestKey(clientId, message);
   const controller = new AbortController();
   if (requestKey) {
     activeRequestControllers.set(requestKey, controller);
     if (cancelledRequestKeys.delete(requestKey)) controller.abort();
   }
-  const response = await handleRequest(message, controller.signal);
+  const response = await handleRequest(message, controller.signal, timing);
   if (requestKey && activeRequestControllers.get(requestKey) === controller) {
     activeRequestControllers.delete(requestKey);
   }
   if (controller.signal.aborted) return;
+  if (timing && response.result && typeof response.result === 'object') {
+    timing.handlerMs = performance.now() - started;
+    timing.responseReadyAtMs = Date.now();
+    (response.result as Record<string, unknown>).bridgeTiming = timing;
+  }
   try {
     await invoke('agent_bridge_respond', {
       clientId,
@@ -140,6 +161,7 @@ export async function attachBridgeTransport(): Promise<UnlistenFn> {
 async function handleRequest(
   message: string,
   signal: AbortSignal,
+  timing?: BridgeRequestTiming,
 ): Promise<JsonRpcResponse> {
   let request: JsonRpcRequest;
   try {
@@ -164,7 +186,9 @@ async function handleRequest(
       if (typeof queryId !== 'string' || !queryId) {
         throw new BridgeError('INVALID_ARGS', 'query requires params.query');
       }
+      const started = performance.now();
       const data = await agentBridge.query(queryId, args, { signal });
+      if (timing) timing.operationMs = performance.now() - started;
       return { jsonrpc: '2.0', id, result: { ok: true, data } };
     }
     if (method === 'execute') {
@@ -179,15 +203,20 @@ async function handleRequest(
         expectedSceneRevision: params.expectedSceneRevision as number | undefined,
       };
       const fingerprint = createExecuteFingerprint(command, args, options);
+      const queuedAt = performance.now();
       let outcome;
       try {
         outcome = await executeRequests.run(
           requestId,
           fingerprint,
           () => executeQueue.run(
-            () => {
+            async () => {
               if (signal.aborted) throw requestCancelledError();
-              return agentBridge.execute(command, args, options);
+              const started = performance.now();
+              if (timing) timing.queueMs = started - queuedAt;
+              const result = await agentBridge.execute(command, args, options);
+              if (timing) timing.operationMs = performance.now() - started;
+              return result;
             },
           ),
         );

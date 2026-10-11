@@ -190,8 +190,7 @@ impl AnimationRuntime {
             return Vec::new();
         }
         let animator_entities: HashSet<_> = world
-            .iter_entities()
-            .filter(|entity| world.get_component::<Animator>(*entity).is_some())
+            .entities_with_components(&["Animator"])
             .collect();
         self.animator_instances
             .retain(|entity, _| animator_entities.contains(entity) && world.is_alive(*entity));
@@ -204,10 +203,9 @@ impl AnimationRuntime {
 
         let mut failures = self.update_animators(world, delta_seconds);
         let all_player_entities: Vec<_> = world
-            .iter_entities()
+            .entities_with_components(&["AnimationPlayer"])
             // A state machine owns animation output when both components are present.
             .filter(|entity| !animator_entities.contains(entity))
-            .filter(|entity| world.get_component::<AnimationPlayer>(*entity).is_some())
             .collect();
         let player_entity_set: HashSet<_> = all_player_entities.iter().copied().collect();
         self.initialized_players
@@ -808,7 +806,7 @@ impl AnimationRuntime {
         delta_seconds: f32,
     ) -> Vec<AnimationLoadFailure> {
         let animators: Vec<_> = world
-            .iter_entities()
+            .entities_with_components(&["Animator"])
             .filter(|entity| world.entity_active(*entity))
             .filter_map(|entity| {
                 world

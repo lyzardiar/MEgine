@@ -32,6 +32,8 @@ export const COMPONENT_ENTITY_REFERENCE_FIELDS = [
 /** Component fields that directly store an entity id rather than a persistent-call object. */
 export const COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS = [
   ['Canvas', 'render_camera'],
+  ['RawImage', 'render_camera'],
+  ['RawImage', 'render_root'],
 ] as const;
 
 function object(value: unknown): Record<string, unknown> | null {

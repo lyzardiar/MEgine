@@ -8,9 +8,13 @@ use crate::time::Time;
 use glam::{Quat, Vec3, Vec4};
 use serde_json::Value;
 use std::any::Any;
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static NEXT_WORLD_ID: AtomicU64 = AtomicU64::new(1);
 
 struct EntityRecord {
+    revision: u64,
     generation: u32,
     alive: bool,
     name: Option<String>,
@@ -23,8 +27,10 @@ struct EntityRecord {
 }
 
 pub struct World {
+    pub(crate) snapshot_id: u64,
     entities: Vec<EntityRecord>,
     free_list: Vec<u32>,
+    component_entities: HashMap<String, BTreeSet<u32>>,
     pub time: Time,
     pub commands: CommandBuffer,
     pub schedule: Schedule,
@@ -49,8 +55,10 @@ impl World {
         registry.register_named("Parent");
         registry.register_named("Children");
         Self {
+            snapshot_id: NEXT_WORLD_ID.fetch_add(1, Ordering::Relaxed),
             entities: Vec::new(),
             free_list: Vec::new(),
+            component_entities: HashMap::new(),
             time: Time::default(),
             commands: CommandBuffer::new(),
             schedule: Schedule::new(),
@@ -64,6 +72,7 @@ impl World {
         if let Some(index) = self.free_list.pop() {
             let rec = &mut self.entities[index as usize];
             rec.alive = true;
+            rec.revision = 0;
             rec.generation = rec.generation.wrapping_add(1);
             rec.name = None;
             rec.components.clear();
@@ -76,6 +85,7 @@ impl World {
         } else {
             let index = self.entities.len() as u32;
             self.entities.push(EntityRecord {
+                revision: 0,
                 generation: 1,
                 alive: true,
                 name: None,
@@ -111,6 +121,7 @@ impl World {
         }
         let rec = &mut self.entities[entity.index as usize];
         rec.alive = false;
+        for name in rec.components.keys() { self.component_entities.get_mut(name).expect("live component index").remove(&entity.index); }
         rec.components.clear();
         rec.serialized_components.clear();
         rec.name = None;
@@ -138,12 +149,12 @@ impl World {
         if !self.is_alive(entity) {
             return;
         }
-        let name = T::type_name().to_string();
-        self.entities[entity.index as usize]
-            .components
-            .insert(name, Box::new(value));
+        let name = T::type_name();
+        self.entities[entity.index as usize].revision += 1;
+        if self.entities[entity.index as usize].components.insert(name.to_string(), Box::new(value)).is_none() { self.component_entities.entry(name.to_string()).or_default().insert(entity.index); }
     }
 
+    /// Read component state; serialized mutations must use `get_component_mut` or a World command.
     pub fn get_component<T: Any + Send + Sync>(&self, entity: Entity) -> Option<&T> {
         if !self.is_alive(entity) {
             return None;
@@ -158,11 +169,15 @@ impl World {
         if !self.is_alive(entity) {
             return None;
         }
-        self.entities[entity.index as usize]
-            .components
+        let record = &mut self.entities[entity.index as usize];
+        let value = record.components
             .values_mut()
-            .find_map(|c| c.as_any_mut().downcast_mut::<T>())
+            .find_map(|c| c.as_any_mut().downcast_mut::<T>());
+        if value.is_some() { record.revision += 1; }
+        value
     }
+
+    pub(crate) fn entity_revision(&self, entity: Entity) -> u64 { self.entities[entity.index as usize].revision }
 
     /// Serialize the live typed component, including runtime mutations.
     pub fn component_value(&self, entity: Entity, name: &str) -> Option<Value> {
@@ -200,7 +215,8 @@ impl World {
             return;
         }
         let name = canonical_component_name(name);
-        self.entities[entity.index as usize].components.remove(name);
+        self.entities[entity.index as usize].revision += 1;
+        if self.entities[entity.index as usize].components.remove(name).is_some() { self.component_entities.get_mut(name).expect("live component index").remove(&entity.index); }
         self.entities[entity.index as usize]
             .serialized_components
             .remove(name);
@@ -216,6 +232,7 @@ impl World {
     pub fn set_editor_state(&mut self, entity: Entity, sibling_index: i32, active: bool) {
         if let Some(record) = self.entities.get_mut(entity.index as usize) {
             if record.alive && record.generation == entity.generation {
+                if record.sibling_index != sibling_index || record.active != active { record.revision += 1; }
                 record.sibling_index = sibling_index;
                 record.active = active;
             }
@@ -241,6 +258,7 @@ impl World {
     pub fn set_entity_metadata(&mut self, entity: Entity, tag: String, layer: u8) {
         if let Some(record) = self.entities.get_mut(entity.index as usize) {
             if record.alive && record.generation == entity.generation {
+                record.revision += 1;
                 let tag = tag.trim();
                 record.tag = if tag.is_empty() {
                     "Untagged".into()
@@ -268,13 +286,29 @@ impl World {
             .unwrap_or_default()
     }
 
+    /// Whether any live entity contains this canonical typed component, including inactive entities.
+    pub fn has_component_type(&self, name: &str) -> bool { self.component_entities.get(name).is_some_and(|entities| !entities.is_empty()) }
+
     pub fn entities_with_components<'a>(
         &'a self,
         type_names: &'a [&'static str],
     ) -> impl Iterator<Item = Entity> + 'a {
-        self.iter_entities().filter(move |e| {
-            let rec = &self.entities[e.index as usize];
-            type_names.iter().all(|n| rec.components.contains_key(*n))
+        let available = type_names.iter().all(|name| self.has_component_type(name));
+        let candidates = available.then(|| type_names.iter().filter_map(|name| self.component_entities.get(*name)).min_by_key(|entities| entities.len())).flatten();
+        let indexed = candidates.into_iter().flatten().filter_map(move |&index| {
+            let record = &self.entities[index as usize];
+            // MiYu: the membership index already proves a single component's presence.
+            (record.alive && (type_names.len() == 1 || type_names.iter().all(|name| record.components.contains_key(*name)))).then_some(Entity::new(index, record.generation))
+        });
+        self.iter_entities().take(if type_names.is_empty() { usize::MAX } else { 0 }).chain(indexed)
+    }
+
+    /// MiYu: Ordered, deduplicated union of component memberships, including inactive entities.
+    pub fn entities_with_any_component(&self, type_names: &[&str]) -> impl Iterator<Item = Entity> + '_ {
+        let indices: BTreeSet<_> = type_names.iter().filter_map(|name| self.component_entities.get(*name)).flat_map(|entities| entities.iter().copied()).collect();
+        indices.into_iter().filter_map(move |index| {
+            let record = &self.entities[index as usize];
+            record.alive.then_some(Entity::new(index, record.generation))
         })
     }
 
@@ -327,7 +361,7 @@ impl World {
 
     pub fn apply_command(&mut self, cmd: WorldCommand) {
         match cmd {
-            WorldCommand::Spawn { name, components } => {
+            WorldCommand::Spawn { name, components, active, parent } => {
                 let e = self.spawn_empty();
                 if let Some(n) = name.clone() {
                     self.entities[e.index as usize].name = Some(n.clone());
@@ -338,10 +372,16 @@ impl World {
                         self.apply_set_component(e, &key, val);
                     }
                 }
+                self.set_parent(e, parent.map(Entity::from_u64));
+                self.set_editor_state(e, self.sibling_index(e), active);
                 self.last_spawned.push(e);
             }
             WorldCommand::Despawn { entity } => {
                 self.despawn(Entity::from_u64(entity));
+            }
+            WorldCommand::SetActive { entity, active } => {
+                let entity = Entity::from_u64(entity);
+                self.set_editor_state(entity, self.sibling_index(entity), active);
             }
             WorldCommand::SetComponent {
                 entity,
@@ -375,6 +415,7 @@ impl World {
             return;
         }
         let component = canonical_component_name(component);
+        self.entities[entity.index as usize].revision += 1;
         self.entities[entity.index as usize]
             .serialized_components
             .insert(component.to_string(), value.clone());
@@ -399,9 +440,7 @@ impl World {
             }
             other => match crate::generated::component_from_value(other, value) {
                 Ok(Some(component)) => {
-                    self.entities[entity.index as usize]
-                        .components
-                        .insert(other.to_string(), component);
+                    if self.entities[entity.index as usize].components.insert(other.to_string(), component).is_none() { self.component_entities.entry(other.to_string()).or_default().insert(entity.index); }
                 }
                 Ok(None) => {
                     log::debug!("unknown component '{other}' preserved as serialized data");
@@ -487,6 +526,7 @@ fn canonical_component_name(component: &str) -> &str {
         "AutoRotate" | "autoRotate" => "AutoRotate",
         "ParticleEmitter2D" | "particleEmitter2D" | "particleEmitter2d" => "ParticleEmitter2D",
         "ParticleEmitter3D" | "particleEmitter3D" | "particleEmitter3d" => "ParticleEmitter3D",
+        "SampledEffect" | "sampledEffect" => "SampledEffect",
         "SpineSkeleton" | "spineSkeleton" => "SpineSkeleton",
         other => other,
     }
@@ -545,6 +585,150 @@ impl Transform {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn spawn_preserves_legacy_defaults_and_initial_hierarchy_state() {
+        use super::*;
+        let mut world = World::new();
+        let legacy: WorldCommand = serde_json::from_value(serde_json::json!({"op":"spawn","name":"legacy","components":{}})).unwrap();
+        world.apply_command(legacy);
+        let parent = *world.last_spawned.last().unwrap();
+        assert!(world.entity_active(parent));
+        assert!(world.get_component::<Parent>(parent).is_none());
+        let hidden: WorldCommand = serde_json::from_value(serde_json::json!({"op":"spawn","active":false,"parent":parent.to_u64(),"components":{"Transform":{"position":[0,0,0]}}})).unwrap();
+        world.apply_command(hidden);
+        let child = *world.last_spawned.last().unwrap();
+        assert!(!world.entity_active(child));
+        assert_eq!(world.get_component::<Parent>(child).unwrap().entity, parent);
+        assert!(world.get_component::<Children>(parent).unwrap().entities.contains(&child));
+        world.apply_command(WorldCommand::SetActive { entity: child.to_u64(), active: true });
+        assert!(world.entity_active(child));
+        world.despawn(parent);
+        let replacement = world.spawn_empty();
+        assert_eq!(replacement.index, parent.index);
+        assert_ne!(replacement.generation, parent.generation);
+        for id in [parent.to_u64(), u64::MAX] {
+            let invalid: WorldCommand = serde_json::from_value(serde_json::json!({"op":"spawn","parent":id,"components":{}})).unwrap();
+            let before = world.last_spawned.len();
+            world.apply_command(invalid);
+            assert_eq!(world.last_spawned.len(), before + 1);
+            assert!(world.get_component::<Parent>(*world.last_spawned.last().unwrap()).is_none());
+        }
+    }
+
+    #[test]
+    fn component_presence_tracks_typed_serialized_and_entity_lifecycles() {
+        use super::*;
+        let mut world = World::new();
+        let first = world.spawn_empty();
+        let second = world.spawn_empty();
+        assert!(!world.has_component_type("Transform"));
+        world.insert_component(first, Transform::default());
+        world.insert_component(first, Transform::default());
+        world.set_component_value(second, "transform", serde_json::json!({"position":[1,2,3]}));
+        world.set_editor_state(second, 0, false);
+        assert_eq!(world.entities_with_components(&["Transform"]).count(), 2);
+        world.remove_component_by_name(first, "transform");
+        world.remove_component_by_name(first, "Transform");
+        assert!(world.has_component_type("Transform"));
+        world.set_component_value(second, "UserBehaviour", serde_json::json!({"enabled":true}));
+        assert!(!world.has_component_type("UserBehaviour"));
+        assert_eq!(world.entities_with_components(&["Transform", "BoxCollider3D"]).count(), 0);
+        world.despawn(second);
+        assert!(!world.has_component_type("Transform"));
+        let recycled = world.spawn_empty();
+        assert_eq!(second.index, recycled.index);
+        world.insert_component(second, Transform::default());
+        world.remove_component_by_name(second, "Transform");
+        assert!(!world.has_component_type("Transform"));
+        for name in crate::generated::meta::COMPONENT_NAMES {
+            world.set_component_value(recycled, name, serde_json::json!({}));
+            world.set_component_value(recycled, name, serde_json::json!({}));
+            assert!(world.has_component_type(name), "{name}");
+            assert_eq!(world.entities_with_components(&[name]).collect::<Vec<_>>(), vec![recycled], "{name}");
+            world.remove_component_by_name(recycled, name);
+            assert!(!world.has_component_type(name), "{name}");
+            assert_eq!(world.entities_with_components(&[name]).count(), 0, "{name}");
+        }
+        world.set_parent(recycled, Some(first));
+        assert!(world.has_component_type("Parent"));
+        assert_eq!(world.entities_with_components(&["Parent"]).collect::<Vec<_>>(), vec![recycled]);
+        world.despawn(first);
+        assert!(!world.has_component_type("Parent"));
+        assert!(!world.has_component_type("Children"));
+        assert_eq!(world.entities_with_components(&[]).count(), 1);
+    }
+
+    #[test]
+    fn indexed_queries_preserve_order_intersection_and_recycled_generations() {
+        use super::*;
+        let mut world = World::new();
+        let entities: Vec<_> = (0..90_000).map(|_| world.spawn_empty()).collect();
+        for &entity in &entities { world.insert_component(entity, Transform::default()); }
+        for &index in &[89_999, 42_000, 7] { world.insert_component(entities[index], Name { value: index.to_string() }); }
+        world.set_editor_state(entities[42_000], 0, false);
+        let expected = vec![entities[7], entities[42_000], entities[89_999]];
+        assert_eq!(world.entities_with_components(&["Transform", "Name"]).collect::<Vec<_>>(), expected);
+        assert_eq!(world.entities_with_components(&["Name", "Transform", "Name"]).collect::<Vec<_>>(), expected);
+        assert_eq!(world.entities_with_components(&["Missing"]).count(), 0);
+        world.remove_component_by_name(entities[7], "Transform");
+        world.despawn(entities[42_000]);
+        let recycled = world.spawn_empty();
+        assert_eq!(recycled.index, entities[42_000].index);
+        assert_ne!(recycled.generation, entities[42_000].generation);
+        world.set_component_value(recycled, "name", serde_json::json!({"value":"recycled"}));
+        world.insert_component(recycled, Transform::default());
+        world.insert_component(entities[42_000], Name { value: "stale".into() });
+        world.remove_component_by_name(entities[42_000], "Name");
+        assert_eq!(world.entities_with_components(&["Name", "Transform"]).collect::<Vec<_>>(), vec![recycled, entities[89_999]]);
+        assert_eq!(world.entities_with_components(&[]).count(), 90_000);
+    }
+
+    #[test]
+    #[ignore = "manual large-scene CPU benchmark"]
+    fn benchmark_sparse_component_query() {
+        use super::*;
+        use std::time::Instant;
+        let mut world = World::new();
+        for i in 0..90_000 {
+            let entity = world.spawn_empty();
+            world.insert_component(entity, Transform::default());
+            if i % 900 == 0 { world.insert_component(entity, Name { value: i.to_string() }); }
+        }
+        let begin = Instant::now();
+        for _ in 0..100 { assert_eq!(world.iter_entities().filter(|entity| world.get_component::<Name>(*entity).is_some()).count(), 100); }
+        let scan_ms = begin.elapsed().as_secs_f64() * 1000.0;
+        let begin = Instant::now();
+        for _ in 0..100 { assert_eq!(world.entities_with_components(&["Name"]).count(), 100); }
+        println!("sparse_query entities=90000 matches=100 iterations=100 scan_ms={scan_ms:.3} index_ms={:.3}", begin.elapsed().as_secs_f64() * 1000.0);
+    }
+
+    #[test]
+    fn component_union_matches_ordered_scan_after_removal_and_slot_reuse() {
+        use super::*;
+        let mut world = World::new();
+        let entities: Vec<_> = (0..300).map(|_| world.spawn_empty()).collect();
+        for (index, &entity) in entities.iter().enumerate() {
+            if index % 3 == 0 { world.insert_component(entity, Transform::default()); }
+            if index % 5 == 0 { world.insert_component(entity, Name { value: index.to_string() }); }
+            if index % 7 == 0 { world.set_editor_state(entity, 0, false); }
+        }
+        let verify = |world: &World| {
+            let expected: Vec<_> = world.iter_entities().filter(|entity| world.get_component::<Transform>(*entity).is_some() || world.get_component::<Name>(*entity).is_some()).collect();
+            assert_eq!(world.entities_with_any_component(&["Missing", "Name", "Transform", "Name"]).collect::<Vec<_>>(), expected);
+            assert_eq!(world.entities_with_any_component(&[]).count(), 0);
+            assert_eq!(world.entities_with_any_component(&["Missing"]).count(), 0);
+        };
+        verify(&world);
+        world.remove_component_by_name(entities[15], "Transform");
+        world.remove_component_by_name(entities[15], "Name");
+        world.despawn(entities[0]); let recycled = world.spawn_empty();
+        world.set_component_value(recycled, "Name", serde_json::json!({"value":"recycled"}));
+        assert_ne!(recycled, entities[0]);
+        world.insert_component(entities[0], Transform::default());
+        verify(&world);
+        assert_eq!(world.entities_with_any_component(&["Name"]).next(), Some(recycled));
+    }
+
     #[test]
     fn generated_factory_deserializes_every_registered_idl_component() {
         for name in crate::generated::meta::COMPONENT_NAMES {

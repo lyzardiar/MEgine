@@ -6,11 +6,16 @@ mod asset_sidecar;
 mod avatar_mask;
 mod gltf_import;
 mod gltf_pose;
+mod gltf_mdx;
 mod material;
 mod material_instance;
+mod mesh_patch;
+mod mesh_surface;
 mod registry;
+mod sampled_effect;
 mod sprite;
 mod surface_shader;
+mod terrain_mesh;
 mod texture;
 mod timeline;
 
@@ -31,7 +36,11 @@ pub use asset_sidecar::{
 };
 pub use avatar_mask::{load_avatar_mask, parse_avatar_mask, target_matches_mask, AvatarMaskAsset};
 pub use gltf_import::{load_gltf_mesh_data, MeshData};
-pub use gltf_pose::{parse_gltf_pose, GltfPoseSource};
+pub use gltf_pose::{parse_gltf_pose, parse_gltf_pose_sample, GltfAttachmentPose, GltfBillboardCamera, GltfNodePose, GltfPoseSource};
+pub use mesh_patch::{parse_mesh_patch_key, MeshPatchSource};
+pub use mesh_surface::{mesh_height_at, raycast_mesh, MeshSurfaceHit};
+pub use sampled_effect::{effect_asset_path, EffectClip, EffectFrame, EffectLight, EffectMaterial, EffectModelPart, EffectModelState, EffectParticleModel, SampledEffectAsset};
+pub use terrain_mesh::terrain_mesh;
 pub use material::{
     load_material_asset, parse_material_asset, MaterialAsset, MaterialBlendMode, MaterialFilter,
     MaterialShader, MaterialSurface, MaterialWrap,

@@ -1,6 +1,7 @@
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+// Author: MiYu. Editor workspace and scene presentation.
 import {
   createEditorStore,
   type EditorMode,
@@ -227,6 +228,7 @@ type WorkspaceSyncMessage =
       sceneName: string | null;
       sceneJson: string;
       playSessionId?: number;
+      playRevision?: number;
       selectedIds: number[];
       sceneHiddenIds?: number[];
       sceneUnpickableIds?: number[];
@@ -250,7 +252,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const undoService = useMemo(() => createEditorUndoService(), []);
   const store = useMemo(() => createEditorStore(undoService), [undoService]);
   const [, setUndoRevision] = useState(undoService.revision);
-  const [snap, setSnap] = useState<WorldSnapshotView & { selectedIds?: number[] }>(store.snapshot());
+  const [snap, setSnap] = useState<WorldSnapshotView & { selectedIds?: number[] }>(() => store.snapshot());
   const [mode, setMode] = useState<EditorMode>('edit');
   const [gizmo, setGizmo] = useState<GizmoMode>('translate');
   const [pivotMode, setPivotMode] = useState<ToolPivotMode>(
@@ -359,7 +361,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const resourceDirtyRef = useRef(resourceDirty);
   const unsavedChangesRef = useRef(false);
   const editorCloseState = useRef(createEditorCloseState());
-  const savedSceneFingerprint = useRef(store.sceneContentFingerprint());
+  const [initialSceneFingerprint] = useState(() => store.sceneContentFingerprint());
+  const savedSceneFingerprint = useRef(initialSceneFingerprint);
   const remoteSceneFingerprint = useRef(savedSceneFingerprint.current);
   const remoteSceneDirty = useRef(false);
   const syncSender = useRef(crypto.randomUUID());
@@ -750,6 +753,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         mode: store.mode,
         sceneJson: store.saveSessionSceneJson(sceneNameRef.current ?? 'Untitled'),
         playSessionId: store.playSessionId,
+        playRevision: store.nativePlayRevision,
         selectedIds: store.selectedIds,
         sceneHiddenIds: store.sceneHiddenIds,
         sceneUnpickableIds: store.sceneUnpickableIds,
@@ -777,7 +781,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
 
   const refresh = (publish = true) => {
-    setSnap(store.snapshot());
+    const snapshot = store.presentationSnapshot();
+    setSnap(snapshot);
     setMode(store.mode);
     setGizmo(store.gizmo);
     setSelected(store.selected);
@@ -786,7 +791,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     setGameDisplay(store.gameDisplay);
     setTreeTick((t) => t + 1);
     updateSceneDirty();
-    if (!props.detachedPanel) agentBridge.observe();
+    if (!props.detachedPanel) agentBridge.observe(false, snapshot);
     if (publish) broadcastScene();
   };
   refreshRef.current = refresh;
@@ -1391,7 +1396,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         applyingRemote.current = true;
         syncReady.current = true;
         lastRemoteTimestamp.current = message.timestamp;
-        store.loadRemoteSceneJson(message.sceneJson, message.mode, message.playSessionId);
+        store.loadRemoteSceneJson(message.sceneJson, message.mode, message.playSessionId, message.playRevision);
         store.selectMany(message.selectedIds, 'replace');
         store.setSceneInteractionState(
           message.sceneHiddenIds ?? [],
@@ -2561,14 +2566,18 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
+    let bootStage = 'scene library';
     void (async () => {
       const { backend, migrated, prefs } = await initSceneLibrary();
+      bootStage = 'sorting layers';
       try {
         await loadSortingLayers();
       } catch (reason) {
         log(`Sorting layer settings could not be loaded: ${String(reason)}`, 'warn');
       }
+      bootStage = 'sprites';
       await refreshSprites();
+      bootStage = 'scene restore';
       bumpScenes();
       // A detached panel is a view of the main editor's in-memory scene. It must
       // never restore the last saved scene from disk, otherwise its boot refresh
@@ -2643,7 +2652,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       applyEditorPrefs(prefs);
       refresh();
       if (!props.detachedPanel) agentBridge.markEditorBootReady(store);
-    })();
+    })().catch((reason) => {
+      booted.current = false;
+      log(`Editor initialization failed at ${bootStage}: ${String(reason)}`, 'error');
+    });
   }, [props.detachedPanel, store]);
 
   useEffect(() => {
@@ -2833,18 +2845,20 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   }, [store]);
 
   const treeNodes = useMemo(() => store.getVisibleFlat(), [store, snap, treeTick]);
-  const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(snap.entities), [snap.entities]);
+  const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(mode === 'edit' ? snap.entities : []), [mode, snap.entities]);
   const sceneHiddenIds = store.sceneHiddenIds;
-  const viewportEntities = viewTab === 'scene' && sceneHiddenIds.length
-    ? snap.entities.filter((entity) => store.sceneVisible(entity.entity))
-    : snap.entities;
+  const sceneInteraction = store.sceneInteractionQuery();
+  const sceneHiddenKey = JSON.stringify(sceneHiddenIds);
+  const viewportEntities = useMemo(() => viewTab === 'scene' && sceneHiddenIds.length
+    ? snap.entities.filter((entity) => sceneInteraction.sceneVisible(entity.entity))
+    : snap.entities, [snap.entities, viewTab, sceneHiddenKey]);
   const viewportSelected = viewTab === 'scene'
     && selected != null
-    && (!store.sceneVisible(selected) || !store.scenePickable(selected))
+    && (!sceneInteraction.sceneVisible(selected) || !sceneInteraction.scenePickable(selected))
     ? null
     : selected;
   const viewportSelectedIds = viewTab === 'scene'
-    ? selectedIds.filter((id) => store.sceneVisible(id) && store.scenePickable(id))
+    ? selectedIds.filter((id) => sceneInteraction.sceneVisible(id) && sceneInteraction.scenePickable(id))
     : selectedIds;
   const timelinePreviewActive = store.timelinePreviewActive();
   const authoredInspectorEntities = timelinePreviewActive
@@ -2959,7 +2973,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               tab={viewTab}
               clearColor={snap.clearColor}
               entities={viewportEntities}
-              runtimeSnapshot={store.playViewportSnapshot}
+              runtimeSnapshot={store.playRenderSnapshot}
               selected={viewportSelected}
               selectedIds={viewportSelectedIds}
               sceneHiddenIds={sceneHiddenIds}
@@ -2987,9 +3001,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 refresh();
               }}
               onMarqueeSelect={(ids, selectionMode) => {
+                const interaction = store.sceneInteractionQuery();
                 const next = combineMarqueeSelection(
                   store.selectedIds,
-                  ids.filter((id) => store.scenePickable(id)),
+                  ids.filter((id) => interaction.scenePickable(id)),
                   selectionMode,
                 );
                 store.selectMany(next, 'replace');

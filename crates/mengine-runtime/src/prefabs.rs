@@ -132,7 +132,7 @@ mod tests {
         )
         .unwrap();
         let mut world = World::new();
-        world.commands.push(mengine_core::WorldCommand::Spawn {
+        world.commands.push(mengine_core::WorldCommand::Spawn { active: true, parent: None,
             name: Some("Container".into()),
             components: json!({}),
         });

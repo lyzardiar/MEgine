@@ -1144,6 +1144,9 @@
       "character_limit": {
         "type": "number"
       },
+      "font": {
+        "type": "string"
+      },
       "font_size": {
         "type": "number"
       },
@@ -1180,6 +1183,7 @@
     },
     "required": [
       "text",
+      "font",
       "placeholder",
       "text_color",
       "placeholder_color",
@@ -2262,6 +2266,12 @@
       "raycast_target": {
         "type": "boolean"
       },
+      "render_camera": {
+        "type": "string"
+      },
+      "render_root": {
+        "type": "string"
+      },
       "texture": {
         "type": "string"
       },
@@ -2277,6 +2287,8 @@
       "maskable",
       "material",
       "texture",
+      "render_camera",
+      "render_root",
       "color",
       "uv_rect",
       "raycast_target",
@@ -2469,6 +2481,37 @@
       "angular_velocity",
       "freeze_rotation",
       "ccd"
+    ],
+    "type": "object"
+  },
+  "SampledEffect": {
+    "properties": {
+      "clip": {
+        "type": "number"
+      },
+      "effect": {
+        "type": "string"
+      },
+      "looping": {
+        "type": "boolean"
+      },
+      "playing": {
+        "type": "boolean"
+      },
+      "speed": {
+        "type": "number"
+      },
+      "time_seconds": {
+        "type": "number"
+      }
+    },
+    "required": [
+      "effect",
+      "clip",
+      "playing",
+      "looping",
+      "speed",
+      "time_seconds"
     ],
     "type": "object"
   },

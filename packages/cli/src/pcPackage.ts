@@ -32,7 +32,7 @@ export const BUILD_PATCH_REPORT_PREFIX = 'MENGINE_BUILD_PATCH ';
 const MAX_TIMELINE_PARTICLE_TIME = 300;
 const MAX_SURFACE_SHADER_PARAMETERS = 16;
 const MAX_SURFACE_SHADER_KEYWORDS = 16;
-const MAX_SURFACE_SHADER_TEXTURES = 4;
+const MAX_SURFACE_SHADER_TEXTURES = 6;
 const DEFAULT_SHADER_VARIANT_LIMIT = 256;
 const MAX_SHADER_VARIANT_LIMIT = 65_536;
 const SURFACE_SHADER_PARAMETERS_MARKER = '/* MENGINE_PARAMETERS';
@@ -1143,6 +1143,12 @@ function scanBuildAssetDependencies(
   ) => {
     const path = rawPath.trim().replaceAll('\\', '/');
     if (!path || builtins.some((builtin) => builtin.toLowerCase() === path.toLowerCase())) return;
+    if (path.startsWith('meshpatch:')) {
+      const patch = /^meshpatch:([^#]+\.mpatch)#([0-9a-f]+)$/i.exec(path);
+      if (!patch || patch[2].length % 5 || patch[2].length > 32 * 32 * 5) throw new Error(`invalid mesh patch reference: ${path}`);
+      enqueue(patch[1], from, kind, builtins);
+      return;
+    }
     if (/\.(?:mmat|mat|minst)$/i.test(path)
       && (kind === 'material'
         || kind === 'always included asset'
@@ -1152,14 +1158,22 @@ function scanBuildAssetDependencies(
     const marker = path.indexOf('#');
     if (marker >= 0) {
       if (kind === '3D model') {
-        const pose = /^(.*\.(?:gltf|glb))#pose=(\d+):(\d+)$/i.exec(path);
-        if (!pose || Number(pose[2]) > 255 || Number(pose[3]) > 1199) throw new Error(`invalid skeletal pose reference: ${path}`);
+        const pose = /^(.*\.(?:gltf|glb))#pose=(\d+):(\d+)(?:@(\d+))?$/i.exec(path);
+        const rate = Number(pose?.[4] ?? 12);
+        if (!pose || Number(pose[2]) > 255 || rate < 1 || rate > 60 || Number(pose[3]) > rate * 600) throw new Error(`invalid skeletal pose reference: ${path}`);
         enqueue(pose[1], from, kind, builtins);
         return;
       }
       const texture = path.slice(0, marker).trim();
       const slice = path.slice(marker + 1).trim();
       if (!texture || !slice) throw new Error(`invalid ${kind} subresource reference: ${path}`);
+      if (/\.(?:gltf|glb)$/i.test(texture)) {
+        const pose = /^pose=(\d+):(\d+)(?:@(\d+))?$/.exec(slice);
+        const rate = Number(pose?.[3] ?? 12);
+        if (!pose || Number(pose[1]) > 255 || rate < 1 || rate > 60 || Number(pose[2]) > rate * 600) throw new Error(`invalid skeletal pose reference: ${path}`);
+        enqueue(texture, from, kind, builtins);
+        return;
+      }
       enqueue(texture, from, kind, builtins);
       enqueue(`${texture}.sprite.json`, from, 'sprite import metadata', [], slice);
       return;
@@ -1278,6 +1292,7 @@ function scanBuildAssetDependencies(
     enqueue(stringValue(component('Animator'), 'controller'), from, 'animator controller');
     enqueue(stringValue(component('TimelineDirector'), 'asset'), from, 'Timeline asset');
     enqueue(stringValue(component('AudioSource'), 'clip'), from, 'audio clip');
+    enqueue(stringValue(component('SampledEffect'), 'effect'), from, 'sampled effect');
     enqueue(
       stringValue(component('EffekseerEffect'), 'effect'),
       from,
@@ -1291,6 +1306,7 @@ function scanBuildAssetDependencies(
     enqueue(stringValue(component('Image'), 'sprite'), from, 'UI texture', ['white']);
     enqueue(stringValue(component('RawImage'), 'texture'), from, 'UI texture', ['white']);
     enqueue(stringValue(component('Text'), 'font'), from, 'UI font');
+    enqueue(stringValue(component('InputField'), 'font'), from, 'UI font');
     for (const name of ['Image', 'RawImage', 'Text', 'Panel', 'SpriteRenderer', 'SpriteBatch2D', 'AnimatedSprite2D']) {
       enqueueMaterial(stringValue(component(name), 'material'), from, 'ui');
     }
@@ -1338,6 +1354,37 @@ function scanBuildAssetDependencies(
           }
         };
         walk(effectDirectory);
+      }
+    } else if (extension === '.mfx') {
+      const effect = readJsonAsset(absolute, root, 'sampled effect');
+      if (effect.schemaVersion !== 1 || !Number.isInteger(effect.fps) || Number(effect.fps) < 1 || Number(effect.fps) > 120 || !Array.isArray(effect.materials) || !Array.isArray(effect.clips) || effect.materials.length > 1024 || effect.clips.length > 1024) {
+        throw new Error(`invalid sampled effect ${source}: schema or limits`);
+      }
+      for (const value of effect.materials) {
+        const material = jsonObject(value);
+        const texture = stringValue(material, 'texture').replaceAll('\\', '/');
+        if (!texture.startsWith('Assets/') || texture.includes(':') || texture.split('/').some(segment => !segment || segment === '.' || segment === '..') || !['alpha', 'additive', 'multiply'].includes(stringValue(material, 'blend'))) {
+          throw new Error(`invalid sampled effect ${source}: material`);
+        }
+        enqueue(texture, source, 'sampled effect texture');
+      }
+      for (const value of effect.clips) {
+        const clip = jsonObject(value);
+        const frames = clip?.frames;
+        if (!clip || typeof clip.duration !== 'number' || !Number.isFinite(clip.duration) || clip.duration <= 0 || clip.duration > 600 || !Array.isArray(frames) || frames.length < 1 || frames.length > 72001) {
+          throw new Error(`invalid sampled effect ${source}: clip`);
+        }
+        let previous = -1;
+        for (const item of frames) {
+          const frame = jsonObject(item);
+          if (!frame || typeof frame.seconds !== 'number' || !Number.isFinite(frame.seconds) || frame.seconds <= previous || frame.seconds < 0 || frame.seconds > clip.duration + 0.0001 || !Array.isArray(frame.particles) || !Array.isArray(frame.quads) || !Array.isArray(frame.lights)) {
+            throw new Error(`invalid sampled effect ${source}: frame`);
+          }
+          previous = frame.seconds;
+        }
+        if (jsonObject(frames[0])?.seconds !== 0 || Math.abs(previous - clip.duration) > 0.0001) {
+          throw new Error(`invalid sampled effect ${source}: endpoints`);
+        }
       }
     } else if (extension === '.mscene') {
       auditedScenes += 1;

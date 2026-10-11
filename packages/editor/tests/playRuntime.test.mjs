@@ -3,6 +3,102 @@ import test from 'node:test';
 import { createServer } from 'vite';
 import { fileURLToPath } from 'node:url';
 
+test('script quit stops Editor Play, preserves the edit scene and resets on restart', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  const savedWindow = globalThis.window; globalThis.window = {};
+  try {
+    const { mockIPC, clearMocks } = await server.ssrLoadModule('@tauri-apps/api/mocks');
+    const { createNativePlayRuntime } = await server.ssrLoadModule('/src/playRuntime.ts');
+    const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const snapshot = { entities: [], frame: 0, sim_frame: 0, clear_color: [0, 0, 0, 1] };
+    let stopped = 0;
+    mockIPC(async cmd => {
+      if (cmd === 'start_editor_play') return { sessionId: 1, snapshot };
+      if (cmd === 'step_editor_play') return { snapshot, entityOrder: [], baseRevision: 0, revision: 1, reset: false, quitRequested: true };
+      if (cmd === 'stop_editor_play') stopped++;
+    });
+    const runtime = createNativePlayRuntime(error => { throw error; });
+    const store = createEditorStore(), original = store.snapshot().entities;
+    store.setPlayRuntime(runtime); store.play(); await store.waitForPlayRuntime(); store.pause(); assert.equal(store.step(.1), true); await store.waitForPlayRuntime();
+    assert.equal(store.mode, 'edit'); assert.deepEqual(store.snapshot().entities, original); assert.equal(runtime.quitRequested, false);
+    store.play(); await store.waitForPlayRuntime(); assert.equal(store.mode, 'play'); assert.equal(stopped, 1); assert.equal(runtime.quitRequested, false); store.stop(); await new Promise(resolve => setImmediate(resolve)); clearMocks();
+  } finally { globalThis.window = savedWindow; await server.close(); }
+});
+
+test('native Play serializes pending startup and stop before restart and rejects stale steps', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  const savedWindow = globalThis.window;
+  globalThis.window = {};
+  try {
+    const { mockIPC, clearMocks } = await server.ssrLoadModule('@tauri-apps/api/mocks');
+    const { createNativePlayRuntime, emptyPlayInput } = await server.ssrLoadModule('/src/playRuntime.ts');
+    const snapshot = { entities: [], frame: 0, sim_frame: 0, clear_color: [0, 0, 0, 1] };
+    const calls = [], errors = [];
+    let releaseStart, releaseStep, session = 0;
+    mockIPC(async (cmd, args) => {
+      calls.push([cmd, args.sessionId]);
+      if (cmd === 'start_editor_play') {
+        const id = ++session;
+        if (id === 1) await new Promise(resolve => { releaseStart = resolve; });
+        return { sessionId: id, snapshot };
+      }
+      if (cmd === 'step_editor_play') {
+        await new Promise(resolve => { releaseStep = resolve; });
+        return { snapshot, entityOrder: [], baseRevision: 0, revision: 1, reset: false };
+      }
+    });
+    const runtime = createNativePlayRuntime(error => errors.push(error));
+    const first = runtime.start({});
+    await new Promise(resolve => setImmediate(resolve));
+    runtime.stop();
+    const second = runtime.start({});
+    assert.deepEqual(calls, [['start_editor_play', undefined]]);
+    releaseStart();
+    assert.equal(await first, undefined);
+    await second;
+    assert.deepEqual(calls, [['start_editor_play', undefined], ['stop_editor_play', 1], ['start_editor_play', undefined]]);
+    assert.equal(runtime.sessionId, 2);
+    const step = runtime.step(undefined, emptyPlayInput(), 0.1);
+    await new Promise(resolve => setImmediate(resolve));
+    runtime.stop();
+    await runtime.start({});
+    releaseStep();
+    await assert.rejects(step, /session expired/);
+    assert.equal(runtime.sessionId, 3);
+    assert.deepEqual(errors, []);
+    runtime.stop();
+    await new Promise(resolve => setImmediate(resolve));
+    clearMocks();
+  } finally { globalThis.window = savedWindow; await server.close(); }
+});
+
+test('Play snapshot deltas preserve full state, identity, ordering and explicit editor resets', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  try {
+    const { applyPlayWorldUpdate } = await server.ssrLoadModule('/src/playRuntime.ts');
+    const { toWorldSnapshotView } = await server.ssrLoadModule('/src/transport/editorTransport.ts');
+    const initial = { entities: [{ entity: 1, name: 'First', components: { Custom: { value: 4 } } }, { entity: 2, name: 'Second', components: {} }], frame: 0, sim_frame: 0, elapsed: 0, clear_color: [0, 0, 0, 1] };
+    const previous = toWorldSnapshotView(initial);
+    const payload = { ...initial, entities: [{ entity: 2, name: 'Changed', active: false, parent: 1, sibling_index: 3, tag: 'Hero', layer: 5, components: { Transform: { position: [3, 4, 5] } } }], frame: 1, sim_frame: 1, elapsed: 0.1, selected: 2, clear_color: [1, 0, 0, 1] };
+    const delta = { snapshot: payload, entityOrder: [2, 1], revision: 1, baseRevision: 0, reset: false };
+    const result = applyPlayWorldUpdate(previous, 0, delta);
+    assert.deepEqual(result, toWorldSnapshotView({ ...payload, entities: [payload.entities[0], initial.entities[0]] }));
+    assert.equal(result.entities[1], previous.entities[0]);
+    assert.equal(previous.entities[1].name, 'Second');
+    const next = { snapshot: { ...payload, entities: [{ entity: 4294967297, name: 'Reused slot', components: {} }] }, entityOrder: [4294967297, 2], baseRevision: 1, revision: 2, reset: false };
+    const removed = applyPlayWorldUpdate(result, 1, next);
+    assert.deepEqual(removed.entities.map(e => e.entity), [4294967297, 2]);
+    assert.equal(removed.entities[1], result.entities[0]);
+    result.entities[0].name = 'Local Inspector edit';
+    const reset = applyPlayWorldUpdate(result, 1, { ...next, snapshot: initial, entityOrder: [1, 2], reset: true });
+    assert.deepEqual(reset, previous);
+    assert.throws(() => applyPlayWorldUpdate(previous, 1, delta), /revision mismatch/);
+    assert.throws(() => applyPlayWorldUpdate(previous, 0, { ...delta, entityOrder: [2, 2] }), /entity order/);
+    assert.throws(() => applyPlayWorldUpdate(previous, 0, { ...delta, entityOrder: [999] }), /entity order/);
+    assert.throws(() => applyPlayWorldUpdate(previous, 0, { ...delta, reset: true }), /entity order/);
+  } finally { await server.close(); }
+});
+
 test('retained runtime omits unchanged worlds and synchronizes Inspector edits before the next step', async () => {
   const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
   try {
@@ -26,6 +122,14 @@ test('retained runtime omits unchanged worlds and synchronizes Inspector edits b
     assert.equal(store.playViewportSnapshot().nativeSessionId, 42);
     const detachedCallback = store.playViewportSnapshot;
     assert.equal(detachedCallback().nativeSessionId, 42);
+    let fingerprints = 0;
+    const observed = detachedCallback().entities[0];
+    Object.defineProperty(observed, 'toJSON', { configurable: true, value() { fingerprints++; const { toJSON, ...entity } = this; return entity; } });
+    for (let i = 0; i < 60; i++) assert.ok(detachedCallback().entities.length);
+    assert.equal(fingerprints, 0, 'viewport presentation does not serialize the live world');
+    assert.equal(detachedCallback().nativeSessionId, 42);
+    assert.equal(fingerprints, 1, 'native rendering checks synchronization on demand');
+    delete observed.toJSON;
     store.step(); await store.waitForPlayRuntime();
     assert.equal(incoming[0], undefined);
     const target = store.playViewportSnapshot().entities[0];
@@ -38,12 +142,67 @@ test('retained runtime omits unchanged worlds and synchronizes Inspector edits b
     assert.equal(incoming[2], undefined);
     const detached = createEditorStore();
     detached.loadRemoteSceneJson(store.saveSessionSceneJson(), 'pause', 42);
-    assert.equal(detached.playViewportSnapshot().nativeSessionId, 42);
+    assert.equal(detached.playViewportSnapshot().nativeSessionId, undefined);
     assert.equal(detached.simulationTime, store.simulationTime);
     assert.deepEqual(detached.snapshot().clearColor, store.snapshot().clearColor);
     assert.equal(detached.playSessionId, 42);
     store.stop();
     assert.equal(store.nativePlaySessionId, undefined);
+  } finally { await server.close(); }
+});
+
+test('Agent observation shares prepared snapshots without invoking live entity serialization hooks', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  try {
+    const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const { agentBridge } = await server.ssrLoadModule('/src/agent/AgentBridge.ts');
+    const store = createEditorStore();
+    store.play(); await store.waitForPlayRuntime(); store.pause();
+    const target = store.playViewportSnapshot().entities[0];
+    let serialized = 0;
+    Object.defineProperty(target, 'toJSON', { configurable: true, enumerable: true, value() { serialized++; return { entity: target.entity, name: 'Unexpected hook' }; } });
+    agentBridge.connect(store);
+    agentBridge.markEditorBootReady(store);
+    agentBridge.observe(true, store.snapshot());
+    const baseline = agentBridge.getSceneSnapshot();
+    assert.equal(serialized, 0);
+    assert.equal(agentBridge.getSceneDiff(baseline.revision).toRevision, baseline.revision);
+    target.name = 'Paused Inspector edit';
+    agentBridge.observe(true, store.snapshot());
+    const diff = agentBridge.getSceneDiff(baseline.revision);
+    assert.deepEqual(diff.changed, [target.entity]);
+    assert.equal(diff.entities[0].name, 'Paused Inspector edit');
+    diff.entities[0].name = 'Caller mutation';
+    assert.equal(target.name, 'Paused Inspector edit');
+    assert.equal(serialized, 0);
+    delete target.toJSON;
+    store.stop();
+  } finally { await server.close(); }
+});
+
+test('visible hierarchy rebuilds sibling order and parents after direct paused edits', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  try {
+    const { createEditorStore } = await server.ssrLoadModule('/src/store.ts');
+    const store = createEditorStore();
+    store.loadSceneJson(JSON.stringify({ version: 1, name: 'Hierarchy', world: { entities: [
+      { entity: 1, parent: null, siblingIndex: 0, components: {} },
+      { entity: 2, parent: 1, siblingIndex: 1, components: {} },
+      { entity: 3, parent: 1, siblingIndex: 1, active: false, components: {} },
+      { entity: 4, parent: null, siblingIndex: 1, components: {} },
+    ] } }));
+    if (!store.getVisibleFlat().find(n => n.entity.entity === 1).expanded) store.toggleExpand(1);
+    assert.deepEqual(store.getVisibleFlat().map(n => [n.entity.entity, n.depth]), [[1, 0], [2, 1], [3, 1], [4, 0]]);
+    store.play(); await store.waitForPlayRuntime(); store.pause();
+    const entities = store.playViewportSnapshot().entities;
+    entities.find(e => e.entity === 3).siblingIndex = -1;
+    entities.find(e => e.entity === 2).parent = 4;
+    if (!store.getVisibleFlat().find(n => n.entity.entity === 4).expanded) store.toggleExpand(4);
+    assert.deepEqual(store.getVisibleFlat().map(n => [n.entity.entity, n.depth]), [[1, 0], [3, 1], [4, 0], [2, 1]]);
+    store.toggleExpand(4);
+    assert.deepEqual(store.getVisibleFlat().map(n => n.entity.entity), [1, 3, 4]);
+    assert.equal(store.getVisibleFlat().find(n => n.entity.entity === 4).hasChildren, true);
+    store.stop();
   } finally { await server.close(); }
 });
 

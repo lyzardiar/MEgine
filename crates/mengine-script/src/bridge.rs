@@ -1,5 +1,5 @@
 use crate::{ScriptError, ScriptInput};
-use mengine_core::{command::{CommandBuffer, WorldCommand}, snapshot::WorldSnapshot, World};
+use mengine_core::{command::{CommandBuffer, WorldCommand}, snapshot::{SharedWorldSnapshot, WorldSnapshotCache}, World};
 use rquickjs::{CaughtError, Context, Ctx, Function, Object, Persistent, Runtime};
 use rquickjs::context::EvalOptions;
 use serde_json::Value as JsonValue;
@@ -8,12 +8,13 @@ use std::{cell::{Cell, RefCell}, rc::Rc, time::{Duration, Instant}};
 #[derive(Default)]
 struct ScriptSnapshot {
     revision: u64,
-    world: Option<WorldSnapshot>,
+    world: Option<SharedWorldSnapshot>,
     json: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ScriptRuntimeRequest {
+    Quit,
     LoadSceneByIndex(usize),
     LoadScene(String),
     ReloadScene,
@@ -112,10 +113,13 @@ pub struct ScriptHost {
     context: Context,
     _runtime: Runtime,
     deadline: Rc<Cell<Instant>>,
+    startup_tick: bool,
     commands: Rc<RefCell<CommandBuffer>>,
     requests: Rc<RefCell<Vec<ScriptRuntimeRequest>>>,
     snapshot: Rc<RefCell<ScriptSnapshot>>,
     storage_root: Rc<RefCell<Option<std::path::PathBuf>>>,
+    asset_nodes: Rc<RefCell<crate::asset_nodes::AssetNodeCache>>,
+    snapshot_cache: WorldSnapshotCache,
 }
 
 fn script_error(ctx: &Ctx<'_>, error: rquickjs::Error) -> ScriptError {
@@ -156,8 +160,11 @@ impl ScriptHost {
         let snapshot = Rc::new(RefCell::new(ScriptSnapshot::default()));
         let network = Rc::new(RefCell::new(crate::network::ScriptNetwork::default()));
         let storage_root = Rc::new(RefCell::new(None::<std::path::PathBuf>));
+        let asset_nodes=Rc::new(RefCell::new(crate::asset_nodes::AssetNodeCache::default()));
         let restore_snapshot = context.with(|ctx| {
             let install = || -> rquickjs::Result<Persistent<Function<'static>>> {
+                let nodes=asset_nodes.clone();
+                ctx.globals().set("__mengineAssetNodes",Function::new(ctx.clone(),move |reference: String,options: String| -> String {nodes.borrow_mut().query(&reference,&options)})?)?;
                 let storage = storage_root.clone();
                 ctx.globals().set("__mengineStorage", Function::new(ctx.clone(), move |operation: String, key: String, payload: String| -> String {
                     crate::storage::operate(storage.borrow().as_deref(), &operation, &key, &payload)
@@ -194,6 +201,16 @@ impl ScriptHost {
                 })?)?;
                 let state = snapshot.clone();
                 ctx.globals().set("__mengineRevision", Function::new(ctx.clone(), move || state.borrow().revision as f64)?)?;
+                // MiYu: dynamic pools query only their new entities without decoding the full scene snapshot.
+                let state = snapshot.clone();
+                ctx.globals().set("__mengineFindEntities", Function::new(ctx.clone(), move |json: String| -> String {
+                    let Ok(names) = serde_json::from_str::<Vec<String>>(&json) else { return "[]".into(); };
+                    if names.len() > 1024 { return "[]".into(); }
+                    let names: std::collections::HashSet<_> = names.into_iter().collect();
+                    let state = state.borrow();
+                    let entities: Vec<_> = state.world.iter().flat_map(|world| &world.entities).filter(|entity| entity.name.as_ref().is_some_and(|name| names.contains(name))).collect();
+                    serde_json::to_string(&entities).expect("selected entities serialize")
+                })?)?;
                 let state = snapshot.clone();
                 ctx.globals().set("__mengineSnapshot", Function::new(ctx.clone(), move || {
                     let mut state = state.borrow_mut();
@@ -204,14 +221,16 @@ impl ScriptHost {
             };
             install().map_err(|error| script_error(&ctx, error))
         })?;
-        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, commands, requests, snapshot, storage_root };
+        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, startup_tick: true, commands, requests, snapshot, storage_root, asset_nodes, snapshot_cache: WorldSnapshotCache::default() };
         host.set_input(&ScriptInput::default())?;
         Ok(host)
     }
 
     pub fn set_storage_root(&mut self, root: std::path::PathBuf) { *self.storage_root.borrow_mut() = Some(root); }
+    pub fn set_project_root(&mut self, root: std::path::PathBuf) {self.asset_nodes.borrow_mut().set_root(root);}
 
     pub fn eval(&mut self, source: &str) -> Result<(), ScriptError> {
+        self.asset_nodes.borrow_mut().begin_frame();
         self.tick_callback = None;
         self.deadline.set(Instant::now() + Duration::from_secs(1));
         let mut options = EvalOptions::default();
@@ -222,8 +241,11 @@ impl ScriptHost {
     pub fn load_file(&mut self, path: &std::path::Path) -> Result<(), ScriptError> { self.eval(&std::fs::read_to_string(path)?) }
 
     pub fn tick(&mut self, world: &mut World, dt: f32) -> Result<(), ScriptError> {
+        self.asset_nodes.borrow_mut().begin_frame();
         self.sync_world(world)?;
-        self.deadline.set(Instant::now() + Duration::from_secs(1));
+        // MiYu: cold scene snapshot decoding and initialization get one bounded loading frame.
+        let seconds=if std::mem::replace(&mut self.startup_tick,false) {3} else {1};
+        self.deadline.set(Instant::now() + Duration::from_secs(seconds));
         let result = self.context.with(|ctx| {
             let mut invoke = || -> rquickjs::Result<()> {
                 if self.tick_callback.is_none() {
@@ -246,7 +268,7 @@ impl ScriptHost {
     pub fn sync_world(&mut self, world: &World) -> Result<(), ScriptError> {
         let mut state = self.snapshot.borrow_mut();
         state.revision += 1;
-        state.world = Some(WorldSnapshot::from_world(world));
+        state.world = Some(self.snapshot_cache.capture(world));
         state.json = None;
         drop(state);
         self.restore_snapshot_properties()
@@ -473,6 +495,7 @@ fn runtime_request(operation: &str, args: &[JsonValue]) -> Option<ScriptRuntimeR
     let time = || arg(1).as_f64().filter(|time| *time >= 0.0 && *time <= f64::from(f32::MAX)).map(|time| time as f32);
     let restart = || arg(1).as_bool().unwrap_or(false);
     Some(match operation {
+        "quit" => Quit,
         "loadScene" if arg(0).is_number() => LoadSceneByIndex(usize::try_from(entity()?).ok()?),
         "loadScene" => LoadScene(text(0)?),
         "reloadScene" => ReloadScene,
@@ -501,6 +524,76 @@ fn runtime_request(operation: &str, args: &[JsonValue]) -> Option<ScriptRuntimeR
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn lazy_effect_pool_commits_hidden_children_and_recovers_failed_script_ticks() {
+        use mengine_core::command::WorldCommand;
+        use mengine_core::hierarchy::Parent;
+        let mut world = World::new();
+        let names = ["Scene / Effects/Classic spell", "Scene / Effects/Classic spell/Slots 0-31", "Classic spell 0 holyLight", "Classic spell 0 holyLight mesh 0"];
+        for name in names {
+            world.apply_command(serde_json::from_value::<WorldCommand>(serde_json::json!({"op":"spawn","name":name,"components":{"Transform":{"position":[0,0,0],"rotation":[0,0,0,1],"scale":[1,1,1]}}})).unwrap());
+        }
+        let mut host = ScriptHost::new().unwrap();
+        host.eval(include_str!("../tests/fixtures/deferred-node-pool.js")).unwrap();
+        host.eval("var records={},authored={},pool=null,visible=true,fail=true; function register(names){for(const e of engine.findEntitiesByName(names)){records[e.name]=e;authored[e.name]=e.components;}} function onTick(){if(!pool){register(['Scene / Effects/Classic spell','Scene / Effects/Classic spell/Slots 0-31','Classic spell 0 holyLight','Classic spell 0 holyLight mesh 0']);pool=NativeNodePool.create(engine,records,authored,register);}pool.beginFrame();if(pool.ensure('Classic spell 2 holyLight',1)){engine.setActive(records['Classic spell 2 holyLight'].entity,visible);engine.setActive(records['Classic spell 2 holyLight mesh 0'].entity,true);}if(fail){fail=false;throw Error('discard first spawn');}}").unwrap();
+        assert!(host.tick(&mut world, 0.016).is_err());
+        assert_eq!(world.iter_entities().count(), 4);
+        for _ in 0..3 { host.tick(&mut world, 0.016).unwrap(); }
+        let find = |world: &World, name: &str| world.iter_entities().find(|entity| world.entity_name(*entity) == Some(name)).unwrap();
+        let root = find(&world, "Classic spell 2 holyLight");
+        let child = find(&world, "Classic spell 2 holyLight mesh 0");
+        assert!(!world.entity_active(root));
+        assert!(!world.entity_active(child));
+        host.tick(&mut world, 0.016).unwrap();
+        assert!(!world.entity_active(root));
+        host.tick(&mut world, 0.016).unwrap();
+        assert!(mengine_core::TransformHierarchy::build(&world).is_active(child));
+        assert_eq!(world.get_component::<Parent>(child).unwrap().entity, root);
+        let count = world.iter_entities().count();
+        host.eval("visible=false;").unwrap();host.tick(&mut world, 0.016).unwrap();
+        assert!(!mengine_core::TransformHierarchy::build(&world).is_active(child));
+        host.eval("visible=true;").unwrap();host.tick(&mut world, 0.016).unwrap();
+        assert!(mengine_core::TransformHierarchy::build(&world).is_active(child));
+        assert_eq!(world.iter_entities().count(), count);
+    }
+
+    #[test]
+    fn named_entity_queries_follow_spawn_parent_and_despawn_without_full_snapshot_json() {
+        use mengine_core::generated::Name;
+        let mut host = ScriptHost::new().unwrap();
+        let mut world = World::new();
+        for _ in 0..20000 { world.spawn_empty(); }
+        let root = world.spawn_empty(); world.insert_component(root, Name { value: "Owl".into() });
+        host.eval("function onTick() { const found=engine.findEntitiesByName(['Owl','missing']); if(found.length!==1 || found[0].name!=='Owl') throw Error('lookup'); engine.pushCommandJson(JSON.stringify({op:'spawn',name:'Owl part',components:{}})); }").unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        assert!(host.snapshot.borrow().json.is_none());
+        host.eval("function onTick() { const found=engine.findEntitiesByName(['Owl','Owl part']); if(found.length!==2) throw Error('spawn'); engine.pushCommandJson(JSON.stringify({op:'setParent',entity:found[1].entity,parent:found[0].entity})); }").unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        host.eval("function onTick() { const found=engine.findEntitiesByName(['Owl','Owl part']); if(found[1].parent!==found[0].entity) throw Error('parent'); engine.pushCommandJson(JSON.stringify({op:'despawn',entity:found[1].entity})); }").unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        host.eval("function onTick() { if(engine.findEntitiesByName(['Owl part']).length) throw Error('despawn'); if(engine.findEntitiesByName([]).length) throw Error('empty'); try { engine.findEntitiesByName(new Array(1025).fill('Owl')); throw Error('unbounded'); } catch(e) { if(!(e instanceof TypeError)) throw e; } }").unwrap();
+        host.tick(&mut world, 0.016).unwrap();
+        assert!(host.snapshot.borrow().json.is_none());
+    }
+
+    #[test]
+    fn application_quit_is_queued_and_consumed_once() {
+        let mut host = ScriptHost::new().unwrap();
+        host.eval("engine.quit();").unwrap();
+        assert_eq!(host.take_runtime_requests(), vec![ScriptRuntimeRequest::Quit]);
+        assert!(host.take_runtime_requests().is_empty());
+    }
+
+    #[test]
+    fn script_activation_preserves_entity_and_updates_descendant_hierarchy() {
+        let mut world = World::new();let parent = world.spawn_empty();let child = world.spawn_empty();world.set_parent(child, Some(parent));world.set_editor_state(parent, 7, true);
+        let mut host = ScriptHost::new().unwrap();
+        for active in [false, true] {
+            host.eval(&format!("engine.setActive({}, {});", parent.to_u64(), active)).unwrap();host.tick(&mut world, 0.016).unwrap();
+            assert_eq!(mengine_core::TransformHierarchy::build(&world).is_active(child), active);assert_eq!(world.sibling_index(parent), 7);assert!(world.is_alive(parent));
+        }
+    }
 
     #[test]
     fn sprite_batch_arrays_commit_in_command_order_and_preserve_authored_properties() {
@@ -555,6 +648,15 @@ mod tests {
         host.eval("if (engine.snapshot.frame !== 42 || JSON.parse(lastSnapshot).frame !== 42) throw Error('missing injected snapshot');").unwrap();
     }
 
+    #[test]
+    fn loading_frame_budget_is_consumed_once_and_normal_ticks_remain_bounded_after_eval() {
+        let mut host=ScriptHost::new().unwrap();let mut world=World::new();
+        host.eval("function onTick(){const begin=Date.now();while(Date.now()-begin<1200){}engine.setClearColor(0,1,0,1);}").unwrap();
+        host.tick(&mut world,0.016).unwrap();assert_eq!(world.time.clear_color.y,1.0);
+        host.eval("function onTick(){engine.setClearColor(1,0,0,1);const begin=Date.now();while(Date.now()-begin<1200){}}").unwrap();
+        assert!(host.tick(&mut world,0.016).is_err());assert_eq!(world.time.clear_color.y,1.0);
+        host.eval("onTick=()=>engine.setClearColor(0,0,1,1)").unwrap();host.tick(&mut world,0.016).unwrap();assert_eq!(world.time.clear_color.z,1.0);
+    }
     #[test]
     fn runaway_ticks_abort_without_leaking_commands_and_the_host_recovers() {
         let mut host = ScriptHost::new().unwrap();

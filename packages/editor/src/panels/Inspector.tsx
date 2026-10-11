@@ -1404,7 +1404,8 @@ function SpineSkeletonEditor(props: {
   );
 }
 
-function CanvasEditor(props: {
+function CameraReferenceEditor(props: {
+  componentType: 'Canvas' | 'RawImage';
   data: Record<string, unknown>;
   entities: Array<{ entity: number; name?: string | null; components: Record<string, unknown> }>;
   onChange: (next: Record<string, unknown>) => void;
@@ -1418,10 +1419,10 @@ function CanvasEditor(props: {
     .sort((left, right) => left.label.localeCompare(right.label));
   return (
     <GenericCompEditor
-      componentType="Canvas"
+      componentType={props.componentType}
       data={props.data}
       entities={props.entities}
-      dynamicOptions={{ render_camera: cameras }}
+      dynamicOptions={{ render_camera: cameras, render_root: props.entities.map(entity => ({ value: String(entity.entity), label: entity.name?.trim() || `Entity ${entity.entity}` })) }}
       onChange={props.onChange}
     />
   );
@@ -2408,11 +2409,12 @@ export function Inspector(props: {
                   props.onInvokeBehaviourMethod?.(entity.entity, k, method)
                 }
               />
-            ) : k === 'Canvas' ? (
-              <CanvasEditor
+            ) : k === 'Canvas' || k === 'RawImage' ? (
+              <CameraReferenceEditor
+                componentType={k}
                 data={data}
                 entities={props.entities ?? [entity]}
-                onChange={(next) => props.onSetComponent(entity.entity, 'Canvas', next)}
+                onChange={(next) => props.onSetComponent(entity.entity, k, next)}
               />
             ) : k === 'Camera3D' ? (
               <Camera3DEditor

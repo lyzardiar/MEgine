@@ -73,8 +73,14 @@ pub struct EditorViewportResource {
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EditorViewportProfileCounts {
+    pub msaa_samples: u32,
     pub entities: usize,
     pub render_objects: usize,
+    pub camera_visible_objects: usize,
+    pub shadow_visible_objects: usize,
+    pub submitted_objects: usize,
+    pub scene_views: usize,
+    pub billboard_meshes: usize,
     pub ui_primitives: usize,
     pub ui_batches: usize,
     pub ui_draw_calls: u32,
@@ -96,6 +102,10 @@ pub struct EditorViewportProfile {
     pub total_ms: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub simulation_ms: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub world_revision: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub world_sync_ms: Option<f64>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub simulation_stages: Vec<EditorViewportProfileNode>,
     pub call_tree: EditorViewportProfileNode,
@@ -534,7 +544,7 @@ impl EditorViewportRenderer {
         log_texture_failures(frame.texture_failures.drain(..));
         finish_stage(&mut stages, "Diagnostics.texture_failures", stage_started);
         let stage_started = Instant::now();
-        for failure in self.meshes.sync(&mut self.renderer, &frame.objects) {
+        for failure in self.meshes.sync_frame(&mut self.renderer, &mut frame) {
             log::warn!(
                 "viewport mesh '{}' could not be loaded from {}: {}",
                 failure.key,
@@ -570,7 +580,7 @@ impl EditorViewportRenderer {
         let stage_started = Instant::now();
         log_texture_failures(
             self.textures
-                .sync_materials(&mut self.renderer, &frame.objects),
+                .sync_materials(&mut self.renderer, &frame.resource_objects()),
         );
         finish_stage(
             &mut stages,
@@ -670,7 +680,7 @@ fn build_viewport_profile(
         .filter_map(|resource| resource.gpu_bytes_estimate)
         .sum::<u64>();
     let viewport_pixels = u64::from(width) * u64::from(height);
-    let frame_object_bytes = size_of_val(frame.objects.as_slice()) as u64;
+    let frame_object_bytes = size_of_val(frame.objects.as_slice()) as u64 + frame.scene_views.iter().map(|view| size_of_val(view.objects.as_slice()) as u64).sum::<u64>();
     let frame_ui_primitive_bytes = size_of_val(frame.ui.primitives.as_slice()) as u64;
     let frame_ui_batch_bytes = size_of_val(frame.ui.batches.as_slice()) as u64;
     let frame_control_bytes = size_of_val(frame.controls.as_slice()) as u64;
@@ -720,9 +730,16 @@ fn build_viewport_profile(
         EditorViewportMemoryCategory {
             name: "GPU offscreen depth".into(),
             domain: "gpu".into(),
-            bytes: viewport_pixels * 4,
+            bytes: viewport_pixels * 4 * u64::from(renderer.sample_count()),
             certainty: "estimate".into(),
-            source: "viewport width x height x 4 depth bytes".into(),
+            source: "viewport width x height x 4 depth/stencil bytes x MSAA samples; physical format is backend-dependent".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "GPU HDR and multisampled color".into(),
+            domain: "gpu".into(),
+            bytes: viewport_pixels * (8 + if renderer.sample_count() > 1 { 12 * u64::from(renderer.sample_count()) } else { 0 }),
+            certainty: "estimate".into(),
+            source: "resolved RGBA16F plus MSAA RGBA16F and surface RGBA8 attachments; excludes driver allocation padding".into(),
         },
         EditorViewportMemoryCategory {
             name: "GPU texture residency".into(),
@@ -730,6 +747,11 @@ fn build_viewport_profile(
             bytes: texture_gpu_bytes,
             certainty: "estimate".into(),
             source: "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "GPU live scene views".into(), domain: "gpu".into(),
+            bytes: frame.scene_views.iter().map(|view| u64::from(view.size[0]) * u64::from(view.size[1])).sum::<u64>() * (12 + 4 * u64::from(renderer.sample_count()) + if renderer.sample_count() > 1 { 12 * u64::from(renderer.sample_count()) } else { 0 }),
+            certainty: "estimate".into(), source: "resolved RGBA8 and RGBA16F, depth/stencil and MSAA color attachments; excludes driver padding".into(),
         },
     ];
     let total_ms = render_started.elapsed().as_secs_f64() * 1_000.0;
@@ -781,6 +803,8 @@ fn build_viewport_profile(
     let texture_stats = renderer.material_texture_stats();
     EditorViewportProfile {
         simulation_ms: None,
+        world_revision: None,
+        world_sync_ms: None,
         simulation_stages: Vec::new(),
         schema_version: 1,
         total_ms,
@@ -791,8 +815,14 @@ fn build_viewport_profile(
         resources_truncated,
         resource_sample_age_ms,
         counts: EditorViewportProfileCounts {
+            msaa_samples: renderer.sample_count(),
             entities: world.iter_entities().count(),
             render_objects: frame.objects.len(),
+            camera_visible_objects: renderer.spatial_culling_stats().camera_visible,
+            shadow_visible_objects: renderer.spatial_culling_stats().shadow_visible,
+            submitted_objects: renderer.spatial_culling_stats().submitted,
+            scene_views: frame.scene_views.len(),
+            billboard_meshes: frame.objects.iter().chain(frame.scene_views.iter().flat_map(|v| &v.objects)).filter(|o| o.mesh_key.starts_with("billboard:")).map(|o| &o.mesh_key).collect::<BTreeSet<_>>().len(),
             ui_primitives: frame.ui.primitives.len(),
             ui_batches: frame.ui.batches.len(),
             ui_draw_calls: ui_stats.draw_calls,
@@ -827,6 +857,8 @@ fn collect_frame_resources(
     for batch in &frame.ui.batches {
         let texture_kind = if batch.key.texture.starts_with("mengine-font://") {
             "font-atlas"
+        } else if batch.key.texture.starts_with("$scene-view:") {
+            "scene-view"
         } else {
             "texture"
         };
@@ -835,8 +867,8 @@ fn collect_frame_resources(
             add("material", &batch.key.material, "UI batch");
         }
     }
-    for object in &frame.objects {
-        add("mesh", &object.mesh_key, "RenderObject");
+    for object in frame.resource_objects().iter() {
+        add("mesh", mengine_runtime::meshes::source_mesh_reference(&object.mesh_key), "RenderObject");
         for texture in [
             &object.material.base_color_texture,
             &object.material.normal_texture,
@@ -862,6 +894,10 @@ fn collect_frame_resources(
         .into_iter()
         .take(MAX_RESOURCES)
         .map(|((kind, asset), referenced_by)| {
+            if kind == "scene-view" {
+                let dimensions = frame.scene_views.iter().find(|view| view.key == asset).map(|view| view.size);
+                return EditorViewportResource { kind, asset, resolved_path: None, loaded: dimensions.is_some(), source_bytes: None, gpu_bytes_estimate: None, dimensions, referenced_by: referenced_by.into_iter().collect() };
+            }
             if kind == "font-atlas" {
                 return EditorViewportResource {
                     kind,
@@ -874,8 +910,8 @@ fn collect_frame_resources(
                     referenced_by: referenced_by.into_iter().collect(),
                 };
             }
-            let resolved =
-                mengine_runtime::textures::resolve_project_asset_path(project_root, &asset);
+            let source = if kind == "mesh" { mengine_assets::parse_gltf_pose_sample(&asset).map_or(asset.as_str(),|p| p.0) } else { &asset };
+            let resolved = mengine_runtime::textures::resolve_project_asset_path(project_root, source);
             let metadata = resolved
                 .as_deref()
                 .and_then(|path| std::fs::metadata(path).ok());

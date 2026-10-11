@@ -77,6 +77,29 @@ const installedFont = [
   '/System/Library/Fonts/Supplemental/Arial.ttf',
 ].find((candidate) => existsSync(candidate));
 
+test('buildPcPackage resolves all six shader textures and the sixth object override', () => {
+  const paths = fixture('six-layer-ground');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Shaders'));
+    const textures = Array.from({length: 6}, (_, i) => ({name: `layer${i}`, type: i < 3 ? 'color' : 'data', default: `Assets/Textures/layer${i}.png`}));
+    for (let i = 0; i < 6; i++) writeFileSync(join(paths.project, textures[i].default), `texture ${i}`);
+    writeFileSync(join(paths.project, 'Assets/Textures/override.png'), 'object override');
+    writeFileSync(join(paths.project, 'Assets/Materials/Ground.mmat'), JSON.stringify({version: 10, shader: 'custom', custom_shader: 'Assets/Shaders/Ground.mshader', custom_textures: Object.fromEntries(textures.map(t => [t.name, t.default]))}));
+    const shader = () => `/* MENGINE_PARAMETERS ${JSON.stringify({textures})} */\nfn mengine_lit_surface_hook(s: MEngineSurface, uv: vec2<f32>, p: vec3<f32>) -> MEngineSurface { var r=s; r.roughness=mengine_texture_layer5(uv).b; return r; }`;
+    writeFileSync(join(paths.project, 'Assets/Shaders/Ground.mshader'), shader());
+    writeFileSync(join(paths.project, 'Assets/Scenes/Main.mscene'), JSON.stringify({world: {entities: [{components: {MeshRenderer: {mesh: 'cube', material: 'Assets/Materials/Ground.mmat'}, MaterialPropertyBlock: {custom_texture_names: textures.map(t => t.name), custom_texture_values: textures.map((t, i) => i === 5 ? 'Assets/Textures/override.png' : t.default)}}}]}}));
+    const options = {projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test-engine'};
+    buildPcPackage(options);
+    for (const texture of textures) assert.equal(existsSync(join(paths.output, texture.default)), true);
+    assert.equal(readFileSync(join(paths.output, 'Assets/Textures/override.png'), 'utf8'), 'object override');
+    textures.push({name: 'overflow', type: 'data', default: textures[0].default});
+    writeFileSync(join(paths.project, 'Assets/Shaders/Ground.mshader'), shader());
+    assert.throws(() => buildPcPackage({...options, outputDir: join(paths.root, 'Overflow')}), /more than 6 textures/);
+  } finally {
+    rmSync(paths.root, {recursive: true, force: true});
+  }
+});
+
 test('buildPcPackage signs the deterministic artifact identity with an external Ed25519 key', () => {
   const paths = fixture('artifact-signature');
   try {
@@ -931,7 +954,7 @@ test('buildPcPackage referenced mode copies the validated closure and always-inc
   }
 });
 
-test('referenced builds include validated Text fonts and reject corrupt sfnt data', {
+for (const component of ['Text', 'InputField']) test(`referenced builds include validated ${component} fonts and reject corrupt sfnt data`, {
   skip: installedFont == null ? 'no system TrueType font is available' : false,
 }, () => {
   const paths = fixture('text-font');
@@ -946,7 +969,7 @@ test('referenced builds include validated Text fonts and reject corrupt sfnt dat
       world: {
         entities: [{
           entity: 1,
-          components: { Text: { text: 'Agent UI', font: 'Assets/Fonts/Interface.ttf' } },
+          components: { [component]: { text: 'Agent UI', font: 'Assets/Fonts/Interface.ttf' } },
         }],
       },
     }));
@@ -2350,7 +2373,7 @@ test('buildPcPackage includes skeletal pose models without requesting sprite met
     scene(`${model}#pose=8:4`);
     buildPcPackage(options);
     assert.ok(existsSync(join(paths.output, model)));
-    for (const suffix of ['pose=256:0', 'pose=0:1200', 'pose=-1:0', 'pose=0:NaN', 'Idle']) {
+    for (const suffix of ['pose=256:0', 'pose=0:7201', 'pose=0:0@0', 'pose=0:0@61', 'pose=0:36001@60', 'pose=0:18001@30', 'pose=-1:0', 'pose=0:NaN', 'Idle']) {
       scene(`${model}#${suffix}`);
       assert.throws(() => buildPcPackage({ ...options, outputDir: join(paths.root, 'Invalid') }), /invalid skeletal pose reference/);
     }
@@ -2545,6 +2568,72 @@ test('buildPcPackage validates external glTF buffers and images', () => {
       kind: 'glTF buffer',
       from: 'Assets/Models/Environment.gltf',
     }]);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage includes skeletal pose models without sprite sidecars and rejects invalid poses', () => {
+  const paths = fixture('gltf-pose');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Models'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Models', 'Hero.gltf'), JSON.stringify({ asset: { version: '2.0' } }));
+    const scene = join(paths.project, 'Assets', 'Scenes', 'Main.mscene');
+    const writePose = (pose) => writeFileSync(scene, JSON.stringify({ world: { entities: [{ components: { MeshRenderer: { mesh: `Assets/Models/Hero.gltf#${pose}`, material: 'default' } } }] } }));
+    for (const pose of ['pose=256:0', 'pose=0:7201', 'pose=0:0@0', 'pose=0:0@61', 'pose=0:36001@60', 'pose=0:18001@30', 'pose=-1:0', 'pose=foo:0']) {
+      writePose(pose);
+      assert.throws(() => buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test' }), /invalid skeletal pose reference/);
+    }
+    for(const pose of ['pose=0:12', 'pose=0:18000@30', 'pose=0:36000@60']) {
+      writePose(pose);buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test', clean: true });
+    }
+    writePose('pose=0:12');
+    const manifest = buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test', clean: true });
+    assert.ok(manifest.files.some(file => file.path === 'Assets/Models/Hero.gltf'));
+    assert.ok(!manifest.files.some(file => file.path.endsWith('.sprite.json')));
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage includes sampled effect textures and rejects missing dependencies and endpoints', () => {
+  const paths = fixture('sampled-effect');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Effects'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Scenes', 'Main.mscene'), JSON.stringify({ world: { entities: [{ components: { SampledEffect: { effect: 'Assets/Effects/Spark.mfx' } } }] } }));
+    const effect = { schemaVersion: 1, fps: 12, materials: [{ texture: 'Assets/Textures/Spark.png', blend: 'additive' }], clips: [{ name: 'Birth', duration: 0.1, loop: false, frames: [0, 0.1].map(seconds => ({ seconds, particles: [], quads: [], lights: [] })) }] };
+    const save = () => writeFileSync(join(paths.project, 'Assets', 'Effects', 'Spark.mfx'), JSON.stringify(effect));
+    save();
+    const build = () => buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test' });
+    assert.throws(build, /missing sampled effect texture/);
+    writeFileSync(join(paths.project, 'Assets', 'Textures', 'Spark.png'), 'texture');
+    effect.clips[0].frames[1].seconds = 0.09; save();
+    assert.throws(build, /invalid sampled effect.*endpoints/);
+    effect.clips[0].frames[1].seconds = 0.1; save();
+    const manifest = build();
+    assert.ok(manifest.files.some(file => file.path === 'Assets/Effects/Spark.mfx'));
+    const texture = manifest.files.find(file => file.path === 'Assets/Textures/Spark.png');
+    assert.ok(texture?.includedBy.some(reason => reason.kind === 'sampled effect texture'));
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
+test('buildPcPackage includes mesh patch sources without sprite sidecars and rejects malformed cells', () => {
+  const paths = fixture('mesh-patch');
+  try {
+    mkdirSync(join(paths.project, 'Assets', 'Models'), { recursive: true });
+    writeFileSync(join(paths.project, 'Assets', 'Models', 'Tiles.mpatch'), JSON.stringify({ schemaVersion: 1, columns: 1, rows: 1, cellSize: [2,2], scale: 2, heightStep: .5, origin: [0,0], templateOffset: [0,0,0], templates: [{ positions: [[0,0,0],[1,0,0],[0,0,1]], normals: [[0,1,0],[0,1,0],[0,1,0]], uvs: [[0,0],[1,0],[0,1]], indices: [0,1,2] }] }));
+    const scene = join(paths.project, 'Assets', 'Scenes', 'Main.mscene');
+    const writePatch = (mesh) => writeFileSync(scene, JSON.stringify({ world: { entities: [{ components: { MeshRenderer: { mesh, material: 'default' } } }] } }));
+    for (const mesh of ['meshpatch:Assets/Models/Tiles.mpatch#0008', 'meshpatch:Assets/Models/Tiles.mpatch#0008x', 'meshpatch:Assets/Models/Tiles.json#00080']) {
+      writePatch(mesh);
+      assert.throws(() => buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test' }), /invalid mesh patch reference/);
+    }
+    writePatch('meshpatch:Assets/Models/Tiles.mpatch#00080');
+    const manifest = buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test' });
+    assert.ok(manifest.files.some(file => file.path === 'Assets/Models/Tiles.mpatch'));
+    assert.ok(!manifest.files.some(file => file.path.endsWith('.sprite.json')));
   } finally {
     rmSync(paths.root, { recursive: true, force: true });
   }

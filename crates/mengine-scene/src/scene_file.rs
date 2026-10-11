@@ -197,43 +197,45 @@ fn apply_snapshot_inner(world: &mut World, snap: &WorldSnapshot, preserve_entiti
         if let Some(name) = &ent.name { world.set_component_value(child, "Name", serde_json::json!({"value":name})); }
     }
 
-    for ent in &snap.entities {
-        let Some(&child) = entity_map.get(&ent.entity) else {
-            continue;
-        };
-        world.set_editor_state(child, ent.sibling_index, ent.active);
-        world.set_entity_metadata(child, ent.tag.clone(), ent.layer);
-        world.set_parent(child, ent.parent.and_then(|id| entity_map.get(&id)).copied());
-        let mut components = serde_json::Value::Object(
-            ent.components
-                .iter()
-                .map(|(name, value)| (name.clone(), value.clone()))
-                .collect(),
-        );
-        match remap_scene_entity_references(&mut components, &entity_map) {
-            Ok(()) => {
-                if let Some(components) = components.as_object() {
-                    for (name, value) in components {
-                        world.set_component_value(child, name, value.clone());
-                    }
+    for ent in &snap.entities { apply_snapshot_entity(world, ent, &entity_map, true); }
+
+    world.selected = snap.selected.and_then(|id| entity_map.get(&id)).copied();
+}
+
+pub(crate) fn apply_snapshot_entity(world: &mut World, ent: &mengine_core::snapshot::EntitySnapshot, entity_map: &HashMap<u64, mengine_core::Entity>, refresh_parent: bool) {
+    let Some(&child) = entity_map.get(&ent.entity) else {
+        return;
+    };
+    world.set_editor_state(child, ent.sibling_index, ent.active);
+    world.set_entity_metadata(child, ent.tag.clone(), ent.layer);
+    if refresh_parent { world.set_parent(child, ent.parent.and_then(|id| entity_map.get(&id)).copied()); }
+    let mut components = serde_json::Value::Object(
+        ent.components
+            .iter()
+            .map(|(name, value)| (name.clone(), value.clone()))
+            .collect(),
+    );
+    match remap_scene_entity_references(&mut components, &entity_map) {
+        Ok(()) => {
+            if let Some(components) = components.as_object() {
+                for (name, value) in components {
+                    world.set_component_value(child, name, value.clone());
                 }
             }
-            Err(error) => log::warn!(
-                "scene entity references on {} could not be remapped: {error}",
-                ent.entity
-            ),
         }
-        if let Some(director) = world.get_component_mut::<TimelineDirector>(child) {
-            if let Ok(mut bindings) = parse_timeline_binding_table(&director.bindings_json) {
-                bindings.remap_entities(&entity_map);
-                if let Ok(serialized) = serialize_timeline_binding_table(bindings) {
-                    director.bindings_json = serialized;
-                }
+        Err(error) => log::warn!(
+            "scene entity references on {} could not be remapped: {error}",
+            ent.entity
+        ),
+    }
+    if let Some(director) = world.get_component_mut::<TimelineDirector>(child) {
+        if let Ok(mut bindings) = parse_timeline_binding_table(&director.bindings_json) {
+            bindings.remap_entities(&entity_map);
+            if let Ok(serialized) = serialize_timeline_binding_table(bindings) {
+                director.bindings_json = serialized;
             }
         }
     }
-
-    world.selected = snap.selected.and_then(|id| entity_map.get(&id)).copied();
 }
 
 #[cfg(test)]
@@ -322,7 +324,7 @@ mod tests {
     fn preserves_unknown_components_and_editor_fields() {
         let (dir, path) = temp_scene("unknown.mscene");
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Custom".into()),
             components: json!({
                 "Transform": {
@@ -367,7 +369,7 @@ mod tests {
     fn preserves_hierarchy_when_reusing_entity_slots_in_reverse_order() {
         let mut source = World::new();
         for name in ["Canvas", "Panel", "Image", "Text", "Badge"] {
-            source.commands.push(WorldCommand::Spawn {
+            source.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: Some(name.into()),
                 components: json!({}),
             });
@@ -386,7 +388,7 @@ mod tests {
         // ascending slot order, causing Spawn to reuse the slots in reverse.
         let mut loaded = World::new();
         for index in 0..8 {
-            loaded.commands.push(WorldCommand::Spawn {
+            loaded.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: Some(format!("Old {index}")),
                 components: json!({}),
             });
@@ -444,7 +446,7 @@ mod tests {
     fn round_trips_canvas_controls_lights_and_materials() {
         let (dir, path) = temp_scene("rendering.mscene");
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Rendered".into()),
             components: json!({
                 "Transform": {
@@ -637,7 +639,7 @@ mod tests {
     fn round_trips_typed_2d_physics_components() {
         let (dir, path) = temp_scene("physics2d.mscene");
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Physics 2D".into()),
             components: json!({
                 "Transform": {
@@ -677,7 +679,7 @@ mod tests {
     fn round_trips_grid_and_sparse_tilemap_components() {
         let (dir, path) = temp_scene("tilemap.mscene");
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Ground".into()),
             components: json!({
                 "Grid": {
@@ -711,7 +713,7 @@ mod tests {
     fn generated_loader_restores_particle_and_spine_runtime_types() {
         let (dir, path) = temp_scene("generated-runtime-components.mscene");
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Runtime Components".into()),
             components: json!({
                 "Transform": {},

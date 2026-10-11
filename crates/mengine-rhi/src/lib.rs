@@ -7,6 +7,7 @@ mod render_graph;
 mod renderer;
 mod shader_targets;
 mod sky;
+mod spatial;
 mod ui;
 
 pub use mesh::{MeshGpu, Vertex};
@@ -16,8 +17,8 @@ pub use renderer::{
     ClearColor, DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting,
     MaterialBlendMode, MaterialFilter, MaterialPipelinePrewarmReport, MaterialPipelineStats,
     MaterialTextureStats, MaterialWrap, OffscreenRenderTarget, PointLightData, RenderFrame,
-    RenderMaterial, RenderObject, RenderTarget, Renderer, SpotLightData,
-    SurfaceShaderParameterBinding, SurfaceShaderPipelineDiagnostic,
+    RenderMaterial, RenderObject, RenderTarget, Renderer, SceneTextureFrame, SpotLightData,
+    SurfaceShaderParameterBinding, SurfaceShaderPipelineDiagnostic, SpatialCullingStats,
 };
 pub use shader_targets::{compile_shader_backends, ShaderBackendArtifact, ShaderCompilationReport};
 pub use ui::{

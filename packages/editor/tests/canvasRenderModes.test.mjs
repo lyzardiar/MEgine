@@ -1,3 +1,4 @@
+// Author: MiYu. Verify Canvas rendering, layout and live mode transitions.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import path from 'node:path';
@@ -25,6 +26,22 @@ const {
   '/src/ui/uiLayout.ts',
 );
 test.after(() => server.close());
+
+test('overlay scenes skip world transform traversal and live WorldSpace switches still project', () => {
+  let transformReads = 0;
+  const transform = { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] };
+  const canvas = { entity: 1, components: { Canvas: { render_mode: 'ScreenSpaceOverlay' }, RectTransform: rect(), get Transform() { transformReads++; return transform; } } };
+  const entities = [canvas, { entity: 2, parent: 1, components: { RectTransform: rect(), Image: { sprite: 'white' } } }];
+  const layout = () => layoutUiWorldSpace(entities, camera, { x: 0, y: 0, w: 800, h: 600 }, new Set());
+  assert.deepEqual(layout(), []); assert.equal(transformReads, 0);
+  canvas.components.Canvas.render_mode = 'WorldSpace';
+  const first = layout().find(item => item.entity === 2); assert.ok(first); assert.ok(transformReads > 0);
+  transform.position[0] = .5;
+  const moved = layout().find(item => item.entity === 2); assert.ok(moved); assert.notDeepEqual(moved.screenCorners, first.screenCorners);
+  canvas.active = false; transformReads = 0; assert.deepEqual(layout(), []); assert.equal(transformReads, 0);
+  canvas.active = true; canvas.components.Canvas.render_mode = 'ScreenSpaceCamera';
+  assert.deepEqual(layout(), []); assert.equal(transformReads, 0);
+});
 
 test('projected quad interpolation preserves corners and perspective depth', () => {
   const corners = [

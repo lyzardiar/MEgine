@@ -1,3 +1,6 @@
+// Author: MiYu. Editor event cursors and scene changes, including immutable Play record signatures.
+import { isRetainedPlayRecord } from '../playWorldSync.ts';
+
 export const AGENT_EVENT_TOPICS = [
   'scene.changed',
   'selection.changed',
@@ -217,16 +220,12 @@ export type SceneDiff = {
   entities: SceneEntityView[];
 };
 
-type SceneEntityRecord = {
-  signature: string;
-  value: SceneEntityView;
-};
-
 export class SceneChangeTracker {
   private revisionValue = 0;
   private sceneName: string | null = null;
   private sceneStateSignature = '';
-  private entities = new Map<number, SceneEntityRecord>();
+  private entities = new Map<number, string>();
+  private immutableSignatures = new WeakMap<SceneEntityView, string>();
   private readonly deltas: SceneDelta[] = [];
   private readonly capacity: number;
 
@@ -246,6 +245,7 @@ export class SceneChangeTracker {
     this.sceneName = null;
     this.sceneStateSignature = '';
     this.entities.clear();
+    this.immutableSignatures = new WeakMap();
     this.deltas.splice(0);
   }
 
@@ -254,7 +254,7 @@ export class SceneChangeTracker {
     entities: readonly SceneEntityView[],
     sceneState: SceneStateView = {},
   ): SceneDelta | null {
-    const current = entityRecords(entities);
+    const current = entitySignatures(entities, this.immutableSignatures);
     const currentSceneStateSignature = JSON.stringify(clone(sceneState));
     if (this.revisionValue === 0) {
       this.revisionValue = 1;
@@ -285,7 +285,7 @@ export class SceneChangeTracker {
       for (const [id, record] of current) {
         const previous = this.entities.get(id);
         if (!previous) added.push(id);
-        else if (previous.signature !== record.signature) changed.push(id);
+        else if (previous !== record) changed.push(id);
       }
       for (const id of this.entities.keys()) {
         if (!current.has(id)) removed.push(id);
@@ -386,16 +386,23 @@ export class SceneChangeTracker {
   }
 }
 
-function entityRecords(
+function entitySignatures(
   entities: readonly SceneEntityView[],
-): Map<number, SceneEntityRecord> {
-  const records = new Map<number, SceneEntityRecord>();
+  immutableSignatures: WeakMap<SceneEntityView, string>,
+): Map<number, string> {
+  const records = new Map<number, string>();
   for (const entity of entities) {
     if (!Number.isSafeInteger(entity.entity) || records.has(entity.entity)) {
       throw new Error(`Scene contains an invalid or duplicate entity id: ${String(entity.entity)}`);
     }
-    const value = clone(entity);
-    records.set(entity.entity, { signature: JSON.stringify(value), value });
+    // Scene payloads are JSON data; diff() clones the requested values at the return boundary.
+    const retained = isRetainedPlayRecord(entity) && !('toJSON' in Object.prototype) && !('toJSON' in Array.prototype);
+    let signature = retained ? immutableSignatures.get(entity) : undefined;
+    if (signature === undefined) {
+      signature = JSON.stringify(entity);
+      if (retained) immutableSignatures.set(entity, signature);
+    }
+    records.set(entity.entity, signature);
   }
   return records;
 }

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { diffProjectFiles } from '../src/projectAssets.ts';
+// Author: MiYu. Asset diff and asynchronous project-session isolation.
+import { diffProjectFiles, listProjectFiles, pollProjectFileChanges, refreshProjectFiles, resetProjectAssetState } from '../src/projectAssets.ts';
 
 function asset(relPath, revision, kind = 'material', guid = 'bf914747-8c6a-418f-b74f-49d49114f9a2') {
   const segments = relPath.split('/');
@@ -61,4 +62,42 @@ test('case-only path renames remain visible as a modification', () => {
   assert.equal(changes.length, 1);
   assert.equal(changes[0].type, 'modified');
   assert.equal(changes[0].relPath, 'Assets/Materials/Hero.mmat');
+});
+
+function deferredAssetFetch() {
+  const pending = [], original = globalThis.fetch;
+  globalThis.fetch = () => new Promise(resolve => pending.push(assets => resolve({ ok: true, json: async () => ({ assets }) })));
+  resetProjectAssetState();
+  return { pending, close() { globalThis.fetch = original; resetProjectAssetState(); } };
+}
+
+test('initial polling uses the baseline established while its scan was pending', async () => {
+  const io = deferredAssetFetch(), files = [asset('Assets/Main.mscene', 'initial', 'scene')];
+  try {
+    const poll = pollProjectFileChanges(), refresh = refreshProjectFiles();
+    io.pending[1](files); await refresh;
+    io.pending[0](files); assert.deepEqual(await poll, []);
+    const changed = pollProjectFileChanges(); io.pending[2]([...files, asset('Assets/New.mmat', 'new')]);
+    assert.deepEqual((await changed).map(e => [e.type, e.relPath]), [['added', 'Assets/New.mmat']]);
+  } finally { io.close(); }
+});
+
+test('a scan from a closed project cannot overwrite the new project index', async () => {
+  const io = deferredAssetFetch();
+  try {
+    const old = refreshProjectFiles(); resetProjectAssetState();
+    const current = refreshProjectFiles(); io.pending[1]([asset('Assets/New.mmat', 'new')]); await current;
+    io.pending[0]([asset('Assets/Old.mmat', 'old')]); await old;
+    assert.deepEqual(listProjectFiles().map(e => e.relPath), ['Assets/New.mmat']);
+  } finally { io.close(); }
+});
+
+test('a poll from a closed project cannot publish changes or replace the new baseline', async () => {
+  const io = deferredAssetFetch();
+  try {
+    const old = pollProjectFileChanges(); resetProjectAssetState();
+    const current = refreshProjectFiles(); io.pending[1]([asset('Assets/New.mmat', 'new')]); await current;
+    io.pending[0]([asset('Assets/Old.mmat', 'old')]); assert.deepEqual(await old, []);
+    assert.deepEqual(listProjectFiles().map(e => e.relPath), ['Assets/New.mmat']);
+  } finally { io.close(); }
 });

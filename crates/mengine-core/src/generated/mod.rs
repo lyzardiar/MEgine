@@ -1665,6 +1665,45 @@ impl Component for ParticleEmitter3D {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(default)]
+pub struct SampledEffect {
+    pub effect: String,
+    pub clip: i32,
+    pub playing: bool,
+    pub looping: bool,
+    pub speed: f32,
+    pub time_seconds: f32,
+}
+
+impl Default for SampledEffect {
+    fn default() -> Self {
+        Self {
+            effect: "".into(),
+            clip: 0,
+            playing: true,
+            looping: true,
+            speed: 1.0,
+            time_seconds: 0.0,
+        }
+    }
+}
+
+impl Component for SampledEffect {
+    fn type_name() -> &'static str {
+        "SampledEffect"
+    }
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
+        self
+    }
+    fn to_value(&self) -> serde_json::Value {
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(default)]
 pub struct EffekseerEffect {
     pub effect: String,
     pub playing: bool,
@@ -2161,6 +2200,8 @@ pub struct RawImage {
     pub maskable: bool,
     pub material: String,
     pub texture: String,
+    pub render_camera: String,
+    pub render_root: String,
     pub color: [f32; 4],
     pub uv_rect: [f32; 4],
     pub raycast_target: bool,
@@ -2174,6 +2215,8 @@ impl Default for RawImage {
             maskable: true,
             material: "".into(),
             texture: "white".into(),
+            render_camera: "".into(),
+            render_root: "".into(),
             color: [1.0, 1.0, 1.0, 1.0],
             uv_rect: [0.0, 0.0, 1.0, 1.0],
             raycast_target: true,
@@ -2819,6 +2862,7 @@ impl Component for ProgressBar {
 #[serde(default)]
 pub struct InputField {
     pub text: String,
+    pub font: String,
     pub placeholder: String,
     pub text_color: [f32; 4],
     pub placeholder_color: [f32; 4],
@@ -2836,6 +2880,7 @@ impl Default for InputField {
     fn default() -> Self {
         Self {
             text: "".into(),
+            font: "".into(),
             placeholder: "Enter text...".into(),
             text_color: [0.94, 0.95, 0.98, 1.0],
             placeholder_color: [0.55, 0.58, 0.64, 1.0],
@@ -3138,6 +3183,8 @@ pub fn component_from_value(
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "ParticleEmitter3D" => serde_json::from_value::<ParticleEmitter3D>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
+        "SampledEffect" => serde_json::from_value::<SampledEffect>(value)
+            .map(|component| Some(Box::new(component) as ComponentBox)),
         "EffekseerEffect" => serde_json::from_value::<EffekseerEffect>(value)
             .map(|component| Some(Box::new(component) as ComponentBox)),
         "SpineSkeleton" => serde_json::from_value::<SpineSkeleton>(value)
@@ -3246,6 +3293,7 @@ pub mod meta {
         "AutoRotate",
         "ParticleEmitter2D",
         "ParticleEmitter3D",
+        "SampledEffect",
         "EffekseerEffect",
         "SpineSkeleton",
         "Canvas",

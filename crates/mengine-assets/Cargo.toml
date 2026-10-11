@@ -13,7 +13,7 @@ thiserror.workspace = true
 log.workspace = true
 uuid.workspace = true
 image.workspace = true
-gltf.workspace = true
+gltf = { workspace = true, features = ["extras"] }
 glam.workspace = true
 parking_lot.workspace = true
 walkdir.workspace = true

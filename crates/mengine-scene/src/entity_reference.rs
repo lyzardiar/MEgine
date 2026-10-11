@@ -17,7 +17,7 @@ const COMPONENT_ENTITY_REFERENCE_FIELDS: [(&str, &str); 10] = [
     ("ScrollView", "on_value_changed"),
     ("TabView", "on_value_changed"),
 ];
-const COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS: [(&str, &str); 1] = [("Canvas", "render_camera")];
+const COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS: [(&str, &str); 3] = [("Canvas", "render_camera"), ("RawImage", "render_camera"), ("RawImage", "render_root")];
 
 enum PrefabReference<'a> {
     Node(&'a str),
@@ -313,6 +313,20 @@ mod tests {
         components["Canvas"]["render_camera"] = json!(99);
         remap_scene_entity_references(&mut components, &HashMap::new()).unwrap();
         assert_eq!(components["Canvas"]["render_camera"], "");
+    }
+
+    #[test]
+    fn raw_image_view_references_remap_through_scene_and_prefab() {
+        let camera = Entity::new(12, 3);
+        let root = Entity::new(8, 2);
+        let mut components = json!({"RawImage":{"render_camera":"10","render_root":"20"}});
+        remap_scene_entity_references(&mut components, &HashMap::from([(10, camera), (20, root)])).unwrap();
+        assert_eq!(components["RawImage"]["render_camera"], camera.to_u64().to_string());
+        assert_eq!(components["RawImage"]["render_root"], root.to_u64().to_string());
+        components = json!({"RawImage":{"render_camera":{TOKEN_KEY:{"kind":"prefab_node","node":"camera"}},"render_root":{TOKEN_KEY:{"kind":"prefab_node","node":"model"}}}});
+        resolve_prefab_entity_references(&mut components, &HashMap::from([("camera".into(), camera), ("model".into(), root)])).unwrap();
+        assert_eq!(components["RawImage"]["render_camera"], camera.to_u64().to_string());
+        assert_eq!(components["RawImage"]["render_root"], root.to_u64().to_string());
     }
 
     #[test]

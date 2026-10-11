@@ -1,4 +1,4 @@
-use mengine_core::{snapshot::WorldSnapshot, World};
+use mengine_core::{snapshot::{EntitySnapshot, SharedWorldSnapshot, WorldSnapshot, WorldSnapshotCache}, World};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
 use mengine_runtime::{animation::AnimationRuntime, audio::AudioRuntime, scenes::{LoadedScene, SceneManager, SceneSelector}, script_requests::ScriptRequestContext, timeline::TimelineRuntime};
 use mengine_script::{ScriptHost, ScriptAnimationEvent, ScriptTimelineSignal};
@@ -6,6 +6,7 @@ pub use mengine_script::ScriptInput;
 use std::path::PathBuf;
 use std::sync::{Arc, atomic::{AtomicU64, Ordering}, mpsc::{self, Sender}};
 use std::time::{Duration, Instant};
+use std::collections::{HashMap, VecDeque};
 use crate::viewport::{EditorViewportFrame, EditorViewportProfileNode};
 
 type RenderPlayWorld = Box<dyn FnOnce(&World) -> Result<EditorViewportFrame, String> + Send>;
@@ -18,10 +19,77 @@ pub struct PlayProject {
     pub build_scenes: Vec<PathBuf>,
 }
 
+/// MiYu: fresh frame metadata and changed payloads; entity order is sent on structural changes or resets.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayWorldUpdate {
+    pub quit_requested: bool,
+    pub snapshot: WorldSnapshot,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entity_order: Option<Vec<u64>>,
+    pub base_revision: u64,
+    pub revision: u64,
+    pub reset: bool,
+}
+
+#[derive(Default)]
+struct PlaySnapshotStream {
+    entities: Vec<Arc<EntitySnapshot>>,
+    revision: u64,
+}
+
+impl PlaySnapshotStream {
+    fn update(&mut self, mut snapshot: SharedWorldSnapshot, reset: bool) -> PlayWorldUpdate {
+        let base_revision = self.revision;
+        self.revision += 1;
+        let current = std::mem::take(&mut snapshot.entities);
+        let stable = !reset && base_revision != 0 && current.len() == self.entities.len() && current.iter().zip(&self.entities).all(|(entity, previous)| entity.entity == previous.entity);
+        let same = |entity: &Arc<EntitySnapshot>, previous: &Arc<EntitySnapshot>| Arc::ptr_eq(previous, entity) || previous == entity;
+        let entity_order = (!stable).then(|| current.iter().map(|entity| entity.entity).collect());
+        let changed = if stable {
+            current.iter().zip(&self.entities).filter(|(entity, previous)| !same(entity, previous)).map(|(entity, _)| entity.clone()).collect()
+        } else {
+            let previous: HashMap<_, _> = self.entities.iter().map(|entity| (entity.entity, entity)).collect();
+            current.iter().filter(|entity| reset || !previous.get(&entity.entity).is_some_and(|previous| same(entity, previous))).cloned().collect()
+        };
+        self.entities = current;
+        snapshot.entities = changed;
+        PlayWorldUpdate { snapshot: snapshot.into_owned(), entity_order, base_revision, revision: self.revision, reset, quit_requested: false }
+    }
+}
+
+const PLAY_VIEWPORT_REVISION_EXPIRED: &str = "Play viewport revision expired";
+
+#[derive(Default)]
+struct PlayRenderHistory {
+    checkpoints: VecDeque<(u64, SharedWorldSnapshot, f64, Vec<EditorViewportProfileNode>)>,
+    materialized: Option<(u64, mengine_scene::SharedSnapshotWorld)>,
+}
+
+impl PlayRenderHistory {
+    fn record(&mut self, revision: u64, snapshot: SharedWorldSnapshot, step_ms: f64, stages: Vec<EditorViewportProfileNode>) {
+        self.checkpoints.push_back((revision, snapshot, step_ms, stages));
+        while self.checkpoints.len() > 3 { self.checkpoints.pop_front(); }
+    }
+
+    fn world<'a>(&'a mut self, live: &'a World, revision: u64) -> Result<(&'a World, f64, Vec<EditorViewportProfileNode>), String> {
+        let (_, snapshot, step_ms, stages) = self.checkpoints.iter().find(|(id, ..)| *id == revision).ok_or_else(|| PLAY_VIEWPORT_REVISION_EXPIRED.to_string())?;
+        let profile = (*step_ms, stages.clone());
+        if self.checkpoints.back().is_some_and(|(id, ..)| *id == revision) { return Ok((live, profile.0, profile.1)); }
+        if self.materialized.as_ref().is_none_or(|(id, _)| *id != revision) {
+            let (_, world) = self.materialized.get_or_insert_with(|| (revision, mengine_scene::SharedSnapshotWorld::default()));
+            world.update(snapshot);
+            self.materialized.as_mut().unwrap().0 = revision;
+        }
+        Ok((self.materialized.as_ref().expect("historical render world").1.world(), profile.0, profile.1))
+    }
+}
+
 enum Request {
     Start { generation: u64, source: String, snapshot: WorldSnapshot, project: PlayProject, reply: Sender<Result<WorldSnapshot, String>> },
     Step { generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<WorldSnapshot, String>> },
-    Render { generation: u64, render: RenderPlayWorld, reply: Sender<Result<EditorViewportFrame, String>> },
+    StepUpdate { generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<PlayWorldUpdate, String>> },
+    Render { generation: u64, revision: Option<u64>, render: RenderPlayWorld, reply: Sender<Result<EditorViewportFrame, String>> },
     Stop { generation: u64 },
 }
 
@@ -48,16 +116,42 @@ impl Default for EditorPlayRuntime {
                     }
                     Request::Step { generation, snapshot, input, dt, reply } => {
                         if current.load(Ordering::SeqCst) != generation { let _ = reply.send(Err("Play session expired".into())); continue; }
-                        let result = session.as_mut().filter(|(id, _)| *id == generation).ok_or_else(|| "Play Mode is not initialized".to_string()).and_then(|(_, session)| session.step(snapshot, input, dt));
+                        let result = session.as_mut().filter(|(id, _)| *id == generation).ok_or_else(|| "Play Mode is not initialized".to_string()).and_then(|(_, session)| { session.render_history = PlayRenderHistory::default(); session.step(snapshot, input, dt).map(SharedWorldSnapshot::into_owned) });
                         if result.is_err() { session = None; }
                         let _ = reply.send(result);
                     }
-                    Request::Render { generation, render, reply } => {
-                        let result = session.as_ref().filter(|(id, _)| *id == generation && current.load(Ordering::SeqCst) == generation)
+                    Request::StepUpdate { generation, snapshot, input, dt, reply } => {
+                        if current.load(Ordering::SeqCst) != generation { let _ = reply.send(Err("Play session expired".into())); continue; }
+                        let reset = snapshot.is_some();
+                        let result = session.as_mut().filter(|(id, _)| *id == generation).ok_or_else(|| "Play Mode is not initialized".to_string()).and_then(|(_, session)| {
+                            let snapshot = session.step(snapshot, input, dt)?;
+                            let started = Instant::now();
+                            let checkpoint = snapshot.clone();
+                            let mut update = session.snapshot_stream.update(snapshot, reset);
+                            update.quit_requested = session.quit_requested;
+                            let total_ms = started.elapsed().as_secs_f64() * 1000.0;
+                            session.step_ms += total_ms;
+                            session.step_stages.push(EditorViewportProfileNode { name: "Snapshot delta".into(), total_ms, self_ms: total_ms, calls: 1, children: Vec::new() });
+                            session.render_history.record(update.revision, checkpoint, session.step_ms, session.step_stages.clone());
+                            Ok(update)
+                        });
+                        if result.is_err() { session = None; }
+                        let _ = reply.send(result);
+                    }
+                    Request::Render { generation, revision, render, reply } => {
+                        let result = session.as_mut().filter(|(id, _)| *id == generation && current.load(Ordering::SeqCst) == generation)
                             .ok_or_else(|| "Play session expired".to_string()).and_then(|(_, session)| {
-                                let mut frame = render(&session.world)?;
-                                frame.profile.simulation_ms = Some(session.step_ms);
-                                frame.profile.simulation_stages = session.step_stages.clone();
+                                let world_sync_started = Instant::now();
+                                let (world, step_ms, stages) = match revision {
+                                    Some(revision) => session.render_history.world(&session.world, revision)?,
+                                    None => (&session.world, session.step_ms, session.step_stages.clone()),
+                                };
+                                let world_sync_ms = world_sync_started.elapsed().as_secs_f64() * 1000.0;
+                                let mut frame = render(world)?;
+                                frame.profile.world_sync_ms = Some(world_sync_ms);
+                                frame.profile.simulation_ms = Some(step_ms);
+                                frame.profile.simulation_stages = stages;
+                                frame.profile.world_revision = revision;
                                 Ok(frame)
                             });
                         let _ = reply.send(result);
@@ -98,15 +192,35 @@ impl EditorPlayRuntime {
 
     pub fn stop(&self) { self.begin(); }
 
+    pub fn stop_session(&self, generation: u64) {
+        if self.generation.compare_exchange(generation, generation + 1, Ordering::SeqCst, Ordering::SeqCst).is_ok() {
+            let _ = self.sender.send(Request::Stop { generation: generation + 1 });
+        }
+    }
+
+    /// Revisioned IPC stream; explicit editor edits force a complete response.
+    pub fn advance_update(&self, generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<PlayWorldUpdate, String> {
+        if !dt.is_finite() || dt <= 0.0 || dt > 1.0 { return Err("Play step delta must be in (0, 1]".into()); }
+        let (reply, result) = mpsc::channel();
+        self.sender.send(Request::StepUpdate { generation, snapshot, input, dt, reply }).map_err(|error| error.to_string())?;
+        result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play step: {error}"))?
+    }
+
     /// Render on the owning worker so each view uses the live world without a scene round trip.
     pub fn render(&self, generation: u64, render: impl FnOnce(&World) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
+        self.render_revision(generation, None, render)
+    }
+
+    /// A browser-owned UI frame can request its exact retained world revision.
+    pub fn render_revision(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
         let (reply, result) = mpsc::channel();
-        self.sender.send(Request::Render { generation, render: Box::new(render), reply }).map_err(|error| error.to_string())?;
+        self.sender.send(Request::Render { generation, revision, render: Box::new(render), reply }).map_err(|error| error.to_string())?;
         result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play rendering: {error}"))?
     }
 }
 
 struct PlaySession {
+    quit_requested: bool,
     world: World,
     script: ScriptHost,
     initial: WorldSnapshot,
@@ -120,6 +234,9 @@ struct PlaySession {
     physics3d: PhysicsWorld,
     step_ms: f64,
     step_stages: Vec<EditorViewportProfileNode>,
+    snapshot_stream: PlaySnapshotStream,
+    snapshot_cache: WorldSnapshotCache,
+    render_history: PlayRenderHistory,
 }
 
 impl PlaySession {
@@ -130,14 +247,17 @@ impl PlaySession {
         let mut scenes = SceneManager::new(project.root.clone(), project.build_scenes, false);
         let initial_scene = scenes.set_current(&project.scene, project.name);
         let mut script = ScriptHost::new().map_err(|error| error.to_string())?;
-        if let Some(root) = project.root.as_deref() { script.set_storage_root(mengine_script::project_storage_root(root)); }
-        script.inject_snapshot_json(&serde_json::to_string(&initial).map_err(|error| error.to_string())?).map_err(|error| error.to_string())?;
+        if let Some(root) = project.root.as_deref() { script.set_storage_root(mengine_script::project_storage_root(root)); script.set_project_root(root.to_path_buf()); }
+        script.sync_world(&world).map_err(|error| error.to_string())?;
         script.eval(source).map_err(|error| error.to_string())?;
         script.notify_scene_loaded(&initial_scene.name, &initial_scene.path.to_string_lossy().replace('\\', "/"), initial_scene.build_index, initial_scene.build_scene_count).map_err(|error| error.to_string())?;
-        Ok(Self { world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new() })
+        let mut snapshot_cache = WorldSnapshotCache::default();
+        let mut render_history = PlayRenderHistory::default();
+        render_history.record(0, snapshot_cache.capture(&world), 0.0, Vec::new());
+        Ok(Self { quit_requested: false, world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new(), snapshot_stream: PlaySnapshotStream::default(), snapshot_cache, render_history })
     }
 
-    fn step(&mut self, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<WorldSnapshot, String> {
+    fn step(&mut self, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<SharedWorldSnapshot, String> {
         let started = Instant::now();
         self.step_stages.clear();
         let stages = &mut self.step_stages;
@@ -189,6 +309,7 @@ impl PlaySession {
         stage("Animation, timeline and audio");
         self.script.tick(world, dt).map_err(|error| error.to_string())?;
         for request in self.script.take_runtime_requests() {
+            if request == mengine_script::ScriptRuntimeRequest::Quit { self.quit_requested = true; break; }
             let Some(selector) = (ScriptRequestContext { world, project_root: self.root.as_deref(), animations: &mut self.animations, timelines: &mut self.timelines, audio: &mut self.audio }).apply(request) else { continue; };
             let loaded = if selector == SceneSelector::Reload && self.scenes.current() == Some(self.initial_scene.path.as_path()) {
                 mengine_scene::apply_snapshot(world, &self.initial);
@@ -206,7 +327,7 @@ impl PlaySession {
             }
         }
         stage("Script and runtime requests");
-        let snapshot = WorldSnapshot::from_world(world);
+        let snapshot = self.snapshot_cache.capture(world);
         stage("Snapshot export");
         self.step_ms = started.elapsed().as_secs_f64() * 1000.0;
         Ok(snapshot)
@@ -216,6 +337,156 @@ impl PlaySession {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn retained_view_revisions_render_exact_clocks_and_reject_expiry_or_old_sessions() {
+        let runtime = EditorPlayRuntime::default();
+        let id = runtime.begin();
+        runtime.start(id, "function onTick(dt, frame) { engine.setClearColor(frame, 0, 0, 1); }".into(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        let verify = |revision, expected| {
+            let error = runtime.render_revision(id, Some(revision), move |world| {
+                assert_eq!(world.time.frame, expected);
+                Err(format!("verified frame {expected}"))
+            }).err().unwrap();
+            assert_eq!(error, format!("verified frame {expected}"));
+        };
+        verify(0, 0);
+        for revision in 1..=2 { assert_eq!(runtime.advance_update(id, None, ScriptInput::default(), 0.01).unwrap().revision, revision); }
+        verify(0, 0); verify(1, 1); verify(2, 2);
+        runtime.advance_update(id, None, ScriptInput::default(), 0.01).unwrap();
+        assert_eq!(runtime.render_revision(id, Some(0), |_| panic!("expired render must not execute")).err().unwrap(), PLAY_VIEWPORT_REVISION_EXPIRED);
+        verify(1, 1); verify(3, 3);
+        runtime.stop();
+        assert_eq!(runtime.render_revision(id, Some(3), |_| panic!("old session must not execute")).err().unwrap(), "Play session expired");
+    }
+
+    #[test]
+    fn historical_views_keep_parent_links_and_component_values_after_slot_reuse() {
+        use mengine_core::generated::{Name, Transform};
+        use mengine_core::Parent;
+        let mut world = World::new();
+        let root = world.spawn_empty(); let child = world.spawn_empty();
+        world.insert_component(root, Name { value: "root".into() });
+        world.insert_component(child, Name { value: "child".into() });
+        world.insert_component(child, Transform { position: [4.0, 5.0, 6.0], ..Transform::default() });
+        world.set_parent(child, Some(root));
+        let mut snapshots = WorldSnapshotCache::default(); let mut history = PlayRenderHistory::default();
+        history.record(0, snapshots.capture(&world), 0.0, Vec::new());
+        world.despawn(child); let recycled = world.spawn_empty();
+        world.insert_component(recycled, Name { value: "replacement".into() });
+        history.record(1, snapshots.capture(&world), 1.0, Vec::new());
+        let (older, _, _) = history.world(&world, 0).unwrap();
+        let child = older.iter_entities().find(|entity| older.get_component::<Name>(*entity).is_some_and(|name| name.value == "child")).unwrap();
+        let parent = older.get_component::<Parent>(child).unwrap().entity;
+        assert_eq!(older.get_component::<Name>(parent).unwrap().value, "root");
+        assert_eq!(older.get_component::<Transform>(child).unwrap().position, [4.0, 5.0, 6.0]);
+        assert!(std::ptr::eq(history.world(&world, 1).unwrap().0, &world));
+        assert_eq!(history.checkpoints.len(), 2);
+        let cache = history.materialized.as_ref().unwrap().0;
+        assert_eq!(cache, 0);
+    }
+
+    #[test]
+    fn named_entity_queries_are_available_in_editor_startup_and_scene_loaded() {
+        let runtime = EditorPlayRuntime::default();
+        let id = runtime.begin();
+        let initial: WorldSnapshot = serde_json::from_value(serde_json::json!({"entities":[{"entity":1,"name":"Owl","components":{}}]})).unwrap();
+        let source = "if(engine.findEntitiesByName(['Owl']).length!==1) throw Error('startup lookup'); function onSceneLoaded() { if(engine.findEntitiesByName(['Owl']).length!==1) throw Error('scene lookup'); } function onTick() { if(engine.findEntitiesByName(['Owl']).length!==1) throw Error('tick lookup'); }";
+        runtime.start(id, source.into(), initial, PlayProject::default()).unwrap();
+        runtime.advance(id, None, ScriptInput::default(), 0.1).unwrap();
+        runtime.stop();
+    }
+
+    #[test]
+    fn snapshot_stream_reconstructs_mutations_removal_reuse_and_editor_reset() {
+        let mut world = World::new();
+        let first = world.spawn_empty();
+        let second = world.spawn_empty();
+        world.set_component_value(first, "Transform", serde_json::json!({"position":[1,2,3]}));
+        world.set_component_value(second, "ProjectBehaviour", serde_json::json!({"text":"保留自定义数据"}));
+        let mut stream = PlaySnapshotStream::default();
+        let mut cache = WorldSnapshotCache::default();
+        let mut reconstructed = HashMap::new();
+        let mut order = Vec::new();
+        for step in 0..5 {
+            world.time.frame += 1;
+            if step == 2 {
+                world.get_component_mut::<mengine_core::generated::Transform>(first).unwrap().position[0] = 8.0;
+                world.set_editor_state(first, 7, false);
+                world.set_entity_metadata(first, "Hero".into(), 3);
+                world.set_parent(second, Some(first));
+            }
+            if step == 3 { world.despawn(first); world.spawn_empty(); }
+            let expected = WorldSnapshot::from_world(&world);
+            let update = stream.update(cache.capture(&world), step == 4);
+            assert_eq!((update.base_revision, update.revision), (step, step + 1));
+            if step == 1 { assert!(update.snapshot.entities.is_empty()); }
+            if step == 4 { assert_eq!(update.snapshot, expected); reconstructed.clear(); }
+            let mut actual = update.snapshot;
+            for entity in actual.entities.drain(..) { reconstructed.insert(entity.entity, entity); }
+            if let Some(next) = update.entity_order { order = next; }
+            actual.entities = order.iter().map(|id| reconstructed[id].clone()).collect();
+            assert_eq!(actual, expected);
+            reconstructed.retain(|id, _| order.contains(id));
+        }
+    }
+
+    #[test]
+    fn snapshot_stream_sends_order_on_reorder_removal_empty_and_reset() {
+        let mut world = World::new(); world.spawn_empty(); world.spawn_empty();
+        let mut cache = WorldSnapshotCache::default();
+        let initial = cache.capture(&world);
+        let mut stream = PlaySnapshotStream::default();
+        let first = stream.update(initial.clone(), false);
+        let ids: Vec<_> = initial.entities.iter().map(|entity| entity.entity).collect();
+        assert_eq!(first.entity_order, Some(ids.clone()));
+        let mut changed = initial.clone(); changed.entities[0] = Arc::new((*changed.entities[0]).clone());
+        let equal = stream.update(changed, false);
+        assert!(equal.snapshot.entities.is_empty()); assert!(equal.entity_order.is_none());
+        let mut reordered = initial.clone(); reordered.entities.reverse();
+        let update = stream.update(reordered, false);
+        assert_eq!(update.entity_order, Some(ids.iter().rev().copied().collect())); assert!(update.snapshot.entities.is_empty());
+        let mut removed = initial.clone(); removed.entities.pop();
+        let update = stream.update(removed, false);
+        assert_eq!(update.entity_order, Some(vec![ids[0]])); assert!(update.snapshot.entities.is_empty());
+        let mut empty = initial.clone(); empty.entities.clear();
+        let update = stream.update(empty.clone(), false);
+        assert_eq!(update.entity_order, Some(Vec::new())); assert!(update.snapshot.entities.is_empty());
+        assert!(stream.update(empty.clone(), false).entity_order.is_none());
+        assert_eq!(stream.update(empty, true).entity_order, Some(Vec::new()));
+        let restored = stream.update(initial, false);
+        assert_eq!(restored.entity_order, Some(ids)); assert_eq!(restored.snapshot.entities.len(), 2);
+    }
+
+    #[test]
+    fn retained_snapshot_stream_tracks_steps_and_forces_reset_after_explicit_edits() {
+        let runtime = EditorPlayRuntime::default();
+        let id = runtime.begin();
+        let initial: WorldSnapshot = serde_json::from_value(serde_json::json!({"entities":[{"entity":1,"name":"Original","components":{"Custom":{"value":4}}}]})).unwrap();
+        let initial = runtime.start(id, "function onTick() { engine.setClearColor(0.2,0.3,0.4,1); }".into(), initial, PlayProject::default()).unwrap();
+        let first = runtime.advance_update(id, None, ScriptInput::default(), 0.1).unwrap();
+        assert_eq!(first.snapshot.entities, initial.entities);
+        assert_eq!(first.entity_order, Some(initial.entities.iter().map(|entity| entity.entity).collect()));
+        let second = runtime.advance_update(id, None, ScriptInput::default(), 0.1).unwrap();
+        assert!(second.snapshot.entities.is_empty());
+        assert!(second.entity_order.is_none());
+        assert!(serde_json::to_value(&second).unwrap().get("entityOrder").is_none());
+        assert_eq!((second.base_revision, second.revision, second.snapshot.frame), (1, 2, 2));
+        let mut edited = initial;
+        edited.entities[0].name = Some("Inspector edit".into());
+        let result = runtime.advance_update(id, Some(edited), ScriptInput::default(), 0.1).unwrap();
+        assert!(result.reset);
+        assert!(result.entity_order.is_some());
+        assert_eq!(result.snapshot.entities[0].name.as_deref(), Some("Inspector edit"));
+        runtime.stop();
+        assert!(runtime.advance_update(id, None, ScriptInput::default(), 0.1).is_err());
+        let next = runtime.begin();
+        runtime.start(next, "".into(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        runtime.stop_session(id);
+        assert!(runtime.advance_update(next, None, ScriptInput::default(), 0.1).is_ok());
+        runtime.stop_session(next);
+        assert!(runtime.advance_update(next, None, ScriptInput::default(), 0.1).is_err());
+    }
 
     #[test]
     fn retained_world_advances_clock_and_accepts_explicit_edits() {
@@ -233,6 +504,28 @@ mod tests {
         assert_eq!(retained.clear_color, [4.0, 0.75, 0.125, 1.0]);
         runtime.stop();
         assert!(runtime.advance(id, None, ScriptInput::default(), 0.125).is_err());
+    }
+
+    #[test]
+    #[ignore = "manual sample performance measurement; requires MENGINE_SAMPLE_ROOT"]
+    fn measure_sample_snapshot_stream() {
+        let root = PathBuf::from(std::env::var("MENGINE_SAMPLE_ROOT").expect("sample root"));
+        let mut world = World::new();
+        mengine_scene::load_scene(&root.join("Assets/Scenes/Main.mscene"), &mut world).unwrap();
+        let target = world.entities_with_components(&["Transform"]).next().unwrap();
+        let mut cache = WorldSnapshotCache::default();
+        let mut stream = PlaySnapshotStream::default();
+        let mut captures = Vec::new(); let mut deltas = Vec::new(); let mut serializations = Vec::new(); let mut sizes = Vec::new();
+        for iteration in 0..102 {
+            world.time.frame += 1;
+            world.get_component_mut::<mengine_core::generated::Transform>(target).unwrap().position[0] = iteration as f32;
+            let started = Instant::now(); let snapshot = cache.capture(&world); let capture_ms = started.elapsed().as_secs_f64() * 1000.0;
+            let started = Instant::now(); let update = stream.update(snapshot, false); let delta_ms = started.elapsed().as_secs_f64() * 1000.0;
+            let started = Instant::now(); let bytes = serde_json::to_vec(&update).unwrap(); let serialize_ms = started.elapsed().as_secs_f64() * 1000.0;
+            if iteration >= 2 { captures.push(capture_ms); deltas.push(delta_ms); serializations.push(serialize_ms); sizes.push(bytes.len()); }
+        }
+        captures.sort_by(f64::total_cmp); deltas.sort_by(f64::total_cmp); serializations.sort_by(f64::total_cmp); sizes.sort();
+        println!("{}", serde_json::json!({"scope":"Authored Main.mscene; 2 warmups and 100 updates changing one Transform; excludes scripts, IPC, browser and rendering", "entities":world.iter_entities().count(), "iterations":100, "medianCaptureMs":captures[50], "medianDeltaMs":deltas[50], "medianSerializationMs":serializations[50], "medianPayloadBytes":sizes[50]}));
     }
 
     #[test]

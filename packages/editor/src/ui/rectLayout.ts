@@ -54,7 +54,7 @@ export function readRectTransform(raw: unknown): Required<{
  * Unity RectTransform layout expressed as a top-left, screen-space rectangle.
  * Serialized RectTransform values keep Unity's bottom-left, Y-up convention.
  */
-export function solveRectTransform(parent: Rect, raw: unknown): Rect {
+export function solveRectTransform(parent: Rect, raw: unknown, nativeCoordinates = false): Rect {
   const rt = readRectTransform(raw);
   const [aminX, aminY] = rt.anchor_min;
   const [amaxX, amaxY] = rt.anchor_max;
@@ -72,13 +72,13 @@ export function solveRectTransform(parent: Rect, raw: unknown): Rect {
   const width = Math.max(0, (anchorW + sdX) * Math.abs(sx));
   const height = Math.max(0, (anchorH + sdY) * Math.abs(sy));
 
-  // Convert Unity's Y-up anchor reference and anchored position at the screen boundary.
+  // Native Game pixels use Y-down; browser authoring keeps Unity's Y-up coordinates.
   const pivotX = anchorMinX + anchorW * pivX + apX;
   const anchorReferenceY = aminY + (amaxY - aminY) * pivY;
-  const pivotY = parent.y + (1 - anchorReferenceY) * parent.h - apY;
+  const pivotY = nativeCoordinates ? parent.y + anchorReferenceY * parent.h + apY : parent.y + (1 - anchorReferenceY) * parent.h - apY;
 
   const x = pivotX - width * pivX;
-  const y = pivotY - height * (1 - pivY);
+  const y = pivotY - height * (nativeCoordinates ? pivY : 1 - pivY);
 
   return { x, y, w: width, h: height };
 }

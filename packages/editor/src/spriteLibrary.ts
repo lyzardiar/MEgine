@@ -1,4 +1,4 @@
-/** Texture / sprite assets under project/Assets (via Vite `/__mengine`). */
+/** Author: MiYu. Texture / sprite assets under project/Assets (via Vite `/__mengine`). */
 
 import { invoke } from '@tauri-apps/api/core';
 import { isDesktopEditor } from './transport/editorTransport';
@@ -157,11 +157,11 @@ export function resolveSpritePixelsPerUnit(raw: string): number {
 }
 
 export function spriteAssetUrl(id: string): string | null {
+  if (isDesktopEditor()) return null;
   const ref = resolveSpriteTextureId(id);
   if (!ref || ref === 'white') return null;
   const withExt = /\.(png|jpe?g|webp|gif)$/i.test(ref) ? ref : `${ref}.png`;
   if (!withExt.toLowerCase().startsWith('assets/')) return null;
-  if (isDesktopEditor()) return null;
   return `${API}/asset/${withExt.split('/').map(encodeURIComponent).join('/')}`;
 }
 

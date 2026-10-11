@@ -53,7 +53,7 @@ export function hierarchyEntityMatches(entity: EntityRec, query: string): boolea
 }
 
 /** Returns matching rows plus their ancestor path, independent of collapsed state. */
-export function filterHierarchyTree(entities: EntityRec[], query: string): TreeNode[] {
+export function filterHierarchyTree(entities: readonly EntityRec[], query: string): TreeNode[] {
   if (!query.trim()) return [];
   const byId = new Map(entities.map((entity) => [entity.entity, entity]));
   const included = new Set<number>();

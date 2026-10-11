@@ -16,13 +16,13 @@ use crate::ui::{
 use glam::{Quat, Vec3, Vec4};
 use mengine_core::generated::{
     Camera2D, Camera3D, DirectionalLight, EnvironmentLight, MaterialPropertyBlock, MeshRenderer,
-    PbrMaterial, PointLight, SpotLight,
+    PbrMaterial, PointLight, RawImage, SpotLight,
 };
-use mengine_core::{Entity, TransformHierarchy, World};
+use mengine_core::{Entity, Parent, TransformHierarchy, World};
 use mengine_rhi::{
     look_at, orthographic, perspective, ClearColor, DirectionalLightData, EnvironmentLightData,
     FrameCamera, FrameLighting, PointLightData, RenderFrame, RenderMaterial, RenderObject,
-    SpotLightData, UiBatchPlan,
+    SceneTextureFrame, SpotLightData, UiBatchPlan,
 };
 use std::collections::HashMap;
 
@@ -122,6 +122,8 @@ pub struct CompiledFrame {
     pub texture_failures: Vec<TextureLoadFailure>,
     pub font_failures: Vec<FontLoadFailure>,
     pub has_authored_camera: bool,
+    pub scene_views: Vec<SceneTextureFrame>,
+    pub view_resources: Vec<RenderObject>,
 }
 
 impl CompiledFrame {
@@ -132,7 +134,14 @@ impl CompiledFrame {
             objects: &self.objects,
             lighting: &self.lighting,
             ui: Some(&self.ui),
+            scene_views: &self.scene_views,
         }
+    }
+
+    /// Main extraction includes active scene meshes. UI-only frames need the view meshes as well.
+    pub fn resource_objects(&self) -> std::borrow::Cow<'_, [RenderObject]> {
+        if self.view_resources.is_empty() { std::borrow::Cow::Borrowed(&self.objects) }
+        else { std::borrow::Cow::Owned(self.objects.iter().chain(&self.view_resources).cloned().collect()) }
     }
 }
 
@@ -163,7 +172,10 @@ impl FrameCompiler<'_> {
         } else {
             Vec::new()
         };
-        let mut lighting = collect_lighting(request.world, request.hierarchy);
+        let mut authored_lighting = collect_lighting(request.world, request.hierarchy);
+        self.particles.sampled_effects.set_project_root(self.textures.project_root());
+        let effect_primitives = self.particles.sampled_effects.collect(request.world, request.hierarchy, camera, request.delta_seconds, &mut authored_lighting);
+        let mut lighting = authored_lighting.clone();
         let clear = resolve_camera_background(&active_camera, request.scene_clear, &mut lighting);
         phase("Camera, meshes and lighting");
 
@@ -187,6 +199,7 @@ impl FrameCompiler<'_> {
         let mut texture_failures = self
             .textures
             .resolve_image_alpha_hit_tests(&mut ui.controls);
+        texture_failures.extend(self.particles.sampled_effects.failures.iter().cloned());
         append_ui_focus_ring(&mut ui.plan, &ui.controls, request.focused_ui);
         phase("Canvas layout and text");
 
@@ -217,6 +230,7 @@ impl FrameCompiler<'_> {
             request.delta_seconds,
         );
         if has_scene_camera {
+            world_primitives.extend(effect_primitives);
             world_primitives.extend(particle_primitives);
             world_primitives.extend(trail_primitives);
         }
@@ -232,6 +246,8 @@ impl FrameCompiler<'_> {
             ui.plan.primitives = primitives;
         }
         phase("Particles, trails and sorting");
+        let scene_views = collect_scene_views(request.world, request.hierarchy, &mut ui.plan, self.materials, request.scene_clear, &authored_lighting);
+        let view_resources = if has_scene_camera { Vec::new() } else { scene_views.iter().flat_map(|view| view.objects.iter().cloned()).collect() };
         texture_failures.extend(
             self.textures
                 .resolve_sprite_regions(&mut ui.plan.primitives),
@@ -252,8 +268,34 @@ impl FrameCompiler<'_> {
             texture_failures,
             font_failures: self.fonts.take_failures(),
             has_authored_camera,
+            scene_views,
+            view_resources,
         }
     }
+}
+
+fn collect_scene_views(world: &World, hierarchy: &TransformHierarchy, ui: &mut UiBatchPlan, materials: &mut RuntimeMaterialCache, scene_clear: Vec4, lighting: &FrameLighting) -> Vec<SceneTextureFrame> {
+    let mut views = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    for primitive in &mut ui.primitives {
+        let Some(id) = primitive.key.texture.strip_prefix("$scene-view:").and_then(|id| id.parse::<u64>().ok()) else { continue; };
+        let entity = Entity::from_u64(id);
+        let Some(image) = world.get_component::<RawImage>(entity) else { continue; };
+        let camera = image.render_camera.trim().parse::<u64>().ok().map(Entity::from_u64);
+        let camera = camera.filter(|&camera| hierarchy.is_active(camera)).and_then(|camera| camera_definition(world, hierarchy, camera));
+        let root = image.render_root.trim().parse::<u64>().ok().map(Entity::from_u64);
+        if camera.is_none() || (!image.render_root.trim().is_empty() && root.is_none_or(|root| !world.is_alive(root) || !hierarchy.is_active(root))) || views.len() >= 8 {
+            primitive.key.texture = image.texture.clone();
+            continue;
+        }
+        if !seen.insert(id) { continue; }
+        let size = [primitive.rect[2].abs().ceil() as u32, primitive.rect[3].abs().ceil() as u32].map(|size| size.clamp(1, 1024));
+        let camera = camera.unwrap().active(size[0] as f32 / size[1] as f32);
+        let mut lighting = lighting.clone();
+        let clear = resolve_camera_background(&camera, scene_clear, &mut lighting);
+        views.push(SceneTextureFrame { key: primitive.key.texture.clone(), size, clear: clear.into(), camera: camera.frame, objects: collect_view_objects(world, hierarchy, materials, root), lighting });
+    }
+    views
 }
 
 pub fn find_camera(
@@ -297,7 +339,7 @@ fn primary_camera_definition(
     hierarchy: &TransformHierarchy,
     target_display: i32,
 ) -> Option<CameraDefinition> {
-    for entity in world.iter_entities() {
+    for entity in world.entities_with_components(&["Camera2D"]) {
         if world
             .get_component::<Camera2D>(entity)
             .is_some_and(|camera| {
@@ -309,7 +351,7 @@ fn primary_camera_definition(
             }
         }
     }
-    for entity in world.iter_entities() {
+    for entity in world.entities_with_components(&["Camera3D"]) {
         if world
             .get_component::<Camera3D>(entity)
             .is_some_and(|camera| {
@@ -498,12 +540,30 @@ pub fn collect_objects(
     hierarchy: &TransformHierarchy,
     materials: &mut RuntimeMaterialCache,
 ) -> Vec<RenderObject> {
+    collect_mesh_objects(world, hierarchy, materials, None)
+}
+
+fn collect_view_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>) -> Vec<RenderObject> {
+    collect_mesh_objects(world, hierarchy, materials, root)
+}
+
+fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>) -> Vec<RenderObject> {
     let mut out = Vec::new();
-    for entity in world.iter_entities() {
-        if let (Some(transform), Some(mesh)) = (
-            hierarchy.get(entity),
-            world.get_component::<MeshRenderer>(entity),
-        ) {
+    for entity in world.entities_with_components(&["MeshRenderer"]) {
+        // MiYu: resolve eligibility before reading pooled renderer components.
+        let Some(transform) = hierarchy.get(entity) else { continue; };
+        if let Some(root) = root {
+            let mut current = entity;
+            let mut matches = current == root;
+            for _ in 0..128 {
+                if matches { break; }
+                let Some(parent) = world.get_component::<Parent>(current) else { break; };
+                current = parent.entity;
+                matches = current == root;
+            }
+            if !matches { continue; }
+        }
+        if let Some(mesh) = world.get_component::<MeshRenderer>(entity) {
             let mut material = world
                 .get_component::<PbrMaterial>(entity)
                 .map(render_material_from_component)
@@ -535,7 +595,7 @@ pub fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameL
         spots: Vec::new(),
     };
     let mut environment_found = false;
-    for entity in world.iter_entities() {
+    for entity in world.entities_with_any_component(&["EnvironmentLight", "DirectionalLight", "PointLight", "SpotLight"]) {
         if !hierarchy.is_active(entity) { continue; }
         if !environment_found {
             if let Some(environment) = world.get_component::<EnvironmentLight>(entity) {
@@ -645,6 +705,27 @@ mod lighting_tests {
     use super::*;
 
     #[test]
+    fn mesh_extraction_reactivates_pools_and_preserves_parent_transforms_and_slot_reuse() {
+        use mengine_core::generated::Transform;
+        let mut world = World::new();
+        let root = world.spawn_empty(); world.insert_component(root, Transform { position: [7.0, 0.0, 0.0], ..Default::default() });
+        let mesh = world.spawn_empty(); world.insert_component(mesh, Transform { position: [2.0, 0.0, 0.0], ..Default::default() });
+        world.insert_component(mesh, MeshRenderer { mesh: "pooled".into(), ..Default::default() }); world.set_parent(mesh, Some(root));
+        let untransformed = world.spawn_empty(); world.insert_component(untransformed, MeshRenderer { mesh: "no-transform".into(), ..Default::default() });
+        let mut materials = RuntimeMaterialCache::new(None);
+        let objects = |world: &World, materials: &mut RuntimeMaterialCache| collect_objects(world, &TransformHierarchy::build(world), materials);
+        let visible = objects(&world, &mut materials); assert_eq!(visible.len(), 1); assert_eq!(visible[0].model.transform_point3(Vec3::ZERO), Vec3::new(9.0, 0.0, 0.0));
+        world.set_editor_state(root, 0, false); assert!(objects(&world, &mut materials).is_empty());
+        world.set_editor_state(root, 0, true); world.set_editor_state(mesh, 0, false); assert!(objects(&world, &mut materials).is_empty());
+        world.get_component_mut::<MeshRenderer>(mesh).unwrap().mesh = "updated-pool".into();
+        world.set_editor_state(mesh, 0, true); assert_eq!(objects(&world, &mut materials)[0].mesh_key, "updated-pool");
+        world.despawn(mesh); let recycled = world.spawn_empty(); assert_eq!(mesh.index, recycled.index); assert_ne!(mesh, recycled);
+        world.insert_component(recycled, Transform::default()); world.insert_component(recycled, MeshRenderer { mesh: "recycled".into(), ..Default::default() });
+        let visible = objects(&world, &mut materials); assert_eq!(visible.len(), 1); assert_eq!(visible[0].mesh_key, "recycled");
+        world.remove_component_by_name(recycled, "MeshRenderer"); assert!(objects(&world, &mut materials).is_empty());
+    }
+
+    #[test]
     fn scene_environment_does_not_require_a_spatial_transform() {
         let mut world = World::new();
         let environment = world.spawn_empty();
@@ -655,5 +736,79 @@ mod lighting_tests {
         world.set_editor_state(environment, 0, false);
         let lighting = collect_lighting(&world, &TransformHierarchy::build(&world));
         assert_eq!(lighting.environment.sky_color, EnvironmentLightData::default().sky_color);
+    }
+}
+
+#[cfg(test)]
+mod scene_view_tests {
+    use super::*;
+    use mengine_core::generated::Transform;
+
+    #[test]
+    fn world_canvas_live_view_keeps_its_own_background_policy() {
+        use mengine_core::generated::{Canvas, RectTransform};
+        let mut world = World::new();
+        let main = world.spawn_empty();
+        world.insert_component(main, Transform { position:[0.0,0.0,8.0], ..Default::default() });
+        world.insert_component(main, Camera3D { primary:true, clear_flags:"solidcolor".into(), ..Default::default() });
+        let camera = world.spawn_empty();
+        world.insert_component(camera, Transform { position:[0.0,0.0,8.0], ..Default::default() });
+        world.insert_component(camera, Camera3D { primary:false, ..Default::default() });
+        let environment = world.spawn_empty();
+        world.insert_component(environment, EnvironmentLight { background_enabled:true, ..Default::default() });
+        let canvas = world.spawn_empty();
+        world.insert_component(canvas, Transform::default());
+        world.insert_component(canvas, RectTransform { size_delta:[2.0,2.0], ..Default::default() });
+        world.insert_component(canvas, Canvas { render_mode:"WorldSpace".into(), ..Default::default() });
+        let raw = world.spawn_empty();
+        world.insert_component(raw, RectTransform { size_delta:[2.0,2.0], ..Default::default() });
+        world.insert_component(raw, RawImage { render_camera:camera.to_u64().to_string(), ..Default::default() });
+        world.set_parent(raw, Some(canvas));
+        let mut materials = RuntimeMaterialCache::new(None);
+        let mut particles = ParticleWorld::default(); let mut trails = TrailWorld::default();
+        let mut textures = RuntimeTextureCache::new(None); let mut fonts = RuntimeFontCache::new(None);
+        let frame = FrameCompiler { materials:&mut materials, particles:&mut particles, trails:&mut trails, textures:&mut textures, fonts:&mut fonts }.compile(FrameCompileRequest {
+            world:&world, hierarchy:&TransformHierarchy::build(&world), viewport:[128,128], scene_clear:Vec4::ZERO,
+            camera_override:None, view_camera:None, include_ui:true, target_display:0, interaction:UiInteractionState::default(),
+            button_tints:&HashMap::new(), focused_ui:None, sorting_layers:&SortingLayers::default(), delta_seconds:0.0,
+        });
+        assert_eq!(frame.scene_views.len(), 1);
+        assert!(frame.scene_views[0].lighting.environment.background_enabled);
+        assert!(!frame.lighting.environment.background_enabled);
+        assert!(frame.ui.batches.iter().any(|batch| batch.key.texture == format!("$scene-view:{}",raw.to_u64())));
+    }
+
+    #[test]
+    fn rooted_live_view_uses_its_camera_and_ignores_inactive_meshes() {
+        let mut world = World::new();
+        let camera = world.spawn_empty();
+        world.insert_component(camera, Transform { position: [0.0, 2.0, 8.0], ..Default::default() });
+        world.insert_component(camera, Camera3D { primary: false, clear_flags: "solidcolor".into(), background_color: [0.2, 0.1, 0.3, 1.0], ..Default::default() });
+        let root = world.spawn_empty();
+        world.insert_component(root, Transform::default());
+        let mesh = world.spawn_empty();
+        world.insert_component(mesh, Transform::default());
+        world.insert_component(mesh, MeshRenderer::default());
+        world.set_parent(mesh, Some(root));
+        let other = world.spawn_empty();
+        world.insert_component(other, Transform::default());
+        world.insert_component(other, MeshRenderer::default());
+        let raw = world.spawn_empty();
+        world.insert_component(raw, RawImage { render_camera: camera.to_u64().to_string(), render_root: root.to_u64().to_string(), texture: "fallback".into(), ..Default::default() });
+        let key = format!("$scene-view:{}", raw.to_u64());
+        let mut primitive = mengine_rhi::UiPrimitive::solid([0.0, 0.0, 132.0, 136.0], [1.0; 4]);
+        primitive.key.texture = key.clone();
+        let mut plan = UiBatchPlan::build(vec![primitive.clone()]);
+        let mut materials = RuntimeMaterialCache::new(None);
+        let views = collect_scene_views(&world, &TransformHierarchy::build(&world), &mut plan, &mut materials, Vec4::ZERO, &FrameLighting::default());
+        assert_eq!(views.len(), 1); assert_eq!(views[0].size, [132, 136]); assert_eq!(views[0].objects.len(), 1);
+        assert_eq!(views[0].camera.position, Vec3::new(0.0, 2.0, 8.0)); assert!((views[0].clear.r - 0.2).abs() < 0.000001);
+        world.set_editor_state(mesh, 0, false);
+        let views = collect_scene_views(&world, &TransformHierarchy::build(&world), &mut plan, &mut materials, Vec4::ZERO, &FrameLighting::default());
+        assert!(views[0].objects.is_empty());
+        world.despawn(camera);
+        plan = UiBatchPlan::build(vec![primitive]);
+        assert!(collect_scene_views(&world, &TransformHierarchy::build(&world), &mut plan, &mut materials, Vec4::ZERO, &FrameLighting::default()).is_empty());
+        assert_eq!(plan.primitives[0].key.texture, "fallback");
     }
 }

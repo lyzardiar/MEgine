@@ -127,6 +127,7 @@ struct App {
     active_slider: Option<Entity>,
     active_ui_press: Option<Entity>,
     focused_input: Option<Entity>,
+    ime_composing: bool,
     focused_ui: Option<Entity>,
     ui_button_tints: HashMap<Entity, UiButtonTintTween>,
     modifiers: ModifiersState,
@@ -199,6 +200,7 @@ impl App {
             active_slider: None,
             active_ui_press: None,
             focused_input: None,
+            ime_composing: false,
             focused_ui: None,
             ui_button_tints: HashMap::new(),
             modifiers: ModifiersState::empty(),
@@ -292,6 +294,7 @@ impl App {
                 self.ui_controls.clear();
                 self.active_slider = None;
                 self.focused_input = None;
+                self.ime_composing = false;
                 self.focused_ui = None;
                 self.last_ui_draw_calls = u32::MAX;
                 self.particles = ParticleWorld::default();
@@ -336,7 +339,7 @@ impl App {
             "lighting-materials" => self.bootstrap_lighting_materials(),
             _ => {
                 // spinning-cube default, also used behind the UI controls sample.
-                self.world.commands.push(WorldCommand::Spawn {
+                self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                     name: Some("MainCamera".into()),
                     components: json!({
                         "Transform": {
@@ -352,7 +355,7 @@ impl App {
                         }
                     }),
                 });
-                self.world.commands.push(WorldCommand::Spawn {
+                self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                     name: Some("Directional Light".into()),
                     components: json!({
                         "Transform": {
@@ -363,7 +366,7 @@ impl App {
                         "DirectionalLight": { "color": [1.0, 0.96, 0.9, 1.0], "intensity": 1.25 }
                     }),
                 });
-                self.world.commands.push(WorldCommand::Spawn {
+                self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                     name: Some("Cube".into()),
                     components: json!({
                         "Transform": {
@@ -383,7 +386,7 @@ impl App {
                     }),
                 });
                 if self.args.sample == "particles" {
-                    self.world.commands.push(WorldCommand::Spawn {
+                    self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                         name: Some("Fire Particles 2D".into()),
                         components: json!({
                             "Transform": {
@@ -398,7 +401,7 @@ impl App {
                             }
                         }),
                     });
-                    self.world.commands.push(WorldCommand::Spawn {
+                    self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                         name: Some("Energy Particles 3D".into()),
                         components: json!({
                             "Transform": {
@@ -504,7 +507,7 @@ impl App {
             ),
         ];
         for (name, components) in entities {
-            self.world.commands.push(WorldCommand::Spawn {
+            self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: Some(name.into()),
                 components,
             });
@@ -711,7 +714,7 @@ impl App {
             ),
         ];
         for (name, value) in components {
-            self.world.commands.push(WorldCommand::Spawn {
+            self.world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: Some(name.into()),
                 components: value,
             });
@@ -787,6 +790,7 @@ impl App {
             self.focused_ui = Some(control.entity);
             if !matches!(control.kind, UiControlKind::InputField) {
                 self.focused_input = None;
+                self.ime_composing = false;
                 if let Some(window) = &self.window {
                     window.set_ime_allowed(false);
                 }
@@ -820,6 +824,7 @@ impl App {
             }
             UiControlKind::InputField => {
                 self.focused_input = Some(control.entity);
+                self.ime_composing = false;
                 if let Some(window) = &self.window {
                     window.set_ime_allowed(true);
                 }
@@ -855,6 +860,7 @@ impl App {
     fn move_ui_focus(&mut self, reverse: bool) {
         self.focused_ui = next_ui_focus(&self.ui_controls, self.focused_ui, reverse);
         self.focused_input = None;
+        self.ime_composing = false;
         if let Some(window) = &self.window {
             window.set_ime_allowed(false);
         }
@@ -879,6 +885,7 @@ impl App {
         }
         if self.world.get_component::<InputField>(entity).is_some() {
             self.focused_input = Some(entity);
+            self.ime_composing = false;
             if let Some(window) = &self.window {
                 window.set_ime_allowed(true);
             }
@@ -969,6 +976,7 @@ impl App {
         };
         let Some(input) = self.world.get_component_mut::<InputField>(entity) else {
             self.focused_input = None;
+            self.ime_composing = false;
             return;
         };
         let sanitized;
@@ -1003,6 +1011,7 @@ impl App {
             true
         } else {
             self.focused_input = None;
+            self.ime_composing = false;
             false
         }
     }
@@ -1022,9 +1031,11 @@ impl App {
             }
             log::info!("UI InputField {:?} submitted: {}", entity, input.text);
             self.focused_input = None;
+            self.ime_composing = false;
             true
         } else {
             self.focused_input = None;
+            self.ime_composing = false;
             false
         }
     }
@@ -1190,7 +1201,7 @@ impl ApplicationHandler for App {
 
         let mut script = ScriptHost::new().ok();
         if let Some(ref mut s) = script {
-            if let Some(root) = self.args.project_root.as_deref() { s.set_storage_root(mengine_script::project_storage_root(root)); }
+            if let Some(root) = self.args.project_root.as_deref() { s.set_storage_root(mengine_script::project_storage_root(root)); s.set_project_root(root.to_path_buf()); }
             if let Err(error) = s.sync_world(&self.world) { log::error!("script snapshot failed: {error}"); }
             let default_script = r#"
 var t = 0.0;
@@ -1273,13 +1284,18 @@ function onTick(dt, frame) {
                     KeyEvent {
                         physical_key: PhysicalKey::Code(code),
                         state,
+                        text,
                         ..
                     },
                 ..
             } => {
+                if self.focused_input.is_some() {
+                    for key in self.script_input.keys.clone() { self.script_input.key(key, false); }
+                }
+                if self.focused_input.is_some() && self.ime_composing { return; }
                 if state == ElementState::Pressed {
                     match code {
-                        WinitKey::Tab => {
+                        WinitKey::Tab if !self.ui_controls.is_empty() => {
                             self.move_ui_focus(self.modifiers.shift_key());
                             return;
                         }
@@ -1294,6 +1310,7 @@ function onTick(dt, frame) {
                         }
                         WinitKey::Escape if self.focused_input.is_some() => {
                             self.focused_input = None;
+                            self.ime_composing = false;
                             if let Some(window) = &self.window {
                                 window.set_ime_allowed(false);
                             }
@@ -1315,6 +1332,12 @@ function onTick(dt, frame) {
                         _ => {}
                     }
                 }
+                if self.focused_input.is_some() {
+                    if state == ElementState::Pressed && !self.modifiers.control_key() && !self.modifiers.super_key() {
+                        if let Some(text) = text { self.edit_focused_input(&text.chars().filter(|c| !c.is_control()).collect::<String>()); }
+                    }
+                    return;
+                }
                 if code == WinitKey::Escape && state == ElementState::Pressed { self.release_pointer(); }
                 self.script_input.key(format!("{code:?}"), state == ElementState::Pressed);
                 let key = match code {
@@ -1331,12 +1354,17 @@ function onTick(dt, frame) {
                     ElementState::Pressed => self.input.key_down(key),
                     ElementState::Released => self.input.key_up(key),
                 }
-                if key == mengine_platform::KeyCode::Escape && state == ElementState::Pressed {
+                if key == mengine_platform::KeyCode::Escape && state == ElementState::Pressed && self.args.script.is_none() {
                     event_loop.exit();
                 }
             }
             WindowEvent::ModifiersChanged(modifiers) => self.modifiers = modifiers.state(),
-            WindowEvent::Ime(Ime::Commit(text)) => self.edit_focused_input(&text),
+            WindowEvent::Ime(Ime::Preedit(text, _)) => self.ime_composing = !text.is_empty(),
+            WindowEvent::Ime(Ime::Commit(text)) => {
+                self.ime_composing = false;
+                self.edit_focused_input(&text);
+            }
+            WindowEvent::Ime(Ime::Disabled) => self.ime_composing = false,
             WindowEvent::CursorMoved { position, .. } => {
                 self.cursor = [position.x as f32, position.y as f32];
                 self.cursor_inside = true;
@@ -1345,6 +1373,7 @@ function onTick(dt, frame) {
             WindowEvent::CursorEntered { .. } => self.cursor_inside = true,
             WindowEvent::CursorLeft { .. } => self.cursor_inside = false,
             WindowEvent::Focused(false) => {
+                self.ime_composing = false;
                 self.release_pointer();
                 self.script_input.release_all();
                 self.cursor_inside = false;
@@ -1594,6 +1623,7 @@ function onTick(dt, frame) {
                 self.script_input.finish_frame();
                 if self.script_input.pointer_locked && !self.pointer_capture_requested() { self.release_pointer(); }
                 for request in runtime_requests {
+                    if request == ScriptRuntimeRequest::Quit { event_loop.exit(); return; }
                     self.apply_runtime_request(request);
                 }
 
@@ -1652,7 +1682,7 @@ function onTick(dt, frame) {
                             );
                         }
                     }
-                    for failure in self.meshes.sync(r, &frame.objects) {
+                    for failure in self.meshes.sync_frame(r, &mut frame) {
                         log::warn!(
                             "Mesh '{}' could not be loaded from {}: {}",
                             failure.key,
@@ -1693,7 +1723,7 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
-                    for failure in self.textures.sync_materials(r, &frame.objects) {
+                    for failure in self.textures.sync_materials(r, &frame.resource_objects()) {
                         log::warn!(
                             "Material texture '{}' could not be loaded from {}: {}",
                             failure.key,
@@ -1710,6 +1740,11 @@ function onTick(dt, frame) {
                         );
                     }
                     self.ui_controls = std::mem::take(&mut frame.controls);
+                    if self.focused_input.is_some_and(|entity| !self.ui_controls.iter().any(|control| control.entity == entity && matches!(control.kind, UiControlKind::InputField))) {
+                        self.focused_input = None;
+                        self.ime_composing = false;
+                        if let Some(window) = &self.window { window.set_ime_allowed(false); }
+                    }
                     if let Err(e) = r.submit_frame(&frame.render_frame()) {
                         log::warn!("render: {e}");
                     }
@@ -1986,17 +2021,23 @@ fn validate_world_assets(
     for entity in world.iter_entities() {
         if let Some(renderer) = world.get_component::<MeshRenderer>(entity) {
             let mesh = renderer.mesh.trim();
-            let pose = mengine_assets::parse_gltf_pose(mesh);
+            if mesh.starts_with("meshpatch:") {
+                let (asset, cells) = mengine_assets::parse_mesh_patch_key(mesh).with_context(|| format!("invalid mesh patch key: {mesh}"))?;
+                let path = resolve(asset, "mesh patch")?;
+                mengine_assets::MeshPatchSource::load(&path).and_then(|s| s.compose(cells)).map_err(|error| anyhow::anyhow!("invalid mesh patch {}: {error}", path.display()))?;
+                validated.insert(path);
+            }
+            let pose = mengine_assets::parse_gltf_pose_sample(mesh);
             if mesh.contains("#pose=") && pose.is_none() { bail!("invalid skeletal pose reference: {mesh}"); }
             let mesh = pose.map(|p| p.0).unwrap_or(mesh);
             if mesh.to_ascii_lowercase().ends_with(".gltf")
                 || mesh.to_ascii_lowercase().ends_with(".glb")
             {
                 let path = resolve(mesh, "model")?;
-                if let Some((_, clip, frame)) = pose {
-                    if validated_poses.insert((path.clone(), clip, frame)) {
+                if let Some((_, clip, frame, rate)) = pose {
+                    if validated_poses.insert((path.clone(), clip, frame, rate)) {
                         if !pose_sources.contains_key(&path) { pose_sources.insert(path.clone(), mengine_assets::GltfPoseSource::load(&path)?); }
-                        pose_sources[&path].sample(clip, frame)?;
+                        pose_sources[&path].sample_at_rate(clip, frame, rate)?;
                     }
                 }
                 if validated.insert(path.clone()) {
@@ -2715,6 +2756,23 @@ fn validate_animation_clip_asset(
 mod tests {
     use super::*;
 
+    #[test]
+    fn input_field_preserves_unicode_and_character_limits() {
+        let mut app = App::new(Args::parse_from(["mengine-runtime"]));
+        let entity = app.world.spawn_empty();
+        app.world.insert_component(entity, InputField { character_limit: 4, ..Default::default() });
+        app.focused_input = Some(entity);
+        app.edit_focused_input("A中\r\n文😀Z");
+        assert_eq!(app.world.get_component::<InputField>(entity).unwrap().text, "A中文😀");
+        assert!(app.backspace_focused_input());
+        assert_eq!(app.world.get_component::<InputField>(entity).unwrap().text, "A中文");
+        app.edit_focused_input("B");
+        assert!(app.submit_focused_input());
+        assert!(app.focused_input.is_none());
+        app.edit_focused_input("ignored");
+        assert_eq!(app.world.get_component::<InputField>(entity).unwrap().text, "A中文B");
+    }
+
     fn temporary_project_root(label: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
             "mengine-{label}-{}-{}",
@@ -2761,7 +2819,7 @@ mod tests {
 
     fn world_with_material(reference: &str) -> World {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Material validation".into()),
             components: json!({
                 "MeshRenderer": { "mesh": "cube", "material": reference }
@@ -2773,7 +2831,7 @@ mod tests {
 
     fn world_with_text_font(reference: &str) -> World {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Font validation".into()),
             components: json!({
                 "Text": { "text": "Agent UI", "font": reference }
@@ -2841,14 +2899,14 @@ mod tests {
     #[test]
     fn primary_2d_camera_wins_and_uses_orthographic_size() {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Main Camera".into()),
             components: json!({
                 "Transform": { "position": [0, 0, 4], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
                 "Camera3D": { "primary": true, "projection": "perspective" }
             }),
         });
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Camera 2D".into()),
             components: json!({
                 "Transform": { "position": [2, 3, 10], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
@@ -2869,14 +2927,14 @@ mod tests {
     #[test]
     fn player_selects_only_primary_cameras_routed_to_display_one() {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Secondary 2D".into()),
             components: json!({
                 "Transform": { "position": [8, 0, 10], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
                 "Camera2D": { "size": 4, "primary": true, "target_display": 1 }
             }),
         });
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Display 1 Camera".into()),
             components: json!({
                 "Transform": { "position": [3, 0, 10], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
@@ -3069,8 +3127,8 @@ mod tests {
     fn packaged_asset_validation_rejects_invalid_pose_references() {
         let mut world = World::new();
         world.commands.push(WorldCommand::Spawn {
-            name: Some("Invalid pose".into()),
-            components: json!({"MeshRenderer": {"mesh":"Assets/hero.glb#pose=0:1200", "material":"default"}}),
+            name: Some("Invalid pose".into()), active: true, parent: None,
+            components: json!({"MeshRenderer": {"mesh":"Assets/hero.glb#pose=0:7201", "material":"default"}}),
         });
         world.commit();
         let error = validate_world_assets(&world, Path::new("C:/Games/Packaged"), &mut HashSet::new()).unwrap_err();
@@ -3080,7 +3138,7 @@ mod tests {
     #[test]
     fn packaged_asset_validation_rejects_unsafe_model_references() {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Unsafe model".into()),
             components: json!({
                 "MeshRenderer": { "mesh": "../outside.gltf", "material": "default" }
@@ -3096,7 +3154,7 @@ mod tests {
     #[test]
     fn packaged_asset_validation_rejects_unsafe_environment_textures() {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Unsafe environment".into()),
             components: json!({
                 "EnvironmentLight": { "texture": "../outside.png" }
@@ -3212,7 +3270,7 @@ mod tests {
         write_test_bmp(&texture_path);
 
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Custom UI material".into()),
             components: json!({
                 "Image": {
@@ -3466,7 +3524,7 @@ mod tests {
         )
         .unwrap();
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Layered animator".into()),
             components: json!({
                 "Animator": { "controller": "Assets/Animations/Hero.mcontroller" }
@@ -3521,7 +3579,7 @@ mod tests {
         let nested_source = r#"{"version":1,"name":"Nested","duration":2,"tracks":[{"type":"activation","id":"actor","name":"Actor","target":"Actor","clips":[]}]}"#;
         std::fs::write(timelines.join("Nested.mtimeline"), nested_source).unwrap();
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Timeline director".into()),
             components: json!({
                 "Animator": {},
@@ -3625,7 +3683,7 @@ mod tests {
             .unwrap();
 
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("HDR environment".into()),
             components: json!({
                 "EnvironmentLight": { "texture": "Assets/studio.hdr" }
@@ -3640,7 +3698,7 @@ mod tests {
     #[test]
     fn packaged_asset_validation_scans_tilemap_sprite_dependencies() {
         let mut world = World::new();
-        world.commands.push(WorldCommand::Spawn {
+        world.commands.push(WorldCommand::Spawn { active: true, parent: None,
             name: Some("Unsafe tilemap".into()),
             components: json!({
                 "Tilemap": {
@@ -3678,7 +3736,7 @@ mod tests {
             ),
         ] {
             let mut world = World::new();
-            world.commands.push(WorldCommand::Spawn {
+            world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: Some("Unsafe UI sprite".into()),
                 components: component,
             });
@@ -3723,7 +3781,7 @@ mod tests {
                 "SpotLight": { "outer_angle_degrees": 55 }
             }),
         ] {
-            world.commands.push(WorldCommand::Spawn {
+            world.commands.push(WorldCommand::Spawn { active: true, parent: None,
                 name: None,
                 components,
             });

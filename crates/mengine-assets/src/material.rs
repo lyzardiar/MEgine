@@ -110,6 +110,8 @@ pub struct MaterialAsset {
     pub surface: MaterialSurface,
     pub blend_mode: MaterialBlendMode,
     pub transparent_depth_write: bool,
+    /// Accept equal depth for successive layers sharing the same geometry.
+    pub depth_equal: bool,
     #[serde(default = "default_render_queue")]
     pub render_queue: i32,
     #[serde(default = "default_base_color")]
@@ -172,6 +174,7 @@ impl Default for MaterialAsset {
             surface: MaterialSurface::Opaque,
             blend_mode: MaterialBlendMode::Alpha,
             transparent_depth_write: false,
+            depth_equal: false,
             render_queue: default_render_queue(),
             base_color: default_base_color(),
             metallic: 0.0,
@@ -428,6 +431,7 @@ mod tests {
         assert_eq!(legacy.blend_mode, MaterialBlendMode::Alpha);
         assert_eq!(legacy.custom_shader, "");
         assert!(!legacy.transparent_depth_write);
+        assert!(!legacy.depth_equal);
         assert_eq!(legacy.render_queue, -1);
         assert_eq!(legacy.normal_texture, "");
         assert_eq!(legacy.normal_scale, 1.0);
@@ -453,6 +457,7 @@ mod tests {
               "surface":"transparent",
               "blend_mode":"premultiplied",
               "transparent_depth_write":true,
+              "depth_equal":true,
               "render_queue":9999,
               "occlusion_texture":" Assets\\Textures\\ao.png ",
               "uv_rotation":-90,
@@ -467,6 +472,7 @@ mod tests {
         assert_eq!(parsed.custom_shader, "Assets/Shaders/toon.mshader");
         assert_eq!(parsed.blend_mode, MaterialBlendMode::Premultiplied);
         assert!(parsed.transparent_depth_write);
+        assert!(parsed.depth_equal);
         assert_eq!(parsed.render_queue, 5000);
         assert_eq!(parsed.occlusion_texture, "Assets/Textures/ao.png");
         assert_eq!(parsed.uv_rotation, 270.0);

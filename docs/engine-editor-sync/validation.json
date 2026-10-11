@@ -1,0 +1,35 @@
+{
+  "author": "MiYu",
+  "baseMaster": "b287f557908454bee011da1e743ea6897b5818ea",
+  "sourceFrostbound": "c0159f68c6f2908cc54e1959ab6db024c5ec2264",
+  "rustLibraries": {
+    "passed": 549,
+    "failed": 0,
+    "ignored": 4,
+    "binaries": 13,
+    "testThreads": 1
+  },
+  "cli": {
+    "passed": 72,
+    "failed": 0
+  },
+  "editor": {
+    "passed": 1032,
+    "failed": 0
+  },
+  "targetedRuntimePoseValidation": {
+    "passed": 1,
+    "failed": 0
+  },
+  "scope": "Engine, editor, API, CLI, generated IDL bindings and independent test fixtures; no Frostbound game or shared asset-library changes",
+  "nativeRelease": {
+    "customProtocol": true,
+    "buildPassed": true,
+    "editorSha256": "69d3252dbe5027c103161208d08690b35ca168d595a86cc19ff77d6572e2fb9b",
+    "sceneOpenPassed": true,
+    "sceneCameraMoves": 8,
+    "frostboundMortarSteps": 82,
+    "consoleErrors": 0,
+    "materialErrors": 0
+  }
+}

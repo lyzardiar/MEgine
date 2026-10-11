@@ -1,3 +1,4 @@
+// Author: MiYu. Hidden Agent editor startup and task-owned runtime cleanup.
 import fs from 'node:fs';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
@@ -126,6 +127,18 @@ export function launchBackgroundEditor({
   const lockFile = path.join(path.dirname(discoveryFile), 'agent-background-launch.lock');
   if (!acquireLaunchLock(lockFile)) return { launched: false, waitingForOwner: true };
   let keepLock = false;
+  let runtimeDirectory = null;
+  let runtimeParent = null;
+  let cleanupStarted = false;
+  let childSpawned = false;
+  const cleanupRuntime = () => {
+    if (!runtimeDirectory || cleanupStarted) return;
+    if (!path.isAbsolute(runtimeDirectory) || path.dirname(runtimeDirectory) !== runtimeParent || !path.basename(runtimeDirectory).startsWith('com.mengine.editor.agent-')) return;
+    cleanupStarted = true;
+    fs.rm(runtimeDirectory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }, (error) => {
+      if (error) console.warn(`Could not remove Agent editor runtime ${runtimeDirectory}: ${error.message}`);
+    });
+  };
   try {
     const { executable, candidates } = resolveBackgroundEditorExecutable({
       env,
@@ -133,16 +146,38 @@ export function launchBackgroundEditor({
       platform,
       stat,
     });
+    const childEnv = {
+      ...env,
+      MENGINE_EDITOR_BACKGROUND: '1',
+      MENGINE_AGENT_BRIDGE_FILE: discoveryFile,
+    };
+    const runtimeRoot = env.MENGINE_AGENT_RUNTIME_ROOT?.trim();
+    if (runtimeRoot) {
+      if (!path.isAbsolute(runtimeRoot)) throw new Error('MENGINE_AGENT_RUNTIME_ROOT must be an absolute path');
+      const root = path.resolve(runtimeRoot);
+      fs.mkdirSync(root, { recursive: true });
+      runtimeParent = root;
+      runtimeDirectory = fs.mkdtempSync(path.join(root, 'com.mengine.editor.agent-'));
+      for (const name of ['config', 'webview', 'temp']) fs.mkdirSync(path.join(runtimeDirectory, name));
+      Object.assign(childEnv, {
+        MENGINE_EDITOR_CONFIG_DIR: path.join(runtimeDirectory, 'config'),
+        WEBVIEW2_USER_DATA_FOLDER: path.join(runtimeDirectory, 'webview'),
+        TEMP: path.join(runtimeDirectory, 'temp'),
+        TMP: path.join(runtimeDirectory, 'temp'),
+        WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `${env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS ?? ''} --disk-cache-size=67108864`.trim(),
+      });
+    }
     const child = spawnProcess(executable, [], {
       detached: true,
       windowsHide: true,
       stdio: 'ignore',
-      env: {
-        ...env,
-        MENGINE_EDITOR_BACKGROUND: '1',
-        MENGINE_AGENT_BRIDGE_FILE: discoveryFile,
-      },
+      env: childEnv,
     });
+    childSpawned = Number.isSafeInteger(child.pid) && child.pid > 0;
+    if (runtimeDirectory) {
+      child.once?.('exit', cleanupRuntime);
+      child.once?.('error', cleanupRuntime);
+    }
     child.unref?.();
     keepLock = transferLaunchLock(lockFile, child.pid);
     return {
@@ -151,8 +186,12 @@ export function launchBackgroundEditor({
       pid: Number.isSafeInteger(child.pid) ? child.pid : null,
       executable,
       candidates,
+      ...(runtimeDirectory ? { runtimeDirectory } : {}),
     };
   } finally {
-    if (!keepLock) releaseLaunchLock(lockFile);
+    if (!keepLock) {
+      releaseLaunchLock(lockFile);
+      if (!childSpawned) cleanupRuntime();
+    }
   }
 }

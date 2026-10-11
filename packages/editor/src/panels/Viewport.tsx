@@ -1,3 +1,4 @@
+// Author: MiYu. Editor Scene/Game drawing and interaction with owned native frame presentation.
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import {
@@ -46,9 +47,10 @@ import {
   quatRotateVec,
   scale as vscale,
 } from '../math3d';
-import { clearModelPreview, modelPreview } from '../modelPreview';
-import { nativeGamePreviewSize, requiresBrowserViewportSnapshot, uploadNativeViewportFrame } from '../nativeViewportFrame';
-import { releaseNativeViewportFrame, requestNativeViewportFrame } from '../nativeViewportTransport';
+import { clearModelPreview, modelPreview, type PreviewMesh } from '../modelPreview';
+import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
+import { createNativeViewportWorldArgs, nativeGamePreviewSize, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
+import { releaseNativeViewportFrame, requestRevisionedNativeViewportFrame } from '../nativeViewportTransport';
 import {
   clearMaterialPreviews,
   materialAssetPreviewState,
@@ -225,6 +227,8 @@ import {
 } from '../worldDrawOrder';
 import { getSortingLayerRank } from '../sortingLayers';
 import { buildWorldTransforms, resolvedTransform } from '../worldTransform';
+import { createHierarchyActiveLookup, viewportActiveLookup } from '../hierarchyActivation';
+import { createNativeViewportPresentationReader } from '../nativeViewportPresentation';
 import {
   modulateLight2DColor,
   prepareLight2DLights,
@@ -496,6 +500,33 @@ type Ent = {
   components: Record<string, unknown>;
 };
 
+const previewBounds = new WeakMap<PreviewMesh, Bounds | null>();
+function browserEntityBounds(entity: Ent, transform: TransformData): Bounds | null {
+  const components = entity.components;
+  // Helpers, complex batches and sampled effects retain their existing visibility and picking.
+  if (['Camera3D', 'Camera2D', 'DirectionalLight', 'PointLight', 'SpotLight', 'Light2D', 'RectTransform', 'Tilemap', 'Line2D', 'SpriteBatch2D', 'SpineSkeleton', 'ParticleEmitter2D', 'ParticleEmitter3D', 'TrailRenderer2D', 'SampledEffect', 'BoxCollider3D', 'SphereCollider3D', 'BoxCollider2D', 'CircleCollider2D', 'PolygonCollider2D', 'EdgeCollider2D', 'TargetJoint2D'].some((key) => components[key])) return null;
+  let local: Bounds | null = null;
+  const mesh = components.MeshRenderer as Record<string, unknown> | undefined;
+  if (mesh) {
+    const path = String(mesh.mesh ?? 'cube');
+    const preview = /\.(?:gltf|glb)$/i.test(path) ? modelPreview(path) : null;
+    if (preview) {
+      if (!previewBounds.has(preview)) previewBounds.set(preview, pointBounds(preview.positions));
+      local = previewBounds.get(preview) ?? null;
+    } else local = { min: [-0.5, -0.5, -0.5], max: [0.5, 0.5, 0.5] };
+  } else {
+    const sprite = (components.AnimatedSprite2D ?? components.SpriteRenderer) as { size?: number[]; pivot?: number[] } | undefined;
+    if (sprite) {
+      const size = [0, 1].map((axis) => Number.isFinite(Number(sprite.size?.[axis])) ? Math.abs(Number(sprite.size![axis])) : 1);
+      const pivot = [0, 1].map((axis) => Number.isFinite(Number(sprite.pivot?.[axis])) ? Number(sprite.pivot![axis]) : 0.5);
+      // Mirror signs and authored pivots may offset the quad from its origin.
+      const radius = size.map((v, axis) => v * Math.max(Math.abs(pivot[axis]), Math.abs(1 - pivot[axis])));
+      local = { min: [-radius[0], -radius[1], 0], max: [radius[0], radius[1], 0] };
+    }
+  }
+  return local ? transformBounds(local, transform) : null;
+}
+
 type TilemapTool = 'paint' | 'erase' | 'box' | 'fill' | 'picker';
 
 function rectHandlePivotForSelection(
@@ -575,8 +606,9 @@ export function Viewport(props: {
   clearColor: [number, number, number, number];
   entities: Ent[];
   nativeSessionId?: number;
+  runtimeSessionId?: number;
   simulationRequestMs?: number;
-  runtimeSnapshot?: () => { entities: Ent[]; clearColor: [number, number, number, number]; simulationTime?: number; nativeSessionId?: number; simulationRequestMs?: number } | null;
+  runtimeSnapshot?: () => { entities: Ent[]; clearColor: [number, number, number, number]; simulationTime?: number; nativeSessionId?: number; nativeWorldReference?: NativeViewportWorldReference<Ent>; runtimeSessionId?: number; simulationRequestMs?: number } | null;
   selected: number | null;
   selectedIds?: number[];
   sceneHiddenIds?: readonly number[];
@@ -668,6 +700,7 @@ export function Viewport(props: {
   ) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const spatialIndexRef = useRef(createViewportSpatialIndex());
   const nativeGameFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
     width: number;
@@ -675,8 +708,11 @@ export function Viewport(props: {
     hasAuthoredCamera: boolean;
     uiPrimitives: number;
     uiBatches: number;
+    world: NativeViewportFrameWorld<Ent>;
+    presentationKey: string;
   } | null>(null);
   const nativeGameRequestRef = useRef({
+    generation: 0,
     inFlight: false,
     lastRequestAt: 0,
     reportedError: false,
@@ -687,6 +723,7 @@ export function Viewport(props: {
     width: number;
     height: number;
     key: string;
+    world: NativeViewportFrameWorld<Ent>;
   } | null>(null);
   const nativeSceneRequestRef = useRef({
     inFlight: false,
@@ -698,6 +735,8 @@ export function Viewport(props: {
   const nativeCameraPreviewFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
     entity: number;
+    key: string;
+    world: NativeViewportFrameWorld<Ent>;
   } | null>(null);
   const nativeCameraPreviewRequestRef = useRef({
     inFlight: false,
@@ -711,6 +750,8 @@ export function Viewport(props: {
   const rectGizmoHitsRef = useRef<RectGizmoHit[]>([]);
   const linePointHitsRef = useRef<LinePointHit[]>([]);
   const uiItemsRef = useRef<UiDrawItem[]>([]);
+  const uiFrameWorldRef = useRef<NativeViewportFrameWorld<Ent> | null>(null);
+  const nativePresentationRef = useRef(createNativeViewportPresentationReader<Ent>());
   const canvasWorkspaceActiveRef = useRef(false);
   const canvasWorkspaceEntityRef = useRef<number | null>(null);
   const artboardFramesRef = useRef<CanvasArtboardFrame[]>([]);
@@ -793,16 +834,28 @@ export function Viewport(props: {
   const lastCameraRef = useRef<Camera>({ eye: [0, 0, 10], target: [0, 0, 0], fovYDeg: 60 });
   const propsRef = useRef(props);
   propsRef.current = props;
+  const filteredSceneRef = useRef<{ source: Ent[]; hiddenKey: string; entities: Ent[] } | null>(null);
   const currentViewportProps = () => {
     const p = propsRef.current, live = p.runtimeSnapshot?.();
     if (!live) return p;
     const hidden = p.tab === 'scene' ? p.sceneHiddenIds ?? [] : [];
-    return { ...p, nativeSessionId: live.nativeSessionId, simulationRequestMs: live.simulationRequestMs, entities: hidden.length ? live.entities.filter(entity => !hidden.includes(entity.entity)) : live.entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime };
+    let entities = live.entities;
+    if (hidden.length) {
+      const hiddenKey = JSON.stringify(hidden), cached = filteredSceneRef.current;
+      if (cached?.source === entities && cached.hiddenKey === hiddenKey) entities = cached.entities;
+      else { const ids = new Set(hidden); filteredSceneRef.current = { source: entities, hiddenKey, entities: entities.filter(entity => !ids.has(entity.entity)) }; entities = filteredSceneRef.current.entities; }
+    }
+    return { ...p, get nativeSessionId() { return hidden.length ? undefined : live.nativeSessionId; }, get nativeWorldReference() { return hidden.length ? undefined : live.nativeWorldReference; }, runtimeSessionId: live.runtimeSessionId, simulationRequestMs: live.simulationRequestMs, entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime };
   };
 
-  const nativeWorldArgs = (p: ReturnType<typeof currentViewportProps>) => p.nativeSessionId != null && !requiresBrowserViewportSnapshot(p.entities)
-    ? { playSessionId: p.nativeSessionId }
-    : { snapshot: { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime } };
+  const currentUiItems = () => {
+    const world = uiFrameWorldRef.current;
+    return world && nativeViewportFrameWorldCurrent(world, currentViewportProps()) ? uiItemsRef.current : [];
+  };
+  const currentUiEntities = () => {
+    const world = uiFrameWorldRef.current;
+    return world && nativeViewportFrameWorldCurrent(world, currentViewportProps()) ? world.entities : [];
+  };
 
   const closeGameInput = (focusCanvas = false) => {
     focusedInputRef.current = null;
@@ -840,7 +893,7 @@ export function Viewport(props: {
       closeGameInput();
       return null;
     }
-    const item = uiItemsRef.current.find((candidate) => candidate.entity === entity);
+    const item = currentUiItems().find((candidate) => candidate.entity === entity);
     if (!item?.input?.interactable) {
       closeGameInput();
       return null;
@@ -906,7 +959,7 @@ export function Viewport(props: {
         const height = Math.max(1, Math.round(sourceHeight * scale));
         // Render the current world at the requested output size. The Game View's
         // display label and letterbox are editor chrome, not game pixels.
-        const frame = await invoke<{ pngBase64: string }>('render_native_game_view', { width, height, ...nativeWorldArgs(p) });
+        const frame = await invoke<{ pngBase64: string }>('render_native_game_view', { width, height, ...createNativeViewportWorldArgs(p).snapshotArgs() });
         let dataUrl = `data:image/png;base64,${frame.pngBase64}`;
         if (format === 'image/jpeg') {
           const image = await decodeNativeFrame(frame.pngBase64);
@@ -1213,6 +1266,9 @@ export function Viewport(props: {
     const clear = () => {
       clearModelPreview();
       clearMaterialPreviews();
+      nativeGameRequestRef.current.generation++;
+      nativeSceneRequestRef.current.generation++;
+      nativeCameraPreviewRequestRef.current.generation++;
       nativeGameFrameRef.current = null;
       nativeSceneFrameRef.current = null;
       nativeCameraPreviewFrameRef.current = null;
@@ -1241,7 +1297,6 @@ export function Viewport(props: {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    const p = currentViewportProps();
     const sc = liveCam.current;
     const now = paintStartedAt;
     const rect = canvas.getBoundingClientRect();
@@ -1249,20 +1304,22 @@ export function Viewport(props: {
       lastProfilerFrameRef.current = 0;
       return;
     }
+    const requestedProps = currentViewportProps();
+    let p = requestedProps;
+    const nativeWorld = createNativeViewportWorldArgs(requestedProps);
+    const requestWorldFrame = (command: string, args: Record<string, unknown>) => {
+      const worldArgs = nativeWorld.worldArgs();
+      nativeWorld.frameWorld();
+      return requestRevisionedNativeViewportFrame(command, { ...args, ...worldArgs }, nativeWorld.snapshotArgs);
+    };
+    const presentationKey = JSON.stringify([p.gameResolution, p.gameDisplay]);
+    if (nativeGameFrameRef.current && (!nativeViewportFrameWorldCurrent(nativeGameFrameRef.current.world, requestedProps) || nativeGameFrameRef.current.presentationKey !== presentationKey)) nativeGameFrameRef.current = null;
+    if (nativeSceneFrameRef.current && !nativeViewportFrameWorldCurrent(nativeSceneFrameRef.current.world, requestedProps)) nativeSceneFrameRef.current = null;
+    if (nativeCameraPreviewFrameRef.current && !nativeViewportFrameWorldCurrent(nativeCameraPreviewFrameRef.current.world, requestedProps)) nativeCameraPreviewFrameRef.current = null;
     const frameIntervalMs = lastProfilerFrameRef.current > 0
       ? now - lastProfilerFrameRef.current
       : 0;
     if (animationFrame) lastProfilerFrameRef.current = now;
-    const simulationClock = sampleViewportSimulationClock(
-      simulationClockRef.current,
-      p.playing,
-      p.simulationTime,
-      now,
-    );
-    simulationClockRef.current = simulationClock.state;
-    const simulationDelta = simulationClock.deltaSeconds;
-    const animationTime = simulationClock.animationTimeSeconds;
-
     const dpr = window.devicePixelRatio || 1;
     const pw = Math.max(1, Math.floor(rect.width));
     const ph = Math.max(1, Math.floor(rect.height));
@@ -1300,15 +1357,17 @@ export function Viewport(props: {
       && (p.playing || now - nativeGameRequestRef.current.lastRequestAt >= 300)
     ) {
       const request = nativeGameRequestRef.current;
+      const generation = ++request.generation;
       request.inFlight = true;
       request.lastRequestAt = now;
       // Fixed-pixel Canvas layouts depend on the selected resolution, even in a small panel.
       const fixedPixelCanvas = p.entities.some(entity => entity.components.Canvas && (entity.components.Canvas as Record<string, unknown>).render_mode !== 'WorldSpace' && (entity.components.CanvasScaler as Record<string, unknown> | undefined)?.ui_scale_mode !== 'ScaleWithScreenSize' && (p.activeInHierarchy?.(entity.entity) ?? true));
       const { width: nativeWidth, height: nativeHeight } = nativeGamePreviewSize(p.gameResolution?.width ?? vp.w * dpr, p.gameResolution?.height ?? vp.h * dpr, vp.w * dpr, vp.h * dpr, fixedPixelCanvas);
-      request.ready = requestNativeViewportFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight, ...nativeWorldArgs(p) })
+      request.ready = requestWorldFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight })
         .then((buffer) => {
+          if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
           const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
-          recordNativeViewportProfile('game', { ...result.profile, simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
+          recordNativeViewportProfile('game', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
           const image = result.image;
           const firstFrame = nativeGameFrameRef.current == null;
           nativeGameFrameRef.current = {
@@ -1318,6 +1377,8 @@ export function Viewport(props: {
             hasAuthoredCamera: result.hasAuthoredCamera,
             uiPrimitives: result.profile.counts.uiPrimitives,
             uiBatches: result.profile.counts.uiBatches,
+            world: nativeWorld.frameWorld(),
+            presentationKey,
           };
           request.reportedError = false;
           // Hidden WebViews may suspend requestAnimationFrame. Commit the decoded frame
@@ -1342,13 +1403,15 @@ export function Viewport(props: {
       ctx.fillRect(0, 0, pw, ph);
     }
 
-    const gameCamera = isGame
-      ? timelineGameCamera(p.entities, p.timelineCameraPreview, p.activeInHierarchy, p.gameDisplay)
+    let isActive = viewportActiveLookup(p.entities, !!p.playing, isGame, p.sceneHiddenIds, p.activeInHierarchy);
+    let gameCamera = isGame && !nativeGameReady
+      ? timelineGameCamera(p.entities, p.timelineCameraPreview, isActive, p.gameDisplay)
       : null;
-    if (isGame && document.pointerLockElement === canvasRef.current && !(p.entities.find(entity => entity.entity === gameCamera?.entity)?.components.Camera3D as Camera3DData | undefined)?.capture_pointer) document.exitPointerLock();
     const selectedCamera = !isGame && p.selected != null
       ? gameCameraForEntity(p.entities, p.selected)
       : null;
+    const cameraPreviewKey = selectedCamera ? JSON.stringify([selectedCamera, p.gameResolution, p.gameDisplay]) : undefined;
+    if (nativeCameraPreviewFrameRef.current?.key !== cameraPreviewKey) nativeCameraPreviewFrameRef.current = null;
     const scene2DActive = !isGame && scene2DRef.current;
     const workspacePreferences = normalizeCanvasWorkspacePreferences(
       canvasWorkspaceRef.current,
@@ -1364,7 +1427,7 @@ export function Viewport(props: {
     const canvasWorkspaceActive = workspaceCanvasEntity != null;
     canvasWorkspaceActiveRef.current = canvasWorkspaceActive;
     canvasWorkspaceEntityRef.current = workspaceCanvasEntity;
-    const cam: Camera = isGame
+    let cam: Camera = isGame
       ? gameCamera ?? { eye: [0, 1.5, 4], target: [0, 0.5, 0], fovYDeg: 60 }
       : {
           eye: orbitEye(sc.pivot, sc.yaw, sc.pitch, sc.distance),
@@ -1384,7 +1447,6 @@ export function Viewport(props: {
           MAX_NATIVE_SCENE_VIEW_DIMENSION,
         )
       : null;
-    lastCameraRef.current = cam;
     if (
       !isGame
       && !scene2DActive
@@ -1396,8 +1458,7 @@ export function Viewport(props: {
       const generation = ++request.generation;
       request.inFlight = true;
       request.lastRequestAt = now;
-      request.ready = requestNativeViewportFrame('render_native_scene_view', {
-        ...nativeWorldArgs(p),
+      request.ready = requestWorldFrame('render_native_scene_view', {
         request: {
           width: nativeSceneIdentity!.width,
           height: nativeSceneIdentity!.height,
@@ -1409,9 +1470,9 @@ export function Viewport(props: {
           hiddenEntityIds: p.sceneHiddenIds ?? [],
         },
       }).then((buffer) => {
-        if (request.generation !== generation) { releaseNativeViewportFrame(buffer); return; }
+        if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
         const result = uploadNativeViewportFrame(buffer, nativeSceneFrameRef.current?.image);
-        recordNativeViewportProfile('scene', { ...result.profile, simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
+        recordNativeViewportProfile('scene', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
         const image = result.image;
         const firstFrame = nativeSceneFrameRef.current == null;
         nativeSceneFrameRef.current = {
@@ -1419,6 +1480,7 @@ export function Viewport(props: {
           width: result.width,
           height: result.height,
           key: nativeSceneIdentity!.key,
+          world: nativeWorld.frameWorld(),
         };
         request.reportedError = false;
         if (firstFrame || performance.now() - lastProfilerFrameRef.current > 100) paint();
@@ -1451,8 +1513,7 @@ export function Viewport(props: {
         : 16 / 9;
       const previewWidth = 320;
       const previewHeight = Math.max(120, Math.round(previewWidth / Math.max(0.5, Math.min(2.5, aspect))));
-      request.ready = requestNativeViewportFrame('render_native_scene_view', {
-        ...nativeWorldArgs(p),
+      request.ready = requestWorldFrame('render_native_scene_view', {
         request: {
           width: previewWidth,
           height: previewHeight,
@@ -1471,12 +1532,16 @@ export function Viewport(props: {
           hiddenEntityIds: [],
         },
       }).then((buffer) => {
-        if (request.generation !== generation) { releaseNativeViewportFrame(buffer); return; }
+        if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
+        const current = currentViewportProps(), camera = current.selected != null ? gameCameraForEntity(current.entities, current.selected) : null;
+        if (!camera || JSON.stringify([camera, current.gameResolution, current.gameDisplay]) !== cameraPreviewKey) { releaseNativeViewportFrame(buffer); return; }
         const { image } = uploadNativeViewportFrame(buffer, nativeCameraPreviewFrameRef.current?.image);
         const firstFrame = nativeCameraPreviewFrameRef.current == null;
         nativeCameraPreviewFrameRef.current = {
           image,
           entity: selectedCamera.entity,
+          key: cameraPreviewKey!,
+          world: nativeWorld.frameWorld(),
         };
         request.reportedError = false;
         if (firstFrame || performance.now() - lastProfilerFrameRef.current > 100) paint();
@@ -1492,10 +1557,31 @@ export function Viewport(props: {
         request.ready = null;
       });
     }
-    const isActive = (id: number) =>
-      p.activeInHierarchy ? p.activeInHierarchy(id) : true;
+    const displayedWorld = isGame ? nativeGameFrameRef.current?.world : !scene2DActive && nativeSceneFrameRef.current?.key === nativeSceneIdentity?.key ? nativeSceneFrameRef.current?.world : undefined;
+    const displayedPresentation = displayedWorld ? nativePresentationRef.current(displayedWorld) : undefined;
+    if (displayedWorld) {
+      // Browser drawing and hit regions use the same owned entity records as the decoded image.
+      p = Object.assign(Object.create(requestedProps), { entities: displayedWorld.entities, clearColor: displayedWorld.clearColor, simulationTime: displayedWorld.simulationTime });
+      isActive = displayedPresentation!.active;
+      if (isGame) {
+        gameCamera = displayedPresentation!.gameCamera(p.timelineCameraPreview, p.gameDisplay);
+        cam = gameCamera ?? { eye: [0, 1.5, 4], target: [0, 0.5, 0], fovYDeg: 60 };
+      }
+    }
+    if (isGame && document.pointerLockElement === canvasRef.current && !(p.entities.find(entity => entity.entity === gameCamera?.entity)?.components.Camera3D as Camera3DData | undefined)?.capture_pointer) document.exitPointerLock();
+    lastCameraRef.current = cam;
+    const simulationClock = sampleViewportSimulationClock(
+      simulationClockRef.current,
+      p.playing,
+      p.simulationTime,
+      now,
+    );
+    simulationClockRef.current = simulationClock.state;
+    const simulationDelta = simulationClock.deltaSeconds;
+    const animationTime = simulationClock.animationTimeSeconds;
+
     const environment = p.entities.find(
-      (entity) => isActive(entity.entity) && entity.components.EnvironmentLight,
+      (entity) => entity.components.EnvironmentLight && isActive(entity.entity),
     )?.components.EnvironmentLight as EnvironmentBackground | undefined;
 
     ctx.save();
@@ -1535,7 +1621,7 @@ export function Viewport(props: {
       if (!scene2DActive) drawGroundGrid(ctx, cam, vp, sc.pivot, sc.distance);
     }
 
-    const worldTransforms = buildWorldTransforms(nativeGameReady && !p.entities.some(entity => entity.components.SpineSkeleton) ? [] : p.entities);
+    const worldTransforms = buildWorldTransforms(nativeGameReady && !(displayedPresentation?.hasSpine ?? p.entities.some(entity => entity.components.SpineSkeleton)) ? [] : p.entities);
     const lights2D = prepareLight2DLights((nativeGameReady ? [] : p.entities).flatMap<Light2DInstance>((entity) => {
       if (!isActive(entity.entity)) return [];
       const component = entity.components.Light2D as Light2DComponent | undefined;
@@ -1680,8 +1766,8 @@ export function Viewport(props: {
     const liveSpineIds = new Set<number>();
     for (const entity of p.entities) {
       if (
-        isActive(entity.entity)
-        && entity.components.SpineSkeleton
+        entity.components.SpineSkeleton
+        && isActive(entity.entity)
         && (
           resolvedTransform(worldTransforms, entity.entity)
           || entity.components.RectTransform
@@ -1702,11 +1788,16 @@ export function Viewport(props: {
         });
     }
 
-    const drawn = (isGame && !gameCamera ? [] : p.entities
-      .flatMap((e, hierarchyOrder) => {
-        if (!isActive(e.entity) || (nativeGameReady && !e.components.SpineSkeleton)) return null;
-        const t = resolvedTransform(worldTransforms, e.entity) ?? undefined;
-        if (!t) return null;
+    const worldEntries = p.entities.flatMap((e, hierarchyOrder) => {
+      if ((nativeGameReady && !e.components.SpineSkeleton) || !isActive(e.entity)) return [];
+      const t = resolvedTransform(worldTransforms, e.entity);
+      return t ? [{ e, t, hierarchyOrder }] : [];
+    });
+    spatialIndexRef.current.update(worldEntries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : browserEntityBounds(e, t)));
+    const spatialCandidates = spatialIndexRef.current.query(viewportPlanes(cam, vp.w / Math.max(1, vp.h)));
+    const drawn = (isGame && !gameCamera ? [] : spatialCandidates
+      .flatMap((index) => {
+        const { e, t, hierarchyOrder } = worldEntries[index];
         const pr = project(t.position as Vec3, cam, vp);
         // Keep cameras/lights even if origin is barely off-screen — frustum/rays may still show
         const camComp = e.components.Camera3D ?? e.components.Camera2D;
@@ -2643,7 +2734,7 @@ export function Viewport(props: {
         const logicalUiSize = p.gameResolution
           ? { w: p.gameResolution.width, h: p.gameResolution.height }
           : { w: uiRoot.w, h: uiRoot.h };
-        const uiItems = nativeGameReady && !requiresBrowserViewportSnapshot(p.entities) ? [] : [
+        const uiItems = nativeGameReady && !(displayedPresentation?.requiresBrowserSnapshot ?? nativeWorld.requiresBrowserSnapshot()) ? [] : [
           ...(gameCamera
             ? layoutUiWorldSpace(p.entities, cam, vp, selSet, textMeasurement)
             : []),
@@ -2655,9 +2746,11 @@ export function Viewport(props: {
             gameCamera ?? undefined,
             p.gameDisplay,
             textMeasurement,
+            nativeGameReady,
           ),
         ];
         uiItemsRef.current = uiItems;
+        uiFrameWorldRef.current = displayedWorld ?? { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime ?? 0, sourceEntities: requestedProps.entities, runtimeSessionId: requestedProps.runtimeSessionId };
 
         let layoutScale = 1;
         if (p.selected != null) {
@@ -2840,6 +2933,7 @@ export function Viewport(props: {
           ];
         }
         uiItemsRef.current = uiItems;
+        uiFrameWorldRef.current = displayedWorld ?? { entities: p.entities, clearColor: p.clearColor, simulationTime: p.simulationTime ?? 0, sourceEntities: requestedProps.entities, runtimeSessionId: requestedProps.runtimeSessionId };
         uiLayoutScaleRef.current = layoutScale || 1;
 
         if (scene2DRef.current && !canvasWorkspaceActive) {
@@ -3072,6 +3166,7 @@ export function Viewport(props: {
       if (
         frame?.image
         && frame.entity === selectedCamera.entity
+        && frame.key === cameraPreviewKey
       ) {
         ctx.drawImage(frame.image, x + 1, y + headerHeight, panelWidth - 2, imageHeight - 1);
       } else {
@@ -3260,8 +3355,8 @@ export function Viewport(props: {
     // Game 视图：只做运行时交互（如 Button），不可点选编辑物体
     if (propsRef.current.tab === 'game') {
       if (ev.button === 0) {
-        const ui = hitTestUi(uiItemsRef.current, x, y, {
-          entities: propsRef.current.entities,
+        const ui = hitTestUi(currentUiItems(), x, y, {
+          entities: currentUiEntities(),
           viewport: lastVpRef.current,
         });
         if (ui?.slider?.interactable || ui?.scrollbar?.interactable) {
@@ -3677,8 +3772,8 @@ export function Viewport(props: {
         const x = ev.clientX - rect.left;
         const y = ev.clientY - rect.top;
         if (propsRef.current.tab === 'game') {
-          const ui = hitTestUi(uiItemsRef.current, x, y, {
-            entities: propsRef.current.entities,
+          const ui = hitTestUi(currentUiItems(), x, y, {
+            entities: currentUiEntities(),
             viewport: lastVpRef.current,
           });
           uiHoverRef.current = ui?.entity ?? null;
@@ -3743,7 +3838,7 @@ export function Viewport(props: {
         const rect = canvas.getBoundingClientRect();
         const x = ev.clientX - rect.left;
         const y = ev.clientY - rect.top;
-        const item = uiItemsRef.current.find((candidate) => candidate.entity === d.entity);
+        const item = currentUiItems().find((candidate) => candidate.entity === d.entity);
         if (item?.slider || item?.scrollbar) {
           const value = d.component === 'Slider'
             ? sliderValueAtPoint(item, x, y)
@@ -4237,8 +4332,8 @@ export function Viewport(props: {
         const rect = canvasRef.current.getBoundingClientRect();
         const x = ev.clientX - rect.left;
         const y = ev.clientY - rect.top;
-        const ui = hitTestUi(uiItemsRef.current, x, y, {
-          entities: propsRef.current.entities,
+        const ui = hitTestUi(currentUiItems(), x, y, {
+          entities: currentUiEntities(),
           viewport: lastVpRef.current,
         });
         if (ui && ui.entity === press) {
@@ -4324,13 +4419,13 @@ export function Viewport(props: {
   const onWheel = (ev: React.WheelEvent) => {
     if (propsRef.current.tab === 'game') {
       const { x, y } = localPos(ev);
-      const ui = hitTestUi(uiItemsRef.current, x, y, {
-        entities: propsRef.current.entities,
+      const ui = hitTestUi(currentUiItems(), x, y, {
+        entities: currentUiEntities(),
         viewport: lastVpRef.current,
       });
       if (ui?.list) {
         ev.preventDefault();
-        const entity = propsRef.current.entities.find((candidate) => candidate.entity === ui.entity);
+        const entity = currentUiEntities().find((candidate) => candidate.entity === ui.entity);
         const raw = entity?.components.ListView as Record<string, unknown> | undefined;
         const current = Number(raw?.scroll_offset ?? raw?.scrollOffset ?? 0);
         const itemHeight = Number(raw?.item_height ?? raw?.itemHeight ?? 32);
@@ -4556,18 +4651,21 @@ export function Viewport(props: {
     const onKey = (ev: KeyboardEvent) => {
       if (propsRef.current.tab === 'game' && ev.target === inputProxyRef.current) return;
       if (propsRef.current.tab === 'game' && ev.key === 'Tab') {
-        focusedUiRef.current = nextUiSelectable(
-          uiItemsRef.current,
+        const next = nextUiSelectable(
+          currentUiItems(),
           focusedUiRef.current,
           ev.shiftKey,
         );
-        closeGameInput();
-        ev.preventDefault();
-        ev.stopImmediatePropagation();
-        return;
+        if (next != null) {
+          focusedUiRef.current = next;
+          closeGameInput();
+          ev.preventDefault();
+          ev.stopImmediatePropagation();
+          return;
+        }
       }
       if (propsRef.current.tab === 'game' && focusedUiRef.current != null) {
-        const item = uiItemsRef.current.find(
+        const item = currentUiItems().find(
           (candidate) => candidate.entity === focusedUiRef.current,
         );
         if (!item) {
@@ -5223,12 +5321,12 @@ export function Viewport(props: {
             const entity = focusedInputRef.current;
             const item = entity == null
               ? undefined
-              : uiItemsRef.current.find((candidate) => candidate.entity === entity);
+              : currentUiItems().find((candidate) => candidate.entity === entity);
             commitGameInput(
               event.currentTarget,
               item?.input?.onValueChanged,
               false,
-              inputCompositionRef.current || native.isComposing === true,
+              inputCompositionRef.current || native?.isComposing === true,
             );
           }}
           onCompositionStart={() => {
@@ -5239,14 +5337,14 @@ export function Viewport(props: {
             const entity = focusedInputRef.current;
             const item = entity == null
               ? undefined
-              : uiItemsRef.current.find((candidate) => candidate.entity === entity);
+              : currentUiItems().find((candidate) => candidate.entity === entity);
             commitGameInput(event.currentTarget, item?.input?.onValueChanged, false, false);
           }}
           onKeyDown={(event) => {
             const entity = focusedInputRef.current;
             const item = entity == null
               ? undefined
-              : uiItemsRef.current.find((candidate) => candidate.entity === entity);
+              : currentUiItems().find((candidate) => candidate.entity === entity);
             if (!item?.input?.interactable) {
               closeGameInput(true);
               return;
@@ -5255,14 +5353,14 @@ export function Viewport(props: {
             const action = uiInputKeyAction(
               event.key,
               item.input.multiline,
-              inputCompositionRef.current || native.isComposing || native.keyCode === 229,
+              inputCompositionRef.current || native?.isComposing || native?.keyCode === 229,
             );
             if (action === 'native') return;
             event.preventDefault();
             event.stopPropagation();
             if (action === 'navigate') {
               focusedUiRef.current = nextUiSelectable(
-                uiItemsRef.current,
+                currentUiItems(),
                 focusedUiRef.current,
                 event.shiftKey,
               );
@@ -5292,8 +5390,8 @@ export function Viewport(props: {
         onMouseDown={(event) => {
           event.currentTarget.focus({ preventScroll: true });
           if (props.tab === 'game' && props.playing && event.button === 0 && document.pointerLockElement !== event.currentTarget) {
-            const p = currentViewportProps(), camera = timelineGameCamera(p.entities, p.timelineCameraPreview, p.activeInHierarchy, p.gameDisplay);
-            if ((p.entities.find(entity => entity.entity === camera?.entity)?.components.Camera3D as Camera3DData | undefined)?.capture_pointer) void event.currentTarget.requestPointerLock()?.catch(() => {});
+            const p = currentViewportProps(), entities = currentUiEntities(), camera = timelineGameCamera(entities, p.timelineCameraPreview, createHierarchyActiveLookup(entities), p.gameDisplay);
+            if ((entities.find(entity => entity.entity === camera?.entity)?.components.Camera3D as Camera3DData | undefined)?.capture_pointer) void event.currentTarget.requestPointerLock()?.catch(() => {});
           }
           sendPlayPointer(event);
           onPointerDown(event);

@@ -1,7 +1,9 @@
+// Author: MiYu. Keep static command schemas separate from editor startup code.
 export const EDITOR_JAVASCRIPT_CHUNK_BUDGET_BYTES = 500_000;
 
 export function editorChunkName(moduleId: string): string | undefined {
   const id = moduleId.replace(/\\/g, '/');
+  if (id.endsWith('/packages/editor/src/agent/commandSchemas.ts')) return 'agent-schemas';
   if (id.includes('/node_modules/@esotericsoftware/spine-')) return 'spine-runtime';
   if (
     id.includes('/node_modules/react/')

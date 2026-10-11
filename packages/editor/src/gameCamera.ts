@@ -126,7 +126,7 @@ function cameraForEntity(
 export function gameCameraForEntity(
   entities: readonly CameraEntity[],
   id: number,
-  world = buildWorldTransforms(entities),
+  world = buildWorldTransforms(entities, [id]),
 ): ResolvedGameCamera | null {
   return cameraForEntity(entities, world, id);
 }
@@ -237,7 +237,7 @@ export function primaryGameCamera(
   isActive?: (id: number) => boolean,
   targetDisplay = 0,
 ): ResolvedGameCamera | null {
-  const world = buildWorldTransforms(entities);
+  const world = buildWorldTransforms(entities, entities.filter(entity => entity.components.Camera2D || entity.components.Camera3D).map(entity => entity.entity));
   return primaryGameCameraFromWorld(entities, world, isActive, targetDisplay);
 }
 
@@ -248,7 +248,7 @@ export function timelineGameCamera(
   isActive?: (id: number) => boolean,
   targetDisplay = 0,
 ): ResolvedGameCamera | null {
-  const world = buildWorldTransforms(entities);
+  const world = buildWorldTransforms(entities, entities.filter(entity => entity.components.Camera2D || entity.components.Camera3D).map(entity => entity.entity));
   const display = normalizeGameDisplay(targetDisplay);
   const primary = primaryGameCameraFromWorld(entities, world, isActive, display);
   if (!preview) return primary;

@@ -385,8 +385,7 @@ impl TimelineRuntime {
             0.0
         };
         let all_entities: HashSet<_> = world
-            .iter_entities()
-            .filter(|entity| world.get_component::<TimelineDirector>(*entity).is_some())
+            .entities_with_components(&["TimelineDirector"])
             .collect();
         self.initialized
             .retain(|entity| all_entities.contains(entity) && world.is_alive(*entity));

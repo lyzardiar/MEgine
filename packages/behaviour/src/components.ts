@@ -108,6 +108,8 @@ export const ParticleEmitter2D = defineBuiltinComponent('ParticleEmitter2D');
 export type ParticleEmitter2D = BuiltinComponents['ParticleEmitter2D'];
 export const ParticleEmitter3D = defineBuiltinComponent('ParticleEmitter3D');
 export type ParticleEmitter3D = BuiltinComponents['ParticleEmitter3D'];
+export const SampledEffect = defineBuiltinComponent('SampledEffect');
+export type SampledEffect = BuiltinComponents['SampledEffect'];
 export const EffekseerEffect = defineBuiltinComponent('EffekseerEffect');
 export type EffekseerEffect = BuiltinComponents['EffekseerEffect'];
 export const SpineSkeleton = defineBuiltinComponent('SpineSkeleton');
@@ -215,6 +217,7 @@ export const BUILTIN_COMPONENT_TYPES = {
   AutoRotate,
   ParticleEmitter2D,
   ParticleEmitter3D,
+  SampledEffect,
   EffekseerEffect,
   SpineSkeleton,
   Canvas,

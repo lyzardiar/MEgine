@@ -1,8 +1,12 @@
 // Public script API shared by the editor and standalone player.
-((command, request, revision, snapshot, spriteBatch, network, storage) => {
+((command, request, revision, snapshot, spriteBatch, network, storage, assetNodes, findEntities) => {
   let valueRevision = -1, value, jsonRevision = -1, json;
   const api = {
     scene: null,
+    quit: () => request('quit', '[]'),
+    assets: Object.freeze({
+      sampleNodes(reference, options = {}) { const r = JSON.parse(assetNodes(String(reference), JSON.stringify(options))); if (!r.ok) throw new Error(r.error); return r.value; },
+    }),
     storage: Object.freeze({
       load(key) { const r = JSON.parse(storage('load', String(key), '')); if (!r.ok) throw new Error(r.error); return r.value; },
       save(key, value) { const r = JSON.parse(storage('save', String(key), JSON.stringify(value))); if (!r.ok) throw new Error(r.error); return r.value; },
@@ -14,6 +18,8 @@
       close: () => { network('close', ''); },
     }),
     pushCommandJson: json => command(String(json)),
+    findEntitiesByName(names) { if(!Array.isArray(names)||names.length>1024||names.some(n=>typeof n!=='string')) throw new TypeError('Expected up to 1024 entity names'); return JSON.parse(findEntities(JSON.stringify(names))); },
+    setActive: (entity, active) => command(JSON.stringify({op:'setActive',entity:Number(entity),active:!!active})),
     setSpriteBatchData: (entity, instances, colors = []) => spriteBatch(String(entity), instances, colors),
     setClearColor(r, g, b, a = 1) {
       const number = (value, fallback = 0) => typeof value === 'number' ? value : fallback;
@@ -50,10 +56,12 @@
   delete globalThis.__mengineSpriteBatch;
   delete globalThis.__mengineNetwork;
   delete globalThis.__mengineStorage;
+  delete globalThis.__mengineAssetNodes;
+  delete globalThis.__mengineFindEntities;
   const restoreSnapshot = () => {
     Object.defineProperty(globalThis.engine, 'snapshot', snapshotProperty);
     Object.defineProperty(globalThis, 'lastSnapshot', jsonProperty);
   };
   restoreSnapshot();
   return restoreSnapshot;
-})(__mengineCommand, __mengineRequest, __mengineRevision, __mengineSnapshot, __mengineSpriteBatch, __mengineNetwork, __mengineStorage);
+})(__mengineCommand, __mengineRequest, __mengineRevision, __mengineSnapshot, __mengineSpriteBatch, __mengineNetwork, __mengineStorage, __mengineAssetNodes, __mengineFindEntities);

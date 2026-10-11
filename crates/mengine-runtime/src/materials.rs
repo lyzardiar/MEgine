@@ -687,6 +687,7 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
         },
         depth_write: material.surface != MaterialSurface::Transparent
             || material.transparent_depth_write,
+        depth_equal: material.depth_equal,
         render_queue: if material.render_queue >= 0 {
             material.render_queue
         } else {
@@ -954,6 +955,7 @@ mod tests {
             surface: MaterialSurface::Cutout,
             blend_mode: AssetMaterialBlendMode::Premultiplied,
             transparent_depth_write: true,
+            depth_equal: true,
             render_queue: 2600,
             alpha_cutoff: 0.4,
             base_color_texture: "Assets/Textures/leaves.png".into(),
@@ -981,6 +983,7 @@ mod tests {
         assert!(!material.transparent);
         assert_eq!(material.blend_mode, MaterialBlendMode::Premultiplied);
         assert!(material.depth_write);
+        assert!(material.depth_equal);
         assert_eq!(material.render_queue, 2600);
         assert_eq!(material.alpha_cutoff, 0.4);
         assert_eq!(material.base_color_texture, asset.base_color_texture);
@@ -1146,7 +1149,7 @@ mod tests {
         assert_eq!(material.custom_textures[1], "Assets/Textures/mask.png");
         assert_eq!(material.custom_texture_names[0], "detail");
         assert_eq!(material.custom_texture_names[1], "mask");
-        assert_eq!(material.custom_texture_srgb, [true, false, false, false]);
+        assert_eq!(material.custom_texture_srgb, [true, false, false, false, false, false]);
         let draft = load_material_asset(&root.join("Assets/Materials/Rim.mmat")).unwrap();
         let preview = cache.resolve_preview(&draft).unwrap();
         assert_eq!(preview.custom_parameters, material.custom_parameters);
@@ -1205,7 +1208,11 @@ mod tests {
         let shader = r#"/* MENGINE_PARAMETERS
         {"textures":[
           {"name":"detail","type":"color","default":"Assets/Textures/default.png"},
-          {"name":"mask","type":"data"}
+          {"name":"mask","type":"data"},
+          {"name":"snow","type":"color"},
+          {"name":"soil","type":"data"},
+          {"name":"stone","type":"data"},
+          {"name":"height","type":"data","default":"Assets/Textures/height.png"}
         ]}
         */
         fn mengine_lit_surface_hook(
@@ -1221,7 +1228,12 @@ mod tests {
         let (textures, srgb) = resolve_surface_shader_textures(&material, shader).unwrap();
         assert_eq!(textures[0], "Assets/Textures/default.png");
         assert_eq!(textures[1], "Assets/Textures/mask.png");
-        assert_eq!(srgb, [true, false, false, false]);
+        assert_eq!(textures[5], "Assets/Textures/height.png");
+        assert_eq!(srgb, [true, false, true, false, false, false]);
+        let mut overridden = textures;
+        let block = MaterialPropertyBlock { custom_texture_names: vec!["height".into()], custom_texture_values: vec!["Assets/Textures/object-height.png".into()], ..Default::default() };
+        apply_custom_property_block(&block, &mut [[0.0; 4]; MAX_SURFACE_SHADER_PARAMETERS], &[], &mut overridden, &["detail".into(), "mask".into(), "snow".into(), "soil".into(), "stone".into(), "height".into()]);
+        assert_eq!(overridden[5], "Assets/Textures/object-height.png");
         material
             .custom_textures
             .insert("removed".into(), "Assets/Textures/stale.png".into());

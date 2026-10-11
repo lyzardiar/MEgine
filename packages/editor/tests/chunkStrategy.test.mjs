@@ -1,3 +1,4 @@
+// Author: MiYu.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
@@ -20,6 +21,8 @@ test('editor chunk strategy isolates stable runtimes on Windows and POSIX paths'
     'spine-runtime',
   );
   assert.equal(editorChunkName('/repo/packages/editor/src/App.tsx'), undefined);
+  assert.equal(editorChunkName('E:\\repo\\packages\\editor\\src\\agent\\commandSchemas.ts'), 'agent-schemas');
+  assert.equal(editorChunkName('/repo/packages/editor/src/agent/commandSchemas.ts'), 'agent-schemas');
 });
 
 test('editor chunk budget reports every oversized JavaScript chunk deterministically', () => {
