@@ -3,6 +3,21 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {fileURLToPath} from 'node:url';
 import {createServer} from 'vite';
+test('edit hierarchy keeps authored activation and permits toggles during Timeline previews',async()=>{
+ const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
+ try{
+  const {createEditorStore}=await server.ssrLoadModule('/src/store.ts'),store=createEditorStore();
+  store.loadSceneJson(JSON.stringify({version:1,name:'Preview',world:{entities:[{entity:1,name:'Actor',active:true,components:{}}]}}));
+  store.setTimelinePreview({activations:[{entity:1,active:false}],animations:[],camera:null,particles:[]});
+  assert.equal(store.presentationSnapshot().entities[0].active,false);
+  assert.equal(store.hierarchyPresentation(store.presentationSnapshot().entities)[0].entity.active,true);
+  assert.equal(store.setActive(1,false),true);assert.equal(store.entitySnapshot(1).active,false);
+  store.setTimelinePreview({activations:[{entity:1,active:true}],animations:[],camera:null,particles:[]});
+  assert.equal(store.presentationSnapshot().entities[0].active,true);
+  assert.equal(store.hierarchyPresentation(store.presentationSnapshot().entities)[0].entity.active,false);
+  assert.equal(store.setActive(1,true),true);store.clearTimelinePreview();assert.equal(store.entitySnapshot(1).active,true);
+ }finally{await server.close();}
+});
 test('scene flags skip entity scans without restrictions and retain inherited restrictions',async()=>{
  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
  try{

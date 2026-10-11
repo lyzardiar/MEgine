@@ -50,6 +50,41 @@ test('Scene visibility and camera-preview snapshots share verified native record
   store.stop();
 }));
 
+test('hierarchy presentation uses the displayed world and keeps live reference edits checked across native revisions', async () => fixture(async ({ mockIPC, runtime, createEditorStore }) => {
+  const store = createEditorStore(); let revision = 0, upload;
+  const records = [entity(1, 'Root'), { ...entity(2, 'Child'), parent: 1 }, { ...entity(3, 'Inactive'), active: false }];
+  store.loadSceneJson(JSON.stringify({ version: 1, name: 'Hierarchy', world: { entities: records } }));
+  store.setSceneVisibility(1, false); store.setScenePickability(1, false); store.expandAll();
+  mockIPC((cmd, args) => {
+    if (cmd === 'start_editor_play') return { sessionId: 82, snapshot: host(records) };
+    if (cmd === 'step_editor_play') {
+      upload = args.snapshot;
+      const changed = upload ? upload.entities : [{ ...records[1], name: 'Next child' }];
+      return { snapshot: host(changed, revision + 1, upload?.clearColor), entityOrder: upload?.entities.map(record => record.entity), reset: !!upload, baseRevision: revision, revision: ++revision };
+    }
+  });
+  store.setPlayRuntime(runtime); store.play(); await store.waitForPlayRuntime(); store.pause();
+  const first = store.presentationSnapshot(), rows = store.hierarchyPresentation(first.entities);
+  assert.deepEqual(rows.map(row => [row.entity.name, row.depth, row.hasChildren]), [['Root', 0, true], ['Child', 1, false], ['Inactive', 0, false]]);
+  assert.equal(rows[1].entity, first.entities[1]); assert.ok(Object.isFrozen(rows[1].entity));
+  assert.throws(() => { rows[1].entity.name = 'Illegal'; }, TypeError);
+  for (const record of records) { store.activeInHierarchy(record.entity); store.sceneVisible(record.entity); store.scenePickable(record.entity); }
+  assert.equal(store.activeInHierarchy(2), true); assert.equal(store.activeInHierarchy(3), false); assert.equal(store.activeInHierarchy(999), false);
+  assert.equal(store.sceneVisible(2), false); assert.equal(store.scenePickable(2), false); assert.equal(store.sceneVisible(3), true);
+  store.step(.1); await store.waitForPlayRuntime(); assert.equal(upload, undefined);
+  assert.equal(store.hierarchyPresentation(store.presentationSnapshot().entities)[1].entity.name, 'Next child');
+  assert.equal(store.hierarchyPresentation(first.entities)[1].entity.name, 'Child');
+  store.collapseAll(); assert.equal(store.hierarchyPresentation(first.entities).length, 2); store.expandAll();
+  const editable = store.getVisibleFlat()[1].entity; editable.components.Custom.values.push(7); editable.parent = 3;
+  assert.equal(store.playRenderSnapshot().nativeWorldReference, undefined); assert.equal(store.activeInHierarchy(2), false);
+  store.step(.1); await store.waitForPlayRuntime(); assert.ok(upload);
+  assert.deepEqual(upload.entities.find(record => record.entity === 2).components.Custom.values, [1, 7]);
+  assert.equal(upload.entities.find(record => record.entity === 2).parent, 3);
+  assert.equal(store.hierarchyPresentation(first.entities)[1].entity.parent, 1); store.stop();
+  store.rename(2, 'Authored child');
+  assert.equal(store.hierarchyPresentation(first.entities)[1].entity.name, 'Authored child');
+}));
+
 test('render snapshots freeze native records, preserve array identity and allow unbound fallback callbacks', async () => fixture(async ({ mockIPC, runtime, createEditorStore }) => {
   const store = createEditorStore(); let revision = 0;
   mockIPC((cmd, args) => {
