@@ -83,16 +83,20 @@ enum Request {
     StepUpdate { generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<PlayWorldUpdate, String>> },
     RenderSnapshot { generation: u64, revision: Option<u64>, reply: Sender<Result<PlayRenderSnapshot, String>> },
     Stop { generation: u64 },
+    #[cfg(test)]
+    Barrier { entered: Sender<()>, resume: mpsc::Receiver<()> },
 }
 
 /// QuickJS stays on one worker thread. Native rendering and editor IPC never own its GC context.
-pub struct EditorPlayRuntime { sender: Sender<Request>, generation: Arc<AtomicU64>, render_world: std::sync::Mutex<(u64, mengine_scene::SharedSnapshotWorld)> }
+pub struct EditorPlayRuntime { sender: Sender<Request>, generation: Arc<AtomicU64>, render_world: std::sync::Mutex<(u64, mengine_scene::SharedSnapshotWorld)>, render_history: Arc<parking_lot::Mutex<Option<(u64, PlayRenderHistory)>>> }
 
 impl Default for EditorPlayRuntime {
     fn default() -> Self {
         let (sender, receiver) = mpsc::channel();
         let generation = Arc::new(AtomicU64::new(0));
         let current = generation.clone();
+        let render_history = Arc::new(parking_lot::Mutex::new(None::<(u64, PlayRenderHistory)>));
+        let published = render_history.clone();
         std::thread::Builder::new().name("mengine-editor-play".into()).spawn(move || {
             let mut session: Option<(u64, PlaySession)> = None;
             while let Ok(request) = receiver.recv() {
@@ -100,15 +104,22 @@ impl Default for EditorPlayRuntime {
                     Request::Start { generation, source, snapshot, project, reply } => {
                         if current.load(Ordering::SeqCst) != generation { let _ = reply.send(Err("Play initialization was superseded".into())); continue; }
                         session = None;
-                        let result = PlaySession::new(&source, snapshot, project).and_then(|value| {
+                        *published.lock() = None;
+                        let result = PlaySession::new(&source, snapshot, project).and_then(|mut value| {
                             if current.load(Ordering::SeqCst) != generation { return Err("Play initialization was superseded".into()); }
+                            let checkpoint = value.snapshot_cache.capture(&value.world);
+                            let mut history = PlayRenderHistory::default();
+                            history.record(0, checkpoint, 0.0, Vec::new());
+                            if current.load(Ordering::SeqCst) != generation { return Err("Play initialization was superseded".into()); }
+                            *published.lock() = Some((generation, history));
                             let snapshot = WorldSnapshot::from_world(&value.world); session = Some((generation, value)); Ok(snapshot)
                         });
                         let _ = reply.send(result);
                     }
                     Request::Step { generation, snapshot, input, dt, reply } => {
                         if current.load(Ordering::SeqCst) != generation { let _ = reply.send(Err("Play session expired".into())); continue; }
-                        let result = session.as_mut().filter(|(id, _)| *id == generation).ok_or_else(|| "Play Mode is not initialized".to_string()).and_then(|(_, session)| { session.render_history = PlayRenderHistory::default(); session.step(snapshot, input, dt).map(SharedWorldSnapshot::into_owned) });
+                        let result = session.as_mut().filter(|(id, _)| *id == generation).ok_or_else(|| "Play Mode is not initialized".to_string()).and_then(|(_, session)| session.step(snapshot, input, dt).map(SharedWorldSnapshot::into_owned));
+                        *published.lock() = result.is_ok().then(|| (generation, PlayRenderHistory::default()));
                         if result.is_err() { session = None; }
                         let _ = reply.send(result);
                     }
@@ -124,25 +135,29 @@ impl Default for EditorPlayRuntime {
                             let total_ms = started.elapsed().as_secs_f64() * 1000.0;
                             session.step_ms += total_ms;
                             session.step_stages.push(EditorViewportProfileNode { name: "Snapshot delta".into(), total_ms, self_ms: total_ms, calls: 1, children: Vec::new() });
-                            session.render_history.record(update.revision, checkpoint, session.step_ms, session.step_stages.clone());
+                            let mut published = published.lock();
+                            let (_, history) = published.as_mut().filter(|(id, _)| *id == generation).ok_or_else(|| "Play session expired".to_string())?;
+                            history.record(update.revision, checkpoint, session.step_ms, session.step_stages.clone());
                             Ok(update)
                         });
-                        if result.is_err() { session = None; }
+                        if result.is_err() { session = None; *published.lock() = None; }
                         let _ = reply.send(result);
                     }
                     Request::RenderSnapshot { generation, revision, reply } => {
                         let result = session.as_mut().filter(|(id, _)| *id == generation && current.load(Ordering::SeqCst) == generation)
                             .ok_or_else(|| "Play session expired".to_string()).and_then(|(_, session)| match revision {
-                                Some(revision) => session.render_history.snapshot(revision),
+                                Some(revision) => published.lock().as_ref().filter(|(id, _)| *id == generation).ok_or_else(|| "Play session expired".to_string()).and_then(|(_, history)| history.snapshot(revision)),
                                 None => Ok((session.snapshot_cache.capture(&session.world), session.step_ms, session.step_stages.clone())),
                             });
                         let _ = reply.send(result);
                     }
-                    Request::Stop { generation } => { if current.load(Ordering::SeqCst) == generation { session = None; } }
+                    Request::Stop { generation } => { if current.load(Ordering::SeqCst) == generation { session = None; *published.lock() = None; } }
+                    #[cfg(test)]
+                    Request::Barrier { entered, resume } => { let _ = entered.send(()); let _ = resume.recv_timeout(Duration::from_secs(3)); }
                 }
             }
         }).expect("create editor script worker");
-        Self { sender, generation, render_world: std::sync::Mutex::new((0, mengine_scene::SharedSnapshotWorld::default())) }
+        Self { sender, generation, render_world: std::sync::Mutex::new((0, mengine_scene::SharedSnapshotWorld::default())), render_history }
     }
 }
 
@@ -200,9 +215,15 @@ impl EditorPlayRuntime {
 
     /// The published source retains browser entity IDs for Scene visibility filtering.
     pub fn render_revision_with_snapshot(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
-        let (reply, result) = mpsc::channel();
-        self.sender.send(Request::RenderSnapshot { generation, revision, reply }).map_err(|error| error.to_string())?;
-        let published = result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play rendering: {error}"))??;
+        let published = if let Some(revision) = revision {
+            let history = self.render_history.lock();
+            if self.generation() != generation { return Err("Play session expired".into()); }
+            history.as_ref().filter(|(id, _)| *id == generation).ok_or_else(|| "Play session expired".to_string())?.1.snapshot(revision)?
+        } else {
+            let (reply, result) = mpsc::channel();
+            self.sender.send(Request::RenderSnapshot { generation, revision, reply }).map_err(|error| error.to_string())?;
+            result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play rendering: {error}"))??
+        };
         self.render_published_snapshot(generation, revision, published, render)
     }
 
@@ -242,7 +263,6 @@ struct PlaySession {
     step_stages: Vec<EditorViewportProfileNode>,
     snapshot_stream: PlaySnapshotStream,
     snapshot_cache: WorldSnapshotCache,
-    render_history: PlayRenderHistory,
 }
 
 impl PlaySession {
@@ -257,10 +277,7 @@ impl PlaySession {
         script.sync_world(&world).map_err(|error| error.to_string())?;
         script.eval(source).map_err(|error| error.to_string())?;
         script.notify_scene_loaded(&initial_scene.name, &initial_scene.path.to_string_lossy().replace('\\', "/"), initial_scene.build_index, initial_scene.build_scene_count).map_err(|error| error.to_string())?;
-        let mut snapshot_cache = WorldSnapshotCache::default();
-        let mut render_history = PlayRenderHistory::default();
-        render_history.record(0, snapshot_cache.capture(&world), 0.0, Vec::new());
-        Ok(Self { quit_requested: false, world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new(), snapshot_stream: PlaySnapshotStream::default(), snapshot_cache, render_history })
+        Ok(Self { quit_requested: false, world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new(), snapshot_stream: PlaySnapshotStream::default(), snapshot_cache: WorldSnapshotCache::default() })
     }
 
     fn step(&mut self, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<SharedWorldSnapshot, String> {
@@ -347,6 +364,46 @@ impl PlaySession {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn retained_revisions_render_while_the_script_worker_is_blocked_and_a_step_is_pending() {
+        let runtime = EditorPlayRuntime::default(); let id = runtime.begin();
+        runtime.start(id, "function onTick(dt, frame) { engine.setClearColor(frame, 0, 0, 1); }".into(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        let (entered, ready) = mpsc::channel(); let (release, resume) = mpsc::channel();
+        runtime.sender.send(Request::Barrier { entered, resume }).unwrap(); ready.recv_timeout(Duration::from_secs(3)).unwrap();
+        let (reply, update) = mpsc::channel();
+        runtime.sender.send(Request::StepUpdate { generation: id, snapshot: None, input: ScriptInput::default(), dt: 0.01, reply }).unwrap();
+        assert_eq!(runtime.render_revision(id, Some(0), |world| { assert_eq!(world.time.frame, 0); Err("retained world rendered".into()) }).err().unwrap(), "retained world rendered");
+        assert_eq!(runtime.render_revision(id, Some(1), |_| panic!("unpublished revision must not render")).err().unwrap(), PLAY_VIEWPORT_REVISION_EXPIRED);
+        release.send(()).unwrap();
+        assert_eq!(update.recv_timeout(Duration::from_secs(3)).unwrap().unwrap().revision, 1);
+        assert_eq!(runtime.render_revision(id, Some(1), |world| { assert_eq!(world.time.frame, 1); assert_eq!(world.time.clear_color.x, 1.0); Err("completed step rendered".into()) }).err().unwrap(), "completed step rendered");
+    }
+
+    #[test]
+    fn failed_initialization_and_script_steps_invalidate_published_history() {
+        let runtime = EditorPlayRuntime::default();
+        assert_eq!(runtime.render_revision(0, Some(0), |_| panic!("uninitialized session must not render")).err().unwrap(), "Play session expired");
+        let id = runtime.begin();
+        runtime.start(id, "function onTick() { throw Error('failed step'); }".into(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        assert!(runtime.advance_update(id, None, ScriptInput::default(), 0.01).is_err());
+        assert_eq!(runtime.render_revision(id, Some(0), |_| panic!("failed session must not render")).err().unwrap(), "Play session expired");
+        let next = runtime.begin();
+        assert!(runtime.start(next, "throw Error('failed initialization');".into(), WorldSnapshot::default(), PlayProject::default()).is_err());
+        assert_eq!(runtime.render_revision(next, Some(0), |_| panic!("failed initialization must not render")).err().unwrap(), "Play session expired");
+        assert_eq!(runtime.render_revision(id, Some(0), |_| panic!("old history must not render")).err().unwrap(), "Play session expired");
+    }
+
+    #[test]
+    fn legacy_steps_expire_retained_revisions_and_keep_latest_rendering_available() {
+        let runtime = EditorPlayRuntime::default(); let id = runtime.begin();
+        runtime.start(id, String::new(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        runtime.advance(id, None, ScriptInput::default(), 0.01).unwrap();
+        assert_eq!(runtime.render_revision(id, Some(0), |_| panic!("legacy steps invalidate retained revisions")).err().unwrap(), PLAY_VIEWPORT_REVISION_EXPIRED);
+        assert_eq!(runtime.render(id, |world| { assert_eq!(world.time.frame, 1); Err("latest world rendered".into()) }).err().unwrap(), "latest world rendered");
+        let update = runtime.advance_update(id, None, ScriptInput::default(), 0.01).unwrap();
+        assert_eq!(runtime.render_revision(id, Some(update.revision), |world| { assert_eq!(world.time.frame, 2); Err("stream resumed".into()) }).err().unwrap(), "stream resumed");
+    }
 
     #[test]
     fn blocked_render_keeps_its_published_world_while_simulation_advances_and_history_expires() {

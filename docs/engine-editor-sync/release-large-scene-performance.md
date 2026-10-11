@@ -145,6 +145,35 @@ Game 原生请求完成后安排下一次绘制，不再依赖下一次 requestA
 - `D:/MEngineNativeQA/profile-game-completion.mjs`
 - `D:/MEngineNativeQA/game-completion-performance-handoff.json`
 
+## 精确版本快照直接读取
+
+渲染线程直接复制已发布的指定版本快照，不需要排队等待 QuickJS worker 完成当前模拟。worker 在启动及完整模拟步骤完成后发布不可变快照，保留三个版本；读取历史的锁在进入渲染镜像锁之前释放。未初始化、失败、停止和旧会话返回 session expired；活跃会话的已淘汰版本返回 revision expired。普通完整快照步骤完成后清除版本历史；无指定版本的最新世界读取保留 worker 执行顺序。镜像锁获取后与渲染返回后继续检查 generation。
+
+同一工程完成两组 Release 对照，第二组交换执行顺序：
+
+| 指标 | 第一组旧版 | 第一组新版 | 第二组旧版 | 第二组新版 |
+| --- | ---: | ---: | ---: | ---: |
+| 完整 Game 请求平均耗时 | 22.66 ms | 14.99 ms | 22.98 ms | 15.09 ms |
+| 原生命令平均耗时 | 17.55 ms | 9.90 ms | 17.62 ms | 9.86 ms |
+| Game 画布新缓冲绘制频率 | 38.07 次/秒 | 48.60 次/秒 | 36.87 次/秒 | 47.89 次/秒 |
+| 不同世界版本的画布绘制频率 | 35.20 次/秒 | 36.01 次/秒 | 33.65 次/秒 | 35.27 次/秒 |
+| 实际模拟推进频率 | 39.34 次/秒 | 38.76 次/秒 | 37.53 次/秒 | 37.83 次/秒 |
+| Scene 拖动空画面次数 | 0 | 0 | 0 | 0 |
+
+完整请求耗时降低约 34%。新缓冲可能对应同一个模拟版本，因此约 48 次/秒的画布缓冲更新不代表单位运动达到 48 FPS，也不代表物理显示器呈现频率。不同世界版本的计数将每次主画布绘制关联到最近已上传原生帧的 worldRevision，再按版本去重；该指标只衡量已绘制的模拟状态。单位运动的平滑度仍需继续改善模拟及呈现节奏。
+
+45 项 editor-host 测试通过，0 失败，3 项手动性能测试按原设置忽略。新增测试明确阻塞 worker 并让下一次模拟排队，此时已发布版本仍能渲染，未发布版本被拒绝；另覆盖初始化/步骤失败、普通步骤清历史、最新世界读取和版本流恢复。现有测试继续验证历史淘汰期间的渲染、等待镜像锁时的重启、停止、实体槽复用与 Scene 源 ID。原生 Release 构建通过，前端源码未修改，复用上一阶段已构建前端。四次真实编辑器验收通过 GPU 像素、选择、层级滚动、暂停时钟、精确单步及停止重启检查，无控制台 error，拥有的 QA 编辑器全部退出。
+
+本轮 EXE：`D:/MEngineNativeQA/release-editor-published-history.exe`，SHA-256：`F9D5D7A2287ACEE7BB6F23176E1879CBF1CF2E3011A79A051073888701ADC77C`。
+
+证据：
+- `D:/MEngineNativeQA/release-scene-profile-published-history-baseline-1791740444628/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-published-history-candidate-1791740546812/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-published-history-candidate-repeat-1791740700315/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-published-history-baseline-repeat-1791740829061/report.json`
+- `D:/MEngineNativeQA/published-history-host-full-tests.log`
+- `D:/MEngineNativeQA/published-history-performance-handoff.json`
+
 ## 验收边界
 
 连续拖动尚未达到 60 FPS，浏览器平均帧间隔与跨 WebView 呈现仍有优化空间。本机 Game 未复现用户机器的极度持续卡顿，需用户以同步后的源码重建并复测，不能据此认定其机器的 Game 问题已完全解决。
