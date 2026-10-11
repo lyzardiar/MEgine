@@ -11,7 +11,7 @@ export function nativeNodeQueries(){
     const split=reference.indexOf('#pose=');assert.ok(split>0,'explicit native pose required');
     const args=['--nodes',path.join(root,reference.slice(0,split))+reference.slice(split)];
     if(options.camera){args.push('--billboard-camera='+[...options.camera.look,...options.camera.up].join(','),'--billboard-model='+options.camera.model.join(','));}
-    const run=spawnSync(probe,args,{encoding:'utf8',windowsHide:true,maxBuffer:8*1024*1024});assert.equal(run.status,0,run.stderr||run.error?.message);
+    const run=spawnSync(probe,args,{encoding:'utf8',windowsHide:true,maxBuffer:8*1024*1024});assert.equal(run.status,0,reference+': '+(run.stderr||run.error?.message));
     let nodes=JSON.parse(run.stdout).nodes;assert.ok(Array.isArray(nodes),'native node result');if(options.attachmentsOnly)nodes=nodes.filter(n=>n.attachment);
     cache.set(key,nodes);return structuredClone(nodes);
   }};

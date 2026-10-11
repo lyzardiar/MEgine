@@ -381364,6 +381364,177 @@
             "material": "Assets/Materials/Warrior.mmat"
           }
         }
+      },
+      {
+        "entity": 90182,
+        "name": "Classic spell 0 priestHeal",
+        "parent": 90041,
+        "siblingIndex": 8973,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanSanctumEffects/Effects/HealTarget.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90183,
+        "name": "Classic spell 0 priestHeal mesh 0",
+        "parent": 90182,
+        "siblingIndex": 0,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanSanctumEffects/Models/Abilities/Spells/Human/Heal/HealTarget/geoset-00-animated.glb",
+            "material": "Assets/HumanSanctumEffects/Materials/Abilities/Spells/Human/Heal/HealTarget/geoset-00-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90184,
+        "name": "Classic spell 0 sorceressSlowCaster",
+        "parent": 90041,
+        "siblingIndex": 8975,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanSanctumEffects/Effects/SlowCaster.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90185,
+        "name": "Classic spell 0 sorceressSlowCaster mesh 0",
+        "parent": 90184,
+        "siblingIndex": 0,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanSanctumEffects/Models/Abilities/Spells/Human/Slow/SlowCaster/geoset-00-animated.glb",
+            "material": "Assets/HumanSanctumEffects/Materials/Abilities/Spells/Human/Slow/SlowCaster/geoset-00-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90186,
+        "name": "Classic spell 0 sorceressSlow",
+        "parent": 90041,
+        "siblingIndex": 8977,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanSanctumEffects/Effects/SlowTarget.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
       }
     ],
     "frame": 0,

@@ -68,6 +68,7 @@ var FrostVisual=(()=>{
     if(Frost.priestessUnit(u)){const point=Number(Frost.priestessRules.units.Emoo.sourceRows.UnitWeapons.castpt);return u.priestessCast?1-u.priestessCast.left/point:u.starfall?0:null;}
     if(Frost.keeperUnit(u)){const point=Number(keeperRules.units.Ekee.sourceRows.UnitWeapons.castpt);return u.keeperCast?1-u.keeperCast.left/point:u.tranquility?0:null;}
     if(Frost.dryadUnit(u)){const r=dryadRules.units.dryad.sourceRows.UnitWeapons,point=Number(r.castpt),back=Number(r.castbsw);return !walking&&!u.stun&&(u.order?.type==='abolish'&&u.order.castLeft!==undefined||u.dryadCastLeft>0)?u.order?.type==='abolish'?(point-u.order.castLeft)/(point+back):(point+back-u.dryadCastLeft)/(point+back):null;}
+    if(Frost.sanctumUnit(u)){const r=Frost.sanctumRules.units[u.kind];return !walking&&!u.stun&&(u.sanctumCast||u.sanctumBackswing||u.sanctumCastPhase!==undefined)?u.sanctumCastPhase!==undefined?u.sanctumCastPhase:u.sanctumCast?(r.castPoint-u.sanctumCast.left)/(r.castPoint+r.castBackswing):(r.castPoint+r.castBackswing-u.sanctumBackswing)/(r.castPoint+r.castBackswing):null;}
     if(Frost.druidUnit(u)){const r=druidRules.units[u.kind].sourceRows.UnitWeapons,point=Number(r.castpt),back=Number(r.castbsw);return !walking&&!u.stun&&(u.order?.type==='druidSpell'&&u.order.castLeft!==undefined||u.druidCastLeft>0)?u.order?.type==='druidSpell'?(point-u.order.castLeft)/(point+back):(point+back-u.druidCastLeft)/(point+back):null;}
     if(u.kind==='shaman')return !walking&&!u.stun&&u.castLeft>0?1-u.castLeft/.8:null;
     if(u.kind==='necromancer')return !walking&&!u.stun&&(u.castLeft>0||u.raiseDeadCd>Frost.raiseDead.cooldown-.8)?u.castLeft>0?1-u.castLeft/.8:(Frost.raiseDead.cooldown-u.raiseDeadCd)/.8:null;
@@ -88,6 +89,7 @@ var FrostVisual=(()=>{
     if(!Frost.mobile(u))return Frost.ancient(u)&&(u.uprooted||u.ancientShift)?old?.yaw??u.yaw??Math.PI/6:Math.PI/6;
     if(Frost.feeding(u))return u.yaw??0;
     const moved=old&&Math.hypot(u.x-old.x,u.z-old.z)>.008;
+    if(Frost.sanctumUnit(u)&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[Frost.sanctumRules.units[u.kind].model],moved)!==null)return u.castYaw;
     if((Frost.druidUnit(u)||Frost.dryadUnit(u))&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[(dryadRules.units[u.kind]??druidRules.units[u.kind]).model],moved)!==null)return u.castYaw;
     if(['hero','necromancer','shaman'].includes(u.kind)&&Number.isFinite(u.castYaw)&&castPhase(u,FrostArt[units[u.kind]||Frost.unitType(u).art],moved)!==null)return u.castYaw;
     const attacking=u.cd>(u.kind==='archer'?0:.25),hit=attacking&&(state.events||[]).find(e=>['hit','launch'].includes(e.type)&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),enemy=attacking&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0),inRange=enemy&&((Frost.hippogryphUnit(u)||Frost.chimaeraUnit(u)||Frost.faerieUnit(u))?Frost.distance(u,enemy):Math.hypot(Frost.distance(u,enemy),Frost.unitHeight(state,u)-Frost.unitHeight(state,enemy)))<=Frost.attackRange(u,enemy)+(Frost.types[enemy.kind].radius||.3)&&Frost.attackClear(state,u,enemy),target=work(state,u)?.target||hit||(inRange&&enemy);
@@ -151,7 +153,8 @@ var FrostVisual=(()=>{
     if(!action&&Frost.demonHunterUnit(u)&&/HeroDemonHunter_Portrait/i.test(asset.sourceModel||''))action='Portrait';
     if(!action){
       const casting=castPhase(u,asset,walking);
-      if(hexModel(u)&&!/Portrait/i.test(asset.sourceModel||'')){const swim=hexModel(u).movement==='float';action=u.hp<=0?(swim?'Death Swim':'Death'):walking?(swim?(classicClip(asset,'Walk Swim',u)>=0?'Walk Swim':'Swim Walk'):'Walk'):swim?'Stand Swim':'Stand';}
+      if(Frost.sanctumUnit(u)&&casting!==null){action='Spell';progress=casting;}
+      else if(hexModel(u)&&!/Portrait/i.test(asset.sourceModel||'')){const swim=hexModel(u).movement==='float';action=u.hp<=0?(swim?'Death Swim':'Death'):walking?(swim?(classicClip(asset,'Walk Swim',u)>=0?'Walk Swim':'Swim Walk'):'Walk'):swim?'Stand Swim':'Stand';}
       else if(Frost.shadowhunterUnit(u)&&u.voodoo&&!walking){action='Stand Channel';elapsed=time-u.voodoo.frame*Frost.DT;}
       else if(Frost.shadowhunterUnit(u)&&u.shadowhunterCast&&!walking){action=u.shadowhunterCast.slot===0?'Spell Throw':'Spell';progress=1-u.shadowhunterCast.left/Number(Frost.shadowhunterRules.unit.sourceRows.UnitWeapons.castpt);}
       else if(Frost.shadowhunterUnit(u)&&u.shadowhunterLastSlot!==undefined&&!walking&&!u.stun&&time-u.shadowhunterCastFrame*Frost.DT<.7){action=u.shadowhunterLastSlot===0?'Spell Throw':'Spell';elapsed=time-u.shadowhunterCastFrame*Frost.DT;}

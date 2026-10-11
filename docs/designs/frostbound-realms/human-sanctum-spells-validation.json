@@ -1,0 +1,153 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 83,
+  "tests": [
+    {
+      "path": "scripts/test-frost-human-sanctum-spells.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-sanctum.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-mortar.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-army.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-equipment.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-technology.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-death-knight.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-hero-death.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-sanctum-network.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-mortar-network.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-equipment-network.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-technology-network.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-army-network.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-sanctum-spells-network.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-mountain-king.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-druids.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-dryad.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-corpse-stages.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-crypt-lord-default.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-corpse-network.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-hero-death-network.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-sanctum-client.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-human-sanctum-spells-client.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-effect-pool-scene.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-build-output.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-death-knight-generated.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-hero-death-generated.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-lich-generated.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-tauren-generated.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-shadowhunter-generated.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-dreadlord-generated.mjs",
+      "passed": true
+    },
+    {
+      "path": "scripts/test-frost-crypt-lord-generated.mjs",
+      "passed": true
+    }
+  ],
+  "assetSources": 8,
+  "signedReproducedOutputs": 44,
+  "initialEntities": 8978,
+  "existingEntitiesPreserved": 8973,
+  "disabledSourceSpellTemplateEntities": 5,
+  "mainSha256": "18e9a83e5c74b4e1a5506031f408655b63de5b8d361fd35475fb15b633a5ad81",
+  "sceneSha256": "f84c63f82cd917fa511be94f0aa25b9e5ae96e263f4dac65f625ab1cb58a8976",
+  "nativeReport": "native-human-sanctum-spells-qa.json",
+  "nativeSteps": 57,
+  "nativeConsoleErrors": 0,
+  "nativeMaterialRejections": 0,
+  "originalRuntimeParity": false,
+  "physicalInput": false,
+  "standalonePlayer": false,
+  "crossMachineLAN": false,
+  "stagedSignedBlobsVerified": 44,
+  "scopedStagedFiles": 87,
+  "originalSourceBytesPreservedByGitAttributes": true
+}

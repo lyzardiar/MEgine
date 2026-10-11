@@ -1,0 +1,278 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-11T07:35:16.136Z",
+  "sample": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample",
+  "root": "D:\\MEngineNativeQA\\sanctum-validation\\human-sanctum-spells-game-1791704115663",
+  "reusedAssets": true,
+  "protocol": 83,
+  "editorSha256": "69d3252dbe5027c103161208d08690b35ca168d595a86cc19ff77d6572e2fb9b",
+  "productMainSha256": "18e9a83e5c74b4e1a5506031f408655b63de5b8d361fd35475fb15b633a5ad81",
+  "steps": [
+    {
+      "name": "project.state",
+      "ms": 5173
+    },
+    {
+      "name": "project.open",
+      "ms": 6349
+    },
+    {
+      "name": "project.state",
+      "ms": 652
+    },
+    {
+      "name": "project.state",
+      "ms": 202
+    },
+    {
+      "name": "view.set_game_resolution",
+      "ms": 605
+    },
+    {
+      "name": "panel.focus",
+      "ms": 2305
+    },
+    {
+      "name": "playback.play",
+      "ms": 4380
+    },
+    {
+      "name": "playback.step",
+      "ms": 1569
+    },
+    {
+      "name": "entity.get",
+      "ms": 73
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 1003
+    },
+    {
+      "name": "entity.get",
+      "ms": 311
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 773
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 2925
+    },
+    {
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "name": "playback.step",
+      "ms": 404
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 84
+    },
+    {
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 133
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 66
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 124
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 70
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 71
+    },
+    {
+      "name": "playback.step",
+      "ms": 93
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 63
+    },
+    {
+      "name": "playback.step",
+      "ms": 248
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 57
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 54
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 72
+    },
+    {
+      "name": "playback.step",
+      "ms": 242
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 72
+    },
+    {
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 72
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 59
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 73
+    },
+    {
+      "name": "playback.step",
+      "ms": 245
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 117
+    },
+    {
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 479
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 113
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 149
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "playback.input",
+      "ms": 1
+    },
+    {
+      "name": "playback.step",
+      "ms": 146
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 68
+    },
+    {
+      "name": "profiler.get_samples",
+      "ms": 22
+    },
+    {
+      "name": "console.get_logs",
+      "ms": 1
+    },
+    {
+      "name": "playback.stop",
+      "ms": 111
+    }
+  ],
+  "physicalInput": false,
+  "nativeAutocastToggleAndStop": true,
+  "nativeOriginalHealAndMana": true,
+  "nativeOriginalSlowAndRates": true,
+  "nativeSpellSaveReload": true,
+  "nativeCounts": {
+    "billboardMeshes": 4,
+    "cameraVisibleObjects": 164,
+    "entities": 9339,
+    "materialPipelineEvictions": 0,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 4,
+    "materialPipelinesRejected": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialSamplers": 2,
+    "materialTextureBindGroups": 20,
+    "materialTexturesColor": 25,
+    "materialTexturesData": 5,
+    "msaaSamples": 4,
+    "renderObjects": 289,
+    "sceneViews": 0,
+    "shadowVisibleObjects": 280,
+    "submittedObjects": 285,
+    "uiBatches": 41,
+    "uiDrawCalls": 41,
+    "uiPrimitives": 619
+  },
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Native E/W target commands, right-click autocast, Stop interruption without mana, original Heal geometry/particles and Slow particles, actual saved combat and reload. Physical input, standalone Player, original-executable parity and cross-machine LAN remain unverified.",
+  "shutdown": {
+    "pid": 6652,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\sanctum-validation\\human-sanctum-spells-game-1791704115663\\runtime\\com.mengine.editor.agent-zhv8EK '\\\\?\\D:\\MEngineNativeQA\\sanctum-validation\\human-sanctum-spells-game-1791704115663\\runtime\\com.mengine.editor.agent-zhv8EK'"
+  }
+}

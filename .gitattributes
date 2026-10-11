@@ -236,3 +236,5 @@ scripts/*human-sanctum*.py text eol=lf
 scripts/*human-sanctum*.mjs text eol=lf
 docs/designs/frostbound-realms/human-sanctum*.json text eol=lf
 docs/designs/frostbound-realms/human-sanctum*.md text eol=lf
+samples/frostbound-realms/Assets/HumanSanctumEffects/** -text whitespace=cr-at-eol
+samples/frostbound-realms/SourceAssets/HumanSanctumEffects/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
