@@ -33,6 +33,35 @@ Frostbound Main 场景含 9,019 个实体。加载完成后的主要 Scene 开�
 
 相同鼠标拖动与 CPU 采样流程下，上一阶段构建呈现 14.59 FPS，当前为 48.17 FPS；平均浏览器帧间隔由 63.29 ms 降到 20.14 ms。上一阶段 12 秒拖动采样中的 authoredEntities 深拷贝占约 5.2 秒，当前不再随相机移动重复深拷贝。CPU 采样自耗时不等于完整调用链耗时。
 
+## Game 脚本阶段与同环境对照
+
+Play profiler 将脚本阶段分为世界状态发布、QuickJS 回调和命令提交，运行时请求保留在父阶段自身耗时中。命令提交与脚本异常回滚的行为保持一致。
+
+frostbound 客户端记录已完成隐藏的普通单位槽，持续隐藏时跳过重复呈现；可见、死亡动画和复活阶段清除该标记。effect pool 继续重试未获原生确认的写入。死亡动画结束、复活结束及槽复用仍执行首次必要清理。
+
+同环境依次运行旧版与候选版，每次使用独立 WebView 调试端口，并确认自己拥有的 QA 编辑器真正退出。两版打开同一 9,019 实体场景，Game 预热 6 秒后采样 12 秒。
+
+| 指标 | 旧版 | 候选版 |
+| --- | ---: | ---: |
+| 连续拖动 Scene 原生实际呈现 | 29.93 FPS | 29.74 FPS |
+| Game 原生实际呈现 | 25.94 FPS | 28.38 FPS |
+| Game 原生模拟平均耗时 | 15.54 ms | 12.61 ms |
+| Game 原生渲染平均耗时 | 10.23 ms | 9.34 ms |
+
+候选打开工程耗时 5.95 秒。Scene 层级初始 15 行 DOM，展开与滚动均为 30 行；模型和 Collider 选择、GPU 方向与透明度检查通过。两版 QA 无控制台 error，拥有的编辑器均确认退出。当前 Scene 结果低于上一阶段 48.17 FPS 的采样，不能混用两次测量作为本轮对照。
+
+独立原生模拟基准使用真实 QuickJS 和生成 Main.js，预热 360 帧后采样 60 帧：QuickJS 回调由 11.56 ms 降至 8.72 ms。该结果只衡量模拟，不包含渲染、WebView 或 IPC。生成客户端等价测试覆盖 21 个呈现场景；同一重复隐藏测试中 effect pool hide 调用由 19,890 次降至 7,200 次。65 项 Rust 测试和 7 组客户端/真实 TCP 测试通过，0 失败。
+
+本轮 EXE：`D:/MEngineNativeQA/release-editor-game-performance.exe`，SHA-256：`C62B7D841386AEA9EB4DCA5AB402211BD2DB3FB7433E5FB52ABBAF2ED207DB26`。
+
+证据：
+- `D:/MEngineNativeQA/release-scene-profile-game-matched-baseline-isolated-1791732473197/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-game-matched-candidate-isolated-1791732583285/report.json`
+- `D:/MEngineNativeQA/game-native-steady-baseline.log`
+- `D:/MEngineNativeQA/game-native-steady-candidate.log`
+
+原生模拟基准可用 `cargo test --release -p mengine-editor-host --lib measure_sample_script_stages -- --ignored --nocapture --test-threads=1` 执行；设置 `MENGINE_SAMPLE_ROOT` 为工程根目录，可用 `MENGINE_PROFILE_SOURCE` 指定另一个生成脚本作对照。
+
 ## 验收边界
 
 连续拖动尚未达到 60 FPS，浏览器平均帧间隔与跨 WebView 呈现仍有优化空间。本机 Game 未复现用户机器的极度持续卡顿，需用户以同步后的源码重建并复测，不能据此认定其机器的 Game 问题已完全解决。
