@@ -1586,10 +1586,11 @@ export function Viewport(props: {
       });
     }
     const displayedWorld = isGame ? nativeGameFrameRef.current?.world : !scene2DActive && nativeSceneFrameRef.current?.key === nativeSceneIdentity?.key ? nativeSceneFrameRef.current?.world : undefined;
-    const displayedPresentation = displayedWorld ? nativePresentationRef.current(displayedWorld) : undefined;
-    if (displayedWorld) {
+    const browserWorld = displayedWorld ?? (editScene ? nativeWorld.frameWorld() : undefined);
+    const displayedPresentation = browserWorld ? nativePresentationRef.current(browserWorld) : undefined;
+    if (browserWorld) {
       // Browser drawing and hit regions use the same owned entity records as the decoded image.
-      p = Object.assign(Object.create(requestedProps), { entities: displayedWorld.entities, clearColor: displayedWorld.clearColor, simulationTime: displayedWorld.simulationTime });
+      p = Object.assign(Object.create(requestedProps), { entities: browserWorld.entities, clearColor: browserWorld.clearColor, simulationTime: browserWorld.simulationTime });
       isActive = displayedPresentation!.active;
       if (isGame) {
         gameCamera = displayedPresentation!.gameCamera(p.timelineCameraPreview, p.gameDisplay);

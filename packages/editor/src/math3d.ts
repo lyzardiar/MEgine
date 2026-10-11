@@ -143,6 +143,27 @@ export function project(
   };
 }
 
+/** Capture one camera/viewport so a projection batch builds its basis only once. */
+export function createProjection(cam: Camera, viewport: { x: number; y: number; w: number; h: number }): (world: Vec3) => { x: number; y: number; depth: number; inverseW: number } | null {
+  const { forward, right, up } = lookBasis(cam.eye, cam.target, cam.up);
+  if (len(right) < 1e-6) return () => null;
+  const eye: Vec3 = [...cam.eye], { x: vx, y: vy, w: width, h: height } = viewport;
+  const near = Math.max(0.000001, cam.near ?? 0.08);
+  const far = Math.max(near, cam.far ?? Number.POSITIVE_INFINITY);
+  const aspect = width / Math.max(1, height), orthographic = cam.projection === 'orthographic';
+  const halfHeight = Math.max(0.001, cam.orthographicSize ?? 5), tanHalf = Math.tan(((cam.fovYDeg * Math.PI) / 180) * 0.5);
+  return world => {
+    const rx = world[0] - eye[0], ry = world[1] - eye[1], rz = world[2] - eye[2];
+    const z = rx * forward[0] + ry * forward[1] + rz * forward[2];
+    if (z <= near || z > far) return null;
+    const x = rx * right[0] + ry * right[1] + rz * right[2], y = rx * up[0] + ry * up[1] + rz * up[2];
+    const ndcX = orthographic ? x / (halfHeight * aspect) : x / (z * tanHalf * aspect);
+    const ndcY = orthographic ? y / halfHeight : y / (z * tanHalf);
+    if (!Number.isFinite(ndcX) || !Number.isFinite(ndcY)) return null;
+    return { x: vx + (ndcX * 0.5 + 0.5) * width, y: vy + (1 - (ndcY * 0.5 + 0.5)) * height, depth: z, inverseW: orthographic ? 1 : 1 / z };
+  };
+}
+
 const NEAR = 0.2;
 
 function viewDepth(world: Vec3, cam: Camera): number {
@@ -367,7 +388,8 @@ export function drawTriangleMesh(
     const point = q ? quatRotateVec(q, scaled) : scaled;
     return add(center, point);
   });
-  const projected = world.map((point) => project(point, cam, viewport));
+  const projectPoint = createProjection(cam, viewport);
+  const projected = world.map(projectPoint);
   const triangles: Array<{ indices: [number, number, number]; depth: number; shade: number }> = [];
   const light = norm([0.35, 0.8, 0.45]);
   // Canvas2D is an authoring preview, not the Player GPU path. Bound work per frame so importing a
@@ -418,7 +440,7 @@ export function drawTriangleMesh(
       maxY = Math.max(maxY, point.y);
     }
   }
-  const projectedCenter = project(center, cam, viewport);
+  const projectedCenter = projectPoint(center);
   if (!projectedCenter || triangles.length === 0) return null;
   return {
     x: projectedCenter.x,
