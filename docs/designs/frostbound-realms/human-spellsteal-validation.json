@@ -1,0 +1,358 @@
+{
+  "author": "MiYu",
+  "protocol": 88,
+  "passed": true,
+  "testModules": 50,
+  "tests": [
+    {
+      "path": "scripts/test-frost-human-sentry.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 350,
+      "output": "PASS Magic Sentry: source enum/range/icon/tower bindings, exact 50/50/30s research/save, actual Wind Walk and Burrow, radius boundary, construction/death/faction/fog/privacy gates and strict saved activation"
+    },
+    {
+      "path": "scripts/test-frost-effect-pool-scene.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 257,
+      "output": "{\"author\":\"MiYu\",\"passed\":true,\"baseline\":\"af690e7\",\"beforeEntities\":9007,\"afterEntities\":9014,\"removed\":0,\"reductionPercent\":0,\"resources\":721,\"retainedNodesEqual\":true,\"existingResourceReferencesPreserved\":true,\"newSourceReferences\":12,\"sceneSha256\":\"f08650af326f4126c72a857a513f57f822288de107fad9cb01d770ddbedeef56\"}"
+    },
+    {
+      "path": "scripts/test-frost-human-sentry-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 878,
+      "output": "PASS TCP Magic Sentry: real source paid research, ownership rejection, hidden Wind Walk actor/reveal, private enemy research, public effect marker, resume and construction/death deactivation"
+    },
+    {
+      "path": "scripts/test-frost-human-sanctum-spells.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 301,
+      "output": "PASS Heal/Slow: original cost/value/range/cast clocks, default autocast and targeting, interrupted mana, approach, hero duration, exact save continuation, privacy, expiry and Purge"
+    },
+    {
+      "path": "scripts/test-frost-human-mortar.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 350,
+      "output": "PASS source Workshop: completed Keep/Blacksmith construction gates, 140/140/60s source cost/stats, 75% construction refund, Mortar-only three-slot 180/70/3/32s paid training/refunds, complete clocks/deterministic reload, strict source identity and legacy generic workshop\nPASS Mortar dual weapons: full 1s windup, 52-64 source dice/siege damage, source launch/arc, 2.5 minimum range/no air, fixed artillery landing with friendly splash, moving structure-tracking missile without splash, deterministic in-flight save\nPASS Mortar target categories: stationary Serpent Wards and Phoenix Eggs remain artillery targets; actual ward impact retains nearby ground splash\nPASS Mortar equipment and terrain orders: original hmtm Rhra extra d13/Rhla +2 armor for existing/new squads, source regen/no mana, frozen projectile ranks, visible-tree artillery without Vorpal research and bounded ground orders\nPASS Flare: original 50/50/30s Keep research, shared deduplicated paid/refundable queue, zero-mana global placement, 0.8s pending delay/15s reveal and invisibility detection/120s cooldown, caster-independent expiry, strict pending save and private enemy world/cooldown/research\nPASS Mortar corpse identity: original hmtm decay classification supports actual Paladin Resurrection and Death Knight Animate Dead with source stats and strict saved continuation"
+    },
+    {
+      "path": "scripts/test-frost-human-army.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 259,
+      "output": "PASS human Barracks: source roster/stats/costs/food, full 20/26/40-second queue, tier-1 riflemen, completed friendly Blacksmith/Lumber Mill/Castle gates, refunds and deterministic mid-queue saves\nPASS human building and save rules: source construction price/timer/armor and cancellation, faction restriction, source metadata/time rejection, legacy roster and in-flight legacy production preserved\nPASS source human combat: 0.17-second instant rifle windup, deterministic source damage dice/armor table, ground/air targets, 0.25 health regeneration and no mana"
+    },
+    {
+      "path": "scripts/test-frost-human-sanctum.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 701,
+      "output": "PASS Sanctum construction/production: completed Keep and Vault gates, original cost/HP, shared three-slot 28/30/28s queue, food and deterministic save\nPASS source caster training: payment/refund/duplicates, Castle level-two gate, +40 HP/+100 mana/+0.325 regen each level, unchanged damage, future recruits and strict deterministic research save\nPASS original caster missiles: source speed/launch/art, actual impacts, magic immunity target refusal and spell damage rejection, deterministic in-flight saves\nPASS strict Sanctum saves: version, ranks, ownership, mana/HP, duplicate/malformed/full-clock queues, legacy version-zero compatibility\nPASS Sanctum corpse identity: all three source decay classifications, actual Resurrection/Animate Dead, original stats/mana/regen and deterministic saved continuation\nPASS Spell Breaker original Blacksmith upgrades: independent d3 average +2 damage and +2 armor, existing/new squads, unchanged casters and frozen validated projectile levels"
+    },
+    {
+      "path": "scripts/test-frost-human-technology.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 406,
+      "output": "PASS human technology: source 150/100/45 Defend, 75/125/30 Long Rifles and 125/175/40 Animal Training; Keep/three-building Castle gates, shared paid queues/full clocks, refunds/duplicates, range 600, existing/new Knight HP 985 and Defend toggles retain orders\nPASS Defend combat: actual instant piercing reflection/reduction, buildings never reflected, unchanged normal damage, returning projectile travel/team/target, deterministic mid-return save and original Stand/Walk/Attack Defend clips\nPASS original upgraded Night Archer reflection: weapon/source levels retained, independent human ownership, arc reset/public team, deterministic returning save, moving/dead targets, dead reflector and invalid ownership rejection\nPASS original stationary Serpent Ward reflection: source rank/arc preserved, deterministic returning save, human impact ownership and piercing return damage\nPASS human technology saves: source ranks/keys/version/queue time/duplicates, unresearched Defend and foreign unit upgrades rejected; pre-technology human saves retain version 0"
+    },
+    {
+      "path": "scripts/test-frost-human-sentry-client.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 2161,
+      "output": "PASS generated Magic Sentry: source research hotkey/card/payment, actual Wind Walk reveal, passive slot 6, native Overhead Ref, original three-part Birth/Stand, enemy public effects, F5 reload and death removal"
+    },
+    {
+      "path": "scripts/test-frost-death-knight.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 316,
+      "output": "PASS source Death Knight recruitment profile, protocol, original stats and legacy save gate\nPASS ranked traveling homing Death Coil, allegiance, cast point, interruption, projectile validation and save continuation\nPASS Death Pact sacrifice, current-life conversion, cast continuation and no kill reward\nPASS strongest-source Unholy Aura, fixed regeneration, movement and immediate range/death update\nPASS six original allied/enemy bodies, baseline stats, no inherited research, ownership, invulnerability, source workers and 40-second expiry\nPASS original Huntress bounce/save validation and revived Bear transformation with preserved source profile, mana and health fraction\nPASS Death Pact excludes phased targets before spending resources\nPASS original Death Knight AI learning order"
+    },
+    {
+      "path": "scripts/test-frost-human-equipment.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 909,
+      "output": "PASS human technology: source 150/100/45 Defend, 75/125/30 Long Rifles and 125/175/40 Animal Training; Keep/three-building Castle gates, shared paid queues/full clocks, refunds/duplicates, range 600, existing/new Knight HP 985 and Defend toggles retain orders\nPASS Defend combat: actual instant piercing reflection/reduction, buildings never reflected, unchanged normal damage, returning projectile travel/team/target, deterministic mid-return save and original Stand/Walk/Attack Defend clips\nPASS original upgraded Night Archer reflection: weapon/source levels retained, independent human ownership, arc reset/public team, deterministic returning save, moving/dead targets, dead reflector and invalid ownership rejection\nPASS original stationary Serpent Ward reflection: source rank/arc preserved, deterministic returning save, human impact ownership and piercing return damage\nPASS human technology saves: source ranks/keys/version/queue time/duplicates, unresearched Defend and foreign unit upgrades rejected; pre-technology human saves retain version 0\nPASS original Blacksmith: four three-rank source research paths, 60/75/90 clocks, paid queues/refunds/duplicates, Keep/Castle gates, existing/new unit damage dice and +2/+4/+6 armor\nPASS Blacksmith save authority: exact rank keys/stats/unit snapshots, sequential ranks/full waiting clocks, old version-0 saves and enemy ownership rejection\nPASS actual upgraded combat: source extra attack dice raise final armor-adjusted damage"
+    },
+    {
+      "path": "scripts/test-frost-hero-death.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 403,
+      "output": "PASS source hero death: all sixteen original bodies and Death/Dissipate clips, source phase durations, retained altar identity/items, released food, no consumer corpse, strict saves, exact continuation and temporary private enemy projection\nPASS source transformed hero death: real Metamorphosis/Avatar commands, captured source form, cleared combat bonuses, Alternate Dissipate and valid saved presentation\nPASS hero return: paid altar revival clears presentation, post-victory dissipate advances independently, ready Reincarnation retains its seven-second effect and cooldown death uses normal dissipate\nPASS hero death migration: missing marker and explicit opt-out preserve existing behavior, non-skirmish modes stay version zero and forged live/source/form/age/version fields are rejected"
+    },
+    {
+      "path": "scripts/test-frost-human-sanctum-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1064,
+      "output": "PASS TCP Sanctum: original Vault/Castle gates and payment/refund, duplicate rejection, enemy ownership/research/queue privacy, queued reconnect, shared exact clocks and original trained recruit"
+    },
+    {
+      "path": "scripts/test-frost-human-mortar-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1205,
+      "output": "PASS TCP Workshop/Mortar/Flare: paid original training/research/refunds/full clocks, foreign and duplicate rejection, private research/queues/flare targets/cooldowns, mid-queue reconnect, source ground-projectile snapshots and strict authority save"
+    },
+    {
+      "path": "scripts/test-frost-human-technology-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1373,
+      "output": "PASS human technology: source 150/100/45 Defend, 75/125/30 Long Rifles and 125/175/40 Animal Training; Keep/three-building Castle gates, shared paid queues/full clocks, refunds/duplicates, range 600, existing/new Knight HP 985 and Defend toggles retain orders\nPASS Defend combat: actual instant piercing reflection/reduction, buildings never reflected, unchanged normal damage, returning projectile travel/team/target, deterministic mid-return save and original Stand/Walk/Attack Defend clips\nPASS original upgraded Night Archer reflection: weapon/source levels retained, independent human ownership, arc reset/public team, deterministic returning save, moving/dead targets, dead reflector and invalid ownership rejection\nPASS original stationary Serpent Ward reflection: source rank/arc preserved, deterministic returning save, human impact ownership and piercing return damage\nPASS human technology saves: source ranks/keys/version/queue time/duplicates, unresearched Defend and foreign unit upgrades rejected; pre-technology human saves retain version 0\nPASS TCP human technology: original prerequisites/payment/refund/full clocks/duplicates, enemy research/queue privacy and ownership refusal, queued and reflected-flight reconnect, range/HP upgrades and authoritative Defend returning original Night Archer weapon"
+    },
+    {
+      "path": "scripts/test-frost-human-army-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1232,
+      "output": "PASS human Barracks: source roster/stats/costs/food, full 20/26/40-second queue, tier-1 riflemen, completed friendly Blacksmith/Lumber Mill/Castle gates, refunds and deterministic mid-queue saves\nPASS human building and save rules: source construction price/timer/armor and cancellation, faction restriction, source metadata/time rejection, legacy roster and in-flight legacy production preserved\nPASS source human combat: 0.17-second instant rifle windup, deterministic source damage dice/armor table, ground/air targets, 0.25 health regeneration and no mana\nPASS TCP human Barracks: source prices and completed building/Castle gates, tier-1 riflemen, full source queue/completion, enemy queue/economy privacy and ownership rejection, mid-production reconnect and real authoritative instant rifle damage"
+    },
+    {
+      "path": "scripts/test-frost-human-equipment-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 2194,
+      "output": "PASS human technology: source 150/100/45 Defend, 75/125/30 Long Rifles and 125/175/40 Animal Training; Keep/three-building Castle gates, shared paid queues/full clocks, refunds/duplicates, range 600, existing/new Knight HP 985 and Defend toggles retain orders\nPASS Defend combat: actual instant piercing reflection/reduction, buildings never reflected, unchanged normal damage, returning projectile travel/team/target, deterministic mid-return save and original Stand/Walk/Attack Defend clips\nPASS original upgraded Night Archer reflection: weapon/source levels retained, independent human ownership, arc reset/public team, deterministic returning save, moving/dead targets, dead reflector and invalid ownership rejection\nPASS original stationary Serpent Ward reflection: source rank/arc preserved, deterministic returning save, human impact ownership and piercing return damage\nPASS human technology saves: source ranks/keys/version/queue time/duplicates, unresearched Defend and foreign unit upgrades rejected; pre-technology human saves retain version 0\nPASS original Blacksmith: four three-rank source research paths, 60/75/90 clocks, paid queues/refunds/duplicates, Keep/Castle gates, existing/new unit damage dice and +2/+4/+6 armor\nPASS Blacksmith save authority: exact rank keys/stats/unit snapshots, sequential ranks/full waiting clocks, old version-0 saves and enemy ownership rejection\nPASS actual upgraded combat: source extra attack dice raise final armor-adjusted damage\nPASS TCP Blacksmith: source costs/refund/shared full clocks, sequential Keep/Castle ranks, duplicate/enemy ownership rejection, private enemy research/queue, mid-queue reconnect and actual completed damage/armor snapshots"
+    },
+    {
+      "path": "scripts/test-frost-druids.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 293,
+      "output": "PASS source Druid producers: faction/tier/Hunter gates, original costs/times/population, human-only rosters and refund\nPASS four source training ranks: exact shared queues, payment, duplicate/tier gates, rank propagation, source HP/damage/mana and deterministic saves\nPASS transformations: paid original timers, uninterruptibility, saved mid-morph, HP ratio, form-only Wild grades and air-only Storm Crow/clear landing\nPASS production Ancient reuse: original rooted/uprooted models/rules, research suspension/resumption and opponent privacy\nPASS source combat integration: actual training dice range, armor tables, attack windup/projectile saves and death during transformation\nPASS strict Druid saves: invalid versions/research ranks/factions/producer queues/form ranks and transformation targets rejected\nPASS original Crow flight height: 240 source units, raised terrain, generic flyer preservation, saved/public-state height and return to ground\nPASS Crow combat height: sourced projectile launch/target altitude, actual air damage and deterministic in-flight continuation"
+    },
+    {
+      "path": "scripts/test-frost-mountain-king.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 321,
+      "output": "PASS original Mountain King stats, source hotkeys/slots and legacy identity\nPASS all Storm Bolt ranks, flying targets, no melee anti-air restriction, homing and saved flight continuation\nPASS cast interruption, target range recheck, immune impact and forged flight rejection\nPASS all Thunder Clap ranks, ground organic mask, exact slow/attack reduction, expiry and save continuation\nPASS additive Avatar stats, health transition, no cancellation, expiry, death reset and strict saves\nPASS deterministic Bash on real hits, magic-immune stun and no proc through invulnerability\nPASS Bash through the actual attack windup/tick loop and restore on every frame\nPASS Avatar generic root cleansing and subsequent physical attack debuff immunity\nPASS Storm Bolt actual caster identity and learned rank validation\nPASS anti-magic potion hostile-effect cleansing and immediately valid save\nPASS original Mountain King AI learning order"
+    },
+    {
+      "path": "scripts/test-frost-dryad.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 253,
+      "output": "PASS Dryad original production: Lore roster, costs, 30s shared queue, source HP/speed/mana/food/regen and non-morphable identity\nPASS researched Abolish Magic: source payment/time, duplicate gate, Root suspension, cancellation refund, saved completion and opponent privacy\nPASS directional dispel: cast-point interruption without payment, 50 mana, friendly harmful/enemy beneficial clearing, preserved opposing effects and exact save continuation\nPASS manual autocast setting: automatic in-range summoned target, repeated 300 summon damage, mana payment and private setting\nPASS autocast command continuity: preserved Shift queue and saved cast, competing casts restore Attack Move/Hold without charging invalid targets\nPASS beneficial item dispel: legal Scroll/Salve/Clarity use cleared manually, enemy regeneration selected by autocast\nPASS original ranged combat: magic immunity, air targets, 17-19 deterministic dice, source windup, original missile kind and saved flight\nPASS strict Dryad saves: versions, missing/foreign research, invalid autocast, forged spell targets and research ranks rejected"
+    },
+    {
+      "path": "scripts/test-frost-corpse-stages.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 346,
+      "output": "PASS corpse source stages: 836 original rows, 1.7s Rifleman Death, 2s flesh, 88s bones, exact transitions, original native clip bindings, 20s survival and deterministic saved expiry\nPASS source non-corpse death: dying Faerie Dragon body is visible only for source death time, cannot feed Raise Dead and disappears without flesh/bone decay\nPASS source old bones remain usable: explicit Raise Dead consumes a thirty-second body and produces the paid saved skeleton pair\nPASS source corpse retention: eighty combat deaths preserve the first body, round-trip saves and project all eighty without legacy FIFO eviction\nPASS source corpse presentation: nonclassic Hunter stays grounded after twenty seconds, alternate Druid clips use their own durations and type-two giant/siege remains non-resurrectable\nPASS source Cannibalize: thirty-second bones heal, active feeding freezes decay, saves continue exactly and transient death bodies cannot restore as food\nPASS corpse legacy migration: missing marker keeps twenty seconds, opt-out and non-skirmish rules remain unchanged\nPASS corpse validation and finished worlds: strict version/mode/age boundaries and post-victory source expiry without battle-time advancement"
+    },
+    {
+      "path": "scripts/test-frost-crypt-lord-default.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 234,
+      "output": "PASS default source Crypt Lord, protocol 74, legacy identity and map-mode boundaries\nPASS completed default Altar recruitment creates the source Crypt Lord with original stats\nPASS first AI skill build summons a nearby corpse as a Carrion Beetle\nPASS AI casts learned Locust Swarm near a valid enemy and preserves mana without enemies"
+    },
+    {
+      "path": "scripts/test-frost-corpse-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 764,
+      "output": "PASS corpse actual TCP: protocol 79, original source identities, Death/flesh/bones, fog/resource privacy, thirty-second bone reconnect, paid Raise Dead and eighty-body snapshots"
+    },
+    {
+      "path": "scripts/test-frost-human-sanctum-spells-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1735,
+      "output": "PASS TCP Heal/Slow: real targeted cast clocks and mana, ownership/type rejection, private enemy cast/autocast/cooldown, mid-cast reconnect and authoritative default-style autocast Slow"
+    },
+    {
+      "path": "scripts/test-frost-hero-death-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1528,
+      "output": "PASS hero death actual TCP: protocol 79, private enemy Death/Dissipate body, retained owner inventory/identity, mid-phase resume, fog disappearance/reappearance, body expiry, paid altar queue/revival snapshot and post-victory expiry"
+    },
+    {
+      "path": "scripts/test-frost-human-sanctum-spells-client.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1044,
+      "output": "PASS generated Heal/Slow: source icons/slots/E/W, right-click autocast border, Stop without effect, real target casting, original Heal mesh/particles and Slow particles, slow rates and F5 reload"
+    },
+    {
+      "path": "scripts/test-frost-build-output.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 726,
+      "output": "PASS independent Frost build output: source scripts/scenes/maps/audio/fonts/shaders unchanged, complete project entry points, five referenced PCM sounds and seven valid playable maps emitted into the requested output"
+    },
+    {
+      "path": "scripts/test-frost-hero-death-generated.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1278,
+      "output": "PASS generated hero death: real damage, original Death/Dissipate geometry and embedded actor timing, hidden HP/ring/aura, dropped selection, paused age, F5 continuation and paid altar revival\nPASS generated hero death forms and reuse: real Metamorphosis/Avatar source forms, Alternate Dissipate, expiry hides body/effects in reused Unit slots, and fog hides enemy retained identity"
+    },
+    {
+      "path": "scripts/test-frost-death-knight-generated.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1955,
+      "output": "PASS generated Death Knight: original body/portrait/scales, C/E/U/D command and research cards, Shift+U learning, homing missile, original sampled effects, enemy body/worker identity and F5 continuation"
+    },
+    {
+      "path": "scripts/test-frost-lich-generated.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1449,
+      "output": "PASS generated Lich: source body/portrait/hover/scales, N/F/R/D cards and research, Armor right-click border, original spells/missile and F5 cast/channel continuation"
+    },
+    {
+      "path": "scripts/test-frost-shadowhunter-generated.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 2489,
+      "output": "PASS generated Shadow Hunter E/X/W/V cards, source body/portrait/scales, native sixteen Hex forms, HWPB/HWSB healing ribbons, ward Birth and embedded particles, Voodoo channel/protection/Stop and F5 continuation"
+    },
+    {
+      "path": "scripts/test-frost-tauren-generated.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 4012,
+      "output": "PASS generated Tauren W/T/E/R cards, original body/portrait/scale/ring, Attack Slam/Spell Slam, travelling geometry, Stomp, aura geometry, Death/Stand/Birth reincarnation and F5 continuation"
+    },
+    {
+      "path": "scripts/test-frost-dreadlord-generated.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 3536,
+      "output": "PASS generated Dreadlord: source body/portraits/scales, C/E/V/N cards and research, Swarm/Sleep/Aura/Infernal effects, F5 pending landing and hidden-caster world rendering"
+    },
+    {
+      "path": "scripts/test-frost-human-priest.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 307,
+      "output": "PASS Priest Dispel/Inner Fire: source training/slots/cost/radius/duration, actual summon and lethal effect, both sides buffs, Dryad dispel, building exclusion, Hold heal restriction, auto/manual casts, interruption, exact saves, privacy and expiry"
+    },
+    {
+      "path": "scripts/test-frost-crypt-lord-generated.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 3797,
+      "output": "PASS generated opt-in Crypt Lord: original body/scale, animated portrait camera, source spell cards, ranked beetles and B morph, right-click autocast, moving Locust actors, forty-actor dynamic pool, alternate body and saved continuation"
+    },
+    {
+      "path": "scripts/test-frost-human-priest-client.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1528,
+      "output": "PASS generated Priest: D/F source cards/slots, actual point and target commands, right-click/Shift+F auto, native Overhead Ref/Birth/Stand geometry, both-side Dispel effects and F5 reload"
+    },
+    {
+      "path": "scripts/test-frost-human-sanctum-client.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 11795,
+      "output": "PASS generated Sanctum: original building/three-unit/research icons and slots, P/S/B/T source hotkeys, Vault/Castle locks, paid shared queues, F5/menu restore, existing/recruited training stats and visible original geometry"
+    },
+    {
+      "path": "scripts/test-frost-human-sorceress.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 468,
+      "output": "PASS Sorceress: source targets/training/clocks, real summon exclusion, Medium damage, invisibility/detection/shop/item/ability/attack, four fixed forms, navigation retention, all dispel routes, death/stun/cancellation and exact strict saves"
+    },
+    {
+      "path": "scripts/test-frost-human-priest-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1844,
+      "output": "PASS TCP Priest: training/ownership rejection, source cast mana clocks, mid-cast resume, private cast/auto/cooldown/research, public buff phase and both-side point Dispel with durable world effects"
+    },
+    {
+      "path": "scripts/test-frost-shadowhunter.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 504,
+      "output": "PASS Shadow Hunter source registration and stats, cancellable cast, legacy version and invalid input\nPASS Shadow Hunter altar recruitment creates original fourth Orc hero\nPASS Shadow Hunter rank 1 Healing Wave unique injured organic bounces, decay, immune target and save\nPASS Shadow Hunter rank 2 Healing Wave unique injured organic bounces, decay, immune target and save\nPASS Shadow Hunter rank 3 Healing Wave unique injured organic bounces, decay, immune target and save\nPASS Shadow Hunter rank 1 Hex ordinary/hero durations, movement, disabled windup and expiry\nPASS Shadow Hunter rank 2 Hex ordinary/hero durations, movement, disabled windup and expiry\nPASS Shadow Hunter rank 3 Hex ordinary/hero durations, movement, disabled windup and expiry\nPASS Shadow Hunter Hex interrupts existing Blizzard and caster autocast, preserves flying form, rejects mechanical and immune targets\nPASS Shadow Hunter rank 1 stationary magic-immune ward, source projectile and lifespan/save\nPASS Shadow Hunter rank 2 stationary magic-immune ward, source projectile and lifespan/save\nPASS Shadow Hunter rank 3 stationary magic-immune ward, source projectile and lifespan/save\nPASS Shadow Hunter Voodoo protects allied ground/air/buildings and invulnerable public state, excluding caster/enemy/outside\nPASS Shadow Hunter Voodoo stop removes protection before same-frame next hit\nPASS Shadow Hunter Voodoo move removes protection before same-frame next hit\nPASS Shadow Hunter Voodoo spell removes protection before same-frame next hit\nPASS Shadow Hunter Voodoo death removes protection before same-frame next hit\nPASS Shadow Hunter Voodoo displacement removes protection before same-frame next hit\nPASS Shadow Hunter War Stomp and Hex immediately end Voodoo and expose following allied victims\nPASS Shadow Hunter save rejects forged Hex, ward, wave and protection while public snapshots redact attribution/casts\nPASS 20 Shadow Hunter gameplay groups / protocol 88"
+    },
+    {
+      "path": "scripts/test-frost-detonate.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 601,
+      "output": "PASS Detonate: source values, friendly/enemy mana and dispel, summoned ground/air damage, immunity, no sacrifice bounty/corpse, travel/stop/stun/blocked paths, gather/resident cleanup, atomic invalid commands, single group caster, exact save and fog privacy"
+    },
+    {
+      "path": "scripts/test-frost-human-sorceress-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 2491,
+      "output": "PASS TCP Sorceress: ownership/training rejection, actual cast clocks, midcast reconnect, hidden/detected unit filtering, public fixed form/Medium/disabled attack, exact buff saves and both-side Priest Dispel"
+    },
+    {
+      "path": "scripts/test-frost-human-sorceress-client.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 7134,
+      "output": "PASS generated Sorceress: I/O source cards and target commands, native Chest Ref six-part nonloop effect, own translucent invisibility, fixed source sheep/Medium, particle/falling/buff art, public disabled attack and F5 continuity/expiry"
+    },
+    {
+      "path": "scripts/test-frost-human-spellbreaker.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 185,
+      "output": "PASS Feedback: actual missile impact and midflight restore, 20/4/remaining mana, lethal hits, magic immunity, dead launcher, hidden target, ethereal/friendly/structure/animated exclusions and strict versioned saves; original armor parity unverified"
+    },
+    {
+      "path": "scripts/test-frost-human-spellbreaker-client.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1142,
+      "output": "PASS generated Feedback: source passive slot 11, A-target missile impact and 20-mana burn, native original particle effect, F5 continuity and 2.1-second effect expiry"
+    },
+    {
+      "path": "scripts/test-frost-human-spellbreaker-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1313,
+      "output": "PASS TCP Feedback: ownership rejection, midflight unburned mana, actual authoritative impact, public enemy burn/health/effect, exact continuation, reconnect and fog filtering"
+    },
+    {
+      "path": "scripts/test-frost-human-spellbreaker-assets.py",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 2674,
+      "output": "{\"author\": \"MiYu\", \"passed\": true, \"sources\": 13, \"signedOutputs\": 101, \"reproducedOutputs\": 101, \"materialMetas\": 9, \"nativeGeometryParts\": 9, \"sampledParticles\": 232, \"spellStealMissileParts\": 5, \"spellStealMissileClips\": 3, \"spellStealTargetParticleOnly\": true, \"modifiedOutputProtected\": true, \"corruptSourceRejected\": true, \"runtimeIntegrated\": false, \"originalRuntimeVerified\": false}"
+    },
+    {
+      "path": "scripts/test-frost-human-spellsteal.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 323,
+      "output": "PASS Spell Steal: actual Priest Inner Fire, 13 unit-cast buffs, positive/negative teams and source attribution, remaining duration, manual-only exceptions, autocast, interruption/no-recipient/mana/fog gates, strict cast clocks, legacy version 1 and private enemy state"
+    },
+    {
+      "path": "scripts/test-frost-human-spellsteal-client.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1437,
+      "output": "PASS generated Spell Steal: source slot 8/T, right-click and Shift-T autocast, unit target transfer, five animated missile parts and target particles, save continuation and effect expiry"
+    },
+    {
+      "path": "scripts/test-frost-human-spellsteal-network.mjs",
+      "passed": true,
+      "exitCode": 0,
+      "ms": 1306,
+      "output": "PASS TCP Spell Steal: actual authoritative positive/negative transfer, masked visible enemy buff targeting, ownership rejection, private cast/cooldown/autocast, duration/team/source restore, reconnect and fog filtering"
+    }
+  ]
+}

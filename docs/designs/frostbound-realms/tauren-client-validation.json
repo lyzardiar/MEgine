@@ -1,8 +1,8 @@
 {
   "author": "MiYu",
   "passed": true,
-  "mainSha256": "1703d682a902d6058b9b4f4f2555037d7b8434b9f274d51688b0ceab30857a34",
-  "sceneSha256": "65f6664930a1308384e857c4970999b876d5eda2b3844380b533eebe7ceab008",
-  "protocol": 87,
+  "mainSha256": "69f08a6035d6df43e4dc459d08835b2bc792e440505def5a47e0aed0492c6ed6",
+  "sceneSha256": "f08650af326f4126c72a857a513f57f822288de107fad9cb01d770ddbedeef56",
+  "protocol": 88,
   "scope": "Generated client with native GLB sampling: W/T/E/R, original source model/portrait/scales/animations, travelling Shockwave, Stomp, aura geometry, Death/Stand/Birth rebirth and F5."
 }
