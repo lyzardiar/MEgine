@@ -1,0 +1,285 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "filesVerified": 69,
+  "signedAssetOutputsVerified": 28,
+  "nativeMainStagedSha256": "27170ebf11e763dfc43472c3af81f3ef74b26da82fc8c16d9ddece3220b4521c",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "gitBlob": "7bdf52b1b919f9ee2de4b32357a85b228551b757"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-technology-handoff.json",
+      "gitBlob": "896c4579140c368cde8310b9c41ebddc4614a8b2"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-technology-native-defend-attack.png",
+      "gitBlob": "ea386ca338e4b5f57ae1d0bebb8d2b7dd99a58bd"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-technology-native-defend.png",
+      "gitBlob": "0460f9bf4940ce739f5ae958ff528101c364e671"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-technology-native-prerequisites.png",
+      "gitBlob": "4d0a9b55ea7f752858b112b24a33926b0b98e2b5"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-technology-native-research.png",
+      "gitBlob": "20a57fad92fda204247591924aee0d8e187af90f"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-technology-regression.json",
+      "gitBlob": "1064b2f8a644479a1760c81e90e397981a0c6258"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-technology-regression.log",
+      "gitBlob": "a53152c8cb91419260059c249caf99e342271208"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-technology-reproduction.json",
+      "gitBlob": "091248d30e2d4d840da6962a417a3813fa7aaa03"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-technology-validation.json",
+      "gitBlob": "e20fe3ef0038fb5d2713442b50992558db5969a9"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-technology.md",
+      "gitBlob": "e8381af3f4ad61b0bab855a6915d2856936ba2eb"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/native-human-technology-qa.json",
+      "gitBlob": "3b9e9b89c9ed27e92bebf3eec52473da07dc1018"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-defend-disabled.png",
+      "gitBlob": "e9449244435f0ae7c3a824db9a6f8e3a67bd1b03"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-defend.png",
+      "gitBlob": "80fb2e3659df45d9a276f87026d5cfd2c8010b3b"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhan-disabled.png",
+      "gitBlob": "65f73cf5fc947b6d0360d3765e4fce6d3ea37824"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhan.png",
+      "gitBlob": "4a9e6c576b1abf6b5c0fcbb239ed0ebbd9079b88"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhde-disabled.png",
+      "gitBlob": "e9449244435f0ae7c3a824db9a6f8e3a67bd1b03"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhde.png",
+      "gitBlob": "80fb2e3659df45d9a276f87026d5cfd2c8010b3b"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhri-disabled.png",
+      "gitBlob": "91818e80ea48a579dd72231b1ce19ff0befac5d8"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhri.png",
+      "gitBlob": "b2c895229ff5061e8a97b28385e52c2e50784d8f"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-undefend-disabled.png",
+      "gitBlob": "c5b5e1a511994fc4f9259f23f3ee1b232f5c9614"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-undefend.png",
+      "gitBlob": "ce90a9a70e028ac49ea0668363580ed360f0af13"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Licenses/Classic-Human-Technology.txt",
+      "gitBlob": "48f9b3310361ad1bd15705b4094131a185168c3a"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Scripts/Main.js",
+      "gitBlob": "a0d1efe893054fa8a56f3360f78842168818dd1e"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/ReplaceableTextures/CommandButtons/BTNAnimalWarTraining.blp",
+      "gitBlob": "7a97b3f45151e3e354ce868314fc5ea74130f62f"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/ReplaceableTextures/CommandButtons/BTNDefend.blp",
+      "gitBlob": "ac5536ea3d6869e6263ad5367950bc8eea6e6e38"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/ReplaceableTextures/CommandButtons/BTNDefendStop.blp",
+      "gitBlob": "54f30d71d2b366a0d0a58dee975a4512be707cdb"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/ReplaceableTextures/CommandButtons/BTNDwarvenLongRifle.blp",
+      "gitBlob": "3be184ea39fc0df6819fe2a3c2cd03fe69bade8e"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/ReplaceableTextures/CommandButtonsDisabled/DISBTNAnimalWarTraining.blp",
+      "gitBlob": "3fca491ac171ca9b51c39bf433086bfff0c0c7ea"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/ReplaceableTextures/CommandButtonsDisabled/DISBTNDefend.blp",
+      "gitBlob": "bc1f2a38fb64fc9df1200fa9b40c005be961ac24"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/ReplaceableTextures/CommandButtonsDisabled/DISBTNDefendStop.blp",
+      "gitBlob": "0fb1f4fd57abc9b0d5a3a5e65efbe177006feac2"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/ReplaceableTextures/CommandButtonsDisabled/DISBTNDwarvenLongRifle.blp",
+      "gitBlob": "0a333ed9a4b7e025d8f1a719e5e217e90182f2b5"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/Units/AbilityData.slk",
+      "gitBlob": "9e373bb77caa4d6174e5b2cb8710aa505b32b63c"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/Units/AbilityMetaData.slk",
+      "gitBlob": "8d9c4137c0020637c6f4f37b3a7e6b035b0604ca"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/Units/HumanAbilityFunc.txt",
+      "gitBlob": "3ba41e3903982d4f6b709a11fd9ef5a315f52c0e"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/Units/HumanAbilityStrings.txt",
+      "gitBlob": "4f99ad8a6d2cf688896f657709c4142c4feb1534"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/Units/HumanUpgradeFunc.txt",
+      "gitBlob": "50710ebd8c271d924e2db43017f2128ad96ed249"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/Units/HumanUpgradeStrings.txt",
+      "gitBlob": "bdc17efbe1963f0d02f1b6a95c11ef674215e7f5"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/Units/UnitAbilities.slk",
+      "gitBlob": "43442c77a7f3e88aa81f0a7e978cce0d2a01ef99"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanTechnology/Units/UpgradeData.slk",
+      "gitBlob": "6b484a8a9504b7af74e56c7279418203bab5b3df"
+    },
+    {
+      "path": "samples/frostbound-realms/game/client.js",
+      "gitBlob": "31f312d604cc31287516b140e16219221de12d0d"
+    },
+    {
+      "path": "samples/frostbound-realms/game/simulation.js",
+      "gitBlob": "5b90df927555e60d4d6762e9a746495564051f30"
+    },
+    {
+      "path": "samples/frostbound-realms/game/visuals.js",
+      "gitBlob": "123430cf869f2c02796daca783a77c8dfacb549c"
+    },
+    {
+      "path": "samples/frostbound-realms/human-technology-sources.json",
+      "gitBlob": "72a3910c8a9e7e510e294f7b2063ee926329a855"
+    },
+    {
+      "path": "samples/frostbound-realms/human-technology.json",
+      "gitBlob": "585a626445615e49fd1ee1916c0cb949b93dda60"
+    },
+    {
+      "path": "scripts/build-frostbound.mjs",
+      "gitBlob": "e237330574cb407c13fe8d797ed1ffa11df842fa"
+    },
+    {
+      "path": "scripts/import-frost-human-technology.py",
+      "gitBlob": "ab5f5350ae3eb59e82a02b88f8af7bcd334a9af7"
+    },
+    {
+      "path": "scripts/qa-frost-human-technology.mjs",
+      "gitBlob": "5c58cccdec5b830de3527e3017f06b9a3a73d36f"
+    },
+    {
+      "path": "scripts/test-frost-avoidance.mjs",
+      "gitBlob": "999a13a4c33976d7b3b3f6ba5e9224dd575b5907"
+    },
+    {
+      "path": "scripts/test-frost-corpse-network.mjs",
+      "gitBlob": "0034a54fe55f86284be0d40cfbfe2f0c77e5a2fc"
+    },
+    {
+      "path": "scripts/test-frost-corpse-stages.mjs",
+      "gitBlob": "2e854312446559d3657ea63222157d0b3e36c725"
+    },
+    {
+      "path": "scripts/test-frost-crypt-lord-default.mjs",
+      "gitBlob": "f8f5545bc6d6f829de8a4bb28640eb4688360315"
+    },
+    {
+      "path": "scripts/test-frost-crypt-lord-generated.mjs",
+      "gitBlob": "da1a40164a90b164fc62f68f1b1bc9f4b8af514d"
+    },
+    {
+      "path": "scripts/test-frost-death-knight-generated.mjs",
+      "gitBlob": "b9c58dada71f13696eed192c44b47adf1fa5b32a"
+    },
+    {
+      "path": "scripts/test-frost-death-knight.mjs",
+      "gitBlob": "7617c4eb8b25a5e550362c542fbe159afd2e0422"
+    },
+    {
+      "path": "scripts/test-frost-dreadlord-generated.mjs",
+      "gitBlob": "f21a7ba75ffd88bd080e22db65a3d6b813601787"
+    },
+    {
+      "path": "scripts/test-frost-hero-death-generated.mjs",
+      "gitBlob": "b7005cd504fc9f3aa4faaac36459085a05e60216"
+    },
+    {
+      "path": "scripts/test-frost-hero-death-network.mjs",
+      "gitBlob": "f30d91741ab2c489fa88ba93ec0898b2c29ce7b2"
+    },
+    {
+      "path": "scripts/test-frost-hero-death.mjs",
+      "gitBlob": "6cfd16c72e66bf09b8b3e072ade078774169ea28"
+    },
+    {
+      "path": "scripts/test-frost-human-army-network.mjs",
+      "gitBlob": "ab59075f19297d6ecc488a6fc5a19b402415b0ca"
+    },
+    {
+      "path": "scripts/test-frost-human-army.mjs",
+      "gitBlob": "61740622af95daa4a7b3632f193bf8845bd30fd0"
+    },
+    {
+      "path": "scripts/test-frost-human-technology-assets.py",
+      "gitBlob": "ba6ae41072ad31e1908f16ad28ac7cae50027dba"
+    },
+    {
+      "path": "scripts/test-frost-human-technology-client.mjs",
+      "gitBlob": "cbf44dd4e890aff17e173ef8d06d4c97070db0bf"
+    },
+    {
+      "path": "scripts/test-frost-human-technology-network.mjs",
+      "gitBlob": "759389dac31bc768c8bc75a3afd6bad8cc0eec14"
+    },
+    {
+      "path": "scripts/test-frost-human-technology.mjs",
+      "gitBlob": "c4fd7be25d5411474e346af28b77d5ee6d7f08de"
+    },
+    {
+      "path": "scripts/test-frost-lich-generated.mjs",
+      "gitBlob": "8d9eb482c14118f12ce1702cde12710249b2486f"
+    },
+    {
+      "path": "scripts/test-frost-shadowhunter-generated.mjs",
+      "gitBlob": "e93f6311982da7b0d0dc4b8c786752822974bf8f"
+    },
+    {
+      "path": "scripts/test-frost-tauren-generated.mjs",
+      "gitBlob": "f975c28719ff9dff1221826433297a118ed88979"
+    },
+    {
+      "path": "scripts/test-frostbound.mjs",
+      "gitBlob": "b28b7c871aa155c7cef18769f7f7d43adc7a25af"
+    }
+  ]
+}

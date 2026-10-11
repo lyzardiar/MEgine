@@ -1,0 +1,368 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-11T03:26:01.364Z",
+  "sample": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample",
+  "root": "D:\\MEngineNativeQA\\human-technology-validation\\human-technology-1791689161341",
+  "reusedAssets": true,
+  "protocol": 79,
+  "editorSha256": "2c90170ba302347986f833ddbd4112b49453d1cf6232a27563989f39c734ce2e",
+  "productMainSha256": "27170ebf11e763dfc43472c3af81f3ef74b26da82fc8c16d9ddece3220b4521c",
+  "steps": [
+    {
+      "name": "project.state",
+      "ms": 4593
+    },
+    {
+      "name": "project.open",
+      "ms": 7050
+    },
+    {
+      "name": "project.state",
+      "ms": 423
+    },
+    {
+      "name": "project.state",
+      "ms": 405
+    },
+    {
+      "name": "view.set_game_resolution",
+      "ms": 1017
+    },
+    {
+      "name": "panel.focus",
+      "ms": 3541
+    },
+    {
+      "name": "playback.play",
+      "ms": 4676
+    },
+    {
+      "name": "playback.step",
+      "ms": 1936
+    },
+    {
+      "name": "entity.get",
+      "ms": 141
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 1732
+    },
+    {
+      "name": "entity.get",
+      "ms": 134
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 2622
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 208
+    },
+    {
+      "name": "entity.get",
+      "ms": 15
+    },
+    {
+      "name": "playback.input",
+      "ms": 4
+    },
+    {
+      "name": "playback.step",
+      "ms": 330
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 104
+    },
+    {
+      "name": "entity.get",
+      "ms": 19
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 119
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 699
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 67
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 187
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "playback.input",
+      "ms": 3
+    },
+    {
+      "name": "playback.step",
+      "ms": 191
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 121
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 140
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 114
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 110
+    },
+    {
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 75
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 706
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 77
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 199
+    },
+    {
+      "name": "entity.get",
+      "ms": 17
+    },
+    {
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "name": "playback.step",
+      "ms": 153
+    },
+    {
+      "name": "entity.get",
+      "ms": 13
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 132
+    },
+    {
+      "name": "entity.get",
+      "ms": 14
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 130
+    },
+    {
+      "name": "entity.get",
+      "ms": 16
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 81
+    },
+    {
+      "name": "entity.get",
+      "ms": 6
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 701
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 68
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 170
+    },
+    {
+      "name": "entity.get",
+      "ms": 16
+    },
+    {
+      "name": "playback.input",
+      "ms": 1
+    },
+    {
+      "name": "playback.step",
+      "ms": 175
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 83
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 87
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 160
+    },
+    {
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "name": "playback.input",
+      "ms": 8
+    },
+    {
+      "name": "playback.step",
+      "ms": 170
+    },
+    {
+      "name": "playback.step",
+      "ms": 176
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 73
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 168
+    },
+    {
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "name": "playback.step",
+      "ms": 153
+    },
+    {
+      "name": "playback.step",
+      "ms": 100
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 662
+    },
+    {
+      "name": "profiler.get_samples",
+      "ms": 26
+    },
+    {
+      "name": "console.get_logs",
+      "ms": 3
+    },
+    {
+      "name": "playback.stop",
+      "ms": 223
+    }
+  ],
+  "physicalInput": false,
+  "paidResearchAndSave": true,
+  "defendSaveLoad": true,
+  "nativeWalkDefend": true,
+  "nativeAttackDefend": true,
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Native generated research slots/icons/prerequisite locks, D/L/A paid queues and F5, actual pause-menu reload and original Stand/Walk/Attack Defend meshes. Range/HP completed state loaded after shared full clocks. Original executable comparison, physical input, standalone player and cross-machine LAN unverified.",
+  "shutdown": {
+    "pid": 178320,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\human-technology-validation\\human-technology-1791689161341\\runtime\\com.mengine.editor.agent-5EGhHc '\\\\?\\D:\\MEngineNativeQA\\human-technology-validation\\human-technology-1791689161341\\runtime\\com.mengine.editor.agent-5EGhHc'"
+  }
+}

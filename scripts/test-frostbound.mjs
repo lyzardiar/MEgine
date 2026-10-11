@@ -2,6 +2,9 @@
 import assert from 'node:assert/strict';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
+import './test-frost-human-technology.mjs';
+import './test-frost-human-technology-client.mjs';
+import './test-frost-human-technology-network.mjs';
 import './test-frost-human-army.mjs';
 import './test-frost-human-army-client.mjs';
 import './test-frost-human-army-network.mjs';

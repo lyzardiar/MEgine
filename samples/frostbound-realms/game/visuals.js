@@ -137,6 +137,7 @@ var FrostVisual=(()=>{
       let rank=0;
       if(Frost.giantUnit?.(u)){if(/upgrade/.test(name))rank+=Frost.giantWeapon(u)==='2'?40:-80;else if(Frost.giantWeapon(u)==='2')rank-=10;}else if(/upgrade/.test(name))rank+=tier===1?-80:tier===2?(/first/.test(name)?40:-80):/second/.test(name)?40:-80;
       else if(tier>1)rank-=10;
+      if(u.kind==='humanfootman')rank+=/defend/.test(name)===Frost.defendActive(u)?40:-40;
       if(alternate!==undefined)rank+=/alternate/.test(name)===alternate?30:-30;else if(/alternate/.test(name))rank-=20;
       if(/gold|lumber/.test(name))rank+=cargo&&name.includes(cargo)?15:-20;
       if(base==='stand'&&/work|ready|victory|hit|channel|birth/.test(name))rank-=30;

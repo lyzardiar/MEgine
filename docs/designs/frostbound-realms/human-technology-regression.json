@@ -1,0 +1,865 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "modules": [
+    {
+      "name": "test-frost-human-technology.mjs",
+      "exitCode": 0,
+      "seconds": 0.34
+    },
+    {
+      "name": "test-frost-human-technology-client.mjs",
+      "exitCode": 0,
+      "seconds": 10.27
+    },
+    {
+      "name": "test-frost-human-technology-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.34
+    },
+    {
+      "name": "test-frost-human-army.mjs",
+      "exitCode": 0,
+      "seconds": 0.24
+    },
+    {
+      "name": "test-frost-human-army-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.59
+    },
+    {
+      "name": "test-frost-human-army-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.22
+    },
+    {
+      "name": "test-frost-dreadlord-profile.mjs",
+      "exitCode": 0,
+      "seconds": 0.07
+    },
+    {
+      "name": "test-frost-dreadlord.mjs",
+      "exitCode": 0,
+      "seconds": 0.52
+    },
+    {
+      "name": "test-frost-dreadlord-generated.mjs",
+      "exitCode": 0,
+      "seconds": 3.46
+    },
+    {
+      "name": "test-frost-dreadlord-network.mjs",
+      "exitCode": 0,
+      "seconds": 2.39
+    },
+    {
+      "name": "test-frost-shadowhunter-profile.mjs",
+      "exitCode": 0,
+      "seconds": 0.07
+    },
+    {
+      "name": "test-frost-shadowhunter.mjs",
+      "exitCode": 0,
+      "seconds": 0.49
+    },
+    {
+      "name": "test-frost-shadowhunter-generated.mjs",
+      "exitCode": 0,
+      "seconds": 2.2
+    },
+    {
+      "name": "test-frost-shadowhunter-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.75
+    },
+    {
+      "name": "test-frost-farseer-profile.mjs",
+      "exitCode": 0,
+      "seconds": 0.08
+    },
+    {
+      "name": "test-frost-tauren-profile.mjs",
+      "exitCode": 0,
+      "seconds": 0.07
+    },
+    {
+      "name": "test-frost-tauren.mjs",
+      "exitCode": 0,
+      "seconds": 0.31
+    },
+    {
+      "name": "test-frost-tauren-generated.mjs",
+      "exitCode": 0,
+      "seconds": 3.61
+    },
+    {
+      "name": "test-frost-tauren-network.mjs",
+      "exitCode": 0,
+      "seconds": 9.22
+    },
+    {
+      "name": "test-frost-farseer.mjs",
+      "exitCode": 0,
+      "seconds": 0.29
+    },
+    {
+      "name": "test-frost-farseer-generated.mjs",
+      "exitCode": 0,
+      "seconds": 1.71
+    },
+    {
+      "name": "test-frost-farseer-network.mjs",
+      "exitCode": 0,
+      "seconds": 2.28
+    },
+    {
+      "name": "test-frost-blademaster.mjs",
+      "exitCode": 0,
+      "seconds": 0.3
+    },
+    {
+      "name": "test-frost-blademaster-generated.mjs",
+      "exitCode": 0,
+      "seconds": 1.46
+    },
+    {
+      "name": "test-frost-blademaster-network.mjs",
+      "exitCode": 0,
+      "seconds": 2.51
+    },
+    {
+      "name": "test-frost-blood-mage-source.mjs",
+      "exitCode": 0,
+      "seconds": 0.21
+    },
+    {
+      "name": "test-frost-blood-mage.mjs",
+      "exitCode": 0,
+      "seconds": 0.35
+    },
+    {
+      "name": "test-frost-phoenix-fire.mjs",
+      "exitCode": 0,
+      "seconds": 0.17
+    },
+    {
+      "name": "test-frost-blood-mage-generated.mjs",
+      "exitCode": 0,
+      "seconds": 4.71
+    },
+    {
+      "name": "test-frost-blood-mage-network.mjs",
+      "exitCode": 0,
+      "seconds": 4.34
+    },
+    {
+      "name": "test-frost-unit-scales.mjs",
+      "exitCode": 0,
+      "seconds": 0.18
+    },
+    {
+      "name": "test-frost-mountain-king-source.mjs",
+      "exitCode": 0,
+      "seconds": 0.1
+    },
+    {
+      "name": "test-frost-mountain-king.mjs",
+      "exitCode": 0,
+      "seconds": 0.32
+    },
+    {
+      "name": "test-frost-mountain-king-generated.mjs",
+      "exitCode": 0,
+      "seconds": 2.37
+    },
+    {
+      "name": "test-frost-mountain-king-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.85
+    },
+    {
+      "name": "test-frost-death-knight-profile.mjs",
+      "exitCode": 0,
+      "seconds": 0.08
+    },
+    {
+      "name": "test-frost-death-knight.mjs",
+      "exitCode": 0,
+      "seconds": 0.31
+    },
+    {
+      "name": "test-frost-death-knight-generated.mjs",
+      "exitCode": 0,
+      "seconds": 2.07
+    },
+    {
+      "name": "test-frost-death-knight-network.mjs",
+      "exitCode": 0,
+      "seconds": 2.27
+    },
+    {
+      "name": "test-frost-paladin-source.mjs",
+      "exitCode": 0,
+      "seconds": 0.11
+    },
+    {
+      "name": "test-frost-paladin.mjs",
+      "exitCode": 0,
+      "seconds": 0.2
+    },
+    {
+      "name": "test-frost-paladin-generated.mjs",
+      "exitCode": 0,
+      "seconds": 1.39
+    },
+    {
+      "name": "test-frost-paladin-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.83
+    },
+    {
+      "name": "test-frost-archmage-source.mjs",
+      "exitCode": 0,
+      "seconds": 0.16
+    },
+    {
+      "name": "test-frost-archmage.mjs",
+      "exitCode": 0,
+      "seconds": 0.84
+    },
+    {
+      "name": "test-frost-archmage-generated.mjs",
+      "exitCode": 0,
+      "seconds": 1.23
+    },
+    {
+      "name": "test-frost-archmage-network.mjs",
+      "exitCode": 0,
+      "seconds": 5.67
+    },
+    {
+      "name": "test-frost-warden-source.mjs",
+      "exitCode": 0,
+      "seconds": 0.19
+    },
+    {
+      "name": "test-frost-warden.mjs",
+      "exitCode": 0,
+      "seconds": 0.58
+    },
+    {
+      "name": "test-frost-warden-client.mjs",
+      "exitCode": 0,
+      "seconds": 0.17
+    },
+    {
+      "name": "test-frost-warden-generated.mjs",
+      "exitCode": 0,
+      "seconds": 1.07
+    },
+    {
+      "name": "test-frost-warden-network.mjs",
+      "exitCode": 0,
+      "seconds": 2.49
+    },
+    {
+      "name": "test-frost-priestess-source.mjs",
+      "exitCode": 0,
+      "seconds": 0.19
+    },
+    {
+      "name": "test-frost-priestess.mjs",
+      "exitCode": 0,
+      "seconds": 0.35
+    },
+    {
+      "name": "test-frost-priestess-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.04
+    },
+    {
+      "name": "test-frost-priestess-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.52
+    },
+    {
+      "name": "test-frost-keeper-source.mjs",
+      "exitCode": 0,
+      "seconds": 0.17
+    },
+    {
+      "name": "test-frost-keeper.mjs",
+      "exitCode": 0,
+      "seconds": 0.34
+    },
+    {
+      "name": "test-frost-keeper-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.03
+    },
+    {
+      "name": "test-frost-keeper-network.mjs",
+      "exitCode": 0,
+      "seconds": 2.61
+    },
+    {
+      "name": "test-frost-demon-hunter.mjs",
+      "exitCode": 0,
+      "seconds": 0.28
+    },
+    {
+      "name": "test-frost-demon-hunter-client.mjs",
+      "exitCode": 0,
+      "seconds": 0.95
+    },
+    {
+      "name": "test-frost-demon-hunter-network.mjs",
+      "exitCode": 0,
+      "seconds": 3.24
+    },
+    {
+      "name": "test-frost-night-elf-ai.mjs",
+      "exitCode": 0,
+      "seconds": 0.72
+    },
+    {
+      "name": "test-frost-night-elf-ai-economy.mjs",
+      "exitCode": 0,
+      "seconds": 123.49
+    },
+    {
+      "name": "test-frost-night-elf-ai-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.02
+    },
+    {
+      "name": "test-frost-night-elf-ai-network.mjs",
+      "exitCode": 0,
+      "seconds": 6.83
+    },
+    {
+      "name": "test-frost-mountain-giant.mjs",
+      "exitCode": 0,
+      "seconds": 0.4
+    },
+    {
+      "name": "test-frost-mountain-giant-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.38
+    },
+    {
+      "name": "test-frost-mountain-giant-network.mjs",
+      "exitCode": 0,
+      "seconds": 2.39
+    },
+    {
+      "name": "test-frost-faerie-dragon.mjs",
+      "exitCode": 0,
+      "seconds": 0.26
+    },
+    {
+      "name": "test-frost-faerie-dragon-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.11
+    },
+    {
+      "name": "test-frost-faerie-dragon-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.62
+    },
+    {
+      "name": "test-frost-chimaera.mjs",
+      "exitCode": 0,
+      "seconds": 0.38
+    },
+    {
+      "name": "test-frost-chimaera-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.06
+    },
+    {
+      "name": "test-frost-chimaera-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.74
+    },
+    {
+      "name": "test-frost-hippogryph.mjs",
+      "exitCode": 0,
+      "seconds": 0.22
+    },
+    {
+      "name": "test-frost-hippogryph-client.mjs",
+      "exitCode": 0,
+      "seconds": 0.94
+    },
+    {
+      "name": "test-frost-hippogryph-network.mjs",
+      "exitCode": 0,
+      "seconds": 0.97
+    },
+    {
+      "name": "test-frost-coupling.mjs",
+      "exitCode": 0,
+      "seconds": 0.36
+    },
+    {
+      "name": "test-frost-coupling-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.05
+    },
+    {
+      "name": "test-frost-coupling-network.mjs",
+      "exitCode": 0,
+      "seconds": 2.94
+    },
+    {
+      "name": "test-frost-slow-poison.mjs",
+      "exitCode": 0,
+      "seconds": 0.21
+    },
+    {
+      "name": "test-frost-slow-poison-client.mjs",
+      "exitCode": 0,
+      "seconds": 2.05
+    },
+    {
+      "name": "test-frost-slow-poison-network.mjs",
+      "exitCode": 0,
+      "seconds": 2.28
+    },
+    {
+      "name": "test-frost-dryad.mjs",
+      "exitCode": 0,
+      "seconds": 0.24
+    },
+    {
+      "name": "test-frost-dryad-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.18
+    },
+    {
+      "name": "test-frost-dryad-network.mjs",
+      "exitCode": 0,
+      "seconds": 0.99
+    },
+    {
+      "name": "test-frost-terrain.mjs",
+      "exitCode": 0,
+      "seconds": 3.61
+    },
+    {
+      "name": "test-frost-gentle-ramps.mjs",
+      "exitCode": 0,
+      "seconds": 0.29
+    },
+    {
+      "name": "test-frost-cliff-clearance.mjs",
+      "exitCode": 0,
+      "seconds": 0.52
+    },
+    {
+      "name": "test-frost-sculpt.mjs",
+      "exitCode": 0,
+      "seconds": 0.13
+    },
+    {
+      "name": "test-frost-formations.mjs",
+      "exitCode": 0,
+      "seconds": 3.34
+    },
+    {
+      "name": "test-frost-avoidance.mjs",
+      "exitCode": 0,
+      "seconds": 2.33
+    },
+    {
+      "name": "test-frost-waypoints.mjs",
+      "exitCode": 0,
+      "seconds": 0.36
+    },
+    {
+      "name": "test-frost-work-queues.mjs",
+      "exitCode": 0,
+      "seconds": 0.58
+    },
+    {
+      "name": "test-frost-patrol.mjs",
+      "exitCode": 0,
+      "seconds": 0.65
+    },
+    {
+      "name": "test-frost-visuals.mjs",
+      "exitCode": 0,
+      "seconds": 1.01
+    },
+    {
+      "name": "test-frost-ancients.mjs",
+      "exitCode": 0,
+      "seconds": 0.29
+    },
+    {
+      "name": "test-frost-ancients-network.mjs",
+      "exitCode": 0,
+      "seconds": 8.01
+    },
+    {
+      "name": "test-frost-projectiles.mjs",
+      "exitCode": 0,
+      "seconds": 0.17
+    },
+    {
+      "name": "test-frost-denies.mjs",
+      "exitCode": 0,
+      "seconds": 0.17
+    },
+    {
+      "name": "test-frost-lanes.mjs",
+      "exitCode": 0,
+      "seconds": 4.27
+    },
+    {
+      "name": "test-frost-daynight.mjs",
+      "exitCode": 0,
+      "seconds": 0.59
+    },
+    {
+      "name": "test-frost-feedback.mjs",
+      "exitCode": 0,
+      "seconds": 0.95
+    },
+    {
+      "name": "test-frost-motion.mjs",
+      "exitCode": 0,
+      "seconds": 1.12
+    },
+    {
+      "name": "test-frost-corpses.mjs",
+      "exitCode": 0,
+      "seconds": 0.49
+    },
+    {
+      "name": "test-frost-corpse-stages.mjs",
+      "exitCode": 0,
+      "seconds": 0.34
+    },
+    {
+      "name": "test-frost-corpse-generated.mjs",
+      "exitCode": 0,
+      "seconds": 1.15
+    },
+    {
+      "name": "test-frost-corpse-network.mjs",
+      "exitCode": 0,
+      "seconds": 0.76
+    },
+    {
+      "name": "test-frost-hero-death.mjs",
+      "exitCode": 0,
+      "seconds": 0.38
+    },
+    {
+      "name": "test-frost-hero-death-generated.mjs",
+      "exitCode": 0,
+      "seconds": 1.26
+    },
+    {
+      "name": "test-frost-hero-death-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.51
+    },
+    {
+      "name": "test-frost-raise-dead.mjs",
+      "exitCode": 0,
+      "seconds": 0.19
+    },
+    {
+      "name": "test-frost-cannibalize.mjs",
+      "exitCode": 0,
+      "seconds": 0.2
+    },
+    {
+      "name": "test-frost-casters.mjs",
+      "exitCode": 0,
+      "seconds": 0.23
+    },
+    {
+      "name": "test-frost-shaman-spells.mjs",
+      "exitCode": 0,
+      "seconds": 0.25
+    },
+    {
+      "name": "test-frost-skeleton-mastery.mjs",
+      "exitCode": 0,
+      "seconds": 0.24
+    },
+    {
+      "name": "test-frost-ziggurat.mjs",
+      "exitCode": 0,
+      "seconds": 0.2
+    },
+    {
+      "name": "test-frost-projectile-art.mjs",
+      "exitCode": 0,
+      "seconds": 0.17
+    },
+    {
+      "name": "test-frost-cavalry.mjs",
+      "exitCode": 0,
+      "seconds": 0.41
+    },
+    {
+      "name": "test-frost-inventory.mjs",
+      "exitCode": 0,
+      "seconds": 0.23
+    },
+    {
+      "name": "test-frost-item-shops.mjs",
+      "exitCode": 0,
+      "seconds": 0.36
+    },
+    {
+      "name": "test-frost-racial-items.mjs",
+      "exitCode": 0,
+      "seconds": 0.38
+    },
+    {
+      "name": "test-frost-item-shops-network.mjs",
+      "exitCode": 0,
+      "seconds": 0.65
+    },
+    {
+      "name": "test-frost-racial-items-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.08
+    },
+    {
+      "name": "test-frost-item-shops-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.3
+    },
+    {
+      "name": "test-frost-heroes.mjs",
+      "exitCode": 0,
+      "seconds": 0.46
+    },
+    {
+      "name": "test-frost-hero-lifecycle.mjs",
+      "exitCode": 0,
+      "seconds": 0.27
+    },
+    {
+      "name": "test-frost-melee-opening.mjs",
+      "exitCode": 0,
+      "seconds": 7.02
+    },
+    {
+      "name": "test-frost-base-tech.mjs",
+      "exitCode": 0,
+      "seconds": 0.43
+    },
+    {
+      "name": "test-frost-base-tech-network.mjs",
+      "exitCode": 0,
+      "seconds": 0.75
+    },
+    {
+      "name": "test-frost-base-rules.mjs",
+      "exitCode": 0,
+      "seconds": 0.48
+    },
+    {
+      "name": "test-frost-base-rules-network.mjs",
+      "exitCode": 0,
+      "seconds": 0.66
+    },
+    {
+      "name": "test-frost-town-portal.mjs",
+      "exitCode": 0,
+      "seconds": 0.69
+    },
+    {
+      "name": "test-frost-town-portal-network.mjs",
+      "exitCode": 0,
+      "seconds": 5.65
+    },
+    {
+      "name": "test-frost-construction.mjs",
+      "exitCode": 0,
+      "seconds": 5.43
+    },
+    {
+      "name": "test-frost-undead-economy.mjs",
+      "exitCode": 0,
+      "seconds": 0.41
+    },
+    {
+      "name": "test-frost-wisp-harvest.mjs",
+      "exitCode": 0,
+      "seconds": 0.3
+    },
+    {
+      "name": "test-frost-detonate.mjs",
+      "exitCode": 0,
+      "seconds": 0.59
+    },
+    {
+      "name": "test-frost-detonate-network.mjs",
+      "exitCode": 0,
+      "seconds": 0.65
+    },
+    {
+      "name": "test-frost-production-ancients.mjs",
+      "exitCode": 0,
+      "seconds": 0.48
+    },
+    {
+      "name": "test-frost-production-ancients-client.mjs",
+      "exitCode": 0,
+      "seconds": 2.9
+    },
+    {
+      "name": "test-frost-production-ancients-network.mjs",
+      "exitCode": 0,
+      "seconds": 6.63
+    },
+    {
+      "name": "test-frost-ancient-war.mjs",
+      "exitCode": 0,
+      "seconds": 0.31
+    },
+    {
+      "name": "test-frost-night-elf-technology.mjs",
+      "exitCode": 0,
+      "seconds": 0.5
+    },
+    {
+      "name": "test-frost-night-elf-technology-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.66
+    },
+    {
+      "name": "test-frost-night-elf-technology-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.31
+    },
+    {
+      "name": "test-frost-sentinel-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.65
+    },
+    {
+      "name": "test-frost-druids.mjs",
+      "exitCode": 0,
+      "seconds": 0.3
+    },
+    {
+      "name": "test-frost-druids-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.36
+    },
+    {
+      "name": "test-frost-druids-network.mjs",
+      "exitCode": 0,
+      "seconds": 2.18
+    },
+    {
+      "name": "test-frost-druid-spells.mjs",
+      "exitCode": 0,
+      "seconds": 0.21
+    },
+    {
+      "name": "test-frost-druid-spells-client.mjs",
+      "exitCode": 0,
+      "seconds": 1.53
+    },
+    {
+      "name": "test-frost-druid-spells-network.mjs",
+      "exitCode": 0,
+      "seconds": 3.26
+    },
+    {
+      "name": "test-frost-ancient-war-client.mjs",
+      "exitCode": 0,
+      "seconds": 11.58
+    },
+    {
+      "name": "test-frost-ancient-war-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.19
+    },
+    {
+      "name": "test-frost-natures-blessing.mjs",
+      "exitCode": 0,
+      "seconds": 0.55
+    },
+    {
+      "name": "test-frost-natures-blessing-client.mjs",
+      "exitCode": 0,
+      "seconds": 6.62
+    },
+    {
+      "name": "test-frost-natures-blessing-network.mjs",
+      "exitCode": 0,
+      "seconds": 1.2
+    },
+    {
+      "name": "test-frost-entangled-rules.mjs",
+      "exitCode": 0,
+      "seconds": 0.34
+    },
+    {
+      "name": "test-frost-wisp-client.mjs",
+      "exitCode": 0,
+      "seconds": 2.09
+    },
+    {
+      "name": "test-frost-undead-network.mjs",
+      "exitCode": 0,
+      "seconds": 0.53
+    },
+    {
+      "name": "test-frost-entangled-network.mjs",
+      "exitCode": 0,
+      "seconds": 6.95
+    },
+    {
+      "name": "test-frost-triggers.mjs",
+      "exitCode": 0,
+      "seconds": 0.65
+    },
+    {
+      "name": "test-frost-tilesets.mjs",
+      "exitCode": 0,
+      "seconds": 0.16
+    },
+    {
+      "name": "test-frost-tree-felling.mjs",
+      "exitCode": 0,
+      "seconds": 7.92
+    },
+    {
+      "name": "test-frost-forest-pathing.mjs",
+      "exitCode": 0,
+      "seconds": 5.72
+    },
+    {
+      "name": "test-frost-doodads.mjs",
+      "exitCode": 0,
+      "seconds": 2.52
+    },
+    {
+      "name": "test-frost-doodads-client.mjs",
+      "exitCode": 0,
+      "seconds": 4.01
+    },
+    {
+      "name": ".human-technology-regression-body.mjs",
+      "exitCode": 0,
+      "seconds": 63.13
+    }
+  ],
+  "pending": null,
+  "totalModules": 170,
+  "uniquePassRecords": 455,
+  "entryBodyCovered": true
+}

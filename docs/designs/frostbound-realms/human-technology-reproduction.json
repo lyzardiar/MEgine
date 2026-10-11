@@ -1,0 +1,14 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "assetOutputsReproduced": 29,
+  "generatedOutputsReproduced": 3,
+  "materialSidecarsTracked": 3211,
+  "missingMaterialSidecars": 0,
+  "duplicateGuids": 0,
+  "generatedSha256": {
+    "Assets/Scripts/Main.js": "27170ebf11e763dfc43472c3af81f3ef74b26da82fc8c16d9ddece3220b4521c",
+    "Assets/Scenes/Main.mscene": "431d7b6d355801227d45f9ef8db50a8b9d9d9be07f1601680bebe9bf38e9a64c",
+    "project.json": "35b294bb5760f5cd88bb6ca5638da46d5a1b2e01e21f6680eea4c6a868a71bdd"
+  }
+}

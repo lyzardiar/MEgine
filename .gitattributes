@@ -209,3 +209,9 @@ scripts/*human-army*.mjs text eol=lf
 scripts/import-frost-classic.py text eol=lf
 scripts/test-frost-classic-import-selector.mjs text eol=lf
 docs/designs/frostbound-realms/*human-army*.json text eol=lf
+
+samples/frostbound-realms/SourceAssets/HumanTechnology/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+samples/frostbound-realms/Assets/Licenses/Classic-Human-Technology.txt text eol=lf
+scripts/*human-technology*.py text eol=lf
+scripts/*human-technology*.mjs text eol=lf
+docs/designs/frostbound-realms/*human-technology*.json text eol=lf
