@@ -722,6 +722,7 @@ export function Viewport(props: {
     lastRequestAt: 0,
     reportedError: false,
     ready: null as Promise<void> | null,
+    resumeTimer: null as number | null,
   });
   const nativeSceneFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
@@ -1307,7 +1308,13 @@ export function Viewport(props: {
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      const request = nativeGameRequestRef.current;
+      request.generation++;
+      if (request.resumeTimer != null) window.clearTimeout(request.resumeTimer);
+      request.resumeTimer = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1384,9 +1391,11 @@ export function Viewport(props: {
       isGame
       && '__TAURI_INTERNALS__' in window
       && !nativeGameRequestRef.current.inFlight
-      && (p.playing || now - nativeGameRequestRef.current.lastRequestAt >= 300)
+      && now - nativeGameRequestRef.current.lastRequestAt >= (p.playing ? 1000 / 60 : 300)
     ) {
       const request = nativeGameRequestRef.current;
+      if (request.resumeTimer != null) window.clearTimeout(request.resumeTimer);
+      request.resumeTimer = null;
       const generation = ++request.generation;
       request.inFlight = true;
       request.lastRequestAt = now;
@@ -1425,6 +1434,11 @@ export function Viewport(props: {
         .finally(() => {
           request.inFlight = false;
           request.ready = null;
+          if (request.generation !== generation || request.reportedError || propsRef.current.tab !== 'game' || !propsRef.current.playing) return;
+          request.resumeTimer = window.setTimeout(() => {
+            request.resumeTimer = null;
+            if (request.generation === generation && propsRef.current.tab === 'game' && propsRef.current.playing) paint();
+          }, Math.max(0, Math.ceil(1000 / 60 - (performance.now() - request.lastRequestAt))));
         });
     }
 
