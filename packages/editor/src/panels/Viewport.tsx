@@ -210,7 +210,7 @@ import {
   sceneOrientationLabel,
   type SceneOrientationView,
 } from '../sceneOrientation';
-import { nativeSceneFrameRequestIdentity, pendingNativeScenePaintUnchanged, type NativeScenePaintState } from '../nativeSceneFrame';
+import { nativeSceneFrameForPresentation, nativeSceneFrameRequestIdentity, pendingNativeScenePaintUnchanged, type NativeScenePaintState } from '../nativeSceneFrame';
 import {
   rectAxisTranslationAmount,
   rectTranslationAlongAxis,
@@ -728,6 +728,8 @@ export function Viewport(props: {
     width: number;
     height: number;
     key: string;
+    presentationKey: string;
+    camera: Camera;
     world: NativeViewportFrameWorld<Ent>;
   } | null>(null);
   const nativeSceneRequestRef = useRef({
@@ -1484,6 +1486,7 @@ export function Viewport(props: {
     ) {
       const request = nativeSceneRequestRef.current;
       const generation = ++request.generation;
+      const requestedSceneCamera = structuredClone(cam);
       request.inFlight = true;
       request.lastRequestAt = now;
       request.ready = requestWorldFrame('render_native_scene_view', {
@@ -1508,6 +1511,8 @@ export function Viewport(props: {
           width: result.width,
           height: result.height,
           key: nativeSceneIdentity!.key,
+          presentationKey: nativeSceneIdentity!.presentationKey,
+          camera: requestedSceneCamera,
           world: nativeWorld.frameWorld(),
         };
         request.reportedError = false;
@@ -1585,7 +1590,9 @@ export function Viewport(props: {
         request.ready = null;
       });
     }
-    const displayedWorld = isGame ? nativeGameFrameRef.current?.world : !scene2DActive && nativeSceneFrameRef.current?.key === nativeSceneIdentity?.key ? nativeSceneFrameRef.current?.world : undefined;
+    const nativeSceneFrame = !isGame && !scene2DActive && !nativeSceneRequestRef.current.reportedError ? nativeSceneFrameForPresentation(nativeSceneFrameRef.current, nativeSceneIdentity) : null;
+    if (nativeSceneFrame) cam = nativeSceneFrame.camera;
+    const displayedWorld = isGame ? nativeGameFrameRef.current?.world : nativeSceneFrame?.world;
     const browserWorld = displayedWorld ?? (editScene ? nativeWorld.frameWorld() : undefined);
     const displayedPresentation = browserWorld ? nativePresentationRef.current(browserWorld) : undefined;
     if (browserWorld) {
@@ -1647,7 +1654,7 @@ export function Viewport(props: {
         ctx.fillStyle = sky;
         ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
       }
-      if (!scene2DActive) drawGroundGrid(ctx, cam, vp, sc.pivot, sc.distance);
+      if (!scene2DActive) drawGroundGrid(ctx, cam, vp, cam.target, Math.hypot(...cam.eye.map((value, axis) => value - cam.target[axis])));
     }
 
     const transformSource = nativeGameReady && !(displayedPresentation?.hasSpine ?? p.entities.some(entity => entity.components.SpineSkeleton)) ? [] : p.entities;
@@ -2390,7 +2397,7 @@ export function Viewport(props: {
       const half: Vec3 = [0.5 * t.scale[0], 0.5 * t.scale[1], 0.5 * t.scale[2]];
       const rot = t.rotation as [number, number, number, number] | undefined;
       // The native Scene image owns mesh pixels; preserve only the existing projected selection region.
-      if (!isGame && !scene2DActive && '__TAURI_INTERNALS__' in window && !nativeSceneRequestRef.current.reportedError) {
+      if (nativeSceneFrame?.image) {
         const meshPath = String((mesh as Record<string, unknown>).mesh ?? 'cube');
         const imported = /\.(?:gltf|glb)$/i.test(meshPath) ? modelPreview(meshPath) : null;
         const hit = imported
@@ -2445,15 +2452,10 @@ export function Viewport(props: {
 
     // The web renderer owns the complete 2D authoring path (including live
     // particles and trails). Native Scene frames are composited only in 3D.
-    const nativeSceneFrame = !isGame
-      && !scene2DActive
-      && nativeSceneFrameRef.current?.key === nativeSceneIdentity?.key
-      ? nativeSceneFrameRef.current
-      : null;
     if (nativeSceneFrame?.image) {
       ctx.drawImage(nativeSceneFrame.image, vp.x, vp.y, vp.w, vp.h);
       if (!scene2DActive && sceneGridRef.current) {
-        drawGroundGrid(ctx, cam, vp, sc.pivot, sc.distance);
+        drawGroundGrid(ctx, cam, vp, cam.target, Math.hypot(...cam.eye.map((value, axis) => value - cam.target[axis])));
       }
       for (const entity of p.entities) {
         if (!isActive(entity.entity)) continue;
@@ -2552,16 +2554,6 @@ export function Viewport(props: {
           }
         }
       }
-    } else if (!isGame && !scene2DActive && '__TAURI_INTERNALS__' in window) {
-      // Do not flash the approximate Web renderer before the first native RHI
-      // frame. The selected-object overlays below remain immediately usable.
-      ctx.fillStyle = '#252a31';
-      ctx.fillRect(vp.x, vp.y, vp.w, vp.h);
-      ctx.fillStyle = '#aab0b7';
-      ctx.font = '11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('Rendering Scene View…', vp.x + vp.w / 2, vp.y + vp.h / 2);
     }
 
     if (!isGame) {
@@ -3750,13 +3742,7 @@ export function Viewport(props: {
             propsRef.current.selected,
             propsRef.current.pivotMode,
           ) ?? (tr ? ([...tr.position] as Vec3) : [0, 0, 0]);
-          const eye = orbitEye(
-            liveCam.current.pivot,
-            liveCam.current.yaw,
-            liveCam.current.pitch,
-            liveCam.current.distance,
-          );
-          const cam: Camera = { eye, target: liveCam.current.pivot, fovYDeg: 60 };
+          const cam = lastCameraRef.current;
           const scr = project(origin, cam, lastVpRef.current);
           const handleRotation = usesLocalHandleAxes(
             propsRef.current.gizmo,
@@ -4025,13 +4011,7 @@ export function Viewport(props: {
         const points = readLine2DPoints(line?.points);
         const point = points[d.index];
         if (!transform || !point) return;
-        const eye = orbitEye(
-          liveCam.current.pivot,
-          liveCam.current.yaw,
-          liveCam.current.pitch,
-          liveCam.current.distance,
-        );
-        const cam: Camera = { eye, target: liveCam.current.pivot, fovYDeg: 60 };
+        const cam = lastCameraRef.current;
         const rotation = transform.rotation as [number, number, number, number];
         const world = linePointWorld(
           point,
@@ -4270,13 +4250,7 @@ export function Viewport(props: {
           if (propsRef.current.handleOrientation === 'local') d.handleRotDeg += degrees;
         }
       } else if (d.type === 'gizmo') {
-        const eye = orbitEye(
-          liveCam.current.pivot,
-          liveCam.current.yaw,
-          liveCam.current.pitch,
-          liveCam.current.distance,
-        );
-        const cam: Camera = { eye, target: liveCam.current.pivot, fovYDeg: 60 };
+        const cam = lastCameraRef.current;
         const vp = lastVpRef.current;
         const ent = propsRef.current.entities.find((e) => e.entity === d.entity);
         const tr = ent

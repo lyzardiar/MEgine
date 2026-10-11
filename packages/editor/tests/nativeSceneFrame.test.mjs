@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { nativeSceneFrameRequestIdentity, pendingNativeScenePaintUnchanged } from '../src/nativeSceneFrame.ts';
+import { nativeSceneFrameForPresentation, nativeSceneFrameRequestIdentity, pendingNativeScenePaintUnchanged } from '../src/nativeSceneFrame.ts';
 
 test('pending Scene paints retain identical pixels but authoring commits, camera changes and new frames repaint immediately', () => {
   const state = { key: 'camera-size-dpr', epoch: 1, frame: {}, preview: {} };
@@ -25,7 +25,22 @@ test('native Scene bitmaps are keyed to the exact orbit camera that rendered the
 
   assert.deepEqual({ width: first.width, height: first.height }, { width: 1600, height: 1200 });
   assert.equal(first.key, same.key, 'visibility ordering is not a visual change');
-  assert.notEqual(first.key, orbited.key, 'an old orbit frame must not cover the live camera');
+  assert.notEqual(first.key, orbited.key, 'camera movement requests a fresh frame');
+  assert.equal(first.presentationKey, orbited.presentationKey, 'camera movement preserves the last complete presentation');
+});
+
+test('continuous camera movement retains completed pixels and their camera until a new frame arrives', () => {
+  const first = nativeSceneFrameRequestIdentity(camera, viewport, 2, [9, 2]);
+  let frame = { presentationKey: first.presentationKey, camera, image: 'first' };
+  for (let step = 1; step <= 20; step++) {
+    const nextCamera = { ...camera, eye: [step, 4, 7] };
+    const next = nativeSceneFrameRequestIdentity(nextCamera, viewport, 2, [2, 9]);
+    assert.equal(nativeSceneFrameForPresentation(frame, next), frame, 'pending render keeps complete pixels and matching hit-test camera');
+    if (step % 3 === 0) frame = { presentationKey: next.presentationKey, camera: nextCamera, image: `frame ${step}` };
+    assert.equal(nativeSceneFrameForPresentation(frame, next).camera, frame.camera);
+  }
+  for (const identity of [null, nativeSceneFrameRequestIdentity(camera, viewport, 2, [2]), nativeSceneFrameRequestIdentity(camera, { w: 900, h: 600 }, 2, [9, 2]), nativeSceneFrameRequestIdentity(camera, viewport, 1, [9, 2])]) assert.equal(nativeSceneFrameForPresentation(frame, identity), null);
+  assert.equal(nativeSceneFrameForPresentation(null, first), null);
 });
 
 test('native Scene frame dimensions remain bounded', () => {
