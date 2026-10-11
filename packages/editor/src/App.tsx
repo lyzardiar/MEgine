@@ -2683,22 +2683,32 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     let lastTick = performance.now();
     let lastPanelRefresh = 0;
     let disposed = false;
-    const id = setInterval(() => {
+    let timer: number | null = null;
+    const schedule = (delay: number) => { if (timer != null) window.clearTimeout(timer); timer = window.setTimeout(tick, delay); };
+    const tick = () => {
+      if (disposed) return;
+      schedule(1000 / 60);
       const now = performance.now();
       if (store.mode !== 'play') { lastTick = now; return; }
       if (store.playBusy) return;
+      const generation = store.playGeneration;
       store.tick(Math.min((now - lastTick) / 1000, 0.25));
       lastTick = now;
       // Viewports read completed Play frames directly. Inspector and hierarchy refresh
       // at 10 Hz; detached windows receive completed frames through the 33 ms broadcast.
       void store.waitForPlayRuntime().then(() => {
+        if (disposed || generation !== store.playGeneration) return;
         if (!disposed && !props.detachedPanel) broadcastScene();
         if (disposed || performance.now() - lastPanelRefresh < 100) return;
         lastPanelRefresh = performance.now();
         refresh(!props.detachedPanel);
-      }).catch(() => {});
-    }, 1000 / 60);
-    return () => { disposed = true; clearInterval(id); };
+      }).catch(() => {}).finally(() => {
+        if (disposed || generation !== store.playGeneration || store.mode !== 'play') return;
+        schedule(Math.max(0, 1000 / 60 - (performance.now() - lastTick)));
+      });
+    };
+    schedule(1000 / 60);
+    return () => { disposed = true; if (timer != null) window.clearTimeout(timer); };
   }, [props.detachedPanel, store]);
 
   useEffect(() => {
