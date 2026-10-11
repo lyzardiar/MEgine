@@ -2869,8 +2869,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     ? selectedIds.filter((id) => sceneInteraction.sceneVisible(id) && sceneInteraction.scenePickable(id))
     : selectedIds;
   const timelinePreviewActive = store.timelinePreviewActive();
+  const authoredEntities = useMemo(() => mode === 'edit' ? store.authoredEntities() : snap.entities, [store, mode, snap.entities]);
   const authoredInspectorEntities = timelinePreviewActive
-    ? store.authoredEntities()
+    ? authoredEntities
     : snap.entities;
 
   return (
@@ -3553,7 +3554,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   }}
                   entity={snap.entities.find((entity) => entity.entity === selected) ?? null}
                   entities={snap.entities}
-                  authoredEntities={mode === 'edit' ? store.authoredEntities() : snap.entities}
+                  authoredEntities={authoredEntities}
                   onAddComponent={(entity, type, value) => {
                     if (store.addComponent(entity, type, value)) {
                       log(`Added ${type}`);

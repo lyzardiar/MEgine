@@ -54,7 +54,7 @@ import {
 } from './buttonSpriteSwap';
 import { resolveSpriteId } from '../spriteLibrary';
 import { projectSceneCanvasTexture } from './sceneCanvasProjection';
-import { add, cross, dot, lookBasis, norm, project, quatRotateVec, scale as scaleVec3, sub, type Camera, type Quat, type Vec3 } from '../math3d';
+import { add, createProjection, cross, dot, lookBasis, norm, project, quatRotateVec, scale as scaleVec3, sub, type Camera, type Quat, type Vec3 } from '../math3d';
 import { rectComponentSceneScale } from '../rectSceneScale';
 import { buildWorldTransforms } from '../worldTransform';
 import { getSortingLayerRank } from '../sortingLayers';
@@ -2289,6 +2289,7 @@ export function layoutUiScene3D(
   const ch = Math.max(1, canvasSize.h);
   const pixelRoot: Rect = { x: 0, y: 0, w: cw, h: ch };
 
+  const projectPoint = createProjection(cam, viewport);
   const out: UiDrawItem[] = [];
   let layoutScale = 1;
   let depthBase = 0;
@@ -2371,15 +2372,15 @@ export function layoutUiScene3D(
         const right = Math.min(bounds.x + bounds.w, Math.ceil((visible.x + visible.w + sourceMargin) / tileSize) * tileSize), bottom = Math.min(bounds.y + bounds.h, Math.ceil((visible.y + visible.h + sourceMargin) / tileSize) * tileSize);
         bounds = { x: left, y: top, w: right - left, h: bottom - top };
       }
-      const projected = pixels.map(point => project(pixelToWorld(point.x, point.y), cam, viewport));
+      const projected = pixels.map(point => projectPoint(pixelToWorld(point.x, point.y)));
       if (bounds.w <= 4096 && bounds.h <= 4096 && pixels.length >= 3 && projected.every(Boolean)) {
         surface = { items: laid, bounds, pixels, corners: projected.map(point => ({ x: point!.x, y: point!.y })), inverseW: projected.map(point => point!.inverseW) };
       }
     }
 
     let sceneScale = 1;
-    const c0 = project(pixelToWorld(cw * 0.5, ch * 0.5), cam, viewport);
-    const c1 = project(pixelToWorld(cw * 0.5 + 1, ch * 0.5), cam, viewport);
+    const c0 = projectPoint(pixelToWorld(cw * 0.5, ch * 0.5));
+    const c1 = projectPoint(pixelToWorld(cw * 0.5 + 1, ch * 0.5));
     if (c0 && c1) {
       const s = Math.hypot(c1.x - c0.x, c1.y - c0.y);
       if (s > 1e-4) {
@@ -2396,7 +2397,7 @@ export function layoutUiScene3D(
 
     const projectPixelRect = (rect: Rect): Rect | undefined => {
       const projected = pixelCorners(rect, 0, [0.5, 0.5])
-        .map(([px, py]) => project(pixelToWorld(px, py), cam, viewport));
+        .map(([px, py]) => projectPoint(pixelToWorld(px, py)));
       if (projected.some((point) => !point)) return undefined;
       const points = projected as Array<{ x: number; y: number; depth: number }>;
       const xs = points.map((point) => point.x);
@@ -2415,7 +2416,7 @@ export function layoutUiScene3D(
       const raycastGeometry = paddedRaycastGeometry(it.rect, it.pivot, it.raycastPadding);
       const raycastProjected = raycastGeometry
         ? pixelCorners(raycastGeometry.rect, it.rotation, raycastGeometry.pivot)
-            .map(([px, py]) => project(pixelToWorld(px, py), cam, viewport))
+            .map(([px, py]) => projectPoint(pixelToWorld(px, py)))
         : [];
       const raycastScreenCorners = raycastProjected.length === 4
         && raycastProjected.every(Boolean)
@@ -2423,7 +2424,7 @@ export function layoutUiScene3D(
         : [];
       const corners = pixelCorners(it.rect, it.rotation, it.pivot);
       const world = corners.map(([px, py]) => pixelToWorld(px, py));
-      const scr = world.map((w) => project(w, cam, viewport));
+      const scr = world.map((w) => projectPoint(w));
       if (scr.some((p) => !p)) continue;
       const P = scr as Array<{ x: number; y: number; depth: number; inverseW: number }>;
       const screenCorners = P.map(({ x, y }) => ({ x, y }));
@@ -2435,13 +2436,13 @@ export function layoutUiScene3D(
       if (drawWidth <= 0.0001 || drawHeight <= 0.0001) continue;
       const angle = Math.atan2(topRight.y - topLeft.y, topRight.x - topLeft.x);
       const pivPx = rectPivot(it.rect, it.pivot);
-      const pivS = project(pixelToWorld(pivPx.x, pivPx.y), cam, viewport);
+      const pivS = projectPoint(pixelToWorld(pivPx.x, pivPx.y));
 
       const itemSceneScale = drawWidth / Math.max(0.0001, it.rect.w);
       const sceneItem = scaleSceneVisuals(it, itemSceneScale);
       const maskRegions = it.maskRegions?.flatMap((mask) => {
         const maskCorners = pixelCorners(mask.rect, mask.rotation, mask.pivot)
-          .map(([px, py]) => project(pixelToWorld(px, py), cam, viewport));
+          .map(([px, py]) => projectPoint(pixelToWorld(px, py)));
         if (maskCorners.some((point) => !point)) return [];
         const exact = (maskCorners as Array<{ x: number; y: number; depth: number }>)
           .map(({ x, y }) => ({ x, y }));
