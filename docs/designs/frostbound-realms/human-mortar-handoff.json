@@ -1,0 +1,32 @@
+{
+  "author": "MiYu",
+  "stage": "Original Workshop/Mortar rules and native source art prerequisites",
+  "status": "source and asset preview validated; gameplay work remains active",
+  "baseCommit": "6a35793d7198765ffef4b3a020a11ae9c188931c",
+  "workspace": "D:\\MEngineNativeQA\\hero-death-release-checkout",
+  "branch": "codex/frostbound-realms",
+  "sourceDataImporter": "scripts/import-frost-human-mortar.py",
+  "effectsImporter": "scripts/import-frost-human-mortar-effects.py",
+  "test": "scripts/test-frost-human-mortar-assets.py",
+  "nativeQa": "scripts/qa-frost-human-mortar-art.mjs",
+  "tools": {
+    "pythonPath": "D:/MEngineNativeQA/human-army-python",
+    "blast": "C:/Users/admin/.codex/worktrees/1339/MEgine/tmp/warcraft-compression/blast.exe",
+    "sampler": "C:/Users/admin/.codex/worktrees/1339/MEgine/tmp/warcraft-effects/sentinel-bin/MdxExport.dll",
+    "metadata": "C:/Users/admin/.codex/worktrees/1339/MEgine/tmp/warcraft-effects/node-metadata/NodeMetadata.dll",
+    "bounds": "D:/MEngineNativeQA/attachment-build/release/examples/gltf_bounds.exe"
+  },
+  "next": [
+    "Add optional source Workshop/Mortar version, preserve old saves",
+    "Implement source construction/train queue, source dual weapons and explicit artillery/tree/ground commands",
+    "Add original Flare source commands, delayed detection and strict world saves",
+    "Resolve/validate Fragmentation overlap/type before exposing research",
+    "Integrate source effects into generated game; test shared/generated/TCP/native; scoped commit/push"
+  ],
+  "preserve": [
+    "scripts/__pycache__/",
+    "tmp/",
+    "Unrelated human-equipment-native-failure.png",
+    "Owned native QA WebView caches retained after normal exit"
+  ]
+}

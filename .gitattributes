@@ -221,3 +221,10 @@ samples/frostbound-realms/Assets/Licenses/Classic-Human-Equipment.txt text eol=l
 scripts/*human-equipment*.py text eol=lf
 scripts/*human-equipment*.mjs text eol=lf
 docs/designs/frostbound-realms/*human-equipment*.json text eol=lf
+
+samples/frostbound-realms/SourceAssets/HumanMortar/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+samples/frostbound-realms/Assets/Licenses/*Human-Mortar*.txt text eol=lf
+scripts/*human-mortar*.py text eol=lf
+scripts/*human-mortar*.mjs text eol=lf
+docs/designs/frostbound-realms/*human-mortar*.json text eol=lf
+samples/frostbound-realms/Assets/HumanMortar/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
