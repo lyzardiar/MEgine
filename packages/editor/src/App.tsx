@@ -2993,6 +2993,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               clearColor={snap.clearColor}
               entities={viewportEntities}
               runtimeSnapshot={store.playRenderSnapshot}
+              subscribeRuntimeFrames={store.subscribePlayFrames}
               selected={viewportSelected}
               selectedIds={viewportSelectedIds}
               sceneHiddenIds={sceneHiddenIds}

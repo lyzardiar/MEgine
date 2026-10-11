@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from '../node_modules/typescript/lib/typescript.js';
+import { nativeGameFrameMatchesRequest } from '../src/nativeViewportFrame.ts';
 
 const source = readFileSync(new URL('../src/panels/Viewport.tsx', import.meta.url), 'utf8');
 const start = source.indexOf('    if (\n      isGame\n');
@@ -15,24 +16,32 @@ const cleanupEnd = source.indexOf('    // eslint-disable-next-line', cleanupStar
 assert.ok(cleanupStart >= 0 && cleanupEnd > cleanupStart);
 const cleanup = ts.transpileModule(`(function () { ${source.slice(cleanupStart, cleanupEnd)} })`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 
-function fixture(duration, timerDelay = 0, integerTimers = false) {
+const subscription = ts.transpileModule(source.slice(source.indexOf('  useEffect(() => props.subscribeRuntimeFrames'), source.indexOf('  // Continuous render loop')), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+
+function fixture(duration, timerDelay = 0, integerTimers = false, revision) {
   let now = 0, serial = 0, active = 0, maxActive = 0, released = 0;
   const tasks = new Map(), starts = [], uploaded = [];
-  const propsRef = { current: { tab: 'game', playing: true, runtimeSessionId: 1, entities: [], gameResolution: { width: 1280, height: 720 } } };
+  const propsRef = { current: { tab: 'game', playing: true, runtimeSessionId: 1, revision, entities: [], gameResolution: { width: 1280, height: 720 } } };
   const nativeGameRequestRef = { current: { generation: 0, inFlight: false, lastRequestAt: -Infinity, reportedError: false, ready: null, resumeTimer: null } }, nativeGameFrameRef = { current: null }, lastProfilerFrameRef = { current: 1 };
   const setTimeout = (callback, delay) => { const id = ++serial; tasks.set(id, { callback, at: now + (integerTimers ? Math.trunc(delay) : delay) + (delay === 0 ? timerDelay : 0) }); return id; };
-  const env = { window: { __TAURI_INTERNALS__: {}, setTimeout, clearTimeout: id => tasks.delete(id) }, performance: { now: () => now }, propsRef, nativeGameRequestRef, nativeGameFrameRef, lastProfilerFrameRef, vp: { w: 640, h: 360 }, dpr: 1, nativeGamePreviewSize: () => ({ width: 1280, height: 720 }), currentViewportProps: () => propsRef.current, nativeViewportFrameWorldCurrent: (world, props) => world.runtimeSessionId === props.runtimeSessionId, releaseNativeViewportFrame: () => released++, uploadNativeViewportFrame: buffer => { uploaded.push(buffer); return { profile: { counts: {} }, image: {}, width: 1280, height: 720 }; }, recordNativeViewportProfile() {}, console: { warn() {} }, raf: 0, cancelAnimationFrame() {} };
+  const env = { window: { __TAURI_INTERNALS__: {}, setTimeout, clearTimeout: id => tasks.delete(id) }, performance: { now: () => now }, propsRef, nativeGameRequestRef, nativeGameFrameRef, lastProfilerFrameRef, vp: { w: 640, h: 360 }, dpr: 1, nativeGameFrameMatchesRequest, nativeGamePreviewSize: () => ({ width: 1280, height: 720 }), currentViewportProps: () => propsRef.current, nativeViewportFrameWorldCurrent: (world, props) => world.runtimeSessionId === props.runtimeSessionId, releaseNativeViewportFrame: () => released++, uploadNativeViewportFrame: buffer => { uploaded.push(buffer); return { profile: { counts: {}, worldRevision: buffer.revision }, image: {}, width: 1280, height: 720 }; }, recordNativeViewportProfile() {}, console: { warn() {} }, raf: 0, cancelAnimationFrame() {} };
   const context = vm.createContext(env), request = vm.runInContext(requestBlock, context);
   const paint = () => {
     const p = propsRef.current;
-    Object.assign(env, { isGame: p.tab === 'game', p, now, presentationKey: 'resolution', nativeWorld: { frameWorld: () => ({ runtimeSessionId: p.runtimeSessionId }) }, requestWorldFrame: () => {
+    Object.assign(env, { isGame: p.tab === 'game', p, now, presentationKey: JSON.stringify([p.gameResolution, p.gameDisplay]), nativeWorld: { frameWorld: () => ({ runtimeSessionId: p.runtimeSessionId }), worldArgs: () => ({ playSessionId: p.runtimeSessionId, playRevision: p.revision }) }, requestWorldFrame: () => {
       starts.push(now); maxActive = Math.max(maxActive, ++active);
-      return new Promise((resolve, reject) => { const id = ++serial; tasks.set(id, { at: now + (typeof duration === 'function' ? duration(starts.length) : duration), callback: () => { active--; env.fail ? reject(Error('render failed')) : resolve({ runtimeSessionId: p.runtimeSessionId }); } }); });
+      return new Promise((resolve, reject) => { const id = ++serial; tasks.set(id, { at: now + (typeof duration === 'function' ? duration(starts.length) : duration), callback: () => { active--; env.fail ? reject(Error('render failed')) : resolve({ runtimeSessionId: p.runtimeSessionId, revision: p.revision }); } }); });
     } });
     request(p, now, env.nativeWorld, env.presentationKey, env.requestWorldFrame);
   };
   env.paint = paint;
-  const dispose = vm.runInContext(cleanup, context)();
+  let notify;
+  env.props = { subscribeRuntimeFrames: listener => { notify = listener; return () => { notify = undefined; }; } };
+  let unsubscribe;
+  env.useEffect = callback => { unsubscribe = callback(); };
+  vm.runInContext(subscription, context);
+  const clearRequest = vm.runInContext(cleanup, context)();
+  const dispose = () => { unsubscribe(); clearRequest(); };
   async function advance(to, animation = true) {
     if (animation) for (let at = Math.ceil((now + .00001) / 16) * 16; at <= to; at += 16) { const id = ++serial; tasks.set(id, { at, callback: paint }); }
     for (;;) {
@@ -44,7 +53,7 @@ function fixture(duration, timerDelay = 0, integerTimers = false) {
     now = to;
   }
   paint();
-  return { propsRef, env, starts, uploaded, nativeGameRequestRef, dispose, paint, advance, get maxActive() { return maxActive; }, get released() { return released; } };
+  return { propsRef, env, starts, uploaded, nativeGameRequestRef, nativeGameFrameRef, dispose, paint, advance, notify: () => notify?.(), get maxActive() { return maxActive; }, get released() { return released; } };
 }
 
 test('slow native Game requests continue on completion without waiting for animation', async () => {
@@ -103,4 +112,34 @@ test('render errors rely on animation retry and do not create a completion loop'
 test('a restarted session releases old pixels and requests the current session', async () => {
   const f = fixture(24); f.propsRef.current = { ...f.propsRef.current, runtimeSessionId: 2 }; await f.advance(60);
   assert.equal(f.released, 1); assert.ok(f.uploaded.every(buffer => buffer.runtimeSessionId === 2)); assert.equal(f.maxActive, 1); f.dispose();
+});
+
+test('exact native revisions reuse pixels and render the newest revision after an in-flight request', async () => {
+  const f = fixture(24, 0, false, 0);
+  await f.advance(95); assert.equal(f.starts.length, 1); assert.equal(f.nativeGameFrameRef.current.worldRevision, 0);
+  f.propsRef.current = { ...f.propsRef.current, revision: 1 }; f.paint();
+  f.propsRef.current = { ...f.propsRef.current, revision: 2 }; f.paint();
+  await f.advance(145, false);
+  assert.deepEqual(f.uploaded.map(buffer => buffer.revision), [0, 1, 2]); assert.equal(f.maxActive, 1); f.dispose();
+});
+
+test('resize, DPR, display, session restart and nonrevisioned worlds bypass pixel reuse', async () => {
+  const f = fixture(5, 0, true, 0); await f.advance(30, false);
+  for (const change of [() => f.env.vp.w++, () => f.env.dpr++, () => f.propsRef.current.gameDisplay = 1, () => f.propsRef.current.runtimeSessionId++, () => f.propsRef.current.revision = undefined]) {
+    const before = f.starts.length; change(); f.paint(); await f.advance(before * 30 + 30, false); assert.ok(f.starts.length > before);
+  }
+  f.dispose();
+});
+
+test('simulation completion wakes a reused frame and preserves the pending request deadline', async () => {
+  const f = fixture(5, 0, true, 0); await f.advance(20, false); assert.deepEqual(f.starts,[0]);
+  f.propsRef.current = {...f.propsRef.current,revision:1}; f.notify(); await f.advance(36,false);
+  f.propsRef.current = {...f.propsRef.current,revision:2}; f.notify(); await f.advance(45,false);
+  assert.deepEqual(f.starts,[0,20,37]); assert.deepEqual(f.uploaded.map(buffer=>buffer.revision),[0,1,2]); assert.equal(f.maxActive,1); f.dispose();
+});
+
+test('full unmount unsubscribes simulation notifications before clearing pending timers', async () => {
+  const f=fixture(5,0,true,0); await f.advance(20,false); f.dispose();
+  f.propsRef.current={...f.propsRef.current,revision:1}; f.notify(); await f.advance(80,false);
+  assert.deepEqual(f.starts,[0]); assert.equal(f.nativeGameRequestRef.current.resumeTimer,null);
 });
