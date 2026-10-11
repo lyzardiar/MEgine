@@ -1,0 +1,340 @@
+{
+  "author": "MiYu",
+  "date": "2026-10-12",
+  "baselineGameCommit": "d70581693aa38d12c0d1ae2fb2edd75e304abfbf",
+  "executable": "D:/MEngineNativeQA/release-editor-revision-presentation.exe",
+  "executableSha256": "16307d8918967c8bb9f81e7350978b9dc7b34b7469f2e72fc56a60dfde3d5627",
+  "nativeExecutableIdenticalForAllRuns": true,
+  "qaSource": {
+    "sample": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Scripts\\Main.js",
+    "originalSha256": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+    "baselineSha256": "c6939215f7d2de3762ba997d156629a6b07e477fef3c22352f44b8e1b8848bd4",
+    "candidateSha256": "c35119e6daae545a65f5ed79b7c93975d445fab10e8c819fe8046ca4039ac52c",
+    "baselineGameCommit": "d70581693aa38d12c0d1ae2fb2edd75e304abfbf"
+  },
+  "qaSampleOriginalRestored": true,
+  "generatedMainReproduced": true,
+  "generatedClientComparison": {
+    "author": "MiYu",
+    "passed": true,
+    "comparisons": 25,
+    "baselineRepeatedCalls": 980,
+    "candidateRepeatedCalls": 0,
+    "scope": "Generated native scenery equivalence; dropped spawn recovery, LOD threshold, same LOD zoom, all tilesets, ground elevation, water, fog, doodad blockers, map replacement and menu transitions."
+  },
+  "regressions": [
+    "environment client",
+    "effect pool client",
+    "tree felling client",
+    "tilesets",
+    "original Warcraft biome trees"
+  ],
+  "cacheBound": {
+    "slots": 140,
+    "keys": [
+      "slot index",
+      "edge",
+      "tileset",
+      "edge or zoom above 14"
+    ],
+    "references": "immutable generated asset descriptions; no map or runtime state references"
+  },
+  "independentReview": {
+    "blockers": 0,
+    "readOnly": true,
+    "reviewer": "release_editor_frame_review"
+  },
+  "diagnostic": {
+    "profile": "D:/MEngineNativeQA/hud-phase-quickjs-profile.json",
+    "frames": 360,
+    "phases": {
+      "actions": {
+        "calls": 457,
+        "ms": 110
+      },
+      "actor": {
+        "calls": 6844,
+        "ms": 307
+      },
+      "component/Camera3D": {
+        "calls": 457,
+        "ms": 6
+      },
+      "component/CanvasScaler": {
+        "calls": 97,
+        "ms": 1
+      },
+      "component/DirectionalLight": {
+        "calls": 97,
+        "ms": 0
+      },
+      "component/EnvironmentLight": {
+        "calls": 97,
+        "ms": 0
+      },
+      "component/Image": {
+        "calls": 7178,
+        "ms": 57
+      },
+      "component/MaterialPropertyBlock": {
+        "calls": 21250,
+        "ms": 239
+      },
+      "component/MeshRenderer": {
+        "calls": 22097,
+        "ms": 148
+      },
+      "component/PbrMaterial": {
+        "calls": 2160,
+        "ms": 6
+      },
+      "component/RawImage": {
+        "calls": 97,
+        "ms": 0
+      },
+      "component/RectTransform": {
+        "calls": 7178,
+        "ms": 42
+      },
+      "component/Text": {
+        "calls": 5529,
+        "ms": 46
+      },
+      "component/Transform": {
+        "calls": 11563,
+        "ms": 84
+      },
+      "effect/anchors": {
+        "calls": 2160,
+        "ms": 4
+      },
+      "effect/embedded": {
+        "calls": 2160,
+        "ms": 10
+      },
+      "effect/spells": {
+        "calls": 2160,
+        "ms": 49
+      },
+      "effect/status": {
+        "calls": 2160,
+        "ms": 13
+      },
+      "hud": {
+        "calls": 97,
+        "ms": 1479
+      },
+      "hud/commands": {
+        "calls": 97,
+        "ms": 105
+      },
+      "hud/grass": {
+        "calls": 97,
+        "ms": 86
+      },
+      "hud/ground": {
+        "calls": 97,
+        "ms": 462
+      },
+      "hud/overlays": {
+        "calls": 97,
+        "ms": 88
+      },
+      "hud/portrait": {
+        "calls": 97,
+        "ms": 37
+      },
+      "hud/scenery": {
+        "calls": 97,
+        "ms": 383
+      },
+      "hud/shell": {
+        "calls": 97,
+        "ms": 169
+      },
+      "hud/status": {
+        "calls": 97,
+        "ms": 66
+      },
+      "hud/telemetry": {
+        "calls": 97,
+        "ms": 82
+      },
+      "missiles": {
+        "calls": 360,
+        "ms": 1
+      },
+      "pool": {
+        "calls": 360,
+        "ms": 191
+      },
+      "resources": {
+        "calls": 360,
+        "ms": 209
+      },
+      "simulation": {
+        "calls": 89,
+        "ms": 254
+      },
+      "simulation/elevation": {
+        "calls": 10709,
+        "ms": 209
+      },
+      "simulation/prepareGround": {
+        "calls": 457,
+        "ms": 99
+      },
+      "simulation/trainable": {
+        "calls": 1039,
+        "ms": 4
+      },
+      "simulation/unitHeight": {
+        "calls": 2160,
+        "ms": 27
+      },
+      "spell": {
+        "calls": 23760,
+        "ms": 42
+      },
+      "terrain/cells": {
+        "calls": 97,
+        "ms": 30
+      },
+      "terrain/chunk": {
+        "calls": 6208,
+        "ms": 84
+      },
+      "terrain/details": {
+        "calls": 97,
+        "ms": 31
+      },
+      "terrain/mesh": {
+        "calls": 6208,
+        "ms": 4
+      },
+      "terrain/waterMesh": {
+        "calls": 12416,
+        "ms": 6
+      },
+      "units": {
+        "calls": 360,
+        "ms": 761
+      },
+      "visual/heading": {
+        "calls": 2160,
+        "ms": 8
+      },
+      "visual/model": {
+        "calls": 2257,
+        "ms": 63
+      },
+      "visual/parts": {
+        "calls": 2257,
+        "ms": 71
+      },
+      "visual/pose": {
+        "calls": 2257,
+        "ms": 100
+      }
+    },
+    "scope": "Inclusive diagnostic timings in instrumented native QuickJS with millisecond timestamps; nested timings must not be summed or treated as production FPS.",
+    "nativeReport": "D:\\MEngineNativeQA\\release-scene-profile-hud-phase-current-1791751052691\\report.json",
+    "qaSource": {
+      "sample": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Scripts\\Main.js",
+      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\4e8f15f9b1b0b9d5\\hud-phase-1791751040131.json",
+      "originalSha256": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+      "baselineSha256": "c6939215f7d2de3762ba997d156629a6b07e477fef3c22352f44b8e1b8848bd4",
+      "instrumentedSha256": "f9f9401bf743b1869e4963a5a1ae3370ff9eed68093c5a8c4abad7385e7bac4a",
+      "baselineGameCommit": "d70581693aa38d12c0d1ae2fb2edd75e304abfbf"
+    }
+  },
+  "qa": [
+    {
+      "label": "scenery-visual-baseline",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scenery-visual-baseline-1791751416746\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 39.31393635770944,
+      "gameCanvasNewBufferHz": 39.31393635770944,
+      "simulationHz": 40.1872350499423,
+      "fullRequestMs": 15.477500000596047,
+      "renderMs": 8.987519583333327,
+      "commandMs": 10.66341541666667,
+      "nativeRequests": 499,
+      "renderedDistinctRevisions": 499,
+      "revisionDrawGapP95Ms": 45,
+      "revisionDrawGapMaxMs": 485.7000000476837,
+      "scenePaintCount": 676,
+      "sceneNewNativeFrames": 656
+    },
+    {
+      "label": "scenery-visual-candidate",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scenery-visual-candidate-1791751494436\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 41.51690157909616,
+      "gameCanvasNewBufferHz": 41.51690157909616,
+      "simulationHz": 42.78345899503134,
+      "fullRequestMs": 15.199166657527288,
+      "renderMs": 8.864936666666669,
+      "commandMs": 10.505612916666665,
+      "nativeRequests": 515,
+      "renderedDistinctRevisions": 515,
+      "revisionDrawGapP95Ms": 43.0,
+      "revisionDrawGapMaxMs": 178.79999995231628,
+      "scenePaintCount": 679,
+      "sceneNewNativeFrames": 658
+    },
+    {
+      "label": "scenery-visual-candidate-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scenery-visual-candidate-repeat-1791751570787\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 40.43493578436345,
+      "gameCanvasNewBufferHz": 40.43493578436345,
+      "simulationHz": 41.67828727050922,
+      "fullRequestMs": 15.635833341876666,
+      "renderMs": 8.91024833333333,
+      "commandMs": 10.596723750000004,
+      "nativeRequests": 505,
+      "renderedDistinctRevisions": 505,
+      "revisionDrawGapP95Ms": 42.200000047683716,
+      "revisionDrawGapMaxMs": 99.10000014305115,
+      "scenePaintCount": 678,
+      "sceneNewNativeFrames": 659
+    },
+    {
+      "label": "scenery-visual-baseline-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scenery-visual-baseline-repeat-1791751647693\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 38.50497192537973,
+      "gameCanvasNewBufferHz": 38.50497192537973,
+      "simulationHz": 39.59232492026963,
+      "fullRequestMs": 15.879166663686435,
+      "renderMs": 8.759249166666667,
+      "commandMs": 10.50881625,
+      "nativeRequests": 492,
+      "renderedDistinctRevisions": 492,
+      "revisionDrawGapP95Ms": 44.90000009536743,
+      "revisionDrawGapMaxMs": 611.5,
+      "scenePaintCount": 676,
+      "sceneNewNativeFrames": 654
+    }
+  ],
+  "gainsPercent": [
+    {
+      "simulationHz": 6.460319904722489,
+      "distinctDrawnWorldRevisionHz": 5.603522377770553
+    },
+    {
+      "simulationHz": 5.268602827543645,
+      "distinctDrawnWorldRevisionHz": 5.012245854181829
+    }
+  ],
+  "acceptanceScope": "Owned native Release editor and generated QuickJS client; actual WebView GPU pixels, continuous Scene orbit, selection, hierarchy, pause/step/restart. Not physical display FPS or cross-machine acceptance."
+}

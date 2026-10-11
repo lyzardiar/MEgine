@@ -5044,6 +5044,12 @@ var FrostClient=(()=>{
     if(mode==='playing'&&!paused&&input.pressedButtons.includes(2)&&inBattlefield(p)){armed=null;const target=attackAt(input,p),r=state.resources.findIndex(r=>r.kind!=='camp'&&r.amount>0&&Math.hypot(r.x-ground().x,r.z-ground().z)<2.8),worker=state.units.some(u=>selected.includes(u.id)&&u.kind==='worker');const b=worker&&state.units.find(u=>u.team===team&&u.hp>0&&!S.types[u.kind].speed&&(u.built<1||u.hp<u.maxHp)&&Math.hypot(screenWorld(u,input).x-p.x,screenWorld(u,input).y-p.y)<28);const tree=state.units.find(u=>selected.includes(u.id)&&S.ancientMain(u)&&!u.uprooted);if(r>=0&&state.resources[r].kind==='mine'&&tree)order({type:'entangle',resource:r});else if(target)order({type:'attack',target:target.id});else if(r>=0&&state.resources[r].kind==='tree'&&state.units.some(u=>selected.includes(u.id)&&(S.mortarUnit(u)||S.nightRank(state,team,'Repb')&&u.kind==='glaivethrower')))order({type:'attackTree',resource:r});else if(b)order({type:b.built<1?'construct':'repair',target:b.id});else if(r>=0&&state.units.some(u=>selected.includes(u.id)&&S.canGather(state,u,state.resources[r])))order({type:'gather',resource:r});else if(state.units.some(u=>u.id===selected[0]&&u.kind==='hero')&&state.loot.some(d=>state.visible[team]?.[S.index(d.x,d.z)]&&Math.hypot(d.x-ground().x,d.z-ground().z)<1.3))order({type:'pickup',loot:state.loot.find(d=>state.visible[team]?.[S.index(d.x,d.z)]&&Math.hypot(d.x-ground().x,d.z-ground().z)<1.3).id});else order({type:state.units.some(u=>selected.includes(u.id)&&S.trainable(state,u).length)?'rally':'move',x:ground().x,z:ground().z});}
   }
   function equalGroundChunk(a,b){for(let i=0;i<a.length;i++)for(let j=0;j<a[i].length;j++)if(a[i][j]!==b[i][j])return false;return true;}
+  const sceneryVisuals=[];
+  function sceneryVisual(i,edge,map){
+    const tileset=map.tileset??0,far=edge||zoom>14,old=sceneryVisuals[i];
+    if(old&&old.edge===edge&&old.tileset===tileset&&old.far===far)return old.visual;
+    const visual=FrostVisual.scenery(i,edge,zoom,tileset);sceneryVisuals[i]={edge,tileset,far,visual};return visual;
+  }
   const minimapTiles=[];let minimapLayout='';
   function render(input){
     updateActions(input);
@@ -5097,7 +5103,7 @@ var FrostClient=(()=>{
       const edge=i<72,angle=i*2.399963,x=edge?Math.cos(angle)*(35+i%4*2):((i*17.71)%54)-27,z=edge?Math.sin(angle)*(35+i%4*2):((i*23.19)%54)-27,idx=S.index(x,z);
       const seen=edge||allVisible||state.explored[team]?.[idx],clear=edge||map.terrain[idx]===0&&(map.doodads||[]).every(d=>Math.hypot(x-d.x,z-d.z)>1.2+d.scale)&&groundBlockers.every(u=>Math.hypot(x-u.x,z-u.z)>4)&&!(state.mode==='td'&&Math.floor(ground[idx]/2)%3===2);
       if(!world||!seen||!clear){environment('Scenery '+i,null);continue;}
-      environment('Scenery '+i,FrostVisual.scenery(i,edge,zoom,map.tileset??0),[x,groundY(x,z)-.02,z]);
+      environment('Scenery '+i,sceneryVisual(i,edge,map),[x,groundY(x,z)-.02,z]);
     }
     for(let i=0;i<S.DOODAD_LIMIT;i++){const d=map.doodads?.[i],seen=d&&(allVisible||state.explored[team]?.[S.index(d.x,d.z)]);environment('Doodad '+i,world&&seen?FrostVisual.doodad(d,zoom,map.tileset??0):null,d?[d.x,groundY(d.x,d.z)-.02,d.z]:hidden);}
     const pathing=editing&&pathingVisible?FrostTerrain.pathing(state):null;for(let z=0;z<8;z++)for(let x=0;x<8;x++){const n='Pathing '+(z*8+x);show(n,!!pathing);if(pathing){set(n,'MeshRenderer',{mesh:FrostTerrain.mesh(map,x,z),material:'Assets/Materials/Pathing.mmat',cast_shadows:false,receive_shadows:false});set(n,'MaterialPropertyBlock',{custom_parameter_names:FrostTerrain.names,custom_parameter_values:FrostTerrain.chunk(pathing,x,z)});}}
