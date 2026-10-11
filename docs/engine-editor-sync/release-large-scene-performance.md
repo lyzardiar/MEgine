@@ -91,6 +91,32 @@ Play worker 只发布不可变世界快照及模拟 profile。调用线程更新
 - `D:/MEngineNativeQA/profile-release-scene-projection.mjs`
 - `D:/MEngineNativeQA/parallel-play-performance-handoff.json`
 
+## Play 完成回调调度
+
+Play 使用单一 timeout，根据最近一次模拟启动时间安排下一步。模拟完成时，如果本轮已超过 60 Hz 周期，立即安排下一步；较快的步骤仍保持 60 Hz 上限。启动、暂停与忙碌期间保留轮询，完成回调检查 session generation，停止或重启后的旧回调不能发布面板状态或调整新会话的调度。
+
+同一工程完成两组 Release 对照，第二组交换执行顺序，并在 12 秒稳定采样前后读取实际帧号及模拟时钟：
+
+| 指标 | 旧版 | 当前 |
+| --- | ---: | ---: |
+| 第二组实际模拟推进频率 | 35.39 次/秒 | 38.90 次/秒 |
+| 第一组 Game 原生帧上传频率 | 34.83 FPS | 33.54 FPS |
+| 第二组 Game 原生帧上传频率 | 33.35 FPS | 33.86 FPS |
+| 两组 Scene 拖动空画面次数 | 0 | 0 |
+
+第二组模拟推进提高约 9.9%；两组 Game 画面上传结果未显示稳定帧率提升。模拟推进和画面上传分别计数，不能互相替代，也不能据此宣称 Game 卡顿已经解决。
+
+25 项前端调度、runtime、输入序列与模拟时钟测试通过，0 失败；TypeScript/Vite 与原生 Release 构建通过。四次真实编辑器验收均通过 GPU 像素、模型选择、层级滚动、暂停时钟冻结、精确单步、继续运行和停止重启检查，无控制台 error，拥有的 QA 编辑器均确认退出。没有修改原生源码，因此本轮未重复原生单元测试。
+
+本轮 EXE：`D:/MEngineNativeQA/release-editor-playback-completion.exe`，SHA-256：`D79A2AD617405D4C414C693ADA0B5FDF923D05BB24961A7B95A05FAF330A53D2`。
+
+证据：
+- `D:/MEngineNativeQA/release-scene-profile-playback-completion-baseline-1791737876830/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-playback-completion-candidate-1791737972228/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-playback-completion-candidate-repeat-1791738093842/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-playback-completion-baseline-repeat-1791738182520/report.json`
+- `D:/MEngineNativeQA/profile-playback-completion.mjs`
+
 ## 验收边界
 
 连续拖动尚未达到 60 FPS，浏览器平均帧间隔与跨 WebView 呈现仍有优化空间。本机 Game 未复现用户机器的极度持续卡顿，需用户以同步后的源码重建并复测，不能据此认定其机器的 Game 问题已完全解决。
