@@ -23,9 +23,9 @@ Frostbound Main 场景含 9,019 个实体。加载完成后的主要 Scene 开�
 | 静止 Scene 浏览器平均绘制 | 约 187 ms | 11.01 ms |
 | 连续拖动 Scene 浏览器平均绘制 | 180.53 ms | 12.07 ms |
 | 连续拖动 Scene 浏览器平均帧间隔 | 467.54 ms | 20.14 ms |
-| 单机 Game 原生实际呈现 | 25.57 FPS | 32.04 FPS |
+| 单机 Game 原生帧上传 | 25.57 FPS | 32.04 FPS |
 
-当前连续拖动 Scene 原生实际呈现为 48.17 FPS，原生世界同步平均 0.0004 ms、渲染平均 2.86 ms。静止 Scene 原生请求使用既有约 200 ms 周期，呈现约 5 FPS；这个数字不代表交互帧率。工程打开耗时 5.99 秒。
+当前连续拖动 Scene 原生帧上传为 48.17 FPS，原生世界同步平均 0.0004 ms、渲染平均 2.86 ms。静止 Scene 原生请求使用既有约 200 ms 周期，呈现约 5 FPS；这个数字不代表交互帧率。工程打开耗时 5.99 秒。
 
 层级初始仅 15 个 DOM 行，展开和滚动后各 30 行；模型选择、Collider 选择、层级展开和滚动均通过。真实 WebView 四色 GPU 像素检查验证纹理方向与半透明结果，控制台无 error，QA 正常退出。
 
@@ -43,8 +43,8 @@ frostbound 客户端记录已完成隐藏的普通单位槽，持续隐藏时跳
 
 | 指标 | 旧版 | 候选版 |
 | --- | ---: | ---: |
-| 连续拖动 Scene 原生实际呈现 | 29.93 FPS | 29.74 FPS |
-| Game 原生实际呈现 | 25.94 FPS | 28.38 FPS |
+| 连续拖动 Scene 原生帧上传 | 29.93 FPS | 29.74 FPS |
+| Game 原生帧上传 | 25.94 FPS | 28.38 FPS |
 | Game 原生模拟平均耗时 | 15.54 ms | 12.61 ms |
 | Game 原生渲染平均耗时 | 10.23 ms | 9.34 ms |
 
@@ -61,6 +61,35 @@ frostbound 客户端记录已完成隐藏的普通单位槽，持续隐藏时跳
 - `D:/MEngineNativeQA/game-native-steady-candidate.log`
 
 原生模拟基准可用 `cargo test --release -p mengine-editor-host --lib measure_sample_script_stages -- --ignored --nocapture --test-threads=1` 执行；设置 `MENGINE_SAMPLE_ROOT` 为工程根目录，可用 `MENGINE_PROFILE_SOURCE` 指定另一个生成脚本作对照。
+
+## Scene 连续画面与 Play 渲染线程
+
+相机移动期间持续显示最近完成且适用于当前世界、隐藏项与视口尺寸的原生帧。新帧到达后同时更新模型像素、相机、选择命中、编辑操作和网格。下一次原生请求使用实时相机；当前显示帧的相机不会覆盖请求参数。首次无帧或原生错误时，浏览器模型绘制保持可见。
+
+Play worker 只发布不可变世界快照及模拟 profile。调用线程更新独立世界镜像并执行 GPU 渲染与回读，QuickJS 可以继续模拟。镜像锁获取后及渲染返回后均检查 session generation，旧渲染结果不进入重启后的会话；历史淘汰不影响已发布快照的生命周期。Scene 隐藏过滤使用发布源的实体 ID。
+
+对同一 9,019 实体工程连续右键拖动 12 秒，拖动阶段暂时隐藏 Interface，并取消相机选择，单独检查主 Scene 画面。每次画布开始绘制时记录主原生 bitmap 与浏览器模型多边形，排除 Camera Preview；原生帧上传频率不能代替画布实际显示验证。
+
+| 指标 | 旧版 | 当前 |
+| --- | ---: | ---: |
+| Scene 绘制次数 | 676 | 676 |
+| 无原生主画面且无浏览器模型的绘制 | 224 | 0 |
+| Scene 原生帧上传频率 | 54.61 FPS | 54.79 FPS |
+| Game 原生帧上传频率 | 35.49 FPS | 34.56 FPS |
+| Game 模拟请求平均延迟 | 21.71 ms | 19.28 ms |
+
+当前 Scene 673 次使用原生主画面、3 次使用浏览器模型回退；实际绘制到画布的新原生主帧为 655 张。拖动中的截图包含连续显示的地形。Game 本轮未获得帧率提升，线程解耦通过正确性验证，不能据此宣布 Game 卡顿已经解决。工程打开耗时为 6.05 秒，打开时间未改善。
+
+42 项 editor-host 测试、1 项共享世界镜像测试、1 项原生相机/活跃实体测试与 29 项前端测试通过，0 失败；其中 3 项手动性能测试按设计忽略。覆盖渲染阻塞期间的模拟推进、旧修订淘汰、停止重启、等待镜像锁的旧发布、实体 ID 复用及 Scene 隐藏过滤。TypeScript/Vite 与原生 Release 构建通过。真实 WebView GPU 像素、模型/Collider 选择及层级展开/滚动检查通过；两个拥有的 QA 编辑器均已退出，未操作用户编辑器。
+
+本轮 EXE：`D:/MEngineNativeQA/release-editor-parallel-play.exe`，SHA-256：`28C72084F4C54234B1CA46A5059AB1744C124351D0ABEC00284B2FFDEAD87DD3`。
+
+证据：
+- `D:/MEngineNativeQA/release-scene-profile-parallel-play-final-baseline-1791735746140/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-parallel-play-final-candidate-1791735819084/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-parallel-play-final-candidate-1791735819084/moving-scene.png`
+- `D:/MEngineNativeQA/profile-release-scene-projection.mjs`
+- `D:/MEngineNativeQA/parallel-play-performance-handoff.json`
 
 ## 验收边界
 

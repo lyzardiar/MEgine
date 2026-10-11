@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 use std::collections::{HashMap, VecDeque};
 use crate::viewport::{EditorViewportFrame, EditorViewportProfileNode};
 
-type RenderPlayWorld = Box<dyn FnOnce(&World) -> Result<EditorViewportFrame, String> + Send>;
+type PlayRenderSnapshot = (SharedWorldSnapshot, f64, Vec<EditorViewportProfileNode>);
 
 #[derive(Default)]
 pub struct PlayProject {
@@ -63,7 +63,6 @@ const PLAY_VIEWPORT_REVISION_EXPIRED: &str = "Play viewport revision expired";
 #[derive(Default)]
 struct PlayRenderHistory {
     checkpoints: VecDeque<(u64, SharedWorldSnapshot, f64, Vec<EditorViewportProfileNode>)>,
-    materialized: Option<(u64, mengine_scene::SharedSnapshotWorld)>,
 }
 
 impl PlayRenderHistory {
@@ -72,16 +71,9 @@ impl PlayRenderHistory {
         while self.checkpoints.len() > 3 { self.checkpoints.pop_front(); }
     }
 
-    fn world<'a>(&'a mut self, live: &'a World, revision: u64) -> Result<(&'a World, f64, Vec<EditorViewportProfileNode>), String> {
+    fn snapshot(&self, revision: u64) -> Result<PlayRenderSnapshot, String> {
         let (_, snapshot, step_ms, stages) = self.checkpoints.iter().find(|(id, ..)| *id == revision).ok_or_else(|| PLAY_VIEWPORT_REVISION_EXPIRED.to_string())?;
-        let profile = (*step_ms, stages.clone());
-        if self.checkpoints.back().is_some_and(|(id, ..)| *id == revision) { return Ok((live, profile.0, profile.1)); }
-        if self.materialized.as_ref().is_none_or(|(id, _)| *id != revision) {
-            let (_, world) = self.materialized.get_or_insert_with(|| (revision, mengine_scene::SharedSnapshotWorld::default()));
-            world.update(snapshot);
-            self.materialized.as_mut().unwrap().0 = revision;
-        }
-        Ok((self.materialized.as_ref().expect("historical render world").1.world(), profile.0, profile.1))
+        Ok((snapshot.clone(), *step_ms, stages.clone()))
     }
 }
 
@@ -89,12 +81,12 @@ enum Request {
     Start { generation: u64, source: String, snapshot: WorldSnapshot, project: PlayProject, reply: Sender<Result<WorldSnapshot, String>> },
     Step { generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<WorldSnapshot, String>> },
     StepUpdate { generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<PlayWorldUpdate, String>> },
-    Render { generation: u64, revision: Option<u64>, render: RenderPlayWorld, reply: Sender<Result<EditorViewportFrame, String>> },
+    RenderSnapshot { generation: u64, revision: Option<u64>, reply: Sender<Result<PlayRenderSnapshot, String>> },
     Stop { generation: u64 },
 }
 
 /// QuickJS stays on one worker thread. Native rendering and editor IPC never own its GC context.
-pub struct EditorPlayRuntime { sender: Sender<Request>, generation: Arc<AtomicU64> }
+pub struct EditorPlayRuntime { sender: Sender<Request>, generation: Arc<AtomicU64>, render_world: std::sync::Mutex<(u64, mengine_scene::SharedSnapshotWorld)> }
 
 impl Default for EditorPlayRuntime {
     fn default() -> Self {
@@ -138,21 +130,11 @@ impl Default for EditorPlayRuntime {
                         if result.is_err() { session = None; }
                         let _ = reply.send(result);
                     }
-                    Request::Render { generation, revision, render, reply } => {
+                    Request::RenderSnapshot { generation, revision, reply } => {
                         let result = session.as_mut().filter(|(id, _)| *id == generation && current.load(Ordering::SeqCst) == generation)
-                            .ok_or_else(|| "Play session expired".to_string()).and_then(|(_, session)| {
-                                let world_sync_started = Instant::now();
-                                let (world, step_ms, stages) = match revision {
-                                    Some(revision) => session.render_history.world(&session.world, revision)?,
-                                    None => (&session.world, session.step_ms, session.step_stages.clone()),
-                                };
-                                let world_sync_ms = world_sync_started.elapsed().as_secs_f64() * 1000.0;
-                                let mut frame = render(world)?;
-                                frame.profile.world_sync_ms = Some(world_sync_ms);
-                                frame.profile.simulation_ms = Some(step_ms);
-                                frame.profile.simulation_stages = stages;
-                                frame.profile.world_revision = revision;
-                                Ok(frame)
+                            .ok_or_else(|| "Play session expired".to_string()).and_then(|(_, session)| match revision {
+                                Some(revision) => session.render_history.snapshot(revision),
+                                None => Ok((session.snapshot_cache.capture(&session.world), session.step_ms, session.step_stages.clone())),
                             });
                         let _ = reply.send(result);
                     }
@@ -160,7 +142,7 @@ impl Default for EditorPlayRuntime {
                 }
             }
         }).expect("create editor script worker");
-        Self { sender, generation }
+        Self { sender, generation, render_world: std::sync::Mutex::new((0, mengine_scene::SharedSnapshotWorld::default())) }
     }
 }
 
@@ -206,16 +188,40 @@ impl EditorPlayRuntime {
         result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play step: {error}"))?
     }
 
-    /// Render on the owning worker so each view uses the live world without a scene round trip.
+    /// MiYu: render a published world on the caller thread while QuickJS continues simulating.
     pub fn render(&self, generation: u64, render: impl FnOnce(&World) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
         self.render_revision(generation, None, render)
     }
 
     /// A browser-owned UI frame can request its exact retained world revision.
     pub fn render_revision(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
+        self.render_revision_with_snapshot(generation, revision, move |world, _| render(world))
+    }
+
+    /// The published source retains browser entity IDs for Scene visibility filtering.
+    pub fn render_revision_with_snapshot(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
         let (reply, result) = mpsc::channel();
-        self.sender.send(Request::Render { generation, revision, render: Box::new(render), reply }).map_err(|error| error.to_string())?;
-        result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play rendering: {error}"))?
+        self.sender.send(Request::RenderSnapshot { generation, revision, reply }).map_err(|error| error.to_string())?;
+        let published = result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play rendering: {error}"))??;
+        self.render_published_snapshot(generation, revision, published, render)
+    }
+
+    fn render_published_snapshot(&self, generation: u64, revision: Option<u64>, published: PlayRenderSnapshot, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String>) -> Result<EditorViewportFrame, String> {
+        let (snapshot, step_ms, stages) = published;
+        let mut mirror = self.render_world.lock().map_err(|error| format!("Play render world: {error}"))?;
+        if self.generation() != generation { return Err("Play session expired".into()); }
+        let started = Instant::now();
+        if mirror.0 != generation { *mirror = (generation, mengine_scene::SharedSnapshotWorld::default()); }
+        mirror.1.update(&snapshot);
+        let world_sync_ms = started.elapsed().as_secs_f64() * 1000.0;
+        let frame = render(mirror.1.world(), &snapshot);
+        if self.generation() != generation { return Err("Play session expired".into()); }
+        let mut frame = frame?;
+        frame.profile.world_sync_ms = Some(world_sync_ms);
+        frame.profile.simulation_ms = Some(step_ms);
+        frame.profile.simulation_stages = stages;
+        frame.profile.world_revision = revision;
+        Ok(frame)
     }
 }
 
@@ -343,6 +349,82 @@ mod tests {
     use super::*;
 
     #[test]
+    fn blocked_render_keeps_its_published_world_while_simulation_advances_and_history_expires() {
+        let runtime = Arc::new(EditorPlayRuntime::default()); let id = runtime.begin();
+        runtime.start(id, "function onTick(dt, frame) { engine.setClearColor(frame, 0, 0, 1); }".into(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        let (started, ready) = mpsc::channel(); let (release, resume) = mpsc::channel();
+        let renderer = runtime.clone();
+        let rendering = std::thread::spawn(move || renderer.render_revision(id, Some(0), move |world| {
+            started.send(()).unwrap(); resume.recv_timeout(Duration::from_secs(3)).unwrap();
+            assert_eq!(world.time.frame, 0); assert_eq!(world.time.clear_color.x, 0.1);
+            Err("published frame rendered".into())
+        }));
+        ready.recv_timeout(Duration::from_secs(3)).unwrap();
+        for frame in 1..=4 { assert_eq!(runtime.advance_update(id, None, ScriptInput::default(), 0.01).unwrap().revision, frame); }
+        assert_eq!(runtime.render_revision(id, Some(0), |_| panic!("expired view must not execute")).err().unwrap(), PLAY_VIEWPORT_REVISION_EXPIRED);
+        release.send(()).unwrap(); assert_eq!(rendering.join().unwrap().err().unwrap(), "published frame rendered");
+        assert_eq!(runtime.render_revision(id, Some(4), |world| { assert_eq!(world.time.frame, 4); assert_eq!(world.time.clear_color.x, 4.0); Err("latest".into()) }).err().unwrap(), "latest");
+        runtime.advance(id, None, ScriptInput::default(), 0.01).unwrap();
+        assert_eq!(runtime.render(id, |world| { assert_eq!(world.time.frame, 5); assert_eq!(world.time.clear_color.x, 5.0); Err("legacy latest".into()) }).err().unwrap(), "legacy latest");
+    }
+
+    #[test]
+    fn stopping_and_restarting_does_not_wait_for_a_render_or_publish_its_old_result() {
+        let runtime = Arc::new(EditorPlayRuntime::default()); let id = runtime.begin();
+        runtime.start(id, String::new(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        let (started, ready) = mpsc::channel(); let (release, resume) = mpsc::channel();
+        let renderer = runtime.clone();
+        let rendering = std::thread::spawn(move || renderer.render_revision(id, Some(0), move |_| {
+            started.send(()).unwrap(); resume.recv_timeout(Duration::from_secs(3)).unwrap(); Err("old render".into())
+        }));
+        ready.recv_timeout(Duration::from_secs(3)).unwrap();
+        runtime.stop_session(id); let next = runtime.begin();
+        let initial = WorldSnapshot { clear_color: [0.75, 0.5, 0.25, 1.0], ..WorldSnapshot::default() };
+        runtime.start(next, String::new(), initial, PlayProject::default()).unwrap();
+        release.send(()).unwrap(); assert_eq!(rendering.join().unwrap().err().unwrap(), "Play session expired");
+        assert_eq!(runtime.render_revision(next, Some(0), |world| { assert_eq!(world.time.clear_color.x, 0.75); Err("new initial".into()) }).err().unwrap(), "new initial");
+        assert_eq!(runtime.advance_update(next, None, ScriptInput::default(), 0.01).unwrap().revision, 1);
+    }
+
+    #[test]
+    fn restarting_rejects_a_published_render_waiting_for_the_mirror() {
+        let runtime = Arc::new(EditorPlayRuntime::default()); let id = runtime.begin();
+        runtime.start(id, String::new(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        let mirror = runtime.render_world.lock().unwrap();
+        let (reply, result) = mpsc::channel();
+        runtime.sender.send(Request::RenderSnapshot { generation: id, revision: Some(0), reply }).unwrap();
+        let published = result.recv_timeout(Duration::from_secs(3)).unwrap().unwrap();
+        let renderer = runtime.clone();
+        let rendering = std::thread::spawn(move || renderer.render_published_snapshot(id, Some(0), published, |_, _| panic!("expired renderer must not execute")));
+        runtime.stop_session(id); let next = runtime.begin();
+        runtime.start(next, String::new(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        drop(mirror);
+        assert_eq!(rendering.join().unwrap().err().unwrap(), "Play session expired");
+        assert_eq!(runtime.advance_update(next, None, ScriptInput::default(), 0.01).unwrap().revision, 1);
+    }
+
+    #[test]
+    fn published_source_ids_support_scene_hiding_after_live_entity_slot_reuse() {
+        use mengine_core::generated::Name;
+        let mut source = World::new(); let root = source.spawn_empty(); let child = source.spawn_empty();
+        source.insert_component(root, Name { value: "parent".into() }); source.insert_component(child, Name { value: "child".into() }); source.set_parent(child, Some(root));
+        let runtime = EditorPlayRuntime::default(); let id = runtime.begin();
+        let mut snapshot = runtime.start(id, String::new(), WorldSnapshot::from_world(&source), PlayProject::default()).unwrap();
+        snapshot.entities.retain(|entity| entity.name.as_deref() != Some("child")); snapshot.entities[0].active = false;
+        let parent = snapshot.entities[0].entity;
+        snapshot.entities.push(serde_json::from_value(serde_json::json!({"entity":777,"name":"replacement","parent":parent,"active":true,"components":{"Transform":{"position":[1,2,3],"rotation":[0,0,0,1],"scale":[1,1,1]}}})).unwrap());
+        runtime.advance_update(id, Some(snapshot), ScriptInput::default(), 0.01).unwrap();
+        assert_eq!(runtime.render_revision_with_snapshot(id, None, |world, source| {
+            let original = source.entities.iter().find(|entity| entity.name.as_deref() == Some("replacement")).unwrap().entity;
+            let mirrored = world.iter_entities().find(|entity| world.get_component::<Name>(*entity).is_some_and(|name| name.value == "replacement")).unwrap();
+            assert_ne!(original, mirrored.to_u64());
+            let mut filtered = source.clone().into_owned(); filtered.entities.retain(|entity| entity.entity != original);
+            assert_eq!(filtered.entities.len(), 1); assert_eq!(filtered.entities[0].name.as_deref(), Some("parent")); assert!(!filtered.entities[0].active);
+            Err("source filtering checked".into())
+        }).err().unwrap(), "source filtering checked");
+    }
+
+    #[test]
     #[ignore = "manual native script stage measurement; requires MENGINE_SAMPLE_ROOT"]
     fn measure_sample_script_stages() {
         let root = PathBuf::from(std::env::var("MENGINE_SAMPLE_ROOT").expect("sample root"));
@@ -410,15 +492,16 @@ mod tests {
         world.despawn(child); let recycled = world.spawn_empty();
         world.insert_component(recycled, Name { value: "replacement".into() });
         history.record(1, snapshots.capture(&world), 1.0, Vec::new());
-        let (older, _, _) = history.world(&world, 0).unwrap();
+        let mut mirror = mengine_scene::SharedSnapshotWorld::default();
+        mirror.update(&history.snapshot(0).unwrap().0);
+        let older = mirror.world();
         let child = older.iter_entities().find(|entity| older.get_component::<Name>(*entity).is_some_and(|name| name.value == "child")).unwrap();
         let parent = older.get_component::<Parent>(child).unwrap().entity;
         assert_eq!(older.get_component::<Name>(parent).unwrap().value, "root");
         assert_eq!(older.get_component::<Transform>(child).unwrap().position, [4.0, 5.0, 6.0]);
-        assert!(std::ptr::eq(history.world(&world, 1).unwrap().0, &world));
+        mirror.update(&history.snapshot(1).unwrap().0);
+        assert!(mirror.world().iter_entities().any(|entity| mirror.world().get_component::<Name>(entity).is_some_and(|name| name.value == "replacement")));
         assert_eq!(history.checkpoints.len(), 2);
-        let cache = history.materialized.as_ref().unwrap().0;
-        assert_eq!(cache, 0);
     }
 
     #[test]

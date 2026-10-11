@@ -1,4 +1,4 @@
-// Author: MiYu. Coalesce unchanged Scene paints while their native frame is pending.
+// Author: MiYu. Keep Scene frames visible while the next camera render is pending.
 import type { Camera } from './math3d.ts';
 
 export type NativeScenePaintState = { key: string; epoch: number; frame: unknown; preview: unknown };
@@ -15,12 +15,10 @@ export type NativeSceneFrameRequestIdentity = {
   width: number;
   height: number;
   key: string;
+  presentationKey: string;
 };
 
-/**
- * Identity for the exact native bitmap that may be composited into Scene view.
- * A frame rendered for an older orbit camera must never cover the live preview.
- */
+/** Request new camera pixels while retaining the last compatible presentation. */
 export function nativeSceneFrameRequestIdentity(
   camera: Camera,
   viewport: NativeSceneViewport,
@@ -35,6 +33,7 @@ export function nativeSceneFrameRequestIdentity(
   );
   const width = Math.max(1, Math.round(viewport.w * scale));
   const height = Math.max(1, Math.round(viewport.h * scale));
+  const presentationKey = JSON.stringify({ width, height, hiddenEntityIds: [...hiddenEntityIds].sort((left, right) => left - right) });
   const key = JSON.stringify({
     width,
     height,
@@ -48,5 +47,10 @@ export function nativeSceneFrameRequestIdentity(
     far: camera.far ?? null,
     hiddenEntityIds: [...hiddenEntityIds].sort((left, right) => left - right),
   });
-  return { width, height, key };
+  return { width, height, key, presentationKey };
+}
+
+/** World/session validity is checked before choosing a compatible camera frame. */
+export function nativeSceneFrameForPresentation<T extends { presentationKey: string }>(frame: T | null, identity: NativeSceneFrameRequestIdentity | null): T | null {
+  return frame && identity && frame.presentationKey === identity.presentationKey ? frame : null;
 }

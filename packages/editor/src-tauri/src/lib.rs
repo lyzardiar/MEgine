@@ -4453,11 +4453,11 @@ async fn render_native_scene_view(
     if snapshot.is_none() && retained_key.is_some() { request.hidden_entity_ids.clear(); }
     let runtime = state.play_runtime.clone();
     let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
-        let render = move |world: &mengine_core::World| -> Result<EditorViewportFrame, String> {
+        let render = move |world: &mengine_core::World, source: Option<&mengine_core::snapshot::SharedWorldSnapshot>| -> Result<EditorViewportFrame, String> {
         let filtered_world;
         let world = if request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() {
             let hidden: HashSet<u64> = request.hidden_entity_ids.iter().copied().collect();
-            let mut snapshot = WorldSnapshot::from_world(world);
+            let mut snapshot = source.map(|value| value.clone().into_owned()).unwrap_or_else(|| WorldSnapshot::from_world(world));
             snapshot.entities.retain(|entity| !hidden.contains(&entity.entity));
             filtered_world = world_from_snapshot(&snapshot);
             &filtered_world
@@ -4533,9 +4533,9 @@ async fn render_native_scene_view(
             (snapshot, _) if snapshot.is_some() || retained_key.is_some() => {
                 let mut mirror = SCENE_SNAPSHOT_WORLD.get_or_init(|| Mutex::new(mengine_editor_host::SceneSnapshotWorld::default())).lock();
                 let sync = Instant::now(); let world = mirror.update(retained_key, snapshot).map_err(str::to_owned)?; let sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
-                let mut frame = render(world)?; frame.profile.world_sync_ms = Some(sync_ms); Ok(frame)
+                let mut frame = render(world, None)?; frame.profile.world_sync_ms = Some(sync_ms); Ok(frame)
             },
-            (None, Some(id)) => runtime.render_revision(id, play_revision, render),
+            (None, Some(id)) => runtime.render_revision_with_snapshot(id, play_revision, move |world, source| render(world, Some(source))),
             _ => Err("viewport world is unavailable".into()),
         }
     })
