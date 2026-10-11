@@ -1,0 +1,14 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "sources": 5,
+  "signedOutputs": 45,
+  "reproducedOutputs": 45,
+  "materialMetas": 4,
+  "nativeGeometryParts": 4,
+  "sampledParticles": 39,
+  "modifiedOutputProtected": true,
+  "corruptSourceRejected": true,
+  "runtimeIntegrated": false,
+  "originalRuntimeVerified": false
+}

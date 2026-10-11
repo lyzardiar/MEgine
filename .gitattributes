@@ -264,3 +264,11 @@ scripts/*human-sorceress*.py text eol=lf
 scripts/*human-sorceress*.mjs text eol=lf
 docs/designs/frostbound-realms/human-sorceress*.json text eol=lf
 docs/designs/frostbound-realms/human-sorceress*.md text eol=lf
+
+samples/frostbound-realms/Assets/HumanSpellbreakerEffects/** -text whitespace=cr-at-eol
+samples/frostbound-realms/SourceAssets/HumanSpellbreakerEffects/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+samples/frostbound-realms/Assets/Licenses/*Human-Spellbreaker*.txt text eol=lf
+samples/frostbound-realms/human-spellbreaker*.json text eol=lf
+scripts/*human-spellbreaker*.py text eol=lf
+docs/designs/frostbound-realms/human-spellbreaker*.json text eol=lf
+docs/designs/frostbound-realms/human-spellbreaker*.md text eol=lf
