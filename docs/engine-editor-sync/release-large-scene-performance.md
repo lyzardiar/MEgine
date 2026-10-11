@@ -207,6 +207,17 @@ EXE：`D:/MEngineNativeQA/release-editor-revision-presentation.exe`，SHA-256：
 - `D:/MEngineNativeQA/revision-presentation-release-build.log`
 - `D:/MEngineNativeQA/revision-presentation-performance-handoff.json`
 
+## Scene 连续画面复验（2026-10-12）
+
+交付构建 `release-editor-revision-presentation.exe` 在同一大场景完成两次独立 Release 验收。连续右键移动视角时分别记录 676、679 次主画布绘制，其中 673、676 次显示原生模型画面，其余各 3 次显示浏览器模型回退；两次完全空画面均为 0。实际绘制的新原生帧分别为 656、658 张。GPU 像素、选择、层级展开滚动、暂停时钟、精确单步和停止重启检查均通过，无控制台 error，拥有的 QA 进程均已退出。
+
+两次 Game 模拟推进分别为 38.19、35.82 次/秒，不同世界版本的画布绘制分别为 37.33、35.07 次/秒。移动时持续可见已经通过本机验收，Game 的稳定帧率仍需继续优化。
+
+证据：
+
+- `D:/MEngineNativeQA/release-scene-profile-persistent-nodes-baseline-1791745253951/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-persistent-nodes-baseline-repeat-1791745549970/report.json`
+
 ## 验收边界
 
 连续拖动尚未达到 60 FPS，浏览器平均帧间隔与跨 WebView 呈现仍有优化空间。本机 Game 未复现用户机器的极度持续卡顿，需用户以同步后的源码重建并复测，不能据此认定其机器的 Game 问题已完全解决。
