@@ -1157,12 +1157,20 @@ function scanBuildAssetDependencies(
     }
     const marker = path.indexOf('#');
     if (marker >= 0) {
+      if (kind === '3D model') {
+        const pose = /^(.*\.(?:gltf|glb))#pose=(\d+):(\d+)(?:@(\d+))?$/i.exec(path);
+        const rate = Number(pose?.[4] ?? 12);
+        if (!pose || Number(pose[2]) > 255 || rate < 1 || rate > 60 || Number(pose[3]) > rate * 600) throw new Error(`invalid skeletal pose reference: ${path}`);
+        enqueue(pose[1], from, kind, builtins);
+        return;
+      }
       const texture = path.slice(0, marker).trim();
       const slice = path.slice(marker + 1).trim();
       if (!texture || !slice) throw new Error(`invalid ${kind} subresource reference: ${path}`);
       if (/\.(?:gltf|glb)$/i.test(texture)) {
-        const pose = /^pose=(\d+):(\d+)$/.exec(slice);
-        if (!pose || Number(pose[1]) > 255 || Number(pose[2]) > 1199) throw new Error(`invalid skeletal pose reference: ${path}`);
+        const pose = /^pose=(\d+):(\d+)(?:@(\d+))?$/.exec(slice);
+        const rate = Number(pose?.[3] ?? 12);
+        if (!pose || Number(pose[1]) > 255 || rate < 1 || rate > 60 || Number(pose[2]) > rate * 600) throw new Error(`invalid skeletal pose reference: ${path}`);
         enqueue(texture, from, kind, builtins);
         return;
       }
@@ -1198,7 +1206,7 @@ function scanBuildAssetDependencies(
     const meshRenderer = component('MeshRenderer');
     const mesh = stringValue(meshRenderer, 'mesh');
     if (mesh && mesh.toLowerCase() !== 'cube'
-      && (/\.(?:gltf|glb)$/i.test(mesh) || mesh.includes('/') || mesh.includes('\\'))) {
+      && (/\.(?:gltf|glb)(?:#.*)?$/i.test(mesh) || mesh.includes('/') || mesh.includes('\\'))) {
       enqueue(mesh, from, '3D model');
     }
     enqueueMaterial(stringValue(meshRenderer, 'material'), from, 'surface');

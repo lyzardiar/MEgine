@@ -6,6 +6,8 @@ import './test-frost-human-equipment.mjs';
 import './test-frost-human-equipment-client.mjs';
 import './test-frost-human-mortar.mjs';
 import './test-frost-human-mortar-client.mjs';
+import './test-frost-presentation-pool.mjs';
+import './test-frost-map-catalog.mjs';
 import './test-frost-human-mortar-network.mjs';
 import './test-frost-human-equipment-network.mjs';
 import './test-frost-human-technology.mjs';

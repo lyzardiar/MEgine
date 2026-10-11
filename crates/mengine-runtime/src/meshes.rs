@@ -159,6 +159,10 @@ impl RuntimeMeshCache {
             }
             let billboard = self.billboard_views.get(key);
             let pose = parse_gltf_pose_sample(billboard.map_or(key,|(source,_)| source));
+            if key.contains("#pose=") && pose.is_none() {
+                if should_attempt(&mut self.attempted, key, FileStamp::default()) { failures.push(MeshLoadFailure { key: key.into(), path: root.to_owned(), error: "invalid skeletal pose reference".into() }); }
+                continue;
+            }
             if pose.is_some() { self.pose_usage.insert(key.to_owned(), self.frame); }
             let asset_key = pose.map(|p| p.0).unwrap_or(key);
             let lower = asset_key.to_ascii_lowercase();

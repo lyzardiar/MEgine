@@ -17,7 +17,8 @@ pub fn parse_gltf_pose_sample(reference: &str) -> Option<(&str, usize, u32, u32)
     let clip = clip.parse::<usize>().ok()?;
     let frame = frame.parse::<u32>().ok()?;
     let rate = rate.parse::<u32>().ok()?;
-    if clip > 255 || !(1..=60).contains(&rate) || frame > rate*600 || !(path.ends_with(".gltf") || path.ends_with(".glb")) { return None; }
+    let lower = path.to_ascii_lowercase();
+    if clip > 255 || !(1..=60).contains(&rate) || frame > rate*600 || !(lower.ends_with(".gltf") || lower.ends_with(".glb")) { return None; }
     Some((path, clip, frame, rate))
 }
 
@@ -291,6 +292,7 @@ mod tests {
     }
     #[test]
     fn pose_references_are_bounded() {
+        assert_eq!(parse_gltf_pose_sample("Assets/Hero.GLB#pose=0:36000@60"),Some(("Assets/Hero.GLB",0,36000,60)));
         assert_eq!(parse_gltf_pose("Assets/hero.glb#pose=2:12"),Some(("Assets/hero.glb",2,12)));
         assert_eq!(parse_gltf_pose_sample("Assets/hero.glb#pose=2:30@30"),Some(("Assets/hero.glb",2,30,30)));
         assert!(parse_gltf_pose("Assets/hero.glb#pose=2:30@30").is_none(),"legacy consumers must not interpret a 30 Hz frame at 12 Hz");

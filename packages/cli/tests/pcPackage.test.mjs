@@ -2361,6 +2361,27 @@ test('buildPcPackage rejects custom shaders that declare engine entry points', (
   }
 });
 
+test('buildPcPackage includes skeletal pose models without requesting sprite metadata', () => {
+  const paths = fixture('skeletal-pose');
+  try {
+    const model = 'Assets/Animations/hero.gltf';
+    writeFileSync(join(paths.project, model), JSON.stringify({ asset: { version: '2.0' } }));
+    const scene = (reference) => writeFileSync(join(paths.project, 'Assets/Scenes/Main.mscene'), JSON.stringify({
+      world: { entities: [{ components: { MeshRenderer: { mesh: reference, material: 'default' } } }] },
+    }));
+    const options = { projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test-engine' };
+    scene(`${model}#pose=8:4`);
+    buildPcPackage(options);
+    assert.ok(existsSync(join(paths.output, model)));
+    for (const suffix of ['pose=256:0', 'pose=0:7201', 'pose=0:0@0', 'pose=0:0@61', 'pose=0:36001@60', 'pose=0:18001@30', 'pose=-1:0', 'pose=0:NaN', 'Idle']) {
+      scene(`${model}#${suffix}`);
+      assert.throws(() => buildPcPackage({ ...options, outputDir: join(paths.root, 'Invalid') }), /invalid skeletal pose reference/);
+    }
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage validates tilemap sprite subresources and shared import metadata', () => {
   const paths = fixture('sprite-subresources');
   try {
@@ -2559,12 +2580,15 @@ test('buildPcPackage includes skeletal pose models without sprite sidecars and r
     writeFileSync(join(paths.project, 'Assets', 'Models', 'Hero.gltf'), JSON.stringify({ asset: { version: '2.0' } }));
     const scene = join(paths.project, 'Assets', 'Scenes', 'Main.mscene');
     const writePose = (pose) => writeFileSync(scene, JSON.stringify({ world: { entities: [{ components: { MeshRenderer: { mesh: `Assets/Models/Hero.gltf#${pose}`, material: 'default' } } }] } }));
-    for (const pose of ['pose=256:0', 'pose=0:1200', 'pose=-1:0', 'pose=foo:0']) {
+    for (const pose of ['pose=256:0', 'pose=0:7201', 'pose=0:0@0', 'pose=0:0@61', 'pose=0:36001@60', 'pose=0:18001@30', 'pose=-1:0', 'pose=foo:0']) {
       writePose(pose);
       assert.throws(() => buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test' }), /invalid skeletal pose reference/);
     }
+    for(const pose of ['pose=0:12', 'pose=0:18000@30', 'pose=0:36000@60']) {
+      writePose(pose);buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test', clean: true });
+    }
     writePose('pose=0:12');
-    const manifest = buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test' });
+    const manifest = buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, engineVersion: 'test', clean: true });
     assert.ok(manifest.files.some(file => file.path === 'Assets/Models/Hero.gltf'));
     assert.ok(!manifest.files.some(file => file.path.endsWith('.sprite.json')));
   } finally {

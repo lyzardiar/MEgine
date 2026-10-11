@@ -2,8 +2,10 @@
 var FrostEffectPool=(()=>{
   const pattern=/^Classic (spell|status|attachment) (\d+)(.*)$/;
   const identity={position:[0,0,0],rotation:[0,0,0,1],scale:[1,1,1]};
+  const actorPattern=/^(Unit|Missile|Scenery|Prop|Doodad|Objective) (\d+)(?: part \d+)?$/;
+  const actorBase=name=>['Unit'].includes(name)?'Units':['Missile'].includes(name)?'Projectiles':['Objective'].includes(name)?'Systems':'Environment';
   const corpsePattern=/^Corpse (\d+)(?: mesh \d+)?$/;
-  const pooled=name=>pattern.test(name)||corpsePattern.test(name);
+  const pooled=name=>pattern.test(name)||corpsePattern.test(name)||actorPattern.test(name);
   // Native typed components include defaults and serialize their floating fields as f32.
   function matches(actual,desired){
     if(actual===desired)return true;
@@ -50,6 +52,18 @@ var FrostEffectPool=(()=>{
       }
       return names.every(n=>entities[n]&&!pending.has(n));
     }
+    function ensureActor(name,count){
+      const match=actorPattern.exec(name);if(!match)return true;
+      const [,kind,index]=match,template=kind+' 0',base='Scene / '+actorBase(kind)+'/'+kind,first=Math.floor(Number(index)/32)*32,group=base+'/Slots '+first+'-'+(first+31);
+      if(!authored[template])return false;
+      queue(group,{Transform:identity},base,true);
+      const names=[group];
+      for(let i=0;i<count;i++){
+        const part=name+(i?' part '+i:''),source=authored[template+(i?' part '+i:'')]??authored[template+' part 1']??authored[template];
+        queue(part,source,group);names.push(part);
+      }
+      return names.every(n=>entities[n]&&!pending.has(n));
+    }
     function entryFor(name){let entry=writes.get(name);if(!entry){entry={components:new Map()};writes.set(name,entry);}return entry;}
     function setActive(name,active){
       const entity=entities[name];if(!entity)return;
@@ -62,7 +76,7 @@ var FrostEffectPool=(()=>{
       if(previous?.json===json||!previous&&matches(entity.components[component],value))return;
       const stored={json,value:JSON.parse(json)};entryFor(name).components.set(component,stored);command({op:'setComponent',entity:entity.entity,component,value:stored.value});
     }
-    return {beginFrame,ensure,setActive,setComponent};
+    return {beginFrame,ensure,ensureActor,setActive,setComponent};
   }
   return {pooled,create};
 })();

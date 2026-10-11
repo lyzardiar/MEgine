@@ -1,0 +1,513 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "rows": [
+    {
+      "variant": "after",
+      "openMs": 6212.5737,
+      "entities": 8973,
+      "rootEntities": 8,
+      "cameraMs": [
+        547.7774999999983,
+        693.2685999999994,
+        301.6153999999988,
+        890.0360999999994,
+        437.9955000000009,
+        942.5070000000014,
+        321.90550000000076,
+        1052.0864000000001
+      ],
+      "nativeSummary": {
+        "intervals": 5,
+        "averagePresentIntervalMs": 1179.3800000190736,
+        "p95PresentIntervalMs": 1979.1000001430511,
+        "presentedFps": 0.8479031355320825,
+        "averageRequestMs": 962.9500000079473,
+        "averageRenderMs": 4.241533333333333,
+        "averageCommandMs": 16.559466666666665,
+        "averageUploadMs": 0.7166666984558105,
+        "averageWorldSyncMs": 12.206966666666668,
+        "averageSimulationMs": null,
+        "averageSimulationRequestMs": null
+      },
+      "nativeLatest": {
+        "callTree": {
+          "calls": 1,
+          "children": [
+            {
+              "calls": 1,
+              "children": [
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "EffekseerWorld.update",
+                  "selfMs": 0.0061,
+                  "totalMs": 0.0061
+                },
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "EffekseerWorld.append_to_frame",
+                  "selfMs": 0.001,
+                  "totalMs": 0.001
+                }
+              ],
+              "name": "Effects",
+              "selfMs": 0,
+              "totalMs": 0.0071
+            },
+            {
+              "calls": 1,
+              "children": [
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "TransformHierarchy.build",
+                  "selfMs": 0.5698,
+                  "totalMs": 0.5698
+                },
+                {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Camera, meshes and lighting",
+                      "selfMs": 0.5236999999999999,
+                      "totalMs": 0.5236999999999999
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Canvas layout and text",
+                      "selfMs": 0.0011,
+                      "totalMs": 0.0011
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "World sprites",
+                      "selfMs": 0.0009,
+                      "totalMs": 0.0009
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Particles, trails and sorting",
+                      "selfMs": 0.054400000000000004,
+                      "totalMs": 0.054400000000000004
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Sprite regions and materials",
+                      "selfMs": 0.0068000000000000005,
+                      "totalMs": 0.0068000000000000005
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI batching",
+                      "selfMs": 0.013699999999999999,
+                      "totalMs": 0.013699999999999999
+                    }
+                  ],
+                  "name": "FrameCompiler.compile",
+                  "selfMs": 0.0010999999999999899,
+                  "totalMs": 0.6017
+                },
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "Diagnostics.texture_failures",
+                  "selfMs": 0.00009999999999999999,
+                  "totalMs": 0.00009999999999999999
+                }
+              ],
+              "name": "Frame compile",
+              "selfMs": 0,
+              "totalMs": 1.1716
+            },
+            {
+              "calls": 1,
+              "children": [
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "OffscreenTarget.ensure_size",
+                  "selfMs": 0.0988,
+                  "totalMs": 0.0988
+                },
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.7019,
+                  "totalMs": 0.7019
+                },
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "Renderer.read_offscreen_rgba8",
+                  "selfMs": 0.9617,
+                  "totalMs": 0.9617
+                }
+              ],
+              "name": "Render backend",
+              "selfMs": 0,
+              "totalMs": 1.7624
+            },
+            {
+              "calls": 1,
+              "children": [
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "RuntimeMeshCache.sync",
+                  "selfMs": 0.025400000000000002,
+                  "totalMs": 0.025400000000000002
+                },
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "RuntimeFontCache.sync",
+                  "selfMs": 0.001,
+                  "totalMs": 0.001
+                },
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "RuntimeTextureCache.sync_ui",
+                  "selfMs": 0.0671,
+                  "totalMs": 0.0671
+                },
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "RuntimeTextureCache.sync_ui_materials",
+                  "selfMs": 0.0017000000000000001,
+                  "totalMs": 0.0017000000000000001
+                },
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "RuntimeTextureCache.sync_materials",
+                  "selfMs": 0.31379999999999997,
+                  "totalMs": 0.31379999999999997
+                },
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "RuntimeTextureCache.sync_environment",
+                  "selfMs": 0,
+                  "totalMs": 0
+                }
+              ],
+              "name": "Resource sync",
+              "selfMs": 0,
+              "totalMs": 0.409
+            },
+            {
+              "calls": 1,
+              "children": [
+                {
+                  "calls": 1,
+                  "children": [],
+                  "name": "Profiler.snapshot",
+                  "selfMs": 0.9728,
+                  "totalMs": 0.9728
+                }
+              ],
+              "name": "Profiler",
+              "selfMs": 0,
+              "totalMs": 0.9728
+            }
+          ],
+          "name": "EditorViewportRenderer.render_world",
+          "selfMs": 0.0045000000000000595,
+          "totalMs": 4.3274
+        },
+        "commandMs": 16.971799999999998,
+        "counts": {
+          "billboardMeshes": 0,
+          "cameraVisibleObjects": 63,
+          "entities": 8973,
+          "materialPipelineEvictions": 0,
+          "materialPipelinesBuiltIn": 36,
+          "materialPipelinesCustom": 1,
+          "materialPipelinesRejected": 0,
+          "materialPipelinesResidentCustom": 0,
+          "materialSamplers": 1,
+          "materialTextureBindGroups": 1,
+          "materialTexturesColor": 7,
+          "materialTexturesData": 1,
+          "msaaSamples": 4,
+          "renderObjects": 65,
+          "sceneViews": 0,
+          "shadowVisibleObjects": 65,
+          "submittedObjects": 65,
+          "uiBatches": 1,
+          "uiDrawCalls": 1,
+          "uiPrimitives": 143
+        },
+        "memory": [
+          {
+            "bytes": 1723800,
+            "certainty": "exact",
+            "domain": "cpu",
+            "name": "CPU readback RGBA",
+            "source": "Renderer.read_offscreen_rgba8 Vec length"
+          },
+          {
+            "bytes": 52000,
+            "certainty": "lower-bound",
+            "domain": "cpu",
+            "name": "Frame packet / render objects",
+            "source": "Rust shallow size for compiled render objects"
+          },
+          {
+            "bytes": 73216,
+            "certainty": "lower-bound",
+            "domain": "cpu",
+            "name": "Frame packet / UI primitives",
+            "source": "Rust shallow size for compiled UI primitives"
+          },
+          {
+            "bytes": 104,
+            "certainty": "lower-bound",
+            "domain": "cpu",
+            "name": "Frame packet / UI batches",
+            "source": "Rust shallow size for compiled UI batches"
+          },
+          {
+            "bytes": 0,
+            "certainty": "lower-bound",
+            "domain": "cpu",
+            "name": "Frame packet / controls",
+            "source": "Rust shallow size for compiled UI controls"
+          },
+          {
+            "bytes": 1723800,
+            "certainty": "estimate",
+            "domain": "gpu",
+            "name": "GPU offscreen color",
+            "source": "viewport width x height x 4 RGBA8 bytes"
+          },
+          {
+            "bytes": 6895200,
+            "certainty": "estimate",
+            "domain": "gpu",
+            "name": "GPU offscreen depth",
+            "source": "viewport width x height x 4 depth/stencil bytes x MSAA samples; physical format is backend-dependent"
+          },
+          {
+            "bytes": 24133200,
+            "certainty": "estimate",
+            "domain": "gpu",
+            "name": "GPU HDR and multisampled color",
+            "source": "resolved RGBA16F plus MSAA RGBA16F and surface RGBA8 attachments; excludes driver allocation padding"
+          },
+          {
+            "bytes": 37262848,
+            "certainty": "estimate",
+            "domain": "gpu",
+            "name": "GPU texture residency",
+            "source": "render-bound texture dimensions x 4 RGBA8 bytes; mipmaps excluded"
+          },
+          {
+            "bytes": 0,
+            "certainty": "estimate",
+            "domain": "gpu",
+            "name": "GPU live scene views",
+            "source": "resolved RGBA8 and RGBA16F, depth/stencil and MSAA color attachments; excludes driver padding"
+          }
+        ],
+        "residentMemoryEstimateBytes": 71864168,
+        "resourceSampleAgeMs": 0.0051,
+        "resources": [
+          {
+            "asset": "terrain4:0000000000000000000000000000000000000000000000000000000000000000",
+            "dimensions": null,
+            "gpuBytesEstimate": null,
+            "kind": "mesh",
+            "loaded": false,
+            "referencedBy": [
+              "RenderObject"
+            ],
+            "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\terrain4:0000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": null
+          },
+          {
+            "asset": "terrain4r:33000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "dimensions": null,
+            "gpuBytesEstimate": null,
+            "kind": "mesh",
+            "loaded": false,
+            "referencedBy": [
+              "RenderObject"
+            ],
+            "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\terrain4r:33000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "sourceBytes": null
+          },
+          {
+            "asset": "Assets/Textures/Classic/tiles-blight.png",
+            "dimensions": [
+              544,
+              816
+            ],
+            "gpuBytesEstimate": 1775616,
+            "kind": "texture",
+            "loaded": true,
+            "referencedBy": [
+              "Surface Shader"
+            ],
+            "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Textures\\Classic\\tiles-blight.png",
+            "sourceBytes": 1162612
+          },
+          {
+            "asset": "Assets/Textures/Classic/tiles-grass.png",
+            "dimensions": [
+              544,
+              816
+            ],
+            "gpuBytesEstimate": 1775616,
+            "kind": "texture",
+            "loaded": true,
+            "referencedBy": [
+              "Surface Shader"
+            ],
+            "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Textures\\Classic\\tiles-grass.png",
+            "sourceBytes": 1161668
+          },
+          {
+            "asset": "Assets/Textures/Classic/tiles-road.png",
+            "dimensions": [
+              544,
+              816
+            ],
+            "gpuBytesEstimate": 1775616,
+            "kind": "texture",
+            "loaded": true,
+            "referencedBy": [
+              "Surface Shader"
+            ],
+            "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Textures\\Classic\\tiles-road.png",
+            "sourceBytes": 618436
+          },
+          {
+            "asset": "Assets/Textures/Classic/tiles-rock.png",
+            "dimensions": [
+              544,
+              816
+            ],
+            "gpuBytesEstimate": 1775616,
+            "kind": "texture",
+            "loaded": true,
+            "referencedBy": [
+              "Surface Shader"
+            ],
+            "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Textures\\Classic\\tiles-rock.png",
+            "sourceBytes": 1027721
+          },
+          {
+            "asset": "Assets/Textures/Classic/tiles-snow.png",
+            "dimensions": [
+              544,
+              816
+            ],
+            "gpuBytesEstimate": 1775616,
+            "kind": "texture",
+            "loaded": true,
+            "referencedBy": [
+              "Surface Shader"
+            ],
+            "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Textures\\Classic\\tiles-snow.png",
+            "sourceBytes": 832184
+          },
+          {
+            "asset": "Assets/Textures/Classic/tiles-soil.png",
+            "dimensions": [
+              544,
+              816
+            ],
+            "gpuBytesEstimate": 1775616,
+            "kind": "texture",
+            "loaded": true,
+            "referencedBy": [
+              "Surface Shader"
+            ],
+            "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Textures\\Classic\\tiles-soil.png",
+            "sourceBytes": 887282
+          },
+          {
+            "asset": "Assets/Textures/cliffs_diff.png",
+            "dimensions": [
+              3096,
+              1032
+            ],
+            "gpuBytesEstimate": 12780288,
+            "kind": "texture",
+            "loaded": true,
+            "referencedBy": [
+              "3D material"
+            ],
+            "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Textures\\cliffs_diff.png",
+            "sourceBytes": 5841906
+          },
+          {
+            "asset": "Assets/Textures/cliffs_nrh.png",
+            "dimensions": [
+              3096,
+              1032
+            ],
+            "gpuBytesEstimate": 12780288,
+            "kind": "texture",
+            "loaded": true,
+            "referencedBy": [
+              "3D material"
+            ],
+            "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Textures\\cliffs_nrh.png",
+            "sourceBytes": 7951818
+          },
+          {
+            "asset": "Assets/Textures/spark_01.png",
+            "dimensions": [
+              512,
+              512
+            ],
+            "gpuBytesEstimate": 1048576,
+            "kind": "texture",
+            "loaded": true,
+            "referencedBy": [
+              "UI batch"
+            ],
+            "resolvedPath": "\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Textures\\spark_01.png",
+            "sourceBytes": 95070
+          }
+        ],
+        "resourcesTruncated": false,
+        "schemaVersion": 1,
+        "totalMs": 4.3274,
+        "worldSyncMs": 12.4651,
+        "uploadMs": 0.7000000476837158,
+        "nativeTransport": "shared-buffer",
+        "renderSize": [
+          850,
+          507
+        ],
+        "transportMs": 786.9000000953674,
+        "source": "scene",
+        "timestamp": 26741.700000047684,
+        "presentIntervalMs": 935.7000000476837
+      }
+    }
+  ],
+  "scope": "Same release editor and reused asset sample; native project opening and camera operation. Includes warmed OS/asset/GPU caches; CPU microbenchmarks reported separately.",
+  "shutdown": {
+    "pid": 135920,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\scene-loading-validation\\scene-loading-1791698090748\\runtime\\com.mengine.editor.agent-B1iyDm '\\\\?\\D:\\MEngineNativeQA\\scene-loading-validation\\scene-loading-1791698090748\\runtime\\com.mengine.editor.agent-B1iyDm'"
+  }
+}

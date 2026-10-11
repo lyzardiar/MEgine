@@ -2016,6 +2016,8 @@ fn validate_world_assets(
     let mut material_cache = RuntimeMaterialCache::new(Some(project_root.to_path_buf()));
     let mut effekseer_manager = None;
     let mut validated_effects = HashSet::new();
+    let mut validated_poses = HashSet::new();
+    let mut pose_sources = std::collections::HashMap::new();
     for entity in world.iter_entities() {
         if let Some(renderer) = world.get_component::<MeshRenderer>(entity) {
             let mesh = renderer.mesh.trim();
@@ -2026,12 +2028,18 @@ fn validate_world_assets(
                 validated.insert(path);
             }
             let pose = mengine_assets::parse_gltf_pose_sample(mesh);
+            if mesh.contains("#pose=") && pose.is_none() { bail!("invalid skeletal pose reference: {mesh}"); }
             let mesh = pose.map(|p| p.0).unwrap_or(mesh);
             if mesh.to_ascii_lowercase().ends_with(".gltf")
                 || mesh.to_ascii_lowercase().ends_with(".glb")
             {
                 let path = resolve(mesh, "model")?;
-                if let Some((_, clip, frame, rate)) = pose { mengine_assets::GltfPoseSource::load(&path)?.sample_at_rate(clip, frame, rate)?; }
+                if let Some((_, clip, frame, rate)) = pose {
+                    if validated_poses.insert((path.clone(), clip, frame, rate)) {
+                        if !pose_sources.contains_key(&path) { pose_sources.insert(path.clone(), mengine_assets::GltfPoseSource::load(&path)?); }
+                        pose_sources[&path].sample_at_rate(clip, frame, rate)?;
+                    }
+                }
                 if validated.insert(path.clone()) {
                     mengine_assets::load_gltf_mesh_data(&path)
                         .with_context(|| format!("invalid model {}", path.display()))?;
@@ -3113,6 +3121,18 @@ mod tests {
         assert_eq!(objects[0].material.ior, 1.33);
         assert_eq!(objects[0].material.clearcoat, 0.75);
         assert_eq!(objects[0].material.clearcoat_roughness, 0.2);
+    }
+
+    #[test]
+    fn packaged_asset_validation_rejects_invalid_pose_references() {
+        let mut world = World::new();
+        world.commands.push(WorldCommand::Spawn {
+            name: Some("Invalid pose".into()), active: true, parent: None,
+            components: json!({"MeshRenderer": {"mesh":"Assets/hero.glb#pose=0:7201", "material":"default"}}),
+        });
+        world.commit();
+        let error = validate_world_assets(&world, Path::new("C:/Games/Packaged"), &mut HashSet::new()).unwrap_err();
+        assert!(error.to_string().contains("invalid skeletal pose reference"));
     }
 
     #[test]

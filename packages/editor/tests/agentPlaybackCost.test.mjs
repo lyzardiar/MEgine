@@ -26,7 +26,7 @@ test('bridge input avoids scene refresh while preserving edges, guards and reque
   assert.equal(refreshes,0);assert.equal(snapshots,0);assert.equal(inputs.length,0);
   const stepped=await bridge.execute('playback.step',{steps:2});
   assert.equal(stepped.data.frame,store.frame);assert.equal(stepped.data.frame,snapshot().frame);
-  assert.equal(snapshots,2,'only the final refresh and observation copy the scene, never the frame accessor');
+  assert.equal(snapshots,1,'only the final refresh copies the scene; observation reuses its snapshot');
   assert.deepEqual(inputs[0].pressedKeys,['KeyB']);assert.deepEqual(inputs[0].releasedKeys,['KeyB']);
   assert.deepEqual(inputs[0].pressedButtons,[0]);assert.deepEqual(inputs[0].releasedButtons,[0]);assert.deepEqual(inputs[0].pointerDelta,[7,-1]);
   assert.deepEqual(inputs[1].pressedKeys,[]);assert.deepEqual(inputs[1].releasedKeys,[]);assert.deepEqual(inputs[1].pointerDelta,[0,0]);

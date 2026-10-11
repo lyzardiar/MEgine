@@ -1,6 +1,6 @@
 // Author: MiYu. Compare live Play data with an owned JSON baseline, including direct reference edits.
 import type { WorldSnapshotView } from '@mengine/api';
-import { normalizeEntity, type EntityRec } from './entityRecord';
+import { normalizeEntity, type EntityRec } from './entityRecord.ts';
 
 const retainedRecords = new WeakSet<object>();
 const retainedWorlds = new WeakSet<object>();

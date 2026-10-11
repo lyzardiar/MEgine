@@ -2,13 +2,14 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-const root=new URL('../samples/frostbound-realms/',import.meta.url),world=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world,values=new Map(),active=new Map();
-const engine={snapshot:structuredClone(world),network:{poll:()=>[],close(){},send(){}},storage:{load:()=>null,save(){}},setActive:(id,on)=>active.set(id,on),playAudio(){},pushCommandJson:raw=>{const c=JSON.parse(raw);values.set(c.entity+'/'+c.component,c.value);}};
+import {clientWorldFixture} from './frost-client-world-fixture.mjs';
+const root=new URL('../samples/frostbound-realms/',import.meta.url),native=clientWorldFixture(JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world),world=native.snapshot,values=native.values,active=native.active;
+const engine=Object.assign(native.engine,{snapshot:world,network:{poll:()=>[],close(){},send(){}},storage:{load:()=>null,save(){}},playAudio(){}});
 const context=vm.createContext({FrostItemCatalog:JSON.parse(fs.readFileSync(new URL('game/racial-items.json',root))),engine,FrostArt:JSON.parse(fs.readFileSync(new URL('model-catalog.json',root))),FrostPortraitViews:Object.fromEntries(JSON.parse(fs.readFileSync(new URL('head-portraits.json',root))).views.map(v=>[v.key,v])),FrostButtons:[]});
 context.FrostEffectArt=JSON.parse(fs.readFileSync(new URL('effect-catalog.json',root)));
 vm.runInContext(fs.readFileSync(new URL('Assets/Scripts/Main.js',root),'utf8'),context);
 vm.runInContext(`const fellingCreate=Frost.create;Frost.create=(mode,options)=>{if(mode!=='skirmish')return fellingCreate(mode,options);const map=Frost.defaultMap();map.tileset=1;for(const field of ['terrain','heights','relief','ramps'])map[field].fill(0);map.props=[{kind:'tree',x:-6,z:16,amount:100}];map.units=[];const s=fellingCreate(mode,{...options,map,ai:[false,false]});s.units=[];Frost.spawn(s,'hall',0,-14,16);Frost.spawn(s,'hall',1,22,-20);Frost.spawn(s,'worker',0,-8,16);s.resources[0].amount=5;Frost.visibility(s);globalThis.fellingState=s;return s;};`,context);
-const tick=(dt,pressedKeys=[])=>{engine.input={keys:[],pressedKeys,buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720]};context.onTick(dt);},id=name=>world.entities.find(e=>e.name===name).entity,transform=name=>values.get(id(name)+'/Transform');
+const tick=(dt,pressedKeys=[])=>{engine.input={keys:[],pressedKeys,buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720]};native.render(dt=>context.onTick(dt),dt);},id=name=>world.entities.find(e=>e.name===name).entity,transform=name=>values.get(id(name)+'/Transform');
 tick(.001);tick(.001,['F1']);vm.runInContext(`Frost.command(fellingState,0,{type:'gather',ids:[fellingState.units.find(u=>u.kind==='worker').id],resource:0});`,context);tick(.1);
 assert.ok(context.fellingState.resources[0].felled);const rotations=[],parts=vm.runInContext('FrostVisual.resource({...fellingState.resources[0],amount:100,felled:null},16,1).parts',context),partNames=Array.from({length:parts.length},(_,i)=>'Prop 0'+(i?' part '+i:'')),rootPart=partNames[parts.findIndex(p=>p.visible!==false)];
 for(let i=0;i<60;i++){tick(1/60);rotations.push(transform(rootPart).rotation);for(const part of partNames)if(active.get(id(part))!==false)assert.deepEqual(transform(part),transform(rootPart));}

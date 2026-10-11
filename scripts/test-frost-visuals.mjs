@@ -72,6 +72,6 @@ assert.equal(idle.key,'ClassicGoldMine');assert.equal(idle.parts.length,5);asser
 for(const p of FrostArt.ClassicWinterTree.parts){const m=JSON.parse(fs.readFileSync(new URL(p.material,root)));assert.match(m.base_color_texture,/LordaeronSnowTree\.png$/);}
 const scene=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world.entities,portraitRoot=scene.find(e=>e.name==='Portrait model');
 assert.equal(scene.filter(e=>e.parent===portraitRoot.entity).length,V.actorPartCount());
-for(const prefix of ['Unit 0','Placement preview'])assert.equal(scene.filter(e=>e.name===prefix||e.name.startsWith(prefix+' part ')).length,V.actorPartCount());
+assert.equal(scene.filter(e=>e.name==='Unit 0'||e.name.startsWith('Unit 0 part ')).length,2);assert.equal(scene.filter(e=>e.name==='Placement preview'||e.name.startsWith('Placement preview part ')).length,V.actorPartCount());
 assert.deepEqual(scene.filter(e=>/^Corpse /.test(e.name)).map(e=>e.name),['Corpse 0','Corpse 0 mesh 0']);
 console.log('PASS: classic asset hashes',source.files.length,'pose samples',samples,'team layers',teamLayers,'hidden layers',hiddenLayers,'four rosters, tiers, worker cycles, spells, terminal deaths and complete render slots');

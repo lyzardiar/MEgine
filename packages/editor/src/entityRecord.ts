@@ -1,5 +1,5 @@
 // Author: MiYu. Canonical entity metadata shared by editable scenes and native Play publication.
-import { normalizeEntityTag, normalizeGameLayerIndex } from './sortingLayerModel';
+import { normalizeEntityTag, normalizeGameLayerIndex } from './sortingLayerModel.ts';
 
 export interface EntityRec {
   entity: number;

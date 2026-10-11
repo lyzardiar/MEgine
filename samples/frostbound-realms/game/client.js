@@ -13,7 +13,8 @@ var FrostClient=(()=>{
   let portalTap=null;
   let mapChoice=0,settings={music:1,sfx:1,snow:true};
   const menuMaps=[['冬落盆地','skirmish','2 人遭遇战\n采集资源，建立基地。\n消灭敌方主基地获得胜利。'],['远古遗迹','moba','Dota · 双方阵营 / 三路\n选择英雄，购买装备。\n摧毁对方的远古要塞。'],['蜿蜒守望','td','塔防 · 12 波进攻\n建造与升级防御塔。\n守住路线终点。'],['破碎盟约','rpg','战役 · 4 阶段任务\n探索北境，收集遗物。\n击败寒霜领主。'],['冬落围城','skirmish','2 人攻城战\n突破山口与城墙。\n攻占敌方城堡。']];
-  function menuMap(){return mapChoice===4?S.siegeMap():S.defaultMap(menuMaps[mapChoice][1]);}
+  function presetMap(key){return typeof FrostMapCatalog!=='undefined'&&FrostMapCatalog[key]?S.clone(FrostMapCatalog[key]):key==='siege'?S.siegeMap():S.defaultMap(key);}
+  function menuMap(){return presetMap(mapChoice===4?'siege':menuMaps[mapChoice][1]);}
   function applySettings(){for(const n of presentationNames)if(n.startsWith('Sound ')){const a=authored[n].AudioSource;set(n,'AudioSource',{...a,volume:a.volume*(a.looped?settings.music:settings.sfx)});}}
   const previous={},visibility={},modelNames={},active={},tileState=[];
   const environmentParts=FrostVisual.environmentPartCount();
@@ -33,12 +34,14 @@ var FrostClient=(()=>{
   const environmentCounts={};
   function environment(n,visual,position=hidden){
     const count=Math.min(visual?.parts.length||0,environmentParts);
+    if(count&&!effectPool.ensureActor(n,count))return;
     for(let i=0;i<Math.max(count,environmentCounts[n]??environmentParts);i++){const name=n+(i?' part '+i:''),part=visual?.parts[i];if(!part||part.visible===false){transform(name,hidden);continue;}set(name,'MeshRenderer',{mesh:part.mesh,material:part.material});if(part.color)set(name,'MaterialPropertyBlock',{override_base_color:true,base_color:part.color});transform(name,position,[visual.scale,visual.scale,visual.scale],visual.rotation||[0,Math.sin(visual.yaw/2),0,Math.cos(visual.yaw/2)]);}
     environmentCounts[n]=count;
   }
   const actorCounts={};let renderedCorpseSlots=0;
   function actor(n,parts,position=hidden,scale=[1,1,1],rotation=[0,0,0,1],color=[1,1,1,1],portrait=false){
     if(/^Corpse \d+$/.test(n)&&parts&&!effectPool.ensure(n,parts.length))return;
+    if(parts&&!effectPool.ensureActor(n,parts.length))return;
     if(portrait)transform(n,parts?position:hidden,scale,rotation);
     const count=parts?.length||0;registerEntities(Array.from({length:count},(_,i)=>portrait?n+' mesh '+i:n+(i?' part '+i:'')));
     for(let i=0;i<Math.max(count,actorCounts[n]||1);i++){
@@ -65,7 +68,7 @@ var FrostClient=(()=>{
   function persist(key,value){try{engine.storage.save(key,value);message('Saved '+key+' to your project user-data folder');return true;}catch(e){message('Save failed: '+e.message);return false;}}
   function load(key){try{return engine.storage.load(key);}catch(e){message('Load failed: '+e.message);return null;}}
   function stopNetwork(){if(connected)engine.network.send({type:'leave'});engine.network.close();online=false;connected=false;room=null;code='';token='';missileView.reset();sentinelView.reset();sentinelPositions.clear();unitView.reset();unitPositions.clear();for(const id of Object.keys(previous))delete previous[id];fx=[];damageText=[];pendingFx=[];lastFrame=-1;}
-  function solo(kind,map){stopNetwork();state=S.create(kind,{map,...(map?{}:{factions:[faction,(faction+1)%4],heroes:[heroClass,(heroClass+1)%S.heroes.length]})});team=0;mode='playing';heroPanel='skills';shopHero=0;paused=false;selected=state.units.filter(u=>u.team===0&&u.kind==='hero').map(u=>u.id);if(!selected.length){const worker=state.units.find(u=>u.team===0&&u.kind==='worker');if(worker)selected=[worker.id];}camera=state.map.spawns[0].map(v=>S.clamp(v,-18,18));zoom=16;accumulator=0;lastFrame=-1;armed=null;groups={};notice='';selectHero(0);}
+  function solo(kind,map){const custom=!!map;map=map||presetMap(kind);stopNetwork();state=S.create(kind,{map,...(custom?{}:{factions:[faction,(faction+1)%4],heroes:[heroClass,(heroClass+1)%S.heroes.length]})});team=0;mode='playing';heroPanel='skills';shopHero=0;paused=false;selected=state.units.filter(u=>u.team===0&&u.kind==='hero').map(u=>u.id);if(!selected.length){const worker=state.units.find(u=>u.team===0&&u.kind==='worker');if(worker)selected=[worker.id];}camera=state.map.spawns[0].map(v=>S.clamp(v,-18,18));zoom=16;accumulator=0;lastFrame=-1;armed=null;groups={};notice='';selectHero(0);}
   function title(){stopNetwork();mode='title';state=S.create();camera=[0,0];zoom=27;paused=false;selected=[];armed=null;returnEditor=false;}
   function order(command){const c={ids:[...selected],...command};if(['move','attackMove','build','construct','repair','gather'].includes(c.type)&&(engine.input?.keys||[]).some(k=>k==='ShiftLeft'||k==='ShiftRight'))c.append=true;if(online){if(connected)engine.network.send({type:'order',seq:++seq,command:c});else message('Reconnecting; orders are paused');}else{const error=S.command(state,team,c);if(error)message(error);else{sound('order');if(Number.isFinite(c.x)&&Number.isFinite(c.z))commandMarker={x:c.x,z:c.z,until:time+1.2};}}}
   function useItem(slot){const u=state.units.find(u=>u.id===selected[0]&&u.kind==='hero'),item=u?.inventory[slot];if(item===undefined)return;if(S.items[item].townPortal){if(armed?.type==='useItem'&&armed.slot===slot&&portalTap?.hero===u.id&&portalTap.slot===slot&&time-portalTap.time<.5){order({type:'useItem',slot,item});armed=null;}else{armed={type:'useItem',slot,item};portalTap={hero:u.id,slot,time};message('Choose a friendly main base in the world or minimap. Double-click the scroll to return automatically.');}}else if(S.items[item].staff||S.items[item].regen?.target||S.items[item].deploy||S.items[item].skull){armed={type:'useItem',slot,item};message(S.items[item].deploy||S.items[item].skull?'Choose nearby visible dry ground':'Choose a nearby friendly unit');}else order({type:'useItem',slot,item});}
@@ -158,7 +161,7 @@ var FrostClient=(()=>{
   }
   function action(id){
     if(/^room\d$/.test(id)){roomIndex=Math.floor(roomIndex/8)*8+Number(id.slice(4));return;}
-    if(id==='solo')mode='single';else if(id==='custom')mode='custom';else if(/^map\d$/.test(id))mapChoice=Number(id.slice(3));else if(id==='mapStart'){returnEditor=false;solo(menuMaps[mapChoice][1],mapChoice===4?S.siegeMap():undefined);if(mapChoice===4){camera=[-15,18];zoom=20;}}else if(id==='moba'){returnEditor=false;solo('moba');}else if(id==='td'){returnEditor=false;solo('td');}else if(id==='siege'){returnEditor=false;solo('skirmish',S.siegeMap());camera=[-15,18];zoom=20;}else if(id==='rpg'){returnEditor=false;solo('rpg');}
+    if(id==='solo')mode='single';else if(id==='custom')mode='custom';else if(/^map\d$/.test(id))mapChoice=Number(id.slice(3));else if(id==='mapStart'){returnEditor=false;solo(menuMaps[mapChoice][1],mapChoice===4?presetMap('siege'):undefined);if(mapChoice===4){camera=[-15,18];zoom=20;}}else if(id==='moba'){returnEditor=false;solo('moba');}else if(id==='td'){returnEditor=false;solo('td');}else if(id==='siege'){returnEditor=false;solo('skirmish',presetMap('siege'));camera=[-15,18];zoom=20;}else if(id==='rpg'){returnEditor=false;solo('rpg');}
     else if(['options','credits','quit'].includes(id))mode=id;else if(id==='mapBack')mode='single';else if(['soloBack','optionsBack','creditsBack','quitCancel'].includes(id))title();
     else if(['musicVolume','sfxVolume','menuSnow'].includes(id)){if(id==='menuSnow')settings.snow=!settings.snow;else{const key=id==='musicVolume'?'music':'sfx';settings[key]=settings[key]<=0?1:Math.max(0,settings[key]-.25);}applySettings();if(persist('settings',settings))message('设置已保存');}
     else if(id==='quitConfirm'){stopNetwork();mode='exited';engine.quit();}

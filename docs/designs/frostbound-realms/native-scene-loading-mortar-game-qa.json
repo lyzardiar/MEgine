@@ -1,0 +1,378 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-11T05:54:20.016Z",
+  "sample": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample",
+  "root": "D:\\MEngineNativeQA\\scene-loading-validation\\scene-loading-mortar-game-1791698059921",
+  "reusedAssets": true,
+  "protocol": 81,
+  "editorSha256": "69d3252dbe5027c103161208d08690b35ca168d595a86cc19ff77d6572e2fb9b",
+  "productMainSha256": "413ca93671ea01f5dad70efac8d37ff6761fb9ae5d0eaa9a228fe97bf1e92b35",
+  "steps": [
+    {
+      "name": "project.state",
+      "ms": 3773
+    },
+    {
+      "name": "project.open",
+      "ms": 5478
+    },
+    {
+      "name": "project.state",
+      "ms": 525
+    },
+    {
+      "name": "project.state",
+      "ms": 192
+    },
+    {
+      "name": "view.set_game_resolution",
+      "ms": 594
+    },
+    {
+      "name": "panel.focus",
+      "ms": 2560
+    },
+    {
+      "name": "playback.play",
+      "ms": 3889
+    },
+    {
+      "name": "playback.step",
+      "ms": 1488
+    },
+    {
+      "name": "entity.get",
+      "ms": 77
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 969
+    },
+    {
+      "name": "entity.get",
+      "ms": 320
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 695
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 2838
+    },
+    {
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "name": "playback.step",
+      "ms": 394
+    },
+    {
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 73
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 112
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 63
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 534
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 78
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 140
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.input",
+      "ms": 1
+    },
+    {
+      "name": "playback.step",
+      "ms": 162
+    },
+    {
+      "name": "entity.get",
+      "ms": 6
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 78
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 122
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 74
+    },
+    {
+      "name": "entity.get",
+      "ms": 6
+    },
+    {
+      "name": "entity.get",
+      "ms": 5
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 52
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 150
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "playback.input",
+      "ms": 20
+    },
+    {
+      "name": "playback.step",
+      "ms": 144
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 46
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 154
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.input",
+      "ms": 1
+    },
+    {
+      "name": "playback.step",
+      "ms": 180
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 71
+    },
+    {
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 126
+    },
+    {
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 69
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 58
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 503
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 56
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 139
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "playback.input",
+      "ms": 1
+    },
+    {
+      "name": "playback.step",
+      "ms": 150
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 50
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 164
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "name": "playback.step",
+      "ms": 138
+    },
+    {
+      "name": "playback.step",
+      "ms": 358
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 104
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 431
+    },
+    {
+      "name": "profiler.get_samples",
+      "ms": 29
+    },
+    {
+      "name": "console.get_logs",
+      "ms": 2
+    },
+    {
+      "name": "playback.stop",
+      "ms": 109
+    }
+  ],
+  "physicalInput": false,
+  "nativeSourceTrainCardAndPayment": true,
+  "nativeKeepResearchAndMenuQueueReload": true,
+  "nativeFlareCastAndCooldownReload": true,
+  "nativeOriginalArtilleryAndStrictFlightSave": true,
+  "nativeCounts": {
+    "billboardMeshes": 0,
+    "cameraVisibleObjects": 164,
+    "entities": 9361,
+    "materialPipelineEvictions": 0,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 4,
+    "materialPipelinesRejected": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialSamplers": 2,
+    "materialTextureBindGroups": 21,
+    "materialTexturesColor": 26,
+    "materialTexturesData": 5,
+    "msaaSamples": 4,
+    "renderObjects": 339,
+    "sceneViews": 0,
+    "shadowVisibleObjects": 332,
+    "submittedObjects": 335,
+    "uiBatches": 31,
+    "uiDrawCalls": 31,
+    "uiPrimitives": 654
+  },
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Final generated native Workshop/Mortar/Flare M/R/F/G cards, source icons, paid source queue/Keep research, actual F5/menu reload, native artillery source flight and Flare casting/cooldown saves. Shared/generated/TCP cover full source clocks, impacts and privacy. Original executable comparison, physical input, standalone player and cross-machine LAN unverified.",
+  "shutdown": {
+    "pid": 1168,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\scene-loading-validation\\scene-loading-mortar-game-1791698059921\\runtime\\com.mengine.editor.agent-Ci6Csv '\\\\?\\D:\\MEngineNativeQA\\scene-loading-validation\\scene-loading-mortar-game-1791698059921\\runtime\\com.mengine.editor.agent-Ci6Csv'"
+  }
+}
