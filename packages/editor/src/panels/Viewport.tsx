@@ -49,7 +49,7 @@ import {
 } from '../math3d';
 import { clearModelPreview, modelPreview, type PreviewMesh } from '../modelPreview';
 import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
-import { createNativeViewportWorldArgs, nativeGamePreviewSize, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
+import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGamePreviewSize, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
 import { releaseNativeViewportFrame, requestRevisionedNativeViewportFrame } from '../nativeViewportTransport';
 import {
   clearMaterialPreviews,
@@ -613,6 +613,7 @@ export function Viewport(props: {
   nativeSessionId?: number;
   runtimeSessionId?: number;
   simulationRequestMs?: number;
+  subscribeRuntimeFrames?: (listener: () => void) => () => void;
   runtimeSnapshot?: () => { entities: Ent[]; clearColor: [number, number, number, number]; simulationTime?: number; nativeSessionId?: number; nativeWorldReference?: NativeViewportWorldReference<Ent>; runtimeSessionId?: number; simulationRequestMs?: number } | null;
   selected: number | null;
   selectedIds?: number[];
@@ -714,6 +715,8 @@ export function Viewport(props: {
     uiPrimitives: number;
     uiBatches: number;
     world: NativeViewportFrameWorld<Ent>;
+    worldRevision?: number;
+    requestKey: string;
     presentationKey: string;
   } | null>(null);
   const nativeGameRequestRef = useRef({
@@ -1300,6 +1303,18 @@ export function Viewport(props: {
     return () => { window.removeEventListener('mengine:project-assets-changed', clear); window.removeEventListener('mengine-ui-font-loaded', clearUiLayout); };
   }, []);
 
+  useEffect(() => props.subscribeRuntimeFrames?.(() => {
+    if (propsRef.current.tab !== 'game') return;
+    paint();
+    const request = nativeGameRequestRef.current, generation = request.generation;
+    const remaining = 1000 / 60 - (performance.now() - request.lastRequestAt);
+    if (!propsRef.current.playing || request.inFlight || request.resumeTimer != null || remaining <= 0) return;
+    request.resumeTimer = window.setTimeout(() => {
+      request.resumeTimer = null;
+      if (request.generation === generation && propsRef.current.tab === 'game' && propsRef.current.playing) paint();
+    }, Math.ceil(remaining));
+  }), [props.subscribeRuntimeFrames]);
+
   // Continuous render loop
   useEffect(() => {
     let raf = 0;
@@ -1392,11 +1407,13 @@ export function Viewport(props: {
       && '__TAURI_INTERNALS__' in window
       && !nativeGameRequestRef.current.inFlight
       && now - nativeGameRequestRef.current.lastRequestAt >= (p.playing ? 1000 / 60 : 300)
+      && (!p.playing || !nativeGameFrameMatchesRequest(nativeGameFrameRef.current, nativeWorld.worldArgs(), JSON.stringify([presentationKey, vp.w, vp.h, dpr])))
     ) {
       const request = nativeGameRequestRef.current;
       if (request.resumeTimer != null) window.clearTimeout(request.resumeTimer);
       request.resumeTimer = null;
       const generation = ++request.generation;
+      const requestKey = JSON.stringify([presentationKey, vp.w, vp.h, dpr]);
       request.inFlight = true;
       request.lastRequestAt = now;
       // Fixed-pixel Canvas layouts depend on the selected resolution, even in a small panel.
@@ -1417,6 +1434,8 @@ export function Viewport(props: {
             uiPrimitives: result.profile.counts.uiPrimitives,
             uiBatches: result.profile.counts.uiBatches,
             world: nativeWorld.frameWorld(),
+            worldRevision: result.profile.worldRevision,
+            requestKey,
             presentationKey,
           };
           request.reportedError = false;

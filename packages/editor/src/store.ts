@@ -207,6 +207,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let playPending: Promise<void> = Promise.resolve();
   let playBusy = false;
   let playGeneration = 0;
+  const playFrameListeners = new Set<() => void>();
   let playError: unknown = null;
   let playInput = emptyPlayInput();
   let playClearColor: [number, number, number, number] | null = null;
@@ -242,6 +243,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     playSpin = result.simulationTime ?? playSpin;
     frame = result.frame;
     playWorldRevision = result.nativeRevision; playWorldSessionId = result.nativeSessionId; playWorldSimulationTime = playSpin;
+    const generation = playGeneration;
+    for (const listener of playFrameListeners) queueMicrotask(() => { if (generation === playGeneration && mode !== 'edit' && playFrameListeners.has(listener)) listener(); });
   };
   let playStepRequestMs = 0;
   let remotePlaySessionId: number | undefined;
@@ -1096,6 +1099,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     /** Live presentation data; verify the retained native world only when a render request reads its session ID. */
     playViewportSnapshot: mutablePlayViewportSnapshot,
+    subscribePlayFrames(listener: () => void) { const subscribed = () => listener(); playFrameListeners.add(subscribed); return () => { playFrameListeners.delete(subscribed); }; },
     /** Frozen native render data keeps private editable copies inside the store. */
     playRenderSnapshot() {
       if (!ownedPlayWorld || !playWorldSync.presentationSnapshot(playEntities, playClearColor ?? clearColor)) return mutablePlayViewportSnapshot();

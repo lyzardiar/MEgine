@@ -174,6 +174,39 @@ Game 原生请求完成后安排下一次绘制，不再依赖下一次 requestA
 - `D:/MEngineNativeQA/published-history-host-full-tests.log`
 - `D:/MEngineNativeQA/published-history-performance-handoff.json`
 
+## 完成世界通知与精确版本复用（2026-10-12）
+
+Game 视图订阅 store 已接受的完整运行世界，在模拟完成时读取最新状态；通知在独立微任务执行，并检查订阅与运行代际。请求仍限制为单个在途请求和最高 60 Hz，提前到达的通知安排一个截止时间重试。暂停单步、停止重启和卸载均受同一生命周期保护。
+
+同 session、精确 revision、视口尺寸、DPR、分辨率及显示设置一致时复用已渲染帧。版本 0 有效。编辑 UI/组件使原生引用失效后，完整快照仍会重新渲染；非精确版本请求和历史淘汰后的快照回退也继续渲染。复用不会跳过主画布绘制和浏览器 UI。
+
+使用同一 9,238 对象工程完成四次 Release 验收，第二组交换执行顺序：
+
+| 指标 | 第一组旧版 | 第一组新版 | 第二组旧版 | 第二组新版 |
+| --- | ---: | ---: | ---: | ---: |
+| 不同世界版本的画布绘制频率 | 34.15 次/秒 | 36.06 次/秒 | 35.15 次/秒 | 36.37 次/秒 |
+| 实际模拟推进频率 | 36.97 次/秒 | 36.92 次/秒 | 38.83 次/秒 | 37.24 次/秒 |
+| 采样原生请求数 | 604 | 453 | 611 | 460 |
+| 请求中的不同版本数 | 436 | 453 | 441 | 460 |
+| 完整 Game 请求平均耗时 | 15.05 ms | 15.70 ms | 15.08 ms | 15.72 ms |
+| 不同状态绘制间隔 P95 | 55.20 ms | 52.20 ms | 55.30 ms | 52.50 ms |
+| Scene 拖动空画面次数 | 0 | 0 | 0 | 0 |
+
+不同世界版本的画布更新提高约 3.5%～5.6%，原生请求减少约 25%，采样中同版本重复请求消除。模拟推进未提速，单次请求平均耗时略增；本阶段改善状态呈现和重复工作，不代表达到 60 FPS。画布绘制计数也不代表物理显示器呈现频率。
+
+69 项相关前端测试通过，0 失败。新增覆盖精确版本与视口去重、版本 0、修改 UI 后完整快照绕过复用、通知取消、停止重启、暂停单步、在途期间到达更新、整数定时器截止时间及完整卸载。前端与原生 Release 构建均通过，独立只读审核未发现阻断。四次真实编辑器验证通过 GPU 像素、选择、层级展开滚动、暂停、单步及重启，均无 console error，拥有的 QA 编辑器全部退出。
+
+EXE：`D:/MEngineNativeQA/release-editor-revision-presentation.exe`，SHA-256：`16307D8918967C8BB9F81E7350978B9DC7B34B7469F2E72FC56A60DFDE3D5627`。
+
+证据：
+
+- `D:/MEngineNativeQA/release-scene-profile-revision-presentation-baseline-1791742106922/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-revision-presentation-candidate-1791742200031/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-revision-presentation-candidate-repeat-1791742301570/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-revision-presentation-baseline-repeat-1791742390902/report.json`
+- `D:/MEngineNativeQA/revision-presentation-release-build.log`
+- `D:/MEngineNativeQA/revision-presentation-performance-handoff.json`
+
 ## 验收边界
 
 连续拖动尚未达到 60 FPS，浏览器平均帧间隔与跨 WebView 呈现仍有优化空间。本机 Game 未复现用户机器的极度持续卡顿，需用户以同步后的源码重建并复测，不能据此认定其机器的 Game 问题已完全解决。

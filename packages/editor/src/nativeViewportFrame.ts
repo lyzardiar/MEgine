@@ -16,6 +16,11 @@ export function nativeViewportFrameWorldCurrent<E>(frame: NativeViewportFrameWor
   return frame.runtimeSessionId != null ? frame.runtimeSessionId === props.runtimeSessionId : props.runtimeSessionId == null && frame.sourceEntities === props.entities;
 }
 
+/** Reuse only an exact native revision rendered with identical viewport settings. */
+export function nativeGameFrameMatchesRequest(frame: { world: { runtimeSessionId?: number }; worldRevision?: number; requestKey: string } | null, args: { playSessionId?: number; playRevision?: number; snapshot?: unknown }, requestKey: string): boolean {
+  return frame != null && args.playSessionId != null && args.playRevision != null && frame.world.runtimeSessionId === args.playSessionId && frame.worldRevision === args.playRevision && frame.requestKey === requestKey;
+}
+
 /** One synchronous paint shares its exact owned browser world and lazy native revision selection. */
 export function createNativeViewportWorldArgs<E extends { entity?: number; parent?: number | null; active?: boolean; components: Record<string, unknown> }>(props: NativeViewportWorld<E> & { readonly nativeSessionId?: number; readonly nativeWorldReference?: NativeViewportWorldReference<E>; runtimeSessionId?: number }, activeSceneOnly = false) {
   let browserSnapshot: boolean | undefined, referenceRead = false;

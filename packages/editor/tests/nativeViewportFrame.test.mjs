@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createNativeViewportWorldArgs, nativeGamePreviewSize, nativeViewportFrameWorldCurrent, parseNativeViewportFrame, requiresBrowserViewportSnapshot } from '../src/nativeViewportFrame.ts';
+import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGamePreviewSize, nativeViewportFrameWorldCurrent, parseNativeViewportFrame, requiresBrowserViewportSnapshot } from '../src/nativeViewportFrame.ts';
 
 test('browser overlays and interactive UI retain a matching snapshot', () => {
   assert.equal(requiresBrowserViewportSnapshot([{ components: { Text: {}, SpriteRenderer: {} } }]), false);
@@ -112,4 +112,12 @@ test('edit Scene world uploads once and unchanged camera frames send only the re
   assert.equal(first.snapshotArgs().snapshot, initial.snapshot);
   const changed = createNativeViewportWorldArgs(props, true).sceneWorldArgs();
   assert.ok(changed.snapshot); assert.notEqual(changed.sceneWorldKey, initial.sceneWorldKey);
+});
+
+test('frame reuse requires an exact session, revision and render configuration', () => {
+  const frame = {world:{runtimeSessionId:4},worldRevision:0,requestKey:'size-display-dpr'};
+  assert.equal(nativeGameFrameMatchesRequest(frame,{playSessionId:4,playRevision:0},frame.requestKey),true);
+  for (const args of [{playSessionId:4}, {playSessionId:5,playRevision:0}, {playSessionId:4,playRevision:1}, {snapshot:{}}]) assert.equal(nativeGameFrameMatchesRequest(frame,args,frame.requestKey),false);
+  assert.equal(nativeGameFrameMatchesRequest(frame,{playSessionId:4,playRevision:0},'resized'),false);
+  assert.equal(nativeGameFrameMatchesRequest(null,{playSessionId:4,playRevision:0},frame.requestKey),false);
 });
