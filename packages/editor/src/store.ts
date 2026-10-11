@@ -1,7 +1,7 @@
 // Author: MiYu. Editor scene state, hierarchy and runtime interaction.
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, retainedNativePlayWorld, type PlayInput, type PlayRuntimeDriver, type PlayRuntimeWorld } from './playRuntime';
-import { createPlayWorldSync } from './playWorldSync';
+import { createPlayWorldSync, isRetainedPlayRecord } from './playWorldSync';
 import { normalizeEntity, type EntityRec } from './entityRecord';
 export type { EntityRec } from './entityRecord';
 import {
@@ -416,7 +416,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     clearColor = restored.clearColor;
   };
 
-  const find = (id: number) => exposePlayRecord(list().find((e) => e.entity === id));
+  const lookup = (id: number) => list().find((e) => e.entity === id);
+  const find = (id: number) => exposePlayRecord(lookup(id));
 
   const translateSelectedRectRoots = (dx: number, dy: number) => {
     if (!Number.isFinite(dx) || !Number.isFinite(dy)) return false;
@@ -479,9 +480,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   const primarySelected = () =>
     selectedIds.length ? selectedIds[selectedIds.length - 1] : null;
 
-  const getVisibleFlat = (): TreeNode[] => {
+  const buildVisibleFlat = (source: readonly EntityRec[], expose: boolean): TreeNode[] => {
     const children = new Map<number | null, EntityRec[]>();
-    for (const entity of list()) {
+    for (const entity of source) {
       const parent = entity.parent ?? null;
       const siblings = children.get(parent);
       if (siblings) siblings.push(entity);
@@ -494,7 +495,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         const kids = children.get(e.entity) ?? [];
         const exp = expanded.has(e.entity);
         out.push({
-          entity: exposePlayRecord(e),
+          entity: expose ? exposePlayRecord(e) : e,
           depth,
           hasChildren: kids.length > 0,
           expanded: exp,
@@ -505,12 +506,13 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     walk(null, 0);
     return out;
   };
+  const getVisibleFlat = () => buildVisibleFlat(list(), true);
 
   const activeInHierarchy = (id: number): boolean => {
     let cur: number | null | undefined = id;
     const guard = new Set<number>();
     while (cur != null) {
-      const e = find(cur);
+      const e = lookup(cur);
       if (!e || e.active === false) return false;
       if (guard.has(cur)) break;
       guard.add(cur);
@@ -1149,6 +1151,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return mode === 'edit' ? timelinePreview?.particles ?? [] : [];
     },
     getVisibleFlat,
+    /** Authoring uses live scene rows; Play displays the panel world without exposing editable records. */
+    hierarchyPresentation(entities: WorldSnapshotView['entities']) { return mode === 'edit' ? getVisibleFlat() : buildVisibleFlat(entities.map(entity => isRetainedPlayRecord(entity) ? entity as EntityRec : normalizeEntity(entity)), false); },
     activeInHierarchy,
     get sceneHiddenIds() {
       return editEntities
@@ -1171,7 +1175,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       while (current != null && !visited.has(current)) {
         if (sceneHiddenIds.has(current)) return false;
         visited.add(current);
-        current = find(current)?.parent ?? null;
+        current = lookup(current)?.parent ?? null;
       }
       return true;
     },
@@ -1182,7 +1186,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       while (current != null && !visited.has(current)) {
         if (sceneUnpickableIds.has(current)) return false;
         visited.add(current);
-        current = find(current)?.parent ?? null;
+        current = lookup(current)?.parent ?? null;
       }
       return true;
     },

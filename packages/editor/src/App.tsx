@@ -2862,7 +2862,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     return () => window.removeEventListener('keydown', onKey);
   }, [store]);
 
-  const treeNodes = useMemo(() => store.getVisibleFlat(), [store, snap, treeTick]);
+  const treeNodes = useMemo(() => store.hierarchyPresentation(snap.entities), [store, snap, treeTick]);
   const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(mode === 'edit' ? snap.entities : []), [mode, snap.entities]);
   const sceneHiddenIds = store.sceneHiddenIds;
   const sceneInteraction = store.sceneInteractionQuery();

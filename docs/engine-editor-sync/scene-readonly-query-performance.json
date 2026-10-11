@@ -1,0 +1,118 @@
+{
+  "author": "MiYu",
+  "date": "2026-10-12",
+  "baselineEngineCommit": "fb9c5b8b0801aa194f9ad23af952549cdee1bcf1",
+  "gameCommit": "128d08fa30d9eaf84fba165ecd209347e8d53ebb",
+  "baselineExecutable": "D:\\MEngineNativeQA\\release-editor-scene-owned-frame.exe",
+  "baselineExecutableSha256": "fe2bc0190702d9558a05fd8681cad548476fa01d32a5c783365c899cdd57eb04",
+  "candidateExecutable": "D:\\MEngineNativeQA\\release-editor-scene-readonly-query.exe",
+  "candidateExecutableSha256": "44cf4e0baac521842e8388b8ac29bb625c6fc541ea1a86b21a80fa8bc6a44cf9",
+  "clientSha256": "d25e9578429842c7a127a2542672ee1c32d71c6093c3eb0f27e88b4f7d85b38f",
+  "sameClientForAllRuns": true,
+  "originalQaRestored": true,
+  "qa": [
+    {
+      "label": "scene-query-baseline",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-baseline-1791756195633\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 149612,
+      "scenePaintMs": 21.397802804290137,
+      "newNativeFrameHz": 11.496718249457784,
+      "sceneSimulationHz": 5.584120292593781,
+      "gameSimulationHz": 39.75479786801525,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "cameraPreviewDraws": 29,
+      "hierarchyRows": 30,
+      "profileSeconds": 12.72858,
+      "renderSnapshotInclusiveSeconds": 3.926162,
+      "movingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-baseline-1791756195633\\moving-play-scene.png",
+      "previewScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-baseline-1791756195633\\live-camera-preview.png"
+    },
+    {
+      "label": "scene-query-candidate",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-candidate-1791756294509\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 91920,
+      "scenePaintMs": 12.380062206635582,
+      "newNativeFrameHz": 22.592449064272284,
+      "sceneSimulationHz": 12.038312275123188,
+      "gameSimulationHz": 40.186885154638645,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "cameraPreviewDraws": 61,
+      "hierarchyRows": 30,
+      "profileSeconds": 12.775414,
+      "renderSnapshotInclusiveSeconds": 0.379804,
+      "movingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-candidate-1791756294509\\moving-play-scene.png",
+      "previewScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-candidate-1791756294509\\live-camera-preview.png"
+    },
+    {
+      "label": "scene-query-candidate-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-candidate-repeat-1791756390899\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 114908,
+      "scenePaintMs": 12.243392850828593,
+      "newNativeFrameHz": 22.353362867542184,
+      "sceneSimulationHz": 11.217923800685377,
+      "gameSimulationHz": 39.70916457918581,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "cameraPreviewDraws": 58,
+      "hierarchyRows": 30,
+      "profileSeconds": 12.621953,
+      "renderSnapshotInclusiveSeconds": 0.440281,
+      "movingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-candidate-repeat-1791756390899\\moving-play-scene.png",
+      "previewScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-candidate-repeat-1791756390899\\live-camera-preview.png"
+    },
+    {
+      "label": "scene-query-baseline-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-baseline-repeat-1791756486709\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 132896,
+      "scenePaintMs": 19.429434084250566,
+      "newNativeFrameHz": 13.232740940781316,
+      "sceneSimulationHz": 6.082129376508182,
+      "gameSimulationHz": 40.03846601720013,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "cameraPreviewDraws": 36,
+      "hierarchyRows": 30,
+      "profileSeconds": 12.832317,
+      "renderSnapshotInclusiveSeconds": 3.649353,
+      "movingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-baseline-repeat-1791756486709\\moving-play-scene.png",
+      "previewScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-baseline-repeat-1791756486709\\live-camera-preview.png"
+    }
+  ],
+  "pairedGains": [
+    {
+      "paintReductionPercent": 42.14330172183169,
+      "nativeFrameGainPercent": 96.51215741794668,
+      "renderSnapshotCostReductionPercent": 90.32632886773393
+    },
+    {
+      "paintReductionPercent": 36.985334736264676,
+      "nativeFrameGainPercent": 68.92466169765694,
+      "renderSnapshotCostReductionPercent": 87.93536826938913
+    }
+  ],
+  "tests": {
+    "passed": 37,
+    "failed": 0,
+    "log": "D:\\MEngineNativeQA\\scene-readonly-query-tests.log"
+  },
+  "independentReview": {
+    "reviewer": "release_editor_frame_review",
+    "readOnly": true,
+    "blockers": 0
+  },
+  "buildLogs": [
+    "D:\\MEngineNativeQA\\scene-readonly-query-editor-build.log",
+    "D:\\MEngineNativeQA\\scene-readonly-query-release-build.log"
+  ],
+  "acceptanceScope": "Actual owned Release editor and WebView; not physical display FPS or cross-machine acceptance."
+}
