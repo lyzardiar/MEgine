@@ -1,0 +1,378 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-11T04:51:23.421Z",
+  "sample": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample",
+  "root": "D:\\MEngineNativeQA\\human-mortar-validation\\human-mortar-game-1791694283324",
+  "reusedAssets": true,
+  "protocol": 81,
+  "editorSha256": "2c90170ba302347986f833ddbd4112b49453d1cf6232a27563989f39c734ce2e",
+  "productMainSha256": "5293d0280cf6316a2421bf76110a12b1a1284ad15e236fe722bdee7892cbe6cb",
+  "steps": [
+    {
+      "name": "project.state",
+      "ms": 4469
+    },
+    {
+      "name": "project.open",
+      "ms": 6582
+    },
+    {
+      "name": "project.state",
+      "ms": 453
+    },
+    {
+      "name": "project.state",
+      "ms": 513
+    },
+    {
+      "name": "view.set_game_resolution",
+      "ms": 962
+    },
+    {
+      "name": "panel.focus",
+      "ms": 3579
+    },
+    {
+      "name": "playback.play",
+      "ms": 4792
+    },
+    {
+      "name": "playback.step",
+      "ms": 1942
+    },
+    {
+      "name": "entity.get",
+      "ms": 109
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 1825
+    },
+    {
+      "name": "entity.get",
+      "ms": 66
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 1496
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 204
+    },
+    {
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "name": "playback.step",
+      "ms": 306
+    },
+    {
+      "name": "entity.get",
+      "ms": 16
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 113
+    },
+    {
+      "name": "entity.get",
+      "ms": 20
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 108
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 112
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 730
+    },
+    {
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 79
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 177
+    },
+    {
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "name": "playback.input",
+      "ms": 4
+    },
+    {
+      "name": "playback.step",
+      "ms": 152
+    },
+    {
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 107
+    },
+    {
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 128
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 85
+    },
+    {
+      "name": "entity.get",
+      "ms": 13
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 72
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 160
+    },
+    {
+      "name": "entity.get",
+      "ms": 19
+    },
+    {
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "name": "playback.step",
+      "ms": 143
+    },
+    {
+      "name": "entity.get",
+      "ms": 16
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 67
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 176
+    },
+    {
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "name": "playback.input",
+      "ms": 7
+    },
+    {
+      "name": "playback.step",
+      "ms": 149
+    },
+    {
+      "name": "entity.get",
+      "ms": 20
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 103
+    },
+    {
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 127
+    },
+    {
+      "name": "entity.get",
+      "ms": 30
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 115
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 83
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 772
+    },
+    {
+      "name": "entity.get",
+      "ms": 5
+    },
+    {
+      "name": "entity.get",
+      "ms": 5
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 62
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 167
+    },
+    {
+      "name": "entity.get",
+      "ms": 15
+    },
+    {
+      "name": "playback.input",
+      "ms": 3
+    },
+    {
+      "name": "playback.step",
+      "ms": 143
+    },
+    {
+      "name": "entity.get",
+      "ms": 15
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 69
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 164
+    },
+    {
+      "name": "entity.get",
+      "ms": 17
+    },
+    {
+      "name": "playback.input",
+      "ms": 3
+    },
+    {
+      "name": "playback.step",
+      "ms": 148
+    },
+    {
+      "name": "playback.step",
+      "ms": 336
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 122
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 676
+    },
+    {
+      "name": "profiler.get_samples",
+      "ms": 24
+    },
+    {
+      "name": "console.get_logs",
+      "ms": 2
+    },
+    {
+      "name": "playback.stop",
+      "ms": 219
+    }
+  ],
+  "physicalInput": false,
+  "nativeSourceTrainCardAndPayment": true,
+  "nativeKeepResearchAndMenuQueueReload": true,
+  "nativeFlareCastAndCooldownReload": true,
+  "nativeOriginalArtilleryAndStrictFlightSave": true,
+  "nativeCounts": {
+    "billboardMeshes": 0,
+    "cameraVisibleObjects": 164,
+    "entities": 22370,
+    "materialPipelineEvictions": 0,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 4,
+    "materialPipelinesRejected": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialSamplers": 2,
+    "materialTextureBindGroups": 21,
+    "materialTexturesColor": 26,
+    "materialTexturesData": 5,
+    "msaaSamples": 4,
+    "renderObjects": 339,
+    "sceneViews": 0,
+    "shadowVisibleObjects": 332,
+    "submittedObjects": 335,
+    "uiBatches": 31,
+    "uiDrawCalls": 31,
+    "uiPrimitives": 654
+  },
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Final generated native Workshop/Mortar/Flare M/R/F/G cards, source icons, paid source queue/Keep research, actual F5/menu reload, native artillery source flight and Flare casting/cooldown saves. Shared/generated/TCP cover full source clocks, impacts and privacy. Original executable comparison, physical input, standalone player and cross-machine LAN unverified.",
+  "shutdown": {
+    "pid": 166908,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\human-mortar-validation\\human-mortar-game-1791694283324\\runtime\\com.mengine.editor.agent-8rnQka '\\\\?\\D:\\MEngineNativeQA\\human-mortar-validation\\human-mortar-game-1791694283324\\runtime\\com.mengine.editor.agent-8rnQka'"
+  }
+}

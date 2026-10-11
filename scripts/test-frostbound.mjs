@@ -4,6 +4,9 @@ import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
 import './test-frost-human-equipment.mjs';
 import './test-frost-human-equipment-client.mjs';
+import './test-frost-human-mortar.mjs';
+import './test-frost-human-mortar-client.mjs';
+import './test-frost-human-mortar-network.mjs';
 import './test-frost-human-equipment-network.mjs';
 import './test-frost-human-technology.mjs';
 import './test-frost-human-technology-client.mjs';
@@ -195,7 +198,8 @@ const aiSpell=S.create('moba',{ai:[false,true]}),aiHero=aiSpell.units.find(u=>u.
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 for(let faction=0;faction<4;faction++){
   const game=battleFixture(S,'skirmish',{factions:[faction,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),worker=game.units.find(u=>u.team===0&&u.kind==='worker'),hall=game.units.find(u=>u.team===0&&u.kind==='hall');
-  // MiYu: preserve siege workshop behavior for legacy Wildwood saves.
+  // MiYu: verify generic siege production retained by legacy saves.
+  game.humanMortarVersion=0;
   if(faction===2){game.hippogryphVersion=0;game.ancientWarVersion=0;game.nightElfTechVersion=0;for(const u of game.units){delete u.nightLevels;delete u.moonWellRules;delete u.rechargeAuto;}}
   assert.match(S.command(game,0,{type:'build',ids:[worker.id],kind:'workshop',x:-10,z:25}),/tier 2/);
   step(game,400);assert.equal(S.command(game,0,{type:'tech',ids:[hall.id]}),null);step(game,1401);
