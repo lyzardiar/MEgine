@@ -4026,8 +4026,16 @@ var FrostTerrain=(()=>{
     });
   }
   function pathing(state){let values=pathingCache.get(state);if(values)return values;values=state.map.terrain.map((_,i)=>{const x=i%32*2-31,z=Math.floor(i/32)*2-31;return Frost.solid(state,x,z,0,-1,.5)?2:Frost.buildingSite(state,x,z,1)?0:1;});pathingCache.set(state,values);return values;}
+  const chunkIndexCache=[];
+  function chunkIndices(x,z){
+    const cached=Number.isInteger(x)&&Number.isInteger(z)&&x>=0&&x<8&&z>=0&&z<8,slot=z*8+x;if(cached&&chunkIndexCache[slot])return chunkIndexCache[slot];
+    const indices=[];for(let dz=-1;dz<=4;dz++)for(let dx=-1;dx<=4;dx++)indices.push(Frost.clamp(z*4+dz,0,31)*32+Frost.clamp(x*4+dx,0,31));if(cached)chunkIndexCache[slot]=indices;return indices;
+  }
+  function chunkMatches(data,x,z,values){
+    if(!values||values.length!==9)return false;const indices=chunkIndices(x,z);for(let i=0;i<9;i++){if(values[i].length!==4)return false;for(let j=0;j<4;j++)if(data[indices[i*4+j]]!==values[i][j])return false;}return true;
+  }
   function chunk(data,x,z){
-    const packed=[];for(let dz=-1;dz<=4;dz++)for(let dx=-1;dx<=4;dx++)packed.push(data[Frost.clamp(z*4+dz,0,31)*32+Frost.clamp(x*4+dx,0,31)]);
+    const packed=chunkIndices(x,z).map(i=>data[i]);
     return Array.from({length:9},(_,i)=>packed.slice(i*4,i*4+4));
   }
   function mesh(map,x,z){let cache=meshes.get(map);if(!cache){cache=[];meshes.set(map,cache);}const slot=z*8+x;if(cache[slot])return cache[slot];let data='',styles='';for(let dz=-1;dz<=4;dz++)for(let dx=-1;dx<=4;dx++){const i=Frost.clamp(z*4+dz,0,31)*32+Frost.clamp(x*4+dx,0,31);for(const [cx,cz] of [[0,0],[2,0],[2,2],[0,2]])data+=Frost.tierHeight(map,i,cx,cz).toString(16);styles+=cliff(map,i);}for(let dz=-1;dz<=5;dz++)for(let dx=-1;dx<=5;dx++)data+=(128+(map.relief?.[Frost.clamp(z*4+dz,0,32)*33+Frost.clamp(x*4+dx,0,32)]||0)*16).toString(16).padStart(2,'0');const suffix=styles.split('').every(v=>v===styles[0])?styles[0]==='0'?'':styles[0]:styles;return cache[slot]='terrain4h:'+x.toString(16)+z.toString(16)+data+suffix;}
@@ -4045,7 +4053,7 @@ var FrostTerrain=(()=>{
       cached.values[i]={x,z,y:p.y-.02,tile,normal:[-dx/n,1/n,-dz/n]};
     }return cached.values;
   }
-  return {pathing,names,surfaceNames,tilesetNames,tilesetColors,cliffNames,material,cliff,cells,chunk,mesh,waterMesh,detailCount,details};
+  return {pathing,names,surfaceNames,tilesetNames,tilesetColors,cliffNames,material,cliff,cells,chunk,chunkMatches,mesh,waterMesh,detailCount,details};
 })();
 if(typeof module!=='undefined')module.exports=FrostTerrain;
 
@@ -5043,7 +5051,11 @@ var FrostClient=(()=>{
     if(mode==='playing'&&!paused&&input.pressedButtons.includes(2)){const button=FrostButtons.find(b=>b.group==='hud'&&b.id.startsWith('action')&&hovered(b,p)),toggle=button&&actions[Number(button.id.slice(6))]?.rightClick;if(toggle){toggle();return;}const item=FrostButtons.find(b=>b.group==='inventory'&&hovered(b,p)),u=state.units.find(u=>u.id===selected[0]&&u.kind==='hero');if(item&&u?.inventory[Number(item.id.slice(4))]!==undefined){order({type:'dropItem',slot:Number(item.id.slice(4)),item:u.inventory[Number(item.id.slice(4))]});return;}}
     if(mode==='playing'&&!paused&&input.pressedButtons.includes(2)&&inBattlefield(p)){armed=null;const target=attackAt(input,p),r=state.resources.findIndex(r=>r.kind!=='camp'&&r.amount>0&&Math.hypot(r.x-ground().x,r.z-ground().z)<2.8),worker=state.units.some(u=>selected.includes(u.id)&&u.kind==='worker');const b=worker&&state.units.find(u=>u.team===team&&u.hp>0&&!S.types[u.kind].speed&&(u.built<1||u.hp<u.maxHp)&&Math.hypot(screenWorld(u,input).x-p.x,screenWorld(u,input).y-p.y)<28);const tree=state.units.find(u=>selected.includes(u.id)&&S.ancientMain(u)&&!u.uprooted);if(r>=0&&state.resources[r].kind==='mine'&&tree)order({type:'entangle',resource:r});else if(target)order({type:'attack',target:target.id});else if(r>=0&&state.resources[r].kind==='tree'&&state.units.some(u=>selected.includes(u.id)&&(S.mortarUnit(u)||S.nightRank(state,team,'Repb')&&u.kind==='glaivethrower')))order({type:'attackTree',resource:r});else if(b)order({type:b.built<1?'construct':'repair',target:b.id});else if(r>=0&&state.units.some(u=>selected.includes(u.id)&&S.canGather(state,u,state.resources[r])))order({type:'gather',resource:r});else if(state.units.some(u=>u.id===selected[0]&&u.kind==='hero')&&state.loot.some(d=>state.visible[team]?.[S.index(d.x,d.z)]&&Math.hypot(d.x-ground().x,d.z-ground().z)<1.3))order({type:'pickup',loot:state.loot.find(d=>state.visible[team]?.[S.index(d.x,d.z)]&&Math.hypot(d.x-ground().x,d.z-ground().z)<1.3).id});else order({type:state.units.some(u=>selected.includes(u.id)&&S.trainable(state,u).length)?'rally':'move',x:ground().x,z:ground().z});}
   }
-  function equalGroundChunk(a,b){for(let i=0;i<a.length;i++)for(let j=0;j<a[i].length;j++)if(a[i][j]!==b[i][j])return false;return true;}
+  const terrainMeshStates={};
+  function terrainMesh(n,mesh,material,bed){
+    const old=terrainMeshStates[n];if(old&&old.mesh===mesh&&old.material===material&&old.bed===bed)return;
+    set(n,'MeshRenderer',{mesh,material,...(bed===undefined?{}:{cast_shadows:false,receive_shadows:!bed})});if(entities[n])terrainMeshStates[n]={mesh,material,bed};
+  }
   const sceneryVisuals=[];
   function sceneryVisual(i,edge,map){
     const tileset=map.tileset??0,far=edge||zoom>14,old=sceneryVisuals[i];
@@ -5084,8 +5096,8 @@ var FrostClient=(()=>{
     S.prepareGround(map);const groundY=(x,z)=>S.elevation(map,x,z,true);
     const ground=FrostTerrain.cells(state,team,allVisible);
     set('Terrain bed','MaterialPropertyBlock',{custom_parameter_names:['tileset'],custom_parameter_values:[[map.tileset??0,0,0,0]]});
-    for(let z=0;z<8;z++)for(let x=0;x<8;x++){const slot=z*8+x,name='Ground '+slot,values=FrostTerrain.chunk(ground,x,z);const old=tileState[slot],tileset=map.tileset??0;if(!old||old.tileset!==tileset||!equalGroundChunk(values,old.values)){set(name,'MaterialPropertyBlock',{custom_parameter_names:[...FrostTerrain.names,'tileset'],custom_parameter_values:[...values,[tileset,0,0,0]]});if(entities[name])tileState[slot]={tileset,values};}set(name,'MeshRenderer',{mesh:FrostTerrain.mesh(map,x,z),material:FrostTerrain.material(map)});
-      for(const bed of [true,false]){const layer=bed?'Riverbed':'Water',n=layer+' '+slot,key=FrostTerrain.waterMesh(map,x,z,bed);show(n,!!key);if(key){set(n,'MeshRenderer',{mesh:key,material:'Assets/Materials/'+layer+'.mmat',cast_shadows:false,receive_shadows:!bed});set(n,'MaterialPropertyBlock',{custom_parameter_names:[...FrostTerrain.names,'tileset','water_layer','water_time',...(!bed?['water_Smin','water_Smax','water_Dmin','water_Dmax']:[])],custom_parameter_values:[...values,[map.tileset??0,0,0,0],[bed?1:2,0,0,0],[editing?time:state.frame*S.DT,FrostWater.texRate,FrostWater.numTex,FrostWater.cells],...(!bed?Object.values(FrostWater.palettes[map.tileset??0].colors):[])]});}}
+    for(let z=0;z<8;z++)for(let x=0;x<8;x++){const slot=z*8+x,name='Ground '+slot,old=tileState[slot],values=old&&FrostTerrain.chunkMatches(ground,x,z,old.values)?old.values:FrostTerrain.chunk(ground,x,z),tileset=map.tileset??0;if(!old||old.tileset!==tileset||values!==old.values){set(name,'MaterialPropertyBlock',{custom_parameter_names:[...FrostTerrain.names,'tileset'],custom_parameter_values:[...values,[tileset,0,0,0]]});if(entities[name])tileState[slot]={tileset,values};}terrainMesh(name,FrostTerrain.mesh(map,x,z),FrostTerrain.material(map));
+      for(const bed of [true,false]){const layer=bed?'Riverbed':'Water',n=layer+' '+slot,key=FrostTerrain.waterMesh(map,x,z,bed);show(n,!!key);if(key){terrainMesh(n,key,'Assets/Materials/'+layer+'.mmat',bed);set(n,'MaterialPropertyBlock',{custom_parameter_names:[...FrostTerrain.names,'tileset','water_layer','water_time',...(!bed?['water_Smin','water_Smax','water_Dmin','water_Dmax']:[])],custom_parameter_values:[...values,[map.tileset??0,0,0,0],[bed?1:2,0,0,0],[editing?time:state.frame*S.DT,FrostWater.texRate,FrostWater.numTex,FrostWater.cells],...(!bed?Object.values(FrostWater.palettes[map.tileset??0].colors):[])]});}}
     }
     const mini=hudRect('Minimap'),layout=editing?JSON.stringify(mini):'authored',layoutChanged=minimapLayout!==layout;
     for(let j=0;j<256;j++){
