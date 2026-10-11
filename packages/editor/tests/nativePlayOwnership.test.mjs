@@ -21,6 +21,35 @@ async function fixture(run) {
 const entity = (id, name = 'Root') => ({ entity: id, name, components: { Transform: { position: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] }, Custom: { values: [1] } } });
 const host = (entities, frame = 0, color = [0, 0, 0, 1]) => ({ entities, frame, sim_frame: frame, elapsed: frame / 10, clear_color: color });
 
+test('Scene visibility and camera-preview snapshots share verified native records and fall back after deep edits or restart', async () => fixture(async ({ mockIPC, runtime, createEditorStore, server }) => {
+  const { createNativeViewportWorldArgs, nativeSceneBrowserWorld, nativeViewportFrameWorldCurrent } = await server.ssrLoadModule('/src/nativeViewportFrame.ts');
+  const { nativeSceneFrameForPresentation, nativeSceneFrameRequestIdentity } = await server.ssrLoadModule('/src/nativeSceneFrame.ts');
+  const store = createEditorStore(); let session = 80;
+  const records = [entity(1, 'Interface'), { ...entity(2, 'Child'), parent: 1 }, { ...entity(3, 'Camera'), components: { ...entity(3).components, Camera3D: { primary: true }, Text: { text: 'first' } } }];
+  mockIPC(cmd => { if (cmd === 'start_editor_play') return { sessionId: ++session, snapshot: host(records) }; });
+  store.setPlayRuntime(runtime); store.play(); await store.waitForPlayRuntime(); store.pause();
+  const scene = hidden => {
+    const live = store.playRenderSnapshot(), visible = live.entities.filter(e => !hidden.includes(e.entity));
+    return createNativeViewportWorldArgs({ entities: visible, clearColor: live.clearColor, simulationTime: live.simulationTime, runtimeSessionId: live.runtimeSessionId, browserWorldReference: nativeSceneBrowserWorld(live.nativeWorldReference, live.entities, visible, hidden) }, true);
+  };
+  const first = scene([1]), firstWorld = first.frameWorld(), initial = store.playRenderSnapshot();
+  assert.equal(firstWorld.entities[1], initial.entities[2]); assert.ok(Object.isFrozen(firstWorld.entities[1]));
+  assert.deepEqual(first.worldArgs().snapshot.entities.map(e => e.entity), [3]); assert.equal(first.worldArgs().playSessionId, undefined);
+  assert.deepEqual(scene([]).worldArgs().snapshot.entities.map(e => e.entity), [1, 2, 3]);
+  const viewport = { w: 800, h: 600 }, camera = { eye: [0, 3, 8], target: [0, 0, 0], fovYDeg: 60 }, identity = nativeSceneFrameRequestIdentity(camera, viewport, 1, [1]);
+  const frame = { presentationKey: identity.presentationKey, world: firstWorld };
+  assert.equal(nativeSceneFrameForPresentation(frame, nativeSceneFrameRequestIdentity(camera, viewport, 1, [])), null);
+  const editable = store.playViewportSnapshot().entities[2]; editable.components.Text.text = 'second'; editable.parent = 1;
+  assert.equal(store.playRenderSnapshot().nativeWorldReference, undefined);
+  const dirty = scene([1]), dirtyWorld = dirty.frameWorld();
+  assert.equal(dirtyWorld.entities[1].components.Text.text, 'second'); assert.notEqual(dirtyWorld.entities[1], editable); assert.equal(dirty.worldArgs().snapshot.entities.length, 0);
+  editable.components.Text.text = 'third'; assert.equal(dirtyWorld.entities[1].components.Text.text, 'second'); assert.equal(firstWorld.entities[1].components.Text.text, 'first');
+  store.stop(); assert.equal(store.playRenderSnapshot(), null);
+  store.play(); await store.waitForPlayRuntime(); store.pause();
+  assert.equal(nativeViewportFrameWorldCurrent(firstWorld, store.playRenderSnapshot()), false); assert.deepEqual(scene([1]).worldArgs().snapshot.entities.map(e => e.entity), [3]);
+  store.stop();
+}));
+
 test('render snapshots freeze native records, preserve array identity and allow unbound fallback callbacks', async () => fixture(async ({ mockIPC, runtime, createEditorStore }) => {
   const store = createEditorStore(); let revision = 0;
   mockIPC((cmd, args) => {

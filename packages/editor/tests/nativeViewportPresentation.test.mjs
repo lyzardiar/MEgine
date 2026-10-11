@@ -35,3 +35,21 @@ test('in-place Timeline preview edits and display changes invalidate camera sele
   assert.deepEqual(presentation.gameCamera(preview, 1), timelineGameCamera(world.entities, preview, presentation.active, 1));
   assert.equal(presentation.gameCamera(null, 1).entity, 5); assert.equal(presentation.gameCamera(null, 0).entity, 2);
 });
+
+test('displayed Scene transforms resolve once per immutable frame and preserve parent edits, mirrored scale and missing parents', () => {
+  const live = props(), angle = Math.PI / 4;
+  live.entities[0].components.Transform = { position: [10, 5, 0], rotation: [0, 0, Math.sin(angle), Math.cos(angle)], scale: [-2, 3, 1] };
+  live.entities[1].components.Transform = { position: [1, 2, 0], rotation: [0, 0, 0, 1], scale: [1, 2, 1] };
+  const reader = createNativeViewportPresentationReader(), firstWorld = createNativeViewportWorldArgs(live).frameWorld(), first = reader(firstWorld), transforms = first.worldTransforms(), child = transforms.get(2).transform;
+  assert.ok(Math.abs(child.position[0] - 4) < 1e-10); assert.ok(Math.abs(child.position[1] - 3) < 1e-10); assert.deepEqual(child.scale, [-2, 6, 1]);
+  for (let i = 0; i < 200; i++) assert.equal(reader(firstWorld).worldTransforms(), transforms);
+  live.entities[0].components.Transform.position[0] += 7;
+  const next = reader(createNativeViewportWorldArgs(live).frameWorld());
+  assert.notEqual(next.worldTransforms(), transforms); assert.ok(Math.abs(next.worldTransforms().get(2).transform.position[0] - 11) < 1e-10);
+  assert.ok(Math.abs(transforms.get(2).transform.position[0] - 4) < 1e-10, 'the old completed frame retains its original pose');
+  live.entities[0].active = false;
+  assert.equal(reader(createNativeViewportWorldArgs(live).frameWorld()).worldTransforms().get(2).active, false);
+  live.entities.splice(0, 1);
+  assert.equal(reader(createNativeViewportWorldArgs(live).frameWorld()).worldTransforms().get(2).active, false);
+  assert.ok(Math.abs(reader(firstWorld).worldTransforms().get(2).transform.position[0] - 4) < 1e-10);
+});

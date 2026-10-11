@@ -12,6 +12,11 @@ export type NativeViewportWorld<E> = { entities: E[]; clearColor: [number, numbe
 export type NativeViewportWorldReference<E> = NativeViewportWorld<E> & { sessionId: number; revision: number };
 export type NativeViewportFrameWorld<E> = NativeViewportWorld<E> & { runtimeSessionId?: number; sourceEntities: E[] };
 
+/** Scene visibility can share verified immutable records while its native request still submits a filtered snapshot. */
+export function nativeSceneBrowserWorld<E extends { entity: number }>(owned: NativeViewportWorldReference<E> | undefined, source: E[], visible: E[], hidden: readonly number[]): NativeViewportWorld<E> | undefined {
+  return owned ? { entities: owned.entities === source ? visible : owned.entities.filter(entity => !hidden.includes(entity.entity)), clearColor: owned.clearColor, simulationTime: owned.simulationTime } : undefined;
+}
+
 export function nativeViewportFrameWorldCurrent<E>(frame: NativeViewportFrameWorld<E>, props: { entities: E[]; runtimeSessionId?: number }): boolean {
   return frame.runtimeSessionId != null ? frame.runtimeSessionId === props.runtimeSessionId : props.runtimeSessionId == null && frame.sourceEntities === props.entities;
 }
@@ -21,8 +26,8 @@ export function nativeGameFrameMatchesRequest(frame: { world: { runtimeSessionId
   return frame != null && args.playSessionId != null && args.playRevision != null && frame.world.runtimeSessionId === args.playSessionId && frame.worldRevision === args.playRevision && frame.requestKey === requestKey;
 }
 
-/** One synchronous paint shares its exact owned browser world and lazy native revision selection. */
-export function createNativeViewportWorldArgs<E extends { entity?: number; parent?: number | null; active?: boolean; components: Record<string, unknown> }>(props: NativeViewportWorld<E> & { readonly nativeSessionId?: number; readonly nativeWorldReference?: NativeViewportWorldReference<E>; runtimeSessionId?: number }, activeSceneOnly = false) {
+/** One synchronous paint shares its immutable browser world; browserWorldReference never authorizes native session reuse. */
+export function createNativeViewportWorldArgs<E extends { entity?: number; parent?: number | null; active?: boolean; components: Record<string, unknown> }>(props: NativeViewportWorld<E> & { readonly nativeSessionId?: number; readonly nativeWorldReference?: NativeViewportWorldReference<E>; readonly browserWorldReference?: NativeViewportWorld<E>; runtimeSessionId?: number }, activeSceneOnly = false) {
   let browserSnapshot: boolean | undefined, referenceRead = false;
   let reference: NativeViewportWorldReference<E> | undefined;
   let captured: NativeViewportFrameWorld<E> | undefined;
@@ -33,8 +38,8 @@ export function createNativeViewportWorldArgs<E extends { entity?: number; paren
   const worldReference = () => { if (!referenceRead) { reference = props.nativeWorldReference; referenceRead = true; } return reference; };
   const frameWorld = () => {
     if (captured) return captured;
-    const retained = worldReference();
-    const world = retained ? { entities: retained.entities, clearColor: retained.clearColor, simulationTime: retained.simulationTime } : JSON.parse(JSON.stringify({ entities: props.entities, clearColor: props.clearColor, simulationTime: props.simulationTime })) as NativeViewportWorld<E>;
+    const retained = worldReference(), owned = retained ?? props.browserWorldReference;
+    const world = owned ? { entities: owned.entities, clearColor: owned.clearColor, simulationTime: owned.simulationTime } : JSON.parse(JSON.stringify({ entities: props.entities, clearColor: props.clearColor, simulationTime: props.simulationTime })) as NativeViewportWorld<E>;
     return captured = { ...world, runtimeSessionId: props.runtimeSessionId ?? retained?.sessionId, sourceEntities: props.entities };
   };
   const snapshotArgs = () => {
