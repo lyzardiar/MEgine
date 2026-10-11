@@ -45,6 +45,7 @@ struct AppState {
 static VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
 static GAME_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_scene::SharedSnapshotWorld>> = OnceLock::new();
 static SCENE_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_editor_host::SceneSnapshotWorld>> = OnceLock::new();
+static FILTERED_PLAY_SCENE_WORLD: OnceLock<Mutex<mengine_editor_host::SceneSnapshotWorld>> = OnceLock::new();
 static SCENE_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
 static EFFEKSEER_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> =
     OnceLock::new();
@@ -4449,18 +4450,19 @@ async fn render_native_scene_view(
     let retained_key = scene_world_key.map(|key| serde_json::to_string(&(project_root.clone(), window.label(), key, if request.camera_entity.is_none() { request.hidden_entity_ids.clone() } else { Vec::new() }))).transpose().map_err(|error| error.to_string())?;
     let mut snapshot = snapshot;
     if let Some(snapshot) = snapshot.as_mut() { filter_scene_view_snapshot(snapshot, &mut request); }
-    else if play_revision.is_some() && request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() { return Err("Hidden entities require a browser viewport snapshot".into()); }
     if snapshot.is_none() && retained_key.is_some() { request.hidden_entity_ids.clear(); }
     let runtime = state.play_runtime.clone();
     let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
         let render = move |world: &mengine_core::World, source: Option<&mengine_core::snapshot::SharedWorldSnapshot>| -> Result<EditorViewportFrame, String> {
-        let filtered_world;
+        let mut filtered_world;
+        let mut filtered_sync_ms = 0.0;
         let world = if request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() {
-            let hidden: HashSet<u64> = request.hidden_entity_ids.iter().copied().collect();
-            let mut snapshot = source.map(|value| value.clone().into_owned()).unwrap_or_else(|| WorldSnapshot::from_world(world));
-            snapshot.entities.retain(|entity| !hidden.contains(&entity.entity));
-            filtered_world = world_from_snapshot(&snapshot);
-            &filtered_world
+            let source = source.ok_or_else(|| "Filtered Scene rendering requires a retained source snapshot".to_string())?;
+            filtered_world = FILTERED_PLAY_SCENE_WORLD.get_or_init(|| Mutex::new(mengine_editor_host::SceneSnapshotWorld::default())).lock();
+            let sync = Instant::now();
+            let world = filtered_world.update_filtered(source, &request.hidden_entity_ids);
+            filtered_sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
+            world
         } else { world };
         let viewport = SCENE_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
         let mut viewport_guard = viewport.lock();
@@ -4480,7 +4482,7 @@ async fn render_native_scene_view(
         let viewport = viewport_guard
             .as_mut()
             .expect("Scene viewport renderer initialized above");
-        let frame = if request.camera_entity.is_some() {
+        let mut frame = if request.camera_entity.is_some() {
             viewport.render_camera(
                 world,
                 request.width,
@@ -4526,6 +4528,7 @@ async fn render_native_scene_view(
             )
         }
         .map_err(|error| error.to_string())?;
+        if filtered_sync_ms > 0.0 { frame.profile.world_sync_ms = Some(filtered_sync_ms); }
         drop(viewport_guard);
         Ok(frame)
         };
