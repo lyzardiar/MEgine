@@ -1,0 +1,448 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-11T09:42:27.376Z",
+  "sample": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample",
+  "root": "D:\\MEngineNativeQA\\sorceress-validation\\human-sorceress-game-1791711747281",
+  "reusedAssets": true,
+  "protocol": 86,
+  "editorSha256": "69d3252dbe5027c103161208d08690b35ca168d595a86cc19ff77d6572e2fb9b",
+  "productMainSha256": "7b453c1e0d82481bbbbf414c8c7b2aaed4b04f9b172d2e7ffb19982da206a9af",
+  "steps": [
+    {
+      "name": "project.state",
+      "ms": 4370
+    },
+    {
+      "name": "project.open",
+      "ms": 5775
+    },
+    {
+      "name": "project.state",
+      "ms": 386
+    },
+    {
+      "name": "project.state",
+      "ms": 322
+    },
+    {
+      "name": "view.set_game_resolution",
+      "ms": 442
+    },
+    {
+      "name": "panel.focus",
+      "ms": 2912
+    },
+    {
+      "name": "playback.play",
+      "ms": 4080
+    },
+    {
+      "name": "playback.step",
+      "ms": 1494
+    },
+    {
+      "name": "entity.get",
+      "ms": 72
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 981
+    },
+    {
+      "name": "entity.get",
+      "ms": 323
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 671
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 2763
+    },
+    {
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "name": "playback.input",
+      "ms": 1
+    },
+    {
+      "name": "playback.step",
+      "ms": 404
+    },
+    {
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 82
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 133
+    },
+    {
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 78
+    },
+    {
+      "name": "playback.step",
+      "ms": 238
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 122
+    },
+    {
+      "name": "entity.get",
+      "ms": 5
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "entity.get",
+      "ms": 6
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 515
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 105
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 154
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "playback.input",
+      "ms": 4
+    },
+    {
+      "name": "playback.step",
+      "ms": 144
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 60
+    },
+    {
+      "name": "playback.step",
+      "ms": 439
+    },
+    {
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 69
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 133
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 76
+    },
+    {
+      "name": "playback.step",
+      "ms": 238
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 118
+    },
+    {
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 601
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 110
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 140
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "playback.input",
+      "ms": 4
+    },
+    {
+      "name": "playback.step",
+      "ms": 150
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 80
+    },
+    {
+      "name": "entity.get",
+      "ms": 6
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 65
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 139
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.input",
+      "ms": 5
+    },
+    {
+      "name": "playback.step",
+      "ms": 153
+    },
+    {
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 72
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 123
+    },
+    {
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 86
+    },
+    {
+      "name": "playback.step",
+      "ms": 1310
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 64
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 5
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 52
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 144
+    },
+    {
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "name": "playback.input",
+      "ms": 1
+    },
+    {
+      "name": "playback.step",
+      "ms": 199
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 75
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 136
+    },
+    {
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 72
+    },
+    {
+      "name": "playback.step",
+      "ms": 272
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 188
+    },
+    {
+      "name": "playback.step",
+      "ms": 1468
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "profiler.get_samples",
+      "ms": 39
+    },
+    {
+      "name": "console.get_logs",
+      "ms": 2
+    },
+    {
+      "name": "playback.stop",
+      "ms": 111
+    }
+  ],
+  "physicalInput": false,
+  "lastLoad": {
+    "mode": "playing",
+    "frame": 81,
+    "units": 11,
+    "map": "Winterfall Basin",
+    "notice": "Saved quicksave to your project user-data folder"
+  },
+  "nativeSourceInvisibility": true,
+  "nativeChestAndTranslucency": true,
+  "nativeSourceFixedSheepAndThreeEffects": true,
+  "nativeSpellSaveReload": true,
+  "nativeAttackRevealAndMediumTarget": true,
+  "nativeBothSidesDispel": true,
+  "nativeEffectExpiry": true,
+  "nativeCounts": {
+    "billboardMeshes": 5,
+    "cameraVisibleObjects": 231,
+    "entities": 9388,
+    "materialPipelineEvictions": 0,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 4,
+    "materialPipelinesRejected": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialSamplers": 2,
+    "materialTextureBindGroups": 20,
+    "materialTexturesColor": 25,
+    "materialTexturesData": 5,
+    "msaaSamples": 4,
+    "renderObjects": 291,
+    "sceneViews": 1,
+    "shadowVisibleObjects": 279,
+    "submittedObjects": 288,
+    "uiBatches": 37,
+    "uiDrawCalls": 37,
+    "uiPrimitives": 647
+  },
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Native source I/O targeting, successful cast mana, invisible Footman alpha and Chest art, source sheep and three transform effects, attack reveal, both-side Priest Dispel, save continuity and expiry. Physical input, standalone Player, original-executable parity and cross-machine LAN remain unverified.",
+  "shutdown": {
+    "pid": 84672,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\sorceress-validation\\human-sorceress-game-1791711747281\\runtime\\com.mengine.editor.agent-qEHTS4 '\\\\?\\D:\\MEngineNativeQA\\sorceress-validation\\human-sorceress-game-1791711747281\\runtime\\com.mengine.editor.agent-qEHTS4'"
+  }
+}

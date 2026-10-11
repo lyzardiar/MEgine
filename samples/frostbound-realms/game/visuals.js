@@ -5,7 +5,7 @@ var FrostVisual=(()=>{
   const keeperRules=typeof module!=='undefined'?require('../keeper-rules.json'):FrostKeeperRules;
   const priestessModel=u=>Frost.priestessUnit(u)?Frost.priestessRules.units.Emoo:Frost.owlScout(u)?Frost.priestessRules.units[['nowl','now2','now3'][(u.scoutRank||1)-1]]:null;
   const bloodMageModel=u=>Frost.bloodMageUnit(u)?Frost.bloodMageRules.units.Hblm:Frost.phoenixUnit(u)?Frost.bloodMageRules.units[u.kind==='phoenixegg'?'hpxe':'hphx']:null;
-  const hexModel=u=>u?.hex||u?.hexLeft>0?Frost.shadowhunterRules.hexForms[u.hex?.form||u.hexForm]:null;
+  const hexModel=u=>Frost.polymorphForm(u)??(u?.hex||u?.hexLeft>0?Frost.shadowhunterRules.hexForms[u.hex?.form||u.hexForm]:null);
   const shadowhunterModel=u=>Frost.shadowhunterUnit(u)?{...Frost.shadowhunterRules.unit,model:'ClassicShadowHunter',portrait:'ClassicShadowHunterPortrait'}:Frost.serpentward(u)?Frost.shadowhunterRules.wards['osp'+(u.wardRank||1)]:null;
   const taurenModel=u=>Frost.taurenUnit(u)?{...Frost.taurenRules.unit,model:'ClassicTaurenChieftain',portrait:'ClassicTaurenChieftainPortrait'}:null;
   const farseerModel=u=>Frost.farseerUnit(u)?{...Frost.farseerRules.unit,model:'ClassicFarSeer',portrait:'ClassicFarSeerPortrait'}:Frost.spiritwolf(u)?Frost.farseerRules.wolves['osw'+(u.wolfRank||1)]:null;

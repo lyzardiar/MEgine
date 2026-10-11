@@ -255,3 +255,12 @@ scripts/*human-priest*.py text eol=lf
 scripts/*human-priest*.mjs text eol=lf
 docs/designs/frostbound-realms/*human-priest*.json text eol=lf
 docs/designs/frostbound-realms/human-priest*.md text eol=lf
+
+samples/frostbound-realms/Assets/HumanSorceress*/** -text whitespace=cr-at-eol
+samples/frostbound-realms/SourceAssets/HumanSorceress*/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+samples/frostbound-realms/Assets/Licenses/*Human-Sorceress*.txt text eol=lf
+samples/frostbound-realms/human-sorceress*.json text eol=lf
+scripts/*human-sorceress*.py text eol=lf
+scripts/*human-sorceress*.mjs text eol=lf
+docs/designs/frostbound-realms/human-sorceress*.json text eol=lf
+docs/designs/frostbound-realms/human-sorceress*.md text eol=lf

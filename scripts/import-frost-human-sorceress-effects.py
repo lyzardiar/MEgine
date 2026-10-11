@@ -1,0 +1,5 @@
+"""Author: MiYu. Reproduce original Invisibility and Polymorph source effects."""
+import importlib
+
+if __name__ == '__main__':
+    importlib.import_module('import-frost-blademaster-effects').main(dict(description=__doc__, label='original Sorceress spell effects', runtimeIntegrated=True, source='Original Warcraft III Invisibility and Polymorph effects', bindings=[('InvisibilityTarget', 'Abilities/Spells/Human/Invisibility/InvisibilityTarget.mdx'), ('PolymorphTarget', 'Abilities/Spells/Human/Polymorph/PolyMorphTarget.mdx'), ('PolymorphFallingSheep', 'Abilities/Spells/Human/Polymorph/PolyMorphFallingSheepArt.mdx')], particleOnly=['PolymorphTarget'], receipt='human-sorceress-effects-sources.json', prefix='Assets/HumanSorceressEffects/', raw='SourceAssets/HumanSorceressEffects/', artFile='human-sorceress-effects.json', modelsFile='human-sorceress-effect-models.json', licenseFile='Assets/Licenses/Human-Sorceress-Effects-W3ModelViewer-MIT.txt', generators=['scripts/import-frost-human-sorceress-effects.py','scripts/warcraft-assets/EffectExport.cs','scripts/warcraft-assets/MdxExport.csproj']))

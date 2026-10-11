@@ -1,0 +1,3 @@
+// Author: MiYu. Trained Sorceress fixture with source Human units and disabled AI.
+import {sanctumFixture} from './frost-human-sanctum-fixture.mjs';
+export function sorceressFixture(S){const f=sanctumFixture(S);f.s.teams[0].humanSanctum.Rhst=2;f.hall.upgradeTier=3;f.hall.maxHp=f.hall.hp=S.mainBase(f.s,f.hall).hp;const sorceress=S.spawn(f.s,'humansorceress',0,-2,0,{mana:400,sanctumAuto:false,cd:99,order:{type:'hold'}}),ally=S.spawn(f.s,'humanfootman',0,-1,1,{cd:99,order:{type:'hold'}}),enemy=S.spawn(f.s,'humanknight',1,2,1,{cd:99,order:{type:'hold'}});S.visibility(f.s);return {...f,sorceress,ally,enemy};}
