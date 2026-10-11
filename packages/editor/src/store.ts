@@ -1104,7 +1104,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     subscribePlayFrames(listener: () => void) { const subscribed = () => listener(); playFrameListeners.add(subscribed); return () => { playFrameListeners.delete(subscribed); }; },
     /** Frozen native render data keeps private editable copies inside the store. */
     playRenderSnapshot() {
-      if (!ownedPlayWorld || !playWorldSync.presentationSnapshot(playEntities, playClearColor ?? clearColor)) return mutablePlayViewportSnapshot();
+      if (!ownedPlayWorld || !playWorldSync.presentationMatches(playEntities, playClearColor ?? clearColor)) return mutablePlayViewportSnapshot();
       const { entities, clearColor: color } = ownedPlayWorld;
       return { entities, frame, simFrame: frame, simulationTime: playSpin, clearColor: color, selected: primarySelected(), nativeSessionId: nativePlaySessionId(true), nativeWorldReference: nativeWorldReference({ entities, clearColor: color }), runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs };
     },

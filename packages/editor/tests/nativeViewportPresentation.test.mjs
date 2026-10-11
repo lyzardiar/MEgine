@@ -53,3 +53,22 @@ test('displayed Scene transforms resolve once per immutable frame and preserve p
   assert.equal(reader(createNativeViewportWorldArgs(live).frameWorld()).worldTransforms().get(2).active, false);
   assert.ok(Math.abs(reader(firstWorld).worldTransforms().get(2).transform.position[0] - 4) < 1e-10);
 });
+
+
+test('camera-only native frames share derived data while newer records restore their own hierarchy and poses', async () => {
+  const { retainPlayWorld } = await server.ssrLoadModule('/src/playWorldSync.ts');
+  const live = props(), owned = retainPlayWorld({ ...live, frame: 0, simFrame: 0, selected: null });
+  const reference = { ...owned, sessionId: 9, revision: 1 };
+  const frame = () => createNativeViewportWorldArgs({ ...live, nativeWorldReference: reference, runtimeSessionId: 9 }).frameWorld();
+  const read = createNativeViewportPresentationReader(), firstWorld = frame(), first = read(firstWorld), transforms = first.worldTransforms();
+  const camera = first.gameCamera(null, 0), nextWorld = frame();
+  assert.notEqual(nextWorld, firstWorld); assert.equal(nextWorld.entities, firstWorld.entities);
+  assert.equal(read(nextWorld).worldTransforms(), transforms); assert.equal(read(nextWorld).gameCamera(null, 0), camera);
+  assert.equal(read(nextWorld).active(3), true); assert.equal(read(nextWorld).requiresBrowserSnapshot, true);
+  live.entities[0].active = false; live.entities[1].components.Transform.position[0] = 14;
+  const newer = retainPlayWorld({ ...live, frame: 1, simFrame: 1, selected: null });
+  const changed = createNativeViewportWorldArgs({ ...live, nativeWorldReference: { ...newer, sessionId: 9, revision: 2 }, runtimeSessionId: 9 }).frameWorld();
+  assert.notEqual(read(changed).worldTransforms(), transforms); assert.equal(read(changed).active(3), false);
+  assert.equal(read(changed).gameCamera(null, 0), null); assert.equal(read(changed).worldTransforms().get(2).transform.position[0], 14);
+  assert.equal(read(firstWorld).active(3), true); assert.equal(read(firstWorld).gameCamera(null, 0).eye[0], 0);
+});

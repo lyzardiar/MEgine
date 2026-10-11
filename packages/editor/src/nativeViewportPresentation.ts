@@ -1,4 +1,4 @@
-// Author: MiYu. Reuse derived hierarchy and camera data only for the browser-owned displayed frame.
+// Author: MiYu. Reuse derived hierarchy and camera data for the same owned displayed entity records.
 import { createHierarchyActiveLookup } from './hierarchyActivation';
 import { timelineGameCamera, type ResolvedGameCamera } from './gameCamera';
 import type { TimelineCameraPreview } from './timelineScenePreview';
@@ -9,7 +9,7 @@ type Entity = { entity: number; parent?: number | null; active?: boolean; compon
 
 /** Live editable worlds never enter this cache; a decoded frame owns its fixed revision's records. */
 export function createNativeViewportPresentationReader<E extends Entity>() {
-  let previous: NativeViewportFrameWorld<E> | undefined;
+  let previousEntities: E[] | undefined;
   let presentation: ReturnType<typeof prepare> | undefined;
   function prepare(world: NativeViewportFrameWorld<E>) {
     const active = createHierarchyActiveLookup(world.entities);
@@ -28,7 +28,7 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
     };
   }
   return (world: NativeViewportFrameWorld<E>) => {
-    if (previous !== world) { previous = world; presentation = prepare(world); }
+    if (previousEntities !== world.entities) { previousEntities = world.entities; presentation = prepare(world); }
     return presentation!;
   };
 }
