@@ -4708,12 +4708,17 @@ var FrostClient=(()=>{
   function set(n,c,v){if(FrostEffectPool.pooled(n)){effectPool.setComponent(n,c,v);return;}const e=entityFor(n);if(!e)return;const json=JSON.stringify(v),key=n+'/'+c;if(sent[key]===json)return;sent[key]=json;engine.pushCommandJson('{"op":"setComponent","entity":'+e.entity+',"component":'+JSON.stringify(c)+',"value":'+json+'}');}
   function activate(n,on){if(FrostEffectPool.pooled(n)){effectPool.setActive(n,on);return;}if(active[n]===on)return;const e=entityFor(n);if(!e)return;active[n]=on;engine.setActive(e.entity,on);}
   function transform(n,position,scale=[1,1,1],rotation=[0,0,0,1]){activate(n,position!==hidden);if(position!==hidden)set(n,'Transform',{position,scale,rotation});}
-  const environmentCounts={};
+  const environmentCounts={},environmentStates={};
+  const sameEnvironmentVector=(a,b)=>a===b||!!a&&!!b&&a.length===b.length&&a.every((v,i)=>v===b[i]);
   function environment(n,visual,position=hidden){
-    const count=Math.min(visual?.parts.length||0,environmentParts);
+    const count=Math.min(visual?.parts.length||0,environmentParts),rotation=count?(visual.rotation||[0,Math.sin(visual.yaw/2),0,Math.cos(visual.yaw/2)]):null,old=environmentStates[n];
+    if(old&&old.count===count&&(!count||old.scale===visual.scale&&sameEnvironmentVector(old.position,position)&&sameEnvironmentVector(old.rotation,rotation)&&old.parts.every((p,i)=>{const next=visual.parts[i];return p.mesh===next.mesh&&p.material===next.material&&p.visible===(next.visible!==false)&&sameEnvironmentVector(p.color,next.color||null);})))return;
     if(count&&!effectPool.ensureActor(n,count))return;
-    for(let i=0;i<Math.max(count,environmentCounts[n]??environmentParts);i++){const name=n+(i?' part '+i:''),part=visual?.parts[i];if(!part||part.visible===false){transform(name,hidden);continue;}set(name,'MeshRenderer',{mesh:part.mesh,material:part.material});if(part.color)set(name,'MaterialPropertyBlock',{override_base_color:true,base_color:part.color});transform(name,position,[visual.scale,visual.scale,visual.scale],visual.rotation||[0,Math.sin(visual.yaw/2),0,Math.cos(visual.yaw/2)]);}
+    const scale=count?[visual.scale,visual.scale,visual.scale]:null;
+    for(let i=0;i<Math.max(count,environmentCounts[n]??environmentParts);i++){const name=n+(i?' part '+i:''),part=visual?.parts[i];if(!part||part.visible===false){transform(name,hidden);continue;}set(name,'MeshRenderer',{mesh:part.mesh,material:part.material});if(part.color)set(name,'MaterialPropertyBlock',{override_base_color:true,base_color:part.color});transform(name,position,scale,rotation);}
     environmentCounts[n]=count;
+    // MiYu: deferred writes retry in beginFrame; keep detached values only after all actor nodes are ready.
+    environmentStates[n]=count?{count,scale:visual.scale,position:[...position],rotation:[...rotation],parts:visual.parts.slice(0,count).map(p=>({mesh:p.mesh,material:p.material,visible:p.visible!==false,color:p.color?[...p.color]:null}))}:{count};
   }
   const actorCounts={};let renderedCorpseSlots=0;
   function actor(n,parts,position=hidden,scale=[1,1,1],rotation=[0,0,0,1],color=[1,1,1,1],portrait=false){

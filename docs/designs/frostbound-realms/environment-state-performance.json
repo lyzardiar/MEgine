@@ -1,0 +1,135 @@
+{
+  "author": "MiYu",
+  "date": "2026-10-12",
+  "baselineGameCommit": "4b1dcd877013f5066ab903e8d4048ab1811e195d",
+  "executable": "D:/MEngineNativeQA/release-editor-revision-presentation.exe",
+  "executableSha256": "16307d8918967c8bb9f81e7350978b9dc7b34b7469f2e72fc56a60dfde3d5627",
+  "nativeExecutableIdenticalForAllRuns": true,
+  "qaSource": {
+    "sample": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Scripts\\Main.js",
+    "originalSha256": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+    "baselineSha256": "0c4fc49a32a2d316f1811610456b46c80264a7d4ff62734f8d6706fa43019f65",
+    "candidateSha256": "b77fed99c9367b37efe6b37f5e8cce54cd5012c7ac87c61e1006f5d29d378e53",
+    "baselineGameCommit": "4b1dcd877013f5066ab903e8d4048ab1811e195d"
+  },
+  "qaSampleOriginalRestored": true,
+  "generatedMainReproduced": true,
+  "generatedClientComparison": {
+    "author": "MiYu",
+    "passed": true,
+    "comparisons": 45,
+    "scope": "Generated Main.js against prior native nodes; readiness, discarded spawn/parent/write/hide recovery, detached caller inputs, poses, materials, colors, transforms, part growth/shrink, visibility and independent actor slots."
+  },
+  "regressions": [
+    "Deferred spawn, parent and component command recovery",
+    "Tree fall progression, fractional pause and fog visibility",
+    "Minimap: 21 scenarios with 256 tiles each",
+    "Effect pool: 16 generated client checks"
+  ],
+  "cacheBound": {
+    "currentSlots": 368,
+    "scenery": 140,
+    "prop": 100,
+    "doodad": 128,
+    "holdsMapReferences": false,
+    "detachedInputs": [
+      "position",
+      "rotation",
+      "part color"
+    ]
+  },
+  "independentReview": {
+    "blockers": 0,
+    "readOnly": true,
+    "reviewer": "release_editor_frame_review"
+  },
+  "qa": [
+    {
+      "label": "environment-state-baseline",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-environment-state-baseline-1791748061602\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 35.7867205421164,
+      "gameCanvasNewBufferHz": 35.7867205421164,
+      "simulationHz": 36.671684880482296,
+      "fullRequestMs": 15.502916661898295,
+      "renderMs": 9.08772541666667,
+      "commandMs": 10.690135,
+      "nativeRequests": 458,
+      "renderedDistinctRevisions": 458,
+      "revisionDrawGapP95Ms": 52.0,
+      "revisionDrawGapMaxMs": 560.4000000953674,
+      "scenePaintCount": 681,
+      "sceneNewNativeFrames": 660
+    },
+    {
+      "label": "environment-state-candidate",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-environment-state-candidate-1791748313367\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 38.8977154436011,
+      "gameCanvasNewBufferHz": 38.8977154436011,
+      "simulationHz": 39.75422164437553,
+      "fullRequestMs": 14.938750013709068,
+      "renderMs": 8.643234166666668,
+      "commandMs": 10.299544999999991,
+      "nativeRequests": 497,
+      "renderedDistinctRevisions": 497,
+      "revisionDrawGapP95Ms": 44.799999952316284,
+      "revisionDrawGapMaxMs": 516.2999999523163,
+      "scenePaintCount": 676,
+      "sceneNewNativeFrames": 657
+    },
+    {
+      "label": "environment-state-candidate-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-environment-state-candidate-repeat-1791748421728\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 38.4566689880727,
+      "gameCanvasNewBufferHz": 38.4566689880727,
+      "simulationHz": 39.60884722572374,
+      "fullRequestMs": 15.491249999403953,
+      "renderMs": 8.799932499999999,
+      "commandMs": 10.456603750000001,
+      "nativeRequests": 486,
+      "renderedDistinctRevisions": 486,
+      "revisionDrawGapP95Ms": 48.59999990463257,
+      "revisionDrawGapMaxMs": 447.0,
+      "scenePaintCount": 679,
+      "sceneNewNativeFrames": 659
+    },
+    {
+      "label": "environment-state-baseline-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-environment-state-baseline-repeat-1791748498577\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 36.698545417534355,
+      "gameCanvasNewBufferHz": 36.698545417534355,
+      "simulationHz": 37.44246115604118,
+      "fullRequestMs": 15.64166667163372,
+      "renderMs": 8.815771666666656,
+      "commandMs": 10.558935416666662,
+      "nativeRequests": 467,
+      "renderedDistinctRevisions": 467,
+      "revisionDrawGapP95Ms": 49.700000047683716,
+      "revisionDrawGapMaxMs": 556.7999999523163,
+      "scenePaintCount": 679,
+      "sceneNewNativeFrames": 659
+    }
+  ],
+  "gainsPercent": [
+    {
+      "simulationHz": 8.405768030401696,
+      "distinctDrawnWorldRevisionHz": 8.693154484003252
+    },
+    {
+      "simulationHz": 5.785907236851129,
+      "distinctDrawnWorldRevisionHz": 4.7907173173635575
+    }
+  ],
+  "acceptanceScope": "Owned native Release editor, generated QuickJS script, actual WebView GPU pixels, Scene continuity, selection, hierarchy, pause/step/restart; not physical display FPS or cross-machine acceptance."
+}
