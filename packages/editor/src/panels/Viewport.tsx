@@ -211,6 +211,7 @@ import {
   type SceneOrientationView,
 } from '../sceneOrientation';
 import { nativeSceneFrameForPresentation, nativeSceneFrameRequestIdentity, pendingNativeScenePaintUnchanged, type NativeScenePaintState } from '../nativeSceneFrame';
+import { createNativeSceneMeshHitCache } from '../nativeSceneMeshHit';
 import {
   rectAxisTranslationAmount,
   rectTranslationAlongAxis,
@@ -736,6 +737,7 @@ export function Viewport(props: {
     camera: Camera;
     world: NativeViewportFrameWorld<Ent>;
   } | null>(null);
+  const nativeSceneMeshHitRef = useRef(createNativeSceneMeshHitCache());
   const nativeSceneRequestRef = useRef({
     inFlight: false,
     lastRequestAt: 0,
@@ -1631,6 +1633,7 @@ export function Viewport(props: {
     }
     const nativeSceneFrame = !isGame && !scene2DActive && !nativeSceneRequestRef.current.reportedError ? nativeSceneFrameForPresentation(nativeSceneFrameRef.current, nativeSceneIdentity) : null;
     if (nativeSceneFrame) cam = nativeSceneFrame.camera;
+    nativeSceneMeshHitRef.current.beginFrame(nativeSceneFrame, vp);
     const displayedWorld = isGame ? nativeGameFrameRef.current?.world : nativeSceneFrame?.world;
     const browserWorld = displayedWorld ?? (editScene ? nativeWorld.frameWorld() : undefined);
     const displayedPresentation = browserWorld ? nativePresentationRef.current(browserWorld) : undefined;
@@ -2439,9 +2442,9 @@ export function Viewport(props: {
       if (nativeSceneFrame?.image) {
         const meshPath = String((mesh as Record<string, unknown>).mesh ?? 'cube');
         const imported = /\.(?:gltf|glb)$/i.test(meshPath) ? modelPreview(meshPath) : null;
-        const hit = imported
+        const hit = nativeSceneMeshHitRef.current.read(e.entity, imported, () => imported
           ? drawTriangleMesh(ctx, cam, vp, t.position as Vec3, t.scale as Vec3, imported.positions, imported.indices, selected, rot, undefined, true)
-          : drawSolidCube(ctx, cam, vp, t.position as Vec3, half, selected, rot, undefined, true);
+          : drawSolidCube(ctx, cam, vp, t.position as Vec3, half, selected, rot, undefined, true));
         if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
         continue;
       }
