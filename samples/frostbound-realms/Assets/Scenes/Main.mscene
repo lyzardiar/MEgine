@@ -381535,6 +381535,140 @@
             "time_seconds": 0
           }
         }
+      },
+      {
+        "entity": 90187,
+        "name": "Classic spell 0 magicSentry",
+        "parent": 90041,
+        "siblingIndex": 8978,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanSentryEffects/Effects/MagicSentryCaster.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90188,
+        "name": "Classic spell 0 magicSentry mesh 0",
+        "parent": 90187,
+        "siblingIndex": 0,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanSentryEffects/Models/Abilities/Spells/Human/MagicSentry/MagicSentryCaster/geoset-00-animated.glb",
+            "material": "Assets/HumanSentryEffects/Materials/Abilities/Spells/Human/MagicSentry/MagicSentryCaster/geoset-00-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90189,
+        "name": "Classic spell 0 magicSentry mesh 1",
+        "parent": 90187,
+        "siblingIndex": 1,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanSentryEffects/Models/Abilities/Spells/Human/MagicSentry/MagicSentryCaster/geoset-01-animated.glb",
+            "material": "Assets/HumanSentryEffects/Materials/Abilities/Spells/Human/MagicSentry/MagicSentryCaster/geoset-01-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90190,
+        "name": "Classic spell 0 magicSentry mesh 2",
+        "parent": 90187,
+        "siblingIndex": 2,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanSentryEffects/Models/Abilities/Spells/Human/MagicSentry/MagicSentryCaster/geoset-02-animated.glb",
+            "material": "Assets/HumanSentryEffects/Materials/Abilities/Spells/Human/MagicSentry/MagicSentryCaster/geoset-02-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
       }
     ],
     "frame": 0,

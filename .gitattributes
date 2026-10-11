@@ -238,3 +238,11 @@ docs/designs/frostbound-realms/human-sanctum*.json text eol=lf
 docs/designs/frostbound-realms/human-sanctum*.md text eol=lf
 samples/frostbound-realms/Assets/HumanSanctumEffects/** -text whitespace=cr-at-eol
 samples/frostbound-realms/SourceAssets/HumanSanctumEffects/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+samples/frostbound-realms/Assets/HumanSentryEffects/** -text whitespace=cr-at-eol
+samples/frostbound-realms/SourceAssets/HumanSentry*/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+samples/frostbound-realms/Assets/Art/classic-human-sentry.png binary
+samples/frostbound-realms/human-sentry*.json text eol=lf
+scripts/*human-sentry*.py text eol=lf
+scripts/*human-sentry*.mjs text eol=lf
+docs/designs/frostbound-realms/human-sentry*.json text eol=lf
+docs/designs/frostbound-realms/human-sentry*.md text eol=lf
