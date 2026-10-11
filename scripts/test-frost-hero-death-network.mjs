@@ -9,7 +9,7 @@ async function peer(){
   const socket=net.connect(address.port,'127.0.0.1'),pending=[];let buffer='',seq=0;sockets.push(socket);socket.setEncoding('utf8');socket.on('error',()=>{});
   socket.on('data',chunk=>{buffer+=chunk;let end;while((end=buffer.indexOf('\n'))>=0){const message=JSON.parse(buffer.slice(0,end));buffer=buffer.slice(end+1);for(const w of [...pending])if(w.check(message)){pending.splice(pending.indexOf(w),1);clearTimeout(w.timer);w.resolve(message);}}});
   await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('error',reject);});
-  const send=message=>socket.write(JSON.stringify(message)+'\n'),next=check=>new Promise((resolve,reject)=>{const w={check,resolve,timer:setTimeout(()=>{pending.splice(pending.indexOf(w),1);reject(Error('Hero death TCP timeout'));},10000)};pending.push(w);}),welcome=next(m=>m.type==='welcome');send({type:'hello',protocol:S.PROTOCOL});assert.equal((await welcome).protocol,81);return {socket,send,next,order:command=>send({type:'order',seq:++seq,command})};
+  const send=message=>socket.write(JSON.stringify(message)+'\n'),next=check=>new Promise((resolve,reject)=>{const w={check,resolve,timer:setTimeout(()=>{pending.splice(pending.indexOf(w),1);reject(Error('Hero death TCP timeout'));},10000)};pending.push(w);}),welcome=next(m=>m.type==='welcome');send({type:'hello',protocol:S.PROTOCOL});assert.equal((await welcome).protocol,82);return {socket,send,next,order:command=>send({type:'order',seq:++seq,command})};
 }
 const wait=(p,check)=>p.next(m=>m.type==='state'&&check(m.state)),hero=(s,id)=>s.units.find(u=>u.id===id);
 try{

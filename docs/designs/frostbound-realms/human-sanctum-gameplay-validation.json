@@ -1,0 +1,134 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "protocol": 82,
+  "featureVersion": 1,
+  "modules": [
+    {
+      "name": "build-output",
+      "exitCode": 0,
+      "verified": "direct terminal result"
+    },
+    {
+      "name": "corpse-network",
+      "exitCode": 0,
+      "seconds": 0.77
+    },
+    {
+      "name": "corpse-stages",
+      "exitCode": 0,
+      "seconds": 0.35
+    },
+    {
+      "name": "death-knight",
+      "exitCode": 0,
+      "seconds": 0.29
+    },
+    {
+      "name": "death-knight-generated",
+      "exitCode": 0,
+      "seconds": 1.9
+    },
+    {
+      "name": "human-army",
+      "exitCode": 0,
+      "verified": "direct terminal result"
+    },
+    {
+      "name": "human-army-client",
+      "exitCode": 0,
+      "seconds": 1.6
+    },
+    {
+      "name": "human-army-network",
+      "exitCode": 0,
+      "seconds": 1.22
+    },
+    {
+      "name": "human-equipment",
+      "exitCode": 0,
+      "seconds": 0.78
+    },
+    {
+      "name": "human-equipment-client",
+      "exitCode": 0,
+      "seconds": 9.34
+    },
+    {
+      "name": "human-equipment-network",
+      "exitCode": 0,
+      "seconds": 2.09
+    },
+    {
+      "name": "human-mortar",
+      "exitCode": 0,
+      "seconds": 0.33
+    },
+    {
+      "name": "human-mortar-client",
+      "exitCode": 0,
+      "seconds": 3.66
+    },
+    {
+      "name": "human-mortar-network",
+      "exitCode": 0,
+      "seconds": 1.19
+    },
+    {
+      "name": "human-sanctum",
+      "exitCode": 0,
+      "verified": "direct terminal result"
+    },
+    {
+      "name": "human-sanctum-client",
+      "exitCode": 0,
+      "seconds": 11.5
+    },
+    {
+      "name": "human-sanctum-network",
+      "exitCode": 0,
+      "seconds": 1.06
+    },
+    {
+      "name": "human-technology",
+      "exitCode": 0,
+      "seconds": 0.37
+    },
+    {
+      "name": "human-technology-client",
+      "exitCode": 0,
+      "seconds": 11.76
+    },
+    {
+      "name": "human-technology-network",
+      "exitCode": 0,
+      "seconds": 1.35
+    },
+    {
+      "name": "paladin",
+      "exitCode": 0,
+      "seconds": 0.19
+    },
+    {
+      "name": "paladin-generated",
+      "exitCode": 0,
+      "seconds": 1.33
+    },
+    {
+      "name": "projectile-art",
+      "exitCode": 0,
+      "verified": "direct terminal result"
+    },
+    {
+      "name": "unit-scales",
+      "exitCode": 0,
+      "verified": "direct terminal result"
+    }
+  ],
+  "nativeSteps": 60,
+  "nativeBundleSha256": "ddf314131e8ca81fdd649604d69c43dbde2db57e1e144974598da714c904203d",
+  "nativeConsoleErrors": 0,
+  "nativeShaderRejections": 0,
+  "initialEntities": 8973,
+  "scope": "Arcane Sanctum construction, three-unit production, ranked caster training, research queues, original weapons, innate immunity, Blacksmith equipment, corpses/revival, client and authoritative TCP integration. Active caster spells and Magic Sentry detection pending."
+}

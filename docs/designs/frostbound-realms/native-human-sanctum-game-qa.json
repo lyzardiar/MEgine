@@ -1,0 +1,289 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-11T06:55:42.433Z",
+  "sample": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample",
+  "root": "D:\\MEngineNativeQA\\sanctum-validation\\human-sanctum-game-1791701741938",
+  "reusedAssets": true,
+  "protocol": 82,
+  "editorSha256": "69d3252dbe5027c103161208d08690b35ca168d595a86cc19ff77d6572e2fb9b",
+  "productMainSha256": "ddf314131e8ca81fdd649604d69c43dbde2db57e1e144974598da714c904203d",
+  "steps": [
+    {
+      "name": "project.state",
+      "ms": 4673
+    },
+    {
+      "name": "project.open",
+      "ms": 5662
+    },
+    {
+      "name": "project.state",
+      "ms": 364
+    },
+    {
+      "name": "project.state",
+      "ms": 433
+    },
+    {
+      "name": "view.set_game_resolution",
+      "ms": 440
+    },
+    {
+      "name": "panel.focus",
+      "ms": 2910
+    },
+    {
+      "name": "playback.play",
+      "ms": 3964
+    },
+    {
+      "name": "playback.step",
+      "ms": 1423
+    },
+    {
+      "name": "entity.get",
+      "ms": 74
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 924
+    },
+    {
+      "name": "entity.get",
+      "ms": 385
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 726
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 2827
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "name": "playback.step",
+      "ms": 365
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 86
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 125
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 70
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 62
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 626
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 80
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 151
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "playback.input",
+      "ms": 1
+    },
+    {
+      "name": "playback.step",
+      "ms": 194
+    },
+    {
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 52
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 167
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "playback.input",
+      "ms": 1
+    },
+    {
+      "name": "playback.step",
+      "ms": 207
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 73
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 119
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 75
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 58
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 61
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 68
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 158
+    },
+    {
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "name": "playback.input",
+      "ms": 1
+    },
+    {
+      "name": "playback.step",
+      "ms": 218
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 572
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 63
+    },
+    {
+      "name": "profiler.get_samples",
+      "ms": 20
+    },
+    {
+      "name": "console.get_logs",
+      "ms": 3
+    },
+    {
+      "name": "playback.stop",
+      "ms": 114
+    }
+  ],
+  "physicalInput": false,
+  "nativeOriginalTrainResearchPaymentAndQueueReload": true,
+  "nativeVaultCastleCardsAndFullQueue": true,
+  "nativeOriginalArmyAndTrainedStats": true,
+  "nativeCounts": {
+    "billboardMeshes": 5,
+    "cameraVisibleObjects": 179,
+    "entities": 9343,
+    "materialPipelineEvictions": 0,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 4,
+    "materialPipelinesRejected": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialSamplers": 2,
+    "materialTextureBindGroups": 21,
+    "materialTexturesColor": 26,
+    "materialTexturesData": 5,
+    "msaaSamples": 4,
+    "renderObjects": 308,
+    "sceneViews": 0,
+    "shadowVisibleObjects": 296,
+    "submittedObjects": 304,
+    "uiBatches": 27,
+    "uiDrawCalls": 27,
+    "uiPrimitives": 627
+  },
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Native original Sanctum P/S/B/T cards, Vault/Castle gates, paid shared queues and F5/menu reload, original three-unit army and trained stats. Shared/generated/TCP tests cover full source clocks, impacts and privacy. Caster abilities, physical input, standalone player, original-executable comparison and cross-machine LAN remain unverified",
+  "shutdown": {
+    "pid": 144904,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\sanctum-validation\\human-sanctum-game-1791701741938\\runtime\\com.mengine.editor.agent-3ZDMKt '\\\\?\\D:\\MEngineNativeQA\\sanctum-validation\\human-sanctum-game-1791701741938\\runtime\\com.mengine.editor.agent-3ZDMKt'"
+  }
+}
