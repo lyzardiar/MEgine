@@ -49,7 +49,7 @@ import {
 } from '../math3d';
 import { clearModelPreview, modelPreview, type PreviewMesh } from '../modelPreview';
 import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
-import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGamePreviewSize, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
+import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGamePreviewSize, nativeSceneBrowserWorld, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
 import { releaseNativeViewportFrame, requestRevisionedNativeViewportFrame } from '../nativeViewportTransport';
 import {
   clearMaterialPreviews,
@@ -864,7 +864,12 @@ export function Viewport(props: {
       if (cached?.source === entities && cached.hiddenKey === hiddenKey) entities = cached.entities;
       else { const ids = new Set(hidden); filteredSceneRef.current = { source: entities, hiddenKey, entities: entities.filter(entity => !ids.has(entity.entity)) }; entities = filteredSceneRef.current.entities; }
     }
-    return { ...p, get nativeSessionId() { return hidden.length ? undefined : live.nativeSessionId; }, get nativeWorldReference() { return hidden.length ? undefined : live.nativeWorldReference; }, runtimeSessionId: live.runtimeSessionId, simulationRequestMs: live.simulationRequestMs, entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime };
+    return { ...p,
+      get nativeSessionId() { return hidden.length ? undefined : live.nativeSessionId; },
+      get nativeWorldReference() { return hidden.length ? undefined : live.nativeWorldReference; },
+      get browserWorldReference() { return hidden.length ? nativeSceneBrowserWorld(live.nativeWorldReference, live.entities, entities, hidden) : undefined; },
+      runtimeSessionId: live.runtimeSessionId, simulationRequestMs: live.simulationRequestMs, entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime,
+    };
   };
 
   const currentUiItems = () => {
@@ -1691,7 +1696,7 @@ export function Viewport(props: {
     }
 
     const transformSource = nativeGameReady && !(displayedPresentation?.hasSpine ?? p.entities.some(entity => entity.components.SpineSkeleton)) ? [] : p.entities;
-    const worldTransforms = editScene && sceneTransformsRef.current?.source === transformSource ? sceneTransformsRef.current.transforms : buildWorldTransforms(transformSource);
+    const worldTransforms = transformSource.length && displayedPresentation ? displayedPresentation.worldTransforms() : editScene && sceneTransformsRef.current?.source === transformSource ? sceneTransformsRef.current.transforms : buildWorldTransforms(transformSource);
     sceneTransformsRef.current = editScene ? { source: transformSource, transforms: worldTransforms } : null;
     const lights2D = prepareLight2DLights((nativeGameReady ? [] : p.entities).flatMap<Light2DInstance>((entity) => {
       if (!isActive(entity.entity)) return [];
