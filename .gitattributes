@@ -215,3 +215,9 @@ samples/frostbound-realms/Assets/Licenses/Classic-Human-Technology.txt text eol=
 scripts/*human-technology*.py text eol=lf
 scripts/*human-technology*.mjs text eol=lf
 docs/designs/frostbound-realms/*human-technology*.json text eol=lf
+
+samples/frostbound-realms/SourceAssets/HumanEquipment/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+samples/frostbound-realms/Assets/Licenses/Classic-Human-Equipment.txt text eol=lf
+scripts/*human-equipment*.py text eol=lf
+scripts/*human-equipment*.mjs text eol=lf
+docs/designs/frostbound-realms/*human-equipment*.json text eol=lf

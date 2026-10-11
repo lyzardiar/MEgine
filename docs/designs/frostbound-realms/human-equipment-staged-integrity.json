@@ -1,0 +1,405 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "filesVerified": 99,
+  "signedAssetOutputsVerified": 57,
+  "nativeMainStagedSha256": "1781f130a8c31471e780f3e6ebb654809ae8f6d503b4aa53b8457cb86120f0fd",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "gitBlob": "b8ae459be32a570edc8225b451ee77dae5afb956"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-equipment-handoff.json",
+      "gitBlob": "9e1f105539ce624aace03d81c100dfea123f3f25"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-equipment-native-keep-gate.png",
+      "gitBlob": "d91c1aad63ccf4848f15ac43b6fd9bb7f230af1f"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-equipment-native-queue.png",
+      "gitBlob": "652f39ee079ad720a7696ba8f1fa2d53ebb66125"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-equipment-native-rank-one.png",
+      "gitBlob": "362e03e24229197494fb8b6bff4bab21f3c74e98"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-equipment-native-rank-three.png",
+      "gitBlob": "a8cdbb55e722cd957ce9fe7c600e0fde29c00434"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-equipment-regression.json",
+      "gitBlob": "598497c6e5942a89ebe51fb6b7bb88911bec13c3"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-equipment-regression.log",
+      "gitBlob": "70c734e2dbfcb575d50f78388f5936d890010ed6"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-equipment-reproduction.json",
+      "gitBlob": "78cae4bbaeaa8f2d4f216483873f1b274a4f0f9f"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-equipment-validation.json",
+      "gitBlob": "5cb1b9cb804a285d6a1471341e61d3043f37b6a4"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/human-equipment.md",
+      "gitBlob": "ccfc059876ab31a454684512fc92ce5da3911d53"
+    },
+    {
+      "path": "docs/designs/frostbound-realms/native-human-equipment-qa.json",
+      "gitBlob": "2b29c6a8e5113b7fe854dc63a8463aae1710e7ed"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhar-1-disabled.png",
+      "gitBlob": "4765bb40ecca78c5d11f29d48305e8ef91b35721"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhar-1.png",
+      "gitBlob": "08322d78dae4f57bfed30b7a5f9a21940402fb79"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhar-2-disabled.png",
+      "gitBlob": "655b0c2290dc98601b0b07c201d38d52dc5079bc"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhar-2.png",
+      "gitBlob": "6eba865cc55d1993c784611f2dafd4a46b1a2ea5"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhar-3-disabled.png",
+      "gitBlob": "b74b3dcabf3eacc4b4468f3c171458e366595930"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhar-3.png",
+      "gitBlob": "d30a9387e228dab3ab1a703544c257f5a0e6b302"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhla-1-disabled.png",
+      "gitBlob": "7b5a93f4b98096f38a94537b1d012e4bcdfc76f0"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhla-1.png",
+      "gitBlob": "c26001c43f5acd58e27db6c92722818bea809b0f"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhla-2-disabled.png",
+      "gitBlob": "6d51691b512d3602b15712491b0a8c8b198f90e7"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhla-2.png",
+      "gitBlob": "85656646906538fb2a3768552bd56144d315c668"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhla-3-disabled.png",
+      "gitBlob": "1fc3ecf881730f23de68e187baf26ea23a38f5e2"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhla-3.png",
+      "gitBlob": "b40cf9eb0706d7e329bd5514769f07aa7b176f5e"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhme-1-disabled.png",
+      "gitBlob": "13de1bd7a9e1cb07ca481642c2cff7f2a8f7a4bf"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhme-1.png",
+      "gitBlob": "19436faf6cb8b03c4406b30d0233b3182d32eed6"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhme-2-disabled.png",
+      "gitBlob": "79339db6f490d4c4aba4e0c6d99099073746d1f0"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhme-2.png",
+      "gitBlob": "169a79665f11ef8305f2876ee44c784dbd893b4a"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhme-3-disabled.png",
+      "gitBlob": "c32ea9f6d4dd2ada39d006bc928fc3b158c7f9cc"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhme-3.png",
+      "gitBlob": "f1b8ccecc71fafebae6774a2f8b29f777015476b"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhra-1-disabled.png",
+      "gitBlob": "e0acbee9bb67571adf2af7dc98001d539dcc2d11"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhra-1.png",
+      "gitBlob": "72173317bfd857147edbaf2c776091790762a6c7"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhra-2-disabled.png",
+      "gitBlob": "71e34c88aceaf51699ac6ea9b85e8574fc313148"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhra-2.png",
+      "gitBlob": "6b8a16aae5d6766ef33ee7011fbe8b7c4de8eb30"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhra-3-disabled.png",
+      "gitBlob": "9c25ad035887589612318264f60a220e568a989a"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Art/classic-rhra-3.png",
+      "gitBlob": "9be7042c382e87378dd90b94d2da13c14563ecf6"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Licenses/Classic-Human-Equipment.txt",
+      "gitBlob": "9b85ddc532511e1677fc1d61897595a38613002a"
+    },
+    {
+      "path": "samples/frostbound-realms/Assets/Scripts/Main.js",
+      "gitBlob": "4cc8c1bb545722b38ef0a0c07aac35720abcd7b5"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNArcaniteMelee.blp",
+      "gitBlob": "f38cfc34fad6033a31a3c77e58abfc729ce51e39"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNHumanArmorUpOne.blp",
+      "gitBlob": "e3da4a36669ee32f02ce20a8032f7ee45fba9be3"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNHumanArmorUpThree.blp",
+      "gitBlob": "c2ffe19b1e2d7a01afdbc1a3ba0d1aa659b15a13"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNHumanArmorUpTwo.blp",
+      "gitBlob": "041a6ba05597f77fdaeb8977f75d5de003579a3f"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNHumanMissileUpOne.blp",
+      "gitBlob": "e920469660e2eb7653e6c5802d7d593dc4ef238e"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNHumanMissileUpThree.blp",
+      "gitBlob": "fe0d9cf74b2dc0b9c3df52f5c2bc804592fee0b2"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNHumanMissileUpTwo.blp",
+      "gitBlob": "2de2ceb192c18da319d49cceb1465d37a643003e"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNLeatherUpgradeOne.blp",
+      "gitBlob": "5c199c080e094f821636f7ff58200b9d73a77c93"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNLeatherUpgradeThree.blp",
+      "gitBlob": "214fa2b3a541a9b88d07ad1c628d8309b447e362"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNLeatherUpgradeTwo.blp",
+      "gitBlob": "bddd515b305118b9e5ee3b66955ff9b1c7db5cf2"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNSteelMelee.blp",
+      "gitBlob": "b2994fa5faa10367391ead42c148d291a7b0e16c"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtons/BTNThoriumMelee.blp",
+      "gitBlob": "ae33702d544a3b2ee1ac5ff147c167f83b247313"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNArcaniteMelee.blp",
+      "gitBlob": "ac032fd0b6bcc75b9ac19088c452ddcb82a3c2f4"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNHumanArmorUpOne.blp",
+      "gitBlob": "d152236cf9da613f0e0b0d9290a104b5390b83e3"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNHumanArmorUpThree.blp",
+      "gitBlob": "6004a433e960c673102a0c2abe0fee1104983703"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNHumanArmorUpTwo.blp",
+      "gitBlob": "07f9655a953f46173ae9d86b1ba2f2908f530a49"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNHumanMissileUpOne.blp",
+      "gitBlob": "75c9d240b8d0c7517ee733b36d7e4c511551d59f"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNHumanMissileUpThree.blp",
+      "gitBlob": "b614cf2686b0529087586309ee0141986982237e"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNHumanMissileUpTwo.blp",
+      "gitBlob": "f3df0b40568bc04b80ec420d6932ab02e86f521d"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNLeatherUpgradeOne.blp",
+      "gitBlob": "bf3c817a0a53263a3dac3a8e4e4314b36a6f8f9b"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNLeatherUpgradeThree.blp",
+      "gitBlob": "6bcbf572cd0f3be8fea43a27ff840e1ef6b142ca"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNLeatherUpgradeTwo.blp",
+      "gitBlob": "babed6d9031dbca5f668e2c5894c1f34e39b8681"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNSteelMelee.blp",
+      "gitBlob": "b8f181075588c5c39115bb89c8765191b2f0cea2"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/ReplaceableTextures/CommandButtonsDisabled/DISBTNThoriumMelee.blp",
+      "gitBlob": "17de559ed6ca65f6e7cc3d189bf52013f8902491"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/Units/HumanUnitFunc.txt",
+      "gitBlob": "ede1c76abd2273d99a54be428ab612e7efdac130"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/Units/HumanUpgradeFunc.txt",
+      "gitBlob": "50710ebd8c271d924e2db43017f2128ad96ed249"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/Units/HumanUpgradeStrings.txt",
+      "gitBlob": "bdc17efbe1963f0d02f1b6a95c11ef674215e7f5"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/Units/UnitBalance.slk",
+      "gitBlob": "86514d0f07b333101fc39fa132ec6c1d14fbe52d"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/Units/UnitWeapons.slk",
+      "gitBlob": "bf46a3596f1ee5fc6cf5e4097def64f2af60ae02"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/Units/UpgradeData.slk",
+      "gitBlob": "6b484a8a9504b7af74e56c7279418203bab5b3df"
+    },
+    {
+      "path": "samples/frostbound-realms/SourceAssets/HumanEquipment/Units/UpgradeEffectMetaData.slk",
+      "gitBlob": "28d30e9d450662862d04971f982d291fd3a1a475"
+    },
+    {
+      "path": "samples/frostbound-realms/game/client.js",
+      "gitBlob": "11f370af368341c67a0d5cf535423178fa6bd706"
+    },
+    {
+      "path": "samples/frostbound-realms/game/simulation.js",
+      "gitBlob": "15f041c08fe6d0b73d619998e1ac23b8bf5dd265"
+    },
+    {
+      "path": "samples/frostbound-realms/human-equipment-sources.json",
+      "gitBlob": "e5a334828d538c5f2de42c7c139b87f420d7c3e0"
+    },
+    {
+      "path": "samples/frostbound-realms/human-equipment.json",
+      "gitBlob": "ed0566f541849e106e7424bf96853f23f16a6147"
+    },
+    {
+      "path": "scripts/build-frostbound.mjs",
+      "gitBlob": "e848add40de54e33428d7d610367051001c31558"
+    },
+    {
+      "path": "scripts/import-frost-human-equipment.py",
+      "gitBlob": "0fc758b9e392007938f4ae6e5194fd42c52085ce"
+    },
+    {
+      "path": "scripts/qa-frost-human-equipment.mjs",
+      "gitBlob": "248582a76bcd4257095430cffa47cd7b7de887e7"
+    },
+    {
+      "path": "scripts/test-frost-avoidance.mjs",
+      "gitBlob": "6e24f42f0e3bda5da9368c18721b1f7bf723f4f1"
+    },
+    {
+      "path": "scripts/test-frost-corpse-network.mjs",
+      "gitBlob": "8585ddd19328806258b46bc48d09cafcd4afbd0d"
+    },
+    {
+      "path": "scripts/test-frost-corpse-stages.mjs",
+      "gitBlob": "95ccaffe4d5212117577b927c5c2f636a2fb9702"
+    },
+    {
+      "path": "scripts/test-frost-crypt-lord-default.mjs",
+      "gitBlob": "76fc6341a712fbf791afa153b6da6f89f85fb63c"
+    },
+    {
+      "path": "scripts/test-frost-crypt-lord-generated.mjs",
+      "gitBlob": "03f2c057b5ddc0fdafd3dc284f20c5a3b2c7cbe0"
+    },
+    {
+      "path": "scripts/test-frost-death-knight-generated.mjs",
+      "gitBlob": "bc99c3150bbfa7fa06d020eded351f29b8e601e5"
+    },
+    {
+      "path": "scripts/test-frost-death-knight.mjs",
+      "gitBlob": "377fcc161f673a2085d978da16fb609f04355d70"
+    },
+    {
+      "path": "scripts/test-frost-dreadlord-generated.mjs",
+      "gitBlob": "3d9eb770d1c4a7b8544ce8c4e7714d3b1df340c6"
+    },
+    {
+      "path": "scripts/test-frost-hero-death-generated.mjs",
+      "gitBlob": "c36278a0e7d45355f2ee068e83a51a0f4fb846cc"
+    },
+    {
+      "path": "scripts/test-frost-hero-death-network.mjs",
+      "gitBlob": "bcd5f5fe77fb8194145c3986e63d2fdf0075b8ea"
+    },
+    {
+      "path": "scripts/test-frost-hero-death.mjs",
+      "gitBlob": "12f891a0e032cf92a77b5890efd131796b84a887"
+    },
+    {
+      "path": "scripts/test-frost-human-army-network.mjs",
+      "gitBlob": "cb9879edf7867491aecb1928ef1d9b9a0e99ca5f"
+    },
+    {
+      "path": "scripts/test-frost-human-army.mjs",
+      "gitBlob": "94cccb242ed4a978b53bb36f825b77843d35bc12"
+    },
+    {
+      "path": "scripts/test-frost-human-equipment-assets.py",
+      "gitBlob": "3cfc52219b2163436030c3f1a0ad137f7c7934dd"
+    },
+    {
+      "path": "scripts/test-frost-human-equipment-client.mjs",
+      "gitBlob": "83459c385e99effd38aed23424e3f7c4b98acfd9"
+    },
+    {
+      "path": "scripts/test-frost-human-equipment-network.mjs",
+      "gitBlob": "1dcf32d29b802bacb2820232ffa0c7fbbe28ce43"
+    },
+    {
+      "path": "scripts/test-frost-human-equipment.mjs",
+      "gitBlob": "5ccfea29dd92fb1eed5ccf66beb430169f85da99"
+    },
+    {
+      "path": "scripts/test-frost-human-technology-network.mjs",
+      "gitBlob": "0436192114b46e4540db026d67b945c949dae5e8"
+    },
+    {
+      "path": "scripts/test-frost-human-technology.mjs",
+      "gitBlob": "442ad177764de3b60fc036e1f65c126f5edce220"
+    },
+    {
+      "path": "scripts/test-frost-lich-generated.mjs",
+      "gitBlob": "163f3baa6adcbac6b719172691fde2f834b28dd1"
+    },
+    {
+      "path": "scripts/test-frost-shadowhunter-generated.mjs",
+      "gitBlob": "8bb75258599ddb8875201edfb2ebf03175618424"
+    },
+    {
+      "path": "scripts/test-frost-tauren-generated.mjs",
+      "gitBlob": "a479f8f7782f2b89c894539eae0cfe017b51ce37"
+    },
+    {
+      "path": "scripts/test-frostbound.mjs",
+      "gitBlob": "d619f8bfe9da541e687a37436b7539037500cacc"
+    }
+  ]
+}

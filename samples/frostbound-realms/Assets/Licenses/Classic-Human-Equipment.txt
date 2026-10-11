@@ -1,0 +1,1 @@
+Warcraft III Blacksmith upgrades, source unit bindings and icons: Blizzard Entertainment. Original game terms apply. Sources, selected rows, archive identities and SHA-256: human-equipment-sources.json and human-equipment.json.

@@ -1,0 +1,15 @@
+# Human Blacksmith equipment research
+
+Author: MiYu. Protocol 80. New skirmishes enable humanEquipmentVersion 1; older saves without the marker restore as version 0.
+
+The Blacksmith offers four three-rank research paths from the original MPQ tables: Rhme melee attack (slot 0, S), Rhra firearm attack (slot 1, G), Rhar iron armor (slot 4, P) and Rhla leather armor (slot 5, A). Every rank takes 60/75/90 seconds. Second ranks require Keep; third ranks require Castle. Research shares a three-slot paid queue, remains unique across the team's Blacksmiths, retains complete waiting clocks and refunds the full source price on cancellation.
+
+Gold/lumber costs by rank are Rhme and Rhra 100/50, 175/175, 250/300; Rhar 125/75, 150/175, 175/275; Rhla 100/100, 150/175, 200/250. Attack research adds 1/2/3 source weapon dice at the corresponding rank. Armor adds 2/4/6. Existing and newly created Footmen, Riflemen and Knights receive their source bindings. Human equipment coexists with Defend, Long Rifles and Animal War Training. Completed ranks, source unit snapshots, real rolled weapon damage and waiting queues survive strict save/load validation. Public enemy snapshots conceal research and queues.
+
+SourceAssets/HumanEquipment preserves the source tables and original BLP bytes. human-equipment-sources.json records archive identities, hashes and generators for 57 outputs, including 24 original rank/disabled PNGs. The catalog also preserves original affected-unit lists for future human production additions. Original Blizzard asset terms apply; download availability does not provide a redistribution license.
+
+The client uses source slots and keys, renders original Chinese rank labels/icons and disables ranks whose prerequisites are absent. The Blacksmith exposes a queue cancellation card and its queue in production telemetry. Its S/P/A/G commands consume research input without triggering unit Stop/Patrol/Attack actions.
+
+Validation evidence is in human-equipment-validation.json, human-equipment-regression.json, native-human-equipment-qa.json and human-equipment-reproduction.json. Shared simulation exhausts all twelve rank clocks, refunds and strict saves; generated Main runs the three initial full clocks with the client's 0.2-second frame limit and restores an actual menu save. TCP checks actual sockets, command authority, payment/refund, privacy, reconnect and completed stats, with research time advanced by fixed authoritative ticks. Native editor playback checks original rank cards, S/P/A input payment, G rejection at a full queue, cancellation-card presence, prerequisite icons, F5/menu restore and upgraded unit stats. Native completed-rank states come from fully advanced shared simulation. Physical input, original executable comparison, standalone player and cross-machine LAN remain unverified.
+
+The full Warcraft III recreation remains incomplete and active. Remaining work includes the rest of human production and research, complete campaigns/custom maps, multiplayer and editor parity.
