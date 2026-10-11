@@ -1,5 +1,7 @@
 // Author: MiYu. Exercise deferred effect creation, hierarchy acknowledgement and dropped-command recovery.
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
 import {createRequire} from 'node:module';
 import {test} from 'node:test';
 const Pool=createRequire(import.meta.url)('../samples/frostbound-realms/game/effect-pool.js');
@@ -36,4 +38,20 @@ test('dropped spawn and dropped parenting commands recover without duplicate ent
 });
 test('root-only status and actors require no mesh template',()=>{
   const f=fixture('status'),name='Classic status 9 sample';assert.equal(f.pool.ensure(name,0),false);f.tick();assert.equal(f.pool.ensure(name,0),true);assert.equal([...f.world.keys()].filter(n=>n.startsWith(name+' mesh')).length,0);
+});
+
+test('acknowledged native components skip serialization while pending writes recover and changing values still commit',()=>{
+  let serializations=0;const module={exports:{}},commands=[],native={entity:1,active:true,components:{Transform:{position:[Math.fround(.1),2,3],rotation:[0,0,0,1],scale:[1,1,1],native_default:0}}},entities={actor:structuredClone(native)};
+  vm.runInNewContext(fs.readFileSync(new URL('../samples/frostbound-realms/game/effect-pool.js',import.meta.url),'utf8'),{module,JSON:{parse:JSON.parse,stringify:value=>{serializations++;return JSON.stringify(value);}}});
+  const pool=module.exports.create({pushCommandJson:raw=>commands.push(JSON.parse(raw))},entities,{},()=>{entities.actor=structuredClone(native);}),value={position:[.1,2,3],rotation:[0,0,0,1],scale:[1,1,1]};
+  for(let i=0;i<100;i++)pool.setComponent('actor','Transform',value);
+  assert.equal(serializations,0,'confirmed f32 values and native defaults need no JSON work');assert.equal(commands.length,0);
+  value.position[0]=4;pool.setComponent('actor','Transform',value);assert.equal(commands.length,1);const changed=structuredClone(commands[0]);
+  value.position[0]=99;assert.equal(changed.value.position[0],4,'queued values are detached from caller mutations');value.position[0]=4;
+  pool.setComponent('actor','Transform',value);assert.equal(commands.length,1,'duplicate pending write stays suppressed');
+  commands.length=0;pool.beginFrame();assert.equal(commands.length,1,'discarded native command is retried');assert.deepEqual(commands[0],changed);
+  native.components.Transform={...changed.value,native_default:0};commands.length=0;pool.beginFrame();const before=serializations;
+  for(let i=0;i<100;i++)pool.setComponent('actor','Transform',value);
+  assert.equal(serializations,before,'acknowledged values return to the serialization-free path');assert.equal(commands.length,0);
+  value.scale=[2,2,2];pool.setComponent('actor','Transform',value);assert.equal(commands.length,1);assert.deepEqual(commands[0].value.scale,[2,2,2]);
 });

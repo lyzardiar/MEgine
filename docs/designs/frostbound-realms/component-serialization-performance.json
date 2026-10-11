@@ -1,0 +1,98 @@
+{
+  "author": "MiYu",
+  "date": "2026-10-12",
+  "executable": "D:/MEngineNativeQA/release-editor-revision-presentation.exe",
+  "executableSha256": "16307d8918967c8bb9f81e7350978b9dc7b34b7469f2e72fc56a60dfde3d5627",
+  "nativeExecutableIdenticalForAllRuns": true,
+  "qaSource": {
+    "sample": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample\\Assets\\Scripts\\Main.js",
+    "baselineSha256": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+    "candidateSha256": "a48f600654ba89b50b82ac142563570d1da4133e5351e022c2deaaefef9aef4e"
+  },
+  "qaSampleOriginalRestored": true,
+  "generatedMainReproduced": true,
+  "unitTests": {
+    "passed": 6,
+    "failed": 0
+  },
+  "generatedClientChecks": 16,
+  "regressions": [
+    "Deferred commands and discarded-write recovery",
+    "Mortar production/research and projectile effects",
+    "Terrain geometry/navigation and fog",
+    "Hero death forms and reused slots",
+    "Tree fall progression and fractional pause",
+    "Scene templates and resource references"
+  ],
+  "qa": [
+    {
+      "label": "component-serialization-baseline",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-component-serialization-baseline-1791746081971\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 36.09357118290246,
+      "gameCanvasNewBufferHz": 36.09357118290246,
+      "simulationHz": 36.74163567112746,
+      "fullRequestMs": 15.746666661898296,
+      "renderMs": 9.026356250000005,
+      "commandMs": 10.744116250000001,
+      "nativeRequests": 451,
+      "renderedDistinctRevisions": 451,
+      "revisionDrawGapP95Ms": 54.0,
+      "revisionDrawGapMaxMs": 328.09999990463257
+    },
+    {
+      "label": "component-serialization-candidate",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-component-serialization-candidate-1791746178245\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 37.15592649065083,
+      "gameCanvasNewBufferHz": 37.15592649065083,
+      "simulationHz": 38.26158356389404,
+      "fullRequestMs": 15.352916671832402,
+      "renderMs": 8.8585275,
+      "commandMs": 10.59418833333333,
+      "nativeRequests": 463,
+      "renderedDistinctRevisions": 463,
+      "revisionDrawGapP95Ms": 48.5,
+      "revisionDrawGapMaxMs": 156.59999990463257
+    },
+    {
+      "label": "component-serialization-candidate-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-component-serialization-candidate-repeat-1791746271796\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 36.70854693377676,
+      "gameCanvasNewBufferHz": 36.70854693377676,
+      "simulationHz": 37.585169458349874,
+      "fullRequestMs": 16.00749999880791,
+      "renderMs": 9.01611875,
+      "commandMs": 10.70215791666666,
+      "nativeRequests": 459,
+      "renderedDistinctRevisions": 459,
+      "revisionDrawGapP95Ms": 50.299999952316284,
+      "revisionDrawGapMaxMs": 323.90000009536743
+    },
+    {
+      "label": "component-serialization-baseline-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-component-serialization-baseline-repeat-1791746375088\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "sceneEmptyPaints": 0,
+      "distinctDrawnWorldRevisionHz": 35.37818735600765,
+      "gameCanvasNewBufferHz": 35.37818735600765,
+      "simulationHz": 36.2542484902049,
+      "fullRequestMs": 15.990833329161008,
+      "renderMs": 9.18897833333334,
+      "commandMs": 10.948036249999996,
+      "nativeRequests": 453,
+      "renderedDistinctRevisions": 453,
+      "revisionDrawGapP95Ms": 51.60000014305115,
+      "revisionDrawGapMaxMs": 98.89999985694885
+    }
+  ],
+  "scope": "This sample on this machine; distinct simulated revisions drawn to canvas, not physical display FPS."
+}

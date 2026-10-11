@@ -4624,8 +4624,9 @@ var FrostEffectPool=(()=>{
     }
     function setComponent(name,component,value){
       const entity=entities[name];if(!entity)return;
-      const json=JSON.stringify(value),previous=writes.get(name)?.components.get(component);
-      if(previous?.json===json||!previous&&matches(entity.components[component],value))return;
+      const previous=writes.get(name)?.components.get(component);
+      if(!previous&&matches(entity.components[component],value))return;
+      const json=JSON.stringify(value);if(previous?.json===json)return;
       const stored={json,value:JSON.parse(json)};entryFor(name).components.set(component,stored);command({op:'setComponent',entity:entity.entity,component,value:stored.value});
     }
     return {beginFrame,ensure,ensureActor,setActive,setComponent};
