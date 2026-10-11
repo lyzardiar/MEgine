@@ -12,6 +12,10 @@ struct ScriptSnapshot {
     json: Option<String>,
 }
 
+/// MiYu: native script timings separate world publication, QuickJS callbacks and committed commands.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct ScriptTickProfile { pub sync_ms: f64, pub callback_ms: f64, pub commit_ms: f64 }
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum ScriptRuntimeRequest {
     Quit,
@@ -241,11 +245,18 @@ impl ScriptHost {
     pub fn load_file(&mut self, path: &std::path::Path) -> Result<(), ScriptError> { self.eval(&std::fs::read_to_string(path)?) }
 
     pub fn tick(&mut self, world: &mut World, dt: f32) -> Result<(), ScriptError> {
+        self.tick_profiled(world, dt).map(|_| ())
+    }
+
+    pub fn tick_profiled(&mut self, world: &mut World, dt: f32) -> Result<ScriptTickProfile, ScriptError> {
+        let started = Instant::now();
         self.asset_nodes.borrow_mut().begin_frame();
         self.sync_world(world)?;
+        let sync_ms = started.elapsed().as_secs_f64() * 1000.0;
         // MiYu: cold scene snapshot decoding and initialization get one bounded loading frame.
         let seconds=if std::mem::replace(&mut self.startup_tick,false) {3} else {1};
         self.deadline.set(Instant::now() + Duration::from_secs(seconds));
+        let callback_started = Instant::now();
         let result = self.context.with(|ctx| {
             let mut invoke = || -> rquickjs::Result<()> {
                 if self.tick_callback.is_none() {
@@ -260,9 +271,11 @@ impl ScriptHost {
             self.commands.borrow_mut().drain(); self.requests.borrow_mut().clear();
             return Err(error);
         }
+        let callback_ms = callback_started.elapsed().as_secs_f64() * 1000.0;
+        let commit_started = Instant::now();
         for command in self.commands.borrow_mut().drain() { world.commands.push(command); }
         world.commit();
-        Ok(())
+        Ok(ScriptTickProfile { sync_ms, callback_ms, commit_ms: commit_started.elapsed().as_secs_f64() * 1000.0 })
     }
 
     pub fn sync_world(&mut self, world: &World) -> Result<(), ScriptError> {

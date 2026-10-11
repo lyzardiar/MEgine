@@ -307,7 +307,7 @@ impl PlaySession {
         self.script.notify_animation_events(&events).map_err(|error| error.to_string())?;
         self.script.notify_timeline_signals(&signals).map_err(|error| error.to_string())?;
         stage("Animation, timeline and audio");
-        self.script.tick(world, dt).map_err(|error| error.to_string())?;
+        let script_profile = self.script.tick_profiled(world, dt).map_err(|error| error.to_string())?;
         for request in self.script.take_runtime_requests() {
             if request == mengine_script::ScriptRuntimeRequest::Quit { self.quit_requested = true; break; }
             let Some(selector) = (ScriptRequestContext { world, project_root: self.root.as_deref(), animations: &mut self.animations, timelines: &mut self.timelines, audio: &mut self.audio }).apply(request) else { continue; };
@@ -329,6 +329,10 @@ impl PlaySession {
         stage("Script and runtime requests");
         let snapshot = self.snapshot_cache.capture(world);
         stage("Snapshot export");
+        if let Some(node) = stages.iter_mut().find(|node| node.name == "Script and runtime requests") {
+            node.children = [("Script world publication", script_profile.sync_ms), ("QuickJS callback", script_profile.callback_ms), ("Script command commit", script_profile.commit_ms)].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect();
+            node.self_ms = (node.total_ms - node.children.iter().map(|child| child.total_ms).sum::<f64>()).max(0.0);
+        }
         self.step_ms = started.elapsed().as_secs_f64() * 1000.0;
         Ok(snapshot)
     }
@@ -337,6 +341,37 @@ impl PlaySession {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[ignore = "manual native script stage measurement; requires MENGINE_SAMPLE_ROOT"]
+    fn measure_sample_script_stages() {
+        let root = PathBuf::from(std::env::var("MENGINE_SAMPLE_ROOT").expect("sample root"));
+        let value: serde_json::Value = serde_json::from_slice(&std::fs::read(root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
+        let snapshot: WorldSnapshot = serde_json::from_value(value["world"].clone()).unwrap();
+        let source = std::fs::read_to_string(std::env::var("MENGINE_PROFILE_SOURCE").map(PathBuf::from).unwrap_or_else(|_| root.join("Assets/Scripts/Main.js"))).unwrap();
+        let mut session = PlaySession::new(&source, snapshot, PlayProject { root: Some(root), name: "Sample stage profile".into(), ..Default::default() }).unwrap();
+        let warmup = std::env::var("MENGINE_PROFILE_WARMUP_FRAMES").ok().and_then(|value| value.parse::<usize>().ok()).unwrap_or(360);
+        let mut totals = std::collections::BTreeMap::<String, f64>::new();
+        for frame in 0..warmup + 60 {
+            let mut input = ScriptInput::default();
+            if frame == 1 { input.key("F1".into(), true); }
+            session.step(None, input, 1.0 / 60.0).unwrap();
+            if frame >= warmup { for node in &session.step_stages { *totals.entry(node.name.clone()).or_default() += node.total_ms / 60.0; for child in &node.children { *totals.entry(format!("{}/{}", node.name, child.name)).or_default() += child.total_ms / 60.0; } } }
+        }
+        let telemetry = WorldSnapshot::from_world(&session.world).entities.into_iter().find(|entity| entity.name.as_deref() == Some("Frost telemetry")).map(|entity| entity.components);
+        println!("NATIVE_SCRIPT_PROFILE={}", serde_json::json!({"warmupFrames":warmup,"measuredFrames":60,"averageStageMs":totals,"telemetry":telemetry}));
+    }
+
+    #[test]
+    fn script_stage_profiles_preserve_commands_and_partition_native_callback_time() {
+        let mut session = PlaySession::new("function onTick(dt) { engine.setClearColor(dt, 0.25, 0.5, 1); }", WorldSnapshot::default(), PlayProject::default()).unwrap();
+        session.step(None, ScriptInput::default(), 0.1).unwrap();
+        assert_eq!(session.world.time.clear_color.x, 0.1);
+        let stage = session.step_stages.iter().find(|node| node.name == "Script and runtime requests").unwrap();
+        assert_eq!(stage.children.iter().map(|node| node.name.as_str()).collect::<Vec<_>>(), ["Script world publication", "QuickJS callback", "Script command commit"]);
+        assert!(stage.children.iter().all(|node| node.total_ms.is_finite() && node.total_ms >= 0.0));
+        assert!(stage.total_ms >= stage.children.iter().map(|node| node.total_ms).sum::<f64>());
+    }
 
     #[test]
     fn retained_view_revisions_render_exact_clocks_and_reject_expiry_or_old_sessions() {

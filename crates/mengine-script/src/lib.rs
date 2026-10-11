@@ -8,7 +8,7 @@ mod storage;
 mod asset_nodes;
 pub use storage::project_storage_root;
 
-pub use bridge::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTimelineSignal};
+pub use bridge::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTickProfile, ScriptTimelineSignal};
 pub use input::ScriptInput;
 
 use thiserror::Error;
