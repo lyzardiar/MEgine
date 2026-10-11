@@ -238,7 +238,7 @@ impl EditorPlayRuntime {
         let frame = render(mirror.1.world(), &snapshot);
         if self.generation() != generation { return Err("Play session expired".into()); }
         let mut frame = frame?;
-        frame.profile.world_sync_ms = Some(world_sync_ms);
+        frame.profile.world_sync_ms = Some(world_sync_ms + frame.profile.world_sync_ms.unwrap_or(0.0));
         frame.profile.simulation_ms = Some(step_ms);
         frame.profile.simulation_stages = stages;
         frame.profile.world_revision = revision;

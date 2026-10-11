@@ -49,7 +49,7 @@ import {
 } from '../math3d';
 import { clearModelPreview, modelPreview, type PreviewMesh } from '../modelPreview';
 import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
-import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGamePreviewSize, nativeSceneBrowserWorld, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
+import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGamePreviewSize, nativeSceneWorldReference, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
 import { releaseNativeViewportFrame, requestRevisionedNativeViewportFrame } from '../nativeViewportTransport';
 import {
   clearMaterialPreviews,
@@ -867,7 +867,7 @@ export function Viewport(props: {
     return { ...p,
       get nativeSessionId() { return hidden.length ? undefined : live.nativeSessionId; },
       get nativeWorldReference() { return hidden.length ? undefined : live.nativeWorldReference; },
-      get browserWorldReference() { return hidden.length ? nativeSceneBrowserWorld(live.nativeWorldReference, live.entities, entities, hidden) : undefined; },
+      get nativeSceneWorldReference() { return hidden.length ? nativeSceneWorldReference(live.nativeWorldReference, live.entities, entities, hidden) : undefined; },
       runtimeSessionId: live.runtimeSessionId, simulationRequestMs: live.simulationRequestMs, entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime,
     };
   };
@@ -1365,7 +1365,8 @@ export function Viewport(props: {
     else sceneWorldArgsRef.current = null;
     const requestWorldFrame = (command: string, args: Record<string, unknown>) => {
       const retainedScene = editScene && command === 'render_native_scene_view';
-      const worldArgs = retainedScene ? nativeWorld.sceneWorldArgs() : nativeWorld.worldArgs();
+      const sceneView = command === 'render_native_scene_view' && (args.request as { cameraEntity?: number } | undefined)?.cameraEntity == null;
+      const worldArgs = retainedScene ? nativeWorld.sceneWorldArgs() : sceneView ? nativeWorld.scenePlayWorldArgs() : nativeWorld.worldArgs();
       nativeWorld.frameWorld();
       return requestRevisionedNativeViewportFrame(command, { ...args, ...worldArgs }, nativeWorld.snapshotArgs).then(buffer => { if (retainedScene) nativeWorld.markSceneWorldUploaded(); return buffer; });
     };

@@ -65,6 +65,17 @@ test('evicted revision falls back to its owned snapshot and other errors propaga
   assert.equal(fallbacks,1);
 });
 
+test('evicted filtered Scene revisions retain visibility and use their exact owned payload', async t => {
+  const original = globalThis.window, requests = [], bytes = new ArrayBuffer(24);
+  globalThis.window = { __TAURI_INTERNALS__: { invoke: async (_, args) => { requests.push(args); if (args.playRevision != null) throw Error('Play viewport revision expired'); return bytes; } } };
+  t.after(() => { globalThis.window = original; });
+  const transport = await import('../src/nativeViewportTransport.ts?filtered-scene-revision');
+  const snapshot = { entities: [{ entity: 7, components: {} }], clearColor: [0, 0, 0, 1], simulationTime: 2 }, request = { width: 800, hiddenEntityIds: [4294967297] };
+  assert.equal(await transport.requestRevisionedNativeViewportFrame('render_native_scene_view', { request, playSessionId: 4, playRevision: 2 }, () => ({ snapshot })), bytes);
+  assert.equal(requests[1].snapshot, snapshot); assert.equal(requests[1].request, request);
+  assert.equal(requests[1].playSessionId, undefined); assert.equal(requests[1].playRevision, undefined);
+});
+
 test('evicted edit Scene world reuploads its owned snapshot under the same revision key', async t => {
   const original = globalThis.window, requests = [], bytes = new ArrayBuffer(24), snapshot = { entities: [], clearColor: [0, 0, 0, 1], simulationTime: 0 };
   let failure = 'Scene viewport revision expired';
