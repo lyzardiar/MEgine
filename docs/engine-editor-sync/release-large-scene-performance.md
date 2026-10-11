@@ -117,6 +117,34 @@ Play 使用单一 timeout，根据最近一次模拟启动时间安排下一步�
 - `D:/MEngineNativeQA/release-scene-profile-playback-completion-baseline-repeat-1791738182520/report.json`
 - `D:/MEngineNativeQA/profile-playback-completion.mjs`
 
+## Game 原生帧完成后接续请求
+
+Game 原生请求完成后安排下一次绘制，不再依赖下一次 requestAnimationFrame 才能发出请求。所有请求共用起点时间与 in-flight 状态，最快按 60 Hz 周期发送；剩余 timeout 延迟向上取整，避免 WebView 的整数 timer 提前触发后错过下一帧。新请求取消旧 timer；停止、切换视图、卸载、资产失效和错误均不能通过旧完成回调持续发出请求。
+
+对同一工程执行两组 Release 对照，第二组先运行新版再运行旧版。每次预热后采样约 12 秒，同时记录实际 native profile 广播，以及 Game 主画布 drawImage 使用的新原生 buffer 序号。
+
+| 指标 | 第一组旧版 | 第一组新版 | 第二组旧版 | 第二组新版 |
+| --- | ---: | ---: | ---: | ---: |
+| Game 画布新帧绘制频率 | 32.09 次/秒 | 37.65 次/秒 | 33.27 次/秒 | 38.04 次/秒 |
+| Game 原生帧上传频率 | 34.20 FPS | 39.75 FPS | 33.25 FPS | 39.48 FPS |
+| 完成帧到下次请求起点的平均等待 | 5.94 ms | 2.75 ms | 6.42 ms | 3.07 ms |
+| 实际模拟推进频率 | 38.30 次/秒 | 38.05 次/秒 | 38.51 次/秒 | 38.34 次/秒 |
+| Scene 拖动空画面次数 | 0 | 0 | 0 | 0 |
+
+两组 Game 画布新帧绘制频率分别提高约 17.3% 和 14.4%，模拟推进基本保持不变。画布新帧计数证明新原生 buffer 已参与主画布绘制，不代表 Windows compositor 或物理显示器的呈现频率。完成帧 timestamp 减去该帧 transportMs 可恢复请求起点，用它与前一张完成帧 timestamp 计算请求间等待。
+
+33 项原生帧、传输、呈现与调度测试通过，0 失败，覆盖整数 timer 且无 RAF 的快速续帧、RAF 竞争、延迟 timer、卸载、切换视图、资产失效、错误和会话重启。TypeScript/Vite 和原生 Release 构建通过。四次真实编辑器验收均通过 GPU 像素、模型选择、层级展开与滚动、暂停时钟、精确单步及停止重启检查，无控制台 error，拥有的 QA 编辑器全部退出。生产修改仅涉及前端，本轮没有重复原生单元测试。
+
+本轮 EXE：`D:/MEngineNativeQA/release-editor-game-completion.exe`，SHA-256：`57680C43C494D6432C9A0E2B829199D95BBCE319735C894521CC1107BCE346CF`。
+
+证据：
+- `D:/MEngineNativeQA/release-scene-profile-game-completion-baseline-1791739102717/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-game-completion-candidate-1791739200333/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-game-completion-candidate-repeat-1791739319972/report.json`
+- `D:/MEngineNativeQA/release-scene-profile-game-completion-baseline-repeat-1791739442017/report.json`
+- `D:/MEngineNativeQA/profile-game-completion.mjs`
+- `D:/MEngineNativeQA/game-completion-performance-handoff.json`
+
 ## 验收边界
 
 连续拖动尚未达到 60 FPS，浏览器平均帧间隔与跨 WebView 呈现仍有优化空间。本机 Game 未复现用户机器的极度持续卡顿，需用户以同步后的源码重建并复测，不能据此认定其机器的 Game 问题已完全解决。
