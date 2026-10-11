@@ -199,3 +199,13 @@ docs/designs/frostbound-realms/*dreadlord*.json text eol=lf
 samples/frostbound-realms/SourceAssets/CorpseRules/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
 samples/frostbound-realms/corpse-*.json text eol=lf
 docs/designs/frostbound-realms/*corpse*.json text eol=lf
+
+samples/frostbound-realms/*.json text eol=lf
+samples/frostbound-realms/Assets/HumanArmy/** -text whitespace=cr-at-eol
+samples/frostbound-realms/SourceAssets/HumanArmy/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+samples/frostbound-realms/Assets/Licenses/Classic-Human-Army.txt text eol=lf
+scripts/*human-army*.py text eol=lf
+scripts/*human-army*.mjs text eol=lf
+scripts/import-frost-classic.py text eol=lf
+scripts/test-frost-classic-import-selector.mjs text eol=lf
+docs/designs/frostbound-realms/*human-army*.json text eol=lf

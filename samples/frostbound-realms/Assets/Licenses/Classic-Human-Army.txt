@@ -1,0 +1,1 @@
+Warcraft III human Barracks rules, icons, Blacksmith and Lumber Mill: Blizzard Entertainment. Original game asset terms apply; not CC0 or MIT. Source paths, archive identities, selected rows, conversion records and SHA-256 hashes: human-army-sources.json and human-army.json.

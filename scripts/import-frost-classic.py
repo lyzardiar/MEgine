@@ -263,7 +263,7 @@ def main():
         bound.add(key + 'Uprooted')
     assert not requested or requested <= bound, 'Unknown requested classic binding'
     classic = {k: v for k, v in catalog.items() if v.get('classic') and (not requested or k in bound)}
-    select = "global.Frost={ancient:u=>u.ancient};global.FrostArt={};const V=require('./samples/frostbound-realms/game/visuals.js');let raw='';process.stdin.on('data',b=>raw+=b);process.stdin.on('end',()=>console.log(JSON.stringify(Object.fromEntries(Object.entries(JSON.parse(raw)).map(([k,a])=>[k,V.classicClip(a,'Stand',{ancient:k.startsWith('WildwoodHall'),uprooted:!!a.classicUprooted})])))));"
+    select = "global.Frost=require('./samples/frostbound-realms/game/simulation.js');global.FrostArt={};const V=require('./samples/frostbound-realms/game/visuals.js');let raw='';process.stdin.on('data',b=>raw+=b);process.stdin.on('end',()=>console.log(JSON.stringify(Object.fromEntries(Object.entries(JSON.parse(raw)).map(([k,a])=>[k,V.classicClip(a,'Stand',{ancient:k.startsWith('WildwoodHall'),uprooted:!!a.classicUprooted})])))));"
     clips = json.loads(subprocess.check_output(['node', '-e', select], input=json.dumps(classic).encode('utf-8'), cwd=ROOT))
     probe = subprocess.Popen([args.pose_probe, '--stdin'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, encoding='utf-8')
     cached = {}

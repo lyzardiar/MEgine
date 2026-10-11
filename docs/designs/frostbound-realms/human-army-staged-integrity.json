@@ -1,0 +1,11 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "signedOutputs": 288,
+  "originalSources": 19,
+  "indexedMaterials": 3211,
+  "missingSidecars": 0,
+  "duplicateGuids": 0,
+  "mainSha256": "0ba773eddeb32f0c712b7211da8ba5bacea479b344be257faa5a1a5fd363b4c6",
+  "nativeFinalBundleMatches": true
+}
