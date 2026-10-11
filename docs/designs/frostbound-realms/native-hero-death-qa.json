@@ -1,0 +1,816 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-11T01:09:57.387Z",
+  "sample": "D:/MEngineNativeQA/hero-death-validation/hero-death-1791680571419/sample",
+  "steps": [
+    {
+      "name": "project open and ready",
+      "ms": 24331
+    },
+    {
+      "name": "source Death Dissipate and saved actor effects",
+      "ms": 5991
+    },
+    {
+      "name": "captured Metamorphosis and Avatar native forms",
+      "ms": 3772
+    },
+    {
+      "name": "paid altar revival replaces death presentation",
+      "ms": 1152
+    }
+  ],
+  "preflightMs": 1208,
+  "editorSha256": "2c90170ba302347986f833ddbd4112b49453d1cf6232a27563989f39c734ce2e",
+  "productMainSha256": "323bc7f60be6ee796ada230dfa5c3fe3fa4e6509ce7bd67a5c498819370d3de1",
+  "productSceneSha256": "431d7b6d355801227d45f9ef8db50a8b9d9d9be07f1601680bebe9bf38e9a64c",
+  "physicalInput": false,
+  "audioListening": false,
+  "commands": [
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 4224
+    },
+    {
+      "kind": "execute",
+      "name": "project.open",
+      "ms": 5332
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 455
+    },
+    {
+      "kind": "query",
+      "name": "project.state",
+      "ms": 414
+    },
+    {
+      "kind": "execute",
+      "name": "view.set_game_resolution",
+      "ms": 639
+    },
+    {
+      "kind": "execute",
+      "name": "panel.focus",
+      "ms": 2768
+    },
+    {
+      "kind": "execute",
+      "name": "playback.play",
+      "ms": 9468
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 1026
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 27
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 2204
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 14
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 579
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 204
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 4
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 307
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 5
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 5
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 665
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 63
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 160
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 7
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 152
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 18
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 5
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 665
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 83
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 5
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 66
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 173
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 17
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 10
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 156
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 18
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 72
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 177
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 12
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 540
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 5
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 618
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 66
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 418
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 810
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 17
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 8
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 620
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 6
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 68
+    },
+    {
+      "kind": "execute",
+      "name": "playback.sequence",
+      "ms": 169
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "kind": "execute",
+      "name": "playback.input",
+      "ms": 3
+    },
+    {
+      "kind": "execute",
+      "name": "playback.step",
+      "ms": 162
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 13
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "kind": "query",
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "kind": "query",
+      "name": "view.screenshot",
+      "ms": 645
+    },
+    {
+      "kind": "query",
+      "name": "profiler.get_samples",
+      "ms": 33
+    },
+    {
+      "kind": "query",
+      "name": "console.get_logs",
+      "ms": 10
+    },
+    {
+      "kind": "execute",
+      "name": "playback.stop",
+      "ms": 219
+    }
+  ],
+  "presentations": [
+    {
+      "source": "Udre",
+      "avatar": false,
+      "age": 0.4,
+      "clip": "Death",
+      "visibleParts": 3
+    },
+    {
+      "source": "Udre",
+      "avatar": false,
+      "age": 3.7,
+      "clip": "Dissipate",
+      "visibleParts": 0
+    },
+    {
+      "source": "Udre",
+      "avatar": false,
+      "age": 4.1,
+      "clip": "Dissipate",
+      "visibleParts": 0
+    },
+    {
+      "source": "Edmm",
+      "avatar": false,
+      "age": 3.7,
+      "clip": "Dissipate Alternate",
+      "visibleParts": 4
+    },
+    {
+      "source": "Hmkg",
+      "avatar": true,
+      "age": 3.2,
+      "clip": "Alternate Dissipate",
+      "visibleParts": 8
+    }
+  ],
+  "savedContinuation": true,
+  "paidRevival": true,
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Native generated client source Death/Dissipate geometry, captured alternate forms, embedded Dreadlord actor timing, hidden HP/ring, F5 continuation and paid altar revival. Original executable phase sequencing, physical input, audio listening, standalone player and cross-machine LAN remain unverified.",
+  "shutdown": {
+    "pid": 154204,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680996099\\runtime\\com.mengine.editor.agent-w3hpeG '\\\\?\\D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680996099\\runtime\\com.mengine.editor.agent-w3hpeG'"
+  }
+}

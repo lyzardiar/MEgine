@@ -93,6 +93,12 @@ var FrostVisual=(()=>{
     const attacking=u.cd>(u.kind==='archer'?0:.25),hit=attacking&&(state.events||[]).find(e=>['hit','launch'].includes(e.type)&&e.team===u.team&&Math.hypot(e.fromX-u.x,e.fromZ-u.z)<.001),enemy=attacking&&u.order?.type==='attack'&&state.units.find(v=>v.id===u.order.target&&v.hp>0),inRange=enemy&&((Frost.hippogryphUnit(u)||Frost.chimaeraUnit(u)||Frost.faerieUnit(u))?Frost.distance(u,enemy):Math.hypot(Frost.distance(u,enemy),Frost.unitHeight(state,u)-Frost.unitHeight(state,enemy)))<=Frost.attackRange(u,enemy)+(Frost.types[enemy.kind].radius||.3)&&Frost.attackClear(state,u,enemy),target=work(state,u)?.target||hit||(inRange&&enemy);
     return target?Math.atan2(target.x-u.x,target.z-u.z):moved?Math.atan2(u.x-old.x,u.z-old.z):old?.yaw??u.yaw??0;
   }
+  function heroDeath(state,u){
+    const stage=Frost.heroDeathStage(state,u);if(!stage)return null;
+    const posed={...u,hex:undefined,hexLeft:0,metamorphLeft:u.heroDeath.sourceUnit==='Edmm'?1:0,mountainAvatarLeft:u.heroDeath.avatar?1:0},visual=model(state,posed),{asset}=visual,clip=classicClip(asset,stage.name,posed);if(clip<0)return null;
+    const duration=asset.animations[clip].duration,time=Frost.clamp(stage.time/(stage.duration||1),0,1)*duration,sample=classicSample(posed,asset,false,time,stage.name);
+    return {...visual,sample,mesh:sampleMesh(asset.parts[0],sample),y:Frost.elevation(state.map,u.x,u.z),yaw:(u.yaw||0)+(asset.classicYaw||0)};
+  }
   function corpse(state,c){
     const visual=model(state,{...c,hp:0,tag:c.boss?'boss':undefined,tdBoss:c.large}),{asset,scale}=visual,clip=asset.animations?.findIndex(a=>/Death/i.test(a.name));
     if(clip===undefined||clip<0)return null;
@@ -264,6 +270,6 @@ var FrostVisual=(()=>{
       return [...tracks.values()].map(v=>position(v,clock));
     }};
   }
-  return {camera:{height:32,depth:42},model,name,pose,corpse,heroPortrait,unitPortrait,heading,resource,scenery,doodad,environmentPartCount,groundDetail,projectile,projectileView,muzzle,classicClip,classicSample,parts,actorPartCount,portrait,sentinel};
+  return {camera:{height:32,depth:42},model,name,pose,corpse,heroDeath,heroPortrait,unitPortrait,heading,resource,scenery,doodad,environmentPartCount,groundDetail,projectile,projectileView,muzzle,classicClip,classicSample,parts,actorPartCount,portrait,sentinel};
 })();
 if(typeof module!=='undefined')module.exports=FrostVisual;

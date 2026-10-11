@@ -106,6 +106,9 @@ import './test-frost-corpses.mjs';
 import './test-frost-corpse-stages.mjs';
 import './test-frost-corpse-generated.mjs';
 import './test-frost-corpse-network.mjs';
+import './test-frost-hero-death.mjs';
+import './test-frost-hero-death-generated.mjs';
+import './test-frost-hero-death-network.mjs';
 import './test-frost-raise-dead.mjs';
 import './test-frost-cannibalize.mjs';
 import './test-frost-casters.mjs';
@@ -327,9 +330,9 @@ try{
   next=altarResume.next(m=>m.type==='state'&&m.state.units.some(u=>u.kind==='hero'&&u.heroClass===2));altar.queue[0].left=.2;const recruited=(await next).state,newHeroId=recruited.units.find(u=>u.kind==='hero'&&u.heroClass===2).id,secondHero=altarState.units.find(u=>u.id===newHeroId);Object.assign(secondHero,{x:-8,z:2,level:3,skillPoints:3,xp:42,damage:0,order:{type:'hold'}});S.visibility(altarState);
   next=altarResume.next(m=>m.type==='state'&&m.state.units.find(u=>u.id===newHeroId)?.inventory.includes(9));altarResume.send({type:'order',seq:1,command:{type:'learn',ids:[newHeroId],slot:0}});altarResume.send({type:'order',seq:2,command:{type:'buy',ids:[newHeroId],item:9}});await next;
   const killer=S.spawn(altarState,'soldier',1,-8,3,{damage:9999,speed:0,order:{type:'attack',target:newHeroId}});S.visibility(altarState);next=altarResume.next(m=>m.type==='state'&&m.state.units.find(u=>u.id===newHeroId)?.hp===0);const deadHeroState=(await next).state;killer.damage=0;killer.order={type:'hold'};assert.deepEqual(deadHeroState.units.find(u=>u.id===newHeroId).inventory,[8,9]);assert.equal(deadHeroState.corpses.some(c=>c.id===newHeroId),false);
-  next=altarResume.next(m=>m.type==='state'&&m.state.units.find(u=>u.id===altar.id)?.queue[0]?.revive===newHeroId);altarResume.send({type:'order',seq:3,command:{type:'revive',ids:[altar.id],target:newHeroId}});const revival=(await next).state;assert.equal(revival.teams[0].gold,1220);assert.equal(S.population(revival,0).used,10);assert.equal(altarGuest.messages.filter(m=>m.type==='state').at(-1).state.units.some(u=>u.id===newHeroId),false);
+  next=altarResume.next(m=>m.type==='state'&&m.state.units.find(u=>u.id===altar.id)?.queue[0]?.revive===newHeroId);altarResume.send({type:'order',seq:3,command:{type:'revive',ids:[altar.id],target:newHeroId}});const revival=(await next).state;assert.equal(revival.teams[0].gold,1220);assert.equal(S.population(revival,0).used,10);const enemyDeath=altarGuest.messages.filter(m=>m.type==='state').at(-1).state.units.find(u=>u.id===newHeroId);assert.ok(enemyDeath.heroDeath);assert.deepEqual(Object.keys(enemyDeath).sort(),['id','kind','team','heroClass','sourceHero','x','z','yaw','hp','built','heroDeath'].sort());
   altarResume.socket.destroy();const revivalResume=await peer();next=revivalResume.next(m=>m.type==='joined');revivalResume.send({type:'resume',code:altarRoom.code,token:altarRoom.token});const revivalSnapshot=(await next).state;assert.equal(revivalSnapshot.units.find(u=>u.id===altar.id).queue[0].revive,newHeroId);assert.deepEqual(revivalSnapshot.units.find(u=>u.id===newHeroId).skills,[1,0,0,0]);
   next=revivalResume.next(m=>m.type==='state'&&m.state.units.find(u=>u.id===newHeroId)?.hp>0);altar.queue[0].left=.2;const revived=(await next).state,revivedHero=revived.units.find(u=>u.id===newHeroId);assert.equal(revivedHero.level,3);assert.equal(revivedHero.xp,42);assert.deepEqual(revivedHero.inventory,[8,9]);assert.deepEqual(revivedHero.skills,[1,0,0,0]);assert.equal(revivedHero.hp,revivedHero.maxHp);assert.ok(revivedHero.mana>=100&&revivedHero.mana<101);assert.equal(revived.units.find(u=>u.id===firstHero.id).heroClass,0);
-  console.log('PASS TCP: class-specific recruitment, duplicate rejection, hidden queues/dead heroes, paid queue reconnect, retained level/items/skills and altar revival reconnect; controlled production timers');
+  console.log('PASS TCP: class-specific recruitment, duplicate rejection, hidden queues/private death bodies, paid queue reconnect, retained level/items/skills and altar revival reconnect; controlled production timers');
   console.log('PASS: economy, production, ownership, fog, spell cooldown, navigation, map validation, TD defeat/victory, MOBA lanes/respawn, TCP rooms/orders/reconnect');
 }finally{for(const p of peers)p.socket.destroy();await app.close();}
