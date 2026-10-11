@@ -1,5 +1,5 @@
 // Author: MiYu. Materialize immutable viewport snapshots without rebuilding unchanged entities.
-use mengine_core::{snapshot::{EntitySnapshot, SharedWorldSnapshot}, Entity, World};
+use mengine_core::{snapshot::{EntitySnapshot, SharedWorldSnapshot, WorldSnapshot}, Entity, World};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
@@ -12,6 +12,14 @@ pub struct SharedSnapshotWorld {
 
 impl SharedSnapshotWorld {
     pub fn world(&self) -> &World { &self.world }
+
+    /// Browser snapshots own their payloads; retain equal records to preserve native component revisions.
+    pub fn update_owned(&mut self, snapshot: WorldSnapshot) {
+        let entities = snapshot.entities.into_iter().map(|record| {
+            self.previous.get(&record.entity).filter(|previous| previous.as_ref() == &record).cloned().unwrap_or_else(|| Arc::new(record))
+        }).collect();
+        self.update(&SharedWorldSnapshot { entities, frame: snapshot.frame, sim_frame: snapshot.sim_frame, elapsed: snapshot.elapsed, clear_color: snapshot.clear_color, selected: snapshot.selected });
+    }
 
     /// Structural changes rebuild mappings in snapshot order; stable hierarchy updates only changed records.
     pub fn update(&mut self, snapshot: &SharedWorldSnapshot) {
@@ -114,4 +122,25 @@ mod tests {
         assert_eq!(mirror.world.iter_entities().count(), 0); assert_eq!(mirror.world.selected, None);
         mirror.update(&original); assert_eq!(mirror.world.iter_entities().count(), 3);
     }
+    #[test]
+    fn owned_viewport_updates_reuse_unchanged_records_and_apply_changes() {
+        let mut source = World::new(); let root = source.spawn_empty(); let child = source.spawn_empty();
+        source.insert_component(child, mengine_core::generated::Transform::default()); source.set_parent(child, Some(root));
+        let mut mirror = SharedSnapshotWorld::default(); mirror.update_owned(WorldSnapshot::from_world(&source));
+        let retained = Arc::clone(&mirror.previous[&child.to_u64()]);
+        let mut native_cache = mengine_core::snapshot::WorldSnapshotCache::default();
+        let native_before = native_cache.capture(mirror.world()).entities;
+        mirror.update_owned(WorldSnapshot::from_world(&source));
+        assert!(Arc::ptr_eq(&retained, &mirror.previous[&child.to_u64()])); assert!(native_before.iter().zip(native_cache.capture(mirror.world()).entities).all(|(before, after)| Arc::ptr_eq(before, &after)));
+        source.get_component_mut::<mengine_core::generated::Transform>(child).unwrap().position[0] = 7.0;
+        source.time.elapsed = 3.0; mirror.update_owned(WorldSnapshot::from_world(&source));
+        assert!(!Arc::ptr_eq(&retained, &mirror.previous[&child.to_u64()]));
+        assert_eq!(mirror.world.get_component::<mengine_core::generated::Transform>(mirror.entities[&child.to_u64()]).unwrap().position[0], 7.0);
+        assert_eq!(mirror.world.time.elapsed, 3.0);
+        source.despawn(root); mirror.update_owned(WorldSnapshot::from_world(&source));
+        assert_eq!(mirror.world.iter_entities().count(), 1);
+        assert!(mirror.world.get_component::<mengine_core::Parent>(mirror.entities[&child.to_u64()]).is_none());
+        mirror.update_owned(WorldSnapshot::default()); assert_eq!(mirror.world.iter_entities().count(), 0);
+    }
+
 }

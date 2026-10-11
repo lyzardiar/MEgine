@@ -43,6 +43,8 @@ struct AppState {
 }
 
 static VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
+static GAME_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_scene::SharedSnapshotWorld>> = OnceLock::new();
+static SCENE_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_scene::SharedSnapshotWorld>> = OnceLock::new();
 static SCENE_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
 static EFFEKSEER_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> =
     OnceLock::new();
@@ -4405,7 +4407,11 @@ async fn render_native_game_view(
         Ok(frame)
         };
         match (snapshot, play_session_id) {
-            (Some(snapshot), _) => render(&world_from_snapshot(&snapshot)),
+            (Some(snapshot), _) => {
+                let mut mirror = GAME_SNAPSHOT_WORLD.get_or_init(|| Mutex::new(mengine_scene::SharedSnapshotWorld::default())).lock();
+                let sync = Instant::now(); mirror.update_owned(snapshot); let sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
+                let mut frame = render(mirror.world())?; frame.profile.world_sync_ms = Some(sync_ms); Ok(frame)
+            },
             (None, Some(id)) => runtime.render_revision(id, play_revision, render),
             _ => Err("viewport world is unavailable".into()),
         }
@@ -4519,7 +4525,11 @@ async fn render_native_scene_view(
         Ok(frame)
         };
         match (snapshot, play_session_id) {
-            (Some(snapshot), _) => render(&world_from_snapshot(&snapshot)),
+            (Some(snapshot), _) => {
+                let mut mirror = SCENE_SNAPSHOT_WORLD.get_or_init(|| Mutex::new(mengine_scene::SharedSnapshotWorld::default())).lock();
+                let sync = Instant::now(); mirror.update_owned(snapshot); let sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
+                let mut frame = render(mirror.world())?; frame.profile.world_sync_ms = Some(sync_ms); Ok(frame)
+            },
             (None, Some(id)) => runtime.render_revision(id, play_revision, render),
             _ => Err("viewport world is unavailable".into()),
         }
