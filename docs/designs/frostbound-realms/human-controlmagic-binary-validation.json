@@ -1,0 +1,151 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "binarySha256": "e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a",
+  "binaryVersion": "1.27.0.52240",
+  "imageBase": "0x6f000000",
+  "abilityVtable": "0x6f9cb5e0",
+  "sourceRowSha256": "dd2b0a7bdbe93143121221b7456eae5e836151371d4cdb7c0381d9de74e2d1cf",
+  "formula": "Cost1 + DataB1 * (DataC1 != 0 ? currentHp : maxHp)",
+  "cases": [
+    {
+      "currentHp": 1,
+      "maxHp": 525,
+      "fixedCost": 25,
+      "healthRatio": 0.45,
+      "dataC": 1.0,
+      "charge": 25.44999885559082,
+      "mathematicalCharge": 25.45
+    },
+    {
+      "currentHp": 5,
+      "maxHp": 525,
+      "fixedCost": 25,
+      "healthRatio": 0.45,
+      "dataC": 1.0,
+      "charge": 27.249998092651367,
+      "mathematicalCharge": 27.25
+    },
+    {
+      "currentHp": 100,
+      "maxHp": 525,
+      "fixedCost": 25,
+      "healthRatio": 0.45,
+      "dataC": 1.0,
+      "charge": 69.99999237060547,
+      "mathematicalCharge": 70.0
+    },
+    {
+      "currentHp": 500,
+      "maxHp": 525,
+      "fixedCost": 25,
+      "healthRatio": 0.45,
+      "dataC": 1.0,
+      "charge": 249.99998474121094,
+      "mathematicalCharge": 250.0
+    },
+    {
+      "currentHp": 525,
+      "maxHp": 525,
+      "fixedCost": 25,
+      "healthRatio": 0.45,
+      "dataC": 1.0,
+      "charge": 261.2499694824219,
+      "mathematicalCharge": 261.25
+    },
+    {
+      "currentHp": 100,
+      "maxHp": 525,
+      "fixedCost": 25,
+      "healthRatio": 0.45,
+      "dataC": 0,
+      "charge": 261.2499694824219,
+      "mathematicalCharge": 261.25
+    },
+    {
+      "currentHp": 100,
+      "maxHp": 525,
+      "fixedCost": 40,
+      "healthRatio": 0.35,
+      "dataC": 1,
+      "charge": 74.99999237060547,
+      "mathematicalCharge": 75.0
+    },
+    {
+      "currentHp": 100,
+      "maxHp": 525,
+      "fixedCost": 0,
+      "healthRatio": 0.75,
+      "dataC": 1,
+      "charge": 75.0,
+      "mathematicalCharge": 75.0
+    },
+    {
+      "currentHp": 100,
+      "maxHp": 525,
+      "fixedCost": 25,
+      "healthRatio": 0.45,
+      "dataC": 2,
+      "charge": 69.99999237060547,
+      "mathematicalCharge": 70.0
+    },
+    {
+      "currentHp": 750,
+      "maxHp": 900,
+      "fixedCost": 25,
+      "healthRatio": 0.45,
+      "dataC": 1,
+      "charge": 362.4999694824219,
+      "mathematicalCharge": 362.5
+    }
+  ],
+  "mismatchedBinaryRejected": true,
+  "staticEvidence": {
+    "fieldNamesAndOffsetsMatched": true,
+    "currentAndMaximumGetterSlotsMatched": true,
+    "activeTimedLifeRemainingDurationBranchMatched": true
+  },
+  "functionIdentities": {
+    "charge": {
+      "address": "0x6f49f5a0",
+      "bytes": 178,
+      "sha256": "d24117754295f2cfd1925e49d85e64905c0c22ad2f42f9a09dd6a17673c61409"
+    },
+    "fixedCost": {
+      "address": "0x6f49f0c0",
+      "bytes": 28,
+      "sha256": "a84c986220fa936dac6e0abcd934bd5a926b872f0db286360d4887d41d20dfdb"
+    },
+    "dataB": {
+      "address": "0x6f3f7470",
+      "bytes": 87,
+      "sha256": "76f1711680117bae26ee7f21eaf2fda66d89f437960178bedf9669007a1025d1"
+    },
+    "dataC": {
+      "address": "0x6f3f74d0",
+      "bytes": 87,
+      "sha256": "3509ac5ecdfef7506d145ef9a3c52cf7c7fecd2eb716065bc4bd09db6d5130e6"
+    },
+    "multiply": {
+      "address": "0x6f0527e0",
+      "bytes": 201,
+      "sha256": "eeadfabe4debc485c1bbf4f2ed3fbe1044eaee4a29044aaad7cd15c0323dadf7"
+    },
+    "add": {
+      "address": "0x6f0529d0",
+      "bytes": 272,
+      "sha256": "0f320dfb9a0d3a27f042bd78566bbf93eabd1bcdf66ad265b6e88b4f9e9d1440"
+    }
+  },
+  "dependencies": {
+    "pefile": "2024.8.26",
+    "capstone": "5.0.9",
+    "unicorn": "2.1.4"
+  },
+  "capstoneRuntimeVersion": "5.0.7",
+  "limitations": [
+    "Only the original charge helper is CPU-emulated; target-health getters supply test operands.",
+    "No original game process is launched; full cast acceptance, mana deduction, ownership and expiry are not runtime-verified.",
+    "Soft-float rounding differs slightly from the mathematical real-valued formula."
+  ]
+}
