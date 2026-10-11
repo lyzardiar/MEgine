@@ -382471,6 +382471,41 @@
             "receive_shadows": false
           }
         }
+      },
+      {
+        "entity": 90215,
+        "name": "Classic spell 0 spellbreakerFeedback",
+        "parent": 90041,
+        "siblingIndex": 9006,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanSpellbreakerEffects/Effects/SpellBreakerAttack.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
       }
     ],
     "frame": 0,

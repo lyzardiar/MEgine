@@ -83,7 +83,7 @@ var FrostEffects=(()=>{
     if(u.polymorph||u.polymorphLeft>0||u.hex||u.hexLeft>0||!(Frost.cryptLordUnit(u)||Frost.dreadlordUnit(u)||Frost.infernalUnit(u)||Frost.lichUnit(u)||Frost.deathKnightUnit(u)||Frost.shadowhunterUnit(u)||Frost.serpentward(u)||Frost.taurenUnit(u)||Frost.farseerUnit(u)||Frost.spiritwolf(u)||Frost.bloodMageUnit(u)||Frost.phoenixUnit(u)||Frost.blademasterUnit(u)||Frost.bladeIllusion(u)))return null;
     const slot=Frost.cryptLordUnit(u)?'cryptLordActor':Frost.dreadlordUnit(u)?'dreadlordActor':Frost.infernalUnit(u)?'infernalActor':Frost.lichUnit(u)?'lichActor':Frost.deathKnightUnit(u)?'deathKnightActor':Frost.shadowhunterUnit(u)?'shadowhunterActor':Frost.serpentward(u)?'wardActor':Frost.taurenUnit(u)?'taurenActor':Frost.farseerUnit(u)?'farseerActor':Frost.spiritwolf(u)?'wolfActor':Frost.bloodMageUnit(u)?'bloodActor':Frost.phoenixUnit(u)?'phoenixActor':'bladeActor',art=FrostEffectArt.effects[spellBindings[slot]],pose=mesh.match(/#pose=(\d+):(\d+)(?:@(\d+))?$/);if(pose){const clip=Number(pose[1]),seconds=Number(pose[2])/Number(pose[3]||12);return {slot,name:spellBindings[slot],component:{effect:art.effect,clip,playing:false,looping:false,speed:1,time_seconds:seconds},parts:[],position:[position.x,position.y,position.z],scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]};}return null;
   }
-  Object.assign(spellBindings,{priestHeal:'HealTarget',sorceressSlowCaster:'SlowCaster',sorceressSlow:'SlowTarget',magicSentry:'MagicSentryCaster',priestDispel:'DispelMagicTarget',innerFire:'InnerFireTarget',sorceressInvisibility:'InvisibilityTarget',sorceressPolymorph:'PolymorphTarget',sorceressFallingSheep:'PolymorphFallingSheep'});
+  Object.assign(spellBindings,{priestHeal:'HealTarget',sorceressSlowCaster:'SlowCaster',sorceressSlow:'SlowTarget',magicSentry:'MagicSentryCaster',priestDispel:'DispelMagicTarget',innerFire:'InnerFireTarget',sorceressInvisibility:'InvisibilityTarget',sorceressPolymorph:'PolymorphTarget',sorceressFallingSheep:'PolymorphFallingSheep',spellbreakerFeedback:'SpellBreakerAttack'});
   function spells(state,u,visual,mesh,position,facing,scale,clock,at=visual.asset.classic?anchors(mesh,facing,scale):()=>null,viewerTeam=0){
     const result=[];
     function add(slot,elapsed,point,destination=null){
@@ -97,6 +97,7 @@ var FrostEffects=(()=>{
       const c=Math.cos(facing),s=Math.sin(facing),world=destination||[position.x+(point[0]*c+point[2]*s)*scale,position.y+point[1]*scale,position.z+(-point[0]*s+point[2]*c)*scale];
       result.push({slot,name,component:{effect:art.effect,clip,playing:false,looping:animation.loop&&slot!=='flareTarget',speed:1,time_seconds:seconds},parts:art.parts.length?FrostVisual.parts(art,art.parts[0].mesh+'#pose='+clip+':'+Math.floor(seconds*30)+'@30'):[],position:world,scale:[scale,scale,scale],rotation:[0,Math.sin(facing/2),0,Math.cos(facing/2)]});
     }
+    if(u.feedbackFrame!==undefined)add('spellbreakerFeedback',clock-u.feedbackFrame*Frost.DT);
     if(u.invisibilityFrame!==undefined)add('sorceressInvisibility',clock-u.invisibilityFrame*Frost.DT,at(/^Chest Ref$/i));
     if(u.polymorphDoneFrame!==undefined)add('hexTransform',clock-u.polymorphDoneFrame*Frost.DT);
     if(u.polymorphFrame!==undefined){add('sorceressPolymorph',clock-u.polymorphFrame*Frost.DT);add('sorceressFallingSheep',clock-u.polymorphFrame*Frost.DT);}

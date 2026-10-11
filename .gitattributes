@@ -270,5 +270,6 @@ samples/frostbound-realms/SourceAssets/HumanSpellbreakerEffects/** -text whitesp
 samples/frostbound-realms/Assets/Licenses/*Human-Spellbreaker*.txt text eol=lf
 samples/frostbound-realms/human-spellbreaker*.json text eol=lf
 scripts/*human-spellbreaker*.py text eol=lf
+scripts/*human-spellbreaker*.mjs text eol=lf
 docs/designs/frostbound-realms/human-spellbreaker*.json text eol=lf
 docs/designs/frostbound-realms/human-spellbreaker*.md text eol=lf
