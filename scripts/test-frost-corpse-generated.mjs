@@ -1,0 +1,19 @@
+// Author: MiYu. Generated client corpse phases, lazy hierarchy, deferred commits, saves and slot reuse.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import {clientWorldFixture} from './frost-client-world-fixture.mjs';
+import {corpseFixture} from './frost-corpse-fixture.mjs';
+const root=new URL('../samples/frostbound-realms/',import.meta.url),source=fs.readFileSync(new URL('Assets/Scripts/Main.js',root),'utf8'),world=clientWorldFixture(JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world,true),storage=new Map(),copy=v=>JSON.parse(JSON.stringify(v));
+const engine=Object.assign(world.engine,{assets:{sampleNodes:()=>[]},network:{poll:()=>[],close(){},send(){}},storage:{load:k=>storage.has(k)?copy(storage.get(k)):null,save:(k,v)=>storage.set(k,copy(v))},playAudio(){}}),context=vm.createContext({engine});vm.runInContext(source,context);
+const S=context.Frost,V=context.FrostVisual,telemetry=()=>JSON.parse(world.entity('Frost telemetry').components.Text.text),tick=(input={},dt=.001)=>{engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};world.render(dt=>context.onTick(dt),dt);},key=k=>{tick({keys:[k],pressedKeys:[k]});tick();};
+tick();assert.equal(world.snapshot.entities.filter(e=>/^Corpse /.test(e.name)).length,2,'only one root and mesh template are authored');
+function load(s){storage.set('quicksave',copy(s));if(telemetry().mode==='title')key('F1');if(!telemetry().paused)key('F10');tick({pointer:[640,388],buttons:[0],pressedButtons:[0]});tick({pointer:[640,388],releasedButtons:[0]});assert.equal(telemetry().mode,'playing');for(let i=0;i<4;i++)tick({},.1);}
+const {s}=corpseFixture(S);load(s);
+for(const [i,c] of telemetry().corpses.entries()){
+  const root=world.entity('Corpse '+i),mesh=world.entity('Corpse '+i+' mesh 0'),view=V.corpse(s,c);assert.equal(root.active,true,'Corpse '+i+' '+JSON.stringify({parent:root.parent,mesh:mesh?.active,t:telemetry().paused}));assert.equal(mesh.parent,root.entity);for(const [j,part] of V.parts(view.asset,view.mesh,c.team).entries()){const e=world.entity('Corpse '+i+' mesh '+j);assert.equal(e.parent,root.entity);assert.equal(e.active,part.visible!==false);if(part.visible!==false)assert.equal(e.components.MeshRenderer.mesh,part.mesh);}assert.deepEqual(root.components.Transform.position,[c.x,Math.fround(view.y),c.z]);assert.deepEqual(mesh.components.Transform.position,[0,0,0]);assert.match(world.snapshot.entities.find(e=>e.entity===root.parent).name,/^Scene \/ Units\/Corpse\/Slots /);
+}
+key('F5');assert.ok(S.restore(storage.get('quicksave')));assert.equal(storage.get('quicksave').corpseVersion,1);assert.equal(storage.get('quicksave').corpses.length,5);
+const crowded=corpseFixture(S,80).s;load(crowded);assert.equal(telemetry().corpses.length,80);assert.equal(world.entity('Corpse 79').active,true);assert.equal(world.entity('Corpse 79 mesh 0').parent,world.entity('Corpse 79').entity);const nodes=world.snapshot.entities.filter(e=>/^Corpse /.test(e.name)).length;load(s);assert.equal(world.entity('Corpse 79').active,false);load(crowded);assert.equal(world.snapshot.entities.filter(e=>/^Corpse /.test(e.name)).length,nodes,'slots reuse the same nodes');
+const invisible=copy(crowded);for(const c of invisible.corpses)c.team=1;invisible.map.spawns[0]=[-18,-18];for(const u of invisible.units)if(u.team===0){u.x=-22;u.z=-22;}S.visibility(invisible);load(invisible);assert.equal(world.entity('Corpse 0').active,false,'enemy corpses under fog do not render');
+console.log('PASS generated corpse client: source Death/flesh/bones, generic decay and nonclassic fallback, local mesh transforms, grouped deferred creation, eighty bodies, F5, unused-slot hiding, reuse and fog privacy');

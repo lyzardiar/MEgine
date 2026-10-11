@@ -1,0 +1,26 @@
+{
+  "author": "MiYu",
+  "phase": "source corpse lifecycle",
+  "status": "complete",
+  "goalStatus": "active",
+  "branch": "codex/frostbound-realms",
+  "baseCommit": "a116e5039fe0a96059ba3201dfa1845286a71a95",
+  "rules": "Fresh skirmishes use corpseVersion 1 and protocol 76. Legacy saves and other modes retain version 0 and twenty seconds. Source-bound mobile nonheroes use death time, two-second flesh and eighty-eight-second bone phases; type-zero units show a transient Death body. Summons and heroes retain their existing lifecycle.",
+  "presentation": "Corpse roots and local mesh children are created on demand under Scene / Units/Corpse/Slots groups and reused. All other authored nodes retain their IDs, components and parents. Generic Decay maps across ninety seconds, missing decay clips hold terminal Death. Source corpse retention uses the maximum possible deaths across the source lifetime plus retained feeding bodies; legacy capacity remains 64.",
+  "validation": "436 full-regression PASS records, real TCP reconnect/consumption/privacy, native eighty-body source presentation/F5/hierarchy/reuse, byte-exact isolated generation, source/output/generator staged fingerprints and zero missing material sidecars.",
+  "evidence": [
+    "corpse-lifecycle-validation.json",
+    "corpse-lifecycle-regression.log",
+    "native-corpse-qa.json",
+    "corpse-native-phases.png",
+    "corpse-native-restored.png",
+    "corpse-native-eighty.png"
+  ],
+  "unverified": [
+    "Warcraft original executable phase sequencing and corpse-consumption timing",
+    "Original hero death/dissipation extension",
+    "Physical input, audio listening, standalone player and cross-machine LAN"
+  ],
+  "preserved": "Original dirty model-catalog and twelve visual/report artifacts remain outside this commit. Existing untracked asset/work artifacts remain untouched. Native QA editors exited normally and discovery files were removed; locked WebView caches remain.",
+  "next": "Compare phase transitions and consumption timing against the original executable; extend hero death/dissipation if the source and runtime evidence establish the behavior."
+}

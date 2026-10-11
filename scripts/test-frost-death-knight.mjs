@@ -5,7 +5,7 @@ import {deathKnightFixture} from './frost-death-knight-fixture.mjs';
 const require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js'),D=require('../samples/frostbound-realms/game/death-knight.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},cmd=(s,h,type,args={})=>S.command(s,h.team,{type,ids:[h.id],...args}),learn=(s,h,slot,n=1)=>{for(let i=0;i<n;i++)assert.equal(cmd(s,h,'learn',{slot}),null);},hold={cd:10000,order:{type:'hold'}};
 {
- const {s,h}=deathKnightFixture(S);assert.equal(S.PROTOCOL,75);assert.equal(h.sourceHero,'Udea');assert.equal(h.maxHp,675);assert.equal(h.damage,30);assert.equal(S.maxMana(h),255);assert.equal(h.mana,100);assert.ok(Math.abs(h.armorValue-2.6)<1e-8);assert.deepEqual(S.unitType(h).spells.map(r=>r.hotkey),['C','E','U','D']);assert.ok(S.restore(s));
+ const {s,h}=deathKnightFixture(S);assert.equal(S.PROTOCOL,76);assert.equal(h.sourceHero,'Udea');assert.equal(h.maxHp,675);assert.equal(h.damage,30);assert.equal(S.maxMana(h),255);assert.equal(h.mana,100);assert.ok(Math.abs(h.armorValue-2.6)<1e-8);assert.deepEqual(S.unitType(h).spells.map(r=>r.hotkey),['C','E','U','D']);assert.ok(S.restore(s));
  const legacy=S.create('skirmish',{deathKnightVersion:0,factions:[3,0],ai:[false,false]});delete legacy.deathKnightVersion;assert.equal(S.restore(legacy).deathKnightVersion,0);assert.equal(S.spawn(legacy,'hero',0,0,0,{heroClass:0}).sourceHero,undefined);assert.throws(()=>S.create('skirmish',{deathKnightVersion:2}),/Death Knight/);
  const bad=S.clone(s);bad.units[0].maxHp++;assert.throws(()=>S.restore(bad),/Death Knight/);bad.units[0].maxHp--;bad.deathKnightVersion=0;assert.throws(()=>S.restore(bad),/Death Knight/);
 }
@@ -35,7 +35,7 @@ console.log('PASS strongest-source Unholy Aura, fixed regeneration, movement and
  for(const v of raised){const r=D.revival(v.sourceUnit);assert.equal(v.maxHp,r.hp);assert.equal(v.damage,Object.values(r.weapons)[0]?.damage||0);assert.equal(v.speed,r.speed);assert.equal(v.armorValue,r.armorValue);assert.equal(v.nightLevels,undefined);assert.equal(v.casterRank||0,0);assert.equal(v.druidRank||0,0);assert.equal(v.expires,v.animateDeadFrame+400);}
  const footman=raised.find(v=>v.sourceUnit==='hfoo'),worker=raised.find(v=>v.sourceUnit==='hpea');assert.ok(footman);assert.ok(worker);assert.equal(footman.maxHp,420);assert.equal(S.acolyte(s,worker),false);assert.ok(S.restore(s));const forged=S.clone(s);forged.units.find(S.animatedUnit).damage++;assert.throws(()=>S.restore(forged),/Animate Dead/);const seventh=S.clone(s),extra=S.clone(seventh.units.find(S.animatedUnit));extra.id=++seventh.serial;seventh.units.push(extra);assert.throws(()=>S.restore(seventh),/Animate Dead/);
  const enemy=S.spawn(s,'soldier',1,15,0,hold),hp=footman.hp;S.fire(s,enemy,footman);assert.equal(footman.hp,hp);assert.equal(S.canControl(s,0,footman),true);assert.equal(S.canControl(s,1,footman),false);assert.equal(h.spell[3],180);
- step(s,400);raised=s.units.filter(v=>ids.includes(v.id));assert.equal(raised.length,0);assert.equal(s.corpses.length,0);assert.ok(S.restore(s));
+ step(s,400);raised=s.units.filter(v=>ids.includes(v.id));assert.equal(raised.length,0);assert.equal(s.corpses.length,1);assert.equal(S.corpseStage(s,s.corpses[0]).name,'Decay Bone');assert.ok(S.restore(s));step(s,Math.ceil((S.corpseDuration(s,s.corpses[0])-s.corpses[0].age)/S.DT));assert.equal(s.corpses.length,0);
 }
 console.log('PASS six original allied/enemy bodies, baseline stats, no inherited research, ownership, invulnerability, source workers and 40-second expiry');
 {

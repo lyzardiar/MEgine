@@ -2,7 +2,8 @@
 var FrostEffectPool=(()=>{
   const pattern=/^Classic (spell|status|attachment) (\d+)(.*)$/;
   const identity={position:[0,0,0],rotation:[0,0,0,1],scale:[1,1,1]};
-  const pooled=name=>pattern.test(name);
+  const corpsePattern=/^Corpse (\d+)(?: mesh \d+)?$/;
+  const pooled=name=>pattern.test(name)||corpsePattern.test(name);
   // Native typed components include defaults and serialize their floating fields as f32.
   function matches(actual,desired){
     if(actual===desired)return true;
@@ -35,10 +36,10 @@ var FrostEffectPool=(()=>{
       }
     }
     function ensure(name,count){
-      const match=pattern.exec(name);if(!match)return true;
-      const [,kind,index,suffix]=match,template='Classic '+kind+' 0'+suffix;
+      const body=corpsePattern.exec(name),match=pattern.exec(name);if(!match&&!body)return true;
+      const [,kind,index,suffix]=match??[],template=body?'Corpse 0':'Classic '+kind+' 0'+suffix;
       if(!authored[template])return false;
-      const base='Scene / Effects/Classic '+kind,first=Math.floor(Number(index)/32)*32,group=base+'/Slots '+first+'-'+(first+31);
+      const base=body?'Scene / Units/Corpse':'Scene / Effects/Classic '+kind,first=Math.floor(Number(body?.[1]??index)/32)*32,group=base+'/Slots '+first+'-'+(first+31);
       queue(group,{Transform:identity},base,true);
       queue(name,authored[template],group);
       const names=[group,name];

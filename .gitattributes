@@ -195,3 +195,7 @@ samples/frostbound-realms/game/dreadlord.js text eol=lf
 scripts/*dreadlord*.py text eol=lf
 scripts/*dreadlord*.mjs text eol=lf
 docs/designs/frostbound-realms/*dreadlord*.json text eol=lf
+
+samples/frostbound-realms/SourceAssets/CorpseRules/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+samples/frostbound-realms/corpse-*.json text eol=lf
+docs/designs/frostbound-realms/*corpse*.json text eol=lf

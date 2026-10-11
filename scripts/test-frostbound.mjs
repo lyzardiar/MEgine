@@ -103,6 +103,9 @@ import './test-frost-daynight.mjs';
 import './test-frost-feedback.mjs';
 import './test-frost-motion.mjs';
 import './test-frost-corpses.mjs';
+import './test-frost-corpse-stages.mjs';
+import './test-frost-corpse-generated.mjs';
+import './test-frost-corpse-network.mjs';
 import './test-frost-raise-dead.mjs';
 import './test-frost-cannibalize.mjs';
 import './test-frost-casters.mjs';
@@ -282,7 +285,7 @@ try{
   next=rangerResume.next(m=>m.type==='state'&&m.state.corpses?.some(c=>c.id===corpseVictim.id));rangerResume.send({type:'order',seq:1,command:{type:'attack',ids:[gunner.id],target:corpseVictim.id}});const deadBody=(await next).state.corpses.find(c=>c.id===corpseVictim.id);assert.equal(deadBody.yaw,1.2);assert.equal(deadBody.kind,'soldier');assert.equal(deadBody.inventory,undefined);
   rangerResume.socket.destroy();const corpseResume=await peer();next=corpseResume.next(m=>m.type==='joined');corpseResume.send({type:'resume',code:arrowRoom.code,token:arrowRoom.token});const resumedBody=(await next).state.corpses.find(c=>c.id===corpseVictim.id);assert.ok(resumedBody.age>=deadBody.age&&resumedBody.age<2);assert.equal(resumedBody.yaw,deadBody.yaw);
   gunner.x=-28;gunner.z=-28;gunner.order={type:'hold'};await corpseResume.next(m=>m.type==='state'&&!m.state.corpses.some(c=>c.id===corpseVictim.id));gunner.x=0;gunner.z=0;await corpseResume.next(m=>m.type==='state'&&m.state.corpses.some(c=>c.id===corpseVictim.id));console.log('PASS: TCP actual rifle kill, authoritative corpse direction/age, mid-death reconnect and fog disappearance/reappearance');
-  authoritative.corpses[0].age=19.8;authoritative.winner=0;const finishedFrame=authoritative.frame,cleared=(await corpseResume.next(m=>m.type==='state'&&m.state.winner===0&&m.state.corpses.length===0)).state;assert.equal(cleared.frame,finishedFrame);console.log('PASS: TCP post-victory corpse expiry without advancing battle time');
+  authoritative.corpses[0].age=S.corpseDuration(authoritative,authoritative.corpses[0])-.2;authoritative.winner=0;const finishedFrame=authoritative.frame,cleared=(await corpseResume.next(m=>m.type==='state'&&m.state.winner===0&&m.state.corpses.length===0)).state;assert.equal(cleared.frame,finishedFrame);console.log('PASS: TCP post-victory corpse expiry without advancing battle time');
   app.rooms.get(arrowRoom.code).phase='playing';authoritative.winner=null;authoritative.units=[];authoritative.corpses=[{...deadBody,age:0}];const caster=S.spawn(authoritative,'necromancer',0,0,0,{damage:0,order:{type:'hold'}});S.visibility(authoritative);
   next=corpseResume.next(m=>m.type==='state'&&m.state.units.filter(u=>u.kind==='skeletonwarrior').length===2);corpseResume.send({type:'order',seq:1,command:{type:'raiseDead',ids:[caster.id],corpse:deadBody.id}});corpseResume.send({type:'order',seq:2,command:{type:'raiseDeadAuto',ids:[caster.id],enabled:true}});const raised=(await next).state;assert.equal(raised.corpses.length,0);assert.ok(raised.units.find(u=>u.id===caster.id).mana<76);assert.equal(raised.units.find(u=>u.id===caster.id).raiseDeadAuto,true);
   corpseResume.socket.destroy();const summonResume=await peer();next=summonResume.next(m=>m.type==='joined');summonResume.send({type:'resume',code:arrowRoom.code,token:arrowRoom.token});const continued=(await next).state;assert.deepEqual(continued.units.filter(u=>u.summoned).map(u=>[u.id,u.expires]),raised.units.filter(u=>u.summoned).map(u=>[u.id,u.expires]));assert.equal(continued.units.find(u=>u.id===caster.id).raiseDeadAuto,true);assert.ok(continued.units.find(u=>u.id===caster.id).raiseDeadCd>7);console.log('PASS: TCP authoritative corpse consumption, summoned sword/shield pair, mana/autocast and reconnect lifetime continuity');

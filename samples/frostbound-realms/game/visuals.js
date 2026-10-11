@@ -96,9 +96,18 @@ var FrostVisual=(()=>{
   function corpse(state,c){
     const visual=model(state,{...c,hp:0,tag:c.boss?'boss':undefined,tdBoss:c.large}),{asset,scale}=visual,clip=asset.animations?.findIndex(a=>/Death/i.test(a.name));
     if(clip===undefined||clip<0)return null;
+    const stage=Frost.corpseStage(state,c);
+    if(asset.classic&&stage){
+      const source=Frost.corpseSource(state,c),death=asset.animations[classicClip(asset,'Death',c)];let target=classicClip(asset,stage.name,c),elapsed=stage.time,duration=stage.duration,action=stage.name;
+      if(stage.name!=='Death'){
+        const generic=classicClip(asset,'Decay',c),genericName=asset.animations[generic]?.name,alternate=Frost.druidUnit(c)&&druidRules.units[c.kind].alternate;
+        if(genericName&&/^Decay(?: Alternate| Upgrade)?$/i.test(genericName)&&(target<0||alternate&&!/alternate/i.test(asset.animations[target].name))){target=generic;action=genericName;elapsed=c.age-source.deathTime;duration=Frost.corpseDuration(state,c)-source.deathTime;}
+      }
+      const animation=target>=0?asset.animations[target]:death,time=target>=0?Frost.clamp(elapsed/(duration||1),0,1)*(animation.duration||0):death.duration,sample=classicSample(c,asset,false,time,target>=0?action:'Death'),ground=Frost.elevation(state.map,c.x,c.z),fall=Frost.clamp(c.age/(source.deathTime||1),0,1);return {...visual,sample,mesh:sampleMesh(asset.parts[0],sample),y:ground+(c.y-ground)*(1-fall),yaw:c.yaw+(asset.classicYaw||0)};
+    }
     if(asset.classic){const sample=classicSample(c,asset,false,c.age,'Death'),ground=Frost.elevation(state.map,c.x,c.z),fall=Frost.clamp(c.age/(asset.animations[sample.clip].duration||1),0,1),decay=Frost.clamp((c.age-(Frost.CORPSE_LIFETIME-4))/4,0,1);return {...visual,sample,mesh:sampleMesh(asset.parts[0],sample),y:ground+(c.y-ground)*(1-fall)-decay*Math.max(2,asset.size[1]*scale),yaw:c.yaw+(asset.classicYaw||0)};}
-    const frames=asset.animations[clip].frames,ground=Frost.elevation(state.map,c.x,c.z),fall=Frost.clamp(c.age/(frames/12),0,1),decay=Frost.clamp((c.age-(Frost.CORPSE_LIFETIME-4))/4,0,1);
-    return {...visual,mesh:asset.parts[0].mesh+'#pose='+clip+':'+Math.min(frames-1,Math.floor(c.age*12)),y:ground+(c.y-ground)*(1-fall)-decay*Math.max(2,asset.size[1]*scale),yaw:c.yaw};
+    const frames=asset.animations[clip].frames,ground=Frost.elevation(state.map,c.x,c.z),deathTime=stage?Frost.corpseSource(state,c).deathTime:frames/12,fall=Frost.clamp(c.age/(deathTime||1),0,1),decay=stage?0:Frost.clamp((c.age-(Frost.CORPSE_LIFETIME-4))/4,0,1),frame=stage?Math.floor(fall*(frames-1)):Math.floor(c.age*12);
+    return {...visual,mesh:asset.parts[0].mesh+'#pose='+clip+':'+Math.min(frames-1,frame),y:ground+(c.y-ground)*(1-fall)-decay*Math.max(2,asset.size[1]*scale),yaw:c.yaw};
   }
   function pose(u,asset,walking,time,rate=12){
     if(asset.classic)return sampleMesh(asset.parts[0],classicSample(u,asset,walking,time,undefined,rate));

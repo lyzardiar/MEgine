@@ -41,7 +41,7 @@ function arrived(s,goals){for(const p of goals){const u=s.units.find(u=>u.id===p
  const s=game(),u=S.spawn(s,'worker',0,-24,24,{damage:0}),enemy=S.spawn(s,'soldier',1,24,-24,{damage:0});S.command(s,1,{type:'hold',ids:[enemy.id]});S.visibility(s);const copy=S.restore(s);copy.units=copy.units.filter(v=>v.id!==enemy.id);order(s,[u],20,-20);order(copy,copy.units,20,-20);for(let i=0;i<15;i++){S.tick(s);S.tick(copy);assert.deepEqual(S.publicState(s,0).units,S.publicState(copy,0).units,'unseen traffic does not alter public paths');}
 }
 {
- const s=game();s.mode='td';s.nextWave=10000;const us=Array.from({length:7},(_,i)=>S.spawn(s,'creep',1,-25-i*.25,-24,{damage:0,route:S.tdPath,waypoint:1,td:true}));
+ const s=game();s.corpseVersion=0;s.mode='td';s.nextWave=10000;const us=Array.from({length:7},(_,i)=>S.spawn(s,'creep',1,-25-i*.25,-24,{damage:0,route:S.tdPath,waypoint:1,td:true}));
  for(let i=0;i<100;i++)S.tick(s);assert.ok(us.every(u=>u.x>-5),'old tightly stacked TD waves escape their initial overlap');separate(us,s.frame);
 }
 {
@@ -58,7 +58,7 @@ function arrived(s,goals){for(const p of goals){const u=s.units.find(u=>u.id===p
  const s=game(),a=Array.from({length:4},(_,i)=>S.spawn(s,'soldier',0,-10,i*2,{damage:0})),b=Array.from({length:4},(_,i)=>S.spawn(s,'soldier',0,10,i*2,{damage:0}));order(s,a,0,0);order(s,b,0,0);advance(s,200);assert.ok(s.units.every(u=>!u.order&&Math.hypot(u.x,u.z)<6),'separate squads resolve newly occupied goals and both finish');
 }
 {
- const s=game();s.mode=s.map.mode='td';s.map.waves=30;s.wave=29;s.nextWave=0;advance(s,1);assert.equal(s.units.length+s.tdPending.length,65);const copy=S.restore(s);advance(s,100);advance(copy,100);assert.deepEqual(s.units,copy.units);assert.deepEqual(s.tdPending,copy.tdPending);assert.ok(s.units.every(u=>Math.abs(u.x)<=30&&Math.abs(u.z)<=30),'largest authored wave stays inside the map');const invalid=S.clone(s);invalid.tdPending=[{hp:100,speed:-1,tdBoss:false}];assert.throws(()=>S.restore(invalid),/entrance queue/);const old=S.clone(game());delete old.tdPending;assert.deepEqual(S.restore(old).tdPending,[]);
+ const s=game();s.corpseVersion=0;s.mode=s.map.mode='td';s.map.waves=30;s.wave=29;s.nextWave=0;advance(s,1);assert.equal(s.units.length+s.tdPending.length,65);const copy=S.restore(s);advance(s,100);advance(copy,100);assert.deepEqual(s.units,copy.units);assert.deepEqual(s.tdPending,copy.tdPending);assert.ok(s.units.every(u=>Math.abs(u.x)<=30&&Math.abs(u.z)<=30),'largest authored wave stays inside the map');const invalid=S.clone(s);invalid.tdPending=[{hp:100,speed:-1,tdBoss:false}];assert.throws(()=>S.restore(invalid),/entrance queue/);const old=S.clone(game());delete old.tdPending;assert.deepEqual(S.restore(old).tdPending,[]);
 }
 {
  const s=game(),hall=S.spawn(s,'hall',0,0,0),workers=Array.from({length:12},(_,i)=>S.spawn(s,'worker',0,Math.cos(i*Math.PI/6)*4,Math.sin(i*Math.PI/6)*4));S.spawn(s,'farm',0,20,20);S.command(s,0,{type:'hold',ids:workers.map(u=>u.id)});assert.equal(S.command(s,0,{type:'train',ids:[hall.id],kind:'worker'}),null);advance(s,45);assert.equal(hall.queue.length,1,'blocked exit waits without stacking the trained unit');assert.equal(s.units.length,14);order(s,[workers[0]],12,0);advance(s,45);assert.equal(hall.queue.length,0);assert.equal(s.units.length,15,'production finishes once an exit is clear');

@@ -1,0 +1,38 @@
+// Author: MiYu. Source corpse phases, expiry, consumer gates, legacy saves and native pose selection.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js');
+globalThis.Frost=S;globalThis.FrostArt=JSON.parse(fs.readFileSync(new URL('../samples/frostbound-realms/Assets/Scripts/Main.js',import.meta.url),'utf8').match(/^var FrostArt=(.+);$/m)[1]);
+const V=require('../samples/frostbound-realms/game/visuals.js'),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
+function arena(options={}){const map=S.defaultMap();for(const k of ['terrain','heights','relief','ramps'])map[k].fill(0);map.props=[];map.units=[];map.doodads=[];map.triggers=[];const s=S.create('skirmish',{map,factions:[0,3],ai:[false,false],...options});s.units=[];S.spawn(s,'hall',0,-22,-22,{damage:0});S.spawn(s,'hall',1,22,22,{damage:0});return s;}
+function kill(s,kind='rifleman',team=0){const attacker=S.spawn(s,'rifleman',1-team,0,0,{damage:100000,range:12}),victim=S.spawn(s,kind,team,0,1,{hp:1,damage:0,speed:0,order:{type:'hold'}});attacker.order={type:'attack',target:victim.id};S.visibility(s);for(let i=0;i<30&&victim.hp>0;i++)S.tick(s);assert.equal(victim.hp,0,kind);attacker.damage=0;attacker.order={type:'hold'};const c=s.corpses.find(c=>c.id===victim.id);assert.ok(c,kind);return c;}
+assert.equal(S.PROTOCOL,76);assert.equal(S.corpseRules.timings.BoneDecayTime,88);assert.equal(S.corpseRules.timings.DecayTime,2);assert.equal(Object.keys(S.corpseRules.units).length,836);
+{
+ const s=arena(),c=kill(s),r=S.corpseRules.units.hrif;assert.equal(s.corpseVersion,1);assert.equal(c.sourceUnit,'hrif');assert.equal(S.corpseDuration(s,c),91.7);assert.equal(S.corpseStage(s,c).name,'Death');
+ for(const [age,name] of [[r.deathTime-.001,'Death'],[r.deathTime,'Decay Flesh'],[r.deathTime+1.999,'Decay Flesh'],[r.deathTime+2,'Decay Bone'],[91.699,'Decay Bone']]){c.age=age;assert.equal(S.corpseStage(s,c).name,name);const view=V.corpse(s,c);assert.equal(view.asset.animations[view.sample.clip].name,name);assert.ok(Math.abs(view.y-S.elevation(s.map,c.x,c.z))<1e-6||name==='Death');assert.ok(S.restore(s));}
+ c.age=20;step(s,1);assert.ok(s.corpses.includes(c),'source body survives the old twenty-second limit');const saved=S.restore(s);step(s,200);step(saved,200);assert.deepEqual(saved.corpses,s.corpses);c.age=91.65;step(s,1);assert.ok(!s.corpses.includes(c));
+ console.log('PASS corpse source stages: 836 original rows, 1.7s Rifleman Death, 2s flesh, 88s bones, exact transitions, original native clip bindings, 20s survival and deterministic saved expiry');
+}
+{
+ const s=arena(),c=kill(s,'faeriedragon'),r=S.corpseRules.units.efdr;assert.equal(r.deathType,0);assert.equal(S.corpseDuration(s,c),r.deathTime);assert.equal(S.corpseUsable(c,s),false);const n=S.spawn(s,'necromancer',1,0,2);n.mana=400;S.visibility(s);assert.match(S.command(s,1,{type:'raiseDead',ids:[n.id],corpse:c.id}),/corpse/);c.age=r.deathTime-.05;step(s,1);assert.ok(!s.corpses.includes(c));console.log('PASS source non-corpse death: dying Faerie Dragon body is visible only for source death time, cannot feed Raise Dead and disappears without flesh/bone decay');
+}
+{
+ const s=arena(),c=kill(s);c.age=30;const n=S.spawn(s,'necromancer',1,0,2,{mana:400});S.visibility(s);assert.equal(S.command(s,1,{type:'raiseDead',ids:[n.id],corpse:c.id}),null);step(s,8);assert.equal(s.corpses.some(b=>b.id===c.id),false);assert.equal(s.units.filter(u=>u.summoned&&u.kind.startsWith('skeleton')).length,2);assert.ok(S.restore(s));console.log('PASS source old bones remain usable: explicit Raise Dead consumes a thirty-second body and produces the paid saved skeleton pair');
+}
+{
+ const s=arena();let first;for(let i=0;i<80;i++){const c=kill(s);first??=c;s.units=s.units.filter(u=>u.kind==='hall');}assert.equal(s.corpses.length,80);assert.equal(s.corpses[0],first);assert.ok(S.restore(s));assert.equal(S.publicState(s,0).corpses.length,80);console.log('PASS source corpse retention: eighty combat deaths preserve the first body, round-trip saves and project all eighty without legacy FIFO eviction');
+}
+{
+ for(const kind of ['hunter','druidclaw','druidbear','druidtalon','mountaingiant','glaivethrower']){const s=arena({factions:[2,3]}),c=kill(s,kind);c.age=30;const view=V.corpse(s,c);assert.ok(view,kind);assert.ok(Math.abs(view.y-S.elevation(s.map,c.x,c.z))<1e-6,kind+' remains above ground');if(view.asset.classic){const clip=V.classicClip(view.asset,'Decay Bone',c);if(clip>=0&&kind!=='druidbear'){assert.equal(view.sample.clip,clip,kind+' '+view.asset.animations[view.sample.clip].name);const duration=view.asset.animations[clip].duration;assert.equal(view.sample.frame,Math.floor((30-S.corpseSource(s,c).deathTime-2)/88*duration*12+1e-7));}}else assert.equal(view.asset.classic,undefined);if(kind==='druidbear'){assert.equal(view.asset.animations[view.sample.clip].name,'Decay Alternate');assert.equal(view.sample.frame,216);}if(['mountaingiant','glaivethrower'].includes(kind))assert.equal(view.asset.animations[view.sample.clip].name,'Decay');assert.ok(S.restore(s));if(['mountaingiant','glaivethrower'].includes(kind)){assert.equal(S.corpseSource(s,c).deathType,2);const hero=S.spawn(s,'hero',0,2,2,{heroClass:0});assert.equal(S.resurrectionCorpses(s,hero).some(b=>b.id===c.id),false);}}
+ console.log('PASS source corpse presentation: nonclassic Hunter stays grounded after twenty seconds, alternate Druid clips use their own durations and type-two giant/siege remains non-resurrectable');
+}
+{
+ const s=arena({factions:[3,0]}),c=kill(s,'rifleman',1),g=S.spawn(s,'ghoul',0,c.x-1,c.z,{hp:10,damage:0,order:{type:'hold'}});s.teams[0].cannibalize=1;c.age=30;S.visibility(s);assert.equal(S.command(s,0,{type:'cannibalize',ids:[g.id]}),null);step(s,2);assert.ok(g.order.active);const age=c.age,loaded=S.restore(s);step(s,50);step(loaded,50);assert.equal(c.age,age);assert.deepEqual(loaded.corpses,s.corpses);assert.deepEqual(loaded.units,s.units);const invalid=S.clone(s);invalid.corpses[0].kind='faeriedragon';invalid.corpses[0].sourceUnit='efdr';invalid.corpses[0].age=0;assert.throws(()=>S.restore(invalid),/Cannibalize/);console.log('PASS source Cannibalize: thirty-second bones heal, active feeding freezes decay, saves continue exactly and transient death bodies cannot restore as food');
+}
+{
+ const s=arena({corpseVersion:0}),c=kill(s);assert.equal(S.corpseDuration(s,c),20);const old=S.clone(s);delete old.corpseVersion;const loaded=S.restore(old);assert.equal(loaded.corpseVersion,0);assert.equal(S.corpseDuration(loaded,loaded.corpses[0]),20);c.age=19.95;step(s,1);assert.equal(s.corpses.length,0);for(const mode of ['moba','td','rpg'])assert.equal(S.create(mode).corpseVersion,0);console.log('PASS corpse legacy migration: missing marker keeps twenty seconds, opt-out and non-skirmish rules remain unchanged');
+}
+{
+ const s=arena(),c=kill(s),life=S.corpseDuration(s,c);for(const patch of [{corpseVersion:2},{corpseVersion:null},{mode:'td',corpseVersion:1}])assert.throws(()=>S.restore({...S.clone(s),...patch}),/corpse version|mode mismatch/);const oversized=S.clone(s);oversized.corpses=Array(S.corpseCapacity(s)+1).fill(c);assert.throws(()=>S.restore(oversized),/corpses/);for(const age of [-1,life,Infinity]){const invalid=S.clone(s);invalid.corpses[0].age=age;assert.throws(()=>S.restore(invalid),/corpse/);}s.winner=0;const frame=s.frame;c.age=life-.05;step(s,1);assert.equal(s.corpses.length,0);assert.equal(s.frame,frame);console.log('PASS corpse validation and finished worlds: strict version/mode/age boundaries and post-victory source expiry without battle-time advancement');
+}
