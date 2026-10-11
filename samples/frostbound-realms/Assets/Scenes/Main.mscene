@@ -382741,6 +382741,173 @@
             "time_seconds": 0
           }
         }
+      },
+      {
+        "entity": 90223,
+        "name": "Classic spell 0 controlMagicTarget",
+        "parent": 90041,
+        "siblingIndex": 9014,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanSpellbreakerEffects/Effects/ControlMagicTarget.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90224,
+        "name": "Classic spell 0 controlMagicTarget mesh 0",
+        "parent": 90223,
+        "siblingIndex": 0,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanSpellbreakerEffects/Models/Abilities/Spells/Human/ControlMagic/ControlMagicTarget/geoset-00-animated.glb",
+            "material": "Assets/HumanSpellbreakerEffects/Materials/Abilities/Spells/Human/ControlMagic/ControlMagicTarget/geoset-00-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90225,
+        "name": "Classic spell 0 controlMagicTarget mesh 1",
+        "parent": 90223,
+        "siblingIndex": 1,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanSpellbreakerEffects/Models/Abilities/Spells/Human/ControlMagic/ControlMagicTarget/geoset-01-animated.glb",
+            "material": "Assets/HumanSpellbreakerEffects/Materials/Abilities/Spells/Human/ControlMagic/ControlMagicTarget/geoset-01-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90226,
+        "name": "Classic spell 0 controlMagicTarget mesh 2",
+        "parent": 90223,
+        "siblingIndex": 2,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanSpellbreakerEffects/Models/Abilities/Spells/Human/ControlMagic/ControlMagicTarget/geoset-02-animated.glb",
+            "material": "Assets/HumanSpellbreakerEffects/Materials/Abilities/Spells/Human/ControlMagic/ControlMagicTarget/geoset-02-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90227,
+        "name": "Classic spell 0 controlMagicTarget mesh 3",
+        "parent": 90223,
+        "siblingIndex": 3,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanSpellbreakerEffects/Models/Abilities/Spells/Human/ControlMagic/ControlMagicTarget/geoset-03-animated.glb",
+            "material": "Assets/HumanSpellbreakerEffects/Materials/Abilities/Spells/Human/ControlMagic/ControlMagicTarget/geoset-03-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
       }
     ],
     "frame": 0,

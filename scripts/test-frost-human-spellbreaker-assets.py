@@ -44,7 +44,7 @@ def main():
     assert art['SpellStealTarget']['animations'] == [dict(name='Birth', frames=37, duration=2.966, loop=False)]
     for name, stats in [('SpellStealMissile', dict(clips=3, frames=28, particles=105, quads=107, lights=0, sourceParticles=2, sourceRibbons=0)), ('SpellStealTarget', dict(clips=1, frames=37, particles=88, quads=0, lights=0, sourceParticles=1, sourceRibbons=0))]:
         assert receipt['statistics'][name] == stats, name
-    assert receipt['nativeGeometryParts'] == 9 and receipt['runtimeIntegrated'] is False and receipt['originalRuntimeVerified'] is False
+    assert receipt['nativeGeometryParts'] == 9 and receipt['runtimeIntegrated'] is True and receipt['originalRuntimeVerified'] is False
     with tempfile.TemporaryDirectory(prefix='spellbreaker-reproduce-', dir='D:/MEngineNativeQA') as temp:
         output = pathlib.Path(temp) / 'sample'
         def run(source=SAMPLE, target=output, success=True):
@@ -60,7 +60,7 @@ def main():
             target = corrupt / r['output']; target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(SAMPLE / r['output'], target)
         (corrupt / receipt['sources'][0]['output']).write_bytes(b'corrupt')
         assert b'Source fingerprint mismatch:' in run(source=corrupt, target=pathlib.Path(temp) / 'rejected', success=False).stderr
-    report = dict(author='MiYu', passed=True, sources=len(receipt['sources']), signedOutputs=len(outputs), reproducedOutputs=len(outputs), materialMetas=sum(name.endswith('.mmat.meta') for name in signed), nativeGeometryParts=9, sampledParticles=sum(r['particles'] for r in receipt['statistics'].values()), spellStealMissileParts=5, spellStealMissileClips=3, spellStealTargetParticleOnly=True, modifiedOutputProtected=True, corruptSourceRejected=True, runtimeIntegrated=False, originalRuntimeVerified=False)
+    report = dict(author='MiYu', passed=True, sources=len(receipt['sources']), signedOutputs=len(outputs), reproducedOutputs=len(outputs), materialMetas=sum(name.endswith('.mmat.meta') for name in signed), nativeGeometryParts=9, sampledParticles=sum(r['particles'] for r in receipt['statistics'].values()), spellStealMissileParts=5, spellStealMissileClips=3, spellStealTargetParticleOnly=True, modifiedOutputProtected=True, corruptSourceRejected=True, runtimeIntegrated=True, originalRuntimeVerified=False)
     (ROOT / 'docs/designs/frostbound-realms/human-spellbreaker-assets-validation.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(report))
 

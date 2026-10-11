@@ -1,0 +1,3 @@
+// Author: MiYu. Source Archmage summon and researched Spell Breaker for client and native acceptance.
+import {sanctumFixture} from './frost-human-sanctum-fixture.mjs';
+export function controlmagicFixture(S){const f=sanctumFixture(S),s=f.s;const h=S.spawn(s,'hero',1,2,0,{heroClass:0,mana:300,cd:99,order:{type:'hold'}});S.command(s,1,{type:'learn',ids:[h.id],slot:1});S.command(s,1,{type:'spell',ids:[h.id],slot:1});for(let i=0;i<12;i++)S.tick(s);const target=s.units.find(S.waterElemental);target.x=1;target.z=0;target.hp=100;target.cd=99;target.order={type:'hold'};h.x=8;h.z=0;const breaker=S.spawn(s,'humanspellbreaker',0,-1,0,{mana:250,spellStealAuto:false,cd:99,order:{type:'hold'}});s.teams[0].humanSanctum.Rhss=1;S.visibility(s);return {...f,h,target,breaker};}

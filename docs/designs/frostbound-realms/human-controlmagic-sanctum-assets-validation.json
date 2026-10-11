@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "sources": 63,
+  "signedFiles": 516,
+  "bytes": 35305147,
+  "models": 7,
+  "parts": 44,
+  "materials": 93,
+  "icons": 48,
+  "billboardNodes": 16,
+  "nativeBounds": 4
+}

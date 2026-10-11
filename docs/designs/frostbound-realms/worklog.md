@@ -261,3 +261,8 @@ Author: MiYu。战争古树／猎手大厅 11 项源研究、19 等级接入共�
 素材 56 原始源／102 签名输出及 104 项 Git 暂存签名验证通过；脱离游戏安装逐字节复现、修改输出预检保护和损坏签名源拒绝通过。全量 Node／生成客户端／真实 TCP 回归 106 条 PASS、退出 0。新增规则 10 组与客户端 6 组通过。原生主验收通过实际费用／退款、完整 20 秒哨兵研究、原版指令图标、目标选择、保存／加载、月井恢复／自动恢复及投刃车地面／树木操作；最终拔根修正与所有 11 张源按钮在独立原生补验通过，两次专属 Editor 均正常退出并清理测试工程／存档。材料管线拒绝和控制台错误 0。源前置拒绝提示随后改为可读建筑名并由六组生成客户端检查验证；主／补充／最终文字差异的真实哈希分别保留在报告中，没有把此前原生截图作为最后文字修正的实机证据。
 
 独立只读审核发现的拔根队列取消按钮重复已修正并增加实际队列覆盖。原版 Owl 来源、三组 geometry、billboard 和两发射器转换入口已核实；哨兵渲染池与 Shaman 点选驱散尚未接入，全部野性兵种和完整四族／战役／经典地图／通用编辑器等仍未完成。原生输入不等于物理键鼠、音频或跨机器 LAN。续接入口为 night-elf-technology-handoff.md；用户要求这批提交推送后暂停，整体目标保持未完成。Ponytail 禁用、资产库只读，保留既有脏图片／QA 与无关草稿。
+
+
+### Control Magic gameplay and native acceptance
+
+Protocol 89 adds Rhss-gated slot 9/C Control Magic, confirmed original health-based mana with float32 truncation, release-time validation, source-preserving ownership and lifetime, persistent buff/projectile provenance and original target geometry. 57 regression entrypoints pass; native playback 44 steps, zero console/material errors; 101 effect outputs reproduce. All 9,014 earlier scene entities are retained; five inactive templates are added. Public engine/editor master synchronization remains remote commit 0a5eb211. Original live Warcraft casts, physical input, standalone Player and cross-machine LAN remain unverified. See human-controlmagic.md and its validation reports.

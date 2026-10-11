@@ -12,6 +12,6 @@
   "spellStealTargetParticleOnly": true,
   "modifiedOutputProtected": true,
   "corruptSourceRejected": true,
-  "runtimeIntegrated": false,
+  "runtimeIntegrated": true,
   "originalRuntimeVerified": false
 }

@@ -136,7 +136,7 @@ def verify(sample, probe):
     assert a['Aslo']['movementReduction'] == .6 and a['Aslo']['attackSpeedReduction'] == .25
     assert a['Aply']['forms'] == dict(ground='nshe', air='nshf', amphibious='nsha', water='nshw')
     assert a['Afbk']['manaBurn'] == 20 and a['Afbk']['heroManaBurn'] == 4 and a['Afbk']['summonedDamage'] == 0
-    assert a['Acmg']['requires'] == ['Rhss'] and a['Acmg']['healthManaRatio'] == .45 and a['Acmg']['currentHealthAdjustment'] == 1
+    assert a['Acmg']['requires'] == ['Rhss'] and a['Acmg']['healthManaRatio'] == .45 and a['Acmg']['useCurrentHealth'] is True
     assert 'self' not in a['Aivs']['targets'] and 'nonhero' in a['Aply']['targets']
     assert a['Amim']['passive'] and a['Amim']['sourceRow']['race'] == 'nightelf'
     assert rules['boundAbilityRows'] == {key: tables['AbilityData'][key] for key in sorted({a for u in selected for a in u['abilities']})}
