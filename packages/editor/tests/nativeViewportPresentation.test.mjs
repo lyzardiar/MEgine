@@ -7,6 +7,7 @@ const server = await createServer({ root: fileURLToPath(new URL('..', import.met
 const { createNativeViewportPresentationReader } = await server.ssrLoadModule('/src/nativeViewportPresentation.ts');
 const { createNativeViewportWorldArgs } = await server.ssrLoadModule('/src/nativeViewportFrame.ts');
 const { timelineGameCamera } = await server.ssrLoadModule('/src/gameCamera.ts');
+const { layoutUiScene3D, layoutUiWorldSpace, sceneUiEntities } = await server.ssrLoadModule('/src/ui/uiLayout.ts');
 test.after(() => server.close());
 const transform = x => ({ position: [x, 0, 2], rotation: [0, 0, 0, 1], scale: [1, 1, 1] });
 const props = () => ({ entities: [{ entity: 1, components: { Transform: transform(0) } }, { entity: 2, parent: 1, components: { Camera3D: { primary: true }, Transform: transform(0) } }, { entity: 3, parent: 1, components: { Button: {} } }, { entity: 4, components: { SpineSkeleton: {} } }], clearColor: [0, 0, 0, 1], simulationTime: 0 });
@@ -64,6 +65,7 @@ test('camera-only native frames share derived data while newer records restore t
   const camera = first.gameCamera(null, 0), nextWorld = frame();
   assert.notEqual(nextWorld, firstWorld); assert.equal(nextWorld.entities, firstWorld.entities);
   assert.equal(read(nextWorld).worldTransforms(), transforms); assert.equal(read(nextWorld).gameCamera(null, 0), camera);
+  assert.equal(read(nextWorld).sceneUiEntities(), first.sceneUiEntities());
   assert.equal(read(nextWorld).active(3), true); assert.equal(read(nextWorld).requiresBrowserSnapshot, true);
   live.entities[0].active = false; live.entities[1].components.Transform.position[0] = 14;
   const newer = retainPlayWorld({ ...live, frame: 1, simFrame: 1, selected: null });
@@ -71,4 +73,40 @@ test('camera-only native frames share derived data while newer records restore t
   assert.notEqual(read(changed).worldTransforms(), transforms); assert.equal(read(changed).active(3), false);
   assert.equal(read(changed).gameCamera(null, 0), null); assert.equal(read(changed).worldTransforms().get(2).transform.position[0], 14);
   assert.equal(read(firstWorld).active(3), true); assert.equal(read(firstWorld).gameCamera(null, 0).eye[0], 0);
+});
+
+test('owned Scene UI membership preserves full layout and projection while new revisions observe Canvas, hierarchy and camera edits', () => {
+  const rect = { anchor_min: [0, 0], anchor_max: [0, 0], pivot: [.5, .5], anchored_position: [40, 40], size_delta: [80, 30] };
+  const camera = { eye: [0, 2, 8], target: [0, 0, 0], fovYDeg: 60 }, viewport = { x: 13, y: 19, w: 800, h: 600 }, size = { w: 800, h: 600 };
+  const live = { entities: [
+    { entity: 1, components: { Transform: transform(2) } },
+    { entity: 2, parent: 1, components: { Canvas: { render_mode: 'ScreenSpaceOverlay' }, RectTransform: rect } },
+    { entity: 3, parent: 2, components: { Image: { sprite: 'white' } } },
+    { entity: 4, parent: 3, components: { RectTransform: rect, Text: { text: 'owned revision' } } },
+    { entity: 5, parent: 1, components: { Canvas: { render_mode: 'WorldSpace' }, RectTransform: rect, Transform: { ...transform(0), scale: [.01, .01, .01] } } },
+    { entity: 6, parent: 5, components: { RectTransform: rect, Image: { color: [1, 0, 0, 1] } } },
+    { entity: 7, components: { Canvas: { render_mode: 'ScreenSpaceCamera', render_camera: '4294967297', plane_distance: 3 }, RectTransform: rect } },
+    { entity: 8, parent: 7, components: { RectTransform: rect, Image: { sprite: 'white' } } },
+    { entity: 9, components: { Transform: { ...transform(0), position: [0, 2, 8] } } },
+    { entity: 4294967297, parent: 9, components: { Camera3D: { primary: true } } },
+    { entity: 10, components: { Camera2D: {} } },
+    { entity: 11, parent: 1, components: { RectTransform: rect, Image: { sprite: 'white' } } },
+    ...Array.from({ length: 20000 }, (_, i) => ({ entity: 1000 + i, components: { Transform: transform(i), MeshRenderer: { mesh: 'cube' } } })),
+  ], clearColor: [0, 0, 0, 1], simulationTime: 0 };
+  const read = createNativeViewportPresentationReader(), world = createNativeViewportWorldArgs(live).frameWorld(), first = read(world), subset = first.sceneUiEntities();
+  assert.equal(subset.length, 11); assert.deepEqual(subset, sceneUiEntities(world.entities)); assert.equal(subset[0], world.entities[0]);
+  for (let i = 0; i < 100; i++) assert.equal(read(world).sceneUiEntities(), subset);
+  const verifyLayout = frame => {
+    const ui = read(frame).sceneUiEntities();
+    for (const selected of [new Set(), new Set([4, 6, 8])]) {
+      assert.deepEqual(layoutUiScene3D(ui, camera, viewport, selected, size), layoutUiScene3D(frame.entities, camera, viewport, selected, size));
+      assert.deepEqual(layoutUiWorldSpace(ui, camera, viewport, selected), layoutUiWorldSpace(frame.entities, camera, viewport, selected));
+    }
+  };
+  verifyLayout(world);
+  live.entities[0].active = false; live.entities[3].parent = 5; live.entities[9].components.Camera3D = { primary: true, orthographic: true, orthographic_size: 6 };
+  delete live.entities[1].components.Canvas; live.entities[11].components.Canvas = { render_mode: 'ScreenSpaceOverlay' };
+  const next = createNativeViewportWorldArgs(live).frameWorld();
+  assert.notEqual(read(next).sceneUiEntities(), subset); assert.ok(read(next).sceneUiEntities().some(entity => entity.entity === 11));
+  verifyLayout(next); assert.equal(read(world).sceneUiEntities().some(entity => entity.entity === 11), false); verifyLayout(world);
 });

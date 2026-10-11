@@ -1703,6 +1703,7 @@ export function Viewport(props: {
     const worldTransforms = transformSource.length && displayedPresentation ? displayedPresentation.worldTransforms() : editScene && sceneTransformsRef.current?.source === transformSource ? sceneTransformsRef.current.transforms : buildWorldTransforms(transformSource);
     sceneTransformsRef.current = editScene ? { source: transformSource, transforms: worldTransforms } : null;
     const lights2D = prepareLight2DLights((nativeGameReady ? [] : p.entities).flatMap<Light2DInstance>((entity) => {
+      if (displayedPresentation && !entity.components.Light2D) return [];
       if (!isActive(entity.entity)) return [];
       const component = entity.components.Light2D as Light2DComponent | undefined;
       const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
@@ -1731,6 +1732,7 @@ export function Viewport(props: {
       (p.timelineParticlePreviews ?? []).map((preview) => [preview.target, preview]),
     );
     for (const entity of nativeGameReady ? [] : p.entities) {
+      if (displayedPresentation && !entity.components.ParticleEmitter2D && !entity.components.ParticleEmitter3D) continue;
       if (!isActive(entity.entity)) continue;
       const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
       if (!transform) continue;
@@ -1822,6 +1824,7 @@ export function Viewport(props: {
       component: Record<string, unknown>;
     }>();
     for (const entity of nativeGameReady ? [] : p.entities) {
+      if (displayedPresentation && !entity.components.TrailRenderer2D) continue;
       if (!isActive(entity.entity)) continue;
       const component = entity.components.TrailRenderer2D as Record<string, unknown> | undefined;
       const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
@@ -2876,8 +2879,8 @@ export function Viewport(props: {
           ctx.restore();
         }
       } else {
-        let uiSource = p.entities;
-        if (editScene) {
+        let uiSource = displayedPresentation?.sceneUiEntities() ?? p.entities;
+        if (editScene && !displayedPresentation) {
           if (sceneUiEntitiesRef.current?.source !== p.entities) sceneUiEntitiesRef.current = { source: p.entities, entities: sceneUiEntities(p.entities) };
           uiSource = sceneUiEntitiesRef.current.entities;
         }
