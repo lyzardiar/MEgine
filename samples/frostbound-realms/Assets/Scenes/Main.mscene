@@ -381669,6 +381669,472 @@
             "receive_shadows": false
           }
         }
+      },
+      {
+        "entity": 90191,
+        "name": "Classic spell 0 priestDispel",
+        "parent": 90041,
+        "siblingIndex": 8982,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanPriestEffects/Effects/DispelMagicTarget.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90192,
+        "name": "Classic spell 0 priestDispel mesh 0",
+        "parent": 90191,
+        "siblingIndex": 0,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-00-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-00-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90193,
+        "name": "Classic spell 0 priestDispel mesh 1",
+        "parent": 90191,
+        "siblingIndex": 1,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-01-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-01-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90194,
+        "name": "Classic spell 0 priestDispel mesh 2",
+        "parent": 90191,
+        "siblingIndex": 2,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-02-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-02-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90195,
+        "name": "Classic spell 0 priestDispel mesh 3",
+        "parent": 90191,
+        "siblingIndex": 3,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-03-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-03-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90196,
+        "name": "Classic spell 0 priestDispel mesh 4",
+        "parent": 90191,
+        "siblingIndex": 4,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-04-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-04-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90197,
+        "name": "Classic spell 0 priestDispel mesh 5",
+        "parent": 90191,
+        "siblingIndex": 5,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-05-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/DispelMagic/DispelMagicTarget/geoset-05-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90198,
+        "name": "Classic spell 0 innerFire",
+        "parent": 90041,
+        "siblingIndex": 8989,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanPriestEffects/Effects/InnerFireTarget.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90199,
+        "name": "Classic spell 0 innerFire mesh 0",
+        "parent": 90198,
+        "siblingIndex": 0,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-00-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-00-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90200,
+        "name": "Classic spell 0 innerFire mesh 1",
+        "parent": 90198,
+        "siblingIndex": 1,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-01-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-01-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90201,
+        "name": "Classic spell 0 innerFire mesh 2",
+        "parent": 90198,
+        "siblingIndex": 2,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-02-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-02-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90202,
+        "name": "Classic spell 0 innerFire mesh 3",
+        "parent": 90198,
+        "siblingIndex": 3,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-03-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-03-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90203,
+        "name": "Classic spell 0 innerFire mesh 4",
+        "parent": 90198,
+        "siblingIndex": 4,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-04-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-04-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90204,
+        "name": "Classic spell 0 innerFire mesh 5",
+        "parent": 90198,
+        "siblingIndex": 5,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanPriestEffects/Models/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-05-animated.glb",
+            "material": "Assets/HumanPriestEffects/Materials/Abilities/Spells/Human/InnerFire/InnerFireTarget/geoset-05-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
       }
     ],
     "frame": 0,

@@ -1,0 +1,14 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "signedFiles": 123,
+  "sources": 13,
+  "reproducedOutputs": 123,
+  "signedTextureMetas": 5,
+  "geometryParts": 12,
+  "modifiedOutputProtected": true,
+  "unsignedOutputProtected": true,
+  "corruptDependencyRejected": true,
+  "corruptSourceRejected": true,
+  "originalRuntimeVerified": false
+}

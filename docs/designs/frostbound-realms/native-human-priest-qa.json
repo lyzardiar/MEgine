@@ -1,0 +1,410 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "startedAt": "2026-10-11T08:58:44.859Z",
+  "sample": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample",
+  "root": "D:\\MEngineNativeQA\\priest-validation\\human-priest-game-1791709124763",
+  "reusedAssets": true,
+  "protocol": 85,
+  "editorSha256": "69d3252dbe5027c103161208d08690b35ca168d595a86cc19ff77d6572e2fb9b",
+  "productMainSha256": "a156e3d1483ac6a7f690df6a16fbf11bcd41d9194a70cd7c21a5f94b76528c5e",
+  "steps": [
+    {
+      "name": "project.state",
+      "ms": 4294
+    },
+    {
+      "name": "project.open",
+      "ms": 5766
+    },
+    {
+      "name": "project.state",
+      "ms": 347
+    },
+    {
+      "name": "project.state",
+      "ms": 334
+    },
+    {
+      "name": "view.set_game_resolution",
+      "ms": 433
+    },
+    {
+      "name": "panel.focus",
+      "ms": 2556
+    },
+    {
+      "name": "playback.play",
+      "ms": 4170
+    },
+    {
+      "name": "playback.step",
+      "ms": 1554
+    },
+    {
+      "name": "entity.get",
+      "ms": 81
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 1003
+    },
+    {
+      "name": "entity.get",
+      "ms": 296
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 694
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 2835
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "name": "playback.step",
+      "ms": 428
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 82
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 130
+    },
+    {
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 80
+    },
+    {
+      "name": "playback.step",
+      "ms": 276
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 114
+    },
+    {
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "name": "playback.step",
+      "ms": 324
+    },
+    {
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 496
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 60
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 146
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "name": "playback.step",
+      "ms": 137
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 63
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 69
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 128
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 75
+    },
+    {
+      "name": "playback.step",
+      "ms": 1412
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 72
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 53
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 167
+    },
+    {
+      "name": "entity.get",
+      "ms": 11
+    },
+    {
+      "name": "playback.input",
+      "ms": 1
+    },
+    {
+      "name": "playback.step",
+      "ms": 283
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 76
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 128
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 90
+    },
+    {
+      "name": "playback.step",
+      "ms": 230
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 111
+    },
+    {
+      "name": "entity.get",
+      "ms": 10
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "entity.get",
+      "ms": 3
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "view.screenshot",
+      "ms": 480
+    },
+    {
+      "name": "entity.get",
+      "ms": 2
+    },
+    {
+      "name": "entity.get",
+      "ms": 1
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 112
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 148
+    },
+    {
+      "name": "entity.get",
+      "ms": 7
+    },
+    {
+      "name": "playback.input",
+      "ms": 2
+    },
+    {
+      "name": "playback.step",
+      "ms": 147
+    },
+    {
+      "name": "playback.sequence",
+      "ms": 64
+    },
+    {
+      "name": "playback.step",
+      "ms": 834
+    },
+    {
+      "name": "entity.get",
+      "ms": 9
+    },
+    {
+      "name": "entity.get",
+      "ms": 4
+    },
+    {
+      "name": "profiler.get_samples",
+      "ms": 30
+    },
+    {
+      "name": "console.get_logs",
+      "ms": 3
+    },
+    {
+      "name": "playback.stop",
+      "ms": 110
+    }
+  ],
+  "physicalInput": false,
+  "lastLoad": {
+    "mode": "playing",
+    "frame": 59,
+    "units": 10,
+    "map": "Winterfall Basin",
+    "notice": "Saved quicksave to your project user-data folder"
+  },
+  "nativeSourceCardsCostsAndBuff": true,
+  "nativeInnerFireBirth": true,
+  "nativeOverheadSixPartEffect": true,
+  "nativeBuffSaveReload": true,
+  "nativeBuffedKnightAttack": true,
+  "nativeBothSidesDispel": true,
+  "nativeDispelBirthGeometry": true,
+  "nativeDispelSaveReload": true,
+  "nativeEffectExpiry": true,
+  "nativeCounts": {
+    "billboardMeshes": 3,
+    "cameraVisibleObjects": 226,
+    "entities": 9371,
+    "materialPipelineEvictions": 0,
+    "materialPipelinesBuiltIn": 36,
+    "materialPipelinesCustom": 4,
+    "materialPipelinesRejected": 0,
+    "materialPipelinesResidentCustom": 0,
+    "materialSamplers": 2,
+    "materialTextureBindGroups": 19,
+    "materialTexturesColor": 24,
+    "materialTexturesData": 5,
+    "msaaSamples": 4,
+    "renderObjects": 283,
+    "sceneViews": 0,
+    "shadowVisibleObjects": 276,
+    "submittedObjects": 283,
+    "uiBatches": 26,
+    "uiDrawCalls": 26,
+    "uiPrimitives": 628
+  },
+  "shaderRejections": 0,
+  "consoleErrors": 0,
+  "scope": "Native source D/F cards/casts/payment, Inner Fire damage/armor stats, actual buffed Knight attack, six-part overhead Stand and point Dispel Birth geometry, both-side magic cleanup, saves and effect expiry. Physical input, standalone Player, original-executable parity and cross-machine LAN remain unverified.",
+  "shutdown": {
+    "pid": 152268,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\priest-validation\\human-priest-game-1791709124763\\runtime\\com.mengine.editor.agent-Wa0uJ6 '\\\\?\\D:\\MEngineNativeQA\\priest-validation\\human-priest-game-1791709124763\\runtime\\com.mengine.editor.agent-Wa0uJ6'"
+  }
+}
