@@ -64,3 +64,15 @@ test('evicted revision falls back to its owned snapshot and other errors propaga
   error='Play session expired';await assert.rejects(transport.requestRevisionedNativeViewportFrame('game',{playSessionId:7,playRevision:4},fallback),/session expired/);
   assert.equal(fallbacks,1);
 });
+
+test('evicted edit Scene world reuploads its owned snapshot under the same revision key', async t => {
+  const original = globalThis.window, requests = [], bytes = new ArrayBuffer(24), snapshot = { entities: [], clearColor: [0, 0, 0, 1], simulationTime: 0 };
+  let failure = 'Scene viewport revision expired';
+  globalThis.window = { __TAURI_INTERNALS__: { invoke: async (command, args) => { requests.push(args); if (!args.snapshot) throw Error(failure); return bytes; } } };
+  t.after(() => { globalThis.window = original; });
+  const transport = await import('../src/nativeViewportTransport.ts?scene-revision-test');
+  assert.equal(await transport.requestRevisionedNativeViewportFrame('scene', { sceneWorldKey: 'owned-world', request: { width: 100 } }, () => ({ snapshot })), bytes);
+  assert.equal(requests[1].sceneWorldKey, 'owned-world'); assert.equal(requests[1].snapshot, snapshot); assert.deepEqual(requests[1].request, { width: 100 });
+  failure = 'GPU device unavailable';
+  await assert.rejects(() => transport.requestRevisionedNativeViewportFrame('scene', { sceneWorldKey: 'owned-world' }, () => ({ snapshot })), /GPU device unavailable/);
+});

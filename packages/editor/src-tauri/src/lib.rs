@@ -44,7 +44,7 @@ struct AppState {
 
 static VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
 static GAME_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_scene::SharedSnapshotWorld>> = OnceLock::new();
-static SCENE_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_scene::SharedSnapshotWorld>> = OnceLock::new();
+static SCENE_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_editor_host::SceneSnapshotWorld>> = OnceLock::new();
 static SCENE_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
 static EFFEKSEER_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> =
     OnceLock::new();
@@ -4425,6 +4425,7 @@ async fn render_native_game_view(
 async fn render_native_scene_view(
     mut request: NativeSceneViewRequest,
     snapshot: Option<WorldSnapshot>,
+    scene_world_key: Option<String>,
     play_session_id: Option<u64>,
     play_revision: Option<u64>,
     raw: Option<bool>,
@@ -4433,6 +4434,8 @@ async fn render_native_scene_view(
     state: State<'_, AppState>,
 ) -> Result<tauri::ipc::Response, String> {
     let started = Instant::now();
+    if scene_world_key.as_ref().is_some_and(|key| key.is_empty() || key.len() > 128) { return Err("Invalid Scene viewport revision key".into()); }
+    if scene_world_key.is_some() && play_session_id.is_some() { return Err("Scene and Play viewport references cannot be combined".into()); }
     let (project_root, snapshot) = {
         let project = state.project.lock();
         let session = project
@@ -4440,12 +4443,14 @@ async fn render_native_scene_view(
             .ok_or_else(|| "no MEngine project is open".to_string())?;
         (
             session.project_root().to_owned(),
-            snapshot.or_else(|| play_session_id.is_none().then(|| WorldSnapshot::from_world(session.active_world()))),
+            snapshot.or_else(|| (play_session_id.is_none() && scene_world_key.is_none()).then(|| WorldSnapshot::from_world(session.active_world()))),
         )
     };
+    let retained_key = scene_world_key.map(|key| serde_json::to_string(&(project_root.clone(), window.label(), key, if request.camera_entity.is_none() { request.hidden_entity_ids.clone() } else { Vec::new() }))).transpose().map_err(|error| error.to_string())?;
     let mut snapshot = snapshot;
     if let Some(snapshot) = snapshot.as_mut() { filter_scene_view_snapshot(snapshot, &mut request); }
     else if play_revision.is_some() && request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() { return Err("Hidden entities require a browser viewport snapshot".into()); }
+    if snapshot.is_none() && retained_key.is_some() { request.hidden_entity_ids.clear(); }
     let runtime = state.play_runtime.clone();
     let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
         let render = move |world: &mengine_core::World| -> Result<EditorViewportFrame, String> {
@@ -4525,10 +4530,10 @@ async fn render_native_scene_view(
         Ok(frame)
         };
         match (snapshot, play_session_id) {
-            (Some(snapshot), _) => {
-                let mut mirror = SCENE_SNAPSHOT_WORLD.get_or_init(|| Mutex::new(mengine_scene::SharedSnapshotWorld::default())).lock();
-                let sync = Instant::now(); mirror.update_owned(snapshot); let sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
-                let mut frame = render(mirror.world())?; frame.profile.world_sync_ms = Some(sync_ms); Ok(frame)
+            (snapshot, _) if snapshot.is_some() || retained_key.is_some() => {
+                let mut mirror = SCENE_SNAPSHOT_WORLD.get_or_init(|| Mutex::new(mengine_editor_host::SceneSnapshotWorld::default())).lock();
+                let sync = Instant::now(); let world = mirror.update(retained_key, snapshot).map_err(str::to_owned)?; let sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
+                let mut frame = render(world)?; frame.profile.world_sync_ms = Some(sync_ms); Ok(frame)
             },
             (None, Some(id)) => runtime.render_revision(id, play_revision, render),
             _ => Err("viewport world is unavailable".into()),

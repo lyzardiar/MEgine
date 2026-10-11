@@ -1,4 +1,5 @@
-import { listProjectFiles, projectAssetUrl } from '../projectAssets';
+// Author: MiYu. Resolve font revisions once per project asset index, including hot reloads.
+import { listProjectFiles, projectAssetUrl, type ProjectFileAsset } from '../projectAssets';
 
 const FONT_LOAD_EVENT = 'mengine-ui-font-loaded';
 type UiFontFaceEntry = {
@@ -8,6 +9,8 @@ type UiFontFaceEntry = {
   face?: FontFace;
 };
 const fontFaces = new Map<string, UiFontFaceEntry>();
+let indexedFiles: ProjectFileAsset[] | undefined;
+let fontAssets = new Map<string, ProjectFileAsset>();
 
 function portableFontPath(value: string): string {
   const normalized = String(value ?? '').trim().replaceAll('\\', '/');
@@ -19,11 +22,20 @@ function portableFontPath(value: string): string {
 }
 
 function fontIdentity(normalized: string): { key: string; revision: string } {
-  const asset = listProjectFiles().find(
-    (candidate) => candidate.relPath.toLocaleLowerCase() === normalized.toLocaleLowerCase(),
-  );
+  const files = listProjectFiles();
+  if (files !== indexedFiles) {
+    fontAssets = new Map();
+    for (const asset of files) {
+      if (asset.kind !== 'font') continue;
+      const key = asset.relPath.toLocaleLowerCase();
+      if (!fontAssets.has(key)) fontAssets.set(key, asset);
+    }
+    indexedFiles = files;
+  }
+  const pathKey = normalized.toLocaleLowerCase();
+  const asset = fontAssets.get(pathKey);
   const revision = asset ? `${asset.guid ?? 'no-guid'}-${asset.revision}` : 'unindexed';
-  return { key: `${normalized.toLocaleLowerCase()}\0${revision}`, revision };
+  return { key: `${pathKey}\0${revision}`, revision };
 }
 
 function stableFontHash(value: string): string {

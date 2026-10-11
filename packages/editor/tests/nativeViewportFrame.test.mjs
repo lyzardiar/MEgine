@@ -47,6 +47,18 @@ test('one paint resolves native session once and the next paint reads fresh stat
   assert.deepEqual(createNativeViewportWorldArgs(props).worldArgs(),{playSessionId:13});
   assert.equal(reads,2);
 });
+
+test('Scene render snapshots exclude inactive subtrees while browser ownership retains editable records', () => {
+  const entities = [{ entity: 1, components: {} }, { entity: 2, parent: 1, active: false, components: {} }, { entity: 3, parent: 2, components: {} }, { entity: 4, parent: 1, components: {} }];
+  const props = { entities, clearColor: [0, 0, 0, 1], simulationTime: 0 };
+  const scene = createNativeViewportWorldArgs(props, true);
+  assert.deepEqual(scene.snapshotArgs().snapshot.entities.map(entity => entity.entity), [1, 4]);
+  assert.equal(scene.frameWorld().entities.length, 4); assert.equal(scene.frameWorld().sourceEntities, entities);
+  entities[1].active = true; entities[2].parent = 4;
+  assert.deepEqual(scene.snapshotArgs().snapshot.entities.map(entity => entity.entity), [1, 4], 'one request owns its captured activity and hierarchy');
+  assert.equal(createNativeViewportWorldArgs(props, true).snapshotArgs().snapshot.entities.length, 4, 'the next request observes live authoring changes');
+  assert.equal(createNativeViewportWorldArgs(props).snapshotArgs().snapshot.entities.length, 4, 'Game snapshots retain their complete world');
+});
 test('interactive snapshot skips session fingerprint and refreshes after UI changes', () => {
   let reads=0;
   const props={entities:[{components:{Button:{}}}],clearColor:[0,0,0,1],simulationTime:1,get nativeSessionId(){reads++;return 12;}};
@@ -89,4 +101,15 @@ test('full snapshot captures own deep UI values and preserve explicit capture di
   assert.deepEqual([request.width,request.height],[1920,1080]);
   assert.equal(nativeViewportFrameWorldCurrent(frame,props),true);
   assert.equal(nativeViewportFrameWorldCurrent(frame,{...props,entities:props.entities.slice()}),false);
+});
+
+test('edit Scene world uploads once and unchanged camera frames send only the retained revision', () => {
+  const props = { entities: [{ entity: 1, components: {} }], clearColor: [0, 0, 0, 1], simulationTime: 0 };
+  const first = createNativeViewportWorldArgs(props, true), initial = first.sceneWorldArgs();
+  assert.ok(initial.snapshot); assert.equal(initial.sceneWorldKey, first.sceneWorldArgs().sceneWorldKey);
+  first.markSceneWorldUploaded();
+  assert.deepEqual(first.sceneWorldArgs(), { sceneWorldKey: initial.sceneWorldKey });
+  assert.equal(first.snapshotArgs().snapshot, initial.snapshot);
+  const changed = createNativeViewportWorldArgs(props, true).sceneWorldArgs();
+  assert.ok(changed.snapshot); assert.notEqual(changed.sceneWorldKey, initial.sceneWorldKey);
 });

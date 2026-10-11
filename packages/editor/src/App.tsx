@@ -6,6 +6,7 @@ import {
   createEditorStore,
   type EditorMode,
   type GizmoMode,
+  type SceneCamera,
 } from './store';
 import { createEditorUndoService } from './editorUndoService';
 import { applyPlaybackAction, playbackShortcut, type PlaybackAction } from './editorPlayback';
@@ -189,6 +190,7 @@ function sameAssetPath(left: string | null, right: string): boolean {
 
 type WorkspaceSyncMessage =
   | { type: 'request-scene'; sender: string }
+  | { type: 'scene-camera'; sender: string; sceneName: string | null; camera: SceneCamera }
   | { type: 'play-input'; sender: string; sessionId: number; input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'viewport' | 'buttons'>> }
   | { type: 'scene-library-changed'; sender: string }
   | { type: 'request-timeline-preview'; sender: string }
@@ -268,6 +270,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [hierFilter, setHierFilter] = useState('');
   const [pendingRenameId, setPendingRenameId] = useState<number | null>(null);
   const [treeTick, setTreeTick] = useState(0);
+  const [, setCameraTick] = useState(0);
   const [sceneTick, setSceneTick] = useState(0);
   const [sceneName, setSceneName] = useState<string | null>(null);
   const [materialPath, setMaterialPath] = useState<string | null>(null);
@@ -1217,6 +1220,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     channel.onmessage = (event: MessageEvent<WorkspaceSyncMessage>) => {
       const message = event.data;
       if (!message || message.sender === syncSender.current) return;
+      if (message.type === 'scene-camera') {
+        if (message.sceneName === sceneNameRef.current) { store.setSceneCamera(message.camera); setCameraTick(tick => tick + 1); }
+        return;
+      }
       if (message.type === 'play-input') {
         if (!props.detachedPanel && message.sessionId === store.playSessionId) store.setPlayInput(message.input);
         return;
@@ -1416,6 +1423,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           sceneDirtyRef.current = dirty;
           setSceneDirty(dirty);
         }
+        sceneNameRef.current = message.sceneName;
         setSceneName(message.sceneName);
         if ('animationAssetPath' in message) {
           setAnimationAssetPath(message.animationAssetPath ?? null);
@@ -3012,7 +3020,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               }}
               onSceneCamera={(partial) => {
                 store.setSceneCamera(partial);
-                refresh();
+                setCameraTick(tick => tick + 1);
+                if (syncReady.current && !applyingRemote.current && booted.current) syncChannel.current?.postMessage({ type: 'scene-camera', sender: syncSender.current, sceneName: sceneNameRef.current, camera: store.sceneCamera } satisfies WorkspaceSyncMessage);
               }}
               onBeginGesture={() => store.beginTransformGesture()}
               onEndGesture={() => store.endTransformGesture()}

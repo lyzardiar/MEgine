@@ -1,4 +1,10 @@
+// Author: MiYu. Coalesce unchanged Scene paints while their native frame is pending.
 import type { Camera } from './math3d.ts';
+
+export type NativeScenePaintState = { key: string; epoch: number; frame: unknown; preview: unknown };
+export function pendingNativeScenePaintUnchanged(previous: NativeScenePaintState | null, current: NativeScenePaintState): boolean {
+  return previous != null && previous.key === current.key && previous.epoch === current.epoch && previous.frame === current.frame && previous.preview === current.preview;
+}
 
 type NativeSceneViewport = {
   w: number;

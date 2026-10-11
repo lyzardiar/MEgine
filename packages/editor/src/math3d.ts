@@ -1,3 +1,4 @@
+// Author: MiYu. Native Scene selection uses mesh projections without duplicate Canvas rasterization.
 import type { MaterialPreviewAppearance } from './materialPreview.ts';
 
 /** Minimal 3D math for editor viewport (no external deps). */
@@ -259,6 +260,7 @@ export function drawSolidCube(
   selected: boolean,
   rotation?: Quat | null,
   material?: MaterialPreviewAppearance,
+  hitOnly = false,
 ): { x: number; y: number; r: number } | null {
   const hx = half[0], hy = half[1], hz = half[2];
   const local: Vec3[] = [
@@ -284,11 +286,13 @@ export function drawSolidCube(
     const c = project(center, cam, viewport);
     if (!c) return null;
     const s = Math.max(12, 120 / c.depth);
-    const [r, g, b, a] = previewMaterialColor(material, 0.9);
-    ctx.fillStyle = selected
-      ? '#5b9bd5'
-      : `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
-    ctx.fillRect(c.x - s / 2, c.y - s / 2, s, s);
+    if (!hitOnly) {
+      const [r, g, b, a] = previewMaterialColor(material, 0.9);
+      ctx.fillStyle = selected
+        ? '#5b9bd5'
+        : `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`;
+      ctx.fillRect(c.x - s / 2, c.y - s / 2, s, s);
+    }
     return { x: c.x, y: c.y, r: s * 0.7 };
   }
 
@@ -301,29 +305,31 @@ export function drawSolidCube(
     [4, 5, 1, 0], // -Y
     [3, 2, 6, 7], // +Y
   ];
-  const faceColors = selected
-    ? ['#4a8ab8', '#6eb0e0', '#3d7aa8', '#7ec0f0', '#2f6288', '#8ec8f5']
-    : (() => {
-        const shades = [0.68, 0.95, 0.58, 1.05, 0.48, 1.15];
-        return shades.map((shade) => previewMaterialCss(material, shade));
-      })();
+  if (!hitOnly) {
+    const faceColors = selected
+      ? ['#4a8ab8', '#6eb0e0', '#3d7aa8', '#7ec0f0', '#2f6288', '#8ec8f5']
+      : (() => {
+          const shades = [0.68, 0.95, 0.58, 1.05, 0.48, 1.15];
+          return shades.map((shade) => previewMaterialCss(material, shade));
+        })();
 
-  const faceDepth = (idx: number[]) =>
-    (P[idx[0]].depth + P[idx[1]].depth + P[idx[2]].depth + P[idx[3]].depth) / 4;
+    const faceDepth = (idx: number[]) =>
+      (P[idx[0]].depth + P[idx[1]].depth + P[idx[2]].depth + P[idx[3]].depth) / 4;
 
-  const order = faces.map((_, i) => i).sort((a, b) => faceDepth(faces[b]) - faceDepth(faces[a]));
+    const order = faces.map((_, i) => i).sort((a, b) => faceDepth(faces[b]) - faceDepth(faces[a]));
 
-  for (const fi of order) {
-    const f = faces[fi];
-    ctx.beginPath();
-    ctx.moveTo(P[f[0]].x, P[f[0]].y);
-    for (let i = 1; i < 4; i++) ctx.lineTo(P[f[i]].x, P[f[i]].y);
-    ctx.closePath();
-    ctx.fillStyle = faceColors[fi];
-    ctx.fill();
-    ctx.strokeStyle = selected ? 'rgba(255,224,140,0.85)' : 'rgba(0,0,0,0.25)';
-    ctx.lineWidth = selected ? 1.5 : 1;
-    ctx.stroke();
+    for (const fi of order) {
+      const f = faces[fi];
+      ctx.beginPath();
+      ctx.moveTo(P[f[0]].x, P[f[0]].y);
+      for (let i = 1; i < 4; i++) ctx.lineTo(P[f[i]].x, P[f[i]].y);
+      ctx.closePath();
+      ctx.fillStyle = faceColors[fi];
+      ctx.fill();
+      ctx.strokeStyle = selected ? 'rgba(255,224,140,0.85)' : 'rgba(0,0,0,0.25)';
+      ctx.lineWidth = selected ? 1.5 : 1;
+      ctx.stroke();
+    }
   }
 
   const c = project(center, cam, viewport)!;
@@ -349,6 +355,7 @@ export function drawTriangleMesh(
   selected: boolean,
   rotation?: Quat | null,
   material?: MaterialPreviewAppearance,
+  hitOnly = false,
 ): { x: number; y: number; r: number } | null {
   const q = rotation ? quatNormalize(rotation) : null;
   const world = positions.map((position): Vec3 => {
@@ -372,36 +379,38 @@ export function drawTriangleMesh(
     const c = indices[triangle * 3 + 2];
     const pa = projected[a], pb = projected[b], pc = projected[c];
     if (!pa || !pb || !pc || !world[a] || !world[b] || !world[c]) continue;
-    const normal = norm(cross(sub(world[b], world[a]), sub(world[c], world[a])));
+    const normal = hitOnly ? null : norm(cross(sub(world[b], world[a]), sub(world[c], world[a])));
     triangles.push({
       indices: [a, b, c],
       depth: (pa.depth + pb.depth + pc.depth) / 3,
-      shade: 0.35 + Math.abs(dot(normal, light)) * 0.75,
+      shade: normal ? 0.35 + Math.abs(dot(normal, light)) * 0.75 : 0,
     });
   }
-  triangles.sort((left, right) => right.depth - left.depth);
+  if (!hitOnly) triangles.sort((left, right) => right.depth - left.depth);
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const triangle of triangles) {
     const a = projected[triangle.indices[0]]!;
     const b = projected[triangle.indices[1]]!;
     const c = projected[triangle.indices[2]]!;
-    const shade = selected ? triangle.shade * 0.9 : triangle.shade;
-    const color = selected
-      ? [0.35, 0.65, 0.95, material?.baseColor[3] ?? 1]
-      : previewMaterialColor(material, shade);
-    const displayShade = selected ? shade : 1;
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
-    ctx.lineTo(c.x, c.y);
-    ctx.closePath();
-    ctx.fillStyle = `rgba(${Math.round(Math.min(1, color[0] * displayShade) * 255)},${Math.round(
-      Math.min(1, color[1] * displayShade) * 255,
-    )},${Math.round(Math.min(1, color[2] * displayShade) * 255)},${color[3]})`;
-    ctx.fill();
-    ctx.strokeStyle = selected ? 'rgba(255,224,140,0.45)' : 'rgba(0,0,0,0.12)';
-    ctx.lineWidth = selected ? 1 : 0.5;
-    ctx.stroke();
+    if (!hitOnly) {
+      const shade = selected ? triangle.shade * 0.9 : triangle.shade;
+      const color = selected
+        ? [0.35, 0.65, 0.95, material?.baseColor[3] ?? 1]
+        : previewMaterialColor(material, shade);
+      const displayShade = selected ? shade : 1;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.lineTo(c.x, c.y);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(${Math.round(Math.min(1, color[0] * displayShade) * 255)},${Math.round(
+        Math.min(1, color[1] * displayShade) * 255,
+      )},${Math.round(Math.min(1, color[2] * displayShade) * 255)},${color[3]})`;
+      ctx.fill();
+      ctx.strokeStyle = selected ? 'rgba(255,224,140,0.45)' : 'rgba(0,0,0,0.12)';
+      ctx.lineWidth = selected ? 1 : 0.5;
+      ctx.stroke();
+    }
     for (const point of [a, b, c]) {
       minX = Math.min(minX, point.x);
       minY = Math.min(minY, point.y);
