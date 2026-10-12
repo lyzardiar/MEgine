@@ -12,7 +12,7 @@ pub struct TransportTrace {
     pub ui_queue_ms: f64, pub setup_ms: f64, pub allocate_ms: f64, pub copy_ms: f64,
     pub additional_data_ms: f64, pub publish_ms: f64, pub close_ms: f64, pub native_total_ms: f64,
     pub publication_ready_epoch_ms: f64, pub publication_started_epoch_ms: f64, pub publication_finished_epoch_ms: f64,
-    pub posted: bool, pub closed: bool,
+    pub posted: bool, pub closed: bool, pub pooled: bool, pub pool_hit: bool, pub buffer_id: u64,
 }
 
 const TRACE_CAPACITY: usize = 1024;
@@ -46,6 +46,22 @@ impl FramePayload {
 
     fn len(&self) -> usize { self.header.len() + self.metadata.len() + self.rgba.len() }
 
+    fn shared_metadata_len(&self) -> usize { self.metadata.len().div_ceil(4096) * 4096 }
+
+    fn shared_len(&self) -> usize { 16 + self.shared_metadata_len() + self.rgba.len() }
+
+    fn write_shared_to(&self, destination: &mut [u8]) {
+        assert_eq!(destination.len(), self.shared_len());
+        let metadata_len = self.shared_metadata_len();
+        let (header, rest) = destination.split_at_mut(16);
+        let (metadata, rgba) = rest.split_at_mut(metadata_len);
+        header.copy_from_slice(&self.header);
+        header[12..16].copy_from_slice(&(metadata_len as u32).to_le_bytes());
+        metadata[..self.metadata.len()].copy_from_slice(&self.metadata);
+        metadata[self.metadata.len()..].fill(b' ');
+        rgba.copy_from_slice(&self.rgba);
+    }
+
     fn write_to(&self, destination: &mut [u8]) {
         assert_eq!(destination.len(), self.len());
         let (header, rest) = destination.split_at_mut(16);
@@ -60,14 +76,125 @@ impl FramePayload {
     }
 }
 
+const POOL_SLOTS: usize = 3;
+const POOL_BYTES: usize = 96 * 1024 * 1024;
+struct Lease { request: String, id: u64, post_finished: bool, acknowledged: bool }
+struct PoolSlot<B> { buffer: Option<B>, bytes: usize, id: u64, lease: Option<Lease> }
+struct FramePool<B> { slots: Vec<Option<PoolSlot<B>>> }
+impl<B> Default for FramePool<B> { fn default() -> Self { Self { slots: Vec::new() } } }
+struct Reservation<B> { index: usize, id: u64, lease_id: u64, buffer: Option<B>, retired: Option<B> }
+impl<B: Clone> FramePool<B> {
+    /// MiYu: reserve before COM calls, and reuse only after both Post return and browser detach.
+    fn reserve(&mut self, bytes: usize, request: &str) -> Option<Reservation<B>> {
+        if self.slots.iter().flatten().any(|slot| slot.lease.as_ref().is_some_and(|lease| lease.request == request)) { return None; }
+        let retained: usize = self.slots.iter().flatten().map(|slot| slot.bytes).sum();
+        let matching = self.slots.iter().position(|slot| slot.as_ref().is_some_and(|slot| slot.lease.is_none() && slot.bytes == bytes));
+        let index = matching.or_else(|| self.slots.iter().position(|slot| match slot {
+            Some(slot) => slot.lease.is_none() && retained - slot.bytes + bytes <= POOL_BYTES,
+            None => retained + bytes <= POOL_BYTES,
+        })).or_else(|| (self.slots.len() < POOL_SLOTS && retained + bytes <= POOL_BYTES).then_some(self.slots.len()))?;
+        if index == self.slots.len() { self.slots.push(None); }
+        let mut retired = None;
+        if matching.is_none() {
+            retired = self.slots[index].take().and_then(|slot| slot.buffer);
+            static NEXT_ID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+            let id = NEXT_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            self.slots[index] = Some(PoolSlot { buffer: None, bytes, id, lease: None });
+        }
+        let slot = self.slots[index].as_mut().unwrap();
+        static NEXT_LEASE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+        let lease_id = NEXT_LEASE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        slot.lease = Some(Lease { request: request.into(), id: lease_id, post_finished: false, acknowledged: false });
+        Some(Reservation { index, id: slot.id, lease_id, buffer: slot.buffer.clone(), retired })
+    }
+
+    fn install(&mut self, index: usize, id: u64, buffer: B) -> bool {
+        if let Some(slot) = self.slots.get_mut(index).and_then(Option::as_mut).filter(|slot| slot.id == id) { slot.buffer = Some(buffer); true } else { false }
+    }
+
+    fn acknowledge(&mut self, request: &str, id: u64) {
+        for slot in self.slots.iter_mut().flatten() {
+            if let Some(lease) = slot.lease.as_mut().filter(|lease| lease.request == request && lease.id == id) {
+                lease.acknowledged = true;
+                if lease.post_finished { slot.lease = None; }
+                return;
+            }
+        }
+    }
+
+    fn finish(&mut self, request: &str, id: u64, posted: bool) -> Option<B> {
+        for entry in &mut self.slots {
+            let Some(slot) = entry.as_mut() else { continue; };
+            let Some(lease) = slot.lease.as_mut().filter(|lease| lease.request == request && lease.id == id) else { continue; };
+            if !posted { return entry.take().and_then(|slot| slot.buffer); }
+            lease.post_finished = true;
+            if lease.acknowledged { slot.lease = None; }
+            return None;
+        }
+        None
+    }
+}
+
+#[cfg(windows)]
+mod shared_pool {
+    use super::*;
+    use std::{cell::RefCell, collections::HashMap};
+    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2SharedBuffer;
+    thread_local! { static WINDOWS: RefCell<HashMap<String, FramePool<ICoreWebView2SharedBuffer>>> = RefCell::new(HashMap::new()); }
+
+    pub fn enabled() -> bool {
+        static ENABLED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+        *ENABLED.get_or_init(|| std::env::var("MENGINE_NATIVE_VIEWPORT_BUFFER_REUSE").as_deref() != Ok("0"))
+    }
+
+    pub fn reserve(label: &str, bytes: usize, request: &str) -> Option<Reservation<ICoreWebView2SharedBuffer>> {
+        WINDOWS.with(|windows| windows.borrow_mut().entry(label.into()).or_default().reserve(bytes, request))
+    }
+
+    pub fn install(label: &str, reservation: &Reservation<ICoreWebView2SharedBuffer>, buffer: &ICoreWebView2SharedBuffer) -> bool {
+        WINDOWS.with(|windows| windows.borrow_mut().get_mut(label).is_some_and(|pool| pool.install(reservation.index, reservation.id, buffer.clone())))
+    }
+
+    pub fn acknowledge(label: &str, request: &str, id: u64) {
+        WINDOWS.with(|windows| { if let Some(pool) = windows.borrow_mut().get_mut(label) { pool.acknowledge(request, id); } });
+    }
+
+    pub fn finish(label: &str, request: &str, id: u64, posted: bool) -> Option<ICoreWebView2SharedBuffer> {
+        WINDOWS.with(|windows| windows.borrow_mut().get_mut(label).and_then(|pool| pool.finish(request, id, posted)))
+    }
+
+    /// Destroyed is delivered on the UI thread while COM interfaces are still available.
+    pub fn destroy(label: &str) {
+        if let Some(pool) = WINDOWS.with(|windows| windows.borrow_mut().remove(label)) {
+            unsafe { for slot in pool.slots.into_iter().flatten() { if let Some(buffer) = slot.buffer { let _ = buffer.Close(); } } }
+        }
+    }
+}
+
+/// MiYu: Tauri authenticates the source window; ACK processing stays on the WebView UI thread.
+#[cfg(windows)]
+pub async fn release_frame(window: tauri::WebviewWindow, request: String, lease: String) -> Result<(), String> {
+    if request.len() > 128 { return Err("Invalid viewport release request".into()); }
+    let id = lease.parse::<u64>().map_err(|_| "Invalid viewport lease")?;
+    let label = window.label().to_owned();
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    window.with_webview(move |_| { shared_pool::acknowledge(&label, &request, id); let _ = tx.send(()); }).map_err(|error| error.to_string())?;
+    rx.await.map_err(|error| error.to_string())
+}
+
+#[cfg(not(windows))]
+pub async fn release_frame(_window: tauri::WebviewWindow, _request: String, _lease: String) -> Result<(), String> { Err("WebView2 shared buffers are unavailable on this platform".into()) }
+
+pub fn destroy_window(_label: &str) { #[cfg(windows)] shared_pool::destroy(_label); }
+
 /// SharedBuffer is CPU shared memory. COM calls stay on WebView2's UI thread.
 #[cfg(windows)]
-pub async fn share_frame(window: &tauri::WebviewWindow, bytes: Arc<FramePayload>, request: String, preparation: PreparationTimings, command_started: std::time::Instant) -> Result<(), String> {
+pub async fn share_frame(window: &tauri::WebviewWindow, bytes: Arc<FramePayload>, request: String, reuse: bool, preparation: PreparationTimings, command_started: std::time::Instant) -> Result<(), String> {
     use webview2_com::Microsoft::Web::WebView2::Win32::{ICoreWebView2Environment12, ICoreWebView2_2, ICoreWebView2_17, COREWEBVIEW2_SHARED_BUFFER_ACCESS_READ_ONLY};
     use windows::core::{HSTRING, Interface};
     let queued_at = std::time::Instant::now();
     let tracing = trace_enabled();
-    let window_label = tracing.then(|| window.label().to_owned());
+    let window_label = window.label().to_owned();
     let (tx, rx) = tokio::sync::oneshot::channel();
     window.with_webview(move |platform| {
         let ui_queue_ms = queued_at.elapsed().as_secs_f64() * 1000.0;
@@ -77,21 +204,39 @@ pub async fn share_frame(window: &tauri::WebviewWindow, bytes: Arc<FramePayload>
                 let webview = platform.controller().CoreWebView2()?;
                 let environment = webview.cast::<ICoreWebView2_2>()?.Environment()?.cast::<ICoreWebView2Environment12>()?;
                 let receiver = webview.cast::<ICoreWebView2_17>()?;
+                let reusable = reuse && shared_pool::enabled() && bytes.shared_metadata_len() <= 256 * 1024;
+                let reservation = if reusable { shared_pool::reserve(&window_label, bytes.shared_len(), &request) } else { None };
+                let pooled = reservation.is_some();
+                let pool_hit = reservation.as_ref().is_some_and(|slot| slot.buffer.is_some());
+                let buffer_id = reservation.as_ref().map(|slot| slot.id).unwrap_or(0);
+                let lease_id = reservation.as_ref().map(|slot| slot.lease_id).unwrap_or(0);
+                let payload_len = if pooled { bytes.shared_len() } else { bytes.len() };
+                if let Some(retired) = reservation.as_ref().and_then(|slot| slot.retired.as_ref()) { let _ = retired.Close(); }
                 let setup_ms = setup_at.elapsed().as_secs_f64() * 1000.0;
                 let allocate_at = std::time::Instant::now();
-                let buffer = environment.CreateSharedBuffer(bytes.len() as u64)?;
+                let buffer = match reservation.as_ref().and_then(|slot| slot.buffer.clone()) {
+                    Some(buffer) => buffer,
+                    None => match environment.CreateSharedBuffer(payload_len as u64) {
+                        Ok(buffer) => buffer,
+                        Err(error) => { if pooled { shared_pool::finish(&window_label, &request, lease_id, false); } return Err(error); }
+                    },
+                };
+                if let Some(slot) = &reservation {
+                    if !shared_pool::install(&window_label, slot, &buffer) { let _ = buffer.Close(); return Err(windows::core::Error::from_hresult(windows::core::HRESULT(0x80000013u32 as i32))); }
+                }
                 let allocate_ms = allocate_at.elapsed().as_secs_f64() * 1000.0;
                 let mut close_attempted = false;
                 let result = (|| {
                     let copy_at = std::time::Instant::now();
                     let mut destination = std::ptr::null_mut();
                     buffer.Buffer(&mut destination)?;
-                    // The allocated mapping has exactly bytes.len() writable native bytes.
-                    bytes.write_to(std::slice::from_raw_parts_mut(destination, bytes.len()));
+                    // No browser view can read this slot until publication, and no live lease is overwritten.
+                    let destination = std::slice::from_raw_parts_mut(destination, payload_len);
+                    if pooled { bytes.write_shared_to(destination); } else { bytes.write_to(destination); }
                     let copy_ms = copy_at.elapsed().as_secs_f64() * 1000.0;
                     let publication_ready_epoch_ms = if tracing { epoch_ms() } else { 0.0 };
                     let additional_data_at = std::time::Instant::now();
-                    let mut data = serde_json::json!({"nativeViewportRequest": &request, "nativeViewportTransport": {"uiQueueMs": ui_queue_ms, "setupMs": setup_ms, "allocateMs": allocate_ms, "copyMs": copy_ms, "bytes": bytes.len()}});
+                    let mut data = serde_json::json!({"nativeViewportRequest": &request, "nativeViewportLease": reservation.as_ref().map(|slot| slot.lease_id.to_string()), "nativeViewportPooled": pooled, "nativeViewportTransport": {"uiQueueMs": ui_queue_ms, "setupMs": setup_ms, "allocateMs": allocate_ms, "copyMs": copy_ms, "bytes": payload_len, "pooled": pooled, "poolHit": pool_hit, "bufferId": buffer_id}});
                     if tracing { data["nativeViewportTransport"]["publicationReadyEpochMs"] = serde_json::json!(publication_ready_epoch_ms); }
                     let metadata = HSTRING::from(data.to_string());
                     let additional_data_ms = additional_data_at.elapsed().as_secs_f64() * 1000.0;
@@ -100,18 +245,23 @@ pub async fn share_frame(window: &tauri::WebviewWindow, bytes: Arc<FramePayload>
                     let posted = receiver.PostSharedBufferToScript(&buffer, COREWEBVIEW2_SHARED_BUFFER_ACCESS_READ_ONLY, &metadata);
                     let publish_ms = publish_at.elapsed().as_secs_f64() * 1000.0;
                     let publication_finished_epoch_ms = if tracing { epoch_ms() } else { 0.0 };
-                    // JS owns its mapping until releaseBuffer; native Close does not revoke it.
+                    // Pooled mappings remain open until retirement or window destruction.
                     let close_at = std::time::Instant::now();
                     close_attempted = true;
-                    let closed = buffer.Close().is_ok();
+                    let closed = if pooled {
+                        shared_pool::finish(&window_label, &request, lease_id, posted.is_ok()).is_some_and(|buffer| buffer.Close().is_ok())
+                    } else { buffer.Close().is_ok() };
                     let close_ms = close_at.elapsed().as_secs_f64() * 1000.0;
                     if tracing {
-                        let trace = TransportTrace { request: request.clone(), window: window_label.clone().unwrap_or_default(), bytes: bytes.len(), preparation: preparation.clone(), ui_queue_ms, setup_ms, allocate_ms, copy_ms, additional_data_ms, publish_ms, close_ms, native_total_ms: command_started.elapsed().as_secs_f64() * 1000.0, publication_ready_epoch_ms, publication_started_epoch_ms, publication_finished_epoch_ms, posted: posted.is_ok(), closed };
+                        let trace = TransportTrace { request: request.clone(), window: window_label.clone(), bytes: payload_len, preparation: preparation.clone(), ui_queue_ms, setup_ms, allocate_ms, copy_ms, additional_data_ms, publish_ms, close_ms, native_total_ms: command_started.elapsed().as_secs_f64() * 1000.0, publication_ready_epoch_ms, publication_started_epoch_ms, publication_finished_epoch_ms, posted: posted.is_ok(), closed, pooled, pool_hit, buffer_id };
                         TRACES.get_or_init(Default::default).lock().unwrap_or_else(|error| error.into_inner()).push(trace);
                     }
                     posted
                 })();
-                if !close_attempted { let _ = buffer.Close(); }
+                if !close_attempted {
+                    if pooled { shared_pool::finish(&window_label, &request, lease_id, false); }
+                    let _ = buffer.Close();
+                }
                 result
             }
         })().map_err(|error| error.to_string());
@@ -121,13 +271,74 @@ pub async fn share_frame(window: &tauri::WebviewWindow, bytes: Arc<FramePayload>
 }
 
 #[cfg(not(windows))]
-pub async fn share_frame(_window: &tauri::WebviewWindow, _bytes: Arc<FramePayload>, _request: String, _preparation: PreparationTimings, _command_started: std::time::Instant) -> Result<(), String> {
+pub async fn share_frame(_window: &tauri::WebviewWindow, _bytes: Arc<FramePayload>, _request: String, _reuse: bool, _preparation: PreparationTimings, _command_started: std::time::Instant) -> Result<(), String> {
     Err("WebView2 shared buffers are unavailable on this platform".into())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pool_waits_for_matching_detach_and_post_return() {
+        let mut pool = FramePool::<u64>::default();
+        let first = pool.reserve(4096, "first").unwrap();
+        assert!(pool.install(first.index, first.id, 7));
+        pool.acknowledge("wrong-window-request", first.lease_id);
+        pool.finish("first", first.lease_id, true);
+        assert!(pool.slots[first.index].as_ref().unwrap().lease.is_some());
+        assert!(pool.reserve(4096, "first").is_none(), "duplicate in-flight requests cannot alias a lease");
+        pool.acknowledge("first", first.lease_id);
+        let next = pool.reserve(4096, "next").unwrap();
+        assert_eq!(next.buffer, Some(7));
+        assert_eq!(next.id, first.id);
+        pool.acknowledge("first", first.lease_id);
+        pool.acknowledge("next", next.lease_id);
+        assert!(pool.slots[next.index].as_ref().unwrap().lease.is_some(), "reentrant ACK cannot reuse a still-posting mapping");
+        pool.finish("next", next.lease_id, true);
+        assert!(pool.slots[next.index].as_ref().unwrap().lease.is_none());
+        pool.acknowledge("next", next.lease_id);
+        let repeated = pool.reserve(4096, "next").unwrap();
+        assert_eq!(repeated.buffer, Some(7));
+        pool.finish("next", next.lease_id, false);
+        pool.finish("next", next.lease_id, true);
+        assert!(pool.slots[repeated.index].as_ref().unwrap().lease.as_ref().is_some_and(|lease| !lease.post_finished), "old Post completion cannot affect the next lease");
+        pool.finish("next", repeated.lease_id, true); pool.acknowledge("next", next.lease_id);
+        assert!(pool.slots[repeated.index].as_ref().unwrap().lease.is_some(), "old ACK cannot release a later lease with the same request");
+    }
+
+    #[test]
+    fn pool_preserves_live_slots_and_bounds_retained_memory() {
+        let mut pool = FramePool::<u64>::default();
+        for index in 0..POOL_SLOTS { let slot = pool.reserve(4096, &index.to_string()).unwrap(); pool.install(slot.index, slot.id, index as u64); }
+        assert!(pool.reserve(4096, "overflow").is_none());
+        let first_lease = pool.slots[0].as_ref().unwrap().lease.as_ref().unwrap().id;
+        pool.acknowledge("0", first_lease); pool.finish("0", first_lease, true);
+        let changed = pool.reserve(8192, "resized").unwrap();
+        assert_eq!(changed.index, 0); assert_eq!(changed.retired, Some(0)); assert_eq!(changed.buffer, None);
+        pool.install(changed.index, changed.id, 10);
+        assert_eq!(pool.finish("resized", changed.lease_id, false), Some(10));
+        assert!(pool.slots[0].is_none());
+        assert!(pool.reserve(POOL_BYTES, "over-budget").is_none());
+        assert!(FramePool::<u64>::default().reserve(POOL_BYTES + 1, "huge").is_none());
+        assert!(FramePool::<u64>::default().reserve(POOL_BYTES, "limit").is_some());
+    }
+
+    #[test]
+    fn pooled_wire_padding_keeps_strict_length_and_exact_pixels() {
+        for metadata_len in [2, 4095, 4096, 4097, 256 * 1024 + 1] {
+            let mut metadata = b"{}".to_vec(); metadata.resize(metadata_len, b' ');
+            let frame = FramePayload::new(1, 1, metadata.clone(), vec![1, 2, 3, 255]).unwrap();
+            let mut mapped = vec![0; frame.shared_len()]; frame.write_shared_to(&mut mapped);
+            let padded = u32::from_le_bytes(mapped[12..16].try_into().unwrap()) as usize;
+            assert_eq!(padded % 4096, 0);
+            assert_eq!(mapped.len(), 16 + padded + 4);
+            assert_eq!(&mapped[16..16 + metadata_len], &metadata);
+            assert!(mapped[16 + metadata_len..16 + padded].iter().all(|byte| *byte == b' '));
+            assert_eq!(&mapped[16 + padded..], &[1, 2, 3, 255]);
+            assert_eq!(frame.encode().len(), 16 + metadata_len + 4, "IPC fallback remains exact");
+        }
+    }
 
     #[test]
     fn traces_remain_bounded_ordered_and_drain_once() {

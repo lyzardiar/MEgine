@@ -2,6 +2,22 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+test('pooled leases acknowledge detach once, including failed and timed-out late frames', async t => {
+  const original=globalThis.window,requests=[],released=[],acknowledged=[];let receive,releaseError=false;
+  globalThis.window={chrome:{webview:{addEventListener:(_,callback)=>{receive=callback;},releaseBuffer:buffer=>{if(releaseError)throw Error('detach failed');released.push(buffer);}}},__TAURI_INTERNALS__:{invoke:(command,args)=>{if(command==='release_native_viewport_frame'){assert.equal(released.length,acknowledged.length+1,'ACK follows detach');assert.equal(args.lease,String(acknowledged.length+1));acknowledged.push(args.request);return Promise.resolve();}return new Promise((resolve,reject)=>requests.push({args,resolve,reject}));}}};
+  t.after(()=>{globalThis.window=original;});
+  const transport=await import('../src/nativeViewportTransport.ts?pooled-leases');
+  const deliver=index=>{const buffer=new ArrayBuffer(8);receive({additionalData:{nativeViewportRequest:requests[index].args.sharedRequest,nativeViewportPooled:true,nativeViewportLease:String(index+1)},getBuffer:()=>buffer});return buffer;};
+  const first=transport.requestNativeViewportFrame('scene',{}),buffer=deliver(0);
+  assert.equal(requests[0].args.sharedBufferReuse,true);assert.equal(await first,buffer);
+  releaseError=true;assert.throws(()=>transport.releaseNativeViewportFrame(buffer),/detach failed/);assert.equal(acknowledged.length,0);assert.equal(transport.isSharedNativeViewportFrame(buffer),true);
+  releaseError=false;transport.releaseNativeViewportFrame(buffer);transport.releaseNativeViewportFrame(buffer);
+  requests[0].resolve(new ArrayBuffer(0));
+  const failed=transport.requestNativeViewportFrame('scene',{});requests[1].reject(Error('render failed'));await assert.rejects(failed,/render failed/);deliver(1);
+  t.mock.timers.enable({apis:['setTimeout']});const expired=transport.requestNativeViewportFrame('scene',{});t.mock.timers.tick(15_000);await assert.rejects(expired,/timed out/);deliver(2);requests[2].resolve(new ArrayBuffer(0));
+  assert.equal(released.length,3);assert.deepEqual(acknowledged,requests.map(request=>request.args.sharedRequest));
+});
+
 test('shared frames correlate concurrent requests and release once; failures and late frames do not leak', async t => {
   const original = globalThis.window;
   const requests = [], released = [];

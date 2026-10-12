@@ -4306,7 +4306,7 @@ fn filter_scene_view_snapshot(snapshot: &mut WorldSnapshot, request: &mut Native
     }
 }
 
-async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: &str, shared_request: Option<String>, window: tauri::WebviewWindow, started: Instant) -> Result<tauri::ipc::Response, String> {
+async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: &str, shared_request: Option<String>, shared_buffer_reuse: bool, window: tauri::WebviewWindow, started: Instant) -> Result<tauri::ipc::Response, String> {
     if !raw {
         let label = label.to_owned();
         return tauri::async_runtime::spawn_blocking(move || serde_json::to_string(&encode_native_viewport_frame(frame, &label)?).map(tauri::ipc::Response::new).map_err(|error| error.to_string())).await.map_err(|error| error.to_string())?;
@@ -4322,7 +4322,7 @@ async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: 
     let bytes = Arc::new(native_viewport_transport::FramePayload::new(frame.width, frame.height, metadata, frame.rgba)?);
     let preparation = native_viewport_transport::PreparationTimings { metadata_value_ms, metadata_encode_ms, payload_ms: payload_at.elapsed().as_secs_f64() * 1000.0 };
     if let Some(request) = shared_request.filter(|request| request.len() <= 128) {
-        if native_viewport_transport::share_frame(&window, Arc::clone(&bytes), request, preparation, started).await.is_ok() {
+        if native_viewport_transport::share_frame(&window, Arc::clone(&bytes), request, shared_buffer_reuse, preparation, started).await.is_ok() {
             return Ok(tauri::ipc::Response::new(Vec::<u8>::new()));
         }
     }
@@ -4331,6 +4331,9 @@ async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: 
 
 #[tauri::command]
 fn take_native_viewport_transport_traces() -> Vec<native_viewport_transport::TransportTrace> { native_viewport_transport::take_traces() }
+
+#[tauri::command]
+async fn release_native_viewport_frame(window: tauri::WebviewWindow, request: String, lease: String) -> Result<(), String> { native_viewport_transport::release_frame(window, request, lease).await }
 
 #[tauri::command]
 async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state: State<'_, AppState>) -> Result<serde_json::Value, String> {
@@ -4380,6 +4383,7 @@ async fn render_native_game_view(
     play_revision: Option<u64>,
     raw: Option<bool>,
     shared_request: Option<String>,
+    shared_buffer_reuse: Option<bool>,
     window: tauri::WebviewWindow,
     state: State<'_, AppState>,
 ) -> Result<tauri::ipc::Response, String> {
@@ -4428,7 +4432,7 @@ async fn render_native_game_view(
     })
     .await
     .map_err(|error| format!("Game viewport worker failed: {error}"))??;
-    native_viewport_response(frame, raw.unwrap_or(false), "viewport", shared_request, window, started).await
+    native_viewport_response(frame, raw.unwrap_or(false), "viewport", shared_request, shared_buffer_reuse.unwrap_or(false), window, started).await
 }
 
 #[tauri::command]
@@ -4440,6 +4444,7 @@ async fn render_native_scene_view(
     play_revision: Option<u64>,
     raw: Option<bool>,
     shared_request: Option<String>,
+    shared_buffer_reuse: Option<bool>,
     window: tauri::WebviewWindow,
     state: State<'_, AppState>,
 ) -> Result<tauri::ipc::Response, String> {
@@ -4553,7 +4558,7 @@ async fn render_native_scene_view(
     })
     .await
     .map_err(|error| format!("Scene viewport worker failed: {error}"))??;
-    native_viewport_response(frame, raw.unwrap_or(false), "Scene viewport", shared_request, window, started).await
+    native_viewport_response(frame, raw.unwrap_or(false), "Scene viewport", shared_request, shared_buffer_reuse.unwrap_or(false), window, started).await
 }
 
 #[tauri::command]
@@ -6411,6 +6416,7 @@ pub fn run() {
             render_native_game_view,
             render_native_scene_view,
             take_native_viewport_transport_traces,
+            release_native_viewport_frame,
             render_effekseer_preview,
             render_material_preview,
             list_project_scenes,
@@ -6495,6 +6501,7 @@ pub fn run() {
         .build(context)
         .expect("error while building MEngine Editor");
     app.run(move |app_handle, event| {
+        if let tauri::RunEvent::WindowEvent { label, event: tauri::WindowEvent::Destroyed, .. } = &event { native_viewport_transport::destroy_window(label); }
         if matches!(event, tauri::RunEvent::Exit) {
             cleanup_bridge_discovery(app_handle, &bridge_token_for_exit);
             if let Some(identifier) = &background_identifier {
