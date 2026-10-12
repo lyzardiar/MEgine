@@ -98,3 +98,36 @@ test('particle draw items preserve the authored texture with a white fallback', 
     'Assets/Sprites/fire.png#spark');
   assert.equal(collectParticleDrawItems(state, [0, 0, 0], 'world', '')[0].texture, 'white');
 });
+
+test('expiration preserves survivor order and allows emission to refill capacity', () => {
+  const state = createParticleEmitterState();
+  stepParticleEmitter(2, { ...emitter, rate_over_time: 0, burst_count: 4, max_particles: 4 }, state, 0.01);
+  const original = [...state.particles];
+  original[0].lifetime = original[2].lifetime = 0.015;
+  stepParticleEmitter(2, { ...emitter, rate_over_time: 0 }, state, 0.02);
+  assert.deepEqual(state.particles, [original[1], original[3]]);
+  stepParticleEmitter(2, { ...emitter, rate_over_time: 100, max_particles: 4 }, state, 0.02);
+  assert.equal(state.particles.length, 4);
+  assert.equal(state.particles[0], original[1]);
+  assert.equal(state.particles[1], original[3]);
+});
+
+test('3D particle vectors and colors retain numeric coercion and invalid-value fallbacks', () => {
+  const state = createParticleEmitterState();
+  stepParticleEmitter(3, { ...emitter, direction: ['0', '1'], gravity: [0, 0, 0], rate_over_time: 100, color_start: ['0.2', NaN, Infinity, '0.5'], color_end: { 3: '0.25' } }, state, 0.01);
+  const particle = state.particles[0];
+  assert.deepEqual(particle.velocity, [0, 2, 0]);
+  assert.deepEqual(particle.colorStart, [0.2, 1, 1, 0.5]);
+  assert.deepEqual(particle.colorEnd, [1, 1, 1, 0.25]);
+});
+
+test('new particles observe edited colors without changing already emitted particles', () => {
+  const state = createParticleEmitterState();
+  const component = { ...emitter, rate_over_time: 100, color_start: [1, 0, 0, 1] };
+  stepParticleEmitter(2, component, state, 0.01);
+  component.color_start[0] = 0;
+  component.color_start[1] = 1;
+  stepParticleEmitter(2, component, state, 0.01);
+  assert.deepEqual(state.particles[0].colorStart, [1, 0, 0, 1]);
+  assert.deepEqual(state.particles[1].colorStart, [0, 1, 0, 1]);
+});
