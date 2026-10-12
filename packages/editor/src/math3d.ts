@@ -364,6 +364,32 @@ export function drawSolidCube(
   return { x: c.x, y: c.y, r: Math.max(maxX - minX, maxY - minY) * 0.55 };
 }
 
+/** Exact mesh selection bounds without rasterization or intermediate world/triangle records. */
+export function projectTriangleMeshHit(cam: Camera, viewport: { x: number; y: number; w: number; h: number }, center: Vec3, objectScale: Vec3, positions: readonly Vec3[], indices: readonly number[], rotation?: Quat | null): { x: number; y: number; r: number } | null {
+  const q = rotation ? quatNormalize(rotation) : null, projectPoint = createProjection(cam, viewport);
+  const projected = positions.map(position => {
+    let x = position[0] * objectScale[0], y = position[1] * objectScale[1], z = position[2] * objectScale[2];
+    if (q) {
+      const [qx, qy, qz, qw] = q, tx = 2 * (qy * z - qz * y), ty = 2 * (qz * x - qx * z), tz = 2 * (qx * y - qy * x);
+      x = x + qw * tx + (qy * tz - qz * ty);
+      y = y + qw * ty + (qz * tx - qx * tz);
+      z = z + qw * tz + (qx * ty - qy * tx);
+    }
+    return projectPoint([center[0] + x, center[1] + y, center[2] + z]);
+  });
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, visible = false;
+  const triangleCount = Math.min(Math.floor(indices.length / 3), 10_000);
+  for (let triangle = 0; triangle < triangleCount; triangle++) {
+    const a = projected[indices[triangle * 3]], b = projected[indices[triangle * 3 + 1]], c = projected[indices[triangle * 3 + 2]];
+    if (!a || !b || !c) continue;
+    visible = true;
+    minX = Math.min(minX, a.x, b.x, c.x); minY = Math.min(minY, a.y, b.y, c.y);
+    maxX = Math.max(maxX, a.x, b.x, c.x); maxY = Math.max(maxY, a.y, b.y, c.y);
+  }
+  const projectedCenter = projectPoint(center);
+  return projectedCenter && visible ? { x: projectedCenter.x, y: projectedCenter.y, r: Math.max(8, Math.max(maxX - minX, maxY - minY) * 0.55) } : null;
+}
+
 /** Canvas preview for imported triangle meshes. Runtime uses the full GPU mesh. */
 export function drawTriangleMesh(
   ctx: CanvasRenderingContext2D,
@@ -378,6 +404,7 @@ export function drawTriangleMesh(
   material?: MaterialPreviewAppearance,
   hitOnly = false,
 ): { x: number; y: number; r: number } | null {
+  if (hitOnly) return projectTriangleMeshHit(cam, viewport, center, objectScale, positions, indices, rotation);
   const q = rotation ? quatNormalize(rotation) : null;
   const world = positions.map((position): Vec3 => {
     const scaled: Vec3 = [

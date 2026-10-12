@@ -1,0 +1,340 @@
+{
+  "author": "MiYu",
+  "date": "2026-10-12",
+  "baselineEngineCommit": "57e8445608fb0886f34b4701d5412e11ee5318b5",
+  "baselineGameCommit": "6d8cd4daba956a15bfa2a205244d9d1d9e95d862",
+  "baselineExecutable": "D:\\MEngineNativeQA\\release-editor-owned-transform.exe",
+  "baselineExecutableSha256": "a5019c59947dc04bff311362da88c22120aad2f2d5fb83081c1dd68b240c7826",
+  "candidateExecutable": "D:\\MEngineNativeQA\\release-editor-direct-mesh-hit.exe",
+  "candidateExecutableSha256": "25fce2110c732dbfdc24711071a7d1dd4d4a8665354d53e4d01337fef514b008",
+  "clientSha256": "d25e9578429842c7a127a2542672ee1c32d71c6093c3eb0f27e88b4f7d85b38f",
+  "sameClientForAllRuns": true,
+  "sameInteractionsForAllRuns": true,
+  "originalQaRestored": true,
+  "measurementNotes": {
+    "gameFullIntervalIncludesProfilerStartStop": true,
+    "gameSteadyWindow": "first observed draw plus 1000ms, then exactly 10000ms; retains stalls inside the window",
+    "backgroundLoadObservation": "D:\\MEngineNativeQA\\direct-mesh-hit-background-load.json",
+    "backgroundLoadCausalityProven": false,
+    "finalExecutionOrder": [
+      "direct-mesh-hit-balanced-candidate",
+      "direct-mesh-hit-balanced-candidate-repeat",
+      "direct-mesh-hit-balanced-baseline-repeat",
+      "direct-mesh-hit-balanced-baseline"
+    ]
+  },
+  "qa": [
+    {
+      "label": "direct-mesh-hit-balanced-baseline",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-direct-mesh-hit-balanced-baseline-1791767736470\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 3388,
+      "scenePaintMs": 7.872350211344482,
+      "newNativeFrameHz": 36.8024286757974,
+      "sceneSimulationHz": 23.156584335333196,
+      "gameSimulationHz": 39.21997916558949,
+      "gameNativeFrameHz": 38.39262861487989,
+      "gameSteadyNativeFrameHz": 41.1,
+      "gameSteadyWindow": {
+        "startMs": 68745.20000004768,
+        "endMs": 78745.20000004768,
+        "durationMs": 10000,
+        "uniqueFrames": 411
+      },
+      "gameMaximumDrawGapMs": 661.5999999046326,
+      "meshProjectionSelfSeconds": 0.327002,
+      "meshProjectionInclusiveSeconds": 0.758355,
+      "gcSelfSeconds": 0.718211,
+      "profileSeconds": 12.760111,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 12,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": false,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "parentTransform": {
+        "parent": 4294976316,
+        "child": 4294976315,
+        "moved": [
+          4294976315
+        ],
+        "hidden": [],
+        "restored": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 906,
+        "renderedRevision": 906,
+        "changedPixels": 653,
+        "expandedMaskDifferentPixels": 52,
+        "snapshotDifferentPixels": 47,
+        "restoredDifferentPixels": 57,
+        "repeatedDifferentPixels": 60,
+        "totalPixels": 76800,
+        "filteredSyncMs": 5.0127
+      },
+      "movingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-direct-mesh-hit-balanced-baseline-1791767736470\\moving-play-scene.png"
+    },
+    {
+      "label": "direct-mesh-hit-balanced-candidate",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-direct-mesh-hit-balanced-candidate-1791767339524\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 177000,
+      "scenePaintMs": 7.075710139550634,
+      "newNativeFrameHz": 44.45056213436727,
+      "sceneSimulationHz": 31.892039003467964,
+      "gameSimulationHz": 40.15607086627765,
+      "gameNativeFrameHz": 39.01818293304353,
+      "gameSteadyNativeFrameHz": 42.3,
+      "gameSteadyWindow": {
+        "startMs": 69026.09999990463,
+        "endMs": 79026.09999990463,
+        "durationMs": 10000,
+        "uniqueFrames": 423
+      },
+      "gameMaximumDrawGapMs": 611.0,
+      "meshProjectionSelfSeconds": 0.085907,
+      "meshProjectionInclusiveSeconds": 0.219404,
+      "gcSelfSeconds": 0.508593,
+      "profileSeconds": 12.509311,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "parentTransform": {
+        "parent": 4294976316,
+        "child": 4294976315,
+        "moved": [
+          4294976315
+        ],
+        "hidden": [],
+        "restored": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 1036,
+        "renderedRevision": 1036,
+        "changedPixels": 662,
+        "expandedMaskDifferentPixels": 63,
+        "snapshotDifferentPixels": 66,
+        "restoredDifferentPixels": 84,
+        "repeatedDifferentPixels": 79,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.796499999999999
+      },
+      "movingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-direct-mesh-hit-balanced-candidate-1791767339524\\moving-play-scene.png"
+    },
+    {
+      "label": "direct-mesh-hit-balanced-candidate-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-direct-mesh-hit-balanced-candidate-repeat-1791767459424\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 54236,
+      "scenePaintMs": 6.899916069396645,
+      "newNativeFrameHz": 36.958288536566634,
+      "sceneSimulationHz": 26.45783519396269,
+      "gameSimulationHz": 36.787471866544585,
+      "gameNativeFrameHz": 30.500631047634517,
+      "gameSteadyNativeFrameHz": 39.3,
+      "gameSteadyWindow": {
+        "startMs": 68054.40000009537,
+        "endMs": 78054.40000009537,
+        "durationMs": 10000,
+        "uniqueFrames": 393
+      },
+      "gameMaximumDrawGapMs": 1641.7999999523163,
+      "meshProjectionSelfSeconds": 0.07201,
+      "meshProjectionInclusiveSeconds": 0.156577,
+      "gcSelfSeconds": 0.498071,
+      "profileSeconds": 12.780813,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 9,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "parentTransform": {
+        "parent": 4294976316,
+        "child": 4294976315,
+        "moved": [
+          4294976315
+        ],
+        "hidden": [],
+        "restored": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 901,
+        "renderedRevision": 901,
+        "changedPixels": 684,
+        "expandedMaskDifferentPixels": 56,
+        "snapshotDifferentPixels": 71,
+        "restoredDifferentPixels": 72,
+        "repeatedDifferentPixels": 77,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.835800000000001
+      },
+      "movingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-direct-mesh-hit-balanced-candidate-repeat-1791767459424\\moving-play-scene.png"
+    },
+    {
+      "label": "direct-mesh-hit-balanced-baseline-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-direct-mesh-hit-balanced-baseline-repeat-1791767578762\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 67788,
+      "scenePaintMs": 7.771856683536328,
+      "newNativeFrameHz": 37.01553029029897,
+      "sceneSimulationHz": 24.07246067876904,
+      "gameSimulationHz": 39.0045768740965,
+      "gameNativeFrameHz": 37.9532094527952,
+      "gameSteadyNativeFrameHz": 40.0,
+      "gameSteadyWindow": {
+        "startMs": 72945,
+        "endMs": 82945,
+        "durationMs": 10000,
+        "uniqueFrames": 400
+      },
+      "gameMaximumDrawGapMs": 416.40000009536743,
+      "meshProjectionSelfSeconds": 0.514728,
+      "meshProjectionInclusiveSeconds": 0.745391,
+      "gcSelfSeconds": 0.658812,
+      "profileSeconds": 12.898637,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 11,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": false,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "parentTransform": {
+        "parent": 4294976316,
+        "child": 4294976315,
+        "moved": [
+          4294976315
+        ],
+        "hidden": [],
+        "restored": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 909,
+        "renderedRevision": 909,
+        "changedPixels": 689,
+        "expandedMaskDifferentPixels": 63,
+        "snapshotDifferentPixels": 68,
+        "restoredDifferentPixels": 72,
+        "repeatedDifferentPixels": 72,
+        "totalPixels": 76800,
+        "filteredSyncMs": 5.0649
+      },
+      "movingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-direct-mesh-hit-balanced-baseline-repeat-1791767578762\\moving-play-scene.png"
+    }
+  ],
+  "pairedGains": [
+    {
+      "paintReductionPercent": 10.119469413922245,
+      "nativeFrameGainPercent": 20.781599839359387,
+      "simulationGainPercent": 37.7234161205972,
+      "gameFrameGainPercent": 1.6293604807283257,
+      "gameSteadyFrameGainPercent": 2.9197080291970767,
+      "meshProjectionCostReductionPercent": 71.0684310118612
+    },
+    {
+      "paintReductionPercent": 11.219206035885554,
+      "nativeFrameGainPercent": -0.1546425332378254,
+      "simulationGainPercent": 9.909142845947017,
+      "gameFrameGainPercent": -19.63622711388855,
+      "gameSteadyFrameGainPercent": -1.750000000000007,
+      "meshProjectionCostReductionPercent": 78.99397765736373
+    }
+  ],
+  "tests": {
+    "passed": 13,
+    "failed": 0,
+    "log": "D:\\MEngineNativeQA\\direct-mesh-hit-tests.log"
+  },
+  "buildLogs": [
+    "D:\\MEngineNativeQA\\direct-mesh-hit-editor-build.log",
+    "D:\\MEngineNativeQA\\direct-mesh-hit-release-build.log"
+  ],
+  "acceptanceScope": "Owned actual Release editor and WebView; physical display FPS and other machine acceptance remain unverified."
+}
