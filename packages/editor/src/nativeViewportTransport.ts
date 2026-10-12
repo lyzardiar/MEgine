@@ -1,8 +1,9 @@
 // Author: MiYu. Correlate shared viewport leases and native transport measurements.
 import { invoke } from '@tauri-apps/api/core';
 
-export type SharedNativeViewportTransportProfile = { uiQueueMs: number; setupMs: number; allocateMs: number; copyMs: number; bytes: number; getBufferMs: number; requestElapsedMs: number };
-type SharedFrameEvent = { additionalData?: { nativeViewportRequest?: string; nativeViewportTransport?: Omit<SharedNativeViewportTransportProfile, 'getBufferMs' | 'requestElapsedMs'> }; getBuffer(): ArrayBuffer };
+type NativeSharedTransportProfile = { uiQueueMs: number; setupMs: number; allocateMs: number; copyMs: number; bytes: number; publicationReadyEpochMs?: number };
+export type SharedNativeViewportTransportProfile = NativeSharedTransportProfile & { requestId: string; receivedEpochMs: number; getBufferMs: number; requestElapsedMs: number; publicationReadyToEventMs?: number; releaseMs?: number };
+type SharedFrameEvent = { additionalData?: { nativeViewportRequest?: string; nativeViewportTransport?: NativeSharedTransportProfile }; getBuffer(): ArrayBuffer };
 type SharedFrameWebView = { addEventListener(type: 'sharedbufferreceived', listener: (event: SharedFrameEvent) => void): void; releaseBuffer(buffer: ArrayBuffer): void };
 const pending = new Map<string, { resolve(buffer: ArrayBuffer): void; reject(error: unknown): void; timer: ReturnType<typeof setTimeout>; startedAt: number }>();
 const leases = new WeakMap<ArrayBuffer, SharedFrameWebView>();
@@ -17,7 +18,12 @@ export function isSharedNativeViewportFrame(buffer: ArrayBuffer): boolean { retu
 
 export function releaseNativeViewportFrame(buffer: ArrayBuffer): void {
   const webview = leases.get(buffer);
-  if (webview) { leases.delete(buffer); transportProfiles.delete(buffer); webview.releaseBuffer(buffer); }
+  if (webview) {
+    const profile = transportProfiles.get(buffer), startedAt = performance.now();
+    leases.delete(buffer); transportProfiles.delete(buffer);
+    try { webview.releaseBuffer(buffer); }
+    finally { if (profile) profile.releaseMs = performance.now() - startedAt; }
+  }
 }
 
 /** Windows WebView2 shares pixel pages; other platforms retain the binary IPC response. */
@@ -33,7 +39,11 @@ export function requestNativeViewportFrame(command: string, args: Record<string,
       pending.delete(id);
       clearTimeout(request.timer);
       leases.set(buffer, webview);
-      if (event.additionalData?.nativeViewportTransport) transportProfiles.set(buffer, { ...event.additionalData.nativeViewportTransport, getBufferMs, requestElapsedMs: receivedAt - request.startedAt });
+      if (event.additionalData?.nativeViewportTransport) {
+        const native = event.additionalData.nativeViewportTransport, receivedEpochMs = performance.timeOrigin + receivedAt;
+        const publicationReadyToEventMs = Number.isFinite(native.publicationReadyEpochMs) && native.publicationReadyEpochMs! > 0 ? receivedEpochMs - native.publicationReadyEpochMs! : undefined;
+        transportProfiles.set(buffer, { ...native, requestId: id, receivedEpochMs, publicationReadyToEventMs, getBufferMs, requestElapsedMs: receivedAt - request.startedAt });
+      }
       request.resolve(buffer);
     });
     listening = webview;

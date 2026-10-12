@@ -21,8 +21,12 @@ test('shared frames correlate concurrent requests and release once; failures and
   assert.equal(transport.isSharedNativeViewportFrame(a), true);
   assert.equal(transport.nativeViewportTransportProfile(a).uiQueueMs,2); assert.equal(transport.nativeViewportTransportProfile(b).uiQueueMs,7);
   assert.ok(transport.nativeViewportTransportProfile(a).getBufferMs>=0); assert.ok(transport.nativeViewportTransportProfile(a).requestElapsedMs>=0);
+  assert.equal(transport.nativeViewportTransportProfile(a).requestId,requests[0].args.sharedRequest);
+  assert.equal(transport.nativeViewportTransportProfile(a).publicationReadyToEventMs,undefined,'older hosts provide no publication epoch');
+  const firstProfile=transport.nativeViewportTransportProfile(a);
   transport.releaseNativeViewportFrame(a); transport.releaseNativeViewportFrame(a); transport.releaseNativeViewportFrame(b);
   assert.deepEqual(released, [a, b]);
+  assert.ok(firstProfile.releaseMs>=0,'retained frame profile observes lease release time');
   assert.equal(transport.nativeViewportTransportProfile(a),undefined); assert.equal(transport.nativeViewportTransportProfile(b),undefined);
   requests[0].resolve(new ArrayBuffer(0)); requests[1].resolve(new ArrayBuffer(0));
   const failed = transport.requestNativeViewportFrame('game', {});
@@ -38,6 +42,20 @@ test('shared frames correlate concurrent requests and release once; failures and
   deliver(3, late);
   assert.equal(released.filter(value => value === late).length, 2);
   requests[3].resolve(new ArrayBuffer(0));
+});
+
+test('publication timestamps correlate per request and preserve clock overlap instead of clamping', async t => {
+  const original=globalThis.window,requests=[];let receive;
+  globalThis.window={chrome:{webview:{addEventListener:(_,callback)=>{receive=callback;},releaseBuffer(){}}},__TAURI_INTERNALS__:{invoke:(_,args)=>new Promise(resolve=>requests.push({args,resolve}))}};
+  t.after(()=>{globalThis.window=original;});
+  const transport=await import('../src/nativeViewportTransport.ts?publication-timestamps'),frame=transport.requestNativeViewportFrame('game',{}),buffer=new ArrayBuffer(24);
+  const futureEpoch=performance.timeOrigin+performance.now()+1000;
+  receive({additionalData:{nativeViewportRequest:requests[0].args.sharedRequest,nativeViewportTransport:{uiQueueMs:0,setupMs:0,allocateMs:0,copyMs:0,bytes:24,publicationReadyEpochMs:futureEpoch}},getBuffer:()=>buffer});
+  assert.equal(await frame,buffer);
+  const profile=transport.nativeViewportTransportProfile(buffer);
+  assert.equal(profile.publicationReadyToEventMs,profile.receivedEpochMs-futureEpoch);
+  assert.ok(profile.publicationReadyToEventMs<0,'clock discrepancies remain visible');
+  transport.releaseNativeViewportFrame(buffer);requests[0].resolve(new ArrayBuffer(0));
 });
 
 test('unsupported shared transport falls back to binary IPC for subsequent requests', async t => {
