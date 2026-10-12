@@ -745,6 +745,8 @@ export function Viewport(props: {
     reportedError: false,
     generation: 0,
     ready: null as Promise<void> | null,
+    resumeTimer: null as number | null,
+    captures: 0,
   });
   const nativeCameraPreviewFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
@@ -828,13 +830,21 @@ export function Viewport(props: {
     performance.now(),
   ));
   const lastProfilerFrameRef = useRef(0);
+  const lastViewportPaintRef = useRef(0);
+  const lastAnimationFrameAtRef = useRef(0);
+  const scenePaintInputsRef = useRef<unknown[]>([]);
   const scenePaintEpochRef = useRef(0);
   const previousScenePaintRef = useRef<NativeScenePaintState | null>(null);
   const sceneWorldArgsRef = useRef<{ source: Ent[]; key: string; args: ReturnType<typeof createNativeViewportWorldArgs<Ent>> } | null>(null);
   const sceneTransformsRef = useRef<{ source: Ent[]; transforms: ReturnType<typeof buildWorldTransforms> } | null>(null);
   const sceneUiEntitiesRef = useRef<{ source: Ent[]; entities: Ent[] } | null>(null);
   const sceneOverlayLayoutRef = useRef<{ source: Ent[]; key: string; updatedAt: number; layout: SceneUiOverlayLayout } | null>(null);
-  scenePaintEpochRef.current++;
+  // Runtime overlays advance with completed native frames; authoring and interaction still invalidate paints.
+  const scenePaintInputs = [props.playing ? null : props.entities, JSON.stringify([props.playing, props.runtimeSessionId, props.nativeSessionId, props.selected, props.selectedIds, props.sceneHiddenIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.gameDisplay, props.timelineCameraPreview, props.timelineParticlePreviews, props.playing ? null : props.clearColor])];
+  if (scenePaintInputs.some((value, index) => value !== scenePaintInputsRef.current[index])) {
+    scenePaintEpochRef.current++;
+    scenePaintInputsRef.current = scenePaintInputs;
+  }
   const hoverGizmoRef = useRef<GizmoPart | null>(null);
   const activeGizmoRef = useRef<GizmoPart | null>(null);
   const lastVpRef = useRef({ x: 0, y: 0, w: 1, h: 1 });
@@ -977,6 +987,13 @@ export function Viewport(props: {
   // a screenshot of the rendered scene/game view (Phase 1 observation surface).
   useEffect(() => {
     return agentBridge.registerViewportCapture(props.tab, async (format, quality, maxSize = 2_048) => {
+      const sceneRequest = propsRef.current.tab === 'scene' ? nativeSceneRequestRef.current : null;
+      if (sceneRequest) {
+        sceneRequest.captures++;
+        if (sceneRequest.resumeTimer != null) window.clearTimeout(sceneRequest.resumeTimer);
+        sceneRequest.resumeTimer = null;
+      }
+      try {
       if (propsRef.current.tab === 'game' && '__TAURI_INTERNALS__' in window) {
         const p = currentViewportProps();
         const sourceWidth = p.gameResolution?.width ?? canvasRef.current?.width ?? 1280;
@@ -1058,6 +1075,7 @@ export function Viewport(props: {
       } catch {
         return null;
       }
+      } finally { if (sceneRequest) sceneRequest.captures--; }
     });
   }, [props.tab]);
 
@@ -1295,6 +1313,8 @@ export function Viewport(props: {
       clearMaterialPreviews();
       nativeGameRequestRef.current.generation++;
       nativeSceneRequestRef.current.generation++;
+      if (nativeSceneRequestRef.current.resumeTimer != null) window.clearTimeout(nativeSceneRequestRef.current.resumeTimer);
+      nativeSceneRequestRef.current.resumeTimer = null;
       nativeCameraPreviewRequestRef.current.generation++;
       nativeGameFrameRef.current = null;
       nativeSceneFrameRef.current = null;
@@ -1309,6 +1329,13 @@ export function Viewport(props: {
     window.addEventListener('mengine:project-assets-changed', clear);
     window.addEventListener('mengine-ui-font-loaded', clearUiLayout);
     return () => { window.removeEventListener('mengine:project-assets-changed', clear); window.removeEventListener('mengine-ui-font-loaded', clearUiLayout); };
+  }, []);
+
+  useEffect(() => () => {
+    const request = nativeSceneRequestRef.current;
+    request.generation++;
+    if (request.resumeTimer != null) window.clearTimeout(request.resumeTimer);
+    request.resumeTimer = null;
   }, []);
 
   useEffect(() => props.subscribeRuntimeFrames?.(() => {
@@ -1341,8 +1368,9 @@ export function Viewport(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const paint = (animationFrame = false) => {
+  const paint = (animationFrame = false, completedSceneFrame = false, resumeSceneRequest = false) => {
     const paintStartedAt = performance.now();
+    if (animationFrame) lastAnimationFrameAtRef.current = paintStartedAt;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -1354,10 +1382,12 @@ export function Viewport(props: {
       lastProfilerFrameRef.current = 0;
       return;
     }
-    const editScene = propsRef.current.tab === 'scene' && !propsRef.current.playing && !scene2DRef.current && '__TAURI_INTERNALS__' in window;
-    const scenePaintState = { key: JSON.stringify([sc, rect.width, rect.height, window.devicePixelRatio, hoverGizmoRef.current, activeGizmoRef.current, uiHoverRef.current, uiPressRef.current]), epoch: scenePaintEpochRef.current, frame: nativeSceneFrameRef.current, preview: nativeCameraPreviewFrameRef.current };
+    const nativeScene3D = propsRef.current.tab === 'scene' && !scene2DRef.current && '__TAURI_INTERNALS__' in window;
+    const editScene = nativeScene3D && !propsRef.current.playing;
+    const scenePaintState = { key: JSON.stringify([nativeSceneFrameRef.current?.camera ?? sc, rect.width, rect.height, window.devicePixelRatio, hoverGizmoRef.current, activeGizmoRef.current, uiHoverRef.current, uiPressRef.current]), epoch: scenePaintEpochRef.current, frame: nativeSceneFrameRef.current, preview: nativeCameraPreviewFrameRef.current };
     const browserAnimation = editScene && propsRef.current.entities.some(entity => (entity.components.SpineSkeleton || entity.components.EffekseerEffect || entity.components.ParticleEmitter2D || entity.components.ParticleEmitter3D || entity.components.TrailRenderer2D || entity.components.AnimatedSprite2D) && (propsRef.current.activeInHierarchy?.(entity.entity) ?? entity.active !== false));
-    if (animationFrame && editScene && !browserAnimation && nativeSceneRequestRef.current.inFlight && pendingNativeScenePaintUnchanged(previousScenePaintRef.current, scenePaintState)) return;
+    const skipUnchangedScenePaint = (animationFrame || resumeSceneRequest) && nativeScene3D && !browserAnimation && pendingNativeScenePaintUnchanged(previousScenePaintRef.current, scenePaintState);
+    if (skipUnchangedScenePaint && nativeSceneRequestRef.current.inFlight) return;
     previousScenePaintRef.current = scenePaintState;
     const requestedProps = currentViewportProps();
     let p = requestedProps;
@@ -1377,10 +1407,6 @@ export function Viewport(props: {
     if (nativeGameFrameRef.current && (!nativeViewportFrameWorldCurrent(nativeGameFrameRef.current.world, requestedProps) || nativeGameFrameRef.current.presentationKey !== presentationKey)) nativeGameFrameRef.current = null;
     if (nativeSceneFrameRef.current && !nativeViewportFrameWorldCurrent(nativeSceneFrameRef.current.world, requestedProps)) nativeSceneFrameRef.current = null;
     if (nativeCameraPreviewFrameRef.current && !nativeViewportFrameWorldCurrent(nativeCameraPreviewFrameRef.current.world, requestedProps)) nativeCameraPreviewFrameRef.current = null;
-    const frameIntervalMs = lastProfilerFrameRef.current > 0
-      ? now - lastProfilerFrameRef.current
-      : 0;
-    if (animationFrame) lastProfilerFrameRef.current = now;
     const dpr = window.devicePixelRatio || 1;
     const pw = Math.max(1, Math.floor(rect.width));
     const ph = Math.max(1, Math.floor(rect.height));
@@ -1394,8 +1420,12 @@ export function Viewport(props: {
     const nativeGameReady = isGame && nativeGameFrameRef.current != null;
     let profilerUiPrimitives = 0;
     let profilerUiBatches = 0;
-    hitsRef.current = [];
-    linePointHitsRef.current = [];
+    const clearViewport = () => {
+      hitsRef.current = [];
+      linePointHitsRef.current = [];
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(0, 0, pw, ph);
+    };
 
     // Scene 2D：锁定正视 Canvas（yaw/pitch = 0，从 +Z 看 XY 平面）
     if (!isGame && scene2DRef.current) {
@@ -1403,8 +1433,7 @@ export function Viewport(props: {
       sc.pitch = 0;
     }
 
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(0, 0, pw, ph);
+    if (!nativeScene3D) clearViewport();
 
     const vp = isGame
       ? letterbox(pw, ph, p.gameResolution)
@@ -1519,14 +1548,21 @@ export function Viewport(props: {
           MAX_NATIVE_SCENE_VIEW_DIMENSION,
         )
       : null;
-    if (
-      !isGame
-      && !scene2DActive
-      && '__TAURI_INTERNALS__' in window
-      && !nativeSceneRequestRef.current.inFlight
-      && (draggingRef.current || p.playing || (!nativeSceneRequestRef.current.reportedError && nativeSceneFrameRef.current?.key !== nativeSceneIdentity?.key) || now - nativeSceneRequestRef.current.lastRequestAt >= 200)
-    ) {
-      const request = nativeSceneRequestRef.current;
+    const sceneRequest = nativeSceneRequestRef.current;
+    const sceneRenderNeeded = (!completedSceneFrame || now - lastAnimationFrameAtRef.current > 100) && !isGame && !scene2DActive && '__TAURI_INTERNALS__' in window && (draggingRef.current || p.playing || (!sceneRequest.reportedError && nativeSceneFrameRef.current?.key !== nativeSceneIdentity?.key) || now - sceneRequest.lastRequestAt >= 200);
+    const sceneRequestInterval = p.playing || now - lastAnimationFrameAtRef.current > 100 ? 1000 / 60 : 0;
+    const sceneRequestDelay = Math.max(0, sceneRequestInterval - (now - sceneRequest.lastRequestAt));
+    if (sceneRenderNeeded && !sceneRequest.inFlight && sceneRequest.captures === 0 && sceneRequestDelay > 0 && sceneRequest.resumeTimer == null) {
+      const generation = sceneRequest.generation;
+      sceneRequest.resumeTimer = window.setTimeout(() => {
+        sceneRequest.resumeTimer = null;
+        if (sceneRequest.generation === generation && propsRef.current.tab === 'scene' && !scene2DRef.current) paint(false, false, true);
+      }, Math.ceil(sceneRequestDelay));
+    }
+    if (sceneRenderNeeded && !sceneRequest.inFlight && (sceneRequest.captures > 0 || sceneRequestDelay === 0)) {
+      const request = sceneRequest;
+      if (request.resumeTimer != null) window.clearTimeout(request.resumeTimer);
+      request.resumeTimer = null;
       const generation = ++request.generation;
       const requestedSceneCamera = structuredClone(cam);
       request.inFlight = true;
@@ -1558,7 +1594,7 @@ export function Viewport(props: {
           world: nativeWorld.frameWorld(),
         };
         request.reportedError = false;
-        if (firstFrame || performance.now() - lastProfilerFrameRef.current > 100) paint();
+        if (firstFrame) paint();
         if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
         if (!request.reportedError) {
@@ -1568,9 +1604,15 @@ export function Viewport(props: {
       }).finally(() => {
         request.inFlight = false;
         request.ready = null;
-        // Hidden WebViews can throttle rAF. Repaint after releasing inFlight so
-        // a response for an older orbit immediately schedules the current one.
-        if (performance.now() - lastProfilerFrameRef.current > 100) paint();
+        // Present Play pixels before yielding to the next request; background Scene views continue without rAF.
+        if (request.generation !== generation || request.reportedError || request.captures > 0 || propsRef.current.tab !== 'scene' || scene2DRef.current) return;
+        if (!propsRef.current.playing && performance.now() - lastAnimationFrameAtRef.current <= 100) return;
+        paint(false, true);
+        if (request.inFlight || request.resumeTimer != null || !propsRef.current.playing) return;
+        request.resumeTimer = window.setTimeout(() => {
+          request.resumeTimer = null;
+          if (request.generation === generation && propsRef.current.tab === 'scene' && propsRef.current.playing && !scene2DRef.current) paint(false, false, true);
+        }, Math.max(0, Math.ceil(1000 / 60 - (performance.now() - request.lastRequestAt))));
       });
     }
     if (
@@ -1632,6 +1674,13 @@ export function Viewport(props: {
         request.ready = null;
       });
     }
+    if (skipUnchangedScenePaint && scenePaintState.frame === nativeSceneFrameRef.current && scenePaintState.preview === nativeCameraPreviewFrameRef.current) return;
+    lastViewportPaintRef.current = now;
+    const frameIntervalMs = lastProfilerFrameRef.current > 0
+      ? now - lastProfilerFrameRef.current
+      : 0;
+    if (animationFrame) lastProfilerFrameRef.current = now;
+    if (nativeScene3D) clearViewport();
     const nativeSceneFrame = !isGame && !scene2DActive && !nativeSceneRequestRef.current.reportedError ? nativeSceneFrameForPresentation(nativeSceneFrameRef.current, nativeSceneIdentity) : null;
     if (nativeSceneFrame) cam = nativeSceneFrame.camera;
     nativeSceneMeshHitRef.current.beginFrame(nativeSceneFrame, vp);
@@ -3315,7 +3364,7 @@ export function Viewport(props: {
   // project and selection updates, so use those commits to start the native request explicitly.
   // The request completion paths above repaint once more with the decoded image.
   useEffect(() => {
-    if (performance.now() - lastProfilerFrameRef.current > 100) paint();
+    if (performance.now() - lastViewportPaintRef.current > 100) paint();
     const trailingPaint = window.setTimeout(paint, 550);
     return () => window.clearTimeout(trailingPaint);
     // `paint` reads the latest values through refs; only authoring changes should trigger this.
