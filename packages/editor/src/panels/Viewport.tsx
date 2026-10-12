@@ -42,6 +42,7 @@ import {
   drawWorldLine2D,
   lookBasis,
   orbitEye,
+  createProjection,
   project,
   quatMul,
   quatRotateVec,
@@ -1871,6 +1872,7 @@ export function Viewport(props: {
         });
     }
 
+    const projectEntityCenter = createProjection(cam, vp);
     const worldEntries = p.entities.flatMap((e, hierarchyOrder) => {
       if ((nativeGameReady && !e.components.SpineSkeleton) || !isActive(e.entity)) return [];
       const t = resolvedTransform(worldTransforms, e.entity);
@@ -1881,7 +1883,7 @@ export function Viewport(props: {
     const drawn = (isGame && !gameCamera ? [] : spatialCandidates
       .flatMap((index) => {
         const { e, t, hierarchyOrder } = worldEntries[index];
-        const pr = project(t.position as Vec3, cam, vp);
+        const pr = projectEntityCenter(t.position as Vec3);
         // Keep cameras/lights even if origin is barely off-screen — frustum/rays may still show
         const camComp = e.components.Camera3D ?? e.components.Camera2D;
         const isLight =
