@@ -1160,11 +1160,13 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     hierarchyPresentation(entities: WorldSnapshotView['entities']) { return mode === 'edit' ? getVisibleFlat() : buildVisibleFlat(entities.map(entity => isRetainedPlayRecord(entity) ? entity as EntityRec : normalizeEntity(entity)), false); },
     activeInHierarchy,
     get sceneHiddenIds() {
+      if (sceneHiddenIds.size === 0) return [];
       return editEntities
         .map((entity) => entity.entity)
         .filter((id) => sceneHiddenIds.has(id));
     },
     get sceneUnpickableIds() {
+      if (sceneUnpickableIds.size === 0) return [];
       return editEntities
         .map((entity) => entity.entity)
         .filter((id) => sceneUnpickableIds.has(id));
