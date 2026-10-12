@@ -1,0 +1,1064 @@
+{
+  "author": "MiYu",
+  "engineBaseline": "edbaba8242f07d911fb3624f0283e874aeb15c5e",
+  "gameBaseline": "8b23c8556952340fa99bc76a4b3419f47a3d3c33",
+  "scriptTests": {
+    "passed": 28,
+    "failed": 0
+  },
+  "runtimeTests": {
+    "passed": 20,
+    "failed": 0,
+    "ignored": 3
+  },
+  "stageMeasurement": {
+    "baseline": {
+      "averageStageMs": {
+        "Animation, timeline and audio": 0.024734999999999993,
+        "Input": 0.013819999999999997,
+        "Physics and collision callbacks": 0.0019583333333333336,
+        "Reconcile": 0.000395,
+        "Script and runtime requests": 6.729175000000002,
+        "Script and runtime requests/QuickJS callback": 6.055078333333333,
+        "Script and runtime requests/Script command commit": 0.09132499999999999,
+        "Script and runtime requests/Script world publication": 0.5819750000000001,
+        "Snapshot export": 0.6778683333333334
+      },
+      "measuredFrames": 60,
+      "warmupFrames": 360
+    },
+    "candidate": {
+      "averageStageMs": {
+        "Animation, timeline and audio": 0.024749999999999998,
+        "Input": 0.013398333333333333,
+        "Physics and collision callbacks": 0.0017766666666666664,
+        "Reconcile": 0.00043166666666666657,
+        "Script and runtime requests": 6.405138333333333,
+        "Script and runtime requests/QuickJS callback": 6.013093333333331,
+        "Script and runtime requests/Script command commit": 0.09352833333333332,
+        "Script and runtime requests/Script world publication": 0.29776166666666676,
+        "Snapshot export": 0.5057466666666666
+      },
+      "measuredFrames": 60,
+      "warmupFrames": 360
+    }
+  },
+  "build": {
+    "started": "2026-10-12T02:53:34.6394356Z",
+    "finished": "2026-10-12T03:00:01.1445093Z",
+    "releaseBuildSeconds": 377.7232721,
+    "sha256": "d0ad7569d6ab49b447860fbc0b0d46578d3fba14bf728b7d5a7a48e3a28ea117",
+    "frontendPassed": true,
+    "releasePassed": true
+  },
+  "runs": [
+    {
+      "label": "shared-snapshot-baseline",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-shared-snapshot-baseline-1791774034907\\report.json",
+      "ownerPid": 49668,
+      "ownerExited": true,
+      "passed": true,
+      "emptyPaints": {
+        "edit": 0,
+        "play": 0
+      },
+      "scenePaintMs": 9.089025907199808,
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 37.96083333293597,
+        "p95PresentIntervalMs": 55.200000047683716,
+        "presentedFps": 26.342941189659545,
+        "averageRequestMs": 33.69458334545295,
+        "averageRenderMs": 8.742903333333336,
+        "averageCommandMs": 11.702277916666658,
+        "averageUploadMs": 1.606666659315427,
+        "averageWorldSyncMs": 2.231420833333334,
+        "averageSimulationMs": 18.753725416666658,
+        "averageSimulationRequestMs": 65.24333332677682
+      },
+      "sceneSimulationHz": 10.28814493108944,
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 34.76875,
+        "p95PresentIntervalMs": 54.60000014305115,
+        "presentedFps": 28.76145964407694,
+        "averageRequestMs": 23.495833323399225,
+        "averageRenderMs": 10.736963750000003,
+        "averageCommandMs": 12.809641666666666,
+        "averageUploadMs": 1.4895833373069762,
+        "averageWorldSyncMs": 1.4270962499999995,
+        "averageSimulationMs": 10.475072083333323,
+        "averageSimulationRequestMs": 22.621666673819224
+      },
+      "gameFullIntervalFps": 27.359887754306648,
+      "gameFixedTenSecondFps": 28.9,
+      "gameMaxNativeDrawGapMs": 588.2999999523163,
+      "gameRenderSize": [
+        1275,
+        717
+      ],
+      "gameStages": [
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Reconcile",
+          "selfMs": 0.0018,
+          "totalMs": 0.0018
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Input",
+          "selfMs": 0.0337,
+          "totalMs": 0.0337
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Physics and collision callbacks",
+          "selfMs": 0.0028,
+          "totalMs": 0.0028
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Animation, timeline and audio",
+          "selfMs": 0.0309,
+          "totalMs": 0.0309
+        },
+        {
+          "calls": 1,
+          "children": [
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script world publication",
+              "selfMs": 0.6005,
+              "totalMs": 0.6005
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "QuickJS callback",
+              "selfMs": 3.6841,
+              "totalMs": 3.6841
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script command commit",
+              "selfMs": 0.022600000000000002,
+              "totalMs": 0.022600000000000002
+            }
+          ],
+          "name": "Script and runtime requests",
+          "selfMs": 0.001200000000000756,
+          "totalMs": 4.308400000000001
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot export",
+          "selfMs": 0.3927,
+          "totalMs": 0.3927
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot delta",
+          "selfMs": 0.1608,
+          "totalMs": 0.1608
+        }
+      ],
+      "sceneStages": [
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Reconcile",
+          "selfMs": 0.0027,
+          "totalMs": 0.0027
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Input",
+          "selfMs": 0.0322,
+          "totalMs": 0.0322
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Physics and collision callbacks",
+          "selfMs": 0.0039,
+          "totalMs": 0.0039
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Animation, timeline and audio",
+          "selfMs": 0.0339,
+          "totalMs": 0.0339
+        },
+        {
+          "calls": 1,
+          "children": [
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script world publication",
+              "selfMs": 0.6005,
+              "totalMs": 0.6005
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "QuickJS callback",
+              "selfMs": 15.563,
+              "totalMs": 15.563
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script command commit",
+              "selfMs": 0.4094,
+              "totalMs": 0.4094
+            }
+          ],
+          "name": "Script and runtime requests",
+          "selfMs": 0.0015000000000000568,
+          "totalMs": 16.5744
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot export",
+          "selfMs": 0.902,
+          "totalMs": 0.902
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot delta",
+          "selfMs": 0.5701,
+          "totalMs": 0.5701
+        }
+      ],
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 614,
+        "renderedRevision": 614,
+        "changedPixels": 682,
+        "expandedMaskDifferentPixels": 61,
+        "snapshotDifferentPixels": 67,
+        "restoredDifferentPixels": 67,
+        "repeatedDifferentPixels": 75,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.7132000000000005
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 647,
+          "time": 36.54730005154852
+        },
+        "pausedAfter": {
+          "frame": 647,
+          "time": 36.54730005154852
+        },
+        "stepped": {
+          "frame": 648,
+          "time": 36.56730005110148
+        },
+        "resumed": {
+          "frame": 657,
+          "time": 36.86630005119089
+        },
+        "restarted": {
+          "frame": 657,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 658,
+          "time": 0.02500000037252903
+        }
+      }
+    },
+    {
+      "label": "shared-snapshot-candidate",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-shared-snapshot-candidate-1791774158728\\report.json",
+      "ownerPid": 61196,
+      "ownerExited": true,
+      "passed": true,
+      "emptyPaints": {
+        "edit": 0,
+        "play": 0
+      },
+      "scenePaintMs": 6.8902018546138235,
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 27.582083333532015,
+        "p95PresentIntervalMs": 41.69999980926514,
+        "presentedFps": 36.25541942962237,
+        "averageRequestMs": 23.42666666607062,
+        "averageRenderMs": 8.47876125,
+        "averageCommandMs": 11.148163333333343,
+        "averageUploadMs": 1.725833347439766,
+        "averageWorldSyncMs": 2.1537575,
+        "averageSimulationMs": 10.741040833333335,
+        "averageSimulationRequestMs": 27.84249999920527
+      },
+      "sceneSimulationHz": 26.391580188606124,
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 26.575,
+        "p95PresentIntervalMs": 47.19999980926514,
+        "presentedFps": 37.62935089369709,
+        "averageRequestMs": 19.87041666706403,
+        "averageRenderMs": 10.499161250000002,
+        "averageCommandMs": 12.307127083333334,
+        "averageUploadMs": 1.6070833265781403,
+        "averageWorldSyncMs": 1.324394583333334,
+        "averageSimulationMs": 9.5369275,
+        "averageSimulationRequestMs": 17.685833332935967
+      },
+      "gameFullIntervalFps": 35.928329178095055,
+      "gameFixedTenSecondFps": 38.7,
+      "gameMaxNativeDrawGapMs": 97.20000004768372,
+      "gameRenderSize": [
+        1275,
+        717
+      ],
+      "gameStages": [
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Reconcile",
+          "selfMs": 0.0014,
+          "totalMs": 0.0014
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Input",
+          "selfMs": 0.036000000000000004,
+          "totalMs": 0.036000000000000004
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Physics and collision callbacks",
+          "selfMs": 0.0037,
+          "totalMs": 0.0037
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Animation, timeline and audio",
+          "selfMs": 0.0327,
+          "totalMs": 0.0327
+        },
+        {
+          "calls": 1,
+          "children": [
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script world publication",
+              "selfMs": 0.4007,
+              "totalMs": 0.4007
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "QuickJS callback",
+              "selfMs": 4.007000000000001,
+              "totalMs": 4.007000000000001
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script command commit",
+              "selfMs": 0.0285,
+              "totalMs": 0.0285
+            }
+          ],
+          "name": "Script and runtime requests",
+          "selfMs": 0.0013999999999994017,
+          "totalMs": 4.4376
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot export",
+          "selfMs": 0.4497,
+          "totalMs": 0.4497
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot delta",
+          "selfMs": 0.1724,
+          "totalMs": 0.1724
+        }
+      ],
+      "sceneStages": [
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Reconcile",
+          "selfMs": 0.0015,
+          "totalMs": 0.0015
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Input",
+          "selfMs": 0.034,
+          "totalMs": 0.034
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Physics and collision callbacks",
+          "selfMs": 0.0033,
+          "totalMs": 0.0033
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Animation, timeline and audio",
+          "selfMs": 0.0306,
+          "totalMs": 0.0306
+        },
+        {
+          "calls": 1,
+          "children": [
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script world publication",
+              "selfMs": 0.4312,
+              "totalMs": 0.4312
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "QuickJS callback",
+              "selfMs": 6.75,
+              "totalMs": 6.75
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script command commit",
+              "selfMs": 0.031,
+              "totalMs": 0.031
+            }
+          ],
+          "name": "Script and runtime requests",
+          "selfMs": 0.0015000000000000568,
+          "totalMs": 7.2137
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot export",
+          "selfMs": 0.45489999999999997,
+          "totalMs": 0.45489999999999997
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot delta",
+          "selfMs": 0.2375,
+          "totalMs": 0.2375
+        }
+      ],
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 917,
+        "renderedRevision": 917,
+        "changedPixels": 653,
+        "expandedMaskDifferentPixels": 42,
+        "snapshotDifferentPixels": 54,
+        "restoredDifferentPixels": 62,
+        "repeatedDifferentPixels": 60,
+        "totalPixels": 76800,
+        "filteredSyncMs": 6.186100000000001
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 967,
+          "time": 36.189799986430444
+        },
+        "pausedAfter": {
+          "frame": 967,
+          "time": 36.189799986430444
+        },
+        "stepped": {
+          "frame": 968,
+          "time": 36.20979998598341
+        },
+        "resumed": {
+          "frame": 980,
+          "time": 36.49479998821858
+        },
+        "restarted": {
+          "frame": 980,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 981,
+          "time": 0.02500000037252903
+        }
+      }
+    },
+    {
+      "label": "shared-snapshot-baseline-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-shared-snapshot-baseline-repeat-1791774276752\\report.json",
+      "ownerPid": 71984,
+      "ownerExited": true,
+      "passed": true,
+      "emptyPaints": {
+        "edit": 0,
+        "play": 0
+      },
+      "scenePaintMs": 7.022863922107327,
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 27.302500000596048,
+        "p95PresentIntervalMs": 46.09999990463257,
+        "presentedFps": 36.626682537429495,
+        "averageRequestMs": 23.434999997417133,
+        "averageRenderMs": 8.226301249999999,
+        "averageCommandMs": 11.027919583333345,
+        "averageUploadMs": 1.7170833369096121,
+        "averageWorldSyncMs": 2.148216249999998,
+        "averageSimulationMs": 10.70378625,
+        "averageSimulationRequestMs": 26.76291666726271
+      },
+      "sceneSimulationHz": 25.277647490963435,
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 27.3125,
+        "p95PresentIntervalMs": 45.39999985694885,
+        "presentedFps": 36.61327231121282,
+        "averageRequestMs": 20.473750007152557,
+        "averageRenderMs": 10.629252083333341,
+        "averageCommandMs": 12.549286249999998,
+        "averageUploadMs": 1.652500002582868,
+        "averageWorldSyncMs": 1.356882083333333,
+        "averageSimulationMs": 9.897599583333333,
+        "averageSimulationRequestMs": 18.745416658123336
+      },
+      "gameFullIntervalFps": 35.943091422251676,
+      "gameFixedTenSecondFps": 37.7,
+      "gameMaxNativeDrawGapMs": 152.40000009536743,
+      "gameRenderSize": [
+        1275,
+        717
+      ],
+      "gameStages": [
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Reconcile",
+          "selfMs": 0.0024,
+          "totalMs": 0.0024
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Input",
+          "selfMs": 0.031,
+          "totalMs": 0.031
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Physics and collision callbacks",
+          "selfMs": 0.003,
+          "totalMs": 0.003
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Animation, timeline and audio",
+          "selfMs": 0.0315,
+          "totalMs": 0.0315
+        },
+        {
+          "calls": 1,
+          "children": [
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script world publication",
+              "selfMs": 0.5557,
+              "totalMs": 0.5557
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "QuickJS callback",
+              "selfMs": 3.5414000000000003,
+              "totalMs": 3.5414000000000003
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script command commit",
+              "selfMs": 0.0085,
+              "totalMs": 0.0085
+            }
+          ],
+          "name": "Script and runtime requests",
+          "selfMs": 0.00140000000000029,
+          "totalMs": 4.107
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot export",
+          "selfMs": 0.38020000000000004,
+          "totalMs": 0.38020000000000004
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot delta",
+          "selfMs": 0.13119999999999998,
+          "totalMs": 0.13119999999999998
+        }
+      ],
+      "sceneStages": [
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Reconcile",
+          "selfMs": 0.0014,
+          "totalMs": 0.0014
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Input",
+          "selfMs": 0.0339,
+          "totalMs": 0.0339
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Physics and collision callbacks",
+          "selfMs": 0.0034000000000000002,
+          "totalMs": 0.0034000000000000002
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Animation, timeline and audio",
+          "selfMs": 0.037,
+          "totalMs": 0.037
+        },
+        {
+          "calls": 1,
+          "children": [
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script world publication",
+              "selfMs": 0.9169,
+              "totalMs": 0.9169
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "QuickJS callback",
+              "selfMs": 16.877799999999997,
+              "totalMs": 16.877799999999997
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script command commit",
+              "selfMs": 0.43370000000000003,
+              "totalMs": 0.43370000000000003
+            }
+          ],
+          "name": "Script and runtime requests",
+          "selfMs": 0.0015999999999998238,
+          "totalMs": 18.23
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot export",
+          "selfMs": 1.2507,
+          "totalMs": 1.2507
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot delta",
+          "selfMs": 0.657,
+          "totalMs": 0.657
+        }
+      ],
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 898,
+        "renderedRevision": 898,
+        "changedPixels": 655,
+        "expandedMaskDifferentPixels": 37,
+        "snapshotDifferentPixels": 55,
+        "restoredDifferentPixels": 64,
+        "repeatedDifferentPixels": 69,
+        "totalPixels": 76800,
+        "filteredSyncMs": 5.073799999999999
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 952,
+          "time": 36.317600050591864
+        },
+        "pausedAfter": {
+          "frame": 952,
+          "time": 36.317600050591864
+        },
+        "stepped": {
+          "frame": 953,
+          "time": 36.33760005014483
+        },
+        "resumed": {
+          "frame": 965,
+          "time": 36.62710005017463
+        },
+        "restarted": {
+          "frame": 965,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 966,
+          "time": 0.02500000037252903
+        }
+      }
+    },
+    {
+      "label": "shared-snapshot-candidate-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-shared-snapshot-candidate-repeat-1791774393945\\report.json",
+      "ownerPid": 177364,
+      "ownerExited": true,
+      "passed": true,
+      "emptyPaints": {
+        "edit": 0,
+        "play": 0
+      },
+      "scenePaintMs": 6.848874118617041,
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 27.75291666686535,
+        "p95PresentIntervalMs": 42.39999985694885,
+        "presentedFps": 36.03224886247419,
+        "averageRequestMs": 23.210833335916202,
+        "averageRenderMs": 8.174867499999994,
+        "averageCommandMs": 10.918485416666664,
+        "averageUploadMs": 1.7087499926487604,
+        "averageWorldSyncMs": 2.159212916666667,
+        "averageSimulationMs": 10.696189999999996,
+        "averageSimulationRequestMs": 28.34833333293597
+      },
+      "sceneSimulationHz": 26.305058472670726,
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 25.725,
+        "p95PresentIntervalMs": 44.60000014305115,
+        "presentedFps": 38.87269193391642,
+        "averageRequestMs": 19.642083325982092,
+        "averageRenderMs": 10.293354999999993,
+        "averageCommandMs": 12.115045,
+        "averageUploadMs": 1.579999993244807,
+        "averageWorldSyncMs": 1.3066420833333328,
+        "averageSimulationMs": 9.305148333333332,
+        "averageSimulationRequestMs": 17.10333333313465
+      },
+      "gameFullIntervalFps": 35.6840729062524,
+      "gameFixedTenSecondFps": 38.5,
+      "gameMaxNativeDrawGapMs": 101.09999990463257,
+      "gameRenderSize": [
+        1275,
+        717
+      ],
+      "gameStages": [
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Reconcile",
+          "selfMs": 0.0014,
+          "totalMs": 0.0014
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Input",
+          "selfMs": 0.0322,
+          "totalMs": 0.0322
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Physics and collision callbacks",
+          "selfMs": 0.003,
+          "totalMs": 0.003
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Animation, timeline and audio",
+          "selfMs": 0.0313,
+          "totalMs": 0.0313
+        },
+        {
+          "calls": 1,
+          "children": [
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script world publication",
+              "selfMs": 0.5102,
+              "totalMs": 0.5102
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "QuickJS callback",
+              "selfMs": 3.5463999999999998,
+              "totalMs": 3.5463999999999998
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script command commit",
+              "selfMs": 0.009099999999999999,
+              "totalMs": 0.009099999999999999
+            }
+          ],
+          "name": "Script and runtime requests",
+          "selfMs": 0.001000000000000334,
+          "totalMs": 4.0667
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot export",
+          "selfMs": 0.3275,
+          "totalMs": 0.3275
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot delta",
+          "selfMs": 0.13660000000000003,
+          "totalMs": 0.13660000000000003
+        }
+      ],
+      "sceneStages": [
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Reconcile",
+          "selfMs": 0.0015999999999999999,
+          "totalMs": 0.0015999999999999999
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Input",
+          "selfMs": 0.0322,
+          "totalMs": 0.0322
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Physics and collision callbacks",
+          "selfMs": 0.0031,
+          "totalMs": 0.0031
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Animation, timeline and audio",
+          "selfMs": 0.0322,
+          "totalMs": 0.0322
+        },
+        {
+          "calls": 1,
+          "children": [
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script world publication",
+              "selfMs": 0.4148,
+              "totalMs": 0.4148
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "QuickJS callback",
+              "selfMs": 3.7645999999999997,
+              "totalMs": 3.7645999999999997
+            },
+            {
+              "calls": 1,
+              "children": [],
+              "name": "Script command commit",
+              "selfMs": 0.0291,
+              "totalMs": 0.0291
+            }
+          ],
+          "name": "Script and runtime requests",
+          "selfMs": 0.0012000000000016442,
+          "totalMs": 4.209700000000001
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot export",
+          "selfMs": 0.4251,
+          "totalMs": 0.4251
+        },
+        {
+          "calls": 1,
+          "children": [],
+          "name": "Snapshot delta",
+          "selfMs": 0.1597,
+          "totalMs": 0.1597
+        }
+      ],
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 910,
+        "renderedRevision": 910,
+        "changedPixels": 652,
+        "expandedMaskDifferentPixels": 48,
+        "snapshotDifferentPixels": 59,
+        "restoredDifferentPixels": 59,
+        "repeatedDifferentPixels": 69,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.5374
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 959,
+          "time": 36.14370005542878
+        },
+        "pausedAfter": {
+          "frame": 959,
+          "time": 36.14370005542878
+        },
+        "stepped": {
+          "frame": 960,
+          "time": 36.163700054981746
+        },
+        "resumed": {
+          "frame": 972,
+          "time": 36.45850005500857
+        },
+        "restarted": {
+          "frame": 972,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 973,
+          "time": 0.02500000037252903
+        }
+      }
+    }
+  ],
+  "order": [
+    "shared-snapshot-baseline",
+    "shared-snapshot-candidate",
+    "shared-snapshot-baseline-repeat",
+    "shared-snapshot-candidate-repeat"
+  ],
+  "measurementLimit": "Two sequential pairs, no simultaneous build or CPU tests. First baseline stalled; all runs retained. Native stage savings do not prove a stable whole-editor FPS gain or 60 FPS.",
+  "baselineExeSha256": "e809ae34aa5828ea09fbda69a71022d3325c96fef298ffa36fd69da5ebbeb7ea",
+  "fixedClientSha256": "d25e9578429842c7a127a2542672ee1c32d71c6093c3eb0f27e88b4f7d85b38f",
+  "originalQaSourceRestored": true,
+  "originalQaSourceSha256": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+  "rejectedReadbackExperiment": {
+    "decision": "not retained: no stable timing improvement",
+    "testsPassed": 2,
+    "testsFailed": 0,
+    "size": [
+      960,
+      540
+    ],
+    "framesPerBlock": 100,
+    "rounds": [
+      {
+        "fresh": 0.8538,
+        "reuse": 0.8956
+      },
+      {
+        "fresh": 0.8728,
+        "reuse": 0.8617
+      },
+      {
+        "fresh": 0.7834,
+        "reuse": 0.7875
+      },
+      {
+        "fresh": 0.7896,
+        "reuse": 0.7804
+      }
+    ],
+    "fullReleaseBuilt": false
+  }
+}
