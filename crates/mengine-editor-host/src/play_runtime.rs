@@ -1,4 +1,4 @@
-use mengine_core::{snapshot::{EntitySnapshot, SharedWorldSnapshot, WorldSnapshot, WorldSnapshotCache}, World};
+use mengine_core::{snapshot::{EntitySnapshot, SharedWorldSnapshot, WorldSnapshot}, World};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
 use mengine_runtime::{animation::AnimationRuntime, audio::AudioRuntime, scenes::{LoadedScene, SceneManager, SceneSelector}, script_requests::ScriptRequestContext, timeline::TimelineRuntime};
 use mengine_script::{ScriptHost, ScriptAnimationEvent, ScriptTimelineSignal};
@@ -107,7 +107,7 @@ impl Default for EditorPlayRuntime {
                         *published.lock() = None;
                         let result = PlaySession::new(&source, snapshot, project).and_then(|mut value| {
                             if current.load(Ordering::SeqCst) != generation { return Err("Play initialization was superseded".into()); }
-                            let checkpoint = value.snapshot_cache.capture(&value.world);
+                            let checkpoint = value.script.capture_world_snapshot(&value.world);
                             let mut history = PlayRenderHistory::default();
                             history.record(0, checkpoint, 0.0, Vec::new());
                             if current.load(Ordering::SeqCst) != generation { return Err("Play initialization was superseded".into()); }
@@ -147,7 +147,7 @@ impl Default for EditorPlayRuntime {
                         let result = session.as_mut().filter(|(id, _)| *id == generation && current.load(Ordering::SeqCst) == generation)
                             .ok_or_else(|| "Play session expired".to_string()).and_then(|(_, session)| match revision {
                                 Some(revision) => published.lock().as_ref().filter(|(id, _)| *id == generation).ok_or_else(|| "Play session expired".to_string()).and_then(|(_, history)| history.snapshot(revision)),
-                                None => Ok((session.snapshot_cache.capture(&session.world), session.step_ms, session.step_stages.clone())),
+                                None => Ok((session.script.capture_world_snapshot(&session.world), session.step_ms, session.step_stages.clone())),
                             });
                         let _ = reply.send(result);
                     }
@@ -262,7 +262,6 @@ struct PlaySession {
     step_ms: f64,
     step_stages: Vec<EditorViewportProfileNode>,
     snapshot_stream: PlaySnapshotStream,
-    snapshot_cache: WorldSnapshotCache,
 }
 
 impl PlaySession {
@@ -277,7 +276,7 @@ impl PlaySession {
         script.sync_world(&world).map_err(|error| error.to_string())?;
         script.eval(source).map_err(|error| error.to_string())?;
         script.notify_scene_loaded(&initial_scene.name, &initial_scene.path.to_string_lossy().replace('\\', "/"), initial_scene.build_index, initial_scene.build_scene_count).map_err(|error| error.to_string())?;
-        Ok(Self { quit_requested: false, world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new(), snapshot_stream: PlaySnapshotStream::default(), snapshot_cache: WorldSnapshotCache::default() })
+        Ok(Self { quit_requested: false, world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new(), snapshot_stream: PlaySnapshotStream::default() })
     }
 
     fn step(&mut self, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<SharedWorldSnapshot, String> {
@@ -350,7 +349,7 @@ impl PlaySession {
             }
         }
         stage("Script and runtime requests");
-        let snapshot = self.snapshot_cache.capture(world);
+        let snapshot = self.script.capture_world_snapshot(world);
         stage("Snapshot export");
         if let Some(node) = stages.iter_mut().find(|node| node.name == "Script and runtime requests") {
             node.children = [("Script world publication", script_profile.sync_ms), ("QuickJS callback", script_profile.callback_ms), ("Script command commit", script_profile.commit_ms)].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect();
@@ -364,6 +363,7 @@ impl PlaySession {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mengine_core::snapshot::WorldSnapshotCache;
 
     #[test]
     fn retained_revisions_render_while_the_script_worker_is_blocked_and_a_step_is_pending() {

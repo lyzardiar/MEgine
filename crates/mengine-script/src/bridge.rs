@@ -278,6 +278,9 @@ impl ScriptHost {
         Ok(ScriptTickProfile { sync_ms, callback_ms, commit_ms: commit_started.elapsed().as_secs_f64() * 1000.0 })
     }
 
+    /// Capture immutable render payloads using the script publication cache without publishing to JavaScript.
+    pub fn capture_world_snapshot(&mut self, world: &World) -> SharedWorldSnapshot { self.snapshot_cache.capture(world) }
+
     pub fn sync_world(&mut self, world: &World) -> Result<(), ScriptError> {
         let mut state = self.snapshot.borrow_mut();
         state.revision += 1;
@@ -705,6 +708,34 @@ mod tests {
         host.eval("onTick = undefined;").unwrap();
         host.tick(&mut world, 0.125).unwrap();
         assert_eq!(world.time.clear_color.x, 3.0);
+    }
+
+    #[test]
+    fn render_capture_shares_unchanged_entities_without_republishing_script_snapshot() {
+        use mengine_core::generated::Transform;
+        let mut host = ScriptHost::new().unwrap();
+        let mut world = World::new();
+        let changed = world.spawn_empty(); world.insert_component(changed, Transform::default());
+        let stable = world.spawn_empty(); world.insert_component(stable, Transform::default());
+        host.sync_world(&world).unwrap();
+        let before = host.snapshot.borrow().world.as_ref().unwrap().clone();
+        host.eval("const beforeRender = engine.snapshot; beforeRender.frame = 99;").unwrap();
+        world.get_component_mut::<Transform>(changed).unwrap().position[0] = 7.0; world.time.frame = 2;
+        let rendered = host.capture_world_snapshot(&world);
+        let entity = |snapshot: &SharedWorldSnapshot, id| snapshot.entities.iter().find(|entity| entity.entity == id).unwrap().clone();
+        assert!(std::sync::Arc::ptr_eq(&entity(&before, stable.to_u64()), &entity(&rendered, stable.to_u64())));
+        assert!(!std::sync::Arc::ptr_eq(&entity(&before, changed.to_u64()), &entity(&rendered, changed.to_u64())));
+        assert_eq!(entity(&before, changed.to_u64()).components["Transform"]["position"][0], 0.0);
+        assert_eq!(entity(&rendered, changed.to_u64()).components["Transform"]["position"][0], 7.0);
+        host.eval("if (engine.snapshot !== beforeRender || engine.snapshot.frame !== 99) throw Error('render republished script state');").unwrap();
+        assert_eq!(host.snapshot.borrow().world.as_ref().unwrap().frame, 0);
+        host.sync_world(&world).unwrap();
+        let after = host.snapshot.borrow().world.as_ref().unwrap().clone();
+        assert!(std::sync::Arc::ptr_eq(&entity(&rendered, changed.to_u64()), &entity(&after, changed.to_u64())));
+        host.eval("if (engine.snapshot === beforeRender || engine.snapshot.frame !== 2 || beforeRender.frame !== 99) throw Error('script frame isolation');").unwrap();
+        world.despawn(stable);
+        assert_eq!(host.capture_world_snapshot(&world).entities.len(), 1);
+        assert_eq!(rendered.entities.len(), 2);
     }
 
     #[test]
