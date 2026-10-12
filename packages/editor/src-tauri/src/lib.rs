@@ -4311,17 +4311,26 @@ async fn native_viewport_response(frame: EditorViewportFrame, raw: bool, label: 
         let label = label.to_owned();
         return tauri::async_runtime::spawn_blocking(move || serde_json::to_string(&encode_native_viewport_frame(frame, &label)?).map(tauri::ipc::Response::new).map_err(|error| error.to_string())).await.map_err(|error| error.to_string())?;
     }
+    let preparation_at = Instant::now();
     let mut metadata = serde_json::json!({"hasAuthoredCamera":frame.has_authored_camera,"profile":frame.profile});
+    let metadata_value_ms = preparation_at.elapsed().as_secs_f64() * 1000.0;
     metadata["profile"]["commandMs"] = serde_json::json!(started.elapsed().as_secs_f64() * 1000.0);
+    let encode_at = Instant::now();
     let metadata = serde_json::to_vec(&metadata).map_err(|error| error.to_string())?;
+    let metadata_encode_ms = encode_at.elapsed().as_secs_f64() * 1000.0;
+    let payload_at = Instant::now();
     let bytes = Arc::new(native_viewport_transport::FramePayload::new(frame.width, frame.height, metadata, frame.rgba)?);
+    let preparation = native_viewport_transport::PreparationTimings { metadata_value_ms, metadata_encode_ms, payload_ms: payload_at.elapsed().as_secs_f64() * 1000.0 };
     if let Some(request) = shared_request.filter(|request| request.len() <= 128) {
-        if native_viewport_transport::share_frame(&window, Arc::clone(&bytes), request).await.is_ok() {
+        if native_viewport_transport::share_frame(&window, Arc::clone(&bytes), request, preparation, started).await.is_ok() {
             return Ok(tauri::ipc::Response::new(Vec::<u8>::new()));
         }
     }
     Ok(tauri::ipc::Response::new(bytes.encode()))
 }
+
+#[tauri::command]
+fn take_native_viewport_transport_traces() -> Vec<native_viewport_transport::TransportTrace> { native_viewport_transport::take_traces() }
 
 #[tauri::command]
 async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state: State<'_, AppState>) -> Result<serde_json::Value, String> {
@@ -6401,6 +6410,7 @@ pub fn run() {
             stop_editor_play,
             render_native_game_view,
             render_native_scene_view,
+            take_native_viewport_transport_traces,
             render_effekseer_preview,
             render_material_preview,
             list_project_scenes,
