@@ -40,11 +40,17 @@ function finite(value: unknown, fallback: number): number {
 
 function vector(value: unknown, length: 2 | 3, fallback: number[]): number[] {
   if (!Array.isArray(value)) return fallback.slice(0, length);
-  return Array.from({ length }, (_, index) => finite(value[index], fallback[index] ?? 0));
+  const x = finite(value[0], fallback[0] ?? 0), y = finite(value[1], fallback[1] ?? 0);
+  return length === 2 ? [x, y] : [x, y, finite(value[2], fallback[2] ?? 0)];
 }
 
 function color(value: unknown, fallback: Color): Color {
-  return vector(value, 3, fallback).concat(finite((value as unknown[])?.[3], fallback[3])) as Color;
+  return [
+    Array.isArray(value) ? finite(value[0], fallback[0]) : fallback[0],
+    Array.isArray(value) ? finite(value[1], fallback[1]) : fallback[1],
+    Array.isArray(value) ? finite(value[2], fallback[2]) : fallback[2],
+    finite((value as unknown[])?.[3], fallback[3]),
+  ];
 }
 
 function normalize3(value: number[]): Vec3 {
@@ -226,22 +232,26 @@ function stepSubframe(
   dt: number,
   emitterPosition: Vec3,
 ): void {
-  const gravity = vector(component.gravity, dimension, dimension === 2 ? [0, -0.8] : [0, -0.6, 0]);
-  const drag = dimension === 2 ? Math.max(0, finite(component.drag, 0)) : 0;
-  const damping = Math.exp(-drag * dt);
-  for (const particle of state.particles) {
-    particle.age += dt;
-    particle.velocity[0] += gravity[0] * dt;
-    particle.velocity[1] += gravity[1] * dt;
-    particle.velocity[2] += (gravity[2] ?? 0) * dt;
-    particle.velocity[0] *= damping;
-    particle.velocity[1] *= damping;
-    particle.velocity[2] *= damping;
-    particle.position[0] += particle.velocity[0] * dt;
-    particle.position[1] += particle.velocity[1] * dt;
-    particle.position[2] += particle.velocity[2] * dt;
+  if (state.particles.length > 0) {
+    const gravity = vector(component.gravity, dimension, dimension === 2 ? [0, -0.8] : [0, -0.6, 0]);
+    const drag = dimension === 2 ? Math.max(0, finite(component.drag, 0)) : 0;
+    const damping = Math.exp(-drag * dt);
+    let liveCount = 0;
+    for (const particle of state.particles) {
+      particle.age += dt;
+      particle.velocity[0] += gravity[0] * dt;
+      particle.velocity[1] += gravity[1] * dt;
+      particle.velocity[2] += (gravity[2] ?? 0) * dt;
+      particle.velocity[0] *= damping;
+      particle.velocity[1] *= damping;
+      particle.velocity[2] *= damping;
+      particle.position[0] += particle.velocity[0] * dt;
+      particle.position[1] += particle.velocity[1] * dt;
+      particle.position[2] += particle.velocity[2] * dt;
+      if (particle.age < particle.lifetime) state.particles[liveCount++] = particle;
+    }
+    state.particles.length = liveCount;
   }
-  state.particles = state.particles.filter((particle) => particle.age < particle.lifetime);
   state.elapsed += dt;
 
   const delay = Math.max(0, finite(component.start_delay, 0));

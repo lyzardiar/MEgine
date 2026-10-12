@@ -1,0 +1,199 @@
+{
+  "author": "MiYu",
+  "baselineEngine": "d10ce2a4f07c57b0f0f6190afd98d0f6666d3df2",
+  "scope": "Reduce per-substep particle allocations using stable in-place expiration, skip physics work for empty emitters, normalize vectors without callback arrays, and build each color in a single array. Preserve seeded simulation, emitter edits, particle order and draw output.",
+  "sourceSha256": {
+    "packages/editor/src/particles/particleSystem.ts": "431dff06963870606ee13a16bdbb6719625cae5f968318b9bb303f179c3103c4",
+    "packages/editor/tests/particleSystem.test.mjs": "77a092acae2b4ba85debbef268804d8ede8245f073254943d54e3195bf5f29ab"
+  },
+  "candidateExecutable": "D:\\MEngineNativeQA\\release-editor-particle-allocation.exe",
+  "candidateExecutableSha256": "aaeacff4f1d15d5bae26324a5fc26f2242da2b2d17fe2f98f955518b88e6e902",
+  "tests": {
+    "passed": 51,
+    "failed": 0,
+    "skipped": 0,
+    "log": "D:\\MEngineNativeQA\\particle-allocation-regression.log"
+  },
+  "frontendBuild": "D:\\MEngineNativeQA\\particle-allocation-frontend-build.log",
+  "releaseBuild": "D:\\MEngineNativeQA\\particle-allocation-release-build.log",
+  "releaseBuildSeconds": 580.814,
+  "deterministicAndMicrobenchmark": {
+    "author": "MiYu",
+    "comparisons": 3650,
+    "configurations": 10,
+    "deterministicStateAndDrawEquivalent": true,
+    "benchmarks": [
+      {
+        "scenario": "3000 empty emitters",
+        "frames": 120,
+        "baselineMs": [
+          32.45450000000005,
+          32.15069999999997,
+          32.06049999999999,
+          32.054700000000025,
+          32.090599999999995,
+          31.463300000000004,
+          32.08999999999992,
+          31.986999999999966,
+          32.058599999999956
+        ],
+        "candidateMs": [
+          30.434300000000007,
+          26.838700000000017,
+          23.407299999999964,
+          23.146099999999933,
+          24.67700000000002,
+          24.0086,
+          23.898799999999937,
+          24.280500000000075,
+          23.882999999999925
+        ],
+        "baselineMedianMs": 32.06049999999999,
+        "candidateMedianMs": 24.0086,
+        "reductionPercent": 25.114705010838854
+      },
+      {
+        "scenario": "96 active 2D/3D emitters",
+        "frames": 120,
+        "baselineMs": [
+          83.4357,
+          77.06700000000001,
+          81.81330000000003,
+          81.7050999999999,
+          78.92010000000005,
+          83.09050000000002,
+          81.83140000000003,
+          82.58690000000001,
+          86.58249999999998
+        ],
+        "candidateMs": [
+          52.51649999999995,
+          40.97590000000014,
+          40.893800000000056,
+          44.437200000000075,
+          41.61959999999999,
+          41.62250000000017,
+          40.706699999999955,
+          41.13720000000012,
+          42.77070000000003
+        ],
+        "baselineMedianMs": 81.83140000000003,
+        "candidateMedianMs": 41.61959999999999,
+        "reductionPercent": 49.139816745161426
+      }
+    ],
+    "scope": "Node microbenchmark; actual Release FPS requires separate validation."
+  },
+  "runs": [
+    {
+      "label": "particle-allocation-baseline",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-particle-allocation-baseline-1791805106691\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 121040,
+      "movingEditFps": 58.783188008916184,
+      "movingPlayFps": 33.17024628973451,
+      "gameFps": 42.7487442552744,
+      "gameSimulationHz": 40.91436752950655,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "playSceneCapture": {
+        "passed": true,
+        "width": 640,
+        "height": 382,
+        "elapsedMs": 332.4181000000099,
+        "bytes": 485980,
+        "simulationFrames": 8
+      },
+      "playSceneCpu": {
+        "profile": "D:\\MEngineNativeQA\\release-scene-profile-particle-allocation-baseline-1791805106691\\moving-play-scene.cpuprofile",
+        "sampledMs": 12634.17,
+        "gcSelfMs": 441.078
+      }
+    },
+    {
+      "label": "particle-allocation-candidate",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-particle-allocation-candidate-1791805619314\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 104472,
+      "movingEditFps": 59.03768572202718,
+      "movingPlayFps": 32.232070910556004,
+      "gameFps": 42.22007212595655,
+      "gameSimulationHz": 38.88938946045119,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "playSceneCapture": {
+        "passed": true,
+        "width": 640,
+        "height": 382,
+        "elapsedMs": 338.2920000000013,
+        "bytes": 493408,
+        "simulationFrames": 6
+      },
+      "playSceneCpu": {
+        "profile": "D:\\MEngineNativeQA\\release-scene-profile-particle-allocation-candidate-1791805619314\\moving-play-scene.cpuprofile",
+        "sampledMs": 12715.897,
+        "gcSelfMs": 409.262
+      }
+    },
+    {
+      "label": "particle-allocation-candidate-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-particle-allocation-candidate-repeat-1791805742936\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 103248,
+      "movingEditFps": 58.31045457723441,
+      "movingPlayFps": 32.33891179520251,
+      "gameFps": 39.98134204069875,
+      "gameSimulationHz": 40.25373301658867,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "playSceneCapture": {
+        "passed": true,
+        "width": 640,
+        "height": 382,
+        "elapsedMs": 334.8993999999948,
+        "bytes": 497722,
+        "simulationFrames": 8
+      },
+      "playSceneCpu": {
+        "profile": "D:\\MEngineNativeQA\\release-scene-profile-particle-allocation-candidate-repeat-1791805742936\\moving-play-scene.cpuprofile",
+        "sampledMs": 12837.278,
+        "gcSelfMs": 445.501
+      }
+    },
+    {
+      "label": "particle-allocation-baseline-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-particle-allocation-baseline-repeat-1791805972701\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "ownerPid": 66692,
+      "movingEditFps": 58.79326816873412,
+      "movingPlayFps": 30.793707819224043,
+      "gameFps": 41.64497657470068,
+      "gameSimulationHz": 38.909779666390875,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "playSceneCapture": {
+        "passed": true,
+        "width": 640,
+        "height": 382,
+        "elapsedMs": 338.19710000000487,
+        "bytes": 500511,
+        "simulationFrames": 8
+      },
+      "playSceneCpu": {
+        "profile": "D:\\MEngineNativeQA\\release-scene-profile-particle-allocation-baseline-repeat-1791805972701\\moving-play-scene.cpuprofile",
+        "sampledMs": 12662.015,
+        "gcSelfMs": 399.922
+      }
+    }
+  ],
+  "cleanup": {
+    "sampleMainRestoredSha256": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+    "allOwnedEditorsExited": true
+  },
+  "conclusion": "Microbenchmark medians measure particle simulation and draw collection only. Local Release FPS and CPU samples describe the complete Frostbound scene; they do not establish stable FPS gains, stable 60 FPS or cross-machine acceptance.",
+  "fullWarcraftGoal": "active"
+}
