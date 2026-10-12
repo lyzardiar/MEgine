@@ -336,7 +336,8 @@ export function Project(props: {
       hasChildren: folders.some((candidate) => candidate.startsWith(`${path}/`)),
     })), [expandedFolders, folders]);
 
-  const sceneAssets: AssetItem[] = scenes.map((s) => {
+  // Author: MiYu. Refresh asset cards with their libraries while simulation redraws reuse the current list.
+  const sceneAssets = useMemo<AssetItem[]>(() => scenes.map((s) => {
     const name = sceneFileName(s.name);
     const metadata = projectFilesByPath.get(`assets/scenes/${name}`.toLocaleLowerCase());
     return {
@@ -351,8 +352,9 @@ export function Project(props: {
       metaStatus: metadata?.metaStatus,
       metaError: metadata?.metaError,
     };
-  });
+  }), [scenes, projectFilesByPath]);
 
+  const allAssets = useMemo<AssetItem[]>(() => {
   const scriptAssets: AssetItem[] = scripts.map((s) => {
     const metadata = s.id.startsWith('project/')
       ? projectFilesByPath.get(`${s.folder}/${s.name}`.toLocaleLowerCase())
@@ -474,23 +476,24 @@ export function Project(props: {
     };
   });
 
-  const allAssets: AssetItem[] = [
+  return [
     ...sceneAssets,
     ...scriptAssets,
     ...spriteAssets,
     ...authoringAssets,
   ];
+  }, [sceneAssets, scripts, sprites, projectFiles, projectFilesByPath]);
   const normalizedQuery = query.trim().toLocaleLowerCase();
-  const visible = allAssets.filter((asset) => {
+  const visible = useMemo(() => allAssets.filter((asset) => {
     if (normalizedQuery) {
       return [asset.name, asset.kind, asset.assetPath, asset.folder]
         .some((value) => value?.toLocaleLowerCase().includes(normalizedQuery));
     }
     return folder === 'Assets' || asset.folder === folder;
-  });
-  const selectedAsset = selected
+  }), [allAssets, normalizedQuery, folder]);
+  const selectedAsset = useMemo(() => selected
     ? allAssets.find((asset) => asset.assetKey === selected) ?? null
-    : null;
+    : null, [allAssets, selected]);
   const assetRenameIsMove = Boolean(
     assetRename?.asset.assetPath
     && assetPathDirectory(assetRename.asset.assetPath)
