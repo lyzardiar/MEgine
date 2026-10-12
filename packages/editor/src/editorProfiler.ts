@@ -1,3 +1,4 @@
+import type { SharedNativeViewportTransportProfile } from './nativeViewportTransport';
 import { createEditorBroadcastChannel } from './editorInstance.ts';
 
 export const EDITOR_PROFILER_SAMPLE_INTERVAL_MS = 250;
@@ -79,6 +80,7 @@ export type NativeViewportProfile = {
   /** Full request, native rendering, binary transfer and Canvas upload wall time. */
   transportMs?: number;
   commandMs?: number;
+  sharedTransport?: SharedNativeViewportTransportProfile;
   simulationMs?: number;
   worldRevision?: number;
   worldSyncMs?: number;

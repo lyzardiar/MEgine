@@ -32,20 +32,29 @@ impl FramePayload {
 pub async fn share_frame(window: &tauri::WebviewWindow, bytes: Arc<FramePayload>, request: String) -> Result<(), String> {
     use webview2_com::Microsoft::Web::WebView2::Win32::{ICoreWebView2Environment12, ICoreWebView2_2, ICoreWebView2_17, COREWEBVIEW2_SHARED_BUFFER_ACCESS_READ_ONLY};
     use windows::core::{HSTRING, Interface};
+    let queued_at = std::time::Instant::now();
     let (tx, rx) = tokio::sync::oneshot::channel();
     window.with_webview(move |platform| {
+        let ui_queue_ms = queued_at.elapsed().as_secs_f64() * 1000.0;
+        let setup_at = std::time::Instant::now();
         let result = (|| -> windows::core::Result<()> {
             unsafe {
                 let webview = platform.controller().CoreWebView2()?;
                 let environment = webview.cast::<ICoreWebView2_2>()?.Environment()?.cast::<ICoreWebView2Environment12>()?;
                 let receiver = webview.cast::<ICoreWebView2_17>()?;
+                let setup_ms = setup_at.elapsed().as_secs_f64() * 1000.0;
+                let allocate_at = std::time::Instant::now();
                 let buffer = environment.CreateSharedBuffer(bytes.len() as u64)?;
+                let allocate_ms = allocate_at.elapsed().as_secs_f64() * 1000.0;
                 let result = (|| {
+                    let copy_at = std::time::Instant::now();
                     let mut destination = std::ptr::null_mut();
                     buffer.Buffer(&mut destination)?;
                     // The allocated mapping has exactly bytes.len() writable native bytes.
                     bytes.write_to(std::slice::from_raw_parts_mut(destination, bytes.len()));
-                    let metadata = HSTRING::from(serde_json::json!({"nativeViewportRequest": request}).to_string());
+                    let copy_ms = copy_at.elapsed().as_secs_f64() * 1000.0;
+                    // Timings end before COM publication; PostSharedBufferToScript and JS dispatch are not included.
+                    let metadata = HSTRING::from(serde_json::json!({"nativeViewportRequest": request, "nativeViewportTransport": {"uiQueueMs": ui_queue_ms, "setupMs": setup_ms, "allocateMs": allocate_ms, "copyMs": copy_ms, "bytes": bytes.len()}}).to_string());
                     receiver.PostSharedBufferToScript(&buffer, COREWEBVIEW2_SHARED_BUFFER_ACCESS_READ_ONLY, &metadata)
                 })();
                 // JS owns its mapping until releaseBuffer; native Close does not revoke it.
