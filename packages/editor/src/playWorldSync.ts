@@ -32,7 +32,7 @@ function equalJson(value: unknown, baseline: unknown): boolean {
 }
 
 // MiYu: private JSON copies have no accessors; exposed records still execute the original comparison.
-type PrivatePlayCopies = { owns(entities: unknown): boolean; unchanged(entity: object, baseline: object): boolean; unchangedWorld?(entities: unknown, retained: unknown): boolean; expose(): void };
+type PrivatePlayCopies = { owns(entities: unknown): boolean; unchanged(entity: object, baseline: object): boolean; comparisonIndices?(entities: unknown, retained: unknown): readonly number[] | undefined; expose(): void };
 const descriptor = Object.getOwnPropertyDescriptor, prototype = Object.getPrototypeOf, keys = Object.keys, isArray = Array.isArray;
 const nativeComparison = [descriptor, prototype, keys, isArray].every(fn => Function.prototype.toString.call(fn).includes('[native code]'));
 function ordinaryComparison(): boolean {
@@ -43,14 +43,15 @@ function equalEntities(value: unknown, baseline: unknown, copies?: PrivatePlayCo
   if (!ordinaryComparison()) { copies.expose(); return equalJson(value, baseline); }
   if (!Array.isArray(value) || !Array.isArray(baseline)) return equalJson(value, baseline);
   if (value.length !== baseline.length) return false;
-  if (retained && copies.unchangedWorld?.(value, retained)) return true;
+  let indices = retained ? copies.comparisonIndices?.(value, retained) : undefined, nextIndex = 0;
   let privateComparison = true;
-  for (let i = 0; i < value.length; i++) {
+  for (let i = indices ? indices[nextIndex++] ?? value.length : 0; i < value.length; i = indices ? indices[nextIndex++] ?? value.length : i + 1) {
     const child = value[i], saved = baseline[i];
     if (child === saved || privateComparison && copies.unchanged(child, saved)) continue;
     if (!equalJson(child, saved)) return false;
     // An exposed getter or Proxy can change global serialization behaviour during comparison.
-    if (privateComparison && !ordinaryComparison()) { copies.expose(); privateComparison = false; }
+    if (privateComparison && !ordinaryComparison()) { copies.expose(); privateComparison = false; indices = undefined; }
+    if (indices && copies.comparisonIndices?.(value, retained) !== indices) indices = undefined;
   }
   return true;
 }
