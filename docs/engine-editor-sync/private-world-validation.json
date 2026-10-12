@@ -1,0 +1,847 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baselineEngine": "3072784e3aebdac60a13ff8697d4f43236e70213",
+  "fixedGameCommit": "1abbef7aa7f5c5af521233469581aff946b50236",
+  "fixedGameRawHash": "e5a34b1b4e58ab66396246b14c834bc023ed2f0bcf1dd9ece1af0b7851c290dd",
+  "sourceSha256": {
+    "packages/editor/src/playWorldSync.ts": "c0403af90042cab22fea855f5f26f34183b4a5f61fb121cff5b0ca384bf65ddc",
+    "packages/editor/src/store.ts": "b0884c9851663f07d1d0c87a8e9b87adcb5d6a691c7a3b36edc48536c06fa1b3",
+    "packages/editor/tests/playWorldSync.test.mjs": "a3073c33f58b79cde5301103822ca5bac4dafb714c095e65d27343ab74dd5858"
+  },
+  "candidateExecutable": "D:/MEngineNativeQA/release-editor-private-world.exe",
+  "candidateExecutableSha256": "d4cd55a0cbef0b170ed148f03d41e7d07646f883401a3dc422420914ae73bee6",
+  "baselineExecutableSha256": "d0ad7569d6ab49b447860fbc0b0d46578d3fba14bf728b7d5a7a48e3a28ea117",
+  "benchmark": {
+    "author": "MiYu",
+    "baseline": "3072784",
+    "entities": 10000,
+    "requestsPerSample": 128,
+    "samples": [
+      [
+        {
+          "ms": 11.67330000000004,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.599699999999984,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 11.623100000000022,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 11.769999999999982,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 11.969499999999925,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 11.18629999999996,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.805799999999977,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 11.611699999999928,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.995300000000043,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.263599999999997,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.165700000000015,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.14930000000004,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.04239999999993,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.160399999999981,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.084699999999998,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.036699999999996,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 11.788999999999987,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 11.265900000000101,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.221900000000005,
+          "recordChecks": 1280000,
+          "requests": 128
+        },
+        {
+          "ms": 10.147900000000163,
+          "recordChecks": 1280000,
+          "requests": 128
+        }
+      ],
+      [
+        {
+          "ms": 0.03829999999993561,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.02949999999998454,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.04739999999992506,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.026000000000067303,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.021299999999996544,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.0544999999999618,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.043400000000019645,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.01089999999999236,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.012899999999945067,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.010099999999965803,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.011999999999943611,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.010300000000029286,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.01059999999995398,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.009999999999990905,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.010400000000004184,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.04499999999995907,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.01569999999992433,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.00909999999998945,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.009999999999990905,
+          "recordChecks": 0,
+          "requests": 128
+        },
+        {
+          "ms": 0.009499999999889042,
+          "recordChecks": 0,
+          "requests": 128
+        }
+      ]
+    ],
+    "medianMs": [
+      10.805799999999977,
+      0.012899999999945067
+    ],
+    "scope": "Node/Vite retained private-world comparison only; not browser or native editor FPS."
+  },
+  "release": [
+    {
+      "label": "private-world-baseline",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-private-world-baseline-1791779168594\\report.json",
+      "passed": true,
+      "owner": {
+        "pid": 167104,
+        "background": true,
+        "runtimeIdentifier": "com.mengine.editor.agent-c7aaa85371b4456893ac0cffdfb84d8c"
+      },
+      "ownerExited": true,
+      "editContinuity": {
+        "paintCount": 727,
+        "emptyPaints": 0,
+        "completedNativeFrames": 696
+      },
+      "playContinuity": {
+        "paintCount": 713,
+        "emptyPaints": 0,
+        "completedNativeFrames": 420
+      },
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 28.23125,
+        "p95PresentIntervalMs": 43,
+        "presentedFps": 35.42174009298207,
+        "averageRequestMs": 24.20041666726271,
+        "averageRenderMs": 8.31774416666667,
+        "averageCommandMs": 11.180277916666665,
+        "averageUploadMs": 1.7000000089406968,
+        "averageWorldSyncMs": 2.199982083333334,
+        "averageSimulationMs": 10.064607500000001,
+        "averageSimulationRequestMs": 27.604583327968914
+      },
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 25.96416666706403,
+        "p95PresentIntervalMs": 39.89999985694885,
+        "presentedFps": 38.51461950706534,
+        "averageRequestMs": 19.772083343068758,
+        "averageRenderMs": 10.270893750000003,
+        "averageCommandMs": 12.092060416666671,
+        "averageUploadMs": 1.584583330154419,
+        "averageWorldSyncMs": 1.3259808333333338,
+        "averageSimulationMs": 8.788761666666662,
+        "averageSimulationRequestMs": 17.218749995032947
+      },
+      "gameSimulation": {
+        "elapsedMs": 12445.398099999991,
+        "frames": 466,
+        "hz": 37.443559157822385,
+        "simulationSeconds": 12.27799998871982
+      },
+      "playSceneSimulation": {
+        "frames": 307,
+        "elapsedMs": 12086.325400000002,
+        "mode": "play"
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 908,
+        "renderedRevision": 908,
+        "changedPixels": 646,
+        "expandedMaskDifferentPixels": 52,
+        "snapshotDifferentPixels": 64,
+        "restoredDifferentPixels": 63,
+        "repeatedDifferentPixels": 66,
+        "totalPixels": 76800,
+        "filteredSyncMs": 5.2116999999999996
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 958,
+          "time": 36.184200007119216
+        },
+        "pausedAfter": {
+          "frame": 958,
+          "time": 36.184200007119216
+        },
+        "stepped": {
+          "frame": 959,
+          "time": 36.20420000667218
+        },
+        "resumed": {
+          "frame": 971,
+          "time": 36.5092000081921
+        },
+        "restarted": {
+          "frame": 971,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 972,
+          "time": 0.02500000037252903
+        }
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_private-world-baseline.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_private-world-baseline.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 85
+      },
+      "consoleErrors": [],
+      "cpu": {
+        "moving-play-scene.cpuprofile": {
+          "unchanged": 365.0080000000001
+        },
+        "game.cpuprofile": {
+          "unchanged": 474.0990000000001
+        }
+      }
+    },
+    {
+      "label": "private-world-candidate",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-private-world-candidate-1791779285598\\report.json",
+      "passed": true,
+      "owner": {
+        "pid": 107412,
+        "background": true,
+        "runtimeIdentifier": "com.mengine.editor.agent-fff9ff7191374e7793a7cd6af0820878"
+      },
+      "ownerExited": true,
+      "editContinuity": {
+        "paintCount": 727,
+        "emptyPaints": 0,
+        "completedNativeFrames": 699
+      },
+      "playContinuity": {
+        "paintCount": 713,
+        "emptyPaints": 0,
+        "completedNativeFrames": 447
+      },
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 26.84208333392938,
+        "p95PresentIntervalMs": 40.5,
+        "presentedFps": 37.25493239699331,
+        "averageRequestMs": 22.927916664878527,
+        "averageRenderMs": 8.090960416666666,
+        "averageCommandMs": 10.792838333333338,
+        "averageUploadMs": 1.6708333293596904,
+        "averageWorldSyncMs": 2.137751250000001,
+        "averageSimulationMs": 9.276252916666671,
+        "averageSimulationRequestMs": 26.527500005563102
+      },
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 25.51416666607062,
+        "p95PresentIntervalMs": 43.5,
+        "presentedFps": 39.19391187993708,
+        "averageRequestMs": 19.957499999801318,
+        "averageRenderMs": 10.519827083333334,
+        "averageCommandMs": 12.46084125,
+        "averageUploadMs": 1.5858333359162013,
+        "averageWorldSyncMs": 1.3802358333333329,
+        "averageSimulationMs": 8.916474583333331,
+        "averageSimulationRequestMs": 16.848749996225038
+      },
+      "gameSimulation": {
+        "elapsedMs": 12646.9081,
+        "frames": 471,
+        "hz": 37.242304306773605,
+        "simulationSeconds": 12.210899995565414
+      },
+      "playSceneSimulation": {
+        "frames": 329,
+        "elapsedMs": 12096.097599999994,
+        "mode": "play"
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 932,
+        "renderedRevision": 932,
+        "changedPixels": 635,
+        "expandedMaskDifferentPixels": 53,
+        "snapshotDifferentPixels": 63,
+        "restoredDifferentPixels": 64,
+        "repeatedDifferentPixels": 66,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.8762
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 978,
+          "time": 36.17339996958617
+        },
+        "pausedAfter": {
+          "frame": 978,
+          "time": 36.17339996958617
+        },
+        "stepped": {
+          "frame": 979,
+          "time": 36.193399969139136
+        },
+        "resumed": {
+          "frame": 992,
+          "time": 36.50429997000936
+        },
+        "restarted": {
+          "frame": 992,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 993,
+          "time": 0.02500000037252903
+        }
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_private-world-candidate.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_private-world-candidate.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 78
+      },
+      "consoleErrors": [],
+      "cpu": {
+        "moving-play-scene.cpuprofile": {
+          "unchanged": 307.421
+        },
+        "game.cpuprofile": {
+          "unchanged": 453.30300000000005
+        }
+      }
+    },
+    {
+      "label": "private-world-baseline-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-private-world-baseline-repeat-1791779402779\\report.json",
+      "passed": true,
+      "owner": {
+        "pid": 69040,
+        "background": true,
+        "runtimeIdentifier": "com.mengine.editor.agent-b60e38a067e64f879798516954014fef"
+      },
+      "ownerExited": true,
+      "editContinuity": {
+        "paintCount": 727,
+        "emptyPaints": 0,
+        "completedNativeFrames": 695
+      },
+      "playContinuity": {
+        "paintCount": 715,
+        "emptyPaints": 0,
+        "completedNativeFrames": 421
+      },
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 29.209583333134653,
+        "p95PresentIntervalMs": 45.59999990463257,
+        "presentedFps": 34.23533942935858,
+        "averageRequestMs": 24.69666666984558,
+        "averageRenderMs": 8.465352083333332,
+        "averageCommandMs": 11.24794458333333,
+        "averageUploadMs": 1.9166666666666667,
+        "averageWorldSyncMs": 2.2677995833333324,
+        "averageSimulationMs": 10.086824166666668,
+        "averageSimulationRequestMs": 28.889166673024494
+      },
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 26.15458333392938,
+        "p95PresentIntervalMs": 46.59999990463257,
+        "presentedFps": 38.23421643665555,
+        "averageRequestMs": 19.960416674613953,
+        "averageRenderMs": 10.389850833333332,
+        "averageCommandMs": 12.324230833333338,
+        "averageUploadMs": 1.589583330353101,
+        "averageWorldSyncMs": 1.337929166666666,
+        "averageSimulationMs": 8.796909583333331,
+        "averageSimulationRequestMs": 17.20791666507721
+      },
+      "gameSimulation": {
+        "elapsedMs": 12695.680399999997,
+        "frames": 466,
+        "hz": 36.705397845396305,
+        "simulationSeconds": 12.287099987894297
+      },
+      "playSceneSimulation": {
+        "frames": 318,
+        "elapsedMs": 12103.451000000001,
+        "mode": "play"
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 912,
+        "renderedRevision": 912,
+        "changedPixels": 658,
+        "expandedMaskDifferentPixels": 52,
+        "snapshotDifferentPixels": 60,
+        "restoredDifferentPixels": 71,
+        "repeatedDifferentPixels": 66,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.6936
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 964,
+          "time": 36.40820000099484
+        },
+        "pausedAfter": {
+          "frame": 964,
+          "time": 36.40820000099484
+        },
+        "stepped": {
+          "frame": 965,
+          "time": 36.428200000547804
+        },
+        "resumed": {
+          "frame": 978,
+          "time": 36.712099999123254
+        },
+        "restarted": {
+          "frame": 979,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 980,
+          "time": 0.02500000037252903
+        }
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_private-world-baseline-repeat.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_private-world-baseline-repeat.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 88
+      },
+      "consoleErrors": [],
+      "cpu": {
+        "moving-play-scene.cpuprofile": {
+          "unchanged": 411.57700000000017
+        },
+        "game.cpuprofile": {
+          "unchanged": 557.8060000000003
+        }
+      }
+    },
+    {
+      "label": "private-world-candidate-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-private-world-candidate-repeat-1791779518650\\report.json",
+      "passed": true,
+      "owner": {
+        "pid": 149208,
+        "background": true,
+        "runtimeIdentifier": "com.mengine.editor.agent-e3c3e8e3baa64f92817be0f4dcf49b5b"
+      },
+      "ownerExited": true,
+      "editContinuity": {
+        "paintCount": 728,
+        "emptyPaints": 0,
+        "completedNativeFrames": 699
+      },
+      "playContinuity": {
+        "paintCount": 714,
+        "emptyPaints": 0,
+        "completedNativeFrames": 452
+      },
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 26.055416666467984,
+        "p95PresentIntervalMs": 40,
+        "presentedFps": 38.37973549994884,
+        "averageRequestMs": 22.17291666766008,
+        "averageRenderMs": 8.011010833333337,
+        "averageCommandMs": 10.718344583333327,
+        "averageUploadMs": 1.6612500021855037,
+        "averageWorldSyncMs": 2.083852916666667,
+        "averageSimulationMs": 8.525324583333326,
+        "averageSimulationRequestMs": 24.21833333571752
+      },
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 24.94208333392938,
+        "p95PresentIntervalMs": 41.5,
+        "presentedFps": 40.09288184197803,
+        "averageRequestMs": 19.32708333233992,
+        "averageRenderMs": 10.06722291666667,
+        "averageCommandMs": 11.916525416666666,
+        "averageUploadMs": 1.5695833325386048,
+        "averageWorldSyncMs": 1.2994637500000006,
+        "averageSimulationMs": 8.61570666666667,
+        "averageSimulationRequestMs": 16.19750000735124
+      },
+      "gameSimulation": {
+        "elapsedMs": 12605.962899999999,
+        "frames": 480,
+        "hz": 38.07721820282369,
+        "simulationSeconds": 12.206900001898408
+      },
+      "playSceneSimulation": {
+        "frames": 332,
+        "elapsedMs": 12122.054799999998,
+        "mode": "play"
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 945,
+        "renderedRevision": 945,
+        "changedPixels": 648,
+        "expandedMaskDifferentPixels": 52,
+        "snapshotDifferentPixels": 64,
+        "restoredDifferentPixels": 72,
+        "repeatedDifferentPixels": 70,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.7594
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 997,
+          "time": 36.05839999730233
+        },
+        "pausedAfter": {
+          "frame": 997,
+          "time": 36.05839999730233
+        },
+        "stepped": {
+          "frame": 998,
+          "time": 36.078399996855296
+        },
+        "resumed": {
+          "frame": 1010,
+          "time": 36.36979999917094
+        },
+        "restarted": {
+          "frame": 1011,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 1012,
+          "time": 0.02500000037252903
+        }
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_private-world-candidate-repeat.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_private-world-candidate-repeat.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 88
+      },
+      "consoleErrors": [],
+      "cpu": {
+        "moving-play-scene.cpuprofile": {
+          "unchanged": 295.27699999999993
+        },
+        "game.cpuprofile": {
+          "unchanged": 513.226
+        }
+      }
+    }
+  ],
+  "validation": {
+    "regressionTests": 93,
+    "passed": 93,
+    "failed": 0,
+    "log": "D:/MEngineNativeQA/private-world-regression.log",
+    "frontendBuild": "D:/MEngineNativeQA/private-world-frontend-build.log",
+    "releaseBuild": "D:/MEngineNativeQA/private-world-release-build.log",
+    "releaseBuildSeconds": 334,
+    "warning": "Existing world_from_snapshot dead_code warning; no Rust changes."
+  },
+  "cleanup": {
+    "sampleMainRestoredSha256": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+    "allOwnedEditorsExited": true,
+    "assetFixturesRemoved": true,
+    "temporaryBaselineRemoved": true
+  },
+  "scope": "Only an owned native world with a fully private editable list can skip entity comparisons. Exposed lists/records, changed prototypes or serialization hooks, ordinary captures and reset retain live comparisons. Color remains checked. FPS describes completed WebView presentations, not display refresh or cross-machine acceptance."
+}
