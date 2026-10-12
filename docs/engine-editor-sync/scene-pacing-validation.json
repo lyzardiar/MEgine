@@ -1,0 +1,1237 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "baselineEngine": "73a1fa7760cdafe41b7aa4193e1bedb1278f256a",
+  "fixedGameRawHash": "e5a34b1b4e58ab66396246b14c834bc023ed2f0bcf1dd9ece1af0b7851c290dd",
+  "sourceSha256": {
+    "packages/editor/src/panels/Viewport.tsx": "f0cf563a268e8326cb01192eafcb4196b6438229f91e9d7eff7f233b4878d8ab",
+    "packages/editor/tests/nativeSceneCompletionScheduling.test.mjs": "799fcf46a0f17da5b44dc0a10c181e422586fd8a81f740272e3b8280ba1ed0e4",
+    "packages/editor/tests/nativeViewportRepaint.test.mjs": "2759ca4a1b9b8be9f579b0944f896c1d11a2de1aa84158bceda072217efd0e7f"
+  },
+  "candidateExecutable": "D:\\MEngineNativeQA\\release-editor-scene-pacing.exe",
+  "candidateExecutableSha256": "c2ffc1c91b80aa147452de48eae6ccbfa67d7eee6141a71edcae1de6f9fee3ea",
+  "baselineExecutableSha256": "74732d7b1560af3179eaadf5ff8c93509430fdd47bdbf240968026c4054deaec",
+  "release": [
+    {
+      "label": "scene-pacing-final-baseline",
+      "report": "D:/MEngineNativeQA/release-scene-profile-scene-pacing-final-baseline-1791799587806/report.json",
+      "passed": true,
+      "ownerExited": true,
+      "openMs": 5331.958999999999,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "gameSimulationHz": 40.08375175665283,
+      "hierarchy": {
+        "meshClickMs": 248.34749999999622,
+        "selection": {
+          "selected": 4294976315,
+          "selectedIds": [
+            4294976315
+          ]
+        },
+        "hierarchyBefore": {
+          "rows": 15,
+          "height": "360px"
+        },
+        "expandMs": 255.3847999999998,
+        "hierarchyExpanded": {
+          "rows": 30,
+          "height": "768px"
+        },
+        "hierarchyAfterScroll": {
+          "rows": 30,
+          "scrollTop": 260
+        }
+      },
+      "scene": {
+        "summary": {
+          "intervals": 54,
+          "averagePresentIntervalMs": 203.03888888712282,
+          "p95PresentIntervalMs": 253,
+          "presentedFps": 4.925164856255388,
+          "averageRequestMs": 41.94727271253412,
+          "averageRenderMs": 4.699321818181817,
+          "averageCommandMs": 31.02332363636363,
+          "averageUploadMs": 1.4800000017339534,
+          "averageWorldSyncMs": 0.0486981818181819,
+          "averageSimulationMs": null,
+          "averageSimulationRequestMs": null
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 2.5355999999999996,
+          "Readback buffer prepare": 0.00019999999999999998,
+          "Readback copy submit": 0.07490000000000001,
+          "Readback GPU map wait": 1.3014000000000001,
+          "Readback RGBA row pack": 1.1552,
+          "Readback unmap": 0.0024
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "movingScene": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 17.010416666666668,
+          "p95PresentIntervalMs": 19,
+          "presentedFps": 58.78750765462339,
+          "averageRequestMs": 9.483333331346511,
+          "averageRenderMs": 3.0760129166666683,
+          "averageCommandMs": 3.3537087499999996,
+          "averageUploadMs": 1.4454166620969773,
+          "averageWorldSyncMs": 0.002819166666666666,
+          "averageSimulationMs": null,
+          "averageSimulationRequestMs": null
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 1.7781,
+          "Readback buffer prepare": 9.999999999999999e-05,
+          "Readback copy submit": 0.0344,
+          "Readback GPU map wait": 1.3925999999999998,
+          "Readback RGBA row pack": 0.3474,
+          "Readback unmap": 0.002
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "game": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 23.4125,
+          "p95PresentIntervalMs": 40.200000047683716,
+          "presentedFps": 42.71222637479978,
+          "averageRequestMs": 18.176249998807908,
+          "averageRenderMs": 9.898954166666659,
+          "averageCommandMs": 11.65709333333334,
+          "averageUploadMs": 1.5566666692495346,
+          "averageWorldSyncMs": 1.2319341666666668,
+          "averageSimulationMs": 8.147345833333329,
+          "averageSimulationRequestMs": 14.66583333114783
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 2.9793,
+          "Readback buffer prepare": 0.0003,
+          "Readback copy submit": 0.0268,
+          "Readback GPU map wait": 2.7103,
+          "Readback RGBA row pack": 0.23929999999999998,
+          "Readback unmap": 0.0012
+        },
+        "staging": {
+          "bytes": 3671040,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "playScene": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 25.736250000198684,
+          "p95PresentIntervalMs": 37.700000047683716,
+          "presentedFps": 38.855699645141776,
+          "averageRequestMs": 21.449166669448218,
+          "averageRenderMs": 7.9708241666666675,
+          "averageCommandMs": 10.442745000000004,
+          "averageUploadMs": 1.664583326379458,
+          "averageWorldSyncMs": 2.060185000000001,
+          "averageSimulationMs": 8.837105416666663,
+          "averageSimulationRequestMs": 25.091249991456667
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 3.3604,
+          "Readback buffer prepare": 9.999999999999999e-05,
+          "Readback copy submit": 0.0315,
+          "Readback GPU map wait": 3.0513,
+          "Readback RGBA row pack": 0.2745,
+          "Readback unmap": 0.002
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "playSceneSimulation": {
+        "frames": 345,
+        "elapsedMs": 12095.4669,
+        "mode": "play",
+        "hz": 28.52308247811418
+      },
+      "playSceneCapture": {
+        "passed": true,
+        "width": 640,
+        "height": 382,
+        "elapsedMs": 388.405700000003,
+        "bytes": 462794,
+        "simulationFrames": 4
+      },
+      "continuity": {
+        "sceneContinuity": {
+          "paintCount": 727,
+          "completedNativeFrames": 695,
+          "emptyPaints": 0,
+          "browserFallbackPaints": 5
+        },
+        "playSceneContinuity": {
+          "paintCount": 721,
+          "completedNativeFrames": 468,
+          "emptyPaints": 0,
+          "browserFallbackPaints": 0
+        }
+      },
+      "gamePresentation": {
+        "displayedFps": 39.28412183473556,
+        "nativeFrames": 511,
+        "readbackSamples": 511,
+        "meanReadbackMs": 3.146902935420744,
+        "meanStagesMs": {
+          "Readback buffer prepare": 0.00014931506849315067,
+          "Readback copy submit": 0.031050880626223094,
+          "Readback GPU map wait": 2.784621526418787,
+          "Readback RGBA row pack": 0.32797866927592956,
+          "Readback unmap": 0.0018641878669275929
+        },
+        "stagingStates": [
+          {
+            "bytes": 3671040,
+            "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+          }
+        ]
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 991,
+        "renderedRevision": 991,
+        "changedPixels": 651,
+        "expandedMaskDifferentPixels": 57,
+        "snapshotDifferentPixels": 63,
+        "restoredDifferentPixels": 68,
+        "repeatedDifferentPixels": 75,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.3999
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 87
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 1049,
+          "time": 36.58370000089053
+        },
+        "pausedAfter": {
+          "frame": 1049,
+          "time": 36.58370000089053
+        },
+        "stepped": {
+          "frame": 1050,
+          "time": 36.603700000443496
+        },
+        "resumed": {
+          "frame": 1064,
+          "time": 36.90880000040773
+        },
+        "restarted": {
+          "frame": 1064,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 1065,
+          "time": 0.02500000037252903
+        }
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_scene-pacing-final-baseline.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_scene-pacing-final-baseline.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "parentTransform": {
+        "parent": 4294976316,
+        "child": 4294976315,
+        "moved": [
+          4294976315
+        ],
+        "hidden": [],
+        "restored": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      }
+    },
+    {
+      "label": "scene-pacing-yield-candidate",
+      "report": "D:/MEngineNativeQA/release-scene-profile-scene-pacing-yield-candidate-1791799287511/report.json",
+      "passed": true,
+      "ownerExited": true,
+      "openMs": 7777.8291,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "gameSimulationHz": 39.63181045543084,
+      "hierarchy": {
+        "meshClickMs": 248.27700000000186,
+        "selection": {
+          "selected": 4294976315,
+          "selectedIds": [
+            4294976315
+          ]
+        },
+        "hierarchyBefore": {
+          "rows": 15,
+          "height": "360px"
+        },
+        "expandMs": 248.74559999999474,
+        "hierarchyExpanded": {
+          "rows": 30,
+          "height": "768px"
+        },
+        "hierarchyAfterScroll": {
+          "rows": 30,
+          "scrollTop": 260
+        }
+      },
+      "scene": {
+        "summary": {
+          "intervals": 58,
+          "averagePresentIntervalMs": 206.39655172413794,
+          "p95PresentIntervalMs": 265.59999990463257,
+          "presentedFps": 4.845042185281096,
+          "averageRequestMs": 20.703389818385496,
+          "averageRenderMs": 4.585845762711866,
+          "averageCommandMs": 8.599050847457628,
+          "averageUploadMs": 1.4932203373666537,
+          "averageWorldSyncMs": 0.047020338983050906,
+          "averageSimulationMs": null,
+          "averageSimulationRequestMs": null
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 1.7721,
+          "Readback buffer prepare": 9.999999999999999e-05,
+          "Readback copy submit": 0.0323,
+          "Readback GPU map wait": 1.3969,
+          "Readback RGBA row pack": 0.3392,
+          "Readback unmap": 0.0017000000000000001
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "movingScene": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 17.080000000198684,
+          "p95PresentIntervalMs": 19.600000143051147,
+          "presentedFps": 58.54800936700044,
+          "averageRequestMs": 9.790833327174187,
+          "averageRenderMs": 3.0912583333333337,
+          "averageCommandMs": 3.3660645833333342,
+          "averageUploadMs": 1.4537500023841858,
+          "averageWorldSyncMs": 0.002577499999999999,
+          "averageSimulationMs": null,
+          "averageSimulationRequestMs": null
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 1.7677999999999998,
+          "Readback buffer prepare": 9.999999999999999e-05,
+          "Readback copy submit": 0.0346,
+          "Readback GPU map wait": 1.4047,
+          "Readback RGBA row pack": 0.32489999999999997,
+          "Readback unmap": 0.002
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "game": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 24.44708333313465,
+          "p95PresentIntervalMs": 44.200000047683716,
+          "presentedFps": 40.9046750638199,
+          "averageRequestMs": 18.355833334724107,
+          "averageRenderMs": 10.098652499999998,
+          "averageCommandMs": 11.86532333333334,
+          "averageUploadMs": 1.5641666561365128,
+          "averageWorldSyncMs": 1.2764270833333327,
+          "averageSimulationMs": 8.248880416666672,
+          "averageSimulationRequestMs": 15.700416666269302
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 3.0318,
+          "Readback buffer prepare": 0,
+          "Readback copy submit": 0.0294,
+          "Readback GPU map wait": 2.757,
+          "Readback RGBA row pack": 0.2427,
+          "Readback unmap": 0.0014
+        },
+        "staging": {
+          "bytes": 3671040,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "playScene": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 28.975416666269304,
+          "p95PresentIntervalMs": 37.40000009536743,
+          "presentedFps": 34.51201449551938,
+          "averageRequestMs": 19.59208333392938,
+          "averageRenderMs": 8.323838750000002,
+          "averageCommandMs": 11.192373749999998,
+          "averageUploadMs": 1.6441666632890701,
+          "averageWorldSyncMs": 2.3285908333333345,
+          "averageSimulationMs": 8.973370833333325,
+          "averageSimulationRequestMs": 20.51791666249434
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 3.2958000000000003,
+          "Readback buffer prepare": 0.00019999999999999998,
+          "Readback copy submit": 0.034999999999999996,
+          "Readback GPU map wait": 2.9668,
+          "Readback RGBA row pack": 0.2906,
+          "Readback unmap": 0.0021
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "playSceneSimulation": {
+        "frames": 390,
+        "elapsedMs": 12095.400099999999,
+        "mode": "play",
+        "hz": 32.24366261352529
+      },
+      "playSceneCapture": {
+        "passed": true,
+        "width": 640,
+        "height": 382,
+        "elapsedMs": 423.21399999999267,
+        "bytes": 493483,
+        "simulationFrames": 7
+      },
+      "continuity": {
+        "sceneContinuity": {
+          "paintCount": 726,
+          "completedNativeFrames": 693,
+          "emptyPaints": 0,
+          "browserFallbackPaints": 3
+        },
+        "playSceneContinuity": {
+          "paintCount": 400,
+          "completedNativeFrames": 400,
+          "emptyPaints": 0,
+          "browserFallbackPaints": 0
+        }
+      },
+      "gamePresentation": {
+        "displayedFps": 38.27816998230109,
+        "nativeFrames": 501,
+        "readbackSamples": 501,
+        "meanReadbackMs": 3.2971353293413173,
+        "meanStagesMs": {
+          "Readback buffer prepare": 0.00015668662674650697,
+          "Readback copy submit": 0.031180239520958084,
+          "Readback GPU map wait": 2.8778898203592815,
+          "Readback RGBA row pack": 0.3844610778443114,
+          "Readback unmap": 0.002082235528942116
+        },
+        "stagingStates": [
+          {
+            "bytes": 3671040,
+            "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+          }
+        ]
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 1022,
+        "renderedRevision": 1022,
+        "changedPixels": 655,
+        "expandedMaskDifferentPixels": 51,
+        "snapshotDifferentPixels": 60,
+        "restoredDifferentPixels": 87,
+        "repeatedDifferentPixels": 77,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.8896
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 54
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 1098,
+          "time": 36.239799977862276
+        },
+        "pausedAfter": {
+          "frame": 1098,
+          "time": 36.239799977862276
+        },
+        "stepped": {
+          "frame": 1099,
+          "time": 36.25979997741524
+        },
+        "resumed": {
+          "frame": 1112,
+          "time": 36.551099976175465
+        },
+        "restarted": {
+          "frame": 1113,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 1114,
+          "time": 0.02500000037252903
+        }
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_scene-pacing-yield-candidate.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_scene-pacing-yield-candidate.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "parentTransform": {
+        "parent": 4294976316,
+        "child": 4294976315,
+        "moved": [
+          4294976315
+        ],
+        "hidden": [],
+        "restored": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      }
+    },
+    {
+      "label": "scene-pacing-final-baseline-repeat",
+      "report": "D:/MEngineNativeQA/release-scene-profile-scene-pacing-final-baseline-repeat-1791787967516/report.json",
+      "passed": true,
+      "ownerExited": true,
+      "openMs": 5730.8386,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "gameSimulationHz": 37.016382427835936,
+      "hierarchy": {
+        "meshClickMs": 267.9374000000025,
+        "selection": {
+          "selected": 4294976315,
+          "selectedIds": [
+            4294976315
+          ]
+        },
+        "hierarchyBefore": {
+          "rows": 15,
+          "height": "360px"
+        },
+        "expandMs": 249.77859999999782,
+        "hierarchyExpanded": {
+          "rows": 30,
+          "height": "768px"
+        },
+        "hierarchyAfterScroll": {
+          "rows": 30,
+          "scrollTop": 260
+        }
+      },
+      "scene": {
+        "summary": {
+          "intervals": 54,
+          "averagePresentIntervalMs": 205.62222222045617,
+          "p95PresentIntervalMs": 254.89999985694885,
+          "presentedFps": 4.863287582447477,
+          "averageRequestMs": 40.18727272640575,
+          "averageRenderMs": 4.664914545454545,
+          "averageCommandMs": 26.41409090909091,
+          "averageUploadMs": 1.5527272701263428,
+          "averageWorldSyncMs": 0.04811272727272733,
+          "averageSimulationMs": null,
+          "averageSimulationRequestMs": null
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 3.0326,
+          "Readback buffer prepare": 0.0003,
+          "Readback copy submit": 0.0361,
+          "Readback GPU map wait": 1.4957,
+          "Readback RGBA row pack": 1.4966000000000002,
+          "Readback unmap": 0.0019
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "movingScene": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 17.083333333333332,
+          "p95PresentIntervalMs": 19.899999856948853,
+          "presentedFps": 58.53658536585366,
+          "averageRequestMs": 9.871666663885117,
+          "averageRenderMs": 3.1779258333333344,
+          "averageCommandMs": 3.4882495833333307,
+          "averageUploadMs": 1.503749997417132,
+          "averageWorldSyncMs": 0.0025379166666666675,
+          "averageSimulationMs": null,
+          "averageSimulationRequestMs": null
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 1.7128,
+          "Readback buffer prepare": 0,
+          "Readback copy submit": 0.0326,
+          "Readback GPU map wait": 1.3699000000000001,
+          "Readback RGBA row pack": 0.30660000000000004,
+          "Readback unmap": 0.0019
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "game": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 25.54708333313465,
+          "p95PresentIntervalMs": 44.19999980926514,
+          "presentedFps": 39.14341167482696,
+          "averageRequestMs": 20.35,
+          "averageRenderMs": 10.692032083333327,
+          "averageCommandMs": 12.6806625,
+          "averageUploadMs": 1.6329166750113169,
+          "averageWorldSyncMs": 1.4014529166666667,
+          "averageSimulationMs": 9.105164999999994,
+          "averageSimulationRequestMs": 16.662083332737286
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 2.9702,
+          "Readback buffer prepare": 9.999999999999999e-05,
+          "Readback copy submit": 0.034499999999999996,
+          "Readback GPU map wait": 2.6866,
+          "Readback RGBA row pack": 0.24600000000000002,
+          "Readback unmap": 0.0015999999999999999
+        },
+        "staging": {
+          "bytes": 3671040,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "playScene": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 27.678749999403955,
+          "p95PresentIntervalMs": 43.09999990463257,
+          "presentedFps": 36.12879916981563,
+          "averageRequestMs": 23.161250007152557,
+          "averageRenderMs": 8.325181249999996,
+          "averageCommandMs": 10.949593333333334,
+          "averageUploadMs": 1.7041666636864343,
+          "averageWorldSyncMs": 2.132637916666666,
+          "averageSimulationMs": 9.401055833333341,
+          "averageSimulationRequestMs": 27.955416665474573
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 4.2001,
+          "Readback buffer prepare": 0,
+          "Readback copy submit": 0.0331,
+          "Readback GPU map wait": 2.9263000000000003,
+          "Readback RGBA row pack": 1.2361,
+          "Readback unmap": 0.0031
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "playSceneSimulation": {
+        "frames": 319,
+        "elapsedMs": 12103.152199999997,
+        "mode": "play",
+        "hz": 26.356770098288948
+      },
+      "playSceneCapture": {
+        "passed": true,
+        "width": 640,
+        "height": 382,
+        "elapsedMs": 366.0237999999954,
+        "bytes": 459857,
+        "simulationFrames": 4
+      },
+      "continuity": {
+        "sceneContinuity": {
+          "paintCount": 728,
+          "completedNativeFrames": 696,
+          "emptyPaints": 0,
+          "browserFallbackPaints": 4
+        },
+        "playSceneContinuity": {
+          "paintCount": 718,
+          "completedNativeFrames": 441,
+          "emptyPaints": 0,
+          "browserFallbackPaints": 0
+        }
+      },
+      "gamePresentation": {
+        "displayedFps": 36.1085715604067,
+        "nativeFrames": 470,
+        "readbackSamples": 470,
+        "meanReadbackMs": 3.2577682978723406,
+        "meanStagesMs": {
+          "Readback buffer prepare": 0.00016148936170212765,
+          "Readback copy submit": 0.032757021276595744,
+          "Readback GPU map wait": 2.8373653191489363,
+          "Readback RGBA row pack": 0.3831746808510638,
+          "Readback unmap": 0.0026802127659574467
+        },
+        "stagingStates": [
+          {
+            "bytes": 3671040,
+            "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+          }
+        ]
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 927,
+        "renderedRevision": 927,
+        "changedPixels": 672,
+        "expandedMaskDifferentPixels": 56,
+        "snapshotDifferentPixels": 71,
+        "restoredDifferentPixels": 68,
+        "repeatedDifferentPixels": 74,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.5725999999999996
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 86
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 979,
+          "time": 36.50050000438932
+        },
+        "pausedAfter": {
+          "frame": 979,
+          "time": 36.50050000438932
+        },
+        "stepped": {
+          "frame": 980,
+          "time": 36.52050000394229
+        },
+        "resumed": {
+          "frame": 991,
+          "time": 36.82260000460688
+        },
+        "restarted": {
+          "frame": 991,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 992,
+          "time": 0.02500000037252903
+        }
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_scene-pacing-final-baseline-repeat.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_scene-pacing-final-baseline-repeat.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "parentTransform": {
+        "parent": 4294976316,
+        "child": 4294976315,
+        "moved": [
+          4294976315
+        ],
+        "hidden": [],
+        "restored": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      }
+    },
+    {
+      "label": "scene-pacing-yield-candidate-repeat",
+      "report": "D:/MEngineNativeQA/release-scene-profile-scene-pacing-yield-candidate-repeat-1791799406810/report.json",
+      "passed": true,
+      "ownerExited": true,
+      "openMs": 5495.148999999999,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "gameSimulationHz": 38.74032436631883,
+      "hierarchy": {
+        "meshClickMs": 252.63700000000244,
+        "selection": {
+          "selected": 4294976315,
+          "selectedIds": [
+            4294976315
+          ]
+        },
+        "hierarchyBefore": {
+          "rows": 15,
+          "height": "360px"
+        },
+        "expandMs": 245.15600000000268,
+        "hierarchyExpanded": {
+          "rows": 30,
+          "height": "768px"
+        },
+        "hierarchyAfterScroll": {
+          "rows": 30,
+          "scrollTop": 260
+        }
+      },
+      "scene": {
+        "summary": {
+          "intervals": 54,
+          "averagePresentIntervalMs": 203.06296296472902,
+          "p95PresentIntervalMs": 248.30000019073486,
+          "presentedFps": 4.924580954596308,
+          "averageRequestMs": 39.83636362769387,
+          "averageRenderMs": 4.382805454545455,
+          "averageCommandMs": 28.52742727272728,
+          "averageUploadMs": 1.4818181948228315,
+          "averageWorldSyncMs": 0.05356000000000006,
+          "averageSimulationMs": null,
+          "averageSimulationRequestMs": null
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 1.883,
+          "Readback buffer prepare": 0.00019999999999999998,
+          "Readback copy submit": 0.0327,
+          "Readback GPU map wait": 1.4419000000000002,
+          "Readback RGBA row pack": 0.4042,
+          "Readback unmap": 0.0022
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "movingScene": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 17.069166667262714,
+          "p95PresentIntervalMs": 19.299999952316284,
+          "presentedFps": 58.58516818620791,
+          "averageRequestMs": 10.165416663885116,
+          "averageRenderMs": 3.1216387499999985,
+          "averageCommandMs": 3.4232783333333328,
+          "averageUploadMs": 1.4583333383003871,
+          "averageWorldSyncMs": 0.0027400000000000037,
+          "averageSimulationMs": null,
+          "averageSimulationRequestMs": null
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 1.8554000000000002,
+          "Readback buffer prepare": 0.00019999999999999998,
+          "Readback copy submit": 0.0322,
+          "Readback GPU map wait": 1.5271,
+          "Readback RGBA row pack": 0.2923,
+          "Readback unmap": 0.0023
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "game": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 24.44499999980132,
+          "p95PresentIntervalMs": 41,
+          "presentedFps": 40.90816117848753,
+          "averageRequestMs": 18.809583340088526,
+          "averageRenderMs": 10.236447499999995,
+          "averageCommandMs": 12.111430833333335,
+          "averageUploadMs": 1.5654166668653489,
+          "averageWorldSyncMs": 1.3152583333333334,
+          "averageSimulationMs": 8.464917083333336,
+          "averageSimulationRequestMs": 15.841666660706203
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 3.0444,
+          "Readback buffer prepare": 9.999999999999999e-05,
+          "Readback copy submit": 0.023799999999999998,
+          "Readback GPU map wait": 2.6903,
+          "Readback RGBA row pack": 0.3272,
+          "Readback unmap": 0.0019
+        },
+        "staging": {
+          "bytes": 3671040,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "playScene": {
+        "summary": {
+          "intervals": 240,
+          "averagePresentIntervalMs": 29.70458333392938,
+          "p95PresentIntervalMs": 40.59999990463257,
+          "presentedFps": 33.66483847823487,
+          "averageRequestMs": 20.188333332538605,
+          "averageRenderMs": 8.144950833333333,
+          "averageCommandMs": 10.82212833333333,
+          "averageUploadMs": 1.6479166756073633,
+          "averageWorldSyncMs": 2.3199687499999992,
+          "averageSimulationMs": 9.040004583333333,
+          "averageSimulationRequestMs": 23.312499991059305
+        },
+        "latestReadbackMs": {
+          "Renderer.read_offscreen_rgba8": 3.7679,
+          "Readback buffer prepare": 9.999999999999999e-05,
+          "Readback copy submit": 0.0324,
+          "Readback GPU map wait": 3.4227,
+          "Readback RGBA row pack": 0.3094,
+          "Readback unmap": 0.0019
+        },
+        "staging": {
+          "bytes": 3901440,
+          "certainty": "lower-bound",
+          "domain": "gpu",
+          "name": "GPU readback staging",
+          "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+        }
+      },
+      "playSceneSimulation": {
+        "frames": 392,
+        "elapsedMs": 12084.280800000008,
+        "mode": "play",
+        "hz": 32.438835747676414
+      },
+      "playSceneCapture": {
+        "passed": true,
+        "width": 640,
+        "height": 382,
+        "elapsedMs": 353.9979000000021,
+        "bytes": 500350,
+        "simulationFrames": 8
+      },
+      "continuity": {
+        "sceneContinuity": {
+          "paintCount": 728,
+          "completedNativeFrames": 693,
+          "emptyPaints": 0,
+          "browserFallbackPaints": 3
+        },
+        "playSceneContinuity": {
+          "paintCount": 412,
+          "completedNativeFrames": 411,
+          "emptyPaints": 0,
+          "browserFallbackPaints": 0
+        }
+      },
+      "gamePresentation": {
+        "displayedFps": 37.50087346741087,
+        "nativeFrames": 483,
+        "readbackSamples": 483,
+        "meanReadbackMs": 3.1762432712215323,
+        "meanStagesMs": {
+          "Readback buffer prepare": 0.00018012422360248447,
+          "Readback copy submit": 0.030926915113871637,
+          "Readback GPU map wait": 2.7916915113871634,
+          "Readback RGBA row pack": 0.34955362318840577,
+          "Readback unmap": 0.0024577639751552794
+        },
+        "stagingStates": [
+          {
+            "bytes": 3671040,
+            "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+          }
+        ]
+      },
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 1006,
+        "renderedRevision": 1006,
+        "changedPixels": 661,
+        "expandedMaskDifferentPixels": 60,
+        "snapshotDifferentPixels": 61,
+        "restoredDifferentPixels": 68,
+        "repeatedDifferentPixels": 72,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.8263
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 50
+      },
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 1080,
+          "time": 36.21300004015211
+        },
+        "pausedAfter": {
+          "frame": 1080,
+          "time": 36.21300004015211
+        },
+        "stepped": {
+          "frame": 1081,
+          "time": 36.233000039705075
+        },
+        "resumed": {
+          "frame": 1094,
+          "time": 36.52640004205052
+        },
+        "restarted": {
+          "frame": 1094,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 1095,
+          "time": 0.02500000037252903
+        }
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_scene-pacing-yield-candidate-repeat.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_scene-pacing-yield-candidate-repeat.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "parentTransform": {
+        "parent": 4294976316,
+        "child": 4294976315,
+        "moved": [
+          4294976315
+        ],
+        "hidden": [],
+        "restored": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      }
+    }
+  ],
+  "validation": {
+    "testsPassed": 68,
+    "failed": 0,
+    "skipped": 0,
+    "regressionLog": "D:\\MEngineNativeQA\\scene-pacing-regression.log",
+    "frontendBuild": "D:\\MEngineNativeQA\\scene-pacing-frontend-build.log",
+    "releaseBuild": "D:\\MEngineNativeQA\\scene-pacing-release-build.log",
+    "releaseBuildSeconds": 269
+  },
+  "cleanup": {
+    "sampleMainRestoredSha256": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+    "allOwnedEditorsExited": true,
+    "assetFixturesRemoved": true
+  },
+  "scope": "Present completed Scene pixels immediately. Active Play yields to the next paced request after presenting completed pixels, without waiting for another animation frame. Request-only passes retain unchanged pixels and picking; background completion continues necessary requests with a 60 Hz limit. Clear pixels and picking only when a new presentation is needed. Preserve displayed camera/world/picking correspondence, edit-mode animation, explicit captures and first-frame paints. Four Release runs verify moving Edit/Play Scene continuity, interaction and simulation progression. No stable 60 FPS or cross-machine acceptance is claimed.",
+  "comparisonDesign": "One unchanged baseline is refreshed after candidate validation and one earlier repeat is reused; the final candidate is measured twice with the same fixed game script, sample, harness and flags. Builds and CPU/GPU tests are excluded during profiling.",
+  "comparison": {
+    "movingEditSceneFps": {
+      "baseline": 58.662046510238525,
+      "candidate": 58.56658877660418,
+      "changePercent": -0.16272486098433125
+    },
+    "movingPlaySceneFps": {
+      "baseline": 37.4922494074787,
+      "candidate": 34.088426486877125,
+      "changePercent": -9.078737537477831
+    },
+    "movingPlaySimulationHz": {
+      "baseline": 27.439926288201562,
+      "candidate": 32.341249180600855,
+      "changePercent": 17.86201187612786
+    },
+    "gameFps": {
+      "baseline": 40.927819024813374,
+      "candidate": 40.90641812115372,
+      "changePercent": -0.052289382062309375
+    },
+    "gameSimulationHz": {
+      "baseline": 38.55006709224438,
+      "candidate": 39.186067410874834,
+      "changePercent": 1.6498034026986241
+    },
+    "playPaintsPerNativeFrame": {
+      "baseline": 1.584358102215245,
+      "candidate": 1.0012165450121655,
+      "changePercent": -36.80617130607864
+    }
+  },
+  "limitations": "On this sample, Play Scene native FPS median is 34.09 versus baseline 37.49, while moving simulation progression improves from 27.44 to 32.34 Hz. Edit Scene and Game presentation remain near baseline. Further native transport/rendering optimization is required; neither a general FPS improvement nor stable 60 FPS is claimed."
+}

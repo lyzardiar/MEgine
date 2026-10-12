@@ -1,3 +1,4 @@
+// Author: MiYu. Verify native presentation and hidden WebView repaint boundaries.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -23,7 +24,7 @@ test('decoded native frames cross a task boundary when hidden WebViews suspend a
   }
   assert.match(
     viewport,
-    /React still commits[\s\S]*useEffect\(\(\) => \{\s+if \(performance\.now\(\) - lastProfilerFrameRef\.current > 100\) paint\(\);[\s\S]*props\.entities/,
+    /React still commits[\s\S]*useEffect\(\(\) => \{\s+if \(performance\.now\(\) - lastViewportPaintRef\.current > 100\) paint\(\);[\s\S]*props\.entities/,
   );
   assert.match(
     viewport,
