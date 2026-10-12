@@ -1,3 +1,4 @@
+// Author: MiYu. Verify request correlation, transport timing ownership and lease cleanup.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
@@ -11,14 +12,18 @@ test('shared frames correlate concurrent requests and release once; failures and
   };
   t.after(() => { globalThis.window = original; });
   const transport = await import('../src/nativeViewportTransport.ts?shared-test');
-  const deliver = (index, buffer) => receive({ additionalData: { nativeViewportRequest: requests[index].args.sharedRequest }, getBuffer: () => buffer });
+  const deliver = (index, buffer, profile) => receive({ additionalData: { nativeViewportRequest: requests[index].args.sharedRequest, nativeViewportTransport: profile }, getBuffer: () => buffer });
   const first = transport.requestNativeViewportFrame('game', {}), second = transport.requestNativeViewportFrame('scene', {});
   const a = new ArrayBuffer(8), b = new ArrayBuffer(16);
-  deliver(1, b); deliver(0, a);
+  const pa={uiQueueMs:2,setupMs:.1,allocateMs:3,copyMs:1,bytes:8},pb={...pa,uiQueueMs:7,bytes:16};
+  deliver(1, b, pb); deliver(0, a, pa);
   assert.equal(await first, a); assert.equal(await second, b);
   assert.equal(transport.isSharedNativeViewportFrame(a), true);
+  assert.equal(transport.nativeViewportTransportProfile(a).uiQueueMs,2); assert.equal(transport.nativeViewportTransportProfile(b).uiQueueMs,7);
+  assert.ok(transport.nativeViewportTransportProfile(a).getBufferMs>=0); assert.ok(transport.nativeViewportTransportProfile(a).requestElapsedMs>=0);
   transport.releaseNativeViewportFrame(a); transport.releaseNativeViewportFrame(a); transport.releaseNativeViewportFrame(b);
   assert.deepEqual(released, [a, b]);
+  assert.equal(transport.nativeViewportTransportProfile(a),undefined); assert.equal(transport.nativeViewportTransportProfile(b),undefined);
   requests[0].resolve(new ArrayBuffer(0)); requests[1].resolve(new ArrayBuffer(0));
   const failed = transport.requestNativeViewportFrame('game', {});
   requests[2].reject(Error('closed window'));

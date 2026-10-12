@@ -1,9 +1,13 @@
+// Author: MiYu. Correlate shared viewport leases and native transport measurements.
 import { invoke } from '@tauri-apps/api/core';
 
-type SharedFrameEvent = { additionalData?: { nativeViewportRequest?: string }; getBuffer(): ArrayBuffer };
+export type SharedNativeViewportTransportProfile = { uiQueueMs: number; setupMs: number; allocateMs: number; copyMs: number; bytes: number; getBufferMs: number; requestElapsedMs: number };
+type SharedFrameEvent = { additionalData?: { nativeViewportRequest?: string; nativeViewportTransport?: Omit<SharedNativeViewportTransportProfile, 'getBufferMs' | 'requestElapsedMs'> }; getBuffer(): ArrayBuffer };
 type SharedFrameWebView = { addEventListener(type: 'sharedbufferreceived', listener: (event: SharedFrameEvent) => void): void; releaseBuffer(buffer: ArrayBuffer): void };
-const pending = new Map<string, { resolve(buffer: ArrayBuffer): void; reject(error: unknown): void; timer: ReturnType<typeof setTimeout> }>();
+const pending = new Map<string, { resolve(buffer: ArrayBuffer): void; reject(error: unknown): void; timer: ReturnType<typeof setTimeout>; startedAt: number }>();
 const leases = new WeakMap<ArrayBuffer, SharedFrameWebView>();
+const transportProfiles = new WeakMap<ArrayBuffer, SharedNativeViewportTransportProfile>();
+export function nativeViewportTransportProfile(buffer: ArrayBuffer) { return transportProfiles.get(buffer); }
 let listening: SharedFrameWebView | undefined;
 let unsupported = false;
 let nextRequest = 0;
@@ -13,7 +17,7 @@ export function isSharedNativeViewportFrame(buffer: ArrayBuffer): boolean { retu
 
 export function releaseNativeViewportFrame(buffer: ArrayBuffer): void {
   const webview = leases.get(buffer);
-  if (webview) { leases.delete(buffer); webview.releaseBuffer(buffer); }
+  if (webview) { leases.delete(buffer); transportProfiles.delete(buffer); webview.releaseBuffer(buffer); }
 }
 
 /** Windows WebView2 shares pixel pages; other platforms retain the binary IPC response. */
@@ -24,11 +28,12 @@ export function requestNativeViewportFrame(command: string, args: Record<string,
     webview.addEventListener('sharedbufferreceived', event => {
       const id = event.additionalData?.nativeViewportRequest;
       if (!id) return;
-      const buffer = event.getBuffer(), request = pending.get(id);
+      const receivedAt = performance.now(), buffer = event.getBuffer(), getBufferMs = performance.now() - receivedAt, request = pending.get(id);
       if (!request) { webview.releaseBuffer(buffer); return; }
       pending.delete(id);
       clearTimeout(request.timer);
       leases.set(buffer, webview);
+      if (event.additionalData?.nativeViewportTransport) transportProfiles.set(buffer, { ...event.additionalData.nativeViewportTransport, getBufferMs, requestElapsedMs: receivedAt - request.startedAt });
       request.resolve(buffer);
     });
     listening = webview;
@@ -43,7 +48,7 @@ export function requestNativeViewportFrame(command: string, args: Record<string,
       reject(error);
     };
     const timer = setTimeout(() => fail(new Error('Native viewport shared frame timed out')), 15_000);
-    pending.set(id, { resolve, reject, timer });
+    pending.set(id, { resolve, reject, timer, startedAt: performance.now() });
     void invoke<ArrayBuffer>(command, { ...args, raw: true, sharedRequest: id }).then(buffer => {
       if (!buffer.byteLength) return; // Shared pixels arrive through sharedbufferreceived.
       unsupported = true;
