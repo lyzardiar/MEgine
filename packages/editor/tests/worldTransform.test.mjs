@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   buildWorldTransforms,
+  createOwnedWorldTransformReader,
   parentWorldTransform,
   resolvedTransform,
   worldDeltaToLocal,
@@ -79,4 +80,61 @@ test('requested world transforms resolve only their ancestors and preserve hiera
   assert.equal(buildWorldTransforms(entities, []).size, 0);
   const unused = { entity: 6, components: { get Transform() { throw new Error('unrelated transform resolved'); } } };
   assert.deepEqual(buildWorldTransforms([...entities, unused], [2]).get(2), full.get(2));
+});
+
+const fixed = value => {
+  if (value && typeof value === 'object') { for (const child of Object.values(value)) fixed(child); Object.freeze(value); }
+  return value;
+};
+const node = (entity, parent = null, x = entity, active = true) => fixed({ entity, parent, active, components: { Transform: transform([x, 2, -1], [0, 0, Math.SQRT1_2, Math.SQRT1_2], [-2, 3, 1]) } });
+const compare = (read, worlds) => worlds.map(entities => {
+  const actual = read(entities);
+  assert.deepEqual([...actual], [...buildWorldTransforms(entities)], 'full resolved values and Map insertion order');
+  return actual;
+});
+
+test('owned frame reuse invalidates descendants on ancestor Transform, activity and parent membership changes', () => {
+  const read = createOwnedWorldTransformReader(), parent = node(1), child = node(2, 1), leaf = node(3, 2), unrelated = node(4);
+  const worlds = [[parent, child, leaf, unrelated], [parent, child, leaf, unrelated], [node(1, null, 15), child, leaf, unrelated], [node(1, null, 15, false), child, leaf, unrelated], [child, leaf, unrelated], [parent, child, leaf, unrelated]];
+  const results = compare(read, worlds);
+  for (const id of [1, 2, 3, 4]) assert.equal(results[0].get(id), results[1].get(id));
+  for (const id of [1, 2, 3]) assert.notEqual(results[1].get(id), results[2].get(id));
+  assert.equal(results[2].get(4), results[0].get(4));
+  assert.equal(results[3].get(3).active, false); assert.equal(results[4].get(3).active, false); assert.equal(results[5].get(3).active, true);
+  compare(read, [worlds[0], worlds[2], worlds[0]]);
+});
+
+test('owned frames preserve reorder, duplicate last-wins records, transformless chains and fresh session records', () => {
+  const read = createOwnedWorldTransformReader(), a = node(1), b = fixed({ entity: 2, parent: 1, components: {} }), c = node(3, 2), d = node(1, null, 20);
+  const worlds = [[a, b, c], [c, b, a], [a, b, c, d], [d, a, c, b], [c, b], [a, b, c]];
+  compare(read, worlds);
+  const before = read(worlds[0]), fresh = JSON.parse(JSON.stringify(worlds[0])).map(fixed), after = read(fresh);
+  assert.deepEqual([...after], [...before]); assert.notEqual(after.get(3), before.get(3));
+  compare(read, [worlds[0], fresh, worlds[0]]);
+});
+
+test('owned frame cache preserves cycle resolution in both traversal orders and cycle repair', () => {
+  const read = createOwnedWorldTransformReader(), a = node(1, 2), b = node(2, 1), child = node(3, 1), root = node(2), self = node(4, 4);
+  const worlds = [[a, b, child, self], [b, a, self, child], [a, root, child], [child, b, a], [root, a, child], [a, b, child, self]];
+  compare(read, [...worlds, ...worlds.toReversed()]);
+});
+
+test('owned frame resolver matches uncached values and order across deterministic forest revisions', () => {
+  const read = createOwnedWorldTransformReader(); let seed = 4271;
+  const random = n => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % n; };
+  let entities = Array.from({ length: 60 }, (_, i) => node(i + 1, i ? random(i + 1) || null : null));
+  const earlier = [];
+  for (let frame = 0; frame < 120; frame++) {
+    earlier.push(entities); entities = entities.slice(); const index = random(entities.length), old = entities[index];
+    entities[index] = random(4) ? node(old.entity, random(64) || null, random(20), !!random(2)) : fixed({ entity: old.entity, parent: random(64) || null, components: {} });
+    if (frame % 3 === 0) entities.reverse();
+    compare(read, [entities]);
+    if (frame % 7 === 0) compare(read, [earlier[random(earlier.length)], entities]);
+  }
+});
+
+test('mutable authored worlds remain uncached across direct edits', () => {
+  const entities = [{ entity: 1, components: { Transform: transform([1, 0, 0]) } }];
+  const first = buildWorldTransforms(entities); entities[0].components.Transform.position[0] = 9;
+  assert.equal(first.get(1).transform.position[0], 1); assert.equal(buildWorldTransforms(entities).get(1).transform.position[0], 9);
 });

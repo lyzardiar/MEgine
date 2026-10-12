@@ -110,3 +110,29 @@ test('owned Scene UI membership preserves full layout and projection while new r
   assert.notEqual(read(next).sceneUiEntities(), subset); assert.ok(read(next).sceneUiEntities().some(entity => entity.entity === 11));
   verifyLayout(next); assert.equal(read(world).sceneUiEntities().some(entity => entity.entity === 11), false); verifyLayout(world);
 });
+
+test('native delta revisions share static resolved nodes and invalidate retained children when their parent changes', async () => {
+  const { retainPlayWorld } = await server.ssrLoadModule('/src/playWorldSync.ts');
+  const { createPlayWorldUpdater } = await server.ssrLoadModule('/src/playRuntime.ts');
+  const { buildWorldTransforms } = await server.ssrLoadModule('/src/worldTransform.ts');
+  const initial = { ...props(), frame: 0, simFrame: 0, selected: null }, update = createPlayWorldUpdater(), read = createNativeViewportPresentationReader();
+  let owned = retainPlayWorld(initial);
+  const worlds = [], results = [];
+  const present = revision => {
+    const world = createNativeViewportWorldArgs({ ...initial, nativeWorldReference: { ...owned, sessionId: 19, revision }, runtimeSessionId: 19 }).frameWorld();
+    const result = read(world).worldTransforms(); assert.deepEqual([...result], [...buildWorldTransforms(world.entities)]);
+    worlds.push(world); results.push(result);
+  };
+  const advance = (revision, entities) => {
+    const previous = owned, snapshot = { frame: revision, sim_frame: revision, selected: null, clear_color: initial.clearColor, entities };
+    owned = retainPlayWorld(update(previous, revision - 1, { snapshot, baseRevision: revision - 1, revision, reset: false }), previous);
+  };
+  present(0); advance(1, []); present(1);
+  assert.notEqual(worlds[0].entities, worlds[1].entities); assert.equal(worlds[0].entities[1], worlds[1].entities[1]);
+  for (const id of [1, 2, 3, 4]) assert.equal(results[0].get(id), results[1].get(id));
+  advance(2, [{ entity: 1, active: false, components: { Transform: transform(12) } }]); present(2);
+  assert.equal(worlds[1].entities[1], worlds[2].entities[1]); assert.notEqual(results[1].get(2), results[2].get(2));
+  assert.equal(results[2].get(2).active, false); assert.equal(results[2].get(2).transform.position[0], 12);
+  assert.equal(results[1].get(4), results[2].get(4));
+  assert.deepEqual([...read(worlds[0]).worldTransforms()], [...results[0]]);
+});

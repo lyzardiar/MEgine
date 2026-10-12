@@ -1,3 +1,4 @@
+// Author: MiYu. Resolve hierarchy TRS and reuse immutable nodes only with the same resolved parent.
 import type { TransformData } from '@mengine/behaviour';
 import {
   add,
@@ -34,6 +35,8 @@ const INVALID: ResolvedWorldTransform = {
   hasTransform: false,
   transform: IDENTITY,
 };
+const ROOT: ResolvedWorldTransform = { active: true, hasTransform: false, transform: IDENTITY };
+type OwnedTransformCache = WeakMap<WorldTransformEntity, { parent: ResolvedWorldTransform; value: ResolvedWorldTransform }>;
 
 function finite(value: unknown, fallback: number): number {
   const number = Number(value);
@@ -84,20 +87,33 @@ export function buildWorldTransforms(
   entities: readonly WorldTransformEntity[],
   roots?: Iterable<number>,
 ): Map<number, ResolvedWorldTransform> {
+  return resolveWorldTransforms(entities, roots);
+}
+
+/** Only fixed owned frame records may enter this reader; mutable editing uses buildWorldTransforms. */
+export function createOwnedWorldTransformReader() {
+  const cache: OwnedTransformCache = new WeakMap();
+  return (entities: readonly WorldTransformEntity[]) => resolveWorldTransforms(entities, undefined, cache);
+}
+
+function resolveWorldTransforms(entities: readonly WorldTransformEntity[], roots?: Iterable<number>, cache?: OwnedTransformCache): Map<number, ResolvedWorldTransform> {
   const byId = new Map(entities.map((entity) => [entity.entity, entity]));
   const states = new Map<number, ResolveState>();
+  let cyclic = false;
 
   const resolve = (id: number): ResolvedWorldTransform => {
     const existing = states.get(id);
-    if (existing?.visiting) return INVALID;
+    if (existing?.visiting) { cyclic = true; return INVALID; }
     if (existing && !existing.visiting) return existing.value;
     const entity = byId.get(id);
     if (!entity) return INVALID;
     states.set(id, { visiting: true });
     const parentId = entity.parent ?? null;
     const parent = parentId == null
-      ? { active: true, hasTransform: false, transform: IDENTITY }
+      ? cache ? ROOT : { active: true, hasTransform: false, transform: IDENTITY }
       : resolve(parentId);
+    const previous = cyclic ? undefined : cache?.get(entity);
+    if (previous?.parent === parent) { states.set(id, { visiting: false, value: previous.value }); return previous.value; }
     const local = normalizeTransform(entity.components.Transform);
     const value: ResolvedWorldTransform = {
       active: parent.active && entity.active !== false,
@@ -105,6 +121,7 @@ export function buildWorldTransforms(
       transform: local ? compose(parent.transform, local) : parent.transform,
     };
     states.set(id, { visiting: false, value });
+    if (!cyclic) cache?.set(entity, { parent, value });
     return value;
   };
 
