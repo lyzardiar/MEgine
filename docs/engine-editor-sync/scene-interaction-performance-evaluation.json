@@ -1,0 +1,231 @@
+{
+  "author": "MiYu",
+  "status": "evaluated; accepted source and Release restored",
+  "baselineEngineCommit": "bef555ab4df2aada600873cd96a77315fdaa2ed3",
+  "baselineGameCommit": "7ec324a09a88c4354f891603e05cad9d0cf676cf",
+  "prototypeScope": "numeric topology and restriction validation before reusing Scene query functions",
+  "prototypeTests": {
+    "passed": 17,
+    "failed": 0
+  },
+  "prototypeReleaseBuildSeconds": 381,
+  "prototypeCodeNotDelivered": true,
+  "restoredFrontendBuildPassed": true,
+  "acceptedReleaseExecutable": "D:\\MEngineNativeQA\\release-editor-entity-center.exe",
+  "acceptedExeSha256": "e809ae34aa5828ea09fbda69a71022d3325c96fef298ffa36fd69da5ebbeb7ea",
+  "constructionBuildExeRestored": true,
+  "originalQaSourceRestored": true,
+  "fixedClientSha256": "d25e9578429842c7a127a2542672ee1c32d71c6093c3eb0f27e88b4f7d85b38f",
+  "noConcurrentBuildsOrCpuTests": true,
+  "executionOrder": [
+    "scene-query-reuse-baseline",
+    "scene-query-reuse-candidate",
+    "scene-query-reuse-candidate-repeat",
+    "scene-query-reuse-baseline-repeat",
+    "scene-query-reuse-candidate-unprobed"
+  ],
+  "excludedQa": [
+    {
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-reuse-candidate-1791770612499\\report.json",
+      "reason": "QA probe accessed readDom before initialization; no moving/Play comparison data",
+      "ownerPid": 82136,
+      "ownerExited": true
+    }
+  ],
+  "primaryComparison": {
+    "baseline": "scene-query-reuse-baseline-repeat",
+    "candidate": "scene-query-reuse-candidate-unprobed",
+    "candidateAppBreakpointUsed": false,
+    "querySampleCostReductionPercent": 49.6159663772767,
+    "scenePaintIncreasePercent": 16.65741422538618
+  },
+  "backgroundLoadObservation": "D:\\MEngineNativeQA\\scene-query-reuse-background-load.json",
+  "backgroundLoadCausalityProven": false,
+  "qa": [
+    {
+      "label": "scene-query-reuse-baseline",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-reuse-baseline-1791770486426\\report.json",
+      "exeSha256": "e809ae34aa5828ea09fbda69a71022d3325c96fef298ffa36fd69da5ebbeb7ea",
+      "ownerPid": 65756,
+      "ownerExited": true,
+      "scenePaintMs": 6.825010719045494,
+      "sceneNativeFps": 36.29106084033042,
+      "sceneSimulationHz": 26.311019109239552,
+      "queryCost": {
+        "selfMs": 279.928,
+        "inclusiveMs": 279.928,
+        "profileMs": 12572.206,
+        "functions": [
+          {
+            "kind": "fresh-query",
+            "name": "Jc",
+            "start": 16673,
+            "end": 17185
+          }
+        ],
+        "note": "Includes fresh query and cached reader plus nested sampled calls; samples are attributed once."
+      },
+      "gameFullIntervalFps": 35.8236327180016,
+      "gameFixedTenSecondFps": 38.4,
+      "emptyPaints": {
+        "edit": 0,
+        "play": 0
+      },
+      "cacheProbe": null,
+      "passed": true
+    },
+    {
+      "label": "scene-query-reuse-candidate",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-reuse-candidate-1791770738001\\report.json",
+      "exeSha256": "70a5f3fd3f4971792253f325d00ab6644eeedb2483cf7c3faf79e44b78385cd0",
+      "ownerPid": 66564,
+      "ownerExited": true,
+      "scenePaintMs": 7.7612757589398145,
+      "sceneNativeFps": 32.848659071930136,
+      "sceneSimulationHz": 19.395565029908497,
+      "queryCost": {
+        "selfMs": 114.054,
+        "inclusiveMs": 114.054,
+        "profileMs": 12907.932,
+        "functions": [
+          {
+            "kind": "fresh-query",
+            "name": "Jc",
+            "start": 16673,
+            "end": 17185
+          },
+          {
+            "kind": "query-reader",
+            "name": "Qc",
+            "start": 17185,
+            "end": 17766
+          }
+        ],
+        "note": "Includes fresh query and cached reader plus nested sampled calls; samples are attributed once."
+      },
+      "gameFullIntervalFps": 33.493081441035294,
+      "gameFixedTenSecondFps": 36.1,
+      "emptyPaints": {
+        "edit": 0,
+        "play": 0
+      },
+      "cacheProbe": {
+        "calls": 4,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "passed": true
+    },
+    {
+      "label": "scene-query-reuse-candidate-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-reuse-candidate-repeat-1791771027325\\report.json",
+      "exeSha256": "70a5f3fd3f4971792253f325d00ab6644eeedb2483cf7c3faf79e44b78385cd0",
+      "ownerPid": 117012,
+      "ownerExited": true,
+      "scenePaintMs": 8.077050805650487,
+      "sceneNativeFps": 30.141865788098706,
+      "sceneSimulationHz": 13.790935853732833,
+      "queryCost": {
+        "selfMs": 145.549,
+        "inclusiveMs": 145.549,
+        "profileMs": 12922.495,
+        "functions": [
+          {
+            "kind": "fresh-query",
+            "name": "Jc",
+            "start": 16673,
+            "end": 17185
+          },
+          {
+            "kind": "query-reader",
+            "name": "Qc",
+            "start": 17185,
+            "end": 17766
+          }
+        ],
+        "note": "Includes fresh query and cached reader plus nested sampled calls; samples are attributed once."
+      },
+      "gameFullIntervalFps": 30.839633903925822,
+      "gameFixedTenSecondFps": 33.7,
+      "emptyPaints": {
+        "edit": 0,
+        "play": 0
+      },
+      "cacheProbe": {
+        "calls": 4,
+        "debuggerProbeOutsideMeasurement": true
+      },
+      "passed": true
+    },
+    {
+      "label": "scene-query-reuse-baseline-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-reuse-baseline-repeat-1791771147908\\report.json",
+      "exeSha256": "e809ae34aa5828ea09fbda69a71022d3325c96fef298ffa36fd69da5ebbeb7ea",
+      "ownerPid": 174088,
+      "ownerExited": true,
+      "scenePaintMs": 6.899760634954095,
+      "sceneNativeFps": 35.30452088114827,
+      "sceneSimulationHz": 24.72143265448087,
+      "queryCost": {
+        "selfMs": 271.721,
+        "inclusiveMs": 271.721,
+        "profileMs": 12948.791,
+        "functions": [
+          {
+            "kind": "fresh-query",
+            "name": "Jc",
+            "start": 16673,
+            "end": 17185
+          }
+        ],
+        "note": "Includes fresh query and cached reader plus nested sampled calls; samples are attributed once."
+      },
+      "gameFullIntervalFps": 36.174102454393406,
+      "gameFixedTenSecondFps": 38.7,
+      "emptyPaints": {
+        "edit": 0,
+        "play": 0
+      },
+      "cacheProbe": null,
+      "passed": true
+    },
+    {
+      "label": "scene-query-reuse-candidate-unprobed",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-scene-query-reuse-candidate-unprobed-1791771355920\\report.json",
+      "exeSha256": "70a5f3fd3f4971792253f325d00ab6644eeedb2483cf7c3faf79e44b78385cd0",
+      "ownerPid": 174084,
+      "ownerExited": true,
+      "scenePaintMs": 8.049082344478535,
+      "sceneNativeFps": 30.34731554285183,
+      "sceneSimulationHz": 15.173657771425916,
+      "queryCost": {
+        "selfMs": 136.904,
+        "inclusiveMs": 136.904,
+        "profileMs": 12897.734,
+        "functions": [
+          {
+            "kind": "fresh-query",
+            "name": "Jc",
+            "start": 16673,
+            "end": 17185
+          },
+          {
+            "kind": "query-reader",
+            "name": "Qc",
+            "start": 17185,
+            "end": 17766
+          }
+        ],
+        "note": "Includes fresh query and cached reader plus nested sampled calls; samples are attributed once."
+      },
+      "gameFullIntervalFps": 31.56966217378057,
+      "gameFixedTenSecondFps": 33.5,
+      "emptyPaints": {
+        "edit": 0,
+        "play": 0
+      },
+      "cacheProbe": null,
+      "passed": true
+    }
+  ],
+  "nextHotspot": "Viewport paint and hierarchy-active lookup; query-local cost reduction did not satisfy overall performance acceptance"
+}
