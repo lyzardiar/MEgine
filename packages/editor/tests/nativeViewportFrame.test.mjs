@@ -30,6 +30,16 @@ test('native frame preserves exact RGBA pixels and metadata without copying the 
   assert.equal(frame.width,2);assert.equal(frame.height,1);assert.equal(frame.hasAuthoredCamera,true);
   assert.deepEqual([...frame.rgba],[255,12,34,255,56,78,90,128]);assert.equal(frame.rgba.buffer,buffer);
 });
+
+test('padded shared metadata parses without copying or accepting trailing RGBA capacity',()=>{
+  const original=packet(),metadataBytes=new DataView(original).getUint32(12,true),buffer=new ArrayBuffer(16+4096+8),header=new DataView(buffer);
+  [0x3146474d,2,1,4096].forEach((value,index)=>header.setUint32(index*4,value,true));
+  new Uint8Array(buffer,16,4096).fill(32);new Uint8Array(buffer,16,metadataBytes).set(new Uint8Array(original,16,metadataBytes));
+  new Uint8Array(buffer,4112).set(new Uint8Array(original,16+metadataBytes));
+  const frame=parseNativeViewportFrame(buffer);assert.equal(frame.rgba.buffer,buffer);assert.deepEqual([...frame.rgba],[255,12,34,255,56,78,90,128]);
+  assert.throws(()=>parseNativeViewportFrame(buffer.slice(0,-1)));
+  const oversized=new ArrayBuffer(buffer.byteLength+4);new Uint8Array(oversized).set(new Uint8Array(buffer));assert.throws(()=>parseNativeViewportFrame(oversized));
+});
 test('native frame rejects invalid magic, dimensions, metadata length and truncated pixels',()=>{
   for(const [offset,value] of [[0,0],[4,0],[8,4097],[12,0xffffffff]]){const buffer=packet();new DataView(buffer).setUint32(offset,value,true);assert.throws(()=>parseNativeViewportFrame(buffer));}
   assert.throws(()=>parseNativeViewportFrame(packet().slice(0,-1)));assert.throws(()=>parseNativeViewportFrame(new ArrayBuffer(8)));
