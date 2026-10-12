@@ -32,17 +32,18 @@ function equalJson(value: unknown, baseline: unknown): boolean {
 }
 
 // MiYu: private JSON copies have no accessors; exposed records still execute the original comparison.
-type PrivatePlayCopies = { owns(entities: unknown): boolean; unchanged(entity: object, baseline: object): boolean; expose(): void };
+type PrivatePlayCopies = { owns(entities: unknown): boolean; unchanged(entity: object, baseline: object): boolean; unchangedWorld?(entities: unknown, retained: unknown): boolean; expose(): void };
 const descriptor = Object.getOwnPropertyDescriptor, prototype = Object.getPrototypeOf, keys = Object.keys, isArray = Array.isArray;
 const nativeComparison = [descriptor, prototype, keys, isArray].every(fn => Function.prototype.toString.call(fn).includes('[native code]'));
 function ordinaryComparison(): boolean {
   return nativeComparison && descriptor(Object, 'keys')?.value === keys && descriptor(Object, 'getPrototypeOf')?.value === prototype && descriptor(Array, 'isArray')?.value === isArray && !descriptor(Object.prototype, 'toJSON') && !descriptor(Array.prototype, 'toJSON') && prototype(Array.prototype) === Object.prototype;
 }
-function equalEntities(value: unknown, baseline: unknown, copies?: PrivatePlayCopies): boolean {
+function equalEntities(value: unknown, baseline: unknown, copies?: PrivatePlayCopies, retained?: unknown): boolean {
   if (!copies?.owns(value)) return equalJson(value, baseline);
   if (!ordinaryComparison()) { copies.expose(); return equalJson(value, baseline); }
   if (!Array.isArray(value) || !Array.isArray(baseline)) return equalJson(value, baseline);
   if (value.length !== baseline.length) return false;
+  if (retained && copies.unchangedWorld?.(value, retained)) return true;
   let privateComparison = true;
   for (let i = 0; i < value.length; i++) {
     const child = value[i], saved = baseline[i];
@@ -92,34 +93,38 @@ export function createPlayWorldSync(copies?: PrivatePlayCopies) {
   type Color = WorldSnapshotView['clearColor'];
   let baseline: [Entities, Color] | null = null;
   let serialized: string | undefined;
+  let retainedEntities: Entities = null;
   const fullCapture = (entities: Entities, color: Color) => {
+    retainedEntities = null;
     serialized = JSON.stringify([entities, color]);
     baseline = JSON.parse(serialized) as [Entities, Color];
     if (Array.isArray(baseline[0])) for (const entity of baseline[0]) freezeJson(entity);
   };
   return {
-    reset() { baseline = null; serialized = undefined; },
+    reset() { baseline = null; serialized = undefined; retainedEntities = null; },
     /** Only a factory-owned immutable world can bypass comparison with editable data. */
     captureRetained(world: RetainedPlayWorld) {
       if (!retainedWorlds.has(world)) throw new Error('Play baseline must be an owned world');
       baseline = [world.entities.slice(), world.clearColor];
+      retainedEntities = world.entities;
       serialized = undefined;
     },
     /** Retain immutable JSON records across later captures; only the pointer list is copied. */
     viewportSnapshot() { return baseline?.[0] ? { entities: baseline[0].slice(), clearColor: baseline[1].slice() as Color } : undefined; },
     /** Verify structured presentation data without copying the immutable pointer list. */
-    presentationMatches(entities: Entities, color: Color) { return baseline != null && equalEntities(entities, baseline[0], copies) && equalJson(color, baseline[1]); },
+    presentationMatches(entities: Entities, color: Color) { return baseline != null && equalEntities(entities, baseline[0], copies, retainedEntities) && equalJson(color, baseline[1]); },
     /** Presentation preserves structured data, so it cannot use the serialization fallback in matches(). */
     presentationSnapshot(entities: Entities, color: Color) {
       return this.presentationMatches(entities, color) ? this.viewportSnapshot() : undefined;
     },
     matches(entities: Entities, color: Color) {
       if (!baseline) return false;
-      if (equalEntities(entities, baseline[0], copies) && equalJson(color, baseline[1])) return true;
+      if (equalEntities(entities, baseline[0], copies, retainedEntities) && equalJson(color, baseline[1])) return true;
       serialized ??= JSON.stringify(baseline);
       return JSON.stringify([entities, color]) === serialized;
     },
     capture(entities: Entities, color: Color) {
+      retainedEntities = null;
       if (!baseline || !entities || !Array.isArray(baseline[0]) || entities.length !== baseline[0].length || typeof (entities as { toJSON?: unknown }).toJSON === 'function') { fullCapture(entities, color); return; }
       const changed: number[] = [];
       for (let i = 0; i < entities.length; i++) if (!equalJson(entities[i], baseline[0][i])) changed.push(i);

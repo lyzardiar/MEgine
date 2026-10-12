@@ -4,6 +4,36 @@ import test from 'node:test';
 import {createServer} from 'vite';
 import {fileURLToPath} from 'node:url';
 
+test('owned private worlds skip record scans until exposure, ordinary capture or reset', async()=>{
+  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
+  try {
+    const {createPlayWorldSync,retainPlayWorld}=await server.ssrLoadModule('/src/playWorldSync.ts');
+    const world=retainPlayWorld({entities:Array.from({length:10000},(_,i)=>({entity:i+1,name:'Node '+i,components:{Transform:{position:[0,0,0]}}})),clearColor:[0,0,0,1],frame:0,simFrame:0});
+    const entities=structuredClone(world.entities),color=[...world.clearColor];let privateWorld=true,recordChecks=0,worldChecks=0;
+    const sync=createPlayWorldSync({owns:value=>privateWorld&&value===entities,unchanged:()=>{recordChecks++;return false;},unchangedWorld:(value,retained)=>{worldChecks++;return privateWorld&&value===entities&&retained===world.entities;},expose:()=>{privateWorld=false;}});
+    sync.captureRetained(world);
+    for(let i=0;i<8;i++){assert.ok(sync.presentationMatches(entities,color));assert.ok(sync.matches(entities,color));}
+    assert.equal(recordChecks,0);assert.equal(worldChecks,16);
+    color[0]=.5;assert.equal(sync.presentationMatches(entities,color),false);color[0]=0;
+    privateWorld=false;entities[9000].components.Transform.position[0]=7;assert.equal(sync.presentationMatches(entities,color),false);assert.equal(world.entities[9000].components.Transform.position[0],0);
+    entities[9000].components.Transform.position[0]=0;privateWorld=true;sync.capture(entities,color);
+    const checks=worldChecks;assert.ok(sync.presentationMatches(entities,color));assert.equal(worldChecks,checks);assert.equal(recordChecks,10000);
+    sync.reset();assert.equal(sync.presentationMatches(entities,color),false);
+  } finally {await server.close();}
+});
+
+test('private whole-world comparison retains prototype and serialization hook checks', async()=>{
+  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
+  const toJson=Object.getOwnPropertyDescriptor(Object.prototype,'toJSON');
+  try {
+    const {createPlayWorldSync,retainPlayWorld}=await server.ssrLoadModule('/src/playWorldSync.ts'),world=retainPlayWorld({entities:[{entity:1,components:{}}],clearColor:[0,0,0,1],frame:0,simFrame:0}),entities=structuredClone(world.entities);let privateWorld=true,worldChecks=0;
+    const sync=createPlayWorldSync({owns:value=>privateWorld&&value===entities,unchanged:()=>true,unchangedWorld:()=>{worldChecks++;return true;},expose:()=>{privateWorld=false;}});
+    sync.captureRetained(world);assert.ok(sync.presentationMatches(entities,world.clearColor));assert.equal(worldChecks,1);
+    Object.defineProperty(Object.prototype,'toJSON',{configurable:true,value(){return this;}});
+    assert.equal(sync.presentationMatches(entities,world.clearColor),false);assert.equal(privateWorld,false);assert.equal(worldChecks,1);
+  } finally {if(toJson)Object.defineProperty(Object.prototype,'toJSON',toJson);else delete Object.prototype.toJSON;await server.close();}
+});
+
 test('Play equality reads changing object and array getters once per structured comparison', async()=>{
   const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
   try {
