@@ -121,12 +121,14 @@ pub struct EditorViewportProfile {
 struct ProfileStage {
     name: &'static str,
     duration_ms: f64,
+    children: Vec<EditorViewportProfileNode>,
 }
 
 fn finish_stage(stages: &mut Vec<ProfileStage>, name: &'static str, started: Instant) {
     stages.push(ProfileStage {
         name,
         duration_ms: started.elapsed().as_secs_f64() * 1_000.0,
+        children: Vec::new(),
     });
 }
 
@@ -605,11 +607,13 @@ impl EditorViewportRenderer {
         finish_stage(&mut stages, "Renderer.submit_frame_to", stage_started);
         submit.context("could not render the editor viewport")?;
         let stage_started = Instant::now();
-        let rgba = self
+        let (rgba, readback) = self
             .renderer
-            .read_offscreen_rgba8(&self.target)
+            .read_offscreen_rgba8_profiled(&self.target)
             .context("could not read the editor viewport")?;
-        finish_stage(&mut stages, "Renderer.read_offscreen_rgba8", stage_started);
+        stages.push(ProfileStage { name: "Renderer.read_offscreen_rgba8", duration_ms: stage_started.elapsed().as_secs_f64() * 1000.0, children: [
+            ("Readback buffer prepare", readback.buffer_prepare_ms), ("Readback copy submit", readback.copy_submit_ms), ("Readback GPU map wait", readback.gpu_wait_ms), ("Readback RGBA row pack", readback.rgba_pack_ms), ("Readback unmap", readback.unmap_ms),
+        ].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect() });
         let stage_started = Instant::now();
         if self.resource_sample.as_ref().is_none_or(|(at, _, _)| at.elapsed().as_millis() >= 250) {
             let (resources, truncated) = collect_frame_resources(&self.project_root, &frame);
@@ -684,6 +688,7 @@ fn build_viewport_profile(
     let frame_ui_primitive_bytes = size_of_val(frame.ui.primitives.as_slice()) as u64;
     let frame_ui_batch_bytes = size_of_val(frame.ui.batches.as_slice()) as u64;
     let frame_control_bytes = size_of_val(frame.controls.as_slice()) as u64;
+    let (readback_buffer_bytes, readback_buffer_allocations) = renderer.offscreen_readback_stats();
     let memory = vec![
         EditorViewportMemoryCategory {
             name: "CPU readback RGBA".into(),
@@ -691,6 +696,10 @@ fn build_viewport_profile(
             bytes: readback_bytes as u64,
             certainty: "exact".into(),
             source: "Renderer.read_offscreen_rgba8 Vec length".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "GPU readback staging".into(), domain: "gpu".into(), bytes: readback_buffer_bytes,
+            certainty: "lower-bound".into(), source: format!("wgpu buffer logical capacity; {readback_buffer_allocations} allocations; driver padding excluded"),
         },
         EditorViewportMemoryCategory {
             name: "Frame packet / render objects".into(),
@@ -789,9 +798,9 @@ fn build_viewport_profile(
                         .map(|stage| EditorViewportProfileNode {
                             name: stage.name.into(),
                             total_ms: stage.duration_ms,
-                            self_ms: stage.duration_ms,
+                            self_ms: (stage.duration_ms - stage.children.iter().map(|node| node.total_ms).sum::<f64>()).max(0.0),
                             calls: 1,
-                            children: Vec::new(),
+                            children: stage.children,
                         })
                         .collect(),
                 }

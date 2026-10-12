@@ -13,7 +13,8 @@ use mengine_core::surface_shader::{
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::num::NonZeroU64;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+use std::time::Instant;
 use winit::dpi::PhysicalSize;
 
 const MAX_POINT_LIGHTS: usize = 4;
@@ -385,6 +386,20 @@ pub struct OffscreenRenderTarget {
     format: wgpu::TextureFormat,
 }
 
+#[derive(Clone, Copy, Debug, Default)]
+pub struct OffscreenReadbackProfile {
+    pub buffer_prepare_ms: f64,
+    pub copy_submit_ms: f64,
+    pub gpu_wait_ms: f64,
+    pub rgba_pack_ms: f64,
+    pub unmap_ms: f64,
+    pub buffer_reused: bool,
+    pub buffer_bytes: u64,
+    pub buffer_allocations: u64,
+}
+
+struct OffscreenReadbackBuffer { buffer: wgpu::Buffer, allocations: u64 }
+
 impl OffscreenRenderTarget {
     pub fn texture(&self) -> &wgpu::Texture {
         &self.texture
@@ -670,6 +685,7 @@ pub struct Renderer {
     pub graph: RenderGraph,
     size: PhysicalSize<u32>,
     scene_textures: HashMap<String, SceneTextureGpu>,
+    offscreen_readback: Mutex<Option<OffscreenReadbackBuffer>>,
 }
 
 impl Renderer {
@@ -1300,6 +1316,7 @@ impl Renderer {
             graph: RenderGraph::default_forward(),
             size,
             scene_textures: HashMap::new(),
+            offscreen_readback: Mutex::new(None),
         })
     }
 
@@ -1361,17 +1378,43 @@ impl Renderer {
         &self,
         target: &OffscreenRenderTarget,
     ) -> Result<Vec<u8>, RhiError> {
+        self.read_offscreen_rgba8_profiled(target).map(|(rgba, _)| rgba)
+    }
+
+    pub fn offscreen_readback_stats(&self) -> (u64, u64) {
+        let cache = self.offscreen_readback.lock().unwrap_or_else(|error| error.into_inner());
+        cache.as_ref().map_or((0, 0), |cached| (cached.buffer.size(), cached.allocations))
+    }
+
+    /// Reuse one unmapped staging buffer, growing only for a larger padded target.
+    pub fn read_offscreen_rgba8_profiled(&self, target: &OffscreenRenderTarget) -> Result<(Vec<u8>, OffscreenReadbackProfile), RhiError> {
+        let started = Instant::now();
+        let bgra = matches!(target.format, wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb);
+        if !bgra && !matches!(target.format, wgpu::TextureFormat::Rgba8Unorm | wgpu::TextureFormat::Rgba8UnormSrgb) {
+            return Err(RhiError::InvalidTarget(format!("RGBA8 readback does not support {:?}", target.format)));
+        }
         let width = target.size.width;
         let height = target.size.height;
         let row_bytes = width * 4;
         let alignment = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
         let padded_row_bytes = row_bytes.div_ceil(alignment) * alignment;
-        let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
-            label: Some("mengine_offscreen_readback"),
-            size: (padded_row_bytes as u64) * (height as u64),
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-            mapped_at_creation: false,
-        });
+        let required_bytes = u64::from(padded_row_bytes) * u64::from(height);
+        let mut cache = self.offscreen_readback.lock().map_err(|error| RhiError::InvalidTarget(format!("readback buffer lock failed: {error}")))?;
+        let buffer_reused = cache.as_ref().is_some_and(|cached| cached.buffer.size() >= required_bytes);
+        if !buffer_reused {
+            let allocations = cache.as_ref().map_or(1, |cached| cached.allocations + 1);
+            let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("mengine_offscreen_readback"),
+                size: required_bytes,
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+                mapped_at_creation: false,
+            });
+            *cache = Some(OffscreenReadbackBuffer { buffer, allocations });
+        }
+        let cached = cache.as_ref().expect("readback buffer initialized above");
+        let buffer = &cached.buffer;
+        let mut profile = OffscreenReadbackProfile { buffer_prepare_ms: started.elapsed().as_secs_f64() * 1000.0, buffer_reused, buffer_bytes: buffer.size(), buffer_allocations: cached.allocations, ..Default::default() };
+        let started = Instant::now();
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -1385,7 +1428,7 @@ impl Renderer {
                 aspect: wgpu::TextureAspect::All,
             },
             wgpu::TexelCopyBufferInfo {
-                buffer: &buffer,
+                buffer,
                 layout: wgpu::TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(padded_row_bytes),
@@ -1399,8 +1442,10 @@ impl Renderer {
             },
         );
         self.queue.submit(std::iter::once(encoder.finish()));
+        profile.copy_submit_ms = started.elapsed().as_secs_f64() * 1000.0;
 
-        let slice = buffer.slice(..);
+        let started = Instant::now();
+        let slice = buffer.slice(..required_bytes);
         let (sender, receiver) = std::sync::mpsc::sync_channel(1);
         slice.map_async(wgpu::MapMode::Read, move |result| {
             let _ = sender.send(result);
@@ -1412,31 +1457,25 @@ impl Renderer {
             .map_err(|error| {
                 RhiError::InvalidTarget(format!("readback mapping failed: {error}"))
             })?;
+        profile.gpu_wait_ms = started.elapsed().as_secs_f64() * 1000.0;
 
+        let started = Instant::now();
         let mapped = slice.get_mapped_range();
         let mut rgba = Vec::with_capacity((row_bytes * height) as usize);
         for row in mapped.chunks_exact(padded_row_bytes as usize) {
             rgba.extend_from_slice(&row[..row_bytes as usize]);
         }
-        if matches!(
-            target.format,
-            wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb
-        ) {
+        if bgra {
             for pixel in rgba.chunks_exact_mut(4) {
                 pixel.swap(0, 2);
             }
-        } else if !matches!(
-            target.format,
-            wgpu::TextureFormat::Rgba8Unorm | wgpu::TextureFormat::Rgba8UnormSrgb
-        ) {
-            return Err(RhiError::InvalidTarget(format!(
-                "RGBA8 readback does not support {:?}",
-                target.format
-            )));
         }
         drop(mapped);
+        profile.rgba_pack_ms = started.elapsed().as_secs_f64() * 1000.0;
+        let started = Instant::now();
         buffer.unmap();
-        Ok(rgba)
+        profile.unmap_ms = started.elapsed().as_secs_f64() * 1000.0;
+        Ok((rgba, profile))
     }
 
     pub fn render(
@@ -4061,6 +4100,53 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn readback_fixture(renderer: &Renderer, width: u32, height: u32, format: wgpu::TextureFormat, seed: u8) -> (OffscreenRenderTarget, Vec<u8>) {
+        let size = PhysicalSize::new(width, height);
+        let texture = renderer.device.create_texture(&wgpu::TextureDescriptor { label: Some("readback pixels"), size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 }, mip_level_count: 1, sample_count: 1, dimension: wgpu::TextureDimension::D2, format, usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::COPY_DST, view_formats: &[] });
+        let rgba = (0..height).flat_map(|y| (0..width).flat_map(move |x| [((x + u32::from(seed)) % 251) as u8, ((y * 17 + u32::from(seed)) % 251) as u8, ((x + y * 3) % 251) as u8, (100 + (x + y) % 156) as u8])).collect::<Vec<_>>();
+        let mut bytes = rgba.clone();
+        if matches!(format, wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb) { for pixel in bytes.chunks_exact_mut(4) { pixel.swap(0, 2); } }
+        renderer.queue.write_texture(wgpu::TexelCopyTextureInfo { texture: &texture, mip_level: 0, origin: wgpu::Origin3d::ZERO, aspect: wgpu::TextureAspect::All }, &bytes, wgpu::TexelCopyBufferLayout { offset: 0, bytes_per_row: Some(width * 4), rows_per_image: Some(height) }, wgpu::Extent3d { width, height, depth_or_array_layers: 1 });
+        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        (OffscreenRenderTarget { texture, view, size, format }, rgba)
+    }
+
+    #[test]
+    fn offscreen_readback_reuses_capacity_preserves_padded_rgba_and_recovers_after_invalid_format() {
+        let renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).expect("GPU adapter for readback acceptance");
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let mut capacity = 0; let mut allocations = 0;
+        for format in [wgpu::TextureFormat::Rgba8Unorm, wgpu::TextureFormat::Rgba8UnormSrgb, wgpu::TextureFormat::Bgra8Unorm, wgpu::TextureFormat::Bgra8UnormSrgb] {
+            for (width, height) in [(1, 2), (63, 3), (64, 3), (65, 2), (129, 7), (31, 1)] {
+                for seed in [3, 29] {
+                    let (mut target, expected) = readback_fixture(&renderer, width, height, format, seed);
+                    let bytes = u64::from((width * 4).div_ceil(wgpu::COPY_BYTES_PER_ROW_ALIGNMENT) * wgpu::COPY_BYTES_PER_ROW_ALIGNMENT) * u64::from(height);
+                    let reuse = capacity >= bytes; if !reuse { capacity = bytes; allocations += 1; }
+                    let (actual, profile) = renderer.read_offscreen_rgba8_profiled(&target).unwrap();
+                    assert_eq!(actual, expected, "row order, alpha, padding and channel order");
+                    assert_eq!(profile.buffer_reused, reuse); assert_eq!((profile.buffer_bytes, profile.buffer_allocations), (capacity, allocations));
+                    target.format = wgpu::TextureFormat::Rgba16Float; assert!(renderer.read_offscreen_rgba8(&target).is_err()); target.format = format;
+                    assert_eq!(renderer.read_offscreen_rgba8(&target).unwrap(), expected); assert_eq!(renderer.offscreen_readback_stats(), (capacity, allocations));
+                }
+            }
+        }
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+    }
+
+    #[test]
+    fn offscreen_readback_serializes_shared_buffer_mapping_for_separate_targets() {
+        let renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).expect("GPU adapter for shared readback acceptance");
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let (first, first_pixels) = readback_fixture(&renderer, 65, 5, wgpu::TextureFormat::Rgba8Unorm, 7);
+        let (second, second_pixels) = readback_fixture(&renderer, 31, 7, wgpu::TextureFormat::Bgra8Unorm, 23);
+        std::thread::scope(|scope| {
+            let one = scope.spawn(|| renderer.read_offscreen_rgba8(&first).unwrap());
+            let two = scope.spawn(|| renderer.read_offscreen_rgba8(&second).unwrap());
+            assert_eq!(one.join().unwrap(), first_pixels); assert_eq!(two.join().unwrap(), second_pixels);
+        });
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+    }
 
     #[test]
     fn spatial_culling_submits_camera_shadow_union_and_refreshes_mesh_bounds() {
