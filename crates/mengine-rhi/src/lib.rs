@@ -16,7 +16,7 @@ pub use renderer::{
     look_at, orthographic, perspective, project_world_to_viewport, validate_surface_shader_hook,
     ClearColor, DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting,
     MaterialBlendMode, MaterialFilter, MaterialPipelinePrewarmReport, MaterialPipelineStats,
-    MaterialTextureStats, MaterialWrap, OffscreenRenderTarget, PointLightData, RenderFrame,
+    MaterialTextureStats, MaterialWrap, OffscreenReadbackProfile, OffscreenRenderTarget, PointLightData, RenderFrame,
     RenderMaterial, RenderObject, RenderTarget, Renderer, SceneTextureFrame, SpotLightData,
     SurfaceShaderParameterBinding, SurfaceShaderPipelineDiagnostic, SpatialCullingStats,
 };
