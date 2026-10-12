@@ -1,0 +1,146 @@
+{
+  "author": "MiYu",
+  "baselineEngine": "74060f8d963fb12408cb90580603ecc25341e94d",
+  "scope": "Build one immutable interaction query only when a visible Scene consumer evaluates filtering/selection. Use actual dock visibility, preserve simultaneous Scene/Game views and immutable queries, and avoid entity scans for empty hidden/unpickable sets.",
+  "sourceSha256": {
+    "packages/editor/src/App.tsx": "d96622c73ef4d4df60a49edeeb2240c3fdd4ab31dc2f48475beaf9df74246b18",
+    "packages/editor/src/store.ts": "d1b7fdb4d6e8dc4ca99bac2680459b1af2878f60c5c5c489d7c6143381b2df62",
+    "packages/editor/tests/viewportInteractionQueryScheduling.test.mjs": "36f674718ca3454a54a82110594f6f6e99b350a86e9724fe2d396f9aa4a8d428"
+  },
+  "candidateExecutable": "D:\\MEngineNativeQA\\release-editor-interaction-query.exe",
+  "candidateExecutableSha256": "dcf4b01a01cfedb750824cf3ecf5429363b20a4f0ad033a31cab25f374c85e50",
+  "tests": {
+    "passed": 26,
+    "failed": 0,
+    "skipped": 0,
+    "log": "D:\\MEngineNativeQA\\interaction-query-regression.log"
+  },
+  "frontendBuild": "D:\\MEngineNativeQA\\interaction-query-frontend-build.log",
+  "releaseBuild": "D:\\MEngineNativeQA\\interaction-query-release-build.log",
+  "runs": [
+    {
+      "label": "interaction-query-baseline",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-interaction-query-baseline-1791803688510\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "queryCoverage": {
+        "view": "game",
+        "viewports": [
+          {
+            "label": "Game viewport",
+            "width": 850.875,
+            "height": 510.13543701171875
+          }
+        ],
+        "cameraUpdates": 8,
+        "queryCalls": 17,
+        "functions": [
+          {
+            "url": "http://tauri.localhost/assets/App-BS0GbkOf.js",
+            "count": 17
+          }
+        ],
+        "outsidePerformanceSampling": true
+      },
+      "movingEditFps": 58.999950830607865,
+      "movingPlayFps": 33.01192555854091,
+      "gameFps": 40.354446555903394,
+      "movingPlaySimulationHz": 32.673747727874996,
+      "playSceneCapture": {
+        "passed": true,
+        "width": 640,
+        "height": 382,
+        "elapsedMs": 346.80650000000605,
+        "bytes": 486094,
+        "simulationFrames": 8
+      }
+    },
+    {
+      "label": "interaction-query-visible-candidate",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-interaction-query-visible-candidate-1791803810126\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "queryCoverage": {
+        "view": "game",
+        "viewports": [
+          {
+            "label": "Game viewport",
+            "width": 850.875,
+            "height": 510.13543701171875
+          }
+        ],
+        "cameraUpdates": 8,
+        "queryCalls": 8,
+        "functions": [
+          {
+            "url": "http://tauri.localhost/assets/App-BZ_YkkS5.js",
+            "count": 8
+          }
+        ],
+        "outsidePerformanceSampling": true
+      },
+      "movingEditFps": 58.8119976482073,
+      "movingPlayFps": 35.24022083945747,
+      "gameFps": 44.015698931464534,
+      "movingPlaySimulationHz": 33.535290026146825,
+      "playSceneCapture": {
+        "passed": true,
+        "width": 640,
+        "height": 382,
+        "elapsedMs": 346.9033000000054,
+        "bytes": 476519,
+        "simulationFrames": 8
+      }
+    },
+    {
+      "label": "interaction-query-visible-candidate-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-interaction-query-visible-candidate-repeat-1791803930673\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "queryCoverage": {
+        "view": "game",
+        "viewports": [
+          {
+            "label": "Game viewport",
+            "width": 850.875,
+            "height": 510.13543701171875
+          }
+        ],
+        "cameraUpdates": 8,
+        "queryCalls": 8,
+        "functions": [
+          {
+            "url": "http://tauri.localhost/assets/App-BZ_YkkS5.js",
+            "count": 8
+          }
+        ],
+        "outsidePerformanceSampling": true
+      },
+      "movingEditFps": 58.79182793866387,
+      "movingPlayFps": 34.49663657769722,
+      "gameFps": 42.9522514127453,
+      "movingPlaySimulationHz": 33.16756635827141,
+      "playSceneCapture": {
+        "passed": true,
+        "width": 640,
+        "height": 382,
+        "elapsedMs": 337.39830000000075,
+        "bytes": 486144,
+        "simulationFrames": 8
+      }
+    }
+  ],
+  "conclusion": "With only Game visible, 8 camera parameter updates caused 17 total store interaction query calls on baseline and 8 on both candidates. App no longer creates the unused Scene query; Hierarchy still builds its required visibility/picking query. Precise coverage runs after performance sampling and is excluded from FPS/CPU measurements. Performance values are local samples; no stable FPS improvement, stable 60 FPS or cross-machine acceptance is claimed.",
+  "cleanup": {
+    "sampleMainRestoredSha256": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+    "allOwnedEditorsExited": true,
+    "assetFixturesRemoved": true
+  },
+  "fullWarcraftGoal": "active"
+}

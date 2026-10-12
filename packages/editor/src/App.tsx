@@ -2865,18 +2865,22 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const treeNodes = useMemo(() => store.hierarchyPresentation(snap.entities), [store, snap, treeTick]);
   const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(mode === 'edit' ? snap.entities : []), [mode, snap.entities]);
   const sceneHiddenIds = store.sceneHiddenIds;
-  const sceneInteraction = store.sceneInteractionQuery();
+  const sceneViewportVisible = visiblePanels.has('scene');
+  let sceneInteraction: ReturnType<typeof store.sceneInteractionQuery> | undefined;
+  const sceneQuery = () => sceneInteraction ??= store.sceneInteractionQuery();
   const sceneHiddenKey = JSON.stringify(sceneHiddenIds);
-  const viewportEntities = useMemo(() => viewTab === 'scene' && sceneHiddenIds.length
-    ? snap.entities.filter((entity) => sceneInteraction.sceneVisible(entity.entity))
-    : snap.entities, [snap.entities, viewTab, sceneHiddenKey]);
-  const viewportSelected = viewTab === 'scene'
+  const viewportEntities = useMemo(() => {
+    if (!sceneViewportVisible || !sceneHiddenIds.length) return snap.entities;
+    const interaction = sceneQuery();
+    return snap.entities.filter((entity) => interaction.sceneVisible(entity.entity));
+  }, [snap.entities, sceneViewportVisible, sceneHiddenKey]);
+  const viewportSelected = sceneViewportVisible
     && selected != null
-    && (!sceneInteraction.sceneVisible(selected) || !sceneInteraction.scenePickable(selected))
+    && (!sceneQuery().sceneVisible(selected) || !sceneQuery().scenePickable(selected))
     ? null
     : selected;
-  const viewportSelectedIds = viewTab === 'scene'
-    ? selectedIds.filter((id) => sceneInteraction.sceneVisible(id) && sceneInteraction.scenePickable(id))
+  const viewportSelectedIds = sceneViewportVisible
+    ? selectedIds.filter((id) => sceneQuery().sceneVisible(id) && sceneQuery().scenePickable(id))
     : selectedIds;
   const timelinePreviewActive = store.timelinePreviewActive();
   const authoredEntities = useMemo(() => mode === 'edit' ? store.authoredEntities() : snap.entities, [store, mode, snap.entities]);
