@@ -371,6 +371,15 @@ var FrostClient=(()=>{
     const old=terrainMeshStates[n];if(old&&old.mesh===mesh&&old.material===material&&old.bed===bed)return;
     set(n,'MeshRenderer',{mesh,material,...(bed===undefined?{}:{cast_shadows:false,receive_shadows:!bed})});if(entities[n])terrainMeshStates[n]={mesh,material,bed};
   }
+  const environmentGrounds=new WeakMap();
+  function environmentGroundCache(map){
+    const key=S.groundRevision(map),old=environmentGrounds.get(map);if(old?.key===key)return old;
+    const cache={key,scenery:[],resources:[]};environmentGrounds.set(map,cache);return cache;
+  }
+  function environmentElevation(map,cache,i,x,z){
+    const old=cache[i];if(old&&old.x===x&&old.z===z)return old.y;
+    const y=S.elevation(map,x,z,true);cache[i]={x,z,y};return y;
+  }
   const sceneryVisuals=[];
   function sceneryVisual(i,edge,map){
     const tileset=map.tileset??0,far=edge||zoom>14,old=sceneryVisuals[i];
@@ -408,7 +417,7 @@ var FrostClient=(()=>{
     label('heroChoice label','英雄：'+S.heroDefinition({mode:'skirmish',shadowhunterVersion:1,taurenVersion:1,farseerVersion:1,blademasterVersion:1,mountainKingVersion:1,cryptLordVersion:1,lichVersion:1,dreadlordVersion:1,deathKnightVersion:1,paladinVersion:1,archmageVersion:1,bloodMageVersion:1,wardenVersion:1,priestessVersion:1,keeperVersion:1,demonHunterVersion:1,teams:[{faction}]},0,heroClass).label);label('faction label','种族：'+['人类','兽人','暗夜精灵','不死族'][faction]);
 
     const map=editing?editMap:state.map;
-    S.prepareGround(map);const groundY=(x,z)=>S.elevation(map,x,z,true);
+    const groundCache=environmentGroundCache(map),groundY=(x,z)=>S.elevation(map,x,z,true);
     const ground=FrostTerrain.cells(state,team,allVisible);
     set('Terrain bed','MaterialPropertyBlock',{custom_parameter_names:['tileset'],custom_parameter_values:[[map.tileset??0,0,0,0]]});
     for(let z=0;z<8;z++)for(let x=0;x<8;x++){const slot=z*8+x,name='Ground '+slot,old=tileState[slot],values=old&&FrostTerrain.chunkMatches(ground,x,z,old.values)?old.values:FrostTerrain.chunk(ground,x,z),tileset=map.tileset??0;if(!old||old.tileset!==tileset||values!==old.values){set(name,'MaterialPropertyBlock',{custom_parameter_names:[...FrostTerrain.names,'tileset'],custom_parameter_values:[...values,[tileset,0,0,0]]});if(entities[name])tileState[slot]={tileset,values};}terrainMesh(name,FrostTerrain.mesh(map,x,z),FrostTerrain.material(map));
@@ -430,7 +439,7 @@ var FrostClient=(()=>{
       const edge=i<72,angle=i*2.399963,x=edge?Math.cos(angle)*(35+i%4*2):((i*17.71)%54)-27,z=edge?Math.sin(angle)*(35+i%4*2):((i*23.19)%54)-27,idx=S.index(x,z);
       const seen=edge||allVisible||state.explored[team]?.[idx],clear=edge||map.terrain[idx]===0&&(map.doodads||[]).every(d=>Math.hypot(x-d.x,z-d.z)>1.2+d.scale)&&groundBlockers.every(u=>Math.hypot(x-u.x,z-u.z)>4)&&!(state.mode==='td'&&Math.floor(ground[idx]/2)%3===2);
       if(!world||!seen||!clear){environment('Scenery '+i,null);continue;}
-      environment('Scenery '+i,sceneryVisual(i,edge,map),[x,groundY(x,z)-.02,z]);
+      environment('Scenery '+i,sceneryVisual(i,edge,map),[x,environmentElevation(map,groundCache.scenery,i,x,z)-.02,z]);
     }
     for(let i=0;i<S.DOODAD_LIMIT;i++){const d=map.doodads?.[i],seen=d&&(allVisible||state.explored[team]?.[S.index(d.x,d.z)]);environment('Doodad '+i,world&&seen?FrostVisual.doodad(d,zoom,map.tileset??0):null,d?[d.x,groundY(d.x,d.z)-.02,d.z]:hidden);}
     const pathing=editing&&pathingVisible?FrostTerrain.pathing(state):null;for(let z=0;z<8;z++)for(let x=0;x<8;x++){const n='Pathing '+(z*8+x);show(n,!!pathing);if(pathing){set(n,'MeshRenderer',{mesh:FrostTerrain.mesh(map,x,z),material:'Assets/Materials/Pathing.mmat',cast_shadows:false,receive_shadows:false});set(n,'MaterialPropertyBlock',{custom_parameter_names:FrostTerrain.names,custom_parameter_values:FrostTerrain.chunk(pathing,x,z)});}}
@@ -541,13 +550,13 @@ var FrostClient=(()=>{
   }
   function renderResources(){
     const playing=['playing','finished','reconnecting'].includes(mode),editing=mode==='editor',world=playing||editing,map=editing?editMap:state.map;
-    S.prepareGround(map);const groundY=(x,z)=>S.elevation(map,x,z,true);
+    const groundCache=environmentGroundCache(map);
     if(resourceFrame!==state.frame){resourceFrame=state.frame;resourceFrameAt=time;}
     const elapsed=online?(connected&&mode==='playing'?Math.min(S.DT,time-resourceFrameAt):0):accumulator;
     for(let i=0;i<100;i++){
       let r=(editing?map.props:state.resources)[i];if(!world||!r||playing&&!state.explored[team]?.[S.index(r.x,r.z)]||!editing&&r.kind==='mine'&&(S.hauntedMine(state,r)||S.entangledMine(state,r))){environment('Prop '+i,null);continue;}
       if(playing&&!state.visible[team]?.[S.index(r.x,r.z)])r={kind:r.kind,x:r.x,z:r.z,amount:state.clearedResources?.[team]?.includes(i)?0:1};
-      const working=playing&&r.kind==='mine'&&state.visible[team]?.[S.index(r.x,r.z)]&&state.units.some(u=>u.hp>0&&u.built===1&&u.order?.type==='gather'&&u.order.resource===i&&r.amount>0&&u.cargo<20&&(!u.cargo||!u.cargoKind||u.cargoKind===r.kind)&&Math.hypot(u.x-r.x,u.z-r.z)<=3&&S.traversable(map,u.x,u.z,r.x,r.z)),v=FrostVisual.resource(r,zoom,map.tileset??0,elapsed,playing?state.frame*S.DT+elapsed:0,working);environment('Prop '+i,v,[r.x,groundY(r.x,r.z)-(v?.sink||0),r.z]);
+      const working=playing&&r.kind==='mine'&&state.visible[team]?.[S.index(r.x,r.z)]&&state.units.some(u=>u.hp>0&&u.built===1&&u.order?.type==='gather'&&u.order.resource===i&&r.amount>0&&u.cargo<20&&(!u.cargo||!u.cargoKind||u.cargoKind===r.kind)&&Math.hypot(u.x-r.x,u.z-r.z)<=3&&S.traversable(map,u.x,u.z,r.x,r.z)),v=FrostVisual.resource(r,zoom,map.tileset??0,elapsed,playing?state.frame*S.DT+elapsed:0,working);environment('Prop '+i,v,[r.x,environmentElevation(map,groundCache.resources,i,r.x,r.z)-(v?.sink||0),r.z]);
     }
   }
   let renderedUnitSlots=S.LIMIT;

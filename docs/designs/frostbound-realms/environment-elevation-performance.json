@@ -1,0 +1,817 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "gameBaseline": "8eca82d2eb37e38235efee5e172164ca6e1fbadb",
+  "engineAccepted": "3072784e3aebdac60a13ff8697d4f43236e70213",
+  "executable": "D:/MEngineNativeQA/release-editor-shared-snapshot.exe",
+  "executableSha256": "d0ad7569d6ab49b447860fbc0b0d46578d3fba14bf728b7d5a7a48e3a28ea117",
+  "candidateRawSha256": "e5a34b1b4e58ab66396246b14c834bc023ed2f0bcf1dd9ece1af0b7851c290dd",
+  "candidateLfSha256": "783450d3c035b6a491a85098286b42ffb56f6f1730ac11be39cb50a3c357a428",
+  "sourceSha256": {
+    "samples/frostbound-realms/game/simulation.js": "ce4e119d3ab66802ef920bc9631f189549a6a8af517b9c73671a8e5822573aa0",
+    "samples/frostbound-realms/game/client.js": "9be2015143beb786169b97ffd1c0044f1629a8e4b88450711035e56d8f43a3c9",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "d47cff3cbd030cb702d4fcb9aea13d7556a81916fa21f208dbafe166452d3e6a",
+    "scripts/test-frost-environment-elevation-client.mjs": "1489534e108facb8b8baa5545253417dd5397ae3d343899c44bff71bdce44473"
+  },
+  "nativeBenchmark": [
+    {
+      "label": "baseline",
+      "averageStageMs": {
+        "Animation, timeline and audio": 0.02541333333333334,
+        "Input": 0.013964999999999997,
+        "Physics and collision callbacks": 0.0019116666666666665,
+        "Reconcile": 0.0003666666666666667,
+        "Script and runtime requests": 6.533700000000001,
+        "Script and runtime requests/QuickJS callback": 6.149179999999999,
+        "Script and runtime requests/Script command commit": 0.09229833333333333,
+        "Script and runtime requests/Script world publication": 0.29140166666666667,
+        "Snapshot export": 0.5223483333333333
+      },
+      "warmupFrames": 360,
+      "measuredFrames": 60
+    },
+    {
+      "label": "candidate",
+      "averageStageMs": {
+        "Animation, timeline and audio": 0.023806666666666667,
+        "Input": 0.012713333333333333,
+        "Physics and collision callbacks": 0.0016933333333333331,
+        "Reconcile": 0.0004783333333333333,
+        "Script and runtime requests": 5.868878333333334,
+        "Script and runtime requests/QuickJS callback": 5.503058333333334,
+        "Script and runtime requests/Script command commit": 0.09246833333333333,
+        "Script and runtime requests/Script world publication": 0.2726333333333334,
+        "Snapshot export": 0.5115566666666668
+      },
+      "warmupFrames": 360,
+      "measuredFrames": 60
+    },
+    {
+      "label": "baseline-repeat",
+      "averageStageMs": {
+        "Animation, timeline and audio": 0.027485000000000002,
+        "Input": 0.01468333333333334,
+        "Physics and collision callbacks": 0.0023450000000000007,
+        "Reconcile": 0.00043333333333333337,
+        "Script and runtime requests": 6.52298,
+        "Script and runtime requests/QuickJS callback": 6.1417249999999965,
+        "Script and runtime requests/Script command commit": 0.0930933333333333,
+        "Script and runtime requests/Script world publication": 0.28728666666666675,
+        "Snapshot export": 0.5631983333333334
+      },
+      "warmupFrames": 360,
+      "measuredFrames": 60
+    },
+    {
+      "label": "candidate-repeat",
+      "averageStageMs": {
+        "Animation, timeline and audio": 0.02435666666666667,
+        "Input": 0.012508333333333337,
+        "Physics and collision callbacks": 0.001759999999999999,
+        "Reconcile": 0.0003600000000000001,
+        "Script and runtime requests": 5.893794999999998,
+        "Script and runtime requests/QuickJS callback": 5.512799999999999,
+        "Script and runtime requests/Script command commit": 0.09272999999999999,
+        "Script and runtime requests/Script world publication": 0.2874950000000001,
+        "Snapshot export": 0.4992566666666667
+      },
+      "warmupFrames": 360,
+      "measuredFrames": 60
+    }
+  ],
+  "release": [
+    {
+      "label": "environment-elevation-baseline",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-environment-elevation-baseline-1791777492289\\report.json",
+      "passed": true,
+      "owner": {
+        "pid": 129256,
+        "background": true,
+        "runtimeIdentifier": "com.mengine.editor.agent-3cd4619a2b774c5d98a0ef378d6c8a94"
+      },
+      "ownerExited": true,
+      "editContinuity": {
+        "paintCount": 728,
+        "emptyPaints": 0,
+        "completedNativeFrames": 698
+      },
+      "playContinuity": {
+        "paintCount": 713,
+        "emptyPaints": 0,
+        "completedNativeFrames": 435
+      },
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 27.49499999980132,
+        "p95PresentIntervalMs": 42.200000047683716,
+        "presentedFps": 36.3702491364694,
+        "averageRequestMs": 23.63875000178814,
+        "averageRenderMs": 8.146653749999997,
+        "averageCommandMs": 10.88369499999999,
+        "averageUploadMs": 1.704583336909612,
+        "averageWorldSyncMs": 2.187025416666667,
+        "averageSimulationMs": 10.151175833333337,
+        "averageSimulationRequestMs": 26.9837500055631
+      },
+      "editNative": {
+        "intervals": 53,
+        "averagePresentIntervalMs": 203.69811320754718,
+        "p95PresentIntervalMs": 239.59999990463257,
+        "presentedFps": 4.9092256391256015,
+        "averageRequestMs": 20.716666645473904,
+        "averageRenderMs": 4.459494444444444,
+        "averageCommandMs": 8.313090740740742,
+        "averageUploadMs": 1.5037036957564178,
+        "averageWorldSyncMs": 0.05460740740740745,
+        "averageSimulationMs": null,
+        "averageSimulationRequestMs": null
+      },
+      "movingNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 17.08125,
+        "p95PresentIntervalMs": 19.299999952316284,
+        "presentedFps": 58.54372484449323,
+        "averageRequestMs": 10.077916672825813,
+        "averageRenderMs": 3.076400000000001,
+        "averageCommandMs": 3.34759625,
+        "averageUploadMs": 1.4595833321412404,
+        "averageWorldSyncMs": 0.002524999999999999,
+        "averageSimulationMs": null,
+        "averageSimulationRequestMs": null
+      },
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 26.147916666666667,
+        "p95PresentIntervalMs": 44.59999990463257,
+        "presentedFps": 38.24396462433272,
+        "averageRequestMs": 20.073750001192092,
+        "averageRenderMs": 10.371714583333329,
+        "averageCommandMs": 12.211095416666662,
+        "averageUploadMs": 1.589166667064031,
+        "averageWorldSyncMs": 1.356023333333334,
+        "averageSimulationMs": 9.512779166666668,
+        "averageSimulationRequestMs": 17.91041665971279
+      },
+      "sceneSimulationHz": 25.867531297853375,
+      "gameSimulationHz": 37.06910560077437,
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_environment-elevation-baseline.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_environment-elevation-baseline.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 909,
+        "renderedRevision": 909,
+        "changedPixels": 649,
+        "expandedMaskDifferentPixels": 40,
+        "snapshotDifferentPixels": 52,
+        "restoredDifferentPixels": 65,
+        "repeatedDifferentPixels": 59,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.8098
+      },
+      "consoleErrors": [],
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 958,
+          "time": 36.077499987208284
+        },
+        "pausedAfter": {
+          "frame": 958,
+          "time": 36.077499987208284
+        },
+        "stepped": {
+          "frame": 959,
+          "time": 36.09749998676125
+        },
+        "resumed": {
+          "frame": 971,
+          "time": 36.39769998716656
+        },
+        "restarted": {
+          "frame": 972,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 973,
+          "time": 0.02500000037252903
+        }
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 74
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      }
+    },
+    {
+      "label": "environment-elevation-candidate",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-environment-elevation-candidate-1791777610862\\report.json",
+      "passed": true,
+      "owner": {
+        "pid": 174952,
+        "background": true,
+        "runtimeIdentifier": "com.mengine.editor.agent-1a2e91ae9f304d6094248cda1a7646e0"
+      },
+      "ownerExited": true,
+      "editContinuity": {
+        "paintCount": 728,
+        "emptyPaints": 0,
+        "completedNativeFrames": 697
+      },
+      "playContinuity": {
+        "paintCount": 716,
+        "emptyPaints": 0,
+        "completedNativeFrames": 448
+      },
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 27.016250000397363,
+        "p95PresentIntervalMs": 40.5,
+        "presentedFps": 37.01475963486019,
+        "averageRequestMs": 22.873333337903023,
+        "averageRenderMs": 8.158874999999997,
+        "averageCommandMs": 10.890012083333342,
+        "averageUploadMs": 1.7129166533549627,
+        "averageWorldSyncMs": 2.1720395833333326,
+        "averageSimulationMs": 9.526253333333335,
+        "averageSimulationRequestMs": 27.657083331545195
+      },
+      "editNative": {
+        "intervals": 53,
+        "averagePresentIntervalMs": 207.7509433998252,
+        "p95PresentIntervalMs": 267.60000014305115,
+        "presentedFps": 4.8134558795983855,
+        "averageRequestMs": 43.496296335149694,
+        "averageRenderMs": 4.930729629629628,
+        "averageCommandMs": 31.488899999999976,
+        "averageUploadMs": 1.5462962962962963,
+        "averageWorldSyncMs": 0.04878148148148155,
+        "averageSimulationMs": null,
+        "averageSimulationRequestMs": null
+      },
+      "movingNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 17.0125,
+        "p95PresentIntervalMs": 19.40000009536743,
+        "presentedFps": 58.78030859662014,
+        "averageRequestMs": 9.959583325187365,
+        "averageRenderMs": 3.188636249999999,
+        "averageCommandMs": 3.4802462500000018,
+        "averageUploadMs": 1.492500013113022,
+        "averageWorldSyncMs": 0.002523749999999999,
+        "averageSimulationMs": null,
+        "averageSimulationRequestMs": null
+      },
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 25.281666667262712,
+        "p95PresentIntervalMs": 42.5,
+        "presentedFps": 39.554354274233916,
+        "averageRequestMs": 19.55875000754992,
+        "averageRenderMs": 10.161120833333332,
+        "averageCommandMs": 11.958208333333337,
+        "averageUploadMs": 1.5779166688521704,
+        "averageWorldSyncMs": 1.3023916666666657,
+        "averageSimulationMs": 8.580069583333334,
+        "averageSimulationRequestMs": 16.328333335121474
+      },
+      "sceneSimulationHz": 25.343715054618325,
+      "gameSimulationHz": 38.4059089184548,
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_environment-elevation-candidate.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_environment-elevation-candidate.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 927,
+        "renderedRevision": 927,
+        "changedPixels": 655,
+        "expandedMaskDifferentPixels": 55,
+        "snapshotDifferentPixels": 66,
+        "restoredDifferentPixels": 70,
+        "repeatedDifferentPixels": 72,
+        "totalPixels": 76800,
+        "filteredSyncMs": 5.1798
+      },
+      "consoleErrors": [],
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 976,
+          "time": 36.16369998792652
+        },
+        "pausedAfter": {
+          "frame": 976,
+          "time": 36.16369998792652
+        },
+        "stepped": {
+          "frame": 977,
+          "time": 36.183699987479486
+        },
+        "resumed": {
+          "frame": 990,
+          "time": 36.49309998763446
+        },
+        "restarted": {
+          "frame": 990,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 991,
+          "time": 0.02500000037252903
+        }
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 77
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 9,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      }
+    },
+    {
+      "label": "environment-elevation-baseline-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-environment-elevation-baseline-repeat-1791777728378\\report.json",
+      "passed": true,
+      "owner": {
+        "pid": 113560,
+        "background": true,
+        "runtimeIdentifier": "com.mengine.editor.agent-0a97ddc85d9c47ee8e054ae0932bf08f"
+      },
+      "ownerExited": true,
+      "editContinuity": {
+        "paintCount": 726,
+        "emptyPaints": 0,
+        "completedNativeFrames": 695
+      },
+      "playContinuity": {
+        "paintCount": 717,
+        "emptyPaints": 0,
+        "completedNativeFrames": 435
+      },
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 27.86750000019868,
+        "p95PresentIntervalMs": 43.700000047683716,
+        "presentedFps": 35.88409437491237,
+        "averageRequestMs": 23.957499999801318,
+        "averageRenderMs": 8.188018749999998,
+        "averageCommandMs": 11.053009583333335,
+        "averageUploadMs": 1.692500000198682,
+        "averageWorldSyncMs": 2.2019054166666665,
+        "averageSimulationMs": 10.57938708333335,
+        "averageSimulationRequestMs": 27.71624998052915
+      },
+      "editNative": {
+        "intervals": 52,
+        "averagePresentIntervalMs": 202.24615384523685,
+        "p95PresentIntervalMs": 254.20000004768372,
+        "presentedFps": 4.944469800722251,
+        "averageRequestMs": 46.69245284458376,
+        "averageRenderMs": 4.4644320754716995,
+        "averageCommandMs": 34.281218867924544,
+        "averageUploadMs": 1.54528302066731,
+        "averageWorldSyncMs": 0.05215849056603778,
+        "averageSimulationMs": null,
+        "averageSimulationRequestMs": null
+      },
+      "movingNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 17.155416666467985,
+        "p95PresentIntervalMs": 19.40000009536743,
+        "presentedFps": 58.29062735355196,
+        "averageRequestMs": 9.977499996622404,
+        "averageRenderMs": 3.1320287500000004,
+        "averageCommandMs": 3.432835833333333,
+        "averageUploadMs": 1.481250003973643,
+        "averageWorldSyncMs": 0.002477500000000001,
+        "averageSimulationMs": null,
+        "averageSimulationRequestMs": null
+      },
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 25.97958333392938,
+        "p95PresentIntervalMs": 45.39999985694885,
+        "presentedFps": 38.49176436536602,
+        "averageRequestMs": 19.72666667600473,
+        "averageRenderMs": 10.163283749999998,
+        "averageCommandMs": 12.126340833333336,
+        "averageUploadMs": 1.582916663090388,
+        "averageWorldSyncMs": 1.3099545833333335,
+        "averageSimulationMs": 9.26833875,
+        "averageSimulationRequestMs": 17.17583332657814
+      },
+      "sceneSimulationHz": 25.734661061481514,
+      "gameSimulationHz": 36.55930134243388,
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_environment-elevation-baseline-repeat.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_environment-elevation-baseline-repeat.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 908,
+        "renderedRevision": 908,
+        "changedPixels": 657,
+        "expandedMaskDifferentPixels": 59,
+        "snapshotDifferentPixels": 63,
+        "restoredDifferentPixels": 67,
+        "repeatedDifferentPixels": 70,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.8863
+      },
+      "consoleErrors": [],
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 957,
+          "time": 36.109999958076514
+        },
+        "pausedAfter": {
+          "frame": 957,
+          "time": 36.109999958076514
+        },
+        "stepped": {
+          "frame": 958,
+          "time": 36.12999995762948
+        },
+        "resumed": {
+          "frame": 971,
+          "time": 36.43469995904807
+        },
+        "restarted": {
+          "frame": 971,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 972,
+          "time": 0.02500000037252903
+        }
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 78
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      }
+    },
+    {
+      "label": "environment-elevation-candidate-repeat",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-environment-elevation-candidate-repeat-1791777844463\\report.json",
+      "passed": true,
+      "owner": {
+        "pid": 16312,
+        "background": true,
+        "runtimeIdentifier": "com.mengine.editor.agent-4ab2e6cadd244c6cb7389ae89c605dcb"
+      },
+      "ownerExited": true,
+      "editContinuity": {
+        "paintCount": 727,
+        "emptyPaints": 0,
+        "completedNativeFrames": 699
+      },
+      "playContinuity": {
+        "paintCount": 712,
+        "emptyPaints": 0,
+        "completedNativeFrames": 420
+      },
+      "sceneNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 28.36208333273729,
+        "p95PresentIntervalMs": 42.200000047683716,
+        "presentedFps": 35.25834080198677,
+        "averageRequestMs": 23.981249996026357,
+        "averageRenderMs": 8.186922916666669,
+        "averageCommandMs": 10.864972916666666,
+        "averageUploadMs": 1.7033333281675975,
+        "averageWorldSyncMs": 2.134901249999999,
+        "averageSimulationMs": 9.561287499999988,
+        "averageSimulationRequestMs": 26.78916666507721
+      },
+      "editNative": {
+        "intervals": 53,
+        "averagePresentIntervalMs": 200.9226415067349,
+        "p95PresentIntervalMs": 264,
+        "presentedFps": 4.977039882120404,
+        "averageRequestMs": 45.75740739592799,
+        "averageRenderMs": 4.650281481481481,
+        "averageCommandMs": 31.98541481481483,
+        "averageUploadMs": 1.5259259409374661,
+        "averageWorldSyncMs": 0.0668666666666667,
+        "averageSimulationMs": null,
+        "averageSimulationRequestMs": null
+      },
+      "movingNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 16.94041666686535,
+        "p95PresentIntervalMs": 19.5,
+        "presentedFps": 59.030425264329686,
+        "averageRequestMs": 9.785416667660078,
+        "averageRenderMs": 3.1669595833333313,
+        "averageCommandMs": 3.458351666666668,
+        "averageUploadMs": 1.4758333335320155,
+        "averageWorldSyncMs": 0.0025745833333333324,
+        "averageSimulationMs": null,
+        "averageSimulationRequestMs": null
+      },
+      "gameNative": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 25.442916666467983,
+        "p95PresentIntervalMs": 42.5,
+        "presentedFps": 39.30366998049132,
+        "averageRequestMs": 19.62374999920527,
+        "averageRenderMs": 10.177923750000001,
+        "averageCommandMs": 12.046529999999997,
+        "averageUploadMs": 1.5754166662693023,
+        "averageWorldSyncMs": 1.3602850000000002,
+        "averageSimulationMs": 8.687812500000001,
+        "averageSimulationRequestMs": 16.42874999245008
+      },
+      "sceneSimulationHz": 25.549313126147307,
+      "gameSimulationHz": 37.0582763379137,
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "projectAssetRefresh": {
+        "added": [
+          {
+            "label": "ProjectListQa_environment-elevation-candidate-repeat.mmat (material)",
+            "selected": false
+          }
+        ],
+        "selected": [
+          {
+            "label": "ProjectListQa_environment-elevation-candidate-repeat.mmat (material)",
+            "selected": true
+          }
+        ],
+        "deleted": [],
+        "restored": [
+          "Main.mscene (scene)"
+        ],
+        "fixtureRemoved": true,
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 911,
+        "renderedRevision": 911,
+        "changedPixels": 650,
+        "expandedMaskDifferentPixels": 56,
+        "snapshotDifferentPixels": 61,
+        "restoredDifferentPixels": 71,
+        "repeatedDifferentPixels": 57,
+        "totalPixels": 76800,
+        "filteredSyncMs": 5.1895
+      },
+      "consoleErrors": [],
+      "playbackControls": {
+        "pausedBefore": {
+          "frame": 957,
+          "time": 36.182100036763586
+        },
+        "pausedAfter": {
+          "frame": 957,
+          "time": 36.182100036763586
+        },
+        "stepped": {
+          "frame": 958,
+          "time": 36.20210003631655
+        },
+        "resumed": {
+          "frame": 970,
+          "time": 36.48750003694836
+        },
+        "restarted": {
+          "frame": 970,
+          "time": 0
+        },
+        "restartedStep": {
+          "frame": 971,
+          "time": 0.02500000037252903
+        }
+      },
+      "liveCameraPreview": {
+        "entity": 4294967296,
+        "draws": 75
+      },
+      "importedMeshPick": {
+        "mesh": "Assets/WarcraftIII/Models/Units/Human/Footman/Footman/geoset-00.glb",
+        "entity": 4294976315,
+        "projections": 10,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true,
+        "directProjection": true,
+        "debuggerProbeOutsideMeasurement": true
+      }
+    }
+  ],
+  "clientEquivalence": {
+    "author": "MiYu",
+    "passed": true,
+    "comparisons": 26,
+    "reusedSamples": 1342,
+    "candidateRepeatedSamples": 0,
+    "scope": "Exact native scenery/resource node equivalence across deferred creation, LOD, mutable heights/ramps/sculpt/terrain, tilesets, fog, moved/reordered resources, editor props, blockers, replacement maps and menu transitions."
+  },
+  "tests": [
+    {
+      "test": "test-frost-scenery-visual-client.mjs",
+      "exit": 0,
+      "log": "D:/MEngineNativeQA/environment-elevation-test-frost-scenery-visual-client.mjs.log"
+    },
+    {
+      "test": "test-frost-environment-client.mjs",
+      "exit": 0,
+      "log": "D:/MEngineNativeQA/environment-elevation-test-frost-environment-client.mjs.log"
+    },
+    {
+      "test": "test-frost-minimap-client.mjs",
+      "exit": 0,
+      "log": "D:/MEngineNativeQA/environment-elevation-test-frost-minimap-client.mjs.log"
+    },
+    {
+      "test": "test-frost-tree-felling-client.mjs",
+      "exit": 0,
+      "log": "D:/MEngineNativeQA/environment-elevation-test-frost-tree-felling-client.mjs.log"
+    },
+    {
+      "test": "test-frost-ground-bindings.mjs",
+      "exit": 0,
+      "log": "D:/MEngineNativeQA/environment-elevation-test-frost-ground-bindings.mjs.log"
+    },
+    {
+      "test": "test-frost-ground-cache-equivalence.mjs",
+      "exit": 1,
+      "log": "D:/MEngineNativeQA/environment-elevation-test-frost-ground-cache-equivalence.mjs.log"
+    },
+    {
+      "exit": 0,
+      "test": "test-frost-ground-cache-equivalence.mjs",
+      "log": "D:/MEngineNativeQA/environment-elevation-test-frost-ground-cache-equivalence.mjs-current.log",
+      "baseline": "8eca82d"
+    },
+    {
+      "exit": 0,
+      "test": "test-frost-ground-detail-equivalence.mjs",
+      "log": "D:/MEngineNativeQA/environment-elevation-test-frost-ground-detail-equivalence.mjs-current.log",
+      "baseline": "script default"
+    },
+    {
+      "exit": 1,
+      "test": "test-frost-ground-blockers.mjs",
+      "log": "D:/MEngineNativeQA/environment-elevation-test-frost-ground-blockers.mjs-current.log",
+      "baseline": "script default"
+    },
+    {
+      "log": "D:/MEngineNativeQA/environment-elevation-blockers-current.log",
+      "test": "full-world-blockers-current",
+      "baseline": "8eca82d",
+      "exit": 0
+    },
+    {
+      "test": "test-frost-terrain.mjs",
+      "log": "D:/MEngineNativeQA/environment-elevation-test-frost-terrain.mjs-current.log",
+      "exit": 0
+    },
+    {
+      "test": "test-frost-ground-display.mjs",
+      "log": "D:/MEngineNativeQA/environment-elevation-test-frost-ground-display.mjs-current.log",
+      "exit": 1
+    }
+  ],
+  "displayCurrentBaseline": {
+    "author": "MiYu",
+    "passed": true,
+    "baseline": "8eca82d",
+    "completeWorldsCompared": 90,
+    "entities": 9019,
+    "scope": "Three map families, four viewport shapes, retained frames, live editor geometry/water/surface/doodad/tileset edits, animated water clocks, fog reveal/hide, menu/editor/game reactivation and native-normalized component values."
+  },
+  "failedRuns": [
+    {
+      "report": "D:/MEngineNativeQA/release-scene-profile-environment-elevation-baseline-1791777387206/report.json",
+      "reason": "Repeated project.open after the same QA project had opened; no performance sample. Harness verifies exact project root before continuing."
+    }
+  ],
+  "testLimitations": [
+    "ground-cache default 46a296b predates current gameplay fields; comparison against 8eca82d passed 144 paths and 315 AI states.",
+    "ground-blockers default historical baseline failed with Array buffer allocation failed; cause unproven. Current-baseline diagnostic passed 36 complete worlds with unchanged visibility call counts.",
+    "ground-display default bdeb052 predates current behavior; 90 complete worlds against 8eca82d passed.",
+    "Static-node sampling test stubs progressive grass only; existing terrain/detail/display tests cover actual grass."
+  ],
+  "cleanup": {
+    "sampleMainRestoredSha256": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+    "allOwnedEditorsExited": true,
+    "allAssetFixturesRemoved": true,
+    "comparisonWrapperExit": "All four QA reports passed; wrapper finalizer rejected the candidate raw hash because it contained the normalized hash. Candidate bytes verified against source and original script restored separately."
+  },
+  "scope": "Caches scenery/resource geometric elevation only. Visibility, blockers, LOD, materials and animation sink remain live. FPS represents completed WebView native presentations, not monitor refresh; cross-machine and stable 60 FPS remain unverified."
+}
