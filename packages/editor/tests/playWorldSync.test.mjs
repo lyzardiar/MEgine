@@ -10,7 +10,7 @@ test('owned private worlds skip record scans until exposure, ordinary capture or
     const {createPlayWorldSync,retainPlayWorld}=await server.ssrLoadModule('/src/playWorldSync.ts');
     const world=retainPlayWorld({entities:Array.from({length:10000},(_,i)=>({entity:i+1,name:'Node '+i,components:{Transform:{position:[0,0,0]}}})),clearColor:[0,0,0,1],frame:0,simFrame:0});
     const entities=structuredClone(world.entities),color=[...world.clearColor];let privateWorld=true,recordChecks=0,worldChecks=0;
-    const sync=createPlayWorldSync({owns:value=>privateWorld&&value===entities,unchanged:()=>{recordChecks++;return false;},unchangedWorld:(value,retained)=>{worldChecks++;return privateWorld&&value===entities&&retained===world.entities;},expose:()=>{privateWorld=false;}});
+    const sync=createPlayWorldSync({owns:value=>privateWorld&&value===entities,unchanged:()=>{recordChecks++;return false;},comparisonIndices:(value,retained)=>{worldChecks++;return privateWorld&&value===entities&&retained===world.entities?[]:undefined;},expose:()=>{privateWorld=false;}});
     sync.captureRetained(world);
     for(let i=0;i<8;i++){assert.ok(sync.presentationMatches(entities,color));assert.ok(sync.matches(entities,color));}
     assert.equal(recordChecks,0);assert.equal(worldChecks,16);
@@ -22,15 +22,38 @@ test('owned private worlds skip record scans until exposure, ordinary capture or
   } finally {await server.close();}
 });
 
-test('private whole-world comparison retains prototype and serialization hook checks', async()=>{
+test('private comparison retains prototype and serialization hook checks', async()=>{
   const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
   const toJson=Object.getOwnPropertyDescriptor(Object.prototype,'toJSON');
   try {
     const {createPlayWorldSync,retainPlayWorld}=await server.ssrLoadModule('/src/playWorldSync.ts'),world=retainPlayWorld({entities:[{entity:1,components:{}}],clearColor:[0,0,0,1],frame:0,simFrame:0}),entities=structuredClone(world.entities);let privateWorld=true,worldChecks=0;
-    const sync=createPlayWorldSync({owns:value=>privateWorld&&value===entities,unchanged:()=>true,unchangedWorld:()=>{worldChecks++;return true;},expose:()=>{privateWorld=false;}});
+    const sync=createPlayWorldSync({owns:value=>privateWorld&&value===entities,unchanged:()=>true,comparisonIndices:()=>{worldChecks++;return [];},expose:()=>{privateWorld=false;}});
     sync.captureRetained(world);assert.ok(sync.presentationMatches(entities,world.clearColor));assert.equal(worldChecks,1);
     Object.defineProperty(Object.prototype,'toJSON',{configurable:true,value(){return this;}});
     assert.equal(sync.presentationMatches(entities,world.clearColor),false);assert.equal(privateWorld,false);assert.equal(worldChecks,1);
+  } finally {if(toJson)Object.defineProperty(Object.prototype,'toJSON',toJson);else delete Object.prototype.toJSON;await server.close();}
+});
+
+test('mixed private worlds compare exposed records and detect new exposure during a getter', async()=>{
+  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
+  try {
+    const {createPlayWorldSync,retainPlayWorld}=await server.ssrLoadModule('/src/playWorldSync.ts'),world=retainPlayWorld({entities:Array.from({length:10000},(_,i)=>({entity:i+1,name:'Node '+i,components:{Transform:{position:[0,0,0]}}})),clearColor:[0,0,0,1],frame:0,simFrame:0});
+    const entities=structuredClone(world.entities),indices=[3,9998],exposed=new Set(indices.map(i=>entities[i])),mapping=new WeakMap(world.entities.map((e,i)=>[e,entities[i]]));let verified=true,recordChecks=0;
+    const sync=createPlayWorldSync({owns:value=>value===entities,unchanged:(value,saved)=>{recordChecks++;return !exposed.has(value)&&mapping.get(saved)===value;},comparisonIndices:(value,retained)=>verified&&value===entities&&retained===world.entities?indices:undefined,expose:()=>{verified=false;}});
+    sync.captureRetained(world);for(let i=0;i<8;i++)assert.ok(sync.presentationMatches(entities,world.clearColor));assert.equal(recordChecks,16);
+    entities[9998].name='Changed';assert.equal(sync.presentationMatches(entities,world.clearColor),false);entities[9998].name=world.entities[9998].name;
+    let reads=0;Object.defineProperty(entities[3].components.Transform.position,0,{configurable:true,get(){reads++;verified=false;exposed.add(entities[8000]);entities[8000].name='New editable alias';return 0;}});
+    assert.equal(sync.presentationMatches(entities,world.clearColor),false);assert.equal(reads,1);assert.equal(world.entities[8000].name,'Node 8000');
+  } finally {await server.close();}
+});
+
+test('mixed private comparison falls back for remaining records when a getter installs serialization hooks', async()=>{
+  const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'}),toJson=Object.getOwnPropertyDescriptor(Object.prototype,'toJSON');
+  try {
+    const {createPlayWorldSync,retainPlayWorld}=await server.ssrLoadModule('/src/playWorldSync.ts'),world=retainPlayWorld({entities:[{entity:1,components:{Custom:{value:1}}},{entity:2,components:{}}],clearColor:[0,0,0,1],frame:0,simFrame:0}),entities=structuredClone(world.entities),indices=[0];let reads=0,recordChecks=0,exposures=0;
+    const sync=createPlayWorldSync({owns:value=>value===entities,unchanged:value=>{recordChecks++;return value===entities[1];},comparisonIndices:()=>indices,expose:()=>{exposures++;}});
+    sync.captureRetained(world);Object.defineProperty(entities[0].components.Custom,'value',{get(){reads++;Object.defineProperty(Object.prototype,'toJSON',{configurable:true,value(){return this;}});return 1;}});
+    assert.equal(sync.presentationMatches(entities,world.clearColor),false);assert.equal(reads,1);assert.equal(recordChecks,1);assert.equal(exposures,1);
   } finally {if(toJson)Object.defineProperty(Object.prototype,'toJSON',toJson);else delete Object.prototype.toJSON;await server.close();}
 });
 

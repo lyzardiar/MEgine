@@ -201,8 +201,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let animationPreview: { root: number; samples: AnimationPreviewSample[] } | null = null;
   let timelinePreview: TimelineScenePreview | null = null;
   const exposedPlayRecords = new WeakSet<object>();
-  // MiYu: native publication certifies the private list until an editable record escapes.
-  let playExposureVersion = 0, privatePlayExposureVersion = 0, allPlayRecordsPrivate = false;
+  // MiYu: native publication certifies private records; exposed records retain live comparison.
+  let playExposureVersion = 0, privatePlayExposureVersion = 0, privatePlayComparisonIndices: number[] = [];
   const exposePlayRecord = <T extends object | undefined>(entity: T): T => { if (entity && !exposedPlayRecords.has(entity)) { exposedPlayRecords.add(entity); playExposureVersion++; } return entity; };
   const behaviourRunner = createBehaviourRunner(exposePlayRecord);
   let playRuntime: PlayRuntimeDriver | null = null;
@@ -218,23 +218,25 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let privatePlayEntities: EntityRec[] | null = null;
   let ownedPlayWorld: ReturnType<typeof retainedNativePlayWorld>;
   const exposePlayEntities = () => { privatePlayEntities = null; if (playEntities) for (const entity of playEntities) exposePlayRecord(entity); };
-  const playWorldSync = createPlayWorldSync({ owns: entities => entities === privatePlayEntities && privatePlayEntities != null, unchanged: (entity, baseline) => !exposedPlayRecords.has(entity) && editableNativeRecords.get(baseline as EntityRec) === entity, unchangedWorld: (entities, retained) => entities === privatePlayEntities && allPlayRecordsPrivate && playExposureVersion === privatePlayExposureVersion && retained === ownedPlayWorld?.entities, expose: exposePlayEntities });
+  const playWorldSync = createPlayWorldSync({ owns: entities => entities === privatePlayEntities && privatePlayEntities != null, unchanged: (entity, baseline) => !exposedPlayRecords.has(entity) && editableNativeRecords.get(baseline as EntityRec) === entity, comparisonIndices: (entities, retained) => entities === privatePlayEntities && playExposureVersion === privatePlayExposureVersion && retained === ownedPlayWorld?.entities ? privatePlayComparisonIndices : undefined, expose: exposePlayEntities });
   const acceptRuntimeWorld = (result: PlayRuntimeWorld) => {
     const owned = retainedNativePlayWorld(result);
     ownedPlayWorld = owned;
     if (owned) {
       let privateRecords = 0;
-      playEntities = owned.entities.map(entity => {
+      privatePlayComparisonIndices = [];
+      playEntities = owned.entities.map((entity, index) => {
         let editable = editableNativeRecords.get(entity);
         if (!editable) { editable = structuredClone(entity); editableNativeRecords.set(entity, editable); }
         if (!exposedPlayRecords.has(editable)) privateRecords++;
+        else privatePlayComparisonIndices.push(index);
         return editable;
       });
       let color = editableNativeColors.get(owned.clearColor);
       if (!color) { color = owned.clearColor.slice() as WorldSnapshotView['clearColor']; editableNativeColors.set(owned.clearColor, color); }
       playClearColor = color;
       privatePlayEntities = privateRecords > playEntities.length / 2 ? playEntities : null;
-      allPlayRecordsPrivate = privateRecords === playEntities.length; privatePlayExposureVersion = playExposureVersion;
+      privatePlayExposureVersion = playExposureVersion;
       if (!privatePlayEntities) exposePlayEntities();
       playWorldSync.captureRetained(owned);
     } else {
