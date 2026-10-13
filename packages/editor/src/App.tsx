@@ -799,6 +799,17 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   };
   refreshRef.current = refresh;
 
+  // MiYu: Scene selection changes keep the displayed world and its content-derived panel data.
+  const refreshSelection = () => {
+    if (store.mode !== 'edit') { refresh(); return; }
+    const selected = store.selected, selectedIds = store.selectedIds;
+    setSnap(previous => ({ ...previous, selected, selectedIds }));
+    setSelected(selected);
+    setSelectedIds(selectedIds);
+    if (!props.detachedPanel) agentBridge.observeSelection();
+    broadcastScene();
+  };
+
   const postTimelinePreview = (preview: TimelineScenePreview | null) => {
     syncChannel.current?.postMessage({
       type: 'timeline-preview',
@@ -3022,7 +3033,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 if (modifiers.toggle) store.selectMany([id], 'toggle', id);
                 else if (modifiers.additive) store.selectMany([id], 'add', id);
                 else store.select(id);
-                refresh();
+                refreshSelection();
               }}
               onMarqueeSelect={(ids, selectionMode) => {
                 const interaction = store.sceneInteractionQuery();
@@ -3032,7 +3043,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                   selectionMode,
                 );
                 store.selectMany(next, 'replace');
-                refresh();
+                refreshSelection();
               }}
               onSceneCamera={(partial) => {
                 store.setSceneCamera(partial);

@@ -2220,6 +2220,20 @@ class AgentBridge {
     return { ok: true };
   }
 
+  /** MiYu: Publish a pure selection change without rescanning scene component payloads. */
+  observeSelection(): void {
+    const store = this.store;
+    if (!store) return;
+    const previous = this.observedState;
+    if (!previous) { this.observe(); return; }
+    const selectedIds = store.selectedIds;
+    if (sameNumberArray(previous.selectedIds, selectedIds)) return;
+    const now = Date.now();
+    this.appendEvent('selection.changed', { selected: store.selected, selectedIds }, now);
+    this.recordMenuEvent(now);
+    this.observedState = { ...previous, selectedIds };
+  }
+
   /**
    * Compare the live editor with the most recently observed state. App calls
    * this after its normal refresh path, so UI and AgentBridge share one source
