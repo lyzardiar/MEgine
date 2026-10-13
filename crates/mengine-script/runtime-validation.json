@@ -1,0 +1,202 @@
+{
+  "author": "MiYu",
+  "defaultRuntime": "QuickJS-NG",
+  "candidateRuntime": "V8 152.2.0 via v8-runtime feature",
+  "scope": "Shared native ScriptHost for Editor and Player, preserving engine_api.js and nine native callbacks.",
+  "passed": true,
+  "nativeAcceptance": "V8 Release Editor and standalone Player passed. Default builds remain QuickJS; the candidate is selected explicitly with v8-runtime.",
+  "tests": {
+    "quickjsScript": {
+      "passed": 34,
+      "failed": 0
+    },
+    "v8Script": {
+      "passed": 34,
+      "failed": 0
+    },
+    "v8EditorHost": {
+      "passed": 50,
+      "failed": 0,
+      "ignored": 4
+    },
+    "v8Runtime": {
+      "passed": 219,
+      "failed": 0
+    },
+    "v8Memory": {
+      "passed": 2,
+      "failed": 0,
+      "childCases": [
+        "objects",
+        "buffers",
+        "oversized-buffer",
+        "large-array"
+      ]
+    },
+    "storageNegativeControl": "Before float_roundtrip, project_storage_preserves_javascript_number_roundtrips fails with numeric storage roundtrip changed state.",
+    "spriteArrayRevalidation": {
+      "quickjs": "1 passed",
+      "v8": "1 passed",
+      "scope": "Getter expands the other array to 8193 valid float4 entries; both reject before native allocation."
+    }
+  },
+  "hostWorkloads": {
+    "passed": false,
+    "scope": "Real ScriptHost runs all original workload steps, preserves deadlines, writes final state through production project storage, compares full JSON exactly to native VM baseline. Debug test executables; not a viewport performance benchmark.",
+    "cases": [
+      {
+        "runtime": "v8",
+        "case": "opening",
+        "output": "D:\\MEngineNativeQA\\script-host-parity-final\\v8-opening-1791896341601356300",
+        "exitCode": 0,
+        "stdout": "{\"output\":\"D:\\\\MEngineNativeQA\\\\script-host-parity-final\\\\v8-opening-1791896341601356300\",\"passed\":true,\"runtime\":\"v8\",\"steps\":600}\n",
+        "stderr": "",
+        "stateExactlyEquivalent": true,
+        "passed": true
+      },
+      {
+        "runtime": "v8",
+        "case": "battle",
+        "output": "D:\\MEngineNativeQA\\script-host-parity-final\\v8-battle-1791896342638044400",
+        "exitCode": 0,
+        "stdout": "{\"output\":\"D:\\\\MEngineNativeQA\\\\script-host-parity-final\\\\v8-battle-1791896342638044400\",\"passed\":true,\"runtime\":\"v8\",\"steps\":30}\n",
+        "stderr": "",
+        "stateExactlyEquivalent": true,
+        "passed": true
+      },
+      {
+        "runtime": "v8",
+        "case": "td",
+        "output": "D:\\MEngineNativeQA\\script-host-parity-final\\v8-td-1791896344888284400",
+        "exitCode": 0,
+        "stdout": "{\"output\":\"D:\\\\MEngineNativeQA\\\\script-host-parity-final\\\\v8-td-1791896344888284400\",\"passed\":true,\"runtime\":\"v8\",\"steps\":600}\n",
+        "stderr": "",
+        "stateExactlyEquivalent": true,
+        "passed": true
+      },
+      {
+        "runtime": "v8",
+        "case": "moba",
+        "output": "D:\\MEngineNativeQA\\script-host-parity-final\\v8-moba-1791896345664717300",
+        "exitCode": 0,
+        "stdout": "{\"output\":\"D:\\\\MEngineNativeQA\\\\script-host-parity-final\\\\v8-moba-1791896345664717300\",\"passed\":true,\"runtime\":\"v8\",\"steps\":600}\n",
+        "stderr": "",
+        "stateExactlyEquivalent": true,
+        "passed": true
+      },
+      {
+        "runtime": "quickjs",
+        "case": "opening",
+        "output": "D:\\MEngineNativeQA\\script-host-parity-final\\quickjs-opening-1791896347600009800",
+        "exitCode": 0,
+        "stdout": "{\"output\":\"D:\\\\MEngineNativeQA\\\\script-host-parity-final\\\\quickjs-opening-1791896347600009800\",\"passed\":true,\"runtime\":\"quickjs\",\"steps\":600}\n",
+        "stderr": "",
+        "stateExactlyEquivalent": true,
+        "passed": true
+      },
+      {
+        "runtime": "quickjs",
+        "case": "battle",
+        "output": "D:\\MEngineNativeQA\\script-host-parity-final\\quickjs-battle-1791896352100652200",
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Error: js: Error: interrupted\n    at routeSearch (eval_script:2258:121)\n    at formation (eval_script:2279:306)\n    at runCommand (eval_script:2490:54)\n    at command (eval_script:2402:1307)\n    at benchmarkReset (eval_script:4033:120)\n    at <eval> (eval_script:1:1)\n\n",
+        "passed": false
+      },
+      {
+        "runtime": "quickjs",
+        "case": "td",
+        "output": "D:\\MEngineNativeQA\\script-host-parity-final\\quickjs-td-1791896353973270800",
+        "exitCode": 0,
+        "stdout": "{\"output\":\"D:\\\\MEngineNativeQA\\\\script-host-parity-final\\\\quickjs-td-1791896353973270800\",\"passed\":true,\"runtime\":\"quickjs\",\"steps\":600}\n",
+        "stderr": "",
+        "stateExactlyEquivalent": true,
+        "passed": true
+      },
+      {
+        "runtime": "quickjs",
+        "case": "moba",
+        "output": "D:\\MEngineNativeQA\\script-host-parity-final\\quickjs-moba-1791896362797089700",
+        "exitCode": 0,
+        "stdout": "{\"output\":\"D:\\\\MEngineNativeQA\\\\script-host-parity-final\\\\quickjs-moba-1791896362797089700\",\"passed\":true,\"runtime\":\"quickjs\",\"steps\":600}\n",
+        "stderr": "",
+        "stateExactlyEquivalent": true,
+        "passed": true
+      }
+    ]
+  },
+  "numberPrecision": {
+    "fix": "serde_json float_roundtrip for incoming TCP messages, storage and native JSON parsing",
+    "regressionExample": {
+      "input": "112.00000000000001",
+      "previous": "112",
+      "current": "112.00000000000001"
+    },
+    "checks": [
+      "exact JavaScript save/load roundtrip including min/max finite numbers",
+      "local TCP echo preserves fractional state and exact string entity IDs"
+    ]
+  },
+  "limitations": [
+    "QuickJS battle workload remains interrupted during benchmarkReset by the original one-second eval budget; no limit was relaxed.",
+    "The native ScriptHost workload tests do not measure viewport FPS or establish two-machine multiplayer acceptance.",
+    "V8 memory protections are for trusted project scripts, not process isolation; arbitrary allocations can still cause a fatal V8 OOM.",
+    "Four existing editor-host tests requiring manually supplied native fixtures were not executed by the consumer suite."
+  ],
+  "evidence": {
+    "quickjs": "D:/MEngineNativeQA/script-host-quickjs-final.log",
+    "consumers": "D:/MEngineNativeQA/script-host-v8-consumers-final.log",
+    "memory": "D:/MEngineNativeQA/script-host-v8-memory.log",
+    "negative": "D:/MEngineNativeQA/script-host-storage-negative.log",
+    "workloads": "D:\\MEngineNativeQA\\script-host-parity-final\\report.json"
+  },
+  "nativeEditor": {
+    "passed": true,
+    "ownerExited": true,
+    "report": "D:\\MEngineNativeQA\\release-scene-profile-v8-script-host-1791897208491\\report.json",
+    "openMs": 5653.072400000001,
+    "movingSceneNativeFps": 56.52911249102917,
+    "gameDisplayedFps": 52.815755208333336,
+    "playSceneNativeFps": 51.205461915937704,
+    "sceneEmptyPaints": 0,
+    "playSceneEmptyPaints": 0,
+    "sampleRestored": true,
+    "harnessCorrection": "Readiness polling dismisses a delayed scene recovery dialog after validating its identity; the initial failed attempt is retained at D:/MEngineNativeQA/release-scene-profile-v8-script-host-1791897073780."
+  },
+  "nativePlayer": {
+    "passed": true,
+    "owner": {
+      "pid": 9000,
+      "started": "2026-10-13T13:09:26.5359362Z",
+      "executable": "D:/MEngineNativeQA/release-player-v8-candidate.exe"
+    },
+    "exit": {
+      "exitCode": 0,
+      "pid": 9000,
+      "exited": true
+    },
+    "marker": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\4e8f15f9b1b0b9d5\\v8-native-player-20261013.json",
+    "result": {
+      "entities": 4224,
+      "hp": 112.00000000000001,
+      "passed": true,
+      "ticks": 120
+    },
+    "stderr": "D:/MEngineNativeQA/v8-native-player.stderr.log",
+    "scope": "Actual Frostbound Main.js with an appended QA wrapper, current scene, 120 real game callbacks, precision marker and normal engine.quit. No two-machine network acceptance or Player FPS claim."
+  },
+  "releaseBuild": {
+    "command": "cargo build --release -p mengine-editor-tauri -p mengine-runtime --features mengine-script/v8-runtime,mengine-editor-tauri/custom-protocol --offline",
+    "elapsed": "8m 44s",
+    "artifacts": {
+      "editor": {
+        "path": "D:\\MEngineNativeQA\\release-editor-v8-candidate.exe",
+        "sha256": "fa25887c4575b2bae648be75450e0d1cf541b31ec1bd4696e856c8b6c9e0ddcb"
+      },
+      "player": {
+        "path": "D:\\MEngineNativeQA\\release-player-v8-candidate.exe",
+        "sha256": "9eeffc08deaaa65885af851c4d5a92d004d8d84af0a49e2408299533fe906ff9"
+      }
+    }
+  }
+}

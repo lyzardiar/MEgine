@@ -1,9 +1,8 @@
 use crate::{ScriptError, ScriptInput};
 use mengine_core::{command::{CommandBuffer, WorldCommand}, snapshot::{SharedWorldSnapshot, WorldSnapshotCache}, World};
-use rquickjs::{CaughtError, Context, Ctx, Function, Object, Persistent, Runtime};
-use rquickjs::context::EvalOptions;
+use crate::vm::ScriptVm;
 use serde_json::Value as JsonValue;
-use std::{cell::{Cell, RefCell}, rc::Rc, time::{Duration, Instant}};
+use std::{cell::RefCell, rc::Rc, time::{Duration, Instant}};
 
 #[derive(Default)]
 struct ScriptSnapshot {
@@ -12,7 +11,7 @@ struct ScriptSnapshot {
     json: Option<String>,
 }
 
-/// MiYu: native script timings separate world publication, QuickJS callbacks and committed commands.
+/// MiYu: native script timings separate world publication, script callbacks and committed commands.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ScriptTickProfile { pub sync_ms: f64, pub callback_ms: f64, pub commit_ms: f64 }
 
@@ -109,14 +108,9 @@ pub struct ScriptTimelineSignal {
 
 
 
-/// One QuickJS runtime per host; editor and standalone players execute the same engine API.
+/// One isolated JavaScript runtime per host; editor and standalone players execute the same engine API.
 pub struct ScriptHost {
-    // Persistent functions must be released before their owning context and runtime.
-    tick_callback: Option<Persistent<Function<'static>>>,
-    restore_snapshot: Persistent<Function<'static>>,
-    context: Context,
-    _runtime: Runtime,
-    deadline: Rc<Cell<Instant>>,
+    vm: ScriptVm,
     startup_tick: bool,
     commands: Rc<RefCell<CommandBuffer>>,
     requests: Rc<RefCell<Vec<ScriptRuntimeRequest>>>,
@@ -124,10 +118,6 @@ pub struct ScriptHost {
     storage_root: Rc<RefCell<Option<std::path::PathBuf>>>,
     asset_nodes: Rc<RefCell<crate::asset_nodes::AssetNodeCache>>,
     snapshot_cache: WorldSnapshotCache,
-}
-
-fn script_error(ctx: &Ctx<'_>, error: rquickjs::Error) -> ScriptError {
-    ScriptError::Js(CaughtError::from_error(ctx, error).to_string())
 }
 
 fn parse_command(json: &str) -> Option<WorldCommand> {
@@ -142,90 +132,60 @@ fn parse_command(json: &str) -> Option<WorldCommand> {
     serde_json::from_str(json).ok()
 }
 
-fn read_float4_array(values: rquickjs::Array<'_>) -> rquickjs::Result<Vec<[f32; 4]>> {
-    values.iter::<rquickjs::Array>().map(|value| {
-        let value = value?;
-        if value.len() != 4 { return Err(rquickjs::Error::new_from_js_message("array", "float4", "expected four numbers")); }
-        Ok([value.get(0)?, value.get(1)?, value.get(2)?, value.get(3)?])
-    }).collect()
+// MiYu: both VMs use the same native state and effect validation.
+#[derive(Clone)]
+pub(crate) struct NativeBindings {
+    commands: Rc<RefCell<CommandBuffer>>,
+    requests: Rc<RefCell<Vec<ScriptRuntimeRequest>>>,
+    snapshot: Rc<RefCell<ScriptSnapshot>>,
+    storage_root: Rc<RefCell<Option<std::path::PathBuf>>>,
+    asset_nodes: Rc<RefCell<crate::asset_nodes::AssetNodeCache>>,
+    network: Rc<RefCell<crate::network::ScriptNetwork>>,
+}
+
+impl NativeBindings {
+    pub fn asset_nodes(&self, reference: &str, options: &str) -> String { self.asset_nodes.borrow_mut().query(reference, options) }
+    pub fn storage(&self, operation: &str, key: &str, payload: &str) -> String { crate::storage::operate(self.storage_root.borrow().as_deref(), operation, key, payload) }
+    pub fn network(&self, operation: &str, value: &str) -> String {
+        let mut client = self.network.borrow_mut();
+        match operation { "connect" => client.connect(value).to_string(), "send" => client.send(value).to_string(), "poll" => client.poll(), "close" => { client.close(); "true".into() }, _ => "false".into() }
+    }
+    pub fn command(&self, json: &str) { if let Some(command) = parse_command(json) { self.commands.borrow_mut().push(command); } }
+    pub fn sprite_batch(&self, entity: u64, instances: Vec<[f32; 4]>, colors: Vec<[f32; 4]>) -> bool {
+        if instances.len() > 8192 || colors.len() > 8192 || !instances.iter().chain(&colors).flatten().all(|value| value.is_finite()) { return false; }
+        self.commands.borrow_mut().push(WorldCommand::SetSpriteBatchData { entity, instances, colors }); true
+    }
+    pub fn request(&self, operation: &str, json: &str) -> bool {
+        let request = serde_json::from_str::<Vec<JsonValue>>(json).ok().and_then(|args| runtime_request(operation, &args));
+        if let Some(request) = request { self.requests.borrow_mut().push(request); true } else { false }
+    }
+    pub fn revision(&self) -> f64 { self.snapshot.borrow().revision as f64 }
+    pub fn find_entities(&self, json: &str) -> String {
+        let Ok(names) = serde_json::from_str::<Vec<String>>(json) else { return "[]".into(); };
+        if names.len() > 1024 { return "[]".into(); }
+        let names: std::collections::HashSet<_> = names.into_iter().collect();
+        let state = self.snapshot.borrow();
+        let entities: Vec<_> = state.world.iter().flat_map(|world| &world.entities).filter(|entity| entity.name.as_ref().is_some_and(|name| names.contains(name))).collect();
+        serde_json::to_string(&entities).expect("selected entities serialize")
+    }
+    pub fn snapshot(&self) -> String {
+        let mut state = self.snapshot.borrow_mut();
+        if state.json.is_none() { state.json = Some(serde_json::to_string(&state.world).expect("world snapshot serializes")); }
+        state.json.as_ref().unwrap().clone()
+    }
 }
 
 impl ScriptHost {
     pub fn new() -> Result<Self, ScriptError> {
-        let runtime = Runtime::new().map_err(|error| ScriptError::Js(error.to_string()))?;
-        runtime.set_memory_limit(256 * 1024 * 1024);
-        runtime.set_max_stack_size(1024 * 1024);
-        let deadline = Rc::new(Cell::new(Instant::now() + Duration::from_secs(1)));
-        let limit = deadline.clone();
-        runtime.set_interrupt_handler(Some(Box::new(move || Instant::now() >= limit.get())));
-        let context = Context::full(&runtime).map_err(|error| ScriptError::Js(error.to_string()))?;
         let commands = Rc::new(RefCell::new(CommandBuffer::new()));
         let requests = Rc::new(RefCell::new(Vec::new()));
         let snapshot = Rc::new(RefCell::new(ScriptSnapshot::default()));
         let network = Rc::new(RefCell::new(crate::network::ScriptNetwork::default()));
         let storage_root = Rc::new(RefCell::new(None::<std::path::PathBuf>));
         let asset_nodes=Rc::new(RefCell::new(crate::asset_nodes::AssetNodeCache::default()));
-        let restore_snapshot = context.with(|ctx| {
-            let install = || -> rquickjs::Result<Persistent<Function<'static>>> {
-                let nodes=asset_nodes.clone();
-                ctx.globals().set("__mengineAssetNodes",Function::new(ctx.clone(),move |reference: String,options: String| -> String {nodes.borrow_mut().query(&reference,&options)})?)?;
-                let storage = storage_root.clone();
-                ctx.globals().set("__mengineStorage", Function::new(ctx.clone(), move |operation: String, key: String, payload: String| -> String {
-                    crate::storage::operate(storage.borrow().as_deref(), &operation, &key, &payload)
-                })?)?;
-                let client = network.clone();
-                ctx.globals().set("__mengineNetwork", Function::new(ctx.clone(), move |operation: String, value: String| -> String {
-                    let mut client = client.borrow_mut();
-                    match operation.as_str() {
-                        "connect" => client.connect(&value).to_string(),
-                        "send" => client.send(&value).to_string(),
-                        "poll" => client.poll(),
-                        "close" => { client.close(); "true".into() },
-                        _ => "false".into(),
-                    }
-                })?)?;
-                let pending = commands.clone();
-                ctx.globals().set("__mengineCommand", Function::new(ctx.clone(), move |json: String| {
-                    if let Some(command) = parse_command(&json) { pending.borrow_mut().push(command); }
-                })?)?;
-                let pending = commands.clone();
-                ctx.globals().set("__mengineSpriteBatch", Function::new(ctx.clone(), move |entity: String, instances: rquickjs::Array, colors: rquickjs::Array| -> rquickjs::Result<bool> {
-                    let Ok(entity) = entity.parse::<u64>() else { return Ok(false); };
-                    if instances.len() > 8192 || colors.len() > 8192 { return Ok(false); }
-                    let instances = read_float4_array(instances)?;
-                    let colors = read_float4_array(colors)?;
-                    if !instances.iter().chain(&colors).flatten().all(|value| value.is_finite()) { return Ok(false); }
-                    pending.borrow_mut().push(WorldCommand::SetSpriteBatchData { entity, instances, colors });
-                    Ok(true)
-                })?)?;
-                let pending = requests.clone();
-                ctx.globals().set("__mengineRequest", Function::new(ctx.clone(), move |operation: String, json: String| {
-                    let request = serde_json::from_str::<Vec<JsonValue>>(&json).ok().and_then(|args| runtime_request(&operation, &args));
-                    if let Some(request) = request { pending.borrow_mut().push(request); true } else { false }
-                })?)?;
-                let state = snapshot.clone();
-                ctx.globals().set("__mengineRevision", Function::new(ctx.clone(), move || state.borrow().revision as f64)?)?;
-                // MiYu: dynamic pools query only their new entities without decoding the full scene snapshot.
-                let state = snapshot.clone();
-                ctx.globals().set("__mengineFindEntities", Function::new(ctx.clone(), move |json: String| -> String {
-                    let Ok(names) = serde_json::from_str::<Vec<String>>(&json) else { return "[]".into(); };
-                    if names.len() > 1024 { return "[]".into(); }
-                    let names: std::collections::HashSet<_> = names.into_iter().collect();
-                    let state = state.borrow();
-                    let entities: Vec<_> = state.world.iter().flat_map(|world| &world.entities).filter(|entity| entity.name.as_ref().is_some_and(|name| names.contains(name))).collect();
-                    serde_json::to_string(&entities).expect("selected entities serialize")
-                })?)?;
-                let state = snapshot.clone();
-                ctx.globals().set("__mengineSnapshot", Function::new(ctx.clone(), move || {
-                    let mut state = state.borrow_mut();
-                    if state.json.is_none() { state.json = Some(serde_json::to_string(&state.world).expect("world snapshot serializes")); }
-                    state.json.as_ref().unwrap().clone()
-                })?)?;
-                Ok(Persistent::save(&ctx, ctx.eval::<Function, _>(include_str!("engine_api.js"))?))
-            };
-            install().map_err(|error| script_error(&ctx, error))
-        })?;
-        let mut host = Self { tick_callback: None, restore_snapshot, context, _runtime: runtime, deadline, startup_tick: true, commands, requests, snapshot, storage_root, asset_nodes, snapshot_cache: WorldSnapshotCache::default() };
+        let bindings = NativeBindings { commands: commands.clone(), requests: requests.clone(), snapshot: snapshot.clone(), storage_root: storage_root.clone(), asset_nodes: asset_nodes.clone(), network };
+        let vm = ScriptVm::new(bindings)?;
+        let mut host = Self { vm, startup_tick: true, commands, requests, snapshot, storage_root, asset_nodes, snapshot_cache: WorldSnapshotCache::default() };
         host.set_input(&ScriptInput::default())?;
         Ok(host)
     }
@@ -235,11 +195,8 @@ impl ScriptHost {
 
     pub fn eval(&mut self, source: &str) -> Result<(), ScriptError> {
         self.asset_nodes.borrow_mut().begin_frame();
-        self.tick_callback = None;
-        self.deadline.set(Instant::now() + Duration::from_secs(1));
-        let mut options = EvalOptions::default();
-        options.strict = false;
-        self.context.with(|ctx| ctx.eval_with_options::<(), _>(source, options).map_err(|error| script_error(&ctx, error)))
+        let result = self.vm.eval(source);
+        self.finish_call(result)
     }
 
     pub fn load_file(&mut self, path: &std::path::Path) -> Result<(), ScriptError> { self.eval(&std::fs::read_to_string(path)?) }
@@ -255,18 +212,8 @@ impl ScriptHost {
         let sync_ms = started.elapsed().as_secs_f64() * 1000.0;
         // MiYu: cold scene snapshot decoding and initialization get one bounded loading frame.
         let seconds=if std::mem::replace(&mut self.startup_tick,false) {3} else {1};
-        self.deadline.set(Instant::now() + Duration::from_secs(seconds));
         let callback_started = Instant::now();
-        let result = self.context.with(|ctx| {
-            let mut invoke = || -> rquickjs::Result<()> {
-                if self.tick_callback.is_none() {
-                    let callback: Function = ctx.eval("(dt, frame) => { if (typeof onTick === 'function') onTick(dt, frame); }")?;
-                    self.tick_callback = Some(Persistent::save(&ctx, callback));
-                }
-                self.tick_callback.as_ref().unwrap().clone().restore(&ctx)?.call::<_, ()>((dt, world.time.frame as f64))
-            };
-            invoke().map_err(|error| script_error(&ctx, error))
-        });
+        let result = self.vm.tick(dt, world.time.frame as f64, Duration::from_secs(seconds));
         if let Err(error) = result {
             self.commands.borrow_mut().drain(); self.requests.borrow_mut().clear();
             return Err(error);
@@ -298,23 +245,18 @@ impl ScriptHost {
         self.restore_snapshot_properties()
     }
 
-    fn restore_snapshot_properties(&self) -> Result<(), ScriptError> {
-        self.deadline.set(Instant::now() + Duration::from_secs(1));
-        self.context.with(|ctx| {
-            self.restore_snapshot.clone().restore(&ctx).and_then(|restore| restore.call::<_, ()>(())).map_err(|error| script_error(&ctx, error))
-        })
+    fn finish_call(&mut self, result: Result<(), ScriptError>) -> Result<(), ScriptError> {
+        if result.is_err() { self.commands.borrow_mut().drain(); self.requests.borrow_mut().clear(); }
+        result
+    }
+
+    fn restore_snapshot_properties(&mut self) -> Result<(), ScriptError> {
+        let result = self.vm.restore_snapshot(); self.finish_call(result)
     }
 
     pub fn set_input(&mut self, input: &ScriptInput) -> Result<(), ScriptError> {
         let json = serde_json::to_string(input).map_err(|error| ScriptError::Other(error.to_string()))?;
-        self.deadline.set(Instant::now() + Duration::from_secs(1));
-        self.context.with(|ctx| {
-            let assign = || -> rquickjs::Result<()> {
-                let engine: Object = ctx.globals().get("engine")?;
-                engine.set("input", ctx.json_parse(json)?)
-            };
-            assign().map_err(|error| script_error(&ctx, error))
-        })
+        let result = self.vm.set_input(&json); self.finish_call(result)
     }
 
     pub fn take_runtime_requests(&mut self) -> Vec<ScriptRuntimeRequest> { std::mem::take(&mut *self.requests.borrow_mut()) }
@@ -684,7 +626,7 @@ mod tests {
         assert!(host.take_runtime_requests().is_empty());
         host.eval("onTick = () => engine.setClearColor(0,1,0,1);").unwrap();
         host.tick(&mut world, 0.016).unwrap();
-        host._runtime.run_gc();
+        host.vm.run_gc();
         host.tick(&mut world, 0.016).unwrap();
         assert_eq!(world.time.clear_color.y, 1.0);
     }
