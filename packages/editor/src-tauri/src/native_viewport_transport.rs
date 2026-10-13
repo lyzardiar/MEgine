@@ -50,9 +50,11 @@ impl FramePayload {
 
     fn shared_len(&self) -> usize { 16 + self.shared_metadata_len() + self.rgba.len() }
 
+    fn max_shared_len(&self) -> usize { 16 + MAX_SHARED_METADATA_BYTES + self.rgba.len() }
+
     fn write_shared_to(&self, destination: &mut [u8]) {
-        assert_eq!(destination.len(), self.shared_len());
-        let metadata_len = self.shared_metadata_len();
+        assert!(destination.len() >= self.shared_len());
+        let metadata_len = destination.len() - 16 - self.rgba.len();
         let (header, rest) = destination.split_at_mut(16);
         let (metadata, rgba) = rest.split_at_mut(metadata_len);
         header.copy_from_slice(&self.header);
@@ -78,17 +80,20 @@ impl FramePayload {
 
 const POOL_SLOTS: usize = 3;
 const POOL_BYTES: usize = 96 * 1024 * 1024;
+const MAX_SHARED_METADATA_BYTES: usize = 256 * 1024;
 struct Lease { request: String, id: u64, post_finished: bool, acknowledged: bool }
 struct PoolSlot<B> { buffer: Option<B>, bytes: usize, id: u64, lease: Option<Lease> }
 struct FramePool<B> { slots: Vec<Option<PoolSlot<B>>> }
 impl<B> Default for FramePool<B> { fn default() -> Self { Self { slots: Vec::new() } } }
-struct Reservation<B> { index: usize, id: u64, lease_id: u64, buffer: Option<B>, retired: Option<B> }
+struct Reservation<B> { index: usize, id: u64, lease_id: u64, bytes: usize, buffer: Option<B>, retired: Option<B> }
 impl<B: Clone> FramePool<B> {
     /// MiYu: reserve before COM calls, and reuse only after Post returns and the browser acknowledges completed pixel access.
-    fn reserve(&mut self, bytes: usize, request: &str) -> Option<Reservation<B>> {
+    fn reserve(&mut self, bytes: usize, max_bytes: usize, request: &str) -> Option<Reservation<B>> {
+        if bytes > max_bytes { return None; }
         if self.slots.iter().flatten().any(|slot| slot.lease.as_ref().is_some_and(|lease| lease.request == request)) { return None; }
         let retained: usize = self.slots.iter().flatten().map(|slot| slot.bytes).sum();
-        let matching = self.slots.iter().position(|slot| slot.as_ref().is_some_and(|slot| slot.lease.is_none() && slot.bytes == bytes));
+        // Keep the smallest sufficient capacity across metadata fluctuations; bound padding by the caller's wire limit.
+        let matching = self.slots.iter().enumerate().filter_map(|(index, slot)| slot.as_ref().filter(|slot| slot.lease.is_none() && slot.bytes >= bytes && slot.bytes <= max_bytes).map(|slot| (index, slot.bytes))).min_by_key(|(_, capacity)| *capacity).map(|(index, _)| index);
         let index = matching.or_else(|| self.slots.iter().position(|slot| match slot {
             Some(slot) => slot.lease.is_none() && retained - slot.bytes + bytes <= POOL_BYTES,
             None => retained + bytes <= POOL_BYTES,
@@ -105,7 +110,7 @@ impl<B: Clone> FramePool<B> {
         static NEXT_LEASE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
         let lease_id = NEXT_LEASE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         slot.lease = Some(Lease { request: request.into(), id: lease_id, post_finished: false, acknowledged: false });
-        Some(Reservation { index, id: slot.id, lease_id, buffer: slot.buffer.clone(), retired })
+        Some(Reservation { index, id: slot.id, lease_id, bytes: slot.bytes, buffer: slot.buffer.clone(), retired })
     }
 
     fn install(&mut self, index: usize, id: u64, buffer: B) -> bool {
@@ -147,8 +152,8 @@ mod shared_pool {
         *ENABLED.get_or_init(|| std::env::var("MENGINE_NATIVE_VIEWPORT_BUFFER_REUSE").as_deref() != Ok("0"))
     }
 
-    pub fn reserve(label: &str, bytes: usize, request: &str) -> Option<Reservation<ICoreWebView2SharedBuffer>> {
-        WINDOWS.with(|windows| windows.borrow_mut().entry(label.into()).or_default().reserve(bytes, request))
+    pub fn reserve(label: &str, bytes: usize, max_bytes: usize, request: &str) -> Option<Reservation<ICoreWebView2SharedBuffer>> {
+        WINDOWS.with(|windows| windows.borrow_mut().entry(label.into()).or_default().reserve(bytes, max_bytes, request))
     }
 
     pub fn install(label: &str, reservation: &Reservation<ICoreWebView2SharedBuffer>, buffer: &ICoreWebView2SharedBuffer) -> bool {
@@ -204,13 +209,13 @@ pub async fn share_frame(window: &tauri::WebviewWindow, bytes: Arc<FramePayload>
                 let webview = platform.controller().CoreWebView2()?;
                 let environment = webview.cast::<ICoreWebView2_2>()?.Environment()?.cast::<ICoreWebView2Environment12>()?;
                 let receiver = webview.cast::<ICoreWebView2_17>()?;
-                let reusable = reuse && shared_pool::enabled() && bytes.shared_metadata_len() <= 256 * 1024;
-                let reservation = if reusable { shared_pool::reserve(&window_label, bytes.shared_len(), &request) } else { None };
+                let reusable = reuse && shared_pool::enabled() && bytes.shared_metadata_len() <= MAX_SHARED_METADATA_BYTES;
+                let reservation = if reusable { shared_pool::reserve(&window_label, bytes.shared_len(), bytes.max_shared_len(), &request) } else { None };
                 let pooled = reservation.is_some();
                 let pool_hit = reservation.as_ref().is_some_and(|slot| slot.buffer.is_some());
                 let buffer_id = reservation.as_ref().map(|slot| slot.id).unwrap_or(0);
                 let lease_id = reservation.as_ref().map(|slot| slot.lease_id).unwrap_or(0);
-                let payload_len = if pooled { bytes.shared_len() } else { bytes.len() };
+                let payload_len = reservation.as_ref().map_or_else(|| bytes.len(), |slot| slot.bytes);
                 if let Some(retired) = reservation.as_ref().and_then(|slot| slot.retired.as_ref()) { let _ = retired.Close(); }
                 let setup_ms = setup_at.elapsed().as_secs_f64() * 1000.0;
                 let allocate_at = std::time::Instant::now();
@@ -282,14 +287,14 @@ mod tests {
     #[test]
     fn pool_waits_for_matching_consumption_ack_and_post_return() {
         let mut pool = FramePool::<u64>::default();
-        let first = pool.reserve(4096, "first").unwrap();
+        let first = pool.reserve(4096, 4096, "first").unwrap();
         assert!(pool.install(first.index, first.id, 7));
         pool.acknowledge("wrong-window-request", first.lease_id);
         pool.finish("first", first.lease_id, true);
         assert!(pool.slots[first.index].as_ref().unwrap().lease.is_some());
-        assert!(pool.reserve(4096, "first").is_none(), "duplicate in-flight requests cannot alias a lease");
+        assert!(pool.reserve(4096, 4096, "first").is_none(), "duplicate in-flight requests cannot alias a lease");
         pool.acknowledge("first", first.lease_id);
-        let next = pool.reserve(4096, "next").unwrap();
+        let next = pool.reserve(4096, 4096, "next").unwrap();
         assert_eq!(next.buffer, Some(7));
         assert_eq!(next.id, first.id);
         pool.acknowledge("first", first.lease_id);
@@ -298,7 +303,7 @@ mod tests {
         pool.finish("next", next.lease_id, true);
         assert!(pool.slots[next.index].as_ref().unwrap().lease.is_none());
         pool.acknowledge("next", next.lease_id);
-        let repeated = pool.reserve(4096, "next").unwrap();
+        let repeated = pool.reserve(4096, 4096, "next").unwrap();
         assert_eq!(repeated.buffer, Some(7));
         pool.finish("next", next.lease_id, false);
         pool.finish("next", next.lease_id, true);
@@ -310,18 +315,67 @@ mod tests {
     #[test]
     fn pool_preserves_live_slots_and_bounds_retained_memory() {
         let mut pool = FramePool::<u64>::default();
-        for index in 0..POOL_SLOTS { let slot = pool.reserve(4096, &index.to_string()).unwrap(); pool.install(slot.index, slot.id, index as u64); }
-        assert!(pool.reserve(4096, "overflow").is_none());
+        for index in 0..POOL_SLOTS { let slot = pool.reserve(4096, 4096, &index.to_string()).unwrap(); pool.install(slot.index, slot.id, index as u64); }
+        assert!(pool.reserve(4096, 4096, "overflow").is_none());
         let first_lease = pool.slots[0].as_ref().unwrap().lease.as_ref().unwrap().id;
         pool.acknowledge("0", first_lease); pool.finish("0", first_lease, true);
-        let changed = pool.reserve(8192, "resized").unwrap();
+        let changed = pool.reserve(8192, 8192, "resized").unwrap();
         assert_eq!(changed.index, 0); assert_eq!(changed.retired, Some(0)); assert_eq!(changed.buffer, None);
         pool.install(changed.index, changed.id, 10);
         assert_eq!(pool.finish("resized", changed.lease_id, false), Some(10));
         assert!(pool.slots[0].is_none());
-        assert!(pool.reserve(POOL_BYTES, "over-budget").is_none());
-        assert!(FramePool::<u64>::default().reserve(POOL_BYTES + 1, "huge").is_none());
-        assert!(FramePool::<u64>::default().reserve(POOL_BYTES, "limit").is_some());
+        assert!(pool.reserve(POOL_BYTES, POOL_BYTES, "over-budget").is_none());
+        assert!(FramePool::<u64>::default().reserve(POOL_BYTES + 1, POOL_BYTES + 1, "huge").is_none());
+        assert!(FramePool::<u64>::default().reserve(POOL_BYTES, POOL_BYTES, "limit").is_some());
+    }
+
+    #[test]
+    fn pool_reuses_smallest_sufficient_capacity_with_bounded_metadata_slack() {
+        let mut pool = FramePool::<u64>::default();
+        let large = pool.reserve(16384, 16384, "large").unwrap(); pool.install(large.index, large.id, 1);
+        let small = pool.reserve(8192, 8192, "small").unwrap(); pool.install(small.index, small.id, 2);
+        pool.finish("large", large.lease_id, true); pool.acknowledge("large", large.lease_id);
+        pool.finish("small", small.lease_id, true); pool.acknowledge("small", small.lease_id);
+        let reused = pool.reserve(4096, 16384, "shorter").unwrap();
+        assert_eq!((reused.id, reused.bytes, reused.buffer), (small.id, 8192, Some(2)));
+        assert!(reused.retired.is_none());
+        let concurrent = pool.reserve(4096, 16384, "concurrent").unwrap();
+        assert_eq!(concurrent.id, large.id, "active smaller mapping cannot be overwritten");
+        pool.finish("shorter", reused.lease_id, true); pool.acknowledge("shorter", reused.lease_id);
+        let resized = pool.reserve(4096, 4096, "small-target").unwrap();
+        assert_eq!(resized.bytes, 4096); assert_ne!(resized.id, small.id); assert_eq!(resized.retired, Some(2));
+        assert!(pool.reserve(8192, 4096, "invalid-range").is_none());
+    }
+
+    #[test]
+    fn fluctuating_metadata_reuses_high_water_capacity_and_preserves_wire_pixels() {
+        let mut pool = FramePool::<u64>::default();
+        let mut retained_id = None;
+        for (index, metadata_len) in [4097, 4095, 4097, 100, 4096].into_iter().enumerate() {
+            let mut metadata = b"{\"revision\":".to_vec(); metadata.extend_from_slice(index.to_string().as_bytes()); metadata.push(b'}'); metadata.resize(metadata_len, b' ');
+            let rgba = vec![index as u8, 2, 3, 255]; let frame = FramePayload::new(1, 1, metadata, rgba.clone()).unwrap();
+            let request = format!("frame-{index}"); let slot = pool.reserve(frame.shared_len(), frame.max_shared_len(), &request).unwrap();
+            if let Some(id) = retained_id { assert_eq!(slot.id, id); assert_eq!(slot.buffer, Some(1)); } else { retained_id = Some(slot.id); }
+            pool.install(slot.index, slot.id, 1);
+            let mut mapped = vec![0xff; slot.bytes]; frame.write_shared_to(&mut mapped);
+            let padded = u32::from_le_bytes(mapped[12..16].try_into().unwrap()) as usize;
+            assert_eq!(mapped.len(), 16 + padded + rgba.len()); assert_eq!(padded, 8192); assert!(padded <= MAX_SHARED_METADATA_BYTES);
+            assert_eq!(serde_json::from_slice::<serde_json::Value>(&mapped[16..16 + padded]).unwrap()["revision"], index);
+            assert_eq!(&mapped[16 + padded..], rgba.as_slice());
+            pool.finish(&request, slot.lease_id, true); pool.acknowledge(&request, slot.lease_id);
+        }
+    }
+
+    #[test]
+    fn retained_capacity_pads_metadata_after_pixel_dimensions_change() {
+        let frame = FramePayload::new(2, 1, b"{\"revision\":9}".to_vec(), vec![1, 2, 3, 255, 4, 5, 6, 255]).unwrap();
+        let mut mapped = vec![0xff; 16 + 8192 + 4]; frame.write_shared_to(&mut mapped);
+        let padded = u32::from_le_bytes(mapped[12..16].try_into().unwrap()) as usize;
+        assert_eq!(padded, 8188);
+        assert_eq!(u32::from_le_bytes(mapped[4..8].try_into().unwrap()), 2);
+        assert_eq!(mapped.len(), 16 + padded + 2 * 4);
+        assert_eq!(serde_json::from_slice::<serde_json::Value>(&mapped[16..16 + padded]).unwrap()["revision"], 9);
+        assert_eq!(&mapped[16 + padded..], &[1, 2, 3, 255, 4, 5, 6, 255]);
     }
 
     #[test]
