@@ -82,6 +82,10 @@ use winit::window::{CursorGrabMode, Window, WindowId};
 #[derive(Parser, Debug)]
 #[command(name = "mengine-runtime")]
 struct Args {
+    /// Print the compiled script runtime identity without opening a window.
+    #[arg(long)]
+    runtime_info: bool,
+
     #[arg(long, default_value = "spinning-cube")]
     sample: String,
 
@@ -1920,6 +1924,10 @@ fn packaged_surface_shader_materials(project_root: &Path) -> Result<Vec<RenderMa
 fn main() -> Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     let mut args = Args::parse();
+    if args.runtime_info {
+        println!("{}", mengine_script::runtime_identity());
+        return Ok(());
+    }
     if args.scene.is_none() {
         match std::env::current_exe() {
             Ok(executable) => match load_player_config(executable) {

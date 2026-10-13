@@ -13,11 +13,13 @@ import { createRequire } from 'node:module';
 import { availableParallelism } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { backendCargoArgs, inspectRuntime, prepareNativeBuild, selectedBackend } from './prepare-native-build.mjs';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const root = resolve(scriptDir, '..');
 const sdkDir = join(root, 'packages', 'editor', 'src-tauri', 'build-sdk');
-const cargoTargetDir = resolve(root, process.env.CARGO_TARGET_DIR || 'target');
+const scriptBackend = selectedBackend();
+const cargoTargetDir = prepareNativeBuild(root, ['debug', 'release'], scriptBackend);
 const cliDir = join(root, 'packages', 'cli');
 const agentDir = join(root, 'packages', 'agent');
 const runtimeName = process.platform === 'win32' ? 'mengine-runtime.exe' : 'mengine-runtime';
@@ -60,7 +62,7 @@ if (!skipBuild) {
     run(pnpm, ['--filter', '@mengine/cli', 'build'], 'Building CLI'),
     run(
       'cargo',
-      ['build', '-p', 'mengine-runtime', '--jobs', String(buildJobs)],
+      ['build', '-p', 'mengine-runtime', ...backendCargoArgs(scriptBackend), '--jobs', String(buildJobs)],
       `Building Debug runtime (${buildJobs} jobs)`,
     ),
   ];
@@ -74,7 +76,7 @@ if (!skipBuild) {
   await Promise.all(parallelBuilds);
   await run(
     'cargo',
-    ['build', '-p', 'mengine-runtime', '--release', '--jobs', String(buildJobs)],
+    ['build', '-p', 'mengine-runtime', ...backendCargoArgs(scriptBackend), '--release', '--jobs', String(buildJobs)],
     `Building Release runtime (${buildJobs} jobs)`,
   );
 }
@@ -82,6 +84,10 @@ if (!skipBuild) {
 const cliEntry = requireFile(join(cliDir, 'dist', 'cli.js'), 'MEngine CLI');
 const debugRuntime = requireFile(join(cargoTargetDir, 'debug', runtimeName), 'Debug player runtime');
 const releaseRuntime = requireFile(join(cargoTargetDir, 'release', runtimeName), 'Release player runtime');
+const scriptRuntime = inspectRuntime(debugRuntime, scriptBackend);
+if (JSON.stringify(inspectRuntime(releaseRuntime, scriptBackend)) !== JSON.stringify(scriptRuntime)) {
+  throw new Error('Debug and Release players use different script runtimes; rebuild both profiles');
+}
 const requireFromCli = createRequire(join(cliDir, 'package.json'));
 const typescriptPackage = requireFromCli.resolve('typescript/package.json');
 const typescriptRoot = dirname(typescriptPackage);
@@ -112,6 +118,7 @@ copyFileSync(
   join(root, 'packages', 'editor', 'THIRD_PARTY_NOTICES.md'),
   join(sdkDir, 'licenses', 'THIRD_PARTY_NOTICES.md'),
 );
+cpSync(join(root, 'packages', 'editor', 'licenses', 'v8'), join(sdkDir, 'licenses', 'v8'), { recursive: true });
 if (process.platform !== 'win32') {
   chmodSync(join(sdkDir, nodeName), 0o755);
   chmodSync(join(sdkDir, 'runtimes', 'debug', runtimeName), 0o755);
@@ -161,6 +168,7 @@ const manifest = {
   architecture: process.arch,
   nodeVersion: process.version,
   cliVersion: String(cliPackage.version ?? '0.0.0'),
+  scriptRuntime,
   node: nodeName,
   cli: 'cli/dist/cli.js',
   runtimes: {

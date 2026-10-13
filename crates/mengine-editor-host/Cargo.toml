@@ -5,6 +5,11 @@ edition.workspace = true
 license.workspace = true
 description = "MEngine editor host: commands, viewport, undo"
 
+[features]
+default = ["v8-runtime"]
+v8-runtime = ["mengine-script/v8-runtime", "mengine-runtime/v8-runtime"]
+quickjs-runtime = ["mengine-script/quickjs-runtime", "mengine-runtime/quickjs-runtime"]
+
 [dependencies]
 mengine-core.workspace = true
 mengine-rhi.workspace = true
@@ -13,7 +18,7 @@ mengine-scene.workspace = true
 mengine-script.workspace = true
 mengine-physics.workspace = true
 mengine-platform.workspace = true
-mengine-runtime = { path = "../mengine-runtime" }
+mengine-runtime = { path = "../mengine-runtime", default-features = false }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true

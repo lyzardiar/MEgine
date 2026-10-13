@@ -1,0 +1,99 @@
+{
+  "author": "MiYu",
+  "defaultRuntime": {
+    "backend": "v8",
+    "bridgeVersion": 1,
+    "version": "15.2.124.1-rusty"
+  },
+  "passed": true,
+  "scope": "Default Editor and Player backend selection, source exports, SDK binary identity and packaged Player execution on this Windows host.",
+  "tests": {
+    "v8Script": 34,
+    "quickjsScript": 34,
+    "v8Limits": 2,
+    "sdkConsumer": 1,
+    "cli": 73,
+    "nativeBuildPreparation": 2
+  },
+  "negativeChecks": {
+    "mixedCargoBackendsRejected": true,
+    "sdkBackendMismatchRejectedBeforeReplacement": true,
+    "stalePlayerVersionRejected": true
+  },
+  "nativeExports": {
+    "debug": {
+      "executable": "D:\\MEngineNativeQA\\default-v8-sdk-export\\debug\\V8 SDK acceptance.exe",
+      "identity": {
+        "backend": "v8",
+        "bridgeVersion": 1,
+        "version": "15.2.124.1-rusty"
+      },
+      "integrity": true,
+      "nativeExitCode": 0
+    },
+    "release": {
+      "executable": "D:\\MEngineNativeQA\\default-v8-sdk-export\\release\\V8 SDK acceptance.exe",
+      "identity": {
+        "backend": "v8",
+        "bridgeVersion": 1,
+        "version": "15.2.124.1-rusty"
+      },
+      "integrity": true,
+      "nativeExitCode": 0
+    }
+  },
+  "precisionMarkers": [
+    {
+      "file": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\d9741de65eb67db7\\sdk-default-v8-20261013.json",
+      "value": {
+        "hp": 112.00000000000001,
+        "id": "18446744073709551615",
+        "passed": true,
+        "ticks": 10
+      }
+    },
+    {
+      "file": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\fd3bcdf81de4b48d\\sdk-default-v8-20261013.json",
+      "value": {
+        "hp": 112.00000000000001,
+        "id": "18446744073709551615",
+        "passed": true,
+        "ticks": 10
+      }
+    }
+  ],
+  "releaseEditorBuild": {
+    "passed": true,
+    "elapsed": "6m 39s",
+    "command": "cargo build --release -p mengine-editor-tauri --features custom-protocol --offline"
+  },
+  "artifacts": {
+    "editor": {
+      "path": "D:\\MEngineNativeQA\\engine-main-sync\\target\\release\\mengine-editor-tauri.exe",
+      "sha256": "77855f3fe64c8852b977d026bdfb7dea1afcf805e185727257f625f850c0eed3"
+    },
+    "sdkDebugPlayer": {
+      "path": "D:\\MEngineNativeQA\\engine-main-sync\\packages\\editor\\src-tauri\\build-sdk\\runtimes\\debug\\mengine-runtime.exe",
+      "sha256": "5c50121b2ca0eeb9e6ac70a4866f89dcf2111ccc69471f45a9cd307822fa836c"
+    },
+    "sdkReleasePlayer": {
+      "path": "D:\\MEngineNativeQA\\engine-main-sync\\packages\\editor\\src-tauri\\build-sdk\\runtimes\\release\\mengine-runtime.exe",
+      "sha256": "b6339d943466800c55576515dd1b7e43e87f92fa793a3a122a79ed7bb805aa9b"
+    }
+  },
+  "limitations": [
+    "No two-machine multiplayer acceptance in this stage; online gameplay remains server-authoritative.",
+    "QuickJS fallback script tests and consumer feature graphs passed; this stage did not package a QuickJS desktop distribution.",
+    "A first SDK identity probe exceeded 10 seconds; after confirming the binary returned its identity, the bounded probe timeout was set to 30 seconds."
+  ],
+  "evidence": {
+    "default-v8-sdk-build": "D:\\MEngineNativeQA\\default-v8-sdk-build.log",
+    "default-v8-script-tests": "D:\\MEngineNativeQA\\default-v8-script-tests.log",
+    "default-quickjs-script-tests": "D:\\MEngineNativeQA\\default-quickjs-script-tests.log",
+    "default-v8-sdk-consumer-test": "D:\\MEngineNativeQA\\default-v8-sdk-consumer-test.log",
+    "default-v8-cli-tests": "D:\\MEngineNativeQA\\default-v8-cli-tests.log",
+    "default-v8-feature-conflict": "D:\\MEngineNativeQA\\default-v8-feature-conflict.log",
+    "default-v8-sdk-rejection": "D:\\MEngineNativeQA\\default-v8-sdk-rejection.log",
+    "default-v8-editor-build": "D:\\MEngineNativeQA\\default-v8-editor-build.log"
+  }
+}

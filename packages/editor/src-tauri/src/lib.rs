@@ -657,6 +657,8 @@ struct BuildSdkManifest {
     node: String,
     cli: String,
     runtimes: BuildSdkRuntimes,
+    #[serde(default)]
+    script_runtime: serde_json::Value,
     agent: Option<BuildSdkAgent>,
 }
 
@@ -820,6 +822,9 @@ fn load_build_sdk(root: &Path, profile: &str) -> Result<BuildSdk, String> {
         return Err("Build SDK path must be a directory".into());
     }
     let manifest = read_build_sdk_manifest(&canonical_root)?;
+    if manifest.script_runtime != mengine_editor_host::runtime_identity() {
+        return Err("Build SDK script runtime differs from editor Play; rebuild the SDK with the editor's backend".into());
+    }
     if manifest.schema_version != 1 {
         return Err(format!(
             "unsupported Build SDK schema version {}",
@@ -3015,6 +3020,8 @@ fn run_player_build_controlled(
     if profile == "debug" {
         command.arg("--debug");
     }
+    command.env("MENGINE_SCRIPT_RUNTIME", mengine_editor_host::runtime_identity()["backend"].as_str().unwrap());
+    command.env("MENGINE_SCRIPT_RUNTIME_IDENTITY", mengine_editor_host::runtime_identity().to_string());
     if clean {
         command.arg("--clean");
     }
@@ -7704,6 +7711,16 @@ mod tests {
         )
         .unwrap();
 
+        let manifest_path = root.join("sdk.json");
+        let mut manifest: serde_json::Value = serde_json::from_slice(&std::fs::read(&manifest_path).unwrap()).unwrap();
+        assert!(load_build_sdk(&root, "debug").unwrap_err().contains("script runtime differs"));
+        manifest["scriptRuntime"] = mengine_editor_host::runtime_identity();
+        manifest["scriptRuntime"]["version"] = serde_json::json!("stale-version");
+        std::fs::write(&manifest_path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+        assert!(load_build_sdk(&root, "debug").unwrap_err().contains("script runtime differs"));
+        manifest["scriptRuntime"] = mengine_editor_host::runtime_identity();
+        std::fs::write(&manifest_path, serde_json::to_vec(&manifest).unwrap()).unwrap();
+
         let debug = load_build_sdk(&root, "debug").unwrap();
         assert!(debug.runtime.ends_with("runtimes/debug/player"));
         assert!(!child_process_path(&debug.cli)
@@ -7732,6 +7749,9 @@ mod tests {
             ),
         )
         .unwrap();
+        let mut manifest: serde_json::Value = serde_json::from_slice(&std::fs::read(&manifest_path).unwrap()).unwrap();
+        manifest["scriptRuntime"] = mengine_editor_host::runtime_identity();
+        std::fs::write(&manifest_path, serde_json::to_vec(&manifest).unwrap()).unwrap();
         assert!(load_bundled_agent_adapters(&root)
             .unwrap_err()
             .contains("unsafe Agent MCP adapter path"));
@@ -7746,6 +7766,9 @@ mod tests {
             ),
         )
         .unwrap();
+        let mut manifest: serde_json::Value = serde_json::from_slice(&std::fs::read(&manifest_path).unwrap()).unwrap();
+        manifest["scriptRuntime"] = mengine_editor_host::runtime_identity();
+        std::fs::write(&manifest_path, serde_json::to_vec(&manifest).unwrap()).unwrap();
         assert!(load_build_sdk(&root, "debug")
             .unwrap_err()
             .contains("unsafe Node runtime path"));

@@ -77,6 +77,27 @@ const installedFont = [
   '/System/Library/Fonts/Supplemental/Arial.ttf',
 ].find((candidate) => existsSync(candidate));
 
+test('buildPcPackage includes runtime licenses in the verified artifact', () => {
+  const paths = fixture('runtime-licenses');
+  try {
+    const licenses = join(paths.root, 'licenses');
+    mkdirSync(join(licenses, 'v8'), { recursive: true });
+    writeFileSync(join(licenses, 'v8', 'LICENSE'), 'Runtime license');
+    const keys = generateKeyPairSync('ed25519');
+    const signingPrivateKeyPath = join(paths.root, 'signing.pem');
+    writeFileSync(signingPrivateKeyPath, keys.privateKey.export({ format: 'pem', type: 'pkcs8' }));
+    const publicKey = keys.publicKey.export({ format: 'pem', type: 'spki' });
+    const manifest = buildPcPackage({ projectDir: paths.project, outputDir: paths.output, runtimePath: paths.runtime, runtimeLicenseDir: licenses, signingPrivateKeyPath, engineVersion: 'test-engine' });
+    assert.equal(readFileSync(join(paths.output, 'licenses/v8/LICENSE'), 'utf8'), 'Runtime license');
+    assert.ok(manifest.files.some(file => file.path === 'licenses/v8/LICENSE'));
+    verifyPcBuildDirectory(paths.output, publicKey);
+    writeFileSync(join(paths.output, 'licenses/v8/LICENSE'), 'changed');
+    assert.throws(() => verifyPcBuildDirectory(paths.output, publicKey), /mismatch/);
+  } finally {
+    rmSync(paths.root, { recursive: true, force: true });
+  }
+});
+
 test('buildPcPackage resolves all six shader textures and the sixth object override', () => {
   const paths = fixture('six-layer-ground');
   try {

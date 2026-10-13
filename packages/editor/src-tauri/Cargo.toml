@@ -9,6 +9,9 @@ name = "mengine_editor_tauri_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [features]
+default = ["v8-runtime"]
+v8-runtime = ["mengine-editor-host/v8-runtime"]
+quickjs-runtime = ["mengine-editor-host/quickjs-runtime"]
 custom-protocol = ["tauri/custom-protocol"]
 
 [build-dependencies]
@@ -20,7 +23,7 @@ tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 parking_lot = "0.12"
-mengine-editor-host = { path = "../../../crates/mengine-editor-host" }
+mengine-editor-host = { path = "../../../crates/mengine-editor-host", default-features = false }
 mengine-core = { path = "../../../crates/mengine-core" }
 mengine-assets = { path = "../../../crates/mengine-assets" }
 mengine-scene = { path = "../../../crates/mengine-scene" }

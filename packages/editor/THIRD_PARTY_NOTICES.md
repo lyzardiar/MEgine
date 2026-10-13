@@ -1,5 +1,14 @@
 # Third-Party Notices
 
+## V8 script runtime
+
+Editor Play and bundled Players use rusty_v8 152.2.0 (MIT), embedding V8
+15.2.124.1 (BSD 3-Clause). The upstream license texts are bundled in
+`licenses/v8/rusty-v8-LICENSE` and `licenses/v8/V8-LICENSE` in the Build SDK.
+Sources: https://github.com/denoland/rusty_v8/tree/v152.2.0 and
+https://github.com/v8/v8/tree/15.2.124.1. V8's license also identifies its
+externally maintained components and their upstream notices.
+
 ## Bundled Build SDK
 
 Desktop distributions include the Node.js executable used only by the local
