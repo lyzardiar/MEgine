@@ -1027,7 +1027,7 @@ export function Viewport(props: {
       for (const request of nativeRequests) request.lastRequestAt = -Infinity;
       // Hidden WebView2 windows can throttle requestAnimationFrame. Paint on
       // demand so an Agent capture always reflects the latest store revision.
-      paint();
+      paint(false, false, false, true);
       if ('__TAURI_INTERNALS__' in window) {
         const requests = propsRef.current.tab === 'game'
           ? [nativeGameRequestRef.current.ready]
@@ -1078,7 +1078,9 @@ export function Viewport(props: {
       } catch {
         return null;
       }
-      } finally { if (sceneRequest) sceneRequest.captures--; }
+      } finally {
+        if (sceneRequest && --sceneRequest.captures === 0 && propsRef.current.tab === 'scene' && propsRef.current.playing && !scene2DRef.current) paint(false, false, true);
+      }
     });
   }, [props.tab]);
 
@@ -1372,7 +1374,7 @@ export function Viewport(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const paint = (animationFrame = false, completedSceneFrame = false, resumeSceneRequest = false) => {
+  const paint = (animationFrame = false, completedSceneFrame = false, resumeSceneRequest = false, captureSceneFrame = false) => {
     const paintStartedAt = performance.now();
     if (animationFrame) lastAnimationFrameAtRef.current = paintStartedAt;
     const canvas = canvasRef.current;
@@ -1564,7 +1566,7 @@ export function Viewport(props: {
         )
       : null;
     const sceneRequest = nativeSceneRequestRef.current;
-    const sceneRenderNeeded = (!completedSceneFrame || now - lastAnimationFrameAtRef.current > 100) && !isGame && !scene2DActive && '__TAURI_INTERNALS__' in window && (draggingRef.current || p.playing || (!sceneRequest.reportedError && nativeSceneFrameRef.current?.key !== nativeSceneIdentity?.key) || now - sceneRequest.lastRequestAt >= 200);
+    const sceneRenderNeeded = (sceneRequest.captures === 0 || captureSceneFrame) && (!completedSceneFrame || now - lastAnimationFrameAtRef.current > 100) && !isGame && !scene2DActive && '__TAURI_INTERNALS__' in window && (draggingRef.current || p.playing || (!sceneRequest.reportedError && nativeSceneFrameRef.current?.key !== nativeSceneIdentity?.key) || now - sceneRequest.lastRequestAt >= 200);
     const sceneRequestInterval = p.playing || now - lastAnimationFrameAtRef.current > 100 ? 1000 / 60 : 0;
     const sceneRequestDelay = Math.max(0, sceneRequestInterval - (now - sceneRequest.lastRequestAt));
     if (sceneRenderNeeded && !sceneRequest.inFlight && sceneRequest.captures === 0 && sceneRequestDelay > 0 && sceneRequest.resumeTimer == null) {
@@ -1632,6 +1634,7 @@ export function Viewport(props: {
     }
     if (
       selectedCamera
+      && (nativeSceneRequestRef.current.captures === 0 || captureSceneFrame)
       && '__TAURI_INTERNALS__' in window
       && !nativeCameraPreviewRequestRef.current.inFlight
       && now - nativeCameraPreviewRequestRef.current.lastRequestAt >= (p.playing ? 120 : 500)
