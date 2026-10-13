@@ -1,10 +1,10 @@
 {
   "author": "MiYu",
   "passed": true,
-  "scope": "Two standalone V8 Players on one host, production generated client and scene, real authoritative TCP. Every distinct authoritative frame presented by a client is checked. Scripted game actions, no physical input or two-machine acceptance.",
+  "scope": "Two standalone V8 Players on one host, production generated client and scene, real authoritative TCP. Every distinct authoritative state presented by a client is checked, including post-match corpse updates at a fixed gameplay frame. Scripted game actions, no physical input or two-machine acceptance.",
   "fixture": {
-    "mapFile": "D:\\MEngineNativeQA\\native-moba-objectives-1791914157717\\fixture-map.json",
-    "mapSha256": "6402f98b45fbbf201a7b82d72821b71402817e9b62b29fab328d0035e71de51d",
+    "mapFile": "D:\\MEngineNativeQA\\native-moba-objectives-1791918913951\\fixture-map.json",
+    "mapSha256": "aef993dfd98a6465c4cd39ce60bce3da44ccd91f3f860d878658630af07a00c0",
     "mode": "moba",
     "objectiveHp": 50,
     "objectiveDamage": 0,
@@ -22,10 +22,10 @@
   },
   "executable": "D:\\MEngineNativeQA\\engine-main-sync\\target\\release\\mengine-runtime.exe",
   "executableSha256": "b6339d943466800c55576515dd1b7e43e87f92fa793a3a122a79ed7bb805aa9b",
-  "clientSha256": "f2c3d73a8356120bae53e88a02030b957ad28a04d80bbc43c8fb1171fec5f11a",
+  "clientSha256": "069ce214b10430a5f0c17a6d0b737a7499ad359a9a4405900cbc2e633ce1189f",
   "sceneSha256": "372c92108da3b6c5a5ecb4dcfd5e9887bafcf856a0ee2e3fbb9e8a2f8d1fcdbe",
-  "projectRoot": "D:\\MEngineNativeQA\\moba-art-1791914017999\\sample",
-  "root": "D:\\MEngineNativeQA\\native-moba-objectives-1791914157717",
+  "projectRoot": "D:\\MEngineNativeQA\\moba-art-1791918632307\\sample",
+  "root": "D:\\MEngineNativeQA\\native-moba-objectives-1791918913951",
   "combatStartFrame": 11,
   "guestTicksWhileStalled": 1,
   "stalledGuestFrame": 224,
@@ -61,7 +61,8 @@
       }
     ]
   },
-  "comparisonFrame": 301,
+  "comparisonFrame": 303,
+  "winner": 1,
   "objectiveCommands": [
     {
       "frame": 36,
@@ -196,7 +197,7 @@
       ]
     },
     {
-      "frame": 57,
+      "frame": 58,
       "team": 1,
       "command": {
         "ids": [
@@ -229,7 +230,7 @@
       ]
     },
     {
-      "frame": 62,
+      "frame": 61,
       "team": 0,
       "command": {
         "ids": [
@@ -310,12 +311,7 @@
         {
           "id": 2,
           "hp": 10090,
-          "order": {
-            "type": "attack",
-            "x": 0,
-            "z": 0,
-            "target": 34
-          }
+          "order": null
         }
       ],
       "goldBefore": 761,
@@ -366,7 +362,7 @@
       ]
     },
     {
-      "frame": 83,
+      "frame": 82,
       "team": 0,
       "command": {
         "ids": [
@@ -819,25 +815,25 @@
       "alive": false
     }
   ],
-  "snapshotComparisons": 54,
-  "sharedActorComparisons": 20,
-  "fogFilteredSnapshots": 54,
+  "snapshotComparisons": 56,
+  "sharedActorComparisons": 18,
+  "fogFilteredSnapshots": 56,
   "exactFloatSnapshots": 0,
   "clients": [
     {
-      "pid": 173544,
-      "project": "D:\\MEngineNativeQA\\native-moba-objectives-1791914157717\\project-0",
-      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\244172e356873b0f",
-      "instrumentedScriptSha256": "c8a855ac421f0fc8fc6cf4a41db05dfad732bcf57c3cef5d95fa32a91cb6e3a4",
+      "pid": 38352,
+      "project": "D:\\MEngineNativeQA\\native-moba-objectives-1791918913951\\project-0",
+      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\78c7900196a25033",
+      "instrumentedScriptSha256": "40d61c7830c07d457de32342b64edd1efba45ddf543ddd1f4f224bb751786d8a",
       "final": {
-        "clientTicks": 46,
-        "elapsed": 51359,
-        "frame": 301,
+        "clientTicks": 47,
+        "elapsed": 52384,
+        "frame": 303,
         "initialObjectives": true,
         "localSimulationTicks": 0,
-        "mode": "playing",
+        "mode": "finished",
         "resumes": 0,
-        "snapshots": 29,
+        "snapshots": 30,
         "team": 0
       },
       "exit": {
@@ -846,19 +842,19 @@
       }
     },
     {
-      "pid": 103536,
-      "project": "D:\\MEngineNativeQA\\native-moba-objectives-1791914157717\\project-1",
-      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\244171e35687395c",
-      "instrumentedScriptSha256": "eca0aa5939a27d615b27cb29d93099c3f156236080c5e6e7de70c0aaf4737193",
+      "pid": 45048,
+      "project": "D:\\MEngineNativeQA\\native-moba-objectives-1791918913951\\project-1",
+      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\78c78f0196a24e80",
+      "instrumentedScriptSha256": "ac3afd8ab5575fd078a4ea6389cbdc6d2a4da05469cd4d8fc6825bf3e26aaaaf",
       "final": {
         "clientTicks": 35,
-        "elapsed": 37018,
-        "frame": 301,
+        "elapsed": 37013,
+        "frame": 303,
         "initialObjectives": true,
         "localSimulationTicks": 0,
-        "mode": "playing",
+        "mode": "finished",
         "resumes": 1,
-        "snapshots": 25,
+        "snapshots": 26,
         "team": 1
       },
       "exit": {
@@ -867,112 +863,117 @@
       }
     }
   ],
-  "elapsedMs": 75798,
+  "elapsedMs": 76379,
   "events": [
     {
       "type": "connected",
       "connection": 1,
-      "at": 30009
+      "at": 30170
     },
     {
       "type": "hello",
       "connection": 1,
-      "at": 30040
+      "at": 30172
     },
     {
       "type": "create",
       "connection": 1,
-      "at": 30043
+      "at": 30173
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 30045
+      "at": 30173
     },
     {
       "type": "ready",
       "connection": 1,
-      "at": 31051
+      "at": 30607
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 33071
+      "at": 31615
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 36100
+      "at": 34645
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 39134
+      "at": 37674
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 40705
     },
     {
       "type": "connected",
       "connection": 2,
-      "at": 40761
+      "at": 41398
     },
     {
       "type": "hello",
       "connection": 2,
-      "at": 40788
+      "at": 41426
     },
     {
       "type": "list",
       "connection": 2,
-      "at": 40790
+      "at": 41428
     },
     {
       "type": "ping",
       "connection": 2,
-      "at": 40792
+      "at": 41431
     },
     {
       "type": "list",
       "connection": 2,
-      "at": 40795
-    },
-    {
-      "type": "ping",
-      "connection": 1,
-      "at": 41156
-    },
-    {
-      "type": "ping",
-      "connection": 2,
-      "at": 41794
+      "at": 41433
     },
     {
       "type": "join",
       "connection": 2,
-      "at": 41799
+      "at": 42438
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 43445
     },
     {
       "type": "ready",
       "connection": 2,
-      "at": 42810
+      "at": 43450
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 43736
     },
     {
       "type": "start",
       "connection": 1,
-      "at": 43185
+      "at": 43747
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 46263
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 44188
-    },
-    {
-      "type": "ping",
-      "connection": 2,
-      "at": 45625
+      "at": 46575
     },
     {
       "type": "order",
       "connection": 2,
-      "at": 46780,
+      "at": 47417,
       "seq": 1,
       "command": {
         "ids": [
@@ -984,14 +985,9 @@
       }
     },
     {
-      "type": "ping",
-      "connection": 1,
-      "at": 47281
-    },
-    {
       "type": "order",
       "connection": 1,
-      "at": 47297,
+      "at": 47857,
       "seq": 1,
       "command": {
         "ids": [
@@ -1003,14 +999,9 @@
       }
     },
     {
-      "type": "ping",
-      "connection": 2,
-      "at": 47882
-    },
-    {
       "type": "order",
       "connection": 2,
-      "at": 47898,
+      "at": 48537,
       "seq": 2,
       "command": {
         "ids": [
@@ -1023,7 +1014,7 @@
     {
       "type": "order",
       "connection": 1,
-      "at": 48339,
+      "at": 48900,
       "seq": 2,
       "command": {
         "ids": [
@@ -1034,9 +1025,14 @@
       }
     },
     {
+      "type": "ping",
+      "connection": 2,
+      "at": 49561
+    },
+    {
       "type": "order",
       "connection": 2,
-      "at": 48940,
+      "at": 49578,
       "seq": 3,
       "command": {
         "ids": [
@@ -1048,9 +1044,14 @@
       }
     },
     {
+      "type": "ping",
+      "connection": 1,
+      "at": 49926
+    },
+    {
       "type": "order",
       "connection": 1,
-      "at": 49383,
+      "at": 49942,
       "seq": 3,
       "command": {
         "ids": [
@@ -1063,7 +1064,7 @@
     {
       "type": "order",
       "connection": 2,
-      "at": 49987,
+      "at": 50622,
       "seq": 4,
       "command": {
         "ids": [
@@ -1074,14 +1075,9 @@
       }
     },
     {
-      "type": "ping",
-      "connection": 1,
-      "at": 50406
-    },
-    {
       "type": "order",
       "connection": 1,
-      "at": 50423,
+      "at": 50986,
       "seq": 4,
       "command": {
         "ids": [
@@ -1093,14 +1089,9 @@
       }
     },
     {
-      "type": "ping",
-      "connection": 2,
-      "at": 51010
-    },
-    {
       "type": "order",
       "connection": 2,
-      "at": 51026,
+      "at": 51657,
       "seq": 5,
       "command": {
         "ids": [
@@ -1112,9 +1103,14 @@
       }
     },
     {
+      "type": "ping",
+      "connection": 1,
+      "at": 52022
+    },
+    {
       "type": "order",
       "connection": 1,
-      "at": 51477,
+      "at": 52043,
       "seq": 5,
       "command": {
         "ids": [
@@ -1125,9 +1121,14 @@
       }
     },
     {
+      "type": "ping",
+      "connection": 2,
+      "at": 52719
+    },
+    {
       "type": "order",
       "connection": 2,
-      "at": 52122,
+      "at": 52757,
       "seq": 6,
       "command": {
         "ids": [
@@ -1140,7 +1141,7 @@
     {
       "type": "order",
       "connection": 1,
-      "at": 52561,
+      "at": 53129,
       "seq": 6,
       "command": {
         "ids": [
@@ -1150,14 +1151,9 @@
       }
     },
     {
-      "type": "ping",
-      "connection": 2,
-      "at": 53229
-    },
-    {
       "type": "order",
       "connection": 2,
-      "at": 53244,
+      "at": 53880,
       "seq": 7,
       "command": {
         "ids": [
@@ -1169,91 +1165,86 @@
     {
       "type": "ping",
       "connection": 1,
-      "at": 53599
+      "at": 55201
     },
     {
       "type": "ping",
       "connection": 2,
-      "at": 56354
-    },
-    {
-      "type": "ping",
-      "connection": 1,
-      "at": 56718
+      "at": 55946
     },
     {
       "type": "ping",
       "connection": 2,
-      "at": 59475
+      "at": 58028
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 59834
+      "at": 58319
     },
     {
       "type": "ping",
       "connection": 2,
-      "at": 62591
+      "at": 61143
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 62949
+      "at": 61434
     },
     {
       "type": "ping",
       "connection": 2,
-      "at": 65762
+      "at": 64278
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 66119
+      "at": 64586
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 67437
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 67736
     },
     {
       "type": "closed",
       "connection": 2
     },
     {
-      "type": "ping",
-      "connection": 1,
-      "at": 68210
-    },
-    {
       "type": "connected",
       "connection": 3,
-      "at": 69919
+      "at": 70541
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 70873
     },
     {
       "type": "hello",
       "connection": 3,
-      "at": 70947
+      "at": 71573
     },
     {
       "type": "resume",
       "connection": 3,
-      "at": 70950
+      "at": 71575
     },
     {
       "type": "ping",
       "connection": 3,
-      "at": 70951
-    },
-    {
-      "type": "ping",
-      "connection": 1,
-      "at": 71337
-    },
-    {
-      "type": "ping",
-      "connection": 3,
-      "at": 71979
+      "at": 71576
     },
     {
       "type": "order",
       "connection": 3,
-      "at": 72001,
+      "at": 72616,
       "seq": 1,
       "command": {
         "ids": [
@@ -1265,16 +1256,21 @@
     {
       "type": "ping",
       "connection": 1,
-      "at": 74481
+      "at": 72964
     },
     {
       "type": "ping",
       "connection": 3,
-      "at": 75122
+      "at": 73645
     },
     {
       "type": "closed",
       "connection": 3
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 76098
     },
     {
       "type": "closed",

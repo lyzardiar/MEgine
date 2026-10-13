@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {nativeQaRoot,configureNativeQa,closeNativeQa} from './frost-native-qa-runtime.mjs';
+import {nativeKeyPhases,nativePointPhases} from './frost-native-input.mjs';
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),base=process.env.MENGINE_QA_PROJECT_ROOT||source,root=path.join(nativeQaRoot,'moba-art-'+Date.now()),sample=path.join(root,'sample'),out=path.join(repo,'docs/designs/frostbound-realms'),hash=raw=>createHash('sha256').update(raw).digest('hex');
 const receipt=JSON.parse(fs.readFileSync(path.join(source,'moba-model-sources.json')));
 for(const p of [process.env.MENGINE_EDITOR_EXECUTABLE,path.join(repo,'packages/agent/mcp/server.mjs'),path.join(source,'Assets/Scenes/Main.mscene')])assert.ok(p&&fs.existsSync(p),'Missing QA prerequisite: '+p);
@@ -16,7 +17,8 @@ linkTree(path.join(base,'Assets'),path.join(sample,'Assets'));
 function replaceFile(relative,raw){const p=path.join(sample,relative);fs.mkdirSync(path.dirname(p),{recursive:true});if(fs.existsSync(p))fs.unlinkSync(p);fs.writeFileSync(p,raw);}
 for(const r of receipt.files.filter(r=>r.path.startsWith('Assets/')))replaceFile(r.path,fs.readFileSync(path.join(source,r.path)));
 replaceFile('Assets/Scenes/Main.mscene',fs.readFileSync(path.join(source,'Assets/Scenes/Main.mscene')));
-const original=fs.readFileSync(path.join(source,'Assets/Scripts/Main.js'),'utf8'),instrumented=original.replace('  return {tick};',"  return {tick,qaView:which=>{solo('moba');team=which;camera=which?[21,-21]:[-21,21];zoom=12;},qaFocus:()=>{const ancient=state.units.find(u=>u.team===team&&u.mobaObjective?.role==='ancient');selected=[ancient.id];camera=[ancient.x,ancient.z];zoom=6;}};").replace('JSON.stringify({mode,','JSON.stringify({qaUnits:state.units,qaMap:map,mode,');
+replaceFile('Assets/Maps/moba.json',fs.readFileSync(path.join(source,'Assets/Maps/moba.json')));
+const original=fs.readFileSync(path.join(source,'Assets/Scripts/Main.js'),'utf8'),instrumented=original.replace('  return {tick};',"  return {tick,qaView:which=>{solo('moba');team=which;camera=which?[21,-21]:[-21,21];zoom=12;},qaFocus:()=>{const ancient=state.units.find(u=>u.team===team&&u.mobaObjective?.role==='ancient');selected=[ancient.id];camera=[ancient.x,ancient.z];zoom=6;}};").replace('JSON.stringify({mode,','JSON.stringify({qaEditor:{editorPage,mobaTeam,mobaBuilding},qaUnits:state.units,qaMap:map,mode,');
 replaceFile('Assets/Scripts/Main.js',Buffer.from(instrumented+"\nvar qaViewTeam=-1,qaRenderTick=onTick;onTick=function(dt,frame){var control=engine.storage.load('moba-art-view');if(control&&control.team!==qaViewTeam){qaViewTeam=control.team;FrostClient.qaView(qaViewTeam);}if(control?.focus)FrostClient.qaFocus();qaRenderTick(dt,frame);};\n"));
 const project={...JSON.parse(fs.readFileSync(path.join(source,'project.json'))),storageId:'moba-art-'+path.basename(root)};fs.writeFileSync(path.join(sample,'project.json'),JSON.stringify(project));
 let storageHash=0xcbf29ce484222325n;for(const byte of Buffer.from(project.storageId))storageHash=BigInt.asUintN(64,(storageHash^BigInt(byte))*0x100000001b3n);const storage=path.join(process.env.LOCALAPPDATA,'MEngine/UserData',storageHash.toString(16).padStart(16,'0'));fs.mkdirSync(storage,{recursive:true});
@@ -43,6 +45,28 @@ try{
   }
   await capture(team,renderedStep.frame,false);
   fs.writeFileSync(path.join(storage,'moba-art-view.json'),JSON.stringify({team,focus:true}));const closeup=await step();await capture(team,closeup.frame,true);
+ }
+ if(process.argv.includes('--layout')){
+  fs.writeFileSync(path.join(storage,'moba-art-view.json'),'null');
+  const map=JSON.parse(fs.readFileSync(path.join(source,'Assets/Maps/moba.json'))),buttons=JSON.parse(original.match(/var FrostButtons=([^\r\n]+);/)[1]);
+  fs.writeFileSync(path.join(storage,'map1.json'),JSON.stringify(map));
+  const key=k=>execute('playback.sequence',{phases:nativeKeyPhases(k,.1)}),point=p=>execute('playback.sequence',{phases:nativePointPhases(p,.1)});
+  const button=async id=>{const b=buttons.find(b=>b.id===id).editor;await point([640+b.x,360+b.y]);};
+  const undo=()=>execute('playback.sequence',{phases:[{input:{keys:['ControlLeft','KeyZ']},deltaTime:.1},{input:{keys:[]},deltaTime:.1}]});
+  const ground=async(x,z)=>{const t=await state(),pitch=Math.atan2(V.camera.height,V.camera.depth);await point([640+(x-t.camera[0])/t.zoom*360,360+((z-t.camera[1])*Math.sin(pitch)-S.elevation(t.qaMap,x,z)*Math.cos(pitch))/t.zoom*360]);};
+  await key('F10');await key('KeyX');assert.equal((await state()).mode,'title');await key('F4');await key('F6');await key('KeyB');assert.equal((await state()).qaEditor.editorPage,12);
+  for(const team of [0,1]){
+   if(team)await button('action0');assert.equal((await state()).qaEditor.mobaTeam,team);await button('action4');
+   const [x,z]=map.mobaLayout[team][0],moved=[x+(team?1:-1),z];await ground(x,z);await key('KeyM');await ground(...moved);
+   assert.deepEqual((await state()).qaMap.mobaLayout[team][0],moved,'native ground input moves selected building');
+   await key('F5');await undo();assert.deepEqual((await state()).qaMap.mobaLayout[team][0],[x,z]);await key('F6');assert.deepEqual((await state()).qaMap.mobaLayout[team][0],moved);
+  }
+  const edited=(await state()).qaMap.mobaLayout;await key('F7');assert.equal((await state()).mode,'playing');assert.deepEqual((await state()).qaMap.mobaLayout,edited);
+  await key('F10');await key('KeyX');assert.equal((await state()).mode,'editor');assert.deepEqual((await state()).qaMap.mobaLayout,edited);
+  await key('KeyB');await button('action4');await execute('playback.input',{pointer:[640,230]});const final=await step();
+  const deadline=Date.now()+30000;let latest;while(Date.now()<deadline){latest=(await query('profiler.get_samples',{source:'game',limit:1})).nativeLatest;if(latest?.worldRevision===final.frame)break;await sleep(200);}assert.equal(latest?.worldRevision,final.frame);
+  const shot=await query('view.screenshot',{target:'game'});fs.writeFileSync(path.join(out,'moba-layout-editor.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));
+  report.layout={nativeInput:true,bothFactions:true,move:true,undo:true,saveLoad:true,playReturn:true,frame:final.frame,worldRevision:latest.worldRevision,screenshot:'moba-layout-editor.png',mobaLayout:edited};console.log('PASS native layout editor input, both factions, persistence and play/return');
  }
  const profile=await query('profiler.get_samples',{source:'game',limit:20}),logs=await query('console.get_logs',{limit:100});assert.equal(profile.nativeLatest.counts.materialPipelinesRejected,0);assert.ok(!logs.some(l=>l.level==='error'),JSON.stringify(logs));report.materialPipelinesRejected=0;report.passed=true;
 }catch(error){report.error=error.stack;process.exitCode=1;console.error(error.stack);try{report.logs=await query('console.get_logs',{limit:40});}catch{}}

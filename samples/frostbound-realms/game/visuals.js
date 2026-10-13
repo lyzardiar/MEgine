@@ -1,5 +1,12 @@
 /* Author: MiYu. Shared faction models for live units, map placement and construction previews. */
 var FrostVisual=(()=>{
+  const camera={height:32,depth:42};
+  function viewBounds(asset,scale,yaw,x,y,z){
+    const min=asset.bounds?.min??[-asset.size[0]/2,0,-asset.size[2]/2],max=asset.bounds?.max??[asset.size[0]/2,asset.size[1],asset.size[2]/2],c=Math.cos(yaw),s=Math.sin(yaw),box=[Infinity,Infinity,-Infinity,-Infinity];
+    for(const px of [min[0],max[0]])for(const py of [min[1],max[1]])for(const pz of [min[2],max[2]]){const vx=x+(px*c+pz*s)*scale,vz=z+(-px*s+pz*c)*scale-(y+py*scale)*camera.depth/camera.height;box[0]=Math.min(box[0],vx);box[1]=Math.min(box[1],vz);box[2]=Math.max(box[2],vx);box[3]=Math.max(box[3],vz);}
+    return box;
+  }
+  const overlapsView=(a,b,margin=.5)=>a[0]<b[2]+margin&&a[2]>b[0]-margin&&a[1]<b[3]+margin&&a[3]>b[1]-margin;
   const buildingScales=typeof module!=='undefined'?require('../building-scale-catalog.json'):FrostBuildingScales;
   const unitScales=typeof module!=='undefined'?require('../unit-scale-catalog.json'):FrostUnitScales;
   const keeperRules=typeof module!=='undefined'?require('../keeper-rules.json'):FrostKeeperRules;
@@ -275,6 +282,6 @@ var FrostVisual=(()=>{
       return [...tracks.values()].map(v=>position(v,clock));
     }};
   }
-  return {camera:{height:32,depth:42},model,name,pose,corpse,heroDeath,heroPortrait,unitPortrait,heading,resource,scenery,doodad,environmentPartCount,groundDetail,projectile,projectileView,muzzle,classicClip,classicSample,parts,actorPartCount,portrait,sentinel};
+  return {camera,viewBounds,overlapsView,model,name,pose,corpse,heroDeath,heroPortrait,unitPortrait,heading,resource,scenery,doodad,environmentPartCount,groundDetail,projectile,projectileView,muzzle,classicClip,classicSample,parts,actorPartCount,portrait,sentinel};
 })();
 if(typeof module!=='undefined')module.exports=FrostVisual;

@@ -5,15 +5,15 @@ var FrostMobaObjectives = (() => {
     {towers:[[-3,3],[-8,8],[-13,13]],melee:[-18,12],ranged:[-12,18]},
     {towers:[[13,24],[1,24],[-9,24]],melee:[-19,27],ranged:[-14,27]}
   ];
-  function layout(team){
+  function layout(team,map){
     const entries=[];for(let local=0;local<3;local++){const lane=team?2-local:local,r=lanes[local];r.towers.forEach((p,i)=>entries.push({role:'tower',lane,tier:i+1,p}));for(const role of ['melee','ranged'])entries.push({role,lane,tier:0,p:r[role]});}
     for(const p of [[-21,19],[-19,22]])entries.push({role:'tower',lane:-1,tier:4,p});
-    return entries.map(o=>({...o,p:team?o.p.map(v=>-v):o.p}));
+    return entries.map((o,i)=>({...o,p:map?.mobaLayout?.[team]?.[i]?[...map.mobaLayout[team][i]]:team?o.p.map(v=>-v):[...o.p]}));
   }
   function attach(s,u,role,lane=-1,tier=0){const record={id:u.id,team:u.team,role,lane,tier,alive:true};s.mobaObjectives.push(record);u.mobaObjective={role,lane,tier};}
   function setup(s,team,hall,spawn){
     s.mobaObjectives??=[];attach(s,hall,'ancient');hall.damage=0;
-    for(const o of layout(team)){const u=spawn(s,o.role==='tower'?'tower':'barracks',team,...o.p,{lane:o.lane});if(!u)throw Error('MOBA objective capacity exceeded');attach(s,u,o.role,o.lane,o.tier);}
+    for(const o of layout(team,s.map)){const u=spawn(s,o.role==='tower'?'tower':'barracks',team,...o.p,{lane:o.lane});if(!u)throw Error('MOBA objective capacity exceeded');attach(s,u,o.role,o.lane,o.tier);}
     refresh(s);
   }
   function protectedObjective(s,o){

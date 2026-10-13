@@ -1,6 +1,6 @@
 /* Author: MiYu. Shared fixed-step rules for the native client and authoritative server. */
 var Frost = (() => {
-  const PROTOCOL = 94, DT = 0.1, LIMIT = 160, PROJECTILE_LIMIT = 256, CORPSE_LIMIT = 64, CORPSE_LIFETIME = 20, TREE_FALL_LIFETIME = 6, TREE_RADIUS = .8, SIZE = 32;
+  const PROTOCOL = 95, DT = 0.1, LIMIT = 160, PROJECTILE_LIMIT = 256, CORPSE_LIMIT = 64, CORPSE_LIFETIME = 20, TREE_FALL_LIFETIME = 6, TREE_RADIUS = .8, SIZE = 32;
   const mobaObjectives=typeof module!=='undefined'?require('./moba-objectives.js'):FrostMobaObjectives;
   const sorceressRules=typeof module!=='undefined'?require('../human-sorceress-spells.json'):FrostHumanSorceressRules;
   const transformed=u=>u.hex||u.hexLeft>0||u.polymorph||u.polymorphLeft>0;
@@ -892,6 +892,12 @@ var Frost = (() => {
     if(raw.tdPath!==undefined&&(!Array.isArray(raw.tdPath)||raw.tdPath.length<2||raw.tdPath.length>32||Array.from(raw.tdPath).some((p,i)=>!point(p)||!Array.from(p).every(Number.isFinite)||i>0&&Math.hypot(p[0]-raw.tdPath[i-1][0],p[1]-raw.tdPath[i-1][1])<2)))throw Error('TD route requires 2 to 32 points inside the map, at least 2 units apart');
     const map={version:1,name:Array.from(String(raw.name||'Custom battlefield')).slice(0,40).join(''),mode:raw.mode,startingHour:raw.startingHour??8,cliffStyle:raw.cliffStyle??0,terrain:[...raw.terrain],surfaces:raw.surfaces?[...raw.surfaces]:Array(1024).fill(0),heights:raw.heights?[...raw.heights]:Array(1024).fill(0),ramps:raw.ramps?[...raw.ramps]:Array(1024).fill(0),relief:raw.relief?raw.relief.map(v=>v||0):Array(1089).fill(0),spawns:raw.spawns.map(p=>[...p]),props:raw.props.map(p=>({kind:p.kind,x:p.x,z:p.z,amount:clamp(Number.isFinite(p.amount)?p.amount:1000,100,10000)})),startingGold:clamp(Number.isFinite(raw.startingGold)?Math.round(raw.startingGold):500,100,2000),startingWood:clamp(Number.isFinite(raw.startingWood)?Math.round(raw.startingWood):raw.mode==='skirmish'?150:250,0,2000),waveInterval:clamp(Number.isFinite(raw.waveInterval)?raw.waveInterval:raw.mode==='moba'?30:24,10,60),waves:clamp(Number.isFinite(raw.waves)?Math.round(raw.waves):12,3,30)};
     if(raw.mode==='td'||raw.tdPath!==undefined)map.tdPath=clone(raw.tdPath??tdPath);
+    if(raw.mobaLayout!==undefined){
+      if(!Array.isArray(raw.mobaLayout)||raw.mobaLayout.length!==2||Array.from(raw.mobaLayout).some(points=>!Array.isArray(points)||points.length!==17||Array.from(points).some(p=>!point(p)||!Array.from(p).every(Number.isFinite))))throw Error('MOBA layout requires 17 building positions for each faction');
+      map.mobaLayout=raw.mobaLayout.map(points=>points.map(p=>[...p]));
+      const sites=map.spawns.map(p=>({p,r:types.hall.radius}));for(const team of [0,1])for(const o of mobaObjectives.layout(team,map))sites.push({p:o.p,r:types[o.role==='tower'?'tower':'barracks'].radius});
+      if(map.mode==='moba')for(let i=0;i<sites.length;i++)for(let j=0;j<i;j++)if(Math.hypot(sites[i].p[0]-sites[j].p[0],sites[i].p[1]-sites[j].p[1])<sites[i].r+sites[j].r+.25)throw Error('MOBA building footprints need clear spacing');
+    }
     if(raw.tdWaves!==undefined){if(!Array.isArray(raw.tdWaves)||raw.tdWaves.length<1||raw.tdWaves.length>30||Array.from(raw.tdWaves).some(w=>!w||!Number.isFinite(w.interval)||w.interval<1||w.interval>120||!Array.isArray(w.groups)||w.groups.length<1||w.groups.length>4||Array.from(w.groups).some(g=>!tdGroupValid(g))||w.groups.reduce((n,g)=>n+g.count,0)>65))throw Error('TD waves require 1 to 30 waves, 1 to 4 valid groups and at most 65 monsters per wave');map.tdWaves=raw.tdWaves.map(w=>({interval:w.interval,groups:w.groups.map(({kind,count,hp,speed,bounty,lives,boss})=>({kind,count,hp,speed,bounty,lives,boss}))}));map.waves=map.tdWaves.length;}
     if(raw.doodads!==undefined){if(!Array.isArray(raw.doodads)||raw.doodads.length>DOODAD_LIMIT||Array.from(raw.doodads).some(d=>!d||!Object.hasOwn(doodads,d.kind)||!Number.isFinite(d.x)||!Number.isFinite(d.z)||Math.abs(d.x)>29||Math.abs(d.z)>29||!Number.isInteger(d.variant)||d.variant<0||d.variant>=doodads[d.kind].variants||!Number.isFinite(d.scale)||d.scale<.5||d.scale>3||!Number.isFinite(d.yaw)||d.yaw<0||d.yaw>=Math.PI*2))throw Error('Invalid map doodads');map.doodads=raw.doodads.map(({kind,x,z,variant,scale,yaw})=>({kind,x,z,variant,scale,yaw}));}
     if(raw.cliffs!==undefined)map.cliffs=[...raw.cliffs];if(raw.tileset!==undefined)map.tileset=raw.tileset;
@@ -917,6 +923,7 @@ var Frost = (() => {
     });
     for(const p of map.spawns){const c=cell(...p);for(let z=c[1]-2;z<=c[1]+2;z++)for(let x=c[0]-2;x<=c[0]+2;x++)if(x>=0&&z>=0&&x<32&&z<32)map.terrain[z*32+x]=0;}
     for(let i=0;i<1024;i++)if(map.ramps[i]&&(map.heights[i]+(map.ramps[i]>4?.5:1)>3||map.terrain[i]===1))throw Error('Ramp requires dry ground below maximum height');
+    if(map.mode==='moba'&&map.mobaLayout)for(const team of [0,1])for(const o of mobaObjectives.layout(team,map)){const r=types[o.role==='tower'?'tower':'barracks'].radius;if(!flatSite(map,...o.p,r)||map.props.some(p=>p.kind==='tree'&&Math.hypot(p.x-o.p[0],p.z-o.p[1])<r+TREE_RADIUS)||(map.doodads||[]).some(d=>doodads[d.kind].radius>0&&Math.hypot(d.x-o.p[0],d.z-o.p[1])<r+doodads[d.kind].radius*d.scale))throw Error('MOBA buildings require clear, flat, dry ground');}
     return map;
   }
   function eventMap(){
