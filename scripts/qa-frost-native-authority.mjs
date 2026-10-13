@@ -9,12 +9,13 @@ import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
 
-const customMap=process.argv.includes('--td-map')?process.argv[process.argv.indexOf('--td-map')+1]:null;
-if(process.argv.includes('--td-map')&&!customMap)throw Error('--td-map requires a JSON map file');
+const waveQa=process.argv.includes('--td-waves'),mapOption=waveQa?'--td-waves':'--td-map';
+const customMap=process.argv.includes(mapOption)?process.argv[process.argv.indexOf(mapOption)+1]:null;
+if(process.argv.includes(mapOption)&&!customMap)throw Error(mapOption+' requires a JSON map file');
 const cooperative=process.argv.includes('--td')||!!customMap;
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms');
 const executable=path.resolve(process.env.MENGINE_RUNTIME_EXECUTABLE||path.join(repo,'target/release/mengine-runtime'+(process.platform==='win32'?'.exe':'')));
-const projectRoot=path.resolve(process.env.MENGINE_QA_PROJECT_ROOT||source),tag=Date.now(),root=path.join(process.env.MENGINE_QA_ROOT||path.join(os.tmpdir(),'mengine-qa'),(customMap?'native-td-route-':cooperative?'native-td-coop-':'native-authority-')+tag);
+const projectRoot=path.resolve(process.env.MENGINE_QA_PROJECT_ROOT||source),tag=Date.now(),root=path.join(process.env.MENGINE_QA_ROOT||path.join(os.tmpdir(),'mengine-qa'),(waveQa?'native-td-waves-':customMap?'native-td-route-':cooperative?'native-td-coop-':'native-authority-')+tag);
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const identityRun=spawnSync(executable,['--runtime-info'],{encoding:'utf8',windowsHide:true,timeout:30000});
 assert.equal(identityRun.status,0,identityRun.error?.message||identityRun.stderr);const identity=JSON.parse(identityRun.stdout);assert.equal(identity.backend,'v8');
@@ -53,7 +54,7 @@ const originalSource=fs.readFileSync(path.join(source,'Assets/Scripts/Main.js'),
 assert.equal(originalSource.split('  return {tick};').length,2,'production client inspection anchor');
 assert.equal(originalSource.split("address='127.0.0.1:7788'").length,2,'production server address anchor');
 function launch(index){
-  const key=(customMap?'native-td-route-':cooperative?'native-td-coop-':'native-authority-')+tag+'-'+index,script=path.join(root,'peer-'+index+'.js');
+  const key=(waveQa?'native-td-waves-':customMap?'native-td-route-':cooperative?'native-td-coop-':'native-authority-')+tag+'-'+index,script=path.join(root,'peer-'+index+'.js');
   const peerProject=path.join(root,'project-'+index),storage=storageRoot(key);fs.mkdirSync(peerProject);fs.mkdirSync(storage,{recursive:true});
   fs.writeFileSync(path.join(peerProject,'project.json'),JSON.stringify({...project,storageId:key}));
   fs.symlinkSync(path.join(projectRoot,'Assets'),path.join(peerProject,'Assets'),process.platform==='win32'?'junction':'dir');
@@ -133,12 +134,13 @@ try{
     for(const state of states){const expected=wire.get(peer.index+':'+state.frame);assert.ok(expected,'server frame recorded');assert.equal(hash(canonical(state)),expected.hash,'native state equals complete authoritative public snapshot');comparisons++;if(expected.hidden)hidden++;if(state.units.some(u=>u.hp===112.00000000000001))precise++;captured.set(peer.index+':'+state.frame,state);}
   }
   for(const [key,left] of captured){if(!key.startsWith('0:'))continue;const right=captured.get('1:'+left.frame);if(!right)continue;if(cooperative)assert.deepEqual(left,right,'cooperative complete state equality');for(const unit of left.units){const other=right.units.find(u=>u.id===unit.id);if(other){for(const key of ['x','z','hp','mana','kind','team'])assert.deepEqual(unit[key],other[key],'shared actor '+key);shared++;}}}
+  if(waveQa){const observed=[];for(let seat=0;seat<2;seat++){const monsters=new Map();for(const [key,state]of captured){if(!key.startsWith(seat+':'))continue;assert.deepEqual(state.map.tdWaves,map.tdWaves,'authored waves preserved on native client');for(const u of state.units.filter(u=>u.td))monsters.set(u.id,{kind:u.kind,hp:u.maxHp,speed:u.speed,bounty:u.tdBounty,lives:u.tdLives,boss:u.tdBoss});}for(const g of map.tdWaves[0].groups)assert.ok([...monsters.values()].filter(u=>Object.keys(u).every(k=>u[k]===g[k])).length>=g.count,'native seat observes every authored monster group');observed.push({seat,monsters:[...monsters.values()]});}report.authoredWaves=observed;}
   assert.ok(shared>0);if(!cooperative){assert.ok(hidden>0);assert.ok(precise>0);}assert.equal(events.filter(e=>e.type==='timeout').length,0);assert.deepEqual(events.filter(e=>e.type==='server-error'),[]);
   report.snapshotComparisons=comparisons;report.sharedActorComparisons=shared;report.fogFilteredSnapshots=hidden;report.exactFloatSnapshots=precise;report.clients=peers.map(p=>({pid:p.child.pid,project:p.project,storage:p.storage,instrumentedScriptSha256:hash(fs.readFileSync(p.script)),final:p.final,exit:p.exit}));report.passed=true;
 }catch(error){report.error=String(error.stack||error);throw error;}
 finally{
   for(const peer of peers)if(!peer.exit&&!peer.error)peer.child.kill();await Promise.all(peers.map(p=>p.done));await app.close();S.create=originalCreate;S.command=originalCommand;
   report.elapsedMs=Date.now()-started;report.events=events;fs.writeFileSync(path.join(root,'report.json'),JSON.stringify(report,null,2)+'\n');
-  fs.writeFileSync(path.join(repo,'docs/designs/frostbound-realms/'+(customMap?'native-td-route-validation.json':cooperative?'native-td-coop-validation.json':'native-v8-authority-validation.json')),JSON.stringify(report,null,2)+'\n');
+  fs.writeFileSync(path.join(repo,'docs/designs/frostbound-realms/'+(waveQa?'native-td-wave-validation.json':customMap?'native-td-route-validation.json':cooperative?'native-td-coop-validation.json':'native-v8-authority-validation.json')),JSON.stringify(report,null,2)+'\n');
 }
 console.log(JSON.stringify({passed:report.passed,comparisons:report.snapshotComparisons,sharedActors:report.sharedActorComparisons,elapsedMs:report.elapsedMs,report:path.join(root,'report.json')}));

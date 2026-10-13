@@ -5393,5 +5393,202 @@
       -23,
       23
     ]
+  ],
+  "tdWaves": [
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "ghoul",
+          "count": 7,
+          "hp": 140,
+          "speed": 3.12,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    },
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "bonearcher",
+          "count": 9,
+          "hp": 251.99999999999997,
+          "speed": 3.24,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    },
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "ghoul",
+          "count": 11,
+          "hp": 220,
+          "speed": 4.872,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    },
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "abomination",
+          "count": 1,
+          "hp": 1300,
+          "speed": 3.48,
+          "bounty": 25,
+          "lives": 5,
+          "boss": true
+        },
+        {
+          "kind": "abomination",
+          "count": 12,
+          "hp": 260,
+          "speed": 3.48,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    },
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "ghoul",
+          "count": 15,
+          "hp": 420,
+          "speed": 3.6,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    },
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "bonearcher",
+          "count": 17,
+          "hp": 340,
+          "speed": 5.393999999999999,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    },
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "ghoul",
+          "count": 19,
+          "hp": 380,
+          "speed": 3.84,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    },
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "abomination",
+          "count": 1,
+          "hp": 2100,
+          "speed": 3.96,
+          "bounty": 25,
+          "lives": 5,
+          "boss": true
+        },
+        {
+          "kind": "abomination",
+          "count": 20,
+          "hp": 588,
+          "speed": 3.96,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    },
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "ghoul",
+          "count": 23,
+          "hp": 460,
+          "speed": 5.9159999999999995,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    },
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "bonearcher",
+          "count": 25,
+          "hp": 500,
+          "speed": 4.2,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    },
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "ghoul",
+          "count": 27,
+          "hp": 756,
+          "speed": 4.32,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    },
+    {
+      "interval": 18,
+      "groups": [
+        {
+          "kind": "abomination",
+          "count": 1,
+          "hp": 2900,
+          "speed": 6.437999999999999,
+          "bounty": 25,
+          "lives": 5,
+          "boss": true
+        },
+        {
+          "kind": "abomination",
+          "count": 28,
+          "hp": 580,
+          "speed": 6.437999999999999,
+          "bounty": 25,
+          "lives": 1,
+          "boss": false
+        }
+      ]
+    }
   ]
 }

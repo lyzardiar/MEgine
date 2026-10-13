@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import './test-frost-td-coop.mjs';
 import './test-frost-td-route.mjs';
 import './test-frost-td-route-client.mjs';
+import './test-frost-td-waves.mjs';
+import './test-frost-td-waves-client.mjs';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
 import './test-frost-human-equipment.mjs';

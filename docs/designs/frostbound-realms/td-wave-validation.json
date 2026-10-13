@@ -1,0 +1,63 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "actualMovementTicks": 161,
+  "monsters": [
+    {
+      "kind": "ghoul",
+      "hp": 123,
+      "speed": 3,
+      "bounty": 31,
+      "lives": 2,
+      "boss": false
+    },
+    {
+      "kind": "ghoul",
+      "hp": 123,
+      "speed": 3,
+      "bounty": 31,
+      "lives": 2,
+      "boss": false
+    },
+    {
+      "kind": "abomination",
+      "hp": 600,
+      "speed": 2,
+      "bounty": 100,
+      "lives": 5,
+      "boss": true
+    },
+    {
+      "kind": "bonearcher",
+      "hp": 99,
+      "speed": 4,
+      "bounty": 17,
+      "lives": 1,
+      "boss": false
+    },
+    {
+      "kind": "bonearcher",
+      "hp": 99,
+      "speed": 4,
+      "bounty": 17,
+      "lives": 1,
+      "boss": false
+    }
+  ],
+  "remainingLives": 9,
+  "checks": [
+    "map schema limits and sparse data",
+    "deep map ownership",
+    "legacy formula",
+    "typed groups and per-wave timing",
+    "actual complete custom route",
+    "deterministic mid-queue save/load",
+    "invalid saved rewards and queues",
+    "legacy save defaults",
+    "last leak defeat precedence",
+    "real tower kill bounty exactly once",
+    "unit capacity defers wave",
+    "shipped 12-wave roster",
+    "entrance fits largest authored monster"
+  ]
+}
