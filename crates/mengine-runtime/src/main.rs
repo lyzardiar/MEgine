@@ -1,4 +1,5 @@
 //! MEngine PC runtime / sample player.
+//! Author: MiYu. Synchronize borrowed resources from every render target.
 
 #[cfg(windows)]
 #[global_allocator]
@@ -1723,7 +1724,7 @@ function onTick(dt, frame) {
                             failure.error
                         );
                     }
-                    for failure in self.textures.sync_materials(r, &frame.resource_objects()) {
+                    for failure in self.textures.sync_materials_iter(r, frame.resource_objects_iter()) {
                         log::warn!(
                             "Material texture '{}' could not be loaded from {}: {}",
                             failure.key,

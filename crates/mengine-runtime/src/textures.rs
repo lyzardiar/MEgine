@@ -1,3 +1,4 @@
+// Author: MiYu. Discover borrowed material texture paths and allocate only distinct cache keys.
 use crate::ui::{UiAlphaTexture, UiControlRegion};
 use mengine_assets::{
     load_environment_texture, load_sprite_import, load_texture_rgba8, split_sprite_reference,
@@ -310,10 +311,14 @@ impl RuntimeTextureCache {
         failures
     }
 
-    pub fn sync_materials(
+    pub fn sync_materials(&mut self, renderer: &mut Renderer, objects: &[RenderObject]) -> Vec<TextureLoadFailure> {
+        self.sync_materials_iter(renderer, objects.iter())
+    }
+
+    pub fn sync_materials_iter<'a>(
         &mut self,
         renderer: &mut Renderer,
-        objects: &[RenderObject],
+        objects: impl IntoIterator<Item = &'a RenderObject>,
     ) -> Vec<TextureLoadFailure> {
         let Some(root) = self.project_root.as_deref() else {
             return Vec::new();
@@ -510,7 +515,7 @@ impl RuntimeTextureCache {
     }
 }
 
-fn material_texture_references(objects: &[RenderObject]) -> Vec<(String, bool)> {
+fn material_texture_references<'a>(objects: impl IntoIterator<Item = &'a RenderObject>) -> Vec<(String, bool)> {
     let mut references = HashSet::new();
     for object in objects {
         let material = &object.material;
@@ -530,11 +535,10 @@ fn material_texture_references(objects: &[RenderObject]) -> Vec<(String, bool)> 
                     .zip(material.custom_texture_srgb)
                     .map(|(key, srgb)| (key.trim(), srgb)),
             )
-            .filter(|(key, _)| !key.is_empty() && !key.eq_ignore_ascii_case("white"))
-            .map(|(key, srgb)| (key.to_owned(), srgb)),
+            .filter(|(key, _)| !key.is_empty() && !key.eq_ignore_ascii_case("white")),
         );
     }
-    let mut references = references.into_iter().collect::<Vec<_>>();
+    let mut references = references.into_iter().map(|(key, srgb)| (key.to_owned(), srgb)).collect::<Vec<_>>();
     references.sort_by(|left, right| left.0.cmp(&right.0).then(left.1.cmp(&right.1)));
     references
 }
@@ -551,11 +555,10 @@ fn ui_material_texture_references(plan: &UiBatchPlan) -> Vec<(String, bool)> {
                 .iter()
                 .zip(material.custom_texture_srgb)
                 .map(|(key, srgb)| (key.trim(), srgb))
-                .filter(|(key, _)| !key.is_empty() && !key.eq_ignore_ascii_case("white"))
-                .map(|(key, srgb)| (key.to_owned(), srgb)),
+                .filter(|(key, _)| !key.is_empty() && !key.eq_ignore_ascii_case("white")),
         );
     }
-    let mut references = references.into_iter().collect::<Vec<_>>();
+    let mut references = references.into_iter().map(|(key, srgb)| (key.to_owned(), srgb)).collect::<Vec<_>>();
     references.sort_by(|left, right| left.0.cmp(&right.0).then(left.1.cmp(&right.1)));
     references
 }
@@ -749,6 +752,30 @@ mod tests {
     use super::*;
     use glam::Mat4;
     use mengine_rhi::UiPrimitive;
+
+    #[test]
+    fn borrowed_frame_resources_include_main_and_embedded_views_and_preserve_texture_roles() {
+        use crate::frame_compiler::CompiledFrame;
+        use glam::{Vec3, Vec4};
+        use mengine_rhi::{FrameCamera, RenderMaterial};
+        let object = |material| RenderObject { mesh_key:"cube".into(), model:Mat4::IDENTITY, material, cast_shadows:true, receive_shadows:true };
+        let mut view = RenderMaterial { base_color_texture:" WHITE ".into(), ..Default::default() };
+        view.custom_textures[0] = " Assets/Shared.png ".into(); view.custom_texture_srgb[0] = false;
+        view.custom_textures[1] = "Assets/Portrait.png".into(); view.custom_texture_srgb[1] = true;
+        let mut frame = CompiledFrame {
+            profile_stages:Vec::new(), clear:Vec4::ZERO.into(), camera:FrameCamera { view:Mat4::IDENTITY, proj:Mat4::IDENTITY, position:Vec3::ZERO },
+            objects:vec![object(RenderMaterial { base_color_texture:"Assets/Shared.png".into(), ..Default::default() })],
+            lighting:FrameLighting::default(), ui:UiBatchPlan::build(Vec::new()), controls:Vec::new(), texture_failures:Vec::new(), font_failures:Vec::new(),
+            has_authored_camera:true, scene_views:Vec::new(), view_resources:vec![object(view)],
+        };
+        let resources = frame.resource_objects_iter().collect::<Vec<_>>();
+        assert!(std::ptr::eq(resources[0], &frame.objects[0]));
+        assert!(std::ptr::eq(resources[1], &frame.view_resources[0]));
+        assert_eq!(material_texture_references(frame.resource_objects_iter()), vec![("Assets/Portrait.png".into(),true),("Assets/Shared.png".into(),false),("Assets/Shared.png".into(),true)]);
+        assert_eq!(material_texture_references(frame.resource_objects_iter()), material_texture_references(frame.resource_objects().as_ref()));
+        frame.objects.clear();
+        assert_eq!(material_texture_references(frame.resource_objects_iter()), vec![("Assets/Portrait.png".into(),true),("Assets/Shared.png".into(),false)]);
+    }
 
     #[test]
     fn material_texture_usage_deduplicates_roles_without_merging_color_spaces() {

@@ -1,4 +1,5 @@
 //! Shared CPU-side scene evaluation for every runtime render target.
+//! Author: MiYu. Borrow resource objects across main and embedded scene views.
 
 use crate::fonts::{FontLoadFailure, RuntimeFontCache};
 use crate::lighting2d::apply_2d_lighting;
@@ -127,6 +128,9 @@ pub struct CompiledFrame {
 }
 
 impl CompiledFrame {
+    /// Borrow every render target's texture resources without copying material payloads.
+    pub fn resource_objects_iter(&self) -> impl Iterator<Item = &RenderObject> { self.objects.iter().chain(&self.view_resources) }
+
     pub fn render_frame(&self) -> RenderFrame<'_> {
         RenderFrame {
             clear: self.clear,
@@ -141,7 +145,7 @@ impl CompiledFrame {
     /// Main extraction includes active scene meshes. UI-only frames need the view meshes as well.
     pub fn resource_objects(&self) -> std::borrow::Cow<'_, [RenderObject]> {
         if self.view_resources.is_empty() { std::borrow::Cow::Borrowed(&self.objects) }
-        else { std::borrow::Cow::Owned(self.objects.iter().chain(&self.view_resources).cloned().collect()) }
+        else { std::borrow::Cow::Owned(self.resource_objects_iter().cloned().collect()) }
     }
 }
 

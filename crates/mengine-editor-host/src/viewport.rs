@@ -1,3 +1,4 @@
+// Author: MiYu. Synchronize borrowed resources from every viewport render target.
 use anyhow::{Context, Result};
 use glam::Vec3;
 use mengine_assets::MaterialAsset;
@@ -611,7 +612,7 @@ impl EditorViewportRenderer {
         let stage_started = Instant::now();
         log_texture_failures(
             self.textures
-                .sync_materials(&mut self.renderer, &frame.resource_objects()),
+                .sync_materials_iter(&mut self.renderer, frame.resource_objects_iter()),
         );
         finish_stage(
             &mut stages,
