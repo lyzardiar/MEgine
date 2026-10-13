@@ -4171,6 +4171,7 @@ where
         .unwrap_or_else(|| session.snapshot());
     *project = Some(session);
     state.play_runtime.stop();
+    mengine_editor_host::invalidate_resource_samples();
     Ok(snapshot)
 }
 
@@ -4246,6 +4247,7 @@ fn close_project(
     let session = project.take().ok_or_else(|| no_project().message)?;
     state.play_runtime.stop();
     drop(session);
+    mengine_editor_host::invalidate_resource_samples();
     Ok(CloseProjectResult { closed_windows })
 }
 
@@ -4398,7 +4400,7 @@ async fn render_native_game_view(
     state: State<'_, AppState>,
 ) -> Result<tauri::ipc::Response, String> {
     let started = Instant::now();
-    let (project_root, snapshot) = {
+    let (project_root, snapshot, resource_generation) = {
         let project = state.project.lock();
         let session = project
             .as_ref()
@@ -4406,6 +4408,7 @@ async fn render_native_game_view(
         (
             session.project_root().to_owned(),
             snapshot.or_else(|| play_session_id.is_none().then(|| WorldSnapshot::from_world(session.active_world()))),
+            mengine_editor_host::resource_sample_generation(),
         )
     };
     let runtime = state.play_runtime.clone();
@@ -4429,6 +4432,7 @@ async fn render_native_game_view(
         let mut frame = viewport
             .as_mut()
             .expect("viewport renderer initialized above")
+            .with_resource_generation(resource_generation)
             .render_game(world, width, height)
             .map_err(|error| error.to_string())?;
         frame.profile.worker_queue_ms = Some(worker_queue_ms);
@@ -4469,7 +4473,7 @@ async fn render_native_scene_view(
     let started = Instant::now();
     if scene_world_key.as_ref().is_some_and(|key| key.is_empty() || key.len() > 128) { return Err("Invalid Scene viewport revision key".into()); }
     if scene_world_key.is_some() && play_session_id.is_some() { return Err("Scene and Play viewport references cannot be combined".into()); }
-    let (project_root, snapshot) = {
+    let (project_root, snapshot, resource_generation) = {
         let project = state.project.lock();
         let session = project
             .as_ref()
@@ -4477,6 +4481,7 @@ async fn render_native_scene_view(
         (
             session.project_root().to_owned(),
             snapshot.or_else(|| (play_session_id.is_none() && scene_world_key.is_none()).then(|| WorldSnapshot::from_world(session.active_world()))),
+            mengine_editor_host::resource_sample_generation(),
         )
     };
     let retained_key = scene_world_key.map(|key| serde_json::to_string(&(project_root.clone(), window.label(), key, if request.camera_entity.is_none() { request.hidden_entity_ids.clone() } else { Vec::new() }))).transpose().map_err(|error| error.to_string())?;
@@ -4518,7 +4523,8 @@ async fn render_native_scene_view(
         }
         let viewport = viewport_guard
             .as_mut()
-            .expect("Scene viewport renderer initialized above");
+            .expect("Scene viewport renderer initialized above")
+            .with_resource_generation(resource_generation);
         let mut frame = if request.camera_entity.is_some() {
             viewport.render_camera(
                 world,
@@ -4594,11 +4600,11 @@ async fn render_effekseer_preview(
     request: EffekseerPreviewRequest,
     state: State<'_, AppState>,
 ) -> Result<NativeViewportFrame, String> {
-    let project_root = state
+    let (project_root, resource_generation) = state
         .project
         .lock()
         .as_ref()
-        .map(|session| session.project_root().to_owned())
+        .map(|session| (session.project_root().to_owned(), mengine_editor_host::resource_sample_generation()))
         .ok_or_else(|| "no MEngine project is open".to_string())?;
     tauri::async_runtime::spawn_blocking(move || {
         let viewport = EFFEKSEER_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
@@ -4619,6 +4625,7 @@ async fn render_effekseer_preview(
         let frame = viewport
             .as_mut()
             .expect("Effekseer viewport renderer initialized above")
+            .with_resource_generation(resource_generation)
             .render_effekseer_preview(
                 request.effect,
                 request.width,
@@ -4645,11 +4652,11 @@ async fn render_material_preview(
     request: MaterialPreviewRequest,
     state: State<'_, AppState>,
 ) -> Result<NativeViewportFrame, String> {
-    let project_root = state
+    let (project_root, resource_generation) = state
         .project
         .lock()
         .as_ref()
-        .map(|session| session.project_root().to_owned())
+        .map(|session| (session.project_root().to_owned(), mengine_editor_host::resource_sample_generation()))
         .ok_or_else(|| "no MEngine project is open".to_string())?;
     tauri::async_runtime::spawn_blocking(move || {
         let viewport = MATERIAL_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
@@ -4670,6 +4677,7 @@ async fn render_material_preview(
         let frame = viewport
             .as_mut()
             .expect("Material viewport renderer initialized above")
+            .with_resource_generation(resource_generation)
             .render_material_preview(
                 request.material,
                 request.width,

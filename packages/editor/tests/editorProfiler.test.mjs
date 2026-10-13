@@ -9,11 +9,21 @@ import {
   editorProfilerUiRefreshDelay,
   nearestEditorProfilerFrame,
   nativeViewportRequestStages,
+  nativeResourceSampleStatus,
   readNativeViewportProfiles,
   recordNativeViewportProfile,
   summarizeEditorProfilerSamples,
   summarizeNativeViewportProfiles,
 } from '../src/editorProfiler.ts';
+
+test('resource status distinguishes pending, retained and unavailable metadata without attributing worker time to the frame', () => {
+  assert.equal(nativeResourceSampleStatus({ resourceSampling: { ready: false, pending: true, unavailable: false, metadataMs: null } }), 'Sampling resource metadata…');
+  assert.equal(nativeResourceSampleStatus({ resourceSampling: { ready: false, pending: false, unavailable: true, metadataMs: null } }), 'Resource sampler unavailable');
+  assert.equal(nativeResourceSampleStatus({ resourceSampleAgeMs: 312, resourceSampling: { ready: true, pending: true, unavailable: false, metadataMs: 4.7 } }), 'sample age 312 ms · updating · metadata worker 4.70 ms');
+  assert.match(nativeResourceSampleStatus({ resourceSampleAgeMs: 912, resourceSampling: { ready: true, pending: false, unavailable: true, metadataMs: 4.7 } }), /sampler unavailable; retained sample/);
+  assert.equal(nativeResourceSampleStatus({}), 'sample age unavailable');
+  assert.equal(nativeResourceSampleStatus({ resourceSampling: { ready: false, pending: true, delayed: true, unavailable: false, metadataMs: null } }), 'Resource metadata delayed; rendering continues');
+});
 
 test('request scopes account for queueing without double-counting simulation, GPU or publication', () => {
   const profile = { totalMs: 21, commandMs: 160, transportMs: 177, workerQueueMs: 3, worldLockWaitMs: 129, worldSyncMs: 2, rendererLockWaitMs: 1, simulationMs: 8, gpu: { totalPassMs: 10 }, sharedTransport: { publicationReadyToEventMs: 12 } };

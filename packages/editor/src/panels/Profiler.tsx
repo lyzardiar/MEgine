@@ -7,6 +7,7 @@ import {
   editorProfilerUiRefreshDelay,
   nearestEditorProfilerFrame,
   nativeViewportRequestStages,
+  nativeResourceSampleStatus,
   readNativeViewportProfiles,
   readEditorProfilerSamples,
   subscribeEditorProfiler,
@@ -651,8 +652,8 @@ export function Profiler() {
             <Metric label="UI Draw Calls" value={latestNative ? formatCount(latestNative.counts.uiDrawCalls) : '—'} hint="World and shadow draws excluded" />
             <Metric label="World Visible" value={latestNative?.counts.cameraVisibleObjects != null ? formatCount(latestNative.counts.cameraVisibleObjects) : '—'} />
             <Metric label="Shadow Casters" value={latestNative?.counts.shadowVisibleObjects != null ? formatCount(latestNative.counts.shadowVisibleObjects) : '—'} />
-            <Metric label="Resident Estimate" value={formatBytes(latestNative?.residentMemoryEstimateBytes)} hint="provenance in Memory" />
-            <Metric label="Render Resources" value={latestNative ? formatCount(latestNative.resources.length) : '—'} />
+            <Metric label="Resident Estimate" value={formatBytes(latestNative?.residentMemoryEstimateBytes)} hint={latestNative?.resourceSampling?.ready === false ? 'partial; resource metadata pending' : 'provenance in Memory'} />
+            <Metric label="Render Resources" value={latestNative && latestNative.resourceSampling?.ready !== false ? formatCount(latestNative.resources.length) : '—'} />
             <Metric label="Native Command" value={latestNative?.commandMs != null ? formatMs(latestNative.commandMs) : '—'} hint="Queue, locks, world sync and rendering" />
             <Metric label="World Lock Wait" value={latestNative?.worldLockWaitMs != null ? formatMs(latestNative.worldLockWaitMs) : '—'} hint="Waiting for another viewport" />
           </div>}
@@ -817,7 +818,7 @@ export function Profiler() {
 
           {module === 'resources' && <section className="profiler-detail-section" aria-label="Native render resources">
             <header>
-              <div><strong>Render-bound Resources</strong><span>{latestNative ? `${resources.length}/${latestNative.resources.length}${latestNative.resourcesTruncated ? '+' : ''} · sample age ${(latestNative.resourceSampleAgeMs ?? 0).toFixed(0)} ms` : 'No sample'}</span></div>
+              <div><strong>Last sampled render resources</strong><span>{latestNative ? `${latestNative.resourceSampling?.ready === false ? '' : `${resources.length}/${latestNative.resources.length}${latestNative.resourcesTruncated ? '+' : ''} · `}${nativeResourceSampleStatus(latestNative)}` : 'No sample'}</span></div>
               <input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder="Filter asset or type…" aria-label="Filter profiler resources" />
             </header>
             {latestNative ? <table className="profiler-detail-table profiler-resource-table">
