@@ -110,6 +110,34 @@ export function retainPlayWorld(world: WorldSnapshotView, previous?: RetainedPla
   return owned;
 }
 
+const retainedWorldIndices = new WeakMap<RetainedPlayWorld, Map<number, number>>();
+
+/** Merge an unchanged-order native delta; private frozen worlds keep their validated entity indices. */
+export function retainPlayWorldPatch(previous: RetainedPlayWorld, patch: WorldSnapshotView): RetainedPlayWorld {
+  if (!retainedWorlds.has(previous)) throw new Error('Play patch requires an owned world');
+  let indices = retainedWorldIndices.get(previous);
+  if (!indices) {
+    indices = new Map();
+    for (let i = 0; i < previous.entities.length; i++) {
+      const id = previous.entities[i].entity;
+      if (indices.has(id)) throw new Error('Invalid Play snapshot entity order');
+      indices.set(id, i);
+    }
+    retainedWorldIndices.set(previous, indices);
+  }
+  const positions = patch.entities.map(entity => {
+    const index = indices.get(entity.entity);
+    if (index === undefined) throw new Error('Invalid Play snapshot entity order');
+    return index;
+  });
+  const changed = retainPlayWorld(patch, previous), entities = previous.entities.slice();
+  for (let i = 0; i < positions.length; i++) entities[positions[i]] = changed.entities[i];
+  const owned = Object.freeze({ ...changed, entities: Object.freeze(entities) as EntityRec[] });
+  retainedWorlds.add(owned);
+  retainedWorldIndices.set(owned, indices);
+  return owned;
+}
+
 export function createPlayWorldSync(copies?: PrivatePlayCopies) {
   type Entities = WorldSnapshotView['entities'] | null;
   type Color = WorldSnapshotView['clearColor'];
