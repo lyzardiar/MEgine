@@ -23,10 +23,10 @@ use mengine_runtime::textures::{RuntimeTextureCache, TextureLoadFailure};
 use mengine_runtime::trails::TrailWorld;
 use mengine_runtime::ui::UiInteractionState;
 use serde::Serialize;
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::mem::size_of_val;
 use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::time::{Instant, SystemTime};
 use winit::dpi::PhysicalSize;
 
 pub struct EditorViewportFrame {
@@ -130,6 +130,27 @@ struct ProfileStage {
     children: Vec<EditorViewportProfileNode>,
 }
 
+#[derive(Clone, Copy)]
+struct ResourceTextureDimensions {
+    modified: SystemTime,
+    source_bytes: u64,
+    dimensions: [u32; 2],
+}
+
+type ResourceTextureDimensionCache = HashMap<PathBuf, ResourceTextureDimensions>;
+
+fn sampled_texture_dimensions(path: &Path, metadata: &std::fs::Metadata, previous: &ResourceTextureDimensionCache, current: &mut ResourceTextureDimensionCache) -> Option<[u32; 2]> {
+    if !metadata.is_file() { return None; }
+    let modified = metadata.modified().ok();
+    if let Some(cached) = previous.get(path).filter(|cached| Some(cached.modified) == modified && cached.source_bytes == metadata.len()) {
+        current.insert(path.to_owned(), *cached);
+        return Some(cached.dimensions);
+    }
+    let dimensions = mengine_assets::texture_dimensions(path).ok()?;
+    if let Some(modified) = modified { current.insert(path.to_owned(), ResourceTextureDimensions { modified, source_bytes: metadata.len(), dimensions }); }
+    Some(dimensions)
+}
+
 fn finish_stage(stages: &mut Vec<ProfileStage>, name: &'static str, started: Instant) {
     stages.push(ProfileStage {
         name,
@@ -210,6 +231,7 @@ pub struct EditorViewportRenderer {
     preview_restart: u64,
     sorting_layers: SortingLayers,
     resource_sample: Option<(Instant, Vec<EditorViewportResource>, bool)>,
+    resource_texture_dimensions: ResourceTextureDimensionCache,
 }
 
 impl EditorViewportRenderer {
@@ -238,6 +260,7 @@ impl EditorViewportRenderer {
             preview_restart: 0,
             sorting_layers,
             resource_sample: None,
+            resource_texture_dimensions: ResourceTextureDimensionCache::new(),
             project_root,
         })
     }
@@ -621,8 +644,9 @@ impl EditorViewportRenderer {
             ("Readback buffer prepare", readback.buffer_prepare_ms), ("Readback copy submit", readback.copy_submit_ms), ("Readback GPU map wait", readback.gpu_wait_ms), ("Readback GPU query decode", readback.gpu_query_read_ms), ("Readback RGBA row pack", readback.rgba_pack_ms), ("Readback unmap", readback.unmap_ms),
         ].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect() });
         let stage_started = Instant::now();
+        let mut resource_stages = Vec::new();
         if self.resource_sample.as_ref().is_none_or(|(at, _, _)| at.elapsed().as_millis() >= 250) {
-            let (resources, truncated) = collect_frame_resources(&self.project_root, &frame);
+            let (resources, truncated) = collect_frame_resources(&self.project_root, &frame, &mut self.resource_texture_dimensions, &mut resource_stages);
             self.resource_sample = Some((Instant::now(), resources, truncated));
         }
         let (sampled_at, resources, resources_truncated) = self.resource_sample.as_ref().expect("resource sample initialized");
@@ -660,9 +684,9 @@ impl EditorViewportRenderer {
             children: vec![EditorViewportProfileNode {
                 name: "Profiler.snapshot".into(),
                 total_ms: profile_overhead_ms,
-                self_ms: profile_overhead_ms,
+                self_ms: (profile_overhead_ms - resource_stages.iter().map(|stage| stage.total_ms).sum::<f64>()).max(0.0),
                 calls: 1,
-                children: Vec::new(),
+                children: resource_stages,
             }],
         });
         Ok(EditorViewportFrame {
@@ -858,18 +882,20 @@ fn build_viewport_profile(
     }
 }
 
-fn collect_frame_resources(
+fn collect_frame_resources<'a>(
     project_root: &Path,
-    frame: &mengine_runtime::frame_compiler::CompiledFrame,
+    frame: &'a mengine_runtime::frame_compiler::CompiledFrame,
+    dimension_cache: &mut ResourceTextureDimensionCache,
+    stages: &mut Vec<EditorViewportProfileNode>,
 ) -> (Vec<EditorViewportResource>, bool) {
+    let references_started = Instant::now();
     let mut references = BTreeMap::<(String, String), BTreeSet<String>>::new();
-    let mut add = |kind: &str, asset: &str, referenced_by: &str| {
-        let normalized = asset.trim().replace('\\', "/");
-        if normalized.is_empty() || normalized.eq_ignore_ascii_case("white") {
-            return;
-        }
+    let mut raw_references = HashSet::new();
+    let mut add = |kind: &'static str, asset: &'a str, referenced_by: &'static str| {
+        let asset = asset.trim();
+        if asset.is_empty() || asset.eq_ignore_ascii_case("white") || !raw_references.insert((kind,asset,referenced_by)) { return; }
         references
-            .entry((kind.into(), normalized))
+            .entry((kind.into(), asset.replace('\\', "/")))
             .or_default()
             .insert(referenced_by.into());
     };
@@ -886,7 +912,7 @@ fn collect_frame_resources(
             add("material", &batch.key.material, "UI batch");
         }
     }
-    for object in frame.resource_objects().iter() {
+    for object in frame.objects.iter().chain(&frame.view_resources) {
         add("mesh", mengine_runtime::meshes::source_mesh_reference(&object.mesh_key), "RenderObject");
         for texture in [
             &object.material.base_color_texture,
@@ -909,6 +935,10 @@ fn collect_frame_resources(
 
     const MAX_RESOURCES: usize = 256;
     let truncated = references.len() > MAX_RESOURCES;
+    let references_ms = references_started.elapsed().as_secs_f64() * 1000.0;
+    stages.push(EditorViewportProfileNode { name: "Resources.references".into(), total_ms: references_ms, self_ms: references_ms, calls: 1, children: Vec::new() });
+    let metadata_started = Instant::now();
+    let mut current_dimensions = ResourceTextureDimensionCache::new();
     let resources = references
         .into_iter()
         .take(MAX_RESOURCES)
@@ -934,13 +964,7 @@ fn collect_frame_resources(
             let metadata = resolved
                 .as_deref()
                 .and_then(|path| std::fs::metadata(path).ok());
-            let dimensions = (kind == "texture")
-                .then(|| {
-                    resolved
-                        .as_deref()
-                        .and_then(|path| mengine_assets::texture_dimensions(path).ok())
-                })
-                .flatten();
+            let dimensions = if kind == "texture" { resolved.as_deref().zip(metadata.as_ref()).and_then(|(path, metadata)| sampled_texture_dimensions(path, metadata, dimension_cache, &mut current_dimensions)) } else { None };
             EditorViewportResource {
                 kind,
                 asset,
@@ -954,6 +978,10 @@ fn collect_frame_resources(
             }
         })
         .collect();
+    // Retain successful dimensions only for this snapshot's resources; metadata is checked on every refresh.
+    *dimension_cache = current_dimensions;
+    let metadata_ms = metadata_started.elapsed().as_secs_f64() * 1000.0;
+    stages.push(EditorViewportProfileNode { name: "Resources.metadata".into(), total_ms: metadata_ms, self_ms: metadata_ms, calls: 1, children: Vec::new() });
     (resources, truncated)
 }
 
@@ -975,6 +1003,111 @@ fn log_texture_failures(failures: impl IntoIterator<Item = TextureLoadFailure>) 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    #[ignore = "Requires MENGINE_RESOURCE_PROFILE_REPORT from a real viewport run"]
+    fn measure_resource_file_metadata_and_texture_headers() {
+        let report_path = std::env::var("MENGINE_RESOURCE_PROFILE_REPORT").expect("set MENGINE_RESOURCE_PROFILE_REPORT");
+        let report: serde_json::Value = serde_json::from_slice(&std::fs::read(report_path).unwrap()).unwrap();
+        let resources = report["game"]["nativeLatest"]["resources"].as_array().unwrap();
+        let mut metadata_ms = Vec::new(); let mut texture_ms = Vec::new();
+        for _ in 0..100 {
+            let started = Instant::now();
+            for resource in resources { if let Some(path) = resource["resolvedPath"].as_str() { std::hint::black_box(std::fs::metadata(path).ok()); } }
+            metadata_ms.push(started.elapsed().as_secs_f64() * 1000.0);
+            let started = Instant::now();
+            for resource in resources { if resource["kind"] == "texture" { if let Some(path) = resource["resolvedPath"].as_str() { std::hint::black_box(mengine_assets::texture_dimensions(Path::new(path)).ok()); } } }
+            texture_ms.push(started.elapsed().as_secs_f64() * 1000.0);
+        }
+        for (name, mut values) in [("File metadata",metadata_ms),("Texture headers",texture_ms)] {
+            values.sort_by(f64::total_cmp);
+            eprintln!("{name}: mean={:.4} ms median={:.4} ms p95={:.4} ms",values.iter().sum::<f64>()/values.len() as f64,values[50],values[94]);
+        }
+    }
+
+    fn resource_frame(objects: Vec<mengine_rhi::RenderObject>, view_resources: Vec<mengine_rhi::RenderObject>) -> mengine_runtime::frame_compiler::CompiledFrame {
+        let camera = FrameCamera { view:glam::Mat4::IDENTITY,proj:glam::Mat4::IDENTITY,position:Vec3::Z };
+        mengine_runtime::frame_compiler::CompiledFrame {
+            profile_stages:vec![],clear:mengine_rhi::ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 },camera,objects,view_resources,lighting:Default::default(),
+            ui:mengine_rhi::UiBatchPlan::build(vec![]),controls:vec![],texture_failures:vec![],font_failures:vec![],has_authored_camera:true,scene_views:vec![],
+        }
+    }
+
+    fn resource_object(mesh: &str) -> mengine_rhi::RenderObject {
+        mengine_rhi::RenderObject { mesh_key:mesh.into(),model:glam::Mat4::IDENTITY,material:Default::default(),cast_shadows:false,receive_shadows:false }
+    }
+
+    #[test]
+    fn resource_snapshot_refreshes_changed_missing_and_recovered_texture_dimensions() {
+        struct TestProject(PathBuf);
+        impl Drop for TestProject { fn drop(&mut self) { let _ = std::fs::remove_dir_all(&self.0); } }
+        let project = TestProject(std::env::temp_dir().join(format!("mengine-resource-snapshot-{}-{}",std::process::id(),SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos())));
+        std::fs::create_dir_all(project.0.join("Assets")).unwrap();
+        let path = project.0.join("Assets/sampled.bmp");
+        let first_time = SystemTime::UNIX_EPOCH + std::time::Duration::from_secs(1_700_000_000);
+        let changed_time = first_time + std::time::Duration::from_secs(2);
+        let write = |width, height, modified| {
+            image::RgbaImage::new(width,height).save(&path).unwrap();
+            std::fs::File::options().write(true).open(&path).unwrap().set_times(std::fs::FileTimes::new().set_modified(modified)).unwrap();
+        };
+        let mut object = resource_object(""); object.material.base_color_texture = "Assets/sampled.bmp".into();
+        let mut frame = resource_frame(vec![object],vec![]);
+        let mut cache = ResourceTextureDimensionCache::new();
+        let read = |frame: &mengine_runtime::frame_compiler::CompiledFrame, cache: &mut ResourceTextureDimensionCache| {
+            let mut stages = Vec::new();
+            let (resources,truncated) = collect_frame_resources(&project.0,frame,cache,&mut stages);
+            assert!(!truncated); assert_eq!(stages.iter().map(|s|s.name.as_str()).collect::<Vec<_>>(),["Resources.references","Resources.metadata"]);
+            resources.into_iter().find(|r|r.kind=="texture").unwrap()
+        };
+        write(2,6,first_time);
+        let first = read(&frame,&mut cache); assert_eq!(first.dimensions,Some([2,6])); assert!(first.loaded); assert_eq!(cache.len(),1);
+        assert_eq!(read(&frame,&mut cache).dimensions,first.dimensions);
+        write(4,3,changed_time);
+        let changed = read(&frame,&mut cache); assert_eq!(changed.source_bytes,first.source_bytes); assert_eq!(changed.dimensions,Some([4,3]));
+        write(5,3,changed_time);
+        let resized = read(&frame,&mut cache); assert_ne!(resized.source_bytes,changed.source_bytes); assert_eq!(resized.dimensions,Some([5,3]));
+        std::fs::remove_file(&path).unwrap();
+        let missing = read(&frame,&mut cache); assert!(!missing.loaded); assert_eq!(missing.source_bytes,None); assert_eq!(missing.dimensions,None); assert!(cache.is_empty());
+        write(2,6,first_time); assert_eq!(read(&frame,&mut cache).dimensions,Some([2,6]));
+        std::fs::write(&path,b"invalid image header").unwrap();
+        let failed = read(&frame,&mut cache); assert!(failed.loaded); assert_eq!(failed.dimensions,None); assert!(cache.is_empty());
+        write(4,3,changed_time); assert_eq!(read(&frame,&mut cache).dimensions,Some([4,3])); assert_eq!(cache.len(),1);
+        frame.objects.clear();
+        let (resources,_) = collect_frame_resources(&project.0,&frame,&mut cache,&mut Vec::new()); assert!(resources.is_empty()); assert!(cache.is_empty());
+    }
+
+    #[test]
+    fn resource_snapshot_preserves_normalized_aliases_all_provenance_and_preview_metadata() {
+        let mut object = resource_object(r"  Assets\hero.glb#pose=0:1@30  ");
+        object.material.base_color_texture = r"  Assets\shared.png  ".into(); object.material.custom_textures[0] = "Assets/shared.png".into();
+        let mut preview = object.clone(); preview.mesh_key = "billboard:0000000000000001:Assets/hero.glb#pose=0:1@30".into();
+        let mut frame = resource_frame(vec![object;300],vec![preview;300]); frame.lighting.environment.texture = "Assets/shared.png".into();
+        let mut image = mengine_rhi::UiPrimitive::solid([0.0,0.0,16.0,16.0],[1.0;4]); image.key.texture = "Assets/shared.png".into(); image.key.material = "Assets/panel.mmat".into();
+        let mut font = image.clone(); font.key.texture = "mengine-font://test".into();
+        let mut view = image.clone(); view.key.texture = "$scene-view:test".into();
+        let mut white = image.clone(); white.key.texture = " WHITE ".into();
+        frame.ui = mengine_rhi::UiBatchPlan::build(vec![image,font,view,white]);
+        frame.scene_views.push(mengine_rhi::SceneTextureFrame { key:"$scene-view:test".into(),size:[20,30],clear:frame.clear,camera:frame.camera,objects:vec![],lighting:Default::default() });
+        let (resources,truncated) = collect_frame_resources(&std::env::temp_dir(),&frame,&mut ResourceTextureDimensionCache::new(),&mut Vec::new());
+        assert!(!truncated); assert_eq!(resources.len(),5);
+        let mesh = resources.iter().find(|r|r.kind=="mesh").unwrap(); assert_eq!(mesh.asset,"Assets/hero.glb#pose=0:1@30"); assert_eq!(mesh.referenced_by,["RenderObject"]);
+        assert!(Path::new(mesh.resolved_path.as_ref().unwrap()).ends_with("Assets/hero.glb"));
+        let texture = resources.iter().find(|r|r.kind=="texture").unwrap(); assert_eq!(texture.asset,"Assets/shared.png");
+        assert_eq!(texture.referenced_by,["3D material","EnvironmentLight","Surface Shader","UI batch"]);
+        let font = resources.iter().find(|r|r.kind=="font-atlas").unwrap(); assert!(font.loaded); assert_eq!(font.dimensions,Some([1024,1024])); assert_eq!(font.gpu_bytes_estimate,Some(1024*1024*4));
+        let view = resources.iter().find(|r|r.kind=="scene-view").unwrap(); assert!(view.loaded); assert_eq!(view.dimensions,Some([20,30])); assert_eq!(view.resolved_path,None);
+    }
+
+    #[test]
+    fn resource_snapshot_counts_unique_normalized_resources_at_the_limit() {
+        let mut frame = resource_frame(vec![],(0..256).map(|id|resource_object(&format!("Assets/meshes/{id:03}.glb#pose=0:1@30"))).collect());
+        frame.view_resources.push(resource_object(r"Assets\meshes\000.glb#pose=0:1@30"));
+        let (resources,truncated) = collect_frame_resources(&std::env::temp_dir(),&frame,&mut ResourceTextureDimensionCache::new(),&mut Vec::new()); assert!(!truncated); assert_eq!(resources.len(),256);
+        assert_eq!(resources.first().unwrap().asset,"Assets/meshes/000.glb#pose=0:1@30"); assert_eq!(resources.last().unwrap().asset,"Assets/meshes/255.glb#pose=0:1@30");
+        frame.view_resources.push(resource_object("Assets/meshes/256.glb#pose=0:1@30"));
+        let (limited,truncated) = collect_frame_resources(&std::env::temp_dir(),&frame,&mut ResourceTextureDimensionCache::new(),&mut Vec::new()); assert!(truncated); assert_eq!(limited.len(),256);
+        assert_eq!(resources.iter().map(|r|&r.asset).collect::<Vec<_>>(),limited.iter().map(|r|&r.asset).collect::<Vec<_>>());
+    }
 
     #[test]
     fn camera_preview_preserves_authored_render_settings() {
