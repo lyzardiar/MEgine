@@ -64,3 +64,26 @@ test('uniform scaling changes all axes and positions around the shared pivot', (
   assert.deepEqual(result.position, [5, 7, 4]);
   assert.deepEqual(result.scale, [2, 2, 2]);
 });
+
+test('handle fallback resolves selected roots and ancestors without unrelated transforms', () => {
+  const unrelated = { entity: 99, components: { get Transform() { throw Error('unrelated geometry must not be resolved'); } } };
+  const entities = [transform(1, [10, 0, 0]), transform(2, [2, 3, 4], 1), transform(3, [-10, 0, 0]), unrelated];
+  assert.deepEqual(transformHandleOrigin(entities, [2], 2, 'pivot'), [12, 3, 4]);
+  assert.deepEqual(transformHandleOrigin(entities, [1, 2, 3], 2, 'center'), [0, 0, 0]);
+});
+
+test('supplied frame transforms preserve parent rotation and scale without recalculation', async () => {
+  const { buildWorldTransforms } = await import('../src/worldTransform.ts');
+  let parentReads = 0;
+  const parentTransform = { position: [10, 0, 0], rotation: [0, 0, Math.SQRT1_2, Math.SQRT1_2], scale: [-2, 3, 1] };
+  const parent = { entity: 1, components: { get Transform() { parentReads++; return parentTransform; } } }, child = transform(2, [2, 3, 4], 1);
+  const entities = [parent, child], world = buildWorldTransforms(entities), before = parentReads;
+  for (let index = 0; index < 20; index++) {
+    const result = transformHandleOrigin(entities, [2], 2, 'pivot', world);
+    assert.ok(Math.abs(result[0] - 1) < 1e-8); assert.ok(Math.abs(result[1] + 4) < 1e-8); assert.equal(result[2], 4);
+  }
+  assert.equal(parentReads, before, 'drawing a handle uses the supplied frame transforms');
+  const edited = [transform(1, [20, 0, 0]), child];
+  assert.deepEqual(transformHandleOrigin(edited, [2], 2, 'pivot'), [22, 3, 4], 'live gestures resolve current edits');
+  assert.deepEqual(transformHandleOrigin(entities, [1, 2], 2, 'center', world), [10, 0, 0]);
+});

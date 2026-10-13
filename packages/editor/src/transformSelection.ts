@@ -1,3 +1,4 @@
+// Author: MiYu. Reuse the current frame's transforms for selection handles.
 import type { TransformData } from '@mengine/behaviour';
 import type { Vec3 } from './math3d';
 import {
@@ -12,7 +13,7 @@ import {
 } from './math3d.ts';
 import type { ToolPivotMode } from './editorTool';
 import { selectedHierarchyRoots } from './hierarchySelection.ts';
-import { buildWorldTransforms, resolvedTransform } from './worldTransform.ts';
+import { buildWorldTransforms, resolvedTransform, type ResolvedWorldTransform } from './worldTransform.ts';
 
 export type TransformSelectionEntity = {
   entity: number;
@@ -42,22 +43,23 @@ export function selectedTransformRoots(
 /**
  * Pivot uses the active object's origin. Center uses the bounds center of all
  * selected Transform roots, matching Unity's multi-selection handle position.
+ * Supplied world transforms must belong to the same entity snapshot.
  */
 export function transformHandleOrigin(
   entities: TransformSelectionEntity[],
   selectedIds: readonly number[],
   primary: number,
   mode: ToolPivotMode,
+  world?: ReadonlyMap<number, ResolvedWorldTransform>,
 ): Vec3 | null {
-  const byId = new Map(entities.map((entity) => [entity.entity, entity]));
-  const primaryTransform = transformOf(byId.get(primary));
+  const primaryTransform = transformOf(entities.find(entity => entity.entity === primary));
   if (!primaryTransform) return null;
-  const world = buildWorldTransforms(entities);
+  const roots = mode === 'pivot' ? [] : selectedTransformRoots(entities, selectedIds, primary);
+  world ??= buildWorldTransforms(entities, [primary, ...roots]);
   const primaryWorld = resolvedTransform(world, primary);
   if (!primaryWorld) return null;
   if (mode === 'pivot') return [...primaryWorld.position] as Vec3;
 
-  const roots = selectedTransformRoots(entities, selectedIds, primary);
   const positions = roots
     .map((id) => resolvedTransform(world, id)?.position)
     .filter((position): position is Vec3 => position != null);
