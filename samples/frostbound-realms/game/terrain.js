@@ -9,6 +9,12 @@ var FrostTerrain=(()=>{
   const cliffNames=['Rock','Ice','Masonry'],cliffMaterials=['Ground','GroundIce','GroundMasonry'];
   const material=map=>'Assets/Materials/'+cliffMaterials[map.cliffStyle||0]+'.mmat';
   const cliff=(map,i)=>map.cliffs?.[i]?map.cliffs[i]-1:map.cliffStyle||0;
+  function summary(map){
+    const {heights,ramps,terrain,surfaces,cliffs,relief}=map,cliffTiles=[cliffs?0:1024,0,0,0],terrainSurfaces=[0,0,0,0,0],length=Math.max(terrain.length,heights.length,ramps.length,surfaces.length,cliffs?.length||0);let terrainRaised=0,terrainRamps=0,terrainWater=0,reliefSamples=0;
+    for(let i=0;i<length;i++){if(heights[i]>0)terrainRaised++;if(ramps[i]>0)terrainRamps++;if(terrain[i]===1)terrainWater++;const surface=surfaces[i];switch(surface){case 0:case 1:case 2:case 3:case 4:terrainSurfaces[surface]++;}if(cliffs){const cliff=cliffs[i];switch(cliff){case 0:case 1:case 2:case 3:cliffTiles[cliff]++;}}}
+    for(let i=0;i<relief.length;i++)if(i in relief&&relief[i]!==0)reliefSamples++;
+    return {terrainRaised,terrainRamps,terrainWater,cliffTiles,terrainSurfaces,reliefSamples,reliefRange:[Math.min(...relief),Math.max(...relief)]};
+  }
   function cells(state,team,allVisible){
     const blight=[...(state.blight||[]),...state.units.filter(u=>u.hp>0&&u.built===1&&u.kind==='hall'&&state.teams[u.team]?.faction===3).map(u=>({x:u.x,z:u.z,radius:10}))];
     return state.map.terrain.map((kind,i)=>{
@@ -46,6 +52,6 @@ var FrostTerrain=(()=>{
       cached.values[i]={x,z,y:p.y-.02,tile,normal:[-dx/n,1/n,-dz/n]};
     }return cached.values;
   }
-  return {pathing,names,surfaceNames,tilesetNames,tilesetColors,cliffNames,material,cliff,cells,chunk,chunkMatches,mesh,waterMesh,detailCount,details};
+  return {summary,pathing,names,surfaceNames,tilesetNames,tilesetColors,cliffNames,material,cliff,cells,chunk,chunkMatches,mesh,waterMesh,detailCount,details};
 })();
 if(typeof module!=='undefined')module.exports=FrostTerrain;

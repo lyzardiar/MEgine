@@ -1,0 +1,129 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "scope": "Memoize immutable effect-name classification and compute terrain telemetry counts in one pass, preserving same-frame map edits.",
+  "baselineCommit": "26006b7cfeb3913775d943dd09f42b7560bb6611",
+  "sha256": {
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "692393165531f16d4957852e9ce0aff22eea9562d32ebb161262a54de102e1f4",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "af1523f21bd75d707fbf49da0374f4432b5ac4445be6dda605fbe33a5c3668be"
+  },
+  "reproducible": true,
+  "sceneEntities": 4224,
+  "tests": {
+    "effectPoolUnit": 6,
+    "effectPoolClientChecks": 16,
+    "streamedEffectFamilies": 7,
+    "completeTelemetryComparisons": 10,
+    "terrainAndSculptPassed": true
+  },
+  "nativeDiagnostic": {
+    "report": "D:\\MEngineNativeQA\\callback-final-native\\native-callback-final-qa.json",
+    "warmupFrames": 120,
+    "sampleFrames": 360,
+    "terrainSummaryBefore": {
+      "calls": 1440,
+      "ms": 726
+    },
+    "terrainSummaryAfter": {
+      "calls": 1440,
+      "ms": 470
+    },
+    "terrainSummaryMethod": "Same native QuickJS map, 20 iterations per variant per HUD call, alternating order. Every result compared with the preceding expressions.",
+    "effectClassificationBefore": {
+      "calls": 155449,
+      "ms": 198
+    },
+    "effectClassificationCached": {
+      "calls": 155449,
+      "ms": 95
+    },
+    "effectClassificationFinal": {
+      "calls": 155449,
+      "ms": 112
+    },
+    "limitations": "Date.now has millisecond resolution and callback wrappers add overhead. Final diagnostic includes the terrain microbenchmark; total HUD time is not comparable."
+  },
+  "release": {
+    "report": "D:\\MEngineNativeQA\\release-scene-profile-callback-hotpath-after-1791888967270\\report.json",
+    "baselineReport": "D:\\MEngineNativeQA\\release-scene-profile-sentinel-pool-after-1791886976220\\report.json",
+    "executable": "D:\\MEngineNativeQA\\release-editor-scene-derived-entries.exe",
+    "editorSha256": "7c6711896bb8dbf2d0b882b19248033843663ead27ee3a6c92ecee6ee6ee927b",
+    "passed": true,
+    "ownerExited": true,
+    "openMs": 4552.757000000001,
+    "before": {
+      "game": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 19.837083332737286,
+        "p95PresentIntervalMs": 28,
+        "presentedFps": 50.41063664584665,
+        "averageRequestMs": 14.552083332339922,
+        "averageRenderMs": 8.927959583333331,
+        "averageCommandMs": 10.043818333333327,
+        "averageUploadMs": 1.679166661699613,
+        "averageWorldSyncMs": 0.8357162499999996,
+        "averageSimulationMs": 7.1264749999999975,
+        "averageSimulationRequestMs": 11.717499995231629
+      },
+      "playScene": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 20.26541666686535,
+        "p95PresentIntervalMs": 24.899999856948853,
+        "presentedFps": 49.345148754579235,
+        "averageRequestMs": 14.825833330551783,
+        "averageRenderMs": 7.214510416666667,
+        "averageCommandMs": 8.954924583333332,
+        "averageUploadMs": 1.7554166694482167,
+        "averageWorldSyncMs": 1.4568983333333325,
+        "averageSimulationMs": 6.0730783333333305,
+        "averageSimulationRequestMs": 12.408333331346512
+      }
+    },
+    "after": {
+      "game": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 19.402499999602636,
+        "p95PresentIntervalMs": 29.5,
+        "presentedFps": 51.53975003326788,
+        "averageRequestMs": 14.361666666467984,
+        "averageRenderMs": 8.811839166666674,
+        "averageCommandMs": 9.906156666666668,
+        "averageUploadMs": 1.6679166714350382,
+        "averageWorldSyncMs": 0.7993450000000001,
+        "averageSimulationMs": 6.630231249999998,
+        "averageSimulationRequestMs": 11.132083321611086
+      },
+      "playScene": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 20.89541666706403,
+        "p95PresentIntervalMs": 27.5,
+        "presentedFps": 47.8573849918116,
+        "averageRequestMs": 15.20916666785876,
+        "averageRenderMs": 7.3005554166666675,
+        "averageCommandMs": 9.164957500000003,
+        "averageUploadMs": 1.7450000057617823,
+        "averageWorldSyncMs": 1.5161720833333334,
+        "averageSimulationMs": 6.564044166666666,
+        "averageSimulationRequestMs": 14.10208332836628
+      }
+    },
+    "emptyScenePaints": 0,
+    "emptyPlayScenePaints": 0,
+    "coverage": [
+      "moving Scene and Play Scene continuity",
+      "selection and Inspector",
+      "parent transforms and activation",
+      "imported mesh picking",
+      "Game tab roundtrip",
+      "asset refresh",
+      "pause, resume and stop",
+      "GPU timing and native masks"
+    ],
+    "limitations": "One local Release sample per version; Game FPS rose slightly while Play Scene FPS fell slightly. No stable whole-frame gain established and performance on the user computer remains unverified."
+  },
+  "fixedSampleRestored": {
+    "Assets/Scripts/Main.js": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+    "Assets/Scenes/Main.mscene": "3eb4d1b0cc97c1876da3257d9f9861b907966c2e48fe3b4a0a679c80c101f787",
+    "project.json": "7b555ef3454ea6c5a4f99b63eb77c0d0f5949239950b4466144621c1311e8a68"
+  }
+}
