@@ -2,7 +2,7 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { WorldSnapshotView } from '@mengine/api';
 import { toWorldSnapshotView, type HostWorldSnapshot } from './transport/editorTransport';
-import { retainPlayWorld, type RetainedPlayWorld } from './playWorldSync';
+import { retainPlayWorld, retainPlayWorldPatch, type RetainedPlayWorld } from './playWorldSync';
 
 export type PlayInput = {
   keys: string[]; pressedKeys: string[]; releasedKeys: string[];
@@ -92,7 +92,6 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
   let backendSessionId: number | null = null;
   let lifecycle: Promise<void> = Promise.resolve();
   let quitRequested = false;
-  let applyUpdate = createPlayWorldUpdater();
   return {
     retainsWorld: true,
     get sessionId() { return sessionId; },
@@ -108,14 +107,20 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
       });
       lifecycle = starting.then(() => {}, () => {});
       const result = await starting;
-      if (result && current === generation) { sessionId = result.sessionId; revision = 0; world = publishNativeWorld({ ...toWorldSnapshotView(result.snapshot), nativeSessionId: result.sessionId, nativeRevision: 0 }); applyUpdate = createPlayWorldUpdater(); return world; }
+      if (result && current === generation) { sessionId = result.sessionId; revision = 0; world = publishNativeWorld({ ...toWorldSnapshotView(result.snapshot), nativeSessionId: result.sessionId, nativeRevision: 0 }); return world; }
     },
     async step(snapshot, input, dt) {
       if (sessionId === null || world === null) throw new Error('Play Mode is initializing');
       const current = generation;
       const update = await invoke<PlayWorldUpdate>('step_editor_play', { sessionId, snapshot, input, dt });
       if (current !== generation || world === null) throw new Error('Play session expired');
-      world = publishNativeWorld({ ...applyUpdate(world, revision, update), nativeSessionId: sessionId, nativeRevision: update.revision }, world);
+      if (update.baseRevision !== revision || update.revision !== revision + 1) throw new Error('Play snapshot revision mismatch');
+      if (!update.reset && update.entityOrder === undefined) {
+        world = retainPlayWorldPatch(world as RetainedPlayWorld, { ...toWorldSnapshotView(update.snapshot), nativeSessionId: sessionId, nativeRevision: update.revision } as PlayRuntimeWorld);
+        nativePublications.add(world);
+      } else {
+        world = publishNativeWorld({ ...applyPlayWorldUpdate(world, revision, update), nativeSessionId: sessionId, nativeRevision: update.revision }, world);
+      }
       revision = update.revision;
       quitRequested = update.quitRequested === true;
       return world;
@@ -123,7 +128,6 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
     stop() {
       quitRequested = false;
       generation++; sessionId = null; world = null; revision = 0;
-      applyUpdate = createPlayWorldUpdater();
       lifecycle = lifecycle.then(async () => {
         const stopped = backendSessionId;
         backendSessionId = null;
