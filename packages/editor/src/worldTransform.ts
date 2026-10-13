@@ -22,8 +22,6 @@ export type ResolvedWorldTransform = {
   transform: TransformData;
 };
 
-type ResolveState = { visiting: true } | { visiting: false; value: ResolvedWorldTransform };
-
 const IDENTITY: TransformData = {
   position: [0, 0, 0],
   rotation: [0, 0, 0, 1],
@@ -99,37 +97,36 @@ export function createOwnedWorldTransformReader() {
 function resolveWorldTransforms(entities: readonly WorldTransformEntity[], roots?: Iterable<number>, cache?: OwnedTransformCache): Map<number, ResolvedWorldTransform> {
   const byId = new Map<number, WorldTransformEntity>();
   for (const entity of entities) byId.set(entity.entity, entity);
-  const states = new Map<number, ResolveState>();
+  const resolved = new Map<number, ResolvedWorldTransform>();
   let cyclic = false;
 
   const resolve = (id: number): ResolvedWorldTransform => {
-    const existing = states.get(id);
-    if (existing?.visiting) { cyclic = true; return INVALID; }
-    if (existing && !existing.visiting) return existing.value;
+    const existing = resolved.get(id);
+    if (existing === INVALID) { cyclic = true; return INVALID; }
+    if (existing) return existing;
     const entity = byId.get(id);
     if (!entity) return INVALID;
-    states.set(id, { visiting: true });
+    // Reserve traversal order and mark the active recursion path in the result itself.
+    resolved.set(id, INVALID);
     const parentId = entity.parent ?? null;
     const parent = parentId == null
       ? cache ? ROOT : { active: true, hasTransform: false, transform: IDENTITY }
       : resolve(parentId);
     const previous = cyclic ? undefined : cache?.get(entity);
-    if (previous?.parent === parent) { states.set(id, { visiting: false, value: previous.value }); return previous.value; }
+    if (previous?.parent === parent) { resolved.set(id, previous.value); return previous.value; }
     const local = normalizeTransform(entity.components.Transform);
     const value: ResolvedWorldTransform = {
       active: parent.active && entity.active !== false,
       hasTransform: local != null,
       transform: local ? compose(parent.transform, local) : parent.transform,
     };
-    states.set(id, { visiting: false, value });
+    resolved.set(id, value);
     if (!cyclic) cache?.set(entity, { parent, value });
     return value;
   };
 
   if (roots) { for (const id of roots) resolve(id); }
   else { for (const entity of entities) resolve(entity.entity); }
-  const resolved = new Map<number, ResolvedWorldTransform>();
-  for (const [id, state] of states) if (!state.visiting) resolved.set(id, state.value);
   return resolved;
 }
 
