@@ -1319,7 +1319,8 @@ export function Viewport(props: {
       if (nativeSceneRequestRef.current.resumeTimer != null) window.clearTimeout(nativeSceneRequestRef.current.resumeTimer);
       nativeSceneRequestRef.current.resumeTimer = null;
       nativeCameraPreviewRequestRef.current.generation++;
-      nativeGameFrameRef.current = null;
+      // MiYu: keep the displayed image during asset reload while forcing a fresh native request.
+      if (nativeGameFrameRef.current) nativeGameFrameRef.current = { ...nativeGameFrameRef.current, requestKey: '' };
       nativeSceneFrameRef.current = null;
       nativeCameraPreviewFrameRef.current = null;
       sceneWorldArgsRef.current = null;
