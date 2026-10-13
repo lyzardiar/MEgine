@@ -79,23 +79,27 @@ impl RuntimeMeshCache {
     pub fn sync_frame(&mut self, renderer: &mut Renderer, frame: &mut CompiledFrame) -> Vec<MeshLoadFailure> {
         self.prepare_billboards(frame.camera,&mut frame.objects);
         for view in &mut frame.scene_views { self.prepare_billboards(view.camera,&mut view.objects); }
-        let objects = frame.objects.iter().chain(frame.scene_views.iter().flat_map(|v| &v.objects)).cloned().collect::<Vec<_>>();
-        self.sync(renderer,&objects)
+        self.sync_objects(renderer,frame.objects.iter().chain(frame.scene_views.iter().flat_map(|v| &v.objects)))
     }
 
     fn prepare_billboards(&mut self, camera: FrameCamera, objects: &mut [RenderObject]) {
         let Some(root) = self.project_root.as_deref() else { return; };
         let poll = self.last_poll.is_none_or(|last| last.elapsed() >= Duration::from_millis(250));
+        let mut checked_assets = HashMap::new();
         for object in objects {
             let key = object.mesh_key.trim();
             let Some((asset,_,_,_)) = parse_gltf_pose_sample(key) else { continue; };
             if poll || !self.poses.contains_key(asset) {
-                let Some(path) = resolve_project_asset_path(root,asset) else { continue; };
-                let stamp = file_stamp(&path);
-                if self.poses.get(asset).is_none_or(|(old,_)| *old != stamp) {
-                    let Ok(source) = GltfPoseSource::load(&path) else { continue; };
-                    self.poses.insert(asset.into(),(stamp,source));
-                }
+                let ready = if let Some(ready) = checked_assets.get(asset) { *ready } else {
+                    let ready = if let Some(path) = resolve_project_asset_path(root,asset) {
+                        let stamp = file_stamp(&path);
+                        if self.poses.get(asset).is_none_or(|(old,_)| *old != stamp) {
+                            match GltfPoseSource::load(&path) { Ok(source) => { self.poses.insert(asset.into(),(stamp,source)); true }, Err(_) => false }
+                        } else { true }
+                    } else { false };
+                    checked_assets.insert(asset.to_owned(),ready); ready
+                };
+                if !ready { continue; }
             }
             if !self.poses[asset].1.has_mesh_billboards() { continue; }
             let Some(view) = billboard_camera(camera,object) else { continue; };
@@ -110,6 +114,10 @@ impl RuntimeMeshCache {
         renderer: &mut Renderer,
         objects: &[RenderObject],
     ) -> Vec<MeshLoadFailure> {
+        self.sync_objects(renderer,objects.iter())
+    }
+
+    fn sync_objects<'a>(&mut self, renderer: &mut Renderer, objects: impl IntoIterator<Item = &'a RenderObject>) -> Vec<MeshLoadFailure> {
         for key in self.evicted.drain(..) { renderer.remove_mesh(&key); }
         self.frame += 1;
         let Some(root) = self.project_root.as_deref() else {
@@ -119,11 +127,12 @@ impl RuntimeMeshCache {
         let poll = self.last_poll.is_none_or(|last| last.elapsed() >= Duration::from_millis(250));
         if poll { self.last_poll = Some(Instant::now()); }
         let mut frame_keys = HashSet::new();
+        let mut file_stamps = HashMap::new();
         for object in objects {
             let key = object.mesh_key.trim();
             if key.starts_with("meshpatch:") {
-                self.pose_usage.insert(key.to_owned(), self.frame);
-                if !frame_keys.insert(key.to_owned()) { continue; }
+                if let Some(used) = self.pose_usage.get_mut(key) { *used = self.frame; } else { self.pose_usage.insert(key.into(), self.frame); }
+                if !frame_keys.insert(key) { continue; }
                 if !poll && self.attempted.contains_key(key) { continue; }
                 let Some((asset, cells)) = parse_mesh_patch_key(key) else {
                     if should_attempt(&mut self.attempted, key, FileStamp::default()) { failures.push(MeshLoadFailure { key:key.into(), path:root.to_owned(), error:"invalid mesh patch key".into() }); }
@@ -133,7 +142,7 @@ impl RuntimeMeshCache {
                     if should_attempt(&mut self.attempted, key, FileStamp::default()) { failures.push(MeshLoadFailure { key:key.into(), path:root.to_owned(), error:"mesh patch path must be project-relative without '..'".into() }); }
                     continue;
                 };
-                let stamp = file_stamp(&path);
+                let stamp = *file_stamps.entry(asset).or_insert_with(|| file_stamp(&path));
                 if !should_attempt(&mut self.attempted, key, stamp) { continue; }
                 if self.patches.get(asset).is_none_or(|(old, _)| *old != stamp) {
                     match MeshPatchSource::load(&path) {
@@ -148,7 +157,7 @@ impl RuntimeMeshCache {
                 continue;
             }
             if key.starts_with("terrain4:") || key.starts_with("terrain4r:") || key.starts_with("terrain4h:") || key.starts_with("terrain4w:") {
-                self.pose_usage.insert(key.to_owned(), self.frame);
+                if let Some(used) = self.pose_usage.get_mut(key) { *used = self.frame; } else { self.pose_usage.insert(key.into(), self.frame); }
                 if should_attempt(&mut self.attempted, key, FileStamp::default()) {
                     match terrain_mesh(key) {
                         Ok(mesh) => renderer.upload_gltf_static(key, &vertices_from_mesh(&mesh), &mesh.indices),
@@ -163,13 +172,13 @@ impl RuntimeMeshCache {
                 if should_attempt(&mut self.attempted, key, FileStamp::default()) { failures.push(MeshLoadFailure { key: key.into(), path: root.to_owned(), error: "invalid skeletal pose reference".into() }); }
                 continue;
             }
-            if pose.is_some() { self.pose_usage.insert(key.to_owned(), self.frame); }
+            if pose.is_some() { if let Some(used) = self.pose_usage.get_mut(key) { *used = self.frame; } else { self.pose_usage.insert(key.into(), self.frame); } }
             let asset_key = pose.map(|p| p.0).unwrap_or(key);
             let lower = asset_key.to_ascii_lowercase();
             if !lower.ends_with(".gltf") && !lower.ends_with(".glb") {
                 continue;
             }
-            if !frame_keys.insert(key.to_owned()) {
+            if !frame_keys.insert(key) {
                 continue;
             }
             if !poll && self.attempted.contains_key(key) { continue; }
@@ -183,7 +192,7 @@ impl RuntimeMeshCache {
                 }
                 continue;
             };
-            let stamp = file_stamp(&path);
+            let stamp = *file_stamps.entry(asset_key).or_insert_with(|| file_stamp(&path));
             if !should_attempt(&mut self.attempted, key, stamp) {
                 continue;
             }
@@ -215,8 +224,17 @@ impl RuntimeMeshCache {
             for (key, _) in stale.into_iter().take(self.pose_usage.len() - 256) { self.pose_usage.remove(&key); self.attempted.remove(&key); renderer.remove_mesh(&key); }
         }
         self.billboard_views.retain(|key,_| self.pose_usage.contains_key(key));
-        self.poses.retain(|asset, _| self.pose_usage.keys().any(|key| parse_gltf_pose_sample(self.billboard_views.get(key).map_or(key,|(source,_)| source)).is_some_and(|p| p.0 == asset)));
-        self.patches.retain(|asset, _| self.pose_usage.keys().any(|key| parse_mesh_patch_key(key).is_some_and(|p| p.0 == asset)));
+        if !self.poses.is_empty() || !self.patches.is_empty() {
+            // Resolve retained sources once across cached poses, terrain and camera-specific meshes.
+            let mut pose_assets = HashSet::new(); let mut patch_assets = HashSet::new();
+            for key in self.pose_usage.keys() {
+                let source = self.billboard_views.get(key).map_or(key.as_str(),|(source,_)| source.as_str());
+                if let Some((asset,_,_,_)) = parse_gltf_pose_sample(source) { pose_assets.insert(asset); }
+                if let Some((asset,_)) = parse_mesh_patch_key(key) { patch_assets.insert(asset); }
+            }
+            self.poses.retain(|asset, _| pose_assets.contains(asset.as_str()));
+            self.patches.retain(|asset, _| patch_assets.contains(asset.as_str()));
+        }
         failures
     }
 }
@@ -306,6 +324,32 @@ mod tests {
         for key in ["meshpatch:Assets/a.mpatch#00080", "meshpatch:Assets/a.mpatch#fff80", "meshpatch:Assets/b.mpatch#00080"] { cache.attempted.insert(key.into(), FileStamp::default()); }
         cache.invalidate("Assets/a.mpatch");
         assert_eq!(cache.attempted.keys().cloned().collect::<Vec<_>>(), vec!["meshpatch:Assets/b.mpatch#00080"]);
+    }
+
+    #[test]
+    fn main_and_nested_views_keep_used_sources_while_evicting_stale_meshes() {
+        let root = std::env::temp_dir().join(format!("mengine-mesh-sync-{}",uuid::Uuid::new_v4())); std::fs::create_dir_all(&root).unwrap();
+        let source_path = root.join("a.gltf"); std::fs::write(&source_path,r#"{"asset":{"version":"2.0"},"scenes":[{"nodes":[]}]}"#).unwrap();
+        let mut renderer = pollster::block_on(Renderer::new_headless(winit::dpi::PhysicalSize::new(16,16))).expect("GPU for mesh cache acceptance");
+        let mut cache = RuntimeMeshCache::new(Some(root.clone())); cache.last_poll = Some(Instant::now());
+        let stamp = file_stamp(&source_path);
+        for asset in ["a.gltf","unused.gltf"] { cache.poses.insert(asset.into(),(stamp,GltfPoseSource::load(&source_path).unwrap())); }
+        let pose = "a.gltf#pose=0:1@30"; let billboard = "billboard:0000000000000001:a.gltf#pose=0:2@30";
+        let camera = FrameCamera { view:glam::Mat4::IDENTITY,proj:glam::Mat4::IDENTITY,position:Vec3::Z };
+        cache.billboard_views.insert(billboard.into(),("a.gltf#pose=0:2@30".into(),GltfBillboardCamera { model:glam::Mat4::IDENTITY,look:-Vec3::Z,up:Vec3::Y }));
+        for key in [pose,billboard] { cache.attempted.insert(key.into(),stamp); }
+        for id in 0..300 { let key = format!("terrain4:{id:064x}"); cache.pose_usage.insert(key.clone(),0); cache.attempted.insert(key,FileStamp::default()); }
+        let preview = format!("terrain4:{:064x}",301);
+        let object = |key: &str| RenderObject { mesh_key:key.into(),model:glam::Mat4::IDENTITY,material:Default::default(),cast_shadows:false,receive_shadows:false };
+        let mut frame = CompiledFrame { profile_stages:vec![],clear:mengine_rhi::ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 },camera,objects:vec![object(pose)],lighting:Default::default(),ui:mengine_rhi::UiBatchPlan::build(vec![]),controls:vec![],texture_failures:vec![],font_failures:vec![],has_authored_camera:true,scene_views:vec![mengine_rhi::SceneTextureFrame { key:"preview".into(),size:[16,16],clear:mengine_rhi::ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 },camera,objects:vec![object(billboard),object(&preview)],lighting:Default::default() }],view_resources:vec![] };
+        assert!(cache.sync_frame(&mut renderer,&mut frame).is_empty());
+        assert_eq!(cache.pose_usage.len(),256); assert_eq!(cache.poses.keys().collect::<Vec<_>>(),["a.gltf"]);
+        for key in [pose,billboard,&preview] { assert_eq!(cache.pose_usage.get(key),Some(&1)); assert!(cache.attempted.contains_key(key)); }
+        assert!(cache.billboard_views.contains_key(billboard));
+        assert!(cache.sync_frame(&mut renderer,&mut frame).is_empty());
+        for key in [pose,billboard,&preview] { assert_eq!(cache.pose_usage.get(key),Some(&2)); }
+        cache.invalidate("a.gltf"); assert!(!cache.poses.contains_key("a.gltf")); assert!(!cache.billboard_views.contains_key(billboard));
+        std::fs::remove_file(&source_path).unwrap(); std::fs::remove_dir(&root).unwrap();
     }
 
     #[test]
