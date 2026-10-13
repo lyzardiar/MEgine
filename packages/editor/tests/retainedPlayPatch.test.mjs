@@ -22,11 +22,15 @@ test('owned patches freeze new data, share unchanged records and preserve old fr
   const sync=createPlayWorldSync();sync.captureRetained(metadata);assert.deepEqual(sync.viewportSnapshot().entities,metadata.entities);
 }));
 
-test('owned patch validation rejects impersonation, duplicate baselines and missing IDs without corrupting later updates',async()=>withModules(({retainPlayWorld,retainPlayWorldPatch})=>{
+test('owned patch validation rejects impersonation, duplicate baselines and missing IDs without corrupting later updates',async()=>withModules(({retainPlayWorld,retainPlayWorldPatch,retainedPlayWorldChanges})=>{
   const first=retainPlayWorld(world([entity(1),entity(2)]));
   for(const impostor of [{...first},Object.freeze({...first}),Object.freeze(world([entity(1)]))])assert.throws(()=>retainPlayWorldPatch(impostor,world([])),/owned world/);
   assert.throws(()=>retainPlayWorldPatch(first,world([entity(9)])),/entity order/);
   const valid=retainPlayWorldPatch(first,world([entity(2,7),entity(2,8)]));assert.deepEqual(valid.entities[1].components.Custom.values,[8]);assert.deepEqual(first.entities[1].components.Custom.values,[2]);
+  assert.deepEqual(retainedPlayWorldChanges(first,valid),[1]);assert.ok(Object.isFrozen(retainedPlayWorldChanges(first,valid)));
+  assert.equal(retainedPlayWorldChanges({...first},valid),undefined);assert.equal(retainedPlayWorldChanges(first,{...valid}),undefined);
+  const next=retainPlayWorldPatch(valid,world([]));assert.deepEqual(retainedPlayWorldChanges(valid,next),[]);assert.equal(retainedPlayWorldChanges(first,next),undefined);
+  assert.equal(retainedPlayWorldChanges(valid,retainPlayWorld(world([entity(2),entity(1)]))),undefined);
   assert.throws(()=>retainPlayWorldPatch(retainPlayWorld(world([entity(1),entity(1)])),world([])),/entity order/);
   assert.deepEqual(retainPlayWorldPatch(retainPlayWorld(world([])),world([],2)).entities,[]);
 }));
