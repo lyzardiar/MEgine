@@ -1,0 +1,14 @@
+[package]
+name = "mengine-script-runtime-benchmark"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Keep experimental VM dependencies out of editor and player builds.
+[workspace]
+
+[dependencies]
+anyhow = "1"
+rquickjs = "=0.14.0"
+serde_json = "1"
+v8 = "=152.2.0"
