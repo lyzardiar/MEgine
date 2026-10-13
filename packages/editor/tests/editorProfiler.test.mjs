@@ -31,6 +31,15 @@ function frame(timestamp, overrides = {}) {
   };
 }
 
+test('hardware GPU samples remain separate from CPU totals and survive frame selection', () => {
+  clearEditorProfilerSamples();
+  const gpu={timestampPeriodNs:1,totalPassMs:12,stages:[{name:'Forward HDR',totalMs:12,selfMs:12,calls:1,children:[]}]};
+  recordNativeViewportProfile('scene',{schemaVersion:1,totalMs:4,callTree:{name:'CPU',totalMs:4,selfMs:4,calls:1,children:[]},gpu},100);
+  const profiles=readNativeViewportProfiles('scene');assert.deepEqual(profiles[0].gpu,gpu);assert.equal(summarizeNativeViewportProfiles(profiles).averageRenderMs,4);
+  profiles[0].gpu.stages[0].totalMs=99;assert.equal(readNativeViewportProfiles('scene')[0].gpu.stages[0].totalMs,12);
+  clearEditorProfilerSamples();
+});
+
 test('native presentation summary retains correct cadence after history reaches its limit', () => {
   clearEditorProfilerSamples();
   for (let index = 0; index < 300; index++) recordNativeViewportProfile('game', { schemaVersion: 1, totalMs: 4, transportMs: 10 }, index * 20);

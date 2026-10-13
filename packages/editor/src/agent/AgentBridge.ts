@@ -5565,7 +5565,7 @@ class AgentBridge {
         return {
           source,
           scope: 'editor-and-native-viewport',
-          note: 'WebView timing plus instrumented native editor-host/RHI call tree, memory provenance, and render-bound resources. GPU bytes are estimates; driver timing and process-wide heap sampling are not claimed.',
+          note: 'WebView timing plus instrumented native editor-host/RHI call tree, memory provenance, and render-bound resources. GPU bytes are estimates; optional hardware timestamps cover main viewport passes. Process-wide heap sampling is not claimed.',
           summary: summarizeEditorProfilerSamples(allSamples),
           nativeLatest: nativeProfiles.at(-1) ?? null,
           nativeProfileCount: nativeProfiles.length,

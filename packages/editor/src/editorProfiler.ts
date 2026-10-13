@@ -77,6 +77,8 @@ export type NativeViewportProfile = {
   timestamp: number;
   totalMs: number;
   callTree: NativeProfilerNode;
+  /** Hardware timestamps for main viewport passes; overlaps CPU work and GPU map wait. */
+  gpu?: { timestampPeriodNs: number; totalPassMs: number; stages: NativeProfilerNode[] };
   /** Full request, native rendering, binary transfer and Canvas upload wall time. */
   transportMs?: number;
   commandMs?: number;
