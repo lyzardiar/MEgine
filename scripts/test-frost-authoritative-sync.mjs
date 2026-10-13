@@ -1,0 +1,39 @@
+// Author: MiYu. Verify actual TCP authority and replay its snapshots through the generated online client.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import net from 'node:net';
+import vm from 'node:vm';
+import {createRequire} from 'node:module';
+import {createServer} from '../samples/frostbound-realms/server.mjs';
+import {clientWorldFixture} from './frost-client-world-fixture.mjs';
+const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),plain=value=>JSON.parse(JSON.stringify(value));
+const app=createServer({port:0}),address=await app.listening,peers=[],history=new Map(),applied=[],publicState=S.publicState,command=S.command;
+S.publicState=(state,team)=>{const view=publicState(state,team),expected=plain(view);for(const u of expected.units)for(const key of ['path','dest','route','home'])delete u[key];expected.events=expected.events.slice(-24);history.set(team+':'+state.frame,expected);return view;};
+S.command=(state,team,order)=>{applied.push({frame:state.frame,team,order:plain(order)});return command(state,team,order);};
+async function peer(){
+ const socket=net.connect(address.port,'127.0.0.1'),messages=[],waiters=[];let buffer='';const p={socket,messages,send:m=>socket.write(JSON.stringify(m)+'\n'),next:check=>new Promise((resolve,reject)=>{const found=messages.find(check);if(found)return resolve(found);const w={check,resolve,reject,timer:setTimeout(()=>{waiters.splice(waiters.indexOf(w),1);reject(Error('Authority TCP timeout'));},10000)};waiters.push(w);})};peers.push(p);
+ socket.setEncoding('utf8');socket.on('error',()=>{});socket.on('data',chunk=>{buffer+=chunk;let end;while((end=buffer.indexOf('\n'))>=0){const m=JSON.parse(buffer.slice(0,end));buffer=buffer.slice(end+1);messages.push(m);for(const w of [...waiters])if(w.check(m)){clearTimeout(w.timer);waiters.splice(waiters.indexOf(w),1);w.resolve(m);}}});
+ await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('error',reject);});p.send({type:'hello',protocol:S.PROTOCOL});await p.next(m=>m.type==='welcome');return p;
+}
+let report;
+try{
+ const a=await peer(),b=await peer(),map=S.defaultMap();for(const key of ['terrain','heights','ramps','relief'])map[key].fill(0);map.props=[];map.doodads=[];map.units=[{kind:'soldier',team:0,x:-2,z:0},{kind:'soldier',team:1,x:2,z:0}];map.triggers=[];
+ a.send({type:'create',map});const joined=await a.next(m=>m.type==='joined');b.send({type:'join',code:joined.code});await b.next(m=>m.type==='joined');a.send({type:'ready',ready:true});b.send({type:'ready',ready:true});await a.next(m=>m.type==='room'&&m.players.length===2&&m.players.every(p=>p.ready));a.send({type:'start'});
+ const initial=(await a.next(m=>m.type==='state')).state,room=app.rooms.get(joined.code),u=initial.units.find(u=>u.kind==='soldier'&&u.team===0),enemy=initial.units.find(u=>u.kind==='soldier'&&u.team===1);assert.ok(u&&enemy);
+ const first={type:'move',ids:[u.id],x:-5,z:0},last={type:'attack',ids:[u.id],target:enemy.id};a.send({type:'order',seq:1,command:first});a.send({type:'order',seq:2,command:last});a.send({type:'order',seq:2,command:first});
+ assert.match((await a.next(m=>m.type==='error')).message,/Stale or invalid/);await a.next(m=>m.type==='state'&&m.state.frame>=12);await b.next(m=>m.type==='state'&&m.state.frame>=12);
+ assert.deepEqual(applied.filter(v=>v.team===0).map(v=>v.order),[first,last],'TCP arrival order, duplicate rejected');
+ const frames=a.messages.filter(m=>m.type==='state'&&m.state.frame<=12).map(m=>m.state.frame);assert.deepEqual(frames,Array.from({length:13},(_,i)=>i),'server advances once per fixed step');
+ let comparisons=0,sharedUnits=0;for(const frame of frames){const left=a.messages.find(m=>m.type==='state'&&m.state.frame===frame).state,right=b.messages.find(m=>m.type==='state'&&m.state.frame===frame).state;for(const [team,state] of [[0,left],[1,right]]){assert.deepEqual(state,history.get(team+':'+frame),'wire snapshot matches authority');comparisons++;}for(const unit of left.units){const other=right.units.find(v=>v.id===unit.id);if(other){for(const key of ['x','z','hp','mana','kind','team'])assert.deepEqual(unit[key],other[key],'shared actor '+key);sharedUnits++;}}assert.ok(left.units.length<room.state.units.length,'fog excludes remote actors');}
+ assert.ok(a.messages.some(m=>m.type==='state'&&m.state.units.find(v=>v.id===enemy.id)?.hp<enemy.hp),'damage changes reach both clients');
+ const closed=new Promise(resolve=>a.socket.once('close',resolve));a.socket.destroy();await closed;await b.next(m=>m.type==='room'&&m.players.some(p=>p.team===0&&!p.online));const c=await peer();c.send({type:'resume',code:joined.code,token:joined.token});const resumed=await c.next(m=>m.type==='joined');assert.equal(resumed.team,0);assert.deepEqual(resumed.state,history.get('0:'+resumed.state.frame));assert.ok(resumed.state.frame>=12);c.send({type:'order',seq:1,command:{type:'stop',ids:[u.id]}});await c.next(m=>m.type==='state'&&m.state.frame>resumed.state.frame);assert.equal(applied.at(-1).order.type,'stop','reconnect resets sequence for its new connection');
+ const root=new URL('../samples/frostbound-realms/',import.meta.url),source=fs.readFileSync(new URL('Assets/Scripts/Main.js',root),'utf8'),scene=JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world,world=clientWorldFixture(scene),events=[],sent=[];
+ const engine=Object.assign(world.engine,{assets:{sampleNodes:()=>[]},network:{poll:()=>events.splice(0),connect(){},close(){},send:m=>sent.push(plain(m))},storage:{load:()=>null,save(){}},playAudio(){}}),context=vm.createContext({engine});
+ assert.equal(source.split('  return {tick};').length,2);vm.runInContext(source.replace('  return {tick};','  return {tick,action,order,inspect:()=>({state,online,mode,seq})};'),context);engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720]};context.onTick(0);world.commit();context.FrostClient.action('netSkirmish');events.push({type:'connected'},{type:'message',data:{...joined,state:null}});
+ let ticks=0;context.Frost.tick=()=>{ticks++;throw Error('Online client must not simulate authority');};
+ const snapshots=a.messages.filter(m=>m.type==='state'&&m.state.frame<=12);for(const message of snapshots){events.push({type:'message',data:plain(message)});world.render(context.onTick,.2);assert.deepEqual(plain(context.FrostClient.inspect().state),message.state,'generated client retains authoritative state');}
+ const held=plain(context.FrostClient.inspect().state);for(let i=0;i<5;i++)world.render(context.onTick,.2);assert.deepEqual(plain(context.FrostClient.inspect().state),held,'missing snapshots do not advance simulation');context.FrostClient.order(first);context.FrostClient.order(last);assert.deepEqual(sent.filter(m=>m.type==='order').map(m=>m.seq),[1,2]);
+ events.push({type:'closed'});world.render(context.onTick,.2);assert.equal(context.FrostClient.inspect().mode,'reconnecting');events.push({type:'connected'},{type:'message',data:plain(resumed)});world.render(context.onTick,.2);assert.deepEqual(plain(context.FrostClient.inspect().state),resumed.state);context.FrostClient.order(first);assert.equal(sent.filter(m=>m.type==='order').at(-1).seq,1);assert.equal(ticks,0);
+ report={passed:true,wireSnapshotComparisons:comparisons,sharedUnitComparisons:sharedUnits,clientSnapshotComparisons:snapshots.length+2,clientSimulationTicks:ticks,scope:'Real TCP order sequence, duplicate rejection, fixed simulation frames, damage, shared visible actors, fog exclusion and reconnect; generated online client snapshot replay, stalled network and reconnect without local simulation. Engine networking and GPU presentation are not exercised by this test.'};
+}finally{S.publicState=publicState;S.command=command;for(const p of peers)p.socket.destroy();await app.close();}
+console.log(JSON.stringify(report));

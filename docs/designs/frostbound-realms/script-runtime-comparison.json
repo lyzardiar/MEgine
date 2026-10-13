@@ -1,0 +1,712 @@
+{
+  "author": "MiYu",
+  "passed": false,
+  "scope": "Native CPU rule execution only. No engine bridge, client presentation, GPU rendering, browser, IPC or per-call deadline. V8 is embedded directly, not run through Node.",
+  "warmup": 300,
+  "samples": 600,
+  "repeats": 3,
+  "generatedSha256": "2d298b2e3e23e662064f20de950e6965582fc6b71c13271a9b6c7b4c8bdde4fd",
+  "rulesSha256": "21b5f76f3a606a169d5533bf0c89baa3929ba6289ea1234be081e92ff2510dcd",
+  "runnerSha256": "df59dda750df22b88615471909841450a0ba6195ae64bfd9f8637d358efad41c",
+  "cases": [
+    {
+      "name": "opening",
+      "warmup": 300,
+      "samples": 600,
+      "sourceSha256": "48e09bb54f265cb48da05a87d67d6b1de110266b9e693e050fa10eb56036fc10",
+      "runs": [
+        {
+          "runtime": "quickjs",
+          "repeat": 0,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 796.5465,
+          "initialResetMs": 3.9477,
+          "warmupMs": 1226.9514,
+          "resetMs": 3.8487,
+          "totalMs": 2781.304400000001,
+          "medianStepMs": 4.2801,
+          "p95StepMs": 6.1127,
+          "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
+          "equality": {
+            "passed": true,
+            "numbers": 10230,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 14,
+            "peakUnits": 20,
+            "unitSteps": 11206,
+            "projectileSteps": 0
+          },
+          "averageStepMs": 4.635507333333335
+        },
+        {
+          "runtime": "v8",
+          "repeat": 0,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 199.5268,
+          "initialResetMs": 3.7033,
+          "warmupMs": 194.3206,
+          "resetMs": 1.0938,
+          "totalMs": 250.88069999999993,
+          "medianStepMs": 0.3157,
+          "p95StepMs": 0.7329,
+          "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
+          "equality": {
+            "passed": true,
+            "numbers": 10230,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 14,
+            "peakUnits": 20,
+            "unitSteps": 11206,
+            "projectileSteps": 0
+          },
+          "averageStepMs": 0.4181344999999999
+        },
+        {
+          "runtime": "v8",
+          "repeat": 1,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 212.9494,
+          "initialResetMs": 4.8116,
+          "warmupMs": 194.523,
+          "resetMs": 0.9779999999999999,
+          "totalMs": 240.6536,
+          "medianStepMs": 0.3005,
+          "p95StepMs": 0.6603,
+          "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
+          "equality": {
+            "passed": true,
+            "numbers": 10230,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 14,
+            "peakUnits": 20,
+            "unitSteps": 11206,
+            "projectileSteps": 0
+          },
+          "averageStepMs": 0.40108933333333335
+        },
+        {
+          "runtime": "quickjs",
+          "repeat": 1,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 849.711,
+          "initialResetMs": 4.081,
+          "warmupMs": 1423.2318,
+          "resetMs": 5.0796,
+          "totalMs": 2856.157200000001,
+          "medianStepMs": 4.2705,
+          "p95StepMs": 6.0896,
+          "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
+          "equality": {
+            "passed": true,
+            "numbers": 10230,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 14,
+            "peakUnits": 20,
+            "unitSteps": 11206,
+            "projectileSteps": 0
+          },
+          "averageStepMs": 4.760262000000002
+        },
+        {
+          "runtime": "quickjs",
+          "repeat": 2,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 820.1767,
+          "initialResetMs": 3.9837,
+          "warmupMs": 1226.809,
+          "resetMs": 3.9947999999999997,
+          "totalMs": 2776.0292000000004,
+          "medianStepMs": 4.2775,
+          "p95StepMs": 6.0624,
+          "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
+          "equality": {
+            "passed": true,
+            "numbers": 10230,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 14,
+            "peakUnits": 20,
+            "unitSteps": 11206,
+            "projectileSteps": 0
+          },
+          "averageStepMs": 4.626715333333334
+        },
+        {
+          "runtime": "v8",
+          "repeat": 2,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 192.6806,
+          "initialResetMs": 3.5136999999999996,
+          "warmupMs": 184.4784,
+          "resetMs": 0.9404,
+          "totalMs": 242.13499999999982,
+          "medianStepMs": 0.29460000000000003,
+          "p95StepMs": 0.6805,
+          "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
+          "equality": {
+            "passed": true,
+            "numbers": 10230,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 14,
+            "peakUnits": 20,
+            "unitSteps": 11206,
+            "projectileSteps": 0
+          },
+          "averageStepMs": 0.403558333333333
+        }
+      ],
+      "medianAverageStepMs": {
+        "quickjs": 4.635507333333335,
+        "v8": 0.403558333333333
+      },
+      "quickjsToV8Ratio": 11.486585582423041
+    },
+    {
+      "name": "battle",
+      "warmup": 10,
+      "samples": 30,
+      "sourceSha256": "c611203f54eaba40057b8808cf0512e8da5a1deb2bf5154fe7b5568d0e8e444d",
+      "runs": [
+        {
+          "runtime": "quickjs",
+          "repeat": 0,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 813.7935,
+          "initialResetMs": 2317.641,
+          "warmupMs": 11594.6696,
+          "resetMs": 2367.8958,
+          "totalMs": 34563.841700000004,
+          "medianStepMs": 1086.1009999999999,
+          "p95StepMs": 1589.8866,
+          "stateSha256": "95ec03c17c8479afdac38297c085b018cc916c25b9133c6283f92e94cdc28828",
+          "equality": {
+            "passed": true,
+            "numbers": 14758,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 30,
+            "initialUnits": 110,
+            "peakUnits": 110,
+            "unitSteps": 3300,
+            "projectileSteps": 111
+          },
+          "averageStepMs": 1152.128056666667
+        },
+        {
+          "runtime": "v8",
+          "repeat": 0,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 202.4838,
+          "initialResetMs": 186.7143,
+          "warmupMs": 600.8019,
+          "resetMs": 147.6072,
+          "totalMs": 1560.2349999999997,
+          "medianStepMs": 48.431599999999996,
+          "p95StepMs": 76.5004,
+          "stateSha256": "f1c5f7c1e671cc8ae299d36ae6725ddb206308131c8f2b622226eb2620a39d87",
+          "equality": {
+            "passed": false,
+            "firstDifference": "$.state.units.62.x: 9.401912179534486 != 9.950695498881613"
+          },
+          "stats": {
+            "steps": 30,
+            "initialUnits": 110,
+            "peakUnits": 110,
+            "unitSteps": 3300,
+            "projectileSteps": 111
+          },
+          "averageStepMs": 52.00783333333332
+        },
+        {
+          "runtime": "v8",
+          "repeat": 1,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 221.9261,
+          "initialResetMs": 180.4225,
+          "warmupMs": 599.0341,
+          "resetMs": 139.922,
+          "totalMs": 1534.3308,
+          "medianStepMs": 49.6819,
+          "p95StepMs": 67.8837,
+          "stateSha256": "f1c5f7c1e671cc8ae299d36ae6725ddb206308131c8f2b622226eb2620a39d87",
+          "equality": {
+            "passed": false,
+            "firstDifference": "$.state.units.62.x: 9.401912179534486 != 9.950695498881613"
+          },
+          "stats": {
+            "steps": 30,
+            "initialUnits": 110,
+            "peakUnits": 110,
+            "unitSteps": 3300,
+            "projectileSteps": 111
+          },
+          "averageStepMs": 51.14436
+        },
+        {
+          "runtime": "quickjs",
+          "repeat": 1,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 821.7869,
+          "initialResetMs": 2028.8482999999999,
+          "warmupMs": 11253.0535,
+          "resetMs": 2293.7308000000003,
+          "totalMs": 33478.32260000001,
+          "medianStepMs": 1065.6521,
+          "p95StepMs": 1514.559,
+          "stateSha256": "95ec03c17c8479afdac38297c085b018cc916c25b9133c6283f92e94cdc28828",
+          "equality": {
+            "passed": true,
+            "numbers": 14758,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 30,
+            "initialUnits": 110,
+            "peakUnits": 110,
+            "unitSteps": 3300,
+            "projectileSteps": 111
+          },
+          "averageStepMs": 1115.9440866666669
+        },
+        {
+          "runtime": "quickjs",
+          "repeat": 2,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 798.2766,
+          "initialResetMs": 2032.8001000000002,
+          "warmupMs": 11189.0021,
+          "resetMs": 2282.7425,
+          "totalMs": 33104.262800000004,
+          "medianStepMs": 1069.0953000000002,
+          "p95StepMs": 1499.354,
+          "stateSha256": "95ec03c17c8479afdac38297c085b018cc916c25b9133c6283f92e94cdc28828",
+          "equality": {
+            "passed": true,
+            "numbers": 14758,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 30,
+            "initialUnits": 110,
+            "peakUnits": 110,
+            "unitSteps": 3300,
+            "projectileSteps": 111
+          },
+          "averageStepMs": 1103.4754266666669
+        },
+        {
+          "runtime": "v8",
+          "repeat": 2,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 195.7083,
+          "initialResetMs": 174.9532,
+          "warmupMs": 584.9938,
+          "resetMs": 144.48069999999998,
+          "totalMs": 1610.1487000000002,
+          "medianStepMs": 51.124700000000004,
+          "p95StepMs": 78.20299999999999,
+          "stateSha256": "f1c5f7c1e671cc8ae299d36ae6725ddb206308131c8f2b622226eb2620a39d87",
+          "equality": {
+            "passed": false,
+            "firstDifference": "$.state.units.62.x: 9.401912179534486 != 9.950695498881613"
+          },
+          "stats": {
+            "steps": 30,
+            "initialUnits": 110,
+            "peakUnits": 110,
+            "unitSteps": 3300,
+            "projectileSteps": 111
+          },
+          "averageStepMs": 53.671623333333336
+        }
+      ],
+      "medianAverageStepMs": {
+        "quickjs": 1115.9440866666669,
+        "v8": 52.00783333333332
+      },
+      "quickjsToV8Ratio": 21.457230865863163
+    },
+    {
+      "name": "td",
+      "warmup": 300,
+      "samples": 600,
+      "sourceSha256": "9605b0a794b66fd1af720a9ef136c860ccac35aa6d178756f87f29352d8c8d42",
+      "runs": [
+        {
+          "runtime": "quickjs",
+          "repeat": 0,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 797.197,
+          "initialResetMs": 1.7879,
+          "warmupMs": 1354.1213,
+          "resetMs": 1.7080000000000002,
+          "totalMs": 7585.879200000001,
+          "medianStepMs": 7.7658,
+          "p95StepMs": 42.2332,
+          "stateSha256": "7a5b88c91be227a716147ee4ad5b9c757a2f2916dcc8065af02f0c407b4a3136",
+          "equality": {
+            "passed": true,
+            "numbers": 10888,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 4,
+            "peakUnits": 23,
+            "unitSteps": 7476,
+            "projectileSteps": 140
+          },
+          "averageStepMs": 12.643132000000001
+        },
+        {
+          "runtime": "v8",
+          "repeat": 0,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 198.9111,
+          "initialResetMs": 2.7641,
+          "warmupMs": 187.56390000000002,
+          "resetMs": 0.622,
+          "totalMs": 656.6994999999996,
+          "medianStepMs": 0.7793,
+          "p95StepMs": 3.0956,
+          "stateSha256": "aceac1293e5803d27b9f49947c8c523e3c84721bae865803c07cf3074f03602f",
+          "equality": {
+            "passed": false,
+            "firstDifference": "$.stats.peakUnits\n\n24 !== 23\n"
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 4,
+            "peakUnits": 24,
+            "unitSteps": 7684,
+            "projectileSteps": 131
+          },
+          "averageStepMs": 1.094499166666666
+        },
+        {
+          "runtime": "v8",
+          "repeat": 1,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 200.87810000000002,
+          "initialResetMs": 2.9718999999999998,
+          "warmupMs": 185.0627,
+          "resetMs": 0.7253999999999999,
+          "totalMs": 640.2570000000001,
+          "medianStepMs": 0.7586,
+          "p95StepMs": 3.0578,
+          "stateSha256": "aceac1293e5803d27b9f49947c8c523e3c84721bae865803c07cf3074f03602f",
+          "equality": {
+            "passed": false,
+            "firstDifference": "$.stats.peakUnits\n\n24 !== 23\n"
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 4,
+            "peakUnits": 24,
+            "unitSteps": 7684,
+            "projectileSteps": 131
+          },
+          "averageStepMs": 1.0670950000000001
+        },
+        {
+          "runtime": "quickjs",
+          "repeat": 1,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 817.8539000000001,
+          "initialResetMs": 1.8103,
+          "warmupMs": 1379.0289,
+          "resetMs": 1.6454,
+          "totalMs": 7564.336699999994,
+          "medianStepMs": 7.6375,
+          "p95StepMs": 42.8157,
+          "stateSha256": "7a5b88c91be227a716147ee4ad5b9c757a2f2916dcc8065af02f0c407b4a3136",
+          "equality": {
+            "passed": true,
+            "numbers": 10888,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 4,
+            "peakUnits": 23,
+            "unitSteps": 7476,
+            "projectileSteps": 140
+          },
+          "averageStepMs": 12.607227833333324
+        },
+        {
+          "runtime": "quickjs",
+          "repeat": 2,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 823.2933,
+          "initialResetMs": 1.8553,
+          "warmupMs": 1365.6174999999998,
+          "resetMs": 1.691,
+          "totalMs": 7556.300399999999,
+          "medianStepMs": 7.7967,
+          "p95StepMs": 42.7438,
+          "stateSha256": "7a5b88c91be227a716147ee4ad5b9c757a2f2916dcc8065af02f0c407b4a3136",
+          "equality": {
+            "passed": true,
+            "numbers": 10888,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 4,
+            "peakUnits": 23,
+            "unitSteps": 7476,
+            "projectileSteps": 140
+          },
+          "averageStepMs": 12.593834
+        },
+        {
+          "runtime": "v8",
+          "repeat": 2,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 197.27800000000002,
+          "initialResetMs": 2.7969000000000004,
+          "warmupMs": 182.35000000000002,
+          "resetMs": 0.6485,
+          "totalMs": 628.0990000000003,
+          "medianStepMs": 0.7615999999999999,
+          "p95StepMs": 3.156,
+          "stateSha256": "aceac1293e5803d27b9f49947c8c523e3c84721bae865803c07cf3074f03602f",
+          "equality": {
+            "passed": false,
+            "firstDifference": "$.stats.peakUnits\n\n24 !== 23\n"
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 4,
+            "peakUnits": 24,
+            "unitSteps": 7684,
+            "projectileSteps": 131
+          },
+          "averageStepMs": 1.046831666666667
+        }
+      ],
+      "medianAverageStepMs": {
+        "quickjs": 12.607227833333324,
+        "v8": 1.0670950000000001
+      },
+      "quickjsToV8Ratio": 11.814531820815693
+    },
+    {
+      "name": "moba",
+      "warmup": 300,
+      "samples": 600,
+      "sourceSha256": "ff96492f76bb68041037b1999a6c04f57dfe929cf9d1cad4d923288739a92dc9",
+      "runs": [
+        {
+          "runtime": "quickjs",
+          "repeat": 0,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 811.4701,
+          "initialResetMs": 8.2138,
+          "warmupMs": 6688.4541,
+          "resetMs": 9.2029,
+          "totalMs": 17149.207300000013,
+          "medianStepMs": 16.097299999999997,
+          "p95StepMs": 74.00840000000001,
+          "stateSha256": "f18d866d489367837702a98f52a0696ef56c4842a8f5406ce2ce8b8881388a94",
+          "equality": {
+            "passed": true,
+            "numbers": 10529,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 18,
+            "peakUnits": 52,
+            "unitSteps": 20932,
+            "projectileSteps": 1149
+          },
+          "averageStepMs": 28.582012166666686
+        },
+        {
+          "runtime": "v8",
+          "repeat": 0,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 199.9202,
+          "initialResetMs": 4.3946000000000005,
+          "warmupMs": 627.1066,
+          "resetMs": 1.9285999999999999,
+          "totalMs": 1242.7030999999993,
+          "medianStepMs": 1.2074,
+          "p95StepMs": 5.5267,
+          "stateSha256": "a9a1da44b4ff7f06fb20df5eee8c352c8fbb565ee969391878563de399c149b7",
+          "equality": {
+            "passed": true,
+            "numbers": 10529,
+            "maxAbsoluteError": 3.552713678800501e-15,
+            "nonIdenticalNumbers": 26
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 18,
+            "peakUnits": 52,
+            "unitSteps": 20932,
+            "projectileSteps": 1149
+          },
+          "averageStepMs": 2.071171833333332
+        },
+        {
+          "runtime": "v8",
+          "repeat": 1,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 219.68099999999998,
+          "initialResetMs": 5.0839,
+          "warmupMs": 728.8153000000001,
+          "resetMs": 2.0662,
+          "totalMs": 1289.1128999999996,
+          "medianStepMs": 1.3657000000000001,
+          "p95StepMs": 5.2188,
+          "stateSha256": "a9a1da44b4ff7f06fb20df5eee8c352c8fbb565ee969391878563de399c149b7",
+          "equality": {
+            "passed": true,
+            "numbers": 10529,
+            "maxAbsoluteError": 3.552713678800501e-15,
+            "nonIdenticalNumbers": 26
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 18,
+            "peakUnits": 52,
+            "unitSteps": 20932,
+            "projectileSteps": 1149
+          },
+          "averageStepMs": 2.1485214999999993
+        },
+        {
+          "runtime": "quickjs",
+          "repeat": 1,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 865.4492,
+          "initialResetMs": 9.1785,
+          "warmupMs": 7469.3368,
+          "resetMs": 8.9634,
+          "totalMs": 18679.40789999999,
+          "medianStepMs": 17.378500000000003,
+          "p95StepMs": 80.6919,
+          "stateSha256": "f18d866d489367837702a98f52a0696ef56c4842a8f5406ce2ce8b8881388a94",
+          "equality": {
+            "passed": true,
+            "numbers": 10529,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 18,
+            "peakUnits": 52,
+            "unitSteps": 20932,
+            "projectileSteps": 1149
+          },
+          "averageStepMs": 31.132346499999986
+        },
+        {
+          "runtime": "quickjs",
+          "repeat": 2,
+          "version": "rquickjs 0.14.0",
+          "loadMs": 865.1782999999999,
+          "initialResetMs": 9.8758,
+          "warmupMs": 7047.5603,
+          "resetMs": 8.5521,
+          "totalMs": 15853.589000000004,
+          "medianStepMs": 14.170200000000001,
+          "p95StepMs": 65.997,
+          "stateSha256": "f18d866d489367837702a98f52a0696ef56c4842a8f5406ce2ce8b8881388a94",
+          "equality": {
+            "passed": true,
+            "numbers": 10529,
+            "maxAbsoluteError": 0,
+            "nonIdenticalNumbers": 0
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 18,
+            "peakUnits": 52,
+            "unitSteps": 20932,
+            "projectileSteps": 1149
+          },
+          "averageStepMs": 26.42264833333334
+        },
+        {
+          "runtime": "v8",
+          "repeat": 2,
+          "version": "15.2.124.1-rusty",
+          "loadMs": 209.2735,
+          "initialResetMs": 4.9991,
+          "warmupMs": 681.0777999999999,
+          "resetMs": 1.8957,
+          "totalMs": 1212.2568,
+          "medianStepMs": 1.1955,
+          "p95StepMs": 4.9033999999999995,
+          "stateSha256": "a9a1da44b4ff7f06fb20df5eee8c352c8fbb565ee969391878563de399c149b7",
+          "equality": {
+            "passed": true,
+            "numbers": 10529,
+            "maxAbsoluteError": 3.552713678800501e-15,
+            "nonIdenticalNumbers": 26
+          },
+          "stats": {
+            "steps": 600,
+            "initialUnits": 18,
+            "peakUnits": 52,
+            "unitSteps": 20932,
+            "projectileSteps": 1149
+          },
+          "averageStepMs": 2.0204280000000003
+        }
+      ],
+      "medianAverageStepMs": {
+        "quickjs": 28.582012166666686,
+        "v8": 2.071171833333332
+      },
+      "quickjsToV8Ratio": 13.799923167488695
+    }
+  ],
+  "completed": true,
+  "statesEquivalent": false,
+  "baselineCommit": "929824ece1f2dfc76a519adb120d5bc34e3507e1",
+  "rawEvidenceDirectory": "D:\\MEngineNativeQA\\script-vm-navigation-final",
+  "productionRuntime": "QuickJS-NG unchanged",
+  "crossRuntimeComparisonPolicy": "Complete final-state comparison with exact integers and 1e-8 absolute tolerance for noninteger numbers; mismatch reports retain the first differing field. Repetitions within one runtime must match.",
+  "limitations": [
+    "Measured rules only, excludes engine bridge, rendering and editor UI.",
+    "One-step deadline is disabled in benchmark hosts. The 110-unit QuickJS workload remains too slow for production.",
+    "Battle state divergence prevents claiming replay equivalence; no production VM migration was performed."
+  ]
+}

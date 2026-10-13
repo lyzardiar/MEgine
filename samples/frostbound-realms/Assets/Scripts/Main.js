@@ -1975,7 +1975,7 @@ var Frost = (() => {
     }
     return map;
   }
-  const groundMeshes=new WeakMap(),groundPlanes=new WeakMap(),groundFrames=new WeakMap(),groundGraphs=new WeakMap(),groundRoutes=new WeakMap();
+  const groundMeshes=new WeakMap(),groundPlanes=new WeakMap(),groundFrames=new WeakMap(),groundGraphs=new WeakMap(),groundRoutes=new WeakMap(),unitGroundSamples=new WeakMap();
   const mix=(a,b,t)=>a+(b-a)*t;
   const tierCorners=(map,x,z)=>{const i=clamp(z,0,31)*32+clamp(x,0,31);return [[0,0],[2,0],[2,2],[0,2]].map(([u,v])=>tierHeight(map,i,u,v));};
   // MiYu: these boundaries and triangle subdivisions mirror mengine-assets/terrain_mesh.rs.
@@ -2014,7 +2014,12 @@ var Frost = (() => {
     const height=map.heights?.[cz*32+cx]||0;for(let z=cz-1;z<=cz+1;z++)for(let x=cx-1;x<=cx+1;x++){const i=clamp(z,0,31)*32+clamp(x,0,31);if((map.heights?.[i]||0)!==height||map.ramps?.[i])return null;}
     const value=(x,z)=>map.relief?.[clamp(cz+z-1,0,32)*33+clamp(cx+x-1,0,32)]||0,a=value(0,0),dx=value(1,0)-a,dz=value(0,1)-a;for(let z=0;z<4;z++)for(let x=0;x<4;x++)if(Math.abs(value(x,z)-a-x*dx-z*dz)>1e-7)return null;return height*2;
   }
-  function groundSample(map,x,z,trusted=false){
+  function groundSample(map,x,z,trusted=false,navigationPoints=false){
+    // MiYu: fixed half-tile navigation points share geometry samples until the terrain revision changes.
+    const samples=navigationPoints&&trusted&&groundRoutes.get(map)?.samples;if(!samples||Math.abs(x)>30||Math.abs(z)>30||!Number.isInteger(x*2)||!Number.isInteger(z*2))return sampleGroundSurface(map,x,z,trusted);
+    const i=(z*2+60)*121+x*2+60;return samples[i]!==undefined?samples[i]:samples[i]=sampleGroundSurface(map,x,z,trusted);
+  }
+  function sampleGroundSurface(map,x,z,trusted=false){
     const [cx,cz]=cell(x,z),plane=groundPlane(map,cx,cz,trusted);if(plane!==null&&Math.abs(x)<30&&Math.abs(z)<30)return {i:cz*32+cx,y:plane+reliefHeight(map,x,z)};const px=x-(cx*2-32),pz=z-(cz*2-32),xs=px<.75?[-1,0]:px>1.25?[0,1]:[0],zs=pz<.75?[-1,0]:pz>1.25?[0,1]:[0];let found=null;
     for(const dz of zs)for(const dx of xs){const ix=cx+dx,iz=cz+dz;if(ix<0||iz<0||ix>31||iz>31)continue;const i=iz*32+ix;for(const [a,b,c] of groundTile(map,ix,iz,trusted).triangles){const det=(b[2]-c[2])*(a[0]-c[0])+(c[0]-b[0])*(a[2]-c[2]);if(Math.abs(det)<1e-10)continue;const u=((b[2]-c[2])*(x-c[0])+(c[0]-b[0])*(z-c[2]))/det,v=((c[2]-a[2])*(x-c[0])+(a[0]-c[0])*(z-c[2]))/det;if(u< -1e-7||v< -1e-7||u+v>1+1e-7)continue;const y=u*a[1]+v*b[1]+(1-u-v)*c[1];if(!found||y>found.y+1e-7)found={i,y};}}
     return found;
@@ -2035,19 +2040,19 @@ var Frost = (() => {
       const tiers=(s.map.heights||[]).join(',')+';'+(s.map.ramps||[]).join(','),geometryKey=tiers+';'+(s.map.relief||[]).join(','),key=geometryKey+';'+s.map.terrain.join(',');
       // MiYu: AI placement probes share terrain edges; obstacles remain specific to each state and team.
       if(!routes||routes.geometryKey!==geometryKey){groundMeshes.delete(s.map);groundPlanes.delete(s.map);}
-      if(!routes||routes.key!==key){routes={key,geometryKey,regions:groundRegions(s.map,tiers),routeEdges:new Map()};groundRoutes.set(s.map,routes);}
+      if(!routes||routes.key!==key){routes={key,geometryKey,regions:groundRegions(s.map,tiers),routeEdges:new Map(),trafficEdges:new Map(),samples:[]};groundRoutes.set(s.map,routes);}
       cache={map:s.map,frame:s.frame,routes,regions:routes.regions,routeEdges:routes.routeEdges};groundFrames.set(s,cache);
     }
     return cache.regions;
   }
   function prepareGround(map){return groundNavigation({map});}
   function groundRevision(map){prepareGround(map);return groundRoutes.get(map).key;}
-  function groundClear(map,ax,az,bx,bz,radius=0,regions){
+  function groundClear(map,ax,az,bx,bz,radius=0,regions,navigationPoints=false){
     const trusted=!!regions;regions??=groundRegions(map);
     if(map.terrain[index(ax,az)]===1||map.terrain[index(bx,bz)]===1)return false;
     const dx=bx-ax,dz=bz-az,cuts=[0,1];for(let i=1;i<32;i++)for(const [a,d] of [[ax,dx],[az,dz]])if(d){const t=(i*2-32-a)/d;if(t>0&&t<1)cuts.push(t);}cuts.sort((a,b)=>a-b);for(let i=1;i<cuts.length;i++){const t=(cuts[i-1]+cuts[i])/2;if(map.terrain[index(ax+dx*t,az+dz*t)]===1)return false;}
     if(!regions.cliffs)return true;
-    const start=groundSample(map,ax,az,trusted),end=groundSample(map,bx,bz,trusted);if(!start||!end||regions[start.i]!==regions[end.i])return false;
+    const start=groundSample(map,ax,az,trusted,navigationPoints),end=groundSample(map,bx,bz,trusted,navigationPoints);if(!start||!end||regions[start.i]!==regions[end.i])return false;
     const first=cell(Math.min(ax,bx)-radius-1,Math.min(az,bz)-radius-1),last=cell(Math.max(ax,bx)+radius+1,Math.max(az,bz)+radius+1),group=regions[start.i];
     for(let z=first[1];z<=last[1];z++)for(let x=first[0];x<=last[0];x++){if(regions[z*32+x]!==group||segmentDistance(x*2-31,z*2-31,[ax,az],[bx,bz])>radius+2.2||groundPlane(map,x,z,trusted)!==null)continue;for(const [a,b] of groundTile(map,x,z,trusted).edges){const A=[a[0],a[2]],B=[b[0],b[2]],C=[ax,az],D=[bx,bz],cross=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]),ab=cross(A,B,C)*cross(A,B,D),cd=cross(C,D,A)*cross(C,D,B);if(ab<0&&cd<0)return false;const before=segmentDistance(...C,A,B),after=segmentDistance(...D,A,B),distance=Math.min(before,after,segmentDistance(...A,C,D),segmentDistance(...B,C,D));if(distance<Math.max(radius,1e-5)-1e-7&&!(before<radius&&distance>=before-1e-7&&after>before+.0001))return false;}}
     return true;
@@ -2058,7 +2063,7 @@ var Frost = (() => {
     for(let cz=a[1];cz<=b[1];cz++)for(let cx=a[0];cx<=b[0];cx++){const i=cz*32+cx;if(map.terrain[i]===1||map.ramps?.[i]||(map.heights?.[i]||0)!==level)return false;for(const [dx,dz] of [[0,0],[2,0],[2,2],[0,2]]){const h=tileHeight(map,i,dx,dz);low=Math.min(low,h);high=Math.max(high,h);}}return high-low<=.25&&groundClear(map,x,z,x,z,radius);
   }
   const pickHeight=(map,x,z)=>elevation(map,x,z)+(map.terrain[index(x,z)]===1?.04:0);
-  const unitHeight=(s,u)=>{groundNavigation(s);return (groundSample(s.map,u.x,u.z,true)?.y??elevation(s.map,u.x,u.z))+(impaleAirLeft(u)>0?2.25*Math.sin(Math.PI*(1-impaleAirLeft(u)/cryptLordRules.abilities.AUim.levels[(u.impaled?.rank||1)-1].airTime)):u.cyclone>0?4:lichUnit(u)?lich.form().movementHeight:types[u.kind]?.flying?types[u.kind].flightHeight??4:0);};
+  const unitHeight=(s,u)=>{groundNavigation(s);const routes=groundRoutes.get(s.map);let sample=simulating.has(s)?unitGroundSamples.get(u):null;if(!sample||sample.routes!==routes||sample.frame!==s.frame||sample.x!==u.x||sample.z!==u.z){sample={routes,frame:s.frame,x:u.x,z:u.z,height:groundSample(s.map,u.x,u.z,true)?.y??elevation(s.map,u.x,u.z)};unitGroundSamples.set(u,sample);}return sample.height+(impaleAirLeft(u)>0?2.25*Math.sin(Math.PI*(1-impaleAirLeft(u)/cryptLordRules.abilities.AUim.levels[(u.impaled?.rank||1)-1].airTime)):u.cyclone>0?4:lichUnit(u)?lich.form().movementHeight:types[u.kind]?.flying?types[u.kind].flightHeight??4:0);};
   function attackClear(s,u,v){
     if(mortarUnit(u)&&mortarWeapon(u,v)===1)return true;
     if((attackRange(u,v)<=2||u.kind==='hall'&&u.baseRules===1&&u.baseFaction===2)&&!types[u.kind].flying&&!traversable(s.map,u.x,u.z,v.x,v.z))return false;
@@ -2246,7 +2251,7 @@ var Frost = (() => {
     if(goal>=0&&blocked[goal])for(let z=1;z<=30;z++)for(let x=1;x<=30;x++){const n=z*32+x;if(!blocked[n]&&regions[n]===regions[start])nearest=Math.min(nearest,goalDistance(n));}
     else nearest=0;
     for(let k=0;k<cells.length;k++){const n=cells[k],x=n%32,z=Math.floor(n/32);if(goal>=0&&goalDistance(n)===nearest)break;
-      for(const [direction,[dx,dz]] of [[1,0],[-1,0],[0,1],[0,-1]].entries()){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j]||!terrainEdge(s.map,n,j))continue;const edge=n*4+direction;edges[edge]||=groundClear(s.map,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,regions)?1:2;if(edges[edge]===2||!obstacleClear(s,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,u.team,true))continue;prev[j]=n;cells.push(j);}}
+      for(const [direction,[dx,dz]] of [[1,0],[-1,0],[0,1],[0,-1]].entries()){const nx=x+dx,nz=z+dz,j=nz*32+nx;if(nx<1||nz<1||nx>30||nz>30||prev[j]!==-1||blocked[j]||!terrainEdge(s.map,n,j))continue;const edge=n*4+direction;edges[edge]||=groundClear(s.map,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,regions,true)?1:2;if(edges[edge]===2||!obstacleClear(s,x*2-31,z*2-31,nx*2-31,nz*2-31,radius,u.team,true))continue;prev[j]=n;cells.push(j);}}
     return {start,prev,cells};
   }
   function path(s,u,tx,tz){
@@ -2285,13 +2290,13 @@ var Frost = (() => {
     if(!groundClear(s.map,u.x,u.z,x,z,radius,groundNavigation(s))||!obstacleClear(s,u.x,u.z,x,z,radius,u.team,true))return false;
     return !s.units.some(v=>v.id!==u.id&&v.hp>0&&!mobile(v)&&(u.team<0||isVisible(s,u.team,v))&&(distance(u,v)<(types[v.kind].radius||1)+radius?Math.hypot(x-v.x,z-v.z)<=distance(u,v)+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])<(types[v.kind].radius||1)+radius));
   }
-  function traffic(s,u){if(u.windWalk&&u.windWalk.fade<=0)return [];const flying=types[u.kind].flying,height=flying?0:unitHeight(s,u);return s.units.filter(v=>v.id!==u.id&&v.hp>0&&!v.inside&&!(v.cyclone>0)&&!(v.windWalk&&v.windWalk.fade<=0)&&mobile(v)&&!!types[v.kind].flying===!!flying&&(u.team<0||v.team===u.team||isVisible(s,u.team,v))&&(flying||Math.abs(height-unitHeight(s,v))<1.5||traversable(s.map,u.x,u.z,v.x,v.z)));}
+  function traffic(s,u){if(u.windWalk&&u.windWalk.fade<=0)return [];const flying=types[u.kind].flying,height=flying?0:unitHeight(s,u);return s.units.filter(v=>v.id!==u.id&&v.hp>0&&!v.inside&&!(v.cyclone>0)&&!(v.windWalk&&v.windWalk.fade<=0)&&mobile(v)&&!!types[v.kind].flying===!!flying&&(u.team<0||v.team===u.team||isVisible(s,u.team,v))&&(flying||Math.abs(height-unitHeight(s,v))<1.5||groundClear(s.map,u.x,u.z,v.x,v.z,0,groundNavigation(s))));}
   function trafficClear(u,near,x,z){
     const r=movementRadius(u);return near.every(v=>{if(v.id===u.id)return true;const radius=r+movementRadius(v),before=distance(u,v),after=Math.hypot(x-v.x,z-v.z);return before<radius-.0001?after>before+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])>=radius-.0001;});
   }
   const trafficCache=new WeakMap();
   function trafficGrid(s,u){
-    let cache=trafficCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){const waterKey=s.map.terrain.join(',');cache={frame:s.frame,serial:s.serial,waterKey,water:cache?.waterKey===waterKey?cache.water:null,teams:[],edges:new Map()};trafficCache.set(s,cache);}const flying=types[u.kind].flying,key=flying?3:u.team+1;if(cache.teams[key])return cache.teams[key];
+    let cache=trafficCache.get(s);if(!cache||cache.frame!==s.frame||cache.serial!==s.serial){const waterKey=s.map.terrain.join(',');cache={frame:s.frame,serial:s.serial,waterKey,water:cache?.waterKey===waterKey?cache.water:null,teams:[]};trafficCache.set(s,cache);}const flying=types[u.kind].flying,key=flying?3:u.team+1;if(cache.teams[key])return cache.teams[key];
     // MiYu: retain the water raster across ticks; visible buildings are applied to each team's fresh copy.
     if(!flying&&!cache.water){cache.water=new Uint8Array(121*121);for(let z=0;z<=120;z++)for(let x=0;x<=120;x++)if(s.map.terrain[Math.floor((z+4)/4)*32+Math.floor((x+4)/4)]===1)cache.water[z*121+x]=1;}
     const grid=flying?new Uint8Array(121*121):cache.water.slice();if(!flying){
@@ -2312,8 +2317,8 @@ var Frost = (() => {
   const trafficDirections=[[1,0],[0,1],[-1,0],[0,-1],[1,1],[-1,1],[-1,-1],[1,-1]];
   function trafficPath(s,u,x,z,near,stop){
     const size=121,start=(Math.round(u.z*2)+60)*size+Math.round(u.x*2)+60,blocked=trafficGrid(s,u).slice(),field=trafficField(s,u,near),prev=new Int16Array(size*size),cost=new Float64Array(size*size);prev.fill(-1);cost.fill(Infinity);cost[start]=0;prev[start]=start;
-    // Fixed grid edges depend only on this frame's map; each caller subtracts its own body below.
-    const r=movementRadius(u),edgeCache=trafficCache.get(s).edges;let edges=edgeCache.get(r);if(!edges){edges=new Uint8Array(121*121*8);edgeCache.set(r,edges);}
+    // MiYu: static terrain edges survive simulation steps; terrain revision changes rebuild them.
+    groundNavigation(s);const r=movementRadius(u),edgeCache=groundRoutes.get(s.map).trafficEdges;let edges=edgeCache.get(r);if(!edges){edges=new Uint8Array(121*121*8);edgeCache.set(r,edges);}
     const heap=[];
     const push=(node,score)=>{let i=heap.length;heap.push([node,score]);while(i){const p=(i-1)>>1;if(heap[p][1]<=score)break;heap[i]=heap[p];i=p;}heap[i]=[node,score];};
     const pop=()=>{const first=heap[0],last=heap.pop();if(heap.length){let i=0;while(i*2+1<heap.length){let c=i*2+1;if(c+1<heap.length&&heap[c+1][1]<heap[c][1])c++;if(heap[c][1]>=last[1])break;heap[i]=heap[c];i=c;}heap[i]=last;}return first[0];};
@@ -2323,7 +2328,7 @@ var Frost = (() => {
       const n=pop();if(blocked[n]===2)continue;blocked[n]=2;const cx=(n%size)/2-30,cz=Math.floor(n/size)/2-30,point=n===start?u:{id:u.id,kind:u.kind,team:u.team,x:cx,z:cz},d=Math.hypot(point.x-x,point.z-z);if(d<best){best=d;found=n;}if(d<=stop&&(types[u.kind].flying||traversable(s.map,point.x,point.z,x,z))||d<=.75&&walkClear(s,point,x,z)&&trafficClear(point,near,x,z)){found=n;break;}
       for(let direction=0;direction<8;direction++){
         const [dx,dz]=trafficDirections[direction],nx=cx+dx/2,nz=cz+dz/2,j=(nz*2+60)*size+nx*2+60,next=cost[n]+Math.hypot(dx,dz)/2;if(nx<-30||nz<-30||nx>30||nz>30||blocked[j]||field.counts[j]>(Math.hypot(nx-u.x,nz-u.z)<r*2-.0001?1:0)||next>=cost[j])continue;
-        if(n===start){if(!walkClear(s,point,nx,nz)||!trafficClear(point,near,nx,nz))continue;}else{if(!types[u.kind].flying){const edge=n*8+direction;edges[edge]||=groundClear(s.map,cx,cz,nx,nz,r,groundNavigation(s))?1:2;if(edges[edge]===2||!obstacleClear(s,cx,cz,nx,nz,r,u.team,true))continue;}if(!trafficClear(point,field.occupants[n]||[],nx,nz))continue;}prev[j]=n;cost[j]=next;push(j,next+Math.max(0,Math.hypot(nx-x,nz-z)-stop));
+        if(n===start){if(!walkClear(s,point,nx,nz)||!trafficClear(point,near,nx,nz))continue;}else{if(!types[u.kind].flying){const edge=n*8+direction;edges[edge]||=groundClear(s.map,cx,cz,nx,nz,r,groundNavigation(s),true)?1:2;if(edges[edge]===2||!obstacleClear(s,cx,cz,nx,nz,r,u.team,true))continue;}if(!trafficClear(point,field.occupants[n]||[],nx,nz))continue;}prev[j]=n;cost[j]=next;push(j,next+Math.max(0,Math.hypot(nx-x,nz-z)-stop));
       }
     }
     const result=[];for(let n=found;n!==start;n=prev[n])result.push([n%size/2-30,Math.floor(n/size)/2-30]);result.reverse();const last=result.at(-1),end=last?{...u,x:last[0],z:last[1]}:u;if(walkClear(s,end,x,z)&&trafficClear(end,near,x,z))result.push([x,z]);return result.slice(0,1024);
