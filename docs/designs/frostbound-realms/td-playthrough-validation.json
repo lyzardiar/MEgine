@@ -1,0 +1,89 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "scope": "Recorded legal commands on the unmodified shipped map; terminal defeat, not a winning strategy or balance acceptance.",
+  "mapSha256": "3070596db5d206d3ffbeaf0977cc20134381189026505083783de55ca75c9e64",
+  "legalCommands": 41,
+  "restoredAtFrame": 1200,
+  "comparedTicks": 1333,
+  "frame": 2533,
+  "winner": 1,
+  "wave": 12,
+  "lives": 0,
+  "kills": 170,
+  "remainingMonsters": 30,
+  "history": [
+    {
+      "frame": 120,
+      "wave": 1,
+      "lives": 20,
+      "kills": 0
+    },
+    {
+      "frame": 300,
+      "wave": 2,
+      "lives": 20,
+      "kills": 7
+    },
+    {
+      "frame": 480,
+      "wave": 3,
+      "lives": 20,
+      "kills": 16
+    },
+    {
+      "frame": 660,
+      "wave": 4,
+      "lives": 20,
+      "kills": 22
+    },
+    {
+      "frame": 840,
+      "wave": 5,
+      "lives": 20,
+      "kills": 34
+    },
+    {
+      "frame": 1020,
+      "wave": 6,
+      "lives": 20,
+      "kills": 44
+    },
+    {
+      "frame": 1200,
+      "wave": 7,
+      "lives": 20,
+      "kills": 57
+    },
+    {
+      "frame": 1380,
+      "wave": 8,
+      "lives": 20,
+      "kills": 75
+    },
+    {
+      "frame": 1560,
+      "wave": 9,
+      "lives": 20,
+      "kills": 86
+    },
+    {
+      "frame": 1740,
+      "wave": 10,
+      "lives": 20,
+      "kills": 100
+    },
+    {
+      "frame": 1920,
+      "wave": 11,
+      "lives": 20,
+      "kills": 116
+    },
+    {
+      "frame": 2100,
+      "wave": 12,
+      "lives": 10,
+      "kills": 142
+    }
+  ]
+}

@@ -9,13 +9,14 @@ import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
 
+const priorityQa=process.argv.includes('--td-priority');
 const waveQa=process.argv.includes('--td-waves'),mapOption=waveQa?'--td-waves':'--td-map';
 const customMap=process.argv.includes(mapOption)?process.argv[process.argv.indexOf(mapOption)+1]:null;
 if(process.argv.includes(mapOption)&&!customMap)throw Error(mapOption+' requires a JSON map file');
-const cooperative=process.argv.includes('--td')||!!customMap;
+const cooperative=process.argv.includes('--td')||!!customMap||priorityQa;
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms');
 const executable=path.resolve(process.env.MENGINE_RUNTIME_EXECUTABLE||path.join(repo,'target/release/mengine-runtime'+(process.platform==='win32'?'.exe':'')));
-const projectRoot=path.resolve(process.env.MENGINE_QA_PROJECT_ROOT||source),tag=Date.now(),root=path.join(process.env.MENGINE_QA_ROOT||path.join(os.tmpdir(),'mengine-qa'),(waveQa?'native-td-waves-':customMap?'native-td-route-':cooperative?'native-td-coop-':'native-authority-')+tag);
+const projectRoot=path.resolve(process.env.MENGINE_QA_PROJECT_ROOT||source),tag=Date.now(),root=path.join(process.env.MENGINE_QA_ROOT||path.join(os.tmpdir(),'mengine-qa'),(priorityQa?'native-td-targeting-':waveQa?'native-td-waves-':customMap?'native-td-route-':cooperative?'native-td-coop-':'native-authority-')+tag);
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const identityRun=spawnSync(executable,['--runtime-info'],{encoding:'utf8',windowsHide:true,timeout:30000});
 assert.equal(identityRun.status,0,identityRun.error?.message||identityRun.stderr);const identity=JSON.parse(identityRun.stdout);assert.equal(identity.backend,'v8');
@@ -54,7 +55,7 @@ const originalSource=fs.readFileSync(path.join(source,'Assets/Scripts/Main.js'),
 assert.equal(originalSource.split('  return {tick};').length,2,'production client inspection anchor');
 assert.equal(originalSource.split("address='127.0.0.1:7788'").length,2,'production server address anchor');
 function launch(index){
-  const key=(waveQa?'native-td-waves-':customMap?'native-td-route-':cooperative?'native-td-coop-':'native-authority-')+tag+'-'+index,script=path.join(root,'peer-'+index+'.js');
+  const key=(priorityQa?'native-td-targeting-':waveQa?'native-td-waves-':customMap?'native-td-route-':cooperative?'native-td-coop-':'native-authority-')+tag+'-'+index,script=path.join(root,'peer-'+index+'.js');
   const peerProject=path.join(root,'project-'+index),storage=storageRoot(key);fs.mkdirSync(peerProject);fs.mkdirSync(storage,{recursive:true});
   fs.writeFileSync(path.join(peerProject,'project.json'),JSON.stringify({...project,storageId:key}));
   fs.symlinkSync(path.join(projectRoot,'Assets'),path.join(peerProject,'Assets'),process.platform==='win32'?'junction':'dir');
@@ -62,7 +63,7 @@ function launch(index){
   const content=originalSource.replace('  return {tick};',expose).replace("address='127.0.0.1:7788'","address='127.0.0.1:"+app.server.address().port+"'");
   const wrapper=`
 // Owned QA instrumentation calls production actions; networking and rendering remain native.
-var qaKey=${JSON.stringify(key)},qaCoop=${cooperative},qaPeer=${index},qaMap=${JSON.stringify(map)},qaStarted=Date.now(),qaBoot=false,qaOrder=false,qaResume=false,qaResumes=0,qaLocalTicks=0,qaTicks=0,qaSnapshots=0,qaBatch=[],qaBatchIndex=0,qaLastFrame=-1,qaLastJson='',qaSavedAt=0,qaFinished=false,qaActionAt=0;
+var qaKey=${JSON.stringify(key)},qaCoop=${cooperative},qaPeer=${index},qaMap=${JSON.stringify(map)},qaStarted=Date.now(),qaBoot=false,qaOrder=false,qaResume=false,qaResumes=0,qaLocalTicks=0,qaTicks=0,qaSnapshots=0,qaBatch=[],qaBatchIndex=0,qaLastFrame=-1,qaLastJson='',qaSavedAt=0,qaFinished=false,qaActionAt=0,qaPriority=false;
 function qaFlush(){if(qaBatch.length){engine.storage.save(qaKey+'-batch-'+qaBatchIndex++,qaBatch);qaBatch=[];}}
 if(qaCoop)FrostMapCatalog.td=JSON.parse(JSON.stringify(qaMap));
 var qaDefaultMap=Frost.defaultMap;Frost.defaultMap=function(mode){return !mode||mode==='skirmish'?JSON.parse(JSON.stringify(qaMap)):qaDefaultMap(mode);};
@@ -81,6 +82,7 @@ onTick=function(dt,frame){
    var own=v.state.units.find(u=>u.kind==='soldier'&&u.team===v.team),enemy=v.state.units.find(u=>u.kind==='soldier'&&u.team!==v.team);
    var hero=v.state.units.find(u=>u.kind==='hero'&&u.team===v.team&&u.hp>0);
    if(!qaOrder&&qaCoop&&hero){var worker=v.state.units.find(u=>u.kind==='worker'&&u.team===v.team);if(worker){FrostClient.order({type:'build',ids:[worker.id],kind:'tower',x:qaPeer===0?-16:-8,z:qaPeer===0?-13:-17});if(qaPeer===1)FrostClient.order({type:'hold',ids:[hero.id]});qaOrder=true;}}
+   if(${priorityQa}&&!qaPriority&&v.state.frame>=(qaPeer===0?10:30)){var tower=v.state.units.find(u=>u.kind==='tower'&&u.team===v.team&&u.built===1);if(tower){FrostClient.order({type:'tdPriority',ids:[tower.id],priority:qaPeer===0?'strongest':'weakest'});qaPriority=true;}}
    if(!qaOrder&&!qaCoop&&own&&enemy&&hero){FrostClient.order(qaPeer===0?{type:'attack',ids:[own.id],target:enemy.id}:{type:'hold',ids:[own.id,hero.id]});qaOrder=true;}
    if(qaResume){qaResume=false;qaResumes++;if(!hero)throw Error('No living hero for reconnect command');FrostClient.order({type:'stop',ids:[hero.id]});}
    var serialized=JSON.stringify(v.state);
@@ -113,7 +115,7 @@ try{
   assert.equal(app.rooms.size,1);const room=[...app.rooms.values()][0];assert.equal(room.players.length,2);
   console.log('PASS two native clients create, browse, join, ready and start');
   if(cooperative){assert.deepEqual(room.players.map(p=>p.team),[0,0]);assert.deepEqual(room.players.map(p=>p.seat),[0,1]);assert.deepEqual(room.state.teams.map(t=>t.ai),[false,false]);const builds=applied.filter(a=>a.command.type==='build');assert.equal(builds.length,2);assert.ok(builds.every(a=>a.error===null&&a.goldBefore-a.goldAfter===S.types.tower.gold));assert.ok(room.state.wave>=1);assert.deepEqual(room.state.map.tdPath,map.tdPath);assert.ok(room.state.units.some(u=>u.td&&canonical(u.route)===canonical(map.tdPath)));report.sharedBuilds=builds;report.wave=room.state.wave;}
-  const oldGuest=[...app.clients].find(c=>c.player?.seat===1);assert.equal(oldGuest.lastSeq,cooperative?2:1);assert.ok(applied.some(a=>a.team===(cooperative?0:1)&&a.command.type==='hold'&&a.error===null));
+  const oldGuest=[...app.clients].find(c=>c.player?.seat===1);assert.equal(oldGuest.lastSeq,priorityQa?3:cooperative?2:1);assert.ok(applied.some(a=>a.team===(cooperative?0:1)&&a.command.type==='hold'&&a.error===null));
   dropGuestStates=true;await sleep(600);const held=status(guest).frame,guestTicks=status(guest).clientTicks,hostBefore=status(host).frame;
   await sleep(1400);assert.equal(status(guest).frame,held,'missing snapshots must not advance native guest');assert.ok(status(guest).clientTicks>guestTicks,'guest keeps executing callbacks while snapshots are withheld');assert.ok(status(host).frame>hostBefore,'host continues receiving authority');assert.ok(droppedStates>0);report.guestTicksWhileStalled=status(guest).clientTicks-guestTicks;dropGuestStates=false;
   await until(()=>status(guest).frame>held,'guest catches up after withheld snapshots');report.stalledGuestFrame=held;report.droppedSnapshots=droppedStates;
@@ -134,6 +136,7 @@ try{
     for(const state of states){const expected=wire.get(peer.index+':'+state.frame);assert.ok(expected,'server frame recorded');assert.equal(hash(canonical(state)),expected.hash,'native state equals complete authoritative public snapshot');comparisons++;if(expected.hidden)hidden++;if(state.units.some(u=>u.hp===112.00000000000001))precise++;captured.set(peer.index+':'+state.frame,state);}
   }
   for(const [key,left] of captured){if(!key.startsWith('0:'))continue;const right=captured.get('1:'+left.frame);if(!right)continue;if(cooperative)assert.deepEqual(left,right,'cooperative complete state equality');for(const unit of left.units){const other=right.units.find(u=>u.id===unit.id);if(other){for(const key of ['x','z','hp','mana','kind','team'])assert.deepEqual(unit[key],other[key],'shared actor '+key);shared++;}}}
+  if(priorityQa){const changes=applied.filter(a=>a.command.type==='tdPriority');assert.equal(changes.length,2);assert.deepEqual(changes.map(a=>a.command.priority),['strongest','weakest']);assert.ok(changes.every(a=>a.error===null));assert.equal(changes[0].command.ids[0],changes[1].command.ids[0]);const id=changes[0].command.ids[0];for(let seat=0;seat<2;seat++){const states=[...captured].filter(([key])=>key.startsWith(seat+':')).map(([,state])=>state);for(const priority of ['strongest','weakest'])assert.ok(states.some(s=>s.units.find(u=>u.id===id)?.tdPriority===priority));assert.equal(states.at(-1).units.find(u=>u.id===id)?.tdPriority,'weakest');}report.priorityCommands=changes;}
   if(waveQa){const observed=[];for(let seat=0;seat<2;seat++){const monsters=new Map();for(const [key,state]of captured){if(!key.startsWith(seat+':'))continue;assert.deepEqual(state.map.tdWaves,map.tdWaves,'authored waves preserved on native client');for(const u of state.units.filter(u=>u.td))monsters.set(u.id,{kind:u.kind,hp:u.maxHp,speed:u.speed,bounty:u.tdBounty,lives:u.tdLives,boss:u.tdBoss});}for(const g of map.tdWaves[0].groups)assert.ok([...monsters.values()].filter(u=>Object.keys(u).every(k=>u[k]===g[k])).length>=g.count,'native seat observes every authored monster group');observed.push({seat,monsters:[...monsters.values()]});}report.authoredWaves=observed;}
   assert.ok(shared>0);if(!cooperative){assert.ok(hidden>0);assert.ok(precise>0);}assert.equal(events.filter(e=>e.type==='timeout').length,0);assert.deepEqual(events.filter(e=>e.type==='server-error'),[]);
   report.snapshotComparisons=comparisons;report.sharedActorComparisons=shared;report.fogFilteredSnapshots=hidden;report.exactFloatSnapshots=precise;report.clients=peers.map(p=>({pid:p.child.pid,project:p.project,storage:p.storage,instrumentedScriptSha256:hash(fs.readFileSync(p.script)),final:p.final,exit:p.exit}));report.passed=true;
@@ -141,6 +144,6 @@ try{
 finally{
   for(const peer of peers)if(!peer.exit&&!peer.error)peer.child.kill();await Promise.all(peers.map(p=>p.done));await app.close();S.create=originalCreate;S.command=originalCommand;
   report.elapsedMs=Date.now()-started;report.events=events;fs.writeFileSync(path.join(root,'report.json'),JSON.stringify(report,null,2)+'\n');
-  fs.writeFileSync(path.join(repo,'docs/designs/frostbound-realms/'+(waveQa?'native-td-wave-validation.json':customMap?'native-td-route-validation.json':cooperative?'native-td-coop-validation.json':'native-v8-authority-validation.json')),JSON.stringify(report,null,2)+'\n');
+  fs.writeFileSync(path.join(repo,'docs/designs/frostbound-realms/'+(priorityQa?'native-td-targeting-validation.json':waveQa?'native-td-wave-validation.json':customMap?'native-td-route-validation.json':cooperative?'native-td-coop-validation.json':'native-v8-authority-validation.json')),JSON.stringify(report,null,2)+'\n');
 }
 console.log(JSON.stringify({passed:report.passed,comparisons:report.snapshotComparisons,sharedActors:report.sharedActorComparisons,elapsedMs:report.elapsedMs,report:path.join(root,'report.json')}));

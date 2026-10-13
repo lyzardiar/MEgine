@@ -1,0 +1,475 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "scope": "Two standalone V8 Players on one host, production generated client and scene, real authoritative TCP. Every distinct authoritative frame presented by a client is checked. Scripted game actions, no physical input or two-machine acceptance.",
+  "fixture": {
+    "mapFile": "D:\\MEngineNativeQA\\native-td-targeting-1791906058691\\fixture-map.json",
+    "mapSha256": "76f9a5c028c5a354e6d60d9d5baf27eb44717897b336615b58598e24ed3bc786",
+    "mode": "td",
+    "unmodifiedShippedMap": true,
+    "customMap": null,
+    "instrumentation": "Expose private client inspection/actions; load the recorded TD map into the client catalog and call the production cooperation menu; replace physical input with empty input; fail on online simulation. Each Player has isolated storage and an Assets directory link."
+  },
+  "runtime": {
+    "backend": "v8",
+    "bridgeVersion": 1,
+    "version": "15.2.124.1-rusty"
+  },
+  "executable": "D:\\MEngineNativeQA\\engine-main-sync\\target\\release\\mengine-runtime.exe",
+  "executableSha256": "b6339d943466800c55576515dd1b7e43e87f92fa793a3a122a79ed7bb805aa9b",
+  "clientSha256": "60095b14491f0a007c024053d27083579b9c6b1829122804bc4293ae70e2b318",
+  "sceneSha256": "372c92108da3b6c5a5ecb4dcfd5e9887bafcf856a0ee2e3fbb9e8a2f8d1fcdbe",
+  "projectRoot": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample",
+  "root": "D:\\MEngineNativeQA\\native-td-targeting-1791906058691",
+  "sharedBuilds": [
+    {
+      "frame": 0,
+      "team": 0,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "build",
+        "kind": "tower",
+        "x": -16,
+        "z": -13
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 2,
+          "hp": 100,
+          "order": null
+        }
+      ],
+      "goldBefore": 650,
+      "goldAfter": 510,
+      "after": [
+        {
+          "id": 2,
+          "hp": 100,
+          "order": null
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "team": 0,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "build",
+        "kind": "tower",
+        "x": -8,
+        "z": -17
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 2,
+          "hp": 100,
+          "order": null
+        }
+      ],
+      "goldBefore": 510,
+      "goldAfter": 370,
+      "after": [
+        {
+          "id": 2,
+          "hp": 100,
+          "order": null
+        }
+      ]
+    }
+  ],
+  "wave": 1,
+  "guestTicksWhileStalled": 95,
+  "stalledGuestFrame": 136,
+  "droppedSnapshots": 20,
+  "resumedCommand": {
+    "frame": 165,
+    "team": 0,
+    "command": {
+      "ids": [
+        3
+      ],
+      "type": "stop"
+    },
+    "error": null,
+    "before": [
+      {
+        "id": 3,
+        "hp": 700,
+        "order": {
+          "type": "hold",
+          "x": 0,
+          "z": 0
+        }
+      }
+    ],
+    "goldBefore": 395,
+    "goldAfter": 395,
+    "after": [
+      {
+        "id": 3,
+        "hp": 700,
+        "order": null
+      }
+    ]
+  },
+  "priorityCommands": [
+    {
+      "frame": 10,
+      "team": 0,
+      "command": {
+        "ids": [
+          4
+        ],
+        "type": "tdPriority",
+        "priority": "strongest"
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 4,
+          "hp": 800,
+          "order": null
+        }
+      ],
+      "goldBefore": 370,
+      "goldAfter": 370,
+      "after": [
+        {
+          "id": 4,
+          "hp": 800,
+          "order": null
+        }
+      ]
+    },
+    {
+      "frame": 30,
+      "team": 0,
+      "command": {
+        "ids": [
+          4
+        ],
+        "type": "tdPriority",
+        "priority": "weakest"
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 4,
+          "hp": 800,
+          "order": null
+        }
+      ],
+      "goldBefore": 370,
+      "goldAfter": 370,
+      "after": [
+        {
+          "id": 4,
+          "hp": 800,
+          "order": null
+        }
+      ]
+    }
+  ],
+  "snapshotComparisons": 327,
+  "sharedActorComparisons": 1061,
+  "fogFilteredSnapshots": 0,
+  "exactFloatSnapshots": 0,
+  "clients": [
+    {
+      "pid": 147800,
+      "project": "D:\\MEngineNativeQA\\native-td-targeting-1791906058691\\project-0",
+      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\6109b8090dbb43cb",
+      "instrumentedScriptSha256": "5a4e66d8919e3d0f60831a6f787f7d73fae5cff1ff673e31acff42a5259abacc",
+      "final": {
+        "clientTicks": 1243,
+        "elapsed": 24231,
+        "frame": 182,
+        "localSimulationTicks": 0,
+        "mode": "playing",
+        "resumes": 0,
+        "snapshots": 176,
+        "team": 0
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "pid": 124744,
+      "project": "D:\\MEngineNativeQA\\native-td-targeting-1791906058691\\project-1",
+      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\6109b7090dbb4218",
+      "instrumentedScriptSha256": "a69ee3208c7715f062300b59799f60eaf4cc46f8cfa952d433a5e5f036a3cfee",
+      "final": {
+        "clientTicks": 1248,
+        "elapsed": 24310,
+        "frame": 182,
+        "localSimulationTicks": 0,
+        "mode": "playing",
+        "resumes": 1,
+        "snapshots": 151,
+        "team": 0
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ],
+  "elapsedMs": 33482,
+  "events": [
+    {
+      "type": "connected",
+      "connection": 1,
+      "at": 11274
+    },
+    {
+      "type": "hello",
+      "connection": 1,
+      "at": 11290
+    },
+    {
+      "type": "list",
+      "connection": 1,
+      "at": 11292
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 11295
+    },
+    {
+      "type": "list",
+      "connection": 1,
+      "at": 11297
+    },
+    {
+      "type": "connected",
+      "connection": 2,
+      "at": 11365
+    },
+    {
+      "type": "hello",
+      "connection": 2,
+      "at": 11380
+    },
+    {
+      "type": "create",
+      "connection": 2,
+      "at": 11384
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 11385
+    },
+    {
+      "type": "ready",
+      "connection": 2,
+      "at": 11401
+    },
+    {
+      "type": "list",
+      "connection": 1,
+      "at": 12297
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 13132
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 13134
+    },
+    {
+      "type": "join",
+      "connection": 1,
+      "at": 13320
+    },
+    {
+      "type": "ready",
+      "connection": 1,
+      "at": 14332
+    },
+    {
+      "type": "start",
+      "connection": 2,
+      "at": 14479
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 14495,
+      "seq": 1,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "build",
+        "kind": "tower",
+        "x": -16,
+        "z": -13
+      }
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 14515,
+      "seq": 1,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "build",
+        "kind": "tower",
+        "x": -8,
+        "z": -17
+      }
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 14515,
+      "seq": 2,
+      "command": {
+        "ids": [
+          3
+        ],
+        "type": "hold"
+      }
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 15433,
+      "seq": 2,
+      "command": {
+        "ids": [
+          4
+        ],
+        "type": "tdPriority",
+        "priority": "strongest"
+      }
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 16134
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 16137
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 17471,
+      "seq": 3,
+      "command": {
+        "ids": [
+          4
+        ],
+        "type": "tdPriority",
+        "priority": "weakest"
+      }
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 19131
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 19131
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 22131
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 22133
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 25132
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 25132
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 28132
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 28136
+    },
+    {
+      "type": "closed",
+      "connection": 1
+    },
+    {
+      "type": "connected",
+      "connection": 3,
+      "at": 31082
+    },
+    {
+      "type": "hello",
+      "connection": 3,
+      "at": 31098
+    },
+    {
+      "type": "resume",
+      "connection": 3,
+      "at": 31102
+    },
+    {
+      "type": "order",
+      "connection": 3,
+      "at": 31117,
+      "seq": 1,
+      "command": {
+        "ids": [
+          3
+        ],
+        "type": "stop"
+      }
+    },
+    {
+      "type": "ping",
+      "connection": 3,
+      "at": 31131
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 31132
+    },
+    {
+      "type": "closed",
+      "connection": 2
+    },
+    {
+      "type": "closed",
+      "connection": 3
+    }
+  ]
+}

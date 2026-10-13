@@ -1,0 +1,440 @@
+{
+  "author": "MiYu",
+  "scope": "Recorded legal commands on the unmodified shipped map; terminal defeat, not a winning strategy or balance acceptance.",
+  "mapSha256": "3070596db5d206d3ffbeaf0977cc20134381189026505083783de55ca75c9e64",
+  "expected": {
+    "frame": 2533,
+    "winner": 1,
+    "wave": 12,
+    "lives": 0,
+    "kills": 170
+  },
+  "orders": [
+    {
+      "frame": 0,
+      "command": {
+        "type": "move",
+        "ids": [
+          3
+        ],
+        "x": -20,
+        "z": -20
+      }
+    },
+    {
+      "frame": 0,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "frosttower",
+        "x": -20,
+        "z": -16
+      }
+    },
+    {
+      "frame": 10,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": -14,
+        "z": -16
+      }
+    },
+    {
+      "frame": 20,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": -7,
+        "z": -16
+      }
+    },
+    {
+      "frame": 30,
+      "command": {
+        "type": "move",
+        "ids": [
+          2
+        ],
+        "x": 0,
+        "z": -16
+      }
+    },
+    {
+      "frame": 40,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": 0,
+        "z": -16
+      }
+    },
+    {
+      "frame": 180,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          4
+        ]
+      }
+    },
+    {
+      "frame": 210,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          5
+        ]
+      }
+    },
+    {
+      "frame": 350,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          6
+        ]
+      }
+    },
+    {
+      "frame": 400,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          7
+        ]
+      }
+    },
+    {
+      "frame": 510,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          8
+        ]
+      }
+    },
+    {
+      "frame": 690,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": 7,
+        "z": -16
+      }
+    },
+    {
+      "frame": 730,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": 13,
+        "z": -18
+      }
+    },
+    {
+      "frame": 830,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          43
+        ]
+      }
+    },
+    {
+      "frame": 910,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          50
+        ]
+      }
+    },
+    {
+      "frame": 1000,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "frosttower",
+        "x": 17,
+        "z": -3
+      }
+    },
+    {
+      "frame": 1080,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          66
+        ]
+      }
+    },
+    {
+      "frame": 1180,
+      "command": {
+        "type": "move",
+        "ids": [
+          2
+        ],
+        "x": 12,
+        "z": 0
+      }
+    },
+    {
+      "frame": 1200,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": 12,
+        "z": 0
+      }
+    },
+    {
+      "frame": 1220,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": 6,
+        "z": 0
+      }
+    },
+    {
+      "frame": 1260,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": 0,
+        "z": 0
+      }
+    },
+    {
+      "frame": 1280,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          85
+        ]
+      }
+    },
+    {
+      "frame": 1340,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          92
+        ]
+      }
+    },
+    {
+      "frame": 1400,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          105
+        ]
+      }
+    },
+    {
+      "frame": 1490,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": -6,
+        "z": 0
+      }
+    },
+    {
+      "frame": 1570,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": -12,
+        "z": 0
+      }
+    },
+    {
+      "frame": 1630,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": -16,
+        "z": 0
+      }
+    },
+    {
+      "frame": 1700,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          127
+        ]
+      }
+    },
+    {
+      "frame": 1750,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          134
+        ]
+      }
+    },
+    {
+      "frame": 1850,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": -10,
+        "z": 14
+      }
+    },
+    {
+      "frame": 1870,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          152
+        ]
+      }
+    },
+    {
+      "frame": 1930,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": -4,
+        "z": 14
+      }
+    },
+    {
+      "frame": 1970,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "tower",
+        "x": 2,
+        "z": 14
+      }
+    },
+    {
+      "frame": 2020,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          178
+        ]
+      }
+    },
+    {
+      "frame": 2040,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          183
+        ]
+      }
+    },
+    {
+      "frame": 2060,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          197
+        ]
+      }
+    },
+    {
+      "frame": 2100,
+      "command": {
+        "type": "build",
+        "ids": [
+          2
+        ],
+        "kind": "frosttower",
+        "x": 8,
+        "z": 14
+      }
+    },
+    {
+      "frame": 2180,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          209
+        ]
+      }
+    },
+    {
+      "frame": 2280,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          4
+        ]
+      }
+    },
+    {
+      "frame": 2420,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          5
+        ]
+      }
+    },
+    {
+      "frame": 2530,
+      "command": {
+        "type": "towerUpgrade",
+        "ids": [
+          6
+        ]
+      }
+    }
+  ]
+}
