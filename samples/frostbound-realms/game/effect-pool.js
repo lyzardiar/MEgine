@@ -17,6 +17,7 @@ var FrostEffectPool=(()=>{
   function create(engine,entities,authored,register){
     const pending=new Map(),writes=new Map();let frame=0;
     const command=value=>engine.pushCommandJson(JSON.stringify(value));
+    const componentCommand=(entity,component,json)=>engine.pushCommandJson('{"op":"setComponent","entity":'+JSON.stringify(entity)+',"component":'+JSON.stringify(component)+',"value":'+json+'}');
     function spawn(name,entry){command({op:'spawn',name,active:entry.active,parent:entities[entry.parent]?.entity??null,components:entry.components});entry.frame=frame;}
     function queue(name,components,parent,active=false){
       if(entities[name]||pending.has(name))return;
@@ -33,7 +34,7 @@ var FrostEffectPool=(()=>{
       for(const [name,entry] of writes){
         const entity=entities[name];if(!entity)continue;
         if(entry.active!==undefined){if((entity.active!==false)===entry.active)delete entry.active;else command({op:'setActive',entity:entity.entity,active:entry.active});}
-        for(const [component,value] of entry.components){if(matches(entity.components[component],value.value))entry.components.delete(component);else command({op:'setComponent',entity:entity.entity,component,value:value.value});}
+        for(const [component,value] of entry.components){if(matches(entity.components[component],value.value))entry.components.delete(component);else componentCommand(entity.entity,component,value.json);}
         if(entry.active===undefined&&!entry.components.size)writes.delete(name);
       }
     }
@@ -75,7 +76,7 @@ var FrostEffectPool=(()=>{
       const previous=writes.get(name)?.components.get(component);
       if(!previous&&matches(entity.components[component],value))return;
       const json=JSON.stringify(value);if(previous?.json===json)return;
-      const stored={json,value:JSON.parse(json)};entryFor(name).components.set(component,stored);command({op:'setComponent',entity:entity.entity,component,value:stored.value});
+      const stored={json,value:JSON.parse(json)};entryFor(name).components.set(component,stored);componentCommand(entity.entity,component,json);
     }
     return {beginFrame,ensure,ensureActor,setActive,setComponent};
   }
