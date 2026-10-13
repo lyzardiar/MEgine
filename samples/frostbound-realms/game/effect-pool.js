@@ -5,7 +5,9 @@ var FrostEffectPool=(()=>{
   const actorPattern=/^(Unit|Missile|Scenery|Prop|Doodad|Objective) (\d+)(?: part \d+)?$/;
   const actorBase=name=>['Unit'].includes(name)?'Units':['Missile'].includes(name)?'Projectiles':['Objective'].includes(name)?'Systems':'Environment';
   const corpsePattern=/^Corpse (\d+)(?: mesh \d+)?$/;
-  const pooled=name=>pattern.test(name)||corpsePattern.test(name)||actorPattern.test(name);
+  const ribbonPattern=/^(Classic (?:Siphon|Healing Wave|Chain Lightning)) (\d+)(?: part \d+)?$/;
+  const sampledPattern=/^(Classic (?:Far Sight|Shockwave)) (\d+)(?: mesh \d+)?$/;
+  const pooled=name=>pattern.test(name)||corpsePattern.test(name)||actorPattern.test(name)||ribbonPattern.test(name)||sampledPattern.test(name);
   // Native typed components include defaults and serialize their floating fields as f32.
   function matches(actual,desired){
     if(actual===desired)return true;
@@ -39,10 +41,10 @@ var FrostEffectPool=(()=>{
       }
     }
     function ensure(name,count){
-      const body=corpsePattern.exec(name),match=pattern.exec(name);if(!match&&!body)return true;
-      const [,kind,index,suffix]=match??[],template=body?'Corpse 0':'Classic '+kind+' 0'+suffix;
+      const body=corpsePattern.exec(name),sampled=sampledPattern.exec(name),match=pattern.exec(name);if(!match&&!body&&!sampled)return true;
+      const [,kind,index,suffix]=match??[],template=body?'Corpse 0':sampled?sampled[1]+' 0':'Classic '+kind+' 0'+suffix;
       if(!authored[template])return false;
-      const base=body?'Scene / Units/Corpse':'Scene / Effects/Classic '+kind,first=Math.floor(Number(body?.[1]??index)/32)*32,group=base+'/Slots '+first+'-'+(first+31);
+      const base=body?'Scene / Units/Corpse':'Scene / Effects/'+(sampled?.[1]??'Classic '+kind),first=Math.floor(Number(body?.[1]??sampled?.[2]??index)/32)*32,group=base+'/Slots '+first+'-'+(first+31);
       queue(group,{Transform:identity},base,true);
       queue(name,authored[template],group);
       const names=[group,name];
@@ -54,8 +56,8 @@ var FrostEffectPool=(()=>{
       return names.every(n=>entities[n]&&!pending.has(n));
     }
     function ensureActor(name,count){
-      const match=actorPattern.exec(name);if(!match)return true;
-      const [,kind,index]=match,template=kind+' 0',base='Scene / '+actorBase(kind)+'/'+kind,first=Math.floor(Number(index)/32)*32,group=base+'/Slots '+first+'-'+(first+31);
+      const match=actorPattern.exec(name)??ribbonPattern.exec(name);if(!match)return true;
+      const [,kind,index]=match,template=kind+' 0',base='Scene / '+(kind.startsWith('Classic ')?'Effects':actorBase(kind))+'/'+kind,first=Math.floor(Number(index)/32)*32,group=base+'/Slots '+first+'-'+(first+31);
       if(!authored[template])return false;
       queue(group,{Transform:identity},base,true);
       const names=[group];

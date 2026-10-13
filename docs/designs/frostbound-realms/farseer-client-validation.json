@@ -1,8 +1,8 @@
 {
   "author": "MiYu",
   "passed": true,
-  "mainSha256": "968f1ff6920bbc9db04bfb445ea14954fc24bd06a3c27e3ed7eb57145f82a115",
-  "sceneSha256": "215716b258e7284cb07c6008e9e03965697b6326e966d4b85cb45dc4704d951c",
-  "protocol": 71,
+  "mainSha256": "9e3234099d8ffc06aee61dd5ae8235a2c7d62bc27cdf4b218b93a1c38d53ce1f",
+  "sceneSha256": "73c59abce974f48879985f9926a278071cc8cb96dd1b0c0daaac4d9707b371c9",
+  "protocol": 89,
   "scope": "Generated client with native GLB node sampling: C/F/T/E, original model/portrait, source scaling, primary lightning, PREM Death clip, Far Sight, timed wolves, Earthquake and F5 restore."
 }
