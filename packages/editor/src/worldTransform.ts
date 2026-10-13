@@ -97,7 +97,8 @@ export function createOwnedWorldTransformReader() {
 }
 
 function resolveWorldTransforms(entities: readonly WorldTransformEntity[], roots?: Iterable<number>, cache?: OwnedTransformCache): Map<number, ResolvedWorldTransform> {
-  const byId = new Map(entities.map((entity) => [entity.entity, entity]));
+  const byId = new Map<number, WorldTransformEntity>();
+  for (const entity of entities) byId.set(entity.entity, entity);
   const states = new Map<number, ResolveState>();
   let cyclic = false;
 
@@ -127,9 +128,9 @@ function resolveWorldTransforms(entities: readonly WorldTransformEntity[], roots
 
   if (roots) { for (const id of roots) resolve(id); }
   else { for (const entity of entities) resolve(entity.entity); }
-  return new Map(
-    [...states.entries()].flatMap(([id, state]) => state.visiting ? [] : [[id, state.value]]),
-  );
+  const resolved = new Map<number, ResolvedWorldTransform>();
+  for (const [id, state] of states) if (!state.visiting) resolved.set(id, state.value);
+  return resolved;
 }
 
 export function resolvedTransform(
