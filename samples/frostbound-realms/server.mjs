@@ -38,7 +38,7 @@ export function createServer({host='127.0.0.1',port=7788}={}) {
     if(m.type==='start'){
       if(p.seat!==r.owner)return fail(c,'Only the host can start');if(r.phase!=='lobby')return fail(c,'Match already started');if(r.players.some(v=>!v.ready||!v.client))return fail(c,'All commanders must be ready');
       const commander=t=>r.players.find(p=>p.team===t&&(r.map.mode!=='td'||p.seat===r.owner));
-      r.state=S.create(r.map.mode,{map:r.map,ai:[0,1].map(t=>r.map.mode!=='td'&&!commander(t)),heroes:[0,1].map(t=>r.map.mode==='td'&&t===0?r.sharedHeroClass:commander(t)?.heroClass??r.map.players[t].heroClass),factions:[0,1].map(t=>r.map.mode==='td'&&t===0?r.sharedFaction:commander(t)?.faction??r.map.players[t].faction)});r.phase='playing';r.queue=[];publish(r);for(const v of r.players)if(v.client)send(v.client,{type:'state',state:view(r,v)});return;
+      const state=S.create(r.map.mode,{map:r.map,ai:[0,1].map(t=>r.map.mode!=='td'&&!commander(t)),heroes:[0,1].map(t=>r.map.mode==='td'&&t===0?r.sharedHeroClass:commander(t)?.heroClass??r.map.players[t].heroClass),factions:[0,1].map(t=>r.map.mode==='td'&&t===0?r.sharedFaction:commander(t)?.faction??r.map.players[t].faction)}),error=S.tdMapError(state);if(error)return fail(c,error);r.state=state;r.phase='playing';r.queue=[];publish(r);for(const v of r.players)if(v.client)send(v.client,{type:'state',state:view(r,v)});return;
     }
     if(m.type==='order'){
       if(r.phase!=='playing'||!Number.isSafeInteger(m.seq)||m.seq<=c.lastSeq||m.seq>c.lastSeq+1000)return fail(c,'Stale or invalid order');if(r.queue.filter(q=>q.client===c).length>=12)return fail(c,'Order queue full');c.lastSeq=m.seq;r.queue.push({team:p.team,command:m.command,client:c});return;

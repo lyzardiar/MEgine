@@ -263,6 +263,7 @@ const effectPoolTemplates=E.filter(e=>streamedEffect.test(e.name)||/^(Unit|Missi
 const tdMenuId=Math.max(...E.map(e=>e.entity))+1;
 classicButton('netTd','合作塔防 [F4]',0,48,400,46,'network');
 E.slice(-3).forEach((e,i)=>{e.entity=tdMenuId+i;});
+const tdLabelId=Math.max(...E.map(e=>e.entity))+1;for(let i=0;i<32;i++){text('TD route label '+i,'',0,0,96,24,15,C.gold,'Center');E.at(-1).entity=tdLabelId+i;E.at(-1).active=false;}
 const sceneInitNames=E.filter(e=>!/(?: part | mesh )\d+$/.test(e.name)&&!/^Classic (?:spell|status|attachment) /.test(e.name)).map(e=>e.name),sceneInactive=E.filter(e=>e.active===false).map(e=>e.name);
 fs.writeFileSync(path.join(outputRoot,'Assets/Scenes/Main.mscene'),JSON.stringify({version:1,name:'Frostbound Realms',world:{entities:E,frame:0,sim_frame:0,clear_color:[.08,.13,.18,1]}},null,2)+'\n');
 fs.writeFileSync(path.join(outputRoot,'project.json'),JSON.stringify({name:'Frostbound Realms',storageId:'frostbound-realms-2d128968-5677-47b3-8d38-a128a763e15a',version:1,language:'javascript',mainScene:'Assets/Scenes/Main.mscene',buildScenes:['Assets/Scenes/Main.mscene'],startupScript:'Assets/Scripts/Main.js',assetMode:'all'},null,2)+'\n');

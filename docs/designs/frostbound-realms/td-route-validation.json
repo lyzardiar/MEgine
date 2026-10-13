@@ -1,0 +1,45 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "route": [
+    [
+      -10,
+      -10
+    ],
+    [
+      0,
+      -10
+    ],
+    [
+      0,
+      10
+    ],
+    [
+      10,
+      10
+    ]
+  ],
+  "actualMovementTicks": 461,
+  "leakedFirstWave": 7,
+  "checks": [
+    "legacy map/save migration",
+    "map array ownership",
+    "invalid and sparse routes",
+    "authored spawn and corners",
+    "actual endpoint arrival",
+    "mid-wave deterministic save/load",
+    "tampered saved route rejection",
+    "short route requires movement",
+    "blocked reversed entrance diagnostics",
+    "server rejects blocked entrance before play",
+    "legacy hall goal reachable",
+    "authored construction exclusion",
+    "orthogonal and diagonal road rendering",
+    "pathing overlay",
+    "public map state",
+    "TCP bad map rejection",
+    "two-client full state equality",
+    "server spawn route",
+    "reconnect route persistence"
+  ]
+}

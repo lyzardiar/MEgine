@@ -1,6 +1,8 @@
 // Author: MiYu. Rule, editor-data and real TCP acceptance checks.
 import assert from 'node:assert/strict';
 import './test-frost-td-coop.mjs';
+import './test-frost-td-route.mjs';
+import './test-frost-td-route-client.mjs';
 import {battleFixture,setTechnology} from './frost-battle-fixture.mjs';
 import net from 'node:net';
 import './test-frost-human-equipment.mjs';

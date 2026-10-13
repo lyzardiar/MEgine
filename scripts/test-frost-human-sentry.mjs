@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';
 import {sentryFixture} from './frost-human-sentry-fixture.mjs';
 import {cryptLordFixture} from './frost-crypt-lord-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),copy=o=>JSON.parse(JSON.stringify(o)),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},cmd=(s,u,type,c={})=>S.command(s,u.team,{type,ids:[u.id],...c});
-assert.equal(S.PROTOCOL,90);assert.equal(S.create().humanSentryVersion,1);assert.equal(S.sentryRules.detectionEnum['03'],'3,WESTRING_UE_DETECTIONTYPE_BOTH');assert.equal(S.sentryRules.range,9);assert.equal(S.sentryRules.slot,6);
+assert.equal(S.PROTOCOL,91);assert.equal(S.create().humanSentryVersion,1);assert.equal(S.sentryRules.detectionEnum['03'],'3,WESTRING_UE_DETECTIONTYPE_BOTH');assert.equal(S.sentryRules.range,9);assert.equal(S.sentryRules.slot,6);
 for(const offset of [1,2]){const {s,sanctum,tower}=sentryFixture(S);step(s,offset);assert.equal(cmd(s,sanctum,'sanctumResearch',{upgrade:'Rhse'}),null);step(s,300);assert.equal(tower.magicSentryFrame,s.frame);assert.ok(S.restore(s));const born=S.spawn(s,'scouttower',0,-8,0,{cd:10000});assert.equal(born.magicSentryFrame,s.frame);assert.ok(S.restore(s));const building=S.spawn(s,'scouttower',0,-16,0,{built:.999,cd:10000,construction:{style:'work',started:true,paidGold:0,paidWood:0}});assert.equal(building.magicSentryFrame,undefined);S.spawn(s,'worker',0,-15,0,{order:{type:'construct',target:building.id}});step(s,1);assert.equal(building.built,1);assert.equal(building.magicSentryFrame,s.frame);assert.ok(S.restore(s));}
 
 {

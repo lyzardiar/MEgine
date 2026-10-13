@@ -18,13 +18,13 @@ var FrostTerrain=(()=>{
   function cells(state,team,allVisible){
     const blight=[...(state.blight||[]),...state.units.filter(u=>u.hp>0&&u.built===1&&u.kind==='hall'&&state.teams[u.team]?.faction===3).map(u=>({x:u.x,z:u.z,radius:10}))];
     return state.map.terrain.map((kind,i)=>{
-      if(state.mode==='td'&&kind===0){const x=i%32*2-31,z=Math.floor(i/32)*2-31;if(Frost.tdPath.slice(1).some((p,j)=>{const a=Frost.tdPath[j];return Math.abs(a[0]-p[0])<1?Math.abs(x-p[0])<2&&z>=Math.min(a[1],p[1])&&z<=Math.max(a[1],p[1]):Math.abs(z-p[1])<2&&x>=Math.min(a[0],p[0])&&x<=Math.max(a[0],p[0]);}))kind=2;}
+      if(state.mode==='td'&&kind===0&&Frost.tdRoad(state.map,i%32*2-31,Math.floor(i/32)*2-31,1.8))kind=2;
       // MiYu: base terrain + three times the authored surface; the fractional field retains fog.
       if(kind!==1)kind+=(blight.some(b=>Math.hypot(i%32*2-31-b.x,Math.floor(i/32)*2-31-b.z)<=b.radius)?5:state.map.surfaces?.[i]||0)*3;
       return kind*2+(allVisible||state.visible[team]?.[i]?1:state.explored[team]?.[i]?.4:.07);
     });
   }
-  function pathing(state){let values=pathingCache.get(state);if(values)return values;values=state.map.terrain.map((_,i)=>{const x=i%32*2-31,z=Math.floor(i/32)*2-31;return Frost.solid(state,x,z,0,-1,.5)?2:Frost.buildingSite(state,x,z,1)?0:1;});pathingCache.set(state,values);return values;}
+  function pathing(state){let values=pathingCache.get(state);if(values)return values;values=state.map.terrain.map((_,i)=>{const x=i%32*2-31,z=Math.floor(i/32)*2-31;return Frost.solid(state,x,z,0,-1,.5)?2:state.mode==='td'&&Frost.tdRoad(state.map,x,z)?1:Frost.buildingSite(state,x,z,1)?0:1;});pathingCache.set(state,values);return values;}
   const chunkIndexCache=[];
   function chunkIndices(x,z){
     const cached=Number.isInteger(x)&&Number.isInteger(z)&&x>=0&&x<8&&z>=0&&z<8,slot=z*8+x;if(cached&&chunkIndexCache[slot])return chunkIndexCache[slot];
