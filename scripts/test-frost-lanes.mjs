@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url),S=require('../samples/frostbound-realms/game/simulation.js');
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},creeps=s=>s.units.filter(u=>S.types[u.kind].laneCreep);
-function game(){return S.create('moba',{ai:[false,false],factions:[0,3]});}
+function game(legacy=false){return S.create('moba',{ai:[false,false],factions:[0,3],mobaObjectivesVersion:legacy?0:1});}
 for(const wave of [1,7]){
   const s=game();s.wave=wave-1;s.nextWave=1;S.tick(s);assert.equal(s.wave,wave);assert.equal(s.nextWave,301);
   const roster=creeps(s);assert.equal(roster.length,wave===7?30:24);
@@ -26,9 +26,9 @@ for(const wave of [1,7]){
   creep.order={type:'attackMove',x:0,z:0};step(s,1);assert.equal(creep.order.type,'attackMove','map-scripted orders are preserved');
 }
 for(const kind of ['rangedcreep','siegecreep']){
-  const s=game();s.units=[];s.nextWave=10000;const hero=S.spawn(s,'hero',0,-4,0,{heroClass:2,damage:1000}),target=S.spawn(s,kind,0,0,0,{hp:20,damage:0,speed:0});S.visibility(s);assert.equal(S.command(s,0,{type:'attack',ids:[hero.id],target:target.id}),null);S.tick(s);const restored=S.restore(s);step(s,5);step(restored,5);assert.equal(target.hp,0);assert.equal(s.teams[0].kills,0);assert.deepEqual(restored.units,s.units);assert.equal(s.corpses.some(c=>c.id===target.id),kind==='rangedcreep');
+  const s=game(true);s.units=[];s.nextWave=10000;const hero=S.spawn(s,'hero',0,-4,0,{heroClass:2,damage:1000}),target=S.spawn(s,kind,0,0,0,{hp:20,damage:0,speed:0});S.visibility(s);assert.equal(S.command(s,0,{type:'attack',ids:[hero.id],target:target.id}),null);S.tick(s);const restored=S.restore(s);step(s,5);step(restored,5);assert.equal(target.hp,0);assert.equal(s.teams[0].kills,0);assert.deepEqual(restored.units,s.units);assert.equal(s.corpses.some(c=>c.id===target.id),kind==='rangedcreep');
   assert.equal(S.projectileArt({kind}),kind==='siegecreep'?'stone':'arrow');
-  const battle=game();battle.units=[];battle.nextWave=10000;S.spawn(battle,kind,0,-4,0);const enemy=S.spawn(battle,'hero',1,2,0,{damage:0,speed:0,order:{type:'hold'}});S.visibility(battle);S.tick(battle);assert.equal(battle.projectiles.length,1);assert.equal(battle.projectiles[0].art,kind==='siegecreep'?'stone':'arrow');const flight=S.restore(battle);step(battle,8);step(flight,8);assert.ok(enemy.hp<enemy.maxHp);assert.deepEqual(flight.units,battle.units,'new lane projectiles resume identically');
+  const battle=game(true);battle.units=[];battle.nextWave=10000;S.spawn(battle,kind,0,-4,0);const enemy=S.spawn(battle,'hero',1,2,0,{damage:0,speed:0,order:{type:'hold'}});S.visibility(battle);S.tick(battle);assert.equal(battle.projectiles.length,1);assert.equal(battle.projectiles[0].art,kind==='siegecreep'?'stone':'arrow');const flight=S.restore(battle);step(battle,8);step(flight,8);assert.ok(enemy.hp<enemy.maxHp);assert.deepEqual(flight.units,battle.units,'new lane projectiles resume identically');
 }
 for(const faction of [1,2,3]){
   const s=S.create('moba',{ai:[true,true],factions:[faction,0]});s.nextWave=10000;const u=S.spawn(s,'creep',0,-10,20);u.hp=50;u.order={type:'hold'};step(s,40);assert.equal(u.hp,50,'faction AI regeneration is disabled in MOBA');assert.equal(u.speed,S.types.creep.speed);

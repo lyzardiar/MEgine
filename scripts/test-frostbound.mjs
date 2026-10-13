@@ -1,5 +1,7 @@
 // Author: MiYu. Rule, editor-data and real TCP acceptance checks.
 import assert from 'node:assert/strict';
+import './test-frost-moba-objectives.mjs';
+import './test-frost-moba-objectives-client.mjs';
 import './test-frost-td-coop.mjs';
 import './test-frost-td-route.mjs';
 import './test-frost-td-route-client.mjs';

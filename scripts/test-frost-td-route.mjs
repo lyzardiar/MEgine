@@ -6,7 +6,7 @@ import {createRequire} from 'node:module';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');globalThis.Frost=S;const T=createRequire(import.meta.url)('../samples/frostbound-realms/game/terrain.js');
 const clone=S.clone,map=S.defaultMap('td'),route=[[-10,-10],[0,-10],[0,10],[10,10]];for(const key of ['terrain','heights','ramps','relief'])map[key].fill(0);map.props=[];map.doodads=[];map.tdPath=route;
-assert.equal(S.PROTOCOL,93);assert.deepEqual(S.validateMap({...map,tdPath:undefined}).tdPath,S.tdPath);const validated=S.validateMap(map);validated.tdPath[0][0]++;assert.equal(map.tdPath[0][0],-10,'validated routes own their arrays');
+assert.ok(S.PROTOCOL>=93,'requires authored TD wave protocol support');assert.deepEqual(S.validateMap({...map,tdPath:undefined}).tdPath,S.tdPath);const validated=S.validateMap(map);validated.tdPath[0][0]++;assert.equal(map.tdPath[0][0],-10,'validated routes own their arrays');
 for(const invalid of [null,[],[[0,0]],Array.from({length:33},(_,i)=>[i%2*3,0]),[[0,0],[0,0]],[[0,0],[1,0]],[[0,0],[28,0]],[[0,0],[NaN,0]],[[0,0],[Infinity,0]],[[0,0],Array(2)],Array(3),[[0,0],[0,2,3]]])assert.throws(()=>S.validateMap({...map,tdPath:invalid}),/TD route/);
 const s=S.create('td',{map,ai:[false,false]});s.units=[];s.nextWave=1;S.tick(s);const first=s.units.find(u=>u.td);assert.ok(first);assert.deepEqual(first.route,route);assert.ok(Math.hypot(first.x+10,first.z+10)<1,'spawn uses authored entrance');
 for(let i=0;i<60;i++)S.tick(s);const saved=clone(s),restored=S.restore(saved);assert.deepEqual(restored.map.tdPath,route);assert.deepEqual(restored.units.find(u=>u.id===first.id).route,route);

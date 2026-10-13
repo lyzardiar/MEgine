@@ -1,0 +1,1434 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "scope": "Two standalone V8 Players on one host, production generated client and scene, real authoritative TCP. Every distinct authoritative frame presented by a client is checked. Scripted game actions, no physical input or two-machine acceptance.",
+  "fixture": {
+    "mapFile": "D:\\MEngineNativeQA\\native-moba-objectives-1791907971139\\fixture-map.json",
+    "mapSha256": "6402f98b45fbbf201a7b82d72821b71402817e9b62b29fab328d0035e71de51d",
+    "mode": "moba",
+    "objectiveHp": 50,
+    "objectiveDamage": 0,
+    "heroHp": 10000,
+    "heroDamage": 1000,
+    "heroSpeed": 12,
+    "firstWaveFrame": 180,
+    "scope": "Accelerated objective combat fixture; not a complete match or balance acceptance.",
+    "instrumentation": "Expose native client actions; authoritative setup lowers objective HP, increases hero stats and positions heroes near opposing T1 towers. Native clients send normal move/attack/hold orders through the server; two corresponding melee barracks are destroyed, future waves and reconnect are compared. Isolated storage and physical asset paths backed by file hard links on the same volume."
+  },
+  "runtime": {
+    "backend": "v8",
+    "bridgeVersion": 1,
+    "version": "15.2.124.1-rusty"
+  },
+  "executable": "D:\\MEngineNativeQA\\engine-main-sync\\target\\release\\mengine-runtime.exe",
+  "executableSha256": "b6339d943466800c55576515dd1b7e43e87f92fa793a3a122a79ed7bb805aa9b",
+  "clientSha256": "bcd1bf9c0630b63d107e29870ff7b3784d7aa8665083e5ce82818bc449d28b65",
+  "sceneSha256": "372c92108da3b6c5a5ecb4dcfd5e9887bafcf856a0ee2e3fbb9e8a2f8d1fcdbe",
+  "projectRoot": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample",
+  "root": "D:\\MEngineNativeQA\\native-moba-objectives-1791907971139",
+  "guestTicksWhileStalled": 84,
+  "stalledGuestFrame": 205,
+  "droppedSnapshots": 20,
+  "resumedCommand": {
+    "frame": 234,
+    "team": 1,
+    "command": {
+      "ids": [
+        21
+      ],
+      "type": "stop"
+    },
+    "error": null,
+    "before": [
+      {
+        "id": 21,
+        "hp": 10126,
+        "order": {
+          "type": "hold",
+          "x": 0,
+          "z": 0
+        }
+      }
+    ],
+    "goldBefore": 1069,
+    "goldAfter": 1069,
+    "after": [
+      {
+        "id": 21,
+        "hp": 10126,
+        "order": null
+      }
+    ]
+  },
+  "objectiveCommands": [
+    {
+      "frame": 1,
+      "team": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "attack",
+        "target": 13
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 21,
+          "hp": 10000,
+          "order": null
+        }
+      ],
+      "goldBefore": 500,
+      "goldAfter": 500,
+      "after": [
+        {
+          "id": 21,
+          "hp": 10000,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 13
+          }
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "team": 0,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "attack",
+        "target": 32
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 2,
+          "hp": 10000,
+          "order": null
+        }
+      ],
+      "goldBefore": 500,
+      "goldAfter": 500,
+      "after": [
+        {
+          "id": 2,
+          "hp": 10000,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 32
+          }
+        }
+      ]
+    },
+    {
+      "frame": 9,
+      "team": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "move",
+        "x": 1,
+        "z": 24
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 21,
+          "hp": 10000,
+          "order": null
+        }
+      ],
+      "goldBefore": 580,
+      "goldAfter": 580,
+      "after": [
+        {
+          "id": 21,
+          "hp": 10000,
+          "order": {
+            "type": "move",
+            "x": 1,
+            "z": 24
+          }
+        }
+      ]
+    },
+    {
+      "frame": 9,
+      "team": 0,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "move",
+        "x": -1,
+        "z": -24
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 2,
+          "hp": 10000,
+          "order": null
+        }
+      ],
+      "goldBefore": 580,
+      "goldAfter": 580,
+      "after": [
+        {
+          "id": 2,
+          "hp": 10000,
+          "order": {
+            "type": "move",
+            "x": -1,
+            "z": -24
+          }
+        }
+      ]
+    },
+    {
+      "frame": 12,
+      "team": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "attack",
+        "target": 14
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 21,
+          "hp": 10000,
+          "order": {
+            "type": "move",
+            "x": 1,
+            "z": 24
+          }
+        }
+      ],
+      "goldBefore": 583,
+      "goldAfter": 583,
+      "after": [
+        {
+          "id": 21,
+          "hp": 10000,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 14
+          }
+        }
+      ]
+    },
+    {
+      "frame": 12,
+      "team": 0,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "attack",
+        "target": 33
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 2,
+          "hp": 10000,
+          "order": {
+            "type": "move",
+            "x": -1,
+            "z": -24
+          }
+        }
+      ],
+      "goldBefore": 583,
+      "goldAfter": 583,
+      "after": [
+        {
+          "id": 2,
+          "hp": 10000,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 33
+          }
+        }
+      ]
+    },
+    {
+      "frame": 19,
+      "team": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "move",
+        "x": -9,
+        "z": 24
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 21,
+          "hp": 10000,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 14
+          }
+        }
+      ],
+      "goldBefore": 663,
+      "goldAfter": 663,
+      "after": [
+        {
+          "id": 21,
+          "hp": 10000,
+          "order": {
+            "type": "move",
+            "x": -9,
+            "z": 24
+          }
+        }
+      ]
+    },
+    {
+      "frame": 19,
+      "team": 0,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "move",
+        "x": 9,
+        "z": -24
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 2,
+          "hp": 10000,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 33
+          }
+        }
+      ],
+      "goldBefore": 663,
+      "goldAfter": 663,
+      "after": [
+        {
+          "id": 2,
+          "hp": 10000,
+          "order": {
+            "type": "move",
+            "x": 9,
+            "z": -24
+          }
+        }
+      ]
+    },
+    {
+      "frame": 24,
+      "team": 0,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "attack",
+        "target": 34
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 2,
+          "hp": 10000,
+          "order": {
+            "type": "move",
+            "x": 9,
+            "z": -24
+          }
+        }
+      ],
+      "goldBefore": 666,
+      "goldAfter": 666,
+      "after": [
+        {
+          "id": 2,
+          "hp": 10000,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 34
+          }
+        }
+      ]
+    },
+    {
+      "frame": 24,
+      "team": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "attack",
+        "target": 15
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 21,
+          "hp": 10000,
+          "order": {
+            "type": "move",
+            "x": -9,
+            "z": 24
+          }
+        }
+      ],
+      "goldBefore": 666,
+      "goldAfter": 666,
+      "after": [
+        {
+          "id": 21,
+          "hp": 10000,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 15
+          }
+        }
+      ]
+    },
+    {
+      "frame": 32,
+      "team": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "move",
+        "x": -19,
+        "z": 27
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 21,
+          "hp": 10090,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 15
+          }
+        }
+      ],
+      "goldBefore": 749,
+      "goldAfter": 749,
+      "after": [
+        {
+          "id": 21,
+          "hp": 10090,
+          "order": {
+            "type": "move",
+            "x": -19,
+            "z": 27
+          }
+        }
+      ]
+    },
+    {
+      "frame": 32,
+      "team": 0,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "move",
+        "x": 19,
+        "z": -27
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 2,
+          "hp": 10090,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 34
+          }
+        }
+      ],
+      "goldBefore": 749,
+      "goldAfter": 749,
+      "after": [
+        {
+          "id": 2,
+          "hp": 10090,
+          "order": {
+            "type": "move",
+            "x": 19,
+            "z": -27
+          }
+        }
+      ]
+    },
+    {
+      "frame": 36,
+      "team": 0,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "attack",
+        "target": 35
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 2,
+          "hp": 10090,
+          "order": {
+            "type": "move",
+            "x": 19,
+            "z": -27
+          }
+        }
+      ],
+      "goldBefore": 749,
+      "goldAfter": 749,
+      "after": [
+        {
+          "id": 2,
+          "hp": 10090,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 35
+          }
+        }
+      ]
+    },
+    {
+      "frame": 36,
+      "team": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "attack",
+        "target": 16
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 21,
+          "hp": 10090,
+          "order": {
+            "type": "move",
+            "x": -19,
+            "z": 27
+          }
+        }
+      ],
+      "goldBefore": 749,
+      "goldAfter": 749,
+      "after": [
+        {
+          "id": 21,
+          "hp": 10090,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 16
+          }
+        }
+      ]
+    },
+    {
+      "frame": 45,
+      "team": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "hold"
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 21,
+          "hp": 10090,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 16
+          }
+        }
+      ],
+      "goldBefore": 832,
+      "goldAfter": 832,
+      "after": [
+        {
+          "id": 21,
+          "hp": 10090,
+          "order": {
+            "type": "hold",
+            "x": 0,
+            "z": 0
+          }
+        }
+      ]
+    },
+    {
+      "frame": 45,
+      "team": 0,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "hold"
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 2,
+          "hp": 10090,
+          "order": {
+            "type": "attack",
+            "x": 0,
+            "z": 0,
+            "target": 35
+          }
+        }
+      ],
+      "goldBefore": 832,
+      "goldAfter": 832,
+      "after": [
+        {
+          "id": 2,
+          "hp": 10090,
+          "order": {
+            "type": "hold",
+            "x": 0,
+            "z": 0
+          }
+        }
+      ]
+    },
+    {
+      "frame": 234,
+      "team": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "stop"
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 21,
+          "hp": 10126,
+          "order": {
+            "type": "hold",
+            "x": 0,
+            "z": 0
+          }
+        }
+      ],
+      "goldBefore": 1069,
+      "goldAfter": 1069,
+      "after": [
+        {
+          "id": 21,
+          "hp": 10126,
+          "order": null
+        }
+      ]
+    }
+  ],
+  "objectives": [
+    {
+      "id": 1,
+      "team": 0,
+      "role": "ancient",
+      "lane": -1,
+      "tier": 0,
+      "alive": true
+    },
+    {
+      "id": 3,
+      "team": 0,
+      "role": "tower",
+      "lane": 0,
+      "tier": 1,
+      "alive": true
+    },
+    {
+      "id": 4,
+      "team": 0,
+      "role": "tower",
+      "lane": 0,
+      "tier": 2,
+      "alive": true
+    },
+    {
+      "id": 5,
+      "team": 0,
+      "role": "tower",
+      "lane": 0,
+      "tier": 3,
+      "alive": true
+    },
+    {
+      "id": 6,
+      "team": 0,
+      "role": "melee",
+      "lane": 0,
+      "tier": 0,
+      "alive": true
+    },
+    {
+      "id": 7,
+      "team": 0,
+      "role": "ranged",
+      "lane": 0,
+      "tier": 0,
+      "alive": true
+    },
+    {
+      "id": 8,
+      "team": 0,
+      "role": "tower",
+      "lane": 1,
+      "tier": 1,
+      "alive": true
+    },
+    {
+      "id": 9,
+      "team": 0,
+      "role": "tower",
+      "lane": 1,
+      "tier": 2,
+      "alive": true
+    },
+    {
+      "id": 10,
+      "team": 0,
+      "role": "tower",
+      "lane": 1,
+      "tier": 3,
+      "alive": true
+    },
+    {
+      "id": 11,
+      "team": 0,
+      "role": "melee",
+      "lane": 1,
+      "tier": 0,
+      "alive": true
+    },
+    {
+      "id": 12,
+      "team": 0,
+      "role": "ranged",
+      "lane": 1,
+      "tier": 0,
+      "alive": true
+    },
+    {
+      "id": 13,
+      "team": 0,
+      "role": "tower",
+      "lane": 2,
+      "tier": 1,
+      "alive": false
+    },
+    {
+      "id": 14,
+      "team": 0,
+      "role": "tower",
+      "lane": 2,
+      "tier": 2,
+      "alive": false
+    },
+    {
+      "id": 15,
+      "team": 0,
+      "role": "tower",
+      "lane": 2,
+      "tier": 3,
+      "alive": false
+    },
+    {
+      "id": 16,
+      "team": 0,
+      "role": "melee",
+      "lane": 2,
+      "tier": 0,
+      "alive": false
+    },
+    {
+      "id": 17,
+      "team": 0,
+      "role": "ranged",
+      "lane": 2,
+      "tier": 0,
+      "alive": false
+    },
+    {
+      "id": 18,
+      "team": 0,
+      "role": "tower",
+      "lane": -1,
+      "tier": 4,
+      "alive": true
+    },
+    {
+      "id": 19,
+      "team": 0,
+      "role": "tower",
+      "lane": -1,
+      "tier": 4,
+      "alive": false
+    },
+    {
+      "id": 20,
+      "team": 1,
+      "role": "ancient",
+      "lane": -1,
+      "tier": 0,
+      "alive": true
+    },
+    {
+      "id": 22,
+      "team": 1,
+      "role": "tower",
+      "lane": 2,
+      "tier": 1,
+      "alive": true
+    },
+    {
+      "id": 23,
+      "team": 1,
+      "role": "tower",
+      "lane": 2,
+      "tier": 2,
+      "alive": true
+    },
+    {
+      "id": 24,
+      "team": 1,
+      "role": "tower",
+      "lane": 2,
+      "tier": 3,
+      "alive": true
+    },
+    {
+      "id": 25,
+      "team": 1,
+      "role": "melee",
+      "lane": 2,
+      "tier": 0,
+      "alive": true
+    },
+    {
+      "id": 26,
+      "team": 1,
+      "role": "ranged",
+      "lane": 2,
+      "tier": 0,
+      "alive": true
+    },
+    {
+      "id": 27,
+      "team": 1,
+      "role": "tower",
+      "lane": 1,
+      "tier": 1,
+      "alive": true
+    },
+    {
+      "id": 28,
+      "team": 1,
+      "role": "tower",
+      "lane": 1,
+      "tier": 2,
+      "alive": true
+    },
+    {
+      "id": 29,
+      "team": 1,
+      "role": "tower",
+      "lane": 1,
+      "tier": 3,
+      "alive": true
+    },
+    {
+      "id": 30,
+      "team": 1,
+      "role": "melee",
+      "lane": 1,
+      "tier": 0,
+      "alive": true
+    },
+    {
+      "id": 31,
+      "team": 1,
+      "role": "ranged",
+      "lane": 1,
+      "tier": 0,
+      "alive": true
+    },
+    {
+      "id": 32,
+      "team": 1,
+      "role": "tower",
+      "lane": 0,
+      "tier": 1,
+      "alive": false
+    },
+    {
+      "id": 33,
+      "team": 1,
+      "role": "tower",
+      "lane": 0,
+      "tier": 2,
+      "alive": false
+    },
+    {
+      "id": 34,
+      "team": 1,
+      "role": "tower",
+      "lane": 0,
+      "tier": 3,
+      "alive": false
+    },
+    {
+      "id": 35,
+      "team": 1,
+      "role": "melee",
+      "lane": 0,
+      "tier": 0,
+      "alive": false
+    },
+    {
+      "id": 36,
+      "team": 1,
+      "role": "ranged",
+      "lane": 0,
+      "tier": 0,
+      "alive": false
+    },
+    {
+      "id": 37,
+      "team": 1,
+      "role": "tower",
+      "lane": -1,
+      "tier": 4,
+      "alive": true
+    },
+    {
+      "id": 38,
+      "team": 1,
+      "role": "tower",
+      "lane": -1,
+      "tier": 4,
+      "alive": true
+    }
+  ],
+  "snapshotComparisons": 461,
+  "sharedActorComparisons": 3639,
+  "fogFilteredSnapshots": 461,
+  "exactFloatSnapshots": 0,
+  "clients": [
+    {
+      "pid": 8852,
+      "project": "D:\\MEngineNativeQA\\native-moba-objectives-1791907971139\\project-0",
+      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\7b22d9397ffc00a9",
+      "instrumentedScriptSha256": "13f1fccb316eceb07075d905cb5d57560e1210b62151db192e62ea83e60474ae",
+      "final": {
+        "clientTicks": 1816,
+        "elapsed": 38099,
+        "frame": 249,
+        "localSimulationTicks": 0,
+        "mode": "playing",
+        "resumes": 0,
+        "snapshots": 243,
+        "team": 0
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "pid": 131384,
+      "project": "D:\\MEngineNativeQA\\native-moba-objectives-1791907971139\\project-1",
+      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\7b22d8397ffbfef6",
+      "instrumentedScriptSha256": "2a4ce0c88de8ad1ebd62be4d77c2d306b7bc70c3c53d1676d3c0ca22f7e11d65",
+      "final": {
+        "clientTicks": 1412,
+        "elapsed": 29939,
+        "frame": 248,
+        "localSimulationTicks": 0,
+        "mode": "playing",
+        "resumes": 1,
+        "snapshots": 218,
+        "team": 1
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ],
+  "elapsedMs": 60841,
+  "events": [
+    {
+      "type": "connected",
+      "connection": 1,
+      "at": 24685
+    },
+    {
+      "type": "hello",
+      "connection": 1,
+      "at": 24715
+    },
+    {
+      "type": "create",
+      "connection": 1,
+      "at": 24717
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 24719
+    },
+    {
+      "type": "ready",
+      "connection": 1,
+      "at": 24721
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 26737
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 29739
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 32737
+    },
+    {
+      "type": "connected",
+      "connection": 2,
+      "at": 32875
+    },
+    {
+      "type": "hello",
+      "connection": 2,
+      "at": 32908
+    },
+    {
+      "type": "list",
+      "connection": 2,
+      "at": 32910
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 32913
+    },
+    {
+      "type": "list",
+      "connection": 2,
+      "at": 32916
+    },
+    {
+      "type": "join",
+      "connection": 2,
+      "at": 33921
+    },
+    {
+      "type": "ready",
+      "connection": 2,
+      "at": 34938
+    },
+    {
+      "type": "start",
+      "connection": 1,
+      "at": 34982
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 35045,
+      "seq": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "attack",
+        "target": 13
+      }
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 35061,
+      "seq": 1,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "attack",
+        "target": 32
+      }
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 35813
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 35832,
+      "seq": 2,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "move",
+        "x": 1,
+        "z": 24
+      }
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 35899
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 35916,
+      "seq": 2,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "move",
+        "x": -1,
+        "z": -24
+      }
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 36156,
+      "seq": 3,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "attack",
+        "target": 14
+      }
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 36179,
+      "seq": 3,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "attack",
+        "target": 33
+      }
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 36878,
+      "seq": 4,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "move",
+        "x": -9,
+        "z": 24
+      }
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 36920,
+      "seq": 4,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "move",
+        "x": 9,
+        "z": -24
+      }
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 37366,
+      "seq": 5,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "attack",
+        "target": 34
+      }
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 37371,
+      "seq": 5,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "attack",
+        "target": 15
+      }
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 38177,
+      "seq": 6,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "move",
+        "x": -19,
+        "z": 27
+      }
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 38185,
+      "seq": 6,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "move",
+        "x": 19,
+        "z": -27
+      }
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 38590,
+      "seq": 7,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "attack",
+        "target": 35
+      }
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 38607,
+      "seq": 7,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "attack",
+        "target": 16
+      }
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 38744
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 38744
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 39496,
+      "seq": 8,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "hold"
+      }
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 39515,
+      "seq": 8,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "hold"
+      }
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 41733
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 41742
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 44738
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 44738
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 47733
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 47739
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 50737
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 50746
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 53733
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 53739
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 56730
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 56743
+    },
+    {
+      "type": "closed",
+      "connection": 2
+    },
+    {
+      "type": "connected",
+      "connection": 3,
+      "at": 58559
+    },
+    {
+      "type": "hello",
+      "connection": 3,
+      "at": 58571
+    },
+    {
+      "type": "resume",
+      "connection": 3,
+      "at": 58576
+    },
+    {
+      "type": "order",
+      "connection": 3,
+      "at": 58612,
+      "seq": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "stop"
+      }
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 59733
+    },
+    {
+      "type": "ping",
+      "connection": 3,
+      "at": 59748
+    },
+    {
+      "type": "closed",
+      "connection": 3
+    },
+    {
+      "type": "closed",
+      "connection": 1
+    }
+  ]
+}
