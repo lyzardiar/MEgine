@@ -3,7 +3,7 @@
   "passed": true,
   "scope": "Two standalone V8 Players on one host, production generated client and scene, real authoritative TCP. Every distinct authoritative frame presented by a client is checked. Scripted game actions, no physical input or two-machine acceptance.",
   "fixture": {
-    "mapFile": "D:\\MEngineNativeQA\\native-moba-objectives-1791907971139\\fixture-map.json",
+    "mapFile": "D:\\MEngineNativeQA\\native-moba-objectives-1791914157717\\fixture-map.json",
     "mapSha256": "6402f98b45fbbf201a7b82d72821b71402817e9b62b29fab328d0035e71de51d",
     "mode": "moba",
     "objectiveHp": 50,
@@ -11,9 +11,9 @@
     "heroHp": 10000,
     "heroDamage": 1000,
     "heroSpeed": 12,
-    "firstWaveFrame": 180,
+    "firstWaveDelayAfterBaseline": 180,
     "scope": "Accelerated objective combat fixture; not a complete match or balance acceptance.",
-    "instrumentation": "Expose native client actions; authoritative setup lowers objective HP, increases hero stats and positions heroes near opposing T1 towers. Native clients send normal move/attack/hold orders through the server; two corresponding melee barracks are destroyed, future waves and reconnect are compared. Isolated storage and physical asset paths backed by file hard links on the same volume."
+    "instrumentation": "Expose native client actions; authoritative setup lowers objective HP, increases hero stats, waits for both clients to capture intact objectives, then positions heroes near opposing T1 towers. Native clients send normal move/attack/hold orders through the server; two corresponding melee barracks are destroyed, future waves and reconnect are compared. Isolated storage and physical asset paths backed by file hard links on the same volume."
   },
   "runtime": {
     "backend": "v8",
@@ -22,15 +22,16 @@
   },
   "executable": "D:\\MEngineNativeQA\\engine-main-sync\\target\\release\\mengine-runtime.exe",
   "executableSha256": "b6339d943466800c55576515dd1b7e43e87f92fa793a3a122a79ed7bb805aa9b",
-  "clientSha256": "bcd1bf9c0630b63d107e29870ff7b3784d7aa8665083e5ce82818bc449d28b65",
+  "clientSha256": "f2c3d73a8356120bae53e88a02030b957ad28a04d80bbc43c8fb1171fec5f11a",
   "sceneSha256": "372c92108da3b6c5a5ecb4dcfd5e9887bafcf856a0ee2e3fbb9e8a2f8d1fcdbe",
-  "projectRoot": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample",
-  "root": "D:\\MEngineNativeQA\\native-moba-objectives-1791907971139",
-  "guestTicksWhileStalled": 84,
-  "stalledGuestFrame": 205,
-  "droppedSnapshots": 20,
+  "projectRoot": "D:\\MEngineNativeQA\\moba-art-1791914017999\\sample",
+  "root": "D:\\MEngineNativeQA\\native-moba-objectives-1791914157717",
+  "combatStartFrame": 11,
+  "guestTicksWhileStalled": 1,
+  "stalledGuestFrame": 224,
+  "droppedSnapshots": 14,
   "resumedCommand": {
-    "frame": 234,
+    "frame": 286,
     "team": 1,
     "command": {
       "ids": [
@@ -42,7 +43,7 @@
     "before": [
       {
         "id": 21,
-        "hp": 10126,
+        "hp": 10081,
         "order": {
           "type": "hold",
           "x": 0,
@@ -50,85 +51,20 @@
         }
       }
     ],
-    "goldBefore": 1069,
-    "goldAfter": 1069,
+    "goldBefore": 1189,
+    "goldAfter": 1189,
     "after": [
       {
         "id": 21,
-        "hp": 10126,
+        "hp": 10081,
         "order": null
       }
     ]
   },
+  "comparisonFrame": 301,
   "objectiveCommands": [
     {
-      "frame": 1,
-      "team": 1,
-      "command": {
-        "ids": [
-          21
-        ],
-        "type": "attack",
-        "target": 13
-      },
-      "error": null,
-      "before": [
-        {
-          "id": 21,
-          "hp": 10000,
-          "order": null
-        }
-      ],
-      "goldBefore": 500,
-      "goldAfter": 500,
-      "after": [
-        {
-          "id": 21,
-          "hp": 10000,
-          "order": {
-            "type": "attack",
-            "x": 0,
-            "z": 0,
-            "target": 13
-          }
-        }
-      ]
-    },
-    {
-      "frame": 1,
-      "team": 0,
-      "command": {
-        "ids": [
-          2
-        ],
-        "type": "attack",
-        "target": 32
-      },
-      "error": null,
-      "before": [
-        {
-          "id": 2,
-          "hp": 10000,
-          "order": null
-        }
-      ],
-      "goldBefore": 500,
-      "goldAfter": 500,
-      "after": [
-        {
-          "id": 2,
-          "hp": 10000,
-          "order": {
-            "type": "attack",
-            "x": 0,
-            "z": 0,
-            "target": 32
-          }
-        }
-      ]
-    },
-    {
-      "frame": 9,
+      "frame": 36,
       "team": 1,
       "command": {
         "ids": [
@@ -146,8 +82,8 @@
           "order": null
         }
       ],
-      "goldBefore": 580,
-      "goldAfter": 580,
+      "goldBefore": 589,
+      "goldAfter": 589,
       "after": [
         {
           "id": 21,
@@ -161,7 +97,7 @@
       ]
     },
     {
-      "frame": 9,
+      "frame": 41,
       "team": 0,
       "command": {
         "ids": [
@@ -179,8 +115,8 @@
           "order": null
         }
       ],
-      "goldBefore": 580,
-      "goldAfter": 580,
+      "goldBefore": 592,
+      "goldAfter": 592,
       "after": [
         {
           "id": 2,
@@ -194,7 +130,7 @@
       ]
     },
     {
-      "frame": 12,
+      "frame": 47,
       "team": 1,
       "command": {
         "ids": [
@@ -208,15 +144,11 @@
         {
           "id": 21,
           "hp": 10000,
-          "order": {
-            "type": "move",
-            "x": 1,
-            "z": 24
-          }
+          "order": null
         }
       ],
-      "goldBefore": 583,
-      "goldAfter": 583,
+      "goldBefore": 592,
+      "goldAfter": 592,
       "after": [
         {
           "id": 21,
@@ -231,7 +163,7 @@
       ]
     },
     {
-      "frame": 12,
+      "frame": 51,
       "team": 0,
       "command": {
         "ids": [
@@ -245,15 +177,11 @@
         {
           "id": 2,
           "hp": 10000,
-          "order": {
-            "type": "move",
-            "x": -1,
-            "z": -24
-          }
+          "order": null
         }
       ],
-      "goldBefore": 583,
-      "goldAfter": 583,
+      "goldBefore": 595,
+      "goldAfter": 595,
       "after": [
         {
           "id": 2,
@@ -268,7 +196,7 @@
       ]
     },
     {
-      "frame": 19,
+      "frame": 57,
       "team": 1,
       "command": {
         "ids": [
@@ -283,16 +211,11 @@
         {
           "id": 21,
           "hp": 10000,
-          "order": {
-            "type": "attack",
-            "x": 0,
-            "z": 0,
-            "target": 14
-          }
+          "order": null
         }
       ],
-      "goldBefore": 663,
-      "goldAfter": 663,
+      "goldBefore": 675,
+      "goldAfter": 675,
       "after": [
         {
           "id": 21,
@@ -306,45 +229,7 @@
       ]
     },
     {
-      "frame": 19,
-      "team": 0,
-      "command": {
-        "ids": [
-          2
-        ],
-        "type": "move",
-        "x": 9,
-        "z": -24
-      },
-      "error": null,
-      "before": [
-        {
-          "id": 2,
-          "hp": 10000,
-          "order": {
-            "type": "attack",
-            "x": 0,
-            "z": 0,
-            "target": 33
-          }
-        }
-      ],
-      "goldBefore": 663,
-      "goldAfter": 663,
-      "after": [
-        {
-          "id": 2,
-          "hp": 10000,
-          "order": {
-            "type": "move",
-            "x": 9,
-            "z": -24
-          }
-        }
-      ]
-    },
-    {
-      "frame": 24,
+      "frame": 62,
       "team": 0,
       "command": {
         "ids": [
@@ -358,15 +243,11 @@
         {
           "id": 2,
           "hp": 10000,
-          "order": {
-            "type": "move",
-            "x": 9,
-            "z": -24
-          }
+          "order": null
         }
       ],
-      "goldBefore": 666,
-      "goldAfter": 666,
+      "goldBefore": 678,
+      "goldAfter": 678,
       "after": [
         {
           "id": 2,
@@ -381,7 +262,7 @@
       ]
     },
     {
-      "frame": 24,
+      "frame": 68,
       "team": 1,
       "command": {
         "ids": [
@@ -395,15 +276,11 @@
         {
           "id": 21,
           "hp": 10000,
-          "order": {
-            "type": "move",
-            "x": -9,
-            "z": 24
-          }
+          "order": null
         }
       ],
-      "goldBefore": 666,
-      "goldAfter": 666,
+      "goldBefore": 678,
+      "goldAfter": 678,
       "after": [
         {
           "id": 21,
@@ -418,45 +295,7 @@
       ]
     },
     {
-      "frame": 32,
-      "team": 1,
-      "command": {
-        "ids": [
-          21
-        ],
-        "type": "move",
-        "x": -19,
-        "z": 27
-      },
-      "error": null,
-      "before": [
-        {
-          "id": 21,
-          "hp": 10090,
-          "order": {
-            "type": "attack",
-            "x": 0,
-            "z": 0,
-            "target": 15
-          }
-        }
-      ],
-      "goldBefore": 749,
-      "goldAfter": 749,
-      "after": [
-        {
-          "id": 21,
-          "hp": 10090,
-          "order": {
-            "type": "move",
-            "x": -19,
-            "z": 27
-          }
-        }
-      ]
-    },
-    {
-      "frame": 32,
+      "frame": 72,
       "team": 0,
       "command": {
         "ids": [
@@ -479,8 +318,8 @@
           }
         }
       ],
-      "goldBefore": 749,
-      "goldAfter": 749,
+      "goldBefore": 761,
+      "goldAfter": 761,
       "after": [
         {
           "id": 2,
@@ -494,7 +333,40 @@
       ]
     },
     {
-      "frame": 36,
+      "frame": 78,
+      "team": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "move",
+        "x": -19,
+        "z": 27
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 21,
+          "hp": 10090,
+          "order": null
+        }
+      ],
+      "goldBefore": 761,
+      "goldAfter": 761,
+      "after": [
+        {
+          "id": 21,
+          "hp": 10090,
+          "order": {
+            "type": "move",
+            "x": -19,
+            "z": 27
+          }
+        }
+      ]
+    },
+    {
+      "frame": 83,
       "team": 0,
       "command": {
         "ids": [
@@ -510,13 +382,13 @@
           "hp": 10090,
           "order": {
             "type": "move",
-            "x": 19,
-            "z": -27
+            "x": 17,
+            "z": -25
           }
         }
       ],
-      "goldBefore": 749,
-      "goldAfter": 749,
+      "goldBefore": 764,
+      "goldAfter": 764,
       "after": [
         {
           "id": 2,
@@ -531,7 +403,7 @@
       ]
     },
     {
-      "frame": 36,
+      "frame": 89,
       "team": 1,
       "command": {
         "ids": [
@@ -545,15 +417,11 @@
         {
           "id": 21,
           "hp": 10090,
-          "order": {
-            "type": "move",
-            "x": -19,
-            "z": 27
-          }
+          "order": null
         }
       ],
-      "goldBefore": 749,
-      "goldAfter": 749,
+      "goldBefore": 764,
+      "goldAfter": 764,
       "after": [
         {
           "id": 21,
@@ -568,43 +436,7 @@
       ]
     },
     {
-      "frame": 45,
-      "team": 1,
-      "command": {
-        "ids": [
-          21
-        ],
-        "type": "hold"
-      },
-      "error": null,
-      "before": [
-        {
-          "id": 21,
-          "hp": 10090,
-          "order": {
-            "type": "attack",
-            "x": 0,
-            "z": 0,
-            "target": 16
-          }
-        }
-      ],
-      "goldBefore": 832,
-      "goldAfter": 832,
-      "after": [
-        {
-          "id": 21,
-          "hp": 10090,
-          "order": {
-            "type": "hold",
-            "x": 0,
-            "z": 0
-          }
-        }
-      ]
-    },
-    {
-      "frame": 45,
+      "frame": 93,
       "team": 0,
       "command": {
         "ids": [
@@ -617,16 +449,11 @@
         {
           "id": 2,
           "hp": 10090,
-          "order": {
-            "type": "attack",
-            "x": 0,
-            "z": 0,
-            "target": 35
-          }
+          "order": null
         }
       ],
-      "goldBefore": 832,
-      "goldAfter": 832,
+      "goldBefore": 847,
+      "goldAfter": 847,
       "after": [
         {
           "id": 2,
@@ -640,7 +467,38 @@
       ]
     },
     {
-      "frame": 234,
+      "frame": 100,
+      "team": 1,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "hold"
+      },
+      "error": null,
+      "before": [
+        {
+          "id": 21,
+          "hp": 10090,
+          "order": null
+        }
+      ],
+      "goldBefore": 850,
+      "goldAfter": 850,
+      "after": [
+        {
+          "id": 21,
+          "hp": 10090,
+          "order": {
+            "type": "hold",
+            "x": 0,
+            "z": 0
+          }
+        }
+      ]
+    },
+    {
+      "frame": 286,
       "team": 1,
       "command": {
         "ids": [
@@ -652,7 +510,7 @@
       "before": [
         {
           "id": 21,
-          "hp": 10126,
+          "hp": 10081,
           "order": {
             "type": "hold",
             "x": 0,
@@ -660,12 +518,12 @@
           }
         }
       ],
-      "goldBefore": 1069,
-      "goldAfter": 1069,
+      "goldBefore": 1189,
+      "goldAfter": 1189,
       "after": [
         {
           "id": 21,
-          "hp": 10126,
+          "hp": 10081,
           "order": null
         }
       ]
@@ -678,7 +536,7 @@
       "role": "ancient",
       "lane": -1,
       "tier": 0,
-      "alive": true
+      "alive": false
     },
     {
       "id": 3,
@@ -806,7 +664,7 @@
       "role": "tower",
       "lane": -1,
       "tier": 4,
-      "alive": true
+      "alive": false
     },
     {
       "id": 19,
@@ -958,27 +816,28 @@
       "role": "tower",
       "lane": -1,
       "tier": 4,
-      "alive": true
+      "alive": false
     }
   ],
-  "snapshotComparisons": 461,
-  "sharedActorComparisons": 3639,
-  "fogFilteredSnapshots": 461,
+  "snapshotComparisons": 54,
+  "sharedActorComparisons": 20,
+  "fogFilteredSnapshots": 54,
   "exactFloatSnapshots": 0,
   "clients": [
     {
-      "pid": 8852,
-      "project": "D:\\MEngineNativeQA\\native-moba-objectives-1791907971139\\project-0",
-      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\7b22d9397ffc00a9",
-      "instrumentedScriptSha256": "13f1fccb316eceb07075d905cb5d57560e1210b62151db192e62ea83e60474ae",
+      "pid": 173544,
+      "project": "D:\\MEngineNativeQA\\native-moba-objectives-1791914157717\\project-0",
+      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\244172e356873b0f",
+      "instrumentedScriptSha256": "c8a855ac421f0fc8fc6cf4a41db05dfad732bcf57c3cef5d95fa32a91cb6e3a4",
       "final": {
-        "clientTicks": 1816,
-        "elapsed": 38099,
-        "frame": 249,
+        "clientTicks": 46,
+        "elapsed": 51359,
+        "frame": 301,
+        "initialObjectives": true,
         "localSimulationTicks": 0,
         "mode": "playing",
         "resumes": 0,
-        "snapshots": 243,
+        "snapshots": 29,
         "team": 0
       },
       "exit": {
@@ -987,18 +846,19 @@
       }
     },
     {
-      "pid": 131384,
-      "project": "D:\\MEngineNativeQA\\native-moba-objectives-1791907971139\\project-1",
-      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\7b22d8397ffbfef6",
-      "instrumentedScriptSha256": "2a4ce0c88de8ad1ebd62be4d77c2d306b7bc70c3c53d1676d3c0ca22f7e11d65",
+      "pid": 103536,
+      "project": "D:\\MEngineNativeQA\\native-moba-objectives-1791914157717\\project-1",
+      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\244171e35687395c",
+      "instrumentedScriptSha256": "eca0aa5939a27d615b27cb29d93099c3f156236080c5e6e7de70c0aaf4737193",
       "final": {
-        "clientTicks": 1412,
-        "elapsed": 29939,
-        "frame": 248,
+        "clientTicks": 35,
+        "elapsed": 37018,
+        "frame": 301,
+        "initialObjectives": true,
         "localSimulationTicks": 0,
         "mode": "playing",
         "resumes": 1,
-        "snapshots": 218,
+        "snapshots": 25,
         "team": 1
       },
       "exit": {
@@ -1007,124 +867,113 @@
       }
     }
   ],
-  "elapsedMs": 60841,
+  "elapsedMs": 75798,
   "events": [
     {
       "type": "connected",
       "connection": 1,
-      "at": 24685
+      "at": 30009
     },
     {
       "type": "hello",
       "connection": 1,
-      "at": 24715
+      "at": 30040
     },
     {
       "type": "create",
       "connection": 1,
-      "at": 24717
+      "at": 30043
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 24719
+      "at": 30045
     },
     {
       "type": "ready",
       "connection": 1,
-      "at": 24721
+      "at": 31051
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 26737
+      "at": 33071
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 29739
+      "at": 36100
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 32737
+      "at": 39134
     },
     {
       "type": "connected",
       "connection": 2,
-      "at": 32875
+      "at": 40761
     },
     {
       "type": "hello",
       "connection": 2,
-      "at": 32908
+      "at": 40788
     },
     {
       "type": "list",
       "connection": 2,
-      "at": 32910
+      "at": 40790
     },
     {
       "type": "ping",
       "connection": 2,
-      "at": 32913
+      "at": 40792
     },
     {
       "type": "list",
       "connection": 2,
-      "at": 32916
+      "at": 40795
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 41156
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 41794
     },
     {
       "type": "join",
       "connection": 2,
-      "at": 33921
+      "at": 41799
     },
     {
       "type": "ready",
       "connection": 2,
-      "at": 34938
+      "at": 42810
     },
     {
       "type": "start",
       "connection": 1,
-      "at": 34982
+      "at": 43185
     },
     {
-      "type": "order",
-      "connection": 2,
-      "at": 35045,
-      "seq": 1,
-      "command": {
-        "ids": [
-          21
-        ],
-        "type": "attack",
-        "target": 13
-      }
-    },
-    {
-      "type": "order",
+      "type": "ping",
       "connection": 1,
-      "at": 35061,
-      "seq": 1,
-      "command": {
-        "ids": [
-          2
-        ],
-        "type": "attack",
-        "target": 32
-      }
+      "at": 44188
     },
     {
       "type": "ping",
       "connection": 2,
-      "at": 35813
+      "at": 45625
     },
     {
       "type": "order",
       "connection": 2,
-      "at": 35832,
-      "seq": 2,
+      "at": 46780,
+      "seq": 1,
       "command": {
         "ids": [
           21
@@ -1137,13 +986,13 @@
     {
       "type": "ping",
       "connection": 1,
-      "at": 35899
+      "at": 47281
     },
     {
       "type": "order",
       "connection": 1,
-      "at": 35916,
-      "seq": 2,
+      "at": 47297,
+      "seq": 1,
       "command": {
         "ids": [
           2
@@ -1154,10 +1003,15 @@
       }
     },
     {
+      "type": "ping",
+      "connection": 2,
+      "at": 47882
+    },
+    {
       "type": "order",
       "connection": 2,
-      "at": 36156,
-      "seq": 3,
+      "at": 47898,
+      "seq": 2,
       "command": {
         "ids": [
           21
@@ -1169,8 +1023,8 @@
     {
       "type": "order",
       "connection": 1,
-      "at": 36179,
-      "seq": 3,
+      "at": 48339,
+      "seq": 2,
       "command": {
         "ids": [
           2
@@ -1182,8 +1036,8 @@
     {
       "type": "order",
       "connection": 2,
-      "at": 36878,
-      "seq": 4,
+      "at": 48940,
+      "seq": 3,
       "command": {
         "ids": [
           21
@@ -1196,22 +1050,8 @@
     {
       "type": "order",
       "connection": 1,
-      "at": 36920,
-      "seq": 4,
-      "command": {
-        "ids": [
-          2
-        ],
-        "type": "move",
-        "x": 9,
-        "z": -24
-      }
-    },
-    {
-      "type": "order",
-      "connection": 1,
-      "at": 37366,
-      "seq": 5,
+      "at": 49383,
+      "seq": 3,
       "command": {
         "ids": [
           2
@@ -1223,8 +1063,8 @@
     {
       "type": "order",
       "connection": 2,
-      "at": 37371,
-      "seq": 5,
+      "at": 49987,
+      "seq": 4,
       "command": {
         "ids": [
           21
@@ -1234,10 +1074,34 @@
       }
     },
     {
+      "type": "ping",
+      "connection": 1,
+      "at": 50406
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 50423,
+      "seq": 4,
+      "command": {
+        "ids": [
+          2
+        ],
+        "type": "move",
+        "x": 19,
+        "z": -27
+      }
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 51010
+    },
+    {
       "type": "order",
       "connection": 2,
-      "at": 38177,
-      "seq": 6,
+      "at": 51026,
+      "seq": 5,
       "command": {
         "ids": [
           21
@@ -1250,22 +1114,8 @@
     {
       "type": "order",
       "connection": 1,
-      "at": 38185,
-      "seq": 6,
-      "command": {
-        "ids": [
-          2
-        ],
-        "type": "move",
-        "x": 19,
-        "z": -27
-      }
-    },
-    {
-      "type": "order",
-      "connection": 1,
-      "at": 38590,
-      "seq": 7,
+      "at": 51477,
+      "seq": 5,
       "command": {
         "ids": [
           2
@@ -1277,8 +1127,8 @@
     {
       "type": "order",
       "connection": 2,
-      "at": 38607,
-      "seq": 7,
+      "at": 52122,
+      "seq": 6,
       "command": {
         "ids": [
           21
@@ -1288,32 +1138,10 @@
       }
     },
     {
-      "type": "ping",
-      "connection": 2,
-      "at": 38744
-    },
-    {
-      "type": "ping",
-      "connection": 1,
-      "at": 38744
-    },
-    {
-      "type": "order",
-      "connection": 2,
-      "at": 39496,
-      "seq": 8,
-      "command": {
-        "ids": [
-          21
-        ],
-        "type": "hold"
-      }
-    },
-    {
       "type": "order",
       "connection": 1,
-      "at": 39515,
-      "seq": 8,
+      "at": 52561,
+      "seq": 6,
       "command": {
         "ids": [
           2
@@ -1324,86 +1152,108 @@
     {
       "type": "ping",
       "connection": 2,
-      "at": 41733
+      "at": 53229
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 53244,
+      "seq": 7,
+      "command": {
+        "ids": [
+          21
+        ],
+        "type": "hold"
+      }
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 41742
+      "at": 53599
     },
     {
       "type": "ping",
       "connection": 2,
-      "at": 44738
+      "at": 56354
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 44738
-    },
-    {
-      "type": "ping",
-      "connection": 1,
-      "at": 47733
+      "at": 56718
     },
     {
       "type": "ping",
       "connection": 2,
-      "at": 47739
+      "at": 59475
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 50737
+      "at": 59834
     },
     {
       "type": "ping",
       "connection": 2,
-      "at": 50746
+      "at": 62591
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 53733
+      "at": 62949
     },
     {
       "type": "ping",
       "connection": 2,
-      "at": 53739
+      "at": 65762
     },
     {
       "type": "ping",
       "connection": 1,
-      "at": 56730
-    },
-    {
-      "type": "ping",
-      "connection": 2,
-      "at": 56743
+      "at": 66119
     },
     {
       "type": "closed",
       "connection": 2
     },
     {
+      "type": "ping",
+      "connection": 1,
+      "at": 68210
+    },
+    {
       "type": "connected",
       "connection": 3,
-      "at": 58559
+      "at": 69919
     },
     {
       "type": "hello",
       "connection": 3,
-      "at": 58571
+      "at": 70947
     },
     {
       "type": "resume",
       "connection": 3,
-      "at": 58576
+      "at": 70950
+    },
+    {
+      "type": "ping",
+      "connection": 3,
+      "at": 70951
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 71337
+    },
+    {
+      "type": "ping",
+      "connection": 3,
+      "at": 71979
     },
     {
       "type": "order",
       "connection": 3,
-      "at": 58612,
+      "at": 72001,
       "seq": 1,
       "command": {
         "ids": [
@@ -1415,12 +1265,12 @@
     {
       "type": "ping",
       "connection": 1,
-      "at": 59733
+      "at": 74481
     },
     {
       "type": "ping",
       "connection": 3,
-      "at": 59748
+      "at": 75122
     },
     {
       "type": "closed",

@@ -1,0 +1,1 @@
+Frozen Throne model and textures: Blizzard Entertainment, Warcraft III. Source package: asset-library/warcraft-iii/remaining-ready. These game assets are not CC0 or MIT. Conversion attribution and signed sources are recorded in moba-model-sources.json and SourceAssets/Moba/node-conversion.json.

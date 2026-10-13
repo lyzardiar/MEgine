@@ -1,0 +1,151 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "root": "D:\\MEngineNativeQA\\moba-art-1791914017999",
+  "sample": "D:\\MEngineNativeQA\\moba-art-1791914017999\\sample",
+  "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\3a7c7a3a5ed9ac46",
+  "sourceClientSha256": "f2c3d73a8356120bae53e88a02030b957ad28a04d80bbc43c8fb1171fec5f11a",
+  "sceneSha256": "372c92108da3b6c5a5ecb4dcfd5e9887bafcf856a0ee2e3fbb9e8a2f8d1fcdbe",
+  "editorSha256": "8ec2a4f473212e8661b29ceeb7ee9488517b9aa30614971a034ffe7ecbd6391b",
+  "models": [
+    {
+      "team": 0,
+      "role": "ancient",
+      "key": "WildwoodHall",
+      "scale": 2,
+      "clip": 5,
+      "visibleParts": 5,
+      "worldSize": [
+        5.297612190246582,
+        5.313401080667973,
+        4.776875019073486
+      ]
+    },
+    {
+      "team": 0,
+      "role": "ranged",
+      "key": "ClassicAncientLore",
+      "scale": 2,
+      "clip": 5,
+      "visibleParts": 7,
+      "worldSize": [
+        3.332697629928589,
+        5.303278386592865,
+        4.4576027393341064
+      ]
+    },
+    {
+      "team": 0,
+      "role": "ranged",
+      "key": "ClassicAncientLore",
+      "scale": 2,
+      "clip": 5,
+      "visibleParts": 7,
+      "worldSize": [
+        3.332697629928589,
+        5.303278386592865,
+        4.4576027393341064
+      ]
+    },
+    {
+      "team": 0,
+      "role": "ranged",
+      "key": "ClassicAncientLore",
+      "scale": 2,
+      "clip": 5,
+      "visibleParts": 7,
+      "worldSize": [
+        3.332697629928589,
+        5.303278386592865,
+        4.4576027393341064
+      ]
+    },
+    {
+      "team": 1,
+      "role": "ancient",
+      "key": "ClassicFrozenThrone",
+      "scale": 0.14,
+      "clip": 0,
+      "visibleParts": 5,
+      "worldSize": [
+        6.556561012268067,
+        3.7025866127014164,
+        6.556561012268067
+      ]
+    },
+    {
+      "team": 1,
+      "role": "ranged",
+      "key": "RealTemple",
+      "scale": 2,
+      "clip": 1,
+      "visibleParts": 3,
+      "worldSize": [
+        4.067984461784363,
+        5.197937488555908,
+        4.6755781173706055
+      ]
+    },
+    {
+      "team": 1,
+      "role": "ranged",
+      "key": "RealTemple",
+      "scale": 2,
+      "clip": 1,
+      "visibleParts": 3,
+      "worldSize": [
+        4.067984461784363,
+        5.197937488555908,
+        4.6755781173706055
+      ]
+    },
+    {
+      "team": 1,
+      "role": "ranged",
+      "key": "RealTemple",
+      "scale": 2,
+      "clip": 1,
+      "visibleParts": 3,
+      "worldSize": [
+        4.067984461784363,
+        5.197937488555908,
+        4.6755781173706055
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "moba-base-sentinel.png",
+      "team": 0,
+      "frame": 3,
+      "worldRevision": 3
+    },
+    {
+      "name": "moba-ancient-sentinel.png",
+      "team": 0,
+      "frame": 4,
+      "worldRevision": 4
+    },
+    {
+      "name": "moba-base-scourge.png",
+      "team": 1,
+      "frame": 6,
+      "worldRevision": 6
+    },
+    {
+      "name": "moba-ancient-scourge.png",
+      "team": 1,
+      "frame": 7,
+      "worldRevision": 7
+    }
+  ],
+  "scope": "Owned native Editor, scripted view changes, physical asset paths. Inspects real mesh/pose references and transforms; no physical input or cross-machine acceptance.",
+  "materialPipelinesRejected": 0,
+  "shutdown": {
+    "pid": 134720,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\moba-art-1791914017999\\runtime\\com.mengine.editor.agent-iMDRdZ '\\\\?\\D:\\MEngineNativeQA\\moba-art-1791914017999\\runtime\\com.mengine.editor.agent-iMDRdZ'"
+  }
+}

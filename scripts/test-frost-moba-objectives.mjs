@@ -35,7 +35,7 @@ function lane(s,team,n){for(let tier=1;tier<=3;tier++)kill(s,objective(s,team,'t
   reject(v=>v.mobaObjectives[1].id=v.mobaObjectives[0].id);reject(v=>v.mobaObjectives.pop());reject(v=>v.mobaObjectives[0].team=3);reject(v=>v.mobaObjectives[0].alive=false);reject(v=>v.units.find(u=>u.mobaProtected).mobaProtected=false);reject(v=>v.units=v.units.filter(u=>u.id!==v.mobaObjectives[0].id));reject(v=>v.mobaObjectivesVersion=0);reject(v=>v.mobaObjectivesVersion=2);
   const old=S.create('moba',{mobaObjectivesVersion:0,ai:[false,false]});delete old.mobaObjectivesVersion;const restored=S.restore(old);assert.equal(restored.mobaObjectivesVersion,0);assert.equal(restored.units.filter(u=>u.kind==='tower').length,12);assert.ok(!restored.units.some(u=>u.mobaProtected));
 }
-globalThis.Frost=S;globalThis.FrostArt=createRequire(import.meta.url)('../samples/frostbound-realms/model-catalog.json');const V=createRequire(import.meta.url)('../samples/frostbound-realms/game/visuals.js');
+globalThis.Frost=S;globalThis.FrostArt=Object.assign({},...['model-catalog','druid-models','moba-models'].map(n=>createRequire(import.meta.url)('../samples/frostbound-realms/'+n+'.json')));const V=createRequire(import.meta.url)('../samples/frostbound-realms/game/visuals.js');
 {const s=game();for(const u of s.units.filter(u=>u.mobaObjective)){const m=V.model(s,u);assert.ok(m.asset);assert.equal(m.key,S.mobaObjectives.model(u));assert.ok(m.scale>0);assert.equal(V.name(s,u),S.mobaObjectives.label(u));}}
 assert.ok(V.projectile('arrow'));
 console.log('PASS MOBA 36 objectives, protected real damage, lane/T4/ancient progression, future-only lane and mega buffs, fog-safe manifest, 120 restore ticks, invalid-save rejection, legacy layout and objective models');

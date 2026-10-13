@@ -54,7 +54,8 @@ var FrostMobaObjectives = (() => {
   }
   function label(u){const o=u?.mobaObjective;return !o?'':o.role==='ancient'?'远古遗迹':o.role==='tower'?'T'+o.tier+' 防御塔':o.role==='melee'?'近战兵营':'远程兵营';}
   function status(s,team){if(s.mobaObjectivesVersion!==1)return '';const own=s.mobaObjectives.filter(o=>o.team===team);return '防御塔 '+own.filter(o=>o.role==='tower'&&o.alive).length+'/11 · 兵营 '+own.filter(o=>['melee','ranged'].includes(o.role)&&o.alive).length+'/6';}
-  function model(u){const o=u?.mobaObjective;if(!o)return null;return o.role==='ancient'?(u.team===0?'WildwoodHall':'RevenantHall'):o.role==='tower'?(u.team===0?'WildwoodTower':'RevenantSpiritTower'):o.role==='melee'?(u.team===0?'WildwoodBarracks':'RevenantBarracks'):(u.team===0?'WildwoodWorkshop':'RealTemple');}
-  return {layout,setup,destroyed,reinforcement,validate,label,status,model};
+  function model(u){const o=u?.mobaObjective;if(!o)return null;return o.role==='ancient'?(u.team===0?'WildwoodHall':'ClassicFrozenThrone'):o.role==='tower'?(u.team===0?'WildwoodTower':'RevenantSpiritTower'):o.role==='melee'?(u.team===0?'WildwoodBarracks':'RevenantBarracks'):(u.team===0?'ClassicAncientLore':'RealTemple');}
+  const artProfile=key=>key==='ClassicFrozenThrone'?{modelScale:.07,selectionScale:4.75}:null;
+  return {artProfile,layout,setup,destroyed,reinforcement,validate,label,status,model};
 })();
 if(typeof module!=='undefined')module.exports=FrostMobaObjectives;
