@@ -11,6 +11,26 @@ type UiFontFaceEntry = {
 const fontFaces = new Map<string, UiFontFaceEntry>();
 let indexedFiles: ProjectFileAsset[] | undefined;
 let fontAssets = new Map<string, ProjectFileAsset>();
+let measurementFiles: ProjectFileAsset[] | undefined;
+let measurementRevision = 0;
+let measurementFonts: FontFaceSet | undefined;
+const invalidateFontMeasurements = () => { measurementRevision++; };
+
+/** Metrics also change when a pending font replaces its fallback face. */
+export function uiFontMeasurementRevision(): number {
+  const files = listProjectFiles();
+  if (files !== measurementFiles) { measurementFiles = files; measurementRevision++; }
+  const fonts = typeof document === 'undefined' ? undefined : document.fonts;
+  if (fonts !== measurementFonts) {
+    measurementFonts?.removeEventListener('loadingdone', invalidateFontMeasurements);
+    measurementFonts?.removeEventListener('loadingerror', invalidateFontMeasurements);
+    measurementFonts = fonts;
+    fonts?.addEventListener('loadingdone', invalidateFontMeasurements);
+    fonts?.addEventListener('loadingerror', invalidateFontMeasurements);
+    measurementRevision++;
+  }
+  return measurementRevision;
+}
 
 function portableFontPath(value: string): string {
   const normalized = String(value ?? '').trim().replaceAll('\\', '/');
@@ -75,6 +95,7 @@ export function uiFontFamily(fontPath: string): string {
         return;
       }
       document.fonts.add(loaded);
+      invalidateFontMeasurements();
       fontFaces.set(identity.key, { path: normalizedKey, family, status: 'ready', face: loaded });
       globalThis.dispatchEvent?.(new CustomEvent(FONT_LOAD_EVENT, { detail: normalized }));
     }).catch(() => {
@@ -106,4 +127,5 @@ export function resetUiFontFaceCacheForTests(): void {
     }
   }
   fontFaces.clear();
+  invalidateFontMeasurements();
 }

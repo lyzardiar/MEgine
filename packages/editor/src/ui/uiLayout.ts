@@ -79,7 +79,7 @@ import {
   type UiTextLayoutRun,
 } from './uiTextLayout';
 import type { UiRichTextGlyph } from './uiRichText';
-import { uiTextFontCss } from './uiFontAssets';
+import { uiFontMeasurementRevision, uiTextFontCss } from './uiFontAssets';
 
 /** Screen-space Canvas pixels map 1:1 to Scene world units, matching its RectTransform size. */
 export const UI_SCENE_PPU = 1;
@@ -552,12 +552,22 @@ function textIntrinsicPreferredSize(
   ];
 }
 
+const canvasTextMeasurements = new WeakMap<CanvasRenderingContext2D, { key: string; measurement: UiTextLayoutMeasurement }>();
+const MAX_TEXT_METRICS = 4096;
+
 export function canvasUiTextLayoutMeasurement(
   ctx: CanvasRenderingContext2D,
 ): UiTextLayoutMeasurement {
+  const canvas = ctx.canvas;
+  const direction = ctx.direction === 'inherit' ? canvas.ownerDocument.defaultView?.getComputedStyle(canvas).direction : ctx.direction;
+  const contextLanguage = (ctx as CanvasRenderingContext2D & { lang?: string }).lang;
+  const language = contextLanguage && contextLanguage !== 'inherit' ? contextLanguage : canvas.closest?.('[lang]')?.getAttribute('lang');
+  const key = JSON.stringify([uiFontMeasurementRevision(), direction, language, ctx.textAlign, ctx.textBaseline, ctx.fontKerning, ctx.fontStretch, ctx.fontVariantCaps, ctx.letterSpacing, ctx.wordSpacing, ctx.textRendering]);
+  const previous = canvasTextMeasurements.get(ctx);
+  if (previous?.key === key) return previous.measurement;
   const glyphCache = new Map<string, UiTextGlyphMeasurement>();
   const pairCache = new Map<string, number>();
-  return {
+  const measurement: UiTextLayoutMeasurement = {
     measureGlyph: (font, glyph) => {
       const key = `${font}\0${glyph.fontSize}\0${glyph.fontStyle}\0${glyph.character}`;
       const cached = glyphCache.get(key);
@@ -591,6 +601,7 @@ export function canvasUiTextLayoutMeasurement(
             ? [-left, right]
             : null,
         };
+        if (glyphCache.size >= MAX_TEXT_METRICS) glyphCache.clear();
         glyphCache.set(key, measured);
         return measured;
       } finally {
@@ -611,6 +622,7 @@ export function canvasUiTextLayoutMeasurement(
         ctx.fontKerning = 'normal';
         const measured = ctx.measureText(left.character + right.character).width - unkerned;
         const kerning = Number.isFinite(measured) ? measured : 0;
+        if (pairCache.size >= MAX_TEXT_METRICS) pairCache.clear();
         pairCache.set(key, kerning);
         return kerning;
       } finally {
@@ -619,6 +631,8 @@ export function canvasUiTextLayoutMeasurement(
       }
     },
   };
+  canvasTextMeasurements.set(ctx, { key, measurement });
+  return measurement;
 }
 
 function layoutChildMetrics(

@@ -12,7 +12,7 @@ const server = await createServer({
   logLevel: 'silent',
   server: { middlewareMode: true },
 });
-const { resetUiFontFaceCacheForTests, uiFontFamily, uiTextFontCss } = await server.ssrLoadModule(
+const { resetUiFontFaceCacheForTests, uiFontFamily, uiFontMeasurementRevision, uiTextFontCss } = await server.ssrLoadModule(
   '/src/ui/uiFontAssets.ts',
 );
 test.after(() => server.close());
@@ -55,4 +55,22 @@ test('font CSS bounds hostile sizes and preserves synthetic Unity styles', () =>
     /^italic 700 16px "MEngineFont_[0-9a-f]{8}", system-ui, sans-serif$/,
   );
   assert.equal(uiTextFontCss(9_999, 'Normal', ''), '512px system-ui, sans-serif');
+});
+
+test('an imported font invalidates fallback measurements when added without a FontFaceSet event', async () => {
+  const previousDocument = globalThis.document, previousFace = globalThis.FontFace;
+  const fonts = new EventTarget(), loaded = new Set();
+  fonts.add = face => loaded.add(face); fonts.delete = face => loaded.delete(face);
+  let finish;
+  globalThis.document = { fonts };
+  globalThis.FontFace = class { load() { return new Promise(resolve => { finish = () => resolve(this); }); } };
+  try {
+    resetUiFontFaceCacheForTests();
+    const before = uiFontMeasurementRevision(), family = uiFontFamily('Assets/Fonts/Pending.ttf');
+    assert.equal(uiFontMeasurementRevision(), before, 'starting a load preserves fallback metrics');
+    finish(); await Promise.resolve();
+    assert.equal(loaded.size, 1);
+    assert.ok(uiFontMeasurementRevision() > before);
+    assert.equal(uiFontFamily('Assets/Fonts/Pending.ttf'), family, 'the CSS family stays stable as its metrics change');
+  } finally { resetUiFontFaceCacheForTests(); globalThis.document = previousDocument; globalThis.FontFace = previousFace; }
 });
