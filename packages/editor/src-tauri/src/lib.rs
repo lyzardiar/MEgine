@@ -45,8 +45,11 @@ struct AppState {
 static VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
 static GAME_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_scene::SharedSnapshotWorld>> = OnceLock::new();
 static SCENE_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_editor_host::SceneSnapshotWorld>> = OnceLock::new();
+static CAMERA_PREVIEW_SNAPSHOT_WORLD: OnceLock<Mutex<mengine_editor_host::SceneSnapshotWorld>> = OnceLock::new();
 static FILTERED_PLAY_SCENE_WORLD: OnceLock<Mutex<mengine_editor_host::SceneSnapshotWorld>> = OnceLock::new();
 static SCENE_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
+// MiYu: camera UI targets and residency must survive intervening Scene frames.
+static CAMERA_PREVIEW_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> = OnceLock::new();
 static EFFEKSEER_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> =
     OnceLock::new();
 static MATERIAL_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> =
@@ -4406,10 +4409,14 @@ async fn render_native_game_view(
         )
     };
     let runtime = state.play_runtime.clone();
+    let queued = Instant::now();
     let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
+        let worker_queue_ms = queued.elapsed().as_secs_f64() * 1000.0;
         let render = move |world: &mengine_core::World| -> Result<EditorViewportFrame, String> {
         let viewport = VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
+        let waiting = Instant::now();
         let mut viewport = viewport.lock();
+        let renderer_lock_wait_ms = waiting.elapsed().as_secs_f64() * 1000.0;
         if viewport
             .as_ref()
             .is_none_or(|renderer| renderer.project_root() != project_root)
@@ -4419,19 +4426,23 @@ async fn render_native_game_view(
                     .map_err(|error| error.to_string())?,
             );
         }
-        let frame = viewport
+        let mut frame = viewport
             .as_mut()
             .expect("viewport renderer initialized above")
             .render_game(world, width, height)
             .map_err(|error| error.to_string())?;
+        frame.profile.worker_queue_ms = Some(worker_queue_ms);
+        frame.profile.renderer_lock_wait_ms = Some(renderer_lock_wait_ms);
         drop(viewport);
         Ok(frame)
         };
         match (snapshot, play_session_id) {
             (Some(snapshot), _) => {
+                let waiting = Instant::now();
                 let mut mirror = GAME_SNAPSHOT_WORLD.get_or_init(|| Mutex::new(mengine_scene::SharedSnapshotWorld::default())).lock();
+                let wait_ms = waiting.elapsed().as_secs_f64() * 1000.0;
                 let sync = Instant::now(); mirror.update_owned(snapshot); let sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
-                let mut frame = render(mirror.world())?; frame.profile.world_sync_ms = Some(sync_ms); Ok(frame)
+                let mut frame = render(mirror.world())?; frame.profile.world_sync_ms = Some(sync_ms); frame.profile.world_lock_wait_ms = Some(wait_ms); Ok(frame)
             },
             (None, Some(id)) => runtime.render_revision(id, play_revision, render),
             _ => Err("viewport world is unavailable".into()),
@@ -4472,8 +4483,11 @@ async fn render_native_scene_view(
     let mut snapshot = snapshot;
     if let Some(snapshot) = snapshot.as_mut() { filter_scene_view_snapshot(snapshot, &mut request); }
     if snapshot.is_none() && retained_key.is_some() { request.hidden_entity_ids.clear(); }
+    let camera_preview = request.camera_entity.is_some();
     let runtime = state.play_runtime.clone();
+    let queued = Instant::now();
     let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
+        let worker_queue_ms = queued.elapsed().as_secs_f64() * 1000.0;
         let render = move |world: &mengine_core::World, source: Option<&mengine_core::snapshot::SharedWorldSnapshot>| -> Result<EditorViewportFrame, String> {
         let mut filtered_world;
         let mut filtered_sync_ms = 0.0;
@@ -4485,8 +4499,10 @@ async fn render_native_scene_view(
             filtered_sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
             world
         } else { world };
-        let viewport = SCENE_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
+        let viewport = if camera_preview { &CAMERA_PREVIEW_RENDERER } else { &SCENE_VIEWPORT_RENDERER }.get_or_init(|| Mutex::new(None));
+        let waiting = Instant::now();
         let mut viewport_guard = viewport.lock();
+        let renderer_lock_wait_ms = waiting.elapsed().as_secs_f64() * 1000.0;
         if viewport_guard
             .as_ref()
             .is_none_or(|renderer| renderer.project_root() != project_root)
@@ -4550,15 +4566,20 @@ async fn render_native_scene_view(
         }
         .map_err(|error| error.to_string())?;
         if filtered_sync_ms > 0.0 { frame.profile.world_sync_ms = Some(filtered_sync_ms); }
+        frame.profile.worker_queue_ms = Some(worker_queue_ms);
+        frame.profile.renderer_lock_wait_ms = Some(renderer_lock_wait_ms);
         drop(viewport_guard);
         Ok(frame)
         };
         match (snapshot, play_session_id) {
             (snapshot, _) if snapshot.is_some() || retained_key.is_some() => {
-                let mut mirror = SCENE_SNAPSHOT_WORLD.get_or_init(|| Mutex::new(mengine_editor_host::SceneSnapshotWorld::default())).lock();
+                let waiting = Instant::now();
+                let mut mirror = if camera_preview { &CAMERA_PREVIEW_SNAPSHOT_WORLD } else { &SCENE_SNAPSHOT_WORLD }.get_or_init(|| Mutex::new(mengine_editor_host::SceneSnapshotWorld::default())).lock();
+                let wait_ms = waiting.elapsed().as_secs_f64() * 1000.0;
                 let sync = Instant::now(); let world = mirror.update(retained_key, snapshot).map_err(str::to_owned)?; let sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
-                let mut frame = render(world, None)?; frame.profile.world_sync_ms = Some(sync_ms); Ok(frame)
+                let mut frame = render(world, None)?; frame.profile.world_sync_ms = Some(sync_ms); frame.profile.world_lock_wait_ms = Some(wait_ms); Ok(frame)
             },
+            (None, Some(id)) if camera_preview => runtime.render_preview_revision_with_snapshot(id, play_revision, move |world, source| render(world, Some(source))),
             (None, Some(id)) => runtime.render_revision_with_snapshot(id, play_revision, move |world, source| render(world, Some(source))),
             _ => Err("viewport world is unavailable".into()),
         }

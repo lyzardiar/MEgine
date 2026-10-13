@@ -8,11 +8,21 @@ import {
   EDITOR_PROFILER_BACKGROUND_UI_INTERVAL_MS,
   editorProfilerUiRefreshDelay,
   nearestEditorProfilerFrame,
+  nativeViewportRequestStages,
   readNativeViewportProfiles,
   recordNativeViewportProfile,
   summarizeEditorProfilerSamples,
   summarizeNativeViewportProfiles,
 } from '../src/editorProfiler.ts';
+
+test('request scopes account for queueing without double-counting simulation, GPU or publication', () => {
+  const profile = { totalMs: 21, commandMs: 160, transportMs: 177, workerQueueMs: 3, worldLockWaitMs: 129, worldSyncMs: 2, rendererLockWaitMs: 1, simulationMs: 8, gpu: { totalPassMs: 10 }, sharedTransport: { publicationReadyToEventMs: 12 } };
+  const stages = nativeViewportRequestStages(profile);
+  assert.deepEqual(stages.map(stage => stage.ms), [3, 129, 2, 1, 21, 4, 17]);
+  assert.equal(stages.reduce((sum, stage) => sum + stage.ms, 0), 177);
+  assert.equal(nativeViewportRequestStages({ totalMs: 21, commandMs: 160 })[5].ms, undefined);
+  assert.equal(nativeViewportRequestStages({ totalMs: 21 })[6].ms, undefined);
+});
 
 function frame(timestamp, overrides = {}) {
   return {

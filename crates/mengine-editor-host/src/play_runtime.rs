@@ -87,8 +87,9 @@ enum Request {
     Barrier { entered: Sender<()>, resume: mpsc::Receiver<()> },
 }
 
-/// QuickJS stays on one worker thread. Native rendering and editor IPC never own its GC context.
-pub struct EditorPlayRuntime { sender: Sender<Request>, generation: Arc<AtomicU64>, render_world: std::sync::Mutex<(u64, mengine_scene::SharedSnapshotWorld)>, render_history: Arc<parking_lot::Mutex<Option<(u64, PlayRenderHistory)>>> }
+type PlayRenderWorld = std::sync::Mutex<(u64, mengine_scene::SharedSnapshotWorld)>;
+/// The script VM stays on one worker thread; viewport mirrors only consume published snapshots.
+pub struct EditorPlayRuntime { sender: Sender<Request>, generation: Arc<AtomicU64>, render_world: PlayRenderWorld, preview_render_world: PlayRenderWorld, render_history: Arc<parking_lot::Mutex<Option<(u64, PlayRenderHistory)>>> }
 
 impl Default for EditorPlayRuntime {
     fn default() -> Self {
@@ -157,7 +158,7 @@ impl Default for EditorPlayRuntime {
                 }
             }
         }).expect("create editor script worker");
-        Self { sender, generation, render_world: std::sync::Mutex::new((0, mengine_scene::SharedSnapshotWorld::default())), render_history }
+        Self { sender, generation, render_world: PlayRenderWorld::default(), preview_render_world: PlayRenderWorld::default(), render_history }
     }
 }
 
@@ -203,7 +204,7 @@ impl EditorPlayRuntime {
         result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play step: {error}"))?
     }
 
-    /// MiYu: render a published world on the caller thread while QuickJS continues simulating.
+    /// MiYu: render a published world on the caller thread while the script VM continues simulating.
     pub fn render(&self, generation: u64, render: impl FnOnce(&World) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
         self.render_revision(generation, None, render)
     }
@@ -215,6 +216,15 @@ impl EditorPlayRuntime {
 
     /// The published source retains browser entity IDs for Scene visibility filtering.
     pub fn render_revision_with_snapshot(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
+        self.render_revision_from_world(generation, revision, &self.render_world, render)
+    }
+
+    /// MiYu: preview resource initialization never holds the Scene/Game world mirror lock.
+    pub fn render_preview_revision_with_snapshot(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
+        self.render_revision_from_world(generation, revision, &self.preview_render_world, render)
+    }
+
+    fn render_revision_from_world(&self, generation: u64, revision: Option<u64>, render_world: &PlayRenderWorld, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
         let published = if let Some(revision) = revision {
             let history = self.render_history.lock();
             if self.generation() != generation { return Err("Play session expired".into()); }
@@ -224,12 +234,14 @@ impl EditorPlayRuntime {
             self.sender.send(Request::RenderSnapshot { generation, revision, reply }).map_err(|error| error.to_string())?;
             result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play rendering: {error}"))??
         };
-        self.render_published_snapshot(generation, revision, published, render)
+        self.render_published_snapshot(generation, revision, published, render_world, render)
     }
 
-    fn render_published_snapshot(&self, generation: u64, revision: Option<u64>, published: PlayRenderSnapshot, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String>) -> Result<EditorViewportFrame, String> {
+    fn render_published_snapshot(&self, generation: u64, revision: Option<u64>, published: PlayRenderSnapshot, render_world: &PlayRenderWorld, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String>) -> Result<EditorViewportFrame, String> {
         let (snapshot, step_ms, stages) = published;
-        let mut mirror = self.render_world.lock().map_err(|error| format!("Play render world: {error}"))?;
+        let waiting = Instant::now();
+        let mut mirror = render_world.lock().map_err(|error| format!("Play render world: {error}"))?;
+        let world_lock_wait_ms = waiting.elapsed().as_secs_f64() * 1000.0;
         if self.generation() != generation { return Err("Play session expired".into()); }
         let started = Instant::now();
         if mirror.0 != generation { *mirror = (generation, mengine_scene::SharedSnapshotWorld::default()); }
@@ -238,6 +250,7 @@ impl EditorPlayRuntime {
         let frame = render(mirror.1.world(), &snapshot);
         if self.generation() != generation { return Err("Play session expired".into()); }
         let mut frame = frame?;
+        frame.profile.world_lock_wait_ms = Some(world_lock_wait_ms);
         frame.profile.world_sync_ms = Some(world_sync_ms + frame.profile.world_sync_ms.unwrap_or(0.0));
         frame.profile.simulation_ms = Some(step_ms);
         frame.profile.simulation_stages = stages;
@@ -426,6 +439,29 @@ mod tests {
     }
 
     #[test]
+    fn slow_preview_does_not_block_game_revisions_and_cannot_publish_after_restart() {
+        let runtime = Arc::new(EditorPlayRuntime::default()); let id = runtime.begin();
+        runtime.start(id, String::new(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        let (entered, ready) = mpsc::channel(); let (release, resume) = mpsc::channel();
+        let preview_runtime = runtime.clone();
+        let preview = std::thread::spawn(move || preview_runtime.render_preview_revision_with_snapshot(id, Some(0), move |world, _| {
+            assert_eq!(world.time.frame, 0); entered.send(()).unwrap(); resume.recv_timeout(Duration::from_secs(3)).unwrap(); Err("preview finished".into())
+        }));
+        ready.recv_timeout(Duration::from_secs(3)).unwrap();
+        assert_eq!(runtime.advance_update(id, None, ScriptInput::default(), 0.01).unwrap().revision, 1);
+        let (completed, result) = mpsc::channel(); let game_runtime = runtime.clone();
+        let game = std::thread::spawn(move || { completed.send(game_runtime.render_revision(id, Some(1), |world| { assert_eq!(world.time.frame, 1); Err("game finished".into()) }).err().unwrap()).unwrap(); });
+        let independent = result.recv_timeout(Duration::from_secs(1));
+        runtime.stop_session(id); let next = runtime.begin();
+        runtime.start(next, String::new(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        release.send(()).unwrap(); game.join().unwrap();
+        assert_eq!(independent.unwrap(), "game finished");
+        assert_eq!(preview.join().unwrap().err().unwrap(), "Play session expired");
+        assert_eq!(runtime.render_preview_revision_with_snapshot(next, Some(0), |world, _| { assert_eq!(world.time.frame, 0); Err("new preview".into()) }).err().unwrap(), "new preview");
+        assert_eq!(runtime.render_preview_revision_with_snapshot(id, Some(0), |_, _| panic!("old preview must not render")).err().unwrap(), "Play session expired");
+    }
+
+    #[test]
     fn stopping_and_restarting_does_not_wait_for_a_render_or_publish_its_old_result() {
         let runtime = Arc::new(EditorPlayRuntime::default()); let id = runtime.begin();
         runtime.start(id, String::new(), WorldSnapshot::default(), PlayProject::default()).unwrap();
@@ -452,7 +488,7 @@ mod tests {
         runtime.sender.send(Request::RenderSnapshot { generation: id, revision: Some(0), reply }).unwrap();
         let published = result.recv_timeout(Duration::from_secs(3)).unwrap().unwrap();
         let renderer = runtime.clone();
-        let rendering = std::thread::spawn(move || renderer.render_published_snapshot(id, Some(0), published, |_, _| panic!("expired renderer must not execute")));
+        let rendering = std::thread::spawn(move || renderer.render_published_snapshot(id, Some(0), published, &renderer.render_world, |_, _| panic!("expired renderer must not execute")));
         runtime.stop_session(id); let next = runtime.begin();
         runtime.start(next, String::new(), WorldSnapshot::default(), PlayProject::default()).unwrap();
         drop(mirror);
