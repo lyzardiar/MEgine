@@ -1,0 +1,310 @@
+{
+  "author": "MiYu",
+  "fullWarcraftGoal": "active",
+  "scope": "Remove per-frame render-object cloning and repeated mesh-key/source checks in runtime mesh synchronization. Preserve pose sampling, camera billboards, source polling, eviction and invalidation.",
+  "implementation": [
+    "Borrow main and nested view objects in sync_frame.",
+    "Borrow duplicate-detection keys and update existing usage entries without replacing strings.",
+    "Resolve retained pose and patch sources in one pass; skip empty source caches.",
+    "Check each billboard source once per camera preparation, preserving success/failure for duplicate references.",
+    "Reuse file metadata per authored source within one mesh synchronization."
+  ],
+  "executable": "D:\\MEngineNativeQA\\release-editor-mesh-sync.exe",
+  "sha256": "9a583dcd6697a1cafdaba3cd468d5e3ef4ca67f98a1de440ba3148e994973580",
+  "runtimeTests": {
+    "passed": 218,
+    "failed": 0,
+    "log": "D:\\MEngineNativeQA\\mesh-sync-runtime-regression.log",
+    "newCase": "Main and nested views retain used pose and billboard sources while stale meshes are evicted; explicit source invalidation remains effective."
+  },
+  "releaseBuildLog": "D:\\MEngineNativeQA\\mesh-sync-release-build.log",
+  "runs": [
+    {
+      "mode": "before",
+      "reportPath": "D:\\MEngineNativeQA\\release-scene-profile-mesh-sync-before-1791856917337\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "error": null,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "gameNativeSummary": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 25.357499999801316,
+        "p95PresentIntervalMs": 48.09999990463257,
+        "presentedFps": 39.43606428109377,
+        "averageRequestMs": 18.888749987880388,
+        "averageRenderMs": 10.547340000000004,
+        "averageCommandMs": 12.631794583333333,
+        "averageUploadMs": 1.6549999962250392,
+        "averageWorldSyncMs": 1.4329391666666653,
+        "averageSimulationMs": 9.1124575,
+        "averageSimulationRequestMs": 17.26458333134651
+      },
+      "playSceneNativeSummary": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 31.224166666467983,
+        "p95PresentIntervalMs": 40.700000047683716,
+        "presentedFps": 32.026475219718584,
+        "averageRequestMs": 20.79333333671093,
+        "averageRenderMs": 8.421182499999995,
+        "averageCommandMs": 11.41711041666667,
+        "averageUploadMs": 1.7612499992052715,
+        "averageWorldSyncMs": 2.534164166666667,
+        "averageSimulationMs": 9.716042916666668,
+        "averageSimulationRequestMs": 23.724166668454806
+      },
+      "game": {
+        "RuntimeMeshCache.sync": {
+          "count": 483,
+          "mean": 1.01995900621118,
+          "median": 0.6930000000000001,
+          "p95": 4.0261000000000005
+        },
+        "Profiler.snapshot": {
+          "count": 483,
+          "mean": 0.9319840579710146,
+          "median": 0.0857,
+          "p95": 8.7291
+        },
+        "Renderer.submit_frame_to": {
+          "count": 483,
+          "mean": 1.430191925465838,
+          "median": 1.3558000000000001,
+          "p95": 1.9507
+        },
+        "RuntimeTextureCache.sync_materials": {
+          "count": 483,
+          "mean": 0.17024616977225668,
+          "median": 0.06609999999999999,
+          "p95": 1.0504
+        },
+        "Camera, meshes and lighting": {
+          "count": 483,
+          "mean": 1.1281391304347828,
+          "median": 0.9767,
+          "p95": 2.0058
+        },
+        "Readback GPU map wait": {
+          "count": 483,
+          "mean": 2.796633954451349,
+          "median": 2.7001,
+          "p95": 3.4732000000000003
+        }
+      },
+      "playScene": {
+        "RuntimeMeshCache.sync": {
+          "count": 405,
+          "mean": 1.1015195061728398,
+          "median": 0.7736000000000001,
+          "p95": 4.0995
+        },
+        "Profiler.snapshot": {
+          "count": 405,
+          "mean": 0.84035975308642,
+          "median": 0.059500000000000004,
+          "p95": 7.0564
+        },
+        "Renderer.submit_frame_to": {
+          "count": 405,
+          "mean": 1.400633827160492,
+          "median": 1.3419,
+          "p95": 1.803
+        },
+        "RuntimeTextureCache.sync_materials": {
+          "count": 405,
+          "mean": 0.18925629629629626,
+          "median": 0.06949999999999999,
+          "p95": 1.0791
+        },
+        "Camera, meshes and lighting": {
+          "count": 405,
+          "mean": 0.8669558024691362,
+          "median": 0.7123,
+          "p95": 1.7141000000000002
+        },
+        "Readback GPU map wait": {
+          "count": 405,
+          "mean": 3.1384451851851822,
+          "median": 3.0076,
+          "p95": 3.6991
+        }
+      },
+      "editCompletedMovingFrames": 698,
+      "playCompletedMovingFrames": 404,
+      "pendingPick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "maskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 984,
+        "renderedRevision": 984,
+        "changedPixels": 663,
+        "expandedMaskDifferentPixels": 60,
+        "snapshotDifferentPixels": 66,
+        "restoredDifferentPixels": 70,
+        "repeatedDifferentPixels": 73,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.3074
+      },
+      "preview": {
+        "entity": 4294967296,
+        "draws": 50
+      },
+      "movingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-mesh-sync-before-1791856917337\\moving-play-scene.png",
+      "ownerPid": 116968
+    },
+    {
+      "mode": "after",
+      "reportPath": "D:\\MEngineNativeQA\\release-scene-profile-mesh-sync-after-1791857041948\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "error": null,
+      "editEmptyPaints": 0,
+      "playEmptyPaints": 0,
+      "gameNativeSummary": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 23.98416666686535,
+        "p95PresentIntervalMs": 40.299999952316284,
+        "presentedFps": 41.69417323894442,
+        "averageRequestMs": 17.14999999701977,
+        "averageRenderMs": 9.702335416666664,
+        "averageCommandMs": 11.487248333333339,
+        "averageUploadMs": 1.6333333392937979,
+        "averageWorldSyncMs": 1.2735570833333336,
+        "averageSimulationMs": 8.39388125,
+        "averageSimulationRequestMs": 16.127083336313564
+      },
+      "playSceneNativeSummary": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 28.6125,
+        "p95PresentIntervalMs": 37.799999952316284,
+        "presentedFps": 34.94975972040192,
+        "averageRequestMs": 18.403750000397363,
+        "averageRenderMs": 7.740477916666672,
+        "averageCommandMs": 10.62686333333333,
+        "averageUploadMs": 1.743333343664805,
+        "averageWorldSyncMs": 2.3307583333333333,
+        "averageSimulationMs": 9.09551291666667,
+        "averageSimulationRequestMs": 20.692083342870077
+      },
+      "game": {
+        "RuntimeMeshCache.sync": {
+          "count": 486,
+          "mean": 0.7195236625514404,
+          "median": 0.4622,
+          "p95": 1.5095
+        },
+        "Profiler.snapshot": {
+          "count": 486,
+          "mean": 0.9070312757201647,
+          "median": 0.0914,
+          "p95": 8.7576
+        },
+        "Renderer.submit_frame_to": {
+          "count": 486,
+          "mean": 6.202122839506173,
+          "median": 1.3392,
+          "p95": 1.7805
+        },
+        "RuntimeTextureCache.sync_materials": {
+          "count": 486,
+          "mean": 2.148244032921811,
+          "median": 0.07150000000000001,
+          "p95": 1.0473
+        },
+        "Camera, meshes and lighting": {
+          "count": 486,
+          "mean": 1.1016331275720164,
+          "median": 0.9533,
+          "p95": 1.9992999999999999
+        },
+        "Readback GPU map wait": {
+          "count": 486,
+          "mean": 2.812517489711933,
+          "median": 2.7016,
+          "p95": 3.4765
+        }
+      },
+      "playScene": {
+        "RuntimeMeshCache.sync": {
+          "count": 419,
+          "mean": 0.57912338902148,
+          "median": 0.5502,
+          "p95": 1.5298
+        },
+        "Profiler.snapshot": {
+          "count": 419,
+          "mean": 0.8254436754176613,
+          "median": 0.0725,
+          "p95": 7.1358999999999995
+        },
+        "Renderer.submit_frame_to": {
+          "count": 419,
+          "mean": 1.368808353221957,
+          "median": 1.3262,
+          "p95": 1.5969
+        },
+        "RuntimeTextureCache.sync_materials": {
+          "count": 419,
+          "mean": 0.18803054892601434,
+          "median": 0.07200000000000001,
+          "p95": 1.0585
+        },
+        "Camera, meshes and lighting": {
+          "count": 419,
+          "mean": 0.8463269689737472,
+          "median": 0.7110000000000001,
+          "p95": 1.6965000000000001
+        },
+        "Readback GPU map wait": {
+          "count": 419,
+          "mean": 3.1057071599045387,
+          "median": 2.9724,
+          "p95": 3.7605999999999997
+        }
+      },
+      "editCompletedMovingFrames": 695,
+      "playCompletedMovingFrames": 418,
+      "pendingPick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "maskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 986,
+        "renderedRevision": 986,
+        "changedPixels": 652,
+        "expandedMaskDifferentPixels": 53,
+        "snapshotDifferentPixels": 69,
+        "restoredDifferentPixels": 68,
+        "repeatedDifferentPixels": 61,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.654000000000001
+      },
+      "preview": {
+        "entity": 4294967296,
+        "draws": 55
+      },
+      "movingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-mesh-sync-after-1791857041948\\moving-play-scene.png",
+      "ownerPid": 100600
+    }
+  ],
+  "comparison": "Both final sequential runs started after all builds completed; same fixed QA game source and harness. Earlier diagnostic run is excluded from performance comparison.",
+  "limitations": [
+    "One sequential local A/B pair establishes the reported stage measurements, not a cross-machine performance guarantee.",
+    "Observed Game FPS 39.44 to 41.69 and moving Play Scene 32.03 to 34.95; stable 60 FPS is not established.",
+    "CPU stages and GPU pass timings overlap and must not be summed."
+  ],
+  "nextFocus": "Profiler.snapshot allocations and repeated normalized references in collect_frame_resources. Keep complete normalized asset identities, reference provenance and preview resources while reducing duplicated work."
+}
