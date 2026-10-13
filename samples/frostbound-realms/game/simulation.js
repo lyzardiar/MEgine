@@ -764,7 +764,9 @@ var Frost = (() => {
     for(const [a,b] of [[0,3],[3,2],[2,1],[1,0]]){const cut=crossing(vertices[a],vertices[b]),steps=[0,.25,.5,.75];if(cut!==null&&cut>1e-6&&cut<1-1e-6&&!steps.some(v=>Math.abs(v-cut)<1e-6))steps.push(cut);steps.sort((a,b)=>a-b);for(const t of steps){const p=top(mix(vertices[a][0],vertices[b][0],t),mix(vertices[a][1],vertices[b][1],t)),q=center.map((v,axis)=>mix(v,p[axis],.5));const innerTop=top((mix(vertices[a][0],vertices[b][0],t)+.5)*.5,(mix(vertices[a][1],vertices[b][1],t)+.5)*.5);q[1]=innerTop[1]-reliefHeight(map,innerTop[0],innerTop[2])+reliefHeight(map,q[0],q[2]);outline.push(p);inner.push(q);}}
     for(let k=0;k<outline.length;k++){const j=(k+1)%outline.length;triangles.push([center,inner[k],inner[j]],[inner[k],outline[k],outline[j]],[inner[k],outline[j],inner[j]]);}
     for(const [dx,dz,a,b,na,nb] of [[0,-1,0,1,3,2],[1,0,1,2,0,3],[0,1,2,3,1,0],[-1,0,3,0,2,1]]){const nx=clamp(cx+dx,0,31),nz=clamp(cz+dz,0,31),nh=tierCorners(map,nx,nz);if(Math.abs(h[a]-nh[na])<.01&&Math.abs(h[b]-nh[nb])<.01)continue;const ts=[0,.25,.5,.75,1],cut=cuts[a];if(cut!==null&&!ts.includes(cut))ts.push(cut);ts.sort((a,b)=>a-b);for(let k=1;k<ts.length;k++)edges.push([boundary(vertices[a],h[a],vertices[b],h[b],ts[k-1]),boundary(vertices[a],h[a],vertices[b],h[b],ts[k])]);}
-    return cache[i]={key,triangles,edges};
+    // MiYu: reject points outside a triangle before barycentric sampling; retain the original triangle order and arithmetic.
+    const triangleBounds=new Float64Array(triangles.length*5);for(let j=0;j<triangles.length;j++){const [a,b,c]=triangles[j],k=j*5;triangleBounds[k]=Math.min(a[0],b[0],c[0])-1e-5;triangleBounds[k+1]=Math.max(a[0],b[0],c[0])+1e-5;triangleBounds[k+2]=Math.min(a[2],b[2],c[2])-1e-5;triangleBounds[k+3]=Math.max(a[2],b[2],c[2])+1e-5;triangleBounds[k+4]=(b[2]-c[2])*(a[0]-c[0])+(c[0]-b[0])*(a[2]-c[2]);}
+    return cache[i]={key,triangles,edges,triangleBounds};
   }
   function groundPlane(map,cx,cz,trusted=false){
     if(trusted){let planes=groundPlanes.get(map);if(!planes){planes=[];groundPlanes.set(map,planes);}const i=cz*32+cx;return planes[i]!==undefined?planes[i]:planes[i]=groundPlane(map,cx,cz);}
@@ -777,8 +779,9 @@ var Frost = (() => {
     const i=(z*2+60)*121+x*2+60;return samples[i]!==undefined?samples[i]:samples[i]=sampleGroundSurface(map,x,z,trusted);
   }
   function sampleGroundSurface(map,x,z,trusted=false){
+    // Nearly degenerate triangles use the full test to preserve its numerical boundary behavior.
     const [cx,cz]=cell(x,z),plane=groundPlane(map,cx,cz,trusted);if(plane!==null&&Math.abs(x)<30&&Math.abs(z)<30)return {i:cz*32+cx,y:plane+reliefHeight(map,x,z)};const px=x-(cx*2-32),pz=z-(cz*2-32),xs=px<.75?[-1,0]:px>1.25?[0,1]:[0],zs=pz<.75?[-1,0]:pz>1.25?[0,1]:[0];let found=null;
-    for(const dz of zs)for(const dx of xs){const ix=cx+dx,iz=cz+dz;if(ix<0||iz<0||ix>31||iz>31)continue;const i=iz*32+ix;for(const [a,b,c] of groundTile(map,ix,iz,trusted).triangles){const det=(b[2]-c[2])*(a[0]-c[0])+(c[0]-b[0])*(a[2]-c[2]);if(Math.abs(det)<1e-10)continue;const u=((b[2]-c[2])*(x-c[0])+(c[0]-b[0])*(z-c[2]))/det,v=((c[2]-a[2])*(x-c[0])+(a[0]-c[0])*(z-c[2]))/det;if(u< -1e-7||v< -1e-7||u+v>1+1e-7)continue;const y=u*a[1]+v*b[1]+(1-u-v)*c[1];if(!found||y>found.y+1e-7)found={i,y};}}
+    for(const dz of zs)for(const dx of xs){const ix=cx+dx,iz=cz+dz;if(ix<0||iz<0||ix>31||iz>31)continue;const i=iz*32+ix,tile=groundTile(map,ix,iz,trusted),bounds=tile.triangleBounds;for(let j=0;j<tile.triangles.length;j++){const k=j*5,det=bounds[k+4];if(Math.abs(det)<1e-10||Math.abs(det)>=1e-4&&(x<bounds[k]||x>bounds[k+1]||z<bounds[k+2]||z>bounds[k+3]))continue;const [a,b,c]=tile.triangles[j];const u=((b[2]-c[2])*(x-c[0])+(c[0]-b[0])*(z-c[2]))/det,v=((c[2]-a[2])*(x-c[0])+(a[0]-c[0])*(z-c[2]))/det;if(u< -1e-7||v< -1e-7||u+v>1+1e-7)continue;const y=u*a[1]+v*b[1]+(1-u-v)*c[1];if(!found||y>found.y+1e-7)found={i,y};}}
     return found;
   }
   function elevation(map,x,z,trusted=false){const surface=Math.abs(x)<=32&&Math.abs(z)<=32?groundSample(map,x,z,trusted):null;if(surface)return surface.y;const [cx,cz]=cell(x,z);return tileHeight(map,cz*32+cx,clamp(x-(cx*2-32),0,2),clamp(z-(cz*2-32),0,2));}
@@ -804,12 +807,13 @@ var Frost = (() => {
   }
   function prepareGround(map){return groundNavigation({map});}
   function groundRevision(map){prepareGround(map);return groundRoutes.get(map).key;}
-  function groundClear(map,ax,az,bx,bz,radius=0,regions,navigationPoints=false){
+  function groundClear(map,ax,az,bx,bz,radius=0,regions,navigationPoints=false,startSurface,endSurface){
     const trusted=!!regions;regions??=groundRegions(map);
     if(map.terrain[index(ax,az)]===1||map.terrain[index(bx,bz)]===1)return false;
-    const dx=bx-ax,dz=bz-az,cuts=[0,1];for(let i=1;i<32;i++)for(const [a,d] of [[ax,dx],[az,dz]])if(d){const t=(i*2-32-a)/d;if(t>0&&t<1)cuts.push(t);}cuts.sort((a,b)=>a-b);for(let i=1;i<cuts.length;i++){const t=(cuts[i-1]+cuts[i])/2;if(map.terrain[index(ax+dx*t,az+dz*t)]===1)return false;}
+    const dx=bx-ax,dz=bz-az,cuts=[0,1];for(const [a,b,d] of [[ax,bx,dx],[az,bz,dz]])if(d){const first=Math.max(1,Math.floor((Math.min(a,b)+32)/2)),last=Math.min(31,Math.ceil((Math.max(a,b)+32)/2));for(let i=first;i<=last;i++){const t=(i*2-32-a)/d;if(t>0&&t<1)cuts.push(t);}}cuts.sort((a,b)=>a-b);for(let i=1;i<cuts.length;i++){const t=(cuts[i-1]+cuts[i])/2;if(map.terrain[index(ax+dx*t,az+dz*t)]===1)return false;}
     if(!regions.cliffs)return true;
-    const start=groundSample(map,ax,az,trusted,navigationPoints),end=groundSample(map,bx,bz,trusted,navigationPoints);if(!start||!end||regions[start.i]!==regions[end.i])return false;
+    // MiYu: traffic supplies the surfaces just sampled for these units; other callers sample their own endpoints.
+    const start=startSurface??groundSample(map,ax,az,trusted,navigationPoints),end=endSurface??groundSample(map,bx,bz,trusted,navigationPoints);if(!start||!end||regions[start.i]!==regions[end.i])return false;
     const first=cell(Math.min(ax,bx)-radius-1,Math.min(az,bz)-radius-1),last=cell(Math.max(ax,bx)+radius+1,Math.max(az,bz)+radius+1),group=regions[start.i];
     for(let z=first[1];z<=last[1];z++)for(let x=first[0];x<=last[0];x++){if(regions[z*32+x]!==group||segmentDistance(x*2-31,z*2-31,[ax,az],[bx,bz])>radius+2.2||groundPlane(map,x,z,trusted)!==null)continue;for(const [a,b] of groundTile(map,x,z,trusted).edges){const A=[a[0],a[2]],B=[b[0],b[2]],C=[ax,az],D=[bx,bz],cross=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]),ab=cross(A,B,C)*cross(A,B,D),cd=cross(C,D,A)*cross(C,D,B);if(ab<0&&cd<0)return false;const before=segmentDistance(...C,A,B),after=segmentDistance(...D,A,B),distance=Math.min(before,after,segmentDistance(...A,C,D),segmentDistance(...B,C,D));if(distance<Math.max(radius,1e-5)-1e-7&&!(before<radius&&distance>=before-1e-7&&after>before+.0001))return false;}}
     return true;
@@ -820,7 +824,7 @@ var Frost = (() => {
     for(let cz=a[1];cz<=b[1];cz++)for(let cx=a[0];cx<=b[0];cx++){const i=cz*32+cx;if(map.terrain[i]===1||map.ramps?.[i]||(map.heights?.[i]||0)!==level)return false;for(const [dx,dz] of [[0,0],[2,0],[2,2],[0,2]]){const h=tileHeight(map,i,dx,dz);low=Math.min(low,h);high=Math.max(high,h);}}return high-low<=.25&&groundClear(map,x,z,x,z,radius);
   }
   const pickHeight=(map,x,z)=>elevation(map,x,z)+(map.terrain[index(x,z)]===1?.04:0);
-  const unitHeight=(s,u)=>{groundNavigation(s);const routes=groundRoutes.get(s.map);let sample=simulating.has(s)?unitGroundSamples.get(u):null;if(!sample||sample.routes!==routes||sample.frame!==s.frame||sample.x!==u.x||sample.z!==u.z){sample={routes,frame:s.frame,x:u.x,z:u.z,height:groundSample(s.map,u.x,u.z,true)?.y??elevation(s.map,u.x,u.z)};unitGroundSamples.set(u,sample);}return sample.height+(impaleAirLeft(u)>0?2.25*Math.sin(Math.PI*(1-impaleAirLeft(u)/cryptLordRules.abilities.AUim.levels[(u.impaled?.rank||1)-1].airTime)):u.cyclone>0?4:lichUnit(u)?lich.form().movementHeight:types[u.kind]?.flying?types[u.kind].flightHeight??4:0);};
+  const unitHeight=(s,u)=>{groundNavigation(s);const routes=groundRoutes.get(s.map);let sample=simulating.has(s)?unitGroundSamples.get(u):null;if(!sample||sample.routes!==routes||sample.frame!==s.frame||sample.x!==u.x||sample.z!==u.z){const surface=groundSample(s.map,u.x,u.z,true);sample={routes,frame:s.frame,x:u.x,z:u.z,surface,height:surface?.y??elevation(s.map,u.x,u.z)};unitGroundSamples.set(u,sample);}return sample.height+(impaleAirLeft(u)>0?2.25*Math.sin(Math.PI*(1-impaleAirLeft(u)/cryptLordRules.abilities.AUim.levels[(u.impaled?.rank||1)-1].airTime)):u.cyclone>0?4:lichUnit(u)?lich.form().movementHeight:types[u.kind]?.flying?types[u.kind].flightHeight??4:0);};
   function attackClear(s,u,v){
     if(mortarUnit(u)&&mortarWeapon(u,v)===1)return true;
     if((attackRange(u,v)<=2||u.kind==='hall'&&u.baseRules===1&&u.baseFaction===2)&&!types[u.kind].flying&&!traversable(s.map,u.x,u.z,v.x,v.z))return false;
@@ -1047,7 +1051,7 @@ var Frost = (() => {
     if(!groundClear(s.map,u.x,u.z,x,z,radius,groundNavigation(s))||!obstacleClear(s,u.x,u.z,x,z,radius,u.team,true))return false;
     return !s.units.some(v=>v.id!==u.id&&v.hp>0&&!mobile(v)&&(u.team<0||isVisible(s,u.team,v))&&(distance(u,v)<(types[v.kind].radius||1)+radius?Math.hypot(x-v.x,z-v.z)<=distance(u,v)+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])<(types[v.kind].radius||1)+radius));
   }
-  function traffic(s,u){if(u.windWalk&&u.windWalk.fade<=0)return [];const flying=types[u.kind].flying,height=flying?0:unitHeight(s,u);return s.units.filter(v=>v.id!==u.id&&v.hp>0&&!v.inside&&!(v.cyclone>0)&&!(v.windWalk&&v.windWalk.fade<=0)&&mobile(v)&&!!types[v.kind].flying===!!flying&&(u.team<0||v.team===u.team||isVisible(s,u.team,v))&&(flying||Math.abs(height-unitHeight(s,v))<1.5||groundClear(s.map,u.x,u.z,v.x,v.z,0,groundNavigation(s))));}
+  function traffic(s,u){if(u.windWalk&&u.windWalk.fade<=0)return [];const flying=types[u.kind].flying,height=flying?0:unitHeight(s,u),surface=unitGroundSamples.get(u)?.surface;return s.units.filter(v=>v.id!==u.id&&v.hp>0&&!v.inside&&!(v.cyclone>0)&&!(v.windWalk&&v.windWalk.fade<=0)&&mobile(v)&&!!types[v.kind].flying===!!flying&&(u.team<0||v.team===u.team||isVisible(s,u.team,v))&&(flying||Math.abs(height-unitHeight(s,v))<1.5||groundClear(s.map,u.x,u.z,v.x,v.z,0,groundNavigation(s),false,surface,unitGroundSamples.get(v)?.surface)));}
   function trafficClear(u,near,x,z){
     const r=movementRadius(u);return near.every(v=>{if(v.id===u.id)return true;const radius=r+movementRadius(v),before=distance(u,v),after=Math.hypot(x-v.x,z-v.z);return before<radius-.0001?after>before+.0001:segmentDistance(v.x,v.z,[u.x,u.z],[x,z])>=radius-.0001;});
   }
@@ -1096,7 +1100,8 @@ var Frost = (() => {
     const near=traffic(s,u);
     if(near.some(v=>distance(u,v)<movementRadius(u)+movementRadius(v)-.0001)||!types[u.kind].flying&&(!obstacleClear(s,u.x,u.z,u.x,u.z,movementRadius(u),u.team)||s.units.some(v=>v.id!==u.id&&v.hp>0&&!mobile(v)&&(u.team<0||isVisible(s,u.team,v))&&distance(u,v)<(types[v.kind].radius||1)+.35))){
       const angle=Math.atan2(z-u.z,x-u.x),step=u.speed*moveRate(u)*DT;let best=null,score=-Infinity;
-      for(const turn of [0,Math.PI/4,-Math.PI/4,Math.PI/2,-Math.PI/2,Math.PI*3/4,-Math.PI*3/4,Math.PI]){const nx=u.x+Math.cos(angle+turn)*step,nz=u.z+Math.sin(angle+turn)*step;if(!walkClear(s,u,nx,nz)||!trafficClear(u,near,nx,nz))continue;const value=near.reduce((sum,v)=>sum+Math.min(0,Math.hypot(nx-v.x,nz-v.z)-movementRadius(u)-movementRadius(v)),0)-Math.hypot(x-nx,z-nz)*.01;if(value>score){score=value;best=[nx,nz];}}
+      // MiYu: numerically tied escape scores retain the first valid direction across JavaScript runtimes.
+      for(const turn of [0,Math.PI/4,-Math.PI/4,Math.PI/2,-Math.PI/2,Math.PI*3/4,-Math.PI*3/4,Math.PI]){const nx=u.x+Math.cos(angle+turn)*step,nz=u.z+Math.sin(angle+turn)*step;if(!walkClear(s,u,nx,nz)||!trafficClear(u,near,nx,nz))continue;const value=near.reduce((sum,v)=>sum+Math.min(0,Math.hypot(nx-v.x,nz-v.z)-movementRadius(u)-movementRadius(v)),0)-Math.hypot(x-nx,z-nz)*.01;if(value>score+1e-12){score=value;best=[nx,nz];}}
       if(best){u.yaw=Math.atan2(best[0]-u.x,best[1]-u.z);[u.x,u.z]=best;u.path=[];}return false;
     }
     const direct=walkClear(s,u,x,z)&&trafficClear(u,near,x,z);
