@@ -1,7 +1,14 @@
+// Author: MiYu. Validate environment decoding and retained viewport invalidation.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { decodeRadianceHdr } from '../src/environmentPreview.ts';
+import { decodeRadianceHdr, environmentPreviewRevision, invalidateEnvironmentPreviews } from '../src/environmentPreview.ts';
+
+test('environment cache invalidation changes the presentation revision', () => {
+  const before = environmentPreviewRevision();
+  invalidateEnvironmentPreviews();
+  assert.equal(environmentPreviewRevision(), before + 1);
+});
 
 function hdrBytes(width, height, pixels) {
   const header = new TextEncoder().encode(

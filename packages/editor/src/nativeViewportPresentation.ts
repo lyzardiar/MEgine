@@ -8,6 +8,13 @@ import { sceneUiEntities } from './ui/uiLayout';
 
 type Entity = { entity: number; parent?: number | null; active?: boolean; components: Record<string, unknown> };
 
+export type NativeGamePaintState = { frame: unknown; surface: unknown; key: string; epoch: number; browserRendering: boolean };
+
+/** Request scheduling remains active while an unchanged native-only Game image stays on its canvas. */
+export function nativeGamePaintUnchanged(previous: NativeGamePaintState | null, current: NativeGamePaintState): boolean {
+  return current.frame != null && !current.browserRendering && previous != null && !previous.browserRendering && previous.frame === current.frame && previous.surface === current.surface && previous.key === current.key && previous.epoch === current.epoch;
+}
+
 /** Live editable worlds never enter this cache; a decoded frame owns its fixed revision's records. */
 export function createNativeViewportPresentationReader<E extends Entity>() {
   let previousEntities: E[] | undefined;

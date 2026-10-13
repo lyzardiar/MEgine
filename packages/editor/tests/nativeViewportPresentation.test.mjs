@@ -3,12 +3,41 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createServer } from 'vite';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+import ts from '../node_modules/typescript/lib/typescript.js';
 const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), appType: 'custom', logLevel: 'silent', server: { middlewareMode: true } });
-const { createNativeViewportPresentationReader } = await server.ssrLoadModule('/src/nativeViewportPresentation.ts');
+const { createNativeViewportPresentationReader, nativeGamePaintUnchanged } = await server.ssrLoadModule('/src/nativeViewportPresentation.ts');
 const { createNativeViewportWorldArgs } = await server.ssrLoadModule('/src/nativeViewportFrame.ts');
 const { timelineGameCamera } = await server.ssrLoadModule('/src/gameCamera.ts');
 const { layoutUiScene3D, layoutUiWorldSpace, sceneUiEntities } = await server.ssrLoadModule('/src/ui/uiLayout.ts');
 test.after(() => server.close());
+
+test('unchanged native Game pixels remain on their owned canvas while new images, interaction and browser content repaint', () => {
+  const image = {}, frame = { image }, surface = {};
+  const state = { frame, surface, key: '1280x720@1/display0/hover0', epoch: 1, browserRendering: false };
+  assert.equal(nativeGamePaintUnchanged(null,state),false);
+  for (let i=0;i<100;i++) assert.equal(nativeGamePaintUnchanged(state,{...state}),true,'repeated wakeups reuse displayed pixels');
+  for (const changed of [{frame:{image}},{surface:{}},{key:'1280x720@2/display0/hover0'},{key:'1280x720@1/display1/hover0'},{key:'1280x720@1/display0/hover1'},{epoch:2},{frame:null},{browserRendering:true}]) assert.equal(nativeGamePaintUnchanged(state,{...state,...changed}),false,'new display state must repaint');
+  assert.equal(nativeGamePaintUnchanged({...state,browserRendering:true},state),false,'leaving browser overlays paints the native base first');
+  const read = createNativeViewportPresentationReader();
+  for (const component of ['SpineSkeleton','Button','Toggle','Slider','Scrollbar','InputField','Dropdown','ListView','ScrollView','TabView']) {
+    const world = { entities:[{entity:1,active:true,components:{[component]:{}}}],clearColor:[0,0,0,1],simulationTime:0,sourceEntities:[] };
+    assert.equal(nativeGamePaintUnchanged(state,{...state,browserRendering:read(world).requiresBrowserSnapshot}),false,component+' keeps browser drawing live');
+  }
+});
+
+test('Game to Scene to Game on the same canvas invalidates both retained presentations', () => {
+  const source = readFileSync(new URL('../src/panels/Viewport.tsx',import.meta.url),'utf8'),ast = ts.createSourceFile('Viewport.tsx',source,ts.ScriptTarget.ES2022,true,ts.ScriptKind.TSX);
+  let expression;
+  function visit(node) { if (ts.isVariableDeclaration(node) && node.name.getText(ast)==='scenePaintInputs') expression=node.initializer.getText(ast); ts.forEachChild(node,visit); }
+  visit(ast); assert.ok(expression);
+  const read = new Function('props','return '+expression),props = {tab:'game',playing:true,entities:[]};
+  let inputs=read(props),epoch=1;
+  const frame={},surface={},before={frame,surface,key:'same viewport',epoch,browserRendering:false};
+  for (const tab of ['scene','game']) { props.tab=tab;const next=read(props);if(next.some((value,index)=>value!==inputs[index]))epoch++;inputs=next; }
+  assert.equal(epoch,3,'each tab transition invalidates canvas ownership');
+  assert.equal(nativeGamePaintUnchanged(before,{...before,epoch}),false,'the retained Game image replaces Scene pixels even at the same native revision');
+});
 const transform = x => ({ position: [x, 0, 2], rotation: [0, 0, 0, 1], scale: [1, 1, 1] });
 const props = () => ({ entities: [{ entity: 1, components: { Transform: transform(0) } }, { entity: 2, parent: 1, components: { Camera3D: { primary: true }, Transform: transform(0) } }, { entity: 3, parent: 1, components: { Button: {} } }, { entity: 4, components: { SpineSkeleton: {} } }], clearColor: [0, 0, 0, 1], simulationTime: 0 });
 
