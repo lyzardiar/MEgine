@@ -84,7 +84,7 @@ struct FramePool<B> { slots: Vec<Option<PoolSlot<B>>> }
 impl<B> Default for FramePool<B> { fn default() -> Self { Self { slots: Vec::new() } } }
 struct Reservation<B> { index: usize, id: u64, lease_id: u64, buffer: Option<B>, retired: Option<B> }
 impl<B: Clone> FramePool<B> {
-    /// MiYu: reserve before COM calls, and reuse only after both Post return and browser detach.
+    /// MiYu: reserve before COM calls, and reuse only after Post returns and the browser acknowledges completed pixel access.
     fn reserve(&mut self, bytes: usize, request: &str) -> Option<Reservation<B>> {
         if self.slots.iter().flatten().any(|slot| slot.lease.as_ref().is_some_and(|lease| lease.request == request)) { return None; }
         let retained: usize = self.slots.iter().flatten().map(|slot| slot.bytes).sum();
@@ -280,7 +280,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn pool_waits_for_matching_detach_and_post_return() {
+    fn pool_waits_for_matching_consumption_ack_and_post_return() {
         let mut pool = FramePool::<u64>::default();
         let first = pool.reserve(4096, "first").unwrap();
         assert!(pool.install(first.index, first.id, 7));

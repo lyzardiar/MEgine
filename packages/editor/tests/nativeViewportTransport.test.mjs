@@ -126,3 +126,72 @@ test('evicted edit Scene world reuploads its owned snapshot under the same revis
   failure = 'GPU device unavailable';
   await assert.rejects(() => transport.requestRevisionedNativeViewportFrame('scene', { sceneWorldKey: 'owned-world' }, () => ({ snapshot })), /GPU device unavailable/);
 });
+
+test('pooled mappings reuse pixel pages while leases and profiles remain per frame', async t => {
+  const original=globalThis.window,requests=[],released=[],acks=[];let receive,hide;
+  const webview={addEventListener:(_,callback)=>{receive=callback;},releaseBuffer:buffer=>{released.push(buffer);structuredClone(buffer,{transfer:[buffer]});}};
+  globalThis.window={chrome:{webview},addEventListener:(type,callback)=>{if(type==='pagehide')hide=callback;},__TAURI_INTERNALS__:{invoke:(command,args)=>{if(command==='release_native_viewport_frame'){acks.push(args);return Promise.resolve();}return new Promise(resolve=>requests.push({args,resolve}));}}};
+  t.after(()=>{globalThis.window=original;});
+  const transport=await import('../src/nativeViewportTransport.ts?retained-pages');
+  const deliver=(index,buffer,id=1)=>{receive({additionalData:{nativeViewportRequest:requests[index].args.sharedRequest,nativeViewportPooled:true,nativeViewportLease:String(index+1),nativeViewportTransport:{bufferId:id,bytes:buffer.byteLength}},getBuffer:()=>buffer});requests[index].resolve(new ArrayBuffer(0));};
+  const first=transport.requestNativeViewportFrame('game',{}),a=new ArrayBuffer(8);deliver(0,a);assert.equal(await first,a);
+  transport.releaseNativeViewportFrame(a);transport.releaseNativeViewportFrame(a);assert.equal(released.length,0);assert.equal(acks.length,1);assert.equal(transport.isSharedNativeViewportFrame(a),false);
+  new Uint8Array(a)[0]=93; // Native writes the next frame into the same backing pages after ACK.
+  const next=transport.requestNativeViewportFrame('game',{}),b=new ArrayBuffer(8);deliver(1,b);assert.equal(await next,a);assert.equal(b.byteLength,0);assert.equal(new Uint8Array(a)[0],93);assert.equal(transport.nativeViewportTransportProfile(a).requestId,requests[1].args.sharedRequest);
+  hide();assert.equal(a.byteLength,8,'pagehide preserves the consumer active lease');transport.releaseNativeViewportFrame(a);assert.equal(a.byteLength,0);assert.equal(acks.length,2);assert.equal(transport.nativeViewportTransportProfile(a),undefined);
+  const third=transport.requestNativeViewportFrame('game',{}),c=new ArrayBuffer(16);deliver(2,c);await third;transport.releaseNativeViewportFrame(c);hide();assert.equal(c.byteLength,0,'idle pages released on pagehide');
+});
+
+test('mapping cache bounds evictions, preserves active frames and releases late frames', async t => {
+  const original=globalThis.window,requests=[],released=[],acks=[];let receive,hide;
+  globalThis.window={chrome:{webview:{addEventListener:(_,callback)=>{receive=callback;},releaseBuffer:buffer=>{released.push(buffer);structuredClone(buffer,{transfer:[buffer]});}}},addEventListener:(type,callback)=>{if(type==='pagehide')hide=callback;},__TAURI_INTERNALS__:{invoke:(command,args)=>{if(command==='release_native_viewport_frame'){acks.push(args);return Promise.resolve();}return new Promise((resolve,reject)=>requests.push({args,resolve,reject}));}}};
+  t.after(()=>{globalThis.window=original;});
+  const transport=await import('../src/nativeViewportTransport.ts?mapping-bounds');
+  const deliver=(index,buffer,id)=>{receive({additionalData:{nativeViewportRequest:requests[index].args.sharedRequest,nativeViewportPooled:true,nativeViewportLease:String(index+1),nativeViewportTransport:{bufferId:id,bytes:buffer.byteLength}},getBuffer:()=>buffer});requests[index].resolve(new ArrayBuffer(0));};
+  const frames=[];
+  for(let i=0;i<4;i++){const promise=transport.requestNativeViewportFrame('scene',{}),buffer=new ArrayBuffer(8);deliver(i,buffer,i+1);frames.push(await promise);}
+  transport.releaseNativeViewportFrame(frames[3]);assert.equal(frames[3].byteLength,0,'fourth mapping is not retained while three are active');assert.ok(frames.slice(0,3).every(b=>b.byteLength===8));
+  transport.releaseNativeViewportFrame(frames[1]);const fifth=transport.requestNativeViewportFrame('scene',{}),replacement=new ArrayBuffer(16);deliver(4,replacement,5);await fifth;assert.equal(frames[1].byteLength,0,'only an idle mapping is evicted');
+  const expired=transport.requestNativeViewportFrame('scene',{});requests[5].reject(Error('render failed'));await assert.rejects(expired,/render failed/);const late=new ArrayBuffer(8);deliver(5,late,1);assert.equal(late.byteLength,0);assert.equal(frames[0].byteLength,8,'late events cannot replace an active mapping');
+  for(const buffer of [frames[0],frames[2],replacement])transport.releaseNativeViewportFrame(buffer);hide();assert.equal(acks.length,6);assert.ok(frames.every(b=>b.byteLength===0));assert.equal(replacement.byteLength,0);
+});
+
+test('mapping byte budget, resize and WebView changes retire only completed consumers', async t => {
+  const original=globalThis.window,requests=[],receivers=[],releases=[];let hide;
+  const makeWebview=()=>{const index=receivers.length;return {addEventListener:(_,callback)=>{receivers[index]=callback;},releaseBuffer:buffer=>{releases.push({index,buffer});structuredClone(buffer,{transfer:[buffer]});}};};
+  globalThis.window={chrome:{webview:makeWebview()},addEventListener:(type,callback)=>{if(type==='pagehide')hide=callback;},__TAURI_INTERNALS__:{invoke:(command,args)=>command==='release_native_viewport_frame'?Promise.resolve():new Promise(resolve=>requests.push({args,resolve}))}};
+  t.after(()=>{globalThis.window=original;});
+  const transport=await import('../src/nativeViewportTransport.ts?mapping-resize');
+  const deliver=(index,buffer,id,receiver=0)=>{receivers[receiver]({additionalData:{nativeViewportRequest:requests[index].args.sharedRequest,nativeViewportPooled:true,nativeViewportLease:String(index+1),nativeViewportTransport:{bufferId:id,bytes:buffer.byteLength}},getBuffer:()=>buffer});requests[index].resolve(new ArrayBuffer(0));};
+  const first=transport.requestNativeViewportFrame('game',{}),a=new ArrayBuffer(8);deliver(0,a,1);await first;transport.releaseNativeViewportFrame(a);
+  const resized=transport.requestNativeViewportFrame('game',{}),b=new ArrayBuffer(16);deliver(1,b,1);assert.equal(await resized,b);assert.equal(a.byteLength,0);transport.releaseNativeViewportFrame(b);
+  const large=transport.requestNativeViewportFrame('game',{}),c=new ArrayBuffer(64*1024*1024);deliver(2,c,2);await large;
+  const overflow=transport.requestNativeViewportFrame('game',{}),d=new ArrayBuffer(40*1024*1024);deliver(3,d,3);await overflow;transport.releaseNativeViewportFrame(d);assert.equal(d.byteLength,0,'96 MiB cap holds with an active 64 MiB mapping');
+  globalThis.window.chrome.webview=makeWebview();const newWindow=transport.requestNativeViewportFrame('game',{}),e=new ArrayBuffer(8);assert.equal(b.byteLength,0);assert.ok(c.byteLength>0);deliver(4,e,2,1);assert.equal(await newWindow,e);transport.releaseNativeViewportFrame(c);assert.equal(c.byteLength,0);transport.releaseNativeViewportFrame(e);hide();assert.equal(e.byteLength,0);
+});
+
+
+
+test('mapping failures preserve delivery and fallback or pagehide prevents late retention', async t => {
+  const original=globalThis.window,requests=[],acks=[],warnings=[];let receive,hide,failRelease=false;
+  t.mock.method(console,'warn',(...args)=>warnings.push(args));
+  globalThis.window={chrome:{webview:{addEventListener:(_,callback)=>{receive=callback;},releaseBuffer:buffer=>{if(failRelease){failRelease=false;throw Error('release failed');}structuredClone(buffer,{transfer:[buffer]});}}},addEventListener:(type,callback)=>{if(type==='pagehide')hide=callback;},__TAURI_INTERNALS__:{invoke:(command,args)=>{if(command==='release_native_viewport_frame'){acks.push(args);return Promise.resolve();}return new Promise(resolve=>requests.push({args,resolve}));}}};
+  t.after(()=>{globalThis.window=original;});
+  const transport=await import('../src/nativeViewportTransport.ts?mapping-failures');
+  const deliver=(index,buffer,id=1)=>receive({additionalData:{nativeViewportRequest:requests[index].args.sharedRequest,nativeViewportPooled:true,nativeViewportLease:String(index+1),nativeViewportTransport:{bufferId:id,bytes:buffer.byteLength}},getBuffer:()=>buffer});
+  const first=transport.requestNativeViewportFrame('game',{}),a=new ArrayBuffer(8);deliver(0,a);await first;requests[0].resolve(new ArrayBuffer(0));transport.releaseNativeViewportFrame(a);
+  const second=transport.requestNativeViewportFrame('game',{}),b=new ArrayBuffer(8);failRelease=true;deliver(1,b);assert.equal(await second,b,'failed reuse falls back to incoming frame');requests[1].resolve(new ArrayBuffer(0));transport.releaseNativeViewportFrame(b);assert.equal(b.byteLength,0);assert.equal(warnings.length,1);assert.equal(acks.length,2);
+  const pending=transport.requestNativeViewportFrame('scene',{});hide();assert.equal(a.byteLength,0);const late=new ArrayBuffer(8);deliver(2,late);await pending;requests[2].resolve(new ArrayBuffer(0));transport.releaseNativeViewportFrame(late);assert.equal(late.byteLength,0,'pagehide prevents in-flight events repopulating the cache');
+  assert.equal(acks.length,3);
+});
+
+test('binary fallback clears retained mappings and later shared consumers still acknowledge', async t => {
+  const original=globalThis.window,requests=[],acks=[];let receive;
+  globalThis.window={chrome:{webview:{addEventListener:(_,callback)=>{receive=callback;},releaseBuffer:buffer=>structuredClone(buffer,{transfer:[buffer]})}},__TAURI_INTERNALS__:{invoke:(command,args)=>{if(command==='release_native_viewport_frame'){acks.push(args);return Promise.resolve();}return new Promise(resolve=>requests.push({args,resolve}));}}};
+  t.after(()=>{globalThis.window=original;});
+  const transport=await import('../src/nativeViewportTransport.ts?mapping-fallback');
+  const deliver=(index,buffer)=>receive({additionalData:{nativeViewportRequest:requests[index].args.sharedRequest,nativeViewportPooled:true,nativeViewportLease:String(index+1),nativeViewportTransport:{bufferId:index+1,bytes:buffer.byteLength}},getBuffer:()=>buffer});
+  const first=transport.requestNativeViewportFrame('game',{}),a=new ArrayBuffer(8);deliver(0,a);await first;requests[0].resolve(new ArrayBuffer(0));transport.releaseNativeViewportFrame(a);
+  const pending=transport.requestNativeViewportFrame('scene',{}),fallback=transport.requestNativeViewportFrame('game',{}),binary=new ArrayBuffer(12);requests[2].resolve(binary);assert.equal(await fallback,binary);assert.equal(a.byteLength,0);
+  const b=new ArrayBuffer(8);deliver(1,b);await pending;requests[1].resolve(new ArrayBuffer(0));transport.releaseNativeViewportFrame(b);assert.equal(b.byteLength,0);assert.equal(acks.length,2);
+});
