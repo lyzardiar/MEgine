@@ -86,6 +86,9 @@ export type NativeViewportProfile = {
   simulationMs?: number;
   worldRevision?: number;
   worldSyncMs?: number;
+  worldLockWaitMs?: number;
+  workerQueueMs?: number;
+  rendererLockWaitMs?: number;
   simulationRequestMs?: number;
   resourceSampleAgeMs?: number;
   uploadMs?: number;
@@ -99,6 +102,21 @@ export type NativeViewportProfile = {
 };
 
 export type NativeViewportProfilePayload = Omit<NativeViewportProfile, 'source' | 'timestamp'>;
+
+/** MiYu: non-overlapping command scopes; simulation and GPU timestamps run on separate clocks. */
+export function nativeViewportRequestStages(profile: NativeViewportProfile): { name: string; ms: number | undefined }[] {
+  const stages = [
+    { name: 'Worker queue', ms: profile.workerQueueMs },
+    { name: 'World lock wait', ms: profile.worldLockWaitMs },
+    { name: 'World sync', ms: profile.worldSyncMs },
+    { name: 'Renderer lock wait', ms: profile.rendererLockWaitMs },
+    { name: 'Native render (includes GPU wait)', ms: profile.totalMs },
+  ];
+  const measured = stages.every(stage => stage.ms != null && Number.isFinite(stage.ms));
+  stages.push({ name: 'Other command work', ms: measured && profile.commandMs != null ? Math.max(0, profile.commandMs - stages.reduce((sum, stage) => sum + (stage.ms ?? 0), 0)) : undefined });
+  stages.push({ name: 'IPC, delivery and upload', ms: profile.transportMs != null && profile.commandMs != null ? Math.max(0, profile.transportMs - profile.commandMs) : undefined });
+  return stages;
+}
 
 export type ViewportProfilerFrame = {
   source: EditorProfilerSource;

@@ -6,6 +6,7 @@ import {
   clearEditorProfilerSamples,
   editorProfilerUiRefreshDelay,
   nearestEditorProfilerFrame,
+  nativeViewportRequestStages,
   readNativeViewportProfiles,
   readEditorProfilerSamples,
   subscribeEditorProfiler,
@@ -638,26 +639,28 @@ export function Profiler() {
             <Metric
               label="Native Render"
               value={latestNative ? formatMs(latestNative.totalMs) : '—'}
-              hint={latestNative ? `${latestNative.callTree.children.length} instrumented calls` : 'Desktop RHI sample unavailable'}
+              hint={latestNative ? `${latestNative.callTree.children.length} timed scope groups` : 'Desktop RHI sample unavailable'}
               warning={Boolean(latestNative && latestNative.totalMs > FRAME_BUDGET_MS)}
             />
             <Metric
-              label="Presented Frame"
+              label="Native Frame Interval"
               value={latestNative?.presentIntervalMs ? formatMs(latestNative.presentIntervalMs) : '—'}
               hint={latestNative?.presentIntervalMs ? `${(1000 / latestNative.presentIntervalMs).toFixed(1)} FPS · request ${formatMs(latestNative.transportMs ?? 0)}` : 'Completed native frames'}
             />
             <Metric label="Simulation" value={latestNative?.simulationMs != null ? formatMs(latestNative.simulationMs) : '—'} hint="Native world update, script and snapshot export" />
-            <Metric label="Native Draw Calls" value={latestNative ? formatCount(latestNative.counts.uiDrawCalls) : '—'} />
+            <Metric label="UI Draw Calls" value={latestNative ? formatCount(latestNative.counts.uiDrawCalls) : '—'} hint="World and shadow draws excluded" />
             <Metric label="World Visible" value={latestNative?.counts.cameraVisibleObjects != null ? formatCount(latestNative.counts.cameraVisibleObjects) : '—'} />
             <Metric label="Shadow Casters" value={latestNative?.counts.shadowVisibleObjects != null ? formatCount(latestNative.counts.shadowVisibleObjects) : '—'} />
             <Metric label="Resident Estimate" value={formatBytes(latestNative?.residentMemoryEstimateBytes)} hint="provenance in Memory" />
             <Metric label="Render Resources" value={latestNative ? formatCount(latestNative.resources.length) : '—'} />
+            <Metric label="Native Command" value={latestNative?.commandMs != null ? formatMs(latestNative.commandMs) : '—'} hint="Queue, locks, world sync and rendering" />
+            <Metric label="World Lock Wait" value={latestNative?.worldLockWaitMs != null ? formatMs(latestNative.worldLockWaitMs) : '—'} hint="Waiting for another viewport" />
           </div>}
 
           {module === 'overview' && latest && <>
           <div className="profiler-metrics profiler-metrics-primary">
             <Metric
-              label="WebView Frame"
+              label="Viewport Paint Interval"
               value={formatMs(latest.frameMs)}
               hint={`${fps.toFixed(1)} FPS · p95 ${formatMs(summary.p95FrameMs)}`}
               warning={summary.p95FrameMs > FRAME_BUDGET_MS}
@@ -688,7 +691,7 @@ export function Profiler() {
               peakField="frameMaxMs"
               color="#55b8d0"
               budget={FRAME_BUDGET_MS}
-              label="WebView rAF Interval"
+              label="Viewport Paint Interval"
               selectedTimestamp={latest?.timestamp ?? null}
               onSelect={selectSample}
             />
@@ -718,6 +721,13 @@ export function Profiler() {
           </div>
           </>}
 
+          {module === 'cpu' && latestNative && <section className="profiler-detail-section" aria-label="Viewport request latency">
+            <h3>Viewport Request · {latestNative.transportMs != null ? formatMs(latestNative.transportMs) : '—'}</h3>
+            <table><thead><tr><th>Stage</th><th>Wall time</th></tr></thead><tbody>
+              {nativeViewportRequestStages(latestNative).map(stage => <tr key={stage.name}><td>{stage.name}</td><td>{stage.ms != null ? formatMs(stage.ms) : '—'}</td></tr>)}
+            </tbody></table>
+            <p>Native frame intervals measure completed uploads, not compositor presentation. Simulation and GPU timestamps overlap these scopes.</p>
+          </section>}
           {module === 'cpu' && <section className="profiler-detail-section" aria-label="Native CPU call tree">
             <header>
               <div><strong>Native CPU Call Tree</strong><span>{latestNative ? formatMs(latestNative.totalMs) : 'No sample'}</span></div>

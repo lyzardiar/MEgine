@@ -111,6 +111,12 @@ pub struct EditorViewportProfile {
     pub world_revision: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub world_sync_ms: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub world_lock_wait_ms: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub worker_queue_ms: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub renderer_lock_wait_ms: Option<f64>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub simulation_stages: Vec<EditorViewportProfileNode>,
     pub call_tree: EditorViewportProfileNode,
@@ -848,6 +854,9 @@ fn build_viewport_profile(
         simulation_ms: None,
         world_revision: None,
         world_sync_ms: None,
+        world_lock_wait_ms: None,
+        worker_queue_ms: None,
+        renderer_lock_wait_ms: None,
         simulation_stages: Vec::new(),
         schema_version: 1,
         gpu: None,
