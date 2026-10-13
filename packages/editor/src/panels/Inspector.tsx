@@ -1941,10 +1941,10 @@ export function Inspector(props: {
   } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const entitiesById = new Map([
+  const entitiesById = new Map((lockedSelection || (props.selectionCount ?? props.selectedIds?.length ?? 0) > 1 ? [
     ...(props.entities ?? []),
     ...(props.entity ? [props.entity] : []),
-  ].map((entity) => [entity.entity, entity]));
+  ] : []).map((entity) => [entity.entity, entity]));
   const lockedEntities = lockedSelection
     ? lockedSelection.ids
       .map((id) => entitiesById.get(id))
