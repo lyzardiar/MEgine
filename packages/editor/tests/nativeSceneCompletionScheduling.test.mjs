@@ -24,8 +24,8 @@ function fixture(duration, playing = true) {
   const canvasRef = { current: { width: 640, height: 360, toDataURL: () => 'data:image/png;frame=' + shown } };
   const env = { window: { __TAURI_INTERNALS__: {}, setTimeout, clearTimeout: id => tasks.delete(id) }, performance: { now: () => now }, lastAnimationFrameAtRef: { current: -Infinity }, structuredClone, propsRef, nativeSceneRequestRef, nativeSceneFrameRef, nativeCameraPreviewRequestRef: { current: { inFlight: false, ready: null, lastRequestAt: 0 } }, scene2DRef, draggingRef, lastProfilerFrameRef, currentViewportProps: () => propsRef.current, nativeWorld: { frameWorld: () => ({ runtimeSessionId: 1 }) }, nativeViewportFrameWorldCurrent: (world, props) => world.runtimeSessionId === props.runtimeSessionId, releaseNativeViewportFrame: () => released++, uploadNativeViewportFrame: buffer => { uploaded.push(buffer); return { profile: {}, image: {}, width: 640, height: 360 }; }, recordNativeViewportProfile() {}, console: { warn() {} }, canvasRef, NATIVE_CAPTURE_READY_TIMEOUT_MS: 8000 };
   const context = vm.createContext(env), request = vm.runInContext(requestBlock, context);
-  const paint = (animationFrame = false, completedSceneFrame = false, resumeSceneRequest = false) => {
-    env.completedSceneFrame = completedSceneFrame; env.resumeSceneRequest = resumeSceneRequest;
+  const paint = (animationFrame = false, completedSceneFrame = false, resumeSceneRequest = false, captureSceneFrame = false) => {
+    env.captureSceneFrame = captureSceneFrame; env.completedSceneFrame = completedSceneFrame; env.resumeSceneRequest = resumeSceneRequest;
     const p = propsRef.current;
     env.isGame = p.tab === 'game'; env.scene2DActive = scene2DRef.current;
     const camera = { eye: [p.key, 4, 7], target: [0, 0, 0], fovYDeg: 60 };
@@ -155,4 +155,23 @@ test('request continuation coalesces unchanged pixels without impersonating an a
   const f=paintFixture(true); f.env.nativeSceneRequestRef.current.inFlight=false; f.env.animationFrame=false; f.env.resumeSceneRequest=true; assert.equal(f.draw(),'paint');
   assert.ok(source.includes('if (animationFrame) lastAnimationFrameAtRef.current = paintStartedAt;'));
   assert.ok(source.includes('if (sceneRequest.generation === generation') && source.includes('paint(false, false, true)'));
+});
+
+
+test('Scene capture owns request starts while a camera preview is still completing', async () => {
+  const f = fixture(24); let completePreview;
+  const preview = f.env.nativeCameraPreviewRequestRef.current; preview.inFlight = true; preview.ready = new Promise(resolve => { completePreview = resolve; });
+  const captured = f.capture(); await f.advance(30); f.paint(true);
+  assert.equal(f.starts.length, 1, 'animation cannot start work while capture waits for preview');
+  preview.inFlight = false; completePreview(); for (let i = 0; i < 12; i++) await Promise.resolve();
+  assert.equal(f.starts.length, 2, 'capture starts its fresh Scene request'); await f.advance(60);
+  const result = await captured; assert.ok(result.dataUrl.startsWith('data:image/png;frame='));
+  assert.equal(f.nativeSceneRequestRef.current.captures, 0); assert.equal(f.starts.length, 3, 'Play resumes after capture'); assert.equal(f.maxActive, 1); f.dispose();
+});
+
+
+test('capture timeout releases request ownership and lets Play continue', async () => {
+  const f = fixture(9000), captured = f.capture(); await f.advance(8001);
+  assert.equal(await captured, null); assert.equal(f.nativeSceneRequestRef.current.captures, 0);
+  assert.equal(f.starts.length, 1); await f.advance(9010); assert.equal(f.starts.length, 2); assert.equal(f.maxActive, 1); f.dispose();
 });
