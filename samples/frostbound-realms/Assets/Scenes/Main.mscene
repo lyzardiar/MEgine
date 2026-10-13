@@ -169301,6 +169301,134 @@
             "receive_shadows": false
           }
         }
+      },
+      {
+        "entity": 90228,
+        "name": "netTd border",
+        "parent": 1585,
+        "siblingIndex": 4224,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              48
+            ],
+            "size_delta": [
+              404,
+              50
+            ]
+          },
+          "Image": {
+            "color": [
+              0.035,
+              0.043,
+              0.057,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 90229,
+        "name": "netTd box",
+        "parent": 1585,
+        "siblingIndex": 4225,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              48
+            ],
+            "size_delta": [
+              400,
+              46
+            ]
+          },
+          "Image": {
+            "material": "Assets/Materials/ClassicButton.mmat",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 90230,
+        "name": "netTd label",
+        "parent": 1585,
+        "siblingIndex": 4226,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              48
+            ],
+            "size_delta": [
+              388,
+              46
+            ]
+          },
+          "Text": {
+            "text": "合作塔防 [F4]",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 20,
+            "color": [
+              0.92,
+              0.79,
+              0.45,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          }
+        }
       }
     ],
     "frame": 0,

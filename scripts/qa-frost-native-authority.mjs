@@ -9,9 +9,10 @@ import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
 
+const cooperative=process.argv.includes('--td');
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms');
 const executable=path.resolve(process.env.MENGINE_RUNTIME_EXECUTABLE||path.join(repo,'target/release/mengine-runtime'+(process.platform==='win32'?'.exe':'')));
-const projectRoot=path.resolve(process.env.MENGINE_QA_PROJECT_ROOT||source),tag=Date.now(),root=path.join(process.env.MENGINE_QA_ROOT||path.join(os.tmpdir(),'mengine-qa'),'native-authority-'+tag);
+const projectRoot=path.resolve(process.env.MENGINE_QA_PROJECT_ROOT||source),tag=Date.now(),root=path.join(process.env.MENGINE_QA_ROOT||path.join(os.tmpdir(),'mengine-qa'),(cooperative?'native-td-coop-':'native-authority-')+tag);
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 const identityRun=spawnSync(executable,['--runtime-info'],{encoding:'utf8',windowsHide:true,timeout:30000});
 assert.equal(identityRun.status,0,identityRun.error?.message||identityRun.stderr);const identity=JSON.parse(identityRun.stdout);assert.equal(identity.backend,'v8');
@@ -23,20 +24,20 @@ function storageRoot(storageName){
   let storageHash=0xcbf29ce484222325n;for(const byte of Buffer.from(storageName))storageHash=BigInt.asUintN(64,(storageHash^BigInt(byte))*0x100000001b3n);
   return path.join(process.env.LOCALAPPDATA||process.env.XDG_DATA_HOME||path.join(os.homedir(),'.local/share'),'MEngine/UserData',storageHash.toString(16).padStart(16,'0'));
 }
-const map=S.defaultMap();for(const key of ['terrain','heights','ramps','relief'])map[key].fill(0);map.props=[];map.doodads=[];map.triggers=[];
-map.name='Native authority acceptance';map.units=[{kind:'soldier',team:0,x:-2,z:0},{kind:'soldier',team:1,x:2,z:0},{kind:'hero',heroClass:0,team:0,x:-18,z:18},{kind:'hero',heroClass:0,team:1,x:18,z:-18}];map.players.forEach(p=>p.ai=false);
+const map=cooperative?JSON.parse(fs.readFileSync(path.join(source,'Assets/Maps/td.json'))):S.defaultMap();if(!cooperative){for(const key of ['terrain','heights','ramps','relief'])map[key].fill(0);map.props=[];map.doodads=[];map.triggers=[];
+map.name='Native authority acceptance';map.units=[{kind:'soldier',team:0,x:-2,z:0},{kind:'soldier',team:1,x:2,z:0},{kind:'hero',heroClass:0,team:0,x:-18,z:18},{kind:'hero',heroClass:0,team:1,x:18,z:-18}];map.players.forEach(p=>p.ai=false);}
 fs.writeFileSync(path.join(root,'fixture-map.json'),JSON.stringify(map));
 const originalCreate=S.create;S.create=(mode,options)=>{const state=originalCreate(mode,options);for(const unit of state.units)if(unit.kind==='soldier')unit.hp=112.00000000000001;return state;};
 const applied=[],originalCommand=S.command;S.command=(state,team,command)=>{
   const units=state.units.filter(u=>command.ids?.includes(u.id)),before=units.map(u=>({id:u.id,hp:u.hp,order:structuredClone(u.order)}));
-  const error=originalCommand(state,team,command);applied.push({frame:state.frame,team,command:structuredClone(command),error,before,after:units.map(u=>({id:u.id,hp:u.hp,order:structuredClone(u.order)}))});return error;
+  const goldBefore=state.teams[team].gold,error=originalCommand(state,team,command);applied.push({frame:state.frame,team,command:structuredClone(command),error,before,goldBefore,goldAfter:state.teams[team].gold,after:units.map(u=>({id:u.id,hp:u.hp,order:structuredClone(u.order)}))});return error;
 };
 const app=createServer({port:0});await app.listening;
 const started=Date.now(),peers=[],wire=new Map(),events=[];let dropGuestStates=false,droppedStates=0;
 app.server.on('connection',socket=>{
   const connection=events.filter(e=>e.type==='connected').length+1;events.push({type:'connected',connection,at:Date.now()-started});
   const originalWrite=socket.write;socket.write=function(data,...args){
-    const message=JSON.parse(String(data)),client=[...app.clients].find(c=>c.socket===socket),team=client?.player?.team;
+    const message=JSON.parse(String(data)),client=[...app.clients].find(c=>c.socket===socket),team=client?.player?.seat;
     if(message.type==='error')events.push({type:'server-error',connection,team,message:message.message});
     const state=message.type==='state'?message.state:message.type==='joined'?message.state:null;
     if(state&&team!==undefined)wire.set(team+':'+state.frame,{hash:hash(canonical(state)),units:state.units.map(u=>({id:u.id,x:u.x,z:u.z,hp:u.hp,mana:u.mana,kind:u.kind,team:u.team})),hidden:state.units.length<client.room.state.units.length});
@@ -50,15 +51,15 @@ const originalSource=fs.readFileSync(path.join(source,'Assets/Scripts/Main.js'),
 assert.equal(originalSource.split('  return {tick};').length,2,'production client inspection anchor');
 assert.equal(originalSource.split("address='127.0.0.1:7788'").length,2,'production server address anchor');
 function launch(index){
-  const key='native-authority-'+tag+'-'+index,script=path.join(root,'peer-'+index+'.js');
+  const key=(cooperative?'native-td-coop-':'native-authority-')+tag+'-'+index,script=path.join(root,'peer-'+index+'.js');
   const peerProject=path.join(root,'project-'+index),storage=storageRoot(key);fs.mkdirSync(peerProject);fs.mkdirSync(storage,{recursive:true});
   fs.writeFileSync(path.join(peerProject,'project.json'),JSON.stringify({...project,storageId:key}));
   fs.symlinkSync(path.join(projectRoot,'Assets'),path.join(peerProject,'Assets'),process.platform==='win32'?'junction':'dir');
-  const expose='  return {tick,action,order,inspect:()=>({state,online,mode,team,seq,room,rooms})};';
+  const expose='  return {tick,action,order,inspect:()=>({state,online,mode,team,seat,seq,room,rooms})};';
   const content=originalSource.replace('  return {tick};',expose).replace("address='127.0.0.1:7788'","address='127.0.0.1:"+app.server.address().port+"'");
   const wrapper=`
 // Owned QA instrumentation calls production actions; networking and rendering remain native.
-var qaKey=${JSON.stringify(key)},qaPeer=${index},qaMap=${JSON.stringify(map)},qaStarted=Date.now(),qaBoot=false,qaOrder=false,qaResume=false,qaResumes=0,qaLocalTicks=0,qaTicks=0,qaSnapshots=0,qaBatch=[],qaBatchIndex=0,qaLastFrame=-1,qaLastJson='',qaSavedAt=0,qaFinished=false,qaActionAt=0;
+var qaKey=${JSON.stringify(key)},qaCoop=${cooperative},qaPeer=${index},qaMap=${JSON.stringify(map)},qaStarted=Date.now(),qaBoot=false,qaOrder=false,qaResume=false,qaResumes=0,qaLocalTicks=0,qaTicks=0,qaSnapshots=0,qaBatch=[],qaBatchIndex=0,qaLastFrame=-1,qaLastJson='',qaSavedAt=0,qaFinished=false,qaActionAt=0;
 function qaFlush(){if(qaBatch.length){engine.storage.save(qaKey+'-batch-'+qaBatchIndex++,qaBatch);qaBatch=[];}}
 var qaDefaultMap=Frost.defaultMap;Frost.defaultMap=function(mode){return !mode||mode==='skirmish'?JSON.parse(JSON.stringify(qaMap)):qaDefaultMap(mode);};
 var qaSimulationTick=Frost.tick;Frost.tick=function(state){if(FrostClient.inspect().online){qaLocalTicks++;throw Error('Online native client attempted independent simulation');}return qaSimulationTick(state);};
@@ -68,14 +69,15 @@ onTick=function(dt,frame){
  try{
   engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720],wheel:0};
   qaOriginalTick(dt,frame);qaTicks++;var now=Date.now(),v=FrostClient.inspect();
-  if(!qaBoot){qaBoot=true;FrostClient.action(qaPeer===0?'netSkirmish':'netBrowse');}
+  if(!qaBoot){qaBoot=true;FrostClient.action(qaPeer===0?(qaCoop?'netTd':'netSkirmish'):'netBrowse');}
   if(v.mode==='rooms'&&now>qaActionAt){FrostClient.action(v.rooms.length?'modalPrimary':'roomRefresh');qaActionAt=now+1000;}
-  if(v.mode==='lobby'&&now>qaActionAt){var self=v.room?.players.find(p=>p.team===v.team);if(!self?.ready||(qaPeer===0&&v.room.players.length===2&&v.room.players.every(p=>p.ready)))FrostClient.action('modalPrimary');qaActionAt=now+500;}
+  if(v.mode==='lobby'&&now>qaActionAt){var self=v.room?.players.find(p=>p.seat===v.seat);if(!self?.ready||(qaPeer===0&&v.room.players.length===2&&v.room.players.every(p=>p.ready)))FrostClient.action('modalPrimary');qaActionAt=now+500;}
   if(v.mode==='reconnecting')qaResume=true;
   if(v.mode==='playing'){
    var own=v.state.units.find(u=>u.kind==='soldier'&&u.team===v.team),enemy=v.state.units.find(u=>u.kind==='soldier'&&u.team!==v.team);
    var hero=v.state.units.find(u=>u.kind==='hero'&&u.team===v.team&&u.hp>0);
-   if(!qaOrder&&own&&enemy&&hero){FrostClient.order(qaPeer===0?{type:'attack',ids:[own.id],target:enemy.id}:{type:'hold',ids:[own.id,hero.id]});qaOrder=true;}
+   if(!qaOrder&&qaCoop&&hero){var worker=v.state.units.find(u=>u.kind==='worker'&&u.team===v.team);if(worker){FrostClient.order({type:'build',ids:[worker.id],kind:'tower',x:qaPeer===0?-16:-8,z:qaPeer===0?-13:-17});if(qaPeer===1)FrostClient.order({type:'hold',ids:[hero.id]});qaOrder=true;}}
+   if(!qaOrder&&!qaCoop&&own&&enemy&&hero){FrostClient.order(qaPeer===0?{type:'attack',ids:[own.id],target:enemy.id}:{type:'hold',ids:[own.id,hero.id]});qaOrder=true;}
    if(qaResume){qaResume=false;qaResumes++;if(!hero)throw Error('No living hero for reconnect command');FrostClient.order({type:'stop',ids:[hero.id]});}
    var serialized=JSON.stringify(v.state);
    if(v.state.frame===qaLastFrame&&serialized!==qaLastJson)throw Error('Client changed authoritative state without a new server frame');
@@ -100,22 +102,23 @@ function read(peer,key){try{return JSON.parse(fs.readFileSync(path.join(peer.sto
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(check,label,timeout=60000){const end=Date.now()+timeout;while(Date.now()<end){for(const peer of peers){const failure=read(peer,peer.key+'-failure');if(failure)throw Error('Player '+peer.index+': '+failure.message);if(peer.error)throw Error(peer.error);if(peer.exit)throw Error('Player '+peer.index+' exited before '+label+': '+JSON.stringify(peer.exit));}if(await check())return;await sleep(100);}throw Error('Native authority timeout: '+label);}
 const status=peer=>read(peer,peer.key+'-status');
-const report={author:'MiYu',passed:false,scope:'Two standalone V8 Players on one host, production generated client and scene, real authoritative TCP. Every distinct authoritative frame presented by a client is checked. Scripted game actions, no physical input or two-machine acceptance.',fixture:{mapFile:path.join(root,'fixture-map.json'),mapSha256:hash(canonical(map)),initialSoldierHp:112.00000000000001,instrumentation:'Expose private client inspection/actions; replace default skirmish map with a flat map containing opposing soldiers and heroes, no props/doodads/triggers; assign precision sentinel HP at server creation; replace physical input with empty input; fail on any online simulation tick. Each Player has an isolated project storage ID and an Assets directory link to the supplied project.'},runtime:identity,executable,executableSha256:hash(fs.readFileSync(executable)),clientSha256:hash(originalSource),sceneSha256:hash(fs.readFileSync(path.join(source,'Assets/Scenes/Main.mscene'))),projectRoot,root};
+const report={author:'MiYu',passed:false,scope:'Two standalone V8 Players on one host, production generated client and scene, real authoritative TCP. Every distinct authoritative frame presented by a client is checked. Scripted game actions, no physical input or two-machine acceptance.',fixture:{mapFile:path.join(root,'fixture-map.json'),mapSha256:hash(canonical(map)),...(cooperative?{mode:'td',unmodifiedShippedMap:true}:{initialSoldierHp:112.00000000000001}),instrumentation:cooperative?'Expose private client inspection/actions; use the unmodified shipped TD map; replace physical input with empty input; fail on online simulation. Each Player has isolated storage and an Assets directory link.':'Expose private client inspection/actions; replace default skirmish map with a flat map containing opposing soldiers and heroes, no props/doodads/triggers; assign precision sentinel HP at server creation; replace physical input with empty input; fail on any online simulation tick. Each Player has an isolated project storage ID and an Assets directory link to the supplied project.'},runtime:identity,executable,executableSha256:hash(fs.readFileSync(executable)),clientSha256:hash(originalSource),sceneSha256:hash(fs.readFileSync(path.join(source,'Assets/Scenes/Main.mscene'))),projectRoot,root};
 try{
   const host=launch(0),guest=launch(1);
-  await until(()=>status(host)?.frame>=15&&status(guest)?.frame>=15,'both clients receive live match');
+  await until(()=>status(host)?.frame>=(cooperative?135:15)&&status(guest)?.frame>=(cooperative?135:15),'both clients receive live match');
   assert.equal(app.rooms.size,1);const room=[...app.rooms.values()][0];assert.equal(room.players.length,2);
   console.log('PASS two native clients create, browse, join, ready and start');
-  const oldGuest=[...app.clients].find(c=>c.player?.team===1);assert.equal(oldGuest.lastSeq,1);assert.ok(applied.some(a=>a.team===1&&a.command.type==='hold'&&a.error===null));
+  if(cooperative){assert.deepEqual(room.players.map(p=>p.team),[0,0]);assert.deepEqual(room.players.map(p=>p.seat),[0,1]);assert.deepEqual(room.state.teams.map(t=>t.ai),[false,false]);const builds=applied.filter(a=>a.command.type==='build');assert.equal(builds.length,2);assert.ok(builds.every(a=>a.error===null&&a.goldBefore-a.goldAfter===S.types.tower.gold));assert.ok(room.state.wave>=1);report.sharedBuilds=builds;report.wave=room.state.wave;}
+  const oldGuest=[...app.clients].find(c=>c.player?.seat===1);assert.equal(oldGuest.lastSeq,cooperative?2:1);assert.ok(applied.some(a=>a.team===(cooperative?0:1)&&a.command.type==='hold'&&a.error===null));
   dropGuestStates=true;await sleep(600);const held=status(guest).frame,guestTicks=status(guest).clientTicks,hostBefore=status(host).frame;
   await sleep(1400);assert.equal(status(guest).frame,held,'missing snapshots must not advance native guest');assert.ok(status(guest).clientTicks>guestTicks,'guest keeps executing callbacks while snapshots are withheld');assert.ok(status(host).frame>hostBefore,'host continues receiving authority');assert.ok(droppedStates>0);report.guestTicksWhileStalled=status(guest).clientTicks-guestTicks;dropGuestStates=false;
   await until(()=>status(guest).frame>held,'guest catches up after withheld snapshots');report.stalledGuestFrame=held;report.droppedSnapshots=droppedStates;
   console.log('PASS missing snapshots hold guest simulation, then recover');
-  const before=[...app.clients].find(c=>c.player?.team===1);assert.ok(before);before.socket.destroy();
-  await until(()=>status(guest).resumes===1&&[...app.clients].some(c=>c!==before&&c.player?.team===1),'real guest TCP reconnect');
+  const before=[...app.clients].find(c=>c.player?.seat===1);assert.ok(before);before.socket.destroy();
+  await until(()=>status(guest).resumes===1&&[...app.clients].some(c=>c!==before&&c.player?.seat===1),'real guest TCP reconnect');
   await until(()=>events.some(e=>e.type==='resume')&&events.some(e=>e.type==='order'&&e.connection===events.find(v=>v.type==='resume').connection&&e.seq===1),'sequence restarts on resumed connection');
-  await until(()=>applied.some(a=>a.team===1&&a.command.type==='stop'),'resumed command applied by authority');
-  const resumedClient=[...app.clients].find(c=>c.player?.team===1),stop=applied.find(a=>a.team===1&&a.command.type==='stop');
+  await until(()=>applied.some(a=>a.team===(cooperative?0:1)&&a.command.type==='stop'),'resumed command applied by authority');
+  const resumedClient=[...app.clients].find(c=>c.player?.seat===1),stop=applied.find(a=>a.team===(cooperative?0:1)&&a.command.type==='stop');
   assert.equal(resumedClient.lastSeq,1);assert.equal(stop.error,null);assert.ok(stop.before.some(u=>u.hp>0&&u.order?.type==='hold'));assert.ok(stop.after.some(u=>u.hp>0&&u.order===null));report.resumedCommand=stop;
   const resumeFrame=status(guest).frame;await until(()=>status(host).frame>resumeFrame+10&&status(guest).frame>resumeFrame+10,'continued state after reconnect');
   console.log('PASS native reconnect restores match and resets order sequence');
@@ -126,13 +129,13 @@ try{
     const files=fs.readdirSync(peer.storage).filter(f=>f.startsWith(peer.key+'-batch-')),states=files.flatMap(file=>JSON.parse(fs.readFileSync(path.join(peer.storage,file))));assert.equal(states.length,final.snapshots,'every presented new frame has evidence');
     for(const state of states){const expected=wire.get(peer.index+':'+state.frame);assert.ok(expected,'server frame recorded');assert.equal(hash(canonical(state)),expected.hash,'native state equals complete authoritative public snapshot');comparisons++;if(expected.hidden)hidden++;if(state.units.some(u=>u.hp===112.00000000000001))precise++;captured.set(peer.index+':'+state.frame,state);}
   }
-  for(const [key,left] of captured){if(!key.startsWith('0:'))continue;const right=captured.get('1:'+left.frame);if(!right)continue;for(const unit of left.units){const other=right.units.find(u=>u.id===unit.id);if(other){for(const key of ['x','z','hp','mana','kind','team'])assert.deepEqual(unit[key],other[key],'shared actor '+key);shared++;}}}
-  assert.ok(shared>0);assert.ok(hidden>0);assert.ok(precise>0);assert.equal(events.filter(e=>e.type==='timeout').length,0);assert.deepEqual(events.filter(e=>e.type==='server-error'),[]);
+  for(const [key,left] of captured){if(!key.startsWith('0:'))continue;const right=captured.get('1:'+left.frame);if(!right)continue;if(cooperative)assert.deepEqual(left,right,'cooperative complete state equality');for(const unit of left.units){const other=right.units.find(u=>u.id===unit.id);if(other){for(const key of ['x','z','hp','mana','kind','team'])assert.deepEqual(unit[key],other[key],'shared actor '+key);shared++;}}}
+  assert.ok(shared>0);if(!cooperative){assert.ok(hidden>0);assert.ok(precise>0);}assert.equal(events.filter(e=>e.type==='timeout').length,0);assert.deepEqual(events.filter(e=>e.type==='server-error'),[]);
   report.snapshotComparisons=comparisons;report.sharedActorComparisons=shared;report.fogFilteredSnapshots=hidden;report.exactFloatSnapshots=precise;report.clients=peers.map(p=>({pid:p.child.pid,project:p.project,storage:p.storage,instrumentedScriptSha256:hash(fs.readFileSync(p.script)),final:p.final,exit:p.exit}));report.passed=true;
 }catch(error){report.error=String(error.stack||error);throw error;}
 finally{
   for(const peer of peers)if(!peer.exit&&!peer.error)peer.child.kill();await Promise.all(peers.map(p=>p.done));await app.close();S.create=originalCreate;S.command=originalCommand;
   report.elapsedMs=Date.now()-started;report.events=events;fs.writeFileSync(path.join(root,'report.json'),JSON.stringify(report,null,2)+'\n');
-  fs.writeFileSync(path.join(repo,'docs/designs/frostbound-realms/native-v8-authority-validation.json'),JSON.stringify(report,null,2)+'\n');
+  fs.writeFileSync(path.join(repo,'docs/designs/frostbound-realms/'+(cooperative?'native-td-coop-validation.json':'native-v8-authority-validation.json')),JSON.stringify(report,null,2)+'\n');
 }
 console.log(JSON.stringify({passed:report.passed,comparisons:report.snapshotComparisons,sharedActors:report.sharedActorComparisons,elapsedMs:report.elapsedMs,report:path.join(root,'report.json')}));

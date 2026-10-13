@@ -1,0 +1,193 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "checks": [
+    "protocol rejection",
+    "two independent seats on defending team",
+    "guest host/hero permissions",
+    "double disconnect owner recovery",
+    "offline slot expiry publication",
+    "shared hero survives owner transfer",
+    "shared building budget",
+    "atomic competing upgrades",
+    "per-seat queue allowance under synchronous parser intake",
+    "creep control rejection",
+    "full public state equality",
+    "reconnect sequence reset",
+    "leave without defender AI",
+    "shared loss",
+    "skirmish teams, heroes and AI takeover",
+    "moba teams, heroes and AI takeover",
+    "shared victory after final cleared wave",
+    "generated scene IDs",
+    "mouse cooperation entry",
+    "keyboard cooperation entry",
+    "guest readiness identity",
+    "client shared hero permission",
+    "guest cannot start",
+    "defense camera"
+  ],
+  "targetedScripts": [
+    {
+      "test": "scripts/test-frost-corpse-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-corpse-stages.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-crypt-lord-default.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-crypt-lord-generated.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-death-knight-generated.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-death-knight.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-dreadlord-generated.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-hero-death-generated.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-hero-death-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-hero-death.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-army-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-army.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-controlmagic-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-controlmagic.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-equipment-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-equipment.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-mortar-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-mortar.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-priest-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-priest.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-sanctum-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-sanctum-spells-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-sanctum.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-sentry-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-sentry.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-sorceress-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-sorceress.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-spellbreaker-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-spellbreaker.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-spellsteal-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-spellsteal.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-technology-network.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-human-technology.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-lich-generated.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-map-catalog.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-scene-groups.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-shadowhunter-generated.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-tauren-generated.mjs",
+      "exit": 0
+    },
+    {
+      "test": "scripts/test-frost-td-coop.mjs",
+      "exit": 0
+    }
+  ],
+  "fullSuite": {
+    "passed": false,
+    "reason": "Sparse QA checkout is missing an unrelated tracked Blood Mage source texture; full-suite source provenance check cannot complete.",
+    "log": "D:/MEngineNativeQA/td-coop-regression.log"
+  }
+}

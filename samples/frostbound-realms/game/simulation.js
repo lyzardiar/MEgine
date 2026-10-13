@@ -1,6 +1,6 @@
 /* Author: MiYu. Shared fixed-step rules for the native client and authoritative server. */
 var Frost = (() => {
-  const PROTOCOL = 89, DT = 0.1, LIMIT = 160, PROJECTILE_LIMIT = 256, CORPSE_LIMIT = 64, CORPSE_LIFETIME = 20, TREE_FALL_LIFETIME = 6, TREE_RADIUS = .8, SIZE = 32;
+  const PROTOCOL = 90, DT = 0.1, LIMIT = 160, PROJECTILE_LIMIT = 256, CORPSE_LIMIT = 64, CORPSE_LIFETIME = 20, TREE_FALL_LIFETIME = 6, TREE_RADIUS = .8, SIZE = 32;
   const sorceressRules=typeof module!=='undefined'?require('../human-sorceress-spells.json'):FrostHumanSorceressRules;
   const transformed=u=>u.hex||u.hexLeft>0||u.polymorph||u.polymorphLeft>0;
   const polymorphForm=u=>u.polymorph||u.polymorphLeft>0?sorceressRules.forms[u.polymorph?.form??u.polymorphForm]:null;
