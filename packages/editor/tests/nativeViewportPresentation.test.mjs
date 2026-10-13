@@ -165,3 +165,19 @@ test('native delta revisions share static resolved nodes and invalidate retained
   assert.equal(results[1].get(4), results[2].get(4));
   assert.deepEqual([...read(worlds[0]).worldTransforms()], [...results[0]]);
 });
+
+test('owned render entries keep hierarchy order and sparse Scene overlays across camera moves and invalidate on scene edits', () => {
+  const make = (entity, components = {}, extra = {}) => ({ entity, components: { Transform: transform(entity), ...components }, ...extra });
+  const live = { entities: [make(1), make(2, { Camera3D: {} }), make(3, { PointLight: {} }), make(4, { PointLight: {}, MeshRenderer: {} }), make(5, { SpineSkeleton: {} }), make(6, { Camera2D: {} }, { parent: 1 }), make(7, { DirectionalLight: {} }, { active: false }), make(8, { SpotLight: {} }, { parent: 7 }), make(9, { Light2D: {} })], clearColor: [0, 0, 0, 1], simulationTime: 0 };
+  const reader = createNativeViewportPresentationReader(), first = reader(createNativeViewportWorldArgs(live).frameWorld());
+  const entries = first.worldEntries(), overlays = first.sceneOverlayEntries();
+  assert.deepEqual(entries.map(({ e, hierarchyOrder }) => [e.entity, hierarchyOrder]), [[1, 0], [2, 1], [3, 2], [4, 3], [5, 4], [6, 5], [9, 8]]);
+  assert.deepEqual(overlays.map(({ e }) => e.entity), [2, 3, 5, 6, 9]);
+  assert.deepEqual(first.worldEntries(true).map(({ e }) => e.entity), [5]);
+  for (let i = 0; i < 100; i++) { assert.equal(first.worldEntries(), entries); assert.equal(first.sceneOverlayEntries(), overlays); }
+  live.entities[0].active = false; live.entities[3].components.Camera3D = {}; live.entities[4].components.Transform.position[0] = 70;
+  const next = reader(createNativeViewportWorldArgs(live).frameWorld());
+  assert.deepEqual(next.sceneOverlayEntries().map(({ e }) => e.entity), [2, 3, 4, 5, 9]);
+  assert.equal(next.worldEntries(true)[0].t.position[0], 70); assert.equal(first.worldEntries(true)[0].t.position[0], 5);
+  assert.equal(entries.find(({ e }) => e.entity === 6).t.position[0], 7);
+});

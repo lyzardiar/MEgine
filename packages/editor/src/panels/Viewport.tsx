@@ -1937,7 +1937,7 @@ export function Viewport(props: {
     }
 
     const projectEntityCenter = createProjection(cam, vp);
-    const worldEntries = p.entities.flatMap((e, hierarchyOrder) => {
+    const worldEntries = displayedPresentation ? displayedPresentation.worldEntries(nativeGameReady) : p.entities.flatMap((e, hierarchyOrder) => {
       if ((nativeGameReady && !e.components.SpineSkeleton) || !isActive(e.entity)) return [];
       const t = resolvedTransform(worldTransforms, e.entity);
       return t ? [{ e, t, hierarchyOrder }] : [];
@@ -2567,10 +2567,7 @@ export function Viewport(props: {
       if (!scene2DActive && sceneGridRef.current) {
         drawGroundGrid(ctx, cam, vp, cam.target, Math.hypot(...cam.eye.map((value, axis) => value - cam.target[axis])));
       }
-      for (const entity of p.entities) {
-        if (!isActive(entity.entity)) continue;
-        const transform = resolvedTransform(worldTransforms, entity.entity) ?? undefined;
-        if (!transform) continue;
+      for (const { e: entity, t: transform } of displayedPresentation!.sceneOverlayEntries()) {
         const selected = selSet.has(entity.entity);
         const camera2D = entity.components.Camera2D as Camera2DData | undefined;
         const camera3D = entity.components.Camera3D as Camera3DData | undefined;
