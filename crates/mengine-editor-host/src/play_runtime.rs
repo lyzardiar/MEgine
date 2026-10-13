@@ -1,3 +1,4 @@
+// Author: MiYu. Keep revision ownership consistent across independent viewport mirrors.
 use mengine_core::{snapshot::{EntitySnapshot, SharedWorldSnapshot, WorldSnapshot}, World};
 use mengine_physics::{PhysicsWorld, PhysicsWorld2D};
 use mengine_runtime::{animation::AnimationRuntime, audio::AudioRuntime, scenes::{LoadedScene, SceneManager, SceneSelector}, script_requests::ScriptRequestContext, timeline::TimelineRuntime};
@@ -89,7 +90,7 @@ enum Request {
 
 type PlayRenderWorld = std::sync::Mutex<(u64, mengine_scene::SharedSnapshotWorld)>;
 /// The script VM stays on one worker thread; viewport mirrors only consume published snapshots.
-pub struct EditorPlayRuntime { sender: Sender<Request>, generation: Arc<AtomicU64>, render_world: PlayRenderWorld, preview_render_world: PlayRenderWorld, render_history: Arc<parking_lot::Mutex<Option<(u64, PlayRenderHistory)>>> }
+pub struct EditorPlayRuntime { sender: Sender<Request>, generation: Arc<AtomicU64>, render_world: PlayRenderWorld, scene_render_world: PlayRenderWorld, preview_render_world: PlayRenderWorld, render_history: Arc<parking_lot::Mutex<Option<(u64, PlayRenderHistory)>>> }
 
 impl Default for EditorPlayRuntime {
     fn default() -> Self {
@@ -158,7 +159,7 @@ impl Default for EditorPlayRuntime {
                 }
             }
         }).expect("create editor script worker");
-        Self { sender, generation, render_world: PlayRenderWorld::default(), preview_render_world: PlayRenderWorld::default(), render_history }
+        Self { sender, generation, render_world: PlayRenderWorld::default(), scene_render_world: PlayRenderWorld::default(), preview_render_world: PlayRenderWorld::default(), render_history }
     }
 }
 
@@ -214,12 +215,17 @@ impl EditorPlayRuntime {
         self.render_revision_with_snapshot(generation, revision, move |world, _| render(world))
     }
 
-    /// The published source retains browser entity IDs for Scene visibility filtering.
+    /// The Game mirror and published source describe the same requested world revision.
     pub fn render_revision_with_snapshot(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
         self.render_revision_from_world(generation, revision, &self.render_world, render)
     }
 
-    /// MiYu: preview resource initialization never holds the Scene/Game world mirror lock.
+    /// MiYu: Scene owns its revision mirror; the source preserves browser IDs for visibility filtering.
+    pub fn render_scene_revision_with_snapshot(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
+        self.render_revision_from_world(generation, revision, &self.scene_render_world, render)
+    }
+
+    /// MiYu: preview resource initialization never holds the Scene or Game world mirror lock.
     pub fn render_preview_revision_with_snapshot(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
         self.render_revision_from_world(generation, revision, &self.preview_render_world, render)
     }
@@ -439,6 +445,75 @@ mod tests {
     }
 
     #[test]
+    fn blocked_scene_keeps_its_revision_while_game_and_preview_render_independently() {
+        let runtime = Arc::new(EditorPlayRuntime::default()); let id = runtime.begin();
+        runtime.start(id, "function onTick(dt, frame) { engine.setClearColor(frame, 0, 0, 1); }".into(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        let (entered, ready) = mpsc::channel(); let (release, resume) = mpsc::channel();
+        let scene_runtime = runtime.clone();
+        let scene = std::thread::spawn(move || scene_runtime.render_scene_revision_with_snapshot(id, Some(0), move |world, source| {
+            entered.send(()).unwrap(); resume.recv_timeout(Duration::from_secs(5)).unwrap();
+            assert_eq!(world.time.frame, 0); assert_eq!(source.frame, 0); assert_eq!(world.time.clear_color.x, 0.1);
+            Err("initial Scene retained".into())
+        }));
+        ready.recv_timeout(Duration::from_secs(3)).unwrap();
+        for frame in 1..=2 { assert_eq!(runtime.advance_update(id, None, ScriptInput::default(), 0.01).unwrap().revision, frame); }
+        let (completed, result) = mpsc::channel(); let other_runtime = runtime.clone();
+        let other_views = std::thread::spawn(move || {
+            for revision in [2, 1, 2] {
+                for preview in [false, true] {
+                    let check = move |world: &World, source: &SharedWorldSnapshot| {
+                        assert_eq!(world.time.frame, revision); assert_eq!(source.frame, revision);
+                        assert_eq!(world.time.clear_color.x, revision as f32);
+                        Err("exact revision checked".into())
+                    };
+                    let frame = if preview { other_runtime.render_preview_revision_with_snapshot(id, Some(revision), check) } else { other_runtime.render_revision_with_snapshot(id, Some(revision), check) };
+                    assert_eq!(frame.err().unwrap(), "exact revision checked");
+                }
+            }
+            completed.send(()).unwrap();
+        });
+        let independent = result.recv_timeout(Duration::from_secs(3));
+        release.send(()).unwrap(); other_views.join().unwrap();
+        assert!(independent.is_ok(), "Game and preview must finish while Scene remains blocked");
+        assert_eq!(scene.join().unwrap().err().unwrap(), "initial Scene retained");
+        assert_eq!(runtime.render_scene_revision_with_snapshot(id, Some(1), |world, source| { assert_eq!(world.time.frame, 1); assert_eq!(source.frame, 1); Err("Scene revision checked".into()) }).err().unwrap(), "Scene revision checked");
+        for _ in 0..3 { runtime.advance_update(id, None, ScriptInput::default(), 0.01).unwrap(); }
+        for view in 0..3 {
+            let reject = |_: &World, _: &SharedWorldSnapshot| panic!("expired revision must not reach any renderer");
+            let result = match view { 0 => runtime.render_revision_with_snapshot(id, Some(0), reject), 1 => runtime.render_scene_revision_with_snapshot(id, Some(0), reject), _ => runtime.render_preview_revision_with_snapshot(id, Some(0), reject) };
+            assert_eq!(result.err().unwrap(), PLAY_VIEWPORT_REVISION_EXPIRED);
+        }
+    }
+
+    #[test]
+    fn scene_restart_rejects_running_and_queued_frames_and_resets_the_mirror() {
+        let runtime = Arc::new(EditorPlayRuntime::default()); let id = runtime.begin();
+        runtime.start(id, String::new(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        let (entered, ready) = mpsc::channel(); let (release, resume) = mpsc::channel();
+        let scene_runtime = runtime.clone();
+        let scene = std::thread::spawn(move || scene_runtime.render_scene_revision_with_snapshot(id, Some(0), move |_, _| {
+            entered.send(()).unwrap(); resume.recv_timeout(Duration::from_secs(5)).unwrap(); Err("old Scene result".into())
+        }));
+        ready.recv_timeout(Duration::from_secs(3)).unwrap();
+        let published = runtime.render_history.lock().as_ref().unwrap().1.snapshot(0).unwrap();
+        let queued_runtime = runtime.clone(); let (queued, pending) = mpsc::channel();
+        let waiting_scene = std::thread::spawn(move || {
+            queued.send(()).unwrap();
+            queued_runtime.render_published_snapshot(id, Some(0), published, &queued_runtime.scene_render_world, |_, _| panic!("queued old Scene must not render"))
+        });
+        pending.recv_timeout(Duration::from_secs(3)).unwrap();
+        runtime.stop_session(id); let next = runtime.begin();
+        runtime.start(next, String::new(), WorldSnapshot { clear_color: [0.75, 0.5, 0.25, 1.0], ..WorldSnapshot::default() }, PlayProject::default()).unwrap();
+        release.send(()).unwrap();
+        assert_eq!(scene.join().unwrap().err().unwrap(), "Play session expired");
+        assert_eq!(waiting_scene.join().unwrap().err().unwrap(), "Play session expired");
+        assert_eq!(runtime.render_scene_revision_with_snapshot(id, Some(0), |_, _| panic!("old session must not render")).err().unwrap(), "Play session expired");
+        assert_eq!(runtime.render_scene_revision_with_snapshot(next, Some(0), |world, source| {
+            assert_eq!(world.time.frame, 0); assert_eq!(source.frame, 0); assert_eq!(world.time.clear_color.x, 0.75); Err("new Scene checked".into())
+        }).err().unwrap(), "new Scene checked");
+    }
+
+    #[test]
     fn slow_preview_does_not_block_game_revisions_and_cannot_publish_after_restart() {
         let runtime = Arc::new(EditorPlayRuntime::default()); let id = runtime.begin();
         runtime.start(id, String::new(), WorldSnapshot::default(), PlayProject::default()).unwrap();
@@ -507,12 +582,22 @@ mod tests {
         let parent = snapshot.entities[0].entity;
         snapshot.entities.push(serde_json::from_value(serde_json::json!({"entity":777,"name":"replacement","parent":parent,"active":true,"components":{"Transform":{"position":[1,2,3],"rotation":[0,0,0,1],"scale":[1,1,1]}}})).unwrap());
         runtime.advance_update(id, Some(snapshot), ScriptInput::default(), 0.01).unwrap();
-        assert_eq!(runtime.render_revision_with_snapshot(id, None, |world, source| {
+        assert_eq!(runtime.render_scene_revision_with_snapshot(id, None, |world, source| {
             let original = source.entities.iter().find(|entity| entity.name.as_deref() == Some("replacement")).unwrap().entity;
             let mirrored = world.iter_entities().find(|entity| world.get_component::<Name>(*entity).is_some_and(|name| name.value == "replacement")).unwrap();
             assert_ne!(original, mirrored.to_u64());
             let mut filtered = source.clone().into_owned(); filtered.entities.retain(|entity| entity.entity != original);
             assert_eq!(filtered.entities.len(), 1); assert_eq!(filtered.entities[0].name.as_deref(), Some("parent")); assert!(!filtered.entities[0].active);
+            let mut active_source = source.clone();
+            for entity in &mut active_source.entities { Arc::make_mut(entity).active = true; }
+            let parent = active_source.entities.iter().find(|entity| entity.name.as_deref() == Some("parent")).unwrap().entity;
+            let mut scene_filter = crate::SceneSnapshotWorld::default();
+            let visible = scene_filter.update_filtered(&active_source, &[original]);
+            assert_eq!(visible.iter_entities().count(), 1);
+            assert!(visible.iter_entities().all(|entity| visible.get_component::<Name>(entity).is_some_and(|name| name.value == "parent")));
+            assert_eq!(scene_filter.update_filtered(&active_source, &[]).iter_entities().count(), 2);
+            assert_eq!(scene_filter.update_filtered(&active_source, &[parent]).iter_entities().count(), 0);
+            assert!(!source.entities.iter().find(|entity| entity.entity == parent).unwrap().active);
             Err("source filtering checked".into())
         }).err().unwrap(), "source filtering checked");
     }

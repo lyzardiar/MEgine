@@ -4586,7 +4586,7 @@ async fn render_native_scene_view(
                 let mut frame = render(world, None)?; frame.profile.world_sync_ms = Some(sync_ms); frame.profile.world_lock_wait_ms = Some(wait_ms); Ok(frame)
             },
             (None, Some(id)) if camera_preview => runtime.render_preview_revision_with_snapshot(id, play_revision, move |world, source| render(world, Some(source))),
-            (None, Some(id)) => runtime.render_revision_with_snapshot(id, play_revision, move |world, source| render(world, Some(source))),
+            (None, Some(id)) => runtime.render_scene_revision_with_snapshot(id, play_revision, move |world, source| render(world, Some(source))),
             _ => Err("viewport world is unavailable".into()),
         }
     })
