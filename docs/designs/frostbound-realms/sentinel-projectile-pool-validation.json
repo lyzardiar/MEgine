@@ -1,0 +1,202 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "scope": "Lazy original Sentinel owls and sampled attack projectiles; current native Release and generated-client regressions.",
+  "baselineCommit": "b9f9001dcc373bef0c74d376441686cb734d813a",
+  "sha256": {
+    "samples/frostbound-realms/Assets/Scenes/Main.mscene": "692393165531f16d4957852e9ce0aff22eea9562d32ebb161262a54de102e1f4",
+    "samples/frostbound-realms/Assets/Scripts/Main.js": "f3dbc0dabe1f245d68faddb99157e40bf66e74bd10373e04d657d60d383c5a00"
+  },
+  "scene": {
+    "beforeEntities": 5126,
+    "afterEntities": 4224,
+    "removedEntities": 902,
+    "originalBeforeStreaming": 9019,
+    "preservedAssetReferences": 742,
+    "retainedNodesEqual": true,
+    "reproducible": true
+  },
+  "tests": {
+    "poolUnitTests": 6,
+    "deferredPoolChecks": 16,
+    "streamedFamilies": 7,
+    "droppedSpawnAndHideRecovery": true,
+    "latestAnimationAfterDeferredCreation": true,
+    "expiredColdEffectsStayHidden": true,
+    "generated": [
+      "sentinel-client",
+      "archmage-generated",
+      "hero-death-generated",
+      "farseer-generated",
+      "blood-mage-generated",
+      "human-mortar-client"
+    ],
+    "projectileSimulation": true
+  },
+  "native": [
+    {
+      "kind": "sentinel",
+      "report": "D:\\MEngineNativeQA\\sentinel-pool-native-sentinel\\native-sentinel-qa.json",
+      "passed": true,
+      "steps": [
+        {
+          "name": "project open and ready",
+          "ms": 16023
+        },
+        {
+          "name": "cold effect slots, parentage, materials, hide and reuse",
+          "ms": 6476
+        },
+        {
+          "name": "original Owl flight and perch",
+          "ms": 2070
+        },
+        {
+          "name": "pause and actual save/load",
+          "ms": 937
+        },
+        {
+          "name": "Shaman Q at rendered Owl height",
+          "ms": 1212
+        },
+        {
+          "name": "native overflow and title cleanup",
+          "ms": 1789
+        },
+        {
+          "name": "completed-world Owl persistence",
+          "ms": 694
+        }
+      ],
+      "normalExit": true,
+      "shaderRejections": 0
+    },
+    {
+      "kind": "archmage",
+      "report": "D:\\MEngineNativeQA\\sentinel-pool-native-archmage\\native-archmage-qa.json",
+      "passed": true,
+      "steps": [
+        {
+          "name": "project open and ready",
+          "ms": 16886
+        },
+        {
+          "name": "original Archmage body, INT cards and rank-three Water Elemental",
+          "ms": 5601
+        },
+        {
+          "name": "source Blizzard, channel animation, shards and F5 continuation",
+          "ms": 1781
+        },
+        {
+          "name": "Brilliance and three-second Mass Teleport with original effects",
+          "ms": 2348
+        }
+      ],
+      "normalExit": true,
+      "shaderRejections": 0
+    }
+  ],
+  "coldNativeEffects": {
+    "passed": true,
+    "slots": [
+      "Classic Sentinel 1301",
+      "Classic Archmage missile 1302"
+    ],
+    "parentage": true,
+    "materials": true,
+    "hidden": true,
+    "reusedIds": [
+      4294971707,
+      4294971712
+    ]
+  },
+  "release": {
+    "report": "D:\\MEngineNativeQA\\release-scene-profile-sentinel-pool-after-1791886976220\\report.json",
+    "executable": "D:/MEngineNativeQA/release-editor-scene-derived-entries.exe",
+    "executableSha256": "7c6711896bb8dbf2d0b882b19248033843663ead27ee3a6c92ecee6ee6ee927b",
+    "passed": true,
+    "ownerExited": true,
+    "openMs": 4471.544399999999,
+    "views": {
+      "movingScene": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 16.877083333333335,
+        "p95PresentIntervalMs": 18.200000047683716,
+        "presentedFps": 59.2519442044192,
+        "averageRequestMs": 8.272499997417132,
+        "averageRenderMs": 3.0746429166666687,
+        "averageCommandMs": 3.236166666666669,
+        "averageUploadMs": 1.5845833291610083,
+        "averageWorldSyncMs": 0.002596666666666666,
+        "averageSimulationMs": null,
+        "averageSimulationRequestMs": null
+      },
+      "game": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 19.837083332737286,
+        "p95PresentIntervalMs": 28,
+        "presentedFps": 50.41063664584665,
+        "averageRequestMs": 14.552083332339922,
+        "averageRenderMs": 8.927959583333331,
+        "averageCommandMs": 10.043818333333327,
+        "averageUploadMs": 1.679166661699613,
+        "averageWorldSyncMs": 0.8357162499999996,
+        "averageSimulationMs": 7.1264749999999975,
+        "averageSimulationRequestMs": 11.717499995231629
+      },
+      "playScene": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 20.26541666686535,
+        "p95PresentIntervalMs": 24.899999856948853,
+        "presentedFps": 49.345148754579235,
+        "averageRequestMs": 14.825833330551783,
+        "averageRenderMs": 7.214510416666667,
+        "averageCommandMs": 8.954924583333332,
+        "averageUploadMs": 1.7554166694482167,
+        "averageWorldSyncMs": 1.4568983333333325,
+        "averageSimulationMs": 6.0730783333333305,
+        "averageSimulationRequestMs": 12.408333331346512
+      }
+    },
+    "sceneContinuity": {
+      "paintCount": 726,
+      "emptyPaints": 0,
+      "completedNativeFrames": 701
+    },
+    "playSceneContinuity": {
+      "paintCount": 573,
+      "emptyPaints": 0,
+      "completedNativeFrames": 572
+    },
+    "gamePresentation": {
+      "drawCount": 602,
+      "uniqueFrames": 602,
+      "emptyRafChecks": 0,
+      "displayedFps": 48.862446530578005
+    },
+    "inspectorSelection": {
+      "single": true,
+      "multi": true,
+      "locked": true,
+      "unlocked": true,
+      "passed": true
+    },
+    "hierarchyAfterScroll": {
+      "rows": 30,
+      "scrollTop": 260
+    }
+  },
+  "restoredQaFiles": {
+    "Assets/Scripts/Main.js": "e8cb5dc6c5467af274de62ca021ab5eb25ca73928160adc52761b3643bc8ae67",
+    "Assets/Scenes/Main.mscene": "3eb4d1b0cc97c1876da3257d9f9861b907966c2e48fe3b4a0a679c80c101f787",
+    "project.json": "7b555ef3454ea6c5a4f99b63eb77c0d0f5949239950b4466144621c1311e8a68"
+  },
+  "limitations": [
+    "FPS is a single local observation, not a cross-machine guarantee; Game FPS remains close to the preceding stage.",
+    "Other preallocated actor indicators, UI and effect families remain.",
+    "The existing one-second initial script-evaluation guard is unchanged.",
+    "Cold slots wait for deferred creation and parent acknowledgement; expired slots stay inactive.",
+    "Owned QA processes exited, but some WebView runtime directories remained locked during cleanup."
+  ]
+}

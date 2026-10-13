@@ -6,7 +6,7 @@ var FrostEffectPool=(()=>{
   const actorBase=name=>['Unit'].includes(name)?'Units':['Missile'].includes(name)?'Projectiles':['Objective'].includes(name)?'Systems':'Environment';
   const corpsePattern=/^Corpse (\d+)(?: mesh \d+)?$/;
   const ribbonPattern=/^(Classic (?:Siphon|Healing Wave|Chain Lightning)) (\d+)(?: part \d+)?$/;
-  const sampledPattern=/^(Classic (?:Far Sight|Shockwave)) (\d+)(?: mesh \d+)?$/;
+  const sampledPattern=/^(Classic (?:Far Sight|Shockwave|Sentinel|Archmage missile)) (\d+)(?: mesh \d+)?$/;
   const pooled=name=>pattern.test(name)||corpsePattern.test(name)||actorPattern.test(name)||ribbonPattern.test(name)||sampledPattern.test(name);
   // Native typed components include defaults and serialize their floating fields as f32.
   function matches(actual,desired){

@@ -22,7 +22,7 @@ var FrostClient=(()=>{
   const missileView=FrostVisual.projectileView(),unitView=FrostVisual.projectileView(3);let dreadSwarmCount=0,infernalImpactCount=0,deathDecayCount=0,flightTime=0,missileCount=0,portraitTime=0,unitTime=0,unitPositions=new Map();
   const locustView=FrostVisual.projectileView(),locustMissileView=FrostVisual.projectileView();let locustCapacity=20,locustRegistered=20,locustCount=0,locustMissileCount=0;
   let impaleCapacity=12,impaleRegistered=12;
-  const sentinelView=FrostVisual.projectileView(),sentinelPositions=new Map();let sentinelCapacity=S.LIMIT,sentinelRegistered=S.LIMIT,sentinelCount=0;
+  const sentinelView=FrostVisual.projectileView(),sentinelPositions=new Map();let sentinelCount=0;
   let editorPage=0,placeKind='soldier',placeHeroClass=0,placeTeam=0,placeTag='',triggerIndex=-1,triggerPanel=0,entryIndex=0,regionIndex=-1,editorTool='select',heightBrush=1,rampBrush=0,gentleRamps=true,surfaceBrush=0,surfaceRadius=0,cliffBrush=0,rename=null;
   let doodadKind='rock',doodadVariant=0,doodadScale=1,doodadYaw=0,doodadIndex=-1,pathingVisible=false;
   const sculptTools=['raise','lower','smooth','flatten'];let sculptTool='raise',sculptRadius=4,sculptStrength=.25,sculptLevel=null,sculptSaved=false;
@@ -45,7 +45,7 @@ var FrostClient=(()=>{
   }
   const actorCounts={};let renderedCorpseSlots=0;
   function actor(n,parts,position=hidden,scale=[1,1,1],rotation=[0,0,0,1],color=[1,1,1,1],portrait=false){
-    if(/^Corpse \d+$/.test(n)&&parts&&!effectPool.ensure(n,parts.length))return;
+    if(parts&&portrait&&!effectPool.ensure(n,parts.length))return;
     if(parts&&!effectPool.ensureActor(n,parts.length))return;
     if(portrait)transform(n,parts?position:hidden,scale,rotation);
     const count=parts?.length||0;registerEntities(Array.from({length:count},(_,i)=>portrait?n+' mesh '+i:n+(i?' part '+i:'')));
@@ -629,11 +629,6 @@ var FrostClient=(()=>{
     for(let i=flameCapacity;i<count;i++)for(const [slot,key] of slots){const template='Classic Flame Strike 0 '+slot,name='Classic Flame Strike '+i+' '+slot;engine.pushCommandJson(JSON.stringify({op:'spawn',name,components:authored[template]}));for(let j=0;j<FrostEffectArt.effects[key].parts.length;j++)engine.pushCommandJson(JSON.stringify({op:'spawn',name:name+' mesh '+j,components:{...authored[template+' mesh '+j],Transform:{position:[0,-100,0],scale:[1,1,1],rotation:[0,0,0,1]}}}));}flameCapacity=Math.max(flameCapacity,count);
     if(flameRegistered<flameCapacity){const names=[];for(let i=flameRegistered;i<flameCapacity;i++)for(const [slot,key] of slots)names.push('Classic Flame Strike '+i+' '+slot,...FrostEffectArt.effects[key].parts.map((_,j)=>'Classic Flame Strike '+i+' '+slot+' mesh '+j));registerEntities(names);while(flameRegistered<flameCapacity){const i=flameRegistered;if(slots.some(([slot,key])=>!entities['Classic Flame Strike '+i+' '+slot]||FrostEffectArt.effects[key].parts.some((_,j)=>!entities['Classic Flame Strike '+i+' '+slot+' mesh '+j])))break;for(const [slot,key] of slots)for(let j=0;j<FrostEffectArt.effects[key].parts.length;j++)engine.pushCommandJson(JSON.stringify({op:'setParent',entity:entities['Classic Flame Strike '+i+' '+slot+' mesh '+j].entity,parent:entities['Classic Flame Strike '+i+' '+slot].entity}));flameRegistered++;}}
   }
-  function sentinelPool(count){
-    const template=authored['Classic Sentinel 0'];
-    for(let i=sentinelCapacity;i<count;i++){const name='Classic Sentinel '+i;engine.pushCommandJson(JSON.stringify({op:'spawn',name,components:template}));for(let j=0;j<FrostSentinelArt.model.parts.length;j++)engine.pushCommandJson(JSON.stringify({op:'spawn',name:name+' mesh '+j,components:{...authored['Classic Sentinel 0 mesh '+j],Transform:{position:[0,-100,0],scale:[1,1,1],rotation:[0,0,0,1]}}}));}sentinelCapacity=Math.max(sentinelCapacity,count);
-    if(sentinelRegistered<sentinelCapacity){const names=[];for(let i=sentinelRegistered;i<sentinelCapacity;i++){names.push('Classic Sentinel '+i);for(let j=0;j<FrostSentinelArt.model.parts.length;j++)names.push('Classic Sentinel '+i+' mesh '+j);}for(let i=0;i<names.length;i+=1024)for(const e of engine.findEntitiesByName(names.slice(i,i+1024))){entities[e.name]=e;authored[e.name]=e.components;}while(sentinelRegistered<sentinelCapacity){const name='Classic Sentinel '+sentinelRegistered,root=entities[name];if(!root||FrostSentinelArt.model.parts.some((_,j)=>!entities[name+' mesh '+j]))break;for(let j=0;j<FrostSentinelArt.model.parts.length;j++)engine.pushCommandJson(JSON.stringify({op:'setParent',entity:entities[name+' mesh '+j].entity,parent:root.entity}));sentinelRegistered++;}}
-  }
   function impalePool(count){
     count=Math.min(S.PROJECTILE_LIMIT*7,count);const parts=FrostEffectArt.effects.ImpaleMissTarget.parts.length;if(count>impaleCapacity)registerEntities(['Classic Impale 0',...Array.from({length:parts},(_,j)=>'Classic Impale 0 mesh '+j)]);
     for(let i=impaleCapacity;i<count;i++){const name='Classic Impale '+i;engine.pushCommandJson(JSON.stringify({op:'spawn',name,components:authored['Classic Impale 0']}));for(let j=0;j<parts;j++)engine.pushCommandJson(JSON.stringify({op:'spawn',name:name+' mesh '+j,components:{...authored['Classic Impale 0 mesh '+j],Transform:{position:[0,-100,0],scale:[1,1,1],rotation:[0,0,0,1]}}}));}impaleCapacity=Math.max(impaleCapacity,count);
@@ -654,7 +649,7 @@ var FrostClient=(()=>{
   }
   function renderSentinels(){
     const inMatch=['playing','finished','reconnecting'].includes(mode),list=inMatch?(state.sentinels||[]).filter(o=>state.visible[team]?.[S.index(o.x,o.z)]):[],live=new Map(list.map(o=>[o.source,o])),clock=state.frame*S.DT+(mode==='playing'&&!online?accumulator:0),shots=list.map(o=>({...o,id:o.source,y:FrostVisual.sentinel(state,o,clock).position[1]}));
-    if(!inMatch)sentinelView.reset();const owls=sentinelView.sample(shots,state.frame,unitTime).filter(o=>live.has(o.source));sentinelPool(owls.length);sentinelPositions.clear();
+    if(!inMatch)sentinelView.reset();const owls=sentinelView.sample(shots,state.frame,unitTime).filter(o=>live.has(o.source));sentinelPositions.clear();
     for(let i=0;i<Math.max(sentinelCount,owls.length);i++){const name='Classic Sentinel '+i,o=owls[i],current=o&&live.get(o.source);if(!current||!state.visible[team]?.[S.index(o.x,o.z)]){actor(name,null,hidden,[1,1,1],[0,0,0,1],[1,1,1,1],true);continue;}const visual=FrostVisual.sentinel(state,{...o,perched:current.perched},clock);visual.target.y+=o.y-visual.position[1];visual.position[1]=o.y;sentinelPositions.set(o.source,visual.target);set(name,'SampledEffect',visual.component);actor(name,visual.parts,visual.position,visual.scale,visual.rotation,[1,1,1,1],true);}
     sentinelCount=owls.length;
   }
