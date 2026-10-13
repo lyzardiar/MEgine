@@ -1,7 +1,7 @@
 // Author: MiYu. Editor scene state, hierarchy and runtime interaction.
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, retainedNativePlayWorld, type PlayInput, type PlayRuntimeDriver, type PlayRuntimeWorld } from './playRuntime';
-import { createPlayWorldSync, isRetainedPlayRecord } from './playWorldSync';
+import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord } from './playWorldSync';
 import { normalizeEntity, type EntityRec } from './entityRecord';
 export type { EntityRec } from './entityRecord';
 import {
@@ -227,7 +227,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       privatePlayComparisonIndices = [];
       playEntities = owned.entities.map((entity, index) => {
         let editable = editableNativeRecords.get(entity);
-        if (!editable) { editable = structuredClone(entity); editableNativeRecords.set(entity, editable); }
+        if (!editable) { editable = cloneRetainedPlayRecord(entity); editableNativeRecords.set(entity, editable); }
         if (!exposedPlayRecords.has(editable)) privateRecords++;
         else privatePlayComparisonIndices.push(index);
         return editable;
