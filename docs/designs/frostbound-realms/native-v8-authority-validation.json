@@ -1,0 +1,268 @@
+{
+  "author": "MiYu",
+  "passed": true,
+  "scope": "Two standalone V8 Players on one host, production generated client and scene, real authoritative TCP. Every distinct authoritative frame presented by a client is checked. Scripted game actions, no physical input or two-machine acceptance.",
+  "fixture": {
+    "mapFile": "D:\\MEngineNativeQA\\native-authority-1791900955027\\fixture-map.json",
+    "mapSha256": "fc04adab7113216a66caf10aeb708e7ffeabf4b856a09a00184e7ea777dc3f95",
+    "initialSoldierHp": 112.00000000000001,
+    "instrumentation": "Expose private client inspection/actions; replace default skirmish map with a flat map containing opposing soldiers and heroes, no props/doodads/triggers; assign precision sentinel HP at server creation; replace physical input with empty input; fail on any online simulation tick. Each Player has an isolated project storage ID and an Assets directory link to the supplied project."
+  },
+  "runtime": {
+    "backend": "v8",
+    "bridgeVersion": 1,
+    "version": "15.2.124.1-rusty"
+  },
+  "executable": "D:\\MEngineNativeQA\\engine-main-sync\\target\\release\\mengine-runtime.exe",
+  "executableSha256": "b6339d943466800c55576515dd1b7e43e87f92fa793a3a122a79ed7bb805aa9b",
+  "clientSha256": "ded2402397eb114d1a3441b7dff18d7e6134fcdb86d75d41f5f2bc96e9168b6d",
+  "sceneSha256": "692393165531f16d4957852e9ce0aff22eea9562d32ebb161262a54de102e1f4",
+  "projectRoot": "D:\\MEngineNativeQA\\hero-death-validation\\hero-death-1791680571419\\sample",
+  "root": "D:\\MEngineNativeQA\\native-authority-1791900955027",
+  "guestTicksWhileStalled": 79,
+  "stalledGuestFrame": 17,
+  "droppedSnapshots": 20,
+  "resumedCommand": {
+    "frame": 44,
+    "team": 1,
+    "command": {
+      "ids": [
+        18
+      ],
+      "type": "stop"
+    },
+    "error": null,
+    "before": [
+      {
+        "id": 18,
+        "hp": 450,
+        "order": {
+          "type": "hold",
+          "x": 0,
+          "z": 0
+        }
+      }
+    ],
+    "after": [
+      {
+        "id": 18,
+        "hp": 450,
+        "order": null
+      }
+    ]
+  },
+  "snapshotComparisons": 79,
+  "sharedActorComparisons": 70,
+  "fogFilteredSnapshots": 79,
+  "exactFloatSnapshots": 2,
+  "clients": [
+    {
+      "pid": 53952,
+      "project": "D:\\MEngineNativeQA\\native-authority-1791900955027\\project-0",
+      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\b63515bb6de5a46f",
+      "instrumentedScriptSha256": "80a085e77b805c39241dee59ba0fba093bb71d0df19d083cc74293b1330fdba1",
+      "final": {
+        "clientTicks": 497,
+        "elapsed": 11831,
+        "frame": 59,
+        "localSimulationTicks": 0,
+        "mode": "playing",
+        "resumes": 0,
+        "snapshots": 53,
+        "team": 0
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    {
+      "pid": 184232,
+      "project": "D:\\MEngineNativeQA\\native-authority-1791900955027\\project-1",
+      "storage": "C:\\Users\\admin\\AppData\\Local\\MEngine\\UserData\\b63514bb6de5a2bc",
+      "instrumentedScriptSha256": "a681f4d823f6da48877cc7cbb1bc9c2611d8781fc27927cd0ec97d5a61ca3f65",
+      "final": {
+        "clientTicks": 483,
+        "elapsed": 11810,
+        "frame": 58,
+        "localSimulationTicks": 0,
+        "mode": "playing",
+        "resumes": 1,
+        "snapshots": 26,
+        "team": 1
+      },
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    }
+  ],
+  "elapsedMs": 20762,
+  "events": [
+    {
+      "type": "connected",
+      "connection": 1,
+      "at": 11328
+    },
+    {
+      "type": "hello",
+      "connection": 1,
+      "at": 11341
+    },
+    {
+      "type": "list",
+      "connection": 1,
+      "at": 11342
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 11345
+    },
+    {
+      "type": "list",
+      "connection": 1,
+      "at": 11348
+    },
+    {
+      "type": "connected",
+      "connection": 2,
+      "at": 11362
+    },
+    {
+      "type": "hello",
+      "connection": 2,
+      "at": 11376
+    },
+    {
+      "type": "create",
+      "connection": 2,
+      "at": 11380
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 11381
+    },
+    {
+      "type": "ready",
+      "connection": 2,
+      "at": 11393
+    },
+    {
+      "type": "list",
+      "connection": 1,
+      "at": 12356
+    },
+    {
+      "type": "join",
+      "connection": 1,
+      "at": 13356
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 13858
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 13860
+    },
+    {
+      "type": "ready",
+      "connection": 1,
+      "at": 14376
+    },
+    {
+      "type": "start",
+      "connection": 2,
+      "at": 14469
+    },
+    {
+      "type": "order",
+      "connection": 2,
+      "at": 14508,
+      "seq": 1,
+      "command": {
+        "ids": [
+          15
+        ],
+        "type": "attack",
+        "target": 16
+      }
+    },
+    {
+      "type": "order",
+      "connection": 1,
+      "at": 14518,
+      "seq": 1,
+      "command": {
+        "ids": [
+          16,
+          18
+        ],
+        "type": "hold"
+      }
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 16857
+    },
+    {
+      "type": "ping",
+      "connection": 1,
+      "at": 16858
+    },
+    {
+      "type": "closed",
+      "connection": 1
+    },
+    {
+      "type": "connected",
+      "connection": 3,
+      "at": 18839
+    },
+    {
+      "type": "hello",
+      "connection": 3,
+      "at": 18856
+    },
+    {
+      "type": "resume",
+      "connection": 3,
+      "at": 18861
+    },
+    {
+      "type": "order",
+      "connection": 3,
+      "at": 18875,
+      "seq": 1,
+      "command": {
+        "ids": [
+          18
+        ],
+        "type": "stop"
+      }
+    },
+    {
+      "type": "ping",
+      "connection": 2,
+      "at": 19856
+    },
+    {
+      "type": "ping",
+      "connection": 3,
+      "at": 19857
+    },
+    {
+      "type": "closed",
+      "connection": 3
+    },
+    {
+      "type": "closed",
+      "connection": 2
+    }
+  ]
+}

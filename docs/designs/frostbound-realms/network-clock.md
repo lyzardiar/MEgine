@@ -11,3 +11,18 @@
 `node scripts/qa-frost-menu-network.mjs` 使用两个独立原生客户端、实际菜单点击和真实 TCP 服务，验证创建、浏览、加入、16 秒大厅空闲、准备／开局、双方权威状态流、种族控制台与客机断线重连。脚本记录服务器连接、请求、心跳、空闲超时及关闭事件；报告为 `native-menu-network-qa.json`。物理鼠标和音频需要另行验收。
 
 原生验收通过，服务器记录 79 次心跳、一次创建、一次浏览、一次加入、两次准备、一次开局和一次重连恢复；未发生服务器空闲超时。大厅闲置 16 秒后仍保留同一对 TCP 连接。双方材质管线拒绝数为 0。画面见 [兽族主机](menu-network-host.png) 和 [暗夜精灵客机](menu-network-guest.png)。
+
+## V8 独立 Player 的权威同步验收
+
+`scripts/qa-frost-native-authority.mjs` 启动两个独立 Release Player 和真实 Node TCP 服务器，运行当前生成的游戏脚本与场景。测试使用平坦地图、双方士兵与英雄，并将士兵初始生命设为 `112.00000000000001` 检查数字精度；通过脚本调用生产菜单和指令入口。注入内容、地图和程序哈希记录在 `native-v8-authority-validation.json`，不将该夹具描述为未经修改的默认对局或物理键鼠验收。
+
+本次两个 Player 正常退出，79 份完整客户端状态与对应玩家、对应帧的服务器公开状态完全一致；70 次共同可见单位数据比较通过，79 份状态均保留迷雾过滤。客机收不到状态的区间继续执行了 79 次回调，战斗帧保持不动；恢复后继续接收状态。随后实际断开客机 TCP，使用重连令牌回到同一对局，服务器接受新连接的序号 1，并将活英雄的 Hold 指令改为 Stop。双方独立模拟计数均为 0，服务器没有返回请求错误或触发空闲超时。该项证明同机双原生进程的一致性，跨机器 LAN、物理输入和音频仍需独立验收。
+
+从资源完整的工程检出执行：
+
+```powershell
+$env:MENGINE_RUNTIME_EXECUTABLE = 'D:\MEngineNativeQA\engine-main-sync\target\release\mengine-runtime.exe'
+node scripts/qa-frost-native-authority.mjs
+```
+
+可以用 `MENGINE_QA_PROJECT_ROOT` 指向已有完整资源工程，用 `MENGINE_QA_ROOT` 指定证据目录。每个 Player 自动使用独立工程配置与存档 ID，资源通过目录链接复用；每四个呈现帧保存一批完整状态，遵守原有存档配额。报告保存于设计目录，原始状态批次、日志和所有者记录保留在本机证据路径中。测试只终止自己启动的 Player。
