@@ -2,7 +2,7 @@
 
 Author: MiYu
 
-This standalone Rust executable runs the same trusted, synchronous JavaScript workload in QuickJS-NG (`rquickjs 0.14.0`, matching the engine) and embedded V8 (`v8 152.2.0`). Its independent Cargo workspace keeps V8 out of editor and player dependencies.
+This standalone Rust executable runs the same trusted, synchronous JavaScript workload in QuickJS-NG (`rquickjs 0.14.0`) and embedded V8 (`v8 152.2.0`), matching the engine's two backends. Its independent Cargo workspace allows benchmarking both VMs together; production Editor and Player builds select one backend.
 
 Build with `cargo build --release --locked --manifest-path tools/script-runtime-benchmark/Cargo.toml`.
 

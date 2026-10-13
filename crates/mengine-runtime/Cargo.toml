@@ -13,6 +13,11 @@ path = "src/main.rs"
 name = "mengine_runtime"
 path = "src/lib.rs"
 
+[features]
+default = ["v8-runtime"]
+v8-runtime = ["mengine-script/v8-runtime"]
+quickjs-runtime = ["mengine-script/quickjs-runtime"]
+
 [dependencies]
 mengine-core.workspace = true
 mengine-rhi.workspace = true

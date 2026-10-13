@@ -124,7 +124,7 @@ Build options:
   --out <dir>                 Output directory (default: <project>/Builds/<platform>-<arch>-<profile>)
   --runtime <file>            Use an existing mengine-runtime executable
   --debug                     Build/use the debug runtime instead of release
-  --skip-runtime-build        Reuse an existing runtime without invoking Cargo
+  --skip-runtime-build        Reuse an existing runtime without compiling it
   --skip-verify               Skip packaged player scene validation
   --cancel-file <file>        Cooperatively cancel before atomic publish (editor use)
   --sign-key <pem>            Sign the artifact manifest with an external Ed25519 PKCS#8 key
@@ -426,23 +426,57 @@ function runtimeFileName(): string {
 }
 
 function resolveRuntime(args: BuildArguments): string {
-  if (args.runtimePath) return args.runtimePath;
+  if (args.runtimePath) return checkedRuntime(args.runtimePath);
   const cliDir = dirname(fileURLToPath(import.meta.url));
   const engineRoot = findEngineRoot(process.cwd()) ?? findEngineRoot(cliDir);
   if (!engineRoot) {
     throw new Error('cannot locate the MEngine source root; pass --runtime <file>');
   }
-  const path = join(engineRoot, 'target', args.profile, runtimeFileName());
+  const preparationArgs = [join(engineRoot, 'scripts', 'prepare-native-build.mjs')];
+  if (args.skipRuntimeBuild) preparationArgs.push('--locate-only');
+  const preparation = spawnSync(process.execPath, preparationArgs, { cwd: engineRoot, encoding: 'utf8', windowsHide: true });
+  if (preparation.error) throw preparation.error;
+  if (preparation.status !== 0) throw new Error(`Native build preparation failed: ${preparation.stderr}`);
+  const targetDir = JSON.parse(preparation.stdout).targetDirectory;
   if (!args.skipRuntimeBuild) {
     console.log(`Building ${args.profile} player runtime…`);
-    const cargoArgs = ['build', '-p', 'mengine-runtime'];
+    const backend = process.env.MENGINE_SCRIPT_RUNTIME || 'v8';
+    const cargoArgs = ['build', '-p', 'mengine-runtime', '--no-default-features', '--features', `${backend}-runtime`];
     if (args.profile === 'release') cargoArgs.push('--release');
     const result = spawnSync('cargo', cargoArgs, { cwd: engineRoot, stdio: 'inherit' });
     if (result.error) throw result.error;
     if (result.status !== 0) throw new Error(`Cargo player build failed with exit code ${result.status}`);
   }
+  const path = join(targetDir, args.profile, runtimeFileName());
   if (!existsSync(path)) throw new Error(`player runtime not found: ${path}`);
+  return checkedRuntime(path);
+}
+
+function checkedRuntime(path: string): string {
+  const expected = process.env.MENGINE_SCRIPT_RUNTIME;
+  if (expected) {
+    const result = spawnSync(path, ['--runtime-info'], { encoding: 'utf8', windowsHide: true, timeout: 30000 });
+    if (result.error || result.status !== 0) throw new Error(`Cannot verify player runtime: ${result.error || result.stderr}`);
+    const identity = JSON.parse(result.stdout);
+    if (identity.backend !== expected || identity.bridgeVersion !== 1) throw new Error(`Player script runtime differs from editor: expected ${expected}, found ${identity.backend}`);
+    const editorIdentity = process.env.MENGINE_SCRIPT_RUNTIME_IDENTITY;
+    if (editorIdentity) {
+      const editor = JSON.parse(editorIdentity);
+      if (identity.backend !== editor.backend || identity.version !== editor.version || identity.bridgeVersion !== editor.bridgeVersion) {
+        throw new Error(`Player script runtime version differs from editor: expected ${editorIdentity}, found ${result.stdout.trim()}`);
+      }
+    }
+  }
   return path;
+}
+
+function runtimeLicenseDirectory(): string {
+  const cliDir = dirname(fileURLToPath(import.meta.url));
+  const bundled = resolve(cliDir, '../../licenses');
+  if (existsSync(bundled)) return bundled;
+  const root = findEngineRoot(cliDir);
+  if (!root) throw new Error('Player runtime licenses are missing from the Build SDK');
+  return join(root, 'packages', 'editor', 'licenses');
 }
 
 function buildProject(values: string[]) {
@@ -474,6 +508,7 @@ function buildProject(values: string[]) {
     projectDir: args.projectDir,
     outputDir,
     runtimePath,
+    runtimeLicenseDir: runtimeLicenseDirectory(),
     engineVersion: ENGINE_VERSION,
     clean: args.clean,
     profile: args.profile,

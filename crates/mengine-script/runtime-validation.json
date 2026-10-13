@@ -1,10 +1,10 @@
 {
   "author": "MiYu",
-  "defaultRuntime": "QuickJS-NG",
-  "candidateRuntime": "V8 152.2.0 via v8-runtime feature",
+  "defaultRuntime": "V8 15.2.124.1-rusty via rusty_v8 152.2.0",
+  "fallbackRuntime": "QuickJS-NG via quickjs-runtime feature",
   "scope": "Shared native ScriptHost for Editor and Player, preserving engine_api.js and nine native callbacks.",
   "passed": true,
-  "nativeAcceptance": "V8 Release Editor and standalone Player passed. Default builds remain QuickJS; the candidate is selected explicitly with v8-runtime.",
+  "nativeAcceptance": "V8 Release Editor and standalone Player passed. Default build and SDK checks are recorded in default-runtime-validation.json.",
   "tests": {
     "quickjsScript": {
       "passed": 34,

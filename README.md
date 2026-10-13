@@ -5,7 +5,7 @@ Cross-platform game engine: **Rust** core + **TypeScript** scripting/tools.
 - Platforms: PC (primary), Android / iOS (player)
 - Graphics: wgpu
 - Editor: Tauri 2 + React/TS panels + native wgpu viewport
-- Script: QuickJS JS host (CommandBuffer bridge)
+- Script: V8 JS host with QuickJS fallback (shared Editor/Player CommandBuffer bridge)
 - Architecture: Schema/IDL → ECS + CommandBuffer + Intent IR
 
 ## Quick start
@@ -14,6 +14,7 @@ Cross-platform game engine: **Rust** core + **TypeScript** scripting/tools.
 # Prerequisites: Rust stable, Node 20+
 npm install   # or pnpm.cmd install
 npm run codegen
+npm run prepare:native
 cargo run -p mengine-runtime -- --sample spinning-cube
 # Effekseer 15-effect 3D + 2D/UI showcase (open samples/effekseer-fire in the editor)
 npm.cmd run sample:effekseer

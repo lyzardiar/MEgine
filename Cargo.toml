@@ -32,7 +32,7 @@ mengine-core     = { path = "crates/mengine-core" }
 mengine-rhi      = { path = "crates/mengine-rhi" }
 mengine-assets   = { path = "crates/mengine-assets" }
 mengine-scene    = { path = "crates/mengine-scene" }
-mengine-script   = { path = "crates/mengine-script" }
+mengine-script   = { path = "crates/mengine-script", default-features = false }
 mengine-platform = { path = "crates/mengine-platform" }
 mengine-idl      = { path = "crates/mengine-idl" }
 mengine-jobs     = { path = "crates/mengine-jobs" }

@@ -15,7 +15,7 @@ All writers (scripts / editor / agent) emit `WorldCommand` values.
 
 ## Script host
 
-Embedded **QuickJS-NG** through `rquickjs`, shared by editor Play and standalone players. Scripts use `engine.*` APIs and emit `CommandBuffer` entries. Each host owns its VM, request queues and 256 MiB heap; JavaScript calls have a one-second execution deadline.
+Embedded **V8** through `rusty_v8` is the default for editor Play and standalone players; QuickJS-NG remains an explicit build-time fallback. Scripts use `engine.*` APIs and emit `CommandBuffer` entries. Each host owns its VM and request queues. JavaScript calls have a one-second deadline (three seconds for the initial tick). V8 has a 256 MiB managed-heap limit plus a termination reserve and a separate ArrayBuffer quota; see [ScriptHost runtimes](../crates/mengine-script/README.md) for limits and backend selection. SDK exports verify the actual Player's runtime and bridge versions against the editor.
 
 World snapshots remain native data until a script reads `engine.snapshot` or `lastSnapshot`. Values stay stable within a frame and refresh before the next callback; `lastSnapshot` remains a JSON string. Pixel delivery uses WebView2 shared CPU buffers on Windows, with binary IPC on other hosts.
 

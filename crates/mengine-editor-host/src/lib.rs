@@ -1,5 +1,7 @@
 //! Editor host: shared engine session, undo stack, play mode, gizmo state.
 
+pub use mengine_script::runtime_identity;
+
 mod gizmo;
 mod project;
 mod play_runtime;

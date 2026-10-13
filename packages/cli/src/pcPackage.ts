@@ -1,6 +1,7 @@
 import {
   chmodSync,
   copyFileSync,
+  cpSync,
   existsSync,
   lstatSync,
   mkdirSync,
@@ -68,6 +69,7 @@ export interface PcPackageOptions {
   projectDir: string;
   outputDir: string;
   runtimePath: string;
+  runtimeLicenseDir?: string;
   engineVersion: string;
   clean?: boolean;
   profile?: 'debug' | 'release';
@@ -4500,6 +4502,7 @@ export function buildPcPackage(options: PcPackageOptions): PcBuildManifest {
     const platform = options.platform ?? hostBuildPlatform();
     const executable = `${safeExecutableName(project.name)}${platform === 'windows' ? '.exe' : ''}`;
     copyFileSync(runtimePath, join(stageDir, executable));
+    if (options.runtimeLicenseDir) cpSync(options.runtimeLicenseDir, join(stageDir, 'licenses'), { recursive: true });
     writeFileSync(
       join(stageDir, PLAYER_CONFIG_FILE),
       `${JSON.stringify({
