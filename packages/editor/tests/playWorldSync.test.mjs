@@ -4,6 +4,30 @@ import test from 'node:test';
 import {createServer} from 'vite';
 import {fileURLToPath} from 'node:url';
 
+test('editable owned JSON copies preserve special keys and remain isolated from retained frames', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  try {
+    const { retainPlayWorld, cloneRetainedPlayRecord, isRetainedPlayRecord } = await server.ssrLoadModule('/src/playWorldSync.ts');
+    const components = JSON.parse('{"Custom":{"__proto__":{"value":1},"constructor":{"prototype":[null,true,"text",[2,3]]},"poison":{"value":4},"empty":[],"toJSON":"data"}}');
+    const owned = retainPlayWorld({ entities: [{ entity: 4294967297, components }], clearColor: [0, 0, 0, 1], frame: 0, simFrame: 0, selected: null }).entities[0];
+    const expected = structuredClone(owned), originalKeys = Object.keys, originalMap = Array.prototype.map, originalSpecies = Object.getOwnPropertyDescriptor(Array, Symbol.species);
+    let copy;
+    try {
+      Object.defineProperty(Object.prototype, 'toJSON', { configurable: true, get() { throw new Error('inherited serialization hook'); } });
+      Object.defineProperty(Object.prototype, 'poison', { configurable: true, set() { throw new Error('inherited setter'); } });
+      Object.keys = () => { throw new Error('replaced enumeration'); };
+      Array.prototype.map = () => { throw new Error('replaced array mapping'); };
+      Object.defineProperty(Array, Symbol.species, { configurable: true, get() { throw new Error('inherited array species'); } });
+      copy = cloneRetainedPlayRecord(owned);
+    } finally { Object.keys = originalKeys; Array.prototype.map = originalMap; Object.defineProperty(Array, Symbol.species, originalSpecies); delete Object.prototype.toJSON; delete Object.prototype.poison; }
+    assert.deepEqual(copy, expected); assert.equal(Object.getPrototypeOf(copy.components.Custom), Object.prototype);
+    assert.equal(Object.hasOwn(copy.components.Custom, '__proto__'), true); assert.equal(isRetainedPlayRecord(copy), false);
+    copy.components.Custom.__proto__.value = 9; copy.components.Custom.constructor.prototype[3].push(4); copy.components.Custom.empty.push('editable');
+    assert.equal(owned.components.Custom.__proto__.value, 1); assert.deepEqual(owned.components.Custom.constructor.prototype[3], [2, 3]); assert.deepEqual(owned.components.Custom.empty, []);
+    assert.throws(() => cloneRetainedPlayRecord({ value: new Date() }), /owned JSON record/);
+  } finally { await server.close(); }
+});
+
 test('owned private worlds skip record scans until exposure, ordinary capture or reset', async()=>{
   const server=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),server:{middlewareMode:true},appType:'custom',logLevel:'silent'});
   try {

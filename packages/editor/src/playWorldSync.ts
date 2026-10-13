@@ -8,6 +8,27 @@ export type RetainedPlayWorld = Omit<WorldSnapshotView, 'entities'> & { entities
 /** Only JSON-owned frozen records created here can share serialization results. */
 export function isRetainedPlayRecord(value: object): boolean { return retainedRecords.has(value); }
 
+function copyOwnedJson<T>(value: T): T {
+  if (value === null || typeof value !== 'object') return value;
+  if (isArray(value)) {
+    const result: unknown[] = [];
+    for (let i = 0; i < value.length; i++) result[i] = copyOwnedJson(value[i]);
+    return result as T;
+  }
+  const result = { ...value } as Record<string, unknown>;
+  for (const key of keys(result)) {
+    const child = result[key];
+    if (child !== null && typeof child === 'object') result[key] = copyOwnedJson(child);
+  }
+  return result as T;
+}
+
+/** Native publication owns plain JSON; editable copies keep their own nested data and special keys. */
+export function cloneRetainedPlayRecord<T extends object>(value: T): T {
+  if (!retainedRecords.has(value)) throw new Error('Editable Play copies require an owned JSON record');
+  return copyOwnedJson(value);
+}
+
 function equalJson(value: unknown, baseline: unknown): boolean {
   if (value === baseline) return true;
   if (value === null || baseline === null || typeof value !== 'object' || typeof baseline !== 'object') return false;
