@@ -1,6 +1,7 @@
 //! wgpu-based RHI with a minimal linear render-graph.
 
 mod ibl;
+mod gpu_profiler;
 mod mesh;
 mod post_process;
 mod render_graph;
@@ -11,6 +12,7 @@ mod spatial;
 mod ui;
 
 pub use mesh::{MeshGpu, Vertex};
+pub use gpu_profiler::{GpuFrameProfile, GpuProfileStage};
 pub use render_graph::{PassDesc, RenderGraph};
 pub use renderer::{
     look_at, orthographic, perspective, project_world_to_viewport, validate_surface_shader_hook,

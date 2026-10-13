@@ -1,4 +1,6 @@
 use crate::ibl::{BrdfLut, EnvironmentPrefilter, PrefilteredEnvironment};
+use crate::gpu_profiler::{profiling_features, GpuFrameProfiler};
+use crate::GpuFrameProfile;
 use crate::mesh::{MeshGpu, Vertex};
 use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
 use crate::render_graph::RenderGraph;
@@ -386,7 +388,7 @@ pub struct OffscreenRenderTarget {
     format: wgpu::TextureFormat,
 }
 
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct OffscreenReadbackProfile {
     pub buffer_prepare_ms: f64,
     pub copy_submit_ms: f64,
@@ -396,6 +398,8 @@ pub struct OffscreenReadbackProfile {
     pub buffer_reused: bool,
     pub buffer_bytes: u64,
     pub buffer_allocations: u64,
+    pub gpu_query_read_ms: f64,
+    pub gpu: Option<GpuFrameProfile>,
 }
 
 struct OffscreenReadbackBuffer { buffer: wgpu::Buffer, allocations: u64 }
@@ -686,6 +690,7 @@ pub struct Renderer {
     size: PhysicalSize<u32>,
     scene_textures: HashMap<String, SceneTextureGpu>,
     offscreen_readback: Mutex<Option<OffscreenReadbackBuffer>>,
+    gpu_profiler: Option<GpuFrameProfiler>,
 }
 
 impl Renderer {
@@ -734,7 +739,7 @@ impl Renderer {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: Some("mengine"),
-                    required_features: wgpu::Features::empty(),
+                    required_features: profiling_features(adapter.features(), std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1")),
                     required_limits: wgpu::Limits::default(),
                     memory_hints: Default::default(),
                 },
@@ -1252,6 +1257,7 @@ impl Renderer {
             sample_count,
         );
 
+        let gpu_profiler = GpuFrameProfiler::new(&device);
         Ok(Self {
             device,
             queue,
@@ -1317,6 +1323,7 @@ impl Renderer {
             size,
             scene_textures: HashMap::new(),
             offscreen_readback: Mutex::new(None),
+            gpu_profiler,
         })
     }
 
@@ -1420,6 +1427,7 @@ impl Renderer {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("mengine_offscreen_readback"),
             });
+        if let Some(profiler) = &self.gpu_profiler { profiler.begin_copy(&mut encoder); }
         encoder.copy_texture_to_buffer(
             wgpu::TexelCopyTextureInfo {
                 texture: &target.texture,
@@ -1441,6 +1449,7 @@ impl Renderer {
                 depth_or_array_layers: 1,
             },
         );
+        if let Some(profiler) = &self.gpu_profiler { profiler.finish_copy(&mut encoder); }
         self.queue.submit(std::iter::once(encoder.finish()));
         profile.copy_submit_ms = started.elapsed().as_secs_f64() * 1000.0;
 
@@ -1450,14 +1459,28 @@ impl Renderer {
         slice.map_async(wgpu::MapMode::Read, move |result| {
             let _ = sender.send(result);
         });
+        let query_receiver = self.gpu_profiler.as_ref().map(|profiler| {
+            let (sender, receiver) = std::sync::mpsc::sync_channel(1);
+            profiler.readback.slice(..).map_async(wgpu::MapMode::Read, move |result| { let _ = sender.send(result); });
+            receiver
+        });
         let _ = self.device.poll(wgpu::Maintain::Wait);
-        receiver
+        let mapped_result = receiver
             .recv()
-            .map_err(|error| RhiError::InvalidTarget(format!("readback callback failed: {error}")))?
-            .map_err(|error| {
-                RhiError::InvalidTarget(format!("readback mapping failed: {error}"))
-            })?;
+            .map_err(|error| RhiError::InvalidTarget(format!("readback callback failed: {error}")))
+            .and_then(|result| result.map_err(|error| RhiError::InvalidTarget(format!("readback mapping failed: {error}"))));
         profile.gpu_wait_ms = started.elapsed().as_secs_f64() * 1000.0;
+        if let (Some(profiler), Some(receiver)) = (&self.gpu_profiler, query_receiver) {
+            let started = Instant::now();
+            if receiver.recv().is_ok_and(|result| result.is_ok()) {
+                let mapped = profiler.readback.slice(..).get_mapped_range();
+                profile.gpu = Some(profiler.decode(&mapped, f64::from(self.queue.get_timestamp_period())));
+                drop(mapped);
+            }
+            profiler.readback.unmap();
+            profile.gpu_query_read_ms = started.elapsed().as_secs_f64() * 1000.0;
+        }
+        if let Err(error) = mapped_result { buffer.unmap(); return Err(error); }
 
         let started = Instant::now();
         let mapped = slice.get_mapped_range();
@@ -1627,10 +1650,12 @@ impl Renderer {
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("frame"),
             });
+        if let Some(profiler) = &mut self.gpu_profiler { profiler.begin_frame(shadow.params[3] > 0.5, !ui_plan.is_empty()); }
 
         if shadow.params[3] > 0.5 {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("directional_shadow_depth"),
+                timestamp_writes: self.gpu_profiler.as_ref().map(|profiler| profiler.pass(0)),
                 color_attachments: &[],
                 depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                     view: &self.shadow_view,
@@ -1687,6 +1712,7 @@ impl Renderer {
             {
                 let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: Some("environment_background"),
+                    timestamp_writes: self.gpu_profiler.as_ref().map(|profiler| profiler.pass(1)),
                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                         view: self.post_process.scene_view(),
                         resolve_target: None,
@@ -1709,6 +1735,7 @@ impl Renderer {
             }
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("forward_hdr"),
+                timestamp_writes: self.gpu_profiler.as_ref().map(|profiler| profiler.pass(2)),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: self.post_process.scene_view(),
                     resolve_target: self.post_process.scene_resolve_target(),
@@ -1787,6 +1814,7 @@ impl Renderer {
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("aces_tone_mapping"),
+                timestamp_writes: self.gpu_profiler.as_ref().map(|profiler| profiler.pass(3)),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: self.post_process.output_view(view),
                     resolve_target: if ui_plan.is_empty() { self.post_process.output_resolve_target(view) } else { None },
@@ -1804,6 +1832,7 @@ impl Renderer {
         if !ui_plan.is_empty() {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("ui_overlay"),
+                timestamp_writes: self.gpu_profiler.as_ref().map(|profiler| profiler.pass(4)),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: self.post_process.output_view(view),
                     resolve_target: self.post_process.output_resolve_target(view),
@@ -1828,6 +1857,7 @@ impl Renderer {
             self.ui.draw(&mut pass, ui_plan);
         }
 
+        if let Some(profiler) = &self.gpu_profiler { profiler.resolve_frame(&mut encoder); }
         self.queue.submit(std::iter::once(encoder.finish()));
         if let Some(frame) = surface_frame {
             frame.present();
@@ -4101,6 +4131,36 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
 mod tests {
     use super::*;
 
+    #[test]
+    fn gpu_pass_timestamps_preserve_pixels_and_reset_optional_passes() {
+        let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).expect("GPU adapter for timestamp acceptance");
+        let enabled = std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1");
+        assert_eq!(renderer.gpu_profiler.is_some(), enabled, "this acceptance run requires hardware timestamp support when enabled");
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let target = renderer.create_offscreen_target(PhysicalSize::new(32, 32));
+        let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+        let ui = UiBatchPlan::build(vec![crate::ui::UiPrimitive::solid([0.0, 0.0, 32.0, 32.0], [0.0, 1.0, 0.0, 1.0])]);
+        let mut first_pixels = None;
+        for extra in [false, true, false] {
+            let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false;
+            lighting.directional = extra.then_some(DirectionalLightData { direction: -Vec3::Z, color: [1.0; 3], intensity: 1.0, cast_shadows: true, shadow_strength: 1.0, shadow_bias: 0.001, shadow_normal_bias: 0.001, shadow_distance: 60.0 });
+            renderer.submit_frame_to(&RenderFrame { clear: ClearColor { r: 0.0, g: 0.0, b: 1.0, a: 1.0 }, camera, objects: &[], lighting: &lighting, ui: extra.then_some(&ui), scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+            let (pixels, readback) = renderer.read_offscreen_rgba8_profiled(&target).unwrap();
+            assert_eq!(pixels.len(), 32 * 32 * 4);
+            if extra { assert!(pixels.chunks_exact(4).all(|pixel| pixel == [0, 255, 0, 255])); }
+            else if let Some(first) = &first_pixels { assert_eq!(&pixels, first); } else { first_pixels = Some(pixels); }
+            if enabled {
+                let gpu = readback.gpu.unwrap(); assert!(gpu.timestamp_period_ns > 0.0);
+                assert!(gpu.stages.iter().all(|stage| stage.milliseconds.is_finite() && stage.milliseconds >= 0.0));
+                let names = gpu.stages.iter().map(|stage| stage.name).collect::<Vec<_>>();
+                for name in ["Environment background", "Forward HDR", "Tone mapping"] { assert!(names.contains(&name)); }
+                assert_eq!(names.contains(&"Shadow depth"), extra); assert_eq!(names.contains(&"UI overlay"), extra);
+                assert_eq!(names.contains(&"Texture readback copy"), renderer.device.features().contains(wgpu::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS));
+            } else { assert!(readback.gpu.is_none()); }
+        }
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+    }
+
     fn readback_fixture(renderer: &Renderer, width: u32, height: u32, format: wgpu::TextureFormat, seed: u8) -> (OffscreenRenderTarget, Vec<u8>) {
         let size = PhysicalSize::new(width, height);
         let texture = renderer.device.create_texture(&wgpu::TextureDescriptor { label: Some("readback pixels"), size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 }, mip_level_count: 1, sample_count: 1, dimension: wgpu::TextureDimension::D2, format, usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::COPY_DST, view_formats: &[] });
@@ -4131,6 +4191,25 @@ mod tests {
                 }
             }
         }
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+    }
+
+    #[test]
+    fn offscreen_readback_recovers_after_repeated_mapping_errors() {
+        let renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).expect("GPU adapter for mapping recovery acceptance");
+        let (target, expected) = readback_fixture(&renderer, 32, 32, wgpu::TextureFormat::Rgba8Unorm, 17);
+        let buffer = renderer.device.create_buffer(&wgpu::BufferDescriptor { label: Some("mapping failure fixture"), size: 256 * 32, usage: wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
+        *renderer.offscreen_readback.lock().unwrap() = Some(OffscreenReadbackBuffer { buffer, allocations: 1 });
+        for _ in 0..2 {
+            renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+            let error = renderer.read_offscreen_rgba8(&target).unwrap_err();
+            assert!(error.to_string().contains("readback mapping failed"), "{error}");
+            assert!(pollster::block_on(renderer.device.pop_error_scope()).is_some());
+            assert!(!renderer.offscreen_readback.is_poisoned());
+        }
+        *renderer.offscreen_readback.lock().unwrap() = None;
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        assert_eq!(renderer.read_offscreen_rgba8(&target).unwrap(), expected);
         assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
     }
 

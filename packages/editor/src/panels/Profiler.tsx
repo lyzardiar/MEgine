@@ -29,7 +29,7 @@ const FRAME_BUDGET_MS = 1000 / 60;
 const COUNT_FORMATTER = new Intl.NumberFormat();
 const PROFILER_SOURCES = ['scene', 'game', 'timeline'] as const;
 type ProfilerSource = EditorProfilerSource | 'timeline';
-const PROFILER_MODULES = ['overview', 'cpu', 'memory', 'resources'] as const;
+const PROFILER_MODULES = ['overview', 'cpu', 'gpu', 'memory', 'resources'] as const;
 type ProfilerModule = typeof PROFILER_MODULES[number];
 type SortDirection = 'asc' | 'desc';
 type SortState<Key extends string> = { key: Key; direction: SortDirection };
@@ -595,7 +595,7 @@ export function Profiler() {
                   setFilter('');
                 }}
                 key={value}
-              >{value === 'cpu' ? 'CPU' : value[0].toUpperCase() + value.slice(1)}</button>
+              >{value === 'cpu' || value === 'gpu' ? value.toUpperCase() : value[0].toUpperCase() + value.slice(1)}</button>
             ))}
           </div>
 
@@ -714,7 +714,7 @@ export function Profiler() {
 
           <div className="profiler-scope-note">
             WebView frame/paint telemetry is shown beside instrumented native editor-host and RHI work.
-            GPU bytes are explicit estimates; driver timing and process-wide heap sampling are not claimed.
+            GPU memory figures are logical estimates. Hardware timestamps, when enabled, are shown in the GPU module.
           </div>
           </>}
 
@@ -750,6 +750,17 @@ export function Profiler() {
                 <td>{formatCount(node.calls)}</td>
               </tr>)}</tbody>
             </table> : <p>No native profile. Keep the {source === 'scene' ? 'Scene' : 'Game'} viewport visible.</p>}
+          </section>}
+
+          {module === 'gpu' && <section className="profiler-detail-section" aria-label="Native GPU passes">
+            <header><div><strong>Main Viewport GPU Passes</strong><span>{latestNative?.gpu ? formatMs(latestNative.gpu.totalPassMs) : 'No GPU sample'}</span></div></header>
+            {latestNative?.gpu ? <>
+              <div className="profiler-scope-note">Hardware timestamps measure GPU execution. These passes overlap CPU work and GPU map wait; their durations must not be added to CPU totals. Nested scene views are outside this pass sample.</div>
+              <table className="profiler-detail-table">
+                <thead><tr><th>Pass</th><th>GPU time</th><th>Measured passes</th></tr></thead>
+                <tbody>{[...latestNative.gpu.stages].sort((left, right) => right.totalMs - left.totalMs).map(stage => <tr key={stage.name}><td>{stage.name}</td><td>{formatMs(stage.totalMs)}</td><td>{latestNative.gpu!.totalPassMs > 0 ? `${(stage.totalMs / latestNative.gpu!.totalPassMs * 100).toFixed(1)}%` : '—'}</td></tr>)}</tbody>
+              </table>
+            </> : <p>GPU timing is not active for this session or is unavailable on this device.</p>}
           </section>}
 
           {module === 'memory' && <section className="profiler-detail-section" aria-label="Native memory provenance">

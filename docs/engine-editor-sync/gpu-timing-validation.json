@@ -1,0 +1,278 @@
+{
+  "author": "MiYu",
+  "fullWarcraftGoal": "active",
+  "scope": "Optional hardware GPU timing and pixel mapping failure recovery; Scene movement continuity reaccepted in Edit and Play.",
+  "executable": "D:\\MEngineNativeQA\\release-editor-gpu-timing.exe",
+  "sha256": "657c31c7123f14babf147f5c8b316a707bb05370505d3e30cb83c0b08674c97c",
+  "defaultGpuTiming": "disabled; unsupported adapters retain rendering without GPU samples",
+  "tests": {
+    "frontend": {
+      "passed": 31,
+      "failed": 0,
+      "log": "D:\\MEngineNativeQA\\gpu-timing-frontend-regression.log"
+    },
+    "sceneContinuityUnit": {
+      "passed": 4,
+      "failed": 0,
+      "log": "D:\\MEngineNativeQA\\gpu-timing-scene-continuity-tests.log"
+    },
+    "rhiEnabledSerial": {
+      "passed": 63,
+      "failed": 0,
+      "log": "D:\\MEngineNativeQA\\gpu-timing-rhi-serial.log"
+    },
+    "rhiEnabledFourThreads": {
+      "passed": 63,
+      "failed": 0,
+      "log": "D:\\MEngineNativeQA\\gpu-timing-rhi-four-threads.log"
+    },
+    "rhiDisabledParallel": {
+      "passed": 63,
+      "failed": 0,
+      "log": "D:\\MEngineNativeQA\\gpu-timing-rhi-default-parallel.log"
+    },
+    "enabledReadbackParallel": {
+      "passed": 3,
+      "failed": 0,
+      "log": "D:\\MEngineNativeQA\\gpu-timing-rhi-mapping-parallel.log"
+    },
+    "initialEnabledUnboundedParallel": {
+      "outcome": "Process exited with 0xc0000374 STATUS_HEAP_CORRUPTION; cause not established. Enabled serial and four-thread regressions and actual Release runs passed.",
+      "log": "D:\\MEngineNativeQA\\gpu-timing-rhi-regression.log"
+    }
+  },
+  "frontendBuild": "D:\\MEngineNativeQA\\gpu-timing-editor-final-build.log",
+  "releaseBuild": "D:\\MEngineNativeQA\\gpu-timing-release-embedded-build.log",
+  "runs": [
+    {
+      "mode": "disabled",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-gpu-timing-disabled-1791815310366\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "error": null,
+      "editMovingEmptyPaints": 0,
+      "playMovingEmptyPaints": 0,
+      "game": {
+        "frames": 482,
+        "gpuTotal": null,
+        "passes": {},
+        "mapWait": {
+          "count": 482,
+          "mean": 2.75596763485477,
+          "median": 2.7087,
+          "p95": 3.0462000000000002
+        }
+      },
+      "playScene": {
+        "frames": 358,
+        "gpuTotal": null,
+        "passes": {},
+        "mapWait": null
+      },
+      "ui": {
+        "text": "Main Viewport GPU PassesNo GPU sampleGPU timing is not active for this session or is unavailable on this device.",
+        "rows": 0,
+        "frozen": "Frozen"
+      },
+      "editMovingFrames": 658,
+      "playMovingFrames": 355,
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 909,
+        "renderedRevision": 909,
+        "changedPixels": 674,
+        "expandedMaskDifferentPixels": 54,
+        "snapshotDifferentPixels": 66,
+        "restoredDifferentPixels": 71,
+        "repeatedDifferentPixels": 71,
+        "totalPixels": 76800,
+        "filteredSyncMs": 4.752
+      },
+      "nativeSummary": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 25.661666667461397,
+        "p95PresentIntervalMs": 43.40000009536743,
+        "presentedFps": 38.96863025143978,
+        "averageRequestMs": 17.47583332657814,
+        "averageRenderMs": 9.932181666666654,
+        "averageCommandMs": 11.667864166666671,
+        "averageUploadMs": 1.5020833373069764,
+        "averageWorldSyncMs": 1.2698287499999998,
+        "averageSimulationMs": 8.390890416666666,
+        "averageSimulationRequestMs": 16.71375000476837
+      },
+      "gpuProfilerScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-gpu-timing-disabled-1791815310366\\gpu-profiler.png",
+      "playMovingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-gpu-timing-disabled-1791815310366\\moving-play-scene.png"
+    },
+    {
+      "mode": "enabled",
+      "report": "D:\\MEngineNativeQA\\release-scene-profile-gpu-timing-enabled-1791815442769\\report.json",
+      "passed": true,
+      "ownerExited": true,
+      "error": null,
+      "editMovingEmptyPaints": 0,
+      "playMovingEmptyPaints": 0,
+      "game": {
+        "frames": 525,
+        "gpuTotal": {
+          "count": 525,
+          "mean": 2.4550600000000022,
+          "median": 2.4234400000000003,
+          "p95": 2.6907600000000005
+        },
+        "passes": {
+          "Shadow depth": {
+            "count": 525,
+            "mean": 0.12054064761904754,
+            "median": 0.11624,
+            "p95": 0.13248
+          },
+          "Environment background": {
+            "count": 525,
+            "mean": 0.027497904761904782,
+            "median": 0.02736,
+            "p95": 0.02828
+          },
+          "Forward HDR": {
+            "count": 525,
+            "mean": 2.028020990476191,
+            "median": 1.99956,
+            "p95": 2.24936
+          },
+          "Tone mapping": {
+            "count": 525,
+            "mean": 0.10781059047619038,
+            "median": 0.10772,
+            "p95": 0.10884
+          },
+          "UI overlay": {
+            "count": 525,
+            "mean": 0.03902849523809525,
+            "median": 0.03912,
+            "p95": 0.04052
+          },
+          "Texture readback copy": {
+            "count": 525,
+            "mean": 0.13216137142857157,
+            "median": 0.13136,
+            "p95": 0.1406
+          }
+        },
+        "mapWait": {
+          "count": 525,
+          "mean": 2.780587999999998,
+          "median": 2.7137,
+          "p95": 3.2542
+        }
+      },
+      "playScene": {
+        "frames": 440,
+        "gpuTotal": {
+          "count": 440,
+          "mean": 2.7159232727272764,
+          "median": 2.65528,
+          "p95": 3.11184
+        },
+        "passes": {
+          "Shadow depth": {
+            "count": 440,
+            "mean": 0.16072290909090908,
+            "median": 0.12044,
+            "p95": 0.32532
+          },
+          "Environment background": {
+            "count": 440,
+            "mean": 0.03688099999999998,
+            "median": 0.02872,
+            "p95": 0.08264
+          },
+          "Forward HDR": {
+            "count": 440,
+            "mean": 2.2365682727272724,
+            "median": 2.2148,
+            "p95": 2.46784
+          },
+          "Tone mapping": {
+            "count": 440,
+            "mean": 0.11908745454545454,
+            "median": 0.12008,
+            "p95": 0.1244
+          },
+          "UI overlay": {
+            "count": 440,
+            "mean": 0.01584045454545458,
+            "median": 0.01584,
+            "p95": 0.01624
+          },
+          "Texture readback copy": {
+            "count": 440,
+            "mean": 0.1468231818181818,
+            "median": 0.14628,
+            "p95": 0.156
+          }
+        },
+        "mapWait": null
+      },
+      "ui": {
+        "text": "Main Viewport GPU Passes1.29 msHardware timestamps measure GPU execution. These passes overlap CPU work and GPU map wait; their durations must not be added to CPU totals. Nested scene views are outside this pass sample.PassGPU timeMeasured passesForward HDR0.64 ms49.4%UI overlay0.29 ms22.2%Texture readback copy0.14 ms10.7%Tone mapping0.13 ms9.9%Shadow depth0.07 ms5.7%Environment background0.03 ms2.2%",
+        "rows": 6,
+        "frozen": "Frozen"
+      },
+      "editMovingFrames": 661,
+      "playMovingFrames": 438,
+      "pendingScenePick": {
+        "heldRequests": 1,
+        "entity": 4294976315,
+        "selectedIds": [
+          4294976315
+        ],
+        "passed": true
+      },
+      "nativeMaskOracle": {
+        "root": 4294975992,
+        "descendants": 72,
+        "sourceRevision": 1054,
+        "renderedRevision": 1054,
+        "changedPixels": 659,
+        "expandedMaskDifferentPixels": 66,
+        "snapshotDifferentPixels": 75,
+        "restoredDifferentPixels": 78,
+        "repeatedDifferentPixels": 83,
+        "totalPixels": 76800,
+        "filteredSyncMs": 5.109000000000001
+      },
+      "nativeSummary": {
+        "intervals": 240,
+        "averagePresentIntervalMs": 22.832499999801318,
+        "p95PresentIntervalMs": 39.700000047683716,
+        "presentedFps": 43.79721887698245,
+        "averageRequestMs": 16.54625000456969,
+        "averageRenderMs": 9.831908333333333,
+        "averageCommandMs": 11.47304041666667,
+        "averageUploadMs": 1.617500004172325,
+        "averageWorldSyncMs": 1.2084362500000003,
+        "averageSimulationMs": 8.010689166666664,
+        "averageSimulationRequestMs": 14.320416657129924
+      },
+      "gpuProfilerScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-gpu-timing-enabled-1791815442769\\gpu-profiler.png",
+      "playMovingScreenshot": "D:\\MEngineNativeQA\\release-scene-profile-gpu-timing-enabled-1791815442769\\moving-play-scene.png"
+    }
+  ],
+  "qaSourceRestored": true,
+  "limitations": [
+    "Main viewport GPU passes exclude nested scene views.",
+    "GPU durations overlap CPU and map wait; they must not be added.",
+    "These sequential samples do not establish a performance gain from enabling instrumentation or a stable 60 FPS.",
+    "Actual Release acceptance covers this machine; other machines remain unverified."
+  ],
+  "nextFocus": "CPU resource synchronization and frame pacing. GPU Game passes average 2.46 ms (forward 2.03 ms, texture copy 0.13 ms), while native CPU render averages 9.83 ms and simulation 8.01 ms. Repeated frame samples are needed before choosing a cache/invalidation change."
+}

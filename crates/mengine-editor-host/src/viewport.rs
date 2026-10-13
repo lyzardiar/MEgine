@@ -97,6 +97,10 @@ pub struct EditorViewportProfileCounts {
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct EditorViewportGpuProfile { pub timestamp_period_ns: f64, pub total_pass_ms: f64, pub stages: Vec<EditorViewportProfileNode> }
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EditorViewportProfile {
     pub schema_version: u32,
     pub total_ms: f64,
@@ -115,6 +119,8 @@ pub struct EditorViewportProfile {
     pub resources_truncated: bool,
     pub resource_sample_age_ms: f64,
     pub counts: EditorViewportProfileCounts,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gpu: Option<EditorViewportGpuProfile>,
 }
 
 #[derive(Clone, Debug)]
@@ -612,7 +618,7 @@ impl EditorViewportRenderer {
             .read_offscreen_rgba8_profiled(&self.target)
             .context("could not read the editor viewport")?;
         stages.push(ProfileStage { name: "Renderer.read_offscreen_rgba8", duration_ms: stage_started.elapsed().as_secs_f64() * 1000.0, children: [
-            ("Readback buffer prepare", readback.buffer_prepare_ms), ("Readback copy submit", readback.copy_submit_ms), ("Readback GPU map wait", readback.gpu_wait_ms), ("Readback RGBA row pack", readback.rgba_pack_ms), ("Readback unmap", readback.unmap_ms),
+            ("Readback buffer prepare", readback.buffer_prepare_ms), ("Readback copy submit", readback.copy_submit_ms), ("Readback GPU map wait", readback.gpu_wait_ms), ("Readback GPU query decode", readback.gpu_query_read_ms), ("Readback RGBA row pack", readback.rgba_pack_ms), ("Readback unmap", readback.unmap_ms),
         ].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect() });
         let stage_started = Instant::now();
         if self.resource_sample.as_ref().is_none_or(|(at, _, _)| at.elapsed().as_millis() >= 250) {
@@ -620,7 +626,7 @@ impl EditorViewportRenderer {
             self.resource_sample = Some((Instant::now(), resources, truncated));
         }
         let (sampled_at, resources, resources_truncated) = self.resource_sample.as_ref().expect("resource sample initialized");
-        let profile = build_viewport_profile(
+        let mut profile = build_viewport_profile(
             resources.clone(),
             *resources_truncated,
             sampled_at.elapsed().as_secs_f64() * 1000.0,
@@ -633,6 +639,9 @@ impl EditorViewportRenderer {
             stages,
             render_started,
         );
+        if let Some(gpu) = readback.gpu {
+            profile.gpu = Some(EditorViewportGpuProfile { timestamp_period_ns: gpu.timestamp_period_ns, total_pass_ms: gpu.stages.iter().map(|stage| stage.milliseconds).sum(), stages: gpu.stages.into_iter().map(|stage| EditorViewportProfileNode { name: stage.name.into(), total_ms: stage.milliseconds, self_ms: stage.milliseconds, calls: 1, children: Vec::new() }).collect() });
+        }
         // Snapshot construction is intentionally reported as profiler overhead.
         let profile_overhead_ms = stage_started.elapsed().as_secs_f64() * 1_000.0;
         let mut profile = profile;
@@ -816,6 +825,7 @@ fn build_viewport_profile(
         world_sync_ms: None,
         simulation_stages: Vec::new(),
         schema_version: 1,
+        gpu: None,
         total_ms,
         call_tree,
         resident_memory_estimate_bytes: memory.iter().map(|category| category.bytes).sum(),
