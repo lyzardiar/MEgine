@@ -1,3 +1,4 @@
+// Author: MiYu. Verify hierarchy values, cycle handling and stable traversal order.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
@@ -64,6 +65,22 @@ test('inactive and cyclic hierarchy branches resolve inactive', () => {
   assert.equal(nodes.get(1).active, false);
   assert.equal(nodes.get(2).active, false);
   assert.equal(nodes.get(4).active, false);
+});
+
+test('cycle and missing-parent results finish every reserved node in first-visit order', () => {
+  const entities = [
+    { entity: 3, parent: 1, components: { Transform: transform([3, 0, 0]) } },
+    { entity: 1, parent: 2, components: { Transform: transform([1, 0, 0]) } },
+    { entity: 2, parent: 1, components: { Transform: transform([2, 0, 0]) } },
+    { entity: 4, parent: 4, components: { Transform: transform([4, 0, 0]) } },
+    { entity: 5, parent: 999, components: { Transform: transform([5, 0, 0]) } },
+    { entity: 6, parent: 1, components: {} },
+  ];
+  const summarize = nodes => [...nodes].map(([id, node]) => [id, node.active, node.hasTransform, node.transform.position[0]]);
+  const expected = [[3, false, true, 6], [1, false, true, 3], [2, false, true, 2], [4, false, true, 4], [5, false, true, 5], [6, false, false, 3]];
+  assert.deepEqual(summarize(buildWorldTransforms(entities)), expected);
+  const read = createOwnedWorldTransformReader();
+  for (let pass = 0; pass < 3; pass++) assert.deepEqual(summarize(read(entities)), expected);
 });
 
 test('requested world transforms resolve only their ancestors and preserve hierarchy validity', () => {
