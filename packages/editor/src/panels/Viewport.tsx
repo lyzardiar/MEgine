@@ -579,6 +579,7 @@ function rectHandlePivotForSelection(
 type Hit =
   | { kind: 'object'; id: number; x: number; y: number; r: number }
   | { kind: 'gizmo'; part: GizmoPart };
+type HitCandidate = Hit | { kind: 'native-mesh'; id: number; resolve: () => { x: number; y: number; r: number } | null };
 
 function letterbox(
   panelW: number,
@@ -762,7 +763,7 @@ export function Viewport(props: {
     generation: 0,
     ready: null as Promise<void> | null,
   });
-  const hitsRef = useRef<Hit[]>([]);
+  const hitsRef = useRef<HitCandidate[]>([]);
   const gizmoHitsRef = useRef<GizmoHit[]>([]);
   const rectGizmoHitsRef = useRef<RectGizmoHit[]>([]);
   const linePointHitsRef = useRef<LinePointHit[]>([]);
@@ -2505,14 +2506,13 @@ export function Viewport(props: {
       if (!pr) continue;
       const half: Vec3 = [0.5 * t.scale[0], 0.5 * t.scale[1], 0.5 * t.scale[2]];
       const rot = t.rotation as [number, number, number, number] | undefined;
-      // The native Scene image owns mesh pixels; preserve only the existing projected selection region.
+      // Project selection geometry on demand using the camera and mesh of the displayed native frame.
       if (nativeSceneFrame?.image) {
         const meshPath = String((mesh as Record<string, unknown>).mesh ?? 'cube');
         const imported = /\.(?:gltf|glb)$/i.test(meshPath) ? modelPreview(meshPath) : null;
-        const hit = nativeSceneMeshHitRef.current.read(e.entity, imported, () => imported
+        hitsRef.current.push({ kind: 'native-mesh', id: e.entity, resolve: () => nativeSceneMeshHitRef.current.read(e.entity, imported, () => imported
           ? drawTriangleMesh(ctx, cam, vp, t.position as Vec3, t.scale as Vec3, imported.positions, imported.indices, selected, rot, undefined, true)
-          : drawSolidCube(ctx, cam, vp, t.position as Vec3, half, selected, rot, undefined, true));
-        if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+          : drawSolidCube(ctx, cam, vp, t.position as Vec3, half, selected, rot, undefined, true)) });
         continue;
       }
       const materialPath = String((mesh as Record<string, unknown>).material ?? 'default');
@@ -3436,9 +3436,15 @@ export function Viewport(props: {
     }
 
     let best: { h: Hit; d: number } | null = null;
-    for (const h of hitsRef.current) {
-      if (h.kind !== 'object') continue;
-      if (propsRef.current.isPickable?.(h.id) === false) continue;
+    for (const candidate of hitsRef.current) {
+      if (candidate.kind === 'gizmo') continue;
+      if (propsRef.current.isPickable?.(candidate.id) === false) continue;
+      let h: Extract<Hit, { kind: 'object' }>;
+      if (candidate.kind === 'native-mesh') {
+        const region = candidate.resolve();
+        if (!region) continue;
+        h = { kind: 'object', id: candidate.id, ...region };
+      } else h = candidate;
       const d = Math.hypot(x - h.x, y - h.y);
       if (d < h.r && (!best || d < best.d)) best = { h, d };
     }
