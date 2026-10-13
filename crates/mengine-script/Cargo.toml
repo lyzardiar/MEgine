@@ -3,15 +3,19 @@ name = "mengine-script"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "MEngine QuickJS script host and TS bridge"
+description = "MEngine JavaScript host and TS bridge"
+
+[features]
+v8-runtime = ["dep:v8"]
 
 [dependencies]
 mengine-core.workspace = true
 mengine-assets.workspace = true
 glam.workspace = true
 rquickjs = "0.14"
+v8 = { version = "=152.2.0", optional = true }
 serde.workspace = true
-serde_json.workspace = true
+serde_json = { workspace = true, features = ["float_roundtrip"] }
 thiserror.workspace = true
 log.workspace = true
 anyhow.workspace = true

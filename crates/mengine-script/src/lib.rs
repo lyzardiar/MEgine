@@ -1,7 +1,13 @@
-//! Script host backed by QuickJS, shared by editor Play and standalone players:
+//! JavaScript host, shared by editor Play and standalone players:
 //! scripts only talk to `engine.*` and emit CommandBuffer entries.
 
 mod bridge;
+#[cfg(feature = "v8-runtime")]
+#[path = "vm_v8.rs"]
+mod vm;
+#[cfg(not(feature = "v8-runtime"))]
+#[path = "vm_quickjs.rs"]
+mod vm;
 mod input;
 mod network;
 mod storage;
@@ -22,3 +28,6 @@ pub enum ScriptError {
     #[error("{0}")]
     Other(String),
 }
+
+#[cfg(test)]
+mod runtime_tests;
