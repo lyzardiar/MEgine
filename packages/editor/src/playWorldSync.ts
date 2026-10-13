@@ -111,6 +111,13 @@ export function retainPlayWorld(world: WorldSnapshotView, previous?: RetainedPla
 }
 
 const retainedWorldIndices = new WeakMap<RetainedPlayWorld, Map<number, number>>();
+const retainedWorldChanges = new WeakMap<RetainedPlayWorld, { previousEntities: EntityRec[]; indices: readonly number[] }>();
+
+/** Certified adjacent deltas retain an entity array, without retaining a chain of earlier worlds. */
+export function retainedPlayWorldChanges(previous: RetainedPlayWorld, next: RetainedPlayWorld): readonly number[] | undefined {
+  const changes = retainedWorldChanges.get(next);
+  return retainedWorlds.has(previous) && changes?.previousEntities === previous.entities ? changes.indices : undefined;
+}
 
 /** Merge an unchanged-order native delta; private frozen worlds keep their validated entity indices. */
 export function retainPlayWorldPatch(previous: RetainedPlayWorld, patch: WorldSnapshotView): RetainedPlayWorld {
@@ -135,6 +142,7 @@ export function retainPlayWorldPatch(previous: RetainedPlayWorld, patch: WorldSn
   const owned = Object.freeze({ ...changed, entities: Object.freeze(entities) as EntityRec[] });
   retainedWorlds.add(owned);
   retainedWorldIndices.set(owned, indices);
+  retainedWorldChanges.set(owned, { previousEntities: previous.entities, indices: Object.freeze([...new Set(positions)]) });
   return owned;
 }
 

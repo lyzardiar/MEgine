@@ -283,3 +283,35 @@ test('pending color changes are independent from uploaded requests and custom dr
   assert.equal(custom.nativePlaySessionId, undefined); custom.step(.1); await custom.waitForPlayRuntime(); assert.ok(incoming); assert.equal(custom.nativePlaySessionId, 60);
   custom.stop();
 }));
+
+test('sparse store updates preserve immutable frames and detect newly exposed aliases during pending replies', async () => fixture(async ({ mockIPC, runtime, createEditorStore }) => {
+  const store = createEditorStore(), records = Array.from({ length: 128 }, (_, i) => entity(i + 1));
+  let revision = 0, upload, release, response, defer = false;
+  mockIPC((cmd, args) => {
+    if (cmd === 'start_editor_play') return { sessionId: 91, snapshot: host(records) };
+    if (cmd === 'step_editor_play') {
+      upload = args.snapshot;
+      const result = { snapshot: host([], revision + 1), reset: false, ...response, baseRevision: revision, revision: ++revision };
+      return defer ? new Promise(resolve => { release = () => resolve(result); }) : result;
+    }
+  });
+  store.setPlayRuntime(runtime); store.play(); await store.waitForPlayRuntime(); store.pause();
+  const first = store.playRenderSnapshot();
+  for (let i = 1; i <= 12; i++) {
+    response = { snapshot: host([entity(64, `Changing ${i}`), entity(64, `Final ${i}`)], i) };
+    store.step(.1); await store.waitForPlayRuntime();
+    const current = store.playRenderSnapshot();
+    assert.equal(upload, undefined); assert.equal(current.entities[0], first.entities[0]);
+    assert.equal(current.entities[63].name, `Final ${i}`); assert.equal(current.nativeWorldReference.revision, i);
+    assert.equal(first.entities[63].name, 'Root');
+  }
+  defer = true; response = undefined; store.step(.1);
+  const alias = store.getTransform(1); alias.position[0] = 42;
+  release(); await store.waitForPlayRuntime(); assert.equal(store.nativePlaySessionId, undefined);
+  response = { snapshot: host([entity(1, 'Replaced')], 14) };
+  store.step(.1); assert.equal(upload.entities[0].components.Transform.position[0], 42);
+  release(); await store.waitForPlayRuntime(); alias.position[0] = 99;
+  assert.equal(store.nativePlaySessionId, 91); assert.equal(store.playRenderSnapshot().entities[0].components.Transform.position[0], 0);
+  const current = store.playViewportSnapshot(); current.entities.reverse();
+  assert.equal(store.nativePlaySessionId, undefined); store.stop();
+}));

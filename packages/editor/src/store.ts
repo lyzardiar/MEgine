@@ -1,7 +1,7 @@
 // Author: MiYu. Editor scene state, hierarchy and runtime interaction.
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, retainedNativePlayWorld, type PlayInput, type PlayRuntimeDriver, type PlayRuntimeWorld } from './playRuntime';
-import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord } from './playWorldSync';
+import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord, retainedPlayWorldChanges } from './playWorldSync';
 import { normalizeEntity, type EntityRec } from './entityRecord';
 export type { EntityRec } from './entityRecord';
 import {
@@ -221,17 +221,24 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   const playWorldSync = createPlayWorldSync({ owns: entities => entities === privatePlayEntities && privatePlayEntities != null, unchanged: (entity, baseline) => !exposedPlayRecords.has(entity) && editableNativeRecords.get(baseline as EntityRec) === entity, comparisonIndices: (entities, retained) => entities === privatePlayEntities && playExposureVersion === privatePlayExposureVersion && retained === ownedPlayWorld?.entities ? privatePlayComparisonIndices : undefined, expose: exposePlayEntities });
   const acceptRuntimeWorld = (result: PlayRuntimeWorld) => {
     const owned = retainedNativePlayWorld(result);
+    const changes = owned && ownedPlayWorld && privatePlayEntities === playEntities && privatePlayEntities != null && privatePlayComparisonIndices.length === 0 && playExposureVersion === privatePlayExposureVersion ? retainedPlayWorldChanges(ownedPlayWorld, owned) : undefined;
     ownedPlayWorld = owned;
     if (owned) {
       let privateRecords = 0;
       privatePlayComparisonIndices = [];
-      playEntities = owned.entities.map((entity, index) => {
+      const editableRecord = (entity: EntityRec, index: number) => {
         let editable = editableNativeRecords.get(entity);
         if (!editable) { editable = cloneRetainedPlayRecord(entity); editableNativeRecords.set(entity, editable); }
         if (!exposedPlayRecords.has(editable)) privateRecords++;
         else privatePlayComparisonIndices.push(index);
         return editable;
-      });
+      };
+      if (changes && playEntities) {
+        // MiYu: an unexposed array keeps unchanged editable records private across certified deltas.
+        playEntities = playEntities.slice();
+        privateRecords = playEntities.length - changes.length;
+        for (const index of changes) playEntities[index] = editableRecord(owned.entities[index], index);
+      } else playEntities = owned.entities.map(editableRecord);
       let color = editableNativeColors.get(owned.clearColor);
       if (!color) { color = owned.clearColor.slice() as WorldSnapshotView['clearColor']; editableNativeColors.set(owned.clearColor, color); }
       playClearColor = color;
