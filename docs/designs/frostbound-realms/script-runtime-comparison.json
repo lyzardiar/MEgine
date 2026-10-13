@@ -1,31 +1,31 @@
 {
   "author": "MiYu",
-  "passed": false,
+  "passed": true,
   "scope": "Native CPU rule execution only. No engine bridge, client presentation, GPU rendering, browser, IPC or per-call deadline. V8 is embedded directly, not run through Node.",
   "warmup": 300,
   "samples": 600,
   "repeats": 3,
-  "generatedSha256": "45ac1d4fa4dc8ecd08555d9c0600ec28b5a429bd456b4a4af81b358f573ae233",
-  "rulesSha256": "355d6628128be3ec429ad7c7f5236212478027309bb33b980aa2eab71dffb07f",
+  "generatedSha256": "ded2402397eb114d1a3441b7dff18d7e6134fcdb86d75d41f5f2bc96e9168b6d",
+  "rulesSha256": "1967240664dd5795ae95c876bbdd57a208639adfff89b8861514dd64b43cdc4a",
   "runnerSha256": "df59dda750df22b88615471909841450a0ba6195ae64bfd9f8637d358efad41c",
   "cases": [
     {
       "name": "opening",
       "warmup": 300,
       "samples": 600,
-      "sourceSha256": "88ee41d638a4ecdad4d9224fa6578ee4bfec17974c874b7ff05d22020e18c9d0",
+      "sourceSha256": "eed7c2fb06e311d22ee04636d4d901f320283f56561919de72079071073b16ff",
       "runs": [
         {
           "runtime": "quickjs",
           "repeat": 0,
           "version": "rquickjs 0.14.0",
-          "loadMs": 814.4998,
-          "initialResetMs": 3.9744,
-          "warmupMs": 1184.9434999999999,
-          "resetMs": 3.7731000000000003,
-          "totalMs": 2486.6992999999975,
-          "medianStepMs": 3.8639,
-          "p95StepMs": 5.1476999999999995,
+          "loadMs": 796.5577999999999,
+          "initialResetMs": 3.875,
+          "warmupMs": 1126.9565,
+          "resetMs": 3.8009,
+          "totalMs": 2498.6291999999985,
+          "medianStepMs": 3.8636,
+          "p95StepMs": 5.1324,
           "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
           "equality": {
             "passed": true,
@@ -40,19 +40,19 @@
             "unitSteps": 11206,
             "projectileSteps": 0
           },
-          "averageStepMs": 4.144498833333329
+          "averageStepMs": 4.164381999999997
         },
         {
           "runtime": "v8",
           "repeat": 0,
           "version": "15.2.124.1-rusty",
-          "loadMs": 204.00889999999998,
-          "initialResetMs": 3.5909,
-          "warmupMs": 176.4365,
-          "resetMs": 1.0958,
-          "totalMs": 219.20600000000013,
-          "medianStepMs": 0.2833,
-          "p95StepMs": 0.5937,
+          "loadMs": 186.9919,
+          "initialResetMs": 3.3973,
+          "warmupMs": 167.1609,
+          "resetMs": 0.9203,
+          "totalMs": 223.4384000000003,
+          "medianStepMs": 0.27109999999999995,
+          "p95StepMs": 0.6537999999999999,
           "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
           "equality": {
             "passed": true,
@@ -67,19 +67,19 @@
             "unitSteps": 11206,
             "projectileSteps": 0
           },
-          "averageStepMs": 0.3653433333333336
+          "averageStepMs": 0.37239733333333386
         },
         {
           "runtime": "v8",
           "repeat": 1,
           "version": "15.2.124.1-rusty",
-          "loadMs": 231.0263,
-          "initialResetMs": 3.7518,
-          "warmupMs": 206.3232,
-          "resetMs": 1.0061,
-          "totalMs": 236.33180000000021,
-          "medianStepMs": 0.30160000000000003,
-          "p95StepMs": 0.6262000000000001,
+          "loadMs": 183.2317,
+          "initialResetMs": 3.5888,
+          "warmupMs": 168.2826,
+          "resetMs": 0.8668,
+          "totalMs": 216.72350000000003,
+          "medianStepMs": 0.2743,
+          "p95StepMs": 0.6053000000000001,
           "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
           "equality": {
             "passed": true,
@@ -94,19 +94,19 @@
             "unitSteps": 11206,
             "projectileSteps": 0
           },
-          "averageStepMs": 0.39388633333333367
+          "averageStepMs": 0.3612058333333334
         },
         {
           "runtime": "quickjs",
           "repeat": 1,
           "version": "rquickjs 0.14.0",
-          "loadMs": 788.905,
-          "initialResetMs": 3.8332,
-          "warmupMs": 1113.2064,
-          "resetMs": 3.8268999999999997,
-          "totalMs": 2496.424000000001,
-          "medianStepMs": 3.8834999999999997,
-          "p95StepMs": 5.1921,
+          "loadMs": 781.8398,
+          "initialResetMs": 4.0347,
+          "warmupMs": 1114.6765,
+          "resetMs": 3.7683,
+          "totalMs": 2478.6249000000003,
+          "medianStepMs": 3.8526,
+          "p95StepMs": 5.1246,
           "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
           "equality": {
             "passed": true,
@@ -121,19 +121,19 @@
             "unitSteps": 11206,
             "projectileSteps": 0
           },
-          "averageStepMs": 4.160706666666668
+          "averageStepMs": 4.1310415
         },
         {
           "runtime": "quickjs",
           "repeat": 2,
           "version": "rquickjs 0.14.0",
-          "loadMs": 793.0534,
-          "initialResetMs": 4.0766,
-          "warmupMs": 1118.6166,
-          "resetMs": 3.8083,
-          "totalMs": 2505.0873000000006,
-          "medianStepMs": 3.8623,
-          "p95StepMs": 5.2163,
+          "loadMs": 777.3854,
+          "initialResetMs": 3.8474,
+          "warmupMs": 1109.1275,
+          "resetMs": 3.7998,
+          "totalMs": 2491.2792000000004,
+          "medianStepMs": 3.8648,
+          "p95StepMs": 5.1616,
           "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
           "equality": {
             "passed": true,
@@ -148,19 +148,19 @@
             "unitSteps": 11206,
             "projectileSteps": 0
           },
-          "averageStepMs": 4.175145500000001
+          "averageStepMs": 4.152132000000001
         },
         {
           "runtime": "v8",
           "repeat": 2,
           "version": "15.2.124.1-rusty",
-          "loadMs": 186.77530000000002,
-          "initialResetMs": 3.5715999999999997,
-          "warmupMs": 168.88649999999998,
-          "resetMs": 0.8944,
-          "totalMs": 223.476,
-          "medianStepMs": 0.2821,
-          "p95StepMs": 0.6577,
+          "loadMs": 186.1812,
+          "initialResetMs": 3.7076000000000002,
+          "warmupMs": 165.8306,
+          "resetMs": 0.9128,
+          "totalMs": 212.85389999999973,
+          "medianStepMs": 0.2677,
+          "p95StepMs": 0.5899,
           "stateSha256": "475e6e9e2a77ab1eb08dce1fad440440cde1a335e418be08e715e8ce0d605e65",
           "equality": {
             "passed": true,
@@ -175,32 +175,32 @@
             "unitSteps": 11206,
             "projectileSteps": 0
           },
-          "averageStepMs": 0.37246
+          "averageStepMs": 0.35475649999999953
         }
       ],
       "medianAverageStepMs": {
-        "quickjs": 4.160706666666668,
-        "v8": 0.37246
+        "quickjs": 4.152132000000001,
+        "v8": 0.3612058333333334
       },
-      "quickjsToV8Ratio": 11.170881884408171
+      "quickjsToV8Ratio": 11.495196413863749
     },
     {
       "name": "battle",
       "warmup": 10,
       "samples": 30,
-      "sourceSha256": "26cef6a2f6c024bfa6a71305bcb528f8bcd72614aeb0b838906c8713222c0f74",
+      "sourceSha256": "b53225f5991ea20473dc9457172e5c34ac352849016c61637e3ad585532029d4",
       "runs": [
         {
           "runtime": "quickjs",
           "repeat": 0,
           "version": "rquickjs 0.14.0",
-          "loadMs": 789.3913,
-          "initialResetMs": 1936.8274,
-          "warmupMs": 5197.8045999999995,
-          "resetMs": 1923.5704,
-          "totalMs": 15438.333100000002,
-          "medianStepMs": 494.54179999999997,
-          "p95StepMs": 778.3497,
+          "loadMs": 779.7146,
+          "initialResetMs": 1930.3169,
+          "warmupMs": 5234.771000000001,
+          "resetMs": 1912.1467,
+          "totalMs": 15687.648699999998,
+          "medianStepMs": 498.7264,
+          "p95StepMs": 833.5797,
           "stateSha256": "95ec03c17c8479afdac38297c085b018cc916c25b9133c6283f92e94cdc28828",
           "equality": {
             "passed": true,
@@ -215,19 +215,19 @@
             "unitSteps": 3300,
             "projectileSteps": 111
           },
-          "averageStepMs": 514.6111033333334
+          "averageStepMs": 522.9216233333333
         },
         {
           "runtime": "v8",
           "repeat": 0,
           "version": "15.2.124.1-rusty",
-          "loadMs": 184.70149999999998,
-          "initialResetMs": 169.6146,
-          "warmupMs": 469.53099999999995,
-          "resetMs": 139.2378,
-          "totalMs": 1260.4077999999997,
-          "medianStepMs": 41.5781,
-          "p95StepMs": 56.2504,
+          "loadMs": 190.7111,
+          "initialResetMs": 162.41320000000002,
+          "warmupMs": 460.8125,
+          "resetMs": 136.66649999999998,
+          "totalMs": 1215.0551000000003,
+          "medianStepMs": 38.142799999999994,
+          "p95StepMs": 56.4447,
           "stateSha256": "580b4c2282482d33b4ef5daf63b3ff6f1c2eac8b477846a21f36ecd9088d14a2",
           "equality": {
             "passed": true,
@@ -242,19 +242,19 @@
             "unitSteps": 3300,
             "projectileSteps": 111
           },
-          "averageStepMs": 42.013593333333326
+          "averageStepMs": 40.50183666666668
         },
         {
           "runtime": "v8",
           "repeat": 1,
           "version": "15.2.124.1-rusty",
-          "loadMs": 192.1983,
-          "initialResetMs": 166.7991,
-          "warmupMs": 447.4229,
-          "resetMs": 133.52929999999998,
-          "totalMs": 1188.8075999999999,
-          "medianStepMs": 37.8453,
-          "p95StepMs": 53.9848,
+          "loadMs": 180.6395,
+          "initialResetMs": 160.8573,
+          "warmupMs": 454.7821,
+          "resetMs": 129.9263,
+          "totalMs": 1231.1997,
+          "medianStepMs": 39.8804,
+          "p95StepMs": 57.4256,
           "stateSha256": "580b4c2282482d33b4ef5daf63b3ff6f1c2eac8b477846a21f36ecd9088d14a2",
           "equality": {
             "passed": true,
@@ -269,19 +269,19 @@
             "unitSteps": 3300,
             "projectileSteps": 111
           },
-          "averageStepMs": 39.62692
+          "averageStepMs": 41.039989999999996
         },
         {
           "runtime": "quickjs",
           "repeat": 1,
           "version": "rquickjs 0.14.0",
-          "loadMs": 775.2873999999999,
-          "initialResetMs": 1907.1775,
-          "warmupMs": 5173.3631,
-          "resetMs": 1928.2874,
-          "totalMs": 15518.2021,
-          "medianStepMs": 500.75860000000006,
-          "p95StepMs": 760.3708,
+          "loadMs": 788.4692,
+          "initialResetMs": 1919.0584,
+          "warmupMs": 5252.858,
+          "resetMs": 1918.1181000000001,
+          "totalMs": 15492.1433,
+          "medianStepMs": 489.5754,
+          "p95StepMs": 770.8122,
           "stateSha256": "95ec03c17c8479afdac38297c085b018cc916c25b9133c6283f92e94cdc28828",
           "equality": {
             "passed": true,
@@ -296,19 +296,19 @@
             "unitSteps": 3300,
             "projectileSteps": 111
           },
-          "averageStepMs": 517.2734033333334
+          "averageStepMs": 516.4047766666666
         },
         {
           "runtime": "quickjs",
           "repeat": 2,
           "version": "rquickjs 0.14.0",
-          "loadMs": 779.5415999999999,
-          "initialResetMs": 1913.0394,
-          "warmupMs": 5226.9887,
-          "resetMs": 1914.5671,
-          "totalMs": 15579.366300000002,
-          "medianStepMs": 485.5802,
-          "p95StepMs": 787.3958,
+          "loadMs": 780.1289,
+          "initialResetMs": 1914.9668,
+          "warmupMs": 5248.4035,
+          "resetMs": 1925.0994,
+          "totalMs": 15493.6376,
+          "medianStepMs": 486.7324,
+          "p95StepMs": 773.058,
           "stateSha256": "95ec03c17c8479afdac38297c085b018cc916c25b9133c6283f92e94cdc28828",
           "equality": {
             "passed": true,
@@ -323,19 +323,19 @@
             "unitSteps": 3300,
             "projectileSteps": 111
           },
-          "averageStepMs": 519.31221
+          "averageStepMs": 516.4545866666666
         },
         {
           "runtime": "v8",
           "repeat": 2,
           "version": "15.2.124.1-rusty",
-          "loadMs": 181.7649,
-          "initialResetMs": 156.39770000000001,
-          "warmupMs": 446.0626,
-          "resetMs": 128.9093,
-          "totalMs": 1249.4447999999998,
-          "medianStepMs": 41.102,
-          "p95StepMs": 57.893899999999995,
+          "loadMs": 185.83259999999999,
+          "initialResetMs": 159.2982,
+          "warmupMs": 458.1717,
+          "resetMs": 135.347,
+          "totalMs": 1213.9307,
+          "medianStepMs": 38.298100000000005,
+          "p95StepMs": 60.0799,
           "stateSha256": "580b4c2282482d33b4ef5daf63b3ff6f1c2eac8b477846a21f36ecd9088d14a2",
           "equality": {
             "passed": true,
@@ -350,369 +350,376 @@
             "unitSteps": 3300,
             "projectileSteps": 111
           },
-          "averageStepMs": 41.64815999999999
+          "averageStepMs": 40.46435666666666
         }
       ],
       "medianAverageStepMs": {
-        "quickjs": 517.2734033333334,
-        "v8": 41.64815999999999
+        "quickjs": 516.4545866666666,
+        "v8": 40.50183666666668
       },
-      "quickjsToV8Ratio": 12.420078181925287
+      "quickjsToV8Ratio": 12.75138683011165
     },
     {
       "name": "td",
       "warmup": 300,
       "samples": 600,
-      "sourceSha256": "21cc7937e6184d9ad55a38059c4b9a330ab41e2d7965e0486153c1870aabdef2",
+      "sourceSha256": "775f3332581bdd7376295033ecccdc0a69353c746e3804f409c0efd9f6415844",
       "runs": [
         {
           "runtime": "quickjs",
           "repeat": 0,
           "version": "rquickjs 0.14.0",
-          "loadMs": 792.5324,
-          "initialResetMs": 1.8822999999999999,
-          "warmupMs": 1051.0988000000002,
-          "resetMs": 1.6377,
-          "totalMs": 6160.114999999996,
-          "medianStepMs": 6.4421,
-          "p95StepMs": 35.1834,
-          "stateSha256": "7a5b88c91be227a716147ee4ad5b9c757a2f2916dcc8065af02f0c407b4a3136",
+          "loadMs": 778.0162,
+          "initialResetMs": 1.8219,
+          "warmupMs": 739.5817999999999,
+          "resetMs": 1.7184,
+          "totalMs": 4606.297,
+          "medianStepMs": 4.2633,
+          "p95StepMs": 27.7179,
+          "stateSha256": "c2b0ac49ba806a26bfd42f766377af41df7e402c38f6198aee42267d1bf6af87",
           "equality": {
             "passed": true,
-            "numbers": 10888,
+            "numbers": 10636,
             "maxAbsoluteError": 0,
             "nonIdenticalNumbers": 0
           },
           "stats": {
             "steps": 600,
             "initialUnits": 4,
-            "peakUnits": 23,
-            "unitSteps": 7476,
-            "projectileSteps": 140
+            "peakUnits": 20,
+            "unitSteps": 6323,
+            "projectileSteps": 112
           },
-          "averageStepMs": 10.266858333333326
+          "averageStepMs": 7.677161666666666
         },
         {
           "runtime": "v8",
           "repeat": 0,
           "version": "15.2.124.1-rusty",
-          "loadMs": 200.671,
-          "initialResetMs": 2.8564,
-          "warmupMs": 150.2088,
-          "resetMs": 0.6468999999999999,
-          "totalMs": 511.10479999999995,
-          "medianStepMs": 0.6229,
-          "p95StepMs": 2.3549,
-          "stateSha256": "aceac1293e5803d27b9f49947c8c523e3c84721bae865803c07cf3074f03602f",
+          "loadMs": 180.54999999999998,
+          "initialResetMs": 2.6169000000000002,
+          "warmupMs": 128.97320000000002,
+          "resetMs": 0.7083,
+          "totalMs": 366.41710000000006,
+          "medianStepMs": 0.4346,
+          "p95StepMs": 1.8481,
+          "stateSha256": "39da3dfae9470b0f383cd9ebbeaeb020e0030497b4d22829d1919d238f20072c",
           "equality": {
-            "passed": false,
-            "firstDifference": "$.stats.peakUnits\n\n24 !== 23\n"
+            "passed": true,
+            "numbers": 10636,
+            "maxAbsoluteError": 3.552713678800501e-15,
+            "nonIdenticalNumbers": 10
           },
           "stats": {
             "steps": 600,
             "initialUnits": 4,
-            "peakUnits": 24,
-            "unitSteps": 7684,
-            "projectileSteps": 131
+            "peakUnits": 20,
+            "unitSteps": 6323,
+            "projectileSteps": 112
           },
-          "averageStepMs": 0.8518413333333332
+          "averageStepMs": 0.6106951666666668
         },
         {
           "runtime": "v8",
           "repeat": 1,
           "version": "15.2.124.1-rusty",
-          "loadMs": 191.8023,
-          "initialResetMs": 2.8958,
-          "warmupMs": 161.8468,
-          "resetMs": 0.6567,
-          "totalMs": 532.8008999999998,
-          "medianStepMs": 0.6499,
-          "p95StepMs": 2.5178000000000003,
-          "stateSha256": "aceac1293e5803d27b9f49947c8c523e3c84721bae865803c07cf3074f03602f",
+          "loadMs": 179.4631,
+          "initialResetMs": 2.7175,
+          "warmupMs": 125.222,
+          "resetMs": 0.5979,
+          "totalMs": 356.9644999999999,
+          "medianStepMs": 0.41209999999999997,
+          "p95StepMs": 1.8409,
+          "stateSha256": "39da3dfae9470b0f383cd9ebbeaeb020e0030497b4d22829d1919d238f20072c",
           "equality": {
-            "passed": false,
-            "firstDifference": "$.stats.peakUnits\n\n24 !== 23\n"
+            "passed": true,
+            "numbers": 10636,
+            "maxAbsoluteError": 3.552713678800501e-15,
+            "nonIdenticalNumbers": 10
           },
           "stats": {
             "steps": 600,
             "initialUnits": 4,
-            "peakUnits": 24,
-            "unitSteps": 7684,
-            "projectileSteps": 131
+            "peakUnits": 20,
+            "unitSteps": 6323,
+            "projectileSteps": 112
           },
-          "averageStepMs": 0.8880014999999998
+          "averageStepMs": 0.5949408333333331
         },
         {
           "runtime": "quickjs",
           "repeat": 1,
           "version": "rquickjs 0.14.0",
-          "loadMs": 804.0349,
-          "initialResetMs": 1.8591,
-          "warmupMs": 1080.2452,
-          "resetMs": 1.7440000000000002,
-          "totalMs": 6179.411099999998,
-          "medianStepMs": 6.4906,
-          "p95StepMs": 35.7166,
-          "stateSha256": "7a5b88c91be227a716147ee4ad5b9c757a2f2916dcc8065af02f0c407b4a3136",
+          "loadMs": 772.9352,
+          "initialResetMs": 1.8112,
+          "warmupMs": 749.4264000000001,
+          "resetMs": 1.6678000000000002,
+          "totalMs": 4572.171300000001,
+          "medianStepMs": 4.3896999999999995,
+          "p95StepMs": 27.2417,
+          "stateSha256": "c2b0ac49ba806a26bfd42f766377af41df7e402c38f6198aee42267d1bf6af87",
           "equality": {
             "passed": true,
-            "numbers": 10888,
+            "numbers": 10636,
             "maxAbsoluteError": 0,
             "nonIdenticalNumbers": 0
           },
           "stats": {
             "steps": 600,
             "initialUnits": 4,
-            "peakUnits": 23,
-            "unitSteps": 7476,
-            "projectileSteps": 140
+            "peakUnits": 20,
+            "unitSteps": 6323,
+            "projectileSteps": 112
           },
-          "averageStepMs": 10.299018499999997
+          "averageStepMs": 7.620285500000001
         },
         {
           "runtime": "quickjs",
           "repeat": 2,
           "version": "rquickjs 0.14.0",
-          "loadMs": 778.4832,
-          "initialResetMs": 1.8357,
-          "warmupMs": 1054.3042,
-          "resetMs": 1.6156,
-          "totalMs": 6133.403800000001,
-          "medianStepMs": 6.4942,
-          "p95StepMs": 34.6467,
-          "stateSha256": "7a5b88c91be227a716147ee4ad5b9c757a2f2916dcc8065af02f0c407b4a3136",
+          "loadMs": 770.7271999999999,
+          "initialResetMs": 1.8264,
+          "warmupMs": 752.3257,
+          "resetMs": 1.6789,
+          "totalMs": 4568.8255,
+          "medianStepMs": 4.2676,
+          "p95StepMs": 27.7164,
+          "stateSha256": "c2b0ac49ba806a26bfd42f766377af41df7e402c38f6198aee42267d1bf6af87",
           "equality": {
             "passed": true,
-            "numbers": 10888,
+            "numbers": 10636,
             "maxAbsoluteError": 0,
             "nonIdenticalNumbers": 0
           },
           "stats": {
             "steps": 600,
             "initialUnits": 4,
-            "peakUnits": 23,
-            "unitSteps": 7476,
-            "projectileSteps": 140
+            "peakUnits": 20,
+            "unitSteps": 6323,
+            "projectileSteps": 112
           },
-          "averageStepMs": 10.222339666666668
+          "averageStepMs": 7.614709166666667
         },
         {
           "runtime": "v8",
           "repeat": 2,
           "version": "15.2.124.1-rusty",
-          "loadMs": 196.8019,
-          "initialResetMs": 2.6879,
-          "warmupMs": 144.3924,
-          "resetMs": 0.7904,
-          "totalMs": 495.4353999999999,
-          "medianStepMs": 0.6124999999999999,
-          "p95StepMs": 2.3113,
-          "stateSha256": "aceac1293e5803d27b9f49947c8c523e3c84721bae865803c07cf3074f03602f",
+          "loadMs": 182.4257,
+          "initialResetMs": 2.6357,
+          "warmupMs": 132.5155,
+          "resetMs": 1.6106,
+          "totalMs": 366.14129999999955,
+          "medianStepMs": 0.415,
+          "p95StepMs": 1.8532,
+          "stateSha256": "39da3dfae9470b0f383cd9ebbeaeb020e0030497b4d22829d1919d238f20072c",
           "equality": {
-            "passed": false,
-            "firstDifference": "$.stats.peakUnits\n\n24 !== 23\n"
+            "passed": true,
+            "numbers": 10636,
+            "maxAbsoluteError": 3.552713678800501e-15,
+            "nonIdenticalNumbers": 10
           },
           "stats": {
             "steps": 600,
             "initialUnits": 4,
-            "peakUnits": 24,
-            "unitSteps": 7684,
-            "projectileSteps": 131
+            "peakUnits": 20,
+            "unitSteps": 6323,
+            "projectileSteps": 112
           },
-          "averageStepMs": 0.8257256666666665
+          "averageStepMs": 0.6102354999999993
         }
       ],
       "medianAverageStepMs": {
-        "quickjs": 10.266858333333326,
-        "v8": 0.8518413333333332
+        "quickjs": 7.620285500000001,
+        "v8": 0.6102354999999993
       },
-      "quickjsToV8Ratio": 12.052547735806819
+      "quickjsToV8Ratio": 12.487450336796222
     },
     {
       "name": "moba",
       "warmup": 300,
       "samples": 600,
-      "sourceSha256": "92b2cb3709a1ad6ccfd9839720d33fe6263731aa1a128d419d0403cc4890619c",
+      "sourceSha256": "5df15ebab6568afc61b7d452654b576603fe3661d32e9d2b82b1070bdd2af918",
       "runs": [
         {
           "runtime": "quickjs",
           "repeat": 0,
           "version": "rquickjs 0.14.0",
-          "loadMs": 793.1863999999999,
-          "initialResetMs": 8.5883,
-          "warmupMs": 5857.715,
-          "resetMs": 8.0319,
-          "totalMs": 13479.1862,
-          "medianStepMs": 13.1431,
-          "p95StepMs": 56.468900000000005,
-          "stateSha256": "f18d866d489367837702a98f52a0696ef56c4842a8f5406ce2ce8b8881388a94",
+          "loadMs": 787.0726999999999,
+          "initialResetMs": 8.3761,
+          "warmupMs": 5842.897599999999,
+          "resetMs": 8.1321,
+          "totalMs": 13479.049799999992,
+          "medianStepMs": 11.892399999999999,
+          "p95StepMs": 57.7321,
+          "stateSha256": "93fd2a0bd70c30f6512b11ee5e8ec6e0ef054feaf6a9ccd96c3df564582f9b24",
           "equality": {
             "passed": true,
-            "numbers": 10529,
+            "numbers": 10398,
             "maxAbsoluteError": 0,
             "nonIdenticalNumbers": 0
           },
           "stats": {
             "steps": 600,
             "initialUnits": 18,
-            "peakUnits": 52,
-            "unitSteps": 20932,
-            "projectileSteps": 1149
+            "peakUnits": 54,
+            "unitSteps": 20829,
+            "projectileSteps": 1144
           },
-          "averageStepMs": 22.465310333333335
+          "averageStepMs": 22.465082999999986
         },
         {
           "runtime": "v8",
           "repeat": 0,
           "version": "15.2.124.1-rusty",
-          "loadMs": 181.522,
-          "initialResetMs": 4.327,
-          "warmupMs": 564.5621,
-          "resetMs": 1.7738,
-          "totalMs": 1097.1206999999997,
-          "medianStepMs": 1.0822,
-          "p95StepMs": 4.4642,
-          "stateSha256": "a9a1da44b4ff7f06fb20df5eee8c352c8fbb565ee969391878563de399c149b7",
+          "loadMs": 181.1477,
+          "initialResetMs": 4.5123999999999995,
+          "warmupMs": 573.3209999999999,
+          "resetMs": 1.7598,
+          "totalMs": 1099.3603000000005,
+          "medianStepMs": 1.0761,
+          "p95StepMs": 4.5195,
+          "stateSha256": "12b1383a51840a31588d3da8d7d6079d3bb91e0f4dfa14084a68d3022dc1ce36",
           "equality": {
             "passed": true,
-            "numbers": 10529,
+            "numbers": 10398,
             "maxAbsoluteError": 3.552713678800501e-15,
-            "nonIdenticalNumbers": 26
+            "nonIdenticalNumbers": 24
           },
           "stats": {
             "steps": 600,
             "initialUnits": 18,
-            "peakUnits": 52,
-            "unitSteps": 20932,
-            "projectileSteps": 1149
+            "peakUnits": 54,
+            "unitSteps": 20829,
+            "projectileSteps": 1144
           },
-          "averageStepMs": 1.8285344999999995
+          "averageStepMs": 1.8322671666666674
         },
         {
           "runtime": "v8",
           "repeat": 1,
           "version": "15.2.124.1-rusty",
-          "loadMs": 190.2516,
-          "initialResetMs": 4.4752,
-          "warmupMs": 590.8507,
-          "resetMs": 1.6961000000000002,
-          "totalMs": 1102.0069999999992,
-          "medianStepMs": 1.0981999999999998,
-          "p95StepMs": 4.5399,
-          "stateSha256": "a9a1da44b4ff7f06fb20df5eee8c352c8fbb565ee969391878563de399c149b7",
+          "loadMs": 191.5357,
+          "initialResetMs": 4.2922,
+          "warmupMs": 571.8629,
+          "resetMs": 1.9027,
+          "totalMs": 1063.5017999999995,
+          "medianStepMs": 1.0740999999999998,
+          "p95StepMs": 4.4199,
+          "stateSha256": "12b1383a51840a31588d3da8d7d6079d3bb91e0f4dfa14084a68d3022dc1ce36",
           "equality": {
             "passed": true,
-            "numbers": 10529,
+            "numbers": 10398,
             "maxAbsoluteError": 3.552713678800501e-15,
-            "nonIdenticalNumbers": 26
+            "nonIdenticalNumbers": 24
           },
           "stats": {
             "steps": 600,
             "initialUnits": 18,
-            "peakUnits": 52,
-            "unitSteps": 20932,
-            "projectileSteps": 1149
+            "peakUnits": 54,
+            "unitSteps": 20829,
+            "projectileSteps": 1144
           },
-          "averageStepMs": 1.8366783333333319
+          "averageStepMs": 1.7725029999999993
         },
         {
           "runtime": "quickjs",
           "repeat": 1,
           "version": "rquickjs 0.14.0",
-          "loadMs": 787.0541,
-          "initialResetMs": 8.7015,
-          "warmupMs": 5862.828399999999,
-          "resetMs": 8.4223,
-          "totalMs": 13375.968500000023,
-          "medianStepMs": 12.7551,
-          "p95StepMs": 56.6991,
-          "stateSha256": "f18d866d489367837702a98f52a0696ef56c4842a8f5406ce2ce8b8881388a94",
+          "loadMs": 787.8829000000001,
+          "initialResetMs": 8.614,
+          "warmupMs": 5828.5287,
+          "resetMs": 8.0842,
+          "totalMs": 13435.998499999994,
+          "medianStepMs": 12.0176,
+          "p95StepMs": 57.988400000000006,
+          "stateSha256": "93fd2a0bd70c30f6512b11ee5e8ec6e0ef054feaf6a9ccd96c3df564582f9b24",
           "equality": {
             "passed": true,
-            "numbers": 10529,
+            "numbers": 10398,
             "maxAbsoluteError": 0,
             "nonIdenticalNumbers": 0
           },
           "stats": {
             "steps": 600,
             "initialUnits": 18,
-            "peakUnits": 52,
-            "unitSteps": 20932,
-            "projectileSteps": 1149
+            "peakUnits": 54,
+            "unitSteps": 20829,
+            "projectileSteps": 1144
           },
-          "averageStepMs": 22.29328083333337
+          "averageStepMs": 22.393330833333323
         },
         {
           "runtime": "quickjs",
           "repeat": 2,
           "version": "rquickjs 0.14.0",
-          "loadMs": 767.2039000000001,
-          "initialResetMs": 8.351799999999999,
-          "warmupMs": 5841.4808,
-          "resetMs": 8.3771,
-          "totalMs": 13316.260999999991,
-          "medianStepMs": 12.9497,
-          "p95StepMs": 56.6214,
-          "stateSha256": "f18d866d489367837702a98f52a0696ef56c4842a8f5406ce2ce8b8881388a94",
+          "loadMs": 776.2257000000001,
+          "initialResetMs": 8.5626,
+          "warmupMs": 5832.3665,
+          "resetMs": 8.0364,
+          "totalMs": 13414.010199999975,
+          "medianStepMs": 11.878400000000001,
+          "p95StepMs": 57.4432,
+          "stateSha256": "93fd2a0bd70c30f6512b11ee5e8ec6e0ef054feaf6a9ccd96c3df564582f9b24",
           "equality": {
             "passed": true,
-            "numbers": 10529,
+            "numbers": 10398,
             "maxAbsoluteError": 0,
             "nonIdenticalNumbers": 0
           },
           "stats": {
             "steps": 600,
             "initialUnits": 18,
-            "peakUnits": 52,
-            "unitSteps": 20932,
-            "projectileSteps": 1149
+            "peakUnits": 54,
+            "unitSteps": 20829,
+            "projectileSteps": 1144
           },
-          "averageStepMs": 22.19376833333332
+          "averageStepMs": 22.356683666666626
         },
         {
           "runtime": "v8",
           "repeat": 2,
           "version": "15.2.124.1-rusty",
-          "loadMs": 182.75369999999998,
-          "initialResetMs": 4.4232000000000005,
-          "warmupMs": 575.5692,
-          "resetMs": 1.8259999999999998,
-          "totalMs": 1072.6167999999996,
-          "medianStepMs": 1.0690000000000002,
-          "p95StepMs": 4.3676,
-          "stateSha256": "a9a1da44b4ff7f06fb20df5eee8c352c8fbb565ee969391878563de399c149b7",
+          "loadMs": 180.26510000000002,
+          "initialResetMs": 4.2281,
+          "warmupMs": 579.7774,
+          "resetMs": 1.7768,
+          "totalMs": 1073.0398999999989,
+          "medianStepMs": 1.0465,
+          "p95StepMs": 4.464700000000001,
+          "stateSha256": "12b1383a51840a31588d3da8d7d6079d3bb91e0f4dfa14084a68d3022dc1ce36",
           "equality": {
             "passed": true,
-            "numbers": 10529,
+            "numbers": 10398,
             "maxAbsoluteError": 3.552713678800501e-15,
-            "nonIdenticalNumbers": 26
+            "nonIdenticalNumbers": 24
           },
           "stats": {
             "steps": 600,
             "initialUnits": 18,
-            "peakUnits": 52,
-            "unitSteps": 20932,
-            "projectileSteps": 1149
+            "peakUnits": 54,
+            "unitSteps": 20829,
+            "projectileSteps": 1144
           },
-          "averageStepMs": 1.787694666666666
+          "averageStepMs": 1.7883998333333315
         }
       ],
       "medianAverageStepMs": {
-        "quickjs": 22.29328083333337,
-        "v8": 1.8285344999999995
+        "quickjs": 22.393330833333323,
+        "v8": 1.7883998333333315
       },
-      "quickjsToV8Ratio": 12.19188417464006
+      "quickjsToV8Ratio": 12.521434198299623
     }
   ],
   "completed": true,
-  "statesEquivalent": false,
-  "baselineCommit": "949fc98b029c74772b2062cf5e924be5f1ea6f38",
-  "rawEvidenceDirectory": "D:\\MEngineNativeQA\\script-vm-ground-sampling-final",
-  "productionRuntime": "QuickJS-NG unchanged",
+  "statesEquivalent": true,
+  "baselineCommit": "7e09a30",
+  "rawEvidenceDirectory": "D:\\MEngineNativeQA\\script-vm-path-priority-final",
+  "productionRuntime": "QuickJS-NG in Editor and Player; V8 remains an isolated native benchmark.",
   "limitations": [
-    "Rules-only native benchmark; no engine bridge, presentation, networking or per-call deadline.",
-    "110-unit battle now agrees within unchanged 1e-8 comparison tolerance; exact integer and structural checks remain enabled.",
-    "Tower-defense states still differ, as in the baseline. No production VM migration was performed.",
-    "QuickJS battle remains too slow, including a cold measured step above one second."
+    "Native CPU benchmark is not Editor FPS or full engine bridge acceptance.",
+    "Integer A* priorities intentionally change some previously tied TD and MOBA routes; workload timings are not purely geometry optimization comparisons.",
+    "Cross-runtime float comparisons retain the existing 1e-8 bound; integers and structures compare exactly.",
+    "110-unit QuickJS simulation remains about 516 ms per step; observed cold maximum 1039.1123 ms can exceed the production one-second deadline.",
+    "Actual server module comparisons and local TCP tests do not establish two-machine native-client acceptance."
   ]
 }

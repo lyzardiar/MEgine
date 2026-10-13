@@ -2324,7 +2324,8 @@ var Frost = (() => {
     // MiYu: static terrain edges survive simulation steps; terrain revision changes rebuild them.
     groundNavigation(s);const r=movementRadius(u),edgeCache=groundRoutes.get(s.map).trafficEdges;let edges=edgeCache.get(r);if(!edges){edges=new Uint8Array(121*121*8);edgeCache.set(r,edges);}
     const heap=[];
-    const push=(node,score)=>{let i=heap.length;heap.push([node,score]);while(i){const p=(i-1)>>1;if(heap[p][1]<=score)break;heap[i]=heap[p];i=p;}heap[i]=[node,score];};
+    // MiYu: integer priorities make numerically tied paths keep the same heap order across runtimes.
+    const push=(node,score)=>{score=Math.round(score*1e9);let i=heap.length;heap.push([node,score]);while(i){const p=(i-1)>>1;if(heap[p][1]<=score)break;heap[i]=heap[p];i=p;}heap[i]=[node,score];};
     const pop=()=>{const first=heap[0],last=heap.pop();if(heap.length){let i=0;while(i*2+1<heap.length){let c=i*2+1;if(c+1<heap.length&&heap[c+1][1]<heap[c][1])c++;if(heap[c][1]>=last[1])break;heap[i]=heap[c];i=c;}heap[i]=last;}return first[0];};
     push(start,0);let found=start,best=Math.hypot(u.x-x,u.z-z);
     // Bound one search; partial routes are continued from the next position.
