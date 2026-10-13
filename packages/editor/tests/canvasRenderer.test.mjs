@@ -142,6 +142,66 @@ test('Canvas text measurement rejects invalid browser metrics safely', () => {
   assert.equal(canvas.context.fontKerning, 'auto');
 });
 
+test('Canvas text metrics survive frames, isolate contexts and follow text state changes', () => {
+  const canvas = new FakeCanvas(new FakeDocument(), 'output'), ctx = canvas.context;
+  const glyph = { character: 'A', fontSize: 10, fontStyle: 'Normal' }, right = { ...glyph, character: 'V' };
+  let calls = 0;
+  ctx.measureText = value => { calls++; return { width: value.length * 8 }; };
+  for (let frame = 0; frame < 20; frame++) {
+    const metrics = canvasUiTextLayoutMeasurement(ctx);
+    assert.equal(metrics.measureGlyph('', glyph).advance, 8);
+    assert.equal(metrics.measurePairKerning('', glyph, right), 0);
+  }
+  assert.equal(calls, 3, 'identical frames reuse glyph and pair measurements');
+  for (const [field, value] of Object.entries({ textBaseline: 'top', textAlign: 'right', direction: 'rtl', lang: 'ja', fontKerning: 'none', fontStretch: 'condensed', fontVariantCaps: 'small-caps', letterSpacing: '2px', wordSpacing: '3px', textRendering: 'geometricPrecision' })) {
+    const before = calls; ctx[field] = value;
+    canvasUiTextLayoutMeasurement(ctx).measureGlyph('', glyph);
+    assert.equal(calls, before + 1, field + ' invalidates metrics');
+  }
+  const other = new FakeCanvas(new FakeDocument(), 'other').context;
+  other.measureText = () => ({ width: 99 });
+  assert.equal(canvasUiTextLayoutMeasurement(other).measureGlyph('', glyph).advance, 99);
+  const metrics = canvasUiTextLayoutMeasurement(ctx), before = calls;
+  metrics.measureGlyph('', { ...glyph, fontSize: 20 });
+  metrics.measureGlyph('', { ...glyph, fontStyle: 'Bold' });
+  metrics.measureGlyph('Assets/Fonts/Other.ttf', glyph);
+  assert.equal(calls, before + 3, 'font, size and style have independent keys');
+});
+
+test('Canvas text caches are bounded and remeasure evicted glyphs and pairs', () => {
+  const ctx = new FakeCanvas(new FakeDocument(), 'output').context;
+  let calls = 0; ctx.measureText = value => { calls++; return { width: value.length * 8 }; };
+  const metrics = canvasUiTextLayoutMeasurement(ctx), glyph = { character: 'A', fontSize: 10, fontStyle: 'Normal' };
+  metrics.measureGlyph('', glyph); metrics.measurePairKerning('', glyph, glyph);
+  for (let i = 0; i < 4100; i++) {
+    const next = { ...glyph, character: String.fromCodePoint(0x1000 + i) };
+    metrics.measureGlyph('', next); metrics.measurePairKerning('', next, glyph);
+  }
+  const before = calls;
+  metrics.measureGlyph('', glyph); metrics.measurePairKerning('', glyph, glyph);
+  assert.equal(calls, before + 3);
+});
+
+test('Canvas text metrics invalidate after font loads and project asset refreshes', async () => {
+  const previousDocument = globalThis.document, previousFetch = globalThis.fetch;
+  const fonts = new EventTarget();
+  globalThis.document = { fonts };
+  const { refreshProjectFiles, resetProjectAssetState } = await server.ssrLoadModule('/src/projectAssets.ts');
+  const { resetUiFontFaceCacheForTests } = await server.ssrLoadModule('/src/ui/uiFontAssets.ts');
+  const ctx = new FakeCanvas(new FakeDocument(), 'output').context, glyph = { character: 'A', fontSize: 10, fontStyle: 'Normal' };
+  let width = 8; ctx.measureText = () => ({ width });
+  const measure = () => canvasUiTextLayoutMeasurement(ctx).measureGlyph('', glyph).advance;
+  try {
+    assert.equal(measure(), 8); width = 12; assert.equal(measure(), 8);
+    fonts.dispatchEvent(new Event('loadingdone')); assert.equal(measure(), 12);
+    width = 16; fonts.dispatchEvent(new Event('loadingerror')); assert.equal(measure(), 16);
+    globalThis.fetch = async () => ({ ok: true, json: async () => ({ assets: [] }) });
+    width = 20; await refreshProjectFiles(); assert.equal(measure(), 20);
+    width = 24; resetProjectAssetState(); assert.equal(measure(), 24);
+    width = 28; resetUiFontFaceCacheForTests(); assert.equal(measure(), 28);
+  } finally { globalThis.document = previousDocument; globalThis.fetch = previousFetch; resetProjectAssetState(); }
+});
+
 function imageItem(canvasRenderer, color = [1, 1, 1, 0]) {
   const entities = [
     {
