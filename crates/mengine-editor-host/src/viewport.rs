@@ -30,6 +30,20 @@ use std::path::{Path, PathBuf};
 use std::time::{Instant, SystemTime};
 use winit::dpi::PhysicalSize;
 
+#[path = "viewport_resources.rs"]
+mod resource_sampling;
+use resource_sampling::ResourceSampler;
+
+#[derive(Clone, Debug, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ResourceSamplingProfile { pub ready: bool, pub pending: bool, pub delayed: bool, pub unavailable: bool, pub metadata_ms: Option<f64> }
+
+/// Invalidate sampled metadata when project ownership changes, including same-root reopen.
+pub fn invalidate_resource_samples() { resource_sampling::invalidate(); }
+
+/// Capture under the project lock together with the render request world.
+pub fn resource_sample_generation() -> u64 { resource_sampling::generation() }
+
 pub struct EditorViewportFrame {
     pub width: u32,
     pub height: u32,
@@ -125,6 +139,7 @@ pub struct EditorViewportProfile {
     pub resources: Vec<EditorViewportResource>,
     pub resources_truncated: bool,
     pub resource_sample_age_ms: f64,
+    pub resource_sampling: ResourceSamplingProfile,
     pub counts: EditorViewportProfileCounts,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gpu: Option<EditorViewportGpuProfile>,
@@ -237,8 +252,8 @@ pub struct EditorViewportRenderer {
     last_effect_frame: Instant,
     preview_restart: u64,
     sorting_layers: SortingLayers,
-    resource_sample: Option<(Instant, Vec<EditorViewportResource>, bool)>,
-    resource_texture_dimensions: ResourceTextureDimensionCache,
+    resource_sampler: ResourceSampler,
+    resource_generation: u64,
 }
 
 impl EditorViewportRenderer {
@@ -266,8 +281,8 @@ impl EditorViewportRenderer {
             last_effect_frame: Instant::now(),
             preview_restart: 0,
             sorting_layers,
-            resource_sample: None,
-            resource_texture_dimensions: ResourceTextureDimensionCache::new(),
+            resource_sampler: ResourceSampler::new(project_root.clone()),
+            resource_generation: resource_sample_generation(),
             project_root,
         })
     }
@@ -275,6 +290,9 @@ impl EditorViewportRenderer {
     pub fn project_root(&self) -> &Path {
         &self.project_root
     }
+
+    /// Bind profiling to the project session that supplied this render request.
+    pub fn with_resource_generation(&mut self, generation: u64) -> &mut Self { self.resource_generation = generation; self }
 
     pub fn render_game(
         &mut self,
@@ -652,15 +670,11 @@ impl EditorViewportRenderer {
         ].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect() });
         let stage_started = Instant::now();
         let mut resource_stages = Vec::new();
-        if self.resource_sample.as_ref().is_none_or(|(at, _, _)| at.elapsed().as_millis() >= 250) {
-            let (resources, truncated) = collect_frame_resources(&self.project_root, &frame, &mut self.resource_texture_dimensions, &mut resource_stages);
-            self.resource_sample = Some((Instant::now(), resources, truncated));
-        }
-        let (sampled_at, resources, resources_truncated) = self.resource_sample.as_ref().expect("resource sample initialized");
+        let (resources, resources_truncated, resource_sample_age_ms, resource_sampling) = self.resource_sampler.sample(&frame, &mut resource_stages, self.resource_generation);
         let mut profile = build_viewport_profile(
-            resources.clone(),
-            *resources_truncated,
-            sampled_at.elapsed().as_secs_f64() * 1000.0,
+            resources,
+            resources_truncated,
+            resource_sample_age_ms,
             world,
             &frame,
             &self.renderer,
@@ -670,6 +684,7 @@ impl EditorViewportRenderer {
             stages,
             render_started,
         );
+        profile.resource_sampling = resource_sampling;
         if let Some(gpu) = readback.gpu {
             profile.gpu = Some(EditorViewportGpuProfile { timestamp_period_ns: gpu.timestamp_period_ns, total_pass_ms: gpu.stages.iter().map(|stage| stage.milliseconds).sum(), stages: gpu.stages.into_iter().map(|stage| EditorViewportProfileNode { name: stage.name.into(), total_ms: stage.milliseconds, self_ms: stage.milliseconds, calls: 1, children: Vec::new() }).collect() });
         }
@@ -867,6 +882,7 @@ fn build_viewport_profile(
         resources,
         resources_truncated,
         resource_sample_age_ms,
+        resource_sampling: ResourceSamplingProfile::default(),
         counts: EditorViewportProfileCounts {
             msaa_samples: renderer.sample_count(),
             entities: world.iter_entities().count(),
@@ -892,24 +908,24 @@ fn build_viewport_profile(
     }
 }
 
-fn collect_frame_resources<'a>(
-    project_root: &Path,
-    frame: &'a mengine_runtime::frame_compiler::CompiledFrame,
-    dimension_cache: &mut ResourceTextureDimensionCache,
-    stages: &mut Vec<EditorViewportProfileNode>,
-) -> (Vec<EditorViewportResource>, bool) {
+fn collect_resource_references<'a>(frame: &'a mengine_runtime::frame_compiler::CompiledFrame, stages: &mut Vec<EditorViewportProfileNode>) -> (Vec<EditorViewportResource>, bool) {
     let references_started = Instant::now();
     let mut references = BTreeMap::<(String, String), BTreeSet<String>>::new();
+    const MAX_RESOURCES: usize = 256;
+    const MAX_REFERENCE_ENTRIES: usize = 4096;
+    let mut truncated = frame.ui.batches.len() + frame.objects.len() + frame.view_resources.len() > MAX_REFERENCE_ENTRIES;
     let mut raw_references = HashSet::new();
     let mut add = |kind: &'static str, asset: &'a str, referenced_by: &'static str| {
         let asset = asset.trim();
-        if asset.is_empty() || asset.eq_ignore_ascii_case("white") || !raw_references.insert((kind,asset,referenced_by)) { return; }
+        if asset.is_empty() || asset.eq_ignore_ascii_case("white") || raw_references.contains(&(kind,asset,referenced_by)) { return; }
+        if raw_references.len() < MAX_REFERENCE_ENTRIES { raw_references.insert((kind,asset,referenced_by)); }
         references
             .entry((kind.into(), asset.replace('\\', "/")))
             .or_default()
             .insert(referenced_by.into());
+        if references.len() > MAX_RESOURCES { references.pop_last(); truncated = true; }
     };
-    for batch in &frame.ui.batches {
+    for batch in frame.ui.batches.iter().take(MAX_REFERENCE_ENTRIES) {
         let texture_kind = if batch.key.texture.starts_with("mengine-font://") {
             "font-atlas"
         } else if batch.key.texture.starts_with("$scene-view:") {
@@ -922,7 +938,7 @@ fn collect_frame_resources<'a>(
             add("material", &batch.key.material, "UI batch");
         }
     }
-    for object in frame.objects.iter().chain(&frame.view_resources) {
+    for object in frame.objects.iter().chain(&frame.view_resources).take(MAX_REFERENCE_ENTRIES.saturating_sub(frame.ui.batches.len())) {
         add("mesh", mengine_runtime::meshes::source_mesh_reference(&object.mesh_key), "RenderObject");
         for texture in [
             &object.material.base_color_texture,
@@ -943,12 +959,8 @@ fn collect_frame_resources<'a>(
         "EnvironmentLight",
     );
 
-    const MAX_RESOURCES: usize = 256;
-    let truncated = references.len() > MAX_RESOURCES;
     let references_ms = references_started.elapsed().as_secs_f64() * 1000.0;
     stages.push(EditorViewportProfileNode { name: "Resources.references".into(), total_ms: references_ms, self_ms: references_ms, calls: 1, children: Vec::new() });
-    let metadata_started = Instant::now();
-    let mut current_dimensions = ResourceTextureDimensionCache::new();
     let resources = references
         .into_iter()
         .take(MAX_RESOURCES)
@@ -969,28 +981,34 @@ fn collect_frame_resources<'a>(
                     referenced_by: referenced_by.into_iter().collect(),
                 };
             }
-            let source = if kind == "mesh" { mengine_assets::parse_gltf_pose_sample(&asset).map_or(asset.as_str(),|p| p.0) } else { &asset };
-            let resolved = mengine_runtime::textures::resolve_project_asset_path(project_root, source);
-            let metadata = resolved
-                .as_deref()
-                .and_then(|path| std::fs::metadata(path).ok());
-            let dimensions = if kind == "texture" { resolved.as_deref().zip(metadata.as_ref()).and_then(|(path, metadata)| sampled_texture_dimensions(path, metadata, dimension_cache, &mut current_dimensions)) } else { None };
-            EditorViewportResource {
-                kind,
-                asset,
-                resolved_path: resolved.as_ref().map(|path| path.display().to_string()),
-                loaded: metadata.as_ref().is_some_and(|value| value.is_file()),
-                source_bytes: metadata.as_ref().map(std::fs::Metadata::len),
-                gpu_bytes_estimate: dimensions
-                    .map(|size| u64::from(size[0]) * u64::from(size[1]) * 4),
-                dimensions,
-                referenced_by: referenced_by.into_iter().collect(),
-            }
-        })
-        .collect();
-    // Retain successful dimensions only for this snapshot's resources; metadata is checked on every refresh.
+            EditorViewportResource { kind, asset, resolved_path: None, loaded: false, source_bytes: None, gpu_bytes_estimate: None, dimensions: None, referenced_by: referenced_by.into_iter().collect() }
+        }).collect();
+    (resources, truncated)
+}
+
+fn sample_resource_metadata(project_root: &Path, resources: &mut [EditorViewportResource], dimension_cache: &mut ResourceTextureDimensionCache) {
+    let mut current_dimensions = ResourceTextureDimensionCache::new();
+    for resource in resources {
+        if resource.kind == "font-atlas" || resource.kind == "scene-view" { continue; }
+        let source = if resource.kind == "mesh" { mengine_assets::parse_gltf_pose_sample(&resource.asset).map_or(resource.asset.as_str(), |p| p.0) } else { &resource.asset };
+        let resolved = mengine_runtime::textures::resolve_project_asset_path(project_root, source);
+        let metadata = resolved.as_deref().and_then(|path| std::fs::metadata(path).ok());
+        let dimensions = if resource.kind == "texture" { resolved.as_deref().zip(metadata.as_ref()).and_then(|(path, metadata)| sampled_texture_dimensions(path, metadata, dimension_cache, &mut current_dimensions)) } else { None };
+        resource.resolved_path = resolved.as_ref().map(|path| path.display().to_string());
+        resource.loaded = metadata.as_ref().is_some_and(|value| value.is_file());
+        resource.source_bytes = metadata.as_ref().map(std::fs::Metadata::len);
+        resource.gpu_bytes_estimate = dimensions.map(|size| u64::from(size[0]) * u64::from(size[1]) * 4);
+        resource.dimensions = dimensions;
+    }
     *dimension_cache = current_dimensions;
-    let metadata_ms = metadata_started.elapsed().as_secs_f64() * 1000.0;
+}
+
+#[cfg(test)]
+fn collect_frame_resources(project_root: &Path, frame: &mengine_runtime::frame_compiler::CompiledFrame, dimension_cache: &mut ResourceTextureDimensionCache, stages: &mut Vec<EditorViewportProfileNode>) -> (Vec<EditorViewportResource>, bool) {
+    let (mut resources, truncated) = collect_resource_references(frame, stages);
+    let started = Instant::now();
+    sample_resource_metadata(project_root, &mut resources, dimension_cache);
+    let metadata_ms = started.elapsed().as_secs_f64() * 1000.0;
     stages.push(EditorViewportProfileNode { name: "Resources.metadata".into(), total_ms: metadata_ms, self_ms: metadata_ms, calls: 1, children: Vec::new() });
     (resources, truncated)
 }
@@ -1035,7 +1053,7 @@ mod tests {
         }
     }
 
-    fn resource_frame(objects: Vec<mengine_rhi::RenderObject>, view_resources: Vec<mengine_rhi::RenderObject>) -> mengine_runtime::frame_compiler::CompiledFrame {
+    pub(super) fn resource_frame(objects: Vec<mengine_rhi::RenderObject>, view_resources: Vec<mengine_rhi::RenderObject>) -> mengine_runtime::frame_compiler::CompiledFrame {
         let camera = FrameCamera { view:glam::Mat4::IDENTITY,proj:glam::Mat4::IDENTITY,position:Vec3::Z };
         mengine_runtime::frame_compiler::CompiledFrame {
             profile_stages:vec![],clear:mengine_rhi::ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 },camera,objects,view_resources,lighting:Default::default(),
@@ -1117,6 +1135,16 @@ mod tests {
         frame.view_resources.push(resource_object("Assets/meshes/256.glb#pose=0:1@30"));
         let (limited,truncated) = collect_frame_resources(&std::env::temp_dir(),&frame,&mut ResourceTextureDimensionCache::new(),&mut Vec::new()); assert!(truncated); assert_eq!(limited.len(),256);
         assert_eq!(resources.iter().map(|r|&r.asset).collect::<Vec<_>>(),limited.iter().map(|r|&r.asset).collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn resource_reference_scan_marks_partial_large_frames_and_bounds_retention() {
+        let mut frame = resource_frame(vec![resource_object("Assets/repeated.glb");4096], vec![resource_object("Assets/after-budget.glb")]);
+        let (resources, truncated) = collect_resource_references(&frame, &mut Vec::new());
+        assert!(truncated); assert_eq!(resources.len(), 1); assert_eq!(resources[0].asset, "Assets/repeated.glb");
+        frame.objects = (0..4096).rev().map(|id| resource_object(&format!("Assets/{id:04}.glb"))).collect();
+        let (resources, truncated) = collect_resource_references(&frame, &mut Vec::new());
+        assert!(truncated); assert_eq!(resources.len(), 256); assert_eq!(resources[0].asset, "Assets/0000.glb"); assert_eq!(resources[255].asset, "Assets/0255.glb");
     }
 
     #[test]

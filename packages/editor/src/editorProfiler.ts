@@ -91,6 +91,7 @@ export type NativeViewportProfile = {
   rendererLockWaitMs?: number;
   simulationRequestMs?: number;
   resourceSampleAgeMs?: number;
+  resourceSampling?: { ready: boolean; pending: boolean; delayed?: boolean; unavailable: boolean; metadataMs: number | null };
   uploadMs?: number;
   nativeTransport?: 'shared-buffer' | 'binary-ipc';
   presentIntervalMs?: number;
@@ -102,6 +103,15 @@ export type NativeViewportProfile = {
 };
 
 export type NativeViewportProfilePayload = Omit<NativeViewportProfile, 'source' | 'timestamp'>;
+
+/** MiYu: background metadata duration is not part of the frame's CPU call tree. */
+export function nativeResourceSampleStatus(profile: Pick<NativeViewportProfile, 'resourceSampling' | 'resourceSampleAgeMs'>): string {
+  const sampling = profile.resourceSampling;
+  if (sampling && !sampling.ready) return sampling.unavailable ? 'Resource sampler unavailable' : sampling.delayed ? 'Resource metadata delayed; rendering continues' : 'Sampling resource metadata…';
+  const age = profile.resourceSampleAgeMs;
+  const status = age != null && Number.isFinite(age) ? `sample age ${age.toFixed(0)} ms` : 'sample age unavailable';
+  return `${status}${sampling?.unavailable ? ' · sampler unavailable; retained sample' : sampling?.delayed ? ' · metadata delayed; retained sample' : sampling?.pending ? ' · updating' : ''}${sampling?.metadataMs != null && Number.isFinite(sampling.metadataMs) ? ` · metadata worker ${sampling.metadataMs.toFixed(2)} ms` : ''}`;
+}
 
 /** MiYu: non-overlapping command scopes; simulation and GPU timestamps run on separate clocks. */
 export function nativeViewportRequestStages(profile: NativeViewportProfile): { name: string; ms: number | undefined }[] {

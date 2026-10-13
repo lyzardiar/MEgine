@@ -23,6 +23,7 @@ pub use project::{
 pub use session::{EditorMode, EditorSession};
 pub use undo::{EditorCommand, UndoStack};
 pub use viewport::{
+    invalidate_resource_samples, resource_sample_generation,
     EditorCameraPreview, EditorSceneCamera, EditorViewportFrame, EditorViewportMemoryCategory,
     EditorViewportProfile, EditorViewportProfileCounts, EditorViewportProfileNode,
     EditorViewportRenderer, EditorViewportResource,
