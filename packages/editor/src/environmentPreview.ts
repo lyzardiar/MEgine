@@ -1,3 +1,4 @@
+// Author: MiYu. Environment preview revisions invalidate retained viewport pixels when textures become ready.
 import type { Camera } from './math3d.ts';
 import { loadProjectImage, readProjectAssetBytes } from './projectAssets.ts';
 
@@ -26,9 +27,13 @@ type PreviewEntry =
   | { state: 'failed' };
 
 const previewCache = new Map<string, PreviewEntry>();
+let previewRevision = 0;
+
+export function environmentPreviewRevision(): number { return previewRevision; }
 
 export function invalidateEnvironmentPreviews(): void {
   previewCache.clear();
+  previewRevision++;
 }
 
 export function drawEnvironmentBackground(
@@ -89,7 +94,7 @@ function requestPanorama(path: string): LinearPanorama | null {
   if (cached) return null;
   previewCache.set(path, { state: 'loading' });
   void loadPanorama(path)
-    .then((panorama) => previewCache.set(path, { state: 'ready', panorama }))
+    .then((panorama) => { previewCache.set(path, { state: 'ready', panorama }); previewRevision++; })
     .catch(() => previewCache.set(path, { state: 'failed' }));
   return null;
 }

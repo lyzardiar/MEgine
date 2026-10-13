@@ -235,7 +235,7 @@ import {
 import { getSortingLayerRank } from '../sortingLayers';
 import { buildWorldTransforms, resolvedTransform } from '../worldTransform';
 import { createHierarchyActiveLookup, viewportActiveLookup } from '../hierarchyActivation';
-import { createNativeViewportPresentationReader } from '../nativeViewportPresentation';
+import { createNativeViewportPresentationReader, nativeGamePaintUnchanged, type NativeGamePaintState } from '../nativeViewportPresentation';
 import {
   modulateLight2DColor,
   prepareLight2DLights,
@@ -265,6 +265,7 @@ import {
 } from '../tilemapModel';
 import {
   drawEnvironmentBackground,
+  environmentPreviewRevision,
   invalidateEnvironmentPreviews,
   type EnvironmentBackground,
 } from '../environmentPreview';
@@ -835,12 +836,13 @@ export function Viewport(props: {
   const scenePaintInputsRef = useRef<unknown[]>([]);
   const scenePaintEpochRef = useRef(0);
   const previousScenePaintRef = useRef<NativeScenePaintState | null>(null);
+  const previousGamePaintRef = useRef<NativeGamePaintState | null>(null);
   const sceneWorldArgsRef = useRef<{ source: Ent[]; key: string; args: ReturnType<typeof createNativeViewportWorldArgs<Ent>> } | null>(null);
   const sceneTransformsRef = useRef<{ source: Ent[]; transforms: ReturnType<typeof buildWorldTransforms> } | null>(null);
   const sceneUiEntitiesRef = useRef<{ source: Ent[]; entities: Ent[] } | null>(null);
   const sceneOverlayLayoutRef = useRef<{ source: Ent[]; key: string; updatedAt: number; layout: SceneUiOverlayLayout } | null>(null);
   // Runtime overlays advance with completed native frames; authoring and interaction still invalidate paints.
-  const scenePaintInputs = [props.playing ? null : props.entities, JSON.stringify([props.playing, props.runtimeSessionId, props.nativeSessionId, props.selected, props.selectedIds, props.sceneHiddenIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.gameDisplay, props.timelineCameraPreview, props.timelineParticlePreviews, props.playing ? null : props.clearColor])];
+  const scenePaintInputs = [props.playing ? null : props.entities, JSON.stringify([props.tab, props.playing, props.runtimeSessionId, props.nativeSessionId, props.selected, props.selectedIds, props.sceneHiddenIds, props.gizmo, props.pivotMode, props.handleOrientation, props.gameResolution, props.gameDisplay, props.timelineCameraPreview, props.timelineParticlePreviews, props.playing ? null : props.clearColor])];
   if (scenePaintInputs.some((value, index) => value !== scenePaintInputsRef.current[index])) {
     scenePaintEpochRef.current++;
     scenePaintInputsRef.current = scenePaintInputs;
@@ -1433,7 +1435,7 @@ export function Viewport(props: {
       sc.pitch = 0;
     }
 
-    if (!nativeScene3D) clearViewport();
+    if (!nativeScene3D && !isGame) clearViewport();
 
     const vp = isGame
       ? letterbox(pw, ph, p.gameResolution)
@@ -1497,6 +1499,17 @@ export function Viewport(props: {
             if (request.generation === generation && propsRef.current.tab === 'game' && propsRef.current.playing) paint();
           }, Math.max(0, Math.ceil(1000 / 60 - (performance.now() - request.lastRequestAt))));
         });
+    }
+
+    // Native Game requests continue even when the displayed canvas needs no new pixels.
+    let nativeGamePaint = false;
+    if (isGame) {
+      const frame = nativeGameFrameRef.current;
+      const gamePaintState = { frame, surface: canvas, key: JSON.stringify([presentationKey, vp.x, vp.y, vp.w, vp.h, dpr, uiHoverRef.current, uiPressRef.current, environmentPreviewRevision()]), epoch: scenePaintEpochRef.current, browserRendering: frame == null || nativeGameRequestRef.current.reportedError || nativePresentationRef.current(frame.world).requiresBrowserSnapshot };
+      if (nativeGamePaintUnchanged(previousGamePaintRef.current, gamePaintState)) return;
+      previousGamePaintRef.current = gamePaintState;
+      nativeGamePaint = !gamePaintState.browserRendering;
+      clearViewport();
     }
 
     if (isGame && (vp.w < pw - 1 || vp.h < ph - 1)) {
@@ -1679,7 +1692,7 @@ export function Viewport(props: {
     const frameIntervalMs = lastProfilerFrameRef.current > 0
       ? now - lastProfilerFrameRef.current
       : 0;
-    if (animationFrame) lastProfilerFrameRef.current = now;
+    if (animationFrame || nativeGamePaint) lastProfilerFrameRef.current = now;
     if (nativeScene3D) clearViewport();
     const nativeSceneFrame = !isGame && !scene2DActive && !nativeSceneRequestRef.current.reportedError ? nativeSceneFrameForPresentation(nativeSceneFrameRef.current, nativeSceneIdentity) : null;
     if (nativeSceneFrame) cam = nativeSceneFrame.camera;
@@ -3343,7 +3356,7 @@ export function Viewport(props: {
     }
 
     ctx.restore();
-    if (animationFrame) recordViewportProfilerFrame({
+    if (animationFrame || nativeGamePaint) recordViewportProfilerFrame({
       source: p.tab,
       timestamp: now,
       frameIntervalMs,

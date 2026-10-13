@@ -8,7 +8,7 @@ import { nativeGameFrameMatchesRequest } from '../src/nativeViewportFrame.ts';
 
 const source = readFileSync(new URL('../src/panels/Viewport.tsx', import.meta.url), 'utf8');
 const start = source.indexOf('    if (\n      isGame\n');
-const end = source.indexOf('    if (isGame && (vp.w < pw - 1', start);
+const end = source.indexOf('    // Native Game requests continue', start);
 assert.ok(start >= 0 && end > start);
 const requestBlock = ts.transpileModule(`(function (p, now, nativeWorld, presentationKey, requestWorldFrame) { ${source.slice(start, end)} })`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const cleanupStart = source.indexOf('    return () => {\n      cancelAnimationFrame(raf);');
