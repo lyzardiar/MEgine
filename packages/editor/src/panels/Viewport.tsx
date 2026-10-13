@@ -2793,6 +2793,7 @@ export function Viewport(props: {
           p.selectedIds ?? [p.selected],
           p.selected,
           p.pivotMode,
+          worldTransforms,
         ) ?? (t.position as Vec3);
         const gizmoDrag = dragRef.current?.type === 'gizmo'
           && dragRef.current.entity === p.selected
@@ -3857,6 +3858,7 @@ export function Viewport(props: {
             propsRef.current.selectedIds ?? [propsRef.current.selected],
             propsRef.current.selected,
             propsRef.current.pivotMode,
+            pointerWorldTransforms,
           ) ?? (tr ? ([...tr.position] as Vec3) : [0, 0, 0]);
           const cam = lastCameraRef.current;
           const scr = project(origin, cam, lastVpRef.current);
@@ -4369,14 +4371,16 @@ export function Viewport(props: {
         const cam = lastCameraRef.current;
         const vp = lastVpRef.current;
         const ent = propsRef.current.entities.find((e) => e.entity === d.entity);
+        const pointerWorldTransforms = ent ? buildWorldTransforms(propsRef.current.entities) : undefined;
         const tr = ent
-          ? (resolvedTransform(buildWorldTransforms(propsRef.current.entities), ent.entity) ?? undefined)
+          ? (resolvedTransform(pointerWorldTransforms!, ent.entity) ?? undefined)
           : undefined;
         const origin = transformHandleOrigin(
           propsRef.current.entities,
           propsRef.current.selectedIds ?? [d.entity],
           d.entity,
           propsRef.current.pivotMode,
+          pointerWorldTransforms,
         ) ?? (tr?.position as Vec3 | undefined) ?? d.origin;
         const handleRotation = usesLocalHandleAxes(
           propsRef.current.gizmo,
