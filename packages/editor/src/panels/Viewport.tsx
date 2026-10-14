@@ -1517,6 +1517,7 @@ export function Viewport(props: {
           if (firstFrame) window.setTimeout(paint, 0);
         })
         .catch((error) => {
+          if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
           if (!request.reportedError) {
             console.warn('Native Game View rendering is unavailable', error);
             request.reportedError = true;
@@ -1643,6 +1644,7 @@ export function Viewport(props: {
         if (firstFrame) paint();
         if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
+        if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
         if (!request.reportedError) {
           console.warn('Native Scene View rendering is unavailable', error);
           request.reportedError = true;
@@ -1711,6 +1713,7 @@ export function Viewport(props: {
         if (firstFrame || performance.now() - lastProfilerFrameRef.current > 100) paint();
         if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
+        if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
         if (!request.reportedError) {
           console.warn('Native Camera Preview rendering is unavailable', error);
           p.onLog?.(`Camera Preview: ${error instanceof Error ? error.message : String(error)}`, 'error');
