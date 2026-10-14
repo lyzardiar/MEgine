@@ -1,3 +1,4 @@
+// Author: MiYu. Retain owned native frames without copying their resource snapshots again.
 import type { SharedNativeViewportTransportProfile } from './nativeViewportTransport';
 import { createEditorBroadcastChannel } from './editorInstance.ts';
 
@@ -481,6 +482,7 @@ type ProfilerChannelMessage =
 const CHANNEL_NAME = 'mengine.editor.profiler.v1';
 const samples: EditorProfilerSample[] = [];
 const nativeProfiles: NativeViewportProfile[] = [];
+const nativeProfileCounts = { scene: 0, game: 0 };
 const listeners = new Set<() => void>();
 const sampler = createEditorProfilerSampler();
 let channel: BroadcastChannel | null = null;
@@ -518,6 +520,7 @@ function profilerChannel(): BroadcastChannel | null {
     if (message?.type === 'clear') {
       samples.length = 0;
       nativeProfiles.length = 0;
+      nativeProfileCounts.scene = nativeProfileCounts.game = 0;
       notify();
       return;
     }
@@ -572,11 +575,10 @@ export function recordViewportProfilerFrame(frame: ViewportProfilerFrame): void 
 }
 
 function appendNativeProfile(profile: NativeViewportProfile, broadcast: boolean): void {
-  nativeProfiles.push(structuredClone(profile));
-  const sourceProfiles = nativeProfiles.filter((candidate) => candidate.source === profile.source);
-  if (sourceProfiles.length > 240) {
+  nativeProfiles.push(profile);
+  if (++nativeProfileCounts[profile.source] > 240) {
     const oldest = nativeProfiles.findIndex((candidate) => candidate.source === profile.source);
-    if (oldest >= 0) nativeProfiles.splice(oldest, 1);
+    if (oldest >= 0) { nativeProfiles.splice(oldest, 1); nativeProfileCounts[profile.source]--; }
   }
   notify();
   if (broadcast) {
@@ -589,6 +591,12 @@ export function recordNativeViewportProfile(
   payload: NativeViewportProfilePayload,
   timestamp = performance.now(),
 ): void {
+  if (payload.schemaVersion !== 1 || !Number.isFinite(payload.totalMs)) return;
+  recordOwnedNativeViewportProfile(source, structuredClone(payload), timestamp);
+}
+
+/** Transfer a decoded frame's metadata to history; the caller must not mutate it afterward. */
+export function recordOwnedNativeViewportProfile(source: EditorProfilerSource, payload: NativeViewportProfilePayload, timestamp = performance.now()): void {
   if (payload.schemaVersion !== 1 || !Number.isFinite(payload.totalMs)) return;
   let previous: NativeViewportProfile | undefined;
   for (let index = nativeProfiles.length - 1; index >= 0; index--) { if (nativeProfiles[index].source === source) { previous = nativeProfiles[index]; break; } }
@@ -613,6 +621,7 @@ export function readEditorProfilerSamples(
 export function clearEditorProfilerSamples(): void {
   samples.length = 0;
   nativeProfiles.length = 0;
+  nativeProfileCounts.scene = nativeProfileCounts.game = 0;
   notify();
   profilerChannel()?.postMessage({ type: 'clear' } satisfies ProfilerChannelMessage);
 }
