@@ -712,12 +712,17 @@ impl Renderer {
 
     pub async fn new(window: Arc<winit::window::Window>) -> Result<Self, RhiError> {
         let size = window.inner_size();
+        Self::new_for_surface(window, size).await
+    }
+
+    /// MiYu: the safe surface target retains its window owner until the surface is dropped.
+    pub async fn new_for_surface(target: impl Into<wgpu::SurfaceTarget<'static>>, size: PhysicalSize<u32>) -> Result<Self, RhiError> {
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: preferred_backends(),
             ..Default::default()
         });
         let surface = instance
-            .create_surface(window.clone())
+            .create_surface(target)
             .map_err(|e| RhiError::RequestDevice(e.to_string()))?;
         Self::new_with_optional_surface(instance, Some(surface), size).await
     }

@@ -1,0 +1,115 @@
+{
+  "childWindow": true,
+  "comparisons": [
+    {
+      "changedPixels": 55,
+      "height": 689,
+      "totalPixels": 844025,
+      "width": 1225
+    },
+    {
+      "changedPixels": 19,
+      "height": 433,
+      "totalPixels": 336441,
+      "width": 777
+    },
+    {
+      "changedPixels": 45,
+      "height": 689,
+      "totalPixels": 844025,
+      "width": 1225
+    }
+  ],
+  "fixedPlayWorld": true,
+  "hiddenWindow": false,
+  "passed": true,
+  "readback": {
+    "count": 30,
+    "meanMs": 7.795826666666667,
+    "p50Ms": 7.7462,
+    "p95Ms": 8.4693
+  },
+  "surface": {
+    "count": 30,
+    "meanMs": 16.619666666666667,
+    "p50Ms": 16.6195,
+    "p95Ms": 17.6498
+  },
+  "timingScope": "CPU call wall time including submission/backpressure; not physical scanout or equal-latency end-to-end FPS",
+  "warmupFrames": 30,
+  "windowOwnerRetainedUntilSurfaceDrop": true,
+  "windowStates": [
+    {
+      "child": true,
+      "innerSize": [
+        1225,
+        689
+      ],
+      "minimized": false,
+      "parentVisible": false,
+      "scaleFactor": 1.5,
+      "visible": false
+    },
+    {
+      "child": true,
+      "innerSize": [
+        1225,
+        689
+      ],
+      "minimized": false,
+      "parentVisible": true,
+      "scaleFactor": 1.5,
+      "visible": true
+    },
+    {
+      "child": true,
+      "innerSize": [
+        1225,
+        689
+      ],
+      "minimized": false,
+      "parentVisible": true,
+      "scaleFactor": 1.5,
+      "visible": true
+    },
+    {
+      "child": true,
+      "innerSize": [
+        1225,
+        689
+      ],
+      "minimized": false,
+      "parentVisible": false,
+      "scaleFactor": 1.5,
+      "visible": false
+    },
+    {
+      "child": true,
+      "innerSize": [
+        1225,
+        689
+      ],
+      "minimized": false,
+      "parentVisible": true,
+      "scaleFactor": 1.5,
+      "visible": true
+    }
+  ],
+  "profileEvidence": [
+    {
+      "totalMs": 8.0488,
+      "submissionStages": []
+    },
+    {
+      "totalMs": 16.8374,
+      "submissionStages": []
+    }
+  ],
+  "author": "MiYu",
+  "reportPath": "D:/MEngineNativeQA/native-child-surface-20261014/report.json",
+  "hostTestsPassed": 5,
+  "hostTestsIgnored": 1,
+  "quickJsCheckPassed": true,
+  "tauriCheckPassed": true,
+  "releaseBuild": "4m00s"
+}
