@@ -7,9 +7,12 @@ const file='samples/frostbound-realms/Assets/Scenes/Main.mscene',baseline=proces
 const before=JSON.parse(execFileSync('git',['show',baseline+':'+file],{maxBuffer:128*1024*1024})).world.entities,raw=fs.readFileSync(file),after=JSON.parse(raw).world.entities,byName=new Map(after.map(e=>[e.name,e]));
 assert.equal(byName.size,after.length);const removed=[];
 const slot=/^Classic (Siphon|Healing Wave|Chain Lightning|Far Sight|Shockwave|Sentinel|Archmage missile) (\d+)(?: (?:mesh|part) \d+)?$/;
-for(const e of before){const current=byName.get(e.name);if(current)assert.deepEqual(current,e,'retained node '+e.name);else{const matched=slot.exec(e.name);assert.ok(matched&&Number(matched[2])>0||/^Scene \/ Effects\/Classic (?:Siphon|Healing Wave|Chain Lightning|Far Sight|Shockwave|Sentinel|Archmage missile)\/Slots (?!0-31$)/.test(e.name),'only duplicate slots and their empty folders removed: '+e.name);removed.push(e);}}
-assert.equal(before.length-after.length,removed.length);assert.equal(removed.length,902);
+// UI activation is validated against the first title-screen tick in test-frost-menu-visibility.mjs.
+for(const e of before){const current=byName.get(e.name);if(current)assert.deepEqual(e.components.RectTransform?{...current,active:e.active}:current,e,'retained node '+e.name);else{const matched=slot.exec(e.name);assert.ok(matched&&Number(matched[2])>0||/^Scene \/ Effects\/Classic (?:Siphon|Healing Wave|Chain Lightning|Far Sight|Shockwave|Sentinel|Archmage missile)\/Slots (?!0-31$)/.test(e.name),'only duplicate slots and their empty folders removed: '+e.name);removed.push(e);}}
+const previousNames=new Set(before.map(e=>e.name)),added=after.filter(e=>!previousNames.has(e.name));
+assert.deepEqual(added.map(e=>e.name).sort(),['netTd border','netTd box','netTd label',...Array.from({length:32},(_,i)=>'TD route label '+i)].sort());
+assert.equal(before.length-after.length,removed.length-added.length);assert.equal(removed.length,902);
 function references(entities){const paths=new Set();function visit(value){if(typeof value==='string'&&value.startsWith('Assets/'))paths.add(value);else if(value&&typeof value==='object')for(const child of Object.values(value))visit(child);}for(const e of entities)visit(e.components);return [...paths].sort();}
 assert.deepEqual(references(after),references(before));const ids=new Set(after.map(e=>e.entity));for(const e of after)if(e.parent!=null)assert.ok(ids.has(e.parent),'retained parent '+e.name);
 assert.deepEqual(after.filter(e=>e.parent==null).map(e=>e.entity),before.filter(e=>e.parent==null).map(e=>e.entity));
-console.log(JSON.stringify({passed:true,baseline,before:before.length,after:after.length,removed:removed.length,resources:references(after).length,retainedNodesEqual:true,sceneSha256:createHash('sha256').update(raw).digest('hex')}));
+console.log(JSON.stringify({passed:true,baseline,before:before.length,after:after.length,removed:removed.length,resources:references(after).length,retainedAuthoredDataEqual:true,uiActivationValidatedSeparately:true,sceneSha256:createHash('sha256').update(raw).digest('hex')}));

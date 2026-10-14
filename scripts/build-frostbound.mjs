@@ -264,6 +264,13 @@ const tdMenuId=Math.max(...E.map(e=>e.entity))+1;
 classicButton('netTd','合作塔防 [F4]',0,48,400,46,'network');
 E.slice(-3).forEach((e,i)=>{e.entity=tdMenuId+i;});
 const tdLabelId=Math.max(...E.map(e=>e.entity))+1;for(let i=0;i<32;i++){text('TD route label '+i,'',0,0,96,24,15,C.gold,'Center');E.at(-1).entity=tdLabelId+i;E.at(-1).active=false;}
+// Authoring preview starts on the same title screen as the first script tick.
+const titleButtonParts=new Set(buttons.filter(b=>b.group==='menu').flatMap(b=>[' border',' box',' label',' detail',' icon'].map(suffix=>b.id+suffix)));
+for(const e of E){
+  if(!e.components.RectTransform||e.components.Canvas)continue;
+  e.active=e.name==='Status'||/^(Menu |Title )/.test(e.name)||titleButtonParts.has(e.name);
+  if(e.name.startsWith('Title chain'))e.active=e.components.RectTransform.anchored_position[1]<-215;
+}
 const sceneInitNames=E.filter(e=>!/(?: part | mesh )\d+$/.test(e.name)&&!/^Classic (?:spell|status|attachment) /.test(e.name)).map(e=>e.name),sceneInactive=E.filter(e=>e.active===false).map(e=>e.name);
 fs.writeFileSync(path.join(outputRoot,'Assets/Scenes/Main.mscene'),JSON.stringify({version:1,name:'Frostbound Realms',world:{entities:E,frame:0,sim_frame:0,clear_color:[.08,.13,.18,1]}},null,2)+'\n');
 fs.writeFileSync(path.join(outputRoot,'project.json'),JSON.stringify({name:'Frostbound Realms',storageId:'frostbound-realms-2d128968-5677-47b3-8d38-a128a763e15a',version:1,language:'javascript',mainScene:'Assets/Scenes/Main.mscene',buildScenes:['Assets/Scenes/Main.mscene'],startupScript:'Assets/Scripts/Main.js',assetMode:'all'},null,2)+'\n');
