@@ -21,6 +21,15 @@ struct FileStamp {
     length: Option<u64>,
 }
 
+// MiYu: retain animation cycles by logical GPU bytes, with an entry guard for tiny/failed meshes.
+const POSE_CACHE_BYTES: usize = 64 * 1024 * 1024;
+const POSE_CACHE_ENTRIES: usize = 8192;
+#[derive(Clone, Copy, Debug, Default)]
+struct PoseUsage { frame: u64, bytes: usize }
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct MeshCacheStats { pub entries: usize, pub bytes: usize, pub uploads: usize, pub evictions: usize }
+
 #[derive(Default)]
 pub struct RuntimeMeshCache {
     project_root: Option<PathBuf>,
@@ -28,7 +37,10 @@ pub struct RuntimeMeshCache {
     last_poll: Option<Instant>,
     poses: HashMap<String, (FileStamp, GltfPoseSource)>,
     patches: HashMap<String, (FileStamp, MeshPatchSource)>,
-    pose_usage: HashMap<String, u64>,
+    pose_usage: HashMap<String, PoseUsage>,
+    pose_bytes: usize,
+    uploads: usize,
+    evictions: usize,
     frame: u64,
     evicted: Vec<String>,
     billboard_views: HashMap<String, (String, GltfBillboardCamera)>,
@@ -43,6 +55,9 @@ impl RuntimeMeshCache {
             poses: HashMap::new(),
             patches: HashMap::new(),
             pose_usage: HashMap::new(),
+            pose_bytes: 0,
+            uploads: 0,
+            evictions: 0,
             frame: 0,
             evicted: Vec::new(),
             billboard_views: HashMap::new(),
@@ -60,6 +75,7 @@ impl RuntimeMeshCache {
         self.patches.clear();
         self.evicted.extend(self.pose_usage.keys().cloned());
         self.pose_usage.clear();
+        self.pose_bytes = 0;
         self.billboard_views.clear();
     }
 
@@ -72,7 +88,22 @@ impl RuntimeMeshCache {
         let asset = key.split('#').next().unwrap_or(key).trim();
         self.attempted.retain(|k, _| parse_gltf_pose_sample(k).is_none_or(|p| p.0 != asset));
         let keys = self.billboard_views.iter().filter(|(_, (source, _))| parse_gltf_pose_sample(source).is_some_and(|p| p.0 == asset)).map(|(k,_)| k.clone()).collect::<Vec<_>>();
-        for key in keys { self.billboard_views.remove(&key);self.attempted.remove(&key);self.pose_usage.remove(&key);self.evicted.push(key); }
+        for key in keys { self.billboard_views.remove(&key);self.attempted.remove(&key);if let Some(used)=self.pose_usage.remove(&key) {self.pose_bytes-=used.bytes;}self.evicted.push(key); }
+    }
+
+    pub fn stats(&self) -> MeshCacheStats { MeshCacheStats { entries:self.pose_usage.len(), bytes:self.pose_bytes, uploads:self.uploads, evictions:self.evictions } }
+
+    fn prune_poses(&mut self) -> Vec<String> {
+        if self.pose_usage.len() <= POSE_CACHE_ENTRIES && self.pose_bytes <= POSE_CACHE_BYTES { return Vec::new(); }
+        let mut stale = self.pose_usage.iter().filter(|(_, used)| used.frame != self.frame).map(|(key, used)| (key.clone(), used.frame)).collect::<Vec<_>>();
+        stale.sort_by_key(|(_, frame)| *frame);
+        let mut removed = Vec::new();
+        for (key, _) in stale {
+            if self.pose_usage.len() <= POSE_CACHE_ENTRIES && self.pose_bytes <= POSE_CACHE_BYTES { break; }
+            self.pose_bytes -= self.pose_usage.remove(&key).unwrap().bytes;
+            self.attempted.remove(&key); self.billboard_views.remove(&key); removed.push(key);
+        }
+        removed
     }
 
     /// MiYu: billboard nodes are sampled separately for the game, editor and each portrait camera.
@@ -119,6 +150,7 @@ impl RuntimeMeshCache {
 
     fn sync_objects<'a>(&mut self, renderer: &mut Renderer, objects: impl IntoIterator<Item = &'a RenderObject>) -> Vec<MeshLoadFailure> {
         for key in self.evicted.drain(..) { renderer.remove_mesh(&key); }
+        self.uploads = 0; self.evictions = 0;
         self.frame += 1;
         let Some(root) = self.project_root.as_deref() else {
             return Vec::new();
@@ -131,7 +163,7 @@ impl RuntimeMeshCache {
         for object in objects {
             let key = object.mesh_key.trim();
             if key.starts_with("meshpatch:") {
-                if let Some(used) = self.pose_usage.get_mut(key) { *used = self.frame; } else { self.pose_usage.insert(key.into(), self.frame); }
+                if let Some(used) = self.pose_usage.get_mut(key) { used.frame = self.frame; } else { self.pose_usage.insert(key.into(), PoseUsage { frame:self.frame, bytes:0 }); }
                 if !frame_keys.insert(key) { continue; }
                 if !poll && self.attempted.contains_key(key) { continue; }
                 let Some((asset, cells)) = parse_mesh_patch_key(key) else {
@@ -151,16 +183,16 @@ impl RuntimeMeshCache {
                     }
                 }
                 match self.patches[asset].1.compose(cells) {
-                    Ok(mesh) => renderer.upload_gltf_static(key, &vertices_from_mesh(&mesh), &mesh.indices),
+                    Ok(mesh) => { renderer.upload_gltf_static(key, &vertices_from_mesh(&mesh), &mesh.indices); record_mesh_bytes(&mut self.pose_usage, &mut self.pose_bytes, key, &mesh); self.uploads += 1; },
                     Err(error) => failures.push(MeshLoadFailure { key:key.into(), path, error }),
                 }
                 continue;
             }
             if key.starts_with("terrain4:") || key.starts_with("terrain4r:") || key.starts_with("terrain4h:") || key.starts_with("terrain4w:") {
-                if let Some(used) = self.pose_usage.get_mut(key) { *used = self.frame; } else { self.pose_usage.insert(key.into(), self.frame); }
+                if let Some(used) = self.pose_usage.get_mut(key) { used.frame = self.frame; } else { self.pose_usage.insert(key.into(), PoseUsage { frame:self.frame, bytes:0 }); }
                 if should_attempt(&mut self.attempted, key, FileStamp::default()) {
                     match terrain_mesh(key) {
-                        Ok(mesh) => renderer.upload_gltf_static(key, &vertices_from_mesh(&mesh), &mesh.indices),
+                        Ok(mesh) => { renderer.upload_gltf_static(key, &vertices_from_mesh(&mesh), &mesh.indices); record_mesh_bytes(&mut self.pose_usage, &mut self.pose_bytes, key, &mesh); self.uploads += 1; },
                         Err(error) => failures.push(MeshLoadFailure { key:key.into(), path:root.to_owned(), error:error.into() }),
                     }
                 }
@@ -172,7 +204,7 @@ impl RuntimeMeshCache {
                 if should_attempt(&mut self.attempted, key, FileStamp::default()) { failures.push(MeshLoadFailure { key: key.into(), path: root.to_owned(), error: "invalid skeletal pose reference".into() }); }
                 continue;
             }
-            if pose.is_some() { if let Some(used) = self.pose_usage.get_mut(key) { *used = self.frame; } else { self.pose_usage.insert(key.into(), self.frame); } }
+            if pose.is_some() { if let Some(used) = self.pose_usage.get_mut(key) { used.frame = self.frame; } else { self.pose_usage.insert(key.into(), PoseUsage { frame:self.frame, bytes:0 }); } }
             let asset_key = pose.map(|p| p.0).unwrap_or(key);
             let lower = asset_key.to_ascii_lowercase();
             if !lower.ends_with(".gltf") && !lower.ends_with(".glb") {
@@ -206,11 +238,7 @@ impl RuntimeMeshCache {
                 self.poses[asset].1.sample_with_camera(clip, frame, rate, billboard.map(|(_,camera)| *camera))
             } else { load_gltf_mesh_data(&path) };
             match mesh {
-                Ok(mesh) => renderer.upload_gltf_static(
-                    key,
-                    &vertices_from_mesh(&mesh),
-                    mesh.indices.as_slice(),
-                ),
+                Ok(mesh) => { renderer.upload_gltf_static(key, &vertices_from_mesh(&mesh), &mesh.indices); record_mesh_bytes(&mut self.pose_usage, &mut self.pose_bytes, key, &mesh); self.uploads += 1; },
                 Err(error) => failures.push(MeshLoadFailure {
                     key: key.to_owned(),
                     path,
@@ -218,13 +246,9 @@ impl RuntimeMeshCache {
                 }),
             }
         }
-        if self.pose_usage.len() > 256 {
-            let mut stale = self.pose_usage.iter().filter(|(_, used)| **used != self.frame).map(|(k, v)| (k.clone(), *v)).collect::<Vec<_>>();
-            stale.sort_by_key(|(_, used)| *used);
-            for (key, _) in stale.into_iter().take(self.pose_usage.len() - 256) { self.pose_usage.remove(&key); self.attempted.remove(&key); renderer.remove_mesh(&key); }
-        }
-        self.billboard_views.retain(|key,_| self.pose_usage.contains_key(key));
-        if !self.poses.is_empty() || !self.patches.is_empty() {
+        let pruned = self.prune_poses(); self.evictions = pruned.len();
+        for key in pruned { renderer.remove_mesh(&key); }
+        if self.evictions > 0 && (!self.poses.is_empty() || !self.patches.is_empty()) {
             // Resolve retained sources once across cached poses, terrain and camera-specific meshes.
             let mut pose_assets = HashSet::new(); let mut patch_assets = HashSet::new();
             for key in self.pose_usage.keys() {
@@ -236,6 +260,14 @@ impl RuntimeMeshCache {
             self.patches.retain(|asset, _| patch_assets.contains(asset.as_str()));
         }
         failures
+    }
+}
+
+fn record_mesh_bytes(usage: &mut HashMap<String, PoseUsage>, total: &mut usize, key: &str, mesh: &MeshData) {
+    if let Some(used) = usage.get_mut(key) {
+        *total -= used.bytes;
+        used.bytes = mesh.positions.len() * std::mem::size_of::<Vertex>() + mesh.indices.len() * std::mem::size_of::<u32>();
+        *total += used.bytes;
     }
 }
 
@@ -291,6 +323,41 @@ fn should_attempt(cache: &mut HashMap<String, FileStamp>, key: &str, stamp: File
 mod tests {
     use super::*;
     #[test]
+    fn pose_byte_accounting_replaces_uploaded_geometry_without_counting_static_keys() {
+        let mut usage = HashMap::from([("pose".into(), PoseUsage::default())]); let mut total = 0;
+        let mut mesh = MeshData { positions:vec![[0.0;3];3], normals:vec![], uvs:vec![], indices:vec![0,1,2] };
+        record_mesh_bytes(&mut usage, &mut total, "pose", &mesh);
+        assert_eq!(total, 3*std::mem::size_of::<Vertex>()+12);
+        record_mesh_bytes(&mut usage, &mut total, "static", &mesh); assert_eq!(usage.len(),1);
+        mesh.positions.push([0.0;3]); record_mesh_bytes(&mut usage, &mut total, "pose", &mesh);
+        assert_eq!(total, 4*std::mem::size_of::<Vertex>()+12); assert_eq!(total,usage["pose"].bytes);
+    }
+
+    #[test]
+    fn byte_budget_evicts_only_unused_meshes_and_keeps_an_oversized_active_frame() {
+        let mut cache = RuntimeMeshCache::new(None); cache.frame=2;
+        cache.pose_usage.insert("old".into(),PoseUsage { frame:1,bytes:POSE_CACHE_BYTES });
+        cache.pose_usage.insert("active".into(),PoseUsage { frame:2,bytes:POSE_CACHE_BYTES+1 });
+        cache.pose_bytes=2*POSE_CACHE_BYTES+1; cache.attempted.insert("old".into(),FileStamp::default());
+        assert_eq!(cache.prune_poses(),vec!["old"]); assert!(!cache.attempted.contains_key("old"));
+        assert_eq!(cache.stats().entries,1); assert_eq!(cache.stats().bytes,POSE_CACHE_BYTES+1);
+        assert!(cache.prune_poses().is_empty());
+        cache.frame=3; assert_eq!(cache.prune_poses(),vec!["active"]); assert_eq!(cache.pose_bytes,0);
+    }
+
+    #[test]
+    fn ordinary_invalidation_keeps_resident_bytes_until_replacement_or_project_change() {
+        let mut cache = RuntimeMeshCache::new(Some("project".into()));
+        for key in ["a.glb#pose=0:0@30","meshpatch:Assets/a.mpatch#00080"] {
+            cache.pose_usage.insert(key.into(),PoseUsage { frame:1,bytes:128 }); cache.pose_bytes+=128;
+            cache.attempted.insert(key.into(),FileStamp::default());
+        }
+        cache.invalidate("a.glb"); cache.invalidate("Assets/a.mpatch");
+        assert!(cache.attempted.is_empty()); assert_eq!(cache.stats().bytes,256);
+        cache.set_project_root(None); assert_eq!(cache.stats().bytes,0); assert_eq!(cache.stats().entries,0); assert_eq!(cache.evicted.len(),2);
+    }
+
+    #[test]
     fn billboard_views_share_translated_actors_but_separate_camera_rotation_and_scale() {
         let camera=FrameCamera { view:glam::Mat4::look_at_rh(Vec3::new(0.0,3.0,4.0),Vec3::ZERO,Vec3::Y),proj:glam::Mat4::IDENTITY,position:Vec3::new(0.0,3.0,4.0) };
         let mut object=RenderObject { mesh_key:"a.glb#pose=0:1@30".into(),model:glam::Mat4::IDENTITY,material:Default::default(),cast_shadows:false,receive_shadows:false };
@@ -306,8 +373,8 @@ mod tests {
     fn changed_billboard_assets_invalidate_every_camera_and_keep_other_models() {
         let mut cache=RuntimeMeshCache::new(None);
         let camera=GltfBillboardCamera { model:glam::Mat4::IDENTITY,look:-Vec3::Z,up:Vec3::Y };
-        for (key,source) in [("billboard:0000000000000001:a.glb#pose=0:1@30","a.glb#pose=0:1@30"),("billboard:0000000000000002:a.glb#pose=0:1@30","a.glb#pose=0:1@30"),("billboard:0000000000000003:b.glb#pose=0:1@30","b.glb#pose=0:1@30")] { cache.billboard_views.insert(key.into(),(source.into(),camera));cache.attempted.insert(key.into(),FileStamp::default());cache.pose_usage.insert(key.into(),1); }
-        cache.invalidate("a.glb");assert_eq!(cache.billboard_views.len(),1);assert_eq!(cache.attempted.len(),1);assert_eq!(cache.pose_usage.len(),1);assert_eq!(cache.evicted.len(),2);
+        for (key,source) in [("billboard:0000000000000001:a.glb#pose=0:1@30","a.glb#pose=0:1@30"),("billboard:0000000000000002:a.glb#pose=0:1@30","a.glb#pose=0:1@30"),("billboard:0000000000000003:b.glb#pose=0:1@30","b.glb#pose=0:1@30")] { cache.billboard_views.insert(key.into(),(source.into(),camera));cache.attempted.insert(key.into(),FileStamp::default());cache.pose_usage.insert(key.into(),PoseUsage { frame:1, bytes:64 });cache.pose_bytes+=64; }
+        cache.invalidate("a.glb");assert_eq!(cache.pose_bytes,64);assert_eq!(cache.billboard_views.len(),1);assert_eq!(cache.attempted.len(),1);assert_eq!(cache.pose_usage.len(),1);assert_eq!(cache.evicted.len(),2);
     }
 
     #[test]
@@ -338,16 +405,16 @@ mod tests {
         let camera = FrameCamera { view:glam::Mat4::IDENTITY,proj:glam::Mat4::IDENTITY,position:Vec3::Z };
         cache.billboard_views.insert(billboard.into(),("a.gltf#pose=0:2@30".into(),GltfBillboardCamera { model:glam::Mat4::IDENTITY,look:-Vec3::Z,up:Vec3::Y }));
         for key in [pose,billboard] { cache.attempted.insert(key.into(),stamp); }
-        for id in 0..300 { let key = format!("terrain4:{id:064x}"); cache.pose_usage.insert(key.clone(),0); cache.attempted.insert(key,FileStamp::default()); }
-        let preview = format!("terrain4:{:064x}",301);
+        for id in 0..POSE_CACHE_ENTRIES+44 { let key = format!("terrain4:{id:064x}"); cache.pose_usage.insert(key.clone(),PoseUsage::default()); cache.attempted.insert(key,FileStamp::default()); }
+        let preview = format!("terrain4:{:064x}",POSE_CACHE_ENTRIES+45);
         let object = |key: &str| RenderObject { mesh_key:key.into(),model:glam::Mat4::IDENTITY,material:Default::default(),cast_shadows:false,receive_shadows:false };
         let mut frame = CompiledFrame { profile_stages:vec![],clear:mengine_rhi::ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 },camera,objects:vec![object(pose)],lighting:Default::default(),ui:mengine_rhi::UiBatchPlan::build(vec![]),controls:vec![],texture_failures:vec![],font_failures:vec![],has_authored_camera:true,scene_views:vec![mengine_rhi::SceneTextureFrame { key:"preview".into(),size:[16,16],clear:mengine_rhi::ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 },camera,objects:vec![object(billboard),object(&preview)],lighting:Default::default() }],view_resources:vec![] };
         assert!(cache.sync_frame(&mut renderer,&mut frame).is_empty());
-        assert_eq!(cache.pose_usage.len(),256); assert_eq!(cache.poses.keys().collect::<Vec<_>>(),["a.gltf"]);
-        for key in [pose,billboard,&preview] { assert_eq!(cache.pose_usage.get(key),Some(&1)); assert!(cache.attempted.contains_key(key)); }
+        assert_eq!(cache.pose_usage.len(),POSE_CACHE_ENTRIES); assert_eq!(cache.poses.keys().collect::<Vec<_>>(),["a.gltf"]);
+        for key in [pose,billboard,&preview] { assert_eq!(cache.pose_usage.get(key).map(|used| used.frame),Some(1)); assert!(cache.attempted.contains_key(key)); }
         assert!(cache.billboard_views.contains_key(billboard));
         assert!(cache.sync_frame(&mut renderer,&mut frame).is_empty());
-        for key in [pose,billboard,&preview] { assert_eq!(cache.pose_usage.get(key),Some(&2)); }
+        for key in [pose,billboard,&preview] { assert_eq!(cache.pose_usage.get(key).map(|used| used.frame),Some(2)); }
         cache.invalidate("a.gltf"); assert!(!cache.poses.contains_key("a.gltf")); assert!(!cache.billboard_views.contains_key(billboard));
         std::fs::remove_file(&source_path).unwrap(); std::fs::remove_dir(&root).unwrap();
     }
