@@ -3,16 +3,30 @@ use anyhow::{Context, Result};
 use mengine_core::snapshot::WorldSnapshot;
 use mengine_editor_host::{EditorPlayRuntime, EditorViewportFrame, EditorViewportProfile, EditorViewportRenderer, PlayProject, ProjectSession, ScriptInput};
 use serde_json::json;
+use raw_window_handle::{HandleError, HasDisplayHandle, HasWindowHandle, DisplayHandle, WindowHandle};
 use std::{path::PathBuf, sync::Arc, time::Instant};
-use winit::{application::ApplicationHandler, dpi::PhysicalSize, event::WindowEvent, event_loop::{ActiveEventLoop, ControlFlow, EventLoop}, window::{Window, WindowId}};
+use winit::{application::ApplicationHandler, dpi::{PhysicalPosition, PhysicalSize}, event::WindowEvent, event_loop::{ActiveEventLoop, ControlFlow, EventLoop}, window::{Window, WindowId}};
+
+// The surface retains this owner, including the parent that can otherwise destroy its child HWND.
+// Field order releases the child before its parent on the event-loop thread.
+struct ProbeWindow { window: Arc<Window>, parent: Option<Arc<Window>> }
+impl std::ops::Deref for ProbeWindow { type Target = Window; fn deref(&self) -> &Window { &self.window } }
+impl HasWindowHandle for ProbeWindow { fn window_handle(&self) -> Result<WindowHandle<'_>, HandleError> { self.window.window_handle() } }
+impl HasDisplayHandle for ProbeWindow { fn display_handle(&self) -> Result<DisplayHandle<'_>, HandleError> { self.window.display_handle() } }
+impl ProbeWindow {
+    fn set_visible(&self, visible: bool) { if let Some(parent) = &self.parent { parent.set_visible(visible); } self.window.set_visible(visible); }
+    fn state(&self) -> serde_json::Value { json!({ "child": self.parent.is_some(), "visible": self.is_visible(), "minimized": self.is_minimized(), "innerSize": [self.inner_size().width, self.inner_size().height], "scaleFactor": self.scale_factor(), "parentVisible": self.parent.as_ref().and_then(|window| window.is_visible()) }) }
+}
 
 struct Probe {
     root: PathBuf,
     output: PathBuf,
     visible: bool,
+    child: bool,
+    window_states: Vec<serde_json::Value>,
     sample_frames: usize,
     world: mengine_scene::SharedSnapshotWorld,
-    window: Option<Arc<Window>>,
+    window: Option<Arc<ProbeWindow>>,
     native: Option<EditorViewportRenderer>,
     headless: Option<EditorViewportRenderer>,
     stage: usize,
@@ -38,9 +52,16 @@ fn compare(a: &EditorViewportFrame, b: &EditorViewportFrame) -> Result<serde_jso
 
 impl Probe {
     fn initialize(&mut self, event_loop: &ActiveEventLoop) -> Result<()> {
-        // Keep initialization hidden; the visible pass measures the surface outside occlusion throttling.
-        let window = Arc::new(event_loop.create_window(Window::default_attributes().with_title("MEngine surface probe").with_inner_size(PhysicalSize::new(1225, 689)).with_visible(false).with_active(false))?);
-        self.native = Some(pollster::block_on(EditorViewportRenderer::new_for_window(self.root.clone(), window.clone()))?);
+        // Record requested and observed visibility independently; hidden creation does not prove compositor state.
+        let parent = if self.child { Some(Arc::new(event_loop.create_window(Window::default_attributes().with_title("MEngine viewport parent probe").with_inner_size(PhysicalSize::new(1310, 800)).with_visible(false).with_active(false))?)) } else { None };
+        let mut attributes = Window::default_attributes().with_title("MEngine surface probe").with_inner_size(PhysicalSize::new(1225, 689)).with_visible(false).with_active(false);
+        if let Some(parent) = &parent {
+            // SAFETY: ProbeWindow retains this parent until the child and its surface have been released.
+            attributes = unsafe { attributes.with_parent_window(Some(parent.window_handle()?.as_raw())) }.with_position(PhysicalPosition::new(24, 36));
+        }
+        let window = Arc::new(ProbeWindow { window: Arc::new(event_loop.create_window(attributes)?), parent });
+        self.window_states.push(window.state());
+        self.native = Some(pollster::block_on(EditorViewportRenderer::new_for_surface(self.root.clone(), window.clone(), 1225, 689))?);
         self.headless = Some(pollster::block_on(EditorViewportRenderer::new(self.root.clone(), 1225, 689))?);
         self.window = Some(window);
         println!("Viewport renderers initialized");
@@ -64,7 +85,8 @@ impl Probe {
         self.profiles.push(serde_json::to_value(profile)?);
         println!("Stage {} complete: {}", self.stage, summary(&self.samples[stage]));
         self.stage += 1; self.frame = 0;
-        if self.stage < 2 { self.window.as_ref().unwrap().set_visible(self.visible); return Ok(false); }
+        if self.stage < 2 { let window = self.window.as_ref().unwrap(); window.set_visible(self.visible); self.window_states.push(window.state()); return Ok(false); }
+        self.window_states.push(self.window.as_ref().unwrap().state());
         self.verify()?;
         Ok(true)
     }
@@ -98,7 +120,20 @@ impl Probe {
         let headless = self.headless.as_mut().unwrap();
         anyhow::ensure!(headless.present_game(world, 1225, 689).is_err() && headless.present_game_with_capture(world, 1225, 689).is_err(), "headless host accepted a window request");
         headless.render_game(world, 64, 64)?;
-        let report = json!({ "passed": true, "hiddenWindow": !self.visible, "fixedPlayWorld": true, "timingScope": "CPU call wall time including submission/backpressure; not physical scanout or equal-latency end-to-end FPS", "warmupFrames": 30, "readback": summary(&self.samples[0]), "surface": summary(&self.samples[1]), "comparisons": results, "profiles": self.profiles });
+        let window = self.window.as_ref().unwrap();
+        window.set_visible(false); self.window_states.push(window.state());
+        if cfg!(target_os = "windows") { anyhow::ensure!(window.is_visible() == Some(false), "hidden viewport remains visible"); }
+        if self.visible {
+            window.set_visible(true); self.window_states.push(window.state());
+            if cfg!(target_os = "windows") { anyhow::ensure!(window.is_visible() == Some(true), "shown viewport remains hidden"); }
+            self.native.as_mut().unwrap().present_game(world, 1225, 689)?;
+        }
+        let owner = Arc::downgrade(window);
+        self.window = None;
+        anyhow::ensure!(owner.upgrade().is_some(), "surface did not retain its window owner");
+        self.native = None;
+        anyhow::ensure!(owner.upgrade().is_none(), "surface leaked its window owner");
+        let report = json!({ "passed": true, "hiddenWindow": !self.visible, "childWindow": self.child, "windowStates": self.window_states, "windowOwnerRetainedUntilSurfaceDrop": true, "fixedPlayWorld": true, "timingScope": "CPU call wall time including submission/backpressure; not physical scanout or equal-latency end-to-end FPS", "warmupFrames": 30, "readback": summary(&self.samples[0]), "surface": summary(&self.samples[1]), "comparisons": results, "profiles": self.profiles });
         std::fs::write(self.output.join("report.json"), serde_json::to_vec_pretty(&report)?)?;
         println!("{}", json!({ "passed": true, "readback": report["readback"], "surface": report["surface"], "comparisons": report["comparisons"] }));
         Ok(())
@@ -121,7 +156,8 @@ impl ApplicationHandler for Probe {
 
 fn main() -> Result<()> {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
-    anyhow::ensure!(args.len() >= 2 && args[2..].iter().all(|arg| arg == "--hidden" || arg.starts_with("--frames=")), "Usage: viewport_surface_probe <Frost project root> <output directory> [--hidden] [--frames=180]");
+    anyhow::ensure!(args.len() >= 2 && args[2..].iter().all(|arg| arg == "--hidden" || arg == "--child" || arg.starts_with("--frames=")), "Usage: viewport_surface_probe <Frost project root> <output directory> [--hidden] [--child] [--frames=180]");
+    anyhow::ensure!(!args.iter().any(|arg| arg == "--child") || cfg!(target_os = "windows"), "child viewport acceptance is supported on Windows");
     let sample_frames = args[2..].iter().find_map(|arg| arg.strip_prefix("--frames=")).unwrap_or("180").parse::<usize>()?;
     anyhow::ensure!((1..=10000).contains(&sample_frames), "sample frame count must be between 1 and 10000");
     let root = std::fs::canonicalize(&args[0])?; let output = PathBuf::from(&args[1]); std::fs::create_dir_all(&output)?;
@@ -136,7 +172,7 @@ fn main() -> Result<()> {
         snapshot = Some(runtime.advance(generation, None, input, 0.001).map_err(anyhow::Error::msg)?);
     }
     let mut world = mengine_scene::SharedSnapshotWorld::default(); world.update_owned(snapshot.unwrap()); runtime.stop();
-    let mut probe = Probe { root, output, visible: !args.iter().any(|arg| arg == "--hidden"), sample_frames, world, window: None, native: None, headless: None, stage: 0, frame: 0, profiles: Vec::new(), samples: [Vec::new(), Vec::new()], error: None };
+    let mut probe = Probe { root, output, visible: !args.iter().any(|arg| arg == "--hidden"), child: args.iter().any(|arg| arg == "--child"), window_states: Vec::new(), sample_frames, world, window: None, native: None, headless: None, stage: 0, frame: 0, profiles: Vec::new(), samples: [Vec::new(), Vec::new()], error: None };
     let event_loop = EventLoop::new()?; event_loop.set_control_flow(ControlFlow::Poll); event_loop.run_app(&mut probe)?;
     if let Some(error) = probe.error { anyhow::bail!(error); }
     anyhow::ensure!(probe.stage == 2, "probe did not finish");

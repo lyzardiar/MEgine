@@ -281,7 +281,13 @@ impl EditorViewportRenderer {
 
     /// The RHI surface retains the window for its entire GPU lifetime.
     pub async fn new_for_window(project_root: PathBuf, window: Arc<winit::window::Window>) -> Result<Self> {
-        let renderer = Renderer::new(window).await.context("could not initialize the viewport surface")?;
+        let size = window.inner_size();
+        Self::new_for_surface(project_root, window, size.width, size.height).await
+    }
+
+    /// MiYu: owned child-window targets must retain their parent and route destruction through their UI thread.
+    pub async fn new_for_surface(project_root: PathBuf, target: impl Into<mengine_rhi::SurfaceTarget<'static>>, width: u32, height: u32) -> Result<Self> {
+        let renderer = Renderer::new_for_surface(target, normalized_size(width, height)).await.context("could not initialize the viewport surface")?;
         Self::with_renderer(project_root, renderer)
     }
 
