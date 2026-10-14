@@ -16,7 +16,7 @@ pub use gpu_profiler::{GpuFrameProfile, GpuProfileStage};
 pub use render_graph::{PassDesc, RenderGraph};
 pub use renderer::{
     look_at, orthographic, perspective, project_world_to_viewport, validate_surface_shader_hook,
-    ClearColor, DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting,
+    ClearColor, DirectionalLightData, EnvironmentLightData, FrameCamera, FrameLighting, FrameSubmissionProfile,
     MaterialBlendMode, MaterialFilter, MaterialPipelinePrewarmReport, MaterialPipelineStats,
     MaterialTextureStats, MaterialWrap, OffscreenReadbackProfile, OffscreenRenderTarget, PointLightData, RenderFrame,
     RenderMaterial, RenderObject, RenderTarget, Renderer, SceneTextureFrame, SpotLightData,

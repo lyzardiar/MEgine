@@ -1,0 +1,694 @@
+{
+  "fixtureCommit": "3098765",
+  "status": "native host capability and diagnostics; Tauri surface integration and remote 200 ms resolution remain pending",
+  "runs": [
+    {
+      "path": "D:/MEngineNativeQA/native-surface-probe-20261014/report.json",
+      "passed": true,
+      "hiddenWindow": true,
+      "timingScope": "CPU call wall time including submission/backpressure; not physical scanout or equal-latency end-to-end FPS",
+      "warmupFrames": 30,
+      "readback": {
+        "count": 180,
+        "meanMs": 6.90712277777778,
+        "p50Ms": 6.8091,
+        "p95Ms": 7.867799999999999
+      },
+      "surface": {
+        "count": 180,
+        "meanMs": 1007.7922422222224,
+        "p50Ms": 1007.6938,
+        "p95Ms": 1009.0011999999999
+      },
+      "comparisons": [
+        {
+          "changedPixels": 72,
+          "height": 689,
+          "totalPixels": 844025,
+          "width": 1225
+        },
+        {
+          "changedPixels": 38,
+          "height": 433,
+          "totalPixels": 336441,
+          "width": 777
+        },
+        {
+          "changedPixels": 78,
+          "height": 689,
+          "totalPixels": 844025,
+          "width": 1225
+        }
+      ],
+      "lastFrameProfiles": [
+        {
+          "totalMs": 6.880599999999999,
+          "backend": {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "ViewportTarget.ensure_size",
+                "selfMs": 0,
+                "totalMs": 0
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 0.9424,
+                "totalMs": 0.9424
+              },
+              {
+                "calls": 1,
+                "children": [
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback buffer prepare",
+                    "selfMs": 0.00009999999999999999,
+                    "totalMs": 0.00009999999999999999
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback copy submit",
+                    "selfMs": 0.0222,
+                    "totalMs": 0.0222
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback GPU map wait",
+                    "selfMs": 2.2839,
+                    "totalMs": 2.2839
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback GPU query decode",
+                    "selfMs": 0,
+                    "totalMs": 0
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback RGBA row pack",
+                    "selfMs": 0.6914,
+                    "totalMs": 0.6914
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback unmap",
+                    "selfMs": 0.001,
+                    "totalMs": 0.001
+                  }
+                ],
+                "name": "Renderer.read_offscreen_rgba8",
+                "selfMs": 0.0009999999999998899,
+                "totalMs": 2.9996
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 3.942
+          },
+          "memory": [
+            {
+              "bytes": 3376100,
+              "certainty": "exact",
+              "domain": "cpu",
+              "name": "CPU readback RGBA",
+              "source": "Renderer.read_offscreen_rgba8 Vec length"
+            },
+            {
+              "bytes": 3527680,
+              "certainty": "lower-bound",
+              "domain": "gpu",
+              "name": "GPU readback staging",
+              "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+            },
+            {
+              "bytes": 3376100,
+              "certainty": "estimate",
+              "domain": "gpu",
+              "name": "GPU offscreen color",
+              "source": "viewport width x height x 4 RGBA8 bytes"
+            }
+          ]
+        },
+        {
+          "totalMs": 1007.6362999999999,
+          "backend": {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "ViewportTarget.ensure_size",
+                "selfMs": 0,
+                "totalMs": 0
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 1001.847,
+                "totalMs": 1001.847
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 1001.847
+          },
+          "memory": [
+            {
+              "bytes": 0,
+              "certainty": "exact",
+              "domain": "cpu",
+              "name": "CPU readback RGBA",
+              "source": "Renderer.read_offscreen_rgba8 Vec length"
+            },
+            {
+              "bytes": 0,
+              "certainty": "lower-bound",
+              "domain": "gpu",
+              "name": "GPU readback staging",
+              "source": "wgpu buffer logical capacity; 0 allocations; driver padding excluded"
+            },
+            {
+              "bytes": 3376100,
+              "certainty": "estimate",
+              "domain": "gpu",
+              "name": "GPU offscreen color",
+              "source": "viewport width x height x 4 RGBA8 bytes"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "D:/MEngineNativeQA/native-surface-visible-20261014/report.json",
+      "passed": true,
+      "hiddenWindow": false,
+      "timingScope": "CPU call wall time including submission/backpressure; not physical scanout or equal-latency end-to-end FPS",
+      "warmupFrames": 30,
+      "readback": {
+        "count": 180,
+        "meanMs": 6.958168888888894,
+        "p50Ms": 6.8521,
+        "p95Ms": 7.585
+      },
+      "surface": {
+        "count": 180,
+        "meanMs": 1008.0940305555555,
+        "p50Ms": 1007.7666999999999,
+        "p95Ms": 1009.0495999999999
+      },
+      "comparisons": [
+        {
+          "changedPixels": 72,
+          "height": 689,
+          "totalPixels": 844025,
+          "width": 1225
+        },
+        {
+          "changedPixels": 38,
+          "height": 433,
+          "totalPixels": 336441,
+          "width": 777
+        },
+        {
+          "changedPixels": 81,
+          "height": 689,
+          "totalPixels": 844025,
+          "width": 1225
+        }
+      ],
+      "lastFrameProfiles": [
+        {
+          "totalMs": 6.7722,
+          "backend": {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "ViewportTarget.ensure_size",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 1.0428,
+                "totalMs": 1.0428
+              },
+              {
+                "calls": 1,
+                "children": [
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback buffer prepare",
+                    "selfMs": 0.00009999999999999999,
+                    "totalMs": 0.00009999999999999999
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback copy submit",
+                    "selfMs": 0.0246,
+                    "totalMs": 0.0246
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback GPU map wait",
+                    "selfMs": 2.2283,
+                    "totalMs": 2.2283
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback GPU query decode",
+                    "selfMs": 0,
+                    "totalMs": 0
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback RGBA row pack",
+                    "selfMs": 0.6176,
+                    "totalMs": 0.6176
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback unmap",
+                    "selfMs": 0.001,
+                    "totalMs": 0.001
+                  }
+                ],
+                "name": "Renderer.read_offscreen_rgba8",
+                "selfMs": 0.0011999999999998678,
+                "totalMs": 2.8728
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 3.9156999999999997
+          },
+          "memory": [
+            {
+              "bytes": 3376100,
+              "certainty": "exact",
+              "domain": "cpu",
+              "name": "CPU readback RGBA",
+              "source": "Renderer.read_offscreen_rgba8 Vec length"
+            },
+            {
+              "bytes": 3527680,
+              "certainty": "lower-bound",
+              "domain": "gpu",
+              "name": "GPU readback staging",
+              "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+            },
+            {
+              "bytes": 3376100,
+              "certainty": "estimate",
+              "domain": "gpu",
+              "name": "GPU offscreen color",
+              "source": "viewport width x height x 4 RGBA8 bytes"
+            }
+          ]
+        },
+        {
+          "totalMs": 1008.2416999999999,
+          "backend": {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "ViewportTarget.ensure_size",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              },
+              {
+                "calls": 1,
+                "children": [],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 1002.3401000000001,
+                "totalMs": 1002.3401000000001
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 1002.3402000000001
+          },
+          "memory": [
+            {
+              "bytes": 0,
+              "certainty": "exact",
+              "domain": "cpu",
+              "name": "CPU readback RGBA",
+              "source": "Renderer.read_offscreen_rgba8 Vec length"
+            },
+            {
+              "bytes": 0,
+              "certainty": "lower-bound",
+              "domain": "gpu",
+              "name": "GPU readback staging",
+              "source": "wgpu buffer logical capacity; 0 allocations; driver padding excluded"
+            },
+            {
+              "bytes": 3376100,
+              "certainty": "estimate",
+              "domain": "gpu",
+              "name": "GPU offscreen color",
+              "source": "viewport width x height x 4 RGBA8 bytes"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "D:/MEngineNativeQA/native-surface-profiled-20261014/report.json",
+      "passed": true,
+      "hiddenWindow": false,
+      "timingScope": "CPU call wall time including submission/backpressure; not physical scanout or equal-latency end-to-end FPS",
+      "warmupFrames": 30,
+      "readback": {
+        "count": 12,
+        "meanMs": 7.121325,
+        "p50Ms": 6.9156,
+        "p95Ms": 9.792800000000002
+      },
+      "surface": {
+        "count": 12,
+        "meanMs": 1007.6387833333333,
+        "p50Ms": 1007.6841000000001,
+        "p95Ms": 1008.1364
+      },
+      "comparisons": [
+        {
+          "changedPixels": 31,
+          "height": 689,
+          "totalPixels": 844025,
+          "width": 1225
+        },
+        {
+          "changedPixels": 18,
+          "height": 433,
+          "totalPixels": 336441,
+          "width": 777
+        },
+        {
+          "changedPixels": 21,
+          "height": 689,
+          "totalPixels": 844025,
+          "width": 1225
+        }
+      ],
+      "lastFrameProfiles": [
+        {
+          "totalMs": 6.3352,
+          "backend": {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "ViewportTarget.ensure_size",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              },
+              {
+                "calls": 1,
+                "children": [
+                  {
+                    "calls": 2,
+                    "children": [],
+                    "name": "Encoder finish and queue submit CPU",
+                    "selfMs": 0.0827,
+                    "totalMs": 0.0827
+                  }
+                ],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 0.8154,
+                "totalMs": 0.8981
+              },
+              {
+                "calls": 1,
+                "children": [
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback buffer prepare",
+                    "selfMs": 0.00009999999999999999,
+                    "totalMs": 0.00009999999999999999
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback copy submit",
+                    "selfMs": 0.022500000000000003,
+                    "totalMs": 0.022500000000000003
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback GPU map wait",
+                    "selfMs": 2.1663,
+                    "totalMs": 2.1663
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback GPU query decode",
+                    "selfMs": 0,
+                    "totalMs": 0
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback RGBA row pack",
+                    "selfMs": 0.49260000000000004,
+                    "totalMs": 0.49260000000000004
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Readback unmap",
+                    "selfMs": 0.0012,
+                    "totalMs": 0.0012
+                  }
+                ],
+                "name": "Renderer.read_offscreen_rgba8",
+                "selfMs": 0.0009999999999998899,
+                "totalMs": 2.6837
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 3.5819
+          },
+          "memory": [
+            {
+              "bytes": 3376100,
+              "certainty": "exact",
+              "domain": "cpu",
+              "name": "CPU readback RGBA",
+              "source": "Renderer.read_offscreen_rgba8 Vec length"
+            },
+            {
+              "bytes": 3527680,
+              "certainty": "lower-bound",
+              "domain": "gpu",
+              "name": "GPU readback staging",
+              "source": "wgpu buffer logical capacity; 1 allocations; driver padding excluded"
+            },
+            {
+              "bytes": 3376100,
+              "certainty": "estimate",
+              "domain": "gpu",
+              "name": "GPU offscreen color",
+              "source": "cached offscreen target dimensions x 4 RGBA8 bytes; zero until capture allocates a target"
+            },
+            {
+              "bytes": 0,
+              "certainty": "lower-bound",
+              "domain": "gpu",
+              "name": "GPU surface color",
+              "source": "one configured surface image x 4 color bytes; excludes additional swapchain buffers and driver padding"
+            },
+            {
+              "bytes": 13504400,
+              "certainty": "estimate",
+              "domain": "gpu",
+              "name": "GPU scene depth",
+              "source": "viewport width x height x 4 depth/stencil bytes x MSAA samples; physical format is backend-dependent"
+            }
+          ]
+        },
+        {
+          "totalMs": 1007.5748,
+          "backend": {
+            "calls": 1,
+            "children": [
+              {
+                "calls": 1,
+                "children": [],
+                "name": "ViewportTarget.ensure_size",
+                "selfMs": 0.00009999999999999999,
+                "totalMs": 0.00009999999999999999
+              },
+              {
+                "calls": 1,
+                "children": [
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Surface acquire CPU wait",
+                    "selfMs": 1000.1699,
+                    "totalMs": 1000.1699
+                  },
+                  {
+                    "calls": 2,
+                    "children": [],
+                    "name": "Encoder finish and queue submit CPU",
+                    "selfMs": 0.18680000000000002,
+                    "totalMs": 0.18680000000000002
+                  },
+                  {
+                    "calls": 1,
+                    "children": [],
+                    "name": "Surface present CPU",
+                    "selfMs": 0.3402,
+                    "totalMs": 0.3402
+                  }
+                ],
+                "name": "Renderer.submit_frame_to",
+                "selfMs": 1.1665000000000418,
+                "totalMs": 1001.8634
+              }
+            ],
+            "name": "Render backend",
+            "selfMs": 0,
+            "totalMs": 1001.8634999999999
+          },
+          "memory": [
+            {
+              "bytes": 0,
+              "certainty": "exact",
+              "domain": "cpu",
+              "name": "CPU readback RGBA",
+              "source": "Renderer.read_offscreen_rgba8 Vec length"
+            },
+            {
+              "bytes": 0,
+              "certainty": "lower-bound",
+              "domain": "gpu",
+              "name": "GPU readback staging",
+              "source": "wgpu buffer logical capacity; 0 allocations; driver padding excluded"
+            },
+            {
+              "bytes": 0,
+              "certainty": "estimate",
+              "domain": "gpu",
+              "name": "GPU offscreen color",
+              "source": "cached offscreen target dimensions x 4 RGBA8 bytes; zero until capture allocates a target"
+            },
+            {
+              "bytes": 3376100,
+              "certainty": "lower-bound",
+              "domain": "gpu",
+              "name": "GPU surface color",
+              "source": "one configured surface image x 4 color bytes; excludes additional swapchain buffers and driver padding"
+            },
+            {
+              "bytes": 13504400,
+              "certainty": "estimate",
+              "domain": "gpu",
+              "name": "GPU scene depth",
+              "source": "viewport width x height x 4 depth/stencil bytes x MSAA samples; physical format is backend-dependent"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "rhiReadback": {
+      "passed": 3,
+      "failed": 0
+    },
+    "rhiSceneViews": {
+      "passed": 1,
+      "failed": 0
+    },
+    "hostViewport": {
+      "passed": 5,
+      "failed": 0,
+      "ignored": 1
+    },
+    "quickjsCompile": true,
+    "releaseBuild": true,
+    "executableSha256": "6EDF7FAAEAA667144D68815185A01963AEF9DC14F04D059DDFB738AFF862EC9D"
+  },
+  "releaseSmoke": {
+    "path": "D:/MEngineNativeQA/rpg-multiview-native-surface-1791936404441/report.json",
+    "passed": true,
+    "scope": "owned background editor with browser background throttling disabled; 2 second regression sample, not a performance acceptance benchmark",
+    "captures": [
+      {
+        "target": "game",
+        "file": "active-game.png",
+        "width": 1280,
+        "height": 720,
+        "elapsedMs": 346
+      },
+      {
+        "target": "scene",
+        "file": "active-scene.png",
+        "width": 408,
+        "height": 804,
+        "elapsedMs": 291
+      }
+    ],
+    "captureRecovery": {
+      "scene": 53,
+      "game": 50
+    },
+    "pixelOracle": {
+      "scenePixels": 230400,
+      "previewPixels": 57600,
+      "sceneChanged": 160,
+      "previewChanged": 57
+    },
+    "consoleErrors": 0,
+    "gameInterval": {
+      "n": 96,
+      "mean": 23.667708332339924,
+      "p50": 19.299999952316284,
+      "p95": 39.200000047683716
+    },
+    "sceneInterval": {
+      "n": 105,
+      "mean": 21.337142855780467,
+      "p50": 18.600000143051147,
+      "p95": 23.5
+    },
+    "shutdown": {
+      "pid": 140388,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\rpg-multiview-native-surface-1791936404441\\runtime\\com.mengine.editor.agent-9ZFNJT '\\\\?\\D:\\MEngineNativeQA\\rpg-multiview-native-surface-1791936404441\\runtime\\com.mengine.editor.agent-9ZFNJT'"
+    }
+  }
+}
