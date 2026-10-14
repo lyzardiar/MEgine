@@ -4,7 +4,7 @@ import { timelineGameCamera, type ResolvedGameCamera } from './gameCamera';
 import type { TimelineCameraPreview } from './timelineScenePreview';
 import { requiresBrowserViewportSnapshot, type NativeViewportFrameWorld } from './nativeViewportFrame';
 import { buildWorldTransforms, createOwnedWorldTransformReader, resolvedTransform } from './worldTransform';
-import { sceneUiEntities } from './ui/uiLayout';
+import { createSceneUiEntityReader } from './ui/uiLayout';
 
 type Entity = { entity: number; parent?: number | null; active?: boolean; components: Record<string, unknown> };
 
@@ -20,6 +20,7 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
   let previousEntities: E[] | undefined;
   let presentation: ReturnType<typeof prepare> | undefined;
   const readTransforms = createOwnedWorldTransformReader();
+  const readSceneUiEntities = createSceneUiEntityReader<E>();
   function prepare(world: NativeViewportFrameWorld<E>) {
     const active = createHierarchyActiveLookup(world.entities);
     let transforms: ReturnType<typeof buildWorldTransforms> | undefined;
@@ -46,7 +47,7 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
           return c.Camera2D || c.Camera3D || c.SpineSkeleton || !c.MeshRenderer && (c.PointLight || c.SpotLight || c.Light2D || c.DirectionalLight);
         });
       },
-      sceneUiEntities() { return uiEntities ??= sceneUiEntities(world.entities); },
+      sceneUiEntities() { return uiEntities ??= readSceneUiEntities(world.entities); },
       gameCamera(preview: TimelineCameraPreview | null | undefined, display: number) {
         const input = [!!preview, preview?.source, preview?.target, preview?.weight, display];
         if (!cameraInput || input.some((value, index) => !Object.is(value, cameraInput![index]))) { camera = timelineGameCamera(world.entities, preview, active, display); cameraInput = input; }

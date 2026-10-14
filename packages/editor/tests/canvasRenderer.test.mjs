@@ -21,6 +21,9 @@ const {
 } = await server.ssrLoadModule('/src/ui/uiLayout.ts');
 test.after(() => server.close());
 
+const { layoutUiText } = await server.ssrLoadModule('/src/ui/uiTextLayout.ts');
+const textLayoutOptions = (extra = {}) => ({ width: 90, height: 40, fontSize: 16, fontStyle: 'Normal', alignByGeometry: false, supportRichText: true, bestFit: false, minSize: 8, maxSize: 24, fontScale: 1, lineSpacing: 1, horizontalOverflow: 'Wrap', verticalOverflow: 'Truncate', alignment: 'Left', verticalAlign: 'Top', ...extra });
+
 class FakeDocument {
   canvases = [];
 
@@ -89,6 +92,50 @@ class FakeContext {
   strokeText(...args) { this.operations.push(['strokeText', ...args]); }
   measureText(value) { return { width: String(value).length * 8 }; }
 }
+
+test('Canvas full text layouts match uncached layout across every layout option and measurement mode', () => {
+  const ctx = new FakeCanvas(new FakeDocument(), 'layout').context;
+  const measurement = canvasUiTextLayoutMeasurement(ctx);
+  const text = '<b>AV AB</b>\nCD EF';
+  const variants = [{}, { width: 40 }, { height: 10 }, { fontSize: 20 }, { fontStyle: 'Italic' }, { alignByGeometry: true }, { supportRichText: false }, { bestFit: true }, { minSize: 10 }, { maxSize: 30 }, { fontScale: 2 }, { lineSpacing: 2 }, { horizontalOverflow: 'Overflow' }, { verticalOverflow: 'Overflow' }, { alignment: 'Right' }, { verticalAlign: 'Bottom' }];
+  for (const font of [null, '', 'Assets/Fonts/Interface.ttf']) for (const extra of variants) {
+    const options = textLayoutOptions(extra);
+    const actual = measurement.layoutText(font, text, options);
+    const expected = layoutUiText(text, { ...options, measureGlyph: font != null ? glyph => measurement.measureGlyph(font, glyph) : undefined, measurePairKerning: font != null ? (left, right) => measurement.measurePairKerning(font, left, right) : undefined });
+    assert.deepEqual(actual, expected);
+    assert.equal(measurement.layoutText(font, text, options), actual, 'stable inputs reuse a full layout');
+  }
+  assert.notDeepEqual(measurement.layoutText(null, 'AAAA', textLayoutOptions()), measurement.layoutText('', 'AAAA', textLayoutOptions()), 'bitmap fallback and empty-font Canvas metrics remain distinct');
+  assert.notDeepEqual(measurement.layoutText('', 'AAAA', textLayoutOptions()), measurement.layoutText('', 'BB', textLayoutOptions()), 'text changes invalidate layout');
+});
+
+test('Canvas layout caching follows live state and font revisions even through a retained measurement', async () => {
+  const ctx = new FakeCanvas(new FakeDocument(), 'state').context;
+  ctx.measureText = value => ({ width: value.length * (ctx.direction === 'rtl' ? 12 : 8) });
+  const measurement = canvasUiTextLayoutMeasurement(ctx), options = textLayoutOptions();
+  const before = measurement.layoutText('', 'AB', options);
+  ctx.direction = 'rtl';
+  const after = measurement.layoutText('', 'AB', options);
+  assert.notDeepEqual(after, before);
+  ctx.direction = undefined;
+  assert.equal(measurement.layoutText('', 'AB', options), before, 'state variants coexist without redoing stable text layout');
+  const { resetUiFontFaceCacheForTests } = await server.ssrLoadModule('/src/ui/uiFontAssets.ts');
+  resetUiFontFaceCacheForTests();
+  assert.notEqual(measurement.layoutText('', 'AB', options), before);
+  assert.notEqual(canvasUiTextLayoutMeasurement(new FakeCanvas(new FakeDocument(), 'other').context).layoutText('', 'AB', options), before);
+});
+
+test('Canvas layout cache bounds entry count and key characters and bypasses long text', () => {
+  const measurement = canvasUiTextLayoutMeasurement(new FakeCanvas(new FakeDocument(), 'bounded').context), options = textLayoutOptions();
+  const first = measurement.layoutText(null, 'first', options);
+  for (let i = 0; i < 300; i++) measurement.layoutText(null, String(i), options);
+  assert.notEqual(measurement.layoutText(null, 'first', options), first);
+  const large = 'A'.repeat(1800), initial = measurement.layoutText(null, large, options);
+  for (let i = 0; i < 30; i++) measurement.layoutText(null, large + i, options);
+  assert.notEqual(measurement.layoutText(null, large, options), initial, 'character budget evicts before entry limit');
+  const uncached = 'A'.repeat(2049);
+  assert.notEqual(measurement.layoutText(null, uncached, options), measurement.layoutText(null, uncached, options));
+});
 
 test('Canvas text measurement uses imported metrics without leaking drawing state', () => {
   const document = new FakeDocument();

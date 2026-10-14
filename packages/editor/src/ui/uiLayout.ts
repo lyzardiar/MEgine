@@ -75,6 +75,8 @@ import {
 } from './uiPhysicsRaycast';
 import {
   layoutUiText,
+  type UiTextLayout,
+  type UiTextLayoutOptions,
   type UiTextGlyphMeasurement,
   type UiTextLayoutRun,
 } from './uiTextLayout';
@@ -94,6 +96,8 @@ export type UiEnt = {
 };
 
 export type UiTextLayoutMeasurement = {
+  /** Returned layouts are shared read-only results. Null font retains bitmap fallback metrics. */
+  layoutText?: (font: string | null, value: string, options: Omit<UiTextLayoutOptions, 'measureGlyph' | 'measurePairKerning'>) => UiTextLayout;
   measureGlyph: (font: string, glyph: UiRichTextGlyph) => UiTextGlyphMeasurement | null;
   measurePairKerning: (
     font: string,
@@ -101,6 +105,11 @@ export type UiTextLayoutMeasurement = {
     right: UiRichTextGlyph,
   ) => number | null;
 };
+
+function measuredTextLayout(font: string | null, value: string, options: Omit<UiTextLayoutOptions, 'measureGlyph' | 'measurePairKerning'>, measurement?: UiTextLayoutMeasurement): UiTextLayout {
+  if (measurement?.layoutText) return measurement.layoutText(font, value, options);
+  return layoutUiText(value, { ...options, measureGlyph: font != null && measurement ? glyph => measurement.measureGlyph(font, glyph) : undefined, measurePairKerning: font != null && measurement ? (left, right) => measurement.measurePairKerning(font, left, right) : undefined });
+}
 
 export type UiMaskRegion = {
   rect: Rect;
@@ -521,22 +530,14 @@ function textIntrinsicPreferredSize(
     verticalOverflow: 'Overflow' as const,
     alignment: 'Left' as const,
     verticalAlign: 'Top' as const,
-    measureGlyph: measurement
-      ? (glyph: UiRichTextGlyph) => measurement.measureGlyph(String(text.font ?? ''), glyph)
-      : undefined,
-    measurePairKerning: measurement
-      ? (left: UiRichTextGlyph, right: UiRichTextGlyph) => (
-          measurement.measurePairKerning(String(text.font ?? ''), left, right)
-        )
-      : undefined,
   };
-  const unwrapped = layoutUiText(value, {
+  const unwrapped = measuredTextLayout(String(text.font ?? ''), value, {
     ...common,
     width: 16_777_216,
     height: 16_777_216,
     horizontalOverflow: 'Overflow',
-  });
-  const wrapped = layoutUiText(value, {
+  }, measurement);
+  const wrapped = measuredTextLayout(String(text.font ?? ''), value, {
     ...common,
     width: Math.max(1, authoredWidth),
     height: 16_777_216,
@@ -545,7 +546,7 @@ function textIntrinsicPreferredSize(
       ['Wrap', 'Overflow'] as const,
       'Wrap',
     ),
-  });
+  }, measurement);
   return [
     Math.max(0, ...unwrapped.lines.map((line) => line.width)),
     Math.max(0, wrapped.blockHeight),
@@ -553,6 +554,7 @@ function textIntrinsicPreferredSize(
 }
 
 const canvasTextMeasurements = new WeakMap<CanvasRenderingContext2D, { key: string; measurement: UiTextLayoutMeasurement }>();
+const canvasTextLayouts = new WeakMap<CanvasRenderingContext2D, { revision: number; characters: number; entries: Map<string, UiTextLayout> }>();
 const MAX_TEXT_METRICS = 4096;
 
 export function canvasUiTextLayoutMeasurement(
@@ -568,6 +570,31 @@ export function canvasUiTextLayoutMeasurement(
   const glyphCache = new Map<string, UiTextGlyphMeasurement>();
   const pairCache = new Map<string, number>();
   const measurement: UiTextLayoutMeasurement = {
+    layoutText: (font, value, options) => {
+      // Drawing changes Canvas text state after the caller obtains its measurement object.
+      const current = canvasUiTextLayoutMeasurement(ctx);
+      const revision = uiFontMeasurementRevision();
+      let cache = canvasTextLayouts.get(ctx);
+      if (!cache || cache.revision !== revision) {
+        cache = { revision, characters: 0, entries: new Map() };
+        canvasTextLayouts.set(ctx, cache);
+      }
+      const values = [options.width, options.height, options.fontSize, options.fontStyle, options.alignByGeometry, options.supportRichText, options.bestFit, options.minSize, options.maxSize, options.fontScale, options.lineSpacing, options.horizontalOverflow, options.verticalOverflow, options.alignment, options.verticalAlign];
+      const key = value.length <= 2048 && !values.some(v => typeof v === 'number' && !Number.isFinite(v)) ? JSON.stringify([font, font == null ? null : canvasTextMeasurements.get(ctx)!.key, value, ...values]) : null;
+      const cached = key == null ? undefined : cache.entries.get(key);
+      if (cached) return cached;
+      const layout = layoutUiText(value, { ...options, measureGlyph: font != null ? glyph => current.measureGlyph(font, glyph) : undefined, measurePairKerning: font != null ? (left, right) => current.measurePairKerning(font, left, right) : undefined });
+      if (key != null && key.length <= 32768) {
+        while (cache.entries.size >= 256 || cache.characters + key.length > 32768) {
+          const oldest = cache.entries.keys().next().value!;
+          cache.entries.delete(oldest);
+          cache.characters -= oldest.length;
+        }
+        cache.entries.set(key, layout);
+        cache.characters += key.length;
+      }
+      return layout;
+    },
     measureGlyph: (font, glyph) => {
       const key = `${font}\0${glyph.fontSize}\0${glyph.fontStyle}\0${glyph.character}`;
       const cached = glyphCache.get(key);
@@ -883,6 +910,27 @@ export function sceneUiEntities<E extends UiEnt>(entities: E[]): E[] {
     while (parent != null && !retained.has(parent)) { retained.add(parent); parent = byId.get(parent)?.parent; }
   }
   return entities.filter(entity => retained.has(entity.entity));
+}
+
+/** Reuse topology only; every returned record belongs to the current frame, including in-place edits. */
+export function createSceneUiEntityReader<E extends UiEnt>() {
+  let topology: Array<[number, number | null, boolean]> = [];
+  let indices: number[] = [];
+  const root = (entity: E) => !!(entity.components.Canvas || entity.components.Camera2D || entity.components.Camera3D);
+  return (entities: E[]): E[] => {
+    if (topology.length !== entities.length || entities.some((entity, index) => {
+      const previous = topology[index];
+      return previous[0] !== entity.entity || previous[1] !== (entity.parent ?? null) || previous[2] !== root(entity);
+    })) {
+      const retained = new Set(sceneUiEntities(entities).map(entity => entity.entity));
+      indices = [];
+      topology = entities.map((entity, index) => {
+        if (retained.has(entity.entity)) indices.push(index);
+        return [entity.entity, entity.parent ?? null, root(entity)];
+      });
+    }
+    return indices.map(index => entities[index]);
+  };
 }
 
 function inCanvasTree(byId: ReadonlyMap<number, UiEnt>, entityId: number, canvasId: number): boolean {
@@ -2353,7 +2401,7 @@ export function layoutUiScene3D(
         let padding = Math.max(4, ...[item.shadow, item.outline].flatMap(effect => effect ? [Math.hypot(...effect.distance) + 4] : []));
         if (item.text) {
           const text = item.text;
-          const measured = layoutUiText(text.text, { ...text, width: item.rect.w, height: item.rect.h, measureGlyph: text.font && textMeasurement ? glyph => textMeasurement.measureGlyph(text.font, glyph) : undefined, measurePairKerning: text.font && textMeasurement ? (left, right) => textMeasurement.measurePairKerning(text.font, left, right) : undefined });
+          const measured = measuredTextLayout(text.font || null, text.text, { ...text, width: item.rect.w, height: item.rect.h }, textMeasurement);
           padding += Math.max(0, measured.blockHeight - item.rect.h, ...measured.lines.map(line => line.width - item.rect.w)) + text.fontSize * 2;
         }
         const points = pixelCorners(item.rect, item.rotation, item.pivot);
@@ -4231,7 +4279,7 @@ export function drawUiItems(
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         ctx.fontKerning = 'normal';
-        const layout = layoutUiText(it.text.text, {
+        const layout = measuredTextLayout(it.text.font || null, it.text.text, {
           width: w,
           height: h,
           fontSize: it.text.fontSize,
@@ -4247,13 +4295,7 @@ export function drawUiItems(
           verticalOverflow: it.text.verticalOverflow,
           alignment: it.text.alignment,
           verticalAlign: it.text.verticalAlign,
-          measureGlyph: it.text.font
-            ? (glyph) => textMeasurement.measureGlyph(it.text!.font, glyph)
-            : undefined,
-          measurePairKerning: it.text.font
-            ? (left, right) => textMeasurement.measurePairKerning(it.text!.font, left, right)
-            : undefined,
-        });
+        }, textMeasurement);
         for (const line of layout.lines) {
           const fallbackOrigin = x + line.x;
           const lineOrigin = it.text.alignByGeometry
