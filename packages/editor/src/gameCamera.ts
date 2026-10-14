@@ -1,3 +1,4 @@
+// Author: MiYu. Skip transform work when the selected entity has no unambiguous camera.
 import type {
   Camera2DData,
   Camera3DData,
@@ -126,9 +127,11 @@ function cameraForEntity(
 export function gameCameraForEntity(
   entities: readonly CameraEntity[],
   id: number,
-  world = buildWorldTransforms(entities, [id]),
+  world?: ReturnType<typeof buildWorldTransforms>,
 ): ResolvedGameCamera | null {
-  return cameraForEntity(entities, world, id);
+  const entity = entities.find(candidate => candidate.entity === id);
+  if (!entity || Boolean(entity.components.Camera2D) === Boolean(entity.components.Camera3D)) return null;
+  return cameraForEntity(entities, world ?? buildWorldTransforms(entities, [id]), id);
 }
 
 function primaryGameCameraFromWorld(

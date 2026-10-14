@@ -95,8 +95,23 @@ export function createOwnedWorldTransformReader() {
 }
 
 function resolveWorldTransforms(entities: readonly WorldTransformEntity[], roots?: Iterable<number>, cache?: OwnedTransformCache): Map<number, ResolvedWorldTransform> {
-  const byId = new Map<number, WorldTransformEntity>();
-  for (const entity of entities) byId.set(entity.entity, entity);
+  let byId: Map<number, WorldTransformEntity> | undefined;
+  let sparseLookups = 0;
+  const findEntity = (id: number) => {
+    // Camera queries usually touch a shallow parent chain; cap scans before indexing deeper hierarchies.
+    if (roots && !byId && sparseLookups++ < 4) {
+      for (let index = entities.length - 1; index >= 0; index--) {
+        const entity = entities[index];
+        if (entity.entity === id || Number.isNaN(entity.entity) && Number.isNaN(id)) return entity;
+      }
+      return undefined;
+    }
+    if (!byId) {
+      byId = new Map();
+      for (const entity of entities) byId.set(entity.entity, entity);
+    }
+    return byId.get(id);
+  };
   const resolved = new Map<number, ResolvedWorldTransform>();
   let cyclic = false;
 
@@ -104,7 +119,7 @@ function resolveWorldTransforms(entities: readonly WorldTransformEntity[], roots
     const existing = resolved.get(id);
     if (existing === INVALID) { cyclic = true; return INVALID; }
     if (existing) return existing;
-    const entity = byId.get(id);
+    const entity = findEntity(id);
     if (!entity) return INVALID;
     // Reserve traversal order and mark the active recursion path in the result itself.
     resolved.set(id, INVALID);
