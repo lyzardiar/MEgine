@@ -752,7 +752,7 @@ impl Renderer {
             .request_device(
                 &wgpu::DeviceDescriptor {
                     label: Some("mengine"),
-                    required_features: profiling_features(adapter.features(), std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1")),
+                    required_features: profiling_features(adapter.features(), true),
                     required_limits: wgpu::Limits::default(),
                     memory_hints: Default::default(),
                 },
@@ -1270,7 +1270,7 @@ impl Renderer {
             sample_count,
         );
 
-        let gpu_profiler = GpuFrameProfiler::new(&device);
+        let gpu_profiler = std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1").then(|| GpuFrameProfiler::new(&device)).flatten();
         Ok(Self {
             device,
             queue,
@@ -1411,6 +1411,16 @@ impl Renderer {
     pub fn offscreen_readback_stats(&self) -> (u64, u64) {
         let cache = self.offscreen_readback.lock().unwrap_or_else(|error| error.into_inner());
         cache.as_ref().map_or((0, 0), |cached| (cached.buffer.size(), cached.allocations))
+    }
+
+    pub fn gpu_timing_supported(&self) -> bool { self.device.features().contains(wgpu::Features::TIMESTAMP_QUERY) }
+
+    pub fn gpu_timing_enabled(&self) -> bool { self.gpu_profiler.is_some() }
+
+    /// Toggle timestamp resources between completed frames without recreating the render device.
+    pub fn set_gpu_timings(&mut self, enabled: bool) {
+        if enabled && self.gpu_profiler.is_none() { self.gpu_profiler = GpuFrameProfiler::new(&self.device); }
+        else if !enabled { self.gpu_profiler = None; }
     }
 
     /// Reuse one unmapped staging buffer, growing only for a larger padded target.
@@ -4175,14 +4185,17 @@ mod tests {
     #[test]
     fn gpu_pass_timestamps_preserve_pixels_and_reset_optional_passes() {
         let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).expect("GPU adapter for timestamp acceptance");
-        let enabled = std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1");
-        assert_eq!(renderer.gpu_profiler.is_some(), enabled, "this acceptance run requires hardware timestamp support when enabled");
+        let default_enabled = std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1");
+        assert!(renderer.gpu_timing_supported(), "GPU timestamp acceptance requires hardware timestamp support");
+        assert_eq!(renderer.gpu_timing_enabled(), default_enabled);
         renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
         let target = renderer.create_offscreen_target(PhysicalSize::new(32, 32));
         let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
         let ui = UiBatchPlan::build(vec![crate::ui::UiPrimitive::solid([0.0, 0.0, 32.0, 32.0], [0.0, 1.0, 0.0, 1.0])]);
         let mut first_pixels = None;
-        for extra in [false, true, false] {
+        for (enabled, extra) in [(false, false), (true, false), (true, true), (false, true), (true, false), (false, false)] {
+            renderer.set_gpu_timings(enabled);
+            assert_eq!(renderer.gpu_timing_enabled(), enabled);
             let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false;
             lighting.directional = extra.then_some(DirectionalLightData { direction: -Vec3::Z, color: [1.0; 3], intensity: 1.0, cast_shadows: true, shadow_strength: 1.0, shadow_bias: 0.001, shadow_normal_bias: 0.001, shadow_distance: 60.0 });
             renderer.submit_frame_to(&RenderFrame { clear: ClearColor { r: 0.0, g: 0.0, b: 1.0, a: 1.0 }, camera, objects: &[], lighting: &lighting, ui: extra.then_some(&ui), scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();

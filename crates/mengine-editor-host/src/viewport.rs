@@ -155,6 +155,8 @@ pub struct EditorViewportProfile {
     pub counts: EditorViewportProfileCounts,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub gpu: Option<EditorViewportGpuProfile>,
+    pub gpu_timing_supported: bool,
+    pub gpu_timing_enabled: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -314,6 +316,8 @@ impl EditorViewportRenderer {
 
     /// Bind profiling to the project session that supplied this render request.
     pub fn with_resource_generation(&mut self, generation: u64) -> &mut Self { self.resource_generation = generation; self }
+
+    pub fn with_gpu_timings(&mut self, enabled: bool) -> &mut Self { self.renderer.set_gpu_timings(enabled); self }
 
     pub fn render_game(
         &mut self,
@@ -938,6 +942,8 @@ fn build_viewport_profile(
         simulation_stages: Vec::new(),
         schema_version: 1,
         gpu: None,
+        gpu_timing_supported: renderer.gpu_timing_supported(),
+        gpu_timing_enabled: renderer.gpu_timing_enabled(),
         total_ms,
         call_tree,
         resident_memory_estimate_bytes: memory.iter().map(|category| category.bytes).sum(),

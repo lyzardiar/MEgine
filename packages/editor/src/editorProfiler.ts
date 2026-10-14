@@ -22,6 +22,13 @@ export function editorProfilerUiRefreshDelay(
 
 export type EditorProfilerSource = 'scene' | 'game';
 
+export type NativeGpuTimingSettings = { game: boolean; scene: boolean; revision: number };
+
+/** MiYu: delayed initial reads and other windows must not roll recording controls backward. */
+export function newerNativeGpuTimings(current: NativeGpuTimingSettings | null, next: NativeGpuTimingSettings): NativeGpuTimingSettings {
+  return !current || next.revision >= current.revision ? next : current;
+}
+
 export type NativeProfilerNode = {
   name: string;
   totalMs: number;
@@ -79,6 +86,8 @@ export type NativeViewportProfile = {
   callTree: NativeProfilerNode;
   /** Hardware timestamps for main viewport passes; overlaps CPU work and GPU map wait. */
   gpu?: { timestampPeriodNs: number; totalPassMs: number; stages: NativeProfilerNode[] };
+  gpuTimingSupported?: boolean;
+  gpuTimingEnabled?: boolean;
   /** Full request, native rendering, binary transfer and Canvas upload wall time. */
   transportMs?: number;
   commandMs?: number;

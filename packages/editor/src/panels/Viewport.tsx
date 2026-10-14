@@ -1,6 +1,7 @@
 // Author: MiYu. Editor Scene/Game drawing and interaction with owned native frame presentation.
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import {
   AlignHorizontalSpaceAround,
   Anchor,
@@ -711,6 +712,7 @@ export function Viewport(props: {
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const spatialIndexRef = useRef(createViewportSpatialIndex());
+  const nativeGpuTimingRevisionRef = useRef(0);
   const nativeGameFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
     width: number;
@@ -1356,6 +1358,17 @@ export function Viewport(props: {
     }, Math.ceil(remaining));
   }), [props.subscribeRuntimeFrames]);
 
+  useEffect(() => {
+    if (!('__TAURI_INTERNALS__' in window)) return;
+    let active = true, unlisten: (() => void) | undefined;
+    void listen<{ revision: number }>('native-gpu-timings', event => {
+      if (!active || event.payload.revision <= nativeGpuTimingRevisionRef.current) return;
+      nativeGpuTimingRevisionRef.current = event.payload.revision;
+      paint();
+    }).then(stop => { if (active) unlisten = stop; else stop(); }).catch(error => console.warn('GPU timing refresh is unavailable', error));
+    return () => { active = false; unlisten?.(); };
+  }, []);
+
   // Continuous render loop
   useEffect(() => {
     let raf = 0;
@@ -1451,13 +1464,13 @@ export function Viewport(props: {
       && '__TAURI_INTERNALS__' in window
       && !nativeGameRequestRef.current.inFlight
       && now - nativeGameRequestRef.current.lastRequestAt >= (p.playing ? 1000 / 60 : 300)
-      && (!p.playing || !nativeGameFrameMatchesRequest(nativeGameFrameRef.current, nativeWorld.worldArgs(), JSON.stringify([presentationKey, vp.w, vp.h, dpr])))
+      && (!p.playing || !nativeGameFrameMatchesRequest(nativeGameFrameRef.current, nativeWorld.worldArgs(), JSON.stringify([presentationKey, vp.w, vp.h, dpr, nativeGpuTimingRevisionRef.current])))
     ) {
       const request = nativeGameRequestRef.current;
       if (request.resumeTimer != null) window.clearTimeout(request.resumeTimer);
       request.resumeTimer = null;
       const generation = ++request.generation;
-      const requestKey = JSON.stringify([presentationKey, vp.w, vp.h, dpr]);
+      const requestKey = JSON.stringify([presentationKey, vp.w, vp.h, dpr, nativeGpuTimingRevisionRef.current]);
       request.inFlight = true;
       request.lastRequestAt = now;
       // Fixed-pixel Canvas layouts depend on the selected resolution, even in a small panel.

@@ -23,6 +23,8 @@ use tauri::{path::BaseDirectory, Emitter, Manager, State};
 
 mod agent_bridge;
 mod native_viewport_transport;
+mod native_gpu_timings;
+use native_gpu_timings::{get_native_gpu_timings, set_native_gpu_timings, GpuTimingSource};
 mod play_compiler;
 use agent_bridge::{
     agent_bridge_broadcast, agent_bridge_respond, agent_bridge_set_transport_ready,
@@ -4433,6 +4435,7 @@ async fn render_native_game_view(
             .as_mut()
             .expect("viewport renderer initialized above")
             .with_resource_generation(resource_generation)
+            .with_gpu_timings(native_gpu_timings::enabled(GpuTimingSource::Game))
             .render_game(world, width, height)
             .map_err(|error| error.to_string())?;
         frame.profile.worker_queue_ms = Some(worker_queue_ms);
@@ -4524,7 +4527,8 @@ async fn render_native_scene_view(
         let viewport = viewport_guard
             .as_mut()
             .expect("Scene viewport renderer initialized above")
-            .with_resource_generation(resource_generation);
+            .with_resource_generation(resource_generation)
+            .with_gpu_timings(native_gpu_timings::enabled(GpuTimingSource::Scene));
         let mut frame = if request.camera_entity.is_some() {
             viewport.render_camera(
                 world,
@@ -6451,6 +6455,8 @@ pub fn run() {
             stop_editor_play,
             render_native_game_view,
             render_native_scene_view,
+            get_native_gpu_timings,
+            set_native_gpu_timings,
             take_native_viewport_transport_traces,
             release_native_viewport_frame,
             render_effekseer_preview,
