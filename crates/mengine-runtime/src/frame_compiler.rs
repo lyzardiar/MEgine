@@ -109,6 +109,7 @@ pub struct FrameCompiler<'a> {
     pub trails: &'a mut TrailWorld,
     pub textures: &'a mut RuntimeTextureCache,
     pub fonts: &'a mut RuntimeFontCache,
+    pub ui_batch_order: Option<&'a mut mengine_rhi::UiBatchOrderCache>,
 }
 
 /// Owned frame packet shared by window, editor, and future offscreen submission paths.
@@ -258,7 +259,8 @@ impl FrameCompiler<'_> {
         );
         resolve_ui_materials(&mut ui.plan.primitives, self.materials);
         phase("Sprite regions and materials");
-        ui.plan = UiBatchPlan::build(std::mem::take(&mut ui.plan.primitives));
+        let primitives = std::mem::take(&mut ui.plan.primitives);
+        ui.plan = match self.ui_batch_order.as_deref_mut() { Some(cache) => cache.build(primitives), None => UiBatchPlan::build(primitives) };
         phase("UI batching");
 
         CompiledFrame {
@@ -771,7 +773,7 @@ mod scene_view_tests {
         let mut materials = RuntimeMaterialCache::new(None);
         let mut particles = ParticleWorld::default(); let mut trails = TrailWorld::default();
         let mut textures = RuntimeTextureCache::new(None); let mut fonts = RuntimeFontCache::new(None);
-        let frame = FrameCompiler { materials:&mut materials, particles:&mut particles, trails:&mut trails, textures:&mut textures, fonts:&mut fonts }.compile(FrameCompileRequest {
+        let frame = FrameCompiler { materials:&mut materials, particles:&mut particles, trails:&mut trails, textures:&mut textures, fonts:&mut fonts, ui_batch_order:None }.compile(FrameCompileRequest {
             world:&world, hierarchy:&TransformHierarchy::build(&world), viewport:[128,128], scene_clear:Vec4::ZERO,
             camera_override:None, view_camera:None, include_ui:true, target_display:0, interaction:UiInteractionState::default(),
             button_tints:&HashMap::new(), focused_ui:None, sorting_layers:&SortingLayers::default(), delta_seconds:0.0,

@@ -1,3 +1,4 @@
+// Author: MiYu. Reuse exact Canvas overlap ordering while retaining current-frame drawing payloads.
 use bytemuck::{Pod, Zeroable};
 use mengine_core::surface_shader::{
     parse_surface_shader_schema, MAX_SURFACE_SHADER_PARAMETERS, MAX_SURFACE_SHADER_TEXTURES,
@@ -300,7 +301,10 @@ pub struct UiBatchPlan {
 
 impl UiBatchPlan {
     pub fn build(primitives: Vec<UiPrimitive>) -> Self {
-        let primitives = optimize_canvas_batch_order(primitives);
+        Self::from_ordered(optimize_canvas_batch_order(primitives))
+    }
+
+    fn from_ordered(primitives: Vec<UiPrimitive>) -> Self {
         let mut batches: Vec<UiBatch> = Vec::new();
         for (index, primitive) in primitives.iter().enumerate() {
             let index = index as u32;
@@ -415,9 +419,9 @@ fn normalized_canvas_grid_size(value: f32) -> f32 {
 /// when their bounding boxes can be reordered without changing transparent
 /// overlap. The grid limits overlap candidates; the topological pass preserves
 /// every original order edge between intersecting graphics.
-fn optimize_canvas_segment(mut primitives: Vec<UiPrimitive>, grid_size: f32) -> Vec<UiPrimitive> {
+fn canvas_segment_order(primitives: &[UiPrimitive], grid_size: f32) -> Vec<usize> {
     if primitives.len() < 3 {
-        return primitives;
+        return (0..primitives.len()).collect();
     }
     let mut seen = HashSet::new();
     let mut previous = None;
@@ -426,7 +430,7 @@ fn optimize_canvas_segment(mut primitives: Vec<UiPrimitive>, grid_size: f32) -> 
         previous = Some(&primitive.key);
         !seen.insert(&primitive.key)
     }) {
-        return primitives;
+        return (0..primitives.len()).collect();
     }
     let bounds: Vec<_> = primitives.iter().map(primitive_bounds).collect();
     let non_empty: Vec<_> = bounds
@@ -435,7 +439,7 @@ fn optimize_canvas_segment(mut primitives: Vec<UiPrimitive>, grid_size: f32) -> 
         .filter(|value| !value.is_empty())
         .collect();
     if non_empty.is_empty() {
-        return primitives;
+        return (0..primitives.len()).collect();
     }
     let area = non_empty.iter().copied().fold(
         PrimitiveBounds {
@@ -482,7 +486,7 @@ fn optimize_canvas_segment(mut primitives: Vec<UiPrimitive>, grid_size: f32) -> 
         let references = (max_x - min_x + 1).saturating_mul(max_y - min_y + 1);
         grid_references = grid_references.saturating_add(references);
         if grid_references > MAX_CANVAS_SORTING_GRID_REFERENCES {
-            return primitives;
+            return (0..primitives.len()).collect();
         }
         for cell_x in min_x..=max_x {
             for cell_y in min_y..=max_y {
@@ -491,7 +495,7 @@ fn optimize_canvas_segment(mut primitives: Vec<UiPrimitive>, grid_size: f32) -> 
                     visited[earlier] = index;
                     if bounds[earlier].intersects(current) {
                         overlap_edges += 1;
-                        if overlap_edges > MAX_CANVAS_OVERLAP_EDGES { return primitives; }
+                        if overlap_edges > MAX_CANVAS_OVERLAP_EDGES { return (0..primitives.len()).collect(); }
                         outgoing[earlier].push(index);
                         indegree[index] += 1;
                     }
@@ -547,36 +551,70 @@ fn optimize_canvas_segment(mut primitives: Vec<UiPrimitive>, grid_size: f32) -> 
         }
     }
     debug_assert_eq!(order.len(), primitives.len());
-    let mut slots: Vec<_> = primitives.drain(..).map(Some).collect();
     order
-        .into_iter()
-        .map(|index| slots[index].take().expect("each primitive is emitted once"))
-        .collect()
+}
+
+fn canvas_batch_order(primitives: &[UiPrimitive]) -> Vec<usize> {
+    let mut order = Vec::with_capacity(primitives.len());
+    let mut start = 0;
+    while start < primitives.len() {
+        let first = &primitives[start];
+        let mut end = start + 1;
+        while end < primitives.len() && primitives[end].key.canvas_group == first.key.canvas_group && primitives[end].canvas_sorting_grid_size.map(f32::to_bits) == first.canvas_sorting_grid_size.map(f32::to_bits) { end += 1; }
+        if first.key.canvas_group.is_some() {
+            order.extend(canvas_segment_order(&primitives[start..end], first.canvas_sorting_grid_size.unwrap_or(DEFAULT_CANVAS_SORTING_GRID_SIZE)).into_iter().map(|index| start + index));
+        } else { order.extend(start..end); }
+        start = end;
+    }
+    order
+}
+
+fn apply_canvas_order(primitives: Vec<UiPrimitive>, order: &[usize]) -> Vec<UiPrimitive> {
+    if order.iter().enumerate().all(|(index, &value)| index == value) { return primitives; }
+    let mut slots: Vec<_> = primitives.into_iter().map(Some).collect();
+    order.iter().map(|&index| slots[index].take().expect("each primitive is emitted once")).collect()
 }
 
 fn optimize_canvas_batch_order(primitives: Vec<UiPrimitive>) -> Vec<UiPrimitive> {
-    let mut input = primitives.into_iter().peekable();
-    let mut output = Vec::with_capacity(input.size_hint().0);
-    while let Some(first) = input.next() {
-        let canvas_group = first.key.canvas_group;
-        let grid_size = first.canvas_sorting_grid_size;
-        let mut segment = vec![first];
-        while input.peek().is_some_and(|next| {
-            next.key.canvas_group == canvas_group
-                && next.canvas_sorting_grid_size.map(f32::to_bits) == grid_size.map(f32::to_bits)
-        }) {
-            segment.push(input.next().expect("peeked primitive must exist"));
-        }
-        if canvas_group.is_some() {
-            output.extend(optimize_canvas_segment(
-                segment,
-                grid_size.unwrap_or(DEFAULT_CANVAS_SORTING_GRID_SIZE),
-            ));
-        } else {
-            output.extend(segment);
-        }
+    let order = canvas_batch_order(&primitives);
+    apply_canvas_order(primitives, &order)
+}
+
+struct CanvasOrderInput { key: UiBatchKey, geometry: [u32; 7], grid: Option<u32> }
+impl CanvasOrderInput {
+    fn geometry(primitive: &UiPrimitive) -> [u32; 7] {
+        let [x, y, w, h] = primitive.rect; let [px, py] = primitive.pivot;
+        [x, y, w, h, px, py, primitive.rotation_radians].map(f32::to_bits)
     }
-    output
+    fn matches(&self, primitive: &UiPrimitive) -> bool {
+        self.key == primitive.key && self.geometry == Self::geometry(primitive) && self.grid == primitive.canvas_sorting_grid_size.map(f32::to_bits)
+    }
+}
+
+/// Retain one bounded overlap-order plan; pixels, colors, UVs and material bindings remain live.
+#[derive(Default)]
+pub struct UiBatchOrderCache { inputs: Vec<CanvasOrderInput>, order: Vec<usize> }
+impl UiBatchOrderCache {
+    pub fn clear(&mut self) { self.inputs.clear(); self.order.clear(); }
+
+    pub fn build(&mut self, primitives: Vec<UiPrimitive>) -> UiBatchPlan {
+        const MAX_CACHED_PRIMITIVES: usize = 16_384;
+        if primitives.len() > MAX_CACHED_PRIMITIVES { self.clear(); return UiBatchPlan::build(primitives); }
+        if self.inputs.len() != primitives.len() || !self.inputs.iter().zip(&primitives).all(|(previous, current)| previous.matches(current)) {
+            self.order = canvas_batch_order(&primitives);
+            self.inputs.truncate(primitives.len());
+            for (index, primitive) in primitives.iter().enumerate() {
+                let geometry = CanvasOrderInput::geometry(primitive);
+                let grid = primitive.canvas_sorting_grid_size.map(f32::to_bits);
+                if let Some(previous) = self.inputs.get_mut(index) {
+                    if previous.key != primitive.key { previous.key.clone_from(&primitive.key); }
+                    previous.geometry = geometry;
+                    previous.grid = grid;
+                } else { self.inputs.push(CanvasOrderInput { key: primitive.key.clone(), geometry, grid }); }
+            }
+        }
+        UiBatchPlan::from_ordered(apply_canvas_order(primitives, &self.order))
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -2499,6 +2537,64 @@ mod tests {
         assert_eq!(plan.batches[0].key.canvas_group, Some(1));
         assert_eq!(plan.batches[1].key.canvas_group, Some(2));
         assert_eq!(plan.batches[2].key.canvas_group, Some(1));
+    }
+
+    #[test]
+    fn cached_canvas_order_keeps_live_payloads_and_rebuilds_material_batches() {
+        let mut inputs: Vec<_> = (0..48).map(|index| {
+            let mut value = primitive(if index % 3 == 0 { "atlas" } else { "other" }, None);
+            value.key.canvas_group = Some(1);
+            value.rect = [(index % 12) as f32 * 12.0, (index / 12) as f32 * 12.0, 8.0, 8.0];
+            value.render_material = Some(Arc::new(UiRenderMaterial::default()));
+            value
+        }).collect();
+        let mut cache = UiBatchOrderCache::default();
+        cache.build(inputs.clone());
+        let order = cache.order.clone();
+        for (index, primitive) in inputs.iter_mut().enumerate() {
+            primitive.color = [index as f32 / 48.0, 0.5, 0.0, 0.4];
+            primitive.uv = [0.1, 0.2, 0.5, 0.5];
+            primitive.depth = 0.3;
+            Arc::make_mut(primitive.render_material.as_mut().unwrap()).custom_textures[0] = format!("texture-{}.png", index % 3);
+        }
+        assert!(cache.inputs.iter().zip(&inputs).all(|(previous, current)| previous.matches(current)));
+        let expected = UiBatchPlan::build(inputs.clone());
+        assert_eq!(format!("{:?}", cache.build(inputs)), format!("{expected:?}"));
+        assert_eq!(cache.order, order);
+    }
+
+    #[test]
+    fn cached_canvas_order_invalidates_every_overlap_input_and_scene_replacement() {
+        let mut inputs: Vec<_> = (0..48).map(|index| {
+            let mut value = primitive(if index % 3 == 0 { "atlas" } else { "other" }, None);
+            value.key.canvas_group = Some(1);
+            value.rect = [(index % 12) as f32 * 12.0, (index / 12) as f32 * 12.0, 15.0, 15.0];
+            value
+        }).collect();
+        let mut cache = UiBatchOrderCache::default();
+        for step in 0..14 {
+            cache.build(inputs.clone());
+            match step {
+                0 => inputs[5].rect[0] += 11.0,
+                1 => inputs[5].rect[1] -= 5.0,
+                2 => inputs[5].rect[2] *= 2.0,
+                3 => inputs[5].rect[3] *= 2.0,
+                4 => inputs[5].pivot = [0.1, 0.2],
+                5 => inputs[5].rotation_radians = 0.8,
+                6 => inputs[5].key.clip = Some(UiClipRect { x: 0, y: 0, width: 25, height: 25 }),
+                7 => inputs[5].canvas_sorting_grid_size = Some(0.031),
+                8 => inputs[5].key.texture = "new.png".into(),
+                9 => inputs[5].key.canvas_group = Some(2),
+                10 => inputs.swap(3, 5),
+                11 => { inputs.pop(); },
+                12 => inputs.clear(),
+                _ => inputs.push(primitive("replaced-scene.png", None)),
+            }
+            let expected = UiBatchPlan::build(inputs.clone());
+            assert_eq!(format!("{:?}", cache.build(inputs.clone())), format!("{expected:?}"), "step {step}");
+        }
+        cache.build(vec![primitive("large.png", None); 16_385]);
+        assert!(cache.inputs.is_empty() && cache.order.is_empty());
     }
 
     #[test]

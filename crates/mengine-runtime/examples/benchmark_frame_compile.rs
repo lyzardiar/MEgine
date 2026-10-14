@@ -19,12 +19,23 @@ fn main() -> anyhow::Result<()> {
     let mut stages: BTreeMap<&str, Vec<f64>> = BTreeMap::new();
     let mut signature = String::new(); let mut counts = serde_json::Value::Null;
     let mut complete_signature = String::new();
+    let mut ui_batch_order = mengine_rhi::UiBatchOrderCache::default();
+    let animate = std::env::args().any(|arg| arg == "--animate-ui");
+    let authored_hierarchy = TransformHierarchy::build(&world);
+    let animated_entity = world.entities_with_components(&["RectTransform", "RawImage"]).find(|&entity| authored_hierarchy.is_active(entity));
+    let original_position = animated_entity.and_then(|entity| world.get_component::<mengine_core::generated::RectTransform>(entity)).map(|rect| rect.anchored_position);
+    let uncached = std::env::args().any(|arg| arg == "--uncached-ui-order");
     for iteration in 0..iterations + 2 {
+        if animate {
+            let entity = animated_entity.expect("scene must contain an active UI image");
+            let rect = world.get_component_mut::<mengine_core::generated::RectTransform>(entity).unwrap();
+            rect.anchored_position[0] = original_position.unwrap()[0] + (iteration % 2) as f32;
+        }
         let start = Instant::now();
         let hierarchy = TransformHierarchy::build(&world);
         let hierarchy_elapsed = start.elapsed().as_secs_f64() * 1000.0;
         let start = Instant::now();
-        let frame = FrameCompiler { materials: &mut materials, particles: &mut particles, trails: &mut trails, textures: &mut textures, fonts: &mut fonts }.compile(FrameCompileRequest {
+        let frame = FrameCompiler { materials: &mut materials, particles: &mut particles, trails: &mut trails, textures: &mut textures, fonts: &mut fonts, ui_batch_order: (!uncached).then_some(&mut ui_batch_order) }.compile(FrameCompileRequest {
             world: &world, hierarchy: &hierarchy, viewport: [1280, 720], scene_clear: world.time.clear_color,
             camera_override: None, view_camera: None, include_ui: true, target_display: 0, interaction: UiInteractionState::default(),
             button_tints: &tints, focused_ui: None, sorting_layers: &sorting, delta_seconds: 0.0,
@@ -45,6 +56,6 @@ fn main() -> anyhow::Result<()> {
     }
     hierarchy_ms.sort_by(f64::total_cmp); compile_ms.sort_by(f64::total_cmp);
     let stages: BTreeMap<_, _> = stages.into_iter().map(|(name, mut samples)| { samples.sort_by(f64::total_cmp); (name, samples[iterations / 2]) }).collect();
-    println!("{}", serde_json::json!({"scope":"Release CPU extraction from authored Main.mscene; no scripts, GPU, IPC or gameplay FPS", "iterations":iterations, "counts":counts, "outputSha256":signature, "completeOutputSha256":complete_signature, "medianStagesMs":stages, "medianHierarchyMs":hierarchy_ms[iterations / 2], "medianCompileMs":compile_ms[iterations / 2], "hierarchyMs":hierarchy_ms, "compileMs":compile_ms}));
+    println!("{}", serde_json::json!({"scope":"Release CPU extraction from authored Main.mscene; no scripts, GPU, IPC or gameplay FPS", "iterations":iterations,"cachedUiOrder":!uncached,"animatedUi":animate, "counts":counts, "outputSha256":signature, "completeOutputSha256":complete_signature, "medianStagesMs":stages, "medianHierarchyMs":hierarchy_ms[iterations / 2], "medianCompileMs":compile_ms[iterations / 2], "hierarchyMs":hierarchy_ms, "compileMs":compile_ms}));
     Ok(())
 }

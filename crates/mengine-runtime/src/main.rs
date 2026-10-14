@@ -145,6 +145,7 @@ struct App {
     sorting_layers: SortingLayers,
     textures: RuntimeTextureCache,
     fonts: RuntimeFontCache,
+    ui_batch_order: mengine_rhi::UiBatchOrderCache,
     animations: AnimationRuntime,
     timelines: TimelineRuntime,
     audio: AudioRuntime,
@@ -218,6 +219,7 @@ impl App {
             sorting_layers,
             textures,
             fonts,
+            ui_batch_order: mengine_rhi::UiBatchOrderCache::default(),
             animations,
             timelines,
             audio,
@@ -1659,6 +1661,7 @@ function onTick(dt, frame) {
                         trails: &mut self.trails,
                         textures: &mut self.textures,
                         fonts: &mut self.fonts,
+                        ui_batch_order: Some(&mut self.ui_batch_order),
                     }
                     .compile(FrameCompileRequest {
                         world: &self.world,
