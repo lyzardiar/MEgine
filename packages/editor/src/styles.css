@@ -7369,9 +7369,10 @@ body.insp-scrubbing * {
   flex-direction: column;
 }
 
+.profiler-gpu-recording { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; white-space: nowrap; font-size: 10px; }
 .profiler-detail-section > header strong { color: var(--u-text-bright); font-size: 11px; }
 .profiler-detail-section > header span { color: var(--u-muted); font: 9px var(--u-mono); }
-.profiler-detail-section > header input {
+.profiler-detail-section > header input:not([type="checkbox"]) {
   width: min(260px, 40%);
   height: 23px;
   border: 1px solid #4a4a4a;

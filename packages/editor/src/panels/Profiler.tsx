@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { ArrowDown, ArrowUp, ArrowUpDown, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import {
   buildEditorProfilerFrames,
@@ -8,6 +10,7 @@ import {
   nearestEditorProfilerFrame,
   nativeViewportRequestStages,
   nativeResourceSampleStatus,
+  newerNativeGpuTimings,
   readNativeViewportProfiles,
   readEditorProfilerSamples,
   subscribeEditorProfiler,
@@ -18,6 +21,7 @@ import {
   type NativeProfilerMemoryNode,
   type NativeProfilerNode,
   type NativeProfilerResource,
+  type NativeGpuTimingSettings,
 } from '../editorProfiler';
 import {
   clearTimelineProfilerSnapshots,
@@ -280,6 +284,35 @@ export function Profiler() {
   const [samples, setSamples] = useState(() => readEditorProfilerSamples('game'));
   const [nativeProfiles, setNativeProfiles] = useState(() => readNativeViewportProfiles('game', false));
   const [timelineSnapshots, setTimelineSnapshots] = useState(readTimelineProfilerSnapshots);
+  const [gpuTimings, setGpuTimings] = useState<NativeGpuTimingSettings | null>(null);
+  const [gpuTimingPending, setGpuTimingPending] = useState(false);
+  const [gpuTimingError, setGpuTimingError] = useState('');
+  const gpuRecording = gpuTimings?.[source === 'scene' ? 'scene' : 'game'] ?? false;
+
+  useEffect(() => {
+    if (!('__TAURI_INTERNALS__' in window)) return;
+    let active = true, unlisten: (() => void) | undefined;
+    const receive = (next: NativeGpuTimingSettings) => { if (active) setGpuTimings(current => newerNativeGpuTimings(current, next)); };
+    void (async () => {
+      try {
+        unlisten = await listen<NativeGpuTimingSettings>('native-gpu-timings', event => receive(event.payload));
+        if (!active) { unlisten(); return; }
+        receive(await invoke<NativeGpuTimingSettings>('get_native_gpu_timings'));
+      } catch (error) { if (active) setGpuTimingError(String(error)); }
+    })();
+    return () => { active = false; unlisten?.(); };
+  }, []);
+
+  const changeGpuTimings = async (enabled: boolean) => {
+    if (source === 'timeline' || !gpuTimings || gpuTimingPending) return;
+    setGpuTimingPending(true); setGpuTimingError('');
+    try {
+      const next = await invoke<NativeGpuTimingSettings>('set_native_gpu_timings', { source, enabled });
+      setGpuTimings(current => newerNativeGpuTimings(current, next));
+      setFrozen(false); setSelectedTimestamp(null);
+    } catch (error) { setGpuTimingError(String(error)); }
+    finally { setGpuTimingPending(false); }
+  };
 
   useEffect(() => {
     setSelectedTimestamp(null);
@@ -764,14 +797,18 @@ export function Profiler() {
           </section>}
 
           {module === 'gpu' && <section className="profiler-detail-section" aria-label="Native GPU passes">
-            <header><div><strong>Main Viewport GPU Passes</strong><span>{latestNative?.gpu ? formatMs(latestNative.gpu.totalPassMs) : 'No GPU sample'}</span></div></header>
+            <header><div><strong>Main Viewport GPU Passes</strong><span>{latestNative?.gpu ? formatMs(latestNative.gpu.totalPassMs) : 'No GPU sample'}</span></div>
+              <label className="profiler-gpu-recording"><input type="checkbox" aria-label="Record GPU timings" checked={gpuRecording} disabled={!gpuTimings || gpuTimingPending || latestNative?.gpuTimingSupported === false && !gpuRecording} onChange={event => void changeGpuTimings(event.currentTarget.checked)} /> Record GPU timings</label>
+            </header>
+            {gpuTimingError && <p role="alert">GPU timing controls: {gpuTimingError}</p>}
+            {latestNative?.gpuTimingSupported === false && <p>Hardware timestamps are unavailable on this device.</p>}
             {latestNative?.gpu ? <>
-              <div className="profiler-scope-note">Hardware timestamps measure GPU execution. These passes overlap CPU work and GPU map wait; their durations must not be added to CPU totals. Nested scene views are outside this pass sample.</div>
+              <div className="profiler-scope-note">Timings belong to the selected frame; recording controls apply to new frames. Hardware timestamps measure GPU execution and overlap CPU work and GPU map wait; do not add them to CPU totals. Nested scene views are outside this pass sample.</div>
               <table className="profiler-detail-table">
                 <thead><tr><th>Pass</th><th>GPU time</th><th>Measured passes</th></tr></thead>
                 <tbody>{[...latestNative.gpu.stages].sort((left, right) => right.totalMs - left.totalMs).map(stage => <tr key={stage.name}><td>{stage.name}</td><td>{formatMs(stage.totalMs)}</td><td>{latestNative.gpu!.totalPassMs > 0 ? `${(stage.totalMs / latestNative.gpu!.totalPassMs * 100).toFixed(1)}%` : '—'}</td></tr>)}</tbody>
               </table>
-            </> : <p>GPU timing is not active for this session or is unavailable on this device.</p>}
+            </> : latestNative?.gpuTimingSupported !== false && <p>{gpuRecording ? 'Waiting for a new GPU sample.' : 'Enable GPU recording to collect new samples.'} Keep the {source === 'scene' ? 'Scene' : 'Game'} viewport visible.</p>}
           </section>}
 
           {module === 'memory' && <section className="profiler-detail-section" aria-label="Native memory provenance">

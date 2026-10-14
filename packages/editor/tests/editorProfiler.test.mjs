@@ -10,11 +10,21 @@ import {
   nearestEditorProfilerFrame,
   nativeViewportRequestStages,
   nativeResourceSampleStatus,
+  newerNativeGpuTimings,
   readNativeViewportProfiles,
   recordNativeViewportProfile,
   summarizeEditorProfilerSamples,
   summarizeNativeViewportProfiles,
 } from '../src/editorProfiler.ts';
+
+test('GPU recording controls retain the latest native revision across delayed window messages', () => {
+  const first = { game: false, scene: false, revision: 0 }, game = { game: true, scene: false, revision: 1 }, scene = { game: true, scene: true, revision: 2 };
+  assert.equal(newerNativeGpuTimings(null, first), first);
+  assert.equal(newerNativeGpuTimings(first, game), game);
+  assert.equal(newerNativeGpuTimings(scene, game), scene);
+  assert.equal(newerNativeGpuTimings(scene, first), scene);
+  assert.equal(newerNativeGpuTimings(game, scene), scene);
+});
 
 test('resource status distinguishes pending, retained and unavailable metadata without attributing worker time to the frame', () => {
   assert.equal(nativeResourceSampleStatus({ resourceSampling: { ready: false, pending: true, unavailable: false, metadataMs: null } }), 'Sampling resource metadata…');

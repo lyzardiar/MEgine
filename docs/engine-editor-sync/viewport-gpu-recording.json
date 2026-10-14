@@ -1,0 +1,783 @@
+{
+  "passed": true,
+  "initialGpuSettings": {
+    "game": false,
+    "scene": false,
+    "revision": 0
+  },
+  "finalGpuSettings": {
+    "game": false,
+    "scene": false,
+    "revision": 4
+  },
+  "gpuRecordingStages": [
+    {
+      "name": "gpu-off",
+      "sources": {
+        "game": {
+          "frames": 480,
+          "enabled": false,
+          "meanGpuPassMs": 0,
+          "passes": {}
+        },
+        "scene": {
+          "frames": 514,
+          "enabled": false,
+          "meanGpuPassMs": 0,
+          "passes": {}
+        }
+      }
+    },
+    {
+      "name": "gpu-game-on",
+      "sources": {
+        "game": {
+          "frames": 483,
+          "enabled": true,
+          "meanGpuPassMs": 2.0844047826086953,
+          "passes": {
+            "Shadow depth": 0.10882985507246376,
+            "Environment background": 0.025959585921325048,
+            "Forward HDR": 1.6671455486542448,
+            "Tone mapping": 0.1068156314699792,
+            "UI overlay": 0.04766335403726712,
+            "Texture readback copy": 0.127990807453416
+          }
+        },
+        "scene": {
+          "frames": 515,
+          "enabled": false,
+          "meanGpuPassMs": 0,
+          "passes": {}
+        }
+      }
+    },
+    {
+      "name": "gpu-both-on",
+      "sources": {
+        "game": {
+          "frames": 491,
+          "enabled": true,
+          "meanGpuPassMs": 2.073695295315683,
+          "passes": {
+            "Shadow depth": 0.10924105906313629,
+            "Environment background": 0.028243095723014283,
+            "Forward HDR": 1.6627226069246444,
+            "Tone mapping": 0.10651655804480652,
+            "UI overlay": 0.03896276985743377,
+            "Texture readback copy": 0.1280092057026475
+          }
+        },
+        "scene": {
+          "frames": 521,
+          "enabled": true,
+          "meanGpuPassMs": 1.299973320537428,
+          "passes": {
+            "Shadow depth": 0.16616547024952003,
+            "Environment background": 0.019004184261036484,
+            "Forward HDR": 1.057015393474089,
+            "Tone mapping": 0.037202149712092146,
+            "UI overlay": 0.008298675623800373,
+            "Texture readback copy": 0.012287447216890601
+          }
+        }
+      }
+    },
+    {
+      "name": "gpu-scene-only",
+      "sources": {
+        "game": {
+          "frames": 486,
+          "enabled": false,
+          "meanGpuPassMs": 0,
+          "passes": {}
+        },
+        "scene": {
+          "frames": 523,
+          "enabled": true,
+          "meanGpuPassMs": 1.3066387762906317,
+          "passes": {
+            "Shadow depth": 0.15181954110898674,
+            "Environment background": 0.018361242829827932,
+            "Forward HDR": 1.0727204780114719,
+            "Tone mapping": 0.04414531548757171,
+            "UI overlay": 0.007387304015296378,
+            "Texture readback copy": 0.012204894837476108
+          }
+        }
+      }
+    },
+    {
+      "name": "gpu-off-again",
+      "sources": {
+        "game": {
+          "frames": 477,
+          "enabled": false,
+          "meanGpuPassMs": 0,
+          "passes": {}
+        },
+        "scene": {
+          "frames": 516,
+          "enabled": false,
+          "meanGpuPassMs": 0,
+          "passes": {}
+        }
+      }
+    }
+  ],
+  "pausedGpuToggles": [
+    {
+      "enabled": true,
+      "frames": 1
+    },
+    {
+      "enabled": false,
+      "frames": 1
+    }
+  ],
+  "activeCaptures": [
+    {
+      "target": "game",
+      "file": "active-game.png",
+      "width": 1280,
+      "height": 720,
+      "elapsedMs": 329
+    },
+    {
+      "target": "scene",
+      "file": "active-scene.png",
+      "width": 408,
+      "height": 804,
+      "elapsedMs": 261
+    }
+  ],
+  "captureRecovery": {
+    "scene": 54,
+    "game": 53
+  },
+  "pixelOracle": {
+    "scenePixels": 230400,
+    "previewPixels": 57600,
+    "sceneChanged": 173,
+    "previewChanged": 65
+  },
+  "shutdown": {
+    "pid": 72248,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\rpg-multiview-gpu-controls-embedded-1791942191777\\runtime\\com.mengine.editor.agent-KQ9sn1 '\\\\?\\D:\\MEngineNativeQA\\rpg-multiview-gpu-controls-embedded-1791942191777\\runtime\\com.mengine.editor.agent-KQ9sn1'"
+  },
+  "author": "MiYu",
+  "fixture": "3098765",
+  "reportPath": "D:\\MEngineNativeQA\\rpg-multiview-gpu-controls-embedded-1791942191777\\report.json",
+  "runner": "D:/MEngineNativeQA/verify-gpu-controls-release.mjs",
+  "stageSeconds": 10,
+  "embeddedFrontend": true,
+  "editorSize": [
+    2560,
+    1440
+  ],
+  "gameRequestedSize": [
+    1920,
+    1080
+  ],
+  "gamePresentedSize": [
+    1225,
+    689
+  ],
+  "msaaSamples": 4,
+  "consoleErrorCount": 0,
+  "tests": {
+    "frontendPassed": 37,
+    "rhiGpuPassed": 7,
+    "nativeSettingsPassed": 1,
+    "hostViewportPassed": 5,
+    "hostViewportIgnored": 1,
+    "quickJsCheckPassed": true
+  },
+  "stages": [
+    {
+      "name": "gpu-off",
+      "longTaskMs": 0,
+      "sources": {
+        "game": {
+          "totalMs": {
+            "n": 480,
+            "mean": 8.678465833333329,
+            "p50": 8.326,
+            "p95": 11.5494
+          },
+          "presentIntervalMs": {
+            "n": 480,
+            "mean": 21.814999999602637,
+            "p50": 18.90000009536743,
+            "p95": 34.59999990463257
+          },
+          "transportMs": {
+            "n": 480,
+            "mean": 15.686875000099342,
+            "p50": 15,
+            "p95": 21.5
+          },
+          "uploadMs": {
+            "n": 480,
+            "mean": 0.37854166626930236,
+            "p50": 0.39999985694885254,
+            "p95": 0.5
+          },
+          "workerQueueMs": {
+            "n": 480,
+            "mean": 0.009295208333333341,
+            "p50": 0.008199999999999999,
+            "p95": 0.016
+          },
+          "worldLockWaitMs": {
+            "n": 480,
+            "mean": 0.0001285416666666661,
+            "p50": 9.999999999999999e-05,
+            "p95": 0.00019999999999999998
+          }
+        },
+        "scene": {
+          "totalMs": {
+            "n": 514,
+            "mean": 5.209981712062258,
+            "p50": 4.8607,
+            "p95": 8.1633
+          },
+          "presentIntervalMs": {
+            "n": 514,
+            "mean": 20.338326847970716,
+            "p50": 18.5,
+            "p95": 26.600000143051147
+          },
+          "transportMs": {
+            "n": 514,
+            "mean": 10.507198450630277,
+            "p50": 8.599999904632568,
+            "p95": 15
+          },
+          "uploadMs": {
+            "n": 514,
+            "mean": 0.34630350287322403,
+            "p50": 0.2999999523162842,
+            "p95": 0.40000009536743164
+          },
+          "workerQueueMs": {
+            "n": 514,
+            "mean": 0.01013093385214008,
+            "p50": 0.0084,
+            "p95": 0.0156
+          },
+          "worldLockWaitMs": {
+            "n": 514,
+            "mean": 0.0002182879377431889,
+            "p50": 0.00019999999999999998,
+            "p95": 0.00039999999999999996
+          }
+        }
+      }
+    },
+    {
+      "name": "gpu-game-on",
+      "longTaskMs": 0,
+      "sources": {
+        "game": {
+          "totalMs": {
+            "n": 483,
+            "mean": 8.692832298136656,
+            "p50": 8.2809,
+            "p95": 11.383799999999999
+          },
+          "presentIntervalMs": {
+            "n": 483,
+            "mean": 21.422153208813558,
+            "p50": 19.199999809265137,
+            "p95": 32.60000014305115
+          },
+          "transportMs": {
+            "n": 483,
+            "mean": 16.471842645364767,
+            "p50": 15,
+            "p95": 21.700000047683716
+          },
+          "uploadMs": {
+            "n": 483,
+            "mean": 0.3869565263791607,
+            "p50": 0.39999985694885254,
+            "p95": 0.5
+          },
+          "workerQueueMs": {
+            "n": 483,
+            "mean": 0.009802070393374754,
+            "p50": 0.0081,
+            "p95": 0.0168
+          },
+          "worldLockWaitMs": {
+            "n": 483,
+            "mean": 0.00012256728778467854,
+            "p50": 9.999999999999999e-05,
+            "p95": 0.00019999999999999998
+          }
+        },
+        "scene": {
+          "totalMs": {
+            "n": 515,
+            "mean": 5.256204466019413,
+            "p50": 4.8621,
+            "p95": 8.279399999999999
+          },
+          "presentIntervalMs": {
+            "n": 515,
+            "mean": 20.0749514561255,
+            "p50": 18.5,
+            "p95": 25.600000143051147
+          },
+          "transportMs": {
+            "n": 515,
+            "mean": 10.113398058900556,
+            "p50": 8.5,
+            "p95": 13.899999856948853
+          },
+          "uploadMs": {
+            "n": 515,
+            "mean": 0.3087378696330543,
+            "p50": 0.2999999523162842,
+            "p95": 0.40000009536743164
+          },
+          "workerQueueMs": {
+            "n": 515,
+            "mean": 0.011012233009708737,
+            "p50": 0.0085,
+            "p95": 0.0177
+          },
+          "worldLockWaitMs": {
+            "n": 515,
+            "mean": 0.00021165048543689128,
+            "p50": 0.00019999999999999998,
+            "p95": 0.0003
+          }
+        }
+      }
+    },
+    {
+      "name": "gpu-both-on",
+      "longTaskMs": 0,
+      "sources": {
+        "game": {
+          "totalMs": {
+            "n": 491,
+            "mean": 8.658305295315678,
+            "p50": 8.259,
+            "p95": 11.5868
+          },
+          "presentIntervalMs": {
+            "n": 490,
+            "mean": 20.869999999902685,
+            "p50": 18.90000009536743,
+            "p95": 32.200000047683716
+          },
+          "transportMs": {
+            "n": 491,
+            "mean": 15.331975556682423,
+            "p50": 14.700000047683716,
+            "p95": 20.59999990463257
+          },
+          "uploadMs": {
+            "n": 491,
+            "mean": 0.38085539617752107,
+            "p50": 0.39999985694885254,
+            "p95": 0.5
+          },
+          "workerQueueMs": {
+            "n": 491,
+            "mean": 0.009277596741344209,
+            "p50": 0.008,
+            "p95": 0.0163
+          },
+          "worldLockWaitMs": {
+            "n": 491,
+            "mean": 0.00011955193482688355,
+            "p50": 9.999999999999999e-05,
+            "p95": 0.00019999999999999998
+          }
+        },
+        "scene": {
+          "totalMs": {
+            "n": 521,
+            "mean": 5.2141017274472174,
+            "p50": 4.806699999999999,
+            "p95": 8.1043
+          },
+          "presentIntervalMs": {
+            "n": 520,
+            "mean": 19.668846153754455,
+            "p50": 18.5,
+            "p95": 25.299999952316284
+          },
+          "transportMs": {
+            "n": 521,
+            "mean": 9.37946257710228,
+            "p50": 8.400000095367432,
+            "p95": 13
+          },
+          "uploadMs": {
+            "n": 521,
+            "mean": 0.3095969279759676,
+            "p50": 0.2999999523162842,
+            "p95": 0.40000009536743164
+          },
+          "workerQueueMs": {
+            "n": 521,
+            "mean": 0.010629942418426106,
+            "p50": 0.0084,
+            "p95": 0.0172
+          },
+          "worldLockWaitMs": {
+            "n": 521,
+            "mean": 0.00020383877159308844,
+            "p50": 0.00019999999999999998,
+            "p95": 0.0003
+          }
+        }
+      }
+    },
+    {
+      "name": "gpu-scene-only",
+      "longTaskMs": 0,
+      "sources": {
+        "game": {
+          "totalMs": {
+            "n": 486,
+            "mean": 8.656333744855965,
+            "p50": 8.287700000000001,
+            "p95": 11.3792
+          },
+          "presentIntervalMs": {
+            "n": 486,
+            "mean": 21.157818930139268,
+            "p50": 19.299999952316284,
+            "p95": 32
+          },
+          "transportMs": {
+            "n": 486,
+            "mean": 15.59835390985748,
+            "p50": 15,
+            "p95": 20.799999952316284
+          },
+          "uploadMs": {
+            "n": 486,
+            "mean": 0.4300411512822281,
+            "p50": 0.39999985694885254,
+            "p95": 0.5
+          },
+          "workerQueueMs": {
+            "n": 486,
+            "mean": 0.00931358024691359,
+            "p50": 0.0081,
+            "p95": 0.0159
+          },
+          "worldLockWaitMs": {
+            "n": 486,
+            "mean": 0.00011851851851851806,
+            "p50": 9.999999999999999e-05,
+            "p95": 0.00019999999999999998
+          }
+        },
+        "scene": {
+          "totalMs": {
+            "n": 523,
+            "mean": 5.256735755258125,
+            "p50": 4.8502,
+            "p95": 7.9427
+          },
+          "presentIntervalMs": {
+            "n": 523,
+            "mean": 19.630975143403443,
+            "p50": 18.299999952316284,
+            "p95": 25.200000047683716
+          },
+          "transportMs": {
+            "n": 523,
+            "mean": 10.140535363731603,
+            "p50": 8.799999952316284,
+            "p95": 13.5
+          },
+          "uploadMs": {
+            "n": 523,
+            "mean": 0.3099426379851128,
+            "p50": 0.2999999523162842,
+            "p95": 0.40000009536743164
+          },
+          "workerQueueMs": {
+            "n": 523,
+            "mean": 0.009943977055449329,
+            "p50": 0.0084,
+            "p95": 0.0134
+          },
+          "worldLockWaitMs": {
+            "n": 523,
+            "mean": 0.0002130019120458874,
+            "p50": 0.00019999999999999998,
+            "p95": 0.00039999999999999996
+          }
+        }
+      }
+    },
+    {
+      "name": "gpu-off-again",
+      "longTaskMs": 0,
+      "sources": {
+        "game": {
+          "totalMs": {
+            "n": 477,
+            "mean": 8.73760733752621,
+            "p50": 8.3526,
+            "p95": 11.581199999999999
+          },
+          "presentIntervalMs": {
+            "n": 476,
+            "mean": 21.660714285714285,
+            "p50": 19.299999952316284,
+            "p95": 35
+          },
+          "transportMs": {
+            "n": 477,
+            "mean": 16.12704402545713,
+            "p50": 15.100000143051147,
+            "p95": 23.799999952316284
+          },
+          "uploadMs": {
+            "n": 477,
+            "mean": 0.3964360550014728,
+            "p50": 0.39999985694885254,
+            "p95": 0.5
+          },
+          "workerQueueMs": {
+            "n": 477,
+            "mean": 0.009761844863731668,
+            "p50": 0.008199999999999999,
+            "p95": 0.015000000000000001
+          },
+          "worldLockWaitMs": {
+            "n": 477,
+            "mean": 0.00012180293501048172,
+            "p50": 9.999999999999999e-05,
+            "p95": 0.00019999999999999998
+          }
+        },
+        "scene": {
+          "totalMs": {
+            "n": 516,
+            "mean": 5.214086627906974,
+            "p50": 4.9101,
+            "p95": 7.468
+          },
+          "presentIntervalMs": {
+            "n": 516,
+            "mean": 20.01589147296063,
+            "p50": 18.40000009536743,
+            "p95": 25.699999809265137
+          },
+          "transportMs": {
+            "n": 516,
+            "mean": 10.89825582365657,
+            "p50": 9.399999856948853,
+            "p95": 15.400000095367432
+          },
+          "uploadMs": {
+            "n": 516,
+            "mean": 0.3091085345246071,
+            "p50": 0.2999999523162842,
+            "p95": 0.40000009536743164
+          },
+          "workerQueueMs": {
+            "n": 516,
+            "mean": 0.01038217054263565,
+            "p50": 0.0087,
+            "p95": 0.016399999999999998
+          },
+          "worldLockWaitMs": {
+            "n": 516,
+            "mean": 0.0002149224806201532,
+            "p50": 0.00019999999999999998,
+            "p95": 0.0003
+          }
+        }
+      }
+    }
+  ],
+  "finalPackagedAcceptance": {
+    "passed": true,
+    "recordingControlLayout": {
+      "width": 13,
+      "height": 13,
+      "labelHeight": 13.333333969116211
+    },
+    "gpuRecordingStages": [
+      {
+        "name": "gpu-off",
+        "sources": {
+          "game": {
+            "frames": 95,
+            "enabled": false,
+            "meanGpuPassMs": 0,
+            "passes": {}
+          },
+          "scene": {
+            "frames": 105,
+            "enabled": false,
+            "meanGpuPassMs": 0,
+            "passes": {}
+          }
+        }
+      },
+      {
+        "name": "gpu-game-on",
+        "sources": {
+          "game": {
+            "frames": 100,
+            "enabled": true,
+            "meanGpuPassMs": 2.0512183999999998,
+            "passes": {
+              "Shadow depth": 0.10602520000000006,
+              "Environment background": 0.025985599999999998,
+              "Forward HDR": 1.6515419999999998,
+              "Tone mapping": 0.1035832,
+              "UI overlay": 0.038392399999999986,
+              "Texture readback copy": 0.12569000000000002
+            }
+          },
+          "scene": {
+            "frames": 106,
+            "enabled": false,
+            "meanGpuPassMs": 0,
+            "passes": {}
+          }
+        }
+      },
+      {
+        "name": "gpu-both-on",
+        "sources": {
+          "game": {
+            "frames": 99,
+            "enabled": true,
+            "meanGpuPassMs": 2.077551010101011,
+            "passes": {
+              "Shadow depth": 0.10747676767676771,
+              "Environment background": 0.025951111111111102,
+              "Forward HDR": 1.676700909090909,
+              "Tone mapping": 0.10352161616161616,
+              "UI overlay": 0.03835878787878787,
+              "Texture readback copy": 0.1255418181818182
+            }
+          },
+          "scene": {
+            "frames": 105,
+            "enabled": true,
+            "meanGpuPassMs": 1.303161619047619,
+            "passes": {
+              "Shadow depth": 0.16234800000000002,
+              "Environment background": 0.01938704761904762,
+              "Forward HDR": 1.0565913333333334,
+              "Tone mapping": 0.03729676190476192,
+              "UI overlay": 0.015216952380952374,
+              "Texture readback copy": 0.01232152380952381
+            }
+          }
+        }
+      },
+      {
+        "name": "gpu-scene-only",
+        "sources": {
+          "game": {
+            "frames": 100,
+            "enabled": false,
+            "meanGpuPassMs": 0,
+            "passes": {}
+          },
+          "scene": {
+            "frames": 105,
+            "enabled": true,
+            "meanGpuPassMs": 1.3449336190476187,
+            "passes": {
+              "Shadow depth": 0.17386514285714283,
+              "Environment background": 0.03087038095238095,
+              "Forward HDR": 1.0829200000000003,
+              "Tone mapping": 0.03726971428571426,
+              "UI overlay": 0.007500952380952384,
+              "Texture readback copy": 0.012507428571428565
+            }
+          }
+        }
+      },
+      {
+        "name": "gpu-off-again",
+        "sources": {
+          "game": {
+            "frames": 99,
+            "enabled": false,
+            "meanGpuPassMs": 0,
+            "passes": {}
+          },
+          "scene": {
+            "frames": 105,
+            "enabled": false,
+            "meanGpuPassMs": 0,
+            "passes": {}
+          }
+        }
+      }
+    ],
+    "pausedGpuToggles": [
+      {
+        "enabled": true,
+        "frames": 1
+      },
+      {
+        "enabled": false,
+        "frames": 1
+      }
+    ],
+    "activeCaptures": [
+      {
+        "target": "game",
+        "file": "active-game.png",
+        "width": 1280,
+        "height": 720,
+        "elapsedMs": 295
+      },
+      {
+        "target": "scene",
+        "file": "active-scene.png",
+        "width": 408,
+        "height": 804,
+        "elapsedMs": 276
+      }
+    ],
+    "captureRecovery": {
+      "scene": 52,
+      "game": 46
+    },
+    "pixelOracle": {
+      "scenePixels": 230400,
+      "previewPixels": 57600,
+      "sceneChanged": 146,
+      "previewChanged": 82
+    },
+    "shutdown": {
+      "pid": 108928,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\rpg-multiview-gpu-controls-final-1791942697828\\runtime\\com.mengine.editor.agent-qqxYbD '\\\\?\\D:\\MEngineNativeQA\\rpg-multiview-gpu-controls-final-1791942697828\\runtime\\com.mengine.editor.agent-qqxYbD'"
+    },
+    "stageSeconds": 2,
+    "reportPath": "D:\\MEngineNativeQA\\rpg-multiview-gpu-controls-final-1791942697828\\report.json",
+    "executableSha256": "5B03F8ACEB1CF05A3EE6D40F9D5B8E3EC8493C44E71D9568B1E2946B2D1E47AE",
+    "releaseDirectory": "D:/MEngineNativeQA/releases/editor-gpu-recording-20261014",
+    "consoleErrorCount": 0,
+    "screenshotInspected": true
+  }
+}
