@@ -1,6 +1,7 @@
 // Author: MiYu. Editor Scene/Game drawing and interaction with owned native frame presentation.
 import { useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { dollySceneCamera, flySceneCamera, sceneNavigationKeys } from '../sceneNavigation';
 import { listen } from '@tauri-apps/api/event';
 import {
   AlignHorizontalSpaceAround,
@@ -51,7 +52,7 @@ import {
 } from '../math3d';
 import { clearModelPreview, modelPreview, type PreviewMesh } from '../modelPreview';
 import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
-import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGamePreviewSize, nativeSceneWorldReference, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
+import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGameRequestInterval, nativeGamePreviewSize, nativeSceneWorldReference, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
 import { releaseNativeViewportFrame, requestRevisionedNativeViewportFrame } from '../nativeViewportTransport';
 import {
   clearMaterialPreviews,
@@ -1094,10 +1095,16 @@ export function Viewport(props: {
     pivot: [...props.sceneCamera.pivot] as Vec3,
   });
   const draggingRef = useRef(false);
+  const navigationScaleRef = useRef(Math.max(1, props.sceneCamera.distance));
+  const navigationKeysRef = useRef(new Set<string>());
+  const navigationFastRef = useRef(false);
+  const navigationTimeRef = useRef(0);
+  useEffect(() => { navigationKeysRef.current.clear(); navigationTimeRef.current = 0; }, [props.tab]);
 
   // Only pull camera from props when NOT dragging (store is source of truth otherwise)
   useEffect(() => {
     if (draggingRef.current) return;
+    if (props.sceneCamera.distance !== liveCam.current.distance || props.sceneCamera.pivot.some((value, axis) => value !== liveCam.current.pivot[axis])) navigationScaleRef.current = Math.max(1, props.sceneCamera.distance);
     liveCam.current = {
       yaw: props.sceneCamera.yaw,
       pitch: props.sceneCamera.pitch,
@@ -1372,7 +1379,12 @@ export function Viewport(props: {
   // Continuous render loop
   useEffect(() => {
     let raf = 0;
-    const frame = () => {
+    const frame = (now: number) => {
+      if (propsRef.current.tab === 'scene' && !scene2DRef.current && document.activeElement === canvasRef.current && navigationKeysRef.current.size) {
+        const next = flySceneCamera(liveCam.current, navigationKeysRef.current, navigationTimeRef.current ? (now - navigationTimeRef.current) / 1000 : 0, navigationScaleRef.current, navigationFastRef.current);
+        if (next !== liveCam.current) { liveCam.current = next; syncCamToStore(); }
+      }
+      navigationTimeRef.current = now;
       paint(true);
       raf = requestAnimationFrame(frame);
     };
@@ -1410,17 +1422,18 @@ export function Viewport(props: {
     previousScenePaintRef.current = scenePaintState;
     const requestedProps = currentViewportProps();
     let p = requestedProps;
-    const worldKey = JSON.stringify([requestedProps.clearColor, requestedProps.simulationTime]);
-    const cachedWorld = editScene && requestedProps.runtimeSessionId == null ? sceneWorldArgsRef.current : null;
+    const worldKey = JSON.stringify([requestedProps.tab, requestedProps.clearColor, requestedProps.simulationTime]);
+    const cacheEditWorld = !requestedProps.playing && requestedProps.runtimeSessionId == null;
+    const cachedWorld = cacheEditWorld ? sceneWorldArgsRef.current : null;
     const nativeWorld = cachedWorld?.source === requestedProps.entities && cachedWorld.key === worldKey ? cachedWorld.args : createNativeViewportWorldArgs(requestedProps, requestedProps.tab === 'scene');
-    if (editScene && requestedProps.runtimeSessionId == null) sceneWorldArgsRef.current = { source: requestedProps.entities, key: worldKey, args: nativeWorld };
+    if (cacheEditWorld) sceneWorldArgsRef.current = { source: requestedProps.entities, key: worldKey, args: nativeWorld };
     else sceneWorldArgsRef.current = null;
     const requestWorldFrame = (command: string, args: Record<string, unknown>) => {
-      const retainedScene = editScene && command === 'render_native_scene_view';
+      const retainedEdit = cacheEditWorld && (command === 'render_native_game_view' || editScene && command === 'render_native_scene_view');
       const sceneView = command === 'render_native_scene_view' && (args.request as { cameraEntity?: number } | undefined)?.cameraEntity == null;
-      const worldArgs = retainedScene ? nativeWorld.sceneWorldArgs() : sceneView ? nativeWorld.scenePlayWorldArgs() : nativeWorld.worldArgs();
+      const worldArgs = retainedEdit ? nativeWorld.sceneWorldArgs() : sceneView ? nativeWorld.scenePlayWorldArgs() : nativeWorld.worldArgs();
       nativeWorld.frameWorld();
-      return requestRevisionedNativeViewportFrame(command, { ...args, ...worldArgs }, nativeWorld.snapshotArgs).then(buffer => { if (retainedScene) nativeWorld.markSceneWorldUploaded(); return buffer; });
+      return requestRevisionedNativeViewportFrame(command, { ...args, ...worldArgs }, nativeWorld.snapshotArgs).then(buffer => { if (retainedEdit) nativeWorld.markSceneWorldUploaded(); return buffer; });
     };
     const presentationKey = JSON.stringify([p.gameResolution, p.gameDisplay]);
     if (nativeGameFrameRef.current && (!nativeViewportFrameWorldCurrent(nativeGameFrameRef.current.world, requestedProps) || nativeGameFrameRef.current.presentationKey !== presentationKey)) nativeGameFrameRef.current = null;
@@ -1459,18 +1472,20 @@ export function Viewport(props: {
       : { x: 0, y: 0, w: pw, h: ph };
     lastVpRef.current = vp;
 
+    const gameRequestKey = JSON.stringify([presentationKey, vp.w, vp.h, dpr, nativeGpuTimingRevisionRef.current]);
+    const gameRequestInterval = nativeGameRequestInterval(!!p.playing, nativeGameFrameRef.current, p, gameRequestKey);
     if (
       isGame
       && '__TAURI_INTERNALS__' in window
       && !nativeGameRequestRef.current.inFlight
-      && now - nativeGameRequestRef.current.lastRequestAt >= (p.playing ? 1000 / 60 : 300)
+      && now - nativeGameRequestRef.current.lastRequestAt >= gameRequestInterval
       && (!p.playing || !nativeGameFrameMatchesRequest(nativeGameFrameRef.current, nativeWorld.worldArgs(), JSON.stringify([presentationKey, vp.w, vp.h, dpr, nativeGpuTimingRevisionRef.current])))
     ) {
       const request = nativeGameRequestRef.current;
       if (request.resumeTimer != null) window.clearTimeout(request.resumeTimer);
       request.resumeTimer = null;
       const generation = ++request.generation;
-      const requestKey = JSON.stringify([presentationKey, vp.w, vp.h, dpr, nativeGpuTimingRevisionRef.current]);
+      const requestKey = gameRequestKey;
       request.inFlight = true;
       request.lastRequestAt = now;
       // Fixed-pixel Canvas layouts depend on the selected resolution, even in a small panel.
@@ -1480,7 +1495,7 @@ export function Viewport(props: {
         .then((buffer) => {
           if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
           const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
-          recordNativeViewportProfile('game', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
+          recordNativeViewportProfile('game', { ...result.profile, updateMode: p.playing ? 'live' : gameRequestInterval ? 'edit-poll' : 'edit-change', pollIntervalMs: p.playing ? undefined : 300, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
           const image = result.image;
           const firstFrame = nativeGameFrameRef.current == null;
           nativeGameFrameRef.current = {
@@ -1510,7 +1525,8 @@ export function Viewport(props: {
         .finally(() => {
           request.inFlight = false;
           request.ready = null;
-          if (request.generation !== generation || request.reportedError || propsRef.current.tab !== 'game' || !propsRef.current.playing) return;
+          if (request.generation !== generation || request.reportedError || propsRef.current.tab !== 'game') return;
+          if (!propsRef.current.playing) { paint(); return; }
           request.resumeTimer = window.setTimeout(() => {
             request.resumeTimer = null;
             if (request.generation === generation && propsRef.current.tab === 'game' && propsRef.current.playing) paint();
@@ -1522,7 +1538,7 @@ export function Viewport(props: {
     let nativeGamePaint = false;
     if (isGame) {
       const frame = nativeGameFrameRef.current;
-      const gamePaintState = { frame, surface: canvas, key: JSON.stringify([presentationKey, vp.x, vp.y, vp.w, vp.h, dpr, uiHoverRef.current, uiPressRef.current, environmentPreviewRevision()]), epoch: scenePaintEpochRef.current, browserRendering: frame == null || nativeGameRequestRef.current.reportedError || nativePresentationRef.current(frame.world).requiresBrowserSnapshot };
+      const gamePaintState = { frame, surface: canvas, key: JSON.stringify([presentationKey, vp.x, vp.y, vp.w, vp.h, dpr, uiHoverRef.current, uiPressRef.current, environmentPreviewRevision()]), epoch: scenePaintEpochRef.current, browserRendering: frame == null || nativeGameRequestRef.current.reportedError || nativePresentationRef.current(frame.world).hasSpine || !!p.playing && nativePresentationRef.current(frame.world).requiresBrowserSnapshot };
       if (nativeGamePaintUnchanged(previousGamePaintRef.current, gamePaintState)) return;
       previousGamePaintRef.current = gamePaintState;
       nativeGamePaint = !gamePaintState.browserRendering;
@@ -4127,7 +4143,7 @@ export function Viewport(props: {
           liveCam.current.distance,
         );
         const { right, up } = lookBasis(eye, liveCam.current.pivot);
-        const sens = liveCam.current.distance * 0.0025;
+        const sens = Math.max(liveCam.current.distance, navigationScaleRef.current * 0.1, 1) * 0.0025;
         liveCam.current.pivot = add(
           liveCam.current.pivot,
           add(vscale(right, -dx * sens), vscale(up, dy * sens)),
@@ -4665,8 +4681,8 @@ export function Viewport(props: {
       });
       return;
     }
-    const factor = ev.deltaY > 0 ? 1.12 : 0.9;
-    liveCam.current.distance = clampSceneCameraDistance(liveCam.current.distance * factor);
+    if (scene2DRef.current) liveCam.current.distance = clampSceneCameraDistance(liveCam.current.distance * (ev.deltaY > 0 ? 1.12 : 0.9));
+    else liveCam.current = dollySceneCamera(liveCam.current, ev.deltaY * (ev.deltaMode === 1 ? 16 : ev.deltaMode === 2 ? 800 : 1), navigationScaleRef.current);
     syncCamToStore();
   };
 
@@ -4904,7 +4920,7 @@ export function Viewport(props: {
         propsRef.current.onRectNudge?.(dx, dy);
         return;
       }
-      if (ev.key === 'f' || ev.key === 'F') propsRef.current.onFrame();
+
     };
     const onKeyUp = (ev: KeyboardEvent) => {
       if (ev.code === 'Space') {
@@ -4915,6 +4931,7 @@ export function Viewport(props: {
       if (!heldNudgeKeys.size) propsRef.current.onEndGesture();
     };
     const onBlur = () => {
+      navigationKeysRef.current.clear(); navigationFastRef.current = false;
       spacePressedRef.current = false;
       endNudge();
     };
@@ -5581,18 +5598,29 @@ export function Viewport(props: {
         onMouseMove={sendPlayPointer}
         onMouseUp={sendPlayPointer}
         onMouseLeave={() => { if (props.tab === 'game') props.onPlayInput?.({ buttons: [] }); }}
+        onDoubleClick={(event) => { if (props.tab === 'scene' && !scene2DRef.current) { event.preventDefault(); props.onFrame(); } }}
         onKeyDown={(event) => {
-          if (props.tab !== 'game' || !props.playing || event.ctrlKey || event.metaKey || event.altKey) return;
+          if (props.tab === 'scene' && !event.ctrlKey && !event.metaKey && !event.altKey && !event.nativeEvent.isComposing) {
+            navigationFastRef.current = event.shiftKey;
+            if ((!scene2DRef.current && event.code === 'Space') || event.code === 'KeyF') {
+              event.preventDefault(); event.stopPropagation(); if (!event.repeat) props.onFrame(); return;
+            }
+            if (!scene2DRef.current && sceneNavigationKeys.has(event.code)) {
+              navigationKeysRef.current.add(event.code); event.preventDefault(); event.stopPropagation(); return;
+            }
+          }
+          if (props.tab !== 'game'  || !props.playing || event.ctrlKey || event.metaKey || event.altKey) return;
           event.preventDefault();
           event.stopPropagation();
           playKeysRef.current.add(event.code || (event.key.length === 1 ? `Key${event.key.toUpperCase()}` : event.key));
           props.onPlayInput?.({ keys: [...playKeysRef.current] });
         }}
         onKeyUp={(event) => {
+          navigationKeysRef.current.delete(event.code); navigationFastRef.current = event.shiftKey;
           playKeysRef.current.delete(event.code || (event.key.length === 1 ? `Key${event.key.toUpperCase()}` : event.key));
           if (props.tab === 'game') props.onPlayInput?.({ keys: [...playKeysRef.current] });
         }}
-        onBlur={() => { playKeysRef.current.clear(); if (props.tab === 'game') props.onPlayInput?.({ keys: [], buttons: [] }); }}
+        onBlur={() => { navigationKeysRef.current.clear(); navigationFastRef.current = false; playKeysRef.current.clear(); if (props.tab === 'game') props.onPlayInput?.({ keys: [], buttons: [] }); }}
         onContextMenu={(e) => e.preventDefault()}
         onWheel={onWheel}
         onDragEnter={(event) => {

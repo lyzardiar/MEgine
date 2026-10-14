@@ -1,3 +1,6 @@
+import { loadModelPreview } from './modelPreview';
+import { sceneFrameEntities } from './sceneFraming';
+import { pointBounds, type Bounds } from './viewportSpatial';
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { WorldSnapshotView } from '@mengine/api';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -255,6 +258,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const store = useMemo(() => createEditorStore(undoService), [undoService]);
   const [, setUndoRevision] = useState(undoService.revision);
   const [snap, setSnap] = useState<WorldSnapshotView & { selectedIds?: number[] }>(() => store.snapshot());
+  const frameWorldRef = useRef(snap.entities); frameWorldRef.current = snap.entities;
+  const frameRequestRef = useRef(0);
+  const frameSelectionRef = useRef<() => void>(() => {});
   const [mode, setMode] = useState<EditorMode>('edit');
   const [gizmo, setGizmo] = useState<GizmoMode>('translate');
   const [pivotMode, setPivotMode] = useState<ToolPivotMode>(
@@ -809,6 +815,24 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (!props.detachedPanel) agentBridge.observeSelection();
     broadcastScene();
   };
+
+  const publishSceneCamera = (partial: Partial<SceneCamera>) => {
+    store.setSceneCamera(partial);
+    setCameraTick(tick => tick + 1);
+    if (syncReady.current && !applyingRemote.current && booted.current) syncChannel.current?.postMessage({ type: 'scene-camera', sender: syncSender.current, sceneName: sceneNameRef.current, camera: store.sceneCamera } satisfies WorkspaceSyncMessage);
+  };
+  const frameSelection = async () => {
+    const request = ++frameRequestRef.current, entities = frameWorldRef.current, selected = store.selectedIds;
+    const cameraKey = JSON.stringify(store.sceneCamera);
+    const paths = [...new Set(sceneFrameEntities(entities, selected).map(entity => String((entity.components.MeshRenderer as { mesh?: string } | undefined)?.mesh ?? '')).filter(path => /\.(gltf|glb)$/i.test(path)))];
+    const models = new Map<string, Bounds>();
+    await Promise.all(paths.map(async path => { const mesh = await loadModelPreview(path), bounds = mesh && pointBounds(mesh.positions); if (bounds) models.set(path, bounds); }));
+    if (request !== frameRequestRef.current || entities !== frameWorldRef.current || JSON.stringify(selected) !== JSON.stringify(store.selectedIds) || cameraKey !== JSON.stringify(store.sceneCamera)) return;
+    const rect = document.querySelector<HTMLCanvasElement>('canvas[data-scene-viewport="true"]')?.getBoundingClientRect();
+    store.frameSelected(rect && rect.height > 0 ? rect.width / rect.height : 1, models);
+    publishSceneCamera(store.sceneCamera);
+  };
+  frameSelectionRef.current = () => { void frameSelection(); };
 
   const postTimelinePreview = (preview: TimelineScenePreview | null) => {
     syncChannel.current?.postMessage({
@@ -2824,8 +2848,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       }
       if (e.key === 'f' || e.key === 'F') {
         e.preventDefault();
-        store.frameSelected();
-        refresh();
+        frameSelectionRef.current();
         return;
       }
       const sceneViewportFocused =
@@ -2834,25 +2857,25 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       if (e.key === 'ArrowUp') {
         e.preventDefault();
         store.navigateVisible(-1);
-        refresh();
+        refreshSelection();
         return;
       }
       if (e.key === 'ArrowDown') {
         e.preventDefault();
         store.navigateVisible(1);
-        refresh();
+        refreshSelection();
         return;
       }
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
         store.navigateHorizontal(-1);
-        refresh();
+        refreshSelection();
         return;
       }
       if (e.key === 'ArrowRight') {
         e.preventDefault();
         store.navigateHorizontal(1);
-        refresh();
+        refreshSelection();
         return;
       }
       if (e.key === 'w' || e.key === 'W') {
@@ -2983,12 +3006,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               pendingRenameId={pendingRenameId}
               onFilter={setHierFilter}
               onPendingRenameConsumed={() => setPendingRenameId(null)}
+              onSelectionChange={refreshSelection}
               onRefresh={refresh}
               onLog={log}
-              onFrame={() => {
-                store.frameSelected();
-                refresh();
-              }}
+              onFrame={() => frameSelectionRef.current()}
               onInstantiatePrefab={(path, parent) => {
                 void instantiateProjectPrefab(store, path, parent)
                   .then(() => {
@@ -3045,11 +3066,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 store.selectMany(next, 'replace');
                 refreshSelection();
               }}
-              onSceneCamera={(partial) => {
-                store.setSceneCamera(partial);
-                setCameraTick(tick => tick + 1);
-                if (syncReady.current && !applyingRemote.current && booted.current) syncChannel.current?.postMessage({ type: 'scene-camera', sender: syncSender.current, sceneName: sceneNameRef.current, camera: store.sceneCamera } satisfies WorkspaceSyncMessage);
-              }}
+              onSceneCamera={publishSceneCamera}
               onBeginGesture={() => store.beginTransformGesture()}
               onEndGesture={() => store.endTransformGesture()}
               onLinePointChange={(entity, points) => {
@@ -3198,10 +3215,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 persistGameViewPrefs();
                 refresh();
               }}
-              onFrame={() => {
-                store.frameSelected();
-                refresh();
-              }}
+              onFrame={() => frameSelectionRef.current()}
               onInstantiatePrefab={(path, position) => {
                 void instantiateProjectPrefab(store, path, null, position)
                   .then((entity) => {
