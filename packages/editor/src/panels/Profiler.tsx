@@ -383,7 +383,7 @@ export function Profiler() {
   const latestNative = selectedFrame?.nativeProfile ?? null;
   const normalizedFilter = filter.trim().toLowerCase();
   const cpuRows = useMemo(() => (
-    latestNative
+    module === 'cpu' && latestNative
       ? flattenCallTree(
           latestNative.callTree,
           cpuSort,
@@ -392,16 +392,17 @@ export function Profiler() {
           latestNative.totalMs,
         )
       : []
-  ), [collapsedCpuNodes, cpuSort, latestNative, normalizedFilter]);
+  ), [collapsedCpuNodes, cpuSort, latestNative, module, normalizedFilter]);
   const memoryTree = useMemo(
-    () => latestNative ? buildNativeProfilerMemoryTree(latestNative) : [],
-    [latestNative],
+    () => module === 'memory' && latestNative ? buildNativeProfilerMemoryTree(latestNative) : [],
+    [latestNative, module],
   );
   const memoryRows = useMemo(
     () => flattenMemoryTree(memoryTree, memorySort, collapsedMemoryNodes, normalizedFilter),
     [collapsedMemoryNodes, memorySort, memoryTree, normalizedFilter],
   );
   const resources = useMemo(() => {
+    if (module !== 'resources') return [];
     const query = filter.trim().toLowerCase();
     const rows = (latestNative?.resources ?? []).filter((resource) => (
       !query
@@ -412,7 +413,7 @@ export function Profiler() {
     return sortedRows(rows, resourceSort, (row: NativeProfilerResource, key) => (
       key === 'referencedBy' ? row.referencedBy.join(', ') : row[key]
     ));
-  }, [filter, latestNative, resourceSort]);
+  }, [filter, latestNative, module, resourceSort]);
   const latestTimeline = timelineSnapshots.at(-1) ?? null;
   const timelineHotspots = useMemo(() => (
     latestTimeline?.dependency.nodes

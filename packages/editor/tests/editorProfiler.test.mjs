@@ -13,9 +13,39 @@ import {
   newerNativeGpuTimings,
   readNativeViewportProfiles,
   recordNativeViewportProfile,
+  recordOwnedNativeViewportProfile,
   summarizeEditorProfilerSamples,
   summarizeNativeViewportProfiles,
 } from '../src/editorProfiler.ts';
+import { initializeEditorInstance } from '../src/editorInstance.ts';
+
+test('owned history retains isolated decoded frames and independent per-source limits', () => {
+  clearEditorProfilerSamples();
+  const payload = { schemaVersion: 1, totalMs: 1, callTree: { name: 'first', children: [] } };
+  recordNativeViewportProfile('game', payload, 0);
+  payload.callTree.name = 'changed';
+  assert.equal(readNativeViewportProfiles('game', false)[0].callTree.name, 'first');
+  const owned = { schemaVersion: 1, totalMs: 2, callTree: { name: 'owned', children: [] } };
+  recordOwnedNativeViewportProfile('scene', owned, 1);
+  const frozen = readNativeViewportProfiles('scene', false)[0];
+  assert.equal(frozen.callTree, owned.callTree);
+  for (let i = 1; i <= 300; i++) {
+    recordOwnedNativeViewportProfile('game', { schemaVersion: 1, totalMs: i }, i * 20);
+    recordOwnedNativeViewportProfile('scene', { schemaVersion: 1, totalMs: i }, i * 20 + 1);
+  }
+  for (const source of ['scene', 'game']) {
+    const profiles = readNativeViewportProfiles(source);
+    assert.equal(profiles.length, 240);
+    assert.deepEqual(profiles.map(p => p.totalMs), Array.from({ length: 240 }, (_, i) => i + 61));
+    assert.ok(profiles.every(p => p.presentIntervalMs === 20));
+  }
+  assert.equal(frozen.callTree.name, 'owned');
+  clearEditorProfilerSamples();
+  recordOwnedNativeViewportProfile('scene', { schemaVersion: 1, totalMs: 2 }, 9999);
+  assert.equal(readNativeViewportProfiles('scene')[0].presentIntervalMs, undefined);
+  assert.equal(frozen.callTree.name, 'owned');
+  clearEditorProfilerSamples();
+});
 
 test('GPU recording controls retain the latest native revision across delayed window messages', () => {
   const first = { game: false, scene: false, revision: 0 }, game = { game: true, scene: false, revision: 1 }, scene = { game: true, scene: true, revision: 2 };
@@ -247,4 +277,32 @@ test('native memory profile expands into domain, subsystem, allocation, and reso
     gpu.children.find((node) => node.name === 'texture residency').children.map((node) => node.name),
     ['Assets/UI/button.png'],
   );
+});
+
+
+test('remote history takes message ownership and remote clear resets both sources', () => {
+  clearEditorProfilerSamples();
+  const originalChannel = globalThis.BroadcastChannel;
+  let receive;
+  globalThis.BroadcastChannel = class { addEventListener(_, callback) { receive = callback; } postMessage() {} };
+  try {
+    initializeEditorInstance('profiler-history-test');
+    clearEditorProfilerSamples();
+    const deliver = message => receive({ data: structuredClone(message) });
+    for (let i = 0; i < 300; i++) for (const source of ['scene', 'game']) deliver({ type: 'native-profile', profile: { schemaVersion: 1, source, timestamp: i * 20, totalMs: i } });
+    for (const source of ['scene', 'game']) assert.equal(readNativeViewportProfiles(source).length, 240);
+    const frozen = readNativeViewportProfiles('game', false)[0];
+    deliver({ type: 'clear' });
+    assert.equal(readNativeViewportProfiles().length, 0);
+    const message = { type: 'native-profile', profile: { schemaVersion: 1, source: 'game', timestamp: 9000, totalMs: 3, callTree: { name: 'remote', children: [] } } };
+    deliver(message);
+    message.profile.callTree.name = 'sender mutation';
+    recordOwnedNativeViewportProfile('game', { schemaVersion: 1, totalMs: 4 }, 9020);
+    const profiles = readNativeViewportProfiles('game');
+    assert.equal(profiles.length, 2);
+    assert.equal(profiles[0].callTree.name, 'remote');
+    assert.equal(profiles[1].presentIntervalMs, 20);
+    assert.equal(frozen.totalMs, 60);
+    clearEditorProfilerSamples();
+  } finally { globalThis.BroadcastChannel = originalChannel; }
 });

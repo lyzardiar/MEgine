@@ -1,0 +1,156 @@
+{
+  "method": "Sequential native Release editor runs with 10s live warmup and 12s measured custom Dota play; Scene/Game/camera preview visible. No browser CPU sampling started during the live window. Hook timings measure native-profile structuredClone and BroadcastChannel.postMessage, not all profiler work. Simulation progress can differ.",
+  "runs": {
+    "before": {
+      "report": "D:\\MEngineNativeQA\\rpg-multiview-profile-overhead-before-1791957940315\\report.json",
+      "passed": true,
+      "normalExit": true,
+      "fixtureRestored": true,
+      "consoleErrors": [],
+      "profilerPanels": null,
+      "clones": {
+        "count": 542,
+        "totalMs": 145.1,
+        "medianMs": 0.2,
+        "p95Ms": 0.4,
+        "maxMs": 3
+      },
+      "broadcasts": {
+        "count": 542,
+        "totalMs": 165.8,
+        "medianMs": 0.3,
+        "p95Ms": 0.4,
+        "maxMs": 2
+      },
+      "longTasks": [],
+      "gameProfiles": {
+        "totalMs": {
+          "count": 268,
+          "totalMs": 4886.2657,
+          "medianMs": 17.0679,
+          "p95Ms": 27.0298,
+          "maxMs": 63.4667
+        },
+        "commandMs": {
+          "count": 268,
+          "totalMs": 7897.4611,
+          "medianMs": 21.7043,
+          "p95Ms": 67.6253,
+          "maxMs": 89.3941
+        },
+        "worldSyncMs": {
+          "count": 268,
+          "totalMs": 2888.735,
+          "medianMs": 3.7685,
+          "p95Ms": 43.9956,
+          "maxMs": 53.2467
+        },
+        "transportMs": {
+          "count": 268,
+          "totalMs": 10368.2,
+          "medianMs": 31.75,
+          "p95Ms": 75.7,
+          "maxMs": 112.7
+        },
+        "presentIntervalMs": {
+          "count": 268,
+          "totalMs": 12060.0,
+          "medianMs": 35.5,
+          "p95Ms": 91.1,
+          "maxMs": 124.1
+        }
+      }
+    },
+    "after": {
+      "report": "D:\\MEngineNativeQA\\rpg-multiview-profile-overhead-after-1791958744347\\report.json",
+      "passed": true,
+      "normalExit": true,
+      "fixtureRestored": true,
+      "consoleErrors": [],
+      "profilerPanels": [
+        {
+          "module": "CPU",
+          "rows": 34
+        },
+        {
+          "module": "Memory",
+          "rows": 24
+        },
+        {
+          "module": "Resources",
+          "rows": 256
+        }
+      ],
+      "clones": {
+        "count": 0,
+        "totalMs": 0
+      },
+      "broadcasts": {
+        "count": 626,
+        "totalMs": 167.7,
+        "medianMs": 0.3,
+        "p95Ms": 0.4,
+        "maxMs": 0.5
+      },
+      "longTasks": [
+        {
+          "start": 52632.299999952316,
+          "duration": 58
+        },
+        {
+          "start": 52762.799999952316,
+          "duration": 57
+        }
+      ],
+      "gameProfiles": {
+        "totalMs": {
+          "count": 310,
+          "totalMs": 5192.9628,
+          "medianMs": 15.1171,
+          "p95Ms": 25.9314,
+          "maxMs": 54.6811
+        },
+        "commandMs": {
+          "count": 310,
+          "totalMs": 8158.2963,
+          "medianMs": 19.6116,
+          "p95Ms": 58.9521,
+          "maxMs": 78.3258
+        },
+        "worldSyncMs": {
+          "count": 310,
+          "totalMs": 2816.8523,
+          "medianMs": 3.4567,
+          "p95Ms": 37.362,
+          "maxMs": 43.8094
+        },
+        "transportMs": {
+          "count": 310,
+          "totalMs": 10602.0,
+          "medianMs": 28.55,
+          "p95Ms": 65.1,
+          "maxMs": 102.8
+        },
+        "presentIntervalMs": {
+          "count": 310,
+          "totalMs": 12053.8,
+          "medianMs": 31.9,
+          "p95Ms": 72.3,
+          "maxMs": 180.5
+        }
+      }
+    }
+  },
+  "remainingWorldSyncEvidence": {
+    "entityCountChanged": {
+      "samples": 40,
+      "medianMs": 37.7713,
+      "maxMs": 51.2543
+    },
+    "entityCountStable": {
+      "samples": 227,
+      "medianMs": 3.3825000000000003,
+      "maxMs": 53.246700000000004
+    }
+  }
+}

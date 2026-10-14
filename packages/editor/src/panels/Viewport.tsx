@@ -19,7 +19,7 @@ import {
 import type { GizmoMode, SceneCamera, TransformData } from '../store';
 import type { PlayInput } from '../playRuntime';
 import {
-  recordNativeViewportProfile,
+  recordOwnedNativeViewportProfile,
   recordViewportProfilerFrame,
 } from '../editorProfiler';
 import { agentBridge } from '../agent/AgentBridge';
@@ -1495,7 +1495,7 @@ export function Viewport(props: {
         .then((buffer) => {
           if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
           const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
-          recordNativeViewportProfile('game', { ...result.profile, updateMode: p.playing ? 'live' : gameRequestInterval ? 'edit-poll' : 'edit-change', pollIntervalMs: p.playing ? undefined : 300, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
+          recordOwnedNativeViewportProfile('game', { ...result.profile, updateMode: p.playing ? 'live' : gameRequestInterval ? 'edit-poll' : 'edit-change', pollIntervalMs: p.playing ? undefined : 300, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
           const image = result.image;
           const firstFrame = nativeGameFrameRef.current == null;
           nativeGameFrameRef.current = {
@@ -1628,7 +1628,7 @@ export function Viewport(props: {
       }).then((buffer) => {
         if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
         const result = uploadNativeViewportFrame(buffer, nativeSceneFrameRef.current?.image);
-        recordNativeViewportProfile('scene', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
+        recordOwnedNativeViewportProfile('scene', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
         const image = result.image;
         const firstFrame = nativeSceneFrameRef.current == null;
         nativeSceneFrameRef.current = {
