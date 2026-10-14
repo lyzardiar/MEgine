@@ -26,7 +26,7 @@ pub use renderer::{
 };
 pub use shader_targets::{compile_shader_backends, ShaderBackendArtifact, ShaderCompilationReport};
 pub use ui::{
-    validate_ui_shader_hook, UiBatch, UiBatchKey, UiBatchPlan, UiBlendMode, UiClipRect,
+    validate_ui_shader_hook, UiBatch, UiBatchKey, UiBatchPlan, UiBatchOrderCache, UiBlendMode, UiClipRect,
     UiFrameStats, UiPrimitive, UiRenderMaterial, UiShaderChannelData, UiShaderChannels, UiSoftClip,
     UiStencilMode, UiTextureError,
 };
