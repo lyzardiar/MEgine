@@ -402,6 +402,16 @@ pub struct OffscreenReadbackProfile {
     pub gpu: Option<GpuFrameProfile>,
 }
 
+/// CPU wall time inside submission APIs, including driver/backpressure waits; not GPU execution time.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct FrameSubmissionProfile {
+    pub surface_acquire_ms: f64,
+    pub queue_submit_ms: f64,
+    pub surface_present_ms: f64,
+    pub queue_submissions: u32,
+    pub surface_frames: u32,
+}
+
 struct OffscreenReadbackBuffer { buffer: wgpu::Buffer, allocations: u64 }
 
 impl OffscreenRenderTarget {
@@ -421,6 +431,8 @@ impl OffscreenRenderTarget {
 #[derive(Clone, Copy)]
 pub enum RenderTarget<'a> {
     Window,
+    /// Copy the exact submitted surface image for an explicitly requested capture.
+    WindowCapture(&'a OffscreenRenderTarget),
     Offscreen(&'a OffscreenRenderTarget),
 }
 
@@ -691,6 +703,7 @@ pub struct Renderer {
     scene_textures: HashMap<String, SceneTextureGpu>,
     offscreen_readback: Mutex<Option<OffscreenReadbackBuffer>>,
     gpu_profiler: Option<GpuFrameProfiler>,
+    submission_profile: FrameSubmissionProfile,
 }
 
 impl Renderer {
@@ -764,7 +777,7 @@ impl Renderer {
         let sample_count = scene_sample_count(|format| adapter.get_texture_format_features(format), format);
 
         let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | if caps.as_ref().is_some_and(|caps| caps.usages.contains(wgpu::TextureUsages::COPY_SRC)) { wgpu::TextureUsages::COPY_SRC } else { wgpu::TextureUsages::empty() },
             format,
             width: size.width.max(1),
             height: size.height.max(1),
@@ -1324,8 +1337,14 @@ impl Renderer {
             scene_textures: HashMap::new(),
             offscreen_readback: Mutex::new(None),
             gpu_profiler,
+            submission_profile: FrameSubmissionProfile::default(),
         })
     }
+
+    pub fn window_size(&self) -> Option<PhysicalSize<u32>> { self.surface.as_ref().map(|_| PhysicalSize::new(self.config.width, self.config.height)) }
+
+    /// Timings accumulated by the last submit_frame_to call, including embedded scene views.
+    pub fn submission_profile(&self) -> FrameSubmissionProfile { self.submission_profile }
 
     pub fn resize(&mut self, new_size: PhysicalSize<u32>) {
         if new_size.width == 0 || new_size.height == 0 {
@@ -1368,6 +1387,7 @@ impl Renderer {
             format: self.config.format,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT
                 | wgpu::TextureUsages::COPY_SRC
+                | wgpu::TextureUsages::COPY_DST
                 | wgpu::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
@@ -1536,8 +1556,13 @@ impl Renderer {
         ui: Option<&UiBatchPlan>,
         target: RenderTarget<'_>,
     ) -> Result<(), RhiError> {
+        if let RenderTarget::WindowCapture(capture) = target {
+            let size = self.window_size().ok_or_else(|| RhiError::InvalidTarget("headless renderer cannot capture a window".into()))?;
+            if capture.size != size || capture.format != self.config.format { return Err(RhiError::InvalidTarget("window capture size and format must match the surface".into())); }
+            if !self.config.usage.contains(wgpu::TextureUsages::COPY_SRC) { return Err(RhiError::InvalidTarget("surface does not support pixel capture".into())); }
+        }
         let target_size = match target {
-            RenderTarget::Window => PhysicalSize::new(self.config.width, self.config.height),
+            RenderTarget::Window | RenderTarget::WindowCapture(_) => PhysicalSize::new(self.config.width, self.config.height),
             RenderTarget::Offscreen(target) => {
                 if target.format != self.config.format {
                     return Err(RhiError::InvalidTarget(format!(
@@ -1621,8 +1646,9 @@ impl Renderer {
             self.ensure_material_texture_set(&object.material);
         }
         self.prune_material_pipeline_cache();
+        let acquire_started = Instant::now();
         let surface_frame = match target {
-            RenderTarget::Window => Some(
+            RenderTarget::Window | RenderTarget::WindowCapture(_) => Some(
                 self.surface
                     .as_ref()
                     .ok_or_else(|| {
@@ -1634,13 +1660,14 @@ impl Renderer {
             ),
             RenderTarget::Offscreen(_) => None,
         };
+        if surface_frame.is_some() { self.submission_profile.surface_acquire_ms += acquire_started.elapsed().as_secs_f64() * 1000.0; }
         let surface_view = surface_frame.as_ref().map(|frame| {
             frame
                 .texture
                 .create_view(&wgpu::TextureViewDescriptor::default())
         });
         let view = match target {
-            RenderTarget::Window => surface_view
+            RenderTarget::Window | RenderTarget::WindowCapture(_) => surface_view
                 .as_ref()
                 .expect("window target acquired before frame encoding"),
             RenderTarget::Offscreen(target) => &target.view,
@@ -1857,10 +1884,23 @@ impl Renderer {
             self.ui.draw(&mut pass, ui_plan);
         }
 
+        if let RenderTarget::WindowCapture(capture) = target {
+            encoder.copy_texture_to_texture(
+                surface_frame.as_ref().expect("capture surface acquired").texture.as_image_copy(),
+                capture.texture.as_image_copy(),
+                wgpu::Extent3d { width: target_size.width, height: target_size.height, depth_or_array_layers: 1 },
+            );
+        }
         if let Some(profiler) = &self.gpu_profiler { profiler.resolve_frame(&mut encoder); }
+        let submit_started = Instant::now();
         self.queue.submit(std::iter::once(encoder.finish()));
+        self.submission_profile.queue_submit_ms += submit_started.elapsed().as_secs_f64() * 1000.0;
+        self.submission_profile.queue_submissions += 1;
         if let Some(frame) = surface_frame {
+            let present_started = Instant::now();
             frame.present();
+            self.submission_profile.surface_present_ms += present_started.elapsed().as_secs_f64() * 1000.0;
+            self.submission_profile.surface_frames += 1;
         }
         Ok(())
     }
@@ -1874,6 +1914,7 @@ impl Renderer {
         frame: &RenderFrame<'_>,
         target: RenderTarget<'_>,
     ) -> Result<(), RhiError> {
+        self.submission_profile = FrameSubmissionProfile::default();
         let active: HashSet<&str> = frame.scene_views.iter().map(|view| view.key.as_str()).collect();
         self.scene_textures.retain(|key, _| {
             if active.contains(key.as_str()) { true } else { self.ui.remove_texture(key); false }
@@ -4355,6 +4396,12 @@ mod tests {
         let target = renderer.create_offscreen_target(PhysicalSize::new(64,32));
         let render = |renderer: &mut Renderer, views: &[SceneTextureFrame]| {
             renderer.submit_frame_to(&RenderFrame { clear, camera, objects:&[], lighting:&lighting, ui:Some(&ui), scene_views:views }, RenderTarget::Offscreen(&target)).unwrap();
+            let profile = renderer.submission_profile();
+            assert_eq!(profile.queue_submissions, views.len() as u32 + 1);
+            assert_eq!(profile.surface_frames, 0);
+            assert_eq!(profile.surface_acquire_ms, 0.0);
+            assert_eq!(profile.surface_present_ms, 0.0);
+            assert!(profile.queue_submit_ms.is_finite() && profile.queue_submit_ms >= 0.0);
             assert_eq!(renderer.size, PhysicalSize::new(64,32));
             renderer.read_offscreen_rgba8(&target).unwrap()
         };

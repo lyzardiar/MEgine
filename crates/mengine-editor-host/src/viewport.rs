@@ -27,6 +27,7 @@ use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::mem::size_of_val;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::{Instant, SystemTime};
 use winit::dpi::PhysicalSize;
 
@@ -51,6 +52,17 @@ pub struct EditorViewportFrame {
     pub has_authored_camera: bool,
     pub profile: EditorViewportProfile,
 }
+
+/// A submitted surface frame; no CPU pixels or physical scanout timestamp are implied.
+pub struct EditorViewportPresentation {
+    pub width: u32,
+    pub height: u32,
+    pub has_authored_camera: bool,
+    pub profile: EditorViewportProfile,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum ViewportDestination { Readback, Window, WindowCapture }
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -237,10 +249,10 @@ fn camera_preview_frame(
     }
 }
 
-/// Headless RHI host used by Game View and as the base pass for Scene View.
+/// RHI host for captured editor views and native window presentation.
 pub struct EditorViewportRenderer {
     renderer: Renderer,
-    target: OffscreenRenderTarget,
+    target: Option<OffscreenRenderTarget>,
     project_root: PathBuf,
     materials: RuntimeMaterialCache,
     meshes: RuntimeMeshCache,
@@ -262,13 +274,22 @@ impl EditorViewportRenderer {
         let renderer = Renderer::new_headless(size)
             .await
             .context("could not initialize the headless RHI")?;
-        let target = renderer.create_offscreen_target(size);
+        Self::with_renderer(project_root, renderer)
+    }
+
+    /// The RHI surface retains the window for its entire GPU lifetime.
+    pub async fn new_for_window(project_root: PathBuf, window: Arc<winit::window::Window>) -> Result<Self> {
+        let renderer = Renderer::new(window).await.context("could not initialize the viewport surface")?;
+        Self::with_renderer(project_root, renderer)
+    }
+
+    fn with_renderer(project_root: PathBuf, renderer: Renderer) -> Result<Self> {
         let sorting_layers = SortingLayers::load(Some(&project_root))
             .map_err(anyhow::Error::msg)
             .context("could not load sorting layers")?;
         Ok(Self {
             renderer,
-            target,
+            target: None,
             materials: RuntimeMaterialCache::new(Some(project_root.clone())),
             meshes: RuntimeMeshCache::new(Some(project_root.clone())),
             textures: RuntimeTextureCache::new(Some(project_root.clone())),
@@ -301,6 +322,17 @@ impl EditorViewportRenderer {
         height: u32,
     ) -> Result<EditorViewportFrame> {
         self.render_world(world, width, height, None, true, None, 0)
+    }
+
+    /// Submit Game pixels directly to the owned window without mapping a readback buffer.
+    pub fn present_game(&mut self, world: &World, width: u32, height: u32) -> Result<EditorViewportPresentation> {
+        let frame = self.render_world_to(world, width, height, None, true, None, 0, ViewportDestination::Window)?;
+        Ok(EditorViewportPresentation { width: frame.width, height: frame.height, has_authored_camera: frame.has_authored_camera, profile: frame.profile })
+    }
+
+    /// Submit a new Game frame and capture that submission's exact swapchain image.
+    pub fn present_game_with_capture(&mut self, world: &World, width: u32, height: u32) -> Result<EditorViewportFrame> {
+        self.render_world_to(world, width, height, None, true, None, 0, ViewportDestination::WindowCapture)
     }
 
     pub fn render_camera(
@@ -522,14 +554,24 @@ impl EditorViewportRenderer {
         material_override: Option<RenderMaterial>,
         target_display: i32,
     ) -> Result<EditorViewportFrame> {
+        self.render_world_to(world, width, height, view_camera, include_ui, material_override, target_display, ViewportDestination::Readback)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn render_world_to(&mut self, world: &World, width: u32, height: u32, view_camera: Option<ActiveFrameCamera>, include_ui: bool, material_override: Option<RenderMaterial>, target_display: i32, destination: ViewportDestination) -> Result<EditorViewportFrame> {
         let render_started = Instant::now();
         let mut stages = Vec::new();
         let size = normalized_size(width, height);
         let stage_started = Instant::now();
-        if self.target.size() != size {
-            self.target = self.renderer.create_offscreen_target(size);
+        if destination != ViewportDestination::Readback {
+            let current = self.renderer.window_size().context("viewport has no native window surface")?;
+            anyhow::ensure!(width > 0 && height > 0, "cannot present a zero-sized viewport");
+            if current != size { self.renderer.resize(size); }
         }
-        finish_stage(&mut stages, "OffscreenTarget.ensure_size", stage_started);
+        if destination != ViewportDestination::Window && self.target.as_ref().is_none_or(|target| target.size() != size) {
+            self.target = Some(self.renderer.create_offscreen_target(size));
+        }
+        finish_stage(&mut stages, "ViewportTarget.ensure_size", stage_started);
 
         let stage_started = Instant::now();
         let hierarchy = TransformHierarchy::build(world);
@@ -655,19 +697,31 @@ impl EditorViewportRenderer {
         );
 
         let stage_started = Instant::now();
-        let submit = self
-            .renderer
-            .submit_frame_to(&frame.render_frame(), RenderTarget::Offscreen(&self.target));
+        let target = match destination {
+            ViewportDestination::Readback => RenderTarget::Offscreen(self.target.as_ref().expect("capture target initialized")),
+            ViewportDestination::Window => RenderTarget::Window,
+            ViewportDestination::WindowCapture => RenderTarget::WindowCapture(self.target.as_ref().expect("capture target initialized")),
+        };
+        let submit = self.renderer.submit_frame_to(&frame.render_frame(), target);
         finish_stage(&mut stages, "Renderer.submit_frame_to", stage_started);
         submit.context("could not render the editor viewport")?;
+        let submission = self.renderer.submission_profile();
+        stages.last_mut().expect("submission stage recorded").children = [
+            ("Surface acquire CPU wait", submission.surface_acquire_ms, submission.surface_frames),
+            ("Encoder finish and queue submit CPU", submission.queue_submit_ms, submission.queue_submissions),
+            ("Surface present CPU", submission.surface_present_ms, submission.surface_frames),
+        ].into_iter().filter(|(_, _, calls)| *calls > 0).map(|(name, ms, calls)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls, children: Vec::new() }).collect();
         let stage_started = Instant::now();
-        let (rgba, readback) = self
-            .renderer
-            .read_offscreen_rgba8_profiled(&self.target)
-            .context("could not read the editor viewport")?;
-        stages.push(ProfileStage { name: "Renderer.read_offscreen_rgba8", duration_ms: stage_started.elapsed().as_secs_f64() * 1000.0, children: [
-            ("Readback buffer prepare", readback.buffer_prepare_ms), ("Readback copy submit", readback.copy_submit_ms), ("Readback GPU map wait", readback.gpu_wait_ms), ("Readback GPU query decode", readback.gpu_query_read_ms), ("Readback RGBA row pack", readback.rgba_pack_ms), ("Readback unmap", readback.unmap_ms),
-        ].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect() });
+        let (rgba, readback) = if destination == ViewportDestination::Window { (Vec::new(), None) } else {
+            let (rgba, readback) = self
+                .renderer
+                .read_offscreen_rgba8_profiled(self.target.as_ref().expect("capture target initialized"))
+                .context("could not read the editor viewport")?;
+            stages.push(ProfileStage { name: "Renderer.read_offscreen_rgba8", duration_ms: stage_started.elapsed().as_secs_f64() * 1000.0, children: [
+                ("Readback buffer prepare", readback.buffer_prepare_ms), ("Readback copy submit", readback.copy_submit_ms), ("Readback GPU map wait", readback.gpu_wait_ms), ("Readback GPU query decode", readback.gpu_query_read_ms), ("Readback RGBA row pack", readback.rgba_pack_ms), ("Readback unmap", readback.unmap_ms),
+            ].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect() });
+            (rgba, Some(readback))
+        };
         let stage_started = Instant::now();
         let mut resource_stages = Vec::new();
         let (resources, resources_truncated, resource_sample_age_ms, resource_sampling) = self.resource_sampler.sample(&frame, &mut resource_stages, self.resource_generation);
@@ -680,12 +734,13 @@ impl EditorViewportRenderer {
             &self.renderer,
             size.width,
             size.height,
+            self.target.as_ref().map(OffscreenRenderTarget::size),
             rgba.len(),
             stages,
             render_started,
         );
         profile.resource_sampling = resource_sampling;
-        if let Some(gpu) = readback.gpu {
+        if let Some(gpu) = readback.and_then(|readback| readback.gpu) {
             profile.gpu = Some(EditorViewportGpuProfile { timestamp_period_ns: gpu.timestamp_period_ns, total_pass_ms: gpu.stages.iter().map(|stage| stage.milliseconds).sum(), stages: gpu.stages.into_iter().map(|stage| EditorViewportProfileNode { name: stage.name.into(), total_ms: stage.milliseconds, self_ms: stage.milliseconds, calls: 1, children: Vec::new() }).collect() });
         }
         // Snapshot construction is intentionally reported as profiler overhead.
@@ -730,6 +785,7 @@ fn build_viewport_profile(
     renderer: &Renderer,
     width: u32,
     height: u32,
+    offscreen_size: Option<PhysicalSize<u32>>,
     readback_bytes: usize,
     stages: Vec<ProfileStage>,
     render_started: Instant,
@@ -787,12 +843,19 @@ fn build_viewport_profile(
         EditorViewportMemoryCategory {
             name: "GPU offscreen color".into(),
             domain: "gpu".into(),
-            bytes: viewport_pixels * 4,
+            bytes: offscreen_size.map_or(0, |size| u64::from(size.width) * u64::from(size.height) * 4),
             certainty: "estimate".into(),
-            source: "viewport width x height x 4 RGBA8 bytes".into(),
+            source: "cached offscreen target dimensions x 4 RGBA8 bytes; zero until capture allocates a target".into(),
         },
         EditorViewportMemoryCategory {
-            name: "GPU offscreen depth".into(),
+            name: "GPU surface color".into(),
+            domain: "gpu".into(),
+            bytes: renderer.window_size().map_or(0, |size| u64::from(size.width) * u64::from(size.height) * 4),
+            certainty: "lower-bound".into(),
+            source: "one configured surface image x 4 color bytes; excludes additional swapchain buffers and driver padding".into(),
+        },
+        EditorViewportMemoryCategory {
+            name: "GPU scene depth".into(),
             domain: "gpu".into(),
             bytes: viewport_pixels * 4 * u64::from(renderer.sample_count()),
             certainty: "estimate".into(),
@@ -803,7 +866,7 @@ fn build_viewport_profile(
             domain: "gpu".into(),
             bytes: viewport_pixels * (8 + if renderer.sample_count() > 1 { 12 * u64::from(renderer.sample_count()) } else { 0 }),
             certainty: "estimate".into(),
-            source: "resolved RGBA16F plus MSAA RGBA16F and surface RGBA8 attachments; excludes driver allocation padding".into(),
+            source: "resolved RGBA16F plus MSAA RGBA16F and MSAA RGBA8 attachments; resolved output color listed separately; excludes driver allocation padding".into(),
         },
         EditorViewportMemoryCategory {
             name: "GPU texture residency".into(),
@@ -823,7 +886,7 @@ fn build_viewport_profile(
     let mut grouped_stages = BTreeMap::<&str, Vec<ProfileStage>>::new();
     for stage in stages {
         let group =
-            if stage.name.starts_with("Renderer.") || stage.name.starts_with("OffscreenTarget.") {
+            if stage.name.starts_with("Renderer.") || stage.name.starts_with("ViewportTarget.") {
                 "Render backend"
             } else if stage.name.starts_with("Runtime") {
                 "Resource sync"
