@@ -127,7 +127,8 @@ import {
   createSpriteSpawnComponents,
   type SpriteSpawnOptions,
 } from './spriteCreation';
-import { frameWorldSprite } from './sceneFraming';
+import { frameSceneSelection } from './sceneFraming';
+import type { Bounds } from './viewportSpatial';
 import { resetTimelineBindingsOnAssetChange } from './timelineBindings';
 import {
   ENTITY_REFERENCE_FIELDS_KEY,
@@ -2338,7 +2339,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return plan;
     },
     getTransform,
-    frameSelected() {
+    frameSelected(aspect = 1, models?: ReadonlyMap<string, Bounds>) {
       const id = primarySelected();
       if (id == null) return;
       const entity = find(id);
@@ -2364,26 +2365,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
           return;
         }
       }
-      const transform = resolvedTransform(buildWorldTransforms(list()), id);
-      if (transform) {
-        const renderer = (entity?.components.SpriteRenderer
-          ?? entity?.components.AnimatedSprite2D) as Record<string, unknown> | undefined;
-        if (renderer) {
-          const frame = frameWorldSprite(
-            transform.position,
-            transform.rotation,
-            transform.scale,
-            Array.isArray(renderer.size) ? renderer.size : [1, 1],
-            Array.isArray(renderer.pivot) ? renderer.pivot : [0.5, 0.5],
-          );
-          sceneCamera.pivot = frame.pivot;
-          sceneCamera.distance = frame.distance;
-          return;
-        }
-        sceneCamera.pivot = [...transform.position] as Vec3;
-        sceneCamera.distance = Math.max(3, Math.max(...transform.scale.map(Math.abs), 1) * 4);
-        return;
-      }
+      const frame = frameSceneSelection(list(), [...selectedIds], sceneCamera, aspect, models);
+      if (frame) { sceneCamera.pivot = frame.pivot; sceneCamera.distance = frame.distance; }
     },
     spawnPrefab(name: string) {
       if (name === 'Camera') {

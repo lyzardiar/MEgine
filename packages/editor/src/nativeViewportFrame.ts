@@ -26,6 +26,13 @@ export function nativeGameFrameMatchesRequest(frame: { world: { runtimeSessionId
   return frame != null && args.playSessionId != null && args.playRevision != null && frame.world.runtimeSessionId === args.playSessionId && frame.worldRevision === args.playRevision && frame.requestKey === requestKey;
 }
 
+/** MiYu: editing changes render immediately; unchanged previews still poll external resources. */
+export function nativeGameRequestInterval<E>(playing: boolean, frame: { world: NativeViewportFrameWorld<E>; requestKey: string } | null, props: NativeViewportWorld<E> & { runtimeSessionId?: number }, requestKey: string): number {
+  if (playing) return 1000 / 60;
+  const unchanged = frame != null && nativeViewportFrameWorldCurrent(frame.world, props) && frame.requestKey === requestKey && frame.world.simulationTime === props.simulationTime && frame.world.clearColor.every((value, axis) => value === props.clearColor[axis]);
+  return unchanged ? 300 : 0;
+}
+
 /** Scene masks use exact published revisions; filtered camera previews and mutable edits use snapshots. */
 export function createNativeViewportWorldArgs<E extends { entity?: number; parent?: number | null; active?: boolean; components: Record<string, unknown> }>(props: NativeViewportWorld<E> & { readonly nativeSessionId?: number; readonly nativeWorldReference?: NativeViewportWorldReference<E>; readonly nativeSceneWorldReference?: NativeViewportWorldReference<E>; runtimeSessionId?: number }, activeSceneOnly = false) {
   let browserSnapshot: boolean | undefined, referenceRead = false;

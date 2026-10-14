@@ -7,7 +7,7 @@ export type PreviewMesh = {
 };
 
 type JsonObject = Record<string, unknown>;
-type PreviewState = { mesh: PreviewMesh | null; loading: boolean; error: string | null };
+type PreviewState = { mesh: PreviewMesh | null; loading: boolean; error: string | null; ready: Promise<PreviewMesh | null> };
 
 const cache = new Map<string, PreviewState>();
 const GLB_MAGIC = 0x46546c67;
@@ -176,17 +176,19 @@ async function loadModel(path: string): Promise<PreviewMesh> {
 export function modelPreview(path: string): PreviewMesh | null {
   const existing = cache.get(path);
   if (existing) return existing.mesh;
-  const state: PreviewState = { mesh: null, loading: true, error: null };
+  const state: PreviewState = { mesh: null, loading: true, error: null, ready: Promise.resolve(null) };
   cache.set(path, state);
-  void loadModel(path)
+  state.ready = loadModel(path)
     .then((mesh) => {
       state.mesh = mesh;
       state.loading = false;
+      return mesh;
     })
     .catch((reason) => {
       state.loading = false;
       state.error = reason instanceof Error ? reason.message : String(reason);
       console.warn(`Model preview failed for ${path}: ${state.error}`);
+      return null;
     });
   return null;
 }
@@ -194,4 +196,10 @@ export function modelPreview(path: string): PreviewMesh | null {
 export function clearModelPreview(path?: string): void {
   if (path) cache.delete(path);
   else cache.clear();
+}
+
+/** MiYu: framing waits for the same cached geometry used by the viewport, without duplicate loads. */
+export function loadModelPreview(path: string): Promise<PreviewMesh | null> {
+  modelPreview(path);
+  return cache.get(path)!.ready;
 }

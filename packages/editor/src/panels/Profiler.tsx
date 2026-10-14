@@ -677,10 +677,11 @@ export function Profiler() {
               warning={Boolean(latestNative && latestNative.totalMs > FRAME_BUDGET_MS)}
             />
             <Metric
-              label="Native Frame Interval"
+              label={latestNative?.updateMode?.startsWith('edit-') ? 'Edit Preview Update Interval' : 'Native Frame Interval'}
               value={latestNative?.presentIntervalMs ? formatMs(latestNative.presentIntervalMs) : '—'}
-              hint={latestNative?.presentIntervalMs ? `${(1000 / latestNative.presentIntervalMs).toFixed(1)} FPS · request ${formatMs(latestNative.transportMs ?? 0)}` : 'Completed native frames'}
+              hint={latestNative?.updateMode?.startsWith('edit-') ? `Idle resource poll ${latestNative.pollIntervalMs ?? 300} ms; edits refresh immediately` : latestNative?.presentIntervalMs ? `${(1000 / latestNative.presentIntervalMs).toFixed(1)} updates/s` : 'Completed native uploads'}
             />
+            <Metric label="Request to Canvas" value={latestNative?.transportMs != null ? formatMs(latestNative.transportMs) : '—'} hint="Queue, native command, transfer, JS scheduling and upload" />
             <Metric label="Simulation" value={latestNative?.simulationMs != null ? formatMs(latestNative.simulationMs) : '—'} hint="Native world update, script and snapshot export" />
             <Metric label="UI Draw Calls" value={latestNative ? formatCount(latestNative.counts.uiDrawCalls) : '—'} hint="World and shadow draws excluded" />
             <Metric label="World Visible" value={latestNative?.counts.cameraVisibleObjects != null ? formatCount(latestNative.counts.cameraVisibleObjects) : '—'} />

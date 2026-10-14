@@ -104,6 +104,8 @@ export type NativeViewportProfile = {
   uploadMs?: number;
   nativeTransport?: 'shared-buffer' | 'binary-ipc';
   presentIntervalMs?: number;
+  updateMode?: 'live' | 'edit-change' | 'edit-poll';
+  pollIntervalMs?: number;
   memory: NativeProfilerMemoryCategory[];
   residentMemoryEstimateBytes: number;
   resources: NativeProfilerResource[];

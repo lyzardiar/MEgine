@@ -86,6 +86,7 @@ export function Hierarchy(props: {
   onFilter: (v: string) => void;
   onPendingRenameConsumed: () => void;
   onRefresh: () => void;
+  onSelectionChange: () => void;
   onLog: (msg: string) => void;
   onFrame: () => void;
   onInstantiatePrefab?: (path: string, parent: number | null) => void;
@@ -220,14 +221,14 @@ export function Hierarchy(props: {
     if (e.kind !== 'entity') return;
     props.store.revealEntity(e.id);
     pendingScroll.current = { id: e.id, focus: false };
-    props.onRefresh();
+    props.onSelectionChange();
     setPingId(e.id);
     window.setTimeout(() => setPingId((cur) => cur === e.id ? null : cur), 900);
-  }), [props.store, props.onRefresh]);
+  }), [props.store, props.onSelectionChange]);
   useEffect(() => {
     const selected = props.store.selected;
     if (selected != null && !props.filter.trim()) {
-      if (props.store.revealEntityAncestors(selected)) props.onRefresh();
+      if (props.store.revealEntityAncestors(selected)) props.onSelectionChange();
       scrollRowRef.current(selected);
     }
   }, [props.store.selected]);
@@ -260,6 +261,10 @@ export function Hierarchy(props: {
     }
     if (editing === id) return;
     const now = Date.now();
+    if (!ev.ctrlKey && !ev.metaKey && !ev.shiftKey && (ev.detail === 2 || (lastClick.current.id === id && now - lastClick.current.t <= 250))) {
+      lastClick.current = { id: -1, t: 0 };
+      props.store.select(id); props.onSelectionChange(); props.onFrame(); return;
+    }
     const slowDbl =
       lastClick.current.id === id &&
       now - lastClick.current.t > 250 &&
@@ -276,7 +281,7 @@ export function Hierarchy(props: {
     }
 
     props.store.selectClick(id, { ctrl: ev.ctrlKey || ev.metaKey, shift: ev.shiftKey });
-    props.onRefresh();
+    props.onSelectionChange();
   };
 
   const onContext = (ev: MouseEvent, id: number | null) => {
@@ -284,7 +289,7 @@ export function Hierarchy(props: {
     ev.stopPropagation();
     if (id != null && !props.selectedIds.includes(id)) {
       props.store.select(id);
-      props.onRefresh();
+      props.onSelectionChange();
     }
     setCtx({ x: ev.clientX, y: ev.clientY, id });
   };
@@ -318,10 +323,10 @@ export function Hierarchy(props: {
         break;
       case 'selectChildren':
         s.selectChildren();
-        break;
+        props.onSelectionChange(); return;
       case 'frame':
         props.onFrame();
-        break;
+        return;
       case 'expandAll':
         s.expandAll();
         break;
@@ -670,7 +675,9 @@ export function Hierarchy(props: {
         onContextMenu={(e) => onContext(e, null)}
         onKeyDown={(event) => {
           if (event.target !== event.currentTarget) return;
-          if (event.key === 'ArrowDown' && filtered.length) {
+          if (event.key === ' ') {
+            event.preventDefault(); event.stopPropagation(); if (!event.repeat) props.onFrame();
+          } else if (event.key === 'ArrowDown' && filtered.length) {
             event.preventDefault();
             scrollRow(filtered[0].entity.entity, true);
           }
@@ -779,7 +786,8 @@ export function Hierarchy(props: {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
                   props.store.select(id);
-                  props.onRefresh();
+                  props.onSelectionChange();
+                  if (event.key === ' ') { event.stopPropagation(); props.onFrame(); }
                 } else if (event.key === 'F2') {
                   event.preventDefault();
                   beginRename(id, n.entity.name ?? '');

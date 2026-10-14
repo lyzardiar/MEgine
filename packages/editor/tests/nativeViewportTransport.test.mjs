@@ -123,6 +123,8 @@ test('evicted edit Scene world reuploads its owned snapshot under the same revis
   const transport = await import('../src/nativeViewportTransport.ts?scene-revision-test');
   assert.equal(await transport.requestRevisionedNativeViewportFrame('scene', { sceneWorldKey: 'owned-world', request: { width: 100 } }, () => ({ snapshot })), bytes);
   assert.equal(requests[1].sceneWorldKey, 'owned-world'); assert.equal(requests[1].snapshot, snapshot); assert.deepEqual(requests[1].request, { width: 100 });
+  assert.equal(await transport.requestRevisionedNativeViewportFrame('render_native_game_view', { sceneWorldKey: 'owned-game', width: 320, height: 180 }, () => ({ snapshot })), bytes);
+  assert.equal(requests[3].sceneWorldKey, 'owned-game'); assert.equal(requests[3].snapshot, snapshot); assert.equal(requests[3].width, 320);
   failure = 'GPU device unavailable';
   await assert.rejects(() => transport.requestRevisionedNativeViewportFrame('scene', { sceneWorldKey: 'owned-world' }, () => ({ snapshot })), /GPU device unavailable/);
 });

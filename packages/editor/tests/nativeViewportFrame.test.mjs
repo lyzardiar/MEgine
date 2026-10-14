@@ -154,3 +154,17 @@ test('frame reuse requires an exact session, revision and render configuration',
   assert.equal(nativeGameFrameMatchesRequest(frame,{playSessionId:4,playRevision:0},'resized'),false);
   assert.equal(nativeGameFrameMatchesRequest(null,{playSessionId:4,playRevision:0},frame.requestKey),false);
 });
+
+// Author: MiYu. Edit preview throttling must never defer changed content.
+test('edit preview changes bypass idle resource polling', async () => {
+  const { nativeGameRequestInterval } = await import('../src/nativeViewportFrame.ts');
+  const props={entities:[],clearColor:[0,0,0,1],simulationTime:0};
+  const frame={world:{...props,sourceEntities:props.entities},requestKey:'size'};
+  assert.equal(nativeGameRequestInterval(false,frame,props,'size'),300);
+  assert.equal(nativeGameRequestInterval(false,null,props,'size'),0);
+  assert.equal(nativeGameRequestInterval(false,frame,{...props,entities:[]},'size'),0);
+  assert.equal(nativeGameRequestInterval(false,frame,props,'resized'),0);
+  assert.equal(nativeGameRequestInterval(false,frame,{...props,clearColor:[1,0,0,1]},'size'),0);
+  assert.equal(nativeGameRequestInterval(false,frame,{...props,simulationTime:1},'size'),0);
+  assert.equal(nativeGameRequestInterval(true,frame,props,'size'),1000/60);
+});
