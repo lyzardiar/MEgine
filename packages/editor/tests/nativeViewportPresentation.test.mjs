@@ -9,8 +9,35 @@ const server = await createServer({ root: fileURLToPath(new URL('..', import.met
 const { createNativeViewportPresentationReader, nativeGamePaintUnchanged } = await server.ssrLoadModule('/src/nativeViewportPresentation.ts');
 const { createNativeViewportWorldArgs } = await server.ssrLoadModule('/src/nativeViewportFrame.ts');
 const { timelineGameCamera } = await server.ssrLoadModule('/src/gameCamera.ts');
-const { layoutUiScene3D, layoutUiWorldSpace, sceneUiEntities } = await server.ssrLoadModule('/src/ui/uiLayout.ts');
+const { createSceneUiEntityReader, layoutUiScene3D, layoutUiWorldSpace, sceneUiEntities } = await server.ssrLoadModule('/src/ui/uiLayout.ts');
 test.after(() => server.close());
+
+test('Scene UI topology reuse returns current records and follows reparenting, roots, reorder and malformed hierarchies', () => {
+  const read = createSceneUiEntityReader();
+  let entities = [{entity:1,components:{}},{entity:2,parent:1,components:{Canvas:{}}},{entity:3,parent:2,components:{Text:{text:'old'}}},{entity:4,parent:1,components:{MeshRenderer:{}}}];
+  const check = () => {
+    const expected = sceneUiEntities(entities), actual = read(entities);
+    assert.deepEqual(actual.map(e=>e.entity),expected.map(e=>e.entity));
+    actual.forEach((entity,index)=>assert.equal(entity,expected[index],'records must belong to this input, not an earlier snapshot'));
+    return actual;
+  };
+  const old = check();
+  entities = structuredClone(entities); entities[2].components.Text.text = 'current'; entities[1].active = false;
+  const current = check();
+  assert.equal(old.find(e=>e.entity===3).components.Text.text,'old');
+  assert.equal(current.find(e=>e.entity===3).components.Text.text,'current');
+  entities[3].parent = 2; check();
+  entities[2].parent = 99; check();
+  delete entities[1].components.Canvas; check();
+  entities[3].components.Camera3D = {}; check();
+  entities.reverse(); check();
+  entities.push({entity:5,parent:4,components:{}}); check();
+  entities[0].parent = 5; check();
+  entities.push({entity:4,parent:null,components:{Canvas:{}}}); check();
+  entities.splice(1,1); check();
+  entities = []; check();
+  entities = [{entity:9,components:{Camera2D:{}}}]; check();
+});
 
 test('unchanged native Game pixels remain on their owned canvas while new images, interaction and browser content repaint', () => {
   const image = {}, frame = { image }, surface = {};

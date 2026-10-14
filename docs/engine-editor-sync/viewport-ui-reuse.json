@@ -1,0 +1,237 @@
+{
+  "before": "D:/MEngineNativeQA/rpg-multiview-text-layout-before-1791937094629",
+  "after": "D:/MEngineNativeQA/rpg-multiview-ui-presentation-after-1791937911698",
+  "passed": true,
+  "scope": "ten-second samples; owned background Release editor with browser background throttling disabled and production frontend delivered through CDP; fixed fixture 3098765",
+  "stages": [
+    {
+      "name": "dual-preview-profiler",
+      "before": {
+        "game": {
+          "n": 471,
+          "mean": 22.00063694257392,
+          "p50": 19.399999856948853,
+          "p95": 36.700000047683716
+        },
+        "scene": {
+          "n": 521,
+          "mean": 19.869289827438326,
+          "p50": 18.5,
+          "p95": 24.5
+        },
+        "layoutSelfMs": 1859.0930000000005,
+        "gcSelfMs": 371.232
+      },
+      "after": {
+        "game": {
+          "n": 495,
+          "mean": 20.592323232419563,
+          "p50": 18.90000009536743,
+          "p95": 30.899999856948853
+        },
+        "scene": {
+          "n": 523,
+          "mean": 19.4701720838565,
+          "p50": 18.5,
+          "p95": 24.90000009536743
+        },
+        "layoutSelfMs": 1594.489,
+        "gcSelfMs": 323.05399999999975
+      },
+      "afterLongTaskMs": 0
+    },
+    {
+      "name": "dual-profiler",
+      "before": {
+        "game": {
+          "n": 505,
+          "mean": 20.46673267336175,
+          "p50": 18.40000009536743,
+          "p95": 31.200000047683716
+        },
+        "scene": {
+          "n": 528,
+          "mean": 19.562310605789676,
+          "p50": 18.200000047683716,
+          "p95": 24.600000143051147
+        },
+        "layoutSelfMs": 1519.699999999998,
+        "gcSelfMs": 321.63600000000025
+      },
+      "after": {
+        "game": {
+          "n": 522,
+          "mean": 19.760344827768904,
+          "p50": 18.200000047683716,
+          "p95": 26.800000190734863
+        },
+        "scene": {
+          "n": 534,
+          "mean": 19.29906367050128,
+          "p50": 18.200000047683716,
+          "p95": 23.90000009536743
+        },
+        "layoutSelfMs": 1284.1360000000006,
+        "gcSelfMs": 319.2099999999998
+      },
+      "afterLongTaskMs": 0
+    },
+    {
+      "name": "game-profiler",
+      "before": {
+        "game": {
+          "n": 540,
+          "mean": 18.522222222222222,
+          "p50": 17.800000190734863,
+          "p95": 24
+        },
+        "scene": {
+          "n": 0,
+          "mean": null
+        },
+        "layoutSelfMs": 229.99000000000004,
+        "gcSelfMs": 157.7890000000001
+      },
+      "after": {
+        "game": {
+          "n": 543,
+          "mean": 18.406077348066297,
+          "p50": 17.90000009536743,
+          "p95": 22.600000143051147
+        },
+        "scene": {
+          "n": 0,
+          "mean": null
+        },
+        "layoutSelfMs": 183.30899999999997,
+        "gcSelfMs": 149.33500000000004
+      },
+      "afterLongTaskMs": 0
+    },
+    {
+      "name": "game-hidden-profiler",
+      "before": {
+        "game": {
+          "n": 539,
+          "mean": 18.964749536178108,
+          "p50": 17.90000009536743,
+          "p95": 24.09999990463257
+        },
+        "scene": {
+          "n": 0,
+          "mean": null
+        },
+        "layoutSelfMs": 184.56199999999998,
+        "gcSelfMs": 137.721
+      },
+      "after": {
+        "game": {
+          "n": 543,
+          "mean": 18.784346224853348,
+          "p50": 17.899999856948853,
+          "p95": 23.199999809265137
+        },
+        "scene": {
+          "n": 0,
+          "mean": null
+        },
+        "layoutSelfMs": 224.55000000000004,
+        "gcSelfMs": 145.681
+      },
+      "afterLongTaskMs": 0
+    },
+    {
+      "name": "dual-preview-repeat",
+      "before": {
+        "game": {
+          "n": 473,
+          "mean": 21.909936575254477,
+          "p50": 19.299999952316284,
+          "p95": 36.200000047683716
+        },
+        "scene": {
+          "n": 523,
+          "mean": 19.78049713202234,
+          "p50": 18.5,
+          "p95": 24.59999990463257
+        },
+        "layoutSelfMs": 1776.2000000000005,
+        "gcSelfMs": 370.2390000000002
+      },
+      "after": {
+        "game": {
+          "n": 487,
+          "mean": 21.293429157817144,
+          "p50": 19.300000190734863,
+          "p95": 32
+        },
+        "scene": {
+          "n": 523,
+          "mean": 19.8166347995087,
+          "p50": 18.5,
+          "p95": 25.40000009536743
+        },
+        "layoutSelfMs": 1515.4160000000002,
+        "gcSelfMs": 323.42199999999974
+      },
+      "afterLongTaskMs": 0
+    }
+  ],
+  "captureRecovery": {
+    "scene": 54,
+    "game": 53
+  },
+  "pixelOracle": {
+    "scenePixels": 230400,
+    "previewPixels": 57600,
+    "sceneChanged": 160,
+    "previewChanged": 56
+  },
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 101536,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\rpg-multiview-ui-presentation-after-1791937911698\\runtime\\com.mengine.editor.agent-lBzXnq '\\\\?\\D:\\MEngineNativeQA\\rpg-multiview-ui-presentation-after-1791937911698\\runtime\\com.mengine.editor.agent-lBzXnq'"
+  },
+  "releaseSmoke": {
+    "path": "D:/MEngineNativeQA/rpg-multiview-ui-reuse-embedded-1791938409561/report.json",
+    "passed": true,
+    "executableSha256": "E1A6878284FD33E8C72DA7B22297631D43435898AB911564E75802D86756D200",
+    "captures": [
+      {
+        "target": "game",
+        "file": "active-game.png",
+        "width": 1280,
+        "height": 720,
+        "elapsedMs": 301
+      },
+      {
+        "target": "scene",
+        "file": "active-scene.png",
+        "width": 408,
+        "height": 804,
+        "elapsedMs": 271
+      }
+    ],
+    "captureRecovery": {
+      "scene": 50,
+      "game": 47
+    },
+    "pixelOracle": {
+      "scenePixels": 230400,
+      "previewPixels": 57600,
+      "sceneChanged": 118,
+      "previewChanged": 66
+    },
+    "consoleErrors": 0,
+    "shutdown": {
+      "pid": 164572,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\rpg-multiview-ui-reuse-embedded-1791938409561\\runtime\\com.mengine.editor.agent-nI0ZBI '\\\\?\\D:\\MEngineNativeQA\\rpg-multiview-ui-reuse-embedded-1791938409561\\runtime\\com.mengine.editor.agent-nI0ZBI'"
+    }
+  }
+}
