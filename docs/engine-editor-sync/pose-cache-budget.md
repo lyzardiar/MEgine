@@ -1,0 +1,22 @@
+# Retaining animated mesh cycles
+
+Frostbound live profiling exposed recurring mesh generation/upload work: RuntimeMeshCache.sync had a 6.14 ms median while running with both Scene and Game visible. The 256-entry sampled-mesh cache also held terrain and patches, leaving little room for repeated animation frames. A controlled GPU synchronization replay uses 109 actual active pose keys from 53 model files, shifted across 64 frames and repeated for three cycles.
+
+The shared editor/player RuntimeMeshCache now retains sampled meshes under a 64 MiB logical vertex/index budget and an 8,192-entry guard. LRU eviction removes only meshes unused by the current frame, after collecting usage across the main view and all embedded views. Current-frame geometry remains complete even when the active working set exceeds either soft budget. Successful replacement updates bytes by difference; failed reloads retain accounting for the previous GPU mesh. Billboard invalidation and project changes remove corresponding residency. Source pruning runs only after eviction, avoiding a full retained-key scan every frame.
+
+Profiler reports cachedPoseMeshes, cachedPoseBytes, meshUploads and meshEvictions. Uploads are successful mesh uploads in this synchronization; evictions count budget removals, not explicit invalidation. The memory breakdown includes sampled GPU mesh bytes as a lower bound. This excludes driver allocation overhead, static imported meshes, source buffers/JSON and animation metadata.
+
+GltfPoseSource keeps immutable duration/playback/UV data in a lazy per-clip result cache. Invalid clips fail when selected, and per-frame UV lookup still validates missing samples. Pose-only loading reads glTF buffers without decoding unused images; project-script dependency validation remains strict. Model timestamp/length or explicit source invalidation replaces the source and its caches. Existing external .bin dependency polling limitations are unchanged.
+
+Controlled results and exact model/binary hashes are in pose-cache-benchmark.json. Animation sample output hashes match for positions, normals, UVs and indices. Median CPU sampling per 109-key window changed from 2.4914 to 2.3827 ms; model loading was unchanged within this fixture (285.48 vs 284.53 ms). Cache replay repeated-cycle sync changed from 539.43 to 2.53 ms per 64 frames. Both cache variants used the new clip metadata path, isolating retention policy. These are stage measurements, not gameplay FPS. Initial shader/pipeline compilation and texture loading remain separate startup costs.
+
+Reproduce with the Frostbound asset root and the committed pose-cache-manifest.json:
+
+- `cargo run -p mengine-assets --release --example benchmark_pose_samples -- <asset-root> docs/engine-editor-sync/pose-cache-manifest.json 24`
+- `cargo run -p mengine-runtime --release --example benchmark_pose_cache -- <asset-root> docs/engine-editor-sync/pose-cache-manifest.json`
+
+Validation: 98 asset tests, 10 mesh-cache tests and 5 viewport tests passed. One viewport profiling utility requiring an external report remains ignored. Coverage includes clip error isolation, terminal/looping UV poses, multiple skin influence sets, byte replacement, byte-only and entry-only limits, active over-budget geometry, invalidation, project changes and main/embedded view retention. Packaged native acceptance is recorded in pose-cache-native.json.
+
+Packaged native comparison (Scene, Game and selected-camera preview visible) passed title parity, live custom Dota and Stop with zero console errors. In the later live window, Game mesh synchronization median/p95 changed from 5.4259/22.2410 to 3.5570/6.9957 ms; native rendering changed from 16.3755/37.9512 to 14.9531/22.0033 ms. Request-to-Canvas median changed from 30.55 to 27.65 ms, and update interval from 34.05 to 33.00 ms. The largest observed new update interval was still 365.8 ms. Dynamic simulation progress and CPU-profile startup affect this short comparison; it does not establish a fixed FPS guarantee or eliminate transport/scheduling spikes. The observed cache maximum was 67,108,772 bytes, within 64 MiB. Both editors exited normally and restored the fixture; locked WebView cache directories were retained.
+
+Editor and Debug/Release player packages are rebuilt from the same shared code with V8. Native gameplay acceptance covers the packaged editor; standalone player gameplay has not been separately exercised in this milestone.

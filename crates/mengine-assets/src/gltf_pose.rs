@@ -1,7 +1,7 @@
 //! MiYu: sample glTF skeletal animation into reusable posed meshes for crowds.
 use crate::{AssetError, MeshData};
 use glam::{Mat4, Quat, Vec3, Vec4};
-use std::path::Path;
+use std::{path::Path, sync::OnceLock};
 
 /// Legacy 12 Hz references. Use `parse_gltf_pose_sample` for an explicit rate.
 pub fn parse_gltf_pose(reference: &str) -> Option<(&str, usize, u32)> {
@@ -32,7 +32,24 @@ pub struct GltfNodePose { pub index: usize, pub name: Option<String>, pub matrix
 #[derive(Clone, Debug)]
 pub struct GltfAttachmentPose { pub id: u32, pub path: String, pub visibility: f32 }
 
-pub struct GltfPoseSource { document: gltf::Document, buffers: Vec<gltf::buffer::Data>, billboards: Vec<u32>, mesh_billboards: bool, mdx: Option<crate::gltf_mdx::MdxAnimation> }
+pub struct GltfPoseSource { document: gltf::Document, buffers: Vec<gltf::buffer::Data>, billboards: Vec<u32>, mesh_billboards: bool, mdx: Option<crate::gltf_mdx::MdxAnimation>, clip_samples: Vec<OnceLock<Result<ClipSampleMetadata, String>>> }
+
+#[derive(serde::Deserialize)]
+struct Playback { #[serde(rename="durationSeconds")] duration: f32, #[serde(rename="loop")] looped: bool }
+#[derive(serde::Deserialize)]
+struct UvTrack { fps: u32, frames: Vec<[f32; 6]> }
+struct ClipSampleMetadata { duration: f32, playback: Option<Playback>, uv: Option<UvTrack> }
+impl ClipSampleMetadata {
+    fn read(animation: &gltf::Animation<'_>, buffers: &[gltf::buffer::Data]) -> Result<Self, String> {
+        let duration = animation.channels().filter_map(|c| c.reader(|b| Some(&buffers[b.index()])).read_inputs().and_then(|v| v.last())).fold(0.0_f32, f32::max);
+        let extra: Option<serde_json::Value> = animation.extras().as_ref().map(|v| serde_json::from_str(v.get()).map_err(|_| "invalid animation extras".to_owned())).transpose()?;
+        let playback: Option<Playback> = extra.as_ref().and_then(|v| v.get("menginePlayback")).map(|v| serde_json::from_value(v.clone()).map_err(|_| "invalid animation playback".to_owned())).transpose()?;
+        if playback.as_ref().is_some_and(|p| !p.duration.is_finite() || p.duration <= 0.0 || p.duration > 600.0) { return Err("invalid animation playback duration".into()); }
+        let uv: Option<UvTrack> = extra.as_ref().and_then(|v| v.get("mengineUv")).map(|v| serde_json::from_value(v.clone()).map_err(|_| "invalid UV animation track".to_owned())).transpose()?;
+        if uv.as_ref().is_some_and(|t| !(1..=60).contains(&t.fps) || t.frames.is_empty() || t.frames.iter().flatten().any(|v| !v.is_finite())) { return Err("invalid UV animation samples".into()); }
+        Ok(Self { duration, playback, uv })
+    }
+}
 
 fn mesh_billboards(document: &gltf::Document, flags: &[u32]) -> bool {
     let mut parents=vec![None;flags.len()];let mut relevant=vec![false;flags.len()];
@@ -109,8 +126,10 @@ impl GltfPoseSource {
         Ok((Self::from_parts(document,buffers)?,dependencies))
     }
     pub fn load(path: &Path) -> Result<Self, AssetError> {
-        let (document, buffers, _) = gltf::import(path).map_err(|e| AssetError::Gltf(e.to_string()))?;
-        Self::from_parts(document,buffers)
+        // Pose geometry uses buffers; texture decoding belongs to the texture loader.
+        let source = gltf::Gltf::open(path).map_err(|e| AssetError::Gltf(e.to_string()))?;
+        let buffers = gltf::import_buffers(&source.document, path.parent(), source.blob).map_err(|e| AssetError::Gltf(e.to_string()))?;
+        Self::from_parts(source.document,buffers)
     }
     fn from_parts(document: gltf::Document, buffers: Vec<gltf::buffer::Data>) -> Result<Self,AssetError> {
         let mut billboards = Vec::new();
@@ -125,7 +144,8 @@ impl GltfPoseSource {
         let extra:Option<serde_json::Value>=document.as_json().extras.as_ref().map(|v|serde_json::from_str(v.get()).map_err(|_|AssetError::Gltf("invalid document extras".into()))).transpose()?;
         let mdx=extra.and_then(|v|v.get("mengineMdxAnimation").cloned()).map(|v|crate::gltf_mdx::MdxAnimation::parse(v,&document)).transpose()?;
         let mesh_billboards=mesh_billboards(&document,&billboards);
-        Ok(Self { document, buffers, billboards, mesh_billboards, mdx })
+        let clip_samples = document.animations().map(|_| OnceLock::new()).collect();
+        Ok(Self { document, buffers, billboards, mesh_billboards, mdx, clip_samples })
     }
     pub fn has_billboards(&self) -> bool { self.billboards.iter().any(|v| *v != 0) }
     pub fn has_mesh_billboards(&self) -> bool {self.mesh_billboards}
@@ -156,27 +176,15 @@ impl GltfPoseSource {
         let nodes = self.document.nodes().collect::<Vec<_>>();
         let mut trs = nodes.iter().map(|n| { let (t,r,s) = n.transform().decomposed(); (Vec3::from(t), Quat::from_array(r), Vec3::from(s)) }).collect::<Vec<_>>();
         let animation = self.document.animations().nth(clip).ok_or_else(|| fail("animation clip index out of bounds"))?;
-        let duration = animation.channels().filter_map(|c| c.reader(|b| Some(&self.buffers[b.index()])).read_inputs().and_then(|v| v.last())).fold(0.0_f32, f32::max);
-        let extra: Option<serde_json::Value> = animation.extras().as_ref().map(|v| serde_json::from_str(v.get()).map_err(|_| fail("invalid animation extras"))).transpose()?;
-        let playback = extra.as_ref().and_then(|v| v.get("menginePlayback"));
-        let (time, terminal) = if let Some(playback) = playback {
-            #[derive(serde::Deserialize)]
-            struct Playback { #[serde(rename="durationSeconds")] duration: f32, #[serde(rename="loop")] looped: bool }
-            let playback: Playback = serde_json::from_value(playback.clone()).map_err(|_| fail("invalid animation playback"))?;
-            if !playback.duration.is_finite() || playback.duration <= 0.0 || playback.duration > 600.0 { return Err(fail("invalid animation playback duration")); }
+        // Cache immutable clip data in its source while preserving per-clip sample errors.
+        let metadata = self.clip_samples[clip].get_or_init(|| ClipSampleMetadata::read(&animation, &self.buffers)).as_ref().map_err(|error| fail(error))?;
+        let (time, terminal) = if let Some(playback) = &metadata.playback {
             let seconds = frame as f32 / rate as f32;
             if playback.looped { (seconds % playback.duration, false) } else { (seconds.min(playback.duration), seconds >= playback.duration) }
-        } else { (if duration > 0.0 { (frame as f32 / rate as f32) % duration } else { 0.0 }, false) };
-        // MiYu: UV transforms are sampled alongside each classic material layer's skeleton.
-        let uv_matrix = if let Some(extra) = extra {
-            if let Some(track) = extra.get("mengineUv") {
-                #[derive(serde::Deserialize)]
-                struct UvTrack { fps: u32, frames: Vec<[f32; 6]> }
-                let track: UvTrack = serde_json::from_value(track.clone()).map_err(|_| fail("invalid UV animation track"))?;
-                if !(1..=60).contains(&track.fps) || track.frames.is_empty() || track.frames.iter().flatten().any(|v| !v.is_finite()) { return Err(fail("invalid UV animation samples")); }
-                let index = if terminal { track.frames.len()-1 } else { (time * track.fps as f32 + 0.0001).floor() as usize };
-                Some(*track.frames.get(index).ok_or_else(|| fail("UV animation frame is missing"))?)
-            } else { None }
+        } else { (if metadata.duration > 0.0 { (frame as f32 / rate as f32) % metadata.duration } else { 0.0 }, false) };
+        let uv_matrix = if let Some(track) = &metadata.uv {
+            let index = if terminal { track.frames.len()-1 } else { (time * track.fps as f32 + 0.0001).floor() as usize };
+            Some(*track.frames.get(index).ok_or_else(|| fail("UV animation frame is missing"))?)
         } else { None };
         if self.mdx.is_none() { for channel in animation.channels() {
             let reader = channel.reader(|b| Some(&self.buffers[b.index()]));
@@ -270,6 +278,38 @@ impl GltfPoseSource {
 mod tests {
     use super::*;
     #[test]
+    fn clip_metadata_is_lazy_and_invalid_clips_do_not_poison_valid_samples() {
+        let value = serde_json::json!({"asset":{"version":"2.0"},"nodes":[{}],"animations":[
+            {"samplers":[],"channels":[],"extras":{"menginePlayback":{"durationSeconds":1.0,"loop":true},"mengineUv":{"fps":2,"frames":[[1,0,0,1,0,0],[1,0,0,1,2,3]]}}},
+            {"samplers":[],"channels":[],"extras":{"menginePlayback":{"durationSeconds":0.0,"loop":false}}}
+        ]});
+        let gltf = gltf::Gltf::from_slice(&serde_json::to_vec(&value).unwrap()).unwrap();
+        let source = GltfPoseSource::from_parts(gltf.document, vec![]).unwrap();
+        assert!(source.clip_samples.iter().all(|clip| clip.get().is_none()));
+        let first = source.node_matrices(0, 6, 12, None).unwrap();
+        assert_eq!(first.1, Some([1.0,0.0,0.0,1.0,2.0,3.0]));
+        assert_eq!(first, source.node_matrices(0, 6, 12, None).unwrap());
+        assert!(source.clip_samples[1].get().is_none());
+        assert!(source.sample_nodes(1, 0, 12, None).is_err());
+        assert!(source.clip_samples[1].get().unwrap().is_err());
+        assert!(source.sample_nodes(0, 0, 12, None).is_ok());
+        assert!(source.sample_nodes(2, 0, 12, None).is_err());
+    }
+
+    #[test]
+    fn pose_loading_does_not_require_decoding_unused_texture_images() {
+        let root = std::env::temp_dir().join(format!("mengine-pose-images-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir(&root).unwrap();
+        let path = root.join("pose.gltf");
+        let value = serde_json::json!({"asset":{"version":"2.0"},"nodes":[{}],"images":[{"uri":"missing.png"}],"animations":[{"samplers":[],"channels":[]}]});
+        std::fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+        let source = GltfPoseSource::load(&path).unwrap();
+        assert_eq!(source.sample_nodes(0, 0, 12, None).unwrap().len(), 1);
+        assert!(GltfPoseSource::load_in_project(&path, &root).is_err(), "project script dependency validation remains strict");
+        std::fs::remove_file(path).unwrap(); std::fs::remove_dir(root).unwrap();
+    }
+
+    #[test]
     fn billboard_keeps_pivot_and_scale_while_facing_the_camera() {
         let world=Mat4::from_scale_rotation_translation(Vec3::new(2.0,3.0,4.0),Quat::from_rotation_y(1.2),Vec3::new(7.0,9.0,-2.0));
         let camera=GltfBillboardCamera { model:Mat4::IDENTITY,look:Vec3::new(-1.0,-1.0,-1.0).normalize(),up:Vec3::Y };
@@ -326,7 +366,7 @@ mod tests {
         let gltf=gltf::Gltf::from_slice(&serde_json::to_vec(&value).unwrap()).unwrap();
         let metadata=serde_json::json!({"sequences":[{"name":"birth","start":1000,"end":2000}],"globalSequences":[],"nodes":[{"node":0,"restTranslation":[10,0,0]},{"node":1,"restTranslation":[2,0,0],"attachment":{"id":7,"path":"embedded.mdx","visibility":{"interpolation":0,"globalSequence":-1,"times":[1000,1500,2000],"values":[[0],[1],[0]]}}}]});
         let mdx=crate::gltf_mdx::MdxAnimation::parse(metadata,&gltf.document).unwrap();
-        let source=GltfPoseSource {document:gltf.document,buffers:vec![],billboards:vec![8,0],mesh_billboards:false,mdx:Some(mdx)};
+        let source=GltfPoseSource {document:gltf.document,buffers:vec![],billboards:vec![8,0],mesh_billboards:false,mdx:Some(mdx),clip_samples:vec![OnceLock::new()]};
         let camera=GltfBillboardCamera {model:Mat4::IDENTITY,look:-Vec3::Z,up:Vec3::Y};
         for (frame,expected) in [(29,0.0),(30,1.0),(59,1.0),(60,0.0),(99,0.0)] {
             let poses=source.sample_nodes(0,frame,60,Some(camera)).unwrap();
@@ -343,7 +383,7 @@ mod tests {
         let gltf=gltf::Gltf::from_slice(&serde_json::to_vec(&value).unwrap()).unwrap();
         let metadata=serde_json::json!({"sequences":[{"name":"nothing","start":-400,"end":400}],"globalSequences":[],"nodes":[{"node":0,"restTranslation":[0,0,0],"translation":{"interpolation":1,"globalSequence":-1,"times":[-400,0,400],"values":[[0,0,0],[10,0,0],[20,0,0]]},"attachment":{"id":0,"path":"effect.mdx","visibility":{"interpolation":0,"globalSequence":-1,"times":[-400,0,400],"values":[[0],[1],[0]]}}}]});
         let mdx=crate::gltf_mdx::MdxAnimation::parse(metadata.clone(),&gltf.document).unwrap();
-        let source=GltfPoseSource {document:gltf.document,buffers:vec![],billboards:vec![0],mesh_billboards:false,mdx:Some(mdx)};
+        let source=GltfPoseSource {document:gltf.document,buffers:vec![],billboards:vec![0],mesh_billboards:false,mdx:Some(mdx),clip_samples:vec![OnceLock::new()]};
         for (frame,x,visible) in [(0,0.0,0.0),(12,5.0,0.0),(24,10.0,1.0),(48,20.0,0.0),(60,20.0,0.0)] {
             let poses=source.sample_nodes(0,frame,60,None).unwrap();assert_eq!(poses[0].matrix.w_axis.x,x);assert_eq!(poses[0].attachment.as_ref().unwrap().visibility,visible);
         }

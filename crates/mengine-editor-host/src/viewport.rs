@@ -108,6 +108,10 @@ pub struct EditorViewportProfileCounts {
     pub submitted_objects: usize,
     pub scene_views: usize,
     pub billboard_meshes: usize,
+    pub cached_pose_meshes: usize,
+    pub cached_pose_bytes: usize,
+    pub mesh_uploads: usize,
+    pub mesh_evictions: usize,
     pub ui_primitives: usize,
     pub ui_batches: usize,
     pub ui_draw_calls: u32,
@@ -753,6 +757,13 @@ impl EditorViewportRenderer {
             render_started,
         );
         profile.resource_sampling = resource_sampling;
+        let mesh_cache = self.meshes.stats();
+        profile.counts.cached_pose_meshes = mesh_cache.entries;
+        profile.counts.cached_pose_bytes = mesh_cache.bytes;
+        profile.counts.mesh_uploads = mesh_cache.uploads;
+        profile.counts.mesh_evictions = mesh_cache.evictions;
+        profile.memory.push(EditorViewportMemoryCategory { name:"GPU sampled mesh cache".into(), domain:"gpu".into(), bytes:mesh_cache.bytes as u64, certainty:"lower-bound".into(), source:"Logical vertex and index bytes for cached poses, terrain and patches; driver overhead and static imported meshes excluded".into() });
+        profile.resident_memory_estimate_bytes += mesh_cache.bytes as u64;
         if let Some(gpu) = readback.and_then(|readback| readback.gpu) {
             profile.gpu = Some(EditorViewportGpuProfile { timestamp_period_ns: gpu.timestamp_period_ns, total_pass_ms: gpu.stages.iter().map(|stage| stage.milliseconds).sum(), stages: gpu.stages.into_iter().map(|stage| EditorViewportProfileNode { name: stage.name.into(), total_ms: stage.milliseconds, self_ms: stage.milliseconds, calls: 1, children: Vec::new() }).collect() });
         }
@@ -970,6 +981,10 @@ fn build_viewport_profile(
             submitted_objects: renderer.spatial_culling_stats().submitted,
             scene_views: frame.scene_views.len(),
             billboard_meshes: frame.objects.iter().chain(frame.scene_views.iter().flat_map(|v| &v.objects)).filter(|o| o.mesh_key.starts_with("billboard:")).map(|o| &o.mesh_key).collect::<BTreeSet<_>>().len(),
+            cached_pose_meshes: 0,
+            cached_pose_bytes: 0,
+            mesh_uploads: 0,
+            mesh_evictions: 0,
             ui_primitives: frame.ui.primitives.len(),
             ui_batches: frame.ui.batches.len(),
             ui_draw_calls: ui_stats.draw_calls,
