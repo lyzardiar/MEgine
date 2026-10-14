@@ -1,0 +1,466 @@
+{
+  "comparison": {
+    "before": "D:/MEngineNativeQA/rpg-multiview-camera-roots-before-1791938910200",
+    "after": "D:/MEngineNativeQA/rpg-multiview-camera-sparse-after-1791939322338",
+    "passed": true,
+    "stages": [
+      {
+        "name": "dual-preview-profiler",
+        "game": {
+          "before": {
+            "n": 494,
+            "mean": 20.65080971659919,
+            "p50": 18.700000047683716,
+            "p95": 32.10000014305115
+          },
+          "after": {
+            "n": 501,
+            "mean": 20.458483033551428,
+            "p50": 18.600000143051147,
+            "p95": 28.700000047683716
+          }
+        },
+        "scene": {
+          "before": {
+            "n": 523,
+            "mean": 19.489292542747513,
+            "p50": 18.200000047683716,
+            "p95": 25.199999809265137
+          },
+          "after": {
+            "n": 528,
+            "mean": 19.3837121210315,
+            "p50": 18.199999809265137,
+            "p95": 25.399999856948853
+          }
+        },
+        "sampledCameraCpuMs": {
+          "before": {
+            "selected": 292.36300000000017,
+            "timeline": 155.87099999999998
+          },
+          "after": {
+            "selected": 78.658,
+            "timeline": 100.28499999999998
+          }
+        },
+        "longTaskMs": 0
+      },
+      {
+        "name": "dual-profiler",
+        "game": {
+          "before": {
+            "n": 515,
+            "mean": 20.123106796301684,
+            "p50": 18.299999952316284,
+            "p95": 30.700000047683716
+          },
+          "after": {
+            "n": 521,
+            "mean": 19.958349328123447,
+            "p50": 18.200000047683716,
+            "p95": 29.5
+          }
+        },
+        "scene": {
+          "before": {
+            "n": 533,
+            "mean": 19.429080675511603,
+            "p50": 18.09999990463257,
+            "p95": 24.5
+          },
+          "after": {
+            "n": 535,
+            "mean": 19.45943925224732,
+            "p50": 18.100000143051147,
+            "p95": 23.899999856948853
+          }
+        },
+        "sampledCameraCpuMs": {
+          "before": {
+            "selected": 0,
+            "timeline": 167.71900000000005
+          },
+          "after": {
+            "selected": 0,
+            "timeline": 121.64600000000003
+          }
+        },
+        "longTaskMs": 0
+      },
+      {
+        "name": "game-profiler",
+        "game": {
+          "before": {
+            "n": 544,
+            "mean": 18.900551470325272,
+            "p50": 18,
+            "p95": 24
+          },
+          "after": {
+            "n": 539,
+            "mean": 19.10983302376487,
+            "p50": 17.90000009536743,
+            "p95": 23.399999856948853
+          }
+        },
+        "scene": {
+          "before": {
+            "n": 0,
+            "mean": null
+          },
+          "after": {
+            "n": 0,
+            "mean": null
+          }
+        },
+        "sampledCameraCpuMs": {
+          "before": {
+            "selected": 0,
+            "timeline": 194.08500000000006
+          },
+          "after": {
+            "selected": 0,
+            "timeline": 124.41100000000003
+          }
+        },
+        "longTaskMs": 0
+      },
+      {
+        "name": "game-hidden-profiler",
+        "game": {
+          "before": {
+            "n": 539,
+            "mean": 18.573283858998145,
+            "p50": 18,
+            "p95": 23.399999856948853
+          },
+          "after": {
+            "n": 536,
+            "mean": 18.96828358208955,
+            "p50": 17.90000009536743,
+            "p95": 23.799999952316284
+          }
+        },
+        "scene": {
+          "before": {
+            "n": 0,
+            "mean": null
+          },
+          "after": {
+            "n": 0,
+            "mean": null
+          }
+        },
+        "sampledCameraCpuMs": {
+          "before": {
+            "selected": 0,
+            "timeline": 192.94100000000003
+          },
+          "after": {
+            "selected": 0,
+            "timeline": 137.107
+          }
+        },
+        "longTaskMs": 0
+      },
+      {
+        "name": "dual-preview-repeat",
+        "game": {
+          "before": {
+            "n": 483,
+            "mean": 21.435610765749377,
+            "p50": 19.299999952316284,
+            "p95": 33.200000047683716
+          },
+          "after": {
+            "n": 500,
+            "mean": 20.416200000286103,
+            "p50": 18.699999809265137,
+            "p95": 31.09999990463257
+          }
+        },
+        "scene": {
+          "before": {
+            "n": 522,
+            "mean": 19.865134099890902,
+            "p50": 18.5,
+            "p95": 25.200000047683716
+          },
+          "after": {
+            "n": 526,
+            "mean": 19.352091254843504,
+            "p50": 18.300000190734863,
+            "p95": 24.700000047683716
+          }
+        },
+        "sampledCameraCpuMs": {
+          "before": {
+            "selected": 286.9489999999999,
+            "timeline": 150.93900000000002
+          },
+          "after": {
+            "selected": 90.93499999999995,
+            "timeline": 107.40999999999998
+          }
+        },
+        "longTaskMs": 0
+      }
+    ],
+    "captureRecovery": {
+      "scene": 52,
+      "game": 50
+    },
+    "pixelOracle": {
+      "scenePixels": 230400,
+      "previewPixels": 57600,
+      "sceneChanged": 154,
+      "previewChanged": 60
+    },
+    "console": [
+      {
+        "level": "info",
+        "message": "MEngine Editor",
+        "source": "editor",
+        "time": 1791939346938
+      },
+      {
+        "level": "info",
+        "message": "场景落盘：packages/editor/project/Assets/Scenes/*.mscene",
+        "source": "editor",
+        "time": 1791939346938
+      },
+      {
+        "level": "info",
+        "message": "新建会弹出命名；双击 .mscene 打开；Ctrl+S 保存",
+        "source": "editor",
+        "time": 1791939346938
+      },
+      {
+        "level": "info",
+        "message": "场景存储：磁盘 project/Assets/Scenes",
+        "time": 1791939350293
+      },
+      {
+        "level": "info",
+        "message": "已恢复场景 Main.mscene",
+        "time": 1791939350429
+      },
+      {
+        "level": "info",
+        "message": "Agent set Game View resolution to 1920 x 1080",
+        "time": 1791939351776
+      }
+    ],
+    "shutdown": {
+      "pid": 133552,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\rpg-multiview-camera-sparse-after-1791939322338\\runtime\\com.mengine.editor.agent-EMsGtJ '\\\\?\\D:\\MEngineNativeQA\\rpg-multiview-camera-sparse-after-1791939322338\\runtime\\com.mengine.editor.agent-EMsGtJ'"
+    }
+  },
+  "microbenchmark": {
+    "entityCount": 20000,
+    "iterations": 500,
+    "rounds": 7,
+    "results": [
+      {
+        "kind": "non-camera",
+        "before": {
+          "medianMs": 0.8945878000000003,
+          "samplesMs": [
+            0.8694225999999998,
+            0.8570131999999999,
+            0.8945878000000003,
+            0.9119770000000008,
+            0.8970468,
+            0.8707218000000002,
+            0.8953083999999999
+          ]
+        },
+        "after": {
+          "medianMs": 0.00007299999999941065,
+          "samplesMs": [
+            0.00020280000000002474,
+            0.0000729999999998654,
+            0.00014460000000008223,
+            0.00007299999999941065,
+            0.00006819999999970605,
+            0.000061399999999594,
+            0.00006220000000030268
+          ]
+        }
+      },
+      {
+        "kind": "root",
+        "before": {
+          "medianMs": 0.8982528000000002,
+          "samplesMs": [
+            0.8971345999999994,
+            0.9022026000000005,
+            0.8907774000000008,
+            0.9271755999999987,
+            0.8716058000000012,
+            0.8982528000000002,
+            0.9026185999999998
+          ]
+        },
+        "after": {
+          "medianMs": 0.01076800000000003,
+          "samplesMs": [
+            0.011711400000000139,
+            0.011065599999999905,
+            0.01080119999999988,
+            0.010610999999998967,
+            0.010700400000001538,
+            0.01076800000000003,
+            0.010619399999999586
+          ]
+        }
+      },
+      {
+        "kind": "timeline",
+        "before": {
+          "medianMs": 1.138147399999998,
+          "samplesMs": [
+            1.1382597999999997,
+            1.1556784000000007,
+            1.1113426,
+            1.1477916000000006,
+            1.1283762000000024,
+            1.138147399999998,
+            1.126305400000001
+          ]
+        },
+        "after": {
+          "medianMs": 0.24626859999999942,
+          "samplesMs": [
+            0.2440733999999975,
+            0.25668759999999746,
+            0.2442027999999991,
+            0.24626859999999942,
+            0.2468837999999996,
+            0.24578380000000105,
+            0.24825080000000163
+          ]
+        }
+      },
+      {
+        "kind": "parented",
+        "before": {
+          "medianMs": 0.8758388000000014,
+          "samplesMs": [
+            0.8692119999999995,
+            0.9090970000000016,
+            0.8705554000000011,
+            0.866463200000002,
+            0.8758388000000014,
+            0.9121044000000001,
+            0.8806598000000012
+          ]
+        },
+        "after": {
+          "medianMs": 0.033643800000001646,
+          "samplesMs": [
+            0.03218379999999888,
+            0.03353019999999742,
+            0.03197420000000056,
+            0.03373139999999694,
+            0.03392819999999847,
+            0.033868599999997966,
+            0.033643800000001646
+          ]
+        }
+      },
+      {
+        "kind": "deep",
+        "before": {
+          "medianMs": 0.9002900000000009,
+          "samplesMs": [
+            0.8711177999999999,
+            0.9423035999999992,
+            0.9002900000000009,
+            0.8778482000000004,
+            0.9033580000000002,
+            0.888225599999998,
+            0.9170627999999997
+          ]
+        },
+        "after": {
+          "medianMs": 0.9714583999999958,
+          "samplesMs": [
+            0.9811781999999948,
+            0.9714583999999958,
+            0.9630786000000008,
+            0.9823571999999986,
+            0.9638793999999979,
+            0.9828067999999984,
+            0.9514671999999992
+          ]
+        }
+      }
+    ]
+  },
+  "equivalence": {
+    "baseline": "123fa37",
+    "revisions": 300,
+    "checks": 1800,
+    "passed": true
+  },
+  "tests": {
+    "passed": 49,
+    "failed": 0,
+    "skipped": 0,
+    "log": "D:/MEngineNativeQA/camera-sparse-tests.log"
+  },
+  "frontendBuild": {
+    "passed": true,
+    "log": "D:/MEngineNativeQA/camera-sparse-build.log"
+  },
+  "nativePanelIntegrated": false,
+  "remote200msResolved": false,
+  "release": {
+    "command": "cargo build --release -p mengine-editor-tauri --features custom-protocol",
+    "passed": true,
+    "duration": "4m24s",
+    "sha256": "CB75AE9F3A6026E73657561521F09CF4F620B8A5F1CBFB9B5BAC7682D6DD6051",
+    "report": "D:/MEngineNativeQA/rpg-multiview-camera-sparse-embedded-final-1791940211747/report.json",
+    "passedSmoke": true,
+    "activeCaptures": [
+      {
+        "target": "game",
+        "file": "active-game.png",
+        "width": 1280,
+        "height": 720,
+        "elapsedMs": 300
+      },
+      {
+        "target": "scene",
+        "file": "active-scene.png",
+        "width": 408,
+        "height": 804,
+        "elapsedMs": 270
+      }
+    ],
+    "captureRecovery": {
+      "scene": 54,
+      "game": 50
+    },
+    "pixelOracle": {
+      "scenePixels": 230400,
+      "previewPixels": 57600,
+      "sceneChanged": 131,
+      "previewChanged": 59
+    },
+    "errors": [],
+    "shutdown": {
+      "pid": 134760,
+      "normalExit": true,
+      "runtimeRemoved": false,
+      "discoveryRemoved": true,
+      "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\rpg-multiview-camera-sparse-embedded-final-1791940211747\\runtime\\com.mengine.editor.agent-Ye6ac5 '\\\\?\\D:\\MEngineNativeQA\\rpg-multiview-camera-sparse-embedded-final-1791940211747\\runtime\\com.mengine.editor.agent-Ye6ac5'"
+    },
+    "screenshotInspected": true
+  }
+}

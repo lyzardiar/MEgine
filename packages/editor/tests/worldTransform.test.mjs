@@ -18,6 +18,20 @@ const transform = (position, rotation = [0, 0, 0, 1], scale = [1, 1, 1]) => ({
   scale,
 });
 
+test('sparse transforms retain parent TRS, active state and duplicate records across shallow and deep queries', () => {
+  const entities = Array.from({ length: 24 }, (_, i) => ({ entity: i, parent: i ? i - 1 : null, active: i !== 7, components: { Transform: transform([1, 2, 3]) } }));
+  entities.push({ entity: 0, components: { Transform: transform([5, 0, 0]) } });
+  for (const id of [0, 2, 3, 4, 5, 23]) {
+    const sparse = buildWorldTransforms(entities, [id]), full = buildWorldTransforms(entities);
+    assert.equal(sparse.size, id + 1);
+    for (const [key, value] of sparse) assert.deepEqual(value, full.get(key));
+    assert.deepEqual(sparse.get(id).transform.position, [5 + id, 2 * id, 3 * id]);
+  }
+  entities[2].parent = 999;
+  for (const id of [2, 3, 23]) assert.deepEqual(buildWorldTransforms(entities, [id]).get(id), buildWorldTransforms(entities).get(id));
+  assert.deepEqual([...buildWorldTransforms(entities, [])], []);
+});
+
 test('editor hierarchy resolves the same nested TRS contract as runtime', () => {
   const quarterTurn = [0, 0, Math.SQRT1_2, Math.SQRT1_2];
   const entities = [

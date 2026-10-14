@@ -8,11 +8,44 @@ import {
   gameCameraForEntity,
 } from '../src/gameCamera.ts';
 import { project } from '../src/math3d.ts';
+import { buildWorldTransforms } from '../src/worldTransform.ts';
 
 const transform = (position = [0, 0, 10]) => ({
   position,
   rotation: [0, 0, 0, 1],
   scale: [1, 1, 1],
+});
+
+test('selected non-camera objects do not resolve world transforms', () => {
+  const entities = [{ entity: 1, components: { get Transform() { throw new Error('unneeded transform'); } } }];
+  assert.equal(gameCameraForEntity(entities, 1), null);
+  assert.equal(gameCameraForEntity(entities, 99), null);
+  entities[0].components.Camera2D = {};
+  entities[0].components.Camera3D = {};
+  assert.equal(gameCameraForEntity(entities, 1), null);
+});
+
+test('sparse camera queries match the full world through parent edits and duplicate IDs', () => {
+  const entities = [
+    { entity: 1, components: { Transform: transform([10, 2, 3]) } },
+    { entity: 2, components: { Transform: transform([1, 0, 0]), Camera3D: { primary: true } } },
+    { entity: 2, components: { Transform: transform([4, 5, 6]) } },
+    { entity: 3, components: { Transform: transform([3, 0, 0]), Camera2D: { primary: false } } },
+  ];
+  const check = () => {
+    const world = buildWorldTransforms(entities);
+    for (const id of [2, 3]) assert.deepEqual(gameCameraForEntity(entities, id), gameCameraForEntity(entities, id, world));
+    assert.deepEqual(primaryGameCamera(entities), world.get(2).active ? gameCameraForEntity(entities, 2, world) : null);
+    assert.deepEqual(timelineGameCamera(entities, { source: 2, target: 3, weight: 1 }), gameCameraForEntity(entities, 3, world));
+  };
+  check();
+  entities[2].parent = 1; check();
+  entities[0].components.Transform.position[0] = 20; check();
+  entities[2].parent = 99; check();
+  entities[2].parent = 2;
+  assert.deepEqual(gameCameraForEntity(entities, 2), gameCameraForEntity(entities, 2, buildWorldTransforms(entities, [2])));
+  entities[2].parent = null; check();
+  entities[1].components.Camera3D.fov_y_degrees = 90; check();
 });
 
 test('primary 2D camera resolves to an orthographic Game camera', () => {
