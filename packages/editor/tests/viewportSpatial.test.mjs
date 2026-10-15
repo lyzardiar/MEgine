@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {boundsVisible, createViewportSpatialIndex, viewportPlanes, transformBounds} from '../src/viewportSpatial.ts';
-import {project} from '../src/math3d.ts';
+import {project, quatRotateVec} from '../src/math3d.ts';
 const box = (x, y, z) => ({min:[x-.1,y-.1,z-.1],max:[x+.1,y+.1,z+.1]});
 test('perspective and orthographic octree queries match linear checks across motion/removal', () => {
   const index = createViewportSpatialIndex();
@@ -32,4 +32,21 @@ test('frustum planes agree with independently projected screen points', () => {
       assert.equal(visible,projectedInside,`${projection}:${point}`);
     }
   }
+});
+
+test('transformed bounds agree with eight-corner geometry across rotations, offsets and signed scales', () => {
+  let seed=173;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+  for(let i=0;i<2000;i++) {
+    const min=[0,1,2].map(()=>random()*20-10),max=min.map(v=>v+random()*10);
+    const rotation=[0,1,2,3].map(()=>random()*2-1);if(i%2) {const length=Math.hypot(...rotation);for(let j=0;j<4;j++)rotation[j]/=length;}
+    const transform={position:[0,1,2].map(()=>random()*40-20),scale:[0,1,2].map(()=>i%7?random()*6-3:0),rotation};
+    const corners=Array.from({length:8},(_,bits)=>quatRotateVec(rotation,min.map((v,axis)=>((bits&(1<<axis))?max[axis]:v)*transform.scale[axis])).map((v,axis)=>v+transform.position[axis]));
+    const actual=transformBounds({min,max},transform);assert.ok(actual);
+    for(const side of ['min','max'])for(let axis=0;axis<3;axis++) {const expected=Math[side](...corners.map(p=>p[axis]));assert.ok(Math.abs(actual[side][axis]-expected)<=1e-10*Math.max(1,Math.abs(expected)),`${i}/${side}/${axis}`);}
+  }
+  for(const field of ['position','scale','rotation'])for(const invalid of [NaN,Infinity,-Infinity]) {
+    const transform={position:[0,0,0],scale:[1,1,1],rotation:[0,0,0,1]};transform[field][0]=invalid;
+    assert.equal(transformBounds(box(0,0,0),transform),null);
+  }
+  assert.equal(transformBounds({min:[NaN,0,0],max:[1,1,1]},{position:[0,0,0],scale:[1,1,1],rotation:[0,0,0,1]}),null);
 });

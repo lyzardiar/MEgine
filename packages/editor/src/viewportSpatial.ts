@@ -13,13 +13,18 @@ export function pointBounds(points: readonly Vec3[]): Bounds | null {
   return { min, max };
 }
 export function transformBounds(bounds: Bounds, transform: { position: number[]; scale: number[]; rotation: number[] }): Bounds | null {
-  const points: Vec3[] = [];
-  for (let corner = 0; corner < 8; corner++) {
-    const local = [0, 1, 2].map((axis) => ((corner & (1 << axis)) ? bounds.max[axis] : bounds.min[axis]) * transform.scale[axis]) as Vec3;
-    const rotated = quatRotateVec(transform.rotation as [number, number, number, number], local);
-    points.push(rotated.map((v, axis) => v + transform.position[axis]) as Vec3);
-  }
-  return pointBounds(points);
+  const [x, y, z, w] = transform.rotation;
+  const half = [0, 1, 2].map(axis => Math.abs((bounds.max[axis] * 0.5 - bounds.min[axis] * 0.5) * transform.scale[axis]));
+  const center = quatRotateVec(transform.rotation as [number, number, number, number], [0, 1, 2].map(axis => (bounds.min[axis] * 0.5 + bounds.max[axis] * 0.5) * transform.scale[axis]) as Vec3);
+  // The absolute rotation matrix maps local half extents to the same world AABB as all eight corners.
+  const extent = [
+    Math.abs(1 - 2 * (y * y + z * z)) * half[0] + Math.abs(2 * (x * y - w * z)) * half[1] + Math.abs(2 * (x * z + w * y)) * half[2],
+    Math.abs(2 * (x * y + w * z)) * half[0] + Math.abs(1 - 2 * (x * x + z * z)) * half[1] + Math.abs(2 * (y * z - w * x)) * half[2],
+    Math.abs(2 * (x * z - w * y)) * half[0] + Math.abs(2 * (y * z + w * x)) * half[1] + Math.abs(1 - 2 * (x * x + y * y)) * half[2],
+  ];
+  const min = center.map((value, axis) => value + transform.position[axis] - extent[axis]) as Vec3;
+  const max = center.map((value, axis) => value + transform.position[axis] + extent[axis]) as Vec3;
+  return min.every(Number.isFinite) && max.every(Number.isFinite) ? { min, max } : null;
 }
 export function viewportPlanes(camera: Camera, aspect: number): Plane[] {
   const { forward, right, up } = lookBasis(camera.eye, camera.target, camera.up);
