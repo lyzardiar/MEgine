@@ -1,0 +1,47 @@
+{
+  "sources": {
+    "crates/mengine-core/src/world.rs": "7db3d830d8c98f68c47d0e78cadd89c4b37c48ffb46865fab9feb55bb07ea7f2",
+    "crates/mengine-scene/src/entity_reference.rs": "6f0fd4ffdd5424db50079f287cdedfe1dea3f0c8d3ebe18cc4dbcc270e98b0ea",
+    "crates/mengine-scene/src/snapshot_world.rs": "f50c47a8707561f70a9934bfbc8439e33075da7333d54ff77a8da00314ffa781",
+    "crates/mengine-scene/examples/benchmark_snapshot_topology.rs": "4964b728d6c4706a2d5f8828aaa33d034ca5e4a98099c771e723caa37c5e399b",
+    "packages/editor/src-tauri/src/lib.rs": "c34547dad1680d8938fce16b22c91910265843a61ca8d8e041100491440ca235"
+  },
+  "tests": {
+    "core": {
+      "passed": 19,
+      "failed": 0,
+      "ignored": 1,
+      "log": "D:\\MEngineNativeQA\\snapshot-core-final-tests.log"
+    },
+    "scene": {
+      "passed": 25,
+      "failed": 0,
+      "ignored": 0,
+      "log": "D:\\MEngineNativeQA\\snapshot-scene-final-tests.log"
+    },
+    "runtime": {
+      "passed": 222,
+      "failed": 0,
+      "ignored": 0,
+      "log": "D:\\MEngineNativeQA\\snapshot-runtime-final-tests.log"
+    },
+    "play": {
+      "passed": 23,
+      "failed": 0,
+      "ignored": 3,
+      "log": "D:\\MEngineNativeQA\\snapshot-play-final-tests.log"
+    },
+    "sprite": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "log": "D:\\MEngineNativeQA\\snapshot-sprite-final-tests.log"
+    }
+  },
+  "buildLogs": [
+    "D:/MEngineNativeQA/snapshot-release-build.log",
+    "D:/MEngineNativeQA/snapshot-debug-player-build.log",
+    "D:/MEngineNativeQA/snapshot-sdk-build.log",
+    "D:/MEngineNativeQA/snapshot-sprite-release-build.log"
+  ]
+}

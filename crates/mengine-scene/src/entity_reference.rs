@@ -19,6 +19,17 @@ const COMPONENT_ENTITY_REFERENCE_FIELDS: [(&str, &str); 10] = [
 ];
 const COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS: [(&str, &str); 3] = [("Canvas", "render_camera"), ("RawImage", "render_camera"), ("RawImage", "render_root")];
 
+/// MiYu: unchanged source records only need remapping when one of their target mappings changed.
+pub(crate) fn scene_reference_mapping_changed(components: &HashMap<String, Value>, changed: &HashSet<u64>) -> bool {
+    let affected = |value: &Value| decimal_entity(value).is_some_and(|id| changed.contains(&id));
+    if components.contains_key("TimelineDirector") { return true; }
+    if COMPONENT_DIRECT_ENTITY_REFERENCE_FIELDS.iter().any(|(name, field)| components.get(*name).and_then(|value| value.get(*field)).is_some_and(&affected)) { return true; }
+    if COMPONENT_ENTITY_REFERENCE_FIELDS.iter().any(|(name, field)| components.get(*name).and_then(|value| value.get(*field)).is_some_and(|calls| {
+        calls.get("target").is_some_and(&affected) || calls.as_array().is_some_and(|calls| calls.iter().any(|call| call.get("target").is_some_and(&affected)))
+    })) { return true; }
+    components.values().any(|component| component.get(REFERENCE_FIELDS_KEY).and_then(Value::as_array).is_some_and(|fields| fields.iter().filter_map(Value::as_str).any(|field| component.get(field).is_some_and(&affected))))
+}
+
 enum PrefabReference<'a> {
     Node(&'a str),
     Missing,

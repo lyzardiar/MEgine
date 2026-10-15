@@ -3892,7 +3892,9 @@ fn collect_project_sprites(root: &Path, dir: &Path, output: &mut Vec<ProjectSpri
         if name.starts_with('.') || name.ends_with(".meta") {
             continue;
         }
-        if path.is_dir() {
+        let Ok(file_type) = entry.file_type() else { continue; };
+        if file_type.is_symlink() { continue; }
+        if file_type.is_dir() {
             collect_project_sprites(root, &path, output);
             continue;
         }
@@ -6047,20 +6049,16 @@ async fn list_project_assets(state: State<'_, AppState>) -> Result<Vec<ProjectAs
 }
 
 #[tauri::command]
-fn list_project_sprites(state: State<'_, AppState>) -> Result<Vec<ProjectSpriteInfo>, String> {
-    let project_root = state
-        .project
-        .lock()
-        .as_ref()
-        .map(|session| session.snapshot().project_root)
-        .ok_or_else(|| no_project().message)?;
-    let root = Path::new(&project_root)
-        .canonicalize()
-        .map_err(|error| error.to_string())?;
-    let mut sprites = Vec::new();
-    collect_project_sprites(&root, &root.join("Assets"), &mut sprites);
-    sprites.sort_by(|left, right| left.rel_path.cmp(&right.rel_path));
-    Ok(sprites)
+async fn list_project_sprites(state: State<'_, AppState>) -> Result<Vec<ProjectSpriteInfo>, String> {
+    let project_root = state.project.lock().as_ref().map(|session| session.project_root().to_owned()).ok_or_else(|| no_project().message)?;
+    // MiYu: image discovery and metadata reads must not block editor input or IPC.
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = project_root.canonicalize().map_err(|error| error.to_string())?;
+        let mut sprites = Vec::new();
+        collect_project_sprites(&root, &root.join("Assets"), &mut sprites);
+        sprites.sort_by(|left, right| left.rel_path.cmp(&right.rel_path));
+        Ok(sprites)
+    }).await.map_err(|error| format!("Sprite discovery worker failed: {error}"))?
 }
 
 #[tauri::command]

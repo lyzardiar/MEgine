@@ -1,3 +1,4 @@
+// Author: MiYu. Preserve explicit snapshot traversal order across stable entity allocations.
 use crate::command::{CommandBuffer, WorldCommand};
 use crate::component::{Component, ComponentBox, ComponentId, ComponentRegistry};
 use crate::entity::Entity;
@@ -14,6 +15,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 static NEXT_WORLD_ID: AtomicU64 = AtomicU64::new(1);
 
 struct EntityRecord {
+    iteration_rank: usize,
     revision: u64,
     generation: u32,
     alive: bool,
@@ -29,6 +31,7 @@ struct EntityRecord {
 pub struct World {
     pub(crate) snapshot_id: u64,
     entities: Vec<EntityRecord>,
+    iteration_order: Option<Vec<u32>>,
     free_list: Vec<u32>,
     component_entities: HashMap<String, BTreeSet<u32>>,
     pub time: Time,
@@ -57,6 +60,7 @@ impl World {
         Self {
             snapshot_id: NEXT_WORLD_ID.fetch_add(1, Ordering::Relaxed),
             entities: Vec::new(),
+            iteration_order: None,
             free_list: Vec::new(),
             component_entities: HashMap::new(),
             time: Time::default(),
@@ -69,7 +73,7 @@ impl World {
     }
 
     pub fn spawn_empty(&mut self) -> Entity {
-        if let Some(index) = self.free_list.pop() {
+        let entity = if let Some(index) = self.free_list.pop() {
             let rec = &mut self.entities[index as usize];
             rec.alive = true;
             rec.revision = 0;
@@ -85,6 +89,7 @@ impl World {
         } else {
             let index = self.entities.len() as u32;
             self.entities.push(EntityRecord {
+                iteration_rank: index as usize,
                 revision: 0,
                 generation: 1,
                 alive: true,
@@ -97,7 +102,12 @@ impl World {
                 layer: 0,
             });
             Entity::new(index, 1)
+        };
+        if let Some(order) = &mut self.iteration_order {
+            self.entities[entity.index as usize].iteration_rank = order.last().map(|index| self.entities[*index as usize].iteration_rank + 1).unwrap_or(0);
+            order.push(entity.index);
         }
+        entity
     }
 
     pub fn despawn(&mut self, entity: Entity) {
@@ -126,6 +136,22 @@ impl World {
         rec.serialized_components.clear();
         rec.name = None;
         self.free_list.push(entity.index);
+        if let Some(order) = &mut self.iteration_order { order.retain(|index| *index != entity.index); }
+    }
+
+    /// Remove a batch while filtering an explicit traversal order only once.
+    pub fn despawn_many(&mut self, entities: impl IntoIterator<Item = Entity>) {
+        let entities: Vec<_> = entities.into_iter().filter(|entity| self.is_alive(*entity)).collect();
+        let mut order = self.iteration_order.take();
+        if entities.len() > 1 {
+            let removed: std::collections::HashSet<_> = entities.iter().copied().collect();
+            let parents: std::collections::HashSet<_> = entities.iter().filter_map(|entity| self.get_component::<Parent>(*entity).map(|parent| parent.entity)).collect();
+            for entity in &entities { self.remove_component_by_name(*entity, "Parent"); }
+            for parent in parents { if let Some(children) = self.get_component_mut::<Children>(parent) { children.entities.retain(|child| !removed.contains(child)); } }
+        }
+        for entity in entities { self.despawn(entity); }
+        if let Some(order) = &mut order { order.retain(|index| self.entities[*index as usize].alive); }
+        self.iteration_order = order;
     }
 
     pub fn is_alive(&self, entity: Entity) -> bool {
@@ -136,13 +162,24 @@ impl World {
     }
 
     pub fn iter_entities(&self) -> impl Iterator<Item = Entity> + '_ {
-        self.entities.iter().enumerate().filter_map(|(i, r)| {
+        self.iteration_order.iter().flatten().copied().chain((0..self.entities.len() as u32).take(if self.iteration_order.is_none() { usize::MAX } else { 0 })).filter_map(|i| {
+            let r = &self.entities[i as usize];
             if r.alive {
                 Some(Entity::new(i as u32, r.generation))
             } else {
                 None
             }
         })
+    }
+
+    /// A complete live-entity permutation controls traversal and indexed queries without changing handles.
+    pub fn set_entity_iteration_order(&mut self, order: &[Entity]) -> bool {
+        if order.len() != self.iter_entities().count() || order.iter().any(|entity| !self.is_alive(*entity)) { return false; }
+        if self.iteration_order.as_ref().is_some_and(|previous| previous.iter().zip(order).all(|(index, entity)| *index == entity.index)) { return true; }
+        if order.iter().collect::<std::collections::HashSet<_>>().len() != order.len() { return false; }
+        for (rank, entity) in order.iter().enumerate() { self.entities[entity.index as usize].iteration_rank = rank; }
+        self.iteration_order = Some(order.iter().map(|entity| entity.index).collect());
+        true
     }
 
     pub fn insert_component<T: Component>(&mut self, entity: Entity, value: T) {
@@ -300,13 +337,23 @@ impl World {
             // MiYu: the membership index already proves a single component's presence.
             (record.alive && (type_names.len() == 1 || type_names.iter().all(|name| record.components.contains_key(*name)))).then_some(Entity::new(index, record.generation))
         });
-        self.iter_entities().take(if type_names.is_empty() { usize::MAX } else { 0 }).chain(indexed)
+        let ordered = self.iteration_order.as_ref().map(|_| {
+            let mut entities = indexed.clone().collect::<Vec<_>>();
+            entities.sort_unstable_by_key(|entity| self.entities[entity.index as usize].iteration_rank);
+            entities
+        });
+        self.iter_entities().take(if type_names.is_empty() { usize::MAX } else { 0 }).chain(ordered.into_iter().flatten()).chain(indexed.take(if self.iteration_order.is_none() { usize::MAX } else { 0 }))
     }
 
     /// MiYu: Ordered, deduplicated union of component memberships, including inactive entities.
     pub fn entities_with_any_component(&self, type_names: &[&str]) -> impl Iterator<Item = Entity> + '_ {
         let indices: BTreeSet<_> = type_names.iter().filter_map(|name| self.component_entities.get(*name)).flat_map(|entities| entities.iter().copied()).collect();
-        indices.into_iter().filter_map(move |index| {
+        let ordered = self.iteration_order.as_ref().map(|_| {
+            let mut ordered: Vec<_> = indices.iter().copied().collect();
+            ordered.sort_unstable_by_key(|index| self.entities[*index as usize].iteration_rank);
+            ordered
+        });
+        ordered.into_iter().flatten().chain(indices.into_iter().take(if self.iteration_order.is_none() { usize::MAX } else { 0 })).filter_map(move |index| {
             let record = &self.entities[index as usize];
             record.alive.then_some(Entity::new(index, record.generation))
         })
@@ -585,6 +632,44 @@ impl Transform {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn batch_removal_detaches_survivors_and_preserves_retained_siblings() {
+        use super::*;
+        let mut world = World::new(); let root = world.spawn_empty();
+        let children: Vec<_> = (0..6).map(|_| { let child = world.spawn_empty(); world.set_parent(child, Some(root)); child }).collect();
+        let grandchild = world.spawn_empty(); world.set_parent(grandchild, Some(children[1]));
+        world.despawn_many([children[1], children[3], children[4]]);
+        assert_eq!(world.get_component::<Children>(root).unwrap().entities, vec![children[0], children[2], children[5]]);
+        assert!(world.get_component::<Parent>(grandchild).is_none());
+        world.despawn_many([root, children[0], children[2]]);
+        assert!(world.get_component::<Parent>(children[5]).is_none());
+        assert_eq!(world.iter_entities().collect::<Vec<_>>(), vec![children[5], grandchild]);
+    }
+
+    #[test]
+    fn explicit_order_matches_component_queries_across_slot_reuse() {
+        use super::*;
+        let mut world = World::new();
+        let entities: Vec<_> = (0..5).map(|_| world.spawn_empty()).collect();
+        for entity in &entities { world.insert_component(*entity, Transform::default()); }
+        let order = [entities[3], entities[0], entities[4], entities[1], entities[2]];
+        assert!(world.set_entity_iteration_order(&order));
+        assert_eq!(world.iter_entities().collect::<Vec<_>>(), order);
+        assert_eq!(world.entities_with_components(&["Transform"]).collect::<Vec<_>>(), order);
+        assert_eq!(world.entities_with_components(&[]).collect::<Vec<_>>(), order);
+        assert_eq!(world.entities_with_any_component(&["Transform", "Transform"]).collect::<Vec<_>>(), order);
+        assert!(!world.set_entity_iteration_order(&[entities[0]; 5]));
+        world.despawn(entities[4]); let next = world.spawn_empty(); world.insert_component(next, Transform::default());
+        assert_eq!(next.index, entities[4].index); assert_ne!(next, entities[4]);
+        let expected = vec![entities[3], entities[0], entities[1], entities[2], next];
+        assert_eq!(world.iter_entities().collect::<Vec<_>>(), expected);
+        assert_eq!(world.entities_with_components(&["Transform"]).collect::<Vec<_>>(), expected);
+        assert!(!world.set_entity_iteration_order(&order));
+        assert_eq!(world.entities_with_any_component(&["Transform"]).collect::<Vec<_>>(), expected);
+        world.despawn_many([entities[3], entities[1], next]);
+        assert_eq!(world.iter_entities().collect::<Vec<_>>(), vec![entities[0], entities[2]]);
+        assert_eq!(world.entities_with_components(&["Transform"]).collect::<Vec<_>>(), vec![entities[0], entities[2]]);
+    }
     #[test]
     fn spawn_preserves_legacy_defaults_and_initial_hierarchy_state() {
         use super::*;
