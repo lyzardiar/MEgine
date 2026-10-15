@@ -33,8 +33,15 @@ struct PoseUsage { frame: u64, bytes: usize }
 pub struct MeshCacheStats { pub entries: usize, pub bytes: usize, pub uploads: usize, pub evictions: usize }
 
 #[derive(Clone, Copy, Debug, Default)]
-pub struct MeshSyncProfile { pub file_check_ms: f64, pub file_checks: u32, pub source_load_ms: f64, pub source_loads: u32, pub source_reuse_ms: f64, pub source_reuses: u32, pub geometry_ms: f64, pub geometry_builds: u32, pub upload_ms: f64, pub uploads: u32 }
+pub struct MeshSyncProfile { pub file_check_ms: f64, pub file_checks: u32, pub source_check_ms: f64, pub source_checks: u32, pub source_load_ms: f64, pub source_loads: u32, pub source_reuse_ms: f64, pub source_reuses: u32, pub geometry_ms: f64, pub geometry_builds: u32, pub upload_ms: f64, pub uploads: u32 }
 
+
+// One validation snapshot per sync call, shared by its main camera and embedded views.
+#[derive(Default)]
+struct FrameSourceChecks { stamps: HashMap<String, FileStamp>, prepared: HashSet<String> }
+impl FrameSourceChecks {
+    fn stamp(&mut self, asset: &str, path: &Path, profile: &mut MeshSyncProfile) -> FileStamp { *self.stamps.entry(asset.into()).or_insert_with(|| profile_file_stamp(path, profile)) }
+}
 
 // Validated sources are shared; legacy render-only loads never enter the script source pool.
 enum CachedPoseSource { Shared(Arc<SharedGltfPoseSource>), Legacy { source: GltfPoseSource, dependencies: Vec<(PathBuf, FileStamp)> } }
@@ -43,6 +50,10 @@ impl std::ops::Deref for CachedPoseSource {
     fn deref(&self) -> &Self::Target { match self { Self::Shared(source) => source, Self::Legacy { source, .. } => source } }
 }
 impl CachedPoseSource { fn is_current(&self) -> bool { match self { Self::Shared(source) => source.is_current(), Self::Legacy { dependencies, .. } => dependencies.iter().all(|(path, stamp)| file_stamp(path) == *stamp) } } }
+fn profile_source_current(source: &CachedPoseSource, profile: &mut MeshSyncProfile) -> bool {
+    let started = Instant::now(); let current = source.is_current();
+    profile.source_check_ms += started.elapsed().as_secs_f64()*1000.; profile.source_checks += 1; current
+}
 fn load_render_only_source(path: &Path) -> Result<CachedPoseSource, AssetError> {
     let dependency_paths = GltfPoseSource::load(path)?.dependency_paths(path);
     let dependencies: Vec<_> = dependency_paths.into_iter().map(|path| { let stamp = file_stamp(&path); (path, stamp) }).collect();
@@ -152,12 +163,13 @@ impl RuntimeMeshCache {
     /// MiYu: billboard nodes are sampled separately for the game, editor and each portrait camera.
     pub fn sync_frame(&mut self, renderer: &mut Renderer, frame: &mut CompiledFrame) -> Vec<MeshLoadFailure> {
         self.profile = MeshSyncProfile::default();
-        self.prepare_billboards(frame.camera,&mut frame.objects);
-        for view in &mut frame.scene_views { self.prepare_billboards(view.camera,&mut view.objects); }
-        self.sync_objects(renderer,frame.objects.iter().chain(frame.scene_views.iter().flat_map(|v| &v.objects)))
+        let mut checks = FrameSourceChecks::default();
+        self.prepare_billboards(frame.camera,&mut frame.objects,&mut checks);
+        for view in &mut frame.scene_views { self.prepare_billboards(view.camera,&mut view.objects,&mut checks); }
+        self.sync_objects(renderer,frame.objects.iter().chain(frame.scene_views.iter().flat_map(|v| &v.objects)), &mut checks)
     }
 
-    fn prepare_billboards(&mut self, camera: FrameCamera, objects: &mut [RenderObject]) {
+    fn prepare_billboards(&mut self, camera: FrameCamera, objects: &mut [RenderObject], checks: &mut FrameSourceChecks) {
         let Some(root) = self.project_root.as_deref() else { return; };
         let poll = self.last_poll.is_none_or(|last| last.elapsed() >= Duration::from_millis(250));
         let mut checked_assets = HashMap::new();
@@ -166,14 +178,15 @@ impl RuntimeMeshCache {
             let Some((asset,_,_,_)) = parse_gltf_pose_sample(key) else { continue; };
             if poll || !self.poses.contains_key(asset) {
                 let ready = if let Some(ready) = checked_assets.get(asset) { *ready } else {
-                    let ready = if let Some(path) = resolve_project_asset_path(root,asset) {
-                        let stamp = profile_file_stamp(&path, &mut self.profile);
-                        if self.poses.get(asset).is_none_or(|(old,source)| *old != stamp || !source.is_current()) {
+                    let ready = if checks.prepared.contains(asset) { true } else if let Some(path) = resolve_project_asset_path(root,asset) {
+                        let stamp = checks.stamp(asset, &path, &mut self.profile);
+                        if self.poses.get(asset).is_none_or(|(old,source)| *old != stamp || !profile_source_current(source, &mut self.profile)) {
                             forget_pose_attempts(&mut self.attempted, &self.billboard_views, asset);
                             self.poses.remove(asset);
                             match load_pose_source(&path, root, &mut self.profile) { Ok(source) => { self.poses.insert(asset.into(),(stamp,source)); true }, Err(_) => false }
                         } else { true }
                     } else { false };
+                    if ready { checks.prepared.insert(asset.to_owned()); }
                     checked_assets.insert(asset.to_owned(),ready); ready
                 };
                 if !ready { continue; }
@@ -192,10 +205,10 @@ impl RuntimeMeshCache {
         objects: &[RenderObject],
     ) -> Vec<MeshLoadFailure> {
         self.profile = MeshSyncProfile::default();
-        self.sync_objects(renderer,objects.iter())
+        self.sync_objects(renderer,objects.iter(), &mut FrameSourceChecks::default())
     }
 
-    fn sync_objects<'a>(&mut self, renderer: &mut Renderer, objects: impl IntoIterator<Item = &'a RenderObject>) -> Vec<MeshLoadFailure> {
+    fn sync_objects<'a>(&mut self, renderer: &mut Renderer, objects: impl IntoIterator<Item = &'a RenderObject>, checks: &mut FrameSourceChecks) -> Vec<MeshLoadFailure> {
         for key in self.evicted.drain(..) { renderer.remove_mesh(&key); }
         self.uploads = 0; self.evictions = 0;
         self.frame += 1;
@@ -206,7 +219,6 @@ impl RuntimeMeshCache {
         let poll = self.last_poll.is_none_or(|last| last.elapsed() >= Duration::from_millis(250));
         if poll { self.last_poll = Some(Instant::now()); }
         let mut frame_keys = HashSet::new();
-        let mut file_stamps = HashMap::new();
         let mut checked_poses = HashSet::new();
         for object in objects {
             let key = object.mesh_key.trim();
@@ -222,7 +234,7 @@ impl RuntimeMeshCache {
                     if should_attempt(&mut self.attempted, key, FileStamp::default()) { failures.push(MeshLoadFailure { key:key.into(), path:root.to_owned(), error:"mesh patch path must be project-relative without '..'".into() }); }
                     continue;
                 };
-                let stamp = *file_stamps.entry(asset).or_insert_with(|| profile_file_stamp(&path, &mut self.profile));
+                let stamp = checks.stamp(asset, &path, &mut self.profile);
                 if !should_attempt(&mut self.attempted, key, stamp) { continue; }
                 if self.patches.get(asset).is_none_or(|(old, _)| *old != stamp) {
                     match { let started = Instant::now(); let source = MeshPatchSource::load(&path); self.profile.source_load_ms += started.elapsed().as_secs_f64()*1000.0; self.profile.source_loads += 1; source } {
@@ -272,9 +284,9 @@ impl RuntimeMeshCache {
                 }
                 continue;
             };
-            let stamp = *file_stamps.entry(asset_key).or_insert_with(|| profile_file_stamp(&path, &mut self.profile));
+            let stamp = checks.stamp(asset_key, &path, &mut self.profile);
             if let Some((asset, _, _, _)) = pose {
-                if checked_poses.insert(asset) && self.poses.get(asset).is_none_or(|(old, source)| *old != stamp || !source.is_current()) {
+                if !checks.prepared.contains(asset) && checked_poses.insert(asset) && self.poses.get(asset).is_none_or(|(old, source)| *old != stamp || !profile_source_current(source, &mut self.profile)) {
                     self.poses.remove(asset);
                     forget_pose_attempts(&mut self.attempted, &self.billboard_views, asset);
                 }
@@ -482,7 +494,7 @@ mod tests {
         fixture.buffer(10.,true);assert_eq!(file_stamp(&path),original_stamp);
         first.last_poll=None;
         let camera=FrameCamera {view:glam::Mat4::IDENTITY,proj:glam::Mat4::IDENTITY,position:Vec3::Z};
-        first.prepare_billboards(camera,&mut objects);assert!(!first.attempted.contains_key(key));
+        first.prepare_billboards(camera,&mut objects,&mut FrameSourceChecks::default());assert!(!first.attempted.contains_key(key));
         assert!(first.sync(&mut renderer,&objects).is_empty());assert_eq!(first.stats().uploads,1);
         assert_eq!(first.poses["pose.gltf"].1.sample_at_rate(0,0,30).unwrap().positions[0][0],9.);
         second.last_poll=None;assert!(second.sync(&mut renderer,&objects).is_empty());assert_eq!(second.stats().uploads,1);
@@ -507,6 +519,27 @@ mod tests {
     }
 
     #[test]
+    fn multiview_frame_validates_each_source_once_and_recovers_missing_buffers() {
+        let fixture=PoseFixture::new();let path=fixture.0.join("pose.gltf");
+        let mut doc:serde_json::Value=serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();doc["nodes"][0]["extras"]=serde_json::json!({"mengineBillboard":{"flags":8}});std::fs::write(&path,doc.to_string()).unwrap();
+        let stamp=file_stamp(&path);
+        let cameras=[0.,0.7,1.4].map(|angle|FrameCamera {view:glam::Mat4::from_rotation_y(angle),proj:glam::Mat4::IDENTITY,position:Vec3::Z});
+        let objects=||vec![RenderObject {mesh_key:"pose.gltf#pose=0:0@30".into(),model:glam::Mat4::IDENTITY,material:Default::default(),cast_shadows:false,receive_shadows:false}];
+        let clear=mengine_rhi::ClearColor {r:0.,g:0.,b:0.,a:1.};
+        let frame=||CompiledFrame {profile_stages:vec![],clear,camera:cameras[0],objects:objects(),lighting:Default::default(),ui:mengine_rhi::UiBatchPlan::build(vec![]),controls:vec![],texture_failures:vec![],font_failures:vec![],has_authored_camera:true,scene_views:cameras[1..].iter().enumerate().map(|(i,camera)|mengine_rhi::SceneTextureFrame {key:format!("preview{i}"),size:[16,16],clear,camera:*camera,objects:objects(),lighting:Default::default()}).collect(),view_resources:vec![]};
+        let mut renderer=pollster::block_on(Renderer::new_headless(winit::dpi::PhysicalSize::new(16,16))).unwrap();let mut cache=RuntimeMeshCache::new(Some(fixture.0.clone()));
+        let mut initial=frame();assert!(cache.sync_frame(&mut renderer,&mut initial).is_empty());assert_eq!(cache.stats().uploads,3);assert_eq!(cache.sync_profile().file_checks,1);
+        let keys=initial.objects.iter().chain(initial.scene_views.iter().flat_map(|v|&v.objects)).map(|o|o.mesh_key.clone()).collect::<HashSet<_>>();assert_eq!(keys.len(),3);assert!(keys.iter().all(|key|key.starts_with("billboard:")));
+        cache.last_poll=None;assert!(cache.sync_frame(&mut renderer,&mut frame()).is_empty());assert_eq!(cache.stats().uploads,0);assert_eq!(cache.sync_profile().source_checks,1);assert_eq!(cache.sync_profile().file_checks,1);
+        fixture.buffer(10.,true);cache.last_poll=None;assert!(cache.sync_frame(&mut renderer,&mut frame()).is_empty());assert_eq!(cache.stats().uploads,3);assert_eq!(cache.sync_profile().source_checks,1);assert_eq!(file_stamp(&path),stamp);
+        assert_eq!(cache.poses["pose.gltf"].1.sample_at_rate(0,0,30).unwrap().positions[0][0],9.);
+        std::fs::remove_file(fixture.0.join("pose.bin")).unwrap();cache.last_poll=None;
+        assert!(!cache.sync_frame(&mut renderer,&mut frame()).is_empty());assert!(keys.iter().all(|key|!cache.attempted.contains_key(key)));assert!(!cache.poses.contains_key("pose.gltf"));
+        fixture.buffer(20.,false);assert!(cache.sync_frame(&mut renderer,&mut frame()).is_empty());assert_eq!(cache.stats().uploads,3);assert!(cache.pose_bytes>0);assert_eq!(file_stamp(&path),stamp);
+        assert_eq!(cache.poses["pose.gltf"].1.sample_at_rate(0,0,30).unwrap().positions[0][0],19.);
+    }
+
+    #[test]
     fn buffer_refresh_invalidates_every_camera_specific_billboard_pose() {
         let fixture=PoseFixture::new();let path=fixture.0.join("pose.gltf");
         let mut doc:serde_json::Value=serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();doc["nodes"][0]["extras"]=serde_json::json!({"mengineBillboard":{"flags":8}});std::fs::write(&path,doc.to_string()).unwrap();
@@ -515,13 +548,13 @@ mod tests {
         let cameras=[glam::Mat4::IDENTITY,glam::Mat4::from_rotation_y(1.)].map(|view|FrameCamera {view,proj:glam::Mat4::IDENTITY,position:Vec3::Z});
         let mut keys=Vec::new();
         for camera in cameras {
-            let mut scene=objects();cache.prepare_billboards(camera,&mut scene);assert!(scene[0].mesh_key.starts_with("billboard:"));keys.push(scene[0].mesh_key.clone());
+            let mut scene=objects();cache.prepare_billboards(camera,&mut scene,&mut FrameSourceChecks::default());assert!(scene[0].mesh_key.starts_with("billboard:"));keys.push(scene[0].mesh_key.clone());
             assert!(cache.sync(&mut renderer,&scene).is_empty());assert_eq!(cache.stats().uploads,1);
         }
         assert_ne!(keys[0],keys[1]);fixture.buffer(2.,true);cache.last_poll=None;
-        let mut scene=objects();cache.prepare_billboards(cameras[0],&mut scene);assert!(keys.iter().all(|key|!cache.attempted.contains_key(key)));
+        let mut scene=objects();cache.prepare_billboards(cameras[0],&mut scene,&mut FrameSourceChecks::default());assert!(keys.iter().all(|key|!cache.attempted.contains_key(key)));
         assert!(cache.sync(&mut renderer,&scene).is_empty());assert_eq!(cache.stats().uploads,1);
-        let mut scene=objects();cache.prepare_billboards(cameras[1],&mut scene);assert_eq!(scene[0].mesh_key,keys[1]);
+        let mut scene=objects();cache.prepare_billboards(cameras[1],&mut scene,&mut FrameSourceChecks::default());assert_eq!(scene[0].mesh_key,keys[1]);
         assert!(cache.sync(&mut renderer,&scene).is_empty());assert_eq!(cache.stats().uploads,1);
     }
 

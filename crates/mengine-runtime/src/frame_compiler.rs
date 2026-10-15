@@ -152,7 +152,7 @@ impl CompiledFrame {
 
 impl FrameCompiler<'_> {
     pub fn compile(&mut self, request: FrameCompileRequest<'_>) -> CompiledFrame {
-        let mut profile_stages = Vec::with_capacity(7);
+        let mut profile_stages = Vec::with_capacity(10);
         let mut started = std::time::Instant::now();
         let mut phase = |name| { profile_stages.push((name, started.elapsed().as_secs_f64() * 1000.0)); started = std::time::Instant::now(); };
         let width = request.viewport[0].max(1);
@@ -172,13 +172,15 @@ impl FrameCompiler<'_> {
         let camera = active_camera.frame;
         let has_authored_camera = active_camera.entity.is_some();
         let has_scene_camera = has_authored_camera || request.view_camera.is_some();
+        phase("Camera selection");
         let objects = if has_scene_camera {
             collect_objects(request.world, request.hierarchy, self.materials)
         } else {
             Vec::new()
         };
+        phase("Mesh objects and materials");
         let mut authored_lighting = collect_lighting(request.world, request.hierarchy);
-        phase("Camera, meshes and lighting");
+        phase("Scene lighting");
         self.particles.sampled_effects.set_project_root(self.textures.project_root());
         let effect_primitives = self.particles.sampled_effects.collect(request.world, request.hierarchy, camera, request.delta_seconds, &mut authored_lighting);
         let mut lighting = authored_lighting.clone();

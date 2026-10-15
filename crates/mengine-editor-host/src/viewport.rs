@@ -671,6 +671,7 @@ impl EditorViewportRenderer {
         let mesh_work = self.meshes.sync_profile();
         stages.last_mut().expect("mesh sync stage recorded").children = [
             ("Mesh file metadata", mesh_work.file_check_ms, mesh_work.file_checks),
+            ("Mesh source validation", mesh_work.source_check_ms, mesh_work.source_checks),
             ("Mesh source load and decode", mesh_work.source_load_ms, mesh_work.source_loads),
             ("Mesh source reuse", mesh_work.source_reuse_ms, mesh_work.source_reuses),
             ("Pose and procedural geometry", mesh_work.geometry_ms, mesh_work.geometry_builds),
