@@ -2,7 +2,7 @@
 use glam::{Mat4,Vec3};
 use mengine_assets::{parse_gltf_pose_sample,GltfBillboardCamera,SharedGltfPoseSource};
 use serde::Deserialize;
-use std::{collections::HashMap,path::{Path,PathBuf},sync::Arc,time::{Instant,SystemTime}};
+use std::{collections::HashMap,path::{Path,PathBuf},sync::Arc,time::Instant};
 
 /// MiYu: native node-query work nested inside the script callback, shared by both VMs.
 #[derive(Clone,Copy,Debug,Default)]
@@ -10,6 +10,7 @@ pub struct AssetNodeProfile { pub query_ms: f64, pub queries: u32, pub load_ms: 
 
 #[cfg(test)]
 mod tests {
+    use std::time::SystemTime;
     use super::*;
     struct Fixture { directory: PathBuf, root: PathBuf }
     impl Fixture {
