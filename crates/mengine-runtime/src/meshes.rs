@@ -33,7 +33,7 @@ struct PoseUsage { frame: u64, bytes: usize }
 pub struct MeshCacheStats { pub entries: usize, pub bytes: usize, pub uploads: usize, pub evictions: usize }
 
 #[derive(Clone, Copy, Debug, Default)]
-pub struct MeshSyncProfile { pub file_check_ms: f64, pub file_checks: u32, pub source_check_ms: f64, pub source_checks: u32, pub source_load_ms: f64, pub source_loads: u32, pub source_reuse_ms: f64, pub source_reuses: u32, pub geometry_ms: f64, pub geometry_builds: u32, pub upload_ms: f64, pub uploads: u32 }
+pub struct MeshSyncProfile { pub file_check_ms: f64, pub file_checks: u32, pub source_check_ms: f64, pub source_checks: u32, pub source_load_ms: f64, pub source_loads: u32, pub source_reuse_ms: f64, pub source_reuses: u32, pub geometry_ms: f64, pub geometry_builds: u32, pub upload_ms: f64, pub uploads: u32, pub vertex_conversion_ms: f64, pub vertex_buffer_ms: f64, pub index_buffer_ms: f64, pub bounds_ms: f64 }
 
 
 // One validation snapshot per sync call, shared by its main camera and embedded views.
@@ -371,7 +371,11 @@ fn profile_file_stamp(path: &Path, profile: &mut MeshSyncProfile) -> FileStamp {
 }
 
 fn profile_upload(renderer: &mut Renderer, key: &str, mesh: &MeshData, profile: &mut MeshSyncProfile) {
-    let started = Instant::now(); renderer.upload_gltf_static(key, &vertices_from_mesh(mesh), &mesh.indices);
+    let started = Instant::now(); let vertices = vertices_from_mesh(mesh);
+    profile.vertex_conversion_ms += started.elapsed().as_secs_f64()*1000.0;
+    let upload = renderer.upload_gltf_static_profiled(key, &vertices, &mesh.indices);
+    profile.vertex_buffer_ms += upload.vertex_buffer_ms; profile.index_buffer_ms += upload.index_buffer_ms; profile.bounds_ms += upload.bounds_ms;
+    drop(vertices);
     profile.upload_ms += started.elapsed().as_secs_f64()*1000.0; profile.uploads += 1;
 }
 
@@ -529,6 +533,8 @@ mod tests {
         let frame=||CompiledFrame {profile_stages:vec![],clear,camera:cameras[0],objects:objects(),lighting:Default::default(),ui:mengine_rhi::UiBatchPlan::build(vec![]),controls:vec![],texture_failures:vec![],font_failures:vec![],has_authored_camera:true,scene_views:cameras[1..].iter().enumerate().map(|(i,camera)|mengine_rhi::SceneTextureFrame {key:format!("preview{i}"),size:[16,16],clear,camera:*camera,objects:objects(),lighting:Default::default()}).collect(),view_resources:vec![]};
         let mut renderer=pollster::block_on(Renderer::new_headless(winit::dpi::PhysicalSize::new(16,16))).unwrap();let mut cache=RuntimeMeshCache::new(Some(fixture.0.clone()));
         let mut initial=frame();assert!(cache.sync_frame(&mut renderer,&mut initial).is_empty());assert_eq!(cache.stats().uploads,3);assert_eq!(cache.sync_profile().file_checks,1);
+        let work=cache.sync_profile();let upload_parts=[work.vertex_conversion_ms,work.vertex_buffer_ms,work.index_buffer_ms,work.bounds_ms];
+        assert_eq!(work.uploads,3);assert!(upload_parts.iter().all(|ms|ms.is_finite()&&*ms>=0.0));assert!(upload_parts.iter().sum::<f64>()<=work.upload_ms+0.001);
         let keys=initial.objects.iter().chain(initial.scene_views.iter().flat_map(|v|&v.objects)).map(|o|o.mesh_key.clone()).collect::<HashSet<_>>();assert_eq!(keys.len(),3);assert!(keys.iter().all(|key|key.starts_with("billboard:")));
         cache.last_poll=None;assert!(cache.sync_frame(&mut renderer,&mut frame()).is_empty());assert_eq!(cache.stats().uploads,0);assert_eq!(cache.sync_profile().source_checks,1);assert_eq!(cache.sync_profile().file_checks,1);
         fixture.buffer(10.,true);cache.last_poll=None;assert!(cache.sync_frame(&mut renderer,&mut frame()).is_empty());assert_eq!(cache.stats().uploads,3);assert_eq!(cache.sync_profile().source_checks,1);assert_eq!(file_stamp(&path),stamp);

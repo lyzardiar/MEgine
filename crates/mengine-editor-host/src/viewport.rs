@@ -677,6 +677,15 @@ impl EditorViewportRenderer {
             ("Pose and procedural geometry", mesh_work.geometry_ms, mesh_work.geometry_builds),
             ("Mesh vertex conversion and GPU upload", mesh_work.upload_ms, mesh_work.uploads),
         ].into_iter().filter(|(_, _, calls)| *calls > 0).map(|(name, ms, calls)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls, children: Vec::new() }).collect();
+        if let Some(upload) = stages.last_mut().expect("mesh sync stage recorded").children.iter_mut().find(|node| node.name == "Mesh vertex conversion and GPU upload") {
+            upload.children = [
+                ("Mesh vertex conversion CPU", mesh_work.vertex_conversion_ms),
+                ("Mesh vertex buffer allocation and upload CPU", mesh_work.vertex_buffer_ms),
+                ("Mesh index buffer allocation and upload CPU", mesh_work.index_buffer_ms),
+                ("Mesh local bounds CPU", mesh_work.bounds_ms),
+            ].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: mesh_work.uploads, children: Vec::new() }).collect();
+            upload.self_ms = (upload.total_ms - upload.children.iter().map(|child| child.total_ms).sum::<f64>()).max(0.0);
+        }
         let stage_started = Instant::now();
         self.fonts.sync(&mut self.renderer);
         for failure in frame.font_failures.drain(..) {
@@ -733,6 +742,16 @@ impl EditorViewportRenderer {
         submit.context("could not render the editor viewport")?;
         let submission = self.renderer.submission_profile();
         stages.last_mut().expect("submission stage recorded").children = [
+            ("Render target preparation CPU", submission.target_prepare_ms, submission.queue_submissions),
+            ("Camera uniforms CPU", submission.camera_uniform_ms, submission.queue_submissions),
+            ("Visibility culling and sorting CPU", submission.culling_ms, submission.queue_submissions),
+            ("Object uniforms CPU", submission.object_uniform_ms, submission.queue_submissions),
+            ("UI batch preparation CPU", submission.ui_prepare_ms, submission.queue_submissions),
+            ("Material preparation CPU", submission.material_prepare_ms, submission.queue_submissions),
+            ("Encoder setup and shadow pass CPU", submission.shadow_encode_ms, submission.queue_submissions),
+            ("World pass encoding CPU", submission.world_encode_ms, submission.queue_submissions),
+            ("Postprocess encoding CPU", submission.postprocess_encode_ms, submission.queue_submissions),
+            ("UI pass encoding CPU", submission.ui_encode_ms, submission.queue_submissions),
             ("Surface acquire CPU wait", submission.surface_acquire_ms, submission.surface_frames),
             ("Encoder finish and queue submit CPU", submission.queue_submit_ms, submission.queue_submissions),
             ("Surface present CPU", submission.surface_present_ms, submission.surface_frames),

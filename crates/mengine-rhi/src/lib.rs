@@ -11,7 +11,7 @@ mod sky;
 mod spatial;
 mod ui;
 
-pub use mesh::{MeshGpu, Vertex};
+pub use mesh::{MeshGpu, MeshUploadProfile, Vertex};
 // Author: MiYu. Safe owned window targets for native editor panels and host windows.
 pub use wgpu::SurfaceTarget;
 pub use gpu_profiler::{GpuFrameProfile, GpuProfileStage};

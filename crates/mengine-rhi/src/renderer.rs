@@ -405,6 +405,18 @@ pub struct OffscreenReadbackProfile {
 /// CPU wall time inside submission APIs, including driver/backpressure waits; not GPU execution time.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct FrameSubmissionProfile {
+    pub target_prepare_ms: f64,
+    pub camera_uniform_ms: f64,
+    pub culling_ms: f64,
+    pub object_uniform_ms: f64,
+    pub ui_prepare_ms: f64,
+    pub material_prepare_ms: f64,
+    /// Encoder creation and GPU query initialization, followed by shadow pass encoding.
+    pub shadow_encode_ms: f64,
+    /// Sky preparation and background/forward pass encoding.
+    pub world_encode_ms: f64,
+    pub postprocess_encode_ms: f64,
+    pub ui_encode_ms: f64,
     pub surface_acquire_ms: f64,
     pub queue_submit_ms: f64,
     pub surface_present_ms: f64,
@@ -1571,6 +1583,7 @@ impl Renderer {
         ui: Option<&UiBatchPlan>,
         target: RenderTarget<'_>,
     ) -> Result<(), RhiError> {
+        let target_started = Instant::now();
         if let RenderTarget::WindowCapture(capture) = target {
             let size = self.window_size().ok_or_else(|| RhiError::InvalidTarget("headless renderer cannot capture a window".into()))?;
             if capture.size != size || capture.format != self.config.format { return Err(RhiError::InvalidTarget("window capture size and format must match the surface".into())); }
@@ -1590,7 +1603,9 @@ impl Renderer {
         };
         self.ensure_render_size(target_size);
         self.material_pipeline_epoch = self.material_pipeline_epoch.wrapping_add(1);
+        self.submission_profile.target_prepare_ms += target_started.elapsed().as_secs_f64() * 1000.0;
 
+        let camera_started = Instant::now();
         let environment_key = lighting.environment.texture.trim();
         let has_environment_texture = !environment_key.is_empty()
             && self.environment_bind_groups.contains_key(environment_key);
@@ -1616,6 +1631,8 @@ impl Renderer {
             .write_buffer(&self.shadow_uniform_buf, 0, bytemuck::bytes_of(&shadow));
         self.post_process
             .write_settings(&self.queue, lighting.environment.exposure, lighting.environment.tone_mapping);
+        self.submission_profile.camera_uniform_ms += camera_started.elapsed().as_secs_f64() * 1000.0;
+        let culling_started = Instant::now();
         // Mesh bounds are measured after skeletal/effect/billboard sampling and transformed by
         // the final world matrix. Main and shadow queries must remain independent.
         self.spatial_index.update(objects.iter().map(|object| self.meshes.get(&object.mesh_key).and_then(|mesh| mesh.bounds).and_then(|bounds| bounds.transformed(object.model))).collect());
@@ -1628,6 +1645,8 @@ impl Renderer {
         submitted.extend_from_slice(&shadow_order);
         submitted.sort_unstable(); submitted.dedup();
         self.spatial_stats = SpatialCullingStats { total: objects.len(), camera_visible: draw_order.len(), shadow_visible: shadow_order.len(), submitted: submitted.len() };
+        self.submission_profile.culling_ms += culling_started.elapsed().as_secs_f64() * 1000.0;
+        let object_started = Instant::now();
         self.ensure_object_capacity(submitted.len().max(1));
         let mut uniform_slots = vec![0_usize; objects.len()];
         if !submitted.is_empty() {
@@ -1641,10 +1660,14 @@ impl Renderer {
             }
             self.queue.write_buffer(&self.object_buf, 0, &packed);
         }
+        self.submission_profile.object_uniform_ms += object_started.elapsed().as_secs_f64() * 1000.0;
 
+        let ui_prepare_started = Instant::now();
         let empty_ui = UiBatchPlan::default();
         let ui_plan = ui.unwrap_or(&empty_ui);
         self.ui.prepare(&self.device, &self.queue, ui_plan);
+        self.submission_profile.ui_prepare_ms += ui_prepare_started.elapsed().as_secs_f64() * 1000.0;
+        let material_started = Instant::now();
         for &index in &submitted {
             let object = &objects[index];
             self.ensure_material_pipeline(&object.material);
@@ -1661,6 +1684,7 @@ impl Renderer {
             self.ensure_material_texture_set(&object.material);
         }
         self.prune_material_pipeline_cache();
+        self.submission_profile.material_prepare_ms += material_started.elapsed().as_secs_f64() * 1000.0;
         let acquire_started = Instant::now();
         let surface_frame = match target {
             RenderTarget::Window | RenderTarget::WindowCapture(_) => Some(
@@ -1676,6 +1700,7 @@ impl Renderer {
             RenderTarget::Offscreen(_) => None,
         };
         if surface_frame.is_some() { self.submission_profile.surface_acquire_ms += acquire_started.elapsed().as_secs_f64() * 1000.0; }
+        let view_started = Instant::now();
         let surface_view = surface_frame.as_ref().map(|frame| {
             frame
                 .texture
@@ -1687,6 +1712,8 @@ impl Renderer {
                 .expect("window target acquired before frame encoding"),
             RenderTarget::Offscreen(target) => &target.view,
         };
+        self.submission_profile.target_prepare_ms += view_started.elapsed().as_secs_f64() * 1000.0;
+        let shadow_started = Instant::now();
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -1736,7 +1763,9 @@ impl Renderer {
                 pass.draw_indexed(0..mesh.index_count, 0, 0..1);
             }
         }
+        self.submission_profile.shadow_encode_ms += shadow_started.elapsed().as_secs_f64() * 1000.0;
 
+        let world_started = Instant::now();
         {
             let environment_bind_group = if has_environment_texture {
                 self.environment_bind_groups
@@ -1852,7 +1881,9 @@ impl Renderer {
                 pass.draw_indexed(0..mesh.index_count, 0, 0..1);
             }
         }
+        self.submission_profile.world_encode_ms += world_started.elapsed().as_secs_f64() * 1000.0;
 
+        let postprocess_started = Instant::now();
         {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("aces_tone_mapping"),
@@ -1870,7 +1901,9 @@ impl Renderer {
             });
             self.post_process.draw(&mut pass);
         }
+        self.submission_profile.postprocess_encode_ms += postprocess_started.elapsed().as_secs_f64() * 1000.0;
 
+        let ui_encode_started = Instant::now();
         if !ui_plan.is_empty() {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("ui_overlay"),
@@ -1898,6 +1931,7 @@ impl Renderer {
             });
             self.ui.draw(&mut pass, ui_plan);
         }
+        self.submission_profile.ui_encode_ms += ui_encode_started.elapsed().as_secs_f64() * 1000.0;
 
         if let RenderTarget::WindowCapture(capture) = target {
             encoder.copy_texture_to_texture(
@@ -2483,8 +2517,13 @@ impl Renderer {
     }
 
     pub fn upload_gltf_static(&mut self, key: &str, vertices: &[Vertex], indices: &[u32]) {
-        let mesh = MeshGpu::upload(&self.device, vertices, indices);
+        self.upload_gltf_static_profiled(key, vertices, indices);
+    }
+
+    pub fn upload_gltf_static_profiled(&mut self, key: &str, vertices: &[Vertex], indices: &[u32]) -> crate::MeshUploadProfile {
+        let (mesh, profile) = MeshGpu::upload_profiled(&self.device, vertices, indices);
         self.meshes.insert(key.to_string(), mesh);
+        profile
     }
 
     /// Release an imported mesh after its runtime cache entry has been evicted.
@@ -4402,7 +4441,12 @@ mod tests {
         };
         renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
         let vertices = [[-1.0,-1.0,0.25],[1.0,-1.0,0.25],[-1.0,1.0,0.25],[1.0,1.0,0.25]].map(|position| Vertex { position, normal: [0.0,0.0,1.0], uv: [0.0,0.0] });
-        renderer.upload_gltf_static("portrait_quad", &vertices, &[0,1,2,2,1,3]);
+        let upload_started = Instant::now();
+        let upload = renderer.upload_gltf_static_profiled("portrait_quad", &vertices, &[0,1,2,2,1,3]);
+        let upload_ms = upload_started.elapsed().as_secs_f64() * 1000.0;
+        let upload_stages = [upload.vertex_buffer_ms, upload.index_buffer_ms, upload.bounds_ms];
+        assert!(upload_stages.iter().all(|ms| ms.is_finite() && *ms >= 0.0));
+        assert!(upload_stages.iter().sum::<f64>() <= upload_ms + 0.01, "mesh upload stages must fit their enclosing wall time");
         let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
         let mut lighting = FrameLighting::default(); lighting.environment.tone_mapping = false;
         let clear = ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 };
@@ -4413,13 +4457,17 @@ mod tests {
         let ui = UiBatchPlan::build(vec![red,blue]);
         let target = renderer.create_offscreen_target(PhysicalSize::new(64,32));
         let render = |renderer: &mut Renderer, views: &[SceneTextureFrame]| {
+            let submit_started = Instant::now();
             renderer.submit_frame_to(&RenderFrame { clear, camera, objects:&[], lighting:&lighting, ui:Some(&ui), scene_views:views }, RenderTarget::Offscreen(&target)).unwrap();
+            let submit_ms = submit_started.elapsed().as_secs_f64() * 1000.0;
             let profile = renderer.submission_profile();
             assert_eq!(profile.queue_submissions, views.len() as u32 + 1);
             assert_eq!(profile.surface_frames, 0);
             assert_eq!(profile.surface_acquire_ms, 0.0);
             assert_eq!(profile.surface_present_ms, 0.0);
-            assert!(profile.queue_submit_ms.is_finite() && profile.queue_submit_ms >= 0.0);
+            let stages = [profile.target_prepare_ms, profile.camera_uniform_ms, profile.culling_ms, profile.object_uniform_ms, profile.ui_prepare_ms, profile.material_prepare_ms, profile.shadow_encode_ms, profile.world_encode_ms, profile.postprocess_encode_ms, profile.ui_encode_ms, profile.surface_acquire_ms, profile.queue_submit_ms, profile.surface_present_ms];
+            assert!(stages.iter().all(|ms| ms.is_finite() && *ms >= 0.0));
+            assert!(stages.iter().sum::<f64>() <= submit_ms + 0.01, "main and embedded submission stages must fit their enclosing wall time: {profile:?}, wall={submit_ms}ms");
             assert_eq!(renderer.size, PhysicalSize::new(64,32));
             renderer.read_offscreen_rgba8(&target).unwrap()
         };

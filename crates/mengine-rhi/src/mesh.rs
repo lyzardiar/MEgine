@@ -1,4 +1,6 @@
+// Author: MiYu. GPU mesh buffers with separate CPU allocation/upload and bounds timings.
 use bytemuck::{Pod, Zeroable};
+use std::time::Instant;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
@@ -15,27 +17,37 @@ pub struct MeshGpu {
     pub(crate) bounds: Option<crate::spatial::Aabb>,
 }
 
+/// CPU wall time in buffer creation and bounds calculation; not GPU execution time.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct MeshUploadProfile { pub vertex_buffer_ms: f64, pub index_buffer_ms: f64, pub bounds_ms: f64 }
+
 type CubeFace = ([f32; 3], [f32; 3], [[f32; 3]; 4]);
 
 impl MeshGpu {
     pub fn upload(device: &wgpu::Device, vertices: &[Vertex], indices: &[u32]) -> Self {
+        Self::upload_profiled(device, vertices, indices).0
+    }
+
+    pub fn upload_profiled(device: &wgpu::Device, vertices: &[Vertex], indices: &[u32]) -> (Self, MeshUploadProfile) {
         use wgpu::util::DeviceExt;
+        let started = Instant::now();
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("mesh_vb"),
             contents: bytemuck::cast_slice(vertices),
             usage: wgpu::BufferUsages::VERTEX,
         });
+        let vertex_buffer_ms = started.elapsed().as_secs_f64() * 1000.0;
+        let started = Instant::now();
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("mesh_ib"),
             contents: bytemuck::cast_slice(indices),
             usage: wgpu::BufferUsages::INDEX,
         });
-        Self {
-            vertex_buffer,
-            index_buffer,
-            index_count: indices.len() as u32,
-            bounds: crate::spatial::Aabb::from_points(vertices.iter().map(|v| glam::Vec3::from_array(v.position))),
-        }
+        let index_buffer_ms = started.elapsed().as_secs_f64() * 1000.0;
+        let started = Instant::now();
+        let bounds = crate::spatial::Aabb::from_points(vertices.iter().map(|v| glam::Vec3::from_array(v.position)));
+        let bounds_ms = started.elapsed().as_secs_f64() * 1000.0;
+        (Self { vertex_buffer, index_buffer, index_count: indices.len() as u32, bounds }, MeshUploadProfile { vertex_buffer_ms, index_buffer_ms, bounds_ms })
     }
 
     pub fn unit_cube(device: &wgpu::Device) -> Self {
