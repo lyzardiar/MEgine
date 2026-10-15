@@ -178,11 +178,12 @@ impl FrameCompiler<'_> {
             Vec::new()
         };
         let mut authored_lighting = collect_lighting(request.world, request.hierarchy);
+        phase("Camera, meshes and lighting");
         self.particles.sampled_effects.set_project_root(self.textures.project_root());
         let effect_primitives = self.particles.sampled_effects.collect(request.world, request.hierarchy, camera, request.delta_seconds, &mut authored_lighting);
         let mut lighting = authored_lighting.clone();
         let clear = resolve_camera_background(&active_camera, request.scene_clear, &mut lighting);
-        phase("Camera, meshes and lighting");
+        phase("Sampled effects and environment");
 
         self.fonts.begin_frame();
         let mut ui = if request.include_ui {

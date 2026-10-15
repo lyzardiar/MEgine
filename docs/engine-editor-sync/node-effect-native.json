@@ -1,0 +1,664 @@
+{
+  "report": "D:\\MEngineNativeQA\\rpg-multiview-node-effect-phases-after-1792071096219\\report.json",
+  "passed": true,
+  "fixtureRestored": true,
+  "stages": {
+    "loadingProfiles": {
+      "game/Script callback": {
+        "medianMs": 5.6412,
+        "p95Ms": 65.90079999999999,
+        "max": {
+          "source": "game",
+          "revision": 1,
+          "name": "Script callback",
+          "ms": 65.90079999999999,
+          "calls": 1,
+          "presentMs": 2503.7000000476837
+        },
+        "frames": 8
+      },
+      "game/Asset node queries": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "game",
+          "revision": 1,
+          "name": "Asset node queries",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 2503.7000000476837
+        },
+        "frames": 8
+      },
+      "game/Node source load/decode": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "game",
+          "revision": 1,
+          "name": "Node source load/decode",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 2503.7000000476837
+        },
+        "frames": 8
+      },
+      "game/Node pose sampling": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "game",
+          "revision": 1,
+          "name": "Node pose sampling",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 2503.7000000476837
+        },
+        "frames": 8
+      },
+      "game/Node result serialization": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "game",
+          "revision": 1,
+          "name": "Node result serialization",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 2503.7000000476837
+        },
+        "frames": 8
+      },
+      "game/Camera, meshes and lighting": {
+        "medianMs": 0.5105999999999999,
+        "p95Ms": 4.1155,
+        "max": {
+          "source": "game",
+          "revision": 9,
+          "name": "Camera, meshes and lighting",
+          "ms": 4.8396,
+          "calls": 1,
+          "presentMs": 278.59999990463257
+        },
+        "frames": 24
+      },
+      "game/Sampled effects and environment": {
+        "medianMs": 0.017349999999999997,
+        "p95Ms": 0.0233,
+        "max": {
+          "source": "game",
+          "revision": null,
+          "name": "Sampled effects and environment",
+          "ms": 0.024,
+          "calls": 1,
+          "presentMs": 508.09999990463257
+        },
+        "frames": 24
+      },
+      "game/RuntimeMeshCache.sync": {
+        "medianMs": 0.015050000000000001,
+        "p95Ms": 81.1143,
+        "max": {
+          "source": "game",
+          "revision": 9,
+          "name": "RuntimeMeshCache.sync",
+          "ms": 196.3175,
+          "calls": 1,
+          "presentMs": 278.59999990463257
+        },
+        "frames": 24
+      },
+      "scene/Script callback": {
+        "medianMs": 15.956399999999999,
+        "p95Ms": 15.956399999999999,
+        "max": {
+          "source": "scene",
+          "revision": 1,
+          "name": "Script callback",
+          "ms": 65.90079999999999,
+          "calls": 1,
+          "presentMs": 2241.100000143051
+        },
+        "frames": 300
+      },
+      "scene/Asset node queries": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "scene",
+          "revision": 1,
+          "name": "Asset node queries",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 2241.100000143051
+        },
+        "frames": 300
+      },
+      "scene/Node source load/decode": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "scene",
+          "revision": 1,
+          "name": "Node source load/decode",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 2241.100000143051
+        },
+        "frames": 300
+      },
+      "scene/Node pose sampling": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "scene",
+          "revision": 1,
+          "name": "Node pose sampling",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 2241.100000143051
+        },
+        "frames": 300
+      },
+      "scene/Node result serialization": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "scene",
+          "revision": 1,
+          "name": "Node result serialization",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 2241.100000143051
+        },
+        "frames": 300
+      },
+      "scene/Camera, meshes and lighting": {
+        "medianMs": 0.9561,
+        "p95Ms": 2.5544000000000002,
+        "max": {
+          "source": "scene",
+          "revision": 1,
+          "name": "Camera, meshes and lighting",
+          "ms": 4.4187,
+          "calls": 1,
+          "presentMs": 2241.100000143051
+        },
+        "frames": 328
+      },
+      "scene/Sampled effects and environment": {
+        "medianMs": 0.0083,
+        "p95Ms": 0.0126,
+        "max": {
+          "source": "scene",
+          "revision": 9,
+          "name": "Sampled effects and environment",
+          "ms": 0.0323,
+          "calls": 1,
+          "presentMs": 19.600000143051147
+        },
+        "frames": 328
+      },
+      "scene/RuntimeMeshCache.sync": {
+        "medianMs": 0.1711,
+        "p95Ms": 2.5637,
+        "max": {
+          "source": "scene",
+          "revision": 9,
+          "name": "RuntimeMeshCache.sync",
+          "ms": 529.9797000000001,
+          "calls": 1,
+          "presentMs": 667.2999999523163
+        },
+        "frames": 328
+      }
+    },
+    "warmupProfiles": {
+      "game/Script callback": {
+        "medianMs": 4.45435,
+        "p95Ms": 11.8047,
+        "max": {
+          "source": "game",
+          "revision": 128,
+          "name": "Script callback",
+          "ms": 53.637299999999996,
+          "calls": 1,
+          "presentMs": 80.5
+        },
+        "frames": 254
+      },
+      "game/Asset node queries": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "game",
+          "revision": 10,
+          "name": "Asset node queries",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 5808.099999904633
+        },
+        "frames": 254
+      },
+      "game/Node source load/decode": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "game",
+          "revision": 10,
+          "name": "Node source load/decode",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 5808.099999904633
+        },
+        "frames": 254
+      },
+      "game/Node pose sampling": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "game",
+          "revision": 10,
+          "name": "Node pose sampling",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 5808.099999904633
+        },
+        "frames": 254
+      },
+      "game/Node result serialization": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "game",
+          "revision": 10,
+          "name": "Node result serialization",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 5808.099999904633
+        },
+        "frames": 254
+      },
+      "game/Camera, meshes and lighting": {
+        "medianMs": 1.1712500000000001,
+        "p95Ms": 3.1376,
+        "max": {
+          "source": "game",
+          "revision": 255,
+          "name": "Camera, meshes and lighting",
+          "ms": 500.9483,
+          "calls": 1,
+          "presentMs": 554.9000000953674
+        },
+        "frames": 254
+      },
+      "game/Sampled effects and environment": {
+        "medianMs": 0.01035,
+        "p95Ms": 0.0204,
+        "max": {
+          "source": "game",
+          "revision": 255,
+          "name": "Sampled effects and environment",
+          "ms": 0.0318,
+          "calls": 1,
+          "presentMs": 554.9000000953674
+        },
+        "frames": 254
+      },
+      "game/RuntimeMeshCache.sync": {
+        "medianMs": 1.0827499999999999,
+        "p95Ms": 4.1597,
+        "max": {
+          "source": "game",
+          "revision": 280,
+          "name": "RuntimeMeshCache.sync",
+          "ms": 369.3012,
+          "calls": 1,
+          "presentMs": 584.2000000476837
+        },
+        "frames": 254
+      },
+      "scene/Script callback": {
+        "medianMs": 4.3625,
+        "p95Ms": 12.1234,
+        "max": {
+          "source": "scene",
+          "revision": 128,
+          "name": "Script callback",
+          "ms": 53.637299999999996,
+          "calls": 1,
+          "presentMs": 31
+        },
+        "frames": 335
+      },
+      "scene/Asset node queries": {
+        "medianMs": 0,
+        "p95Ms": 0,
+        "max": {
+          "source": "scene",
+          "revision": 9,
+          "name": "Asset node queries",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 17.200000047683716
+        },
+        "frames": 335
+      },
+      "scene/Node source load/decode": {
+        "medianMs": 0,
+        "p95Ms": 0,
+        "max": {
+          "source": "scene",
+          "revision": 9,
+          "name": "Node source load/decode",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 17.200000047683716
+        },
+        "frames": 335
+      },
+      "scene/Node pose sampling": {
+        "medianMs": 0,
+        "p95Ms": 0,
+        "max": {
+          "source": "scene",
+          "revision": 9,
+          "name": "Node pose sampling",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 17.200000047683716
+        },
+        "frames": 335
+      },
+      "scene/Node result serialization": {
+        "medianMs": 0,
+        "p95Ms": 0,
+        "max": {
+          "source": "scene",
+          "revision": 9,
+          "name": "Node result serialization",
+          "ms": 0,
+          "calls": 0,
+          "presentMs": 17.200000047683716
+        },
+        "frames": 335
+      },
+      "scene/Camera, meshes and lighting": {
+        "medianMs": 1.1588,
+        "p95Ms": 3.2349,
+        "max": {
+          "source": "scene",
+          "revision": 255,
+          "name": "Camera, meshes and lighting",
+          "ms": 485.577,
+          "calls": 1,
+          "presentMs": 518
+        },
+        "frames": 335
+      },
+      "scene/Sampled effects and environment": {
+        "medianMs": 0.01,
+        "p95Ms": 0.0178,
+        "max": {
+          "source": "scene",
+          "revision": 255,
+          "name": "Sampled effects and environment",
+          "ms": 0.0293,
+          "calls": 1,
+          "presentMs": 518
+        },
+        "frames": 335
+      },
+      "scene/RuntimeMeshCache.sync": {
+        "medianMs": 1.0292000000000001,
+        "p95Ms": 3.7901,
+        "max": {
+          "source": "scene",
+          "revision": 280,
+          "name": "RuntimeMeshCache.sync",
+          "ms": 371.9117,
+          "calls": 1,
+          "presentMs": 586.5
+        },
+        "frames": 335
+      }
+    },
+    "liveProfiles": {
+      "game/Script callback": {
+        "medianMs": 6.9632000000000005,
+        "p95Ms": 13.3196,
+        "max": {
+          "source": "game",
+          "revision": 516,
+          "name": "Script callback",
+          "ms": 311.9347,
+          "calls": 1,
+          "presentMs": 339.90000009536743
+        },
+        "frames": 271
+      },
+      "game/Asset node queries": {
+        "medianMs": 0,
+        "p95Ms": 0.4843,
+        "max": {
+          "source": "game",
+          "revision": 516,
+          "name": "Asset node queries",
+          "ms": 306.0011,
+          "calls": 1,
+          "presentMs": 339.90000009536743
+        },
+        "frames": 271
+      },
+      "game/Node source load/decode": {
+        "medianMs": 0,
+        "p95Ms": 0,
+        "max": {
+          "source": "game",
+          "revision": 516,
+          "name": "Node source load/decode",
+          "ms": 305.3713,
+          "calls": 1,
+          "presentMs": 339.90000009536743
+        },
+        "frames": 271
+      },
+      "game/Node pose sampling": {
+        "medianMs": 0,
+        "p95Ms": 0.079,
+        "max": {
+          "source": "game",
+          "revision": 607,
+          "name": "Node pose sampling",
+          "ms": 0.12789999999999999,
+          "calls": 1,
+          "presentMs": 45.59999990463257
+        },
+        "frames": 271
+      },
+      "game/Node result serialization": {
+        "medianMs": 0,
+        "p95Ms": 0.0537,
+        "max": {
+          "source": "game",
+          "revision": 540,
+          "name": "Node result serialization",
+          "ms": 0.0976,
+          "calls": 1,
+          "presentMs": 37.89999985694885
+        },
+        "frames": 271
+      },
+      "game/Camera, meshes and lighting": {
+        "medianMs": 1.4794999999999998,
+        "p95Ms": 3.7252,
+        "max": {
+          "source": "game",
+          "revision": 316,
+          "name": "Camera, meshes and lighting",
+          "ms": 27.8739,
+          "calls": 1,
+          "presentMs": 228.79999995231628
+        },
+        "frames": 271
+      },
+      "game/Sampled effects and environment": {
+        "medianMs": 0.0143,
+        "p95Ms": 0.1585,
+        "max": {
+          "source": "game",
+          "revision": 557,
+          "name": "Sampled effects and environment",
+          "ms": 12.002600000000001,
+          "calls": 1,
+          "presentMs": 62.80000019073486
+        },
+        "frames": 271
+      },
+      "game/RuntimeMeshCache.sync": {
+        "medianMs": 3.257,
+        "p95Ms": 6.9105,
+        "max": {
+          "source": "game",
+          "revision": 368,
+          "name": "RuntimeMeshCache.sync",
+          "ms": 91.8985,
+          "calls": 1,
+          "presentMs": 151.90000009536743
+        },
+        "frames": 271
+      },
+      "scene/Script callback": {
+        "medianMs": 7.05325,
+        "p95Ms": 12.5861,
+        "max": {
+          "source": "scene",
+          "revision": 516,
+          "name": "Script callback",
+          "ms": 311.9347,
+          "calls": 1,
+          "presentMs": 40.299999952316284
+        },
+        "frames": 344
+      },
+      "scene/Asset node queries": {
+        "medianMs": 0.0,
+        "p95Ms": 0.47869999999999996,
+        "max": {
+          "source": "scene",
+          "revision": 516,
+          "name": "Asset node queries",
+          "ms": 306.0011,
+          "calls": 1,
+          "presentMs": 40.299999952316284
+        },
+        "frames": 344
+      },
+      "scene/Node source load/decode": {
+        "medianMs": 0.0,
+        "p95Ms": 0,
+        "max": {
+          "source": "scene",
+          "revision": 516,
+          "name": "Node source load/decode",
+          "ms": 305.3713,
+          "calls": 1,
+          "presentMs": 40.299999952316284
+        },
+        "frames": 344
+      },
+      "scene/Node pose sampling": {
+        "medianMs": 0.0,
+        "p95Ms": 0.0778,
+        "max": {
+          "source": "scene",
+          "revision": 607,
+          "name": "Node pose sampling",
+          "ms": 0.12789999999999999,
+          "calls": 1,
+          "presentMs": 34.69999980926514
+        },
+        "frames": 344
+      },
+      "scene/Node result serialization": {
+        "medianMs": 0.0,
+        "p95Ms": 0.0541,
+        "max": {
+          "source": "scene",
+          "revision": 540,
+          "name": "Node result serialization",
+          "ms": 0.0976,
+          "calls": 1,
+          "presentMs": 33.80000019073486
+        },
+        "frames": 344
+      },
+      "scene/Camera, meshes and lighting": {
+        "medianMs": 1.4726499999999998,
+        "p95Ms": 3.7564,
+        "max": {
+          "source": "scene",
+          "revision": 316,
+          "name": "Camera, meshes and lighting",
+          "ms": 16.6604,
+          "calls": 1,
+          "presentMs": 186.90000009536743
+        },
+        "frames": 344
+      },
+      "scene/Sampled effects and environment": {
+        "medianMs": 0.0133,
+        "p95Ms": 0.1738,
+        "max": {
+          "source": "scene",
+          "revision": 557,
+          "name": "Sampled effects and environment",
+          "ms": 0.3348,
+          "calls": 1,
+          "presentMs": 28.5
+        },
+        "frames": 344
+      },
+      "scene/RuntimeMeshCache.sync": {
+        "medianMs": 3.0967000000000002,
+        "p95Ms": 6.2896,
+        "max": {
+          "source": "scene",
+          "revision": 316,
+          "name": "RuntimeMeshCache.sync",
+          "ms": 91.84920000000001,
+          "calls": 1,
+          "presentMs": 186.90000009536743
+        },
+        "frames": 344
+      }
+    }
+  },
+  "validation": {
+    "newTimingNodesChecked": 3024,
+    "samplesWithNodeQueries": 196,
+    "childTimingContainment": true
+  },
+  "consoleErrors": 0,
+  "shutdown": {
+    "pid": 82676,
+    "normalExit": true,
+    "runtimeRemoved": false,
+    "discoveryRemoved": true,
+    "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\rpg-multiview-node-effect-phases-after-1792071096219\\runtime\\com.mengine.editor.agent-ci6AiG '\\\\?\\D:\\MEngineNativeQA\\rpg-multiview-node-effect-phases-after-1792071096219\\runtime\\com.mengine.editor.agent-ci6AiG'"
+  },
+  "profilerPanels": [
+    {
+      "module": "CPU",
+      "rows": 38
+    },
+    {
+      "module": "Memory",
+      "rows": 24
+    },
+    {
+      "module": "Resources",
+      "rows": 256
+    }
+  ]
+}

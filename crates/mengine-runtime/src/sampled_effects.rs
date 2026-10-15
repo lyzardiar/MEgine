@@ -40,14 +40,17 @@ impl SampledEffectWorld {
             let (Some(component), Some(transform)) = (world.get_component::<SampledEffect>(entity), hierarchy.get(entity)) else { continue; };
             let key = component.effect.trim().replace('\\', "/");
             if !effect_asset_path(&key) { continue; }
-            let path = root.join(&key);
-            let stamp = std::fs::metadata(&path).map(|m| (m.modified().ok(), m.len())).unwrap_or((None, 0));
-            if self.assets.get(&key).is_none_or(|cached| cached.stamp != stamp) {
-                let asset = SampledEffectAsset::load(&path);
-                if let Err(error) = &asset { self.failures.push(TextureLoadFailure { key: key.clone(), path: path.clone(), error: format!("sampled effect: {error}") }); }
-                self.assets.insert(key.clone(), CachedEffect { stamp, asset });
+            // MiYu: shared instances use one resource version per collection, refreshed next frame.
+            if used.insert(key.clone()) {
+                let path = root.join(&key);
+                let stamp = file_stamp(&path);
+                if self.assets.get(&key).is_none_or(|cached| cached.stamp != stamp) {
+                    let asset = SampledEffectAsset::load(&path);
+                    if let Err(error) = &asset { self.failures.push(TextureLoadFailure { key: key.clone(), path: path.clone(), error: format!("sampled effect: {error}") }); }
+                    self.assets.insert(key.clone(), CachedEffect { stamp, asset });
+                }
             }
-            used.insert(key.clone()); live.insert(entity);
+            live.insert(entity);
             let signature = (key.clone(), component.clip, component.time_seconds.to_bits());
             let player = self.players.entry(entity).or_insert_with(|| Playback { key: signature.clone(), elapsed: component.time_seconds.max(0.) });
             if player.key != signature { player.key = signature; player.elapsed = component.time_seconds.max(0.); }
@@ -179,6 +182,30 @@ mod tests {
         let hierarchy=TransformHierarchy::build(&world); let camera=FrameCamera { view:mengine_rhi::look_at(Vec3::new(0.,0.,10.),Vec3::ZERO,Vec3::Y),proj:mengine_rhi::orthographic(10.,1.,0.1,100.),position:Vec3::new(0.,0.,10.) };
         let mut output=Vec::new();collect_frame(&asset.clips[0].frames[0],&asset.materials,hierarchy.get(entity).unwrap(),camera,&mut FrameLighting::default(),&mut output);
         assert_eq!(output.len(),1);let p=&output[0].primitive;assert!(p.key.depth_test);assert_eq!(p.uv,[0.25,0.,0.25,1.]);let c=p.clip_corners.unwrap();assert!(c[0][0]<c[1][0]);assert!(c[0][1]>c[2][1]);assert!(output[0].depth>0.);
+    }
+    #[test]
+    fn shared_resource_instances_keep_independent_playback_and_reload_together() {
+        let root=std::env::temp_dir().join(format!("mengine-shared-effect-{}",uuid::Uuid::new_v4()));std::fs::create_dir_all(root.join("Assets")).unwrap();
+        let path=root.join("Assets/shared.mfx");
+        let mut data=serde_json::json!({"schemaVersion":1,"fps":12,"materials":[{"texture":"Assets/s.png","blend":"alpha"}],"clips":[{"name":"Birth","duration":1.,"loop":false,"frames":[{"seconds":0.,"particles":[],"quads":[],"lights":[]},{"seconds":1.,"particles":[{"material":0,"position":[0,0,0],"size":1,"color":[1,1,1,1],"uv":[0,0,1,1]}],"quads":[],"lights":[]}]}]});
+        std::fs::write(&path,data.to_string()).unwrap();
+        let mut world=World::new();
+        for time_seconds in [0.,1.,1.] {
+            let entity=world.spawn_empty();world.insert_component(entity,Transform::default());
+            world.insert_component(entity,SampledEffect {effect:"Assets/shared.mfx".into(),playing:false,looping:false,time_seconds,..SampledEffect::default()});
+        }
+        let hierarchy=TransformHierarchy::build(&world);
+        let camera=FrameCamera {view:mengine_rhi::look_at(Vec3::new(0.,0.,10.),Vec3::ZERO,Vec3::Y),proj:mengine_rhi::orthographic(10.,1.,0.1,100.),position:Vec3::new(0.,0.,10.)};
+        let mut effects=SampledEffectWorld::default();effects.set_project_root(Some(&root));
+        let collect=|effects:&mut SampledEffectWorld|effects.collect(&world,&hierarchy,camera,0.,&mut FrameLighting::default());
+        assert_eq!(collect(&mut effects).len(),2);assert_eq!(effects.players.len(),3);assert_eq!(effects.assets.len(),1);
+        data["clips"][0]["frames"][1]["particles"]=serde_json::json!([]);std::fs::write(&path,data.to_string()).unwrap();
+        assert!(collect(&mut effects).is_empty());assert!(effects.failures.is_empty());
+        std::fs::write(&path,"invalid").unwrap();assert!(collect(&mut effects).is_empty());assert_eq!(effects.failures.len(),1);
+        assert!(collect(&mut effects).is_empty());assert!(effects.failures.is_empty());
+        std::fs::remove_file(&path).unwrap();assert!(collect(&mut effects).is_empty());assert_eq!(effects.failures.len(),1);
+        std::fs::write(&path,data.to_string()).unwrap();assert!(collect(&mut effects).is_empty());assert!(effects.failures.is_empty());
+        std::fs::remove_dir_all(root).unwrap();
     }
     #[test]
     fn playback_handles_pause_seek_source_reload_and_inactive_entities() {

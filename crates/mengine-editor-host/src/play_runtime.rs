@@ -371,7 +371,13 @@ impl PlaySession {
         let snapshot = self.script.capture_world_snapshot(world);
         stage("Snapshot export");
         if let Some(node) = stages.iter_mut().find(|node| node.name == "Script and runtime requests") {
-            node.children = [("Script world publication", script_profile.sync_ms), ("QuickJS callback", script_profile.callback_ms), ("Script command commit", script_profile.commit_ms)].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect();
+            node.children = [("Script world publication", script_profile.sync_ms), ("Script callback", script_profile.callback_ms), ("Script command commit", script_profile.commit_ms)].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect();
+            let profile = script_profile.asset_nodes;
+            let children: Vec<_> = [("Node source load/decode", profile.load_ms, profile.loads), ("Node pose sampling", profile.sample_ms, profile.samples), ("Node result serialization", profile.serialize_ms, profile.serializations)].into_iter().map(|(name, ms, calls)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls, children: Vec::new() }).collect();
+            let query_self_ms = (profile.query_ms - children.iter().map(|child| child.total_ms).sum::<f64>()).max(0.0);
+            let callback = &mut node.children[1];
+            callback.children.push(EditorViewportProfileNode { name: "Asset node queries".into(), total_ms: profile.query_ms, self_ms: query_self_ms, calls: profile.queries, children });
+            callback.self_ms = (callback.total_ms - profile.query_ms).max(0.0);
             node.self_ms = (node.total_ms - node.children.iter().map(|child| child.total_ms).sum::<f64>()).max(0.0);
         }
         self.step_ms = started.elapsed().as_secs_f64() * 1000.0;
@@ -628,7 +634,7 @@ mod tests {
         session.step(None, ScriptInput::default(), 0.1).unwrap();
         assert_eq!(session.world.time.clear_color.x, 0.1);
         let stage = session.step_stages.iter().find(|node| node.name == "Script and runtime requests").unwrap();
-        assert_eq!(stage.children.iter().map(|node| node.name.as_str()).collect::<Vec<_>>(), ["Script world publication", "QuickJS callback", "Script command commit"]);
+        assert_eq!(stage.children.iter().map(|node| node.name.as_str()).collect::<Vec<_>>(), ["Script world publication", "Script callback", "Script command commit"]);
         assert!(stage.children.iter().all(|node| node.total_ms.is_finite() && node.total_ms >= 0.0));
         assert!(stage.total_ms >= stage.children.iter().map(|node| node.total_ms).sum::<f64>());
     }

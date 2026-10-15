@@ -13,7 +13,7 @@ struct ScriptSnapshot {
 
 /// MiYu: native script timings separate world publication, script callbacks and committed commands.
 #[derive(Clone, Copy, Debug, Default)]
-pub struct ScriptTickProfile { pub sync_ms: f64, pub callback_ms: f64, pub commit_ms: f64 }
+pub struct ScriptTickProfile { pub sync_ms: f64, pub callback_ms: f64, pub commit_ms: f64, pub asset_nodes: crate::AssetNodeProfile }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ScriptRuntimeRequest {
@@ -222,7 +222,7 @@ impl ScriptHost {
         let commit_started = Instant::now();
         for command in self.commands.borrow_mut().drain() { world.commands.push(command); }
         world.commit();
-        Ok(ScriptTickProfile { sync_ms, callback_ms, commit_ms: commit_started.elapsed().as_secs_f64() * 1000.0 })
+        Ok(ScriptTickProfile { sync_ms, callback_ms, commit_ms: commit_started.elapsed().as_secs_f64() * 1000.0, asset_nodes: self.asset_nodes.borrow().profile })
     }
 
     /// Capture immutable render payloads using the script publication cache without publishing to JavaScript.
