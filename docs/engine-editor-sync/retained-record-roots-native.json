@@ -1,0 +1,937 @@
+{
+  "scope": "Separate observational runs of the same native harness and fixture; CPU sampling and filesystem cache state affect timings. Function labels verified against bundled bodies. Self times are not inclusive and are not FPS.",
+  "runs": [
+    {
+      "report": "D:\\MEngineNativeQA\\rpg-multiview-browser-hotpaths-after-1792077329202\\report.json",
+      "passed": true,
+      "normalExit": true,
+      "fixtureRestored": true,
+      "consoleErrors": 0,
+      "cpuDurationMs": 12297.436,
+      "samples": 7346,
+      "selfMs": {
+        "resolveSpriteId": 5.019,
+        "transformBounds": 65.98800000000001,
+        "freezeJson": 375.93499999999995,
+        "gc": 512.6500000000002
+      },
+      "topSelf": [
+        {
+          "symbol": "(program)",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 1708.7019999999993
+        },
+        {
+          "symbol": "(idle)",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 1411.3099999999993
+        },
+        {
+          "symbol": "Xe",
+          "bundle": "Viewport-CRZieZCG.js",
+          "line0": 32,
+          "column0": 47059,
+          "ms": 540.603
+        },
+        {
+          "symbol": "fetch",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 528.6470000000002
+        },
+        {
+          "symbol": "(garbage collector)",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 512.6500000000002
+        },
+        {
+          "symbol": "fn",
+          "bundle": "index-CIeQ8a6k.js",
+          "line0": 1,
+          "column0": 79501,
+          "ms": 375.93499999999995
+        },
+        {
+          "symbol": "s",
+          "bundle": "Viewport-CRZieZCG.js",
+          "line0": 32,
+          "column0": 21162,
+          "ms": 323.38000000000005
+        },
+        {
+          "symbol": "ar",
+          "bundle": "uiLayout-CDL3rbJX.js",
+          "line0": 5,
+          "column0": 3713,
+          "ms": 270.5390000000002
+        },
+        {
+          "symbol": "Au",
+          "bundle": "index-CIeQ8a6k.js",
+          "line0": 1,
+          "column0": 86843,
+          "ms": 194.1939999999999
+        },
+        {
+          "symbol": "i",
+          "bundle": "uiLayout-CDL3rbJX.js",
+          "line0": 5,
+          "column0": 3739,
+          "ms": 186.53100000000006
+        },
+        {
+          "symbol": "h",
+          "bundle": "uiLayout-CDL3rbJX.js",
+          "line0": 9,
+          "column0": 21562,
+          "ms": 186.21800000000002
+        },
+        {
+          "symbol": "presentationMatches",
+          "bundle": "index-CIeQ8a6k.js",
+          "line0": 1,
+          "column0": 81210,
+          "ms": 181.02400000000003
+        },
+        {
+          "symbol": "k",
+          "bundle": "math3d-DJsZSoJv.js",
+          "line0": 0,
+          "column0": 1165,
+          "ms": 166.942
+        },
+        {
+          "symbol": "ri",
+          "bundle": "Viewport-CRZieZCG.js",
+          "line0": 30,
+          "column0": 1151,
+          "ms": 166.509
+        },
+        {
+          "symbol": "putImageData",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 152.677
+        },
+        {
+          "symbol": "G",
+          "bundle": "Viewport-CRZieZCG.js",
+          "line0": 32,
+          "column0": 21220,
+          "ms": 150.69199999999992
+        },
+        {
+          "symbol": "",
+          "bundle": "index-CIeQ8a6k.js",
+          "line0": 1,
+          "column0": 79673,
+          "ms": 136.16499999999994
+        },
+        {
+          "symbol": "tick",
+          "bundle": "agent-schemas-BwAH0b24.js",
+          "line0": 0,
+          "column0": 11769,
+          "ms": 133.49699999999999
+        },
+        {
+          "symbol": "J",
+          "bundle": "math3d-DJsZSoJv.js",
+          "line0": 0,
+          "column0": 589,
+          "ms": 131.332
+        },
+        {
+          "symbol": "Za",
+          "bundle": "uiLayout-CDL3rbJX.js",
+          "line0": 9,
+          "column0": 42777,
+          "ms": 123.64799999999998
+        },
+        {
+          "symbol": "ao",
+          "bundle": "index-CIeQ8a6k.js",
+          "line0": 1,
+          "column0": 78565,
+          "ms": 118.09600000000002
+        },
+        {
+          "symbol": "drawImage",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 110.711
+        },
+        {
+          "symbol": "postMessage",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 103.07699999999997
+        },
+        {
+          "symbol": "Kl",
+          "bundle": "Viewport-CRZieZCG.js",
+          "line0": 30,
+          "column0": 7376,
+          "ms": 100.296
+        },
+        {
+          "symbol": "Ye",
+          "bundle": "App-CZl-XJhv.js",
+          "line0": 106,
+          "column0": 14494,
+          "ms": 91.66099999999999
+        }
+      ],
+      "presentation": {
+        "game": {
+          "presentIntervalMs": {
+            "count": 296,
+            "medianMs": 37.10000002384186,
+            "p95Ms": 69,
+            "maxMs": 361.2999999523163
+          },
+          "totalMs": {
+            "count": 296,
+            "medianMs": 14.0252,
+            "p95Ms": 23.3779,
+            "maxMs": 59.0187
+          },
+          "simulationMs": {
+            "count": 296,
+            "medianMs": 9.49955,
+            "p95Ms": 15.5481,
+            "maxMs": 26.179299999999998
+          },
+          "simulationRequestMs": {
+            "count": 296,
+            "medianMs": 29.5,
+            "p95Ms": 54.299999952316284,
+            "maxMs": 318.7000000476837
+          },
+          "transportMs": {
+            "count": 296,
+            "medianMs": 28.049999952316284,
+            "p95Ms": 47.700000047683716,
+            "maxMs": 328.90000009536743
+          }
+        },
+        "scene": {
+          "presentIntervalMs": {
+            "count": 349,
+            "medianMs": 32.90000009536743,
+            "p95Ms": 47.39999985694885,
+            "maxMs": 312.2000000476837
+          },
+          "totalMs": {
+            "count": 349,
+            "medianMs": 10.324200000000001,
+            "p95Ms": 16.7428,
+            "maxMs": 57.832
+          },
+          "simulationMs": {
+            "count": 349,
+            "medianMs": 9.497699999999998,
+            "p95Ms": 14.933200000000001,
+            "maxMs": 23.758899999999997
+          },
+          "simulationRequestMs": {
+            "count": 349,
+            "medianMs": 30.600000143051147,
+            "p95Ms": 54.60000014305115,
+            "maxMs": 318.7000000476837
+          },
+          "transportMs": {
+            "count": 349,
+            "medianMs": 20.59999990463257,
+            "p95Ms": 34.10000014305115,
+            "maxMs": 301.10000014305115
+          }
+        }
+      },
+      "longTasks": [
+        {
+          "start": 49385.800000190735,
+          "duration": 62
+        },
+        {
+          "start": 49488.300000190735,
+          "duration": 59
+        },
+        {
+          "start": 55694.300000190735,
+          "duration": 52
+        }
+      ],
+      "invokeSamples": 0,
+      "cpuStartRequestedMs": 46576,
+      "cpuStartReadyMs": null,
+      "cpuStopRequestedMs": null
+    },
+    {
+      "report": "D:\\MEngineNativeQA\\rpg-multiview-retained-roots-after-1792078631676\\report.json",
+      "passed": true,
+      "normalExit": true,
+      "fixtureRestored": true,
+      "consoleErrors": 0,
+      "cpuDurationMs": 12337.992,
+      "samples": 7373,
+      "selfMs": {
+        "resolveSpriteId": 3.411,
+        "transformBounds": 55.82100000000001,
+        "freezeJson": 113.27900000000001,
+        "gc": 454.316
+      },
+      "topSelf": [
+        {
+          "symbol": "(idle)",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 2571.4060000000068
+        },
+        {
+          "symbol": "(program)",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 1668.2950000000008
+        },
+        {
+          "symbol": "fetch",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 472.59299999999996
+        },
+        {
+          "symbol": "(garbage collector)",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 454.316
+        },
+        {
+          "symbol": "Xe",
+          "bundle": "Viewport-txqZMDrh.js",
+          "line0": 32,
+          "column0": 47059,
+          "ms": 450.671
+        },
+        {
+          "symbol": "s",
+          "bundle": "Viewport-txqZMDrh.js",
+          "line0": 32,
+          "column0": 21162,
+          "ms": 262.75100000000003
+        },
+        {
+          "symbol": "putImageData",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 257.50399999999996
+        },
+        {
+          "symbol": "ar",
+          "bundle": "uiLayout-BXy-Lztv.js",
+          "line0": 5,
+          "column0": 3713,
+          "ms": 242.37400000000002
+        },
+        {
+          "symbol": "k",
+          "bundle": "math3d-DJsZSoJv.js",
+          "line0": 0,
+          "column0": 1165,
+          "ms": 196.57099999999994
+        },
+        {
+          "symbol": "",
+          "bundle": "index-WKCGpwvs.js",
+          "line0": 1,
+          "column0": 79796,
+          "ms": 158.27599999999998
+        },
+        {
+          "symbol": "Eu",
+          "bundle": "index-WKCGpwvs.js",
+          "line0": 1,
+          "column0": 86966,
+          "ms": 157.97999999999996
+        },
+        {
+          "symbol": "ri",
+          "bundle": "Viewport-txqZMDrh.js",
+          "line0": 30,
+          "column0": 1151,
+          "ms": 150.384
+        },
+        {
+          "symbol": "i",
+          "bundle": "uiLayout-BXy-Lztv.js",
+          "line0": 5,
+          "column0": 3739,
+          "ms": 137.53
+        },
+        {
+          "symbol": "",
+          "bundle": "math3d-DJsZSoJv.js",
+          "line0": 0,
+          "column0": 2094,
+          "ms": 131.06600000000003
+        },
+        {
+          "symbol": "Za",
+          "bundle": "uiLayout-BXy-Lztv.js",
+          "line0": 9,
+          "column0": 42777,
+          "ms": 130.70899999999997
+        },
+        {
+          "symbol": "h",
+          "bundle": "uiLayout-BXy-Lztv.js",
+          "line0": 9,
+          "column0": 21562,
+          "ms": 127.21499999999999
+        },
+        {
+          "symbol": "postMessage",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 122.25599999999999
+        },
+        {
+          "symbol": "tick",
+          "bundle": "agent-schemas-BwAH0b24.js",
+          "line0": 0,
+          "column0": 11769,
+          "ms": 116.039
+        },
+        {
+          "symbol": "E",
+          "bundle": "App-BtRGat58.js",
+          "line0": 106,
+          "column0": 14611,
+          "ms": 114.89899999999999
+        },
+        {
+          "symbol": "J",
+          "bundle": "math3d-DJsZSoJv.js",
+          "line0": 0,
+          "column0": 589,
+          "ms": 111.32399999999998
+        },
+        {
+          "symbol": "Ye",
+          "bundle": "App-BtRGat58.js",
+          "line0": 106,
+          "column0": 14494,
+          "ms": 109.32700000000001
+        },
+        {
+          "symbol": "presentationMatches",
+          "bundle": "index-WKCGpwvs.js",
+          "line0": 1,
+          "column0": 81333,
+          "ms": 103.743
+        },
+        {
+          "symbol": "it",
+          "bundle": "uiLayout-BXy-Lztv.js",
+          "line0": 9,
+          "column0": 16278,
+          "ms": 102.862
+        },
+        {
+          "symbol": "l",
+          "bundle": "App-BtRGat58.js",
+          "line0": 86,
+          "column0": 6508,
+          "ms": 102.716
+        },
+        {
+          "symbol": "decode",
+          "bundle": "",
+          "line0": -1,
+          "column0": -1,
+          "ms": 99.97099999999998
+        }
+      ],
+      "presentation": {
+        "game": {
+          "presentIntervalMs": {
+            "count": 396,
+            "medianMs": 27.25,
+            "p95Ms": 54.59999990463257,
+            "maxMs": 373.39999985694885
+          },
+          "totalMs": {
+            "count": 396,
+            "medianMs": 13.79945,
+            "p95Ms": 24.319,
+            "maxMs": 51.936299999999996
+          },
+          "simulationMs": {
+            "count": 396,
+            "medianMs": 7.54715,
+            "p95Ms": 15.3788,
+            "maxMs": 21.895000000000003
+          },
+          "simulationRequestMs": {
+            "count": 396,
+            "medianMs": 20.450000047683716,
+            "p95Ms": 41.299999952316284,
+            "maxMs": 92.70000004768372
+          },
+          "transportMs": {
+            "count": 396,
+            "medianMs": 23.75,
+            "p95Ms": 39.799999952316284,
+            "maxMs": 364.7000000476837
+          }
+        },
+        "scene": {
+          "presentIntervalMs": {
+            "count": 418,
+            "medianMs": 27.5,
+            "p95Ms": 41.89999985694885,
+            "maxMs": 352
+          },
+          "totalMs": {
+            "count": 418,
+            "medianMs": 10.349350000000001,
+            "p95Ms": 18.3312,
+            "maxMs": 50.8379
+          },
+          "simulationMs": {
+            "count": 418,
+            "medianMs": 7.0939499999999995,
+            "p95Ms": 14.6573,
+            "maxMs": 21.895000000000003
+          },
+          "simulationRequestMs": {
+            "count": 418,
+            "medianMs": 19.549999952316284,
+            "p95Ms": 42.5,
+            "maxMs": 92.70000004768372
+          },
+          "transportMs": {
+            "count": 418,
+            "medianMs": 18.40000009536743,
+            "p95Ms": 31.199999809265137,
+            "maxMs": 343
+          }
+        }
+      },
+      "longTasks": [],
+      "invokeSamples": 0,
+      "cpuStartRequestedMs": 46105.59999990463,
+      "cpuStartReadyMs": 46442.200000047684,
+      "cpuStopRequestedMs": 58444.09999990463
+    }
+  ],
+  "benchmark": {
+    "scope": "JSON normalization, copy and deep freezing; equivalent values and input isolation, not FPS",
+    "fixture": "D:/MEngineNativeQA/rpg-multiview-browser-hotpaths-no-live-cpu-1792077477478/report.json",
+    "entities": 5006,
+    "iterations": 30,
+    "resultsEqual": true,
+    "checksum": 389232,
+    "before": {
+      "medianMs": 48.96354999999994,
+      "p95Ms": 142.6493999999998,
+      "maxMs": 189.51979999999992
+    },
+    "after": {
+      "medianMs": 19.564399999999978,
+      "p95Ms": 43.19959999999992,
+      "maxMs": 43.32999999999993
+    }
+  },
+  "registrationCounts": {
+    "entities": 5006,
+    "before": 55211,
+    "after": 5008
+  },
+  "cpuStartupRequestToReadyMs": 336.60000014305115,
+  "limitations": [
+    "The root marker helper now intentionally rejects nested components; all repository consumers use entity roots.",
+    "Both before/after invoke wrappers captured zero samples; no invoke RTT claim.",
+    "Raw CPU-probe maximum intervals overlap Profiler.start; a non-live-CPU run supplies separate presentation evidence.",
+    "Separate observational runs, not a controlled FPS speedup."
+  ],
+  "withoutLiveCpuSampling": [
+    {
+      "report": "D:\\MEngineNativeQA\\rpg-multiview-browser-hotpaths-no-live-cpu-1792077477478\\report.json",
+      "passed": true,
+      "fixtureRestored": true,
+      "shutdown": {
+        "pid": 160304,
+        "normalExit": true,
+        "runtimeRemoved": false,
+        "discoveryRemoved": true,
+        "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\rpg-multiview-browser-hotpaths-no-live-cpu-1792077477478\\runtime\\com.mengine.editor.agent-Jnrp4s '\\\\?\\D:\\MEngineNativeQA\\rpg-multiview-browser-hotpaths-no-live-cpu-1792077477478\\runtime\\com.mengine.editor.agent-Jnrp4s'"
+      },
+      "consoleErrors": 0,
+      "presentation": {
+        "game": {
+          "presentIntervalMs": {
+            "count": 320,
+            "medianMs": 34.200000047683716,
+            "p95Ms": 66.60000014305115,
+            "maxMs": 131.5
+          },
+          "totalMs": {
+            "count": 320,
+            "medianMs": 13.6391,
+            "p95Ms": 23.6711,
+            "maxMs": 52.0746
+          },
+          "simulationRequestMs": {
+            "count": 320,
+            "medianMs": 26.200000047683716,
+            "p95Ms": 50.59999990463257,
+            "maxMs": 140.20000004768372
+          },
+          "transportMs": {
+            "count": 320,
+            "medianMs": 26.59999990463257,
+            "p95Ms": 43.80000019073486,
+            "maxMs": 76
+          },
+          "longest": {
+            "worldRevision": 339,
+            "presentIntervalMs": 131.5,
+            "totalMs": 30.447200000000002,
+            "commandMs": 36.165099999999995,
+            "simulationMs": 11.2915,
+            "simulationRequestMs": 111.29999995231628,
+            "transportMs": 43.700000047683716,
+            "sharedTransport": {
+              "allocateMs": 0.0407,
+              "bufferId": 256,
+              "bytes": 3539956,
+              "copyMs": 1.7912,
+              "poolHit": false,
+              "pooled": true,
+              "publicationReadyEpochMs": 1792077529212.777,
+              "setupMs": 0.0988,
+              "uiQueueMs": 0.2675,
+              "requestId": "0d3e3156-e59b-4658-a45e-ba859be10b7f-1305",
+              "receivedEpochMs": 1792077529213.5,
+              "publicationReadyToEventMs": 0.722900390625,
+              "getBufferMs": 0.2999999523162842,
+              "requestElapsedMs": 40.89999985694885,
+              "releaseMs": 0.5
+            }
+          }
+        },
+        "scene": {
+          "presentIntervalMs": {
+            "count": 368,
+            "medianMs": 30.84999990463257,
+            "p95Ms": 46.60000014305115,
+            "maxMs": 113.19999980926514
+          },
+          "totalMs": {
+            "count": 368,
+            "medianMs": 9.996400000000001,
+            "p95Ms": 17.4676,
+            "maxMs": 66.3061
+          },
+          "simulationRequestMs": {
+            "count": 368,
+            "medianMs": 26.65000009536743,
+            "p95Ms": 54.60000014305115,
+            "maxMs": 219.69999980926514
+          },
+          "transportMs": {
+            "count": 368,
+            "medianMs": 19.299999952316284,
+            "p95Ms": 35.39999985694885,
+            "maxMs": 99.39999985694885
+          },
+          "longest": {
+            "worldRevision": 338,
+            "presentIntervalMs": 113.19999980926514,
+            "totalMs": 7.3484,
+            "commandMs": 11.9758,
+            "simulationMs": 10.6496,
+            "simulationRequestMs": 27.899999856948853,
+            "transportMs": 99.39999985694885,
+            "sharedTransport": {
+              "allocateMs": 0.0462,
+              "bufferId": 255,
+              "bytes": 1480080,
+              "copyMs": 0.5821999999999999,
+              "poolHit": false,
+              "pooled": true,
+              "publicationReadyEpochMs": 1792077529095.632,
+              "setupMs": 0.1887,
+              "uiQueueMs": 0.0421,
+              "requestId": "0d3e3156-e59b-4658-a45e-ba859be10b7f-1304",
+              "receivedEpochMs": 1792077529178.1,
+              "publicationReadyToEventMs": 82.468017578125,
+              "getBufferMs": 0,
+              "requestElapsedMs": 97.80000019073486,
+              "releaseMs": 0.2999999523162842
+            }
+          }
+        }
+      }
+    },
+    {
+      "report": "D:\\MEngineNativeQA\\rpg-multiview-retained-roots-no-live-cpu-1792078755827\\report.json",
+      "passed": true,
+      "normalExit": true,
+      "fixtureRestored": true,
+      "consoleErrors": 0,
+      "shutdown": {
+        "pid": 73928,
+        "normalExit": true,
+        "runtimeRemoved": false,
+        "discoveryRemoved": true,
+        "runtimeRemovalError": "EPERM, Permission denied: \\\\?\\D:\\MEngineNativeQA\\rpg-multiview-retained-roots-no-live-cpu-1792078755827\\runtime\\com.mengine.editor.agent-TbL6vn '\\\\?\\D:\\MEngineNativeQA\\rpg-multiview-retained-roots-no-live-cpu-1792078755827\\runtime\\com.mengine.editor.agent-TbL6vn'"
+      },
+      "presentation": {
+        "game": {
+          "presentIntervalMs": {
+            "count": 327,
+            "medianMs": 33.59999990463257,
+            "p95Ms": 64.90000009536743,
+            "maxMs": 116.69999980926514
+          },
+          "totalMs": {
+            "count": 327,
+            "medianMs": 13.8841,
+            "p95Ms": 23.1208,
+            "maxMs": 64.9896
+          },
+          "simulationMs": {
+            "count": 327,
+            "medianMs": 9.0805,
+            "p95Ms": 14.606200000000001,
+            "maxMs": 23.4193
+          },
+          "simulationRequestMs": {
+            "count": 327,
+            "medianMs": 26.5,
+            "p95Ms": 48.5,
+            "maxMs": 98.39999985694885
+          },
+          "transportMs": {
+            "count": 327,
+            "medianMs": 27,
+            "p95Ms": 40.90000009536743,
+            "maxMs": 76.20000004768372
+          },
+          "longest": {
+            "worldRevision": 574,
+            "presentIntervalMs": 116.69999980926514,
+            "totalMs": 22.9148,
+            "commandMs": 26.459699999999998,
+            "simulationMs": 10.9311,
+            "simulationRequestMs": 89.70000004768372,
+            "transportMs": 32.299999952316284,
+            "sharedTransport": {
+              "allocateMs": 0.00039999999999999996,
+              "bufferId": 203,
+              "bytes": 3544052,
+              "copyMs": 0.20579999999999998,
+              "poolHit": true,
+              "pooled": true,
+              "publicationReadyEpochMs": 1792078815393.0664,
+              "setupMs": 0.0074,
+              "uiQueueMs": 0.3572,
+              "requestId": "7592232b-83f3-4e71-91f7-06d692563cc8-1853",
+              "receivedEpochMs": 1792078815394.7998,
+              "publicationReadyToEventMs": 1.7333984375,
+              "getBufferMs": 0,
+              "requestElapsedMs": 30.600000143051147,
+              "releaseMs": 0.39999985694885254
+            }
+          }
+        },
+        "scene": {
+          "presentIntervalMs": {
+            "count": 365,
+            "medianMs": 31.299999952316284,
+            "p95Ms": 44.59999990463257,
+            "maxMs": 107.70000004768372
+          },
+          "totalMs": {
+            "count": 365,
+            "medianMs": 10.293999999999999,
+            "p95Ms": 18.3853,
+            "maxMs": 57.092400000000005
+          },
+          "simulationMs": {
+            "count": 365,
+            "medianMs": 8.888900000000001,
+            "p95Ms": 14.4574,
+            "maxMs": 23.4193
+          },
+          "simulationRequestMs": {
+            "count": 365,
+            "medianMs": 27.100000143051147,
+            "p95Ms": 50.60000014305115,
+            "maxMs": 212
+          },
+          "transportMs": {
+            "count": 365,
+            "medianMs": 19.800000190734863,
+            "p95Ms": 32.5,
+            "maxMs": 94.70000004768372
+          },
+          "longest": {
+            "worldRevision": 376,
+            "presentIntervalMs": 107.70000004768372,
+            "totalMs": 57.092400000000005,
+            "commandMs": 60.110200000000006,
+            "simulationMs": 11.298499999999999,
+            "simulationRequestMs": 31.199999809265137,
+            "transportMs": 94.70000004768372,
+            "sharedTransport": {
+              "allocateMs": 0.00019999999999999998,
+              "bufferId": 134,
+              "bytes": 1480080,
+              "copyMs": 0.156,
+              "poolHit": true,
+              "pooled": true,
+              "publicationReadyEpochMs": 1792078808156.3403,
+              "setupMs": 0.0027,
+              "uiQueueMs": 8.704500000000001,
+              "requestId": "7592232b-83f3-4e71-91f7-06d692563cc8-1388",
+              "receivedEpochMs": 1792078808179,
+              "publicationReadyToEventMs": 22.65966796875,
+              "getBufferMs": 0,
+              "requestElapsedMs": 93.39999985694885,
+              "releaseMs": 0.40000009536743164
+            }
+          }
+        }
+      }
+    }
+  ],
+  "remainingNativeSpikes": {
+    "scene": {
+      "revision": 376,
+      "nativeMs": 57.092400000000005,
+      "topSelf": [
+        {
+          "name": "Mesh vertex conversion and GPU upload",
+          "selfMs": 41.835499999999996,
+          "totalMs": 41.835499999999996,
+          "calls": 17
+        },
+        {
+          "name": "RuntimeTextureCache.sync_materials",
+          "selfMs": 4.555,
+          "totalMs": 4.555,
+          "calls": 1
+        },
+        {
+          "name": "RuntimeMeshCache.sync",
+          "selfMs": 2.5456000000000074,
+          "totalMs": 46.4754,
+          "calls": 1
+        },
+        {
+          "name": "Readback GPU map wait",
+          "selfMs": 1.7948,
+          "totalMs": 1.7948,
+          "calls": 1
+        },
+        {
+          "name": "Renderer.submit_frame_to",
+          "selfMs": 1.7504,
+          "totalMs": 1.8402,
+          "calls": 1
+        },
+        {
+          "name": "Mesh objects and materials",
+          "selfMs": 1.4339000000000002,
+          "totalMs": 1.4339000000000002,
+          "calls": 1
+        },
+        {
+          "name": "Mesh source validation",
+          "selfMs": 1.0829,
+          "totalMs": 1.0829,
+          "calls": 9
+        },
+        {
+          "name": "Pose and procedural geometry",
+          "selfMs": 0.567,
+          "totalMs": 0.567,
+          "calls": 17
+        }
+      ]
+    },
+    "game": {
+      "revision": 559,
+      "nativeMs": 64.9896,
+      "topSelf": [
+        {
+          "name": "Renderer.submit_frame_to",
+          "selfMs": 44.5589,
+          "totalMs": 44.7776,
+          "calls": 1
+        },
+        {
+          "name": "Mesh source validation",
+          "selfMs": 4.5146,
+          "totalMs": 4.5146,
+          "calls": 49
+        },
+        {
+          "name": "RuntimeMeshCache.sync",
+          "selfMs": 2.845699999999999,
+          "totalMs": 9.3479,
+          "calls": 1
+        },
+        {
+          "name": "Readback GPU map wait",
+          "selfMs": 2.4686,
+          "totalMs": 2.4686,
+          "calls": 1
+        },
+        {
+          "name": "Mesh file metadata",
+          "selfMs": 1.6123000000000003,
+          "totalMs": 1.6123000000000003,
+          "calls": 55
+        },
+        {
+          "name": "RuntimeTextureCache.sync_materials",
+          "selfMs": 1.4992,
+          "totalMs": 1.4992,
+          "calls": 1
+        },
+        {
+          "name": "RuntimeTextureCache.sync_ui",
+          "selfMs": 1.3866,
+          "totalMs": 1.3866,
+          "calls": 1
+        },
+        {
+          "name": "Mesh objects and materials",
+          "selfMs": 1.3569,
+          "totalMs": 1.3569,
+          "calls": 1
+        }
+      ]
+    }
+  }
+}
