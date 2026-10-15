@@ -1,3 +1,4 @@
+// Author: MiYu. Measure source loading, geometry generation and GPU mesh uploads.
 use crate::textures::resolve_project_asset_path;
 use crate::frame_compiler::CompiledFrame;
 use glam::{Vec3, Vec4};
@@ -30,6 +31,9 @@ struct PoseUsage { frame: u64, bytes: usize }
 #[derive(Clone, Copy, Debug, Default)]
 pub struct MeshCacheStats { pub entries: usize, pub bytes: usize, pub uploads: usize, pub evictions: usize }
 
+#[derive(Clone, Copy, Debug, Default)]
+pub struct MeshSyncProfile { pub file_check_ms: f64, pub file_checks: u32, pub source_load_ms: f64, pub source_loads: u32, pub geometry_ms: f64, pub geometry_builds: u32, pub upload_ms: f64, pub uploads: u32 }
+
 #[derive(Default)]
 pub struct RuntimeMeshCache {
     project_root: Option<PathBuf>,
@@ -40,6 +44,7 @@ pub struct RuntimeMeshCache {
     pose_usage: HashMap<String, PoseUsage>,
     pose_bytes: usize,
     uploads: usize,
+    profile: MeshSyncProfile,
     evictions: usize,
     frame: u64,
     evicted: Vec<String>,
@@ -57,6 +62,7 @@ impl RuntimeMeshCache {
             pose_usage: HashMap::new(),
             pose_bytes: 0,
             uploads: 0,
+            profile: MeshSyncProfile::default(),
             evictions: 0,
             frame: 0,
             evicted: Vec::new(),
@@ -93,6 +99,8 @@ impl RuntimeMeshCache {
 
     pub fn stats(&self) -> MeshCacheStats { MeshCacheStats { entries:self.pose_usage.len(), bytes:self.pose_bytes, uploads:self.uploads, evictions:self.evictions } }
 
+    pub fn sync_profile(&self) -> MeshSyncProfile { self.profile }
+
     fn prune_poses(&mut self) -> Vec<String> {
         if self.pose_usage.len() <= POSE_CACHE_ENTRIES && self.pose_bytes <= POSE_CACHE_BYTES { return Vec::new(); }
         let mut stale = self.pose_usage.iter().filter(|(_, used)| used.frame != self.frame).map(|(key, used)| (key.clone(), used.frame)).collect::<Vec<_>>();
@@ -108,6 +116,7 @@ impl RuntimeMeshCache {
 
     /// MiYu: billboard nodes are sampled separately for the game, editor and each portrait camera.
     pub fn sync_frame(&mut self, renderer: &mut Renderer, frame: &mut CompiledFrame) -> Vec<MeshLoadFailure> {
+        self.profile = MeshSyncProfile::default();
         self.prepare_billboards(frame.camera,&mut frame.objects);
         for view in &mut frame.scene_views { self.prepare_billboards(view.camera,&mut view.objects); }
         self.sync_objects(renderer,frame.objects.iter().chain(frame.scene_views.iter().flat_map(|v| &v.objects)))
@@ -123,9 +132,9 @@ impl RuntimeMeshCache {
             if poll || !self.poses.contains_key(asset) {
                 let ready = if let Some(ready) = checked_assets.get(asset) { *ready } else {
                     let ready = if let Some(path) = resolve_project_asset_path(root,asset) {
-                        let stamp = file_stamp(&path);
+                        let stamp = profile_file_stamp(&path, &mut self.profile);
                         if self.poses.get(asset).is_none_or(|(old,_)| *old != stamp) {
-                            match GltfPoseSource::load(&path) { Ok(source) => { self.poses.insert(asset.into(),(stamp,source)); true }, Err(_) => false }
+                            match { let started = Instant::now(); let source = GltfPoseSource::load(&path); self.profile.source_load_ms += started.elapsed().as_secs_f64()*1000.0; self.profile.source_loads += 1; source } { Ok(source) => { self.poses.insert(asset.into(),(stamp,source)); true }, Err(_) => false }
                         } else { true }
                     } else { false };
                     checked_assets.insert(asset.to_owned(),ready); ready
@@ -145,6 +154,7 @@ impl RuntimeMeshCache {
         renderer: &mut Renderer,
         objects: &[RenderObject],
     ) -> Vec<MeshLoadFailure> {
+        self.profile = MeshSyncProfile::default();
         self.sync_objects(renderer,objects.iter())
     }
 
@@ -174,16 +184,16 @@ impl RuntimeMeshCache {
                     if should_attempt(&mut self.attempted, key, FileStamp::default()) { failures.push(MeshLoadFailure { key:key.into(), path:root.to_owned(), error:"mesh patch path must be project-relative without '..'".into() }); }
                     continue;
                 };
-                let stamp = *file_stamps.entry(asset).or_insert_with(|| file_stamp(&path));
+                let stamp = *file_stamps.entry(asset).or_insert_with(|| profile_file_stamp(&path, &mut self.profile));
                 if !should_attempt(&mut self.attempted, key, stamp) { continue; }
                 if self.patches.get(asset).is_none_or(|(old, _)| *old != stamp) {
-                    match MeshPatchSource::load(&path) {
+                    match { let started = Instant::now(); let source = MeshPatchSource::load(&path); self.profile.source_load_ms += started.elapsed().as_secs_f64()*1000.0; self.profile.source_loads += 1; source } {
                         Ok(source) => { self.patches.insert(asset.to_owned(), (stamp, source)); }
                         Err(error) => { failures.push(MeshLoadFailure { key:key.into(), path, error }); continue; }
                     }
                 }
-                match self.patches[asset].1.compose(cells) {
-                    Ok(mesh) => { renderer.upload_gltf_static(key, &vertices_from_mesh(&mesh), &mesh.indices); record_mesh_bytes(&mut self.pose_usage, &mut self.pose_bytes, key, &mesh); self.uploads += 1; },
+                match { let started = Instant::now(); let mesh = self.patches[asset].1.compose(cells); self.profile.geometry_ms += started.elapsed().as_secs_f64()*1000.0; self.profile.geometry_builds += 1; mesh } {
+                    Ok(mesh) => { profile_upload(renderer, key, &mesh, &mut self.profile); record_mesh_bytes(&mut self.pose_usage, &mut self.pose_bytes, key, &mesh); self.uploads += 1; },
                     Err(error) => failures.push(MeshLoadFailure { key:key.into(), path, error }),
                 }
                 continue;
@@ -191,8 +201,8 @@ impl RuntimeMeshCache {
             if key.starts_with("terrain4:") || key.starts_with("terrain4r:") || key.starts_with("terrain4h:") || key.starts_with("terrain4w:") {
                 if let Some(used) = self.pose_usage.get_mut(key) { used.frame = self.frame; } else { self.pose_usage.insert(key.into(), PoseUsage { frame:self.frame, bytes:0 }); }
                 if should_attempt(&mut self.attempted, key, FileStamp::default()) {
-                    match terrain_mesh(key) {
-                        Ok(mesh) => { renderer.upload_gltf_static(key, &vertices_from_mesh(&mesh), &mesh.indices); record_mesh_bytes(&mut self.pose_usage, &mut self.pose_bytes, key, &mesh); self.uploads += 1; },
+                    match { let started = Instant::now(); let mesh = terrain_mesh(key); self.profile.geometry_ms += started.elapsed().as_secs_f64()*1000.0; self.profile.geometry_builds += 1; mesh } {
+                        Ok(mesh) => { profile_upload(renderer, key, &mesh, &mut self.profile); record_mesh_bytes(&mut self.pose_usage, &mut self.pose_bytes, key, &mesh); self.uploads += 1; },
                         Err(error) => failures.push(MeshLoadFailure { key:key.into(), path:root.to_owned(), error:error.into() }),
                     }
                 }
@@ -224,21 +234,21 @@ impl RuntimeMeshCache {
                 }
                 continue;
             };
-            let stamp = *file_stamps.entry(asset_key).or_insert_with(|| file_stamp(&path));
+            let stamp = *file_stamps.entry(asset_key).or_insert_with(|| profile_file_stamp(&path, &mut self.profile));
             if !should_attempt(&mut self.attempted, key, stamp) {
                 continue;
             }
             let mesh = if let Some((asset, clip, frame, rate)) = pose {
                 if self.poses.get(asset).is_none_or(|(old, _)| *old != stamp) {
-                    match GltfPoseSource::load(&path) {
+                    match { let started = Instant::now(); let source = GltfPoseSource::load(&path); self.profile.source_load_ms += started.elapsed().as_secs_f64()*1000.0; self.profile.source_loads += 1; source } {
                         Ok(source) => { self.poses.insert(asset.to_owned(), (stamp, source)); }
                         Err(error) => { failures.push(MeshLoadFailure { key:key.into(), path, error:error.to_string() }); continue; }
                     }
                 }
-                self.poses[asset].1.sample_with_camera(clip, frame, rate, billboard.map(|(_,camera)| *camera))
-            } else { load_gltf_mesh_data(&path) };
+                { let started = Instant::now(); let mesh = self.poses[asset].1.sample_with_camera(clip, frame, rate, billboard.map(|(_,camera)| *camera)); self.profile.geometry_ms += started.elapsed().as_secs_f64()*1000.0; self.profile.geometry_builds += 1; mesh }
+            } else { let started = Instant::now(); let mesh = load_gltf_mesh_data(&path); self.profile.source_load_ms += started.elapsed().as_secs_f64()*1000.0; self.profile.source_loads += 1; mesh };
             match mesh {
-                Ok(mesh) => { renderer.upload_gltf_static(key, &vertices_from_mesh(&mesh), &mesh.indices); record_mesh_bytes(&mut self.pose_usage, &mut self.pose_bytes, key, &mesh); self.uploads += 1; },
+                Ok(mesh) => { profile_upload(renderer, key, &mesh, &mut self.profile); record_mesh_bytes(&mut self.pose_usage, &mut self.pose_bytes, key, &mesh); self.uploads += 1; },
                 Err(error) => failures.push(MeshLoadFailure {
                     key: key.to_owned(),
                     path,
@@ -299,6 +309,16 @@ fn vertices_from_mesh(mesh: &MeshData) -> Vec<Vertex> {
             uv: mesh.uvs.get(index).copied().unwrap_or([0.0, 0.0]),
         })
         .collect()
+}
+
+fn profile_file_stamp(path: &Path, profile: &mut MeshSyncProfile) -> FileStamp {
+    let started = Instant::now(); let stamp = file_stamp(path);
+    profile.file_check_ms += started.elapsed().as_secs_f64()*1000.0; profile.file_checks += 1; stamp
+}
+
+fn profile_upload(renderer: &mut Renderer, key: &str, mesh: &MeshData, profile: &mut MeshSyncProfile) {
+    let started = Instant::now(); renderer.upload_gltf_static(key, &vertices_from_mesh(mesh), &mesh.indices);
+    profile.upload_ms += started.elapsed().as_secs_f64()*1000.0; profile.uploads += 1;
 }
 
 fn file_stamp(path: &Path) -> FileStamp {
