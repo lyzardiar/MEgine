@@ -4,7 +4,7 @@ use crate::textures::TextureLoadFailure;
 use glam::{Mat4, Vec3, Vec4};
 use mengine_assets::{effect_asset_path, EffectFrame, EffectMaterial, GltfBillboardCamera, SharedGltfPoseSource, SampledEffectAsset};
 use mengine_core::{generated::SampledEffect, Entity, TransformHierarchy, World};
-use mengine_rhi::{DirectionalLightData, FrameCamera, FrameLighting, PointLightData, UiBlendMode, UiPrimitive, UiRenderMaterial, UiShaderChannelData};
+use mengine_rhi::{DirectionalLightData, FrameCamera, FrameLighting, PointLightData, UiBlendMode, UiPrimitive, UiShaderChannelData};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime};
@@ -164,11 +164,8 @@ fn push_polygon(corners: [Vec3;4], color: [f32;4], uv: [f32;4], vertex_uv: Optio
     if let Some(uv0) = vertex_uv { primitive.shader_channel_data = Some(Arc::new(UiShaderChannelData { uv0, ..UiShaderChannelData::default() })); }
     primitive.key.texture = material.texture.clone(); primitive.key.material = "sampled-effect".into();
     primitive.key.blend = match material.blend.as_str() { "additive" => UiBlendMode::Additive, "multiply" => UiBlendMode::Multiply, _ => UiBlendMode::Alpha };
-    if material.alpha_cutoff > 0. || primitive.key.blend == UiBlendMode::Multiply {
-        let result = if primitive.key.blend == UiBlendMode::Multiply { "vec4<f32>(color.rgb * color.a, color.a)" } else { "color" };
-        let shader = format!("fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {{ let color = mengine_ui_main_texture(input.uv0) * input.vertex_color; if color.a < {} {{ discard; }} return {}; }}", material.alpha_cutoff, result);
-        primitive.render_material = Some(Arc::new(UiRenderMaterial { shader: shader.into(), blend: primitive.key.blend, ..UiRenderMaterial::default() }));
-    }
+    primitive.alpha_cutoff = material.alpha_cutoff;
+    primitive.premultiply_rgb = primitive.key.blend == UiBlendMode::Multiply;
     primitive.key.depth_test = true;
     output.push(WorldPrimitive { kind: WorldPrimitiveKind::ThreeD, sorting_layer: "default".into(), sorting_order: 0, depth: center.z / center.w.max(1e-6), world_position: None, primitive });
 }
@@ -177,6 +174,25 @@ fn push_polygon(corners: [Vec3;4], color: [f32;4], uv: [f32;4], vertex_uv: Optio
 mod tests {
     use super::*;
     use mengine_core::generated::Transform;
+    #[test]
+    fn sampled_materials_use_instance_parameters_without_custom_shader_creation() {
+        let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+        let corners = [Vec3::new(-1.,1.,0.5),Vec3::new(1.,1.,0.5),Vec3::new(1.,-1.,0.5),Vec3::new(-1.,-1.,0.5)];
+        let uv0 = [[0.2,0.3,0.,0.],[0.6,0.3,0.,0.],[0.6,0.8,0.,0.],[0.2,0.8,0.,0.]];
+        let mut output = Vec::new();
+        for (blend, cutoff) in [("alpha",0.5),("alpha",0.75),("multiply",0.),("multiply",0.75),("additive",0.)] {
+            let material = EffectMaterial { texture: "Assets/s.png".into(), blend: blend.into(), alpha_cutoff: cutoff, model: None };
+            push_polygon(corners,[0.8,0.6,0.4,0.5],[0.,0.,1.,1.],Some(uv0),&material,camera,&mut output);
+            let primitive = &output.last().unwrap().primitive;
+            assert_eq!(primitive.alpha_cutoff,cutoff); assert_eq!(primitive.premultiply_rgb,blend=="multiply");
+            assert!(primitive.render_material.is_none()); assert!(primitive.key.depth_test);
+            assert_eq!(primitive.shader_channel_data.as_ref().unwrap().uv0,uv0);
+            assert_eq!(primitive.clip_corners,Some(corners.map(|p|p.extend(1.).to_array())));
+        }
+        let plan = mengine_rhi::UiBatchPlan::build(output.into_iter().map(|p|p.primitive).collect());
+        assert_eq!(plan.batches.len(),3,"cutoff values are instance data, not shader variants");
+        assert_eq!(plan.primitives.len(),5);
+    }
     #[test]
     fn sampled_quads_use_transformed_depth_and_camera_axes() {
         let asset=SampledEffectAsset::parse(r#"{"schemaVersion":1,"fps":12,"materials":[{"texture":"Assets/s.png","blend":"additive"}],"clips":[{"name":"Stand","duration":1,"loop":true,"frames":[{"seconds":0,"particles":[{"material":0,"position":[0,0,0],"size":2,"color":[1,0,0,1],"uv":[0.25,0,0.25,1]}],"quads":[],"lights":[]},{"seconds":1,"particles":[],"quads":[],"lights":[]}]}]}"#).unwrap();

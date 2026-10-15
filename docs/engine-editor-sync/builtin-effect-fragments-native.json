@@ -1,0 +1,4484 @@
+{
+  "report": "D:\\MEngineNativeQA\\rpg-multiview-builtin-effect-fragments-after-1792084494104\\report.json",
+  "scope": "CPU wall-time attribution; no live CPU sampling; observational timings, not a controlled performance comparison. Edit-idle CPU sampling ends before gameplay.",
+  "passed": true,
+  "normalExit": true,
+  "fixtureRestored": true,
+  "webgpuShaderValidation": {
+    "supported": true,
+    "adapter": {
+      "vendor": "amd",
+      "architecture": "rdna-2",
+      "device": "",
+      "description": ""
+    },
+    "limits": {
+      "maxVertexAttributes": 16,
+      "maxInterStageShaderVariables": 16
+    },
+    "pipelines": [
+      "alpha",
+      "multiply"
+    ],
+    "messages": [],
+    "validationError": null,
+    "passed": true
+  },
+  "consoleErrors": 0,
+  "phases": {
+    "loadingProfiles": {
+      "count": 373,
+      "sources": {
+        "game": {
+          "presentationMs": {
+            "count": 23,
+            "median": 313.09999990463257,
+            "p95": 1020.6000001430511,
+            "max": 2497.7000000476837
+          },
+          "nativeMs": {
+            "count": 23,
+            "median": 7.0514,
+            "p95": 829.252,
+            "max": 2177.3341
+          },
+          "meshUploads": 328,
+          "indexBufferReuses": 284,
+          "uiCounts": {
+            "uiCustomPipelineAttempts": 3,
+            "uiCustomPipelineBuilds": 3,
+            "uiErrorPipelineBuilds": 0,
+            "uiPipelineEvictions": 0,
+            "uiTextureSetBuilds": 0,
+            "uiBufferAllocations": 3
+          },
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 3,
+              "median": 0.35620000000000035,
+              "p95": 0.38140000000000074,
+              "max": 0.38140000000000074
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 3,
+              "median": 1.721599999999999,
+              "p95": 1.988,
+              "max": 1.988
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 3,
+              "median": 0.37129999999999974,
+              "p95": 0.5958999999999999,
+              "max": 0.5958999999999999
+            },
+            "Mesh local bounds CPU": {
+              "count": 3,
+              "median": 0.8157000000000012,
+              "p95": 0.8777000000000025,
+              "max": 0.8777000000000025
+            },
+            "Render target preparation CPU": {
+              "count": 23,
+              "median": 0.0003,
+              "p95": 0.00039999999999999996,
+              "max": 0.0005
+            },
+            "Camera uniforms CPU": {
+              "count": 23,
+              "median": 0.1003,
+              "p95": 0.1119,
+              "max": 0.1121
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 23,
+              "median": 0.016900000000000002,
+              "p95": 0.0907,
+              "max": 0.1328
+            },
+            "Object uniforms CPU": {
+              "count": 23,
+              "median": 0.012,
+              "p95": 0.054400000000000004,
+              "max": 0.0751
+            },
+            "UI batch preparation CPU": {
+              "count": 23,
+              "median": 0.08009999999999999,
+              "p95": 0.2104,
+              "max": 179.4069
+            },
+            "Material preparation CPU": {
+              "count": 23,
+              "median": 0.1365,
+              "p95": 186.5108,
+              "max": 1414.1339
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 23,
+              "median": 0.1365,
+              "p95": 0.3629,
+              "max": 0.3885
+            },
+            "World pass encoding CPU": {
+              "count": 23,
+              "median": 0.2565,
+              "p95": 0.5582,
+              "max": 0.6083
+            },
+            "Postprocess encoding CPU": {
+              "count": 23,
+              "median": 0.0216,
+              "p95": 0.038900000000000004,
+              "max": 0.0435
+            },
+            "UI pass encoding CPU": {
+              "count": 23,
+              "median": 0.0505,
+              "p95": 0.0825,
+              "max": 0.11309999999999999
+            },
+            "UI buffer capacity and bindings CPU": {
+              "count": 23,
+              "median": 0.0021,
+              "p95": 0.006699999999999999,
+              "max": 0.031
+            },
+            "UI instance packing CPU": {
+              "count": 23,
+              "median": 0.0302,
+              "p95": 0.1409,
+              "max": 0.17709999999999998
+            },
+            "UI buffer writes CPU": {
+              "count": 23,
+              "median": 0.032799999999999996,
+              "p95": 0.0498,
+              "max": 0.07390000000000001
+            },
+            "UI material lookup and texture sets CPU": {
+              "count": 23,
+              "median": 0.005,
+              "p95": 0.009,
+              "max": 0.0163
+            },
+            "UI pipeline preparation CPU": {
+              "count": 23,
+              "median": 0.0007,
+              "p95": 0.001,
+              "max": 179.11970000000002
+            },
+            "UI cache pruning CPU": {
+              "count": 23,
+              "median": 0.0036,
+              "p95": 0.0049,
+              "max": 0.008
+            },
+            "UI custom shader compilation CPU": {
+              "count": 1,
+              "median": 179.11450000000002,
+              "p95": 179.11450000000002,
+              "max": 179.11450000000002
+            },
+            "Profiler.snapshot": {
+              "count": 23,
+              "median": 0.1132,
+              "p95": 0.23729999999999998,
+              "max": 0.2825
+            },
+            "Renderer.submit_frame_to": {
+              "count": 23,
+              "median": 0.9315,
+              "p95": 434.1809,
+              "max": 1470.5040000000001
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 3,
+              "median": 3.600700000000001,
+              "p95": 3.717300000000001,
+              "max": 3.717300000000001
+            }
+          },
+          "topSamples": {
+            "UI batch preparation CPU": [
+              {
+                "revision": 8,
+                "nativeMs": 829.252,
+                "presentationMs": 1020.6000001430511,
+                "counts": {
+                  "billboardMeshes": 2,
+                  "cachedPoseBytes": 22886832,
+                  "cachedPoseMeshes": 275,
+                  "cameraVisibleObjects": 97,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 12,
+                  "materialTexturesColor": 20,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 125,
+                  "meshUploads": 133,
+                  "msaaSamples": 4,
+                  "renderObjects": 187,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 109,
+                  "submittedObjects": 142,
+                  "uiBatches": 34,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 3,
+                  "uiCustomPipelineBuilds": 3,
+                  "uiDrawCalls": 34,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 653,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.006599999999999999,
+                      "totalMs": 0.006599999999999999
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.17709999999999998,
+                      "totalMs": 0.17709999999999998
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.07390000000000001,
+                      "totalMs": 0.07390000000000001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.0163,
+                      "totalMs": 0.0163
+                    },
+                    {
+                      "calls": 2,
+                      "children": [
+                        {
+                          "calls": 3,
+                          "children": [
+                            {
+                              "calls": 1,
+                              "children": [],
+                              "name": "Slowest UI shader a3b93fffa024f656",
+                              "selfMs": 72.2025,
+                              "totalMs": 72.2025
+                            }
+                          ],
+                          "name": "UI custom shader compilation CPU",
+                          "selfMs": 106.91200000000002,
+                          "totalMs": 179.11450000000002
+                        }
+                      ],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0.005200000000002092,
+                      "totalMs": 179.11970000000002
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.008,
+                      "totalMs": 0.008
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.00529999999997699,
+                  "totalMs": 179.4069
+                }
+              },
+              {
+                "revision": 4,
+                "nativeMs": 18.3759,
+                "presentationMs": 117.79999995231628,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 12571264,
+                  "cachedPoseMeshes": 146,
+                  "cameraVisibleObjects": 145,
+                  "entities": 4259,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 3,
+                  "materialTexturesColor": 12,
+                  "materialTexturesData": 5,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 145,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 145,
+                  "uiBatches": 20,
+                  "uiBufferAllocations": 3,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 20,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 651,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.031,
+                      "totalMs": 0.031
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.1409,
+                      "totalMs": 0.1409
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.027500000000000004,
+                      "totalMs": 0.027500000000000004
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.006300000000000001,
+                      "totalMs": 0.006300000000000001
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0.0008,
+                      "totalMs": 0.0008
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0026,
+                      "totalMs": 0.0026
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0013000000000000234,
+                  "totalMs": 0.2104
+                }
+              },
+              {
+                "revision": null,
+                "nativeMs": 9.1729,
+                "presentationMs": 135.40000009536743,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 95104,
+                  "cachedPoseMeshes": 2,
+                  "cameraVisibleObjects": 65,
+                  "entities": 4259,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 1,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 1,
+                  "materialTexturesColor": 7,
+                  "materialTexturesData": 1,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 65,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 65,
+                  "uiBatches": 14,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 14,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 399,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0029000000000000002,
+                      "totalMs": 0.0029000000000000002
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.0985,
+                      "totalMs": 0.0985
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.038700000000000005,
+                      "totalMs": 0.038700000000000005
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.0055000000000000005,
+                      "totalMs": 0.0055000000000000005
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0.0007999999999999999,
+                      "totalMs": 0.0007999999999999999
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0039,
+                      "totalMs": 0.0039
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.001700000000000007,
+                  "totalMs": 0.152
+                }
+              }
+            ],
+            "UI pipeline preparation CPU": [
+              {
+                "revision": 8,
+                "nativeMs": 829.252,
+                "presentationMs": 1020.6000001430511,
+                "counts": {
+                  "billboardMeshes": 2,
+                  "cachedPoseBytes": 22886832,
+                  "cachedPoseMeshes": 275,
+                  "cameraVisibleObjects": 97,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 12,
+                  "materialTexturesColor": 20,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 125,
+                  "meshUploads": 133,
+                  "msaaSamples": 4,
+                  "renderObjects": 187,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 109,
+                  "submittedObjects": 142,
+                  "uiBatches": 34,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 3,
+                  "uiCustomPipelineBuilds": 3,
+                  "uiDrawCalls": 34,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 653,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [
+                    {
+                      "calls": 3,
+                      "children": [
+                        {
+                          "calls": 1,
+                          "children": [],
+                          "name": "Slowest UI shader a3b93fffa024f656",
+                          "selfMs": 72.2025,
+                          "totalMs": 72.2025
+                        }
+                      ],
+                      "name": "UI custom shader compilation CPU",
+                      "selfMs": 106.91200000000002,
+                      "totalMs": 179.11450000000002
+                    }
+                  ],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0.005200000000002092,
+                  "totalMs": 179.11970000000002
+                }
+              },
+              {
+                "revision": null,
+                "nativeMs": 5.9326,
+                "presentationMs": 392.89999985694885,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 95104,
+                  "cachedPoseMeshes": 2,
+                  "cameraVisibleObjects": 65,
+                  "entities": 4259,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 1,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 1,
+                  "materialTexturesColor": 7,
+                  "materialTexturesData": 1,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 65,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 65,
+                  "uiBatches": 14,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 14,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 399,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0.001,
+                  "totalMs": 0.001
+                }
+              },
+              {
+                "revision": 9,
+                "nativeMs": 76.8382,
+                "presentationMs": 91.29999995231628,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 23186268,
+                  "cachedPoseMeshes": 324,
+                  "cameraVisibleObjects": 215,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 27,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 20,
+                  "meshUploads": 51,
+                  "msaaSamples": 4,
+                  "renderObjects": 386,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 273,
+                  "submittedObjects": 332,
+                  "uiBatches": 34,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 34,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 652,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0.0009,
+                  "totalMs": 0.0009
+                }
+              }
+            ],
+            "UI custom shader compilation CPU": [
+              {
+                "revision": 8,
+                "nativeMs": 829.252,
+                "presentationMs": 1020.6000001430511,
+                "counts": {
+                  "billboardMeshes": 2,
+                  "cachedPoseBytes": 22886832,
+                  "cachedPoseMeshes": 275,
+                  "cameraVisibleObjects": 97,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 12,
+                  "materialTexturesColor": 20,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 125,
+                  "meshUploads": 133,
+                  "msaaSamples": 4,
+                  "renderObjects": 187,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 109,
+                  "submittedObjects": 142,
+                  "uiBatches": 34,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 3,
+                  "uiCustomPipelineBuilds": 3,
+                  "uiDrawCalls": 34,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 653,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 3,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Slowest UI shader a3b93fffa024f656",
+                      "selfMs": 72.2025,
+                      "totalMs": 72.2025
+                    }
+                  ],
+                  "name": "UI custom shader compilation CPU",
+                  "selfMs": 106.91200000000002,
+                  "totalMs": 179.11450000000002
+                }
+              }
+            ],
+            "UI buffer writes CPU": [
+              {
+                "revision": 8,
+                "nativeMs": 829.252,
+                "presentationMs": 1020.6000001430511,
+                "counts": {
+                  "billboardMeshes": 2,
+                  "cachedPoseBytes": 22886832,
+                  "cachedPoseMeshes": 275,
+                  "cameraVisibleObjects": 97,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 12,
+                  "materialTexturesColor": 20,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 125,
+                  "meshUploads": 133,
+                  "msaaSamples": 4,
+                  "renderObjects": 187,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 109,
+                  "submittedObjects": 142,
+                  "uiBatches": 34,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 3,
+                  "uiCustomPipelineBuilds": 3,
+                  "uiDrawCalls": 34,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 653,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.07390000000000001,
+                  "totalMs": 0.07390000000000001
+                }
+              },
+              {
+                "revision": null,
+                "nativeMs": 8.4151,
+                "presentationMs": 318.2999999523163,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 95104,
+                  "cachedPoseMeshes": 2,
+                  "cameraVisibleObjects": 65,
+                  "entities": 4259,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 1,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 1,
+                  "materialTexturesColor": 7,
+                  "materialTexturesData": 1,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 65,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 65,
+                  "uiBatches": 14,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 14,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 399,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0498,
+                  "totalMs": 0.0498
+                }
+              },
+              {
+                "revision": null,
+                "nativeMs": 5.5051,
+                "presentationMs": 10.5,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 95104,
+                  "cachedPoseMeshes": 2,
+                  "cameraVisibleObjects": 65,
+                  "entities": 4259,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 1,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 1,
+                  "materialTexturesColor": 7,
+                  "materialTexturesData": 1,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 65,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 65,
+                  "uiBatches": 14,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 14,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 399,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0404,
+                  "totalMs": 0.0404
+                }
+              }
+            ]
+          }
+        },
+        "scene": {
+          "presentationMs": {
+            "count": 350,
+            "median": 18.299999952316284,
+            "p95": 210,
+            "max": 2235.5999999046326
+          },
+          "nativeMs": {
+            "count": 350,
+            "median": 4.8891,
+            "p95": 11.2612,
+            "max": 2114.9826
+          },
+          "meshUploads": 326,
+          "indexBufferReuses": 282,
+          "uiCounts": {
+            "uiCustomPipelineAttempts": 0,
+            "uiCustomPipelineBuilds": 0,
+            "uiErrorPipelineBuilds": 0,
+            "uiPipelineEvictions": 0,
+            "uiTextureSetBuilds": 0,
+            "uiBufferAllocations": 0
+          },
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 3,
+              "median": 0.3444000000000005,
+              "p95": 0.3484000000000006,
+              "max": 0.3484000000000006
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 3,
+              "median": 2.1212,
+              "p95": 13.636800000000001,
+              "max": 13.636800000000001
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 3,
+              "median": 0.34070000000000006,
+              "p95": 0.6148,
+              "max": 0.6148
+            },
+            "Mesh local bounds CPU": {
+              "count": 3,
+              "median": 0.8399000000000012,
+              "p95": 0.8765000000000017,
+              "max": 0.8765000000000017
+            },
+            "Render target preparation CPU": {
+              "count": 350,
+              "median": 0.00019999999999999998,
+              "p95": 0.0003,
+              "max": 0.0005
+            },
+            "Camera uniforms CPU": {
+              "count": 350,
+              "median": 0.0863,
+              "p95": 0.1056,
+              "max": 0.40259999999999996
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 350,
+              "median": 0.08845,
+              "p95": 0.1043,
+              "max": 0.1467
+            },
+            "Object uniforms CPU": {
+              "count": 350,
+              "median": 0.0306,
+              "p95": 0.0427,
+              "max": 0.13210000000000002
+            },
+            "UI batch preparation CPU": {
+              "count": 350,
+              "median": 0.0187,
+              "p95": 0.0277,
+              "max": 0.046900000000000004
+            },
+            "Material preparation CPU": {
+              "count": 350,
+              "median": 0.2153,
+              "p95": 0.2409,
+              "max": 1384.7518
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 350,
+              "median": 0.3307,
+              "p95": 0.3745,
+              "max": 0.5424
+            },
+            "World pass encoding CPU": {
+              "count": 350,
+              "median": 0.39195,
+              "p95": 0.4593,
+              "max": 0.6512
+            },
+            "Postprocess encoding CPU": {
+              "count": 350,
+              "median": 0.0168,
+              "p95": 0.0224,
+              "max": 0.0451
+            },
+            "UI pass encoding CPU": {
+              "count": 350,
+              "median": 0.0207,
+              "p95": 0.0261,
+              "max": 0.041999999999999996
+            },
+            "UI buffer capacity and bindings CPU": {
+              "count": 350,
+              "median": 0.0006,
+              "p95": 0.0017000000000000001,
+              "max": 0.0061
+            },
+            "UI instance packing CPU": {
+              "count": 350,
+              "median": 0.0045,
+              "p95": 0.0067,
+              "max": 0.0246
+            },
+            "UI buffer writes CPU": {
+              "count": 350,
+              "median": 0.010499999999999999,
+              "p95": 0.015200000000000002,
+              "max": 0.026000000000000002
+            },
+            "UI material lookup and texture sets CPU": {
+              "count": 350,
+              "median": 9.999999999999999e-05,
+              "p95": 0.00019999999999999998,
+              "max": 0.00039999999999999996
+            },
+            "UI pipeline preparation CPU": {
+              "count": 350,
+              "median": 0.0,
+              "p95": 0,
+              "max": 0
+            },
+            "UI cache pruning CPU": {
+              "count": 350,
+              "median": 0.0021,
+              "p95": 0.003,
+              "max": 0.0156
+            },
+            "UI custom shader compilation CPU": null,
+            "Profiler.snapshot": {
+              "count": 350,
+              "median": 0.09234999999999999,
+              "p95": 0.2987,
+              "max": 0.5161
+            },
+            "Renderer.submit_frame_to": {
+              "count": 350,
+              "median": 1.27165,
+              "p95": 1.4124,
+              "max": 1407.6545999999998
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 3,
+              "median": 3.7658999999999976,
+              "p95": 14.041799999999999,
+              "max": 14.041799999999999
+            }
+          },
+          "topSamples": {
+            "UI batch preparation CPU": [
+              {
+                "revision": null,
+                "nativeMs": 3.0109,
+                "presentationMs": 211.30000019073486,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 95104,
+                  "cachedPoseMeshes": 2,
+                  "cameraVisibleObjects": 43,
+                  "entities": 482,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 1,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 1,
+                  "materialTexturesColor": 7,
+                  "materialTexturesData": 1,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 65,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 65,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 150,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0015999999999999999,
+                      "totalMs": 0.0015999999999999999
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.0060999999999999995,
+                      "totalMs": 0.0060999999999999995
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.026000000000000002,
+                      "totalMs": 0.026000000000000002
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.00039999999999999996,
+                      "totalMs": 0.00039999999999999996
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0,
+                      "totalMs": 0
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0118,
+                      "totalMs": 0.0118
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0010000000000000078,
+                  "totalMs": 0.046900000000000004
+                }
+              },
+              {
+                "revision": 9,
+                "nativeMs": 5.7749999999999995,
+                "presentationMs": 26.800000190734863,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 23183532,
+                  "cachedPoseMeshes": 322,
+                  "cameraVisibleObjects": 192,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 386,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 277,
+                  "submittedObjects": 330,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 150,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.004,
+                      "totalMs": 0.004
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.0195,
+                      "totalMs": 0.0195
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.0149,
+                      "totalMs": 0.0149
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0,
+                      "totalMs": 0
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0,
+                      "totalMs": 0
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0024,
+                      "totalMs": 0.0024
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0007999999999999952,
+                  "totalMs": 0.0416
+                }
+              },
+              {
+                "revision": 9,
+                "nativeMs": 5.2011,
+                "presentationMs": 17.699999809265137,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 23183532,
+                  "cachedPoseMeshes": 322,
+                  "cameraVisibleObjects": 192,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 386,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 277,
+                  "submittedObjects": 330,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 113,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0005,
+                      "totalMs": 0.0005
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.0246,
+                      "totalMs": 0.0246
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.0114,
+                      "totalMs": 0.0114
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 9.999999999999999e-05,
+                      "totalMs": 9.999999999999999e-05
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0,
+                      "totalMs": 0
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0023,
+                      "totalMs": 0.0023
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0008999999999999911,
+                  "totalMs": 0.039799999999999995
+                }
+              }
+            ],
+            "UI pipeline preparation CPU": [
+              {
+                "revision": null,
+                "nativeMs": 2.6921,
+                "presentationMs": 209.5,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 95104,
+                  "cachedPoseMeshes": 2,
+                  "cameraVisibleObjects": 43,
+                  "entities": 482,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 1,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 1,
+                  "materialTexturesColor": 7,
+                  "materialTexturesData": 1,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 65,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 65,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 150,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0,
+                  "totalMs": 0
+                }
+              },
+              {
+                "revision": null,
+                "nativeMs": 2.4941,
+                "presentationMs": 240.20000004768372,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 95104,
+                  "cachedPoseMeshes": 2,
+                  "cameraVisibleObjects": 43,
+                  "entities": 482,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 1,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 1,
+                  "materialTexturesColor": 7,
+                  "materialTexturesData": 1,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 65,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 65,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 150,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0,
+                  "totalMs": 0
+                }
+              },
+              {
+                "revision": null,
+                "nativeMs": 3.2916,
+                "presentationMs": 212.79999995231628,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 95104,
+                  "cachedPoseMeshes": 2,
+                  "cameraVisibleObjects": 43,
+                  "entities": 482,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 1,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 1,
+                  "materialTexturesColor": 7,
+                  "materialTexturesData": 1,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 65,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 65,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 150,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0,
+                  "totalMs": 0
+                }
+              }
+            ],
+            "UI custom shader compilation CPU": [],
+            "UI buffer writes CPU": [
+              {
+                "revision": null,
+                "nativeMs": 3.0109,
+                "presentationMs": 211.30000019073486,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 95104,
+                  "cachedPoseMeshes": 2,
+                  "cameraVisibleObjects": 43,
+                  "entities": 482,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 1,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 1,
+                  "materialTexturesColor": 7,
+                  "materialTexturesData": 1,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 65,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 65,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 150,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.026000000000000002,
+                  "totalMs": 0.026000000000000002
+                }
+              },
+              {
+                "revision": 6,
+                "nativeMs": 3.6974,
+                "presentationMs": 49.60000014305115,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 12571264,
+                  "cachedPoseMeshes": 146,
+                  "cameraVisibleObjects": 87,
+                  "entities": 4259,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 3,
+                  "materialTexturesColor": 12,
+                  "materialTexturesData": 5,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 145,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 109,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 42,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0223,
+                  "totalMs": 0.0223
+                }
+              },
+              {
+                "revision": null,
+                "nativeMs": 3.2916,
+                "presentationMs": 212.79999995231628,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 95104,
+                  "cachedPoseMeshes": 2,
+                  "cameraVisibleObjects": 43,
+                  "entities": 482,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 1,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 1,
+                  "materialTexturesColor": 7,
+                  "materialTexturesData": 1,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 65,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 65,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 150,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0191,
+                  "totalMs": 0.0191
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "warmupProfiles": {
+      "count": 729,
+      "sources": {
+        "game": {
+          "presentationMs": {
+            "count": 335,
+            "median": 26.299999952316284,
+            "p95": 55.200000047683716,
+            "max": 5979.799999952316
+          },
+          "nativeMs": {
+            "count": 335,
+            "median": 10.8475,
+            "p95": 19.127100000000002,
+            "max": 66.6885
+          },
+          "meshUploads": 3596,
+          "indexBufferReuses": 3588,
+          "uiCounts": {
+            "uiCustomPipelineAttempts": 0,
+            "uiCustomPipelineBuilds": 0,
+            "uiErrorPipelineBuilds": 0,
+            "uiPipelineEvictions": 2,
+            "uiTextureSetBuilds": 0,
+            "uiBufferAllocations": 0
+          },
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 263,
+              "median": 0.007000000000000001,
+              "p95": 0.013600000000000001,
+              "max": 0.02520000000000001
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 263,
+              "median": 0.1584,
+              "p95": 0.4195,
+              "max": 37.57200000000001
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 263,
+              "median": 0.0109,
+              "p95": 0.029400000000000003,
+              "max": 0.04259999999999999
+            },
+            "Mesh local bounds CPU": {
+              "count": 263,
+              "median": 0.011399999999999997,
+              "p95": 0.016499999999999997,
+              "max": 0.021299999999999993
+            },
+            "Render target preparation CPU": {
+              "count": 335,
+              "median": 0.0003,
+              "p95": 0.0005,
+              "max": 0.0006999999999999999
+            },
+            "Camera uniforms CPU": {
+              "count": 335,
+              "median": 0.0417,
+              "p95": 0.11250000000000002,
+              "max": 0.3524
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 335,
+              "median": 0.14909999999999998,
+              "p95": 0.187,
+              "max": 0.26739999999999997
+            },
+            "Object uniforms CPU": {
+              "count": 335,
+              "median": 0.041,
+              "p95": 0.0771,
+              "max": 0.1503
+            },
+            "UI batch preparation CPU": {
+              "count": 335,
+              "median": 0.0888,
+              "p95": 0.14070000000000002,
+              "max": 0.18000000000000002
+            },
+            "Material preparation CPU": {
+              "count": 335,
+              "median": 0.2595,
+              "p95": 0.38020000000000004,
+              "max": 0.5189
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 335,
+              "median": 0.43229999999999996,
+              "p95": 0.5498999999999999,
+              "max": 2.7005
+            },
+            "World pass encoding CPU": {
+              "count": 335,
+              "median": 0.5508,
+              "p95": 0.7587999999999999,
+              "max": 2.384
+            },
+            "Postprocess encoding CPU": {
+              "count": 335,
+              "median": 0.0415,
+              "p95": 0.057100000000000005,
+              "max": 0.3231
+            },
+            "UI pass encoding CPU": {
+              "count": 335,
+              "median": 0.0644,
+              "p95": 0.0949,
+              "max": 0.1387
+            },
+            "UI buffer capacity and bindings CPU": {
+              "count": 335,
+              "median": 0.0045,
+              "p95": 0.0072,
+              "max": 0.033800000000000004
+            },
+            "UI instance packing CPU": {
+              "count": 335,
+              "median": 0.0428,
+              "p95": 0.08600000000000001,
+              "max": 0.1124
+            },
+            "UI buffer writes CPU": {
+              "count": 335,
+              "median": 0.026999999999999996,
+              "p95": 0.0438,
+              "max": 0.0674
+            },
+            "UI material lookup and texture sets CPU": {
+              "count": 335,
+              "median": 0.005199999999999999,
+              "p95": 0.007200000000000001,
+              "max": 0.0106
+            },
+            "UI pipeline preparation CPU": {
+              "count": 335,
+              "median": 0.0007999999999999999,
+              "p95": 0.0010999999999999998,
+              "max": 0.0017
+            },
+            "UI cache pruning CPU": {
+              "count": 335,
+              "median": 0.0048000000000000004,
+              "p95": 0.006500000000000001,
+              "max": 0.06280000000000001
+            },
+            "UI custom shader compilation CPU": null,
+            "Profiler.snapshot": {
+              "count": 335,
+              "median": 0.11309999999999999,
+              "p95": 0.43879999999999997,
+              "max": 0.6155
+            },
+            "Renderer.submit_frame_to": {
+              "count": 335,
+              "median": 1.8427,
+              "p95": 2.5541,
+              "max": 4.433000000000001
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 263,
+              "median": 0.19330000000000003,
+              "p95": 0.5296,
+              "max": 37.600899999999996
+            }
+          },
+          "topSamples": {
+            "UI batch preparation CPU": [
+              {
+                "revision": 21,
+                "nativeMs": 16.8978,
+                "presentationMs": 24.299999952316284,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 25258352,
+                  "cachedPoseMeshes": 601,
+                  "cameraVisibleObjects": 219,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 28,
+                  "materialTexturesColor": 36,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 26,
+                  "meshUploads": 26,
+                  "msaaSamples": 4,
+                  "renderObjects": 393,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 280,
+                  "submittedObjects": 339,
+                  "uiBatches": 34,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 34,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 650,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0116,
+                      "totalMs": 0.0116
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.09789999999999999,
+                      "totalMs": 0.09789999999999999
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.0503,
+                      "totalMs": 0.0503
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.007500000000000002,
+                      "totalMs": 0.007500000000000002
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0.0010999999999999998,
+                      "totalMs": 0.0010999999999999998
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0079,
+                      "totalMs": 0.0079
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0037000000000000366,
+                  "totalMs": 0.18000000000000002
+                }
+              },
+              {
+                "revision": 14,
+                "nativeMs": 15.632,
+                "presentationMs": 26.200000047683716,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 23876312,
+                  "cachedPoseMeshes": 416,
+                  "cameraVisibleObjects": 217,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 27,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 36,
+                  "meshUploads": 36,
+                  "msaaSamples": 4,
+                  "renderObjects": 389,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 276,
+                  "submittedObjects": 335,
+                  "uiBatches": 34,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 34,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 653,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0113,
+                      "totalMs": 0.0113
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.09399999999999999,
+                      "totalMs": 0.09399999999999999
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.0519,
+                      "totalMs": 0.0519
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.008400000000000001,
+                      "totalMs": 0.008400000000000001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0.001,
+                      "totalMs": 0.001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0085,
+                      "totalMs": 0.0085
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0031999999999999806,
+                  "totalMs": 0.1783
+                }
+              },
+              {
+                "revision": 87,
+                "nativeMs": 16.1388,
+                "presentationMs": 66.29999995231628,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 34402280,
+                  "cachedPoseMeshes": 1794,
+                  "cameraVisibleObjects": 238,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 34,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 12,
+                  "meshUploads": 12,
+                  "msaaSamples": 4,
+                  "renderObjects": 430,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 317,
+                  "submittedObjects": 376,
+                  "uiBatches": 35,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 35,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 645,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0107,
+                      "totalMs": 0.0107
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.1124,
+                      "totalMs": 0.1124
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.032499999999999994,
+                      "totalMs": 0.032499999999999994
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.006500000000000001,
+                      "totalMs": 0.006500000000000001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0.001,
+                      "totalMs": 0.001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.005599999999999999,
+                      "totalMs": 0.005599999999999999
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0025000000000000022,
+                  "totalMs": 0.1712
+                }
+              }
+            ],
+            "UI pipeline preparation CPU": [
+              {
+                "revision": 148,
+                "nativeMs": 15.9521,
+                "presentationMs": 26.299999952316284,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 36243880,
+                  "cachedPoseMeshes": 2018,
+                  "cameraVisibleObjects": 238,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 34,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 5,
+                  "meshUploads": 5,
+                  "msaaSamples": 4,
+                  "renderObjects": 430,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 317,
+                  "submittedObjects": 376,
+                  "uiBatches": 35,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 35,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 659,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0.0017,
+                  "totalMs": 0.0017
+                }
+              },
+              {
+                "revision": 29,
+                "nativeMs": 17.1956,
+                "presentationMs": 23.09999990463257,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 26671576,
+                  "cachedPoseMeshes": 791,
+                  "cameraVisibleObjects": 218,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 27,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 26,
+                  "meshUploads": 26,
+                  "msaaSamples": 4,
+                  "renderObjects": 395,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 282,
+                  "submittedObjects": 341,
+                  "uiBatches": 41,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 41,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 683,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0.0014,
+                  "totalMs": 0.0014
+                }
+              },
+              {
+                "revision": 205,
+                "nativeMs": 11.2157,
+                "presentationMs": 29.299999952316284,
+                "counts": {
+                  "billboardMeshes": 22,
+                  "cachedPoseBytes": 45666616,
+                  "cachedPoseMeshes": 2664,
+                  "cameraVisibleObjects": 289,
+                  "entities": 4706,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 30,
+                  "materialTexturesColor": 38,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 12,
+                  "meshUploads": 12,
+                  "msaaSamples": 4,
+                  "renderObjects": 481,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 356,
+                  "submittedObjects": 427,
+                  "uiBatches": 34,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 34,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 665,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0.0013,
+                  "totalMs": 0.0013
+                }
+              }
+            ],
+            "UI custom shader compilation CPU": [],
+            "UI buffer writes CPU": [
+              {
+                "revision": 236,
+                "nativeMs": 15.618699999999999,
+                "presentationMs": 57.799999952316284,
+                "counts": {
+                  "billboardMeshes": 22,
+                  "cachedPoseBytes": 50839016,
+                  "cachedPoseMeshes": 2980,
+                  "cameraVisibleObjects": 287,
+                  "entities": 4706,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 29,
+                  "materialTexturesColor": 37,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 8,
+                  "meshUploads": 8,
+                  "msaaSamples": 4,
+                  "renderObjects": 480,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 355,
+                  "submittedObjects": 426,
+                  "uiBatches": 35,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 35,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 671,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0674,
+                  "totalMs": 0.0674
+                }
+              },
+              {
+                "revision": 187,
+                "nativeMs": 10.1134,
+                "presentationMs": 25.299999952316284,
+                "counts": {
+                  "billboardMeshes": 22,
+                  "cachedPoseBytes": 42606860,
+                  "cachedPoseMeshes": 2461,
+                  "cameraVisibleObjects": 286,
+                  "entities": 4706,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 28,
+                  "materialTexturesColor": 36,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 4,
+                  "meshUploads": 4,
+                  "msaaSamples": 4,
+                  "renderObjects": 478,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 353,
+                  "submittedObjects": 424,
+                  "uiBatches": 35,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 35,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 671,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.06630000000000001,
+                  "totalMs": 0.06630000000000001
+                }
+              },
+              {
+                "revision": 81,
+                "nativeMs": 11.355,
+                "presentationMs": 19.5,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 33981612,
+                  "cachedPoseMeshes": 1744,
+                  "cameraVisibleObjects": 237,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 27,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 10,
+                  "meshUploads": 10,
+                  "msaaSamples": 4,
+                  "renderObjects": 427,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 314,
+                  "submittedObjects": 373,
+                  "uiBatches": 41,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 41,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 672,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0621,
+                  "totalMs": 0.0621
+                }
+              }
+            ]
+          }
+        },
+        "scene": {
+          "presentationMs": {
+            "count": 394,
+            "median": 23.899999856948853,
+            "p95": 36.200000047683716,
+            "max": 76.70000004768372
+          },
+          "nativeMs": {
+            "count": 394,
+            "median": 6.97275,
+            "p95": 14.287899999999999,
+            "max": 48.4702
+          },
+          "meshUploads": 3535,
+          "indexBufferReuses": 3527,
+          "uiCounts": {
+            "uiCustomPipelineAttempts": 0,
+            "uiCustomPipelineBuilds": 0,
+            "uiErrorPipelineBuilds": 0,
+            "uiPipelineEvictions": 0,
+            "uiTextureSetBuilds": 0,
+            "uiBufferAllocations": 0
+          },
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 255,
+              "median": 0.007600000000000001,
+              "p95": 0.014199999999999999,
+              "max": 0.04000000000000001
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 255,
+              "median": 0.16160000000000002,
+              "p95": 0.46379999999999993,
+              "max": 0.7330000000000001
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 255,
+              "median": 0.0108,
+              "p95": 0.0296,
+              "max": 0.047400000000000005
+            },
+            "Mesh local bounds CPU": {
+              "count": 255,
+              "median": 0.0115,
+              "p95": 0.0163,
+              "max": 0.020299999999999995
+            },
+            "Render target preparation CPU": {
+              "count": 394,
+              "median": 0.00019999999999999998,
+              "p95": 0.0003,
+              "max": 0.0007999999999999999
+            },
+            "Camera uniforms CPU": {
+              "count": 394,
+              "median": 0.0174,
+              "p95": 0.0963,
+              "max": 0.3848
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 394,
+              "median": 0.13555,
+              "p95": 0.1778,
+              "max": 0.352
+            },
+            "Object uniforms CPU": {
+              "count": 394,
+              "median": 0.0353,
+              "p95": 0.058,
+              "max": 0.32880000000000004
+            },
+            "UI batch preparation CPU": {
+              "count": 394,
+              "median": 0.022099999999999998,
+              "p95": 0.033800000000000004,
+              "max": 0.0832
+            },
+            "Material preparation CPU": {
+              "count": 394,
+              "median": 0.24439999999999998,
+              "p95": 0.3574,
+              "max": 0.472
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 394,
+              "median": 0.4114,
+              "p95": 0.5067,
+              "max": 1.0756
+            },
+            "World pass encoding CPU": {
+              "count": 394,
+              "median": 0.4543,
+              "p95": 0.5838,
+              "max": 1.2917
+            },
+            "Postprocess encoding CPU": {
+              "count": 394,
+              "median": 0.0187,
+              "p95": 0.0259,
+              "max": 0.0882
+            },
+            "UI pass encoding CPU": {
+              "count": 394,
+              "median": 0.0234,
+              "p95": 0.034,
+              "max": 0.0812
+            },
+            "UI buffer capacity and bindings CPU": {
+              "count": 394,
+              "median": 0.0011,
+              "p95": 0.0021,
+              "max": 0.0038
+            },
+            "UI instance packing CPU": {
+              "count": 394,
+              "median": 0.0069,
+              "p95": 0.011300000000000001,
+              "max": 0.025800000000000003
+            },
+            "UI buffer writes CPU": {
+              "count": 394,
+              "median": 0.011199999999999998,
+              "p95": 0.0165,
+              "max": 0.061900000000000004
+            },
+            "UI material lookup and texture sets CPU": {
+              "count": 394,
+              "median": 9.999999999999999e-05,
+              "p95": 0.0006000000000000001,
+              "max": 0.0009000000000000002
+            },
+            "UI pipeline preparation CPU": {
+              "count": 394,
+              "median": 0.0,
+              "p95": 0,
+              "max": 0
+            },
+            "UI cache pruning CPU": {
+              "count": 394,
+              "median": 0.0022,
+              "p95": 0.003,
+              "max": 0.0054
+            },
+            "UI custom shader compilation CPU": null,
+            "Profiler.snapshot": {
+              "count": 394,
+              "median": 0.10825000000000001,
+              "p95": 0.3819,
+              "max": 0.623
+            },
+            "Renderer.submit_frame_to": {
+              "count": 394,
+              "median": 1.4672,
+              "p95": 1.8757,
+              "max": 2.366
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 255,
+              "median": 0.1982,
+              "p95": 0.5742,
+              "max": 0.7592000000000001
+            }
+          },
+          "topSamples": {
+            "UI batch preparation CPU": [
+              {
+                "revision": 251,
+                "nativeMs": 7.0615,
+                "presentationMs": 27.799999952316284,
+                "counts": {
+                  "billboardMeshes": 21,
+                  "cachedPoseBytes": 52743408,
+                  "cachedPoseMeshes": 3060,
+                  "cameraVisibleObjects": 253,
+                  "entities": 4706,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 28,
+                  "materialTexturesColor": 37,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 12,
+                  "meshUploads": 12,
+                  "msaaSamples": 4,
+                  "renderObjects": 479,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 358,
+                  "submittedObjects": 419,
+                  "uiBatches": 9,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 9,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 154,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0022,
+                      "totalMs": 0.0022
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.014199999999999999,
+                      "totalMs": 0.014199999999999999
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.061900000000000004,
+                      "totalMs": 0.061900000000000004
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.0009,
+                      "totalMs": 0.0009
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0,
+                      "totalMs": 0
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0023,
+                      "totalMs": 0.0023
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0016999999999999932,
+                  "totalMs": 0.0832
+                }
+              },
+              {
+                "revision": 30,
+                "nativeMs": 13.7585,
+                "presentationMs": 31.799999952316284,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 26915284,
+                  "cachedPoseMeshes": 820,
+                  "cameraVisibleObjects": 198,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 37,
+                  "meshUploads": 37,
+                  "msaaSamples": 4,
+                  "renderObjects": 395,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 286,
+                  "submittedObjects": 339,
+                  "uiBatches": 15,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 15,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 182,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0034000000000000002,
+                      "totalMs": 0.0034000000000000002
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.025800000000000003,
+                      "totalMs": 0.025800000000000003
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.0175,
+                      "totalMs": 0.0175
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.0008000000000000001,
+                      "totalMs": 0.0008000000000000001
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0,
+                      "totalMs": 0
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0039,
+                      "totalMs": 0.0039
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0015999999999999903,
+                  "totalMs": 0.053
+                }
+              },
+              {
+                "revision": 353,
+                "nativeMs": 8.031,
+                "presentationMs": 24.59999990463257,
+                "counts": {
+                  "billboardMeshes": 24,
+                  "cachedPoseBytes": 64993212,
+                  "cachedPoseMeshes": 3843,
+                  "cameraVisibleObjects": 268,
+                  "entities": 4733,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 29,
+                  "materialTexturesColor": 38,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 13,
+                  "meshUploads": 13,
+                  "msaaSamples": 4,
+                  "renderObjects": 494,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 369,
+                  "submittedObjects": 434,
+                  "uiBatches": 3,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 3,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 158,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0013,
+                      "totalMs": 0.0013
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.0066,
+                      "totalMs": 0.0066
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.0383,
+                      "totalMs": 0.0383
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.0003,
+                      "totalMs": 0.0003
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0,
+                      "totalMs": 0
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0021,
+                      "totalMs": 0.0021
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0007999999999999952,
+                  "totalMs": 0.0494
+                }
+              }
+            ],
+            "UI pipeline preparation CPU": [
+              {
+                "revision": 9,
+                "nativeMs": 4.8354,
+                "presentationMs": 21.899999856948853,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 23183532,
+                  "cachedPoseMeshes": 322,
+                  "cameraVisibleObjects": 192,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 386,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 277,
+                  "submittedObjects": 330,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 150,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0,
+                  "totalMs": 0
+                }
+              },
+              {
+                "revision": 9,
+                "nativeMs": 4.9022,
+                "presentationMs": 17.700000047683716,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 23183532,
+                  "cachedPoseMeshes": 322,
+                  "cameraVisibleObjects": 192,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 386,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 277,
+                  "submittedObjects": 330,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 149,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0,
+                  "totalMs": 0
+                }
+              },
+              {
+                "revision": 10,
+                "nativeMs": 16.7577,
+                "presentationMs": 30,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 23183532,
+                  "cachedPoseMeshes": 322,
+                  "cameraVisibleObjects": 192,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 386,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 277,
+                  "submittedObjects": 330,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 150,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0,
+                  "totalMs": 0
+                }
+              }
+            ],
+            "UI custom shader compilation CPU": [],
+            "UI buffer writes CPU": [
+              {
+                "revision": 251,
+                "nativeMs": 7.0615,
+                "presentationMs": 27.799999952316284,
+                "counts": {
+                  "billboardMeshes": 21,
+                  "cachedPoseBytes": 52743408,
+                  "cachedPoseMeshes": 3060,
+                  "cameraVisibleObjects": 253,
+                  "entities": 4706,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 28,
+                  "materialTexturesColor": 37,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 12,
+                  "meshUploads": 12,
+                  "msaaSamples": 4,
+                  "renderObjects": 479,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 358,
+                  "submittedObjects": 419,
+                  "uiBatches": 9,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 9,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 154,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.061900000000000004,
+                  "totalMs": 0.061900000000000004
+                }
+              },
+              {
+                "revision": 353,
+                "nativeMs": 8.031,
+                "presentationMs": 24.59999990463257,
+                "counts": {
+                  "billboardMeshes": 24,
+                  "cachedPoseBytes": 64993212,
+                  "cachedPoseMeshes": 3843,
+                  "cameraVisibleObjects": 268,
+                  "entities": 4733,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 29,
+                  "materialTexturesColor": 38,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 13,
+                  "meshUploads": 13,
+                  "msaaSamples": 4,
+                  "renderObjects": 494,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 369,
+                  "submittedObjects": 434,
+                  "uiBatches": 3,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 3,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 158,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0383,
+                  "totalMs": 0.0383
+                }
+              },
+              {
+                "revision": 67,
+                "nativeMs": 5.1048,
+                "presentationMs": 22.700000047683716,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 32540736,
+                  "cachedPoseMeshes": 1554,
+                  "cameraVisibleObjects": 212,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 417,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 308,
+                  "submittedObjects": 361,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 150,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0241,
+                  "totalMs": 0.0241
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "liveProfiles": {
+      "count": 739,
+      "sources": {
+        "game": {
+          "presentationMs": {
+            "count": 349,
+            "median": 30.5,
+            "p95": 66.89999985694885,
+            "max": 153.70000004768372
+          },
+          "nativeMs": {
+            "count": 349,
+            "median": 13.563699999999999,
+            "p95": 23.3819,
+            "max": 35.95
+          },
+          "meshUploads": 3402,
+          "indexBufferReuses": 3398,
+          "uiCounts": {
+            "uiCustomPipelineAttempts": 0,
+            "uiCustomPipelineBuilds": 0,
+            "uiErrorPipelineBuilds": 0,
+            "uiPipelineEvictions": 0,
+            "uiTextureSetBuilds": 0,
+            "uiBufferAllocations": 0
+          },
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 316,
+              "median": 0.006799999999999999,
+              "p95": 0.013699999999999997,
+              "max": 0.018999999999999993
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 316,
+              "median": 0.14089999999999997,
+              "p95": 0.26180000000000003,
+              "max": 0.6404999999999998
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 316,
+              "median": 0.009000000000000001,
+              "p95": 0.02,
+              "max": 0.16499999999999998
+            },
+            "Mesh local bounds CPU": {
+              "count": 316,
+              "median": 0.0097,
+              "p95": 0.0209,
+              "max": 0.025299999999999996
+            },
+            "Render target preparation CPU": {
+              "count": 349,
+              "median": 0.0003,
+              "p95": 0.0005,
+              "max": 0.001
+            },
+            "Camera uniforms CPU": {
+              "count": 349,
+              "median": 0.058899999999999994,
+              "p95": 0.1064,
+              "max": 0.1386
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 349,
+              "median": 0.1997,
+              "p95": 0.23950000000000002,
+              "max": 0.7184999999999999
+            },
+            "Object uniforms CPU": {
+              "count": 349,
+              "median": 0.0475,
+              "p95": 0.0731,
+              "max": 0.1338
+            },
+            "UI batch preparation CPU": {
+              "count": 349,
+              "median": 0.10210000000000001,
+              "p95": 0.16349999999999998,
+              "max": 0.321
+            },
+            "Material preparation CPU": {
+              "count": 349,
+              "median": 0.2999,
+              "p95": 0.4309,
+              "max": 0.6188
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 349,
+              "median": 0.5286,
+              "p95": 0.6213,
+              "max": 0.8080999999999999
+            },
+            "World pass encoding CPU": {
+              "count": 349,
+              "median": 0.5700999999999999,
+              "p95": 0.7386,
+              "max": 2.0571
+            },
+            "Postprocess encoding CPU": {
+              "count": 349,
+              "median": 0.0434,
+              "p95": 0.055099999999999996,
+              "max": 0.10080000000000001
+            },
+            "UI pass encoding CPU": {
+              "count": 349,
+              "median": 0.0765,
+              "p95": 0.1039,
+              "max": 0.1479
+            },
+            "UI buffer capacity and bindings CPU": {
+              "count": 349,
+              "median": 0.0061,
+              "p95": 0.0082,
+              "max": 0.0334
+            },
+            "UI instance packing CPU": {
+              "count": 349,
+              "median": 0.052099999999999994,
+              "p95": 0.0942,
+              "max": 0.27
+            },
+            "UI buffer writes CPU": {
+              "count": 349,
+              "median": 0.0288,
+              "p95": 0.0383,
+              "max": 0.095
+            },
+            "UI material lookup and texture sets CPU": {
+              "count": 349,
+              "median": 0.005999999999999999,
+              "p95": 0.008100000000000005,
+              "max": 0.026299999999999997
+            },
+            "UI pipeline preparation CPU": {
+              "count": 349,
+              "median": 0.0007999999999999999,
+              "p95": 0.0010999999999999998,
+              "max": 0.0123
+            },
+            "UI cache pruning CPU": {
+              "count": 349,
+              "median": 0.0048000000000000004,
+              "p95": 0.0062,
+              "max": 0.0397
+            },
+            "UI custom shader compilation CPU": null,
+            "Profiler.snapshot": {
+              "count": 349,
+              "median": 0.1118,
+              "p95": 0.4749,
+              "max": 0.6671999999999999
+            },
+            "Renderer.submit_frame_to": {
+              "count": 349,
+              "median": 2.1139,
+              "p95": 2.606,
+              "max": 3.5355
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 316,
+              "median": 0.17215000000000003,
+              "p95": 0.3268999999999999,
+              "max": 0.6878
+            }
+          },
+          "topSamples": {
+            "UI batch preparation CPU": [
+              {
+                "revision": 490,
+                "nativeMs": 20.567700000000002,
+                "presentationMs": 29.799999952316284,
+                "counts": {
+                  "billboardMeshes": 44,
+                  "cachedPoseBytes": 67097932,
+                  "cachedPoseMeshes": 4765,
+                  "cameraVisibleObjects": 273,
+                  "entities": 4843,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 34,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 2,
+                  "meshIndexBufferReuses": 4,
+                  "meshUploads": 4,
+                  "msaaSamples": 4,
+                  "renderObjects": 573,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 421,
+                  "submittedObjects": 491,
+                  "uiBatches": 71,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 71,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 833,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0066,
+                      "totalMs": 0.0066
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.27,
+                      "totalMs": 0.27
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.028499999999999998,
+                      "totalMs": 0.028499999999999998
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.006900000000000002,
+                      "totalMs": 0.006900000000000002
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0.001,
+                      "totalMs": 0.001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0049,
+                      "totalMs": 0.0049
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.003099999999999936,
+                  "totalMs": 0.321
+                }
+              },
+              {
+                "revision": 682,
+                "nativeMs": 27.917,
+                "presentationMs": 71.5,
+                "counts": {
+                  "billboardMeshes": 41,
+                  "cachedPoseBytes": 67104244,
+                  "cachedPoseMeshes": 4822,
+                  "cameraVisibleObjects": 270,
+                  "entities": 4953,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 32,
+                  "materialTexturesColor": 40,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 14,
+                  "meshIndexBufferReuses": 12,
+                  "meshUploads": 12,
+                  "msaaSamples": 4,
+                  "renderObjects": 547,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 401,
+                  "submittedObjects": 469,
+                  "uiBatches": 63,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 63,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 723,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.005699999999999999,
+                      "totalMs": 0.005699999999999999
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.2224,
+                      "totalMs": 0.2224
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.0383,
+                      "totalMs": 0.0383
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.007300000000000003,
+                      "totalMs": 0.007300000000000003
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0.0007999999999999999,
+                      "totalMs": 0.0007999999999999999
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0048000000000000004,
+                      "totalMs": 0.0048000000000000004
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.003199999999999925,
+                  "totalMs": 0.2825
+                }
+              },
+              {
+                "revision": 424,
+                "nativeMs": 16.7486,
+                "presentationMs": 47.5,
+                "counts": {
+                  "billboardMeshes": 36,
+                  "cachedPoseBytes": 67078276,
+                  "cachedPoseMeshes": 4607,
+                  "cameraVisibleObjects": 273,
+                  "entities": 4767,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 33,
+                  "materialTexturesColor": 41,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 2,
+                  "meshIndexBufferReuses": 12,
+                  "meshUploads": 12,
+                  "msaaSamples": 4,
+                  "renderObjects": 527,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 387,
+                  "submittedObjects": 458,
+                  "uiBatches": 108,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 108,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 802,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0058,
+                      "totalMs": 0.0058
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.2143,
+                      "totalMs": 0.2143
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.038,
+                      "totalMs": 0.038
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.006200000000000001,
+                      "totalMs": 0.006200000000000001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0.0007999999999999999,
+                      "totalMs": 0.0007999999999999999
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0051,
+                      "totalMs": 0.0051
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.005199999999999982,
+                  "totalMs": 0.2754
+                }
+              }
+            ],
+            "UI pipeline preparation CPU": [
+              {
+                "revision": 435,
+                "nativeMs": 19.477,
+                "presentationMs": 33.299999952316284,
+                "counts": {
+                  "billboardMeshes": 38,
+                  "cachedPoseBytes": 67097704,
+                  "cachedPoseMeshes": 4695,
+                  "cameraVisibleObjects": 269,
+                  "entities": 4792,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 33,
+                  "materialTexturesColor": 41,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 13,
+                  "meshIndexBufferReuses": 19,
+                  "meshUploads": 19,
+                  "msaaSamples": 4,
+                  "renderObjects": 541,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 398,
+                  "submittedObjects": 467,
+                  "uiBatches": 35,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 35,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 694,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0.0123,
+                  "totalMs": 0.0123
+                }
+              },
+              {
+                "revision": 712,
+                "nativeMs": 16.250600000000002,
+                "presentationMs": 53.299999952316284,
+                "counts": {
+                  "billboardMeshes": 40,
+                  "cachedPoseBytes": 67091784,
+                  "cachedPoseMeshes": 4876,
+                  "cameraVisibleObjects": 269,
+                  "entities": 4972,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 31,
+                  "materialTexturesColor": 39,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 8,
+                  "meshIndexBufferReuses": 9,
+                  "meshUploads": 9,
+                  "msaaSamples": 4,
+                  "renderObjects": 542,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 397,
+                  "submittedObjects": 465,
+                  "uiBatches": 62,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 62,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 764,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0.0014999999999999998,
+                  "totalMs": 0.0014999999999999998
+                }
+              },
+              {
+                "revision": 496,
+                "nativeMs": 13.4545,
+                "presentationMs": 35.40000009536743,
+                "counts": {
+                  "billboardMeshes": 42,
+                  "cachedPoseBytes": 67107812,
+                  "cachedPoseMeshes": 4768,
+                  "cameraVisibleObjects": 269,
+                  "entities": 4852,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 34,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 7,
+                  "meshIndexBufferReuses": 9,
+                  "meshUploads": 9,
+                  "msaaSamples": 4,
+                  "renderObjects": 560,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 413,
+                  "submittedObjects": 482,
+                  "uiBatches": 53,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 53,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 806,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0.0013,
+                  "totalMs": 0.0013
+                }
+              }
+            ],
+            "UI custom shader compilation CPU": [],
+            "UI buffer writes CPU": [
+              {
+                "revision": 426,
+                "nativeMs": 14.923300000000001,
+                "presentationMs": 38.299999952316284,
+                "counts": {
+                  "billboardMeshes": 32,
+                  "cachedPoseBytes": 67044412,
+                  "cachedPoseMeshes": 4630,
+                  "cameraVisibleObjects": 268,
+                  "entities": 4767,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 31,
+                  "materialTexturesColor": 39,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 3,
+                  "meshIndexBufferReuses": 17,
+                  "meshUploads": 17,
+                  "msaaSamples": 4,
+                  "renderObjects": 523,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 387,
+                  "submittedObjects": 454,
+                  "uiBatches": 112,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 112,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 832,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.095,
+                  "totalMs": 0.095
+                }
+              },
+              {
+                "revision": 712,
+                "nativeMs": 16.250600000000002,
+                "presentationMs": 53.299999952316284,
+                "counts": {
+                  "billboardMeshes": 40,
+                  "cachedPoseBytes": 67091784,
+                  "cachedPoseMeshes": 4876,
+                  "cameraVisibleObjects": 269,
+                  "entities": 4972,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 31,
+                  "materialTexturesColor": 39,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 8,
+                  "meshIndexBufferReuses": 9,
+                  "meshUploads": 9,
+                  "msaaSamples": 4,
+                  "renderObjects": 542,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 397,
+                  "submittedObjects": 465,
+                  "uiBatches": 62,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 62,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 764,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0851,
+                  "totalMs": 0.0851
+                }
+              },
+              {
+                "revision": 461,
+                "nativeMs": 13.467,
+                "presentationMs": 33,
+                "counts": {
+                  "billboardMeshes": 42,
+                  "cachedPoseBytes": 67103792,
+                  "cachedPoseMeshes": 4744,
+                  "cameraVisibleObjects": 274,
+                  "entities": 4820,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 34,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 15,
+                  "meshIndexBufferReuses": 15,
+                  "meshUploads": 15,
+                  "msaaSamples": 4,
+                  "renderObjects": 564,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 417,
+                  "submittedObjects": 486,
+                  "uiBatches": 41,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 41,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 743,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 2,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0672,
+                  "totalMs": 0.0672
+                }
+              }
+            ]
+          }
+        },
+        "scene": {
+          "presentationMs": {
+            "count": 390,
+            "median": 29.299999952316284,
+            "p95": 43.700000047683716,
+            "max": 75.20000004768372
+          },
+          "nativeMs": {
+            "count": 390,
+            "median": 10.0533,
+            "p95": 15.8027,
+            "max": 56.3547
+          },
+          "meshUploads": 3308,
+          "indexBufferReuses": 3304,
+          "uiCounts": {
+            "uiCustomPipelineAttempts": 0,
+            "uiCustomPipelineBuilds": 0,
+            "uiErrorPipelineBuilds": 0,
+            "uiPipelineEvictions": 0,
+            "uiTextureSetBuilds": 0,
+            "uiBufferAllocations": 2
+          },
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 299,
+              "median": 0.007499999999999999,
+              "p95": 0.014599999999999998,
+              "max": 0.018299999999999997
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 299,
+              "median": 0.14830000000000002,
+              "p95": 0.2599,
+              "max": 44.3292
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 299,
+              "median": 0.009099999999999999,
+              "p95": 0.019599999999999996,
+              "max": 0.1569
+            },
+            "Mesh local bounds CPU": {
+              "count": 299,
+              "median": 0.0098,
+              "p95": 0.021500000000000002,
+              "max": 0.053299999999999986
+            },
+            "Render target preparation CPU": {
+              "count": 390,
+              "median": 0.00019999999999999998,
+              "p95": 0.0003,
+              "max": 0.0009
+            },
+            "Camera uniforms CPU": {
+              "count": 390,
+              "median": 0.03785,
+              "p95": 0.09280000000000001,
+              "max": 0.1368
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 390,
+              "median": 0.1844,
+              "p95": 0.2319,
+              "max": 0.39490000000000003
+            },
+            "Object uniforms CPU": {
+              "count": 390,
+              "median": 0.043300000000000005,
+              "p95": 0.0625,
+              "max": 0.27080000000000004
+            },
+            "UI batch preparation CPU": {
+              "count": 390,
+              "median": 0.0298,
+              "p95": 0.0448,
+              "max": 0.0708
+            },
+            "Material preparation CPU": {
+              "count": 390,
+              "median": 0.2748,
+              "p95": 0.40190000000000003,
+              "max": 0.5770000000000001
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 390,
+              "median": 0.5045999999999999,
+              "p95": 0.5802999999999999,
+              "max": 0.7228
+            },
+            "World pass encoding CPU": {
+              "count": 390,
+              "median": 0.5226500000000001,
+              "p95": 0.6292,
+              "max": 0.901
+            },
+            "Postprocess encoding CPU": {
+              "count": 390,
+              "median": 0.02,
+              "p95": 0.0265,
+              "max": 0.0722
+            },
+            "UI pass encoding CPU": {
+              "count": 390,
+              "median": 0.036399999999999995,
+              "p95": 0.0625,
+              "max": 0.1093
+            },
+            "UI buffer capacity and bindings CPU": {
+              "count": 390,
+              "median": 0.0019,
+              "p95": 0.003,
+              "max": 0.027299999999999998
+            },
+            "UI instance packing CPU": {
+              "count": 390,
+              "median": 0.01025,
+              "p95": 0.018000000000000002,
+              "max": 0.0499
+            },
+            "UI buffer writes CPU": {
+              "count": 390,
+              "median": 0.0131,
+              "p95": 0.0181,
+              "max": 0.0441
+            },
+            "UI material lookup and texture sets CPU": {
+              "count": 390,
+              "median": 0.0008000000000000001,
+              "p95": 0.0019000000000000006,
+              "max": 0.0029999999999999988
+            },
+            "UI pipeline preparation CPU": {
+              "count": 390,
+              "median": 0.0,
+              "p95": 0,
+              "max": 0
+            },
+            "UI cache pruning CPU": {
+              "count": 390,
+              "median": 0.0021,
+              "p95": 0.0026,
+              "max": 0.0152
+            },
+            "UI custom shader compilation CPU": null,
+            "Profiler.snapshot": {
+              "count": 390,
+              "median": 0.11405,
+              "p95": 0.4517,
+              "max": 0.7045
+            },
+            "Renderer.submit_frame_to": {
+              "count": 390,
+              "median": 1.7593,
+              "p95": 2.0141999999999998,
+              "max": 2.6906999999999996
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 299,
+              "median": 0.18099999999999997,
+              "p95": 0.3257,
+              "max": 44.38280000000001
+            }
+          },
+          "topSamples": {
+            "UI batch preparation CPU": [
+              {
+                "revision": 653,
+                "nativeMs": 7.3337,
+                "presentationMs": 27.199999809265137,
+                "counts": {
+                  "billboardMeshes": 44,
+                  "cachedPoseBytes": 67106228,
+                  "cachedPoseMeshes": 4791,
+                  "cameraVisibleObjects": 294,
+                  "entities": 4945,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 33,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 551,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 405,
+                  "submittedObjects": 480,
+                  "uiBatches": 79,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 79,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 321,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0012,
+                      "totalMs": 0.0012
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.016599999999999997,
+                      "totalMs": 0.016599999999999997
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.0441,
+                      "totalMs": 0.0441
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.0023,
+                      "totalMs": 0.0023
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0,
+                      "totalMs": 0
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0024,
+                      "totalMs": 0.0024
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.004200000000000009,
+                  "totalMs": 0.0708
+                }
+              },
+              {
+                "revision": 464,
+                "nativeMs": 6.365799999999999,
+                "presentationMs": 21.300000190734863,
+                "counts": {
+                  "billboardMeshes": 41,
+                  "cachedPoseBytes": 67103620,
+                  "cachedPoseMeshes": 4716,
+                  "cameraVisibleObjects": 297,
+                  "entities": 4828,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 33,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 558,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 416,
+                  "submittedObjects": 491,
+                  "uiBatches": 17,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 17,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 229,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.0007,
+                      "totalMs": 0.0007
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.0499,
+                      "totalMs": 0.0499
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.014699999999999998,
+                      "totalMs": 0.014699999999999998
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.00039999999999999996,
+                      "totalMs": 0.00039999999999999996
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0,
+                      "totalMs": 0
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.0022,
+                      "totalMs": 0.0022
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0012000000000000066,
+                  "totalMs": 0.0691
+                }
+              },
+              {
+                "revision": 622,
+                "nativeMs": 9.8435,
+                "presentationMs": 31.199999809265137,
+                "counts": {
+                  "billboardMeshes": 42,
+                  "cachedPoseBytes": 67102808,
+                  "cachedPoseMeshes": 4798,
+                  "cameraVisibleObjects": 289,
+                  "entities": 4909,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 33,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 8,
+                  "meshIndexBufferReuses": 8,
+                  "meshUploads": 8,
+                  "msaaSamples": 4,
+                  "renderObjects": 553,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 409,
+                  "submittedObjects": 481,
+                  "uiBatches": 6,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 6,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 173,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer capacity and bindings CPU",
+                      "selfMs": 0.002,
+                      "totalMs": 0.002
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI instance packing CPU",
+                      "selfMs": 0.0131,
+                      "totalMs": 0.0131
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI buffer writes CPU",
+                      "selfMs": 0.0413,
+                      "totalMs": 0.0413
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI material lookup and texture sets CPU",
+                      "selfMs": 0.0006999999999999999,
+                      "totalMs": 0.0006999999999999999
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pipeline preparation CPU",
+                      "selfMs": 0,
+                      "totalMs": 0
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI cache pruning CPU",
+                      "selfMs": 0.01,
+                      "totalMs": 0.01
+                    }
+                  ],
+                  "name": "UI batch preparation CPU",
+                  "selfMs": 0.0012000000000000066,
+                  "totalMs": 0.06830000000000001
+                }
+              }
+            ],
+            "UI pipeline preparation CPU": [
+              {
+                "revision": 358,
+                "nativeMs": 26.3802,
+                "presentationMs": 57.59999990463257,
+                "counts": {
+                  "billboardMeshes": 25,
+                  "cachedPoseBytes": 65769588,
+                  "cachedPoseMeshes": 3897,
+                  "cameraVisibleObjects": 271,
+                  "entities": 4738,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 31,
+                  "materialTexturesColor": 40,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 15,
+                  "meshUploads": 16,
+                  "msaaSamples": 4,
+                  "renderObjects": 497,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 370,
+                  "submittedObjects": 437,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 153,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0,
+                  "totalMs": 0
+                }
+              },
+              {
+                "revision": 359,
+                "nativeMs": 12.344600000000002,
+                "presentationMs": 38.10000014305115,
+                "counts": {
+                  "billboardMeshes": 26,
+                  "cachedPoseBytes": 65987820,
+                  "cachedPoseMeshes": 3914,
+                  "cameraVisibleObjects": 276,
+                  "entities": 4738,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 32,
+                  "materialTexturesColor": 41,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 17,
+                  "meshUploads": 17,
+                  "msaaSamples": 4,
+                  "renderObjects": 502,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 374,
+                  "submittedObjects": 442,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 157,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0,
+                  "totalMs": 0
+                }
+              },
+              {
+                "revision": 360,
+                "nativeMs": 7.5687999999999995,
+                "presentationMs": 23.299999952316284,
+                "counts": {
+                  "billboardMeshes": 26,
+                  "cachedPoseBytes": 66175688,
+                  "cachedPoseMeshes": 3926,
+                  "cameraVisibleObjects": 276,
+                  "entities": 4738,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 32,
+                  "materialTexturesColor": 41,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 12,
+                  "meshUploads": 12,
+                  "msaaSamples": 4,
+                  "renderObjects": 502,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 374,
+                  "submittedObjects": 442,
+                  "uiBatches": 1,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 1,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 160,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI pipeline preparation CPU",
+                  "selfMs": 0,
+                  "totalMs": 0
+                }
+              }
+            ],
+            "UI custom shader compilation CPU": [],
+            "UI buffer writes CPU": [
+              {
+                "revision": 653,
+                "nativeMs": 7.3337,
+                "presentationMs": 27.199999809265137,
+                "counts": {
+                  "billboardMeshes": 44,
+                  "cachedPoseBytes": 67106228,
+                  "cachedPoseMeshes": 4791,
+                  "cameraVisibleObjects": 294,
+                  "entities": 4945,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 33,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 551,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 405,
+                  "submittedObjects": 480,
+                  "uiBatches": 79,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 79,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 321,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0441,
+                  "totalMs": 0.0441
+                }
+              },
+              {
+                "revision": 622,
+                "nativeMs": 9.8435,
+                "presentationMs": 31.199999809265137,
+                "counts": {
+                  "billboardMeshes": 42,
+                  "cachedPoseBytes": 67102808,
+                  "cachedPoseMeshes": 4798,
+                  "cameraVisibleObjects": 289,
+                  "entities": 4909,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 33,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 8,
+                  "meshIndexBufferReuses": 8,
+                  "meshUploads": 8,
+                  "msaaSamples": 4,
+                  "renderObjects": 553,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 409,
+                  "submittedObjects": 481,
+                  "uiBatches": 6,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 6,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 173,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0413,
+                  "totalMs": 0.0413
+                }
+              },
+              {
+                "revision": 624,
+                "nativeMs": 10.429300000000001,
+                "presentationMs": 32.299999952316284,
+                "counts": {
+                  "billboardMeshes": 41,
+                  "cachedPoseBytes": 67104944,
+                  "cachedPoseMeshes": 4797,
+                  "cameraVisibleObjects": 286,
+                  "entities": 4916,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 32,
+                  "materialTexturesColor": 41,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 9,
+                  "meshIndexBufferReuses": 9,
+                  "meshUploads": 9,
+                  "msaaSamples": 4,
+                  "renderObjects": 546,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 403,
+                  "submittedObjects": 475,
+                  "uiBatches": 14,
+                  "uiBufferAllocations": 0,
+                  "uiCustomPipelineAttempts": 0,
+                  "uiCustomPipelineBuilds": 0,
+                  "uiDrawCalls": 14,
+                  "uiErrorPipelineBuilds": 0,
+                  "uiPipelineEvictions": 0,
+                  "uiPrimitives": 215,
+                  "uiTextureSetBuilds": 0
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [],
+                  "name": "UI buffer writes CPU",
+                  "selfMs": 0.0337,
+                  "totalMs": 0.0337
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "newStagePresence": {
+    "Mesh vertex conversion CPU": true,
+    "Mesh vertex buffer allocation and upload CPU": true,
+    "Mesh index buffer lookup and upload CPU": true,
+    "Mesh local bounds CPU": true,
+    "Render target preparation CPU": true,
+    "Camera uniforms CPU": true,
+    "Visibility culling and sorting CPU": true,
+    "Object uniforms CPU": true,
+    "UI batch preparation CPU": true,
+    "Material preparation CPU": true,
+    "Encoder setup and shadow pass CPU": true,
+    "World pass encoding CPU": true,
+    "Postprocess encoding CPU": true,
+    "UI pass encoding CPU": true,
+    "UI buffer capacity and bindings CPU": true,
+    "UI instance packing CPU": true,
+    "UI buffer writes CPU": true,
+    "UI material lookup and texture sets CPU": true,
+    "UI pipeline preparation CPU": true,
+    "UI cache pruning CPU": true,
+    "UI custom shader compilation CPU": true
+  },
+  "timingContainmentViolations": [],
+  "instrumentationMs": {
+    "cloneMs": null,
+    "broadcastMs": {
+      "count": 739,
+      "median": 0.2999999523162842,
+      "p95": 0.40000009536743164,
+      "max": 1
+    }
+  },
+  "customShaderEvents": [
+    {
+      "phase": "loadingProfiles",
+      "source": "game",
+      "revision": 8,
+      "counts": {
+        "billboardMeshes": 2,
+        "cachedPoseBytes": 22886832,
+        "cachedPoseMeshes": 275,
+        "cameraVisibleObjects": 97,
+        "entities": 4637,
+        "materialPipelineEvictions": 0,
+        "materialPipelinesBuiltIn": 36,
+        "materialPipelinesCustom": 4,
+        "materialPipelinesRejected": 0,
+        "materialPipelinesResidentCustom": 0,
+        "materialSamplers": 2,
+        "materialTextureBindGroups": 12,
+        "materialTexturesColor": 20,
+        "materialTexturesData": 9,
+        "meshEvictions": 0,
+        "meshIndexBufferReuses": 125,
+        "meshUploads": 133,
+        "msaaSamples": 4,
+        "renderObjects": 187,
+        "sceneViews": 1,
+        "shadowVisibleObjects": 109,
+        "submittedObjects": 142,
+        "uiBatches": 34,
+        "uiBufferAllocations": 0,
+        "uiCustomPipelineAttempts": 3,
+        "uiCustomPipelineBuilds": 3,
+        "uiDrawCalls": 34,
+        "uiErrorPipelineBuilds": 0,
+        "uiPipelineEvictions": 0,
+        "uiPrimitives": 653,
+        "uiTextureSetBuilds": 0
+      },
+      "node": {
+        "calls": 3,
+        "children": [
+          {
+            "calls": 1,
+            "children": [],
+            "name": "Slowest UI shader a3b93fffa024f656",
+            "selfMs": 72.2025,
+            "totalMs": 72.2025
+          }
+        ],
+        "name": "UI custom shader compilation CPU",
+        "selfMs": 106.91200000000002,
+        "totalMs": 179.11450000000002
+      }
+    }
+  ],
+  "activeSampledEffectsAtEnd": [
+    {
+      "name": "Classic status 7 fire0",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/SmallBuildingFire/SmallBuildingFire0.mfx"
+    },
+    {
+      "name": "Classic status 7 fire1",
+      "effect": "Assets/WarcraftIII/Effects/remaining-ready/Environment/SmallBuildingFire/SmallBuildingFire1.mfx"
+    }
+  ],
+  "screenshotInspected": "D:\\MEngineNativeQA\\rpg-multiview-builtin-effect-fragments-after-1792084494104\\live-game.png",
+  "browserValidationScope": "Actual builtin WGSL and 184-byte instance vertex layout compiled into Alpha and Multiply pipelines on WebView2 WebGPU; not full browser gameplay or browser pixel-equivalence acceptance."
+}
