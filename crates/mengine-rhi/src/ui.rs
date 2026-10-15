@@ -6,6 +6,7 @@ use mengine_core::surface_shader::{
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
+use std::time::Instant;
 use thiserror::Error;
 use wgpu::util::DeviceExt;
 
@@ -839,6 +840,60 @@ impl From<&UiRenderMaterial> for UiMaterialTextureSetKey {
     }
 }
 
+/// CPU wall time in UI preparation. Pipeline build timings are nested in pipeline_prepare_ms.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct UiPrepareProfile {
+    pub buffer_prepare_ms: f64,
+    pub packing_ms: f64,
+    pub buffer_write_ms: f64,
+    pub material_prepare_ms: f64,
+    pub pipeline_prepare_ms: f64,
+    pub prune_ms: f64,
+    /// Includes source composition/validation attempts that reject before a GPU pipeline is built.
+    pub custom_pipeline_build_ms: f64,
+    pub error_pipeline_build_ms: f64,
+    pub buffer_allocations: u32,
+    pub texture_set_builds: u32,
+    pub custom_pipeline_attempts: u32,
+    pub custom_pipeline_builds: u32,
+    pub error_pipeline_builds: u32,
+    pub pipeline_evictions: u32,
+    pub slowest_custom_pipeline_ms: f64,
+    pub slowest_custom_fingerprint: u64,
+}
+
+impl UiPrepareProfile {
+    pub(crate) fn accumulate(&mut self, other: Self) {
+        self.buffer_prepare_ms += other.buffer_prepare_ms;
+        self.packing_ms += other.packing_ms;
+        self.buffer_write_ms += other.buffer_write_ms;
+        self.material_prepare_ms += other.material_prepare_ms;
+        self.pipeline_prepare_ms += other.pipeline_prepare_ms;
+        self.prune_ms += other.prune_ms;
+        self.custom_pipeline_build_ms += other.custom_pipeline_build_ms;
+        self.error_pipeline_build_ms += other.error_pipeline_build_ms;
+        self.buffer_allocations += other.buffer_allocations;
+        self.texture_set_builds += other.texture_set_builds;
+        self.custom_pipeline_attempts += other.custom_pipeline_attempts;
+        self.custom_pipeline_builds += other.custom_pipeline_builds;
+        self.error_pipeline_builds += other.error_pipeline_builds;
+        self.pipeline_evictions += other.pipeline_evictions;
+        if other.slowest_custom_pipeline_ms > self.slowest_custom_pipeline_ms {
+            self.slowest_custom_pipeline_ms = other.slowest_custom_pipeline_ms;
+            self.slowest_custom_fingerprint = other.slowest_custom_fingerprint;
+        }
+    }
+
+    fn record_custom_build(&mut self, started: Instant, fingerprint: u64) {
+        let elapsed = started.elapsed().as_secs_f64() * 1000.0;
+        self.custom_pipeline_build_ms += elapsed;
+        if elapsed > self.slowest_custom_pipeline_ms {
+            self.slowest_custom_pipeline_ms = elapsed;
+            self.slowest_custom_fingerprint = fingerprint;
+        }
+    }
+}
+
 pub(crate) struct UiRenderer {
     pipelines: HashMap<UiPipelineKey, wgpu::RenderPipeline>,
     custom_pipelines: HashMap<UiMaterialPipelineKey, wgpu::RenderPipeline>,
@@ -877,6 +932,7 @@ pub(crate) struct UiRenderer {
     supports_anisotropy: bool,
     viewport: [u32; 2],
     stats: UiFrameStats,
+    prepare_profile: UiPrepareProfile,
 }
 
 struct UiTextureGpu {
@@ -1186,6 +1242,7 @@ impl UiRenderer {
             supports_anisotropy,
             viewport: [width.max(1), height.max(1)],
             stats: UiFrameStats::default(),
+            prepare_profile: UiPrepareProfile::default(),
         }
     }
 
@@ -1281,12 +1338,15 @@ impl UiRenderer {
     }
 
     pub fn prepare(&mut self, device: &wgpu::Device, queue: &wgpu::Queue, plan: &UiBatchPlan) {
+        self.prepare_profile = UiPrepareProfile::default();
+        let started = Instant::now();
         self.material_cache_epoch = self.material_cache_epoch.wrapping_add(1);
         let mut recreate_bind_group = false;
         if plan.primitives.len() > self.instance_capacity {
             self.instance_capacity = plan.primitives.len().next_power_of_two();
             self.instance_buffer = create_instance_buffer(device, self.instance_capacity);
             self.soft_clip_buffer = create_soft_clip_buffer(device, self.instance_capacity);
+            self.prepare_profile.buffer_allocations += 2;
             recreate_bind_group = true;
         }
         let needs_shader_channels = plan
@@ -1303,11 +1363,13 @@ impl UiRenderer {
             self.shader_channel_capacity = plan.primitives.len().next_power_of_two();
             self.shader_channel_buffer =
                 create_shader_channel_buffer(device, self.shader_channel_capacity);
+            self.prepare_profile.buffer_allocations += 1;
             recreate_bind_group = true;
         }
         if needs_materials && plan.primitives.len() > self.material_capacity {
             self.material_capacity = plan.primitives.len().next_power_of_two();
             self.material_buffer = create_material_buffer(device, self.material_capacity);
+            self.prepare_profile.buffer_allocations += 1;
             recreate_bind_group = true;
         }
         if recreate_bind_group {
@@ -1320,37 +1382,55 @@ impl UiRenderer {
                 &self.material_buffer,
             );
         }
+        self.prepare_profile.buffer_prepare_ms += started.elapsed().as_secs_f64() * 1000.0;
         if !plan.primitives.is_empty() {
+            let started = Instant::now();
             let instances: Vec<UiInstance> = plan.primitives.iter().map(UiInstance::from).collect();
+            self.prepare_profile.packing_ms += started.elapsed().as_secs_f64() * 1000.0;
+            let started = Instant::now();
             queue.write_buffer(&self.instance_buffer, 0, bytemuck::cast_slice(&instances));
+            self.prepare_profile.buffer_write_ms += started.elapsed().as_secs_f64() * 1000.0;
+            let started = Instant::now();
             let soft_clips: Vec<UiSoftClipInstance> = plan
                 .primitives
                 .iter()
                 .map(UiSoftClipInstance::from)
                 .collect();
+            self.prepare_profile.packing_ms += started.elapsed().as_secs_f64() * 1000.0;
+            let started = Instant::now();
             queue.write_buffer(&self.soft_clip_buffer, 0, bytemuck::cast_slice(&soft_clips));
+            self.prepare_profile.buffer_write_ms += started.elapsed().as_secs_f64() * 1000.0;
             if needs_shader_channels {
+                let started = Instant::now();
                 let shader_channels: Vec<UiShaderChannelInstance> = plan
                     .primitives
                     .iter()
                     .map(UiShaderChannelInstance::from)
                     .collect();
+                self.prepare_profile.packing_ms += started.elapsed().as_secs_f64() * 1000.0;
+                let started = Instant::now();
                 queue.write_buffer(
                     &self.shader_channel_buffer,
                     0,
                     bytemuck::cast_slice(&shader_channels),
                 );
+                self.prepare_profile.buffer_write_ms += started.elapsed().as_secs_f64() * 1000.0;
             }
             if needs_materials {
+                let started = Instant::now();
                 let materials: Vec<UiMaterialInstance> = plan
                     .primitives
                     .iter()
                     .map(UiMaterialInstance::from)
                     .collect();
+                self.prepare_profile.packing_ms += started.elapsed().as_secs_f64() * 1000.0;
+                let started = Instant::now();
                 queue.write_buffer(&self.material_buffer, 0, bytemuck::cast_slice(&materials));
+                self.prepare_profile.buffer_write_ms += started.elapsed().as_secs_f64() * 1000.0;
             }
         }
         for batch in &plan.batches {
+            let started = Instant::now();
             let material = plan.primitives[batch.start as usize]
                 .render_material
                 .as_ref()
@@ -1378,9 +1458,16 @@ impl UiRenderer {
                 if !material.is_error {
                     self.ensure_material_texture_set(device, &material);
                 }
+                self.prepare_profile.material_prepare_ms += started.elapsed().as_secs_f64() * 1000.0;
+                let started = Instant::now();
                 self.ensure_material_pipeline(device, batch, &material);
+                self.prepare_profile.pipeline_prepare_ms += started.elapsed().as_secs_f64() * 1000.0;
+            } else {
+                self.prepare_profile.material_prepare_ms += started.elapsed().as_secs_f64() * 1000.0;
             }
         }
+        let started = Instant::now();
+        let pipeline_count = self.custom_pipelines.len();
         prune_ui_material_cache(
             &mut self.custom_pipelines,
             &mut self.custom_pipeline_last_used,
@@ -1401,7 +1488,12 @@ impl UiRenderer {
             &mut self.material_sampler_last_used,
             self.material_cache_epoch,
         );
+        self.prepare_profile.pipeline_evictions = (pipeline_count - self.custom_pipelines.len()) as u32;
+        self.prepare_profile.prune_ms += started.elapsed().as_secs_f64() * 1000.0;
+        let started = Instant::now();
         self.write_uniform(queue);
+        self.prepare_profile.buffer_write_ms += started.elapsed().as_secs_f64() * 1000.0;
+        let started = Instant::now();
         self.stats = UiFrameStats {
             primitives: plan.primitives.len() as u32,
             batches: plan.batches.len() as u32,
@@ -1418,7 +1510,10 @@ impl UiRenderer {
                 })
                 .count() as u32,
         };
+        self.prepare_profile.material_prepare_ms += started.elapsed().as_secs_f64() * 1000.0;
     }
+
+    pub(crate) fn prepare_profile(&self) -> UiPrepareProfile { self.prepare_profile }
 
     fn write_uniform(&self, queue: &wgpu::Queue) {
         queue.write_buffer(
@@ -1459,11 +1554,14 @@ impl UiRenderer {
             }
             return;
         }
+        let started = Instant::now();
+        self.prepare_profile.custom_pipeline_attempts += 1;
         let source = match compose_ui_shader(&material.shader, Some(&material.keywords)) {
             Ok(source) => source,
             Err(error) => {
                 log::warn!("UI shader rejected: {error}");
                 self.rejected_shaders.insert(fingerprint, error);
+                self.prepare_profile.record_custom_build(started, fingerprint);
                 self.ensure_error_pipeline(device, state);
                 return;
             }
@@ -1476,12 +1574,15 @@ impl UiRenderer {
             key,
             create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state, self.sample_count),
         );
+        self.prepare_profile.custom_pipeline_builds += 1;
+        self.prepare_profile.record_custom_build(started, fingerprint);
     }
 
     fn ensure_error_pipeline(&mut self, device: &wgpu::Device, state: UiPipelineKey) {
         if self.error_pipelines.contains_key(&state) {
             return;
         }
+        let started = Instant::now();
         let source = compose_ui_shader(ERROR_UI_SHADER_HOOK, None)
             .expect("engine error UI Shader must remain valid");
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -1492,6 +1593,8 @@ impl UiRenderer {
             state,
             create_ui_pipeline(device, &self.pipeline_layout, &shader, self.format, state, self.sample_count),
         );
+        self.prepare_profile.error_pipeline_builds += 1;
+        self.prepare_profile.error_pipeline_build_ms += started.elapsed().as_secs_f64() * 1000.0;
     }
 
     fn material_has_missing_textures(&self, material: &UiRenderMaterial) -> bool {
@@ -1540,6 +1643,7 @@ impl UiRenderer {
             &self.material_samplers[&key.sampler],
         );
         self.material_texture_sets.insert(key, bind_group);
+        self.prepare_profile.texture_set_builds += 1;
     }
 
     pub fn draw<'pass>(&'pass self, pass: &mut wgpu::RenderPass<'pass>, plan: &UiBatchPlan) {
@@ -2824,8 +2928,34 @@ mod tests {
         let mut pop = primitive("white", None);
         pop.key.stencil = UiStencilMode::Pop { reference: 1 };
         let plan = UiBatchPlan::build(vec![push, child, pop]);
+        let assert_profile = |profile: UiPrepareProfile, wall_ms: f64| {
+            let stages = [profile.buffer_prepare_ms, profile.packing_ms, profile.buffer_write_ms, profile.material_prepare_ms, profile.pipeline_prepare_ms, profile.prune_ms];
+            assert!(stages.iter().all(|ms| ms.is_finite() && *ms >= 0.));
+            assert!(stages.iter().sum::<f64>() <= wall_ms + 0.001, "UI stages must be disjoint: {profile:?}, wall={wall_ms}");
+            assert!(profile.custom_pipeline_build_ms + profile.error_pipeline_build_ms <= profile.pipeline_prepare_ms + 0.001, "build stages must fit inside pipeline preparation");
+            assert!(profile.slowest_custom_pipeline_ms <= profile.custom_pipeline_build_ms);
+        };
+        let started = Instant::now();
         renderer.prepare(&device, &queue, &plan);
+        let cold = renderer.prepare_profile();
+        assert_profile(cold, started.elapsed().as_secs_f64() * 1000.0);
+        assert_eq!(cold.buffer_allocations, 2); assert_eq!(cold.texture_set_builds, 1);
+        assert_eq!(cold.custom_pipeline_attempts, 1); assert_eq!(cold.custom_pipeline_builds, 1); assert_eq!(cold.error_pipeline_builds, 0);
+        assert!(cold.custom_pipeline_build_ms > 0.); assert_ne!(cold.slowest_custom_fingerprint, 0);
         assert_eq!(renderer.custom_pipelines.len(), 1);
+        let started = Instant::now();
+        renderer.prepare(&device, &queue, &plan);
+        let warm = renderer.prepare_profile();
+        assert_profile(warm, started.elapsed().as_secs_f64() * 1000.0);
+        assert_eq!(warm.buffer_allocations, 0); assert_eq!(warm.texture_set_builds, 0);
+        assert_eq!(warm.custom_pipeline_attempts, 0); assert_eq!(warm.custom_pipeline_builds, 0); assert_eq!(warm.error_pipeline_builds, 0);
+        assert_eq!(warm.custom_pipeline_build_ms, 0.); assert_eq!(warm.slowest_custom_fingerprint, 0);
+        let mut combined = UiPrepareProfile::default();
+        combined.accumulate(cold); combined.accumulate(warm);
+        assert_eq!(combined.custom_pipeline_builds, 1); assert_eq!(combined.custom_pipeline_attempts, 1); assert_eq!(combined.buffer_allocations, 2);
+        assert_eq!(combined.packing_ms, cold.packing_ms + warm.packing_ms);
+        assert_eq!(combined.pipeline_prepare_ms, cold.pipeline_prepare_ms + warm.pipeline_prepare_ms);
+        assert_eq!(combined.slowest_custom_fingerprint, cold.slowest_custom_fingerprint);
 
         let color = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("ui_stencil_test_color"),
@@ -2895,6 +3025,23 @@ mod tests {
         }
         assert!(renderer.custom_pipelines.is_empty());
         assert!(renderer.material_texture_sets.is_empty());
+        assert_eq!(renderer.prepare_profile().pipeline_evictions, 1);
+        device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let mut invalid = primitive("white", None);
+        invalid.render_material = Some(Arc::new(UiRenderMaterial { shader: Arc::from("invalid WGSL"), ..Default::default() }));
+        let invalid_plan = UiBatchPlan::build(vec![invalid]);
+        let started = Instant::now();
+        renderer.prepare(&device, &queue, &invalid_plan);
+        let rejected = renderer.prepare_profile();
+        assert_profile(rejected, started.elapsed().as_secs_f64() * 1000.0);
+        assert_eq!(rejected.custom_pipeline_attempts, 1); assert_eq!(rejected.custom_pipeline_builds, 0); assert_eq!(rejected.error_pipeline_builds, 1);
+        assert!(rejected.custom_pipeline_build_ms > 0.); assert!(rejected.error_pipeline_build_ms > 0.);
+        assert_ne!(rejected.slowest_custom_fingerprint, 0);
+        renderer.prepare(&device, &queue, &invalid_plan);
+        let repeated = renderer.prepare_profile();
+        assert_eq!(repeated.custom_pipeline_attempts, 0); assert_eq!(repeated.custom_pipeline_builds, 0); assert_eq!(repeated.error_pipeline_builds, 0);
+        assert_eq!(repeated.custom_pipeline_build_ms, 0.); assert_eq!(repeated.error_pipeline_build_ms, 0.);
+        assert!(pollster::block_on(device.pop_error_scope()).is_none(), "rejected UI source must use a valid cached error pipeline");
     }
 
     #[test]
