@@ -2,6 +2,9 @@
 use crate::{AssetError, MeshData};
 use glam::{Mat4, Quat, Vec3, Vec4};
 use std::{path::Path, sync::OnceLock};
+mod shared;
+pub use shared::{SharedGltfPoseSource, SharedPoseLoad};
+use shared::DependencyStamp;
 
 /// Legacy 12 Hz references. Use `parse_gltf_pose_sample` for an explicit rate.
 pub fn parse_gltf_pose(reference: &str) -> Option<(&str, usize, u32)> {
@@ -95,14 +98,19 @@ fn keyframe_segment(times: &[f32], time: f32, step: bool) -> (usize, usize) {
 impl GltfPoseSource {
     /// MiYu: validate every file dependency before allowing a project script to load the pose.
     pub fn load_in_project(path: &Path, root: &Path) -> Result<(Self,Vec<std::path::PathBuf>),AssetError> {
+        let (source, dependencies) = Self::load_project_source(path, root)?;
+        Ok((source, dependencies.into_iter().map(|stamp| stamp.path).collect()))
+    }
+    fn load_project_source(path: &Path, root: &Path) -> Result<(Self,Vec<DependencyStamp>),AssetError> {
         let fail=|s: &str| AssetError::Gltf(s.into());
         let root=root.canonicalize().map_err(|e|fail(&e.to_string()))?;
         let path=path.canonicalize().map_err(|e|fail(&e.to_string()))?;
         if !path.starts_with(&root) { return Err(fail("pose asset is outside the project")); }
         if std::fs::metadata(&path).map_err(|e|fail(&e.to_string()))?.len()>128*1024*1024 {return Err(fail("pose asset size exceeds 128 MiB"));}
+        let main_stamp=DependencyStamp::read(&path)?;
         let source=gltf::Gltf::open(&path).map_err(|e|fail(&e.to_string()))?;
         let document=source.document;
-        let mut dependencies=vec![path.clone()];
+        let mut dependencies=vec![main_stamp];
         let uris=document.buffers().filter_map(|b|match b.source() {gltf::buffer::Source::Uri(uri)=>Some(uri),_=>None}).chain(document.images().filter_map(|i|match i.source() {gltf::image::Source::Uri {uri,..}=>Some(uri),_=>None}));
         for uri in uris {
             if uri.starts_with("data:") { continue; }
@@ -116,20 +124,41 @@ impl GltfPoseSource {
             }
             let decoded=String::from_utf8(decoded).map_err(|_|fail("invalid pose dependency URI"))?;
             if decoded.contains([':', '\0']) || Path::new(&decoded).is_absolute() { return Err(fail("pose dependency must be project relative")); }
-            let dependency=path.parent().unwrap().join(decoded).canonicalize().map_err(|e|fail(&e.to_string()))?;
-            if !dependency.starts_with(&root) { return Err(fail("pose dependency is outside the project")); }
+            let dependency=DependencyStamp::read(&path.parent().unwrap().join(decoded))?;
+            if !dependency.path.starts_with(&root) { return Err(fail("pose dependency is outside the project")); }
             if !dependencies.contains(&dependency) {dependencies.push(dependency);}
         }
-        let bytes=dependencies.iter().try_fold(0u64,|total,p|std::fs::metadata(p).map(|m|total.saturating_add(m.len()))).map_err(|e|fail(&e.to_string()))?;
+        let mut paths=std::collections::HashSet::new();
+        let bytes=dependencies.iter().filter(|stamp|paths.insert(&stamp.path)).map(|stamp|stamp.bytes).sum::<u64>();
         if bytes>128*1024*1024 { return Err(fail("pose dependency size exceeds 128 MiB")); }
         let buffers=gltf::import_buffers(&document,path.parent(),source.blob).map_err(|e|fail(&e.to_string()))?;
-        Ok((Self::from_parts(document,buffers)?,dependencies))
+        let source=Self::from_parts(document,buffers)?;
+        if !dependencies.iter().all(DependencyStamp::is_current) { return Err(fail("pose dependencies changed while loading; retry with the current version")); }
+        Ok((source,dependencies))
     }
     pub fn load(path: &Path) -> Result<Self, AssetError> {
         // Pose geometry uses buffers; texture decoding belongs to the texture loader.
         let source = gltf::Gltf::open(path).map_err(|e| AssetError::Gltf(e.to_string()))?;
         let buffers = gltf::import_buffers(&source.document, path.parent(), source.blob).map_err(|e| AssetError::Gltf(e.to_string()))?;
         Self::from_parts(source.document,buffers)
+    }
+    /// Render-only compatibility tracking; these paths do not grant project-scoped script access.
+    pub fn dependency_paths(&self, path: &Path) -> Vec<std::path::PathBuf> {
+        let mut paths=vec![path.to_path_buf()];
+        let uris=self.document.buffers().filter_map(|b|match b.source() {gltf::buffer::Source::Uri(uri)=>Some(uri),_=>None}).chain(self.document.images().filter_map(|i|match i.source() {gltf::image::Source::Uri {uri,..}=>Some(uri),_=>None}));
+        for uri in uris {
+            if uri.starts_with("data:") {continue;}
+            let decode=||->Option<String> {
+                let bytes=uri.as_bytes();let mut decoded=Vec::new();let mut i=0;
+                while i<bytes.len() {
+                    if bytes[i]==b'%' {decoded.push(u8::from_str_radix(std::str::from_utf8(bytes.get(i+1..i+3)?).ok()?,16).ok()?);i+=3;} else {decoded.push(bytes[i]);i+=1;}
+                }
+                String::from_utf8(decoded).ok()
+            };
+            let decoded=decode().unwrap_or_else(||uri.to_owned());
+            paths.push(path.parent().unwrap_or(Path::new("")).join(decoded.strip_prefix("file://").unwrap_or(&decoded)));
+        }
+        paths
     }
     fn from_parts(document: gltf::Document, buffers: Vec<gltf::buffer::Data>) -> Result<Self,AssetError> {
         let mut billboards = Vec::new();

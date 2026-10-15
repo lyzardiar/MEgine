@@ -1,22 +1,12 @@
 //! MiYu: project-scoped exact node queries shared by editor and standalone scripts.
 use glam::{Mat4,Vec3};
-use mengine_assets::{parse_gltf_pose_sample,GltfBillboardCamera,GltfPoseSource};
+use mengine_assets::{parse_gltf_pose_sample,GltfBillboardCamera,SharedGltfPoseSource};
 use serde::Deserialize;
-use std::{collections::HashMap,path::{Path,PathBuf},time::{Instant,SystemTime}};
+use std::{collections::HashMap,path::{Path,PathBuf},sync::Arc,time::{Instant,SystemTime}};
 
 /// MiYu: native node-query work nested inside the script callback, shared by both VMs.
 #[derive(Clone,Copy,Debug,Default)]
-pub struct AssetNodeProfile { pub query_ms: f64, pub queries: u32, pub load_ms: f64, pub loads: u32, pub sample_ms: f64, pub samples: u32, pub serialize_ms: f64, pub serializations: u32 }
-
-#[derive(PartialEq)]
-struct Stamp { path: PathBuf, bytes: u64, modified: SystemTime }
-impl Stamp {
-    fn read(path: &Path) -> Result<Self,String> {
-        let m=std::fs::metadata(path).map_err(|e|e.to_string())?;
-        if !m.is_file() {return Err("Pose dependency is not a file".into());}
-        Ok(Self {path:path.into(),bytes:m.len(),modified:m.modified().map_err(|e|e.to_string())?})
-    }
-}
+pub struct AssetNodeProfile { pub query_ms: f64, pub queries: u32, pub load_ms: f64, pub loads: u32, pub reuse_ms: f64, pub reuses: u32, pub sample_ms: f64, pub samples: u32, pub serialize_ms: f64, pub serializations: u32 }
 
 #[cfg(test)]
 mod tests {
@@ -67,10 +57,10 @@ mod tests {
         let mut host=crate::ScriptHost::new().unwrap();host.set_project_root(fixture.root.clone());
         host.eval("function onTick() { engine.assets.sampleNodes('Assets/actor.gltf#pose=0:15@30');engine.assets.sampleNodes('Assets/actor.gltf#pose=0:15@30'); }").unwrap();
         let mut world=mengine_core::World::new();
-        for expected_loads in [1,0] {
+        for expected_reuses in [1,0] {
             let tick=host.tick_profiled(&mut world,0.).unwrap();let profile=tick.asset_nodes;
-            assert_eq!((profile.queries,profile.loads,profile.samples,profile.serializations),(2,expected_loads,1,1));
-            assert!(tick.callback_ms>=profile.query_ms);
+            assert_eq!((profile.queries,profile.loads,profile.samples,profile.serializations),(2,0,1,1));
+            assert_eq!(profile.reuses,expected_reuses);assert!(tick.callback_ms>=profile.query_ms);
         }
     }
     #[test]
@@ -85,7 +75,7 @@ mod tests {
         host.eval("var rejected=false;try{engine.assets.sampleNodes('Assets/actor.gltf#pose=0:0')}catch(e){rejected=String(e).includes('outside the project')}if(!rejected)throw Error('outside dependency accepted');").unwrap();
     }
 }
-struct Source { pose: GltfPoseSource, stamps: Vec<Stamp>, checked: u64, used: u64, results: HashMap<String,String> }
+struct Source { pose: Arc<SharedGltfPoseSource>, checked: u64, used: u64, results: HashMap<String,String> }
 #[derive(Default)]
 pub(crate) struct AssetNodeCache { root: Option<PathBuf>, sources: HashMap<PathBuf,Source>, epoch: u64, serial: u64, pub(crate) profile: AssetNodeProfile }
 #[derive(Deserialize,Default)]
@@ -116,21 +106,20 @@ impl AssetNodeCache {
         self.serial=self.serial.wrapping_add(1);
         if let Some(source)=self.sources.get_mut(&path) {
             if source.checked!=self.epoch {
-                let stamps=source.stamps.iter().map(|s|Stamp::read(&s.path)).collect::<Result<Vec<_>,_>>();
-                if stamps.as_ref().is_ok_and(|s|*s==source.stamps) {source.checked=self.epoch;} else {self.sources.remove(&path);}
+                if source.pose.is_current() {source.checked=self.epoch;} else {self.sources.remove(&path);}
             }
         }
         if !self.sources.contains_key(&path) {
             let started=Instant::now();
-            let loaded=GltfPoseSource::load_in_project(&path,&root).map_err(|e|e.to_string());
-            self.profile.load_ms+=started.elapsed().as_secs_f64()*1000.;self.profile.loads+=1;
-            let (pose,dependencies)=loaded?;
-            let stamps=dependencies.iter().map(|p|Stamp::read(p)).collect::<Result<Vec<_>,_>>()?;
-            let bytes=stamps.iter().map(|s|s.bytes).sum::<u64>();
-            while self.sources.len()>=128 || self.sources.values().flat_map(|s|&s.stamps).map(|s|s.bytes).sum::<u64>()+bytes>256*1024*1024 {
+            let loaded=SharedGltfPoseSource::load(&path,&root).map_err(|e|e.to_string());
+            let elapsed=started.elapsed().as_secs_f64()*1000.;
+            if loaded.as_ref().is_ok_and(|load|load.reused) {self.profile.reuse_ms+=elapsed;self.profile.reuses+=1;} else {self.profile.load_ms+=elapsed;self.profile.loads+=1;}
+            let pose=loaded?.source;
+            let bytes=pose.dependency_bytes();
+            while self.sources.len()>=128 || self.sources.values().map(|s|s.pose.dependency_bytes()).sum::<u64>()+bytes>256*1024*1024 {
                 let Some(oldest)=self.sources.iter().min_by_key(|(_,s)|s.used).map(|(p,_)|p.clone()) else {break;};self.sources.remove(&oldest);
             }
-            self.sources.insert(path.clone(),Source {pose,stamps,checked:self.epoch,used:self.serial,results:HashMap::new()});
+            self.sources.insert(path.clone(),Source {pose,checked:self.epoch,used:self.serial,results:HashMap::new()});
         }
         let source=self.sources.get_mut(&path).unwrap();source.used=self.serial;
         let key=format!("{clip}:{frame}@{rate}|{options}");
