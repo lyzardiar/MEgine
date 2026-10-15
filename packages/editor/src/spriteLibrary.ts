@@ -24,6 +24,7 @@ let _ready = false;
 let _refreshPromise: Promise<SpriteAsset[]> | null = null;
 let indexedSprites: SpriteAsset[] | undefined;
 let spritesById = new Map<string, SpriteAsset>();
+const resolvedSpriteIds = new Map<string, string>();
 
 function spriteIndex(): ReadonlyMap<string, SpriteAsset> {
   if (indexedSprites !== _sprites) {
@@ -71,6 +72,9 @@ async function refreshSpritesNow(): Promise<SpriteAsset[]> {
   } catch {
     _sprites = [];
     _folders = [];
+  } finally {
+    indexedSprites = undefined;
+    resolvedSpriteIds.clear();
   }
   _ready = true;
   return _sprites;
@@ -124,6 +128,15 @@ export function normalizeSpriteRef(raw: string): string {
 
 /** Dev URL to load a project texture in <img> / canvas. */
 export function resolveSpriteId(raw: string): string {
+  const cached = resolvedSpriteIds.get(raw);
+  if (cached !== undefined) return cached;
+  const id = findSpriteId(raw);
+  if (resolvedSpriteIds.size >= 2048) resolvedSpriteIds.delete(resolvedSpriteIds.keys().next().value!);
+  resolvedSpriteIds.set(raw, id);
+  return id;
+}
+
+function findSpriteId(raw: string): string {
   const n = normalizeSpriteRef(raw);
   if (!n || n === 'white') return 'white';
   const lower = n.toLowerCase();

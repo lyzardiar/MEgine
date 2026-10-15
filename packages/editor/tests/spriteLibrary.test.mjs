@@ -59,3 +59,52 @@ test('browser thumbnails preserve catalogue aliases, slices, encoded paths and r
     assert.equal(library.resolveSpriteTextureId('Idle'),'Assets/UI/Repacked.png');
   } finally {globalThis.fetch=previousFetch;if(previousWindow)Object.defineProperty(globalThis,'window',previousWindow);else delete globalThis.window;}
 });
+
+test('cached sprite references preserve catalogue order, exact IDs, casing and path normalization across refreshes', async () => {
+  const originalFetch = globalThis.fetch, originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  const asset = (id, name) => ({ id, name, folder: 'Assets/UI', relPath: id });
+  let sprites = [asset('Assets/First/Hero.png', 'First'), asset('Assets/Second/Hero.png', 'Hero'), asset('Assets/UI/Atlas.png#Idle', 'Idle'), asset('Hero', 'Exact'), asset('Assets/UI/Panel Image.png', 'Panel Image.png')];
+  globalThis.window = {}; globalThis.fetch = async () => ({ ok: true, json: async () => ({ sprites }) });
+  try {
+    await library.refreshSprites();
+    const cases = [
+      ['hErO', 'Hero'], ['Hero.png', 'Assets/First/Hero.png'], ['First/Hero', 'Assets/First/Hero.png'],
+      ['IDLE', 'Assets/UI/Atlas.png#Idle'], ['assets/SECOND/HERO.PNG', 'Assets/Second/Hero.png'],
+      ['file:///G:/project/Assets/UI/Panel%20Image.png', 'Assets/UI/Panel Image.png'],
+      ['# drag\r\nD:\\Project\\Assets\\UI\\Panel Image.png', 'Assets/UI/Panel Image.png'],
+      ['Assets/UI/Unknown', 'Assets/UI/Unknown'], ['missing', 'missing'], ['white.png', 'white'], ['', 'white'],
+    ];
+    for (let repeat = 0; repeat < 2; repeat++) for (const [raw, expected] of cases) assert.equal(library.resolveSpriteId(raw), expected);
+    sprites.splice(0, sprites.length, asset('Assets/New/Idle.png', 'Idle'), asset('Assets/New/Missing.png', 'missing'));
+    await library.refreshSprites();
+    assert.equal(library.resolveSpriteId('IDLE'), 'Assets/New/Idle.png');
+    assert.equal(library.resolveSpriteId('missing'), 'Assets/New/Missing.png');
+    assert.equal(library.resolveSpriteAsset('Assets/UI/Atlas.png#Idle'), null);
+    sprites = [asset('Assets/OtherProject/Idle.png', 'Idle')]; await library.refreshSprites();
+    assert.equal(library.resolveSpriteId('IDLE'), 'Assets/OtherProject/Idle.png');
+    globalThis.fetch = async () => { throw new Error('project closed'); }; await library.refreshSprites();
+    assert.equal(library.resolveSpriteId('IDLE'), 'IDLE');
+    assert.equal(library.resolveSpriteAsset('Assets/OtherProject/Idle.png'), null);
+  } finally { globalThis.fetch = originalFetch; if (originalWindow) Object.defineProperty(globalThis, 'window', originalWindow); else delete globalThis.window; }
+});
+
+test('repeated sprite aliases and misses avoid catalogue scans while reference caching stays bounded', async () => {
+  const originalFetch = globalThis.fetch, originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  let nameReads = 0;
+  const sprites = Array.from({ length: 20000 }, (_, i) => ({ id: `Assets/Icons/${i}.png`, get name() { nameReads++; return `${i}.png`; }, folder: 'Assets/Icons', relPath: `Assets/Icons/${i}.png` }));
+  globalThis.window = {}; globalThis.fetch = async () => ({ ok: true, json: async () => ({ sprites }) });
+  try {
+    await library.refreshSprites();
+    assert.equal(library.resolveSpriteId('19999'), 'Assets/Icons/19999.png');
+    assert.equal(library.resolveSpriteId('missing'), 'missing');
+    const scanned = nameReads;
+    for (let i = 0; i < 500; i++) {
+      assert.equal(library.resolveSpriteId('19999'), 'Assets/Icons/19999.png');
+      assert.equal(library.resolveSpriteId('missing'), 'missing');
+    }
+    assert.equal(nameReads, scanned, 'cached aliases and misses must not read catalogue names');
+    for (let i = 0; i < 2048; i++) library.resolveSpriteId(`Assets/Unlisted/${i}.png`);
+    assert.equal(library.resolveSpriteId('19999'), 'Assets/Icons/19999.png');
+    assert.ok(nameReads > scanned, 'old references are evicted after the bounded cache fills');
+  } finally { globalThis.fetch = originalFetch; if (originalWindow) Object.defineProperty(globalThis, 'window', originalWindow); else delete globalThis.window; }
+});
