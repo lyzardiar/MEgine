@@ -21,22 +21,48 @@ impl SharedSnapshotWorld {
         self.update(&SharedWorldSnapshot { entities, frame: snapshot.frame, sim_frame: snapshot.sim_frame, elapsed: snapshot.elapsed, clear_color: snapshot.clear_color, selected: snapshot.selected });
     }
 
-    /// Structural changes rebuild mappings in snapshot order; stable hierarchy updates only changed records.
+    /// Preserve surviving handles and apply only changed records or invalidated entity references.
     pub fn update(&mut self, snapshot: &SharedWorldSnapshot) {
         let incoming: HashSet<_> = snapshot.entities.iter().map(|entity| entity.entity).collect();
-        let topology_changed = incoming.len() != self.entities.len() || self.entities.keys().any(|id| !incoming.contains(id));
-        let hierarchy_changed = topology_changed || snapshot.entities.iter().any(|record| self.previous.get(&record.entity).is_none_or(|previous| previous.parent != record.parent));
-        if hierarchy_changed { self.world = World::new(); self.entities.clear(); self.previous.clear(); }
+        let mut changed_ids: HashSet<_> = incoming.iter().filter(|id| !self.entities.contains_key(id)).copied().collect();
+        let mut removed = Vec::new();
+        self.entities.retain(|id, entity| {
+            if incoming.contains(id) { return true; }
+            changed_ids.insert(*id); removed.push(*entity); false
+        });
+        if !removed.is_empty() { self.world.despawn_many(removed); }
+        let mut hierarchy_changed = !changed_ids.is_empty() || snapshot.entities.iter().any(|record| self.previous.get(&record.entity).is_none_or(|previous| previous.parent != record.parent));
         for record in &snapshot.entities { self.entities.entry(record.entity).or_insert_with(|| self.world.spawn_empty()); }
+        let mut order: Vec<_> = snapshot.entities.iter().map(|record| self.entities[&record.entity]).collect();
+        if order.len() != incoming.len() { let mut seen = HashSet::new(); order.retain(|entity| seen.insert(*entity)); }
+        if !self.world.iter_entities().eq(order.iter().copied()) {
+            assert!(self.world.set_entity_iteration_order(&order));
+            hierarchy_changed = true;
+        }
         for record in &snapshot.entities {
-            if !hierarchy_changed && self.previous.get(&record.entity).is_some_and(|previous| Arc::ptr_eq(previous, record)) { continue; }
+            let same = self.previous.get(&record.entity).is_some_and(|previous| Arc::ptr_eq(previous, record));
+            if !hierarchy_changed && same { continue; }
             let entity = self.entities[&record.entity];
+            let parent = record.parent.and_then(|id| self.entities.get(&id)).copied();
+            if self.world.get_component::<mengine_core::Parent>(entity).map(|value| value.entity) != parent { self.world.set_parent(entity, parent); }
+            let references_changed = !changed_ids.is_empty() && crate::entity_reference::scene_reference_mapping_changed(&record.components, &changed_ids);
+            if !references_changed && same { continue; }
             let old: Vec<_> = self.world.serialized_components(entity).into_iter().flat_map(|values| values.keys().cloned()).collect();
             for name in old { if !matches!(name.as_str(), "Parent" | "Children") { self.world.remove_component_by_name(entity, &name); } }
             if let Some(name) = &record.name { self.world.set_component_value(entity, "Name", serde_json::json!({"value":name})); }
-            let parent = record.parent.and_then(|id| self.entities.get(&id)).copied();
-            let refresh_parent = hierarchy_changed || self.world.get_component::<mengine_core::Parent>(entity).map(|value| value.entity) != parent;
-            crate::scene_file::apply_snapshot_entity(&mut self.world, record, &self.entities, refresh_parent);
+            crate::scene_file::apply_snapshot_entity(&mut self.world, record, &self.entities, false);
+        }
+        if hierarchy_changed {
+            let mut children = HashMap::<Entity, Vec<Entity>>::new();
+            for entity in &order {
+                if let Some(parent) = self.world.get_component::<mengine_core::Parent>(*entity) { children.entry(parent.entity).or_default().push(*entity); }
+            }
+            for entity in order {
+                let expected = children.remove(&entity).unwrap_or_default();
+                let current = self.world.get_component::<mengine_core::Children>(entity);
+                if expected.is_empty() { if current.is_some() { self.world.remove_component_by_name(entity, "Children"); } }
+                else if current.is_none_or(|value| value.entities != expected) { self.world.insert_component(entity, mengine_core::Children { entities: expected }); }
+            }
         }
         self.previous.clear();
         self.previous.extend(snapshot.entities.iter().map(|record| (record.entity, Arc::clone(record))));
@@ -52,6 +78,65 @@ impl SharedSnapshotWorld {
 mod tests {
     use super::*;
     use mengine_core::{generated::{Name, RawImage, Transform}, snapshot::WorldSnapshotCache, Parent};
+
+    #[test]
+    fn topology_edits_preserve_survivors_and_snapshot_traversal_order() {
+        let mut source = World::new(); let root = source.spawn_empty();
+        let nodes: Vec<_> = (0..6).map(|i| { let entity = source.spawn_empty(); source.insert_component(entity, Name { value: i.to_string() }); source.insert_component(entity, Transform::default()); source.set_parent(entity, Some(root)); entity }).collect();
+        let mut cache = WorldSnapshotCache::default(); let original = cache.capture(&source);
+        let mut mirror = SharedSnapshotWorld::default(); mirror.update(&original);
+        let survivor = mirror.entities[&nodes[5].to_u64()];
+        let mut retained_cache = WorldSnapshotCache::default();
+        let retained = retained_cache.capture(mirror.world()).entities.into_iter().find(|record| record.entity == survivor.to_u64()).unwrap();
+        source.despawn(nodes[0]); source.despawn(nodes[2]);
+        let added = source.spawn_empty(); source.insert_component(added, Name { value: "new".into() }); source.set_parent(added, Some(root));
+        source.set_parent(nodes[1], Some(nodes[3]));
+        let edited = cache.capture(&source);
+        for snapshot in [&edited, &original, &edited] {
+            mirror.update(snapshot);
+            assert_eq!(mirror.entities[&nodes[5].to_u64()], survivor);
+            let current = retained_cache.capture(mirror.world()).entities.into_iter().find(|record| record.entity == survivor.to_u64()).unwrap();
+            assert!(Arc::ptr_eq(&retained, &current));
+            let expected: Vec<_> = snapshot.entities.iter().map(|record| record.name.clone()).collect();
+            assert_eq!(mirror.world.iter_entities().map(|entity| mirror.world.get_component::<Name>(entity).map(|name| name.value.clone())).collect::<Vec<_>>(), expected);
+            for record in &snapshot.entities {
+                let entity = mirror.entities[&record.entity];
+                let expected: Vec<_> = snapshot.entities.iter().filter(|child| child.parent == Some(record.entity)).map(|child| mirror.entities[&child.entity]).collect();
+                assert_eq!(mirror.world.get_component::<mengine_core::Children>(entity).map(|children| children.entities.clone()).unwrap_or_default(), expected);
+            }
+        }
+    }
+
+    #[test]
+    fn unchanged_records_restore_missing_parents_and_all_reference_kinds() {
+        let mut source = World::new(); let target = source.spawn_empty(); let owner = source.spawn_empty();
+        source.insert_component(owner, Transform::default()); source.set_parent(owner, Some(target));
+        let mut cache = WorldSnapshotCache::default(); let mut full = cache.capture(&source);
+        let record = Arc::make_mut(full.entities.iter_mut().find(|record| record.entity == owner.to_u64()).unwrap());
+        let id = target.to_u64().to_string();
+        record.components.insert("RawImage".into(), serde_json::json!({"render_camera":id,"render_root":id}));
+        record.components.insert("Canvas".into(), serde_json::json!({"render_camera":id}));
+        record.components.insert("Button".into(), serde_json::json!({"on_click":[{"target":id,"method":"test"}]}));
+        record.components.insert("CustomRef".into(), serde_json::json!({"__mengine_entity_reference_fields":["target"],"target":id}));
+        record.components.insert("TimelineDirector".into(), serde_json::json!({"bindings_json":serde_json::json!({"version":1,"bindings":{"target":{"entity":id}}}).to_string()}));
+        let mut missing = full.clone(); missing.entities.retain(|record| record.entity != target.to_u64());
+        let mut mirror = SharedSnapshotWorld::default();
+        for (snapshot, present) in [(&missing,false),(&full,true),(&missing,false),(&full,true)] {
+            mirror.update(snapshot); let owner = mirror.entities[&owner.to_u64()];
+            let mapped = mirror.entities.get(&target.to_u64()).copied();
+            assert_eq!(mirror.world.get_component::<Parent>(owner).map(|value| value.entity), mapped);
+            let components = mirror.world.serialized_components(owner).unwrap();
+            for (component, field) in [("RawImage","render_camera"),("RawImage","render_root"),("Canvas","render_camera")] { assert_eq!(components[component][field], mapped.map(|entity| entity.to_u64().to_string()).unwrap_or_default()); }
+            for value in [&components["Button"]["on_click"][0]["target"], &components["CustomRef"]["target"]] {
+                if present { assert_eq!(*value, mapped.unwrap().to_u64().to_string()); }
+                else { assert_eq!(value["$mengine_entity_ref"]["kind"], "missing"); }
+            }
+            let timeline = mirror.world.get_component::<mengine_core::generated::TimelineDirector>(owner).unwrap();
+            let bindings = mengine_assets::parse_timeline_binding_table(&timeline.bindings_json).unwrap();
+            assert_eq!(bindings.bindings["target"].missing, !present);
+            if present { assert_eq!(bindings.bindings["target"].entity, mapped.unwrap().to_u64().to_string()); }
+        }
+    }
 
     #[test]
     fn changed_components_preserve_sibling_order_and_removed_transforms() {
