@@ -2,18 +2,18 @@
 use crate::sorting::{WorldPrimitive, WorldPrimitiveKind};
 use crate::textures::TextureLoadFailure;
 use glam::{Mat4, Vec3, Vec4};
-use mengine_assets::{effect_asset_path, EffectFrame, EffectMaterial, GltfBillboardCamera, GltfPoseSource, SampledEffectAsset};
+use mengine_assets::{effect_asset_path, EffectFrame, EffectMaterial, GltfBillboardCamera, SharedGltfPoseSource, SampledEffectAsset};
 use mengine_core::{generated::SampledEffect, Entity, TransformHierarchy, World};
 use mengine_rhi::{DirectionalLightData, FrameCamera, FrameLighting, PointLightData, UiBlendMode, UiPrimitive, UiRenderMaterial, UiShaderChannelData};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
+use std::time::{Duration, Instant, SystemTime};
 use std::sync::Arc;
 
 type Stamp = (Option<SystemTime>, u64);
 struct CachedEffect { stamp: Stamp, asset: Result<SampledEffectAsset, String> }
 struct Playback { key: (String, i32, u32), elapsed: f32 }
-struct CachedModel { dependencies: Vec<(PathBuf, Stamp)>, source: Result<GltfPoseSource, String> }
+struct CachedModel { stamp: Stamp, attempted_at: Instant, source: Result<Arc<SharedGltfPoseSource>, String> }
 fn file_stamp(path: &Path) -> Stamp { std::fs::metadata(path).map(|m| (m.modified().ok(), m.len())).unwrap_or((None, 0)) }
 
 #[derive(Default)]
@@ -119,13 +119,15 @@ fn collect_model_particles(frame: &EffectFrame, materials: &[EffectMaterial], tr
         for part in &model.parts {
             let first_use = used.insert(part.mesh.clone());
             let path = root.join(&part.mesh);
-            if cache.get(&part.mesh).is_none_or(|entry| first_use && entry.dependencies.iter().any(|(p, stamp)| file_stamp(p) != *stamp)) {
-                let loaded = GltfPoseSource::load_in_project(&path, root);
-                let (source, dependencies) = match loaded {
-                    Ok((source, dependencies)) => (Ok(source), dependencies),
-                    Err(error) => { failures.push(TextureLoadFailure { key: part.mesh.clone(), path: path.clone(), error: format!("sampled model particle: {error}") }); (Err(error.to_string()), vec![path.clone()]) }
-                };
-                cache.insert(part.mesh.clone(), CachedModel { source, dependencies: dependencies.into_iter().map(|p| { let stamp = file_stamp(&p); (p, stamp) }).collect() });
+            if cache.get(&part.mesh).is_none_or(|entry| first_use && match &entry.source {
+                Ok(source) => !source.is_current(),
+                Err(_) => file_stamp(&path) != entry.stamp || entry.attempted_at.elapsed() >= Duration::from_millis(250),
+            }) {
+                let source = SharedGltfPoseSource::load(&path, root).map(|loaded| loaded.source).map_err(|error| error.to_string());
+                if let Err(error) = &source {
+                    if cache.get(&part.mesh).and_then(|entry| entry.source.as_ref().err()) != Some(error) { failures.push(TextureLoadFailure { key: part.mesh.clone(), path: path.clone(), error: format!("sampled model particle: {error}") }); }
+                }
+                cache.insert(part.mesh.clone(), CachedModel { source, stamp: file_stamp(&path), attempted_at: Instant::now() });
             }
             let Ok(source) = &cache[&part.mesh].source else { continue; };
             let state = &part.states[part.states.partition_point(|s| s.frame <= sample).saturating_sub(1)];

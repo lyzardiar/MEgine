@@ -672,6 +672,7 @@ impl EditorViewportRenderer {
         stages.last_mut().expect("mesh sync stage recorded").children = [
             ("Mesh file metadata", mesh_work.file_check_ms, mesh_work.file_checks),
             ("Mesh source load and decode", mesh_work.source_load_ms, mesh_work.source_loads),
+            ("Mesh source reuse", mesh_work.source_reuse_ms, mesh_work.source_reuses),
             ("Pose and procedural geometry", mesh_work.geometry_ms, mesh_work.geometry_builds),
             ("Mesh vertex conversion and GPU upload", mesh_work.upload_ms, mesh_work.uploads),
         ].into_iter().filter(|(_, _, calls)| *calls > 0).map(|(name, ms, calls)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls, children: Vec::new() }).collect();
