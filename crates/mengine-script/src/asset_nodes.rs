@@ -2,7 +2,11 @@
 use glam::{Mat4,Vec3};
 use mengine_assets::{parse_gltf_pose_sample,GltfBillboardCamera,GltfPoseSource};
 use serde::Deserialize;
-use std::{collections::HashMap,path::{Path,PathBuf},time::SystemTime};
+use std::{collections::HashMap,path::{Path,PathBuf},time::{Instant,SystemTime}};
+
+/// MiYu: native node-query work nested inside the script callback, shared by both VMs.
+#[derive(Clone,Copy,Debug,Default)]
+pub struct AssetNodeProfile { pub query_ms: f64, pub queries: u32, pub load_ms: f64, pub loads: u32, pub sample_ms: f64, pub samples: u32, pub serialize_ms: f64, pub serializations: u32 }
 
 #[derive(PartialEq)]
 struct Stamp { path: PathBuf, bytes: u64, modified: SystemTime }
@@ -49,6 +53,27 @@ mod tests {
         let value:serde_json::Value=serde_json::from_str(&cache.query(reference,"{}")).unwrap();assert_eq!(value["ok"],false);
     }
     #[test]
+    fn query_profile_counts_real_loads_samples_and_errors_and_resets_between_frames() {
+        let fixture=Fixture::new(8.0);let mut cache=AssetNodeCache::default();cache.set_root(fixture.root.clone());
+        let reference="Assets/actor.gltf#pose=0:15@30";
+        let first=nodes(&mut cache,reference,"{}");assert_eq!(nodes(&mut cache,reference,"{}"),first);
+        let profile=cache.profile;
+        assert_eq!((profile.queries,profile.loads,profile.samples,profile.serializations),(2,1,1,1));
+        assert!(profile.query_ms>=profile.load_ms+profile.sample_ms+profile.serialize_ms);
+        cache.begin_frame();assert_eq!(cache.profile.queries,0);assert_eq!(cache.profile.query_ms,0.);
+        assert_eq!(nodes(&mut cache,reference,"{}"),first);
+        let invalid:serde_json::Value=serde_json::from_str(&cache.query("invalid","{}")).unwrap();assert_eq!(invalid["ok"],false);
+        assert_eq!((cache.profile.queries,cache.profile.loads,cache.profile.samples,cache.profile.serializations),(2,0,1,1));
+        let mut host=crate::ScriptHost::new().unwrap();host.set_project_root(fixture.root.clone());
+        host.eval("function onTick() { engine.assets.sampleNodes('Assets/actor.gltf#pose=0:15@30');engine.assets.sampleNodes('Assets/actor.gltf#pose=0:15@30'); }").unwrap();
+        let mut world=mengine_core::World::new();
+        for expected_loads in [1,0] {
+            let tick=host.tick_profiled(&mut world,0.).unwrap();let profile=tick.asset_nodes;
+            assert_eq!((profile.queries,profile.loads,profile.samples,profile.serializations),(2,expected_loads,1,1));
+            assert!(tick.callback_ms>=profile.query_ms);
+        }
+    }
+    #[test]
     fn quickjs_api_is_project_scoped_and_does_not_expose_its_native_function() {
         let a=Fixture::new(8.0);let b=Fixture::new(20.0);let mut host=crate::ScriptHost::new().unwrap();host.set_project_root(a.root.clone());
         host.eval("var nodes=engine.assets.sampleNodes('Assets/actor.gltf#pose=0:15@30');if(nodes[1].position[0]!==6||nodes[0].name!==nodes[1].name||nodes[0].index===nodes[1].index)throw Error('bad native nodes');if(typeof __mengineAssetNodes!=='undefined')throw Error('native function leaked');").unwrap();
@@ -62,7 +87,7 @@ mod tests {
 }
 struct Source { pose: GltfPoseSource, stamps: Vec<Stamp>, checked: u64, used: u64, results: HashMap<String,String> }
 #[derive(Default)]
-pub(crate) struct AssetNodeCache { root: Option<PathBuf>, sources: HashMap<PathBuf,Source>, epoch: u64, serial: u64 }
+pub(crate) struct AssetNodeCache { root: Option<PathBuf>, sources: HashMap<PathBuf,Source>, epoch: u64, serial: u64, pub(crate) profile: AssetNodeProfile }
 #[derive(Deserialize,Default)]
 #[serde(deny_unknown_fields)]
 struct Options { camera: Option<Camera>, #[serde(default,rename="attachmentsOnly")] attachments_only: bool }
@@ -72,9 +97,12 @@ struct Camera { model: [f32;16], look: [f32;3], up: [f32;3] }
 
 impl AssetNodeCache {
     pub(crate) fn set_root(&mut self, root: PathBuf) {self.root=Some(root);self.sources.clear();}
-    pub(crate) fn begin_frame(&mut self) {self.epoch=self.epoch.wrapping_add(1);for source in self.sources.values_mut() {source.results.clear();}}
+    pub(crate) fn begin_frame(&mut self) {self.profile=AssetNodeProfile::default();self.epoch=self.epoch.wrapping_add(1);for source in self.sources.values_mut() {source.results.clear();}}
     pub(crate) fn query(&mut self, reference: &str, options: &str) -> String {
-        match self.sample(reference,options) {Ok(value)=>value,Err(error)=>serde_json::json!({"ok":false,"error":error}).to_string()}
+        let started=Instant::now();
+        let value=match self.sample(reference,options) {Ok(value)=>value,Err(error)=>serde_json::json!({"ok":false,"error":error}).to_string()};
+        self.profile.query_ms+=started.elapsed().as_secs_f64()*1000.;self.profile.queries+=1;
+        value
     }
     fn sample(&mut self, reference: &str, options: &str) -> Result<String,String> {
         if reference.len()>4096 || options.len()>4096 {return Err("Node query is too large".into());}
@@ -93,7 +121,10 @@ impl AssetNodeCache {
             }
         }
         if !self.sources.contains_key(&path) {
-            let (pose,dependencies)=GltfPoseSource::load_in_project(&path,&root).map_err(|e|e.to_string())?;
+            let started=Instant::now();
+            let loaded=GltfPoseSource::load_in_project(&path,&root).map_err(|e|e.to_string());
+            self.profile.load_ms+=started.elapsed().as_secs_f64()*1000.;self.profile.loads+=1;
+            let (pose,dependencies)=loaded?;
             let stamps=dependencies.iter().map(|p|Stamp::read(p)).collect::<Result<Vec<_>,_>>()?;
             let bytes=stamps.iter().map(|s|s.bytes).sum::<u64>();
             while self.sources.len()>=128 || self.sources.values().flat_map(|s|&s.stamps).map(|s|s.bytes).sum::<u64>()+bytes>256*1024*1024 {
@@ -104,8 +135,13 @@ impl AssetNodeCache {
         let source=self.sources.get_mut(&path).unwrap();source.used=self.serial;
         let key=format!("{clip}:{frame}@{rate}|{options}");
         if let Some(value)=source.results.get(&key) {return Ok(value.clone());}
-        let poses=source.pose.sample_nodes(clip,frame,rate,camera).map_err(|e|e.to_string())?;
+        let started=Instant::now();
+        let sampled=source.pose.sample_nodes(clip,frame,rate,camera).map_err(|e|e.to_string());
+        self.profile.sample_ms+=started.elapsed().as_secs_f64()*1000.;self.profile.samples+=1;
+        let poses=sampled?;
+        let started=Instant::now();
         let value=serde_json::json!({"ok":true,"value":poses.iter().filter(|n|!options_value.attachments_only || n.attachment.is_some()).map(|n|serde_json::json!({"index":n.index,"name":n.name,"position":n.matrix.w_axis.truncate().to_array(),"matrix":n.matrix.to_cols_array(),"attachment":n.attachment.as_ref().map(|a|serde_json::json!({"id":a.id,"path":a.path,"visibility":a.visibility}))})).collect::<Vec<_>>()}).to_string();
+        self.profile.serialize_ms+=started.elapsed().as_secs_f64()*1000.;self.profile.serializations+=1;
         if source.results.len()<128 && source.results.values().map(|v|v.len()).sum::<usize>()+value.len()<=512*1024 {source.results.insert(key,value.clone());}
         Ok(value)
     }
