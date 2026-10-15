@@ -116,6 +116,12 @@ pub struct EditorViewportProfileCounts {
     pub ui_primitives: usize,
     pub ui_batches: usize,
     pub ui_draw_calls: u32,
+    pub ui_custom_pipeline_attempts: u32,
+    pub ui_custom_pipeline_builds: u32,
+    pub ui_error_pipeline_builds: u32,
+    pub ui_pipeline_evictions: u32,
+    pub ui_texture_set_builds: u32,
+    pub ui_buffer_allocations: u32,
     pub material_pipelines_built_in: usize,
     pub material_pipelines_custom: usize,
     pub material_pipelines_resident_custom: usize,
@@ -757,6 +763,30 @@ impl EditorViewportRenderer {
             ("Encoder finish and queue submit CPU", submission.queue_submit_ms, submission.queue_submissions),
             ("Surface present CPU", submission.surface_present_ms, submission.surface_frames),
         ].into_iter().filter(|(_, _, calls)| *calls > 0).map(|(name, ms, calls)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls, children: Vec::new() }).collect();
+        if let Some(ui) = stages.last_mut().expect("submission stage recorded").children.iter_mut().find(|node| node.name == "UI batch preparation CPU") {
+            let work = submission.ui_preparation;
+            ui.children = [
+                ("UI buffer capacity and bindings CPU", work.buffer_prepare_ms),
+                ("UI instance packing CPU", work.packing_ms),
+                ("UI buffer writes CPU", work.buffer_write_ms),
+                ("UI material lookup and texture sets CPU", work.material_prepare_ms),
+                ("UI pipeline preparation CPU", work.pipeline_prepare_ms),
+                ("UI cache pruning CPU", work.prune_ms),
+            ].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: submission.queue_submissions, children: Vec::new() }).collect();
+            let pipelines = ui.children.iter_mut().find(|node| node.name == "UI pipeline preparation CPU").expect("UI pipeline stage recorded");
+            pipelines.children = [
+                ("UI custom shader compilation CPU", work.custom_pipeline_build_ms, work.custom_pipeline_attempts),
+                ("UI error pipeline creation CPU", work.error_pipeline_build_ms, work.error_pipeline_builds),
+            ].into_iter().filter(|(_, ms, calls)| *calls > 0 || *ms > 0.).map(|(name, ms, calls)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls, children: Vec::new() }).collect();
+            if let Some(custom) = pipelines.children.iter_mut().find(|node| node.name == "UI custom shader compilation CPU") {
+                if work.slowest_custom_pipeline_ms > 0. {
+                    custom.children.push(EditorViewportProfileNode { name: format!("Slowest UI shader {:016x}", work.slowest_custom_fingerprint), total_ms: work.slowest_custom_pipeline_ms, self_ms: work.slowest_custom_pipeline_ms, calls: 1, children: Vec::new() });
+                    custom.self_ms = (custom.total_ms - work.slowest_custom_pipeline_ms).max(0.);
+                }
+            }
+            pipelines.self_ms = (pipelines.total_ms - pipelines.children.iter().map(|child| child.total_ms).sum::<f64>()).max(0.);
+            ui.self_ms = (ui.total_ms - ui.children.iter().map(|child| child.total_ms).sum::<f64>()).max(0.);
+        }
         let stage_started = Instant::now();
         let (rgba, readback) = if destination == ViewportDestination::Window { (Vec::new(), None) } else {
             let (rgba, readback) = self
@@ -791,6 +821,12 @@ impl EditorViewportRenderer {
         profile.counts.cached_pose_bytes = mesh_cache.bytes;
         profile.counts.mesh_uploads = mesh_cache.uploads;
         profile.counts.mesh_index_buffer_reuses = mesh_work.index_buffer_reuses;
+        profile.counts.ui_custom_pipeline_attempts = submission.ui_preparation.custom_pipeline_attempts;
+        profile.counts.ui_custom_pipeline_builds = submission.ui_preparation.custom_pipeline_builds;
+        profile.counts.ui_error_pipeline_builds = submission.ui_preparation.error_pipeline_builds;
+        profile.counts.ui_pipeline_evictions = submission.ui_preparation.pipeline_evictions;
+        profile.counts.ui_texture_set_builds = submission.ui_preparation.texture_set_builds;
+        profile.counts.ui_buffer_allocations = submission.ui_preparation.buffer_allocations;
         profile.counts.mesh_evictions = mesh_cache.evictions;
         profile.memory.push(EditorViewportMemoryCategory { name:"GPU sampled mesh cache".into(), domain:"gpu".into(), bytes:mesh_cache.bytes as u64, certainty:"estimate".into(), source:"Logical per-mesh vertex/index bytes; shared indices may be counted repeatedly; retained index-cache handles, driver overhead and static meshes are excluded".into() });
         profile.resident_memory_estimate_bytes += mesh_cache.bytes as u64;
@@ -1019,6 +1055,12 @@ fn build_viewport_profile(
             ui_primitives: frame.ui.primitives.len(),
             ui_batches: frame.ui.batches.len(),
             ui_draw_calls: ui_stats.draw_calls,
+            ui_custom_pipeline_attempts: 0,
+            ui_custom_pipeline_builds: 0,
+            ui_error_pipeline_builds: 0,
+            ui_pipeline_evictions: 0,
+            ui_texture_set_builds: 0,
+            ui_buffer_allocations: 0,
             material_pipelines_built_in: pipeline_stats.built_in,
             material_pipelines_custom: pipeline_stats.custom,
             material_pipelines_resident_custom: pipeline_stats.resident_custom,

@@ -410,6 +410,7 @@ pub struct FrameSubmissionProfile {
     pub culling_ms: f64,
     pub object_uniform_ms: f64,
     pub ui_prepare_ms: f64,
+    pub ui_preparation: crate::UiPrepareProfile,
     pub material_prepare_ms: f64,
     /// Encoder creation and GPU query initialization, followed by shadow pass encoding.
     pub shadow_encode_ms: f64,
@@ -1668,6 +1669,7 @@ impl Renderer {
         let empty_ui = UiBatchPlan::default();
         let ui_plan = ui.unwrap_or(&empty_ui);
         self.ui.prepare(&self.device, &self.queue, ui_plan);
+        self.submission_profile.ui_preparation.accumulate(self.ui.prepare_profile());
         self.submission_profile.ui_prepare_ms += ui_prepare_started.elapsed().as_secs_f64() * 1000.0;
         let material_started = Instant::now();
         for &index in &submitted {
@@ -4477,6 +4479,11 @@ mod tests {
             let stages = [profile.target_prepare_ms, profile.camera_uniform_ms, profile.culling_ms, profile.object_uniform_ms, profile.ui_prepare_ms, profile.material_prepare_ms, profile.shadow_encode_ms, profile.world_encode_ms, profile.postprocess_encode_ms, profile.ui_encode_ms, profile.surface_acquire_ms, profile.queue_submit_ms, profile.surface_present_ms];
             assert!(stages.iter().all(|ms| ms.is_finite() && *ms >= 0.0));
             assert!(stages.iter().sum::<f64>() <= submit_ms + 0.01, "main and embedded submission stages must fit their enclosing wall time: {profile:?}, wall={submit_ms}ms");
+            let ui = profile.ui_preparation;
+            let ui_stages = [ui.buffer_prepare_ms, ui.packing_ms, ui.buffer_write_ms, ui.material_prepare_ms, ui.pipeline_prepare_ms, ui.prune_ms];
+            assert!(ui_stages.iter().all(|ms| ms.is_finite() && *ms >= 0.));
+            assert!(ui_stages.iter().sum::<f64>() <= profile.ui_prepare_ms + 0.01, "accumulated UI stages must fit main and embedded preparation");
+            assert!(ui.custom_pipeline_build_ms + ui.error_pipeline_build_ms <= ui.pipeline_prepare_ms + 0.01);
             assert_eq!(renderer.size, PhysicalSize::new(64,32));
             renderer.read_offscreen_rgba8(&target).unwrap()
         };
