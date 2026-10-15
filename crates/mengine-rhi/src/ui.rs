@@ -241,6 +241,10 @@ pub struct UiPrimitive {
     /// Top-left pixel rect: x, y, width, height.
     pub rect: [f32; 4],
     pub color: [f32; 4],
+    /// Discard sampled fragment alpha below this value when positive, before stencil and soft clips.
+    pub alpha_cutoff: f32,
+    /// Multiply fragment RGB by its alpha before stencil and soft clips.
+    pub premultiply_rgb: bool,
     pub pivot: [f32; 2],
     pub rotation_radians: f32,
     /// WebGPU clip-space depth in the 0..1 range for screen-aligned primitives.
@@ -272,6 +276,8 @@ impl UiPrimitive {
         Self {
             rect,
             color,
+            alpha_cutoff: 0.0,
+            premultiply_rgb: false,
             pivot: [0.5, 0.5],
             rotation_radians: 0.0,
             depth: 0.0,
@@ -641,6 +647,7 @@ struct UiInstance {
     projection: [f32; 4],
     corners: [[f32; 4]; 4],
     vertex_positions: [[f32; 4]; 2],
+    fragment_options: [f32; 2],
 }
 
 impl From<&UiPrimitive> for UiInstance {
@@ -692,6 +699,7 @@ impl From<&UiPrimitive> for UiInstance {
                     vertices[3][1],
                 ],
             ],
+            fragment_options: [value.alpha_cutoff, if value.premultiply_rgb { 1.0 } else { 0.0 }],
         }
     }
 }
@@ -1836,7 +1844,7 @@ fn create_ui_pipeline(
                     attributes: &wgpu::vertex_attr_array![
                         1 => Float32x4, 2 => Float32x4, 3 => Float32x4, 4 => Float32x4,
                         5 => Float32x4, 6 => Float32x4, 7 => Float32x4, 8 => Float32x4,
-                        9 => Float32x4, 10 => Float32x4, 11 => Float32x4
+                        9 => Float32x4, 10 => Float32x4, 11 => Float32x4, 12 => Float32x2
                     ],
                 },
             ],
@@ -2349,6 +2357,7 @@ struct VsIn {
     @location(9) corner_bottom_left: vec4<f32>,
     @location(10) vertex_x: vec4<f32>,
     @location(11) vertex_y: vec4<f32>,
+    @location(12) fragment_options: vec2<f32>,
 };
 
 struct VsOut {
@@ -2363,6 +2372,7 @@ struct VsOut {
     @location(7) normal: vec3<f32>,
     @location(8) tangent: vec4<f32>,
     @location(9) @interpolate(flat) shader_channels: u32,
+    @location(10) @interpolate(flat) fragment_options: vec2<f32>,
 };
 
 struct MEngineUiInput {
@@ -2448,6 +2458,7 @@ fn vs_main(input: VsIn) -> VsOut {
         output.tangent = select(output.tangent, channel_data.tangents[vertex_slot], (channels & 16u) != 0u);
     }
     output.shader_channels = channels;
+    output.fragment_options = input.fragment_options;
     return output;
 }
 
@@ -2465,6 +2476,12 @@ fn fs_main(input: VsOut) -> @location(0) vec4<f32> {
         input.shader_channels,
         input.instance_index,
     ));
+    if input.fragment_options.x > 0.0 && color.a < input.fragment_options.x {
+        discard;
+    }
+    if input.fragment_options.y > 0.5 {
+        color = vec4<f32>(color.rgb * color.a, color.a);
+    }
     if input.alpha_clip > 0.5 && color.a <= 0.001 {
         discard;
     }
@@ -2743,7 +2760,106 @@ mod tests {
 
     #[test]
     fn ui_shader_with_custom_quad_attributes_parses() {
-        naga::front::wgsl::parse_str(UI_WGSL).expect("UI WGSL should remain valid");
+        let module = naga::front::wgsl::parse_str(UI_WGSL).expect("UI WGSL should remain valid");
+        naga::valid::Validator::new(naga::valid::ValidationFlags::all(), naga::valid::Capabilities::all()).validate(&module).expect("UI shader validation");
+        let output_components: u32 = module.types.iter().find_map(|(_, ty)| {
+            if ty.name.as_deref() != Some("VsOut") { return None; }
+            let naga::TypeInner::Struct { members, .. } = &ty.inner else { panic!("VsOut must be a struct"); };
+            Some(members.iter().filter(|member| matches!(member.binding, Some(naga::Binding::Location { .. }))).map(|member| match module.types[member.ty].inner {
+                naga::TypeInner::Scalar(_) => 1,
+                naga::TypeInner::Vector { size, .. } => size as u32,
+                _ => panic!("unexpected UI varying type"),
+            }).sum())
+        }).unwrap();
+        let limits = wgpu::Limits::downlevel_webgl2_defaults();
+        assert_eq!(output_components, 30); assert!(output_components <= limits.max_inter_stage_shader_components);
+        assert!(13 <= limits.max_vertex_attributes);
+        assert_eq!(std::mem::offset_of!(UiInstance, fragment_options), 176); assert_eq!(std::mem::size_of::<UiInstance>(), 184);
+    }
+
+    #[test]
+    fn sampled_effect_parameters_match_custom_hooks_pixels_without_pipeline_builds() {
+        use crate::{ClearColor, FrameCamera, FrameLighting, RenderFrame, RenderMaterial, RenderObject, Renderer, RenderTarget, Vertex};
+        use glam::{Mat4, Vec3};
+        use winit::dpi::PhysicalSize;
+        let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32,32))).expect("GPU for sampled effect pixel equivalence");
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        renderer.upload_ui_texture_rgba8("effect_pixels", 2, 2, &[230,100,40,128, 40,220,100,230, 80,60,240,200, 200,170,60,80]).unwrap();
+        let vertices = [[-1.,-1.,0.4],[0.,-1.,0.4],[-1.,1.,0.4],[0.,1.,0.4]].map(|position| Vertex { position, normal: [0.,0.,1.], uv: [0.,0.] });
+        renderer.upload_gltf_static("effect_occluder", &vertices, &[0,1,2,2,1,3]);
+        let objects = [RenderObject { mesh_key: "effect_occluder".into(), model: Mat4::IDENTITY, material: RenderMaterial { unlit: true, double_sided: true, base_color: [0.2,0.3,0.5,1.], ..Default::default() }, cast_shadows: false, receive_shadows: false }];
+        let target = renderer.create_offscreen_target(PhysicalSize::new(32,32));
+        let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+        let clear = ClearColor { r: 0.4, g: 0.6, b: 0.8, a: 1. };
+        let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false;
+        let render = |renderer: &mut Renderer, plan: &UiBatchPlan, occlude: bool| {
+            renderer.submit_frame_to(&RenderFrame { clear, camera, objects: if occlude { &objects } else { &[] }, lighting: &lighting, ui: Some(plan), scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+            let profile = renderer.submission_profile().ui_preparation;
+            (renderer.read_offscreen_rgba8(&target).unwrap(), profile)
+        };
+        let legacy_plan = |primitives: &[UiPrimitive]| UiBatchPlan::build(primitives.iter().map(|primitive| {
+            let mut legacy = primitive.clone();
+            let result = if primitive.premultiply_rgb { "vec4<f32>(color.rgb * color.a, color.a)" } else { "color" };
+            let shader = format!("fn mengine_ui_hook(input: MEngineUiInput) -> vec4<f32> {{ let color = mengine_ui_main_texture(input.uv0) * input.vertex_color; if color.a < {} {{ discard; }} return {}; }}", primitive.alpha_cutoff, result);
+            legacy.alpha_cutoff = 0.; legacy.premultiply_rgb = false;
+            legacy.render_material = Some(Arc::new(UiRenderMaterial { shader: shader.into(), blend: primitive.key.blend, ..Default::default() }));
+            legacy
+        }).collect());
+        let baseline = render(&mut renderer, &UiBatchPlan::default(), false).0;
+        let occluded_baseline = render(&mut renderer, &UiBatchPlan::default(), true).0;
+        let pixel = |data: &[u8], x: usize, y: usize| data[(y*32+x)*4..(y*32+x)*4+4].to_vec();
+        let mut cases = Vec::new();
+        let mut multiply = UiPrimitive::solid([0.,0.,32.,32.], [0.8,0.6,0.4,0.65]);
+        multiply.key.texture = "effect_pixels".into(); multiply.key.blend = UiBlendMode::Multiply; multiply.premultiply_rgb = true;
+        cases.push(("multiply fractional texture and vertex alpha", multiply.clone(), false, false));
+        for alpha in [0.749,0.75,0.751] {
+            let mut cutoff = UiPrimitive::solid([0.,0.,32.,32.], [0.8,0.3,0.1,alpha]); cutoff.alpha_cutoff = 0.75;
+            cases.push(("cutoff boundary", cutoff, false, alpha < 0.75));
+        }
+        let mut combined = UiPrimitive::solid([0.,0.,32.,32.], [0.8,0.3,0.1,0.8]);
+        combined.alpha_cutoff = 0.75; combined.premultiply_rgb = true; combined.key.blend = UiBlendMode::Multiply;
+        cases.push(("cutoff and multiply", combined, false, false));
+        let mut projected = multiply;
+        projected.alpha_cutoff = 0.1; projected.key.depth_test = true;
+        projected.clip_corners = Some([[-1.,1.,0.7,1.],[1.,1.,0.7,1.],[1.,-1.,0.7,1.],[-1.,-1.,0.7,1.]]);
+        projected.shader_channel_data = Some(Arc::new(UiShaderChannelData { uv0: [[1.,1.,0.,0.],[0.,1.,0.,0.],[0.,0.,0.,0.],[1.,0.,0.,0.]], ..Default::default() }));
+        projected.soft_clips[0] = Some(UiSoftClip { rect: [2.,2.,28.,28.], softness: [6.,6.] });
+        projected.key.clip = Some(UiClipRect { x: 3, y: 3, width: 26, height: 26 });
+        cases.push(("custom UV clip corners depth scissor and soft clip", projected, true, false));
+        cases.push(("default parameters preserve ordinary UI", UiPrimitive::solid([0.,0.,32.,32.], [0.3,0.2,0.7,0.5]), false, false));
+        for (name, primitive, occlude, fully_discarded) in cases {
+            let plan = UiBatchPlan::build(vec![primitive]);
+            let (actual, profile) = render(&mut renderer, &plan, occlude);
+            assert_eq!(profile.custom_pipeline_attempts, 0, "{name}"); assert_eq!(profile.custom_pipeline_builds, 0, "{name}"); assert_eq!(profile.error_pipeline_builds, 0, "{name}");
+            let expected = render(&mut renderer, &legacy_plan(&plan.primitives), occlude).0;
+            assert_eq!(actual, expected, "{name}");
+            if fully_discarded { assert_eq!(actual, baseline, "alpha strictly below cutoff must discard"); }
+            else if occlude {
+                assert_eq!(pixel(&actual,8,16), pixel(&occluded_baseline,8,16), "world depth must occlude the left half");
+                assert_ne!(pixel(&actual,24,16), pixel(&occluded_baseline,24,16), "unoccluded effect must draw");
+                assert_eq!(pixel(&actual,31,16), pixel(&occluded_baseline,31,16), "clip must reject the outer edge");
+            } else { assert_ne!(pixel(&actual,16,16), pixel(&baseline,16,16), "{name} must affect visible pixels"); }
+        }
+        let mixed = UiBatchPlan::build([(0.,false),(0.75,true),(0.25,true)].into_iter().enumerate().map(|(i,(cutoff,premultiply))| {
+            let mut value = UiPrimitive::solid([i as f32*10.,0.,10.,32.], [0.6,0.3,0.2,0.5]);
+            value.alpha_cutoff = cutoff; value.premultiply_rgb = premultiply; value.key.blend = UiBlendMode::Multiply; value
+        }).collect());
+        assert_eq!(mixed.batches.len(), 1, "fragment options are instance data");
+        let (actual, profile) = render(&mut renderer, &mixed, false);
+        assert_eq!(profile.custom_pipeline_attempts, 0); assert_eq!(profile.custom_pipeline_builds, 0);
+        assert_eq!(actual, render(&mut renderer, &legacy_plan(&mixed.primitives), false).0);
+        assert_ne!(pixel(&actual,5,16), pixel(&baseline,5,16)); assert_eq!(pixel(&actual,15,16), pixel(&baseline,15,16)); assert_ne!(pixel(&actual,25,16), pixel(&baseline,25,16));
+        assert_ne!(pixel(&actual,5,16), pixel(&actual,25,16), "premultiply must vary within a batch");
+        let mut mask = UiPrimitive::solid([8.,4.,16.,24.], [1.;4]); mask.key.stencil = UiStencilMode::Push { reference: 0 };
+        let mut masked = UiPrimitive::solid([0.,0.,32.,32.], [0.6,0.3,0.2,0.6]);
+        masked.alpha_cutoff = 0.25; masked.premultiply_rgb = true; masked.key.blend = UiBlendMode::Multiply; masked.key.stencil = UiStencilMode::Test { reference: 1 };
+        let mut pop = mask.clone(); pop.key.stencil = UiStencilMode::Pop { reference: 1 };
+        let stencil = UiBatchPlan::build(vec![mask,masked,pop]);
+        let (actual, profile) = render(&mut renderer, &stencil, false);
+        assert_eq!(profile.custom_pipeline_attempts, 0); assert_eq!(profile.custom_pipeline_builds, 0);
+        assert_eq!(actual, render(&mut renderer, &legacy_plan(&stencil.primitives), false).0);
+        assert_eq!(pixel(&actual,4,16), pixel(&baseline,4,16)); assert_ne!(pixel(&actual,16,16), pixel(&baseline,16,16));
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none(), "sampled effect GPU validation");
     }
 
     #[test]

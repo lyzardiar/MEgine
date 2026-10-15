@@ -294,6 +294,8 @@ fn project_world_ribbon_segment(
             shader_channel_data: Default::default(),
             soft_clips: [None; 8],
             canvas_sorting_grid_size: None,
+            alpha_cutoff: 0.0,
+            premultiply_rgb: false,
             key: UiBatchKey {
                 canvas_group: None,
                 material: material.into(),
@@ -503,6 +505,8 @@ fn project_sprite(
             shader_channel_data: channels.clone(),
             soft_clips: [None; 8],
             canvas_sorting_grid_size: None,
+            alpha_cutoff: 0.0,
+            premultiply_rgb: false,
             key: UiBatchKey {
                 canvas_group: None,
                 material: if sprite.material.trim().is_empty() { "sprite/default".into() } else { sprite.material.trim().into() },

@@ -5047,6 +5047,8 @@ fn primitive(
         shader_channel_data: Default::default(),
         soft_clips: [None; 8],
         canvas_sorting_grid_size: None,
+        alpha_cutoff: 0.0,
+        premultiply_rgb: false,
         key: UiBatchKey {
             canvas_group: None,
             material: material.into(),

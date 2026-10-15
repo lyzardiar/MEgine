@@ -616,6 +616,8 @@ fn effect_triangle_primitive(
         render_material,
         soft_clips: [None; 8],
         canvas_sorting_grid_size: None,
+        alpha_cutoff: 0.0,
+        premultiply_rgb: false,
         key,
     })
 }
