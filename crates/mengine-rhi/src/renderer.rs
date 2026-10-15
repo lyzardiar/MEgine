@@ -1,7 +1,7 @@
 use crate::ibl::{BrdfLut, EnvironmentPrefilter, PrefilteredEnvironment};
 use crate::gpu_profiler::{profiling_features, GpuFrameProfiler};
 use crate::GpuFrameProfile;
-use crate::mesh::{MeshGpu, Vertex};
+use crate::mesh::{MeshGpu, MeshIndexBufferCache, Vertex};
 use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
 use crate::render_graph::RenderGraph;
 use crate::sky::SkyBackground;
@@ -670,6 +670,7 @@ pub struct Renderer {
     depth_view: wgpu::TextureView,
     depth_texture: wgpu::Texture,
     meshes: HashMap<String, MeshGpu>,
+    mesh_indices: MeshIndexBufferCache,
     spatial_index: SpatialIndex,
     spatial_stats: SpatialCullingStats,
     bind_layout: wgpu::BindGroupLayout,
@@ -1304,6 +1305,7 @@ impl Renderer {
             depth_view,
             depth_texture,
             meshes,
+            mesh_indices: MeshIndexBufferCache::default(),
             spatial_index: SpatialIndex::default(),
             spatial_stats: SpatialCullingStats::default(),
             bind_layout,
@@ -2521,7 +2523,7 @@ impl Renderer {
     }
 
     pub fn upload_gltf_static_profiled(&mut self, key: &str, vertices: &[Vertex], indices: &[u32]) -> crate::MeshUploadProfile {
-        let (mesh, profile) = MeshGpu::upload_profiled(&self.device, vertices, indices);
+        let (mesh, profile) = MeshGpu::upload_with_indices(&self.device, vertices, indices, || self.mesh_indices.acquire(&self.device, indices));
         self.meshes.insert(key.to_string(), mesh);
         profile
     }
@@ -4440,6 +4442,7 @@ mod tests {
             Err(error) => panic!("headless live view renderer: {error}"),
         };
         renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        renderer.mesh_indices = MeshIndexBufferCache::with_limits(1, 48);
         let vertices = [[-1.0,-1.0,0.25],[1.0,-1.0,0.25],[-1.0,1.0,0.25],[1.0,1.0,0.25]].map(|position| Vertex { position, normal: [0.0,0.0,1.0], uv: [0.0,0.0] });
         let upload_started = Instant::now();
         let upload = renderer.upload_gltf_static_profiled("portrait_quad", &vertices, &[0,1,2,2,1,3]);
@@ -4447,6 +4450,12 @@ mod tests {
         let upload_stages = [upload.vertex_buffer_ms, upload.index_buffer_ms, upload.bounds_ms];
         assert!(upload_stages.iter().all(|ms| ms.is_finite() && *ms >= 0.0));
         assert!(upload_stages.iter().sum::<f64>() <= upload_ms + 0.01, "mesh upload stages must fit their enclosing wall time");
+        assert!(!upload.index_buffer_reused);
+        let original_indices = renderer.meshes["portrait_quad"].index_buffer.clone();
+        assert!(renderer.upload_gltf_static_profiled("shared_quad", &vertices, &[0,1,2,2,1,3]).index_buffer_reused);
+        assert_eq!(renderer.meshes["shared_quad"].index_buffer, original_indices);
+        assert!(!renderer.upload_gltf_static_profiled("cache_evictor", &vertices, &[0,1,2]).index_buffer_reused);
+        renderer.remove_mesh("shared_quad"); renderer.remove_mesh("cache_evictor");
         let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
         let mut lighting = FrameLighting::default(); lighting.environment.tone_mapping = false;
         let clear = ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 };
@@ -4474,6 +4483,8 @@ mod tests {
         let pixel = |data: &[u8], x: usize, y: usize| { let i = (y*64+x)*4; data[i..i+3].to_vec() };
         let data = render(&mut renderer, &views);
         assert_eq!(pixel(&data,16,16), [255,0,0]); assert_eq!(pixel(&data,48,16), [0,0,255]);
+        assert_eq!(pixel(&data,8,8), [255,0,0]); assert_eq!(pixel(&data,24,24), [255,0,0], "cache eviction must preserve the live mesh buffer");
+        assert_eq!(renderer.meshes["portrait_quad"].index_buffer, original_indices);
         views[0].objects[0].model = Mat4::from_translation(Vec3::new(3.0,0.0,0.0));
         views[1].size = [24,20];
         let data = render(&mut renderer, &views);
@@ -4485,6 +4496,13 @@ mod tests {
         views[0].objects[0].model = Mat4::IDENTITY;
         assert_eq!(pixel(&render(&mut renderer, &views[..1]),16,16), [255,0,0]);
         assert_eq!(renderer.scene_textures.len(), 1);
+        assert!(!renderer.upload_gltf_static_profiled("portrait_quad", &vertices, &[0,2,3,0,2,3]).index_buffer_reused);
+        assert_ne!(renderer.meshes["portrait_quad"].index_buffer, original_indices);
+        let data = render(&mut renderer, &views[..1]);
+        assert_eq!(pixel(&data,8,8), [255,0,0]); assert_eq!(pixel(&data,24,24), [0,0,0], "same-key equal-length topology replacement must change pixels");
+        renderer.upload_gltf_static("portrait_quad", &vertices, &[0,1,2,2,1,3]);
+        let data = render(&mut renderer, &views[..1]);
+        assert_eq!(pixel(&data,8,8), [255,0,0]); assert_eq!(pixel(&data,24,24), [255,0,0]);
         assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none(), "live view GPU validation");
     }
 

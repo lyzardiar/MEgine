@@ -1,0 +1,4137 @@
+{
+  "report": "D:\\MEngineNativeQA\\rpg-multiview-shared-mesh-indices-after-1792082024911\\report.json",
+  "scope": "CPU wall-time attribution; no live CPU sampling; observational timings, not a controlled performance comparison. Edit-idle CPU sampling ends before gameplay.",
+  "passed": true,
+  "normalExit": true,
+  "fixtureRestored": true,
+  "consoleErrors": 0,
+  "phases": {
+    "loadingProfiles": {
+      "count": 375,
+      "sources": {
+        "game": {
+          "presentationMs": {
+            "count": 22,
+            "median": 314.0500000715256,
+            "p95": 1011.2999999523163,
+            "max": 2327.300000190735
+          },
+          "nativeMs": {
+            "count": 22,
+            "median": 6.497,
+            "p95": 807.7392,
+            "max": 2086.5138
+          },
+          "meshUploads": 328,
+          "indexBufferReuses": 284,
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 3,
+              "median": 0.3656000000000008,
+              "p95": 0.3907000000000006,
+              "max": 0.3907000000000006
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 3,
+              "median": 1.9890000000000003,
+              "p95": 2.1588999999999996,
+              "max": 2.1588999999999996
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 3,
+              "median": 0.35039999999999977,
+              "p95": 0.6507000000000003,
+              "max": 0.6507000000000003
+            },
+            "Mesh local bounds CPU": {
+              "count": 3,
+              "median": 0.8800000000000018,
+              "p95": 0.885400000000002,
+              "max": 0.885400000000002
+            },
+            "Render target preparation CPU": {
+              "count": 22,
+              "median": 0.00019999999999999998,
+              "p95": 0.00039999999999999996,
+              "max": 0.0006
+            },
+            "Camera uniforms CPU": {
+              "count": 22,
+              "median": 0.0902,
+              "p95": 0.1053,
+              "max": 0.10679999999999999
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 22,
+              "median": 0.015,
+              "p95": 0.0954,
+              "max": 0.13649999999999998
+            },
+            "Object uniforms CPU": {
+              "count": 22,
+              "median": 0.0112,
+              "p95": 0.0591,
+              "max": 0.10540000000000001
+            },
+            "UI batch preparation CPU": {
+              "count": 22,
+              "median": 0.07490000000000001,
+              "p95": 0.1749,
+              "max": 133.68370000000002
+            },
+            "Material preparation CPU": {
+              "count": 22,
+              "median": 0.1337,
+              "p95": 190.8648,
+              "max": 1346.2335
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 22,
+              "median": 0.1315,
+              "p95": 0.29510000000000003,
+              "max": 0.3472
+            },
+            "World pass encoding CPU": {
+              "count": 22,
+              "median": 0.25255000000000005,
+              "p95": 0.4772,
+              "max": 0.8857
+            },
+            "Postprocess encoding CPU": {
+              "count": 22,
+              "median": 0.02035,
+              "p95": 0.0372,
+              "max": 0.0397
+            },
+            "UI pass encoding CPU": {
+              "count": 22,
+              "median": 0.0489,
+              "p95": 0.059500000000000004,
+              "max": 0.0656
+            },
+            "Profiler.snapshot": {
+              "count": 22,
+              "median": 0.1177,
+              "p95": 0.23399999999999999,
+              "max": 0.3247
+            },
+            "Renderer.submit_frame_to": {
+              "count": 22,
+              "median": 0.88105,
+              "p95": 392.7585,
+              "max": 1369.1713000000002
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 3,
+              "median": 3.844899999999998,
+              "p95": 4.0091,
+              "max": 4.0091
+            }
+          },
+          "topSamples": {
+            "Mesh vertex conversion and GPU upload": [
+              {
+                "revision": 8,
+                "nativeMs": 807.7392,
+                "presentationMs": 1011.2999999523163,
+                "counts": {
+                  "billboardMeshes": 2,
+                  "cachedPoseBytes": 22886832,
+                  "cachedPoseMeshes": 275,
+                  "cameraVisibleObjects": 97,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 12,
+                  "materialTexturesColor": 20,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 125,
+                  "meshUploads": 133,
+                  "msaaSamples": 4,
+                  "renderObjects": 187,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 109,
+                  "submittedObjects": 142,
+                  "uiBatches": 34,
+                  "uiDrawCalls": 34,
+                  "uiPrimitives": 653
+                },
+                "node": {
+                  "calls": 133,
+                  "children": [
+                    {
+                      "calls": 133,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.3907000000000006,
+                      "totalMs": 0.3907000000000006
+                    },
+                    {
+                      "calls": 133,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 1.9890000000000003,
+                      "totalMs": 1.9890000000000003
+                    },
+                    {
+                      "calls": 133,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.6507000000000003,
+                      "totalMs": 0.6507000000000003
+                    },
+                    {
+                      "calls": 133,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.8800000000000018,
+                      "totalMs": 0.8800000000000018
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.09869999999999735,
+                  "totalMs": 4.0091
+                }
+              },
+              {
+                "revision": 1,
+                "nativeMs": 2086.5138,
+                "presentationMs": 2327.300000190735,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 12571264,
+                  "cachedPoseMeshes": 146,
+                  "cameraVisibleObjects": 145,
+                  "entities": 4259,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 3,
+                  "materialTexturesColor": 12,
+                  "materialTexturesData": 5,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 139,
+                  "meshUploads": 144,
+                  "msaaSamples": 4,
+                  "renderObjects": 145,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 145,
+                  "uiBatches": 14,
+                  "uiDrawCalls": 14,
+                  "uiPrimitives": 399
+                },
+                "node": {
+                  "calls": 144,
+                  "children": [
+                    {
+                      "calls": 144,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.3656000000000008,
+                      "totalMs": 0.3656000000000008
+                    },
+                    {
+                      "calls": 144,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 2.1588999999999996,
+                      "totalMs": 2.1588999999999996
+                    },
+                    {
+                      "calls": 144,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.35039999999999977,
+                      "totalMs": 0.35039999999999977
+                    },
+                    {
+                      "calls": 144,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.885400000000002,
+                      "totalMs": 0.885400000000002
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.08459999999999601,
+                  "totalMs": 3.844899999999998
+                }
+              },
+              {
+                "revision": 9,
+                "nativeMs": 77.53599999999999,
+                "presentationMs": 90,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 23186268,
+                  "cachedPoseMeshes": 324,
+                  "cameraVisibleObjects": 215,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 27,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 20,
+                  "meshUploads": 51,
+                  "msaaSamples": 4,
+                  "renderObjects": 386,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 273,
+                  "submittedObjects": 332,
+                  "uiBatches": 34,
+                  "uiDrawCalls": 34,
+                  "uiPrimitives": 653
+                },
+                "node": {
+                  "calls": 51,
+                  "children": [
+                    {
+                      "calls": 51,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.019299999999999987,
+                      "totalMs": 0.019299999999999987
+                    },
+                    {
+                      "calls": 51,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.6307999999999998,
+                      "totalMs": 0.6307999999999998
+                    },
+                    {
+                      "calls": 51,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.2966999999999999,
+                      "totalMs": 0.2966999999999999
+                    },
+                    {
+                      "calls": 51,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.025999999999999985,
+                      "totalMs": 0.025999999999999985
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.014100000000000334,
+                  "totalMs": 0.9869
+                }
+              }
+            ],
+            "Renderer.submit_frame_to": [
+              {
+                "revision": 1,
+                "nativeMs": 2086.5138,
+                "presentationMs": 2327.300000190735,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 12571264,
+                  "cachedPoseMeshes": 146,
+                  "cameraVisibleObjects": 145,
+                  "entities": 4259,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 3,
+                  "materialTexturesColor": 12,
+                  "materialTexturesData": 5,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 139,
+                  "meshUploads": 144,
+                  "msaaSamples": 4,
+                  "renderObjects": 145,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 145,
+                  "uiBatches": 14,
+                  "uiDrawCalls": 14,
+                  "uiPrimitives": 399
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.00019999999999999998,
+                      "totalMs": 0.00019999999999999998
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0194,
+                      "totalMs": 0.0194
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.0954,
+                      "totalMs": 0.0954
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.0591,
+                      "totalMs": 0.0591
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.0959,
+                      "totalMs": 0.0959
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 1346.2335,
+                      "totalMs": 1346.2335
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.1838,
+                      "totalMs": 0.1838
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.4704,
+                      "totalMs": 0.4704
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.016900000000000002,
+                      "totalMs": 0.016900000000000002
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.0399,
+                      "totalMs": 0.0399
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 21.9541,
+                      "totalMs": 21.9541
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.0027000000002317393,
+                  "totalMs": 1369.1713000000002
+                }
+              },
+              {
+                "revision": 8,
+                "nativeMs": 807.7392,
+                "presentationMs": 1011.2999999523163,
+                "counts": {
+                  "billboardMeshes": 2,
+                  "cachedPoseBytes": 22886832,
+                  "cachedPoseMeshes": 275,
+                  "cameraVisibleObjects": 97,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 12,
+                  "materialTexturesColor": 20,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 125,
+                  "meshUploads": 133,
+                  "msaaSamples": 4,
+                  "renderObjects": 187,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 109,
+                  "submittedObjects": 142,
+                  "uiBatches": 34,
+                  "uiDrawCalls": 34,
+                  "uiPrimitives": 653
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.0003,
+                      "totalMs": 0.0003
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0654,
+                      "totalMs": 0.0654
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.0773,
+                      "totalMs": 0.0773
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.020499999999999997,
+                      "totalMs": 0.020499999999999997
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 133.68370000000002,
+                      "totalMs": 133.68370000000002
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 190.8648,
+                      "totalMs": 190.8648
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.29510000000000003,
+                      "totalMs": 0.29510000000000003
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.38249999999999995,
+                      "totalMs": 0.38249999999999995
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0372,
+                      "totalMs": 0.0372
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.0656,
+                      "totalMs": 0.0656
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 2.1019000000000005,
+                      "totalMs": 2.1019000000000005
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 65.16420000000005,
+                  "totalMs": 392.7585
+                }
+              },
+              {
+                "revision": 9,
+                "nativeMs": 77.53599999999999,
+                "presentationMs": 90,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 23186268,
+                  "cachedPoseMeshes": 324,
+                  "cameraVisibleObjects": 215,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 27,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 20,
+                  "meshUploads": 51,
+                  "msaaSamples": 4,
+                  "renderObjects": 386,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 273,
+                  "submittedObjects": 332,
+                  "uiBatches": 34,
+                  "uiDrawCalls": 34,
+                  "uiPrimitives": 653
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.0003,
+                      "totalMs": 0.0003
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0363,
+                      "totalMs": 0.0363
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.13649999999999998,
+                      "totalMs": 0.13649999999999998
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.10540000000000001,
+                      "totalMs": 0.10540000000000001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.15,
+                      "totalMs": 0.15
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.36050000000000004,
+                      "totalMs": 0.36050000000000004
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.3472,
+                      "totalMs": 0.3472
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.4772,
+                      "totalMs": 0.4772
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0397,
+                      "totalMs": 0.0397
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.059500000000000004,
+                      "totalMs": 0.059500000000000004
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.3187,
+                      "totalMs": 0.3187
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.004699999999999704,
+                  "totalMs": 2.036
+                }
+              }
+            ]
+          }
+        },
+        "scene": {
+          "presentationMs": {
+            "count": 353,
+            "median": 18.200000047683716,
+            "p95": 208.5,
+            "max": 2116.100000143051
+          },
+          "nativeMs": {
+            "count": 353,
+            "median": 4.8713999999999995,
+            "p95": 11.3814,
+            "max": 2072.7316
+          },
+          "meshUploads": 326,
+          "indexBufferReuses": 282,
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 3,
+              "median": 0.3321000000000005,
+              "p95": 0.34890000000000027,
+              "max": 0.34890000000000027
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 3,
+              "median": 1.8757000000000006,
+              "p95": 13.4557,
+              "max": 13.4557
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 3,
+              "median": 0.4,
+              "p95": 0.6433999999999997,
+              "max": 0.6433999999999997
+            },
+            "Mesh local bounds CPU": {
+              "count": 3,
+              "median": 0.8190000000000017,
+              "p95": 0.875400000000002,
+              "max": 0.875400000000002
+            },
+            "Render target preparation CPU": {
+              "count": 353,
+              "median": 0.00019999999999999998,
+              "p95": 0.0003,
+              "max": 0.0037
+            },
+            "Camera uniforms CPU": {
+              "count": 353,
+              "median": 0.08650000000000001,
+              "p95": 0.1044,
+              "max": 0.3277
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 353,
+              "median": 0.0862,
+              "p95": 0.10179999999999999,
+              "max": 0.1556
+            },
+            "Object uniforms CPU": {
+              "count": 353,
+              "median": 0.0307,
+              "p95": 0.0596,
+              "max": 0.5672
+            },
+            "UI batch preparation CPU": {
+              "count": 353,
+              "median": 0.0177,
+              "p95": 0.0251,
+              "max": 0.0555
+            },
+            "Material preparation CPU": {
+              "count": 353,
+              "median": 0.2175,
+              "p95": 0.24020000000000002,
+              "max": 1356.5179999999998
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 353,
+              "median": 0.3279,
+              "p95": 0.3674,
+              "max": 0.7781
+            },
+            "World pass encoding CPU": {
+              "count": 353,
+              "median": 0.3935,
+              "p95": 0.4618,
+              "max": 1.1864
+            },
+            "Postprocess encoding CPU": {
+              "count": 353,
+              "median": 0.0167,
+              "p95": 0.022600000000000002,
+              "max": 0.066
+            },
+            "UI pass encoding CPU": {
+              "count": 353,
+              "median": 0.0213,
+              "p95": 0.027200000000000002,
+              "max": 0.0359
+            },
+            "Profiler.snapshot": {
+              "count": 353,
+              "median": 0.0924,
+              "p95": 0.3069,
+              "max": 0.6622
+            },
+            "Renderer.submit_frame_to": {
+              "count": 353,
+              "median": 1.2668,
+              "p95": 1.3986999999999998,
+              "max": 1381.1612
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 3,
+              "median": 3.770400000000001,
+              "p95": 13.928599999999998,
+              "max": 13.928599999999998
+            }
+          },
+          "topSamples": {
+            "Mesh vertex conversion and GPU upload": [
+              {
+                "revision": 9,
+                "nativeMs": 181.3526,
+                "presentationMs": 248.79999995231628,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 23183532,
+                  "cachedPoseMeshes": 322,
+                  "cameraVisibleObjects": 192,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 19,
+                  "meshUploads": 50,
+                  "msaaSamples": 4,
+                  "renderObjects": 386,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 277,
+                  "submittedObjects": 330,
+                  "uiBatches": 1,
+                  "uiDrawCalls": 1,
+                  "uiPrimitives": 56
+                },
+                "node": {
+                  "calls": 50,
+                  "children": [
+                    {
+                      "calls": 50,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.024199999999999982,
+                      "totalMs": 0.024199999999999982
+                    },
+                    {
+                      "calls": 50,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 13.4557,
+                      "totalMs": 13.4557
+                    },
+                    {
+                      "calls": 50,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.4,
+                      "totalMs": 0.4
+                    },
+                    {
+                      "calls": 50,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.0289,
+                      "totalMs": 0.0289
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.019799999999996487,
+                  "totalMs": 13.928599999999998
+                }
+              },
+              {
+                "revision": 8,
+                "nativeMs": 337.0769,
+                "presentationMs": 373.39999985694885,
+                "counts": {
+                  "billboardMeshes": 1,
+                  "cachedPoseBytes": 22885464,
+                  "cachedPoseMeshes": 274,
+                  "cameraVisibleObjects": 98,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 9,
+                  "materialTexturesColor": 20,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 124,
+                  "meshUploads": 132,
+                  "msaaSamples": 4,
+                  "renderObjects": 187,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 110,
+                  "submittedObjects": 146,
+                  "uiBatches": 1,
+                  "uiDrawCalls": 1,
+                  "uiPrimitives": 49
+                },
+                "node": {
+                  "calls": 132,
+                  "children": [
+                    {
+                      "calls": 132,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.34890000000000027,
+                      "totalMs": 0.34890000000000027
+                    },
+                    {
+                      "calls": 132,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 1.8757000000000006,
+                      "totalMs": 1.8757000000000006
+                    },
+                    {
+                      "calls": 132,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.6433999999999997,
+                      "totalMs": 0.6433999999999997
+                    },
+                    {
+                      "calls": 132,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.8190000000000017,
+                      "totalMs": 0.8190000000000017
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.08339999999999836,
+                  "totalMs": 3.770400000000001
+                }
+              },
+              {
+                "revision": 1,
+                "nativeMs": 2072.7316,
+                "presentationMs": 2116.100000143051,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 12571264,
+                  "cachedPoseMeshes": 146,
+                  "cameraVisibleObjects": 87,
+                  "entities": 4259,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 3,
+                  "materialTexturesColor": 12,
+                  "materialTexturesData": 5,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 139,
+                  "meshUploads": 144,
+                  "msaaSamples": 4,
+                  "renderObjects": 145,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 109,
+                  "uiBatches": 1,
+                  "uiDrawCalls": 1,
+                  "uiPrimitives": 13
+                },
+                "node": {
+                  "calls": 144,
+                  "children": [
+                    {
+                      "calls": 144,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.3321000000000005,
+                      "totalMs": 0.3321000000000005
+                    },
+                    {
+                      "calls": 144,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 1.7086,
+                      "totalMs": 1.7086
+                    },
+                    {
+                      "calls": 144,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.32389999999999985,
+                      "totalMs": 0.32389999999999985
+                    },
+                    {
+                      "calls": 144,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.875400000000002,
+                      "totalMs": 0.875400000000002
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.08429999999999849,
+                  "totalMs": 3.3243000000000005
+                }
+              }
+            ],
+            "Renderer.submit_frame_to": [
+              {
+                "revision": 1,
+                "nativeMs": 2072.7316,
+                "presentationMs": 2116.100000143051,
+                "counts": {
+                  "billboardMeshes": 0,
+                  "cachedPoseBytes": 12571264,
+                  "cachedPoseMeshes": 146,
+                  "cameraVisibleObjects": 87,
+                  "entities": 4259,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 1,
+                  "materialTextureBindGroups": 3,
+                  "materialTexturesColor": 12,
+                  "materialTexturesData": 5,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 139,
+                  "meshUploads": 144,
+                  "msaaSamples": 4,
+                  "renderObjects": 145,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 65,
+                  "submittedObjects": 109,
+                  "uiBatches": 1,
+                  "uiDrawCalls": 1,
+                  "uiPrimitives": 13
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.00019999999999999998,
+                      "totalMs": 0.00019999999999999998
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0135,
+                      "totalMs": 0.0135
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.0697,
+                      "totalMs": 0.0697
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.013699999999999999,
+                      "totalMs": 0.013699999999999999
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.0162,
+                      "totalMs": 0.0162
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 1356.5179999999998,
+                      "totalMs": 1356.5179999999998
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.177,
+                      "totalMs": 0.177
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.3307,
+                      "totalMs": 0.3307
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0162,
+                      "totalMs": 0.0162
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.0217,
+                      "totalMs": 0.0217
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 23.9814,
+                      "totalMs": 23.9814
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.002900000000408909,
+                  "totalMs": 1381.1612
+                }
+              },
+              {
+                "revision": 9,
+                "nativeMs": 7.2426,
+                "presentationMs": 21.699999809265137,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 23183532,
+                  "cachedPoseMeshes": 322,
+                  "cameraVisibleObjects": 192,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 386,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 277,
+                  "submittedObjects": 330,
+                  "uiBatches": 1,
+                  "uiDrawCalls": 1,
+                  "uiPrimitives": 150
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.00039999999999999996,
+                      "totalMs": 0.00039999999999999996
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.10189999999999999,
+                      "totalMs": 0.10189999999999999
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.1485,
+                      "totalMs": 0.1485
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.0927,
+                      "totalMs": 0.0927
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.0555,
+                      "totalMs": 0.0555
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.4996,
+                      "totalMs": 0.4996
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.6074999999999999,
+                      "totalMs": 0.6074999999999999
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.4782,
+                      "totalMs": 0.4782
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0162,
+                      "totalMs": 0.0162
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.0207,
+                      "totalMs": 0.0207
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.0653,
+                      "totalMs": 0.0653
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.0012999999999996348,
+                  "totalMs": 2.0878
+                }
+              },
+              {
+                "revision": 9,
+                "nativeMs": 5.8167,
+                "presentationMs": 22.600000143051147,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 23183532,
+                  "cachedPoseMeshes": 322,
+                  "cameraVisibleObjects": 192,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 386,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 277,
+                  "submittedObjects": 330,
+                  "uiBatches": 1,
+                  "uiDrawCalls": 1,
+                  "uiPrimitives": 130
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.00019999999999999998,
+                      "totalMs": 0.00019999999999999998
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.054400000000000004,
+                      "totalMs": 0.054400000000000004
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.08610000000000001,
+                      "totalMs": 0.08610000000000001
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.0286,
+                      "totalMs": 0.0286
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.0195,
+                      "totalMs": 0.0195
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.2318,
+                      "totalMs": 0.2318
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.31379999999999997,
+                      "totalMs": 0.31379999999999997
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 1.1864,
+                      "totalMs": 1.1864
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0239,
+                      "totalMs": 0.0239
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.022600000000000002,
+                      "totalMs": 0.022600000000000002
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.046900000000000004,
+                      "totalMs": 0.046900000000000004
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.001200000000000312,
+                  "totalMs": 2.0154
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "warmupProfiles": {
+      "count": 840,
+      "sources": {
+        "game": {
+          "presentationMs": {
+            "count": 396,
+            "median": 22.149999976158142,
+            "p95": 46.59999990463257,
+            "max": 5911.299999952316
+          },
+          "nativeMs": {
+            "count": 396,
+            "median": 10.20945,
+            "p95": 20.0686,
+            "max": 68.0381
+          },
+          "meshUploads": 3681,
+          "indexBufferReuses": 3673,
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 280,
+              "median": 0.0069,
+              "p95": 0.0135,
+              "max": 0.1052
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 280,
+              "median": 0.14629999999999999,
+              "p95": 0.43069999999999997,
+              "max": 0.7514999999999998
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 280,
+              "median": 0.00985,
+              "p95": 0.027899999999999998,
+              "max": 0.0366
+            },
+            "Mesh local bounds CPU": {
+              "count": 280,
+              "median": 0.0112,
+              "p95": 0.016599999999999993,
+              "max": 0.04379999999999999
+            },
+            "Render target preparation CPU": {
+              "count": 396,
+              "median": 0.0003,
+              "p95": 0.0005,
+              "max": 0.0008
+            },
+            "Camera uniforms CPU": {
+              "count": 396,
+              "median": 0.04295,
+              "p95": 0.114,
+              "max": 0.28049999999999997
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 396,
+              "median": 0.14679999999999999,
+              "p95": 0.18829999999999997,
+              "max": 0.2449
+            },
+            "Object uniforms CPU": {
+              "count": 396,
+              "median": 0.0401,
+              "p95": 0.0649,
+              "max": 0.46950000000000003
+            },
+            "UI batch preparation CPU": {
+              "count": 396,
+              "median": 0.08159999999999999,
+              "p95": 0.12250000000000001,
+              "max": 0.20159999999999997
+            },
+            "Material preparation CPU": {
+              "count": 396,
+              "median": 0.25625,
+              "p95": 0.3924,
+              "max": 0.5934
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 396,
+              "median": 0.41779999999999995,
+              "p95": 0.537,
+              "max": 0.9209999999999999
+            },
+            "World pass encoding CPU": {
+              "count": 396,
+              "median": 0.5488999999999999,
+              "p95": 0.7112,
+              "max": 1.4090999999999998
+            },
+            "Postprocess encoding CPU": {
+              "count": 396,
+              "median": 0.0426,
+              "p95": 0.0546,
+              "max": 0.10959999999999999
+            },
+            "UI pass encoding CPU": {
+              "count": 396,
+              "median": 0.06475,
+              "p95": 0.0916,
+              "max": 0.18589999999999998
+            },
+            "Profiler.snapshot": {
+              "count": 396,
+              "median": 0.1128,
+              "p95": 0.4189,
+              "max": 0.7535000000000001
+            },
+            "Renderer.submit_frame_to": {
+              "count": 396,
+              "median": 1.80565,
+              "p95": 2.332,
+              "max": 3.6422
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 280,
+              "median": 0.18024999999999997,
+              "p95": 0.5095999999999999,
+              "max": 0.8260000000000002
+            }
+          },
+          "topSamples": {
+            "Mesh vertex conversion and GPU upload": [
+              {
+                "revision": 38,
+                "nativeMs": 17.215999999999998,
+                "presentationMs": 35.299999952316284,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 27334340,
+                  "cachedPoseMeshes": 880,
+                  "cameraVisibleObjects": 218,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 27,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 37,
+                  "meshUploads": 37,
+                  "msaaSamples": 4,
+                  "renderObjects": 395,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 282,
+                  "submittedObjects": 341,
+                  "uiBatches": 47,
+                  "uiDrawCalls": 47,
+                  "uiPrimitives": 693
+                },
+                "node": {
+                  "calls": 37,
+                  "children": [
+                    {
+                      "calls": 37,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.0149,
+                      "totalMs": 0.0149
+                    },
+                    {
+                      "calls": 37,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.7514999999999998,
+                      "totalMs": 0.7514999999999998
+                    },
+                    {
+                      "calls": 37,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.027700000000000006,
+                      "totalMs": 0.027700000000000006
+                    },
+                    {
+                      "calls": 37,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.017699999999999994,
+                      "totalMs": 0.017699999999999994
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.014200000000000323,
+                  "totalMs": 0.8260000000000002
+                }
+              },
+              {
+                "revision": 16,
+                "nativeMs": 13.726,
+                "presentationMs": 21.59999990463257,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 24080368,
+                  "cachedPoseMeshes": 442,
+                  "cameraVisibleObjects": 218,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 27,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 26,
+                  "meshUploads": 26,
+                  "msaaSamples": 4,
+                  "renderObjects": 389,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 276,
+                  "submittedObjects": 335,
+                  "uiBatches": 34,
+                  "uiDrawCalls": 34,
+                  "uiPrimitives": 652
+                },
+                "node": {
+                  "calls": 26,
+                  "children": [
+                    {
+                      "calls": 26,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.011499999999999996,
+                      "totalMs": 0.011499999999999996
+                    },
+                    {
+                      "calls": 26,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.6378,
+                      "totalMs": 0.6378
+                    },
+                    {
+                      "calls": 26,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.026500000000000006,
+                      "totalMs": 0.026500000000000006
+                    },
+                    {
+                      "calls": 26,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.014999999999999998,
+                      "totalMs": 0.014999999999999998
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.07979999999999998,
+                  "totalMs": 0.7706
+                }
+              },
+              {
+                "revision": 27,
+                "nativeMs": 15.4743,
+                "presentationMs": 27.299999952316284,
+                "counts": {
+                  "billboardMeshes": 10,
+                  "cachedPoseBytes": 25695696,
+                  "cachedPoseMeshes": 657,
+                  "cameraVisibleObjects": 219,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 28,
+                  "materialTexturesColor": 36,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 30,
+                  "meshUploads": 30,
+                  "msaaSamples": 4,
+                  "renderObjects": 395,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 282,
+                  "submittedObjects": 341,
+                  "uiBatches": 34,
+                  "uiDrawCalls": 34,
+                  "uiPrimitives": 652
+                },
+                "node": {
+                  "calls": 30,
+                  "children": [
+                    {
+                      "calls": 30,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.016199999999999996,
+                      "totalMs": 0.016199999999999996
+                    },
+                    {
+                      "calls": 30,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.6015000000000001,
+                      "totalMs": 0.6015000000000001
+                    },
+                    {
+                      "calls": 30,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.030900000000000007,
+                      "totalMs": 0.030900000000000007
+                    },
+                    {
+                      "calls": 30,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.026400000000000007,
+                      "totalMs": 0.026400000000000007
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.016899999999999693,
+                  "totalMs": 0.6918999999999998
+                }
+              }
+            ],
+            "Renderer.submit_frame_to": [
+              {
+                "revision": 385,
+                "nativeMs": 12.1748,
+                "presentationMs": 23.59999990463257,
+                "counts": {
+                  "billboardMeshes": 23,
+                  "cachedPoseBytes": 61607732,
+                  "cachedPoseMeshes": 3637,
+                  "cameraVisibleObjects": 287,
+                  "entities": 4721,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 30,
+                  "materialTexturesColor": 38,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 12,
+                  "meshUploads": 12,
+                  "msaaSamples": 4,
+                  "renderObjects": 486,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 359,
+                  "submittedObjects": 431,
+                  "uiBatches": 35,
+                  "uiDrawCalls": 35,
+                  "uiPrimitives": 672
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.0005,
+                      "totalMs": 0.0005
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0334,
+                      "totalMs": 0.0334
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.1628,
+                      "totalMs": 0.1628
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.1215,
+                      "totalMs": 0.1215
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.10949999999999999,
+                      "totalMs": 0.10949999999999999
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.5817,
+                      "totalMs": 0.5817
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.8833,
+                      "totalMs": 0.8833
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 1.3161,
+                      "totalMs": 1.3161
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0616,
+                      "totalMs": 0.0616
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.1266,
+                      "totalMs": 0.1266
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.2403,
+                      "totalMs": 0.2403
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.0049000000000001265,
+                  "totalMs": 3.6422
+                }
+              },
+              {
+                "revision": 336,
+                "nativeMs": 15.4756,
+                "presentationMs": 39,
+                "counts": {
+                  "billboardMeshes": 22,
+                  "cachedPoseBytes": 57367780,
+                  "cachedPoseMeshes": 3377,
+                  "cameraVisibleObjects": 287,
+                  "entities": 4706,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 29,
+                  "materialTexturesColor": 37,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 8,
+                  "meshUploads": 8,
+                  "msaaSamples": 4,
+                  "renderObjects": 480,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 355,
+                  "submittedObjects": 426,
+                  "uiBatches": 35,
+                  "uiDrawCalls": 35,
+                  "uiPrimitives": 671
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.00039999999999999996,
+                      "totalMs": 0.00039999999999999996
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0427,
+                      "totalMs": 0.0427
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.1948,
+                      "totalMs": 0.1948
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.052000000000000005,
+                      "totalMs": 0.052000000000000005
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.14429999999999998,
+                      "totalMs": 0.14429999999999998
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.4508,
+                      "totalMs": 0.4508
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.5205,
+                      "totalMs": 0.5205
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 1.4090999999999998,
+                      "totalMs": 1.4090999999999998
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.07289999999999999,
+                      "totalMs": 0.07289999999999999
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.12430000000000001,
+                      "totalMs": 0.12430000000000001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.271,
+                      "totalMs": 0.271
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.0053000000000005265,
+                  "totalMs": 3.2881
+                }
+              },
+              {
+                "revision": 388,
+                "nativeMs": 18.2563,
+                "presentationMs": 29.09999990463257,
+                "counts": {
+                  "billboardMeshes": 22,
+                  "cachedPoseBytes": 62118440,
+                  "cachedPoseMeshes": 3671,
+                  "cameraVisibleObjects": 286,
+                  "entities": 4721,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 31,
+                  "materialTexturesColor": 39,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 10,
+                  "meshUploads": 10,
+                  "msaaSamples": 4,
+                  "renderObjects": 488,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 361,
+                  "submittedObjects": 432,
+                  "uiBatches": 35,
+                  "uiDrawCalls": 35,
+                  "uiPrimitives": 672
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.0005,
+                      "totalMs": 0.0005
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0646,
+                      "totalMs": 0.0646
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.2399,
+                      "totalMs": 0.2399
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.0649,
+                      "totalMs": 0.0649
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.1231,
+                      "totalMs": 0.1231
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.5934,
+                      "totalMs": 0.5934
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.7186,
+                      "totalMs": 0.7186
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.965,
+                      "totalMs": 0.965
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.060700000000000004,
+                      "totalMs": 0.060700000000000004
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.0924,
+                      "totalMs": 0.0924
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.1986,
+                      "totalMs": 0.1986
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.006399999999999739,
+                  "totalMs": 3.1281
+                }
+              }
+            ]
+          }
+        },
+        "scene": {
+          "presentationMs": {
+            "count": 444,
+            "median": 21.399999976158142,
+            "p95": 31.40000009536743,
+            "max": 65.29999995231628
+          },
+          "nativeMs": {
+            "count": 444,
+            "median": 6.7844999999999995,
+            "p95": 13.6905,
+            "max": 46.5534
+          },
+          "meshUploads": 3612,
+          "indexBufferReuses": 3604,
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 273,
+              "median": 0.0076,
+              "p95": 0.014199999999999999,
+              "max": 0.43279999999999996
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 273,
+              "median": 0.157,
+              "p95": 0.43990000000000007,
+              "max": 0.6977000000000003
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 273,
+              "median": 0.010499999999999999,
+              "p95": 0.030400000000000003,
+              "max": 0.038400000000000004
+            },
+            "Mesh local bounds CPU": {
+              "count": 273,
+              "median": 0.011300000000000001,
+              "p95": 0.016999999999999994,
+              "max": 0.032200000000000006
+            },
+            "Render target preparation CPU": {
+              "count": 444,
+              "median": 0.00019999999999999998,
+              "p95": 0.0003,
+              "max": 0.0006000000000000001
+            },
+            "Camera uniforms CPU": {
+              "count": 444,
+              "median": 0.017900000000000003,
+              "p95": 0.0954,
+              "max": 0.1307
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 444,
+              "median": 0.13305,
+              "p95": 0.1757,
+              "max": 0.3049
+            },
+            "Object uniforms CPU": {
+              "count": 444,
+              "median": 0.0353,
+              "p95": 0.055099999999999996,
+              "max": 0.2472
+            },
+            "UI batch preparation CPU": {
+              "count": 444,
+              "median": 0.0211,
+              "p95": 0.031,
+              "max": 0.1125
+            },
+            "Material preparation CPU": {
+              "count": 444,
+              "median": 0.24474999999999997,
+              "p95": 0.3633,
+              "max": 0.4881
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 444,
+              "median": 0.40974999999999995,
+              "p95": 0.5025000000000001,
+              "max": 2.2241
+            },
+            "World pass encoding CPU": {
+              "count": 444,
+              "median": 0.4571,
+              "p95": 0.5932,
+              "max": 1.3114999999999999
+            },
+            "Postprocess encoding CPU": {
+              "count": 444,
+              "median": 0.018600000000000002,
+              "p95": 0.027800000000000002,
+              "max": 0.0567
+            },
+            "UI pass encoding CPU": {
+              "count": 444,
+              "median": 0.0237,
+              "p95": 0.033,
+              "max": 0.06899999999999999
+            },
+            "Profiler.snapshot": {
+              "count": 444,
+              "median": 0.10985,
+              "p95": 0.3733,
+              "max": 0.7128
+            },
+            "Renderer.submit_frame_to": {
+              "count": 444,
+              "median": 1.4722,
+              "p95": 1.8439999999999999,
+              "max": 3.3486000000000002
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 273,
+              "median": 0.1926,
+              "p95": 0.5364,
+              "max": 0.7622
+            }
+          },
+          "topSamples": {
+            "Mesh vertex conversion and GPU upload": [
+              {
+                "revision": 20,
+                "nativeMs": 13.001000000000001,
+                "presentationMs": 26.5,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 24764940,
+                  "cachedPoseMeshes": 530,
+                  "cameraVisibleObjects": 194,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 26,
+                  "meshUploads": 26,
+                  "msaaSamples": 4,
+                  "renderObjects": 390,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 281,
+                  "submittedObjects": 334,
+                  "uiBatches": 1,
+                  "uiDrawCalls": 1,
+                  "uiPrimitives": 149
+                },
+                "node": {
+                  "calls": 26,
+                  "children": [
+                    {
+                      "calls": 26,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.011200000000000002,
+                      "totalMs": 0.011200000000000002
+                    },
+                    {
+                      "calls": 26,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.6977000000000003,
+                      "totalMs": 0.6977000000000003
+                    },
+                    {
+                      "calls": 26,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.027200000000000002,
+                      "totalMs": 0.027200000000000002
+                    },
+                    {
+                      "calls": 26,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.013699999999999993,
+                      "totalMs": 0.013699999999999993
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.012399999999999634,
+                  "totalMs": 0.7622
+                }
+              },
+              {
+                "revision": 197,
+                "nativeMs": 7.5315,
+                "presentationMs": 20,
+                "counts": {
+                  "billboardMeshes": 21,
+                  "cachedPoseBytes": 38861344,
+                  "cachedPoseMeshes": 2169,
+                  "cameraVisibleObjects": 230,
+                  "entities": 4706,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 28,
+                  "materialTexturesColor": 37,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 14,
+                  "meshUploads": 14,
+                  "msaaSamples": 4,
+                  "renderObjects": 479,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 358,
+                  "submittedObjects": 413,
+                  "uiBatches": 1,
+                  "uiDrawCalls": 1,
+                  "uiPrimitives": 141
+                },
+                "node": {
+                  "calls": 14,
+                  "children": [
+                    {
+                      "calls": 14,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.43279999999999996,
+                      "totalMs": 0.43279999999999996
+                    },
+                    {
+                      "calls": 14,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.2704,
+                      "totalMs": 0.2704
+                    },
+                    {
+                      "calls": 14,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.013600000000000001,
+                      "totalMs": 0.013600000000000001
+                    },
+                    {
+                      "calls": 14,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.013899999999999997,
+                      "totalMs": 0.013899999999999997
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.006400000000000183,
+                  "totalMs": 0.7371000000000001
+                }
+              },
+              {
+                "revision": 386,
+                "nativeMs": 8.558,
+                "presentationMs": 24.299999952316284,
+                "counts": {
+                  "billboardMeshes": 22,
+                  "cachedPoseBytes": 61296548,
+                  "cachedPoseMeshes": 3585,
+                  "cameraVisibleObjects": 260,
+                  "entities": 4721,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 29,
+                  "materialTexturesColor": 38,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 12,
+                  "meshUploads": 12,
+                  "msaaSamples": 4,
+                  "renderObjects": 486,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 363,
+                  "submittedObjects": 426,
+                  "uiBatches": 1,
+                  "uiDrawCalls": 1,
+                  "uiPrimitives": 150
+                },
+                "node": {
+                  "calls": 12,
+                  "children": [
+                    {
+                      "calls": 12,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.014700000000000003,
+                      "totalMs": 0.014700000000000003
+                    },
+                    {
+                      "calls": 12,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.16879999999999998,
+                      "totalMs": 0.16879999999999998
+                    },
+                    {
+                      "calls": 12,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.012299999999999998,
+                      "totalMs": 0.012299999999999998
+                    },
+                    {
+                      "calls": 12,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.0118,
+                      "totalMs": 0.0118
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.5257000000000001,
+                  "totalMs": 0.7333000000000001
+                }
+              }
+            ],
+            "Renderer.submit_frame_to": [
+              {
+                "revision": 143,
+                "nativeMs": 7.5329999999999995,
+                "presentationMs": 21.09999990463257,
+                "counts": {
+                  "billboardMeshes": 9,
+                  "cachedPoseBytes": 35940252,
+                  "cachedPoseMeshes": 1951,
+                  "cameraVisibleObjects": 221,
+                  "entities": 4637,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 26,
+                  "materialTexturesColor": 35,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 431,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 322,
+                  "submittedObjects": 375,
+                  "uiBatches": 7,
+                  "uiDrawCalls": 7,
+                  "uiPrimitives": 156
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 9.999999999999999e-05,
+                      "totalMs": 9.999999999999999e-05
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0515,
+                      "totalMs": 0.0515
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.1176,
+                      "totalMs": 0.1176
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.030800000000000004,
+                      "totalMs": 0.030800000000000004
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.0176,
+                      "totalMs": 0.0176
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.2344,
+                      "totalMs": 0.2344
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 2.2241,
+                      "totalMs": 2.2241
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.5724,
+                      "totalMs": 0.5724
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0202,
+                      "totalMs": 0.0202
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.0282,
+                      "totalMs": 0.0282
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.05,
+                      "totalMs": 0.05
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.001700000000000479,
+                  "totalMs": 3.3486000000000002
+                }
+              },
+              {
+                "revision": 375,
+                "nativeMs": 7.704,
+                "presentationMs": 20.700000047683716,
+                "counts": {
+                  "billboardMeshes": 19,
+                  "cachedPoseBytes": 60355620,
+                  "cachedPoseMeshes": 3524,
+                  "cameraVisibleObjects": 256,
+                  "entities": 4712,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 27,
+                  "materialTexturesColor": 36,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 7,
+                  "meshUploads": 7,
+                  "msaaSamples": 4,
+                  "renderObjects": 482,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 360,
+                  "submittedObjects": 422,
+                  "uiBatches": 1,
+                  "uiDrawCalls": 1,
+                  "uiPrimitives": 150
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 9.999999999999999e-05,
+                      "totalMs": 9.999999999999999e-05
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.012799999999999999,
+                      "totalMs": 0.012799999999999999
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.1427,
+                      "totalMs": 0.1427
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.074,
+                      "totalMs": 0.074
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.0862,
+                      "totalMs": 0.0862
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.4522,
+                      "totalMs": 0.4522
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.773,
+                      "totalMs": 0.773
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.9278,
+                      "totalMs": 0.9278
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0327,
+                      "totalMs": 0.0327
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.0386,
+                      "totalMs": 0.0386
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.0937,
+                      "totalMs": 0.0937
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.0029999999999996696,
+                  "totalMs": 2.6368
+                }
+              },
+              {
+                "revision": 246,
+                "nativeMs": 7.0733999999999995,
+                "presentationMs": 26.700000047683716,
+                "counts": {
+                  "billboardMeshes": 21,
+                  "cachedPoseBytes": 45795708,
+                  "cachedPoseMeshes": 2640,
+                  "cameraVisibleObjects": 250,
+                  "entities": 4706,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 28,
+                  "materialTexturesColor": 37,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 480,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 359,
+                  "submittedObjects": 419,
+                  "uiBatches": 1,
+                  "uiDrawCalls": 1,
+                  "uiPrimitives": 142
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.00019999999999999998,
+                      "totalMs": 0.00019999999999999998
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0533,
+                      "totalMs": 0.0533
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.1296,
+                      "totalMs": 0.1296
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.0255,
+                      "totalMs": 0.0255
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.016,
+                      "totalMs": 0.016
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.23929999999999998,
+                      "totalMs": 0.23929999999999998
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.3844,
+                      "totalMs": 0.3844
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 1.3114999999999999,
+                      "totalMs": 1.3114999999999999
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0249,
+                      "totalMs": 0.0249
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.0216,
+                      "totalMs": 0.0216
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.0467,
+                      "totalMs": 0.0467
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.00140000000000029,
+                  "totalMs": 2.2544
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "liveProfiles": {
+      "count": 845,
+      "sources": {
+        "game": {
+          "presentationMs": {
+            "count": 410,
+            "median": 26.40000009536743,
+            "p95": 50.59999990463257,
+            "max": 125.40000009536743
+          },
+          "nativeMs": {
+            "count": 410,
+            "median": 13.54055,
+            "p95": 23.4375,
+            "max": 50.8076
+          },
+          "meshUploads": 3628,
+          "indexBufferReuses": 3624,
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 370,
+              "median": 0.006200000000000001,
+              "p95": 0.013299999999999998,
+              "max": 0.021500000000000002
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 370,
+              "median": 0.13685,
+              "p95": 0.24730000000000005,
+              "max": 0.4322
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 370,
+              "median": 0.00825,
+              "p95": 0.018800000000000004,
+              "max": 0.16690000000000002
+            },
+            "Mesh local bounds CPU": {
+              "count": 370,
+              "median": 0.008899999999999998,
+              "p95": 0.020300000000000002,
+              "max": 0.0258
+            },
+            "Render target preparation CPU": {
+              "count": 410,
+              "median": 0.0003,
+              "p95": 0.0005,
+              "max": 0.0011
+            },
+            "Camera uniforms CPU": {
+              "count": 410,
+              "median": 0.06225,
+              "p95": 0.1071,
+              "max": 0.43710000000000004
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 410,
+              "median": 0.20295000000000002,
+              "p95": 0.2494,
+              "max": 0.3496
+            },
+            "Object uniforms CPU": {
+              "count": 410,
+              "median": 0.046799999999999994,
+              "p95": 0.0755,
+              "max": 0.4234
+            },
+            "UI batch preparation CPU": {
+              "count": 410,
+              "median": 0.09745000000000001,
+              "p95": 0.1505,
+              "max": 36.8669
+            },
+            "Material preparation CPU": {
+              "count": 410,
+              "median": 0.2987,
+              "p95": 0.4394,
+              "max": 0.6452
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 410,
+              "median": 0.5264,
+              "p95": 0.6218,
+              "max": 0.9440000000000001
+            },
+            "World pass encoding CPU": {
+              "count": 410,
+              "median": 0.5730500000000001,
+              "p95": 0.7428,
+              "max": 1.1982
+            },
+            "Postprocess encoding CPU": {
+              "count": 410,
+              "median": 0.0448,
+              "p95": 0.0566,
+              "max": 0.14300000000000002
+            },
+            "UI pass encoding CPU": {
+              "count": 410,
+              "median": 0.07985,
+              "p95": 0.1043,
+              "max": 0.1544
+            },
+            "Profiler.snapshot": {
+              "count": 410,
+              "median": 0.1188,
+              "p95": 0.49720000000000003,
+              "max": 1.536
+            },
+            "Renderer.submit_frame_to": {
+              "count": 410,
+              "median": 2.1186,
+              "p95": 2.6936,
+              "max": 39.1026
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 370,
+              "median": 0.1627,
+              "p95": 0.3116,
+              "max": 0.5078
+            }
+          },
+          "topSamples": {
+            "Mesh vertex conversion and GPU upload": [
+              {
+                "revision": 486,
+                "nativeMs": 45.3146,
+                "presentationMs": 85.90000009536743,
+                "counts": {
+                  "billboardMeshes": 35,
+                  "cachedPoseBytes": 67093468,
+                  "cachedPoseMeshes": 4537,
+                  "cameraVisibleObjects": 273,
+                  "entities": 4759,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 32,
+                  "materialTexturesColor": 41,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 3,
+                  "meshIndexBufferReuses": 24,
+                  "meshUploads": 24,
+                  "msaaSamples": 4,
+                  "renderObjects": 522,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 383,
+                  "submittedObjects": 452,
+                  "uiBatches": 67,
+                  "uiDrawCalls": 67,
+                  "uiPrimitives": 735
+                },
+                "node": {
+                  "calls": 24,
+                  "children": [
+                    {
+                      "calls": 24,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.018600000000000002,
+                      "totalMs": 0.018600000000000002
+                    },
+                    {
+                      "calls": 24,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.4322,
+                      "totalMs": 0.4322
+                    },
+                    {
+                      "calls": 24,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.0251,
+                      "totalMs": 0.0251
+                    },
+                    {
+                      "calls": 24,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.017199999999999997,
+                      "totalMs": 0.017199999999999997
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.014700000000000046,
+                  "totalMs": 0.5078
+                }
+              },
+              {
+                "revision": 618,
+                "nativeMs": 16.4115,
+                "presentationMs": 33.30000019073486,
+                "counts": {
+                  "billboardMeshes": 41,
+                  "cachedPoseBytes": 67091280,
+                  "cachedPoseMeshes": 4797,
+                  "cameraVisibleObjects": 269,
+                  "entities": 4867,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 31,
+                  "materialTexturesColor": 39,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 24,
+                  "meshIndexBufferReuses": 25,
+                  "meshUploads": 25,
+                  "msaaSamples": 4,
+                  "renderObjects": 561,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 415,
+                  "submittedObjects": 483,
+                  "uiBatches": 47,
+                  "uiDrawCalls": 47,
+                  "uiPrimitives": 738
+                },
+                "node": {
+                  "calls": 25,
+                  "children": [
+                    {
+                      "calls": 25,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.018600000000000002,
+                      "totalMs": 0.018600000000000002
+                    },
+                    {
+                      "calls": 25,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.3914,
+                      "totalMs": 0.3914
+                    },
+                    {
+                      "calls": 25,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.025700000000000004,
+                      "totalMs": 0.025700000000000004
+                    },
+                    {
+                      "calls": 25,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.025500000000000002,
+                      "totalMs": 0.025500000000000002
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.012899999999999912,
+                  "totalMs": 0.47409999999999997
+                }
+              },
+              {
+                "revision": 626,
+                "nativeMs": 17.5532,
+                "presentationMs": 37.59999990463257,
+                "counts": {
+                  "billboardMeshes": 44,
+                  "cachedPoseBytes": 67105032,
+                  "cachedPoseMeshes": 4808,
+                  "cameraVisibleObjects": 267,
+                  "entities": 4867,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 34,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 13,
+                  "meshIndexBufferReuses": 17,
+                  "meshUploads": 17,
+                  "msaaSamples": 4,
+                  "renderObjects": 560,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 411,
+                  "submittedObjects": 480,
+                  "uiBatches": 71,
+                  "uiDrawCalls": 71,
+                  "uiPrimitives": 810
+                },
+                "node": {
+                  "calls": 17,
+                  "children": [
+                    {
+                      "calls": 17,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.0161,
+                      "totalMs": 0.0161
+                    },
+                    {
+                      "calls": 17,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.39510000000000006,
+                      "totalMs": 0.39510000000000006
+                    },
+                    {
+                      "calls": 17,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.025,
+                      "totalMs": 0.025
+                    },
+                    {
+                      "calls": 17,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.0258,
+                      "totalMs": 0.0258
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.011299999999999866,
+                  "totalMs": 0.47329999999999994
+                }
+              }
+            ],
+            "Renderer.submit_frame_to": [
+              {
+                "revision": 706,
+                "nativeMs": 50.8076,
+                "presentationMs": 64.20000004768372,
+                "counts": {
+                  "billboardMeshes": 43,
+                  "cachedPoseBytes": 67102200,
+                  "cachedPoseMeshes": 4819,
+                  "cameraVisibleObjects": 271,
+                  "entities": 4895,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 33,
+                  "materialTexturesColor": 41,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 10,
+                  "meshIndexBufferReuses": 7,
+                  "meshUploads": 7,
+                  "msaaSamples": 4,
+                  "renderObjects": 558,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 410,
+                  "submittedObjects": 480,
+                  "uiBatches": 55,
+                  "uiDrawCalls": 55,
+                  "uiPrimitives": 775
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.00039999999999999996,
+                      "totalMs": 0.00039999999999999996
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.04820000000000001,
+                      "totalMs": 0.04820000000000001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.2075,
+                      "totalMs": 0.2075
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.04070000000000001,
+                      "totalMs": 0.04070000000000001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 36.8669,
+                      "totalMs": 36.8669
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.3532,
+                      "totalMs": 0.3532
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.6579999999999999,
+                      "totalMs": 0.6579999999999999
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.6163000000000001,
+                      "totalMs": 0.6163000000000001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0464,
+                      "totalMs": 0.0464
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.08220000000000001,
+                      "totalMs": 0.08220000000000001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.1779,
+                      "totalMs": 0.1779
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.004899999999999238,
+                  "totalMs": 39.1026
+                }
+              },
+              {
+                "revision": 656,
+                "nativeMs": 14.0342,
+                "presentationMs": 35.5,
+                "counts": {
+                  "billboardMeshes": 41,
+                  "cachedPoseBytes": 67104596,
+                  "cachedPoseMeshes": 4830,
+                  "cameraVisibleObjects": 267,
+                  "entities": 4880,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 31,
+                  "materialTexturesColor": 39,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 9,
+                  "meshIndexBufferReuses": 10,
+                  "meshUploads": 10,
+                  "msaaSamples": 4,
+                  "renderObjects": 555,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 409,
+                  "submittedObjects": 477,
+                  "uiBatches": 59,
+                  "uiDrawCalls": 59,
+                  "uiPrimitives": 784
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 9.999999999999999e-05,
+                      "totalMs": 9.999999999999999e-05
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0618,
+                      "totalMs": 0.0618
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.20450000000000002,
+                      "totalMs": 0.20450000000000002
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.0485,
+                      "totalMs": 0.0485
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.11889999999999999,
+                      "totalMs": 0.11889999999999999
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.36499999999999994,
+                      "totalMs": 0.36499999999999994
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.9191,
+                      "totalMs": 0.9191
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.9997,
+                      "totalMs": 0.9997
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0606,
+                      "totalMs": 0.0606
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.13269999999999998,
+                      "totalMs": 0.13269999999999998
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.21760000000000002,
+                      "totalMs": 0.21760000000000002
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.005600000000000271,
+                  "totalMs": 3.1341
+                }
+              },
+              {
+                "revision": 548,
+                "nativeMs": 17.3308,
+                "presentationMs": 32.5,
+                "counts": {
+                  "billboardMeshes": 42,
+                  "cachedPoseBytes": 67107420,
+                  "cachedPoseMeshes": 4756,
+                  "cameraVisibleObjects": 274,
+                  "entities": 4820,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 4,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 34,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 16,
+                  "meshIndexBufferReuses": 17,
+                  "meshUploads": 17,
+                  "msaaSamples": 4,
+                  "renderObjects": 564,
+                  "sceneViews": 1,
+                  "shadowVisibleObjects": 417,
+                  "submittedObjects": 486,
+                  "uiBatches": 39,
+                  "uiDrawCalls": 39,
+                  "uiPrimitives": 726
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.00039999999999999996,
+                      "totalMs": 0.00039999999999999996
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.1043,
+                      "totalMs": 0.1043
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.2621,
+                      "totalMs": 0.2621
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.0755,
+                      "totalMs": 0.0755
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.1628,
+                      "totalMs": 0.1628
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.4521,
+                      "totalMs": 0.4521
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.8502000000000001,
+                      "totalMs": 0.8502000000000001
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.8518,
+                      "totalMs": 0.8518
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0542,
+                      "totalMs": 0.0542
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.0714,
+                      "totalMs": 0.0714
+                    },
+                    {
+                      "calls": 2,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.1887,
+                      "totalMs": 0.1887
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.0054000000000002935,
+                  "totalMs": 3.0789
+                }
+              }
+            ]
+          }
+        },
+        "scene": {
+          "presentationMs": {
+            "count": 435,
+            "median": 26.100000143051147,
+            "p95": 38.90000009536743,
+            "max": 74
+          },
+          "nativeMs": {
+            "count": 435,
+            "median": 10.1084,
+            "p95": 17.4224,
+            "max": 55.0805
+          },
+          "meshUploads": 3589,
+          "indexBufferReuses": 3585,
+          "stageMs": {
+            "Mesh vertex conversion CPU": {
+              "count": 350,
+              "median": 0.006699999999999999,
+              "p95": 0.0141,
+              "max": 0.022600000000000006
+            },
+            "Mesh vertex buffer allocation and upload CPU": {
+              "count": 350,
+              "median": 0.14550000000000002,
+              "p95": 0.2804,
+              "max": 44.8929
+            },
+            "Mesh index buffer lookup and upload CPU": {
+              "count": 350,
+              "median": 0.008799999999999999,
+              "p95": 0.019499999999999997,
+              "max": 0.17099999999999999
+            },
+            "Mesh local bounds CPU": {
+              "count": 350,
+              "median": 0.009250000000000001,
+              "p95": 0.0208,
+              "max": 0.0246
+            },
+            "Render target preparation CPU": {
+              "count": 435,
+              "median": 0.00019999999999999998,
+              "p95": 0.00039999999999999996,
+              "max": 0.001
+            },
+            "Camera uniforms CPU": {
+              "count": 435,
+              "median": 0.0378,
+              "p95": 0.0929,
+              "max": 0.15510000000000002
+            },
+            "Visibility culling and sorting CPU": {
+              "count": 435,
+              "median": 0.185,
+              "p95": 0.2248,
+              "max": 0.3503
+            },
+            "Object uniforms CPU": {
+              "count": 435,
+              "median": 0.0434,
+              "p95": 0.0804,
+              "max": 0.191
+            },
+            "UI batch preparation CPU": {
+              "count": 435,
+              "median": 0.0294,
+              "p95": 0.0557,
+              "max": 40.2007
+            },
+            "Material preparation CPU": {
+              "count": 435,
+              "median": 0.27849999999999997,
+              "p95": 0.41829999999999995,
+              "max": 0.7078
+            },
+            "Encoder setup and shadow pass CPU": {
+              "count": 435,
+              "median": 0.5045,
+              "p95": 0.6187,
+              "max": 0.9139
+            },
+            "World pass encoding CPU": {
+              "count": 435,
+              "median": 0.5281,
+              "p95": 0.7371,
+              "max": 1.5919
+            },
+            "Postprocess encoding CPU": {
+              "count": 435,
+              "median": 0.0198,
+              "p95": 0.0294,
+              "max": 0.061900000000000004
+            },
+            "UI pass encoding CPU": {
+              "count": 435,
+              "median": 0.0376,
+              "p95": 0.064,
+              "max": 0.0971
+            },
+            "Profiler.snapshot": {
+              "count": 435,
+              "median": 0.1159,
+              "p95": 0.4491,
+              "max": 0.7258
+            },
+            "Renderer.submit_frame_to": {
+              "count": 435,
+              "median": 1.7738999999999998,
+              "p95": 2.2368,
+              "max": 42.0764
+            },
+            "Mesh vertex conversion and GPU upload": {
+              "count": 350,
+              "median": 0.17435,
+              "p95": 0.3431,
+              "max": 44.9324
+            }
+          },
+          "topSamples": {
+            "Mesh vertex conversion and GPU upload": [
+              {
+                "revision": 469,
+                "nativeMs": 55.0805,
+                "presentationMs": 70.40000009536743,
+                "counts": {
+                  "billboardMeshes": 29,
+                  "cachedPoseBytes": 67084552,
+                  "cachedPoseMeshes": 4319,
+                  "cameraVisibleObjects": 284,
+                  "entities": 4751,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 31,
+                  "materialTexturesColor": 40,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 2,
+                  "meshIndexBufferReuses": 11,
+                  "meshUploads": 11,
+                  "msaaSamples": 4,
+                  "renderObjects": 510,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 378,
+                  "submittedObjects": 450,
+                  "uiBatches": 9,
+                  "uiDrawCalls": 9,
+                  "uiPrimitives": 197
+                },
+                "node": {
+                  "calls": 11,
+                  "children": [
+                    {
+                      "calls": 11,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.008100000000000001,
+                      "totalMs": 0.008100000000000001
+                    },
+                    {
+                      "calls": 11,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 44.8929,
+                      "totalMs": 44.8929
+                    },
+                    {
+                      "calls": 11,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.012199999999999999,
+                      "totalMs": 0.012199999999999999
+                    },
+                    {
+                      "calls": 11,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.012300000000000002,
+                      "totalMs": 0.012300000000000002
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.0069000000000016826,
+                  "totalMs": 44.9324
+                }
+              },
+              {
+                "revision": 543,
+                "nativeMs": 14.5123,
+                "presentationMs": 33.19999980926514,
+                "counts": {
+                  "billboardMeshes": 40,
+                  "cachedPoseBytes": 67092520,
+                  "cachedPoseMeshes": 4721,
+                  "cameraVisibleObjects": 305,
+                  "entities": 4815,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 33,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 17,
+                  "meshIndexBufferReuses": 19,
+                  "meshUploads": 19,
+                  "msaaSamples": 4,
+                  "renderObjects": 563,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 421,
+                  "submittedObjects": 497,
+                  "uiBatches": 21,
+                  "uiDrawCalls": 21,
+                  "uiPrimitives": 254
+                },
+                "node": {
+                  "calls": 19,
+                  "children": [
+                    {
+                      "calls": 19,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.022600000000000006,
+                      "totalMs": 0.022600000000000006
+                    },
+                    {
+                      "calls": 19,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.4211999999999999,
+                      "totalMs": 0.4211999999999999
+                    },
+                    {
+                      "calls": 19,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.0237,
+                      "totalMs": 0.0237
+                    },
+                    {
+                      "calls": 19,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.018199999999999997,
+                      "totalMs": 0.018199999999999997
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.012200000000000044,
+                  "totalMs": 0.49789999999999995
+                }
+              },
+              {
+                "revision": 548,
+                "nativeMs": 10.2811,
+                "presentationMs": 29.40000009536743,
+                "counts": {
+                  "billboardMeshes": 41,
+                  "cachedPoseBytes": 67098620,
+                  "cachedPoseMeshes": 4724,
+                  "cameraVisibleObjects": 303,
+                  "entities": 4820,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 33,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 16,
+                  "meshIndexBufferReuses": 17,
+                  "meshUploads": 17,
+                  "msaaSamples": 4,
+                  "renderObjects": 564,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 421,
+                  "submittedObjects": 497,
+                  "uiBatches": 7,
+                  "uiDrawCalls": 7,
+                  "uiPrimitives": 167
+                },
+                "node": {
+                  "calls": 17,
+                  "children": [
+                    {
+                      "calls": 17,
+                      "children": [],
+                      "name": "Mesh vertex conversion CPU",
+                      "selfMs": 0.010899999999999998,
+                      "totalMs": 0.010899999999999998
+                    },
+                    {
+                      "calls": 17,
+                      "children": [],
+                      "name": "Mesh vertex buffer allocation and upload CPU",
+                      "selfMs": 0.4162,
+                      "totalMs": 0.4162
+                    },
+                    {
+                      "calls": 17,
+                      "children": [],
+                      "name": "Mesh index buffer lookup and upload CPU",
+                      "selfMs": 0.015799999999999995,
+                      "totalMs": 0.015799999999999995
+                    },
+                    {
+                      "calls": 17,
+                      "children": [],
+                      "name": "Mesh local bounds CPU",
+                      "selfMs": 0.0177,
+                      "totalMs": 0.0177
+                    }
+                  ],
+                  "name": "Mesh vertex conversion and GPU upload",
+                  "selfMs": 0.008099999999999885,
+                  "totalMs": 0.4686999999999999
+                }
+              }
+            ],
+            "Renderer.submit_frame_to": [
+              {
+                "revision": 706,
+                "nativeMs": 51.2879,
+                "presentationMs": 74,
+                "counts": {
+                  "billboardMeshes": 42,
+                  "cachedPoseBytes": 67095596,
+                  "cachedPoseMeshes": 4792,
+                  "cameraVisibleObjects": 293,
+                  "entities": 4895,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 32,
+                  "materialTexturesColor": 41,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 10,
+                  "meshIndexBufferReuses": 8,
+                  "meshUploads": 8,
+                  "msaaSamples": 4,
+                  "renderObjects": 558,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 414,
+                  "submittedObjects": 486,
+                  "uiBatches": 25,
+                  "uiDrawCalls": 25,
+                  "uiPrimitives": 220
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.00019999999999999998,
+                      "totalMs": 0.00019999999999999998
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0171,
+                      "totalMs": 0.0171
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.2132,
+                      "totalMs": 0.2132
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.0324,
+                      "totalMs": 0.0324
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 40.2007,
+                      "totalMs": 40.2007
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.3332,
+                      "totalMs": 0.3332
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.5656,
+                      "totalMs": 0.5656
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 0.5735,
+                      "totalMs": 0.5735
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.022799999999999997,
+                      "totalMs": 0.022799999999999997
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.0446,
+                      "totalMs": 0.0446
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.0707,
+                      "totalMs": 0.0707
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.0023999999999944066,
+                  "totalMs": 42.0764
+                }
+              },
+              {
+                "revision": 849,
+                "nativeMs": 8.7636,
+                "presentationMs": 22,
+                "counts": {
+                  "billboardMeshes": 39,
+                  "cachedPoseBytes": 67106200,
+                  "cachedPoseMeshes": 4828,
+                  "cameraVisibleObjects": 291,
+                  "entities": 4972,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 30,
+                  "materialTexturesColor": 39,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 0,
+                  "meshIndexBufferReuses": 0,
+                  "meshUploads": 0,
+                  "msaaSamples": 4,
+                  "renderObjects": 549,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 404,
+                  "submittedObjects": 476,
+                  "uiBatches": 32,
+                  "uiDrawCalls": 32,
+                  "uiPrimitives": 196
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.00019999999999999998,
+                      "totalMs": 0.00019999999999999998
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0988,
+                      "totalMs": 0.0988
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.208,
+                      "totalMs": 0.208
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.050800000000000005,
+                      "totalMs": 0.050800000000000005
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.0559,
+                      "totalMs": 0.0559
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.3622,
+                      "totalMs": 0.3622
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.9135,
+                      "totalMs": 0.9135
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 1.1882,
+                      "totalMs": 1.1882
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.0306,
+                      "totalMs": 0.0306
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.054200000000000005,
+                      "totalMs": 0.054200000000000005
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.0746,
+                      "totalMs": 0.0746
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.0028000000000001357,
+                  "totalMs": 3.0398
+                }
+              },
+              {
+                "revision": 494,
+                "nativeMs": 12.216,
+                "presentationMs": 26.399999856948853,
+                "counts": {
+                  "billboardMeshes": 35,
+                  "cachedPoseBytes": 67062764,
+                  "cachedPoseMeshes": 4544,
+                  "cameraVisibleObjects": 294,
+                  "entities": 4765,
+                  "materialPipelineEvictions": 0,
+                  "materialPipelinesBuiltIn": 36,
+                  "materialPipelinesCustom": 3,
+                  "materialPipelinesRejected": 0,
+                  "materialPipelinesResidentCustom": 0,
+                  "materialSamplers": 2,
+                  "materialTextureBindGroups": 33,
+                  "materialTexturesColor": 42,
+                  "materialTexturesData": 9,
+                  "meshEvictions": 3,
+                  "meshIndexBufferReuses": 12,
+                  "meshUploads": 12,
+                  "msaaSamples": 4,
+                  "renderObjects": 528,
+                  "sceneViews": 0,
+                  "shadowVisibleObjects": 392,
+                  "submittedObjects": 466,
+                  "uiBatches": 30,
+                  "uiDrawCalls": 30,
+                  "uiPrimitives": 250
+                },
+                "node": {
+                  "calls": 1,
+                  "children": [
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Render target preparation CPU",
+                      "selfMs": 0.00039999999999999996,
+                      "totalMs": 0.00039999999999999996
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Camera uniforms CPU",
+                      "selfMs": 0.0205,
+                      "totalMs": 0.0205
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Visibility culling and sorting CPU",
+                      "selfMs": 0.1521,
+                      "totalMs": 0.1521
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Object uniforms CPU",
+                      "selfMs": 0.0399,
+                      "totalMs": 0.0399
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI batch preparation CPU",
+                      "selfMs": 0.027,
+                      "totalMs": 0.027
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Material preparation CPU",
+                      "selfMs": 0.2551,
+                      "totalMs": 0.2551
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder setup and shadow pass CPU",
+                      "selfMs": 0.8141,
+                      "totalMs": 0.8141
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "World pass encoding CPU",
+                      "selfMs": 1.5919,
+                      "totalMs": 1.5919
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Postprocess encoding CPU",
+                      "selfMs": 0.022600000000000002,
+                      "totalMs": 0.022600000000000002
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "UI pass encoding CPU",
+                      "selfMs": 0.0399,
+                      "totalMs": 0.0399
+                    },
+                    {
+                      "calls": 1,
+                      "children": [],
+                      "name": "Encoder finish and queue submit CPU",
+                      "selfMs": 0.058499999999999996,
+                      "totalMs": 0.058499999999999996
+                    }
+                  ],
+                  "name": "Renderer.submit_frame_to",
+                  "selfMs": 0.0016000000000002679,
+                  "totalMs": 3.0236
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "newStagePresence": {
+    "Mesh vertex conversion CPU": true,
+    "Mesh vertex buffer allocation and upload CPU": true,
+    "Mesh index buffer lookup and upload CPU": true,
+    "Mesh local bounds CPU": true,
+    "Render target preparation CPU": true,
+    "Camera uniforms CPU": true,
+    "Visibility culling and sorting CPU": true,
+    "Object uniforms CPU": true,
+    "UI batch preparation CPU": true,
+    "Material preparation CPU": true,
+    "Encoder setup and shadow pass CPU": true,
+    "World pass encoding CPU": true,
+    "Postprocess encoding CPU": true,
+    "UI pass encoding CPU": true
+  },
+  "timingContainmentViolations": [],
+  "instrumentationMs": {
+    "cloneMs": null,
+    "broadcastMs": {
+      "count": 845,
+      "median": 0.20000004768371582,
+      "p95": 0.3000001907348633,
+      "max": 0.5
+    }
+  }
+}

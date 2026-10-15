@@ -33,7 +33,7 @@ struct PoseUsage { frame: u64, bytes: usize }
 pub struct MeshCacheStats { pub entries: usize, pub bytes: usize, pub uploads: usize, pub evictions: usize }
 
 #[derive(Clone, Copy, Debug, Default)]
-pub struct MeshSyncProfile { pub file_check_ms: f64, pub file_checks: u32, pub source_check_ms: f64, pub source_checks: u32, pub source_load_ms: f64, pub source_loads: u32, pub source_reuse_ms: f64, pub source_reuses: u32, pub geometry_ms: f64, pub geometry_builds: u32, pub upload_ms: f64, pub uploads: u32, pub vertex_conversion_ms: f64, pub vertex_buffer_ms: f64, pub index_buffer_ms: f64, pub bounds_ms: f64 }
+pub struct MeshSyncProfile { pub file_check_ms: f64, pub file_checks: u32, pub source_check_ms: f64, pub source_checks: u32, pub source_load_ms: f64, pub source_loads: u32, pub source_reuse_ms: f64, pub source_reuses: u32, pub geometry_ms: f64, pub geometry_builds: u32, pub upload_ms: f64, pub uploads: u32, pub vertex_conversion_ms: f64, pub vertex_buffer_ms: f64, pub index_buffer_ms: f64, pub bounds_ms: f64, pub index_buffer_reuses: usize }
 
 
 // One validation snapshot per sync call, shared by its main camera and embedded views.
@@ -375,6 +375,7 @@ fn profile_upload(renderer: &mut Renderer, key: &str, mesh: &MeshData, profile: 
     profile.vertex_conversion_ms += started.elapsed().as_secs_f64()*1000.0;
     let upload = renderer.upload_gltf_static_profiled(key, &vertices, &mesh.indices);
     profile.vertex_buffer_ms += upload.vertex_buffer_ms; profile.index_buffer_ms += upload.index_buffer_ms; profile.bounds_ms += upload.bounds_ms;
+    profile.index_buffer_reuses += usize::from(upload.index_buffer_reused);
     drop(vertices);
     profile.upload_ms += started.elapsed().as_secs_f64()*1000.0; profile.uploads += 1;
 }
