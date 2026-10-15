@@ -5,7 +5,7 @@ import { normalizeEntity, type EntityRec } from './entityRecord.ts';
 const retainedRecords = new WeakSet<object>();
 const retainedWorlds = new WeakSet<object>();
 export type RetainedPlayWorld = Omit<WorldSnapshotView, 'entities'> & { entities: EntityRec[] };
-/** Only JSON-owned frozen records created here can share serialization results. */
+/** Only explicitly retained JSON roots can share record serialization results. */
 export function isRetainedPlayRecord(value: object): boolean { return retainedRecords.has(value); }
 
 function copyOwnedJson<T>(value: T): T {
@@ -23,7 +23,7 @@ function copyOwnedJson<T>(value: T): T {
   return result as T;
 }
 
-/** Native publication owns plain JSON; editable copies keep their own nested data and special keys. */
+/** Copy a certified record root; editable copies keep their own nested data and special keys. */
 export function cloneRetainedPlayRecord<T extends object>(value: T): T {
   if (!retainedRecords.has(value)) throw new Error('Editable Play copies require an owned JSON record');
   return copyOwnedJson(value);
@@ -89,11 +89,22 @@ function plainJson(value: unknown, ancestors = new Set<object>()): boolean {
   return result;
 }
 
-// MiYu: retained records can be shared by presentation and native revisions without allowing writes.
+// MiYu: callers supply fresh JSON.parse trees. Nested values stay frozen; only published roots certify record ownership.
+function freezeJsonTree(value: object): void {
+  if (isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      const child = value[i];
+      if (child !== null && typeof child === 'object') freezeJsonTree(child);
+    }
+  } else for (const key of keys(value)) {
+    const child = (value as Record<string, unknown>)[key];
+    if (child !== null && typeof child === 'object') freezeJsonTree(child);
+  }
+  Object.freeze(value);
+}
 function freezeJson<T>(value: T): T {
-  if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
-    for (const child of Object.values(value)) freezeJson(child);
-    Object.freeze(value);
+  if (value !== null && typeof value === 'object') {
+    freezeJsonTree(value);
     retainedRecords.add(value);
   }
   return value;

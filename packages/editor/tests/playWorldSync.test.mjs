@@ -242,3 +242,33 @@ test('structured presentation verification tracks deep edits and never substitut
     sync.reset(); assert.equal(sync.presentationMatches(entities, color), false);
   } finally { await server.close(); }
 });
+
+
+test('retained root certification keeps every nested value frozen without certifying independent component records', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  try {
+    const { retainPlayWorld, cloneRetainedPlayRecord, isRetainedPlayRecord, createPlayWorldSync } = await server.ssrLoadModule('/src/playWorldSync.ts');
+    const nested = JSON.parse('{"__proto__":{"value":7},"constructor":{"prototype":[1,{"deep":[true,null,"x"]}]},"toJSON":"data"}');
+    const input = { entities: [{ entity: 1, components: { Custom: nested, Serialized: { toJSON() { return { values: [, undefined, Infinity], omitted: undefined }; } } } }], clearColor: [0, 0, 0, 1], frame: 0, simFrame: 0, selected: null, extra: { list: [1, { value: 2 }] } };
+    const retained = retainPlayWorld(input), entity = retained.entities[0];
+    const frozenTree = value => { if (value !== null && typeof value === 'object') { assert.ok(Object.isFrozen(value)); for (const child of Object.values(value)) frozenTree(child); } };
+    frozenTree(retained);
+    assert.equal(isRetainedPlayRecord(entity), true);
+    for (const child of [entity.components, entity.components.Custom, entity.components.Custom.constructor.prototype]) {
+      assert.equal(isRetainedPlayRecord(child), false);
+      assert.throws(() => cloneRetainedPlayRecord(child), /owned JSON record/);
+    }
+    assert.equal(isRetainedPlayRecord(Object.freeze({ ...entity })), false);
+    assert.deepEqual(entity.components.Serialized, { values: [null, null, null] });
+    assert.ok(Object.hasOwn(entity.components.Custom, '__proto__'));
+    nested.__proto__.value = 99; input.extra.list[1].value = 8; input.clearColor[0] = .5;
+    assert.equal(entity.components.Custom.__proto__.value, 7); assert.equal(retained.extra.list[1].value, 2); assert.equal(retained.clearColor[0], 0);
+    const editable = cloneRetainedPlayRecord(entity); editable.components.Custom.constructor.prototype[1].deep.push('changed');
+    assert.deepEqual(entity.components.Custom.constructor.prototype[1].deep, [true, null, 'x']);
+    const sync = createPlayWorldSync(); sync.capture([editable], retained.clearColor);
+    const first = sync.viewportSnapshot(); frozenTree(first.entities[0]); assert.ok(isRetainedPlayRecord(first.entities[0]));
+    editable.components.Custom.__proto__.value = 10; sync.capture([editable], retained.clearColor);
+    const second = sync.viewportSnapshot(); frozenTree(second.entities[0]); assert.ok(isRetainedPlayRecord(second.entities[0]));
+    assert.equal(first.entities[0].components.Custom.__proto__.value, 7); assert.equal(second.entities[0].components.Custom.__proto__.value, 10);
+  } finally { await server.close(); }
+});
