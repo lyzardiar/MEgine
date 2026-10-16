@@ -23,6 +23,8 @@ TypeScript 示例以 `.ts` 为源码；包含独立生成器的示例按各自 R
 
 ## 原创 3D 游戏
 
+- [Lumen Shoal / 流光泻湖](lumen-shoal/README.md)：分步教学式 3D 展示 sample——从空场景逐步搭到写实黄昏泻湖，演示法线、水体、反射、体积云，并可在写实/低多边形/像素三种风格间切换；左下角代码块 + 中英字幕旁白，含原生实机截图与零被拒管线验收。
+
 - [Ion Outpost / 离子前哨](ion-outpost/README.md)：CC0 真实角色、怪物与场景资产，双武器 FPS、机器人、房间、60 Hz 权威帧同步、预测校正、断线重连；含多进程原生验收与 Windows Player。
 
 - [Pelican Road Rage / 鹈鹕暴力摩托](pelican-road-rage/README.md)：六人海岸竞速、翼击战斗、漂移氮气、连续曲面角色、夕阳海面、三个跟随镜头；含实机截图、完整比赛验证和 Windows Player 构建入口。

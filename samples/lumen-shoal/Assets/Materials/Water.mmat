@@ -1,0 +1,17 @@
+{
+  "version": 10,
+  "name": "Lumen Shoal water",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Water.mshader",
+  "custom_parameters": {
+    "clock": [0, 0, 0, 0],
+    "reveal": [1, 1, 1, 0],
+    "style": [0, 0, 0, 0]
+  },
+  "surface": "opaque",
+  "base_color": [0.02, 0.12, 0.16, 1],
+  "metallic": 0.0,
+  "roughness": 0.08,
+  "ior": 1.33,
+  "double_sided": true
+}

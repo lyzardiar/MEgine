@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "executable": "G:\\work\\git\\MEgine\\target\\release\\mengine-editor-tauri.exe",
+  "shots": [],
+  "measuredAt": "2026-10-16T14:55:11.477Z",
+  "materialPipelinesRejected": 0,
+  "profiler": {
+    "intervals": 240,
+    "averagePresentIntervalMs": 18.025,
+    "p95PresentIntervalMs": 22.100000000558794,
+    "presentedFps": 55.47850208044383,
+    "averageRequestMs": 7.385416666697711,
+    "averageRenderMs": 4.153991666666669,
+    "averageCommandMs": 4.635192500000003,
+    "averageUploadMs": 0.27791666670236737,
+    "averageWorldSyncMs": 0.3102833333333333,
+    "averageSimulationMs": 0.43424749999999973,
+    "averageSimulationRequestMs": 3.112083333315483
+  }
+}

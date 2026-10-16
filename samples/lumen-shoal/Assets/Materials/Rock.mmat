@@ -1,0 +1,20 @@
+{
+  "version": 10,
+  "name": "Lumen Shoal rock",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/Ground.mshader",
+  "custom_textures": {
+    "surface_normal": "Assets/Textures/island-normal.png"
+  },
+  "custom_parameters": {
+    "clock": [0, 0, 0, 0],
+    "reveal": [1, 0.25, 0, 0],
+    "style": [0, 0, 0, 0]
+  },
+  "surface": "opaque",
+  "base_color": [1, 1, 1, 1],
+  "metallic": 0.0,
+  "roughness": 0.72,
+  "double_sided": true,
+  "uv_scale": [3, 3]
+}
