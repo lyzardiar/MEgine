@@ -283,3 +283,16 @@ Author: MiYu。协议 97，新遭遇战的农民/苦工/侍僧使用实际 War3P
 整体 1:1 目标继续进行；三族武器骰子、攻击时序、射程、采集/维修/建造和完整视野仍需对照。下一批武器原版数据与当前值已保存在 tmp/docs-artifacts/frost-worker-balance/next-worker-weapons.json，完整范围见 replica-parity.md。
 
 最终分段主入口复跑得到 496 条 PASS 记录、退出码 0；24,000 帧长程 AI 经济另行通过，汇总为 tmp/docs-artifacts/frost-worker-balance/regression-summary.json。
+
+
+## 2026-10-18：原版工人第一武器
+
+协议 98，新遭遇战通过 workerCombatVersion 启用农民/苦工/侍僧第一武器：伤害 5–6 / 7–8 / 9–10、90 射程、2 / 3 / 2.5 秒间隔、源前摇/后摇、16 碰撞半径和 500 索敌。接入普通伤害护甲表、伤害范围 HUD、实际 Attack 动作与后摇结束 Stand，保存未完成命中和随机数，清理改令/控制/死亡中的 pending attack；旧存档保持版本 0。拒绝伪造源伤害和超界冷却。
+
+REA 6.5.0 / Rizin 0.8.1 通过真实 MCP 保留 Game.dll 武器字段和指针表证据，DLL 未修改。MPQ 导入保留源行、原件及摘要，维护入口为 worker-weapons.md、REA README 和 third_party/rea/README-MENGINE.md。字段引用证据不等同于原版完整攻击函数实测。
+
+三族规则/TCP、46 个真实 TCP 入口、24,000 帧长程 AI 经济通过。原生 Editor 六个场景通过三族实际完整付费训练、攻击命令、HUD 范围、Attack 动作、前摇中存读档及后摇转 Stand，控制台错误为 0；最终 Main.js SHA-256 为 4603b4f1f74a61d6492ccba9240850461897168f6f7b44039acb6545fedf995d。Editor 正常退出，WebView runtime 的 EPERM 清理失败保留在报告中。证据位于 tmp/docs-artifacts/frost-worker-weapons/，不提交运行快照。
+
+存档/传送/建造等旧测试夹具改用真实源工人伤害与合法冷却，保留原功能断言。整体 1:1 目标仍进行中：.1 秒离散时序、原版运动缓冲、取消前摇后的再攻击节奏、武器 2 和采集/建造/维修/视野仍需继续对照。
+
+主入口分段回归通过：先完成避障测试前的导入，再从修正后的避障测试运行全部剩余导入与完整主入口正文；长程 AI 另行通过。共 471 条去重 PASS 记录，后段退出码 0。汇总为 `tmp/docs-artifacts/frost-worker-weapons/regression-summary.json`。

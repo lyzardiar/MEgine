@@ -19,3 +19,4 @@ effect-sources.json text eol=lf
 /dryad-sources.json text eol=lf
 /combat-rewards*.json text eol=lf
 /worker-balance*.json text eol=lf
+/worker-weapons*.json text eol=lf

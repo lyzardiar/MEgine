@@ -219,6 +219,7 @@ var FrostVisual=(()=>{
       else if(Frost.ancient(u)&&u.ancientRegen>0){action='Spell Eat Tree';elapsed=Frost.ancientRules.duration-u.ancientRegen;}
       else if(Frost.mortarUnit(u)&&u.flareFrame!==undefined&&!walking&&!u.stun&&time-u.flareFrame*Frost.DT<.833){action='Attack Spell';elapsed=time-u.flareFrame*Frost.DT;}
       else if(!u.stun&&asset.classicWork){action=asset.classicWork==='Wood'?'Attack Lumber':asset.classicWork==='Mine'&&classicClip(asset,'Stand Work Gold',u)>=0?'Stand Work Gold':'Stand Work';}
+      else if(!u.stun&&Frost.workerCombat(u)){action=u.workerAttackActive?'Attack':'Stand';elapsed=u.workerAttackActive?Frost.unitType(u).cooldown-u.cd:time;}
       else if(!u.stun&&u.cd>0){action=classicClip(asset,'Attack',u)>=0?'Attack':'Spell Attack';progress=Frost.clamp(1-u.cd/(Frost.unitType(u).cooldown||1),0,1);}
       else action='Stand';
     }

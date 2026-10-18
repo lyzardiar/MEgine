@@ -1,0 +1,31 @@
+{
+  "author": "MiYu",
+  "generator": "scripts/import-frost-worker-weapons.py",
+  "gameDirectory": "E:\\Program Files (x86)\\dzclient\\Game\\Warcraft III Frozen Throne",
+  "sources": [
+    {
+      "path": "Units/UnitWeapons.slk",
+      "archive": "War3Patch.mpq",
+      "bytes": 813530,
+      "sha256": "03c9cbc02d703cf5f8b5b1ed4da789ffcf733aff44f8e2f70b7937e4de613b33",
+      "localPath": "SourceAssets/WarcraftIII/Units/UnitWeapons.slk"
+    },
+    {
+      "path": "Units/MiscGame.txt",
+      "archive": "War3Patch.mpq",
+      "bytes": 6145,
+      "sha256": "2228cf869991d6ec5133e6115c3457903c2f0da9f0d70acc3d2518fe91e5f5bf",
+      "localPath": "SourceAssets/CombatRewards/Units/MiscGame.txt"
+    },
+    {
+      "path": "Units/UnitBalance.slk",
+      "archive": "War3Patch.mpq",
+      "bytes": 616820,
+      "sha256": "ab1a8cfbebcb2abe68535b170117730726249c5fafef15c13695400d4b0a3327",
+      "localPath": "SourceAssets/CombatRewards/Units/UnitBalance.slk"
+    }
+  ],
+  "profileSha256": "d38bc4379a52e66182fa2c3bb8183bc55463da6f89f9d202fa5c9bcb77bed69d",
+  "reaEvidence": "tmp/docs-artifacts/frost-worker-weapons/worker-weapons-rea.json",
+  "license": "Blizzard Entertainment original game terms; extraction does not grant redistribution rights"
+}

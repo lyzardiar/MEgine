@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
 function game(mode='skirmish'){const map=S.defaultMap(mode);map.terrain.fill(0);map.heights.fill(0);map.relief.fill(0);map.ramps.fill(0);map.props=[];map.units=[];map.triggers=[];const s=S.create(mode,{map,ai:[false,false]});s.units=[];s.resources=[];return s;}
-const radius=u=>S.types[u.kind].flying?1:S.types[u.kind].attack==='siege'?.9:S.types[u.kind].model==='knight'?.7:.5;
+const radius=S.movementRadius;
 const order=(s,us,x,z)=>{assert.equal(S.command(s,0,{type:'move',ids:us.map(u=>u.id),x,z}),null);return us.map(u=>({id:u.id,x:u.order.x,z:u.order.z}));};
 function separate(us,frame){for(let i=0;i<us.length;i++)for(let j=0;j<i;j++)if(!!S.types[us[i].kind].flying===!!S.types[us[j].kind].flying)assert.ok(S.distance(us[i],us[j])>=radius(us[i])+radius(us[j])-.001,JSON.stringify({overlap:[us[i].id,us[j].id],distance:S.distance(us[i],us[j]),frame}));}
 function advance(s,n){for(let i=0;i<n;i++){S.tick(s);separate(s.units.filter(u=>u.hp>0&&S.types[u.kind].speed),s.frame);}}
@@ -38,7 +38,7 @@ function arrived(s,goals){for(const p of goals){const u=s.units.find(u=>u.id===p
  const a=S.spawn(s,'soldier',0,-10,1,{damage:0}),b=S.spawn(s,'soldier',0,10,1,{damage:0}),goals=[...order(s,[a],10,1),...order(s,[b],-10,1)];advance(s,200);arrived(s,goals);
 }
 {
- const s=game(),u=S.spawn(s,'worker',0,-24,24,{damage:0}),enemy=S.spawn(s,'soldier',1,24,-24,{damage:0});S.command(s,1,{type:'hold',ids:[enemy.id]});S.visibility(s);const copy=S.restore(s);copy.units=copy.units.filter(v=>v.id!==enemy.id);order(s,[u],20,-20);order(copy,copy.units,20,-20);for(let i=0;i<15;i++){S.tick(s);S.tick(copy);assert.deepEqual(S.publicState(s,0).units,S.publicState(copy,0).units,'unseen traffic does not alter public paths');}
+ const s=game(),u=S.spawn(s,'worker',0,-24,24),enemy=S.spawn(s,'soldier',1,24,-24,{damage:0});S.command(s,1,{type:'hold',ids:[enemy.id]});S.visibility(s);const copy=S.restore(s);copy.units=copy.units.filter(v=>v.id!==enemy.id);order(s,[u],20,-20);order(copy,copy.units,20,-20);for(let i=0;i<15;i++){S.tick(s);S.tick(copy);assert.deepEqual(S.publicState(s,0).units,S.publicState(copy,0).units,'unseen traffic does not alter public paths');}
 }
 {
  const s=game();s.heroDeathVersion=0;s.corpseVersion=0;s.mode='td';s.nextWave=10000;const us=Array.from({length:7},(_,i)=>S.spawn(s,'creep',1,-25-i*.25,-24,{damage:0,route:S.tdPath,waypoint:1,td:true}));

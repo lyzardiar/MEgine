@@ -47,7 +47,7 @@ function arrived(s,targets){for(const p of targets){const u=s.units.find(u=>u.id
   const before=S.clone(us);assert.match(issue(s,us,12,12),/No reachable space/);assert.deepEqual(us,before,'failed allocation leaves all previous orders untouched');
 }
 {
-  const s=flat(),u=S.spawn(s,'worker',0,-23,23),hall=S.spawn(s,'hall',1,23,-23);hall.damage=0;u.damage=0;S.visibility(s);
+  const s=flat(),u=S.spawn(s,'worker',0,-23,23),hall=S.spawn(s,'hall',1,23,-23);hall.damage=0;S.visibility(s);
   const empty=S.restore(s);empty.units=empty.units.filter(v=>v.id!==hall.id);assert.equal(S.isVisible(s,0,hall),false);
   assert.equal(issue(s,[u],hall.x,hall.z),null);assert.equal(issue(empty,empty.units,hall.x,hall.z),null);
   assert.deepEqual(u.order,empty.units[0].order,'hidden buildings do not disclose their footprint through assigned orders');

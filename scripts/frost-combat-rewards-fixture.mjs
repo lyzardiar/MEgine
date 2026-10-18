@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {battleFixture} from './frost-battle-fixture.mjs';
 export function rewardsFixture(S,options={}){
- const s=battleFixture(S,'skirmish',{factions:[0,0],...options},['hero']);for(const u of s.units)u.cd=100;
+ const s=battleFixture(S,'skirmish',{factions:[0,0],...options},['hero']);for(const u of s.units)if(!S.workerCombat(u))u.cd=100;
  const hero=s.units.find(u=>u.team===0&&u.kind==='hero');Object.assign(hero,{x:0,z:3,order:{type:'hold'},xp:0});return {s,hero};
 }
 export function rewardFight(S,s,kind='ghoul',team=-1){
