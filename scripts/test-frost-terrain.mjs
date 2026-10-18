@@ -95,7 +95,7 @@ for(let z=0;z<8;z++)for(let x=0;x<8;x++){
   s.units=s.units.filter(v=>v.id!==fly.id);const defender=S.spawn(s,'soldier',1,-11,3);u.order=null;u.cd=0;const hp=defender.hp;step(s,5);assert.equal(defender.hp,hp,'melee cannot strike across a cliff');
 }
 {
-  const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];const worker=S.spawn(s,'worker',0,-15,7),money=s.teams[0].gold;
+  const s=S.create('skirmish',{map,humanMasonryVersion:0,ai:[false,false]});s.units=[];s.resources=[];const worker=S.spawn(s,'worker',0,-15,7),money=s.teams[0].gold;
   assert.match(S.command(s,0,{type:'build',ids:[worker.id],kind:'tower',x:-13,z:7}),/flat dry/);assert.equal(s.teams[0].gold,money);
   assert.equal(S.command(s,0,{type:'build',ids:[worker.id],kind:'tower',x:-7,z:7}),null);
   const archer=S.spawn(s,'archer',0,-13,1),target=S.spawn(s,'archer',1,13,1);assert.equal(S.attackClear(s,archer,target),false,'plateau blocks line of fire');
@@ -104,6 +104,6 @@ for(let z=0;z<8;z++)for(let x=0;x<8;x++){
   const s=battleFixture(S,'skirmish',{},['hero','barracks','farm','guard','harvest']);s.map.heights[S.index(.1,-1)]=3;const a={kind:'archer',x:-.1,z:-1},b={kind:'archer',x:.1,z:-1};assert.equal(S.attackClear(s,a,b),false,'short rays test the vertical cliff crossing');assert.equal(S.attackClear(s,b,a),false);
 }
 {
-  const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];s.resources=[];const w=S.spawn(s,'worker',0,-12.5,1);assert.equal(S.command(s,0,{type:'build',ids:[w.id],kind:'tower',x:-9,z:1}),null);const b=s.units.at(-1);step(s,5);assert.equal(b.built,.01,'workers cannot start construction through a cliff');
+  const s=S.create('skirmish',{map,humanMasonryVersion:0,ai:[false,false]});s.units=[];s.resources=[];const w=S.spawn(s,'worker',0,-12.5,1);assert.equal(S.command(s,0,{type:'build',ids:[w.id],kind:'tower',x:-9,z:1}),null);const b=s.units.at(-1);step(s,5);assert.equal(b.built,.01,'workers cannot start construction through a cliff');
 }
 console.log('PASS: terrain legacy/save/network data, mesh corners, ramps, cliff navigation/fallback, flying, building footprint and combat occlusion');

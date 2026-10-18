@@ -9,7 +9,7 @@ for(let f=0;f<4;f++){
 }
 {
  const {s,w}=game();ok(s,w,'gather',{resource:0});ok(s,w,'move',{x:-5,z:-5,append:true});const gold=s.teams[0].gold;step(s,200);assert.equal(s.teams[0].gold,gold+20,'queued gathering finishes exactly one delivery');assert.equal(w.order,null);assert.ok(S.distance(w,{x:-5,z:-5})<.13);
- ok(s,w,'build',{kind:'farm',x:0,z:0});ok(s,w,'build',{kind:'farm',x:24,z:0,append:true});step(s,400);assert.equal(s.units.filter(u=>u.kind==='farm'&&u.built===1).length,2,'far queued site walks into construction range');assert.doesNotThrow(()=>S.restore(s));
+ ok(s,w,'build',{kind:'farm',x:0,z:0});ok(s,w,'build',{kind:'farm',x:24,z:0,append:true});step(s,S.buildingType(s,'farm',0).time*20+200);assert.equal(s.units.filter(u=>u.kind==='farm'&&u.built===1).length,2,'far queued site walks into construction range');assert.doesNotThrow(()=>S.restore(s));
 }
 {
  const {s,w,hall}=game();hall.hp-=80;ok(s,w,'move',{x:-8,z:-3});ok(s,w,'repair',{target:hall.id,append:true});ok(s,w,'gather',{resource:0,append:true});step(s,400);assert.equal(hall.hp,hall.maxHp);assert.equal(w.order.type,'gather');
@@ -31,7 +31,7 @@ for(let f=0;f<4;f++){
 }
 {
  const {s,w,hall}=game();hall.built=.5;ok(s,w,'gather',{resource:0});ok(s,w,'move',{x:-5,z:-5,append:true});step(s,100);assert.equal(w.order,null);assert.match(s.announcements[0],/no completed stronghold/);
- const idle=game();const gold=idle.s.teams[0].gold;ok(idle.s,idle.w,'build',{kind:'farm',x:24,z:0,append:true});assert.equal(idle.s.teams[0].gold,gold);assert.equal(idle.w.order.type,'build');step(idle.s,400);assert.equal(idle.s.units.filter(u=>u.kind==='farm'&&u.built===1).length,1);
+ const idle=game();const gold=idle.s.teams[0].gold;ok(idle.s,idle.w,'build',{kind:'farm',x:24,z:0,append:true});assert.equal(idle.s.teams[0].gold,gold);assert.equal(idle.w.order.type,'build');step(idle.s,S.buildingType(idle.s,'farm',0).time*10+250);assert.equal(idle.s.units.filter(u=>u.kind==='farm'&&u.built===1).length,1);
  const inside=game(1);ok(inside.s,inside.w,'build',{kind:'farm',x:-5,z:3});step(inside.s,30);assert.ok(inside.w.inside);ok(inside.s,inside.w,'move',{x:3,z:-5,append:true});step(inside.s,200);assert.equal(inside.w.order,null);assert.ok(S.distance(inside.w,{x:3,z:-5})<.13);
  const poor=game();ok(poor.s,poor.w,'move',{x:-8,z:-3});ok(poor.s,poor.w,'build',{kind:'farm',x:-5,z:3,append:true});ok(poor.s,poor.w,'gather',{resource:0,append:true});poor.s.teams[0].gold=0;step(poor.s,30);assert.match(poor.s.announcements[0],/Not enough resources/);assert.equal(poor.w.order.type,'gather');
 }

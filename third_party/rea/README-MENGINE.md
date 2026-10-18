@@ -46,6 +46,8 @@ JavaScript/Electron 和托管程序集静态分析不需要原生反编译引擎
 
 ## 更新维护
 
+Frostbound Realms 的人族石工技术对照可用 `node scripts/probe-frost-rea-rewards.mjs --human-masonry` 复现。源 MPQ、DLL 摘要、研究规则、静态证据地址和动态验收范围见 [人族石工技术维护说明](../../docs/designs/frostbound-realms/human-masonry.md)。
+
 原生离线分析已添加可选的 Rizin `0.8.1`，项目 MCP 配置通过 `REA_RIZIN_COMMAND` 指定本地可执行文件，可使用 REA 的 `execute_rizin_command` 检查 PE、字符串和汇编。官方来源、归档 SHA-256 和路径见 [`rizin-source.json`](rizin-source.json)。工具位于被 Git 忽略的 `tools/`；新检出可从记录的官方地址下载、校验并解压到对应目录，不需要系统安装。`rea:install` 仅恢复 Node 运行包，不会移除该目录。目标软件不会因静态检查而被执行；Rizin 的存在不代表 Ghidra 等其他引擎已配置。
 
 1. 从 GitHub 源站及 npm 检查版本、发布说明、许可证和平台支持；`npm.cmd view rea-agents version` 只查询可用版本。

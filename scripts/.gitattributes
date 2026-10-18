@@ -11,3 +11,5 @@
 /warcraft-hippogryph-reference.j text eol=lf
 /analyze-warcraft-hippogryph-reference.py text eol=lf
 /test-warcraft-hippogryph-reference.py text eol=lf
+
+/import-frost-human-masonry.py text eol=lf

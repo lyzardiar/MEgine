@@ -5,6 +5,7 @@ import './test-frost-worker-weapons-network.mjs';
 import './test-frost-worker-repair-network.mjs';
 import './test-frost-worker-lumber-network.mjs';
 import './test-frost-lumber-technology-network.mjs';
+import './test-frost-human-masonry-network.mjs';
 import './test-frost-combat-rewards.mjs';
 import './test-frost-combat-rewards-network.mjs';
 import './test-frost-moba-objectives.mjs';
@@ -234,7 +235,7 @@ for(let faction=0;faction<4;faction++){
   const restored=S.restore(game);step(restored,160);const unit=restored.units.find(u=>u.kind===kind);assert.ok(unit);assert.equal(unit.order?.type,'attackMove');assert.ok(unit.z<23,'production follows saved rally');
   assert.throws(()=>S.restore({...game,units:game.units.map(u=>u.id===workshop.id?{...u,rally:{x:NaN,z:0}}:u)}));
   game.visible[1].fill(1);const visible=S.publicState(game,1).units.find(u=>u.id===workshop.id);assert.equal(visible.rally,undefined);assert.deepEqual(visible.queue,[]);
-  step(game,400);const altarWorker=game.units.find(u=>u.team===0&&u.kind==='worker'&&!u.inside);assert.equal(S.command(game,0,{type:'move',ids:[altarWorker.id],x:-10,z:18}),null);step(game,70);assert.equal(S.command(game,0,{type:'build',ids:[altarWorker.id],kind:'altar',x:-10,z:15}),null);step(game,150);const altar=game.units.find(u=>u.team===0&&u.kind==='altar');assert.match(S.command(game,0,{type:'train',ids:[altar.id],kind:S.flyers[faction]}),/tier 3/);
+  step(game,400);const altarWorker=game.units.find(u=>u.team===0&&u.kind==='worker'&&!u.inside);assert.equal(S.command(game,0,{type:'move',ids:[altarWorker.id],x:-10,z:18}),null);step(game,70);assert.equal(S.command(game,0,{type:'build',ids:[altarWorker.id],kind:'altar',x:-10,z:15}),null);step(game,Math.max(150,S.buildingType(game,'altar',0).time*10+50));const altar=game.units.find(u=>u.team===0&&u.kind==='altar');assert.match(S.command(game,0,{type:'train',ids:[altar.id],kind:S.flyers[faction]}),/tier 3/);
   assert.equal(S.command(game,0,{type:'tech',ids:[hall.id]}),null);step(game,1401);S.spawn(game,'farm',0,0,25);assert.equal(S.command(game,0,{type:'train',ids:[altar.id],kind:S.flyers[faction]}),null);step(game,181);assert.ok(game.units.some(u=>u.kind===S.flyers[faction]));
 }
 assert.equal(S.weaponDamage({kind:'ballista'},{kind:'tower'},100),300);assert.equal(S.weaponDamage({kind:'ballista'},{kind:'soldier'},100),65);assert.equal(S.weaponDamage({kind:'archer'},{kind:'knight'},100),75);assert.equal(S.weaponDamage({kind:'mage'},{kind:'knight'},100),150);

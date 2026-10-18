@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},close=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`),cmd=(s,u,type,args={})=>S.command(s,u.team,{type,ids:[u.id],...args});
-function arena(tier=3,props=[]){const map=S.defaultMap();map.units=[];map.props=props;map.triggers=[];map.doodads=[];for(const k of ['terrain','heights','relief','ramps'])map[k].fill(0);const s=S.create('skirmish',{map,factions:[2,0],ai:[false,false]});s.units=[];Object.assign(s.teams[0],{gold:100000,wood:100000});const base=S.spawn(s,'hall',0,-24,24,{upgradeTier:tier,damage:0}),enemy=S.spawn(s,'hall',1,24,-24,{damage:0}),war=S.spawn(s,'barracks',0,-12,0,{damage:0}),hall=S.spawn(s,'workshop',0,12,0);S.visibility(s);return {s,base,enemy,war,hall};}
+function arena(tier=3,props=[]){const map=S.defaultMap();map.units=[];map.props=props;map.triggers=[];map.doodads=[];for(const k of ['terrain','heights','relief','ramps'])map[k].fill(0);const s=S.create('skirmish',{map,humanMasonryVersion:0,factions:[2,0],ai:[false,false]});s.units=[];Object.assign(s.teams[0],{gold:100000,wood:100000});const base=S.spawn(s,'hall',0,-24,24,{upgradeTier:tier,damage:0}),enemy=S.spawn(s,'hall',1,24,-24,{damage:0}),war=S.spawn(s,'barracks',0,-12,0,{damage:0}),hall=S.spawn(s,'workshop',0,12,0);S.visibility(s);return {s,base,enemy,war,hall};}
 const study=(s,u,key)=>cmd(s,u,'nightResearch',{upgrade:key}),tree=(x,z)=>({kind:'tree',x,z,amount:700});
 {
  const {s,war,hall}=arena(1);assert.equal(S.nightResearchOptions(s,war).length,5);assert.equal(S.nightResearchOptions(s,hall).length,6);
