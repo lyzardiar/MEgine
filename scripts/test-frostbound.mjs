@@ -6,6 +6,7 @@ import './test-frost-worker-repair-network.mjs';
 import './test-frost-worker-lumber-network.mjs';
 import './test-frost-lumber-technology-network.mjs';
 import './test-frost-human-masonry-network.mjs';
+import './test-frost-hitpoint-upgrades-network.mjs';
 import './test-frost-combat-rewards.mjs';
 import './test-frost-combat-rewards-network.mjs';
 import './test-frost-moba-objectives.mjs';
