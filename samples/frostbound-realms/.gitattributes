@@ -60,3 +60,8 @@ Assets/Licenses/Classic-Undead-Equipment.txt text eol=lf
 /undead-army*.json text eol=lf
 SourceAssets/UndeadArmy/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
 Assets/Licenses/Classic-Undead-Army.txt text eol=lf
+
+/crypt-unit*.json text eol=lf
+Assets/CryptUnits/** -text whitespace=cr-at-eol
+SourceAssets/CryptUnits/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+Assets/Licenses/Classic-Crypt-Units.txt text eol=lf

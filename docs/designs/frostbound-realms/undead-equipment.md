@@ -1,6 +1,6 @@
 # 不死族坟场装备研究
 
-协议 109。新遭遇战默认 `undeadEquipmentVersion=1`；缺字段旧存档恢复为 0。研究入口为坟场，源单位身份 `ugrv`。每队的 `undeadEquipment` 保存四条科技等级，源单位与在飞弹道的 `undeadEquipmentLevels` 保存已经应用的等级。
+协议 110。新遭遇战默认 `undeadEquipmentVersion=1`；缺字段旧存档恢复为 0。研究入口为坟场，源单位身份 `ugrv`。每队的 `undeadEquipment` 保存四条科技等级，源单位与在飞弹道的 `undeadEquipmentLevels` 保存已经应用的等级。
 
 | 科技 | 卡位 / 热键 | 一级金/木 | 二级金/木 | 三级金/木 |
 | --- | --- | --- | --- | --- |
@@ -44,3 +44,5 @@ node scripts/qa-frost-undead-equipment.mjs
 其余不死族兵种基础档案与装备绑定、完整科技树、原版队列容量与取消快捷键、原版 AI 计划和全部更新顺序仍需继续对照。整体 1:1 复刻目标保持进行中。
 
 食尸鬼、憎恶及地穴/屠宰场的源身体、完整生产与施工时钟、真实攻击和更新验证入口见 [不死族军队维护说明](undead-army.md)。
+
+穴居恶魔 `ucry`、石像鬼 `ugar` 已接入 Rura/Rucr。两者攻击每级增加一个源武器骰子，护甲每级增加 2；石像鬼对空 d10、对地 d4 独立计算。生产与弹道、来源死亡、原版头像和后续技能边界见 [地穴单位说明](crypt-units.md)。

@@ -1,3 +1,5 @@
+import './test-frost-crypt-units-network.mjs';
+import './test-frost-crypt-units-generated.mjs';
 import './test-frost-undead-army-network.mjs';
 import './test-frost-undead-army-generated.mjs';
 import './test-frost-undead-equipment-network.mjs';

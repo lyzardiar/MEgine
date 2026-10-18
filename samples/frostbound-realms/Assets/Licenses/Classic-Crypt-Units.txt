@@ -1,0 +1,1 @@
+Warcraft III Crypt Fiend/Gargoyle data, portraits, models, icons and missiles: Blizzard Entertainment original game terms. Source and conversion hashes: crypt-units-sources.json. REA upstream https://github.com/morluto/rea; fixed runtime and maintenance third_party/rea/README-MENGINE.md.

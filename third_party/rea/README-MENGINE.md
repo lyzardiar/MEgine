@@ -84,3 +84,5 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 人族采木升级：`node scripts/probe-frost-rea-rewards.mjs --lumber-upgrade` 保留 rlum / CUpgradeLumberJack 至 Harvest DataB 容量字段的静态调用链。`scripts/import-frost-lumber-technology.py` 保留原件、研究等级、本地化、按钮、元数据和摘要，并支持无安装复现。使用与更新入口见 `docs/designs/frostbound-realms/lumber-technology.md`。
 
 不死族食尸鬼/憎恶及地穴/屠宰场：`node scripts/probe-frost-rea-rewards.mjs --undead-army` 检查源字段和武器装载路径，`scripts/import-frost-undead-army.py` 保存 MPQ 原件、单位/建筑数据、命令卡和文件摘要。源配置、兼容边界与导入/验证命令见 [维护说明](../../docs/designs/frostbound-realms/undead-army.md)。GitHub 源站、固定版本及更新流程沿用本文件。
+
+地穴穴居恶魔/石像鬼：`node scripts/probe-frost-rea-rewards.mjs --crypt-units` 检查双武器字段和装载路径；`scripts/import-frost-crypt-units.py` 保存原件、源身体/武器档案、身体/头像/弹道转换与摘要。维护、复现和技能边界见 [地穴单位说明](../../docs/designs/frostbound-realms/crypt-units.md)。
