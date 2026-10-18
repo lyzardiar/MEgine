@@ -120,7 +120,7 @@ export async function applySelectedPrefab(
     revision,
   );
   store.markPrefabInstance(instance.root, instance.source, captured.nodeIds);
-  await refreshProjectFiles();
+  // MiYu: writeProjectAssetText already accepts the host's updated asset and watcher baseline.
   return instance.source;
 }
 

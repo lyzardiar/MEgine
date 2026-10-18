@@ -106,6 +106,7 @@ import {
   loadProjectImage,
   normalizeProjectAssetPath,
   readProjectAssetBytesWithRevision,
+  readProjectFileInfo,
   refreshProjectFiles,
   writeProjectAssetText,
   type ProjectAssetChange,
@@ -1668,7 +1669,7 @@ class AgentBridge {
         `Entity ${entityId} is not part of a prefab instance`,
       );
     }
-    const asset = findAsset(await refreshProjectFiles(), instance.source);
+    const asset = await readProjectFileInfo(instance.source);
     if (!asset) {
       throw new BridgeError(
         'IO_ERROR',
@@ -3417,12 +3418,12 @@ class AgentBridge {
       await applySelectedPrefab(store, expectedRevision);
     } catch (error) {
       if (isStaleAssetError(error)) {
-        const current = findAsset(await refreshProjectFiles(), target.source);
+        const current = await readProjectFileInfo(target.source);
         throw stalePrefabRevision(current, expectedRevision, target.source);
       }
       throw prefabBridgeError(error);
     }
-    const after = findAsset(await refreshProjectFiles(), target.source);
+    const after = findAsset(listProjectFiles(), target.source);
     if (
       !after
       || after.revision === target.asset.revision
@@ -3474,7 +3475,7 @@ class AgentBridge {
       await revertSelectedPrefab(store, expectedRevision);
     } catch (error) {
       if (isStaleAssetError(error)) {
-        const current = findAsset(await refreshProjectFiles(), target.source);
+        const current = await readProjectFileInfo(target.source);
         throw stalePrefabRevision(current, expectedRevision, target.source);
       }
       throw prefabBridgeError(error);

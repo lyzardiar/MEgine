@@ -6024,6 +6024,70 @@ fn restore_project_asset(
         .map_err(|error| error.to_string())
 }
 
+// MiYu: Inspect existing sidecars only; do not import assets or create unrelated metadata.
+fn project_asset_guid_conflict(root: &Path, target: &Path, guid: &str) -> Result<Option<String>, String> {
+    let target_meta = mengine_assets::asset_sidecar_path(target);
+    let mut directories = vec![root.join("Assets")];
+    while let Some(directory) = directories.pop() {
+        for entry in std::fs::read_dir(&directory).map_err(|error| error.to_string())? {
+            let entry = entry.map_err(|error| error.to_string())?;
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if name.starts_with('.') { continue; }
+            let kind = entry.file_type().map_err(|error| error.to_string())?;
+            if kind.is_symlink() { continue; }
+            let path = entry.path();
+            if kind.is_dir() { directories.push(path); continue; }
+            let Some(asset_name) = name.strip_suffix(".meta") else { continue; };
+            if path == target_meta || cfg!(windows) && path.to_string_lossy().eq_ignore_ascii_case(&target_meta.to_string_lossy()) { continue; }
+            let Some(importer) = project_asset_kind(asset_name) else { continue; };
+            let asset_path = path.with_file_name(asset_name);
+            match std::fs::symlink_metadata(&asset_path) {
+                Ok(metadata) if metadata.is_file() && !metadata.file_type().is_symlink() => {},
+                Ok(_) => continue,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(error) => return Err(error.to_string()),
+            }
+            // Malformed metadata is not a healthy GUID owner, matching list_project_assets.
+            if entry.metadata().map_err(|error| error.to_string())?.len() > 1024 * 1024 { return Err(format!("cannot confirm GUID ownership: metadata exceeds 1 MiB: {}", path.display())); }
+            let bytes = std::fs::read(&path).map_err(|error| error.to_string())?;
+            if mengine_assets::parse_asset_sidecar(&bytes, importer).is_ok_and(|sidecar| sidecar.guid.0.to_string() == guid) {
+                return Ok(Some(asset_path.strip_prefix(root).map_err(|error| error.to_string())?.to_string_lossy().replace('\\', "/")));
+            }
+        }
+    }
+    Ok(None)
+}
+
+// MiYu: Reuse single-file revision and metadata validation without whole-library discovery.
+fn project_asset_info_at_path(root: &Path, relative_path: &str, check_guid_owners: bool) -> Result<Option<ProjectAssetInfo>, String> {
+    let file = project_asset_read_path(root, relative_path)?;
+    let authored_path = root.join("Assets").join(asset_relative_tail(relative_path)?);
+    if std::fs::symlink_metadata(&authored_path).map_err(|error| error.to_string())?.file_type().is_symlink() {
+        return Err("asset must be a regular non-symlink file".into());
+    }
+    let mut asset = project_asset_info(root, &file);
+    if check_guid_owners {
+        if let Some(info) = asset.as_mut().filter(|info| info.meta_status == "ready") {
+            if let Some(guid) = &info.guid {
+                if let Some(other) = project_asset_guid_conflict(root, &file, guid)? {
+                    info.meta_status = "duplicate".into();
+                    info.meta_error = Some(format!("asset GUID {guid} is shared by multiple files: {}, {other}", info.rel_path));
+                }
+            }
+        }
+    }
+    Ok(asset)
+}
+
+#[tauri::command]
+async fn get_project_asset_info(relative_path: String, check_guid_owners: Option<bool>, state: State<'_, AppState>) -> Result<Option<ProjectAssetInfo>, String> {
+    let project_root = state.project.lock().as_ref().map(|session| session.snapshot().project_root).ok_or_else(|| no_project().message)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = Path::new(&project_root).canonicalize().map_err(|error| error.to_string())?;
+        project_asset_info_at_path(&root, &relative_path, check_guid_owners.unwrap_or(true))
+    }).await.map_err(|error| format!("Asset information worker failed: {error}"))?
+}
+
 #[tauri::command]
 async fn list_project_assets(state: State<'_, AppState>) -> Result<Vec<ProjectAssetInfo>, String> {
     let project_root = state
@@ -6496,6 +6560,7 @@ pub fn run() {
             list_project_asset_trash,
             restore_project_asset,
             list_project_assets,
+            get_project_asset_info,
             list_project_sprites,
             open_scene,
             save_scene,
@@ -8247,6 +8312,34 @@ mod tests {
         assert_eq!(sprites.len(), 1);
         assert_eq!(sprites[0].id, "Assets/UI/panel.png");
         assert_eq!(sprites[0].folder, "Assets/UI");
+    }
+
+    #[test]
+    fn project_asset_single_info_keeps_revision_and_sidecar_validation_local() {
+        let root = std::env::temp_dir().join(format!("mengine-single-asset-info-{}-{}", std::process::id(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+        let assets = root.join("Assets");
+        std::fs::create_dir_all(&assets).unwrap();
+        let root = root.canonicalize().unwrap();
+        let prefab = root.join("Assets/UI.prefab");
+        std::fs::write(&prefab, b"{}").unwrap();
+        std::fs::write(root.join("Assets/Untouched.png"), b"not an image").unwrap();
+        let before = project_asset_info_at_path(&root, "Assets/UI.prefab", true).unwrap().unwrap();
+        assert_eq!(before.meta_status, "ready");
+        assert_eq!(before.kind, "prefab");
+        assert!(!root.join("Assets/Untouched.png.meta").exists());
+        std::fs::write(&prefab, b"{\"version\":2}").unwrap();
+        let after = project_asset_info_at_path(&root, "Assets/UI.prefab", false).unwrap().unwrap();
+        assert_ne!(before.revision, after.revision);
+        assert_eq!(before.guid, after.guid);
+        std::fs::write(root.join("Assets/Duplicate.prefab"), b"{}").unwrap();
+        std::fs::copy(root.join("Assets/UI.prefab.meta"), root.join("Assets/Duplicate.prefab.meta")).unwrap();
+        assert_eq!(project_asset_info_at_path(&root, "Assets/UI.prefab", true).unwrap().unwrap().meta_status, "duplicate");
+        std::fs::write(root.join("Assets/Duplicate.prefab.meta"), vec![b' '; 1024 * 1024 + 1]).unwrap();
+        assert!(project_asset_info_at_path(&root, "Assets/UI.prefab", true).err().unwrap().contains("exceeds 1 MiB"));
+        std::fs::write(root.join("Assets/UI.prefab.meta"), b"invalid JSON").unwrap();
+        assert_eq!(project_asset_info_at_path(&root, "Assets/UI.prefab", true).unwrap().unwrap().meta_status, "invalid");
+        assert!(project_asset_info_at_path(&root, "Assets/../outside.prefab", true).is_err());
+        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
