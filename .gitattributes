@@ -277,3 +277,5 @@ docs/designs/frostbound-realms/human-spellbreaker*.md text eol=lf
 scripts/*worker-lumber*.* text eol=lf
 scripts/import-frost-lumber-depots.py text eol=lf
 scripts/*lumber-technology*.* text eol=lf
+
+scripts/*undead-army*.* text eol=lf

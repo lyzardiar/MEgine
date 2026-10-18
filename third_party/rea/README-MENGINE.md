@@ -82,3 +82,5 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 原版采木维护入口：`node scripts/probe-frost-rea-rewards.mjs --worker-lumber`，配合 `scripts/import-frost-worker-lumber.py`、`scripts/import-frost-lumber-depots.py`。源技能/第二武器/树生命、交付建筑、模型及原版按钮的来源、摘要、复现和测试入口见 `docs/designs/frostbound-realms/worker-lumber.md`。GitHub 上游、固定版本及更新方法沿用本说明。
 
 人族采木升级：`node scripts/probe-frost-rea-rewards.mjs --lumber-upgrade` 保留 rlum / CUpgradeLumberJack 至 Harvest DataB 容量字段的静态调用链。`scripts/import-frost-lumber-technology.py` 保留原件、研究等级、本地化、按钮、元数据和摘要，并支持无安装复现。使用与更新入口见 `docs/designs/frostbound-realms/lumber-technology.md`。
+
+不死族食尸鬼/憎恶及地穴/屠宰场：`node scripts/probe-frost-rea-rewards.mjs --undead-army` 检查源字段和武器装载路径，`scripts/import-frost-undead-army.py` 保存 MPQ 原件、单位/建筑数据、命令卡和文件摘要。源配置、兼容边界与导入/验证命令见 [维护说明](../../docs/designs/frostbound-realms/undead-army.md)。GitHub 源站、固定版本及更新流程沿用本文件。

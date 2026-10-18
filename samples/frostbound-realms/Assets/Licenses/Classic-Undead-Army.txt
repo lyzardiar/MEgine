@@ -1,0 +1,1 @@
+Warcraft III Ghoul, Abomination, Crypt and Slaughterhouse data and command icons: Blizzard Entertainment original game terms. REA upstream https://github.com/morluto/rea; fixed runtime and maintenance: third_party/rea/README-MENGINE.md. Source identities and generated hashes: undead-army-sources.json.
