@@ -1,0 +1,1024 @@
+{
+  "version": 2,
+  "name": "PauseDialog",
+  "root": {
+    "id": "1edee04e-d51d-5212-a540-a6305a6577c6",
+    "name": "UI PauseDialog",
+    "active": false,
+    "tag": "Untagged",
+    "layer": 0,
+    "components": {
+      "RectTransform": {
+        "anchor_min": [
+          0,
+          0
+        ],
+        "anchor_max": [
+          1,
+          1
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "anchored_position": [
+          0,
+          0
+        ],
+        "size_delta": [
+          0,
+          0
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "9dc9e94a-f14a-5f12-aa5c-f626dfe6362c",
+        "name": "UI PauseDialog / Presentation",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "5127a487-7bbb-5ba6-aa71-6be9ddcea8e5",
+            "name": "Pause shade",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  1280,
+                  720
+                ]
+              },
+              "Image": {
+                "color": [
+                  0,
+                  0,
+                  0,
+                  0.58
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "e369e7c6-d365-58b8-af45-58caaf8a584c",
+            "name": "Pause frame",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -20
+                ],
+                "size_delta": [
+                  394,
+                  406
+                ]
+              },
+              "Image": {
+                "sprite": "Assets/Art/hud-human-frame.png",
+                "image_type": "Sliced",
+                "border": [
+                  350,
+                  350,
+                  350,
+                  350
+                ],
+                "source_size": [
+                  1254,
+                  1254
+                ],
+                "pixels_per_unit_multiplier": 8,
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "3604c9a0-b8a5-5553-ab44-2e5e7e9efc20",
+            "name": "Pause inset",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -20
+                ],
+                "size_delta": [
+                  326,
+                  338
+                ]
+              },
+              "Image": {
+                "color": [
+                  0.024,
+                  0.034,
+                  0.044,
+                  0.98
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "6a6578e2-28e9-5592-a77d-d5e09e45a6e0",
+            "name": "Pause title",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -172
+                ],
+                "size_delta": [
+                  330,
+                  42
+                ]
+              },
+              "Text": {
+                "text": "游戏菜单",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 28,
+                "color": [
+                  0.81,
+                  0.65,
+                  0.36,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "e7b20ebb-c4fd-5343-a893-7a2d30f235f7",
+        "name": "UI PauseDialog / Controls",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "c7aaabfa-b206-5d4d-af8b-0e215a6d14a7",
+            "name": "UI Control pauseResume",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -102
+                ],
+                "size_delta": [
+                  298,
+                  48
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "55159f1e-ef5c-539f-ae06-1e402644be16",
+                "name": "pauseResume border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      2,
+                      2
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.3,
+                      0.24,
+                      0.13,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "4afb23d8-8481-53ae-a875-948b050c0a57",
+                "name": "pauseResume box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/Panel.mmat",
+                    "color": [
+                      0.2,
+                      0.17,
+                      0.11,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "3a13e928-778b-5742-ae65-ebc8988a80c2",
+                "name": "pauseResume label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -30,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "返回游戏 (Esc)",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 16,
+                    "color": [
+                      0.84,
+                      0.9,
+                      0.91,
+                      1
+                    ],
+                    "alignment": "Left",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "249f890c-8009-5c2a-a9ff-c61731ed3458",
+            "name": "UI Control pauseSave",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -37
+                ],
+                "size_delta": [
+                  298,
+                  48
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "29b4fe27-f953-598d-a93a-8ea65acceccb",
+                "name": "pauseSave border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      2,
+                      2
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.3,
+                      0.24,
+                      0.13,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "6ac3b79b-a569-5e0f-a561-c2cc759ef95a",
+                "name": "pauseSave box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/Panel.mmat",
+                    "color": [
+                      0.2,
+                      0.17,
+                      0.11,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "e81c3620-acf4-5d24-aaf2-f3aa7ccb0643",
+                "name": "pauseSave label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -30,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "保存游戏",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 16,
+                    "color": [
+                      0.84,
+                      0.9,
+                      0.91,
+                      1
+                    ],
+                    "alignment": "Left",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "f292e468-458f-5928-a98c-0ae9fc74d271",
+            "name": "UI Control pauseLoad",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  28
+                ],
+                "size_delta": [
+                  298,
+                  48
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "c7d1de1e-a9a4-5a6e-afb5-9f3361e926e9",
+                "name": "pauseLoad border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      2,
+                      2
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.3,
+                      0.24,
+                      0.13,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "04ec8df6-051a-54e2-a002-fc72d2fbf87d",
+                "name": "pauseLoad box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/Panel.mmat",
+                    "color": [
+                      0.2,
+                      0.17,
+                      0.11,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "1e2ba926-5a40-571d-ab6a-fe1d1f78dc55",
+                "name": "pauseLoad label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -30,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "载入游戏",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 16,
+                    "color": [
+                      0.84,
+                      0.9,
+                      0.91,
+                      1
+                    ],
+                    "alignment": "Left",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "3adf8ac0-65d0-5d55-a3d2-bde8a1e7f3c1",
+            "name": "UI Control pauseExit",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  93
+                ],
+                "size_delta": [
+                  298,
+                  48
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "6ba71e7f-76f9-5d65-a641-94903e5ed88d",
+                "name": "pauseExit border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      2,
+                      2
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.3,
+                      0.24,
+                      0.13,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "df415f9f-fc0c-554a-a361-42d5c757c00a",
+                "name": "pauseExit box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/Panel.mmat",
+                    "color": [
+                      0.2,
+                      0.17,
+                      0.11,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "f050c5cc-6649-5d78-a53d-86b49b7fb6cc",
+                "name": "pauseExit label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -30,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "结束游戏 (X)",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 16,
+                    "color": [
+                      0.84,
+                      0.9,
+                      0.91,
+                      1
+                    ],
+                    "alignment": "Left",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "cf8372a9-73bc-5531-ab98-12aa3e58efb9",
+        "name": "UI PauseDialog / Presentation 2",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "5fc77df0-3c13-576a-a9fa-ca6ac752524e",
+            "name": "Pause hint",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  157
+                ],
+                "size_delta": [
+                  340,
+                  24
+                ]
+              },
+              "Text": {
+                "text": "单人游戏暂停 · 联机对局继续运行",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 12,
+                "color": [
+                  0.48,
+                  0.61,
+                  0.65,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}

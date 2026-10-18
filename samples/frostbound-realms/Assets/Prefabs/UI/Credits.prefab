@@ -1,0 +1,315 @@
+{
+  "version": 2,
+  "name": "Credits",
+  "root": {
+    "id": "c461e6b4-8314-5504-a273-3fc61dbda59f",
+    "name": "UI Credits",
+    "active": false,
+    "tag": "Untagged",
+    "layer": 0,
+    "components": {
+      "RectTransform": {
+        "anchor_min": [
+          0,
+          0
+        ],
+        "anchor_max": [
+          1,
+          1
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "anchored_position": [
+          0,
+          0
+        ],
+        "size_delta": [
+          0,
+          0
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "3a4eaeed-af74-597f-a2de-1dd72a73a054",
+        "name": "UI Credits / Presentation",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "a4e55133-d423-5cd8-a052-f801e2529c77",
+            "name": "Credits text",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  4
+                ],
+                "size_delta": [
+                  850,
+                  300
+                ]
+              },
+              "Text": {
+                "text": "FROSTBOUND REALMS\n\n基于 MEngine 的经典即时战略游戏复刻项目\n程序、引擎与地图：MiYu\n\n免费模型与材质：详见随包 Sources 与 Licenses\n冰冠背景 / 金属边框：原创生成素材\n字体：Cinzel / Noto Sans SC（OFL）",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 22,
+                "color": [
+                  0.84,
+                  0.9,
+                  0.91,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "6794f35d-f147-51a5-a847-f305526db728",
+        "name": "UI Credits / Controls",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "18364285-5813-55a8-a0b4-d0029a203e77",
+            "name": "UI Control creditsBack",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  245
+                ],
+                "size_delta": [
+                  270,
+                  42
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "64ff99b8-f048-5e7e-a2bf-be2c246d4c1d",
+                "name": "creditsBack border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "3b524fe7-9274-5a73-ae93-6881b683ef11",
+                "name": "creditsBack box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "c1f323f9-dd4c-570c-aceb-95db59fc4ca5",
+                "name": "creditsBack label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "返回",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

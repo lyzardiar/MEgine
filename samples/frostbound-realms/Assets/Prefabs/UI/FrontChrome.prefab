@@ -1,0 +1,214 @@
+{
+  "version": 2,
+  "name": "FrontChrome",
+  "root": {
+    "id": "873b9ee9-6a96-5e62-a6fe-6a2ea8126615",
+    "name": "UI FrontChrome",
+    "active": false,
+    "tag": "Untagged",
+    "layer": 0,
+    "components": {
+      "RectTransform": {
+        "anchor_min": [
+          0,
+          0
+        ],
+        "anchor_max": [
+          1,
+          1
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "anchored_position": [
+          0,
+          0
+        ],
+        "size_delta": [
+          0,
+          0
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "a37252ff-7fdf-5982-acbf-cd29e86df5c0",
+        "name": "UI FrontChrome / Presentation",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "565cffed-fcb2-5413-a544-e29042b9720d",
+            "name": "Front backing",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  20
+                ],
+                "size_delta": [
+                  1000,
+                  570
+                ]
+              },
+              "Image": {
+                "material": "Assets/Materials/ClassicPanel.mmat",
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "b75913cb-bc70-5c29-af2c-f938c469757e",
+            "name": "Front frame",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  20
+                ],
+                "size_delta": [
+                  1020,
+                  590
+                ]
+              },
+              "Image": {
+                "sprite": "Assets/Art/classic-iron-frame.png",
+                "image_type": "Sliced",
+                "border": [
+                  250,
+                  250,
+                  250,
+                  250
+                ],
+                "source_size": [
+                  1254,
+                  1254
+                ],
+                "pixels_per_unit_multiplier": 12,
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "741b01da-c13e-50cb-af04-eded587321d8",
+            "name": "Front title",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -230
+                ],
+                "size_delta": [
+                  860,
+                  44
+                ]
+              },
+              "Text": {
+                "text": "自定义游戏",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 32,
+                "color": [
+                  0.81,
+                  0.65,
+                  0.36,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}

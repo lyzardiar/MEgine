@@ -1,0 +1,807 @@
+{
+  "version": 2,
+  "name": "Options",
+  "root": {
+    "id": "f05d8230-c5bc-5ca3-a3e1-fdc53aef9244",
+    "name": "UI Options",
+    "active": false,
+    "tag": "Untagged",
+    "layer": 0,
+    "components": {
+      "RectTransform": {
+        "anchor_min": [
+          0,
+          0
+        ],
+        "anchor_max": [
+          1,
+          1
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "anchored_position": [
+          0,
+          0
+        ],
+        "size_delta": [
+          0,
+          0
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "1e0ede9c-3f0f-52a5-a94b-8864f4bf4b11",
+        "name": "UI Options / Presentation",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "5ca21a34-50d7-5f0a-af86-66b0838c2663",
+            "name": "Options heading",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -150
+                ],
+                "size_delta": [
+                  830,
+                  42
+                ]
+              },
+              "Text": {
+                "text": "声音与环境",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 25,
+                "color": [
+                  0.81,
+                  0.65,
+                  0.36,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "1d4d100c-453b-54cc-a957-95ee9cffd94d",
+        "name": "UI Options / Controls",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "02472184-e7a5-5445-a12e-a7e396881e00",
+            "name": "UI Control musicVolume",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -73
+                ],
+                "size_delta": [
+                  580,
+                  50
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "1d521b5c-e686-5096-afaf-64dec20375af",
+                "name": "musicVolume border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "5515abb2-d6d9-5c7f-ab6a-b7c0e1e845d2",
+                "name": "musicVolume box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "447f69c3-e54b-5282-a54e-cc8e01386e0e",
+                "name": "musicVolume label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "音乐音量",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "66b05583-5927-59b9-a518-52739be8755e",
+            "name": "UI Control sfxVolume",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  2
+                ],
+                "size_delta": [
+                  580,
+                  50
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "8169d5e6-3217-545c-a328-8cad686f311c",
+                "name": "sfxVolume border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "d6897b05-b23c-5d56-a843-831eaf622cc2",
+                "name": "sfxVolume box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "fd0943e8-8590-55f3-a77e-5d939eb3cffa",
+                "name": "sfxVolume label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "音效音量",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "f610a9d9-a7a9-5006-aa76-fedef251a814",
+            "name": "UI Control menuSnow",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  77
+                ],
+                "size_delta": [
+                  580,
+                  50
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "74045e5f-5305-5f12-a0b0-d0f8902344b4",
+                "name": "menuSnow border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "7e0f3f9c-7eec-55da-a30c-5cc2a9344826",
+                "name": "menuSnow box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "3af27181-74a9-57f6-a069-7886e7df6d1e",
+                "name": "menuSnow label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "背景飘雪",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "3a51d1d7-eea9-57b1-afdf-3a1b309dc493",
+            "name": "UI Control optionsBack",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  245
+                ],
+                "size_delta": [
+                  270,
+                  42
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "7638ce72-5282-5e77-ad43-4d3e795f0214",
+                "name": "optionsBack border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "d34dddf2-a6c0-522c-a78f-79af8e0f7c96",
+                "name": "optionsBack box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "09d538e9-2e3c-5324-a166-6862f2b5987b",
+                "name": "optionsBack label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "确定",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

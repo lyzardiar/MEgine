@@ -1,0 +1,160 @@
+{
+  "version": 2,
+  "name": "Tooltip",
+  "root": {
+    "id": "5c1c35d5-c0a1-5c36-af2b-fa9e18d14354",
+    "name": "UI Tooltip",
+    "active": false,
+    "tag": "Untagged",
+    "layer": 0,
+    "components": {
+      "RectTransform": {
+        "anchor_min": [
+          0,
+          0
+        ],
+        "anchor_max": [
+          1,
+          1
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "anchored_position": [
+          0,
+          0
+        ],
+        "size_delta": [
+          0,
+          0
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "8ff7f4c5-4aaa-5056-a8f6-75336441e2e0",
+        "name": "UI Tooltip / Presentation",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "a3307a12-1f8b-5fe1-acd8-25f3f9512fca",
+            "name": "Tooltip panel",
+            "active": false,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  1,
+                  1
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  -248,
+                  -269
+                ],
+                "size_delta": [
+                  460,
+                  110
+                ]
+              },
+              "Image": {
+                "material": "Assets/Materials/Panel.mmat",
+                "color": [
+                  0.2,
+                  0.17,
+                  0.11,
+                  1
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "2fc19e04-ab57-5623-ac68-3d0d487c2edf",
+            "name": "Tooltip text",
+            "active": false,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  1,
+                  1
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  -248,
+                  -269
+                ],
+                "size_delta": [
+                  434,
+                  98
+                ]
+              },
+              "Text": {
+                "text": "",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 13,
+                "color": [
+                  0.84,
+                  0.9,
+                  0.91,
+                  1
+                ],
+                "alignment": "Left",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Wrap",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}

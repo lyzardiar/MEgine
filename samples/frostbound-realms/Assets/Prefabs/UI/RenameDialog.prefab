@@ -1,0 +1,825 @@
+{
+  "version": 2,
+  "name": "RenameDialog",
+  "root": {
+    "id": "bff2c24d-3048-5b29-acb4-8378628e5590",
+    "name": "UI RenameDialog",
+    "active": false,
+    "tag": "Untagged",
+    "layer": 0,
+    "components": {
+      "RectTransform": {
+        "anchor_min": [
+          0,
+          0
+        ],
+        "anchor_max": [
+          1,
+          1
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "anchored_position": [
+          0,
+          0
+        ],
+        "size_delta": [
+          0,
+          0
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "a61edecd-0e31-5fed-ad53-934868119005",
+        "name": "UI RenameDialog / Presentation",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "24f2e247-a50f-59a9-ae09-081e7a993e81",
+            "name": "Rename shade",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -35
+                ],
+                "size_delta": [
+                  880,
+                  300
+                ]
+              },
+              "Image": {
+                "color": [
+                  0.025,
+                  0.04,
+                  0.057,
+                  0.96
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "d318c8c3-8262-59fe-a061-eea49d32a578",
+            "name": "Rename rule",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -184
+                ],
+                "size_delta": [
+                  880,
+                  2
+                ]
+              },
+              "Image": {
+                "color": [
+                  0.81,
+                  0.65,
+                  0.36,
+                  1
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "91f7483a-4602-5add-a9a6-84921ee48e8c",
+            "name": "Rename title",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -143
+                ],
+                "size_delta": [
+                  800,
+                  38
+                ]
+              },
+              "Text": {
+                "text": "编辑名称 / 任务公告",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 26,
+                "color": [
+                  0.81,
+                  0.65,
+                  0.36,
+                  1
+                ],
+                "alignment": "Left",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "8dd683bc-a3a7-5fd6-a8b6-79c892531c57",
+            "name": "Rename hint",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -96
+                ],
+                "size_delta": [
+                  800,
+                  32
+                ]
+              },
+              "Text": {
+                "text": "点击输入框，使用键盘或输入法编辑；点击保存应用到地图。",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 17,
+                "color": [
+                  0.48,
+                  0.61,
+                  0.65,
+                  1
+                ],
+                "alignment": "Left",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "2e7a1dfc-1405-53cc-a00c-87d69a0c32c5",
+            "name": "Rename input",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -28
+                ],
+                "size_delta": [
+                  800,
+                  64
+                ]
+              },
+              "InputField": {
+                "text": "",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 22,
+                "character_limit": 120,
+                "multiline": false,
+                "interactable": true,
+                "background_color": [
+                  0.06,
+                  0.1,
+                  0.14,
+                  1
+                ],
+                "text_color": [
+                  0.84,
+                  0.9,
+                  0.91,
+                  1
+                ]
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "bdfdc7ec-bf54-53a3-aafa-461248e4612f",
+        "name": "UI RenameDialog / Controls",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "9147a04e-5571-5906-a65f-92f743b08c32",
+            "name": "UI Control renameClear",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  -270,
+                  65
+                ],
+                "size_delta": [
+                  220,
+                  44
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "01eab269-f192-5a60-ad30-313f12513e53",
+                "name": "renameClear border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      2,
+                      2
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.3,
+                      0.24,
+                      0.13,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "0545478c-547b-5ce3-acdf-14e26205afd7",
+                "name": "renameClear box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/Panel.mmat",
+                    "color": [
+                      0.2,
+                      0.17,
+                      0.11,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "4c3f6336-1465-52dd-a65b-a082451d25f3",
+                "name": "renameClear label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -30,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "清空",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 16,
+                    "color": [
+                      0.84,
+                      0.9,
+                      0.91,
+                      1
+                    ],
+                    "alignment": "Left",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "90b008fa-5473-553c-a0d1-fa97fc46c0d5",
+            "name": "UI Control renameSave",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  65
+                ],
+                "size_delta": [
+                  220,
+                  44
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "53f2ea14-618f-5517-a9d7-e56780b133b9",
+                "name": "renameSave border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      2,
+                      2
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.3,
+                      0.24,
+                      0.13,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "ccba5088-ed5f-57e3-a7b6-e449357fa0a3",
+                "name": "renameSave box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/Panel.mmat",
+                    "color": [
+                      0.2,
+                      0.17,
+                      0.11,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "b0f641ad-c62d-55a8-a862-cb1f8d3e5a85",
+                "name": "renameSave label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -30,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "保存",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 16,
+                    "color": [
+                      0.84,
+                      0.9,
+                      0.91,
+                      1
+                    ],
+                    "alignment": "Left",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "7fa8e07c-f7c0-5bcf-a50d-5e9c1e92cca8",
+            "name": "UI Control renameCancel",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  270,
+                  65
+                ],
+                "size_delta": [
+                  220,
+                  44
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "9d52e2d4-99d5-5fd8-aedf-3f409a839b20",
+                "name": "renameCancel border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      2,
+                      2
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.3,
+                      0.24,
+                      0.13,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "73908b47-1452-5783-a904-b096689545d2",
+                "name": "renameCancel box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/Panel.mmat",
+                    "color": [
+                      0.2,
+                      0.17,
+                      0.11,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "1f3edc2b-4849-5888-ab31-e69250eead10",
+                "name": "renameCancel label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -30,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "取消",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 16,
+                    "color": [
+                      0.84,
+                      0.9,
+                      0.91,
+                      1
+                    ],
+                    "alignment": "Left",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

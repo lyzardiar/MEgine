@@ -1,0 +1,479 @@
+{
+  "version": 2,
+  "name": "QuitDialog",
+  "root": {
+    "id": "1a284f35-6541-507f-a008-b55312c588ae",
+    "name": "UI QuitDialog",
+    "active": false,
+    "tag": "Untagged",
+    "layer": 0,
+    "components": {
+      "RectTransform": {
+        "anchor_min": [
+          0,
+          0
+        ],
+        "anchor_max": [
+          1,
+          1
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "anchored_position": [
+          0,
+          0
+        ],
+        "size_delta": [
+          0,
+          0
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "ff571cda-7152-5f14-a779-fec32cb41273",
+        "name": "UI QuitDialog / Presentation",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "ddf3c1cb-f716-532f-af63-6cbfdff23dd4",
+            "name": "Quit text",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -30
+                ],
+                "size_delta": [
+                  850,
+                  120
+                ]
+              },
+              "Text": {
+                "text": "是否退出游戏？",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 30,
+                "color": [
+                  0.81,
+                  0.65,
+                  0.36,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "d0ba77c6-a498-54fa-a8f7-37b033a2eb54",
+        "name": "UI QuitDialog / Controls",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "745310ed-726b-5003-a9f2-ad5a9488269b",
+            "name": "UI Control quitConfirm",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  -166,
+                  150
+                ],
+                "size_delta": [
+                  270,
+                  42
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "2370304b-b972-5f8b-ad1f-086c8a1b8397",
+                "name": "quitConfirm border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "b078af5d-cc89-5fc3-afb1-b618fe30a45e",
+                "name": "quitConfirm box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "9a06eceb-3443-50b3-aef9-dbb07663cd11",
+                "name": "quitConfirm label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "退出",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "9c80d8b4-630b-57b3-a36e-3d36fb3ae49a",
+            "name": "UI Control quitCancel",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  166,
+                  150
+                ],
+                "size_delta": [
+                  270,
+                  42
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "4f3b035f-b920-5a13-a3a0-00f0d064846c",
+                "name": "quitCancel border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "2adaae75-43ee-59df-aada-28e6bf42bffd",
+                "name": "quitCancel box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "96c8a4bb-d3b9-5c10-adec-3b05de755fe2",
+                "name": "quitCancel label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "取消",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,4 +1,6 @@
 // Author: MiYu. Simulate native command commits and name queries between script ticks.
+import {createRequire} from 'node:module';
+const UI=createRequire(import.meta.url)('../samples/frostbound-realms/game/ui-manager.js');
 export function clientWorldFixture(source,normalize=false){
   const snapshot=structuredClone(source),names=new Map(snapshot.entities.map(e=>[e.name,e])),ids=new Map(snapshot.entities.map(e=>[e.entity,e])),commands=[],values=new Map(),active=new Map(snapshot.entities.map(e=>[e.entity,e.active!==false]));
   let next=Math.max(...snapshot.entities.map(e=>e.entity))+1,queries=0;
@@ -19,5 +21,12 @@ export function clientWorldFixture(source,normalize=false){
     // A 10 Hz simulation step also presents two frames with no simulation time; pooled nodes acknowledge deferred native creation.
     if(deltaTime>=.08)for(let i=0;i<2;i++){engine.input={...engine.input,pressedKeys:[],pressedButtons:[],releasedButtons:[]};tick(0);commit();}
   }
-  return {engine,snapshot,values,active,commit,render,entity:name=>names.get(name),queries:()=>queries};
+  function visible(name){for(let e=names.get(name);e;e=ids.get(e.parent))if(e.active===false)return false;return names.has(name);}
+  function canvasRect(name){
+    const e=names.get(name),identity={anchor_min:[0,0],anchor_max:[1,1],pivot:[.5,.5],anchored_position:[0,0],size_delta:[0,0]};
+    if(!e||e.components.Canvas)return identity;
+    const parent=ids.get(e.parent),rect=parent?canvasRect(parent.name):identity;
+    return e.components.RectTransform?UI.compose(rect,e.components.RectTransform):rect;
+  }
+  return {engine,snapshot,values,active,commit,render,visible,canvasRect,entity:name=>names.get(name),queries:()=>queries};
 }

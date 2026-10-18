@@ -1,0 +1,1067 @@
+{
+  "version": 2,
+  "name": "SinglePlayer",
+  "root": {
+    "id": "3aef08d8-8929-584e-a38c-82f5324aece9",
+    "name": "UI SinglePlayer",
+    "active": false,
+    "tag": "Untagged",
+    "layer": 0,
+    "components": {
+      "RectTransform": {
+        "anchor_min": [
+          0,
+          0
+        ],
+        "anchor_max": [
+          1,
+          1
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "anchored_position": [
+          0,
+          0
+        ],
+        "size_delta": [
+          0,
+          0
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "bdffdd72-3c09-55f8-aade-6f3ff1a2c00b",
+        "name": "UI SinglePlayer / Presentation",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "00ba14c2-1434-56a2-abd8-c2db738001cb",
+            "name": "Solo backing",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  450,
+                  -30
+                ],
+                "size_delta": [
+                  316,
+                  358
+                ]
+              },
+              "Image": {
+                "material": "Assets/Materials/ClassicPanel.mmat",
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "10bac4bf-3b85-5c42-a0ec-21989d1c9c3d",
+            "name": "Solo frame",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  450,
+                  -30
+                ],
+                "size_delta": [
+                  330,
+                  372
+                ]
+              },
+              "Image": {
+                "sprite": "Assets/Art/classic-iron-frame.png",
+                "image_type": "Sliced",
+                "border": [
+                  250,
+                  250,
+                  250,
+                  250
+                ],
+                "source_size": [
+                  1254,
+                  1254
+                ],
+                "pixels_per_unit_multiplier": 9,
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "d857abf5-6c27-5ed9-afa1-02992d450476",
+            "name": "Solo title",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  450,
+                  -172
+                ],
+                "size_delta": [
+                  290,
+                  36
+                ]
+              },
+              "Text": {
+                "text": "单人游戏",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 23,
+                "color": [
+                  0.81,
+                  0.65,
+                  0.36,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "41cdc95d-e9a0-5b14-a004-76755054c495",
+        "name": "UI SinglePlayer / Controls",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "c54812e4-dd93-5809-a09b-56153808ec98",
+            "name": "UI Control rpg",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  450,
+                  -113
+                ],
+                "size_delta": [
+                  270,
+                  40
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "57b87d09-88b7-562e-aa2f-66f7eb5850e3",
+                "name": "rpg border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "a45ad4cb-fdd9-589a-aa80-8a56d5d6134b",
+                "name": "rpg box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "2f32b67c-6547-54b5-a9d9-591113a3d74e",
+                "name": "rpg label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "战役",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "3c0d4654-ae3a-5cd3-ae7f-63804b3aac67",
+            "name": "UI Control custom",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  450,
+                  -55
+                ],
+                "size_delta": [
+                  270,
+                  40
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "e14cb2fc-70ba-5456-a064-0359088aba65",
+                "name": "custom border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "e62318f2-f2fc-5e71-ab54-e5b785df8fc9",
+                "name": "custom box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "e2ed007e-62ca-5adc-ab48-fb11da884ecd",
+                "name": "custom label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "自定义游戏",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "226a5934-22c9-5d57-a163-2da5589b6f18",
+            "name": "UI Control continue",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  450,
+                  3
+                ],
+                "size_delta": [
+                  270,
+                  40
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "7a9b55cf-c709-5306-a667-cf6082798c14",
+                "name": "continue border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "fffac728-083a-5180-a7b8-5f2939412980",
+                "name": "continue box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "78eac045-128c-54c2-a4f6-5ab1a5323632",
+                "name": "continue label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "载入游戏",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "c5a02b2e-1d7b-55a3-ace5-6d69d390b880",
+            "name": "UI Control editor",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  450,
+                  61
+                ],
+                "size_delta": [
+                  270,
+                  40
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "fc8cd6f3-a7ec-510b-a885-0ae8c0ca794d",
+                "name": "editor border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "c3c73fe5-2613-5fe6-a060-98fb77a18646",
+                "name": "editor box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "da1c42ad-1d5e-5cf9-ad0c-528623b32246",
+                "name": "editor label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "地图编辑器",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "eba5a513-4b47-595f-a4b8-fdee4bd0faae",
+            "name": "UI Control soloBack",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  450,
+                  119
+                ],
+                "size_delta": [
+                  270,
+                  40
+                ]
+              }
+            },
+            "children": [
+              {
+                "id": "59b30994-a685-5f57-a08b-0734bda6c531",
+                "name": "soloBack border",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      4,
+                      4
+                    ]
+                  },
+                  "Image": {
+                    "color": [
+                      0.035,
+                      0.043,
+                      0.057,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "61cac69f-0d40-5238-a178-f954648708b5",
+                "name": "soloBack box",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      0,
+                      0
+                    ]
+                  },
+                  "Image": {
+                    "material": "Assets/Materials/ClassicButton.mmat",
+                    "color": [
+                      1,
+                      1,
+                      1,
+                      1
+                    ],
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              },
+              {
+                "id": "eea7ca48-defa-5b74-a879-dce55c8cd4f9",
+                "name": "soloBack label",
+                "active": true,
+                "tag": "Untagged",
+                "layer": 0,
+                "components": {
+                  "RectTransform": {
+                    "anchor_min": [
+                      0,
+                      0
+                    ],
+                    "anchor_max": [
+                      1,
+                      1
+                    ],
+                    "pivot": [
+                      0.5,
+                      0.5
+                    ],
+                    "anchored_position": [
+                      0,
+                      0
+                    ],
+                    "size_delta": [
+                      -12,
+                      0
+                    ]
+                  },
+                  "Text": {
+                    "text": "返回",
+                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font_size": 20,
+                    "color": [
+                      0.92,
+                      0.79,
+                      0.45,
+                      1
+                    ],
+                    "alignment": "Center",
+                    "vertical_align": "Middle",
+                    "horizontal_overflow": "Overflow",
+                    "vertical_overflow": "Overflow",
+                    "raycast_target": false
+                  }
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

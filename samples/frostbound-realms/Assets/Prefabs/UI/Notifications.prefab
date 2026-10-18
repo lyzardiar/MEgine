@@ -1,0 +1,214 @@
+{
+  "version": 2,
+  "name": "Notifications",
+  "root": {
+    "id": "7887f8ee-18b2-5c2f-afce-85458280f932",
+    "name": "UI Notifications",
+    "active": true,
+    "tag": "Untagged",
+    "layer": 0,
+    "components": {
+      "RectTransform": {
+        "anchor_min": [
+          0,
+          0
+        ],
+        "anchor_max": [
+          1,
+          1
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "anchored_position": [
+          0,
+          0
+        ],
+        "size_delta": [
+          0,
+          0
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "811921ba-f2cb-5400-a8e8-feff5b9aa4f7",
+        "name": "UI Notifications / Presentation",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "603fbb51-182d-5c9a-a497-adcbf17821da",
+            "name": "Status",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  1
+                ],
+                "anchor_max": [
+                  0.5,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  -225
+                ],
+                "size_delta": [
+                  1150,
+                  25
+                ]
+              },
+              "Text": {
+                "text": "",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 14,
+                "color": [
+                  0.81,
+                  0.65,
+                  0.36,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "852c5525-af64-5ccd-a188-b73f0b270c93",
+            "name": "Controls",
+            "active": false,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  1
+                ],
+                "anchor_max": [
+                  0.5,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  60,
+                  -10
+                ],
+                "size_delta": [
+                  400,
+                  16
+                ]
+              },
+              "Text": {
+                "text": "",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 10,
+                "color": [
+                  0.48,
+                  0.61,
+                  0.65,
+                  1
+                ],
+                "alignment": "Right",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "0cee3842-a502-5b54-a04b-a572cb482061",
+            "name": "Frost telemetry",
+            "active": false,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  5000,
+                  5000
+                ],
+                "size_delta": [
+                  1,
+                  1
+                ]
+              },
+              "Text": {
+                "text": "{}",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 1,
+                "color": [
+                  0.84,
+                  0.9,
+                  0.91,
+                  1
+                ],
+                "alignment": "Left",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}

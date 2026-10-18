@@ -1,0 +1,208 @@
+{
+  "version": 2,
+  "name": "MenuBrand",
+  "root": {
+    "id": "42cbce04-6460-5072-abe1-76d4d2e21ed1",
+    "name": "UI MenuBrand",
+    "active": true,
+    "tag": "Untagged",
+    "layer": 0,
+    "components": {
+      "RectTransform": {
+        "anchor_min": [
+          0,
+          0
+        ],
+        "anchor_max": [
+          1,
+          1
+        ],
+        "pivot": [
+          0.5,
+          0.5
+        ],
+        "anchored_position": [
+          0,
+          0
+        ],
+        "size_delta": [
+          0,
+          0
+        ]
+      }
+    },
+    "children": [
+      {
+        "id": "39dcaa86-e098-57bc-a0dc-bfe18814a7c9",
+        "name": "UI MenuBrand / Presentation",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "d02f9497-56ef-59ef-a18f-3d0262c1d3bc",
+            "name": "Menu logo",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  -388,
+                  -270
+                ],
+                "size_delta": [
+                  460,
+                  160
+                ]
+              },
+              "Image": {
+                "sprite": "Assets/Art/classic-title-logo.png",
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "a2d87bc8-5a7f-5983-a403-1489f6b22ba6",
+            "name": "Menu subtitle",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  -388,
+                  -182
+                ],
+                "size_delta": [
+                  450,
+                  34
+                ]
+              },
+              "Text": {
+                "text": "THE FROZEN THRONE",
+                "font": "Assets/Fonts/Cinzel.ttf",
+                "font_size": 19,
+                "color": [
+                  0.59,
+                  0.74,
+                  0.83,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "58b00a3c-32ae-5945-afd6-089300eb8b8b",
+            "name": "Menu subtitle cn",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  -388,
+                  -148
+                ],
+                "size_delta": [
+                  450,
+                  30
+                ]
+              },
+              "Text": {
+                "text": "冰 封 王 座",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 22,
+                "color": [
+                  0.79,
+                  0.84,
+                  0.85,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}
