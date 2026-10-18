@@ -1,0 +1,29 @@
+{
+  "author": "MiYu",
+  "gameDirectory": "E:\\Program Files (x86)\\dzclient\\Game\\Warcraft III Frozen Throne",
+  "generator": "scripts/import-frost-combat-rewards.py",
+  "sources": [
+    {
+      "path": "Units/UnitBalance.slk",
+      "archive": "War3Patch.mpq",
+      "bytes": 616820,
+      "sha256": "ab1a8cfbebcb2abe68535b170117730726249c5fafef15c13695400d4b0a3327"
+    },
+    {
+      "path": "Units/MiscGame.txt",
+      "archive": "War3Patch.mpq",
+      "bytes": 6145,
+      "sha256": "2228cf869991d6ec5133e6115c3457903c2f0da9f0d70acc3d2518fe91e5f5bf"
+    },
+    {
+      "path": "Scripts/common.j",
+      "archive": "War3Patch.mpq",
+      "bytes": 166690,
+      "sha256": "9cb04da1c75dd30025d96fec12b4302c2f6a1f1a8c864b66d6cf52c65ecde924"
+    }
+  ],
+  "profileSha256": "ca6d040ef80397af8032fc075fa8d130b8238129dff4d59ae07000fed398497f",
+  "miscSource": "paladin-rules.json: misc",
+  "reaEvidence": "docs/designs/frostbound-realms/rea/rewards-mcp-field-loader.json",
+  "license": "Blizzard Entertainment original game terms; extraction does not grant redistribution rights"
+}

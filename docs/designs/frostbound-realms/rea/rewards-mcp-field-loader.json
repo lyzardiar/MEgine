@@ -1,0 +1,69 @@
+{
+  "evidence_id": "ev_5285948840de412c882de62eec227583d1caa8a08ebdca0ec7b3a60764c3922e",
+  "subject": {
+    "name": "Game.dll",
+    "digest": {
+      "sha256": "e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a"
+    },
+    "local_path": "E:\\Program Files (x86)\\dzclient\\Game\\Warcraft III Frozen Throne\\Game.dll",
+    "format": "unknown",
+    "architecture": null
+  },
+  "provider": {
+    "id": "rizin",
+    "name": "Rizin",
+    "version": null
+  },
+  "analysis_profile": null,
+  "predicate_type": "rea.reverse-engineering.command-observation",
+  "operation": "execute_rizin_command",
+  "parameters": {
+    "path": "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Game.dll",
+    "command": "e scr.color=0;pd 44 @ 0x6f693492",
+    "provider_executable": "G:\\work\\github\\MEgine\\third_party\\rea\\tools\\rizin-0.8.1\\rizin-win-installer-clang_cl-64\\bin\\rizin.exe",
+    "command_arguments": [
+      "-N",
+      "-q",
+      "-c",
+      "e scr.color=0;pd 44 @ 0x6f693492",
+      "E:\\Program Files (x86)\\dzclient\\Game\\Warcraft III Frozen Throne\\Game.dll"
+    ]
+  },
+  "raw_result": {
+    "stdout": "            0x6f693492      push  str.bountydice                       ; 0x6fa4e098 ; \"bountydice\"\r\n            0x6f693497      lea   eax, [esi + 0x224]\r\n            0x6f69349d      mov   ecx, esi\r\n            0x6f69349f      push  eax\r\n            0x6f6934a0      push  edi\r\n            0x6f6934a1      call  0x6f689500\r\n            0x6f6934a6      push  str.bountysides                      ; 0x6fa4e0a4 ; \"bountysides\"\r\n            0x6f6934ab      lea   eax, [esi + 0x230]\r\n            0x6f6934b1      mov   ecx, esi\r\n            0x6f6934b3      push  eax\r\n            0x6f6934b4      push  edi\r\n            0x6f6934b5      call  0x6f689500\r\n            0x6f6934ba      push  str.bountyplus                       ; 0x6fa4e0b0 ; \"bountyplus\"\r\n            0x6f6934bf      lea   eax, [esi + 0x23c]\r\n            0x6f6934c5      mov   ecx, esi\r\n            0x6f6934c7      push  eax\r\n            0x6f6934c8      push  edi\r\n            0x6f6934c9      call  0x6f689500\r\n            0x6f6934ce      push  str.lumberbountydice                 ; 0x6fa4e0bc ; \"lumberbountydice\"\r\n            0x6f6934d3      lea   eax, [esi + 0x248]\r\n            0x6f6934d9      mov   ecx, esi\r\n            0x6f6934db      push  eax\r\n            0x6f6934dc      push  edi\r\n            0x6f6934dd      call  0x6f689500\r\n            0x6f6934e2      push  str.lumberbountysides                ; 0x6fa4e0d0 ; \"lumberbountysides\"\r\n            0x6f6934e7      lea   eax, [esi + 0x254]\r\n            0x6f6934ed      mov   ecx, esi\r\n            0x6f6934ef      push  eax\r\n            0x6f6934f0      push  edi\r\n            0x6f6934f1      call  0x6f689500\r\n            0x6f6934f6      push  str.lumberbountyplus                 ; 0x6fa4e0e4 ; \"lumberbountyplus\"\r\n            0x6f6934fb      lea   eax, [esi + 0x260]\r\n            0x6f693501      mov   ecx, esi\r\n            0x6f693503      push  eax\r\n            0x6f693504      push  edi\r\n            0x6f693505      call  0x6f689500\r\n            0x6f69350a      push  0x6fa4af54\r\n            0x6f69350f      lea   eax, [esi + 0x26c]\r\n            0x6f693515      mov   ecx, esi\r\n            0x6f693517      push  eax\r\n            0x6f693518      push  edi\r\n            0x6f693519      call  0x6f689500\r\n            0x6f69351e      push  str.regenHP                          ; 0x6fa4af8c ; \"regenHP\"\r\n            0x6f693523      lea   eax, [esi + 0x278]\r\n",
+    "stderr": "",
+    "exit_code": 0,
+    "signal": null,
+    "output_truncated": false,
+    "completion_status": "complete",
+    "artifact_sha256_after": "e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a",
+    "artifact_changed": false
+  },
+  "normalized_result": {
+    "stdout": "            0x6f693492      push  str.bountydice                       ; 0x6fa4e098 ; \"bountydice\"\r\n            0x6f693497      lea   eax, [esi + 0x224]\r\n            0x6f69349d      mov   ecx, esi\r\n            0x6f69349f      push  eax\r\n            0x6f6934a0      push  edi\r\n            0x6f6934a1      call  0x6f689500\r\n            0x6f6934a6      push  str.bountysides                      ; 0x6fa4e0a4 ; \"bountysides\"\r\n            0x6f6934ab      lea   eax, [esi + 0x230]\r\n            0x6f6934b1      mov   ecx, esi\r\n            0x6f6934b3      push  eax\r\n            0x6f6934b4      push  edi\r\n            0x6f6934b5      call  0x6f689500\r\n            0x6f6934ba      push  str.bountyplus                       ; 0x6fa4e0b0 ; \"bountyplus\"\r\n            0x6f6934bf      lea   eax, [esi + 0x23c]\r\n            0x6f6934c5      mov   ecx, esi\r\n            0x6f6934c7      push  eax\r\n            0x6f6934c8      push  edi\r\n            0x6f6934c9      call  0x6f689500\r\n            0x6f6934ce      push  str.lumberbountydice                 ; 0x6fa4e0bc ; \"lumberbountydice\"\r\n            0x6f6934d3      lea   eax, [esi + 0x248]\r\n            0x6f6934d9      mov   ecx, esi\r\n            0x6f6934db      push  eax\r\n            0x6f6934dc      push  edi\r\n            0x6f6934dd      call  0x6f689500\r\n            0x6f6934e2      push  str.lumberbountysides                ; 0x6fa4e0d0 ; \"lumberbountysides\"\r\n            0x6f6934e7      lea   eax, [esi + 0x254]\r\n            0x6f6934ed      mov   ecx, esi\r\n            0x6f6934ef      push  eax\r\n            0x6f6934f0      push  edi\r\n            0x6f6934f1      call  0x6f689500\r\n            0x6f6934f6      push  str.lumberbountyplus                 ; 0x6fa4e0e4 ; \"lumberbountyplus\"\r\n            0x6f6934fb      lea   eax, [esi + 0x260]\r\n            0x6f693501      mov   ecx, esi\r\n            0x6f693503      push  eax\r\n            0x6f693504      push  edi\r\n            0x6f693505      call  0x6f689500\r\n            0x6f69350a      push  0x6fa4af54\r\n            0x6f69350f      lea   eax, [esi + 0x26c]\r\n            0x6f693515      mov   ecx, esi\r\n            0x6f693517      push  eax\r\n            0x6f693518      push  edi\r\n            0x6f693519      call  0x6f689500\r\n            0x6f69351e      push  str.regenHP                          ; 0x6fa4af8c ; \"regenHP\"\r\n            0x6f693523      lea   eax, [esi + 0x278]\r\n",
+    "stderr": "",
+    "exit_code": 0,
+    "signal": null,
+    "output_truncated": false,
+    "completion_status": "complete",
+    "artifact_sha256_after": "e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a",
+    "artifact_changed": false
+  },
+  "confidence": "observed",
+  "authority": "shipped-artifact",
+  "environment": null,
+  "limitations": [
+    "The executable version and supported formats are reported as unknown because no reliable version probe was performed.",
+    "A non-zero process exit is preserved as an observed command result.",
+    "Rizin commands and retained plugins may read files or access network resources outside the selected artifact; those external inputs are not bound to Evidence.",
+    "When both are available, pre-run and post-run digests detect artifact changes across the provider call but cannot prove the exact bytes consumed during the call."
+  ],
+  "relationship_coverage": null,
+  "locations": [
+    {
+      "kind": "artifact-path",
+      "path": "E:\\Program Files (x86)\\dzclient\\Game\\Warcraft III Frozen Throne\\Game.dll"
+    }
+  ],
+  "evidence_links": []
+}

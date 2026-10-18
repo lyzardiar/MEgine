@@ -138,6 +138,8 @@ node samples/frostbound-realms/server.mjs --host 0.0.0.0 --port 7788
 
 ## 验证与修改
 
+新建遭遇战已依据原版数据完善击杀奖励：普通玩家单位击杀不再产生固定金币，英雄经验采用原版等级表、1200 源单位范围、野怪衰减和召唤物系数；旧存档保留原结算。REA 证据、规则边界和验证入口见 [战斗奖励对照](../../docs/designs/frostbound-realms/rea/README.md)。
+
 ```powershell
 node scripts/test-frostbound.mjs
 cargo test -p mengine-script storage --lib

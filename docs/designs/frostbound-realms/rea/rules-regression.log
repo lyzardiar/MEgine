@@ -1,0 +1,63 @@
+PASS combat rewards: retained source hashes and actual original unit levels
+PASS combat rewards: player unit kills grant original experience without melee gold income
+PASS combat rewards: neutral experience reduction at hero level 1
+PASS combat rewards: neutral experience reduction at hero level 2
+PASS combat rewards: neutral experience reduction at hero level 3
+PASS combat rewards: neutral experience reduction at hero level 4
+PASS combat rewards: neutral experience reduction at hero level 5
+PASS combat rewards: global experience is used only when no living hero is inside the original range
+PASS combat rewards: building kills give no experience and leave player bounty disabled
+PASS combat rewards: saved RNG and pending lethal attack continue identically
+PASS combat rewards: old saves preserve fixed rewards and malformed versions fail
+PASS combat rewards checks: 11
+PASS MOBA 36 objectives, protected real damage, lane/T4/ancient progression, future-only lane and mega buffs, fog-safe manifest, 120 restore ticks, invalid-save rejection, legacy layout and objective models
+PASS generated MOBA objective selection, protected/read-only UI, fixed faction models, global progress and quicksave/load
+PASS generated route editor: selection/move/insert/delete/reverse, validation rollback, single-click insertion, undo, save/load, 2/32 limits, numbered segment preview, play/return, blocked entrance feedback and edited-map hosting
+{"author":"MiYu","passed":true,"actualMovementTicks":161,"monsters":[{"kind":"ghoul","hp":123,"speed":3,"bounty":31,"lives":2,"boss":false},{"kind":"ghoul","hp":123,"speed":3,"bounty":31,"lives":2,"boss":false},{"kind":"abomination","hp":600,"speed":2,"bounty":100,"lives":5,"boss":true},{"kind":"bonearcher","hp":99,"speed":4,"bounty":17,"lives":1,"boss":false},{"kind":"bonearcher","hp":99,"speed":4,"bounty":17,"lives":1,"boss":false}],"remainingLives":9,"checks":["map schema limits and sparse data","deep map ownership","legacy formula","typed groups and per-wave timing","actual complete custom route","deterministic mid-queue save/load","invalid saved rewards and queues","legacy save defaults","last leak defeat precedence","real tower kill bounty exactly once","unit capacity defers wave","shipped 12-wave roster","entrance fits largest authored monster"]}
+PASS generated wave editor: actual grid clicks, 8 fields, group/wave operations, legacy 30-wave migration, bounds, rollback, undo/save/load/play, native mesh selection and hosting
+{"author":"MiYu","passed":true,"checks":["all five modes select actual projectile target","new tower first default","manual attack priority","mode switch clears manual attack","hidden and out-of-range filtering","stable id tie","group selection and zero cost","invalid mixed selection atomic","enemy and unfinished tower rejection","80-tick save/load combat equality","public state persistence","legacy nearest migration","invalid save rejection","enemy authored tower restore","non-TD command rejected"]}
+PASS generated target priority: physical selection and command-grid coordinates, five-mode G cycle, current mode label, quicksave/load persistence
+{"author":"MiYu","passed":true,"scope":"Recorded legal commands on the unmodified shipped map; terminal defeat, not a winning strategy or balance acceptance.","mapSha256":"3070596db5d206d3ffbeaf0977cc20134381189026505083783de55ca75c9e64","legalCommands":41,"restoredAtFrame":1200,"comparedTicks":1333,"frame":2533,"winner":1,"wave":12,"lives":0,"kills":170,"remainingMonsters":30,"history":[{"frame":120,"wave":1,"lives":20,"kills":0},{"frame":300,"wave":2,"lives":20,"kills":7},{"frame":480,"wave":3,"lives":20,"kills":16},{"frame":660,"wave":4,"lives":20,"kills":22},{"frame":840,"wave":5,"lives":20,"kills":34},{"frame":1020,"wave":6,"lives":20,"kills":44},{"frame":1200,"wave":7,"lives":20,"kills":57},{"frame":1380,"wave":8,"lives":20,"kills":75},{"frame":1560,"wave":9,"lives":20,"kills":86},{"frame":1740,"wave":10,"lives":20,"kills":100},{"frame":1920,"wave":11,"lives":20,"kills":116},{"frame":2100,"wave":12,"lives":10,"kills":142}]}
+PASS human technology: source 150/100/45 Defend, 75/125/30 Long Rifles and 125/175/40 Animal Training; Keep/three-building Castle gates, shared paid queues/full clocks, refunds/duplicates, range 600, existing/new Knight HP 985 and Defend toggles retain orders
+PASS Defend combat: actual instant piercing reflection/reduction, buildings never reflected, unchanged normal damage, returning projectile travel/team/target, deterministic mid-return save and original Stand/Walk/Attack Defend clips
+PASS original upgraded Night Archer reflection: weapon/source levels retained, independent human ownership, arc reset/public team, deterministic returning save, moving/dead targets, dead reflector and invalid ownership rejection
+PASS original stationary Serpent Ward reflection: source rank/arc preserved, deterministic returning save, human impact ownership and piercing return damage
+PASS human technology saves: source ranks/keys/version/queue time/duplicates, unresearched Defend and foreign unit upgrades rejected; pre-technology human saves retain version 0
+PASS original Blacksmith: four three-rank source research paths, 60/75/90 clocks, paid queues/refunds/duplicates, Keep/Castle gates, existing/new unit damage dice and +2/+4/+6 armor
+PASS Blacksmith save authority: exact rank keys/stats/unit snapshots, sequential ranks/full waiting clocks, old version-0 saves and enemy ownership rejection
+PASS actual upgraded combat: source extra attack dice raise final armor-adjusted damage
+PASS generated Blacksmith: source Chinese rank names/slots/24 icon references, S/P/A/G paid queue conflict handling, real menu save/load/full initial clocks, armor display data and next-rank Keep locked/enabled art
+PASS source Workshop: completed Keep/Blacksmith construction gates, 140/140/60s source cost/stats, 75% construction refund, Mortar-only three-slot 180/70/3/32s paid training/refunds, complete clocks/deterministic reload, strict source identity and legacy generic workshop
+PASS Mortar dual weapons: full 1s windup, 52-64 source dice/siege damage, source launch/arc, 2.5 minimum range/no air, fixed artillery landing with friendly splash, moving structure-tracking missile without splash, deterministic in-flight save
+PASS Mortar target categories: stationary Serpent Wards and Phoenix Eggs remain artillery targets; actual ward impact retains nearby ground splash
+PASS Mortar equipment and terrain orders: original hmtm Rhra extra d13/Rhla +2 armor for existing/new squads, source regen/no mana, frozen projectile ranks, visible-tree artillery without Vorpal research and bounded ground orders
+PASS Flare: original 50/50/30s Keep research, shared deduplicated paid/refundable queue, zero-mana global placement, 0.8s pending delay/15s reveal and invisibility detection/120s cooldown, caster-independent expiry, strict pending save and private enemy world/cooldown/research
+PASS Mortar corpse identity: original hmtm decay classification supports actual Paladin Resurrection and Death Knight Animate Dead with source stats and strict saved continuation
+PASS generated Workshop/Mortar: original M/R/F/G source slots/icons, no Stop overwrite, Keep lock, shared paid source training/research clocks, actual F5/menu reload, original MortarTeam/model and ground-attack MortarMissile mesh/particle effects, delayed Flare/cooldown preserved
+PASS presentation pools: compact scene, deferred Unit/Missile/environment creation, exact model part counts, grouped parents, grow/shrink/hide/reuse and discarded-command recovery
+PASS map catalog: all shipped JSON files match bundle, menu and default single-player consume configuration, all modes load and runtime maps remain independent
+PASS generated human technology: original bottom-row research icons/locks, D/L/A paid queues without Attack orders, actual menu save/load, completed range/HP, D/Stop Defend source icons/Stand mesh and saved toggle
+PASS human Barracks: source roster/stats/costs/food, full 20/26/40-second queue, tier-1 riflemen, completed friendly Blacksmith/Lumber Mill/Castle gates, refunds and deterministic mid-queue saves
+PASS human building and save rules: source construction price/timer/armor and cancellation, faction restriction, source metadata/time rejection, legacy roster and in-flight legacy production preserved
+PASS source human combat: 0.17-second instant rifle windup, deterministic source damage dice/armor table, ground/air targets, 0.25 health regeneration and no mana
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Blacksmith/. Input:
+
+''
+
+    at file:///G:/work/github/MEgine/scripts/test-frost-human-army-client.mjs:14:150
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '',
+  expected: /Blacksmith/,
+  operator: 'match',
+  diff: 'simple'
+}
+
+Node.js v24.18.0

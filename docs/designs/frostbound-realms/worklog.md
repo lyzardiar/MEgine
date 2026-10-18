@@ -1,5 +1,9 @@
 # 霜境战纪当前交接
 
+## 2026-10-18：REA 战斗奖励对照
+
+Author: MiYu。本轮目标目录为 `G:/work/github/MEgine/samples/frostbound-realms`，协议 96。REA 6.5.0 经 Rizin 0.8.1 的真实 MCP 静态分析确认本机原始 Game.dll 摘要与赏金字段读取；原版 MPQ 的 836 单位奖励数据和经验常量已接入新建遭遇战。完成玩家金币政策、原版经验范围/等级表、野怪衰减、召唤物及建筑处理、满级分摊和旧存档隔离。12 项新增规则、真实 TCP、14 个定向入口、三个原生战斗场景及当前引擎 Release 编译通过。全量入口仍在既有 Blacksmith 提示断言处停止，原始脚本可复现。来源、复现命令、原生画面、清理记录及边界见 [REA 战斗奖励交接](rea/README.md)。未修改原版游戏；REA 接入与奖励规则分别提交推送，其他无关文件保留。
+
 工作目录 C:/Users/admin/.codex/worktrees/1339/MEgine，分支 codex/frostbound-realms。原目录 G:/work/github/MEgine 未改动。施工阶段 651dab9 与地图事件阶段 cc6e66a 已推送；本文件随中文编辑阶段提交。完整复刻目标保持 active。
 
 2026-09-28 本阶段：World 实体写入维护 revision，WorldSnapshotCache 复用 Arc<EntitySnapshot>，每个 World 有唯一缓存身份。ScriptHost 和 PlaySession 使用不可变快照；原生 Play 返回变化实体、完整顺序、帧元数据及连续revision，前端重建全量状态；显式 Inspector/Agent 编辑强制全量校正。快照过滤重复 Name/Parent/Children 元数据，修复运行改名回滚。异步启动/停止串行且停止绑定原生会话；编译子进程有 30 秒超时和 kill_on_drop。组件序列化状态变更通过 World 写 API 或 get_component_mut，不能经只读引用内部修改。
