@@ -25,7 +25,7 @@ Author: MiYu
 
 Scene 显示使用最近完成且尺寸、显隐设置兼容的原生帧，直到新相机帧完成；图像、相机、命中区域共用同一帧数据。请求持续追赶最新视角，避免拖动期间清除整个模型画面。该通用引擎和编辑器实现已同步到 master，本次源代码优化位于游戏脚本。
 
-![运行态移动 Scene 时的真实模型画面](ground-binding-moving-scene.png)
+运行态移动 Scene 时的真实模型画面 (`ground-binding-moving-scene.png`)
 
 ## 验证
 
@@ -34,4 +34,4 @@ Scene 显示使用最近完成且尺寸、显隐设置兼容的原生帧，直�
 - ground-display、terrain、ground-detail、tilesets、minimap-client、ground-cache 六组回归通过；独立只读审核无阻断。
 - 使用 MENGINE_FROST_BUILD_OUTPUT 和 node scripts/build-frostbound.mjs 生成隔离 Main.js，核对精确字节。
 
-测试入口：`node scripts/test-frost-ground-bindings.mjs` 和 `node scripts/test-frost-ground-display.mjs 7a7a7ee`。EXE、脚本哈希、运行态模型和四次原始报告路径见 [验收记录](ground-binding-performance.json)。
+测试入口：`node scripts/test-frost-ground-bindings.mjs` 和 `node scripts/test-frost-ground-display.mjs 7a7a7ee`。EXE、脚本哈希、运行态模型和四次原始报告路径见 验收记录 (`ground-binding-performance.json`)。

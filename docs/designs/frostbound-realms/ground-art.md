@@ -12,10 +12,10 @@ Surface/UI Shader 支持六个自定义纹理，核心解析、材质实例、�
 
 ## 实际画面
 
-- 村庄：[更新前](ground-before-settlement.png)、[扫描材质](ground-settlement.png)
-- 河岸：[更新前](ground-before-river.png)、[扫描材质](ground-river.png)
-- 高地：[更新前](ground-before-highland.png)、[扫描材质](ground-highland.png)
-- [游戏中沿坡道登高](highland-ascent.png)
+- 村庄：更新前 (`ground-before-settlement.png`)、扫描材质 (`ground-settlement.png`)
+- 河岸：更新前 (`ground-before-river.png`)、扫描材质 (`ground-river.png`)
+- 高地：更新前 (`ground-before-highland.png`)、扫描材质 (`ground-highland.png`)
+- 游戏中沿坡道登高 (`highland-ascent.png`)
 
 截图来自原生 Release 编辑器。地表对比使用相同地图、相机和缩放；人物待机姿势随截图时刻变化。积雪与河岸仍是材质表现，没有微几何位移、实时流体或脚印交互；高地几何仍采用可编辑的分层网格。当前画面属于写实素材的 RTS 原型，尚未达到完整魔兽复刻或精细写实场景的完成标准。
 
@@ -28,7 +28,7 @@ Surface/UI Shader 支持六个自定义纹理，核心解析、材质实例、�
 - 同一高地近景的单次 5 秒窗口：更新前约 7.66 FPS / render 17.86 ms，更新后约 7.73 FPS / render 19.06 ms。这是局部测量，不能证明整体性能改善；5 ms 目标仍未达到。
 - Release 包共 538 文件、230,993,061 字节，内容哈希 `6200b02ad94467cb6bcef11e06e2bc5eacae85a16a1599b8ecfc9938a8614f45`。资源校验及独立 Player 30 秒启动响应检查通过，错误日志为 0。
 
-物理鼠标键盘、音频听感和跨机器局域网未由本阶段验证。结构化结果见 [素材检查](ground-import-qa.json)、[原生地表](native-ground-qa.json)、[地形交互](native-terrain-qa.json) 和 [阶段汇总](ground-art-qa.json)。
+物理鼠标键盘、音频听感和跨机器局域网未由本阶段验证。结构化结果见 素材检查 (`ground-import-qa.json`)、原生地表 (`native-ground-qa.json`)、地形交互 (`native-terrain-qa.json`) 和 阶段汇总 (`ground-art-qa.json`)。
 
 ## 复现
 

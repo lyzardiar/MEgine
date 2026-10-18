@@ -25,8 +25,8 @@ Scene/Game 绘制选定当前显示帧的相机后，创建一次 `createProject
 
 Edit/Play 移动空画面均为0；等待相机请求时拾取、父子变换和激活、真实 Footman GLB 点击、Warcraft 模型姿态、粒子/UI、GPU Canvas、相机预览、层级滚动、暂停/单步/停止重启和资源刷新通过。两次自有 QA 编辑器退出，临时材质及 meta 移除，隔离 Main.js 恢复并核对哈希。其他机器及多窗口/DPR 尚未验收。
 
-[完整验收记录](entity-center-projection-performance.json)
+完整验收记录 (`entity-center-projection-performance.json`)
 
-![移动中的 Scene](entity-center-moving.png)
+移动中的 Scene (`entity-center-moving.png`)
 
 Release 构建耗时 8分46秒，已有 `world_from_snapshot` 未使用警告。先运行 `npm.cmd --prefix packages/editor run build`，再运行 `cargo build --release -p mengine-editor-tauri --features custom-protocol`，以重新嵌入前端。

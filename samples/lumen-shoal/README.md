@@ -7,7 +7,7 @@
 > 说明：QoderWork 无法直接产出视频文件，本 sample 把「视频脚本」搬进了引擎——打开即自动播放这条
 > 分步演示，可用键盘交互，也可作为录制视频的底稿。
 
-![原生实机 · 电影级成色](../../docs/designs/lumen-shoal/stage-06.png)
+原生实机 · 电影级成色 (`../../docs/designs/lumen-shoal/stage-06.png`)
 
 ## 运行
 

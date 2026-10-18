@@ -22,4 +22,4 @@ node scripts/qa-frostbound.mjs --terrain-only
 
 原生验收使用带 `tauri/custom-protocol` 的独立 Release 编辑器和 Agent 输入。高地移动验收明确增加一名友方英雄用于登坡，默认对战开局保持现有规则。高度笔刷、撤销、地图保存读取和重复试玩属于本阶段验收。人工物理输入和音频聆听尚未验证。
 
-同机位截图：[之前](tile-before-ground-highland.png)、[之后](tile-after-ground-highland.png)。操作截图：[高度编辑](tile-after-highland-editor.png)、[沿坡道登高](tile-after-highland-ascent.png)。记录见 [阶段验证](terrain-tiles-validation.json)。基线通过 `--tile-baseline` 在独立样例副本中读取提交 `6f3c306` 的地形脚本及着色器；主工作区不回退。
+同机位截图：之前 (`tile-before-ground-highland.png`)、之后 (`tile-after-ground-highland.png`)。操作截图：高度编辑 (`tile-after-highland-editor.png`)、沿坡道登高 (`tile-after-highland-ascent.png`)。记录见 阶段验证 (`terrain-tiles-validation.json`)。基线通过 `--tile-baseline` 在独立样例副本中读取提交 `6f3c306` 的地形脚本及着色器；主工作区不回退。

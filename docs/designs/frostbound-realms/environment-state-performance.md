@@ -29,4 +29,4 @@ Author: MiYu
 
 生成：设置 `MENGINE_FROST_BUILD_OUTPUT` 指向隔离输出目录，再运行 `node scripts/build-frostbound.mjs`；仅同步生成 Main.js，并核对字节一致。Release 测量使用 `D:/MEngineNativeQA/profile-game-completion.mjs`，启用 `MENGINE_PROFILE_GAME=1` 和 `MENGINE_PROFILE_REQUIRE_CONTINUITY=1`，每次使用独立调试端口。
 
-测量摘要、源文件与 EXE 哈希、原始报告路径见 [验收记录](environment-state-performance.json)。后续继续优化单位更新和呈现开销；完整 Warcraft III 单机、联机及地图编辑器复刻仍未完成。
+测量摘要、源文件与 EXE 哈希、原始报告路径见 验收记录 (`environment-state-performance.json`)。后续继续优化单位更新和呈现开销；完整 Warcraft III 单机、联机及地图编辑器复刻仍未完成。

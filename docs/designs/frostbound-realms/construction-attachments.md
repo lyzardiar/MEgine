@@ -23,6 +23,6 @@ python scripts/validate-frost-construction.py --metadata-reader tmp/warcraft-eff
 node scripts/qa-frost-effects.mjs --construction
 ```
 
-客户端验证覆盖 15 宿主、75 个源姿态、59 个可见及 16 个隐藏附件样本；真实建造/取消命令、完整矩阵、反射、暂停、迷雾、存档及权威快照恢复通过。资产验证覆盖三种资源、27 部件、四个视角、324 次原生加载和 27,612 个源顶点，最大误差 `0.0000005052673341943148`。174 个库文件与 166 个导入文件独立重生成一致，覆盖保护检查通过。报告见 [资产验证](construction-asset-validation.json)。
+客户端验证覆盖 15 宿主、75 个源姿态、59 个可见及 16 个隐藏附件样本；真实建造/取消命令、完整矩阵、反射、暂停、迷雾、存档及权威快照恢复通过。资产验证覆盖三种资源、27 部件、四个视角、324 次原生加载和 27,612 个源顶点，最大误差 `0.0000005052673341943148`。174 个库文件与 166 个导入文件独立重生成一致，覆盖保护检查通过。报告见 资产验证 (`construction-asset-validation.json`)。
 
-Release 原生编辑器验证通过：单机、完整附件组件及矩阵暂停冻结、两个真实 TCP 客户端和断线重连均通过。固定建造相位的独立源矩阵对照最大误差为 `0.0000004786457061811689`，两端材质管线拒绝数均为 0。原生画面使用稳定的建造相位夹具，真实建造和取消命令由上述客户端测试覆盖。报告见 [原生验收](native-construction-art-qa.json)，画面见 [单机](construction-battlefield.png)、[回城](construction-arrival.png) 和 [联机](construction-network.png)。验收程序 SHA-256 为 `c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206`。物理鼠标及音频体验尚未独立验收。
+Release 原生编辑器验证通过：单机、完整附件组件及矩阵暂停冻结、两个真实 TCP 客户端和断线重连均通过。固定建造相位的独立源矩阵对照最大误差为 `0.0000004786457061811689`，两端材质管线拒绝数均为 0。原生画面使用稳定的建造相位夹具，真实建造和取消命令由上述客户端测试覆盖。报告见 原生验收 (`native-construction-art-qa.json`)，画面见 单机 (`construction-battlefield.png`)、回城 (`construction-arrival.png`) 和 联机 (`construction-network.png`)。验收程序 SHA-256 为 `c95eb43852915e85b375eeeb7758df2c08ef4ca0c1777268b374722ad4ce4206`。物理鼠标及音频体验尚未独立验收。

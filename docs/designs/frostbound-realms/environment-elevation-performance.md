@@ -32,4 +32,4 @@ Scene 持续显示最近完成且兼容的画面，新相机帧完成后替换�
 
 旧基线测试失败和一次 QA 打开请求失败保留在 JSON 中；验收采用修改前 8eca82d 对照。四轮控制台 error 为 0，拥有的编辑器进程均退出、资源 fixture 已删除、QA 原脚本已恢复并核对哈希。恢复校验区分原始字节哈希和 LF 规范化哈希。
 
-测试入口：`node scripts/test-frost-environment-elevation-client.mjs`、`node scripts/test-frost-ground-display.mjs 8eca82d`。原始报告、具体测试限制及构建哈希见 [验收记录](environment-elevation-performance.json)。跨机器的严重卡顿仍需重建后复测；本机结果不代表其他机器已经解决。
+测试入口：`node scripts/test-frost-environment-elevation-client.mjs`、`node scripts/test-frost-ground-display.mjs 8eca82d`。原始报告、具体测试限制及构建哈希见 验收记录 (`environment-elevation-performance.json`)。跨机器的严重卡顿仍需重建后复测；本机结果不代表其他机器已经解决。

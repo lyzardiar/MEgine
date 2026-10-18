@@ -29,4 +29,4 @@ Node/Vite 独立对照采用 10,000 个私有实体，每个样本执行 128 次
 
 四轮 Edit/Play 移动空画面均为 0，所有验收检查通过，无控制台 error。拥有的 QA 编辑器均退出，fixture 已删除，隔离工程脚本恢复原始哈希。当前运行态 Scene 约 37～38 张/秒，尚未达到稳定 60 FPS；其他机器需更新、重新构建并复验。
 
-构建哈希、基准每组数据、93 项回归日志和四轮原始报告路径见 [验收记录](private-world-validation.json)。完整 Warcraft 游戏目标仍在继续。
+构建哈希、基准每组数据、93 项回归日志和四轮原始报告路径见 验收记录 (`private-world-validation.json`)。完整 Warcraft 游戏目标仍在继续。

@@ -27,10 +27,10 @@ Author: MiYu
 
 四次 Edit/Play 移动均无空画面。真实 Warcraft 模型姿态、粒子、UI、GPU Canvas 投影、相机预览、拾取、层级展开滚动、暂停、单步和停止重启通过。两次候选等待相机请求点击与原生显隐像素 oracle 通过（0.5% 容差）。实际父节点移动后子模型可在新位置点击，关闭父节点后子模型不可点击，再启用恢复点击；临时父子对象删除，资源刷新临时材质及 meta 移除。控制台无 error。
 
-41 项针对性测试通过，包含完整变换值及 Map 顺序对照、父 TRS/active/增删、重复 ID、无 Transform 链、双向循环及循环修复、120 次确定性版本及旧帧回看、真实 delta 保留记录。前端与 Release 构建通过。[完整记录](owned-transform-performance.json)包含 EXE 哈希、进程和原始报告。
+41 项针对性测试通过，包含完整变换值及 Map 顺序对照、父 TRS/active/增删、重复 ID、无 Transform 链、双向循环及循环修复、120 次确定性版本及旧帧回看、真实 delta 保留记录。前端与 Release 构建通过。完整记录 (`owned-transform-performance.json`)包含 EXE 哈希、进程和原始报告。
 
 四次 QA 进程退出，隔离 Main.js 恢复并核对哈希。稳定 60 FPS、多窗口/DPR、其他机器验收和完整 Warcraft III 游戏仍有后续工作。
 
-![移动中的 Scene](owned-transform-moving.png)
+移动中的 Scene (`owned-transform-moving.png`)
 
 Release 内嵌前端资源，先执行 `npm.cmd --prefix packages/editor run build`，再执行 `cargo build --release -p mengine-editor-tauri --features custom-protocol`。

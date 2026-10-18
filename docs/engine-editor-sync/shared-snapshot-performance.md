@@ -33,4 +33,4 @@ Author: MiYu
 
 四轮均通过等待相机请求时的拾取、真实 Footman GLB 点击、父子变换、模型姿态、层级隐藏、GPU Canvas、相机预览、暂停/单步/停止重启和资源刷新。四个自有编辑器均已退出；临时材质及 meta 已移除，隔离 Main.js 已恢复并核对 SHA256。其他机器与多窗口/DPR 未在本轮验收。
 
-[完整验收数据](shared-snapshot-performance.json)
+完整验收数据 (`shared-snapshot-performance.json`)

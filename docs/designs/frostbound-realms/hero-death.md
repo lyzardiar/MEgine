@@ -13,6 +13,6 @@ Author: MiYu。新遭遇战使用 `heroDeathVersion=1` 和协议 77。已接入�
 - `node scripts/test-frost-hero-death-network.mjs`：真实 TCP 阶段投影、重连、隐私、迷雾、付费复活及胜利后消散。
 - `node scripts/qa-frost-hero-death.mjs`：原生 Death／Dissipate、变身模型、内嵌特效时间、F5 和祭坛复活；可通过 `MENGINE_QA_ROOT` 指定有足够空间的临时工程目录。
 
-原生报告为 [native-hero-death-qa.json](native-hero-death-qa.json)，截图见 [Death](hero-death-native-death.png)、[Dissipate](hero-death-native-dissipate.png)、[变身](hero-death-native-demon.png)、[天神下凡](hero-death-native-avatar.png) 和 [复活](hero-death-native-revived.png)。最终全量回归和生成一致性结果见 `hero-death-validation.json`。
+原生报告为 native-hero-death-qa.json (`native-hero-death-qa.json`)，截图见 Death (`hero-death-native-death.png`)、Dissipate (`hero-death-native-dissipate.png`)、变身 (`hero-death-native-demon.png`)、天神下凡 (`hero-death-native-avatar.png`) 和 复活 (`hero-death-native-revived.png`)。最终全量回归和生成一致性结果见 `hero-death-validation.json`。
 
 原版可执行程序的实际阶段衔接与播放速度、物理键鼠、音频听验、独立播放器和跨机器 LAN 尚未验收。当前阶段完善遭遇战英雄死亡表现；完整四族、战役、原版 Dota／塔防地图和完整地图编辑器仍需继续实现。

@@ -19,7 +19,7 @@ Rebuild with Blender 4.5.9: `--background --disable-autoexec --python-exit-code 
 
 The packaged Release contains 637 files with content hash `f8649feeffbb745b493cfa0f8ab61efc8da3c7f7602765c480cd525a9d9e6f3e`. Manifest validation and the 30-second Player startup/responsiveness check passed with zero logged errors (`player-smoke.json`).
 
-![Native action poses](acolyte-poses.png)
-![Repairing the stone stronghold](acolyte-repair.png)
+Native action poses (`acolyte-poses.png`)
+Repairing the stone stronghold (`acolyte-repair.png`)
 
 This is textured low-polygon artwork, not a photorealistic scan or an exact Warcraft Acolyte mesh. Gameplay still uses the sample's shared worker economy, including wood harvesting and gold delivery. Haunted mines and the original Acolyte/Ghoul division of resource work remain incomplete. Physical mouse, audio listening and cross-machine LAN were not verified by this stage.

@@ -14,13 +14,13 @@ Use Blender 4.5.9 with `--background --disable-autoexec --python-exit-code 1 --p
 
 `scripts/render-frost-unit-icons.mjs --crypt-sheet` defines the six native views below. During this run, automatic editor startup timed out at `project.open`. The same Release editor was launched with redirected diagnostics and the same isolated project was reused for capture. The building atlas likewise completed after the existing editor finished loading. These captures establish native rendering; they do not establish a fix for cold-start bridge timeouts.
 
-![Six native views](crypt-views.png)
+Six native views (`crypt-views.png`)
 
 Native gameplay acceptance and package evidence are recorded in `crypt-validation.json` and `native-crypt-art-qa.json`. `node scripts/qa-frostbound.mjs --crypt-art-only` passed with the standard launcher: placement preview, construction, mid-construction save/load, completed material and portrait, ghoul training, Cannibalize research, editor placement, map save/load and playtest. The renderer reported zero material-pipeline rejections. The editor assertion counts the existing default-map barracks plus the newly placed building.
 
 The full Node rule/TCP suite passed, and all three native-host Frostbound tests passed. Release packaging validated 661 files with content hash `3d10d0c6380825e9b5a137c1351c46ed332a1c774ab05570713ac63293ae77c1`. The packaged Player remained responsive for 30 seconds with zero error logs. The adapter still reports its existing WebGPU downlevel-capability warning.
 
-![Completed Crypt and portrait](crypt-complete.png)
-![Map editor placement](crypt-editor.png)
+Completed Crypt and portrait (`crypt-complete.png`)
+Map editor placement (`crypt-editor.png`)
 
 This stage replaces one building. Consistent realistic art across the full roster and complete game fidelity remain unfinished. Agent input and startup checks do not establish physical mouse, audio-listening or cross-machine LAN acceptance.

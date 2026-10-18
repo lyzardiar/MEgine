@@ -2,13 +2,13 @@
 
 2026-09-26，Windows 本机 Release 编辑器、独立 QuickJS VM 与 TCP 服务端。运行入口、资源许可及网络边界见[样例说明](../../../samples/ion-outpost/README.md)。
 
-![原生 FPS 联机](multiplayer.png)
+原生 FPS 联机 (`multiplayer.png`)
 
 ## 实际验证
 
 - `scripts/test-ion-outpost.mjs`：8 组检查通过。包含非有限输入、移动归一化、掩体、跳跃、射击、爆头、弹药、换弹、出生保护、死亡复活、补给、比赛结束、机器人战斗、固定帧重放校验、缺帧检测，以及真实 TCP 房间权限、准备、隔离、输入重放拒绝、重连、房主移交和回收。
 - `cargo test -p mengine-editor-host --test ion_sample`：真实 QuickJS / EditorPlayRuntime / World 验证离线开局、移动、相对转向、射击、换弹、暂停冻结、完整比赛结束和重新开局。
-- `scripts/qa-ion-outpost.mjs`：[native-qa.json](native-qa.json) 记录两个独立 Release 原生编辑器进程使用真实 TCP 服务端的结果。通过离线操作、相对鼠标 Agent 通道、房间创建/加入、准备/开局、七人对局、预测位置收敛、计分板和断线自动恢复身份检查。采样时客户端分别完成 583 / 380 帧输入重放校验，校验不符引起的恢复次数均为 0。
+- `scripts/qa-ion-outpost.mjs`：native-qa.json (`native-qa.json`) 记录两个独立 Release 原生编辑器进程使用真实 TCP 服务端的结果。通过离线操作、相对鼠标 Agent 通道、房间创建/加入、准备/开局、七人对局、预测位置收敛、计分板和断线自动恢复身份检查。采样时客户端分别完成 583 / 380 帧输入重放校验，校验不符引起的恢复次数均为 0。
 - 引擎相关 Rust 测试：292 通过；3 项需特定样例回放/基准的既有测试按其默认设置忽略。新增 FPS 完整对局另行运行通过。
 - 编辑器完整测试：943 通过、0 失败。包含相对鼠标位移累加、下一帧清零、IDL / Inspector 默认值和 Agent schema 一致性。
 - Release Editor、Player 和 CLI 构建通过。Windows Player 包含资源依赖与 SHA-256 清单，`--validate-package` 校验通过。独立 Player 启动后存活并初始化渲染；仅关闭本轮启动的进程。
@@ -36,4 +36,4 @@
 
 联机已验证本机独立多进程。跨电脑局域网、公网延迟、丢包条件、NAT 穿透和大规模连接压力未验收。TCP 在丢包时会等待重传；本版本没有 UDP 传输、历史回溯命中补偿或公网账号服务。
 
-其余原生截图：[标题页](title.png)、[离线战斗](solo-combat.png)、[房间](lobby.png)、[计分板](scoreboard.png)。
+其余原生截图：标题页 (`title.png`)、离线战斗 (`solo-combat.png`)、房间 (`lobby.png`)、计分板 (`scoreboard.png`)。

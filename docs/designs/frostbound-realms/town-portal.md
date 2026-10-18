@@ -22,6 +22,6 @@ Author: MiYu
 - `node scripts/qa-frost-town-portal.mjs`：原生 Release 编辑器中，通过 Agent 输入操作明确构造的祭坛、军队和攻击者练习场；真实 55 秒招募与完整 5 秒施法，验证小地图与战场选点、实际敌方攻击和伤亡、工人留守、保存、购买、双击返回和停止。此场景不是默认开局验收。
 - 打包 717 文件完成哈希校验，Player 运行 30 秒且响应正常、日志错误为 0。人工物理输入、音频聆听和跨机器局域网尚未验证。
 
-记录见 [原生报告](town-portal-native.json)、[验证汇总](town-portal-validation.json) 和 [Player 检查](player-smoke.json)。截图：[首次卷轴](portal-first-scroll.png)、[施法](portal-channel.png)、[到达](portal-arrival.png)、[双击回城](portal-double-click-return.png)。
+记录见 原生报告 (`town-portal-native.json`)、验证汇总 (`town-portal-validation.json`) 和 Player 检查 (`player-smoke.json`)。截图：首次卷轴 (`portal-first-scroll.png`)、施法 (`portal-channel.png`)、到达 (`portal-arrival.png`)、双击回城 (`portal-double-click-return.png`)。
 
 图标由内置 `image_gen` 生成，保存为 `Assets/Art/town-portal-scroll.png`。准确提示词及资产 SHA-256 见样例根目录 `town-portal-art.json`，随 Player 分发的来源说明为 `Assets/Licenses/Town-Portal-Icon.txt`；生成过程具有随机性，仓库保存实际交付图像。

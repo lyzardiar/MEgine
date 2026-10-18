@@ -1,9 +1,0 @@
-START native combat reward readiness
-START native reward scenarios
-START legacy save
-PASS legacy save
-START enemy player
-PASS enemy player
-START neutral creep
-PASS neutral creep
-PASS native combat reward scenarios: 3

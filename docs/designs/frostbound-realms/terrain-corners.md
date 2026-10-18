@@ -20,4 +20,4 @@ node scripts/qa-frostbound.mjs --terrain-only
 
 网格验证遍历全部 16 种相邻高低组合及平地、同向坡道、相向坡道和不同坡度交点，共 64 种情况。每种情况组合四个原生渲染块，焊接三角形的世界坐标边，检查内部不存在开放边，并检查法线有限、顶面朝向正确、凸角和凹角使用共同曲线交点。实际原生画面、地形编辑与英雄沿坡道登高另行验收，不以网格测试代替。
 
-同机位实拍：[之前](corner-before-ground-highland.png)、[之后](corner-after-ground-highland.png)。旧引擎基线保存为提交 `2ca1de0` 的独立 Release 可执行文件；样例与机位保持一致。阶段记录见 [悬崖转角验证](terrain-corners-validation.json)。
+同机位实拍：之前 (`corner-before-ground-highland.png`)、之后 (`corner-after-ground-highland.png`)。旧引擎基线保存为提交 `2ca1de0` 的独立 Release 可执行文件；样例与机位保持一致。阶段记录见 悬崖转角验证 (`terrain-corners-validation.json`)。

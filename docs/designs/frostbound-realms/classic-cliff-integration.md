@@ -8,11 +8,11 @@ The 48 transition models span two cells along X or Z. Each record includes measu
 
 The `cliff-skins-ready` collection preserves five original BLPs and converted PNGs. The four preview materials use `W_Cliff1` for Lordaeron Winter, `Cliff1` for Forest, `B_Cliff0` for Barrens, and `Y_Cliff1` for masonry. `N_Cliff1` remains available for Northrend. Materials retain the original layer's shading, blending, culling and addressing properties. Blizzard Entertainment's asset ownership and original usage terms still apply.
 
-![Native original cliff patches](classic-cliff-patches.png)
+Native original cliff patches (`classic-cliff-patches.png`)
 
 The image uses the shared native editor GPU renderer and runtime mesh cache. Each panel is a 4×4 patch; positions, materials and template choices are recorded in `classic-cliff-patches.json`. The preview package passes native validation: 23 files, nine runtime assets and seven entities. The standalone renderer and runtime were rebuilt; the installed Tauri editor executable was not updated in this stage.
 
-![Native original ramp transitions](classic-ramp-patches.png)
+Native original ramp transitions (`classic-ramp-patches.png`)
 
 The ramp preview pairs AAHL and LHAA in Winter, Forest, Barrens and masonry. Eight model placements cover sixteen cells without overlap, and the four full-length shared seams pass at the stated coordinate tolerance. `classic-ramp-patches.json` records the native package, source bounds and occupied cells. Its package also passes native validation with 23 files, nine assets and seven entities.
 

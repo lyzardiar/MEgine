@@ -2,7 +2,7 @@
 
 原创 3D 海岸竞速与近身战斗示例。六名鹈鹕骑手沿 2.7 km 海岸公路穿过棕榈海岸、滨海村落和灯塔，拾取沙丁鱼补充氮气与体力，利用漂移、超车和左右翼攻击累积连击分数。
 
-![原生实机侧视](../../docs/designs/pelican-road-rage/model-sunset.png)
+原生实机侧视 (`../../docs/designs/pelican-road-rage/model-sunset.png`)
 
 ## 运行
 

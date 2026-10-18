@@ -27,6 +27,6 @@ Validation completed:
 
 Native interaction uses the Agent bridge. Physical mouse/audio and cross-machine LAN acceptance are not covered. Other temporary faction art and the full requested game remain unfinished.
 
-![Native animation poses](shaman-poses.png)
-![Native shaman combat](shaman-combat.png)
-![Native Purge](casters-purge.png)
+Native animation poses (`shaman-poses.png`)
+Native shaman combat (`shaman-combat.png`)
+Native Purge (`casters-purge.png`)

@@ -17,12 +17,12 @@ Author: MiYu
 
 联机协议 38，主城规则存档版本 `baseRulesVersion:1`。旧存档中的基地保留原生命、通用建造工期、维修和攻击；旧施工付款及进度不重算，旧在途弹道保持原攻击。完成下一次主城升级时启用对应等级战斗规则，新造基地采用经典规则。敌方可观察建筑种族、等级和外观，施工付款、工人驻留与升级剩余时间继续保密。
 
-基础数值来自 Blizzard [Classic 指南](https://classic.battle.net/war3/)，来源页面地址和原始 HTTP 字节 SHA-256 见 [数据来源](main-base-rules-provenance.json)。[Tree of Life 资料](https://warcraft.wiki.gg/wiki/Tree_of_Life_(Warcraft_III))用于核对扎根攻击和护甲：Nature's Blessing 后的 7 护甲未直接当作基础值。Frost 的存在和移动减速由经典指南确认；当前 5 秒、移动倍率 0.5、攻击恢复倍率 0.75 沿用既有蛛网怪塔效果，英雄时长及倍率尚未独立核对。
+基础数值来自 Blizzard [Classic 指南](https://classic.battle.net/war3/)，来源页面地址和原始 HTTP 字节 SHA-256 见 数据来源 (`main-base-rules-provenance.json`)。[Tree of Life 资料](https://warcraft.wiki.gg/wiki/Tree_of_Life_(Warcraft_III))用于核对扎根攻击和护甲：Nature's Blessing 后的 7 护甲未直接当作基础值。Frost 的存在和移动减速由经典指南确认；当前 5 秒、移动倍率 0.5、攻击恢复倍率 0.75 沿用既有蛛网怪塔效果，英雄时长及倍率尚未独立核对。
 
 最终规则与真实 TCP 总套件 72 条 PASS、退出 0。覆盖四族完整工期、取消／退款、工人暂停／付费协助、维修扣费、根部近战／隔水限制、亡灵地空弹道、发射快照、旧施工和旧弹道迁移、畸形存档、重复指令、敌方施工隐私与重连。原生 Release QuickJS 四族实际 HUD 建造走完完整 100／120／150／180 秒，并验证悬停费用提示、游戏菜单存读档、取消退款、维修和实际种族战斗；材质拒绝 0。完整原生工期从实际地基开始推进，没有缩短施工存档。自动输入不等同于物理键鼠验收。
 
-运行包 778 文件、4837 实体、10 着色器变体；文件大小和 SHA-256、源脚本、场景、原生资产／许可及 Release runtime 一致，Player 启动 30 秒存活且响应、日志错误 0。内容 SHA-256 `dca95a610cd482d8e82ea2bf243d903d80ba59d6f3770d59ea68912240f95f13`。证据：[原生报告](main-base-rules-native-qa.json)、[完整验证](main-base-rules-validation.json)、[Player](main-base-rules-player-smoke.json)。复验入口：`node scripts/test-frost-base-rules.mjs`、`node scripts/test-frost-base-rules-network.mjs`、`node scripts/test-frostbound.mjs`、`node scripts/qa-frost-base-rules.mjs`。
+运行包 778 文件、4837 实体、10 着色器变体；文件大小和 SHA-256、源脚本、场景、原生资产／许可及 Release runtime 一致，Player 启动 30 秒存活且响应、日志错误 0。内容 SHA-256 `dca95a610cd482d8e82ea2bf243d903d80ba59d6f3770d59ea68912240f95f13`。证据：原生报告 (`main-base-rules-native-qa.json`)、完整验证 (`main-base-rules-validation.json`)、Player (`main-base-rules-player-smoke.json`)。复验入口：`node scripts/test-frost-base-rules.mjs`、`node scripts/test-frost-base-rules-network.mjs`、`node scripts/test-frostbound.mjs`、`node scripts/qa-frost-base-rules.mjs`。
 
-截图：[人族完工](base-rules-completed-0.png)、[兽族完工](base-rules-completed-1.png)、[暗夜完工](base-rules-completed-2.png)、[亡灵完工](base-rules-completed-3.png)、[古树战斗](base-rules-combat-2.png)、[亡灵冰冻](base-rules-combat-3.png)。
+截图：人族完工 (`base-rules-completed-0.png`)、兽族完工 (`base-rules-completed-1.png`)、暗夜完工 (`base-rules-completed-2.png`)、亡灵完工 (`base-rules-completed-3.png`)、古树战斗 (`base-rules-combat-2.png`)、亡灵冰冻 (`base-rules-combat-3.png`)。
 
 拔根／扎根切换、吃树、缠绕金矿、自然祝福、民兵、尖刺路障、种族护甲／生命研究、独立原作品质美术及完整 Warcraft III 复刻仍未完成。试听、跨机器 LAN 与稳定 Player 帧率未在本阶段验收。

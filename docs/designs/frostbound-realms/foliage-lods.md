@@ -14,7 +14,7 @@
 
 ## 原生画面与性能
 
-![近景](realistic-close-detail.png)
+近景 (`realistic-close-detail.png`)
 
 基线为 `4df574e90b9905ccc16b4289e32a896a2a9a86c3`，相同原生 Release 编辑器、1,899 实体、1280×720 和 4× MSAA。标准视角预热 5 秒、采样三次各 5 秒；近景另预热 3 秒、采样一次 5 秒。
 
@@ -35,7 +35,7 @@
 - 独立 Player 重新打包：362 文件、119,379,708 字节，内容哈希 `bff512a959cd71e1d93995023477006cf296667adfcc61bb19df1053509cdb56`。逐文件哈希检查通过；启动 30 秒窗口响应、日志错误 0。本阶段沿用已构建的 Release 原生程序，修改的是资产导入与游戏资源。
 - 物理鼠标键盘、音频听感和跨机器 LAN 未在本阶段验收。角色、其他阵营、地形水岸、完整战役与完整游戏目标仍待完成；远景贴片仍依赖固定相机角度。
 
-[完整对照与包记录](foliage-lods-qa.json)、[近远景原生验收](native-realistic-qa.json)、[标准视角采样](native-performance-qa.json)、[Player 启动验收](player-smoke.json)。
+完整对照与包记录 (`foliage-lods-qa.json`)、近远景原生验收 (`native-realistic-qa.json`)、标准视角采样 (`native-performance-qa.json`)、Player 启动验收 (`player-smoke.json`)。
 
 ## 重建
 

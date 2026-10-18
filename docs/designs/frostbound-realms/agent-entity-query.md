@@ -13,7 +13,7 @@
 
 原生 Play 的两个读取路径相差约 22.02 倍。各模式交替测量，预热 1 次、采样 3 次；这比较的是完整快照与单实体接口，不能解释为旧版／新版 entity.get 二进制对照、游戏帧率或完整交付流程的提速。Edit 的剩余往返耗时明显更高，需继续定位视口、桥接与编辑器处理。
 
-[原生记录](native-agent-entity-query-qa.json)包含逐次耗时、返回数据量、命令耗时与 Editor／store／产品哈希。[Node 记录](agent-entity-query-benchmark.json)在同一场景对比快照查找与单实体函数，分别预热 3 次、采样 9 次；仅测量 store 查询，不含桥接、原生渲染、启动或完整 QA。
+原生记录 (`native-agent-entity-query-qa.json`)包含逐次耗时、返回数据量、命令耗时与 Editor／store／产品哈希。Node 记录 (`agent-entity-query-benchmark.json`)在同一场景对比快照查找与单实体函数，分别预热 3 次、采样 9 次；仅测量 store 查询，不含桥接、原生渲染、启动或完整 QA。
 
 验收脚本先验证夹具，再启动编辑器；逐阶段写入当前报告并输出训练步数。原生查询脚本记录各个命令耗时，先设置 Game 分辨率并聚焦 Game View，再启动暂停 Play、完成两个微步的首帧预热；读取对照期间暂停世界。playback.play 等待 Native runtime 初始化，使用 5 分钟的有界等待预算，保留请求取消与幂等请求 ID。
 

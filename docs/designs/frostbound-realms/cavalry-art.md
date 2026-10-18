@@ -23,7 +23,7 @@ node scripts/qa-frostbound.mjs --network-only
 
 规则/TCP 验证覆盖王国专属科技门槛、费用、AI、训练队列保存、移动、近战，以及训练中断线恢复和产出后的集结命令。原生 QuickJS/Agent 输入验证实际第五个兵营按钮产出第二名骑兵、选择头像、移动与攻击动画、朝向、伤害、保存恢复，材质管线拒绝数为 0。双客户端原生测试验证协议 10 与重连。
 
-- [九个动作姿态](cavalry-poses.png)、[实际战斗](cavalry-combat.png)、[兵营训练](cavalry-training.png)。
-- [导入检查](cavalry-import-qa.json)、[原生交互检查](native-cavalry-qa.json)、[阶段结果](cavalry-art-qa.json)。
+- 九个动作姿态 (`cavalry-poses.png`)、实际战斗 (`cavalry-combat.png`)、兵营训练 (`cavalry-training.png`)。
+- 导入检查 (`cavalry-import-qa.json`)、原生交互检查 (`native-cavalry-qa.json`)、阶段结果 (`cavalry-art-qa.json`)。
 
 截图为原生引擎渲染；战斗截图使用平地、固定高生命靶和无 AI 的专项测试场景。其余未替换角色仍存在风格差异，整体美术统一和完整游戏复刻尚未完成。Free3D 此前访问返回 HTTP 403，本阶段未从该站下载资源。物理键鼠、听感、跨机器 LAN 和独立 Player 帧率尚未验收。

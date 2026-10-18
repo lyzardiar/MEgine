@@ -22,5 +22,5 @@ Use Blender 4.5.9 with `--background --disable-autoexec --python-exit-code 1 --p
 
 Native gameplay evidence uses Agent input, not physical mouse/keyboard or listening tests. This stage replaces the skeletal crossbowman; other fantasy units and the full requested Warcraft-style recreation remain unfinished.
 
-![Native pose sheet](crossbowman-poses.png)
-![Native ranged combat](crossbowman-combat.png)
+Native pose sheet (`crossbowman-poses.png`)
+Native ranged combat (`crossbowman-combat.png`)

@@ -15,9 +15,9 @@
 ## 实测与验收
 
 - RHI 46 通过、0 失败，真实 GPU 测试未跳过；Node 规则、TCP、资源源文件与派生哈希检查通过。
-- Release Runtime 与原生编辑器构建通过。[原生美术检查](native-realistic-qa.json)覆盖近景、远景 LOD 和地图编辑器，材质管线拒绝数 0。
-- 同一 1280×720、1899 实体场景，预热 5 秒后三次各测量 5 秒：12.09、12.06、12.27 FPS。相对上一阶段，中位数 13.50 → 12.09 FPS，原生渲染耗时中位数 8.32 → 8.93 ms。这是整阶段变更的测量，不能单独归因于 FXAA；5 ms 目标仍未达到。样本、二进制哈希见 [阶段验收](rendering-refinement-qa.json)。
-- 本阶段历史包 362 文件，内容哈希 `79e6b430e95c52542161a3062a86e49f34550af1de6be7dd67fba8ca0b757ba5`。当时逐文件核验通过，启动 30 秒后窗口响应且错误日志 0。最新包检查保存在 [Player 检查](player-smoke.json)。物理键鼠、音频听感和跨机器 LAN 不在此次验收内。
+- Release Runtime 与原生编辑器构建通过。原生美术检查 (`native-realistic-qa.json`)覆盖近景、远景 LOD 和地图编辑器，材质管线拒绝数 0。
+- 同一 1280×720、1899 实体场景，预热 5 秒后三次各测量 5 秒：12.09、12.06、12.27 FPS。相对上一阶段，中位数 13.50 → 12.09 FPS，原生渲染耗时中位数 8.32 → 8.93 ms。这是整阶段变更的测量，不能单独归因于 FXAA；5 ms 目标仍未达到。样本、二进制哈希见 阶段验收 (`rendering-refinement-qa.json`)。
+- 本阶段历史包 362 文件，内容哈希 `79e6b430e95c52542161a3062a86e49f34550af1de6be7dd67fba8ca0b757ba5`。当时逐文件核验通过，启动 30 秒后窗口响应且错误日志 0。最新包检查保存在 Player 检查 (`player-smoke.json`)。物理键鼠、音频听感和跨机器 LAN 不在此次验收内。
 
 近景针叶仍偏暗、稀疏；抗锯齿与 UV 修正尚不足以完成植被质量目标。其他阵营、角色写实化、自然地图轮廓和整体性能仍需推进，完整游戏目标未完成。
 
@@ -36,6 +36,6 @@ node scripts/qa-frostbound.mjs --performance-only
 
 导入依赖和固定版本见 [写实美术记录](realistic-art.md)。两种原生 QA 模式依次运行。
 
-![标准视角](realistic-settlement.png)
+标准视角 (`realistic-settlement.png`)
 
-![最近视角](realistic-close-detail.png)
+最近视角 (`realistic-close-detail.png`)

@@ -30,6 +30,6 @@ node scripts/qa-frost-entangled.mjs
 
 The independent geometry check covers four embedded source models, 34 parts, four camera views, 408 native loads and 29,244 compared vertices. Maximum position error is `5.0527e-7`; all original binary buffers and skins are preserved. Conversion reproduces 229 files and import reproduces 219 files, with atomic refusal of modified outputs. The rules and command icons also reproduce byte for byte. Direct TCP tests exercise gather, Load, Unload, duplicate delivery, resident reconnect, private enemy data and deposit exhaustion. Native results are recorded in `native-entangled-qa.json`; physical mouse and listening acceptance remain separate. The editor uses the asset baseline available when each scan finishes and discards results from closed project sessions. This keeps an initial scan from reporting an existing scene as an external addition and interrupting a running lobby. Regression evidence is retained in `asset-scan-race-validation.json`.
 
-![Five original cargo attachments](entangled-five-wisps.png)
-![Individual unload and resident controls](entangled-four-wisps.png)
-![One resident work sequence](entangled-one-wisp.png)
+Five original cargo attachments (`entangled-five-wisps.png`)
+Individual unload and resident controls (`entangled-four-wisps.png`)
+One resident work sequence (`entangled-one-wisp.png`)

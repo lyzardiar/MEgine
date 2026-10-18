@@ -19,5 +19,5 @@ node scripts/qa-frostbound.mjs --surface-only --deterministic-input
 
 验收记录见 terrain-palette-validation.json 与 native-surface-qa.json。原生 QA 使用两个独立 Release 编辑器、QuickJS 与 Agent 输入，检查五种画刷、三个尺寸、草地撤销、地图保存加载、试玩、主机自定义地图、客机地表参数及断线重连。截图为实际渲染。物理键鼠、听音和稳定帧率另待验证；完整原版地形套件和游戏内容仍未完成。
 
-![地形编辑](palette-surface-palette.png)
-![MOBA 草地兵线](palette-surface-moba.png)
+地形编辑 (`palette-surface-palette.png`)
+MOBA 草地兵线 (`palette-surface-moba.png`)

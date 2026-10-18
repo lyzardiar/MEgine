@@ -35,6 +35,6 @@ Author: MiYu。新近战使用各族经典商品表，参照 2026-10-05 获取�
 
 出处和提取文件指纹见 `racial-items-provenance.json`。本阶段未新增美术下载，图标与部分建筑仍复用现有许可资源；专属商店模型/逐物品图标、AI 购物和完整原作单位/英雄/战役/经典地图内容仍待完善。原生 Agent 输入不覆盖物理键鼠、试听、跨机局域网或稳定 Player 帧性能；完整复刻目标保持进行中。
 
-![人族商店](racial-items-shop-0.png)
-![药膏次数](racial-items-salve-charges.png)
-![枯萎地与骷髅](racial-items-blight-skeletons.png)
+人族商店 (`racial-items-shop-0.png`)
+药膏次数 (`racial-items-salve-charges.png`)
+枯萎地与骷髅 (`racial-items-blight-skeletons.png`)

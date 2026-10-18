@@ -21,4 +21,4 @@ node scripts/qa-frostbound.mjs --ground-only
 
 `--sculpt-only` 在独立样例副本中使用平地起伏的高地模板、关闭 AI 并放置一名友方英雄。通过原生 QuickJS、Agent 指针和键盘输入检验笔刷拖动、整笔撤销、负高度拾取、地图保存读取、英雄登坡和游戏存档恢复；测试夹具不会写回游戏地图。人工物理输入和音频聆听未在该自动化中验收。
 
-实拍：[默认地表](relief-ground-highland.png)、[连续起伏](sculpt-sculpt-hills.png)、[英雄登坡](sculpt-sculpt-ascent.png)、[凹地笔刷](sculpt-sculpt-depression.png)。验收记录见 [阶段验证](terrain-sculpt-validation.json)。
+实拍：默认地表 (`relief-ground-highland.png`)、连续起伏 (`sculpt-sculpt-hills.png`)、英雄登坡 (`sculpt-sculpt-ascent.png`)、凹地笔刷 (`sculpt-sculpt-depression.png`)。验收记录见 阶段验证 (`terrain-sculpt-validation.json`)。

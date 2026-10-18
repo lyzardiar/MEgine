@@ -28,11 +28,11 @@ Scene UI 布局按已显示画面的 owned entity array 复用现有 sceneUiEnti
 
 54 项画面、布局、世界数据回归及 14 项灯光、粒子与拖尾回归通过。新增两万无关模型节点测试比较完整世界与筛选子集的 Scene/World Space Canvas 布局和投影，覆盖无 RectTransform 子节点、祖先活动状态、指定 Camera3D 及 Camera2D、Canvas 移除/加入、节点改挂与新旧帧切换。同一 owned entity array 的多个 camera frame 复用同一筛选结果。
 
-独立只读审核已核查 UI 依赖及 owned 来源，无阻断；主代理完成实现、测试、构建及实测。四次 QA 进程均退出，隔离 Main.js 已恢复并核对哈希。[验收记录](scene-component-layout-performance.json)保留测量、CPU 采样、进程、EXE 哈希和日志。
+独立只读审核已核查 UI 依赖及 owned 来源，无阻断；主代理完成实现、测试、构建及实测。四次 QA 进程均退出，隔离 Main.js 已恢复并核对哈希。验收记录 (`scene-component-layout-performance.json`)保留测量、CPU 采样、进程、EXE 哈希和日志。
 
 实际资源重载、DPR/多窗口交互的完整组合、稳定 60 FPS 和其他机器仍需进一步验收；完整 Warcraft III 单机、联机及地图编辑器仍有未完成项。
 
-![移动期间的运行态 Scene](scene-component-layout-moving.png)
+移动期间的运行态 Scene (`scene-component-layout-moving.png`)
 
 ## 构建
 

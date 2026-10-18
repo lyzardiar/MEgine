@@ -22,8 +22,8 @@ python scripts/validate-frost-classic-attachments.py --reference tmp/warcraft-ef
 
 原生探针追加 `--nodes` 时输出节点矩阵、枢轴位置及附件定义，而不生成网格。独立源参考器使用固定 MDX 动画器的世界矩阵变换源枢轴与三个坐标轴，并通过 `SampleFloat` 计算 KATV。验证覆盖全部 94 模型的全部动作、两种相机方向、30/60 Hz、显隐关键帧邻域以及终点与越界保持。每个动画网格部件另取首动作两帧，与基集合的实际原生网格逐顶点比较；GLB 二进制和全部蒙皮定义逐文件保持一致。
 
-- [原始节点与附件对照结果](classic-attachment-validation.json)
-- [独立重生成与保护结果](classic-attachment-reproduction.json)
+- 原始节点与附件对照结果 (`classic-attachment-validation.json`)
+- 独立重生成与保护结果 (`classic-attachment-reproduction.json`)
 
 最终验证通过：83 项引擎资产测试、1,670 项源读取器检查、6,356 次原生节点加载和 462,686 个完整节点矩阵对照。最大枢轴位置误差为 `0.0000044037124633522495`，最大矩阵分量误差为 `0.000010144042974502554`；51,221 个可见和 8,754 个隐藏附件样本均与源轨道一致。2,308 次网格加载对照未改变顶点，1,253 个文件独立重生成字节一致，手工改动时拒绝覆盖且其他产物保持原样。编辑器宿主集成检查通过。
 
@@ -35,9 +35,9 @@ Frostbound 已导入完整节点集合，并通过脚本 API `engine.assets.samp
 
 脚本接入验证通过 84 项资产测试与 24 项脚本测试，包含真实 QuickJS API、工程切换、URI 越界拒绝、外部 buffer 热更新、不同相机结果隔离及附件参考点不触发网格重复上传。CLI 构建、独立 Player 检查、状态/技能客户端及真实 TCP 测试通过。
 
-[网格源姿态报告](native-anchor-mesh-pose-validation.json) 覆盖 94 个模型、577 个部件、4 个视角和全部动作，共 73,236 次原生加载、10,122,960 个顶点对照，最大误差 `0.000007660351562410739`。二进制缓冲保持一致；增加完整节点后，恢复原网格节点索引并核对根节点集合，原 GLB 结构一致。[重生成报告](classic-attachment-import-reproduction.json) 记录 1,253 个库文件及 4,956 个导入文件字节一致，手工修改时拒绝覆盖且不改变其他输出。
+网格源姿态报告 (`native-anchor-mesh-pose-validation.json`) 覆盖 94 个模型、577 个部件、4 个视角和全部动作，共 73,236 次原生加载、10,122,960 个顶点对照，最大误差 `0.000007660351562410739`。二进制缓冲保持一致；增加完整节点后，恢复原网格节点索引并核对根节点集合，原 GLB 结构一致。重生成报告 (`classic-attachment-import-reproduction.json`) 记录 1,253 个库文件及 4,956 个导入文件字节一致，手工修改时拒绝覆盖且不改变其他输出。
 
-[原生窗口报告](native-anchor-art-qa.json) 使用当前 Release 编辑器、真实 GPU Game View 与两个 TCP 客户端。单机 35 处、主机 44 处、客机 36 处挂点与同一原子场景快照中的探针结果对照，最大误差 `0.0000007330137989924879`。暂停后特效时间与变换保持一致，8 个回城到达效果、重连和两端材质管线检查通过，拒绝数为 0。画面见 [战场](native-anchor-battlefield.png)、[回城到达](native-anchor-arrival.png)、[联机客机](native-anchor-network.png)。此范围未包含物理鼠标、音频或完整游戏验收。
+原生窗口报告 (`native-anchor-art-qa.json`) 使用当前 Release 编辑器、真实 GPU Game View 与两个 TCP 客户端。单机 35 处、主机 44 处、客机 36 处挂点与同一原子场景快照中的探针结果对照，最大误差 `0.0000007330137989924879`。暂停后特效时间与变换保持一致，8 个回城到达效果、重连和两端材质管线检查通过，拒绝数为 0。画面见 战场 (`native-anchor-battlefield.png`)、回城到达 (`native-anchor-arrival.png`)、联机客机 (`native-anchor-network.png`)。此范围未包含物理鼠标、音频或完整游戏验收。
 
 ```powershell
 python scripts/import-frost-classic.py --pose-probe <当前 gltf_bounds.exe 的绝对路径>

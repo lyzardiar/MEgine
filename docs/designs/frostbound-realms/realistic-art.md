@@ -8,10 +8,10 @@ Free3D 的实际访问返回 HTTP 403 与浏览器校验入口，正常浏览器
 
 ## 原生截图
 
-- [标准游戏视角](realistic-settlement.png)
-- [远景](realistic-overview.png)
-- [地图编辑器](realistic-editor.png)
-- [最近视角的立体树模型](realistic-close-detail.png)
+- 标准游戏视角 (`realistic-settlement.png`)
+- 远景 (`realistic-overview.png`)
+- 地图编辑器 (`realistic-editor.png`)
+- 最近视角的立体树模型 (`realistic-close-detail.png`)
 
 截图由原生 Release 编辑器运行实际样例生成。其他三族建筑与角色仍使用现有原型美术，尚未完成整款游戏的写实风格统一。近景针叶仍有锯齿；水岸与地形轮廓也需继续完善。
 

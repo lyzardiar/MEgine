@@ -21,6 +21,6 @@ Validation:
 
 Native input is supplied through the Agent bridge. Physical mouse/keyboard, audio listening and cross-machine LAN acceptance are not covered. The full Warcraft-style game remains incomplete.
 
-![Native sword/shield poses](skeleton-warrior-poses.png)
-![Native raising gesture and two summons](raise-dead-cast.png)
-![Controlled skeleton squad](raise-dead-warriors.png)
+Native sword/shield poses (`skeleton-warrior-poses.png`)
+Native raising gesture and two summons (`raise-dead-cast.png`)
+Controlled skeleton squad (`raise-dead-warriors.png`)

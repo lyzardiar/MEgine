@@ -19,7 +19,7 @@ Validation passed:
 - `qa-frostbound.mjs --fortress-art-only`: native UI upgrades through tiers 1–3, matching portraits, mid-upgrade save/load, completed-tier save/load, worker training and tier-3 placement preview. Zero material-pipeline rejections. Evidence: `native-revenant-fortress-qa.json`.
 - Packaged Release: 616 files, content hash `f0226fc48b74c42f19a87cdd71b69b5e16835d0354d60dd49187b5f7292766a9`; manifest validation and a 30-second Player startup/responsiveness check passed with zero logged errors (`player-smoke.json`).
 
-![Three tiers, front and rear views](revenant-fortress-views.png)
-![Tier 3 beside the stone Temple](revenant-fortress-tier3.png)
+Three tiers, front and rear views (`revenant-fortress-views.png`)
+Tier 3 beside the stone Temple (`revenant-fortress-tier3.png`)
 
 These are original stone stronghold layouts adapted from licensed modules. They improve material detail and faction consistency; they do not reproduce the exact Warcraft Necropolis geometry or animation. Other Revenant buildings still need an art pass; the worker uses the [robed Acolyte](acolyte.md). Native Agent input does not prove physical mouse, audio-listening or cross-machine LAN acceptance.

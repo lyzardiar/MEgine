@@ -22,4 +22,4 @@ Author: MiYu
 
 下一步根据采样处理 Viewport 绘制和层级激活查询。稳定60 FPS、其他机器及多窗口/DPR仍未验收。
 
-[完整记录](scene-interaction-performance-evaluation.json)
+完整记录 (`scene-interaction-performance-evaluation.json`)

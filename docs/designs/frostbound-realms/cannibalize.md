@@ -12,5 +12,5 @@ Validation uses `node scripts/test-frostbound.mjs`, both asset import tests, `ca
 
 Evidence: `native-cannibalize-qa.json`, `cannibalize-validation.json`, `cannibalize-poses.json` and the native screenshots below. Native tests use Agent input; physical mouse/audio and cross-machine LAN are not covered. The full Warcraft III recreation and a consistently realistic art style remain unfinished.
 
-![Feeding poses](cannibalize-poses.png)
-![Native corpse healing](cannibalize-feeding.png)
+Feeding poses (`cannibalize-poses.png`)
+Native corpse healing (`cannibalize-feeding.png`)

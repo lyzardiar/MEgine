@@ -14,11 +14,11 @@ The information card uses original attack and armor textures selected by the uni
 
 The source archive contains 27 information-card BLPs. The skin configuration's three `human-attribute-*` paths resolve to the installed archives' `infocard-heroattributes-*` assets; its neutral hero-armor binding resolves to the original hero-armor texture. These four mappings are recorded explicitly in info-panel-icons.json. Original archive origins and hashes are in info-panel-source-archives.json, and converted PNG/source hashes are in info-panel-sources.json. `python scripts/import-frost-info-panel.py` rebuilds from retained sources without an installed game. Blizzard's original asset terms apply.
 
-![Original human console](console-layout-human.png)
-![Original night elf console](console-layout-night-elf.png)
-![Wide viewport](console-layout-2560x1080.png)
+Original human console (`console-layout-human.png`)
+Original night elf console (`console-layout-night-elf.png`)
+Wide viewport (`console-layout-2560x1080.png`)
 
-![Source Warden information panel](info-panel-Ewar.png)
+Source Warden information panel (`info-panel-Ewar.png`)
 
 Generated-client checks cover all four source heroes, level changes, attribute hover, attack/armor mappings, production-queue footer ownership, ordinary unit selection, multiple selection and editor mode. Native acceptance for the four heroes, four resolutions and attribute tooltip is recorded in native-info-panel-qa.json. Screenshot dimensions are requested explicitly to retain the full 2560×1080 image.
 

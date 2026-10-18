@@ -30,10 +30,10 @@ Author: MiYu
 
 旧版及新版均执行同样的父子编辑、等待相机拾取、资源刷新与 GLB 点击步骤。四次使用真实 Footman geoset-00.glb 创建点击探针并成功选择。在计时区间外，通过实际加载模块中相应模型投影函数的条件断点累计执行次数，确认旧版使用原模型投影、新版确实进入直接投影路径；条件始终 false，不暂停。随后移除断点并删除自有探针。材质及 meta 刷新临时文件已移除。
 
-13 项针对性测试通过。其中 480 组确定性几何结果以未改正常绘制路径作为独立 oracle，完整 deepEqual 比较点击中心、半径及 null；覆盖透视/正交、镜像缩放、任意归一化旋转、裁剪、无效索引、NaN 顶点、零 viewport、camera up，以及 triangle cap、稀疏数组和 near/far 边界。前端与 Release 构建通过。[完整记录](direct-mesh-hit-performance.json)包含 EXE 哈希、进程和原始报告。
+13 项针对性测试通过。其中 480 组确定性几何结果以未改正常绘制路径作为独立 oracle，完整 deepEqual 比较点击中心、半径及 null；覆盖透视/正交、镜像缩放、任意归一化旋转、裁剪、无效索引、NaN 顶点、零 viewport、camera up，以及 triangle cap、稀疏数组和 near/far 边界。前端与 Release 构建通过。完整记录 (`direct-mesh-hit-performance.json`)包含 EXE 哈希、进程和原始报告。
 
 四次 QA 进程退出，隔离 Main.js 恢复并核对哈希。稳定 60 FPS、多窗口/DPR、其他机器验收和完整 Warcraft III 游戏仍有后续工作。
 
-![移动中的 Scene](direct-mesh-hit-moving.png)
+移动中的 Scene (`direct-mesh-hit-moving.png`)
 
 Release 内嵌前端资源，先执行 `npm.cmd --prefix packages/editor run build`，再执行 `cargo build --release -p mengine-editor-tauri --features custom-protocol`。

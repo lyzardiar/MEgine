@@ -29,8 +29,8 @@ node scripts/qa-frostbound.mjs --rifleman-only
 
 规则与 TCP 回归通过；原生 Agent 检查覆盖移动、朝向、即时伤害、头像、训练图标、枪口火光转烟雾和存档恢复。533 文件的 Release 包通过哈希检查与 30 秒启动检查，无错误日志。物理鼠标、听音与跨机器局域网尚未验收。
 
-- [角色姿势](rifleman-poses.png)
-- [实际开火](rifleman-flash.png)、[枪口烟雾](rifleman-smoke.png)
-- [阶段记录](rifleman-art-qa.json)
+- 角色姿势 (`rifleman-poses.png`)
+- 实际开火 (`rifleman-flash.png`)、枪口烟雾 (`rifleman-smoke.png`)
+- 阶段记录 (`rifleman-art-qa.json`)
 
 Free3D 的直接 HTTP 请求曾返回 403，本次浏览器工具两次建立页面超时，尚未从该站成功下载；本阶段实际使用上述已下载且有许可记录的资产。

@@ -4,9 +4,9 @@
 
 河道改动同步生成遭遇战、补给路和高地地图。塔防、MOBA 与 RPG 保持各自水域布局。没有新增下载资产；树木及地表素材来源继续见 [写实素材清单](../../../samples/frostbound-realms/realistic-sources.json)。Free3D 此前访问被验证拦截，本阶段没有从该站下载素材。
 
-![编辑器河道](realistic-editor.png)
+编辑器河道 (`realistic-editor.png`)
 
-![树木与水岸近景](realistic-close-detail.png)
+树木与水岸近景 (`realistic-close-detail.png`)
 
 ## 验证
 
@@ -16,7 +16,7 @@
 - `node scripts/qa-frostbound.mjs --terrain-only`：64 区块、204 个高地格、11 个坡道；绘制、撤销、保存读取及英雄上坡通过。
 - `node scripts/qa-frostbound.mjs --performance-only`：1280×720，预热 5 秒，三个 5 秒窗口分别为 12.64、12.42、12.92 FPS，中位数 12.64；平均原生渲染约 11.13–11.34 ms。近景单窗口 13.53 FPS、12.31 ms。前阶段标准视角中位数为 14.74 FPS，本次更慢；场景和着色均已变化，顺序短窗口不构成独立 GPU 成本测量。5 ms 目标仍未达到。
 
-独立 Player 的包内容哈希、文件数量、启动检查及本阶段源文件摘要见 [阶段记录](shorelines-qa.json)。沿用现有 Release 程序，只重建和打包游戏脚本及资源。物理输入、音频听感及跨机器 LAN 未在本阶段验收。
+独立 Player 的包内容哈希、文件数量、启动检查及本阶段源文件摘要见 阶段记录 (`shorelines-qa.json`)。沿用现有 Release 程序，只重建和打包游戏脚本及资源。物理输入、音频听感及跨机器 LAN 未在本阶段验收。
 
 ## 后续范围
 

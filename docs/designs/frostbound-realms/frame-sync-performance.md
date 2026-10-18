@@ -23,14 +23,14 @@ React 场景状态使用延迟初始化，后续组件刷新不再计算被忽�
 | 模拟平均耗时的中位数 | 11.19 ms | 6.57 ms |
 | 15 秒 CPU 采样中 snapshotEntities 自身耗时 | 2168 ms | 851 ms |
 
-减少主线程拷贝也减少了 CPU 争用。短窗口仍受机器调度影响，这不是长期稳定性或统计显著性证明。渲染耗时、请求耗时彼此包含，不能直接相加。两个版本的二进制哈希、逐组指标、CPU 汇总和原生差异验收见 [数据](frame-sync-performance.json)。原始 [基线 CPU profile](frame-sync-before.cpuprofile) 与 [当前 CPU profile](frame-sync-after.cpuprofile) 可在 Chromium DevTools Performance/JavaScript Profiler 中加载；函数 `Dn` 对应检查过的 `store.ts` 中 `snapshotEntities` 编译体。
+减少主线程拷贝也减少了 CPU 争用。短窗口仍受机器调度影响，这不是长期稳定性或统计显著性证明。渲染耗时、请求耗时彼此包含，不能直接相加。两个版本的二进制哈希、逐组指标、CPU 汇总和原生差异验收见 数据 (`frame-sync-performance.json`)。原始 基线 CPU profile (`frame-sync-before.cpuprofile`) 与 当前 CPU profile (`frame-sync-after.cpuprofile`) 可在 Chromium DevTools Performance/JavaScript Profiler 中加载；函数 `Dn` 对应检查过的 `store.ts` 中 `snapshotEntities` 编译体。
 
 ## 验证
 
 - 31 项相关测试通过，包括嵌套原地修改、实体 ID 删除后复用、查询结果隔离、重复 ID 拒绝、暂停层级编辑和运行时同步。新增实际 AgentBridge 集成测试确认观察快照不调用原始实体上的额外序列化钩子。
 - TypeScript/Vite、嵌入前端的原生 Release 编辑器构建通过。
 - 原生 Game 性能采样的材质管线拒绝为 0。原生 Agent 在暂停且已提交的模拟步骤完成后，快照没有虚假差异；单步后 revision 增长，并返回变化实体及更新后的游戏遥测。
-- 最终版本的原生地图回归通过：中文区域名、中文任务文本、输入框命中、保存读取、触发条件保护及护送任务运行正常。结果见 [地图验收](native-triggers-qa.json)。
+- 最终版本的原生地图回归通过：中文区域名、中文任务文本、输入框命中、保存读取、触发条件保护及护送任务运行正常。结果见 地图验收 (`native-triggers-qa.json`)。
 - Player、游戏规则和素材未修改，沿用扫描地表阶段的包；物理键鼠、IME、音频及跨机器 LAN 未在本阶段验收。
 
 ```powershell

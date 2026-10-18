@@ -24,6 +24,6 @@
 - 本次仅修改编辑器前端；独立 Player 和资源沿用 [MSAA 阶段交付](multisampling.md)。物理输入、音频听感、跨机器 LAN 不在本次验收范围内。
 - 完整游戏及写实美术仍未完成。近景树冠偏暗稀疏、角色及其他阵营风格、自然地形轮廓需要继续完善。
 
-原始结果：[标准视角](native-performance-qa.json)、[美术回归](native-realistic-qa.json)、[前后对照及编辑器哈希](viewport-performance-qa.json)。前后对照保存基线摘要，后续采样覆盖标准报告时仍可核对本阶段结果。
+原始结果：标准视角 (`native-performance-qa.json`)、美术回归 (`native-realistic-qa.json`)、前后对照及编辑器哈希 (`viewport-performance-qa.json`)。前后对照保存基线摘要，后续采样覆盖标准报告时仍可核对本阶段结果。
 
 复现：`pnpm.cmd --filter @mengine/editor build`，`cargo build --release -p mengine-editor-tauri --features tauri/custom-protocol`，随后依次运行 `node scripts/qa-frostbound.mjs --performance-only`、`node scripts/qa-frostbound.mjs --realistic-only`。

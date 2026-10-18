@@ -27,10 +27,10 @@ Project 面板按现有场景、脚本、精灵、工程文件及路径索引数
 
 四次移动均无空画面；模型选择、层级展开滚动、真实 Warcraft 模型姿态、粒子、UI、GPU Canvas 投影、相机预览、暂停、单步和停止重启通过，无控制台 error。两次候选的等待相机请求点击和显隐像素检查通过，像素 oracle 容差为 0.5%。
 
-两次候选在计时结束后使用真实 Project 搜索、刷新和选中交互，新增临时材质及唯一 GUID 的 meta 后显示一张正确卡片，点击可选中；移除自有文件后刷新，搜索结果变为零，再清除搜索恢复原 Scenes 目录。证明资源库变化继续更新列表，临时文件已移除。13 项资源路径、库更新、工程启动和最近工程回归通过，前端与 Release 构建通过。[完整记录](project-asset-list-performance.json)包含进程、EXE 哈希、截图和原始报告。
+两次候选在计时结束后使用真实 Project 搜索、刷新和选中交互，新增临时材质及唯一 GUID 的 meta 后显示一张正确卡片，点击可选中；移除自有文件后刷新，搜索结果变为零，再清除搜索恢复原 Scenes 目录。证明资源库变化继续更新列表，临时文件已移除。13 项资源路径、库更新、工程启动和最近工程回归通过，前端与 Release 构建通过。完整记录 (`project-asset-list-performance.json`)包含进程、EXE 哈希、截图和原始报告。
 
 四次 QA 进程已退出，隔离 Main.js 恢复且哈希一致。稳定 60 FPS、多窗口/DPR 与跨机器验收仍未完成，完整 Warcraft III 单机、联机和地图编辑器仍有后续工作。
 
-![移动中的 Scene](project-asset-list-moving.png)
+移动中的 Scene (`project-asset-list-moving.png`)
 
 Release 内嵌前端资源，需先执行 `npm.cmd --prefix packages/editor run build`，再执行 `cargo build --release -p mengine-editor-tauri --features custom-protocol`。

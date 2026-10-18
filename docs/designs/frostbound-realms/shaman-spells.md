@@ -28,7 +28,7 @@ Windows package: 586 files / 270,349,438 bytes; content SHA-256 `3d289ad5e66be03
 
 Native inputs use the Agent bridge. Physical mouse/audio and cross-machine LAN acceptance remain unverified. The full game, campaign content and final realistic art remain incomplete.
 
-![Master Training](shaman-master-research.png)
-![Lightning Shield](shaman-lightning-shield.png)
-![Bloodlust](shaman-bloodlust.png)
-![Bloodlust autocast](shaman-autocast.png)
+Master Training (`shaman-master-research.png`)
+Lightning Shield (`shaman-lightning-shield.png`)
+Bloodlust (`shaman-bloodlust.png`)
+Bloodlust autocast (`shaman-autocast.png`)

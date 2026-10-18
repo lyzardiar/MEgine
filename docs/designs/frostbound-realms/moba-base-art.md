@@ -20,10 +20,10 @@ Author: MiYu
 
 ## 画面与后续
 
-![近卫基地](moba-base-sentinel.png)
-![天灾基地](moba-base-scourge.png)
-![近卫远古遗迹](moba-ancient-sentinel.png)
-![冰封王座](moba-ancient-scourge.png)
+近卫基地 (`moba-base-sentinel.png`)
+天灾基地 (`moba-base-scourge.png`)
+近卫远古遗迹 (`moba-ancient-sentinel.png`)
+冰封王座 (`moba-ancient-scourge.png`)
 
 基地建筑已重新分布，自动装饰树按建筑投影避让；地图编辑器支持配置两边的塔和兵营位置，详见 `moba-base-layout.md`。当前地图仍为缩尺三路 MOBA；完整经典 DotA 地图、英雄／物品和完整 Warcraft III 游戏复刻尚未完成。
 

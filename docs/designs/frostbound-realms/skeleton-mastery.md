@@ -18,6 +18,6 @@ Validation:
 
 Windows package: 590 files / 276,039,544 bytes; content SHA-256 `935f546e90c5e7fcab7ab6a74cdc66a5ee867d7cb180ce4d4494814cd175fafc`. Package hash validation and the 30-second Player startup passed with a responsive window and zero logged errors. Physical mouse/audio and cross-machine LAN remain unverified. The full-game recreation remains incomplete.
 
-![Native poses](skeleton-mage-poses.png)
-![Research](skeleton-mastery-research.png)
-![Mage and airborne target](skeleton-mastery-mage.png)
+Native poses (`skeleton-mage-poses.png`)
+Research (`skeleton-mastery-research.png`)
+Mage and airborne target (`skeleton-mastery-mage.png`)

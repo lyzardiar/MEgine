@@ -16,12 +16,12 @@ GLB 根 `extras.mengineMdxAnimation` 保存源动画窗口、全局序列周期�
 
 ## 验证
 
-- [全部模型的源姿态对照](classic-billboard-pose-validation.json)：94 个模型、577 个部件、四个视角、全部源动画及首帧/中段/终点，73,236 次原生加载、10,122,960 个顶点比较，最大位置误差 `0.000007660351562410739` 引擎单位。包括对象旋转、完整 billboard、锁 Z 和退化俯视方向。
-- [30/60 Hz 对照](classic-node-rates-validation.json)：六个代表模型、6,800 次原生加载、740,096 个顶点比较、854 次非循环终点保持，最大位置误差 `0.000003829516601605576`。
-- [独立重生成与修改保护](classic-billboard-reproduction.json)：1,253 个集合文件及 4,956 个游戏导入文件逐字节一致，拒绝修改输出时其余文件不变。
-- [原生多视图](classic-node-views-validation.json)：小精灵、树人和屠宰场在主视图及六个 rooted UI 头像视图绘制；[预览](classic-node-views.png)。材质拒绝数为 0。
+- 全部模型的源姿态对照 (`classic-billboard-pose-validation.json`)：94 个模型、577 个部件、四个视角、全部源动画及首帧/中段/终点，73,236 次原生加载、10,122,960 个顶点比较，最大位置误差 `0.000007660351562410739` 引擎单位。包括对象旋转、完整 billboard、锁 Z 和退化俯视方向。
+- 30/60 Hz 对照 (`classic-node-rates-validation.json`)：六个代表模型、6,800 次原生加载、740,096 个顶点比较、854 次非循环终点保持，最大位置误差 `0.000003829516601605576`。
+- 独立重生成与修改保护 (`classic-billboard-reproduction.json`)：1,253 个集合文件及 4,956 个游戏导入文件逐字节一致，拒绝修改输出时其余文件不变。
+- 原生多视图 (`classic-node-views-validation.json`)：小精灵、树人和屠宰场在主视图及六个 rooted UI 头像视图绘制；预览 (`classic-node-views.png`)。材质拒绝数为 0。
 - 资产库 81 项及运行时 216 项测试通过；Release 编辑器、GPU 预览器和姿态探针构建通过。
-- [原生单机及双客户端报告](native-classic-node-art-qa.json)覆盖实际 Game View、施法、暂停、回城到达、TCP 双客户端和重连；图像为 Agent 输入与真实渲染，不代表物理鼠标或音频验收。
+- 原生单机及双客户端报告 (`native-classic-node-art-qa.json`)覆盖实际 Game View、施法、暂停、回城到达、TCP 双客户端和重连；图像为 Agent 输入与真实渲染，不代表物理鼠标或音频验收。
 
 原生二进制保存在 `tmp/warcraft-effects/classic-node-final-native/mengine-editor-tauri.exe`，已安装编辑器没有替换。日志入口为 `tmp/warcraft-effects/classic-billboard-*`、`classic-node-*`。
 

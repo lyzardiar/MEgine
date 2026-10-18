@@ -10,4 +10,4 @@
 
 再现方式见 [样例说明](../../../samples/pelican-road-rage/README.md)。Player 的打包 / 启动验证与窗口操作验收分别记录，不以逻辑测试或插画替代实机效果。
 
-2026-09-26：QuickJS-NG 迁移后的 2.7 km 原生完整比赛通过，Player 已用最新运行时重新打包并由包内程序校验资源、脚本和内容哈希。最新包哈希见 [player-builds.json](../editor-performance/player-builds.json)；此次没有新增独立 Player 窗口操作或音频听感验收。
+2026-09-26：QuickJS-NG 迁移后的 2.7 km 原生完整比赛通过，Player 已用最新运行时重新打包并由包内程序校验资源、脚本和内容哈希。最新包哈希见 player-builds.json (`../editor-performance/player-builds.json`)；此次没有新增独立 Player 窗口操作或音频听感验收。

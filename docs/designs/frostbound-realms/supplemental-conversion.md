@@ -49,9 +49,9 @@ python scripts/convert-warcraft-effects.py --output asset-library/warcraft-iii/s
 
 ## 验证入口
 
-- [新转换的原生加载与哈希结果](supplemental-conversion-validation.json)
-- [完整来源覆盖清单](asset-conversion-coverage.json)
-- [原生特效预览](classic-effects-preview.png)及[较早时刻](classic-effects-earlier.png)
+- 新转换的原生加载与哈希结果 (`supplemental-conversion-validation.json`)
+- 完整来源覆盖清单 (`asset-conversion-coverage.json`)
+- 原生特效预览 (`classic-effects-preview.png`)及较早时刻 (`classic-effects-earlier.png`)
 - `tmp/warcraft-effects/assets-tests.log`、`runtime-tests.log`、`cli-tests.log`
 - `tmp/warcraft-effects/native-validation.log`、`native-preview.log`、`release-build.log`
 

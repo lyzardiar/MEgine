@@ -25,8 +25,8 @@ node scripts/qa-frostbound.mjs --tactics-only
 
 实际 QuickJS/原生渲染验收通过 Agent 输入检查四种器械的选择、移动、攻击朝向、三个装填周期、四个选择头像、王国工坊训练图标、伤害及保存恢复。规则/TCP 测试另检查四族生产与模型映射。原生攻击验证使用平地、无 AI 和固定高生命靶，截图表示该测试场景。
 
-- [原生姿态展示](siege-poses.png)：每行依次为弩炮、扭力投石机、牵引投石机、冲车。
-- [弩炮战斗](siege-ballista-combat.png)、[投石机战斗](siege-catapult-combat.png)、[牵引投石机](siege-trebuchet-loaded.png)、[冲车](siege-ram-combat.png)。
-- [导入验证](siege-import-qa.json)、[原生交互验证](native-siege-art-qa.json)、[阶段结果](siege-art-qa.json)。
+- 原生姿态展示 (`siege-poses.png`)：每行依次为弩炮、扭力投石机、牵引投石机、冲车。
+- 弩炮战斗 (`siege-ballista-combat.png`)、投石机战斗 (`siege-catapult-combat.png`)、牵引投石机 (`siege-trebuchet-loaded.png`)、冲车 (`siege-ram-combat.png`)。
+- 导入验证 (`siege-import-qa.json`)、原生交互验证 (`native-siege-art-qa.json`)、阶段结果 (`siege-art-qa.json`)。
 
 未验收物理鼠标、音频听感、跨机器联机或独立 Player 帧率。

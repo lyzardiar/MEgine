@@ -22,9 +22,9 @@ Author: MiYu
 
 四次编辑态和运行态移动均无空画面。实际原始 Warcraft 树木、城镇大厅与农民模型激活，移动中保持显示；选中策略相机后，其原生预览实际绘制。GPU 像素、模型选择、层级展开滚动、暂停、单步和停止重启验收通过，无控制台 error，所有拥有的 QA 编辑器退出。独立只读审核无阻断。
 
-42 项前端回归全部通过，覆盖真实 store/native IPC 发布、冻结记录复用、隐藏根与子级、显隐切换、深层编辑回退及隔离、停止重启后旧 session 帧丢弃、父级旋转与负缩放、同帧变换复用和跨帧失效。测试记录和 EXE/脚本哈希及原始报告路径见 [验收记录](scene-owned-frame-performance.json)。
+42 项前端回归全部通过，覆盖真实 store/native IPC 发布、冻结记录复用、隐藏根与子级、显隐切换、深层编辑回退及隔离、停止重启后旧 session 帧丢弃、父级旋转与负缩放、同帧变换复用和跨帧失效。测试记录和 EXE/脚本哈希及原始报告路径见 验收记录 (`scene-owned-frame-performance.json`)。
 
-![移动期间的 Scene 和真实模型](scene-owned-frame-moving.png)
+移动期间的 Scene 和真实模型 (`scene-owned-frame-moving.png`)
 
 ## 构建
 

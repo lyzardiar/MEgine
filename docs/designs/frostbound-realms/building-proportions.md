@@ -29,4 +29,4 @@ node scripts/qa-frost-building-scale.mjs
 
 资产独立重生成字节一致，修改输出的覆盖保护通过。经典视觉测试覆盖四族、主城三级、建造预览材质、动画与源资产哈希；状态特效、技能特效与建造附件回归通过。
 
-Release 原生编辑器中的四族共 36 个建筑绘制验证通过，核对全部当前可见网格部件的真实 Transform、对应源网格和血条高度，材质管线拒绝数为 0。报告见 [原生验收](native-building-scale-qa.json)，画面见 [人族](building-scale-human.png)、[兽族](building-scale-orc.png)、[暗夜精灵](building-scale-night-elf.png)、[亡灵](building-scale-undead.png)。这组夹具用于并排查看三级主城与普通建筑，物理鼠标和音频未在此项中验收。
+Release 原生编辑器中的四族共 36 个建筑绘制验证通过，核对全部当前可见网格部件的真实 Transform、对应源网格和血条高度，材质管线拒绝数为 0。报告见 原生验收 (`native-building-scale-qa.json`)，画面见 人族 (`building-scale-human.png`)、兽族 (`building-scale-orc.png`)、暗夜精灵 (`building-scale-night-elf.png`)、亡灵 (`building-scale-undead.png`)。这组夹具用于并排查看三级主城与普通建筑，物理鼠标和音频未在此项中验收。

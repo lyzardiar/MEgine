@@ -28,4 +28,4 @@ Node/Vite 独立对照使用 10,000 个实体，其中 6 个已暴露；每样�
 
 当前本机运行态 Scene 约 40 张/秒，仍未达到稳定 60 FPS；跨机器严重卡顿需更新构建后复验。原生最后一帧采样中 GPU 回读仍有数毫秒等待，后续分析这条路径。完整 Warcraft 单机、联机、地图编辑器、TD/Dota 目标继续推进。
 
-构建哈希、每组基准数据、CPU profiles、95 项回归日志和四轮原始报告路径见 [验收记录](mixed-private-world-validation.json)。
+构建哈希、每组基准数据、CPU profiles、95 项回归日志和四轮原始报告路径见 验收记录 (`mixed-private-world-validation.json`)。

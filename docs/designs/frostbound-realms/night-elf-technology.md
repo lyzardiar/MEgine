@@ -50,7 +50,7 @@ python scripts/test-frost-night-elf-technology-assets.py --index
 
 首次导入从本机游戏档案按 `War3Patch → War3xLocal → War3x → war3` 优先级提取缺失源文件，既有共享原始表必须匹配已登记的签名。后续只用签名源文件即可脱离游戏安装复现。素材修改保护在任何写入前检查全部候选输出；预检拒绝时不补写其他缺失文件、不修改任何输出。
 
-验证结果为 50 个原始源文件、90 个签名输出逐字节匹配；覆盖全部 11 项／19 级费用、前置、绑定、中文、槽位和 38 张 64×64 RGBA 图标。隔离目录复现的输出和来源回执逐字节一致。另验证已修改图标会阻止整个导入写入，损坏原始升级表会在任何输出写入前被拒绝。结果记录在 [night-elf-technology-art-validation.json](night-elf-technology-art-validation.json)。原始图标来自 Blizzard 游戏档案，适用原游戏资产条款；提取和下载不代表取得免费再分发许可。
+验证结果为 50 个原始源文件、90 个签名输出逐字节匹配；覆盖全部 11 项／19 级费用、前置、绑定、中文、槽位和 38 张 64×64 RGBA 图标。隔离目录复现的输出和来源回执逐字节一致。另验证已修改图标会阻止整个导入写入，损坏原始升级表会在任何输出写入前被拒绝。结果记录在 night-elf-technology-art-validation.json (`night-elf-technology-art-validation.json`)。原始图标来自 Blizzard 游戏档案，适用原游戏资产条款；提取和下载不代表取得免费再分发许可。
 
 提交前另验证暂存区生成器、回执及全部签名输出共 92 项，使用一次 `git cat-file --batch` 读取，并核对 blob 的实际字节哈希。Git 属性固定生成器／目录 JSON 的 LF 换行、保留 WorldEditStrings 原始字节，确保检出后仍可复现。独立只读审核额外从 38 个原始 BLP 在内存重新解码，与交付 PNG 逐字节比较，通过。
 

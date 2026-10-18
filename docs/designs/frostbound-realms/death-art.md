@@ -25,8 +25,8 @@ node scripts/qa-frostbound.mjs --death-only
 
 原生 Agent 检查覆盖 4 次实际射击死亡、倒地中保存与恢复、尸体不能选中、最后姿势不循环及消退后实体停用。规则与 TCP 检查覆盖人口和寻路独立、容量上限、英雄复活、非法和旧存档、即时法术死亡存档、重连时序、迷雾出入及胜利后的清理。物理鼠标、听音、跨机器局域网和完整魔兽玩法还原未由这些检查证明。
 
-6 份清单完整重复导入后，268 个去重的来源和生成文件 SHA256 全部一致。Release 包含 534 个文件、222,744,812 字节，内容哈希为 `3911b4c44405cf345829b9aa8b52d883cbaa7079087aa2bd017b352b86f2e456`；包校验通过，独立 Player 持续运行 30 秒、窗口响应正常、错误日志为 0，详情见 [打包运行检查](player-smoke.json)。
+6 份清单完整重复导入后，268 个去重的来源和生成文件 SHA256 全部一致。Release 包含 534 个文件、222,744,812 字节，内容哈希为 `3911b4c44405cf345829b9aa8b52d883cbaa7079087aa2bd017b352b86f2e456`；包校验通过，独立 Player 持续运行 30 秒、窗口响应正常、错误日志为 0，详情见 打包运行检查 (`player-smoke.json`)。
 
-- [倒地姿势图](death-poses.png)
-- [战场倒地](death-falling.png)、[保持尸体](death-corpses.png)、[恢复死亡动作](death-restored.png)、[清理后的战场](death-cleared.png)
-- [原生姿势验证](death-import-qa.json)、[原生游戏验证](native-death-qa.json)
+- 倒地姿势图 (`death-poses.png`)
+- 战场倒地 (`death-falling.png`)、保持尸体 (`death-corpses.png`)、恢复死亡动作 (`death-restored.png`)、清理后的战场 (`death-cleared.png`)
+- 原生姿势验证 (`death-import-qa.json`)、原生游戏验证 (`native-death-qa.json`)

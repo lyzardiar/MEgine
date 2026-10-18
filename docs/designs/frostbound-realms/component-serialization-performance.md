@@ -27,4 +27,4 @@ Author: MiYu
 
 测试：`node --test scripts/test-frost-effect-pool.mjs`，`node scripts/test-frost-effect-pool-client.mjs`，以及 `scripts/test-frost-human-mortar-client.mjs`、`scripts/test-frost-terrain.mjs`、`scripts/test-frost-hero-death-generated.mjs`、`scripts/test-frost-tree-felling-client.mjs`、`scripts/test-frost-effect-pool-scene.mjs`。
 
-测量摘要、源码与 EXE 哈希、原始报告路径见 [验收记录](component-serialization-performance.json)。下一阶段继续测量单位更新、地形与小地图、景物及 HUD 更新；完整游戏复刻仍未完成。
+测量摘要、源码与 EXE 哈希、原始报告路径见 验收记录 (`component-serialization-performance.json`)。下一阶段继续测量单位更新、地形与小地图、景物及 HUD 更新；完整游戏复刻仍未完成。

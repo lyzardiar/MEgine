@@ -2,7 +2,7 @@
 
 原生 MEngine FPS：在沙漠科研前哨与玩家、机器人交战。脉冲步枪、散射枪、爆头、掩体遮挡、弹匣换弹、冲刺跳跃、护盾补给、死亡复活、击杀信息和计分板构成完整循环；每局 3 分钟，或先达到 20 次击杀。默认加入 5 名机器人，最多 8 个角色同时参战。
 
-![原生联机画面](../../docs/designs/ion-outpost/multiplayer.png)
+原生联机画面 (`../../docs/designs/ion-outpost/multiplayer.png`)
 
 ## 运行
 

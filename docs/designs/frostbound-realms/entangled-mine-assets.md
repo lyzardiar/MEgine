@@ -6,7 +6,7 @@ Author: MiYu.
 
 The original `BTNEntangleMine.blp` and `DISBTNEntangleMine.blp` are decoded to 64×64 PNGs. The source MDX, both source icons and signed billboard/attachment conversion receipts are retained in `SourceAssets/WarcraftIII`. Source paths, archives, input and output SHA-256 records are in `entangled-asset-sources.json`; the full runtime binding receipt is `classic-sources.json`. Blizzard's original game asset terms apply.
 
-![Native model sequence previews](entangled-mine-native-views.png)
+Native model sequence previews (`entangled-mine-native-views.png`)
 
 The native GPU preview renders Birth at 30 seconds, Stand and all five Stand Work sequences with source scaling and seven independent cameras. It verifies the assets and source animation clips. It does not establish Entangle casting, construction rules, loaded Wisp display, capacity, income, unloading or multiplayer behavior. Those game rules remain unfinished. The source model's five EntangleWisp attachment paths are retained; their runtime use must be validated with the actual cargo behavior.
 

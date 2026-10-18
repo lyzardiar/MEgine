@@ -35,3 +35,26 @@ packages/editor/src-tauri/target
 packages/editor/src-tauri/gen/schemas
 packages/editor/src-tauri/build-sdk/*
 !packages/editor/src-tauri/build-sdk/.gitkeep
+
+# Local documentation snapshots and validation artifacts (see AGENTS.md)
+/tmp/docs-artifacts/
+/docs/**/*.[pP][nN][gG]
+/docs/**/*.[jJ][pP][gG]
+/docs/**/*.[jJ][pP][eE][gG]
+/docs/**/*.[wW][eE][bB][pP]
+/docs/**/*.[gG][iI][fF]
+/docs/**/*.mp4
+/docs/**/*.webm
+/docs/**/*.cpuprofile
+/docs/**/player-stdout.txt
+/docs/**/player-stderr.txt
+/docs/designs/**/*.json
+/docs/engine-editor-sync/**/*.json
+# Required test/import reference data, not disposable reports
+!/docs/designs/frostbound-realms/cliff-surface-fixtures.json
+!/docs/designs/frostbound-realms/classic-cliff-patches.json
+!/docs/designs/frostbound-realms/classic-ramp-patches.json
+!/docs/designs/unity-demos/unity-grid-reference.json
+!/docs/designs/unity-demos/isometric-native-colliders.json
+!/docs/images/**/
+!/docs/images/**

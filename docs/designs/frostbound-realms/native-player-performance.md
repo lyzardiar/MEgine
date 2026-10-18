@@ -19,4 +19,4 @@ node scripts/qa-frost-player.mjs moba
 node scripts/qa-frost-player.mjs td
 ```
 
-结果：[遭遇战](native-player-performance-skirmish.json)、[MOBA](native-player-performance-moba.json)、[塔防](native-player-performance-td.json)。
+结果：遭遇战 (`native-player-performance-skirmish.json`)、MOBA (`native-player-performance-moba.json`)、塔防 (`native-player-performance-td.json`)。

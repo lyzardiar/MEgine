@@ -26,6 +26,6 @@ Validation:
 
 Native inputs use the Agent bridge. Physical input, audio listening and cross-machine LAN acceptance are not covered. The full requested game remains incomplete.
 
-![Adept research](casters-adept-research.png)
-![Unholy Frenzy](casters-frenzy.png)
-![Purge](casters-purge.png)
+Adept research (`casters-adept-research.png`)
+Unholy Frenzy (`casters-frenzy.png`)
+Purge (`casters-purge.png`)

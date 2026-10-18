@@ -32,8 +32,8 @@ Validation includes `test-frost-undead-economy.mjs`, `test-frost-undead-network.
 
 `qa-frostbound.mjs --undead-economy-only` uses native Release rendering, QuickJS and Agent input. It verifies placement, summoning, a construction save, the mine portrait, five simultaneous ritual poses, direct gold, ghoul lumber, occupied save/load, stopping a miner and the expanded command panel. See `native-undead-economy-qa.json` and `haunted-mine-import-qa.json`.
 
-![Staffed Haunted Gold Mine](haunted-mine-staffed.png)
-![Mine construction](haunted-mine-summoning.png)
+Staffed Haunted Gold Mine (`haunted-mine-staffed.png`)
+Mine construction (`haunted-mine-summoning.png`)
 
 This remains a prototype: the mine is an original modular stone layout, and the ghoul still uses the stylized Demon model. Exact Warcraft artwork, physical mouse/audio and cross-machine LAN acceptance are not established by these checks. Free3D contributed no downloaded asset to this stage.
 

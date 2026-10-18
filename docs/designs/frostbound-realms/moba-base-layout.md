@@ -37,4 +37,4 @@ node scripts/qa-frost-native-authority.mjs --moba-objectives
 
 原生运行使用 `MENGINE_QA_ROOT`、`MENGINE_QA_PROJECT_ROOT`、`MENGINE_EDITOR_EXECUTABLE`、`MENGINE_RUNTIME_EXECUTABLE` 指定隔离目录、完整资产和 Release 程序。原生报告为 `native-moba-art-validation.json` 和 `native-moba-objectives-validation.json`。
 
-![原生基地布局编辑器](moba-layout-editor.png)
+原生基地布局编辑器 (`moba-layout-editor.png`)

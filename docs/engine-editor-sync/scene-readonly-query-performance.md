@@ -23,9 +23,9 @@ CPU 表格是实际采样中 `playRenderSnapshot` 调用栈的累计时间，包
 
 四次编辑态和运行态移动均无空画面。真实树木、城镇大厅和农民的活动动画模型、实际 GPU 像素、模型点击选择、层级展开与滚动、选中相机的原生预览、暂停、单步及停止重启验收通过，无控制台 error。
 
-37 项回归通过，包含 Timeline 正反激活预览下的作者状态与切换、显示旧帧和新帧、深组件与父级编辑上传、可变入口的引用检测、原生生命周期、层级和显隐查询。独立只读审核无阻断。[完整验收记录](scene-readonly-query-performance.json)包含哈希、日志和原始报告路径。
+37 项回归通过，包含 Timeline 正反激活预览下的作者状态与切换、显示旧帧和新帧、深组件与父级编辑上传、可变入口的引用检测、原生生命周期、层级和显隐查询。独立只读审核无阻断。完整验收记录 (`scene-readonly-query-performance.json`)包含哈希、日志和原始报告路径。
 
-![移动期间的运行态 Scene](scene-readonly-query-moving.png)
+移动期间的运行态 Scene (`scene-readonly-query-moving.png`)
 
 ## 构建
 

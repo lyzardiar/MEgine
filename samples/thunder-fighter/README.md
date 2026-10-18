@@ -2,7 +2,7 @@
 
 MEngine 原创纵向弹幕射击游戏。两段关卡、两名 Boss、五种 Boss 弹幕阶段，包含发光花瓣、交叉针弹、六臂螺旋、预警激光阵列和终局放射弹幕。
 
-![原生终局弹幕](../../docs/designs/thunder-fighter/boss-4-2.png)
+原生终局弹幕 (`../../docs/designs/thunder-fighter/boss-4-2.png`)
 
 在 MEngine 编辑器打开本目录，点击 Play，再按 Enter 出击。战场按 16:9 画布设计，中央为纵向飞行区域，两侧显示资源和操作说明。
 
@@ -49,6 +49,6 @@ cargo test -p mengine-editor-host --test thunder_sample -- --ignored --nocapture
 
 第一条使用真实编译脚本和输入机器人验证完整关卡、精确移动、暂停、Nova、失败和重试，并产生物理按键回放。第二条把同一回放送入 `EditorPlayRuntime / Boa / native World`，断言胜利和五种 Boss 阶段，导出真实状态用于画面检查。当前原生结果：约 109 秒通关、56 次击落、16 次擦弹、4 次 Nova、1 次受伤、峰值 478 发敌弹。
 
-`scripts/qa-thunder-fighter.mjs` 使用独立 QA 编辑器，通过 Agent 验证实况移动、Nova、暂停、继续、重开及 Stop 恢复原始场景。运行前设置 `MENGINE_EDITOR_CONFIG_DIR`、`MENGINE_EDITOR_EXECUTABLE` 指向隔离配置和当前构建的编辑器。标题和 `live-nova.png` 为实时 Play 截图，其余图片是原生通关回放的状态，经 `scene.load_json` 在原生 Game 渲染器中重绘。查看 [原生结果](../../docs/designs/thunder-fighter/native-campaign.json)、[Agent 结果](../../docs/designs/thunder-fighter/agent-checks.json)。
+`scripts/qa-thunder-fighter.mjs` 使用独立 QA 编辑器，通过 Agent 验证实况移动、Nova、暂停、继续、重开及 Stop 恢复原始场景。运行前设置 `MENGINE_EDITOR_CONFIG_DIR`、`MENGINE_EDITOR_EXECUTABLE` 指向隔离配置和当前构建的编辑器。标题和 `live-nova.png` 为实时 Play 截图，其余图片是原生通关回放的状态，经 `scene.load_json` 在原生 Game 渲染器中重绘。查看 原生结果 (`../../docs/designs/thunder-fighter/native-campaign.json`)、Agent 结果 (`../../docs/designs/thunder-fighter/agent-checks.json`)。
 
 Windows 包通过资源与 SHA-256 校验，Player 启动 8 秒后仍正常运行。桌面自动化因 `GetCursorPos 0x80070005` 未能完成独立 Player 窗口操作，当前机器无默认音频输出设备，键鼠实窗体验和音频听感需人工确认；上述回放验证不代表 60 FPS 性能验收。浏览器 Canvas 回退可显示精灵布局，自定义着色效果需原生编辑器或 Player。

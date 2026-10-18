@@ -20,6 +20,6 @@ node scripts/qa-frostbound.mjs --classic-terrain-only --deterministic-input
 
 原生验收使用 Agent 输入，未验收物理鼠标或音频。截图为同一可编辑场景，记录于 `native-classic-terrain-qa.json`：
 
-![森林](classic-terrain-forest.png)
-![冬季](classic-terrain-winter.png)
-![荒地](classic-terrain-barrens.png)
+森林 (`classic-terrain-forest.png`)
+冬季 (`classic-terrain-winter.png`)
+荒地 (`classic-terrain-barrens.png`)

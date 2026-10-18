@@ -31,9 +31,9 @@ node scripts/qa-frostbound.mjs --network-only
 
 原生视觉验收使用十个固定发射者与固定靶，编辑器逐帧推进实际 QuickJS 和渲染器。检查全部十类弹体、实体与粒子启用状态、同一模拟帧内的位移和命中清理；该展示场景用于对照弹体，不代表正式地图摆放。保存回归另用真实 Agent 输入执行暂停、F5 与继续游戏。
 
-- [飞行展示](projectile-art-flight.png)
-- [命中展示](projectile-art-impacts.png)
-- [原生验证](native-projectile-art-qa.json)
-- [阶段结果](projectile-visuals-qa.json)
+- 飞行展示 (`projectile-art-flight.png`)
+- 命中展示 (`projectile-art-impacts.png`)
+- 原生验证 (`native-projectile-art-qa.json`)
+- 阶段结果 (`projectile-visuals-qa.json`)
 
 其余角色、兵种和两族建筑仍需统一写实美术。该阶段没有验收物理鼠标、音频听感、跨机器局域网或独立 Player 帧率，完整复刻仍未完成。

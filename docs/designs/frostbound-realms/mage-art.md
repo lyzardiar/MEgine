@@ -25,8 +25,8 @@ node scripts/qa-frostbound.mjs --mages-only
 
 原生 Release/QuickJS 检查通过英雄选择、头像、行走、法杖攻击、冰霜/火焰弹道、实际伤害、技能学习、法力消耗及施法中途存档恢复；材质管线拒绝数为 0。整套规则/TCP 回归通过。Player 包含 511 个文件，209,087,616 字节，逐文件哈希核验和 30 秒启动响应检查通过。
 
-- [原生姿势图](mage-poses.png)
-- [寒霜施法](mage-0-cast.png)、[烈焰施法](mage-1-cast.png)
-- [导入检查](mage-import-qa.json)、[原生检查](native-mages-qa.json)、[阶段结果](mage-art-qa.json)
+- 原生姿势图 (`mage-poses.png`)
+- 寒霜施法 (`mage-0-cast.png`)、烈焰施法 (`mage-1-cast.png`)
+- 导入检查 (`mage-import-qa.json`)、原生检查 (`native-mages-qa.json`)、阶段结果 (`mage-art-qa.json`)
 
 这是历史风格素材组装的原创法师外观；其余部分角色仍使用不同风格资产，尚未达到完整魔兽英雄美术还原。原生 Agent 输入检查不代表物理鼠标、听音、跨机器局域网或独立 Player 帧率验收。

@@ -19,9 +19,9 @@ node scripts/qa-frostbound.mjs --network-only
 
 规则测试覆盖移动目标、射手死亡、目标消失、护盾、吸血、攻城落点与溅射、弹体上限、寿命、存档校验和战争迷雾。真实 TCP 测试检查飞行中断线重连、编号保持、隐私字段裁剪和单次命中。
 
-原生弹道验收使用平地与固定靶，弓箭手在射程内等待初始冷却，首箭之后抑制连射。编辑器逐帧推进捕捉短暂飞行，再通过 Agent 输入执行 Escape 暂停、F5 保存与菜单继续；检查实际箭模型坐标、暂停冻结和一次护甲折算伤害。详情见 [原生弹道结果](native-projectiles-qa.json)、[阶段结果](projectile-combat-qa.json)。
+原生弹道验收使用平地与固定靶，弓箭手在射程内等待初始冷却，首箭之后抑制连射。编辑器逐帧推进捕捉短暂飞行，再通过 Agent 输入执行 Escape 暂停、F5 保存与菜单继续；检查实际箭模型坐标、暂停冻结和一次护甲折算伤害。详情见 原生弹道结果 (`native-projectiles-qa.json`)、阶段结果 (`projectile-combat-qa.json`)。
 
-- [箭矢飞行](projectile-in-flight.png)
-- [读取飞行存档后命中](projectile-impact.png)
+- 箭矢飞行 (`projectile-in-flight.png`)
+- 读取飞行存档后命中 (`projectile-impact.png`)
 
 该阶段未统一其余英雄、兵种和两族建筑的写实美术；弹体分类与客户端插值见 [弹体视觉阶段](projectile-visuals.md)。完整复刻、物理鼠标、音频听感、跨机器联机与独立 Player 帧率不属于本阶段已验收结果。

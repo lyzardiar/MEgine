@@ -25,8 +25,8 @@ node scripts/qa-frostbound.mjs --heroes-only
 
 原生 Release/QuickJS 检查通过游侠选择、头像、移动、普通箭弹道和伤害、搭箭/放箭切换、技能学习和伤害、法力消耗、施法朝向及中途存档恢复；材质管线拒绝数为 0。四英雄选择、技能释放、存档读取和编辑器英雄放置往返通过。TCP 检查实际发送学习/施法指令，验证权威朝向及施法中途重连；整套规则/联机回归通过。
 
-- [原生姿势图](ranger-poses.png)
-- [实际射击](ranger-combat.png)、[技能释放](ranger-cast.png)、[恢复施法](ranger-restored.png)
-- [导入检查](ranger-import-qa.json)、[原生游侠检查](native-ranger-qa.json)、[四英雄检查](native-heroes-qa.json)、[阶段结果](ranger-art-qa.json)
+- 原生姿势图 (`ranger-poses.png`)
+- 实际射击 (`ranger-combat.png`)、技能释放 (`ranger-cast.png`)、恢复施法 (`ranger-restored.png`)
+- 导入检查 (`ranger-import-qa.json`)、原生游侠检查 (`native-ranger-qa.json`)、四英雄检查 (`native-heroes-qa.json`)、阶段结果 (`ranger-art-qa.json`)
 
 四位英雄均已有写实模型，但这仍是历史风格素材组装的原创角色；其余部分兵种风格尚未统一，完整魔兽游戏与美术还原仍未完成。原生 Agent 检查不代表物理鼠标、听音、跨机器局域网或独立 Player 帧率验收。

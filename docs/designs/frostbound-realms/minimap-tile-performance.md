@@ -27,4 +27,4 @@ Author: MiYu
 
 生成脚本：`node scripts/build-frostbound.mjs`。本轮设置 `MENGINE_FROST_BUILD_OUTPUT` 输出至隔离目录，仅同步生成的 Main.js 并核对字节一致。
 
-测量摘要、源码和 EXE 哈希、原始报告路径见 [验收记录](minimap-tile-performance.json)。下一阶段继续测量景物与单位更新；完整 Warcraft III 单机、联机和地图编辑器复刻仍未完成。
+测量摘要、源码和 EXE 哈希、原始报告路径见 验收记录 (`minimap-tile-performance.json`)。下一阶段继续测量景物与单位更新；完整 Warcraft III 单机、联机和地图编辑器复刻仍未完成。

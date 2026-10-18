@@ -25,5 +25,5 @@ Run `node scripts/render-frost-unit-icons.mjs` and `node scripts/build-frostboun
 
 Native interaction evidence uses Agent input. Physical mouse/keyboard, audio listening and a new cross-machine LAN run are not covered by this stage. Corpse raising is now documented in [Raise Dead](raise-dead.md). The remaining faction artwork and full Warcraft-style game are still unfinished.
 
-![Native pose sheet](necromancer-poses.png)
-![Native shadow combat](necromancer-combat.png)
+Native pose sheet (`necromancer-poses.png`)
+Native shadow combat (`necromancer-combat.png`)

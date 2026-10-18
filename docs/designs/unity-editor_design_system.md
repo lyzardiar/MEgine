@@ -35,8 +35,8 @@ Effekseer 按资源、Playback、Rendering 分组；Screen Position 和 Screen S
 
 截图由 Windows Tauri / WebView2 后台窗口生成，不是设计稿。Effekseer 截图使用空资源引用，验证属性布局与操作，不代表特效渲染验收。
 
-![Inspector 与场景手柄](editor-ui/inspector.png)
+Inspector 与场景手柄 (`editor-ui/inspector.png`)
 
-![2D RectTransform 与 Console](editor-ui/rect-transform.png)
+2D RectTransform 与 Console (`editor-ui/rect-transform.png`)
 
-![窄 Inspector](editor-ui/narrow.png)
+窄 Inspector (`editor-ui/narrow.png`)

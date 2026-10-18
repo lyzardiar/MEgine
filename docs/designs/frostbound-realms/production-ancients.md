@@ -36,13 +36,13 @@ python scripts/verify-frost-production-ancient-bundles.py
 
 双原生 Release QuickJS 客户端通过实际大厅加入／准备／开局、HUD 拔根命令、完整权威形态计时、自然的祝福护甲／速度、敌方订单隐私及客机断线重连。两端控制台错误和材质管线拒绝均为 0。联机输入在短暂暂停编辑器后等待按下／抬起各一帧的原生执行完成，再恢复运行；测试覆盖真实 TCP，并非物理键鼠验收。两份独立测试工程各 6,660 个文件与当前产品逐文件一致，差异仅为工程标识、临时 TCP 端口和 qaUnits 观察字段。所有十四个签名源／输出文件与导入器签名在 Git index 和 Windows 实际检出后保持一致。
 
-报告：[原生验收](native-production-ancients-qa.json)、[产品字节比对](production-ancient-native-bundle-validation.json)、[素材复现](production-ancient-art-validation.json)、[Git 检出签名](production-ancient-index-validation.json)。
+报告：原生验收 (`native-production-ancients-qa.json`)、产品字节比对 (`production-ancient-native-bundle-validation.json`)、素材复现 (`production-ancient-art-validation.json`)、Git 检出签名 (`production-ancient-index-validation.json`)。
 
-![完整施工后的古树](production-ancients-construction.png)
-![扎根模型与原版控制台](production-ancients-rooted.png)
-![拔根形态和原版命令](production-ancients-uprooted.png)
-![原版吃树动画](production-ancients-eat-tree.png)
-![双客户端联机古树](production-ancients-network.png)
+完整施工后的古树 (`production-ancients-construction.png`)
+扎根模型与原版控制台 (`production-ancients-rooted.png`)
+拔根形态和原版命令 (`production-ancients-uprooted.png`)
+原版吃树动画 (`production-ancients-eat-tree.png`)
+双客户端联机古树 (`production-ancients-network.png`)
 
 建筑源比例、四族控制台和多宽高比布局使用当前共享实现，详见 [建筑比例](building-proportions.md) 和 [控制台布局](console-layout.md)。本次生产古树命令与状态信息使用同一控制台；没有修改源网格尺寸或统一各建筑的边界。
 

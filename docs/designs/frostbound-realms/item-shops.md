@@ -32,12 +32,12 @@ Author: MiYu
 - test-frost-item-shops-network.mjs：真实 TCP 连续购买同一最后库存只支付一次，重连恢复库存/背包/计时，权威补货和敌方非法购买拒绝。补货边界测试缩短服务器测试状态的剩余计时。
 - test-frost-item-shops-client.mjs：生成场景与实际客户端脚本接收按钮/键盘/鼠标输入，验证商店购买、缺货提示与无扣款、英雄切换/选择、背包、英雄页面购物、保存恢复、补货与非近战热键限制。
 - 全量规则/TCP 回归：66 项 PASS，进程退出 0。最终客户端调整后再次通过针对性客户端输入测试。
-- [原生报告](item-shops-native-qa.json)：隔离的 Release 编辑器，真实 QuickJS 与 Agent 输入，四族商店按钮、三维模型绑定、工人实际施工，完整 60 模拟秒补货、暂停冻结以及存档加载。测试地图从隔离项目用户数据加载，只增加 qaMap / qaUnits 观察字段。
-- [交付校验](item-shops-validation.json)与 [Player 检查](item-shops-player-smoke.json)：源码/原生资产/分发包一致，所有文件大小与 SHA-256 校验、着色器变体校验、30 秒 Player 启动及响应。
+- 原生报告 (`item-shops-native-qa.json`)：隔离的 Release 编辑器，真实 QuickJS 与 Agent 输入，四族商店按钮、三维模型绑定、工人实际施工，完整 60 模拟秒补货、暂停冻结以及存档加载。测试地图从隔离项目用户数据加载，只增加 qaMap / qaUnits 观察字段。
+- 交付校验 (`item-shops-validation.json`)与 Player 检查 (`item-shops-player-smoke.json`)：源码/原生资产/分发包一致，所有文件大小与 SHA-256 校验、着色器变体校验、30 秒 Player 启动及响应。
 
 原生 Agent 输入验收不代表物理鼠标、音频试听、跨机器局域网或稳定 Player 帧性能验收。完整冰封王座复刻目标仍未完成。
 
-![人族商店](item-shops-shop-0.png)
-![兽族商店](item-shops-shop-1.png)
-![暗夜商店](item-shops-shop-2.png)
-![亡灵商店](item-shops-shop-3.png)
+人族商店 (`item-shops-shop-0.png`)
+兽族商店 (`item-shops-shop-1.png`)
+暗夜商店 (`item-shops-shop-2.png`)
+亡灵商店 (`item-shops-shop-3.png`)

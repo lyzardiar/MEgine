@@ -23,8 +23,8 @@ node scripts/qa-frostbound.mjs --heroes-only
 
 专项原生 QuickJS/Agent 输入验证普通圣骑士的头像、训练图标、移动、攻击朝向、伤害和保存恢复；英雄验证同帧切换并开局、实际学习圣光、释放治疗、扣除法力、进入施法姿态，并在施法中保存和恢复。英雄专项验证继续覆盖四种英雄选择、学习、释放、保存以及地图编辑器放置英雄。
 
-- [模型与动作](paladin-poses.png)：上排普通圣骑士，中排黎明圣骑士，下排举锤施法；中列的行走姿态展示背部披风。
-- [实际施法](paladin-cast.png)、[施法存档恢复](paladin-cast-restored.png)、[普通圣骑士战斗](paladin-combat.png)。
-- [导入检查](paladin-import-qa.json)、[原生检查](native-paladin-qa.json)、[阶段结果](paladin-art-qa.json)。
+- 模型与动作 (`paladin-poses.png`)：上排普通圣骑士，中排黎明圣骑士，下排举锤施法；中列的行走姿态展示背部披风。
+- 实际施法 (`paladin-cast.png`)、施法存档恢复 (`paladin-cast-restored.png`)、普通圣骑士战斗 (`paladin-combat.png`)。
+- 导入检查 (`paladin-import-qa.json`)、原生检查 (`native-paladin-qa.json`)、阶段结果 (`paladin-art-qa.json`)。
 
 模型来源为历史题材角色，当前是写实风格的组合外观，尚未达到原作英雄造型的完整还原；其他未替换角色仍有风格差异。截图为原生渲染，专项场景使用固定高生命靶和无 AI。物理键鼠、音频听感、跨机器 LAN 与独立 Player 帧率尚未验收。

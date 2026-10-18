@@ -27,4 +27,4 @@ Author: MiYu
 
 测试入口：`node scripts/test-frost-scenery-visual-client.mjs`。使用 `MENGINE_FROST_BUILD_OUTPUT` 和 `node scripts/build-frostbound.mjs` 生成隔离 Main.js，并核对生成字节。
 
-EXE、脚本哈希及四次原始报告见 [验收记录](scenery-visual-performance.json)。继续优化地形和运行开销；完整单机、联机及地图编辑器的 Warcraft III 行为复刻仍在继续。
+EXE、脚本哈希及四次原始报告见 验收记录 (`scenery-visual-performance.json`)。继续优化地形和运行开销；完整单机、联机及地图编辑器的 Warcraft III 行为复刻仍在继续。
