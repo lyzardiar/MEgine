@@ -84,11 +84,11 @@ assert not special['vorpalBlades']['attackGroundSpills'] and not special['vorpal
 assert special['ultravision']['nightSightEqualsDaySight'] and special['ultravision']['units'] == research['Reuv']['units']
 well = special['wellSpring']
 assert units['emow']['hpRegenType'] == 'none' and well['sourceAbilityRow']['DataE1'] == '1' and well['regeneratesOnlyAtNight'], 'Mana night restriction comes from Ambt, not HP regeneration type'
-assert (units['emow']['initialMana'], well['upgradedMaxMana'], well['upgradedManaRegen'], well['manaRegenMultiplier']) == (100, 425, 1.9, 1.52)
+assert (units['emow']['initialMana'], well['upgradedMaxMana'], well['upgradedManaRegen'], well['manaRegenBonus']) == (100, 425, 1.77, 0.52)
 assert well['healthPerWellMana'] == 2 and well['targetManaPerWellMana'] == .5
 assert '%' in research['Rews']['effects'][1]['sourceLabels']['mnrb']
 print('PASS original research: 11 IDs / 19 ranks, exact costs, prerequisites, localization, slots, unit bindings and 38 RGBA icons')
-print('PASS source effects: dice-specific attack, unit armor, bows, marksmanship, three glaive targets, single-use owl, weapon-2 tree rules, night vision and percent well regeneration')
+print('PASS source effects: dice-specific attack, unit armor, bows, marksmanship, three glaive targets, single-use owl, weapon-2 tree rules, night vision and additive well regeneration')
 
 with tempfile.TemporaryDirectory(prefix='frost-night-elf-tech-') as name:
     directory = pathlib.Path(name); output = directory / 'output'

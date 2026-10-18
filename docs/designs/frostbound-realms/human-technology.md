@@ -1,6 +1,6 @@
 # Human Barracks technology and Defend
 
-Author: MiYu. Protocol 103. New skirmishes enable humanTechnologyVersion 1; saves without the marker restore as version 0.
+Author: MiYu. Protocol 104. New skirmishes enable humanTechnologyVersion 1; saves without the marker restore as version 0.
 
 The human Barracks shares its three paid production slots with Defend (150 gold, 100 lumber, 45 s), Long Rifles (75/125/30 s; Keep) and Animal War Training (125/175/40 s; Lumber Mill, Castle and Blacksmith). Research is unique per team, refunds on queue cancellation, consumes no population and retains full waiting clocks. Long Rifles increases Rifleman range from 400 to 600; Animal War Training adds 150 maximum HP to existing and newly trained Knights. New games retain the existing Knight health ratio with source float rounding; saves without healthUpgradeVersion keep their additive health behavior. See [HP upgrade policy](hitpoint-upgrades.md).
 
