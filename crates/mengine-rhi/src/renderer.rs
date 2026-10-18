@@ -1,7 +1,7 @@
 use crate::ibl::{BrdfLut, EnvironmentPrefilter, PrefilteredEnvironment};
 use crate::gpu_profiler::{profiling_features, GpuFrameProfiler};
 use crate::GpuFrameProfile;
-use crate::mesh::{MeshGpu, MeshIndexBufferCache, Vertex};
+use crate::mesh::{MeshGpu, MeshIndexBufferCache, MeshVertexBufferPool, Vertex};
 use crate::post_process::{HdrPostProcess, HDR_COLOR_FORMAT};
 use crate::render_graph::RenderGraph;
 use crate::sky::SkyBackground;
@@ -672,6 +672,7 @@ pub struct Renderer {
     depth_texture: wgpu::Texture,
     meshes: HashMap<String, MeshGpu>,
     mesh_indices: MeshIndexBufferCache,
+    mesh_vertices: MeshVertexBufferPool,
     spatial_index: SpatialIndex,
     spatial_stats: SpatialCullingStats,
     bind_layout: wgpu::BindGroupLayout,
@@ -1307,6 +1308,7 @@ impl Renderer {
             depth_texture,
             meshes,
             mesh_indices: MeshIndexBufferCache::default(),
+            mesh_vertices: MeshVertexBufferPool::default(),
             spatial_index: SpatialIndex::default(),
             spatial_stats: SpatialCullingStats::default(),
             bind_layout,
@@ -1751,6 +1753,7 @@ impl Renderer {
                 let Some(mesh) = self.meshes.get(&object.mesh_key) else {
                     continue;
                 };
+                if mesh.index_count == 0 { continue; }
                 pass.set_bind_group(
                     0,
                     &self.shadow_pass_bind_group,
@@ -1838,6 +1841,7 @@ impl Renderer {
                 let Some(mesh) = self.meshes.get(&object.mesh_key) else {
                     continue;
                 };
+                if mesh.index_count == 0 { continue; }
                 let pipeline_key = MaterialPipelineKey::from(&object.material);
                 let use_error_pipeline = object.material.is_error
                     || (pipeline_key.shader_fingerprint != 0
@@ -2516,7 +2520,9 @@ impl Renderer {
 
     pub fn spatial_culling_stats(&self) -> SpatialCullingStats { self.spatial_stats }
 
-    pub fn register_mesh(&mut self, key: &str, mesh: MeshGpu) {
+    pub fn register_mesh(&mut self, key: &str, mut mesh: MeshGpu) {
+        self.remove_mesh(key);
+        mesh.recyclable_vertices = false;
         self.meshes.insert(key.to_string(), mesh);
     }
 
@@ -2525,13 +2531,23 @@ impl Renderer {
     }
 
     pub fn upload_gltf_static_profiled(&mut self, key: &str, vertices: &[Vertex], indices: &[u32]) -> crate::MeshUploadProfile {
-        let (mesh, profile) = MeshGpu::upload_with_indices(&self.device, vertices, indices, || self.mesh_indices.acquire(&self.device, indices));
+        self.remove_mesh(key);
+        let (mut mesh, profile) = MeshGpu::upload_with_buffers(vertices, indices, || self.mesh_vertices.upload(&self.device, &self.queue, vertices), || self.mesh_indices.acquire(&self.device, indices));
+        mesh.recyclable_vertices = true;
         self.meshes.insert(key.to_string(), mesh);
         profile
     }
 
     /// Release an imported mesh after its runtime cache entry has been evicted.
-    pub fn remove_mesh(&mut self, key: &str) { self.meshes.remove(key); }
+    pub fn remove_mesh(&mut self, key: &str) {
+        if let Some(mesh) = self.meshes.remove(key) {
+            // Each view is submitted before returning; queued writes run after those prior draws.
+            if mesh.recyclable_vertices { self.mesh_vertices.recycle(mesh.vertex_buffer); }
+        }
+    }
+
+    /// Idle vertex-buffer count and payload bytes, excluding active meshes and driver overhead.
+    pub fn mesh_vertex_pool_stats(&self) -> (usize, usize) { (self.mesh_vertices.entries, self.mesh_vertices.bytes) }
 }
 
 fn preferred_backends() -> wgpu::Backends {
@@ -4229,6 +4245,107 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn recycled_vertices_preserve_submitted_pixels_and_isolate_live_scene_meshes() {
+        let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32,32))).expect("GPU for recycled vertex acceptance");
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let before = renderer.create_offscreen_target(PhysicalSize::new(32,32));
+        let after = renderer.create_offscreen_target(PhysicalSize::new(32,32));
+        let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+        let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false;
+        let clear = ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 };
+        let left = [[-1.,-1.,0.25],[0.,-1.,0.25],[-1.,1.,0.25],[0.,1.,0.25]].map(|position| Vertex { position, normal:[0.,0.,1.], uv:[0.,0.] });
+        let right = left.map(|mut vertex| { vertex.position[0] += 1.; vertex });
+        let indices = [0,1,2,2,1,3];
+        let object = |key: &str, color| RenderObject { mesh_key:key.into(), model:Mat4::IDENTITY, material:RenderMaterial { unlit:true, double_sided:true, base_color:color, ..Default::default() }, cast_shadows:false, receive_shadows:false };
+        let red = object("moving", [1.,0.,0.,1.]);
+        let blue = object("live", [0.,0.,1.,1.]);
+        assert!(!renderer.upload_gltf_static_profiled("moving", &left, &indices).vertex_buffer_reused);
+        let original = renderer.meshes["moving"].vertex_buffer.clone();
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects:std::slice::from_ref(&red), lighting:&lighting, ui:None, scene_views:&[] }, RenderTarget::Offscreen(&before)).unwrap();
+
+        // MiYu: no poll or readback between the first submission and recycling its vertex buffer.
+        renderer.remove_mesh("moving");
+        assert!(renderer.upload_gltf_static_profiled("moving", &right, &indices).vertex_buffer_reused);
+        assert_eq!(renderer.meshes["moving"].vertex_buffer, original);
+        assert_eq!(renderer.meshes["moving"].bounds.unwrap().min, Vec3::new(0.,-1.,0.25));
+        assert_eq!(renderer.meshes["moving"].bounds.unwrap().max, Vec3::new(1.,1.,0.25));
+        assert!(!renderer.upload_gltf_static_profiled("live", &left, &indices).vertex_buffer_reused);
+        assert_ne!(renderer.meshes["live"].vertex_buffer, original);
+        let view = SceneTextureFrame { key:"$scene-view:pool-isolation".into(), size:[32,32], clear, camera, lighting:lighting.clone(), objects:vec![blue.clone()] };
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects:&[red.clone(),blue], lighting:&lighting, ui:None, scene_views:std::slice::from_ref(&view) }, RenderTarget::Offscreen(&after)).unwrap();
+        assert_eq!(renderer.submission_profile().queue_submissions, 2);
+        let pixel = |data: &[u8], x: usize, y: usize| { let i = (y * 32 + x) * 4; data[i..i+3].to_vec() };
+        let first = renderer.read_offscreen_rgba8(&before).unwrap();
+        let second = renderer.read_offscreen_rgba8(&after).unwrap();
+        let scene = renderer.read_offscreen_rgba8(&renderer.scene_textures[&view.key].target).unwrap();
+        assert_eq!(pixel(&first,8,16), [255,0,0], "recycling must preserve the preceding submission's geometry");
+        assert_eq!(pixel(&first,24,16), [0,0,0]);
+        assert_eq!(pixel(&second,8,16), [0,0,255]); assert_eq!(pixel(&second,24,16), [255,0,0]);
+        assert_eq!(pixel(&scene,8,16), [0,0,255]); assert_eq!(pixel(&scene,24,16), [0,0,0]);
+
+        let old_indices = renderer.meshes["moving"].index_buffer.clone();
+        let replacement = renderer.upload_gltf_static_profiled("moving", &right, &[0,2,3,0,2,3]);
+        assert!(replacement.vertex_buffer_reused); assert!(!replacement.index_buffer_reused);
+        assert_eq!(renderer.meshes["moving"].vertex_buffer, original);
+        assert_ne!(renderer.meshes["moving"].index_buffer, old_indices);
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects:std::slice::from_ref(&red), lighting:&lighting, ui:None, scene_views:&[] }, RenderTarget::Offscreen(&after)).unwrap();
+        let triangle = renderer.read_offscreen_rgba8(&after).unwrap();
+        assert_eq!(pixel(&triangle,20,8), [255,0,0]); assert_eq!(pixel(&triangle,28,24), [0,0,0], "same-key equal-length topology replacement must update pixels");
+        assert_eq!(renderer.meshes["moving"].index_count, 6);
+        renderer.upload_gltf_static("moving", &right, &[0,2,3]);
+        assert_eq!(renderer.meshes["moving"].index_count, 3);
+        renderer.upload_gltf_static("moving", &[], &[]);
+        assert!(renderer.meshes["moving"].bounds.is_none()); assert_eq!(renderer.meshes["moving"].index_count, 0);
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects:std::slice::from_ref(&red), lighting:&lighting, ui:None, scene_views:&[] }, RenderTarget::Offscreen(&after)).unwrap();
+        let empty = renderer.read_offscreen_rgba8(&after).unwrap();
+        assert_eq!(pixel(&empty,20,8), [0,0,0]); assert_eq!(pixel(&empty,28,24), [0,0,0]);
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none(), "recycled vertex rendering validation");
+    }
+
+    #[test]
+    fn registered_vertex_aliases_survive_removal_and_same_key_replacement() {
+        use wgpu::util::DeviceExt;
+        let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(16,16))).expect("GPU for registered vertex isolation");
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let vertices = [[-1.,-1.,0.25],[1.,-1.,0.25],[0.,1.,0.25]].map(|position| Vertex { position, normal:[0.,0.,1.], uv:[0.,0.] });
+        let changed = vertices.map(|mut vertex| { vertex.position[0] += 10.; vertex });
+        let indices = [0,1,2];
+        let external = renderer.device.create_buffer_init(&wgpu::util::BufferInitDescriptor { label:Some("external_vertex_alias"), contents:bytemuck::cast_slice(&vertices), usage:wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::COPY_SRC });
+        let make_external = |device: &wgpu::Device| {
+            let mut mesh = MeshGpu::upload(device, &vertices, &indices);
+            mesh.vertex_buffer = external.clone();
+            mesh.recyclable_vertices = true;
+            mesh
+        };
+        renderer.upload_gltf_static("slot", &vertices, &indices);
+        let internal = renderer.meshes["slot"].vertex_buffer.clone();
+        renderer.register_mesh("slot", make_external(&renderer.device));
+        assert!(!renderer.meshes["slot"].recyclable_vertices, "register_mesh must reset provenance even on a transferred mesh");
+        assert!(renderer.upload_gltf_static_profiled("replacement", &changed, &indices).vertex_buffer_reused);
+        assert_eq!(renderer.meshes["replacement"].vertex_buffer, internal);
+        assert_ne!(internal, external);
+        assert!(!renderer.upload_gltf_static_profiled("slot", &changed, &indices).vertex_buffer_reused);
+        assert_ne!(renderer.meshes["slot"].vertex_buffer, external, "same-key replacement must not recycle a registered alias");
+        renderer.register_mesh("removed", make_external(&renderer.device));
+        renderer.remove_mesh("removed");
+        assert!(!renderer.upload_gltf_static_profiled("after_removal", &changed, &indices).vertex_buffer_reused);
+        assert_ne!(renderer.meshes["after_removal"].vertex_buffer, external);
+
+        let bytes = std::mem::size_of_val(&vertices) as u64;
+        let readback = renderer.device.create_buffer(&wgpu::BufferDescriptor { label:Some("external_vertex_readback"), size:bytes, usage:wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ, mapped_at_creation:false });
+        let mut encoder = renderer.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label:Some("external_vertex_readback") });
+        encoder.copy_buffer_to_buffer(&external, 0, &readback, 0, bytes);
+        renderer.queue.submit([encoder.finish()]);
+        let (sender, receiver) = std::sync::mpsc::channel();
+        readback.slice(..).map_async(wgpu::MapMode::Read, move |result| { sender.send(result).unwrap(); });
+        let _ = renderer.device.poll(wgpu::Maintain::Wait);
+        receiver.recv().unwrap().unwrap();
+        assert_eq!(&*readback.slice(..).get_mapped_range(), bytemuck::cast_slice::<Vertex,u8>(&vertices), "external buffer contents must survive all internal uploads");
+        readback.unmap();
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none(), "registered vertex alias validation");
+    }
 
     #[test]
     fn gpu_pass_timestamps_preserve_pixels_and_reset_optional_passes() {
