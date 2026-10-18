@@ -5909,6 +5909,21 @@ fn read_project_asset(
     Err("asset changed repeatedly while it was being read; retry".into())
 }
 
+// MiYu: Write results use the same canonical root as their resolved asset path.
+fn write_project_asset_result(project_root: &Path, relative_path: &str, contents: &[u8], expected_revision: Option<&str>) -> Result<ProjectAssetWriteResult, String> {
+    let root = project_root.canonicalize().map_err(|error| format!("cannot resolve project root: {error}"))?;
+    let target = project_asset_write_path(&root, relative_path)?;
+    require_project_asset_revision(&target, expected_revision)
+        .map_err(|error| format!("{error}: {relative_path}"))?;
+    write_project_asset_file(&root, relative_path, contents)?;
+    let file = project_asset_read_path(&root, relative_path)?;
+    let metadata = file.metadata().map_err(|error| error.to_string())?;
+    Ok(ProjectAssetWriteResult {
+        revision: project_file_revision(&metadata),
+        asset: project_asset_info(&root, &file),
+    })
+}
+
 #[tauri::command]
 fn write_project_asset(
     relative_path: String,
@@ -5918,18 +5933,7 @@ fn write_project_asset(
 ) -> Result<ProjectAssetWriteResult, String> {
     let guard = state.project.lock();
     let session = guard.as_ref().ok_or_else(|| no_project().message)?;
-    let project_root = session.snapshot().project_root;
-    let root = Path::new(&project_root);
-    let target = project_asset_write_path(root, &relative_path)?;
-    require_project_asset_revision(&target, expected_revision.as_deref())
-        .map_err(|error| format!("{error}: {relative_path}"))?;
-    write_project_asset_file(root, &relative_path, &contents)?;
-    let file = project_asset_read_path(root, &relative_path)?;
-    let metadata = file.metadata().map_err(|error| error.to_string())?;
-    Ok(ProjectAssetWriteResult {
-        revision: project_file_revision(&metadata),
-        asset: project_asset_info(root, &file),
-    })
+    write_project_asset_result(session.project_root(), &relative_path, &contents, expected_revision.as_deref())
 }
 
 #[tauri::command]
@@ -8577,6 +8581,32 @@ mod tests {
         assert!(write_project_asset_file(&root, "Assets", b"bad").is_err());
         assert!(!root.join("outside.manim").exists());
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn project_asset_write_result_returns_updated_asset_from_display_root() {
+        let temporary = create_owned_temporary_directory("asset-write-result-test").unwrap();
+        let root = temporary.path.join("Project");
+        std::fs::create_dir_all(root.join("Assets")).unwrap();
+        #[cfg(windows)]
+        let root_argument = PathBuf::from(root.to_string_lossy().strip_prefix(r"\\?\").expect("temporary root should use a canonical verbatim path"));
+        #[cfg(not(windows))]
+        let root_argument = root.join("Assets/..");
+        let first = write_project_asset_result(&root_argument, "Assets/UI.prefab", b"{}", None).unwrap();
+        let first_asset = first.asset.as_ref().expect("successful prefab write must return asset metadata");
+        assert_eq!(first_asset.rel_path, "Assets/UI.prefab");
+        assert_eq!(first_asset.revision, first.revision);
+        assert_eq!(first_asset.meta_status, "ready");
+        let second = write_project_asset_result(&root_argument, "Assets/UI.prefab", br#"{"version":2}"#, Some(&first.revision)).unwrap();
+        let second_asset = second.asset.as_ref().expect("updated prefab write must return asset metadata");
+        assert_eq!(second_asset.revision, second.revision);
+        assert_eq!(second_asset.guid, first_asset.guid);
+        assert_ne!(second.revision, first.revision);
+        let indexed = project_asset_info_at_path(&root.canonicalize().unwrap(), "Assets/UI.prefab", false).unwrap().unwrap();
+        assert_eq!(second_asset.revision, indexed.revision);
+        assert_eq!(std::fs::read(root.join("Assets/UI.prefab")).unwrap(), br#"{"version":2}"#);
+        assert!(write_project_asset_result(&root_argument, "Assets/UI.prefab", b"stale", Some(&first.revision)).is_err());
+        assert_eq!(std::fs::read(root.join("Assets/UI.prefab")).unwrap(), br#"{"version":2}"#);
     }
 
     #[test]

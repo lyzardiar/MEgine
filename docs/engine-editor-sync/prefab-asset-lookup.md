@@ -12,6 +12,7 @@ Author: MiYu
 - 目录访问、sidecar 读取失败或超过 1 MiB 的 sidecar 会使归属检查失败。已存在且 metadata 有效的重复 GUID 会返回 `duplicate`。无对应资产的孤立 sidecar、符号链接及无效 metadata 不作为有效 GUID 所有者。
 - 前端保留索引中已知的 duplicate 状态，不以单文件的 `ready` 结果覆盖它。GUID 改变会重新执行归属检查。
 - warm 查询复用 GUID 索引，不声称提供全库实时唯一性证明。已有 watcher 每 2 秒尝试刷新索引；新增重复 GUID 在相应扫描完成后才可见，长扫描不保证两秒内发现。本次没有重构 watcher。
+- 写入接口将项目根目录与目标文件统一为 canonical 路径后组装返回资产，保证 Windows 展示路径也能返回有效 asset 信息供缓存更新。
 - Apply 仍携带 expectedRevision 写入，Revert 仍比较实际读取内容的 revision；查询不会推进已打开资源编辑器的隐式写入基线。
 - 单资产读取更新展示缓存，不覆盖 watcher 的历史基线，因此后续 watcher 仍能报告外部修改。
 
@@ -26,7 +27,7 @@ node packages/editor/node_modules/typescript/bin/tsc --project packages/editor/t
 cargo test --manifest-path packages/editor/src-tauri/Cargo.toml --lib project_asset_ --no-default-features --features quickjs-runtime -- --nocapture
 ```
 
-结果：前端针对性测试 17 通过、0 失败；AgentBridge 测试文件通过；TypeScript 检查通过；原生针对性测试 6 通过、0 失败、69 项按名称过滤（测试运行 0.04 秒）。原生测试覆盖 revision 更新、无关资产不生成 metadata、重复 GUID、损坏 metadata、超大 sidecar、越界路径、孤立 sidecar、目录所有者过滤、嵌套所有者和 Windows 大小写别名。
+结果：前端针对性测试 17 通过、0 失败；AgentBridge 测试文件通过；TypeScript 检查通过；原生针对性测试 7 通过、0 失败、69 项按名称过滤（测试运行 0.03 秒）。原生测试覆盖 revision 更新、无关资产不生成 metadata、重复 GUID、损坏 metadata、超大 sidecar、越界路径、孤立 sidecar、目录所有者过滤、嵌套所有者和 Windows 大小写别名。写入返回值测试从展示路径执行两次真实写入，验证 asset 非空、GUID 不变、新 revision 与读取索引一致，以及旧 revision 写入被拒绝且文件保持最新内容。
 
 当前 Windows 返回错误 1314，缺少创建符号链接的权限，因此真实文件符号链接子项未执行；测试明确输出该限制。仅此权限错误跳过该子项，其他创建错误仍导致测试失败。
 
