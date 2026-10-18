@@ -1,0 +1,1 @@
+Original Warcraft III spell data and command icons: Blizzard Entertainment original game terms. REA upstream https://github.com/morluto/rea; fixed version and maintenance in third_party/rea/README-MENGINE.md. Archive and file identities: caster-spells-sources.json.

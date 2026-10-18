@@ -8,7 +8,7 @@ export const sourceCasterCases=[{kind:'necromancer',building:'temple',faction:3,
 export const stepCasters=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 export function sourceCasterFixture(c,options={}){const map=S.defaultMap();for(const key of ['terrain','heights','relief','ramps'])map[key].fill(0);map.props=[];map.units=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map,factions:[c.faction,0],ai:[false,false],...options});s.units=[];const hall=S.spawn(s,'hall',0,-24,24),enemyHall=S.spawn(s,'hall',1,24,-24);hall.upgradeTier=3;hall.maxHp=hall.hp=S.mainBase(s,hall).hp;S.updateTechnology(s);s.teams[0].gold=s.teams[0].wood=10000;const producer=S.spawn(s,c.building,0,0,0),unit=S.spawn(s,c.kind,0,-8,-4,{order:{type:'hold'},bloodlustAuto:false});S.visibility(s);return {s,hall,enemyHall,producer,unit};}
 const cmd=(s,u,type,fields={})=>S.command(s,u.team,{type,ids:[u.id],...fields}),near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`),round=x=>Math.floor(Math.fround(Math.fround(x)+.5));
-assert.equal(S.PROTOCOL,105);
+assert.equal(S.PROTOCOL,106);
 for(const c of sourceCasterCases){
  const r=S.sourceCasterRules.units[c.kind],b=S.sourceCasterRules.buildings[c.building],training=S.sourceCasterRules.research[c.key];
  assert.equal(r.food,2);assert.deepEqual([r.damage,r.bonus,r.dice,r.sides,r.initialMana],[8.5,7,1,2,75]);
@@ -46,7 +46,7 @@ for(const c of sourceCasterCases){
  for(const healthUpgradeVersion of [0,1])for(const manaUpgradeVersion of [0,1]){const {s,producer,unit}=sourceCasterFixture(c,{healthUpgradeVersion,manaUpgradeVersion});unit.hp=100;unit.mana=75.25;assert.equal(cmd(s,producer,'casterResearch'),null);producer.casterResearch.left=.1;const hp=unit.maxHp;S.tick(s);near(unit.hp,(healthUpgradeVersion?round(Math.fround((hp+40)*Math.fround(100/hp))):140)+(c.kind==='shaman'?.025:0));near(unit.mana,(manaUpgradeVersion?113:75.25)+(S.sourceCasterRules.units[c.kind].manaRegen+.325)*S.DT);assert.ok(S.restore(s));}
 }
 console.log('PASS source caster invalid-marker/stat/rank rejection and independent HP/mana compatibility policies');
-for(const value of [-1,2,null,'1']){assert.throws(()=>S.create('skirmish',{sourceCasterVersion:value}),/caster version/);const {s}=sourceCasterFixture(sourceCasterCases[0]);s.sourceCasterVersion=value;assert.throws(()=>S.restore(s),/caster version/);}
+for(const value of [-1,2,null,'1']){assert.throws(()=>S.create('skirmish',{sourceCasterVersion:value}),/caster.*version/);const {s}=sourceCasterFixture(sourceCasterCases[0]);s.sourceCasterVersion=value;assert.throws(()=>S.restore(s),/caster.*version/);}
 for(const mode of ['moba','td','rpg'])assert.equal(S.create(mode).sourceCasterVersion,0);
 const root=new URL('../samples/frostbound-realms/',import.meta.url),receipt=JSON.parse(fs.readFileSync(new URL('source-casters-sources.json',root))),hash=raw=>createHash('sha256').update(raw).digest('hex');
 for(const record of receipt.files){const raw=fs.readFileSync(new URL(record.path,root));assert.equal(raw.length,record.bytes);assert.equal(hash(raw),record.sha256);}

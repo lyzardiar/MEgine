@@ -78,6 +78,7 @@ var FrostVisual=(()=>{
     if(Frost.dryadUnit(u)){const r=dryadRules.units.dryad.sourceRows.UnitWeapons,point=Number(r.castpt),back=Number(r.castbsw);return !walking&&!u.stun&&(u.order?.type==='abolish'&&u.order.castLeft!==undefined||u.dryadCastLeft>0)?u.order?.type==='abolish'?(point-u.order.castLeft)/(point+back):(point+back-u.dryadCastLeft)/(point+back):null;}
     if(Frost.sanctumUnit(u)){const r=Frost.sanctumRules.units[u.kind];return !walking&&!u.stun&&(u.sanctumCast||u.priestCast||u.sorceressCast||u.controlMagicCast||u.spellStealCast||u.sanctumBackswing||u.priestBackswing||u.sorceressBackswing||u.controlMagicBackswing||u.spellStealBackswing||(u.sanctumCastPhase??u.controlMagicCastPhase??u.spellStealCastPhase)!==undefined)?(u.sanctumCastPhase??u.controlMagicCastPhase??u.spellStealCastPhase)!==undefined?(u.sanctumCastPhase??u.controlMagicCastPhase??u.spellStealCastPhase):(u.sanctumCast||u.priestCast||u.sorceressCast||u.controlMagicCast||u.spellStealCast)?(r.castPoint-(u.sanctumCast||u.priestCast||u.sorceressCast||u.controlMagicCast||u.spellStealCast).left)/(r.castPoint+r.castBackswing):(r.castPoint+r.castBackswing-(u.sanctumBackswing||u.priestBackswing||u.sorceressBackswing||u.controlMagicBackswing||u.spellStealBackswing))/(r.castPoint+r.castBackswing):null;}
     if(Frost.druidUnit(u)){const r=druidRules.units[u.kind].sourceRows.UnitWeapons,point=Number(r.castpt),back=Number(r.castbsw);return !walking&&!u.stun&&(u.order?.type==='druidSpell'&&u.order.castLeft!==undefined||u.druidCastLeft>0)?u.order?.type==='druidSpell'?(point-u.order.castLeft)/(point+back):(point+back-u.druidCastLeft)/(point+back):null;}
+    if(Frost.sourceCasterUnit(u)&&u.casterSpellRules===1){const r=Frost.sourceCasterRules.units[u.kind];return !walking&&!u.stun&&(u.casterCast||u.casterBackswing||u.casterCastPhase!==undefined)?(u.casterCastPhase??(u.casterCast?(r.castPoint-u.casterCast.left)/(r.castPoint+r.castBackswing):(r.castPoint+r.castBackswing-u.casterBackswing)/(r.castPoint+r.castBackswing))):null;}
     if(u.kind==='shaman')return !walking&&!u.stun&&u.castLeft>0?1-u.castLeft/.8:null;
     if(u.kind==='necromancer')return !walking&&!u.stun&&(u.castLeft>0||u.raiseDeadCd>Frost.raiseDead.cooldown-.8)?u.castLeft>0?1-u.castLeft/.8:(Frost.raiseDead.cooldown-u.raiseDeadCd)/.8:null;
     if(u.kind!=='hero'||walking||u.stun||!asset.animations?.some(a=>asset.classic?/^spell|^stand channel/i.test(a.name):a.name==='Cast'))return null;
@@ -284,6 +285,6 @@ var FrostVisual=(()=>{
       return [...tracks.values()].map(v=>position(v,clock));
     }};
   }
-  return {camera,viewBounds,overlapsView,model,name,pose,corpse,heroDeath,heroPortrait,unitPortrait,heading,resource,scenery,doodad,environmentPartCount,groundDetail,projectile,projectileView,muzzle,classicClip,classicSample,parts,actorPartCount,portrait,sentinel};
+  return {castPhase,camera,viewBounds,overlapsView,model,name,pose,corpse,heroDeath,heroPortrait,unitPortrait,heading,resource,scenery,doodad,environmentPartCount,groundDetail,projectile,projectileView,muzzle,classicClip,classicSample,parts,actorPartCount,portrait,sentinel};
 })();
 if(typeof module!=='undefined')module.exports=FrostVisual;

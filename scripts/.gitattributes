@@ -15,3 +15,5 @@
 /import-frost-human-masonry.py text eol=lf
 
 /import-frost-source-casters.py text eol=lf
+
+/import-frost-caster-spells.py text eol=lf
