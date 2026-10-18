@@ -68,6 +68,19 @@ test('navigation cones align with selectable axes across perspective and cardina
   }
 });
 
+test('corner compass keeps equal 3D radii while its projected axes foreshorten', () => {
+  for (const [yaw, pitch] of [[35, 25], [0, 0], [90, 0], [0, 89], [-145, -25]]) {
+    const radius = 34;
+    const handles = sceneOrientationHandles(yaw, pitch, radius);
+    for (const handle of handles) {
+      assert.ok(Math.abs(Math.hypot(handle.x, handle.y, handle.depth * radius) - radius) < 1e-8);
+    }
+  }
+  const front = sceneOrientationHandles(0, 0, 34);
+  assert.equal(Math.hypot(front.find((handle) => handle.view === 'front').x, front.find((handle) => handle.view === 'front').y), 0);
+  assert.equal(Math.hypot(front.find((handle) => handle.view === 'right').x, front.find((handle) => handle.view === 'right').y), 34);
+});
+
 test('recognizes snapped views across wrapped yaw while leaving free orbit as Perspective', () => {
   assert.equal(activeSceneOrientation(360, 0), 'front');
   assert.equal(activeSceneOrientation(-180, 0), 'back');
