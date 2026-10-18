@@ -29,3 +29,7 @@ Assets/LumberDepots/** -text whitespace=cr-at-eol
 SourceAssets/LumberDepots/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
 SourceAssets/WorkerLumber/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
 Assets/Art/classic-worker-lumber-*.png.meta -text
+
+/lumber-technology*.json text eol=lf
+Assets/Art/classic-lumber-harvest-*.png.meta text eol=lf
+SourceAssets/LumberTechnology/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof

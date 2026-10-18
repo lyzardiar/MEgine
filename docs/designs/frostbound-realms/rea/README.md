@@ -55,3 +55,7 @@ Probe 地址绑定上述 Game.dll 摘要；其他版本会被拒绝，需要重�
 ## 采木证据与维护
 
 `node scripts/probe-frost-rea-rewards.mjs --worker-lumber` 使用真实 REA / Rizin MCP，保留受检 Game.dll 的 HarvestBase/HarvestReturn/HarvestLumber/Harvest 类标识与 RTTI；输出到 `tmp/docs-artifacts/frost-worker-lumber/`。第二武器、能力元数据和交付建筑以实际 MPQ 为准，来源及导入/运行命令见 [采木与资源交付](../worker-lumber.md)。类名证据不代表完整原版执行函数动态验收。
+
+## 人族采木升级执行链路
+
+`node scripts/probe-frost-rea-rewards.mjs --lumber-upgrade` 使用真实 REA / Rizin MCP，保留 CUpgradeLumberJack 的 rlum 处理、Harvest 虚方法、DataB 容量加载与写入及货物比较。数值来源、地址、摘要、复现和验收入口见 [人族采木升级](../lumber-technology.md)，输出位于 `tmp/docs-artifacts/frost-lumber-upgrade/`。该静态证据不代表完整原版运行时验收。

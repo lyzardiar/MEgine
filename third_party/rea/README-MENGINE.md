@@ -66,3 +66,5 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 工人手动维修：`node scripts/probe-frost-rea-rewards.mjs --worker-repair` 保留 Repair/Renew 类标识证据，输出到 `tmp/docs-artifacts/frost-worker-repair/`。源技能/分类/图标、原版元数据、摘要及导入/验证入口见 `docs/designs/frostbound-realms/worker-repair.md` 和 `scripts/import-frost-worker-repair.py`。
 
 原版采木维护入口：`node scripts/probe-frost-rea-rewards.mjs --worker-lumber`，配合 `scripts/import-frost-worker-lumber.py`、`scripts/import-frost-lumber-depots.py`。源技能/第二武器/树生命、交付建筑、模型及原版按钮的来源、摘要、复现和测试入口见 `docs/designs/frostbound-realms/worker-lumber.md`。GitHub 上游、固定版本及更新方法沿用本说明。
+
+人族采木升级：`node scripts/probe-frost-rea-rewards.mjs --lumber-upgrade` 保留 rlum / CUpgradeLumberJack 至 Harvest DataB 容量字段的静态调用链。`scripts/import-frost-lumber-technology.py` 保留原件、研究等级、本地化、按钮、元数据和摘要，并支持无安装复现。使用与更新入口见 `docs/designs/frostbound-realms/lumber-technology.md`。

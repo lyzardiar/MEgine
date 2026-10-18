@@ -322,3 +322,16 @@ REA 6.5.0 / Rizin 0.8.1 通过真实 MCP 保留 Game.dll 武器字段和指针�
 三类规则与真实 TCP、五个原生 Editor 场景及 24,000 帧 AI 经济通过；原生控制台错误为 0，Editor 正常退出，EPERM runtime 清理结果保留。产物在 tmp/docs-artifacts/frost-worker-lumber/。旧地图、字体、来源清单和其他样例改动保持未提交。整体 1:1 目标继续进行。
 
 最终主入口退出码 0、525 条 PASS 记录；仅跳过已独立通过的 24,000 帧长程 AI 导入，其余导入及正文完整执行。最终 Main.js SHA-256 为 11f219437dd6d565e2344b09eeb48fd50b577271f4e403fe4a0a7acc2da44f7f，与五个原生验收场景的运行包一致。汇总为 `tmp/docs-artifacts/frost-worker-lumber/regression-summary.json`。
+
+
+## 2026-10-18：人族采木升级 Rhlh
+
+协议 101，lumberTechnologyVersion 为源人族采木游戏启用两级 Rhlh，旧存档缺字段保持版本 0。伐木场第 0 格 / L 使用原版启用和禁用图标、名称与说明；100/200 金、60/75 秒，要塞/城堡限制，复用研究队列、去重、取消退款和存档/联机续接。容量动态影响既有和新农民，保持已在返程的货物与订单。
+
+真实 REA / Rizin MCP 从 CUpgradeLumberJack 的 0x6f698dd0 追至 Harvest 虚方法 +0x33c 和 0x6f3de1c0，确认修改 DataB 的 +0x198 容量字段。DataB 加载、容量比较和独立 +0x190 挥砍数据均保留证据；农民容量 10/20/30，原有每击 1 点树伤/货物和 1.1 秒间隔不变。原 DLL 摘要不变，未声称完成原版进程动态对照。
+
+原版研究行、升级元数据、农民绑定、伐木场研究清单、本地化与四张图标原件在 SourceAssets/LumberTechnology/，来源和摘要在 lumber-technology-sources.json。20 个保留原件/输出及来源清单可在无安装环境逐字节复现。原生 Editor 两级均通过原版按钮/热键、实际付款、完整研究工期、退款、半程保存加载以及 20/30 实际货物和树伤验收，控制台错误为 0；Editor 正常退出，EPERM runtime 缓存保留。
+
+主回归、两级真实 TCP 和 24,000 帧 AI 通过；补充规则检查验证前置建筑损毁后的研究/存档续跑。旧人族版本夹具同步移除新增研究版本，兼容性路径保留。整体 1:1 继续进行：Rhac、金矿出入、完整研究面板/音效和原版动态时序仍待完善。运行证据在 tmp/docs-artifacts/frost-lumber-upgrade/，维护入口为 lumber-technology.md。
+
+最终主入口退出码 0、530 条 PASS 记录，仅跳过已独立通过的长程 AI 导入；其余导入和正文完整执行。最终 Main.js SHA-256 为 854658c3653935a7ca30b27bfb62d59e55233b2beca269f7784dedbb514b3608，与两级原生验收运行包一致。暂存 20 个原件/输出、导入器及生成包的摘要均通过。汇总为 `tmp/docs-artifacts/frost-lumber-upgrade/regression-summary.json`。

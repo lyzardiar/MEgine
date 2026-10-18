@@ -1,0 +1,1 @@
+Warcraft III Rhlh research definitions, metadata, localized text and command icons: Blizzard Entertainment. Original game asset terms apply; these assets are not CC0 or MIT. Original MPQ bytes, archive precedence and SHA-256 hashes are preserved in lumber-technology-sources.json.
