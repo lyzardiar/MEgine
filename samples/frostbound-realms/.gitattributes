@@ -38,3 +38,8 @@ SourceAssets/LumberTechnology/** -text whitespace=cr-at-eol,-blank-at-eol,-blank
 Assets/Art/classic-masonry-*.png.meta text eol=lf
 SourceAssets/HumanMasonry/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
 Assets/Licenses/Classic-Human-Masonry.txt text eol=lf
+
+/source-caster*.json text eol=lf
+Assets/SourceCasters/** -text whitespace=cr-at-eol
+SourceAssets/SourceCasters/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+Assets/Licenses/Classic-Source-Casters.txt text eol=lf

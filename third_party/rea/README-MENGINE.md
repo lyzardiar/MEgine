@@ -46,6 +46,8 @@ JavaScript/Electron 和托管程序集静态分析不需要原生反编译引擎
 
 ## 更新维护
 
+死灵法师与萨满基础属性、普通攻击和训练可用 `node scripts/probe-frost-rea-rewards.mjs --source-casters` 复核。MPQ 原件、源投射物、独立版本兼容及原生验证入口见 [施法单位维护说明](../../docs/designs/frostbound-realms/source-casters.md)。
+
 法力训练与回复可用 `node scripts/probe-frost-rea-rewards.mjs --mana-upgrades` 复现。`CUpgradeManaEx`、policy 1、`rmnr` 加法回复、月井目录版本和验证入口见 [法力升级维护说明](../../docs/designs/frostbound-realms/mana-upgrades.md)。
 
 生命升级效果 `rhpx` 可用 `node scripts/probe-frost-rea-rewards.mjs --hitpoint-upgrades` 复现。效果标识、生命比例写入、舍入地址、旧存档策略和七种单位形态的验证入口见 [生命升级维护说明](../../docs/designs/frostbound-realms/hitpoint-upgrades.md)。

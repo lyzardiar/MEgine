@@ -13,3 +13,5 @@
 /test-warcraft-hippogryph-reference.py text eol=lf
 
 /import-frost-human-masonry.py text eol=lf
+
+/import-frost-source-casters.py text eol=lf

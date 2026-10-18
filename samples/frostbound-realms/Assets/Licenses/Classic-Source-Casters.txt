@@ -1,0 +1,1 @@
+Warcraft III Necromancer/Shaman statistics, command cards and missiles: Blizzard Entertainment. Original game terms apply; not CC0 or MIT. See source-casters-sources.json for archive identities, retained original bytes and generator hashes. REA upstream: https://github.com/morluto/rea; fixed runtime and maintenance: third_party/rea/README-MENGINE.md.

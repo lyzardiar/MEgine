@@ -1,3 +1,4 @@
+import './test-frost-source-casters-network.mjs';
 // Author: MiYu. Rule, editor-data and real TCP acceptance checks.
 import assert from 'node:assert/strict';
 import './test-frost-worker-balance-network.mjs';
