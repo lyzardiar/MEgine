@@ -112,6 +112,9 @@ pub struct EditorViewportProfileCounts {
     pub cached_pose_bytes: usize,
     pub mesh_uploads: usize,
     pub mesh_index_buffer_reuses: usize,
+    pub mesh_vertex_buffer_reuses: usize,
+    pub mesh_vertex_pool_buffers: usize,
+    pub mesh_vertex_pool_bytes: usize,
     pub mesh_evictions: usize,
     pub ui_primitives: usize,
     pub ui_batches: usize,
@@ -821,6 +824,10 @@ impl EditorViewportRenderer {
         profile.counts.cached_pose_bytes = mesh_cache.bytes;
         profile.counts.mesh_uploads = mesh_cache.uploads;
         profile.counts.mesh_index_buffer_reuses = mesh_work.index_buffer_reuses;
+        profile.counts.mesh_vertex_buffer_reuses = mesh_work.vertex_buffer_reuses;
+        let (vertex_pool_buffers, vertex_pool_bytes) = self.renderer.mesh_vertex_pool_stats();
+        profile.counts.mesh_vertex_pool_buffers = vertex_pool_buffers;
+        profile.counts.mesh_vertex_pool_bytes = vertex_pool_bytes;
         profile.counts.ui_custom_pipeline_attempts = submission.ui_preparation.custom_pipeline_attempts;
         profile.counts.ui_custom_pipeline_builds = submission.ui_preparation.custom_pipeline_builds;
         profile.counts.ui_error_pipeline_builds = submission.ui_preparation.error_pipeline_builds;
@@ -830,6 +837,8 @@ impl EditorViewportRenderer {
         profile.counts.mesh_evictions = mesh_cache.evictions;
         profile.memory.push(EditorViewportMemoryCategory { name:"GPU sampled mesh cache".into(), domain:"gpu".into(), bytes:mesh_cache.bytes as u64, certainty:"estimate".into(), source:"Logical per-mesh vertex/index bytes; shared indices may be counted repeatedly; retained index-cache handles, driver overhead and static meshes are excluded".into() });
         profile.resident_memory_estimate_bytes += mesh_cache.bytes as u64;
+        profile.memory.push(EditorViewportMemoryCategory { name:"GPU idle mesh vertex buffers".into(), domain:"gpu".into(), bytes:vertex_pool_bytes as u64, certainty:"estimate".into(), source:"Retained idle vertex-buffer payload capacities; active meshes and driver overhead are excluded".into() });
+        profile.resident_memory_estimate_bytes += vertex_pool_bytes as u64;
         if let Some(gpu) = readback.and_then(|readback| readback.gpu) {
             profile.gpu = Some(EditorViewportGpuProfile { timestamp_period_ns: gpu.timestamp_period_ns, total_pass_ms: gpu.stages.iter().map(|stage| stage.milliseconds).sum(), stages: gpu.stages.into_iter().map(|stage| EditorViewportProfileNode { name: stage.name.into(), total_ms: stage.milliseconds, self_ms: stage.milliseconds, calls: 1, children: Vec::new() }).collect() });
         }
@@ -1051,6 +1060,9 @@ fn build_viewport_profile(
             cached_pose_bytes: 0,
             mesh_uploads: 0,
             mesh_index_buffer_reuses: 0,
+            mesh_vertex_buffer_reuses: 0,
+            mesh_vertex_pool_buffers: 0,
+            mesh_vertex_pool_bytes: 0,
             mesh_evictions: 0,
             ui_primitives: frame.ui.primitives.len(),
             ui_batches: frame.ui.batches.len(),
