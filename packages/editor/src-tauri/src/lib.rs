@@ -6029,6 +6029,8 @@ fn project_asset_guid_conflict(root: &Path, target: &Path, guid: &str) -> Result
     let target_meta = mengine_assets::asset_sidecar_path(target);
     let mut directories = vec![root.join("Assets")];
     while let Some(directory) = directories.pop() {
+        let mut regular_files = HashSet::new();
+        let mut sidecars = Vec::new();
         for entry in std::fs::read_dir(&directory).map_err(|error| error.to_string())? {
             let entry = entry.map_err(|error| error.to_string())?;
             let name = entry.file_name().to_string_lossy().into_owned();
@@ -6037,15 +6039,23 @@ fn project_asset_guid_conflict(root: &Path, target: &Path, guid: &str) -> Result
             if kind.is_symlink() { continue; }
             let path = entry.path();
             if kind.is_dir() { directories.push(path); continue; }
-            let Some(asset_name) = name.strip_suffix(".meta") else { continue; };
+            if kind.is_file() { regular_files.insert(entry.file_name()); }
+            if name.ends_with(".meta") { sidecars.push((entry, name, path)); }
+        }
+        for (entry, name, path) in sidecars {
+            let asset_name = name.strip_suffix(".meta").expect("metadata suffix checked above");
             if path == target_meta || cfg!(windows) && path.to_string_lossy().eq_ignore_ascii_case(&target_meta.to_string_lossy()) { continue; }
             let Some(importer) = project_asset_kind(asset_name) else { continue; };
             let asset_path = path.with_file_name(asset_name);
-            match std::fs::symlink_metadata(&asset_path) {
-                Ok(metadata) if metadata.is_file() && !metadata.file_type().is_symlink() => {},
-                Ok(_) => continue,
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
-                Err(error) => return Err(error.to_string()),
+            // MiYu: Directory entries already identify regular owners; only Windows spelling aliases need a filesystem lookup.
+            if !regular_files.contains(std::ffi::OsStr::new(asset_name)) {
+                if !cfg!(windows) { continue; }
+                match std::fs::symlink_metadata(&asset_path) {
+                    Ok(metadata) if metadata.is_file() && !metadata.file_type().is_symlink() => {},
+                    Ok(_) => continue,
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                    Err(error) => return Err(error.to_string()),
+                }
             }
             // Malformed metadata is not a healthy GUID owner, matching list_project_assets.
             if entry.metadata().map_err(|error| error.to_string())?.len() > 1024 * 1024 { return Err(format!("cannot confirm GUID ownership: metadata exceeds 1 MiB: {}", path.display())); }
@@ -6081,7 +6091,7 @@ fn project_asset_info_at_path(root: &Path, relative_path: &str, check_guid_owner
 
 #[tauri::command]
 async fn get_project_asset_info(relative_path: String, check_guid_owners: Option<bool>, state: State<'_, AppState>) -> Result<Option<ProjectAssetInfo>, String> {
-    let project_root = state.project.lock().as_ref().map(|session| session.snapshot().project_root).ok_or_else(|| no_project().message)?;
+    let project_root = state.project.lock().as_ref().map(|session| session.project_root().to_owned()).ok_or_else(|| no_project().message)?;
     tauri::async_runtime::spawn_blocking(move || {
         let root = Path::new(&project_root).canonicalize().map_err(|error| error.to_string())?;
         project_asset_info_at_path(&root, &relative_path, check_guid_owners.unwrap_or(true))
@@ -6094,7 +6104,7 @@ async fn list_project_assets(state: State<'_, AppState>) -> Result<Vec<ProjectAs
         .project
         .lock()
         .as_ref()
-        .map(|session| session.snapshot().project_root)
+        .map(|session| session.project_root().to_owned())
         .ok_or_else(|| no_project().message)?;
     // Discovery may create and sync thousands of GUID sidecars on first open.
     // Keep that disk work off the WebView thread so other IPC remains responsive.
@@ -8339,6 +8349,39 @@ mod tests {
         std::fs::write(root.join("Assets/UI.prefab.meta"), b"invalid JSON").unwrap();
         assert_eq!(project_asset_info_at_path(&root, "Assets/UI.prefab", true).unwrap().unwrap().meta_status, "invalid");
         assert!(project_asset_info_at_path(&root, "Assets/../outside.prefab", true).is_err());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn project_asset_guid_owner_scan_filters_non_files_and_checks_nested_owners() {
+        let root = std::env::temp_dir().join(format!("mengine-guid-owners-{}-{}", std::process::id(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+        std::fs::create_dir_all(root.join("Assets/Nested")).unwrap();
+        let root = root.canonicalize().unwrap();
+        let target = root.join("Assets/UI.prefab");
+        std::fs::write(&target, b"{}").unwrap();
+        let info = project_asset_info_at_path(&root, "Assets/UI.prefab", false).unwrap().unwrap();
+        let guid = info.guid.unwrap();
+        let target_meta = mengine_assets::asset_sidecar_path(&target);
+        std::fs::copy(&target_meta, root.join("Assets/Orphan.prefab.meta")).unwrap();
+        std::fs::create_dir(root.join("Assets/Directory.prefab")).unwrap();
+        std::fs::copy(&target_meta, root.join("Assets/Directory.prefab.meta")).unwrap();
+        #[cfg(windows)]
+        if let Err(error) = std::os::windows::fs::symlink_file(&target, root.join("Assets/Link.prefab")) {
+            assert_eq!(error.raw_os_error(), Some(1314), "unexpected symlink creation error: {error}");
+            eprintln!("symlink owner branch not exercised: Windows requires symlink creation privilege (1314)");
+        }
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(&target, root.join("Assets/Link.prefab")).unwrap();
+        std::fs::copy(&target_meta, root.join("Assets/Link.prefab.meta")).unwrap();
+        assert_eq!(project_asset_guid_conflict(&root, &target, &guid).unwrap(), None);
+        std::fs::write(root.join("Assets/Nested/Other.prefab"), b"{}").unwrap();
+        std::fs::copy(&target_meta, root.join("Assets/Nested/Other.prefab.meta")).unwrap();
+        assert_eq!(project_asset_guid_conflict(&root, &target, &guid).unwrap().as_deref(), Some("Assets/Nested/Other.prefab"));
+        #[cfg(windows)]
+        {
+            std::fs::rename(root.join("Assets/Nested/Other.prefab.meta"), root.join("Assets/Nested/OTHER.prefab.meta")).unwrap();
+            assert_eq!(project_asset_guid_conflict(&root, &target, &guid).unwrap().as_deref(), Some("Assets/Nested/OTHER.prefab"));
+        }
         std::fs::remove_dir_all(root).unwrap();
     }
 

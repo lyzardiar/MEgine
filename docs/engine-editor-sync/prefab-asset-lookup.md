@@ -4,7 +4,7 @@ Author: MiYu
 
 `prefab.instance`、Apply 和 Revert 通过 `get_project_asset_info` 查询目标文件的最新 revision 和 metadata 健康状态。已有 GUID 索引时不再重新扫描整个资源库；Apply 使用写入接口返回的资产信息更新缓存，避免写入后的重复扫描。
 
-首次遇到目标资产或目标 GUID 改变时，原生接口检查已有 `.meta` 的 GUID 归属。检查直接使用 sidecar parser，不调用其他资产的 importer、不解析图片或字体、不创建其他资产的 metadata，也不使用旧资源列表的 10,000 条截断。它仍需遍历 Assets 目录并读取符合条件的 sidecar；大型项目的实际耗时应通过原生验收记录，不能由单元测试推断。
+首次遇到目标资产或目标 GUID 改变时，原生接口检查已有 `.meta` 的 GUID 归属。检查直接使用 sidecar parser，不调用其他资产的 importer、不解析图片或字体、不创建其他资产的 metadata，也不使用旧资源列表的 10,000 条截断。每个目录只枚举一次，并复用枚举得到的普通文件名称集合确认 sidecar 对应资产，避免为正常同名配对逐项查询文件属性。Windows 名称未精确匹配时保留属性查询，以兼容大小写别名并继续过滤目录与符号链接。它仍需遍历 Assets 目录并读取符合条件的 sidecar；大型项目的实际耗时应通过原生验收记录，不能由单元测试推断。
 
 ## 安全边界
 
@@ -23,10 +23,12 @@ Author: MiYu
 node --test packages/editor/tests/projectAssetInfo.test.mjs packages/editor/tests/projectAssets.test.mjs packages/editor/tests/projectAssetChanges.test.mjs packages/editor/tests/agentAssetIo.test.mjs
 node --test --test-name-pattern=prefab packages/editor/tests/agentBridge.test.mjs
 node packages/editor/node_modules/typescript/bin/tsc --project packages/editor/tsconfig.json --noEmit --pretty false
-cargo test --manifest-path packages/editor/src-tauri/Cargo.toml --lib project_asset_single_info_keeps_revision_and_sidecar_validation_local --no-default-features --features quickjs-runtime
+cargo test --manifest-path packages/editor/src-tauri/Cargo.toml --lib project_asset_ --no-default-features --features quickjs-runtime -- --nocapture
 ```
 
-结果：前端针对性测试 17 通过、0 失败；AgentBridge 测试文件通过；TypeScript 检查通过；原生针对性测试 1 通过、0 失败。原生测试覆盖 revision 更新、无关资产不生成 metadata、重复 GUID、损坏 metadata、超大 sidecar 和越界路径。
+结果：前端针对性测试 17 通过、0 失败；AgentBridge 测试文件通过；TypeScript 检查通过；原生针对性测试 6 通过、0 失败、69 项按名称过滤（测试运行 0.04 秒）。原生测试覆盖 revision 更新、无关资产不生成 metadata、重复 GUID、损坏 metadata、超大 sidecar、越界路径、孤立 sidecar、目录所有者过滤、嵌套所有者和 Windows 大小写别名。
+
+当前 Windows 返回错误 1314，缺少创建符号链接的权限，因此真实文件符号链接子项未执行；测试明确输出该限制。仅此权限错误跳过该子项，其他创建错误仍导致测试失败。
 
 这些结果不替代最终 Release 编辑器的完整资源库验收。
 
