@@ -52,3 +52,7 @@ Assets/Licenses/Classic-Caster-Spells.txt text eol=lf
 Assets/SkeletonRules/** -text whitespace=cr-at-eol
 SourceAssets/SkeletonRules/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
 Assets/Licenses/Classic-Skeleton-Rules.txt text eol=lf
+
+/undead-equipment*.json text eol=lf
+SourceAssets/UndeadEquipment/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+Assets/Licenses/Classic-Undead-Equipment.txt text eol=lf

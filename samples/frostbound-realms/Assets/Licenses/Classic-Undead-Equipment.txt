@@ -1,0 +1,1 @@
+Warcraft III Graveyard upgrades, eligible source-unit bindings and command icons: Blizzard Entertainment original game terms. REA upstream https://github.com/morluto/rea; fixed runtime and maintenance: third_party/rea/README-MENGINE.md. Retained source and output hashes: undead-equipment-sources.json.

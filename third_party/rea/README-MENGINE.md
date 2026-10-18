@@ -46,6 +46,8 @@ JavaScript/Electron 和托管程序集静态分析不需要原生反编译引擎
 
 ## 更新维护
 
+不死族坟场四条科技、原版骰子与护甲升级可用 `node scripts/probe-frost-rea-rewards.mjs --undead-equipment` 复核。十二级参数、来源摘要、骷髅绑定和验证入口见 [坟场装备维护说明](../../docs/designs/frostbound-realms/undead-equipment.md)。
+
 骷髅战士与骷髅魔法师的基础属性、原版弹道和两项诅咒神庙研究可用 `node scripts/probe-frost-rea-rewards.mjs --skeleton-rules` 复核。原件、来源摘要、旧存档策略及验证入口见 [骷髅规则维护说明](../../docs/designs/frostbound-realms/skeleton-rules.md)。
 
 死灵法师和萨满的六个法术、源施法前后摇与净化恢复可用 `node scripts/probe-frost-rea-rewards.mjs --caster-spells` 复核。字段加载地址、MPQ 原件、存档策略、TCP 和原生验收入口见 [施法流程维护说明](../../docs/designs/frostbound-realms/caster-spells.md)。

@@ -1,3 +1,5 @@
+import './test-frost-undead-equipment-network.mjs';
+import './test-frost-undead-equipment-generated.mjs';
 import './test-frost-skeleton-generated.mjs';
 import './test-frost-skeleton-rules-network.mjs';
 import './test-frost-caster-spells-network.mjs';
