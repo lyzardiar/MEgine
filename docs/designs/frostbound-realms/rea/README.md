@@ -45,3 +45,5 @@ node scripts/qa-frost-combat-rewards.mjs
 ```
 
 Probe 地址绑定上述 Game.dll 摘要；其他版本会被拒绝，需要重新定位。原始数据遵循 Blizzard 原有条款。阶段源码和证据由 Git 独立提交追踪。
+
+新运行的 probe 将原始报告写入 `tmp/docs-artifacts/frost-combat-rewards/`；附加 `--worker-fields` 时写入 `tmp/docs-artifacts/frost-worker-balance/`。工人字段与原版 MPQ 基础平衡的维护入口见 [工人基础平衡](../worker-balance.md)。

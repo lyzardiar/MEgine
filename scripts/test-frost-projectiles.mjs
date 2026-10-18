@@ -12,7 +12,7 @@ function launch(kind='archer',distance=8){const a=arena(kind,distance);S.tick(a.
  const {s,u,v}=launch();v.x=4;step(s,2);assert.ok(s.projectiles[0].x>0,'homing follows a moving target');step(s,6);assert.equal(v.hp,v.maxHp-S.weaponDamage(u,v,u.damage));
 }
 {
- const {s,u,v}=launch();u.hp=0;v.hp=1;const gold=s.teams[0].gold;step(s,5);assert.equal(v.hp,0);assert.equal(s.teams[0].gold,gold+25);assert.equal(s.teams[0].kills,1,'projectile retains kill credit after the shooter dies');assert.ok(!s.units.some(x=>x.id===u.id));
+ const {s,u,v}=launch();u.hp=0;v.hp=1;const gold=s.teams[0].gold;step(s,5);assert.equal(v.hp,0);assert.equal(s.teams[0].gold,gold,'player kills do not award melee bounty');assert.equal(s.teams[0].kills,1,'projectile retains kill credit after the shooter dies');assert.ok(!s.units.some(x=>x.id===u.id));
 }
 for(const disappear of [v=>v.hp=0,v=>v.inside=999]){const {s,v}=launch();disappear(v);S.tick(s);assert.equal(s.projectiles.length,0);assert.ok(!s.events.some(e=>e.type==='impact'),'lost target cannot be hit');}
 {

@@ -48,6 +48,6 @@ for(let f=0;f<4;f++){const s=S.create('skirmish',{factions:[f,0],ai:[false,false
  const f=fixture();assert.equal(cmd(f.s,f.base,'uproot'),null);step(f.s,25);assert.equal(f.base.uprooted,true);assert.equal(cmd(f.s,f.base,'rootAncient'),null);step(f.s,25);assert.equal(f.base.uprooted,false);assert.ok(f.base.entangleCast);assert.doesNotThrow(()=>S.restore(f.s));step(f.s,30);assert.ok(S.entangledMine(f.s,f.s.resources[0]));step(f.s,600);assert.equal(S.entangledMine(f.s,f.s.resources[0]).built,1);
 }
 {
- const f=fixture(0,false),other=S.spawn(f.s,'hall',0,0,3);S.visibility(f.s);assert.equal(cmd(f.s,f.base,'entangle',{resource:0}),null);assert.match(cmd(f.s,other,'entangle',{resource:0}),/unused visible/);const w=S.spawn(f.s,'worker',1,6,2);f.s.teams[1].faction=3;f.s.visible[1].fill(1);assert.match(cmd(f.s,w,'build',{kind:'hauntedmine',x:6,z:0}),/occupied/);assert.doesNotThrow(()=>S.restore(f.s));
+ const f=fixture(0,false),other=S.spawn(f.s,'hall',0,0,3);S.visibility(f.s);assert.equal(cmd(f.s,f.base,'entangle',{resource:0}),null);assert.match(cmd(f.s,other,'entangle',{resource:0}),/unused visible/);f.s.teams[1].faction=3;const w=S.spawn(f.s,'worker',1,6,2);f.s.visible[1].fill(1);assert.match(cmd(f.s,w,'build',{kind:'hauntedmine',x:6,z:0}),/occupied/);assert.doesNotThrow(()=>S.restore(f.s));
 }
 console.log('PASS Entangle: 3+60s, five cargo seats, shared rotating income, original work/child art, queued exit, cleanup, save cursor, privacy, buffs, legacy and four factions');

@@ -1,6 +1,7 @@
 // Author: MiYu. Simulate native command commits and name queries between script ticks.
 import {createRequire} from 'node:module';
 const UI=createRequire(import.meta.url)('../samples/frostbound-realms/game/ui-manager.js');
+const HUD=createRequire(import.meta.url)('../samples/frostbound-realms/game/hud.js');
 export function clientWorldFixture(source,normalize=false){
   const snapshot=structuredClone(source),names=new Map(snapshot.entities.map(e=>[e.name,e])),ids=new Map(snapshot.entities.map(e=>[e.entity,e])),commands=[],values=new Map(),active=new Map(snapshot.entities.map(e=>[e.entity,e.active!==false]));
   let next=Math.max(...snapshot.entities.map(e=>e.entity))+1,queries=0;
@@ -28,5 +29,6 @@ export function clientWorldFixture(source,normalize=false){
     const parent=ids.get(e.parent),rect=parent?canvasRect(parent.name):identity;
     return e.components.RectTransform?UI.compose(rect,e.components.RectTransform):rect;
   }
-  return {engine,snapshot,values,active,commit,render,visible,canvasRect,entity:name=>names.get(name),queries:()=>queries};
+  function canvasPoint(name,viewport=[1280,720],world=true){if(!names.has(name))throw Error('Unknown UI entity '+name);const v=HUD.viewport({viewport},world),r=UI.rectangle(canvasRect(name),[v.width,v.height]);return [v.w/2+r.x*v.scale,v.h/2+r.y*v.scale];}
+  return {engine,snapshot,values,active,commit,render,visible,canvasRect,canvasPoint,entity:name=>names.get(name),queries:()=>queries};
 }

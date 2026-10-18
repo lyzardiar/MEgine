@@ -1,0 +1,16 @@
+{
+  "author": "MiYu",
+  "generator": "scripts/import-frost-worker-balance.py",
+  "gameDirectory": "E:\\Program Files (x86)\\dzclient\\Game\\Warcraft III Frozen Throne",
+  "source": {
+    "path": "Units/UnitBalance.slk",
+    "archive": "War3Patch.mpq",
+    "archiveBytes": 55646795,
+    "bytes": 616820,
+    "sha256": "ab1a8cfbebcb2abe68535b170117730726249c5fafef15c13695400d4b0a3327",
+    "localPath": "SourceAssets/CombatRewards/Units/UnitBalance.slk"
+  },
+  "profileSha256": "ef9939a8fa84391c6467f6edbddf265ea43fd43f742fe702192109a301207297",
+  "reaEvidence": "tmp/docs-artifacts/frost-worker-balance/worker-fields-rea.json",
+  "license": "Blizzard Entertainment original game terms; extraction does not grant redistribution rights"
+}

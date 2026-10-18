@@ -13,7 +13,7 @@ const goals=us=>us.map(u=>({id:u.id,x:u.order.x,z:u.order.z}));
 function arrived(s,targets){for(const p of targets){const u=s.units.find(u=>u.id===p.id);assert.ok(S.distance(u,p)<=.121,JSON.stringify({id:u.id,position:[u.x,u.z],target:p,order:u.order}));assert.equal(u.order,null);}}
 {
   const s=flat(),u=S.spawn(s,'worker',0,-8,-8);assert.equal(issue(s,[u],4.3,6.7),null);assert.deepEqual([u.order.x,u.order.z],[4.3,6.7]);
-  advance(s,90);assert.ok(S.distance(u,{x:4.3,z:6.7})<=.121,'single unit reaches the actual clicked point');assert.equal(u.order,null);
+  advance(s,Math.ceil(S.distance(u,{x:4.3,z:6.7})/(u.speed*S.DT))+20);assert.ok(S.distance(u,{x:4.3,z:6.7})<=.121,'single unit reaches the actual clicked point');assert.equal(u.order,null);
 }
 {
   const s=flat(),us=Array.from({length:40},(_,i)=>S.spawn(s,['soldier','archer','knight','catapult'][i%4],0,-23+i%8*2,-23+Math.floor(i/8)*2));
@@ -52,6 +52,6 @@ function arrived(s,targets){for(const p of targets){const u=s.units.find(u=>u.id
   assert.equal(issue(s,[u],hall.x,hall.z),null);assert.equal(issue(empty,empty.units,hall.x,hall.z),null);
   assert.deepEqual(u.order,empty.units[0].order,'hidden buildings do not disclose their footprint through assigned orders');
   advance(s,15);advance(empty,15);assert.deepEqual(S.publicState(s,0).units,S.publicState(empty,0).units,'owned positions, paths and orders do not expose distant hidden obstacles');
-  advance(s,300);assert.equal(u.order,null,'newly revealed occupied goal resolves to a reachable arrival');assert.ok(!S.solid(s,u.x,u.z));assert.ok(S.distance(u,hall)>2.8&&S.distance(u,hall)<5);
+  advance(s,Math.ceil(S.distance(u,hall)/(u.speed*S.DT))+40);assert.equal(u.order,null,'newly revealed occupied goal resolves to a reachable arrival');assert.ok(!S.solid(s,u.x,u.z));assert.ok(S.distance(u,hall)>2.8&&S.distance(u,hall)<5);
 }
 console.log('PASS: exact single movement, 40-unit mixed formation arrival, selection determinism/save restore, rows, blockers, ramps, sealed cliffs, air/ground, edge bounds and atomic rejection');

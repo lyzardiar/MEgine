@@ -45,7 +45,7 @@ function arena(){const map=S.defaultMap();map.terrain.fill(0);map.heights.fill(0
  assert.equal(train(1).includes('tier 2'),true);assert.equal(revive(h),null);altar.queue[0].left=.1;step(s,1);assert.equal(h.hp,h.maxHp,'revival reuses identity even at unit capacity');assert.equal(s.units.length,S.LIMIT);
 }
 {
- const {s,altar}=arena(),a=S.spawn(s,'hero',0,4,0,{heroClass:0,damage:9999,order:{type:'hold'}}),b=S.spawn(s,'hero',0,4,-1,{heroClass:1,damage:0,order:{type:'hold'}}),victim=S.spawn(s,'soldier',1,4,1,{hp:1,damage:0,speed:0});S.visibility(s);S.command(s,0,{type:'attack',ids:[a.id],target:victim.id});step(s,10);assert.equal(a.xp,17.5);assert.equal(b.xp,17.5,'nearby allied heroes split experience');assert.equal(altar.queue.length,0);
+ const {s,altar}=arena(),a=S.spawn(s,'hero',0,4,0,{heroClass:0,damage:9999,order:{type:'hold'}}),b=S.spawn(s,'hero',0,4,-1,{heroClass:1,damage:0,order:{type:'hold'}}),victim=S.spawn(s,'soldier',1,4,1,{hp:1,damage:0,speed:0});S.visibility(s);S.command(s,0,{type:'attack',ids:[a.id],target:victim.id});step(s,10);assert.equal(a.xp,30);assert.equal(b.xp,30,'nearby allied heroes split the original Grunt experience');assert.equal(altar.queue.length,0);
 }
 {
  const {s}=arena(),hero=S.spawn(s,'hero',0,4,0,{heroClass:0,order:{type:'hold'}}),target=S.spawn(s,'soldier',1,4,1,{hp:1000,maxHp:1000,damage:0,speed:0,order:{type:'hold'}});s.teams[0].upgrade=3;S.visibility(s);S.command(s,0,{type:'attack',ids:[hero.id],target:target.id});step(s,10);assert.equal(target.hp,1000-hero.damage,'ordinary weapon research never increases hero damage');

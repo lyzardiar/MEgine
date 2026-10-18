@@ -20,7 +20,7 @@ const cast=(s,u,spell,v)=>S.command(s,u.team,{type:'casterSpell',ids:[u.id],spel
 }
 {
  const {s,n,h}=arena(),friend=S.spawn(s,'soldier',0,1,0,{hp:.3,damage:0,shield:99,shieldLeft:10,order:{type:'hold'}}),before=[s.teams[0].gold,s.teams[0].kills];S.visibility(s);assert.equal(cast(s,n,'frenzy',friend),null);step(s,1);assert.equal(friend.hp,0);assert.equal(friend.shield,99,'life drain bypasses shields');assert.deepEqual([s.teams[0].gold,s.teams[0].kills],before);assert.ok(s.corpses.some(c=>c.id===friend.id));assert.ok(!s.events.some(e=>e.type==='deny'));
- const enemy=S.spawn(s,'hero',1,1,0,{hp:.3,damage:0});n.frenzyCd=0;S.visibility(s);assert.equal(cast(s,n,'frenzy',enemy),null);n.hp=0;step(s,1);assert.equal(enemy.hp,0);assert.equal(s.teams[0].gold,before[0]+140,'enemy drain kill credits the original caster even after caster death');
+ const enemy=S.spawn(s,'hero',1,1,0,{hp:.3,damage:0});n.frenzyCd=0;S.visibility(s);assert.equal(cast(s,n,'frenzy',enemy),null);n.hp=0;step(s,1);assert.equal(enemy.hp,0);assert.equal(s.teams[0].gold,before[0],'player hero deaths do not award melee bounty');assert.equal(s.teams[0].kills,before[1]+1,'enemy drain kill credits the original caster even after caster death');
 }
 {
  const {s,n,h}=arena(),hero=S.spawn(s,'hero',1,2,1,{damage:0}),ally=S.spawn(s,'soldier',0,0,1,{damage:0});S.visibility(s);assert.equal(cast(s,n,'cripple',hero),null);assert.equal(hero.cripple,10);assert.equal(cast(s,h,'purge',hero),null);assert.equal(hero.cripple,0);assert.equal(hero.purgeLeft,5);h.purgeCd=0;assert.equal(cast(s,n,'frenzy',ally),null);assert.equal(cast(s,h,'purge',ally),null);assert.equal(ally.frenzy,0);assert.equal(ally.purgeLeft,0,'friendly dispel never slows');

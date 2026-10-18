@@ -270,3 +270,16 @@ Author: MiYu。战争古树／猎手大厅 11 项源研究、19 等级接入共�
 ### Control Magic gameplay and native acceptance
 
 Protocol 89 adds Rhss-gated slot 9/C Control Magic, confirmed original health-based mana with float32 truncation, release-time validation, source-preserving ownership and lifetime, persistent buff/projectile provenance and original target geometry. 57 regression entrypoints pass; native playback 44 steps, zero console/material errors; 101 effect outputs reproduce. All 9,014 earlier scene entities are retained; five inactive templates are added. Public engine/editor master synchronization remains remote commit 0a5eb211. Original live Warcraft casts, physical input, standalone Player and cross-machine LAN remain unverified. See human-controlmagic.md and its validation reports.
+
+
+## 2026-10-18：REA 工人基础平衡与回归维护
+
+Author: MiYu。协议 97，新遭遇战的农民/苦工/侍僧使用实际 War3Patch.mpq 的 UnitBalance 数据，统一源生命、移动、护甲、费用、人口、15 秒训练、零法力和条件回血，侍僧腐地回血只计算一次。旧存档保留版本 0，亡者复生使用独立原始身份。导入目录、原件、摘要与 GitHub REA/Rizin 维护入口完整保留。
+
+四族 28 项基础值对照、三族完整训练/退款/严格存档/逐帧续跑、真实双客户端工人生产/隐私/断线恢复通过。45 个真实 TCP 回归入口全部通过；24,000 帧付费暗夜 AI 经济验证通过。原生 Editor 三族实际按钮、付款、完整生产与存档通过，控制台错误 0，生成 Main.js 与原生报告摘要一致。Editor 正常退出；清理本次 QA 临时缓存的操作被自动审批策略拒绝，缓存保留在 E:/work/codex/cache/mengine/native-qa/worker-balance-1792326816644。
+
+同步维护测试入口的 Prefab 层级坐标、源单位生产/移动等待、经典战斗奖励与 Hex 拒绝提示，运行报告转到 tmp/docs-artifacts/。原始记录在 tmp/docs-artifacts/frost-worker-balance/，维护说明为 worker-balance.md。暂存源码/原版原件/生成包的摘要校验通过，不提交运行快照与其他样例、地图和素材清单的既有改动。
+
+整体 1:1 目标继续进行；三族武器骰子、攻击时序、射程、采集/维修/建造和完整视野仍需对照。下一批武器原版数据与当前值已保存在 tmp/docs-artifacts/frost-worker-balance/next-worker-weapons.json，完整范围见 replica-parity.md。
+
+最终分段主入口复跑得到 496 条 PASS 记录、退出码 0；24,000 帧长程 AI 经济另行通过，汇总为 tmp/docs-artifacts/frost-worker-balance/regression-summary.json。

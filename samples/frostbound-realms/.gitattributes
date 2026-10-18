@@ -18,3 +18,4 @@ effect-sources.json text eol=lf
 /druid-spell-art-sources.json text eol=lf
 /dryad-sources.json text eol=lf
 /combat-rewards*.json text eol=lf
+/worker-balance*.json text eol=lf

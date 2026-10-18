@@ -22,7 +22,7 @@ const context=vm.createContext({engine});vm.runInContext(fs.readFileSync(path.jo
 const S=context.Frost,component=(n,c)=>values.get(byName.get(n).entity+'/'+c)||byName.get(n).components[c],shown=n=>{const e=byName.get(n);return e?(active.get(e.entity)??e.active):false;},telemetry=()=>JSON.parse(component('Frost telemetry','Text').text);
 function tick(input={},dt=.001){engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};native.render(dt=>context.onTick(dt),dt);}
 const key=k=>{tick({keys:[k],pressedKeys:[k]});tick();},click=(pointer,keys=[])=>{tick({pointer,keys,buttons:[0],pressedButtons:[0]});tick({pointer,keys,releasedButtons:[0]});};
-function ui(n,viewport=[1280,720]){const v=H.viewport({viewport}),r=H.rect(component(n,'RectTransform'),{viewport});return [viewport[0]/2+r.x*v.scale,viewport[1]/2+r.y*v.scale];}
+function ui(n,viewport=[1280,720]){return native.canvasPoint(n,viewport);}
 function load(s){storage.set('quicksave',copy(s));if(telemetry().mode==='title')key('F1');if(!telemetry().paused)key('F10');click(ui('pauseLoad box'));assert.ok(context.infoState,telemetry().notice);key('Space');return context.infoState;}
 function point(u){const t=telemetry(),a=Math.atan2(context.FrostVisual.camera.height,context.FrostVisual.camera.depth);return [640+(u.x-t.camera[0])/t.zoom*360,360+(u.z-t.camera[1])*Math.sin(a)/t.zoom*360];}
 tick();const f=archmageFixture(S,6);f.h.skills=[1,1,1,1];f.h.skillPoints=2;f.h.mana=500;const target=S.spawn(f.s,'farm',0,15,0),enemy=S.spawn(f.s,'soldier',1,3,-2,{damage:0,order:{type:'hold'}});S.visibility(f.s);let s=load(f.s),h=s.units[0];
