@@ -64,3 +64,5 @@ JavaScript/Electron 和托管程序集静态分析不需要原生反编译引擎
 Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --worker-weapons`，配合 `scripts/import-frost-worker-weapons.py` 和 `docs/designs/frostbound-realms/worker-weapons.md`。该 probe 绑定受检 Game.dll 摘要，保留字段、指针表和源数据来源供更新复核。
 
 工人手动维修：`node scripts/probe-frost-rea-rewards.mjs --worker-repair` 保留 Repair/Renew 类标识证据，输出到 `tmp/docs-artifacts/frost-worker-repair/`。源技能/分类/图标、原版元数据、摘要及导入/验证入口见 `docs/designs/frostbound-realms/worker-repair.md` 和 `scripts/import-frost-worker-repair.py`。
+
+原版采木维护入口：`node scripts/probe-frost-rea-rewards.mjs --worker-lumber`，配合 `scripts/import-frost-worker-lumber.py`、`scripts/import-frost-lumber-depots.py`。源技能/第二武器/树生命、交付建筑、模型及原版按钮的来源、摘要、复现和测试入口见 `docs/designs/frostbound-realms/worker-lumber.md`。GitHub 上游、固定版本及更新方法沿用本说明。

@@ -273,3 +273,6 @@ scripts/*human-spellbreaker*.py text eol=lf
 scripts/*human-spellbreaker*.mjs text eol=lf
 docs/designs/frostbound-realms/human-spellbreaker*.json text eol=lf
 docs/designs/frostbound-realms/human-spellbreaker*.md text eol=lf
+
+scripts/*worker-lumber*.* text eol=lf
+scripts/import-frost-lumber-depots.py text eol=lf

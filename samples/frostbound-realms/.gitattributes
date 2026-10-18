@@ -22,3 +22,10 @@ effect-sources.json text eol=lf
 /worker-weapons*.json text eol=lf
 /worker-repair*.json text eol=lf
 SourceAssets/WorkerRepair/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+
+/worker-lumber*.json text eol=lf
+/lumber-depot*.json text eol=lf
+Assets/LumberDepots/** -text whitespace=cr-at-eol
+SourceAssets/LumberDepots/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+SourceAssets/WorkerLumber/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+Assets/Art/classic-worker-lumber-*.png.meta -text

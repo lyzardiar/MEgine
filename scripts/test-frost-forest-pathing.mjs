@@ -8,18 +8,18 @@ function fixture(wall=true,tileset=1){
   const map=S.defaultMap();map.tileset=tileset;for(const field of ['terrain','heights','relief','ramps'])map[field].fill(0);map.props=wall?Array.from({length:30},(_,i)=>({kind:'tree',x:0,z:-29+i*2,amount:100})):[{kind:'tree',x:0,z:1,amount:100}];map.units=[];map.triggers=[];map.players.forEach(p=>p.ai=false);
   const s=S.create('skirmish',{map,ai:[false,false]});s.units=[];S.spawn(s,'hall',0,-20,12);S.spawn(s,'hall',1,20,-20);S.visibility(s);return s;
 }
-const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
+const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},fell=(s,i)=>{for(let n=0;n<100&&s.resources[i].amount>0;n++)S.tick(s);assert.equal(s.resources[i].amount,0);};
 for(const tileset of [0,1,2]){
   const s=fixture(true,tileset),unit=S.spawn(s,'soldier',0,-5,1),worker=S.spawn(s,'worker',0,-2,1),flyer=S.spawn(s,'dragon',0,-5,6);S.visibility(s);
   for(let i=0;i<s.resources.length;i++){const r=s.resources[i];assert.equal(S.resourceAt(s,r.x,r.z,0),i,'dense forest picks the closest tree, regardless of list order');}
   assert.equal(S.walkClear(s,unit,5,1),false);assert.equal(S.walkClear(s,flyer,5,6),true);assert.ok(S.solid(s,0,1));assert.equal(S.buildingSite(s,0,1,S.types.farm.radius),false);
   assert.equal(S.command(s,0,{type:'move',ids:[unit.id],x:5,z:1}),null);assert.equal(S.command(s,0,{type:'move',ids:[flyer.id],x:5,z:6}),null);step(s,60);assert.ok(unit.x<0,'sealed forest blocks ground passage');assert.ok(flyer.x>4,'air unit crosses forest');
   const money=s.teams[0].gold;assert.match(S.command(s,0,{type:'build',ids:[worker.id],kind:'farm',x:0,z:1}),/clear flat dry/);assert.equal(s.teams[0].gold,money);assert.equal(worker.order,null,'blocked site rejects without changing order');
-  const ri=s.resources.findIndex(r=>r.z===1),tree=s.resources[ri];tree.amount=5;assert.equal(S.command(s,0,{type:'gather',ids:[worker.id],resource:ri}),null);step(s,1);
+  const ri=s.resources.findIndex(r=>r.z===1),tree=s.resources[ri];tree.amount=5;tree.hp=1;assert.equal(S.command(s,0,{type:'gather',ids:[worker.id],resource:ri}),null);fell(s,ri);
   assert.equal(tree.amount,0);assert.ok(tree.felled);assert.ok(s.clearedResources[0].includes(ri));assert.equal(S.treeClear(s,-2,1,2,1,S.movementRadius(unit),0),true,'depletion opens cached passage in the same simulation frame');
   assert.equal(S.command(s,0,{type:'move',ids:[unit.id],x:5,z:1}),null);const saved=S.restore(s);step(s,60);step(saved,60);assert.ok(unit.x>4,'movement command crosses the harvested opening');assert.deepEqual(saved.resources,s.resources);assert.deepEqual(saved.clearedResources,s.clearedResources);assert.deepEqual(saved.units,s.units,'save replay preserves opened route');
   assert.equal(S.buildingSite(s,0,1,S.types.farm.radius),false,'walking gap still needs more clearing for a building');
-  for(const i of [ri-1,ri+1]){s.resources[i].amount=5;worker.x=-2;worker.z=1;assert.equal(S.command(s,0,{type:'gather',ids:[worker.id],resource:i}),null);step(s,20);assert.equal(s.resources[i].amount,0);}
+  for(const i of [ri-1,ri+1]){s.resources[i].amount=5;s.resources[i].hp=1;worker.x=-2;worker.z=1;assert.equal(S.command(s,0,{type:'gather',ids:[worker.id],resource:i}),null);fell(s,i);assert.equal(s.resources[i].amount,0);}
   assert.equal(S.buildingSite(s,0,1,S.types.farm.radius),true);S.command(s,0,{type:'stop',ids:[worker.id]});worker.x=-2;worker.z=1;S.visibility(s);assert.equal(S.command(s,0,{type:'build',ids:[worker.id],kind:'farm',x:0,z:1}),null,'cleared site admits a real construction command');
 }
 {
@@ -29,7 +29,7 @@ for(const tileset of [0,1,2]){
   assert.equal(S.treeClear(s,-3,1,3,1,0,-1),false,'long swept check blocks tunneling');
 }
 {
-  const s=fixture(false),worker=S.spawn(s,'worker',0,-2,1),observer=S.spawn(s,'soldier',1,22,-22),tree=s.resources[0];tree.amount=5;S.visibility(s);S.command(s,0,{type:'gather',ids:[worker.id],resource:0});S.tick(s);assert.deepEqual(s.clearedResources,[[0],[]]);
+  const s=fixture(false),worker=S.spawn(s,'worker',0,-2,1),observer=S.spawn(s,'soldier',1,22,-22),tree=s.resources[0];tree.amount=5;tree.hp=1;S.visibility(s);S.command(s,0,{type:'gather',ids:[worker.id],resource:0});fell(s,0);assert.deepEqual(s.clearedResources,[[0],[]]);
   assert.equal(S.publicState(s,1).resources[0].amount,1,'unseen depletion stays private');assert.deepEqual(S.publicState(s,1).clearedResources,[[],[]]);assert.equal(S.treeClear(s,-2,1,2,1,.5,1),false,'unaware team does not route through a secret opening');assert.equal(S.treeClear(s,-2,1,2,1,.5,-1),true,'physical authority knows the opening');
   const unaware=S.spawn(s,'worker',1,22,-20);assert.equal(S.command(s,1,{type:'gather',ids:[unaware.id],resource:0}),null,'gather request does not reveal unseen depletion');S.tick(s);assert.equal(unaware.order.resource,0,'gatherer approaches before learning depletion');assert.equal(S.resourceAvailable(s,0,1),true);assert.equal(S.resourceAvailable(s,0,0),false);
   observer.x=0;observer.z=4;S.visibility(s);assert.deepEqual(s.clearedResources,[[0],[0]]);observer.x=22;observer.z=-22;S.visibility(s);const view=S.publicState(s,1);assert.equal(view.resources[0].amount,0);assert.equal(view.resources[0].felled,undefined);assert.deepEqual(view.clearedResources,[[],[0]]);assert.equal(S.treeClear(s,-2,1,2,1,.5,1),true,'discovered opening remains known after vision leaves');

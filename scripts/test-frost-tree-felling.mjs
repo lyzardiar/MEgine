@@ -12,10 +12,10 @@ function mapFor(tileset){const map=S.defaultMap();map.tileset=tileset;for(const 
 function rotate(q,p){const [x,y,z,w]=q,[a,b,c]=p,tx=2*(y*c-z*b),ty=2*(z*a-x*c),tz=2*(x*b-y*a);return [a+w*tx+y*tz-z*ty,b+w*ty+z*tx-x*tz,c+w*tz+x*ty-y*tx];}
 for(const tileset of [0,1,2])for(const faction of [0,1,2,3]){
   const s=S.create('skirmish',{map:mapFor(tileset),ai:[false,false],factions:[faction,0]});s.units=[];S.spawn(s,'hall',0,-22,16);S.spawn(s,'hall',1,22,-16);
-  const r=s.resources[0];r.amount=5;const w=S.spawn(s,faction===3?'ghoul':'worker',0,-16,16);S.visibility(s);
+  const r=s.resources[0];r.amount=5;r.hp=5;const w=S.spawn(s,faction===3?'ghoul':'worker',0,-16,16);S.visibility(s);
   assert.equal(S.command(s,0,{type:'gather',ids:[w.id],resource:0}),null);S.tick(s);
   if(S.wisp(s,w)){for(let i=0;i<90;i++)S.tick(s);assert.equal(r.amount,5);assert.equal(r.felled,undefined);assert.equal(w.cargo,0);assert.equal(s.teams[0].wood,155);assert.doesNotThrow(()=>S.restore(s));continue;}
-  assert.equal(r.amount,0);assert.deepEqual(r.felled,{frame:s.frame,yaw:Math.PI/2,age:0});assert.equal(w.cargo,5);
+  for(let i=0;i<100&&!r.felled;i++)S.tick(s);assert.equal(r.amount,0);assert.deepEqual(r.felled,{frame:s.frame,yaw:Math.PI/2,age:0});assert.equal(w.cargo,5);
   const ended=S.restore(s);ended.winner=0;const endedFrame=ended.frame;for(let i=0;i<60;i++)S.tick(ended);assert.equal(ended.frame,endedFrame);assert.equal(ended.resources[0].felled.age,6);assert.equal(V.resource(ended.resources[0],12,tileset),null,'post-victory fall finishes without advancing battle time');
   const f=structuredClone(r.felled),begin=V.resource(r,12,tileset),middle=V.resource(r,12,tileset,.75),flat=V.resource(r,12,tileset,1.5),far=V.resource(r,27,tileset,1.5);
   assert.ok(begin);assert.equal(begin.parts.length,begin.asset.parts.length);assert.equal(flat.scale,far.scale);assert.deepEqual(flat.rotation,far.rotation);

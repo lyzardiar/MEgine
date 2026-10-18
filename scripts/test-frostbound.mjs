@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import './test-frost-worker-balance-network.mjs';
 import './test-frost-worker-weapons-network.mjs';
 import './test-frost-worker-repair-network.mjs';
+import './test-frost-worker-lumber-network.mjs';
 import './test-frost-combat-rewards.mjs';
 import './test-frost-combat-rewards-network.mjs';
 import './test-frost-moba-objectives.mjs';
@@ -215,6 +216,8 @@ const aiSpell=S.create('moba',{ai:[false,true]}),aiHero=aiSpell.units.find(u=>u.
 const step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 for(let faction=0;faction<4;faction++){
   const game=battleFixture(S,'skirmish',{factions:[faction,0],ai:[false,false]},['hero','barracks','farm','guard','harvest']),worker=game.units.find(u=>u.team===0&&u.kind==='worker'),hall=game.units.find(u=>u.team===0&&u.kind==='hall');
+  // MiYu: fund the production/technology acceptance independently of finite source lumber.
+  Object.assign(game.teams[0],{gold:10000,wood:10000});
   // MiYu: verify generic siege production retained by legacy saves.
   game.humanMortarVersion=0;
   if(faction===2){game.hippogryphVersion=0;game.ancientWarVersion=0;game.nightElfTechVersion=0;for(const u of game.units){delete u.nightLevels;delete u.moonWellRules;delete u.rechargeAuto;}}

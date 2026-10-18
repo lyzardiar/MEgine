@@ -309,3 +309,16 @@ REA 6.5.0 / Rizin 0.8.1 通过真实 MCP 保留 Game.dll 武器字段和指针�
 整体 1:1 仍进行中。自动维修、海军范围、建造协助参数、维修音频和所有动作/地形细节继续对照；完整采集、采木/返程和入矿仍待实现。下一批原版 Ahar/Ahrl/Amin/Agld 与工人第二武器证据保留在 next-worker-harvest.json。共享工作区的地图、原有来源清单和其他样例改动保持未提交。
 
 最终主入口退出码 0、515 条 PASS 记录；仅跳过已另行通过的长程 AI 导入，其余导入和正文完整执行。47 个独立 TCP 入口、24,000 帧 AI 与四族原生验收通过，汇总为 `tmp/docs-artifacts/frost-worker-repair/regression-summary.json`。
+
+
+## 2026-10-18：原版采木、返程与交付建筑
+
+协议 100，lumberHarvestVersion 为农民、苦工、食尸鬼接入第二武器的源伤害、间隔、前摇/后摇、10/10/20 容量和 50 HP 树损耗；满载后摇、无基地保留货物、部分交付、合法建筑过滤、回树、Shift/Stop/控制/死亡、存档和联机续接使用共享规则。小精灵和侍僧专用经济保持独立。未知耗尽树木必须经视野确认，森林清障保留同帧缓存更新。
+
+磨坊 ofor 和坟场 ugrv 使用实际 MPQ 的费用、生命、护甲、工期、碰撞、模型、图标和建造热键，作为真实可建造木材交付点；源模型缩放和选择圈同时接入。Gather/Return 共用原版第 7 格，G/E/右键可操作，亡灵商店使用源 R。磨坊科技、坟场造尸、采木升级和金矿进出运输另行对照。
+
+真实 REA 6.5.0 / Rizin 0.8.1 MCP 保留 Harvest 类标识和 RTTI，Game.dll 未修改；原版数据及资产来源、原件、摘要和复现命令见 worker-lumber.md、worker-lumber-sources.json 和 lumber-depot-sources.json。232 个暂存原件/依赖/输出的 SHA 和字节数通过，建筑保留原件可无游戏安装逐字节复现。
+
+三类规则与真实 TCP、五个原生 Editor 场景及 24,000 帧 AI 经济通过；原生控制台错误为 0，Editor 正常退出，EPERM runtime 清理结果保留。产物在 tmp/docs-artifacts/frost-worker-lumber/。旧地图、字体、来源清单和其他样例改动保持未提交。整体 1:1 目标继续进行。
+
+最终主入口退出码 0、525 条 PASS 记录；仅跳过已独立通过的 24,000 帧长程 AI 导入，其余导入及正文完整执行。最终 Main.js SHA-256 为 11f219437dd6d565e2344b09eeb48fd50b577271f4e403fe4a0a7acc2da44f7f，与五个原生验收场景的运行包一致。汇总为 `tmp/docs-artifacts/frost-worker-lumber/regression-summary.json`。

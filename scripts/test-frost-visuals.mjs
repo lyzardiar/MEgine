@@ -10,7 +10,7 @@ Object.assign(FrostArt,...['human-sanctum-models','human-sorceress-models'].map(
 const source=JSON.parse(fs.readFileSync(new URL('classic-sources.json',root))),sha=data=>crypto.createHash('sha256').update(data).digest('hex');
 const buildingScales=JSON.parse(fs.readFileSync(new URL('building-scale-catalog.json',root))),buildingSources=JSON.parse(fs.readFileSync(new URL('building-scale-sources.json',root)));
 for(const file of buildingSources.files)assert.equal(sha(fs.readFileSync(new URL(file.path,root))),file.sha256,file.path);
-assert.equal(Object.keys(buildingScales.models).length+Object.keys(S.druidRules.buildings).length+Object.keys(S.chimaeraRules.buildings).length+Object.values(S.humanRules.buildings).filter(r=>!buildingScales.models[r.model]).length,Object.values(FrostArt).filter(a=>a.classic&&a.factionBuilding&&a!==FrostArt[S.sanctumRules.building.model]).length);
+assert.equal(Object.keys(S.lumberDepots.buildings).length+Object.keys(buildingScales.models).length+Object.keys(S.druidRules.buildings).length+Object.keys(S.chimaeraRules.buildings).length+Object.values(S.humanRules.buildings).filter(r=>!buildingScales.models[r.model]).length,Object.values(FrostArt).filter(a=>a.classic&&a.factionBuilding&&a!==FrostArt[S.sanctumRules.building.model]).length);
 for(const file of source.files)assert.equal(sha(fs.readFileSync(new URL(file.path,root))),file.sha256,file.path);
 let samples=0,teamLayers=0,hiddenLayers=0;
 for(const asset of Object.values(FrostArt).filter(a=>a.classic)){

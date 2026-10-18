@@ -51,3 +51,7 @@ Probe 地址绑定上述 Game.dll 摘要；其他版本会被拒绝，需要重�
 `--worker-weapons` 模式将武器字段、字符串指针引用和描述表证据写入 `tmp/docs-artifacts/frost-worker-weapons/`。对应 MPQ 导入器、原件摘要、运行时验证和未完成边界见 [工人武器](../worker-weapons.md)。
 
 工人手动维修：`node scripts/probe-frost-rea-rewards.mjs --worker-repair` 保留 Repair/Renew 类标识证据，输出到 `tmp/docs-artifacts/frost-worker-repair/`。源技能/分类/图标、原版元数据、摘要及导入/验证入口见 `docs/designs/frostbound-realms/worker-repair.md` 和 `scripts/import-frost-worker-repair.py`。
+
+## 采木证据与维护
+
+`node scripts/probe-frost-rea-rewards.mjs --worker-lumber` 使用真实 REA / Rizin MCP，保留受检 Game.dll 的 HarvestBase/HarvestReturn/HarvestLumber/Harvest 类标识与 RTTI；输出到 `tmp/docs-artifacts/frost-worker-lumber/`。第二武器、能力元数据和交付建筑以实际 MPQ 为准，来源及导入/运行命令见 [采木与资源交付](../worker-lumber.md)。类名证据不代表完整原版执行函数动态验收。
