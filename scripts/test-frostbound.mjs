@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import './test-frost-worker-balance-network.mjs';
 import './test-frost-worker-weapons-network.mjs';
+import './test-frost-worker-repair-network.mjs';
 import './test-frost-combat-rewards.mjs';
 import './test-frost-combat-rewards-network.mjs';
 import './test-frost-moba-objectives.mjs';

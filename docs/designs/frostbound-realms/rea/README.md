@@ -49,3 +49,5 @@ Probe 地址绑定上述 Game.dll 摘要；其他版本会被拒绝，需要重�
 新运行的 probe 将原始报告写入 `tmp/docs-artifacts/frost-combat-rewards/`；附加 `--worker-fields` 时写入 `tmp/docs-artifacts/frost-worker-balance/`。工人字段与原版 MPQ 基础平衡的维护入口见 [工人基础平衡](../worker-balance.md)。
 
 `--worker-weapons` 模式将武器字段、字符串指针引用和描述表证据写入 `tmp/docs-artifacts/frost-worker-weapons/`。对应 MPQ 导入器、原件摘要、运行时验证和未完成边界见 [工人武器](../worker-weapons.md)。
+
+工人手动维修：`node scripts/probe-frost-rea-rewards.mjs --worker-repair` 保留 Repair/Renew 类标识证据，输出到 `tmp/docs-artifacts/frost-worker-repair/`。源技能/分类/图标、原版元数据、摘要及导入/验证入口见 `docs/designs/frostbound-realms/worker-repair.md` 和 `scripts/import-frost-worker-repair.py`。

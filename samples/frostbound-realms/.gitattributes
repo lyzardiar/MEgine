@@ -20,3 +20,5 @@ effect-sources.json text eol=lf
 /combat-rewards*.json text eol=lf
 /worker-balance*.json text eol=lf
 /worker-weapons*.json text eol=lf
+/worker-repair*.json text eol=lf
+SourceAssets/WorkerRepair/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof

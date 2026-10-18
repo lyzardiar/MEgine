@@ -1,0 +1,1 @@
+Original Warcraft III worker repair data and command textures: Blizzard Entertainment original game asset terms apply. Source archives, paths, SHA-256 and generator are retained in worker-repair-sources.json. Extraction does not grant redistribution rights.

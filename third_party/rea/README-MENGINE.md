@@ -62,3 +62,5 @@ JavaScript/Electron 和托管程序集静态分析不需要原生反编译引擎
 3,777 个源码文件（47,103,748 字节）与固定提交归档逐字节一致。锁文件恢复后，真实 MCP 检查 3/3 通过：版本及来源一致、REA 工具发现及 JavaScript 静态分析、MEngine 工作流及维护信息读取。REA 返回 207 个工具，静态分析生成证据且未执行测试目标。引擎 MCP 协议、契约与交付回归 32/32 通过，编辑器生产构建通过；构建产物的浏览器页面已核对源站、标签、提交及维护入口。Codex CLI 已读到两个项目级 MCP 配置；当前聊天的工具连接仍需重连后载入。后续原生 Warcraft 分析证据见 `docs/designs/frostbound-realms/rea/README.md`；提交状态以仓库日志为准。
 
 Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --worker-weapons`，配合 `scripts/import-frost-worker-weapons.py` 和 `docs/designs/frostbound-realms/worker-weapons.md`。该 probe 绑定受检 Game.dll 摘要，保留字段、指针表和源数据来源供更新复核。
+
+工人手动维修：`node scripts/probe-frost-rea-rewards.mjs --worker-repair` 保留 Repair/Renew 类标识证据，输出到 `tmp/docs-artifacts/frost-worker-repair/`。源技能/分类/图标、原版元数据、摘要及导入/验证入口见 `docs/designs/frostbound-realms/worker-repair.md` 和 `scripts/import-frost-worker-repair.py`。

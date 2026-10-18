@@ -57,9 +57,9 @@ var FrostVisual=(()=>{
       animation=target.kind==='tree'?'Wood':'Mine';
     }else if(['construct','repair'].includes(u.order.type)){
       if(u.root>0)return null;
-      target=state.units.find(v=>v.id===u.order.target&&v.team===u.team&&v.hp>0&&!Frost.types[v.kind].speed);
-      if(!target||u.order.type==='construct'&&target.built===1||u.order.type==='repair'&&(target.built<1||target.hp>=target.maxHp)||Frost.distance(u,target)>Frost.types[target.kind].radius+1.1)return null;
-      if(u.order.type==='repair'){const cost=Frost.repairCost(target),team=state.teams[u.team];if(team.gold<cost.gold||team.wood<cost.wood)return null;}
+      target=state.units.find(v=>v.id===u.order.target&&v.team===u.team&&v.hp>0&&(u.order.type==='repair'?Frost.repairTarget(state,u,v):!Frost.types[v.kind].speed));
+      if(!target||u.order.type==='construct'&&target.built===1||u.order.type==='repair'&&(target.built<1||target.hp>=target.maxHp)||Frost.distance(u,target)>(u.order.type==='repair'?Frost.repairReach(state,u,target):Frost.types[target.kind].radius+1.1))return null;
+      if(u.order.type==='repair'){const cost=Frost.repairCost(target,Frost.workerRepair(state,u)),team=state.teams[u.team];if(team.gold<cost.gold||team.wood<cost.wood)return null;}
       animation='Build';
     }else return null;
     return Frost.traversable(state.map,u.x,u.z,target.x,target.z)?{target,animation}:null;
