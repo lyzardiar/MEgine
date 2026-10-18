@@ -1,0 +1,1 @@
+Warcraft III Skeleton Warrior/Mage statistics, research cards and missile: Blizzard Entertainment. Original game terms apply; not CC0 or MIT. See skeleton-rules-sources.json for archive identities, retained original bytes and generator hashes. REA upstream: https://github.com/morluto/rea; fixed runtime and maintenance: third_party/rea/README-MENGINE.md.

@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';
 import {priestFixture} from './frost-human-priest-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),copy=o=>JSON.parse(JSON.stringify(o)),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},cmd=(s,u,type,c={})=>S.command(s,u.team,{type,ids:[u.id],...c});
 
-assert.equal(S.PROTOCOL,106);assert.equal(S.create().humanPriestVersion,1);assert.equal(S.priestRules.buffSource.alias,'Binf');assert.equal(S.priestRules.buffFunc.Targetattach,'overhead');
+assert.equal(S.PROTOCOL,107);assert.equal(S.create().humanPriestVersion,1);assert.equal(S.priestRules.buffSource.alias,'Binf');assert.equal(S.priestRules.buffFunc.Targetattach,'overhead');
 {
  const {s,priest,ally}=priestFixture(S);s.teams[0].humanSanctum.Rhpt=0;assert.equal(S.priestSpellOption(s,priest,'Adis').available,false);assert.ok(cmd(s,priest,'priestSpell',{spell:'Adis',x:0,z:1}));s.teams[0].humanSanctum.Rhpt=1;assert.equal(S.priestSpellOption(s,priest,'Adis').available,true);assert.equal(S.priestSpellOption(s,priest,'Ainf').available,false);assert.ok(cmd(s,priest,'priestSpell',{spell:'Ainf',target:ally.id}));assert.ok(cmd(s,priest,'priestAuto',{enabled:true}));s.teams[0].humanSanctum.Rhpt=2;assert.equal(S.priestSpellOption(s,priest,'Ainf').available,true);assert.equal(priest.innerFireAuto,false);assert.equal(S.priestSpellOption(s,priest,'Adis').slot,9);assert.equal(S.priestSpellOption(s,priest,'Ainf').slot,10);
 }

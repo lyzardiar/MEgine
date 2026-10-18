@@ -47,3 +47,8 @@ Assets/Licenses/Classic-Source-Casters.txt text eol=lf
 /caster-spells*.json text eol=lf
 SourceAssets/CasterSpells/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
 Assets/Licenses/Classic-Caster-Spells.txt text eol=lf
+
+/skeleton-*.json text eol=lf
+Assets/SkeletonRules/** -text whitespace=cr-at-eol
+SourceAssets/SkeletonRules/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+Assets/Licenses/Classic-Skeleton-Rules.txt text eol=lf

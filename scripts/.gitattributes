@@ -17,3 +17,5 @@
 /import-frost-source-casters.py text eol=lf
 
 /import-frost-caster-spells.py text eol=lf
+
+/import-frost-skeleton-rules.py text eol=lf

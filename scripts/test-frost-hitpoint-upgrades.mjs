@@ -7,7 +7,7 @@ export function hitpointFixture(c,options={}){const map=S.defaultMap();map.start
 export const hitpointOrder=(s,c,producer)=>S.command(s,0,{type:c.command,ids:[producer.id],upgrade:c.key});
 export const hitpointResearch=(s,c,producer)=>c.command==='humanResearch'?S.humanResearchOption(s,producer,c.key):c.command==='sanctumResearch'?S.sanctumResearchOption(s,producer,c.key):S.druidResearchOption(s,producer,c.key);
 const round=x=>Math.floor(Math.fround(Math.fround(x)+.5)),ratioHp=(hp,max,next)=>hp>0?Math.max(1,Math.min(next,round(Math.fround(next*Math.fround(hp/max))))):0;
-assert.equal(S.PROTOCOL,106);assert.equal(S.create().healthUpgradeVersion,1);assert.equal(S.humanTechnology.research.Rhan.sourceRow.effect1,'rhpx');for(const key of ['Rhpt','Rhst'])assert.equal(S.sanctumRules.research[key].sourceRow.effect3,'rhpx');
+assert.equal(S.PROTOCOL,107);assert.equal(S.create().healthUpgradeVersion,1);assert.equal(S.humanTechnology.research.Rhan.sourceRow.effect1,'rhpx');for(const key of ['Rhpt','Rhst'])assert.equal(S.sanctumRules.research[key].sourceRow.effect3,'rhpx');
 for(const c of hitpointCases){
  const {s,producer,unit}=hitpointFixture(c),base=unit.maxHp,units=[unit,...[.001,1,base/2,base].map((hp,i)=>S.spawn(s,c.kind,0,-4-i*3,-4,{hp,...(c.kind==='humanpriest'?{sanctumAuto:false}:{}),order:{type:'hold'}}))];
  for(let rank=1;rank<=c.ranks;rank++){
