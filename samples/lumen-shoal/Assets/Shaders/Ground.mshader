@@ -1,0 +1,97 @@
+/* MENGINE_PARAMETERS
+{"parameters":[
+  {"name":"clock","label":"Clock (x=time)","type":"vector4","default":[0,0,0,0]},
+  {"name":"reveal","label":"Reveal (detail, moss, spare, spare)","type":"vector4","default":[1,1,0,0]},
+  {"name":"style","label":"Style (0 realistic, 1 low-poly, 2 pixel)","type":"float","default":0,"min":0,"max":2}
+],
+"textures":[
+  {"name":"surface_normal","label":"Normal Map","type":"data","default":"Assets/Textures/island-normal.png"}
+]}
+*/
+// Lumen Shoal — island terrain. Demonstrates tangent-space normal mapping computed from
+// screen-space derivatives (no tangent attribute required), height-based moss/rock colour,
+// and a stylised flat/pixel mode driven by the shared `style` parameter.
+
+fn hash21(p: vec2<f32>) -> f32 {
+    var q = fract(p * vec2<f32>(123.34, 456.21));
+    q += dot(q, q + 45.32);
+    return fract(q.x * q.y);
+}
+
+fn vnoise(p: vec2<f32>) -> f32 {
+    let i = floor(p);
+    let f = fract(p);
+    let u = f * f * (3.0 - 2.0 * f);
+    let a = hash21(i);
+    let b = hash21(i + vec2<f32>(1.0, 0.0));
+    let c = hash21(i + vec2<f32>(0.0, 1.0));
+    let d = hash21(i + vec2<f32>(1.0, 1.0));
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+fn fbm2(p: vec2<f32>) -> f32 {
+    var v = 0.0;
+    var amp = 0.5;
+    var q = p;
+    for (var i = 0; i < 4; i = i + 1) {
+        v += amp * vnoise(q);
+        q *= 2.05;
+        amp *= 0.5;
+    }
+    return v;
+}
+
+// Derivative-based tangent frame, mirroring the engine's mapped_normal().
+fn tangent_normal(geom: vec3<f32>, world_position: vec3<f32>, uv: vec2<f32>, encoded: vec3<f32>, scale: f32) -> vec3<f32> {
+    let pdx = dpdx(world_position);
+    let pdy = dpdy(world_position);
+    let udx = dpdx(uv);
+    let udy = dpdy(uv);
+    let t_raw = cross(pdy, geom) * udx.x + cross(geom, pdx) * udy.x;
+    let b_raw = cross(pdy, geom) * udx.y + cross(geom, pdx) * udy.y;
+    let inv = inverseSqrt(max(max(dot(t_raw, t_raw), dot(b_raw, b_raw)), 0.000001));
+    let tangent = t_raw * inv;
+    let bitangent = b_raw * inv;
+    var tn = encoded * 2.0 - vec3<f32>(1.0);
+    tn.x *= scale;
+    tn.y *= scale;
+    return normalize(tangent * tn.x + bitangent * tn.y + geom * tn.z);
+}
+
+fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
+    var s = surface;
+    let reveal = mengine_param_reveal();
+    let style = mengine_param_style();
+    let detail = reveal.x;
+
+    // Faceted low-poly shading: replace the interpolated normal with the flat face normal.
+    var base_normal = s.normal;
+    if (style > 0.5 && style < 1.5) {
+        base_normal = normalize(cross(dpdx(world_position), dpdy(world_position)));
+        // Keep the facet normal facing the same hemisphere as the smooth normal.
+        if (dot(base_normal, s.normal) < 0.0) {
+            base_normal = -base_normal;
+        }
+    }
+
+    // Tangent-space normal map, faded in by the reveal detail factor.
+    let mapped = tangent_normal(base_normal, world_position, uv, mengine_texture_surface_normal(uv).rgb, 1.4 * detail);
+    s.normal = normalize(mix(base_normal, mapped, step(0.001, detail)));
+
+    // Height + slope driven biome: sand at the shore, moss on gentle uplands, rock on cliffs.
+    let slope = clamp(1.0 - dot(normalize(s.normal), vec3<f32>(0.0, 1.0, 0.0)), 0.0, 1.0);
+    let height = clamp((world_position.y + 1.0) / 18.0, 0.0, 1.0);
+    let mottle = fbm2(world_position.xz * 0.12);
+    var sand = vec3<f32>(0.76, 0.66, 0.44);
+    var moss = mix(vec3<f32>(0.16, 0.36, 0.16), vec3<f32>(0.34, 0.52, 0.22), mottle);
+    var rock = mix(vec3<f32>(0.28, 0.27, 0.29), vec3<f32>(0.46, 0.45, 0.47), mottle);
+    var col = mix(sand, moss, smoothstep(0.05, 0.35, height));
+    col = mix(col, rock, smoothstep(0.45, 0.85, slope));
+    if (style > 1.5) {
+        col = floor(col * 6.0 + 0.5) / 6.0;  // pixel-art palette quantisation
+    }
+    s.base_color = mix(vec3<f32>(0.5, 0.5, 0.5), col, detail);
+    s.roughness = mix(0.9, 0.65, mottle);
+    s.metallic = 0.0;
+    return s;
+}

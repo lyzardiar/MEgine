@@ -1,0 +1,1207 @@
+{
+  "version": 1,
+  "name": "Lumen Shoal",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              120.0,
+              46.0,
+              150.0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0.08728314427023702,
+              0.32958789089232793,
+              -0.03061727381122941,
+              0.9395829167496693
+            ]
+          },
+          "Camera3D": {
+            "fov_y_degrees": 42.0,
+            "near": 0.4,
+            "far": 2000.0,
+            "primary": true,
+            "clear_flags": "skybox",
+            "background_color": [
+              0.1,
+              0.12,
+              0.16,
+              1.0
+            ]
+          },
+          "AudioListener": {
+            "primary": true
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Sun Light",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              40,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0.06744598927757178,
+              0.5431478446848435,
+              -0.04383133339844246,
+              0.8357752518213815
+            ]
+          },
+          "DirectionalLight": {
+            "color": [
+              1.0,
+              0.72,
+              0.46,
+              1.0
+            ],
+            "intensity": 3.4,
+            "cast_shadows": true,
+            "shadow_strength": 0.82,
+            "shadow_distance": 260.0,
+            "shadow_bias": 0.0016,
+            "shadow_normal_bias": 0.02
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Environment",
+        "parent": null,
+        "siblingIndex": 2,
+        "active": true,
+        "components": {
+          "EnvironmentLight": {
+            "sky_color": [
+              0.011612245179743885,
+              0.07618538148130785,
+              0.21586050011389926,
+              1.0
+            ],
+            "equator_color": [
+              0.8879231178819663,
+              0.2831487404299921,
+              0.10224173308810132,
+              1.0
+            ],
+            "ground_color": [
+              0.003346535763899161,
+              0.004391442037410293,
+              0.006048833022857054,
+              1.0
+            ],
+            "diffuse_intensity": 0.7,
+            "specular_intensity": 1.0,
+            "texture": "Assets/Textures/sky-clear.png",
+            "background_enabled": true,
+            "background_intensity": 1.0,
+            "exposure": 0.0,
+            "tone_mapping": true
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Water",
+        "parent": null,
+        "siblingIndex": 3,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/ocean.glb",
+            "material": "Assets/Materials/Water.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "clock",
+              "reveal",
+              "style"
+            ],
+            "custom_parameter_values": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Island",
+        "parent": null,
+        "siblingIndex": 4,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/island.glb",
+            "material": "Assets/Materials/Ground.mmat",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "clock",
+              "reveal",
+              "style"
+            ],
+            "custom_parameter_values": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "Rock 0",
+        "parent": null,
+        "siblingIndex": 5,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock-0.glb",
+            "material": "Assets/Materials/Rock.mmat",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "clock",
+              "reveal",
+              "style"
+            ],
+            "custom_parameter_values": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "Rock 1",
+        "parent": null,
+        "siblingIndex": 6,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock-1.glb",
+            "material": "Assets/Materials/Rock.mmat",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "clock",
+              "reveal",
+              "style"
+            ],
+            "custom_parameter_values": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "Rock 2",
+        "parent": null,
+        "siblingIndex": 7,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock-2.glb",
+            "material": "Assets/Materials/Rock.mmat",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "clock",
+              "reveal",
+              "style"
+            ],
+            "custom_parameter_values": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Rock 3",
+        "parent": null,
+        "siblingIndex": 8,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock-3.glb",
+            "material": "Assets/Materials/Rock.mmat",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "clock",
+              "reveal",
+              "style"
+            ],
+            "custom_parameter_values": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Rock 4",
+        "parent": null,
+        "siblingIndex": 9,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock-4.glb",
+            "material": "Assets/Materials/Rock.mmat",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "clock",
+              "reveal",
+              "style"
+            ],
+            "custom_parameter_values": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Rock 5",
+        "parent": null,
+        "siblingIndex": 10,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/rock-5.glb",
+            "material": "Assets/Materials/Rock.mmat",
+            "cast_shadows": true,
+            "receive_shadows": true
+          },
+          "MaterialPropertyBlock": {
+            "custom_parameter_names": [
+              "clock",
+              "reveal",
+              "style"
+            ],
+            "custom_parameter_values": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "Pollen",
+        "parent": null,
+        "siblingIndex": 11,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              6,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "ParticleEmitter3D": {
+            "playing": true,
+            "looping": true,
+            "max_particles": 900,
+            "rate_over_time": 60,
+            "lifetime_min": 6,
+            "lifetime_max": 12,
+            "size_start": 0.14,
+            "size_end": 0.02,
+            "color_start": [
+              1.0,
+              0.86,
+              0.55,
+              0.9
+            ],
+            "color_end": [
+              1.0,
+              0.6,
+              0.3,
+              0.0
+            ],
+            "gravity": [
+              0.05,
+              0.12,
+              0.0
+            ],
+            "shape": "box",
+            "shape_size": [
+              150,
+              24,
+              150
+            ],
+            "spread_degrees": 12,
+            "blend_mode": "additive",
+            "billboard": true,
+            "seed": 7
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Overlay Canvas",
+        "parent": null,
+        "siblingIndex": 12,
+        "active": true,
+        "components": {
+          "Canvas": {
+            "render_mode": "ScreenSpaceOverlay",
+            "pixel_perfect": false,
+            "sorting_order": 100
+          },
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              1920,
+              1080
+            ],
+            "screen_match_mode": "MatchWidthOrHeight",
+            "match_width_or_height": 0.5
+          },
+          "GraphicRaycaster": {
+            "enabled": false
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "panel-bg",
+        "parent": 13,
+        "siblingIndex": 13,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -520,
+              -290
+            ],
+            "size_delta": [
+              800,
+              400
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.03,
+              0.05,
+              0.08,
+              0.82
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "panel-accent",
+        "parent": 13,
+        "siblingIndex": 14,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -908,
+              -116
+            ],
+            "size_delta": [
+              6,
+              72
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.45,
+              0.85,
+              0.95,
+              1.0
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "panel-badge",
+        "parent": 13,
+        "siblingIndex": 15,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -520,
+              -116
+            ],
+            "size_delta": [
+              760,
+              56
+            ]
+          },
+          "Text": {
+            "text": "STEP 1 / 6  \u00b7  \u5efa\u7acb 3D \u573a\u666f / ESTABLISH THE 3D STAGE",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 28,
+            "color": [
+              1.0,
+              0.78,
+              0.36,
+              1.0
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "panel-code",
+        "parent": 13,
+        "siblingIndex": 16,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -524,
+              -290
+            ],
+            "size_delta": [
+              760,
+              250
+            ]
+          },
+          "Text": {
+            "text": "// placeholder",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 21,
+            "color": [
+              0.62,
+              0.9,
+              0.76,
+              1.0
+            ],
+            "alignment": "Left",
+            "vertical_align": "Top",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "subtitle-cn",
+        "parent": 13,
+        "siblingIndex": 17,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -390
+            ],
+            "size_delta": [
+              1500,
+              66
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 34,
+            "color": [
+              1,
+              1,
+              1,
+              0.96
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "subtitle-en",
+        "parent": 13,
+        "siblingIndex": 18,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -448
+            ],
+            "size_delta": [
+              1500,
+              44
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 23,
+            "color": [
+              0.82,
+              0.88,
+              0.94,
+              0.9
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "title",
+        "parent": 13,
+        "siblingIndex": 19,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -660,
+              490
+            ],
+            "size_delta": [
+              560,
+              52
+            ]
+          },
+          "Text": {
+            "text": "LUMEN SHOAL  \u00b7  \u6d41\u5149\u6cfb\u6e56",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 38,
+            "color": [
+              1,
+              1,
+              1,
+              0.96
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "mode",
+        "parent": 13,
+        "siblingIndex": 20,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              760,
+              490
+            ],
+            "size_delta": [
+              360,
+              40
+            ]
+          },
+          "Text": {
+            "text": "REALISTIC / \u5199\u5b9e",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 26,
+            "color": [
+              0.45,
+              0.85,
+              0.95,
+              1.0
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "hint",
+        "parent": 13,
+        "siblingIndex": 21,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              560,
+              -500
+            ],
+            "size_delta": [
+              720,
+              36
+            ]
+          },
+          "Text": {
+            "text": "SPACE \u4e0b\u4e00\u6b65 \u00b7 Next    1/2/3 \u98ce\u683c \u00b7 Style    TAB \u81ea\u52a8 \u00b7 Auto    R \u91cd\u7f6e \u00b7 Reset",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 20,
+            "color": [
+              0.75,
+              0.8,
+              0.86,
+              0.85
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "progress-rail",
+        "parent": 13,
+        "siblingIndex": 22,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -534
+            ],
+            "size_delta": [
+              1920,
+              8
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.2,
+              0.3,
+              0.34,
+              0.9
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "progress-fill",
+        "parent": 13,
+        "siblingIndex": 23,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0,
+              0.5
+            ],
+            "anchored_position": [
+              -960,
+              -534
+            ],
+            "size_delta": [
+              480,
+              8
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.45,
+              0.85,
+              0.95,
+              1.0
+            ],
+            "raycast_target": false
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [
+      0.05,
+      0.06,
+      0.09,
+      1.0
+    ],
+    "selected": 1
+  }
+}
