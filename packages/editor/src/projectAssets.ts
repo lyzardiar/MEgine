@@ -151,6 +151,33 @@ export async function refreshProjectFiles(): Promise<ProjectFileAsset[]> {
   return projectFiles;
 }
 
+/**
+ * MiYu: Refresh one native asset's revision and sidecar health without rediscovering the library.
+ * Known duplicate GUIDs stay blocked. Unknown or changed GUIDs receive a native sidecar-only
+ * ownership check; warm reads reuse the Project/watcher index. Warm reads are not a real-time
+ * global uniqueness proof: new duplicates become visible when the normal watcher scan completes.
+ */
+export async function readProjectFileInfo(relativePath: string): Promise<ProjectFileAsset | null> {
+  const normalized = normalizeProjectAssetPath(relativePath), key = assetKey(normalized);
+  const generation = assetSessionGeneration;
+  const indexed = () => projectFiles.find((asset) => assetKey(asset.relPath) === key);
+  if (!isDesktopEditor()) return (await refreshProjectFiles()).find((asset) => assetKey(asset.relPath) === key) ?? null;
+  let cached = indexed();
+  let result = await invoke<ProjectFileAsset | null>('get_project_asset_info', { relativePath: normalized, checkGuidOwners: !cached });
+  if (generation !== assetSessionGeneration) throw new Error('project changed while reading asset information');
+  if (!result) return null;
+  if (cached && cached.guid !== result.guid?.toLowerCase()) {
+    result = await invoke<ProjectFileAsset | null>('get_project_asset_info', { relativePath: normalized, checkGuidOwners: true });
+    if (generation !== assetSessionGeneration) throw new Error('project changed while reading asset information');
+    if (!result) return null;
+  }
+  const fresh = normalizeListedAsset(result);cached = indexed();
+  const duplicate = cached?.guid === fresh.guid && cached.metaStatus === 'duplicate' || fresh.guid != null && projectFiles.some((asset) => assetKey(asset.relPath) !== key && asset.guid === fresh.guid);
+  const current = duplicate ? { ...fresh, metaStatus: 'duplicate' as const, metaError: cached?.metaError ?? `asset GUID ${fresh.guid} is shared by multiple indexed files` } : fresh;
+  projectFiles = [...projectFiles.filter((asset) => assetKey(asset.relPath) !== key), current];
+  return current;
+}
+
 /** Accepts an editor-owned multi-file transaction as the new watcher baseline. */
 export async function resetProjectAssetWatchBaseline(): Promise<ProjectFileAsset[]> {
   const generation = assetSessionGeneration;
