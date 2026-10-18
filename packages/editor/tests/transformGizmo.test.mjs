@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { add, dot, lookBasis, project } from '../src/math3d.ts';
+import { add, dot, lookBasis, project, scale, screenPointRay, sub } from '../src/math3d.ts';
+import { transformBasis } from '../src/editorGizmos.ts';
 import { advanceSnap, EMPTY_SNAP_ACCUMULATOR } from '../src/sceneSnap.ts';
 import {
   drawTransformGizmo,
@@ -117,9 +118,8 @@ test('Unity-style gizmos stay large enough to read and hit at any camera distanc
     const planes = translate.filter((hit) => hit.kind === 'plane');
     assert.equal(axes.length, 3);
     assert.equal(planes.length, 3);
-    for (const axis of axes) {
-      assert.ok(Math.hypot(axis.end.x - axis.start.x, axis.end.y - axis.start.y) >= 80);
-    }
+    assert.ok(axes.every((axis) => Math.hypot(axis.end.x - axis.start.x, axis.end.y - axis.start.y) > 24));
+    assert.ok(Math.max(...axes.map((axis) => Math.hypot(axis.end.x - axis.start.x, axis.end.y - axis.start.y))) >= 80);
     assert.equal(translate.find((hit) => hit.kind === 'center')?.radius, 10);
   }
 
@@ -133,6 +133,73 @@ test('Unity-style gizmos stay large enough to read and hit at any camera distanc
     Math.abs(Math.hypot(ring.u.x, ring.u.y) - Math.hypot(ring.v.x, ring.v.y)) > 0.05
   )), '3D rotation rings preserve projected foreshortening instead of becoming tangled circles');
   assert.equal(rotate.find((hit) => hit.kind === 'center')?.radius, 86);
+});
+
+test('move and scale endpoints recover one equal 3D axis length across camera and local rotations', () => {
+  const origin = [0.3, -0.2, 0.1];
+  for (const mode of ['translate', 'scale']) {
+    for (const sceneCamera of [camera, { ...camera, eye: [30, 40, 70] }, { ...camera, eye: [-7, 3, 5], fovYDeg: 90 }, { ...camera, projection: 'orthographic', orthographicSize: 4 }]) {
+      for (const rotation of [null, [0, Math.sin(0.3), 0, Math.cos(0.3)]]) {
+        const hits = drawTransformGizmo(drawingContext(), sceneCamera, viewport, origin, rotation, mode, null, null);
+        const axes = hits.filter((hit) => hit.kind === 'axis' && hit.shape === 'segment');
+        const basis = transformBasis(rotation);
+        const directions = { x: basis.right, y: basis.up, z: basis.forward };
+        const lengths = axes.map((axis) => {
+          const ray = screenPointRay(axis.end.x, axis.end.y, sceneCamera, viewport);
+          const direction = directions[axis.axis];
+          const relative = sub(ray.origin, origin);
+          const alignment = dot(direction, ray.dir);
+          const length = (dot(relative, direction) - alignment * dot(relative, ray.dir)) / (1 - alignment * alignment);
+          const recovered = project(add(origin, scale(direction, length)), sceneCamera, viewport);
+          assert.ok(Math.hypot(recovered.x - axis.end.x, recovered.y - axis.end.y) < 1e-7);
+          return length;
+        });
+        assert.ok(lengths.length >= 2);
+        assert.ok(lengths.every((length) => length > 0 && Math.abs(length - lengths[0]) < 1e-7));
+      }
+    }
+  }
+});
+
+test('true projected endpoints and plane corners share drawing and hit geometry', () => {
+  const origin = [0, 0, 0];
+  const context = recordingContext();
+  const hits = drawTransformGizmo(context, camera, viewport, origin, null, 'translate', null, null);
+  for (const hit of hits) {
+    if (hit.kind === 'axis' && hit.shape === 'segment') {
+      assert.deepEqual(hitTestTransformGizmo(hits, hit.end.x, hit.end.y), { kind: 'axis', axis: hit.axis });
+      assert.ok(context.calls.some(([method, x, y]) => method === 'moveTo' && x === hit.end.x && y === hit.end.y));
+    }
+    if (hit.kind === 'plane') {
+      const axes = { x: [1, 0, 0], y: [0, 1, 0], z: [0, 0, -1] };
+      const unit = 2 * project(origin, camera, viewport).depth * Math.tan(Math.PI / 6) / viewport.h;
+      const offsets = [[21, 21], [38, 21], [38, 38], [21, 38]];
+      hit.corners.forEach((corner, index) => {
+        const expected = project(add(scale(axes[hit.plane[0]], offsets[index][0] * unit), scale(axes[hit.plane[1]], offsets[index][1] * unit)), camera, viewport);
+        assert.ok(Math.hypot(expected.x - corner.x, expected.y - corner.y) < 1e-7);
+      });
+      const center = hit.corners.reduce((sum, point) => ({ x: sum.x + point.x / 4, y: sum.y + point.y / 4 }), { x: 0, y: 0 });
+      assert.deepEqual(hitTestTransformGizmo([hit], center.x, center.y), { kind: 'plane', plane: hit.plane });
+    }
+  }
+});
+
+test('camera zoom scales all axes together while end-on axes cannot be picked', () => {
+  const draw = (sceneCamera, mode) => drawTransformGizmo(drawingContext(), sceneCamera, viewport, [0, 0, 0], null, mode, null, null);
+  for (const mode of ['translate', 'scale']) {
+    const near = draw(camera, mode);
+    const far = draw({ ...camera, eye: [30, 40, 70] }, mode);
+    for (const axis of near.filter((hit) => hit.kind === 'axis')) {
+      const zoomed = far.find((hit) => hit.kind === 'axis' && hit.axis === axis.axis);
+      assert.ok(Math.hypot(axis.end.x - zoomed.end.x, axis.end.y - zoomed.end.y) < 1e-7);
+    }
+    for (const eye of [[0, 0, 8], [0.1, 0, 8]]) {
+      const hits = draw({ ...camera, eye }, mode);
+      assert.equal(hits.some((hit) => hit.kind === 'axis' && hit.axis === 'z'), false);
+      assert.deepEqual(hitTestTransformGizmo(hits, 400, 300), { kind: 'center' });
+      assert.equal(hitTestTransformGizmo(hits, 400, 340), null);
+    }
+  }
 });
 
 test('rotation rings remain present and hittable when an axis points at the camera', () => {

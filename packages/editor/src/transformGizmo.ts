@@ -1,4 +1,4 @@
-/** Screen-stable Scene transform gizmo with one geometry model for draw and hit testing. */
+/** Equal-length world axes with one projected geometry model for draw and hit testing. */
 
 import type { Camera, Quat, Vec3 } from './math3d';
 import {
@@ -88,25 +88,18 @@ function partOpacity(part: GizmoPart, hover: GizmoPart | null, active: GizmoPart
   return 1;
 }
 
-function projectedAxis(origin: Vec3, direction: Vec3, camera: Camera, viewport: Vp, center: Point) {
-  // Only the direction comes from world space; the visible handle remains screen-sized.
-  // Scale the direction sample with distance so distant objects do not lose whole axes.
-  const cameraDistance = Math.hypot(...sub(origin, camera.eye));
-  const projected = project(
-    add(origin, scale(direction, Math.max(1, cameraDistance * 0.04))),
-    camera,
-    viewport,
-  );
+function projectedAxis(origin: Vec3, direction: Vec3, worldLength: number, camera: Camera, viewport: Vp, center: Point) {
+  const projected = project(add(origin, scale(direction, worldLength)), camera, viewport);
   if (!projected) return null;
   const dx = projected.x - center.x;
   const dy = projected.y - center.y;
   const length = Math.hypot(dx, dy);
-  if (length < 3) return null;
+  // End-on axes cannot fit a shaft and cap or provide a stable drag direction.
+  if (length <= AXIS_GAP + ARROW_LENGTH + 2) return null;
   const unit = { x: dx / length, y: dy / length };
   return {
     unit,
-    screen: { x: dx, y: dy },
-    tip: { x: center.x + unit.x * AXIS_LENGTH, y: center.y + unit.y * AXIS_LENGTH },
+    tip: { x: projected.x, y: projected.y },
     angle: Math.atan2(unit.y, unit.x),
     depth: projected.depth,
   };
@@ -187,20 +180,17 @@ function arrowHead(context: CanvasRenderingContext2D, tip: Point, angle: number,
   context.fill();
 }
 
-function planeCorners(center: Point, axisA: Point, axisB: Point): [Point, Point, Point, Point] {
-  const origin = {
-    x: center.x + (axisA.x + axisB.x) * PLANE_OFFSET,
-    y: center.y + (axisA.y + axisB.y) * PLANE_OFFSET,
-  };
-  return [
-    origin,
-    { x: origin.x + axisA.x * PLANE_SIZE, y: origin.y + axisA.y * PLANE_SIZE },
-    {
-      x: origin.x + (axisA.x + axisB.x) * PLANE_SIZE,
-      y: origin.y + (axisA.y + axisB.y) * PLANE_SIZE,
-    },
-    { x: origin.x + axisB.x * PLANE_SIZE, y: origin.y + axisB.y * PLANE_SIZE },
-  ];
+function planeCorners(origin: Vec3, axisA: Vec3, axisB: Vec3, worldPerPixel: number, camera: Camera, viewport: Vp): [Point, Point, Point, Point] | null {
+  const [a, b, c, d] = [[0, 0], [1, 0], [1, 1], [0, 1]].map(([a, b]) => project(
+    add(add(origin, scale(axisA, (PLANE_OFFSET + a * PLANE_SIZE) * worldPerPixel)), scale(axisB, (PLANE_OFFSET + b * PLANE_SIZE) * worldPerPixel)), camera, viewport,
+  ));
+  if (!a || !b || !c || !d) return null;
+  const points: [Point, Point, Point, Point] = [a, b, c, d];
+  const area = Math.abs(points.reduce((sum, point, index) => {
+    const next = points[(index + 1) % points.length];
+    return sum + point.x * next.y - next.x * point.y;
+  }, 0)) / 2;
+  return area >= 36 ? points : null;
 }
 
 function drawPlane(
@@ -355,10 +345,15 @@ export function drawTransformGizmo(
   if (!projectedOrigin) return [];
   context.save();
   const center = { x: projectedOrigin.x, y: projectedOrigin.y };
+  // One scale for the whole 3D gizmo preserves foreshortening as the camera or handle rotates.
+  const halfHeight = camera.projection === 'orthographic'
+    ? Math.max(0.001, camera.orthographicSize ?? 5)
+    : projectedOrigin.depth * Math.tan(camera.fovYDeg * Math.PI / 360);
+  const worldPerPixel = 2 * halfHeight / Math.max(1, viewport.h);
   const basis = transformBasis(rotation);
   const directions: Record<GizmoAxis, Vec3> = { x: basis.right, y: basis.up, z: basis.forward };
   const projected = Object.fromEntries(
-    AXES.map((axis) => [axis, projectedAxis(worldOrigin, directions[axis], camera, viewport, center)]),
+    AXES.map((axis) => [axis, projectedAxis(worldOrigin, directions[axis], AXIS_LENGTH * worldPerPixel, camera, viewport, center)]),
   ) as Record<GizmoAxis, ReturnType<typeof projectedAxis>>;
   const drawAxes = [...AXES].sort(
     (left, right) => (projected[right]?.depth ?? 0) - (projected[left]?.depth ?? 0),
@@ -374,7 +369,8 @@ export function drawTransformGizmo(
       const b = projected[axisB];
       if (!a || !b || Math.abs(a.unit.x * b.unit.y - b.unit.x * a.unit.y) < 0.12) continue;
       const part: GizmoPart = { kind: 'plane', plane };
-      const corners = planeCorners(center, a.unit, b.unit);
+      const corners = planeCorners(worldOrigin, directions[axisA], directions[axisB], worldPerPixel, camera, viewport);
+      if (!corners) continue;
       context.save();
       context.globalAlpha = partOpacity(part, hover, active);
       drawPlane(context, corners, partColor(part, hover, active), samePart(hover, part) || samePart(active, part));
