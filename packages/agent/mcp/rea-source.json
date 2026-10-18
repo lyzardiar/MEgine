@@ -1,0 +1,20 @@
+{
+  "name": "REA (Reverse Engineer Anything)",
+  "upstream": "https://github.com/morluto/rea",
+  "website": "https://rea.tools",
+  "version": "6.5.0",
+  "tag": "rea-agents-6.5.0",
+  "commit": "3b79af28e80785afce9f5998d8f03289402a1847",
+  "sourceArchive": "https://codeload.github.com/morluto/rea/zip/3b79af28e80785afce9f5998d8f03289402a1847",
+  "sourceArchiveSha256": "32eb5cc973ca3eba354769681a92de5c9a4c23877ce5fb9931e3d80d3586d3d4",
+  "sourceArchiveBytes": 14270809,
+  "npmPackage": "rea-agents",
+  "npmUrl": "https://www.npmjs.com/package/rea-agents/v/6.5.0",
+  "npmIntegrity": "sha512-C6BG7LyrAdR74mSjertM6PrxJkcNZ2bfQNOJornPo9erDEp2tyPRVYPnV5Yodr+1RqewCQla68WulXlVnveD+A==",
+  "license": "MIT; third-party components retain their own licenses",
+  "sourceDirectory": "third_party/rea/source",
+  "runtimeDirectory": "third_party/rea/node_modules/rea-agents",
+  "maintenanceGuide": "third_party/rea/README-MENGINE.md",
+  "updateCheck": "npm view rea-agents version",
+  "verifiedOn": "2026-10-18"
+}

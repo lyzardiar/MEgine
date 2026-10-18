@@ -1,0 +1,12 @@
+{
+  "name": "mengine-rea-workflow",
+  "private": true,
+  "version": "6.5.0",
+  "description": "Pinned REA MCP runtime for the MEngine development workflow",
+  "engines": {
+    "node": "^22.19.0 || ^24.11.0 || >=26.0.0"
+  },
+  "dependencies": {
+    "rea-agents": "6.5.0"
+  }
+}

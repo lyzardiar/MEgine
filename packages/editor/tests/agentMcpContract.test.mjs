@@ -472,6 +472,7 @@ test('MCP startup instructions teach the safe autonomous workflow', () => {
 test('MCP prompts expose bounded background-safe autonomous workflows', () => {
   const names = PROMPTS.map((prompt) => prompt.name);
   assert.deepEqual(names, [
+    'reverse_engineer_feature',
     'create_ui_button',
     'setup_3d_scene',
     'inspect_and_fix',
@@ -520,6 +521,15 @@ test('MCP prompts expose bounded background-safe autonomous workflows', () => {
   assert.match(inspect.messages[0].content.text, /minimal evidence-backed correction/);
   assert.match(inspect.messages[0].content.text, /If no defect is confirmed, make no write/);
   assert.match(inspect.messages[0].content.text, /before\/after comparison/);
+
+  const reverse = renderPrompt('reverse_engineer_feature', { targetPath: 'D:/apps/example', feature: 'Understand search' });
+  assert.match(reverse.messages[0].content.text, /https:\/\/github.com\/morluto\/rea/);
+  assert.match(reverse.messages[0].content.text, /3b79af28e80785afce9f5998d8f03289402a1847/);
+  assert.match(reverse.messages[0].content.text, /README-MENGINE.md/);
+  assert.match(reverse.messages[0].content.text, /Inspection alone does not authorize implementation/);
+  assert.match(reverse.messages[0].content.text, /does not decode IL2CPP/);
+  assert.match(reverse.messages[0].content.text, /expectedSceneRevision/);
+  assert.throws(() => renderPrompt('reverse_engineer_feature', { targetPath: 'D:/apps/example' }), /Missing required argument/);
 
   assert.throws(
     () => renderPrompt('inspect_and_fix'),

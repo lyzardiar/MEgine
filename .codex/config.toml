@@ -1,0 +1,17 @@
+# Project-local MCP workflow. Update these absolute paths if the checkout moves.
+[mcp_servers.mengine]
+command = "node"
+args = ["G:/work/github/MEgine/packages/agent/mcp/server.mjs"]
+cwd = "G:/work/github/MEgine"
+startup_timeout_sec = 60
+tool_timeout_sec = 300
+
+[mcp_servers.rea]
+command = "node"
+args = ["G:/work/github/MEgine/third_party/rea/node_modules/rea-agents/scripts/rea.mjs", "mcp"]
+cwd = "G:/work/github/MEgine"
+startup_timeout_sec = 60
+tool_timeout_sec = 300
+
+[mcp_servers.rea.env]
+REA_RIZIN_COMMAND = "G:/work/github/MEgine/third_party/rea/tools/rizin-0.8.1/rizin-win-installer-clang_cl-64/bin/rizin.exe"

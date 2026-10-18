@@ -1,0 +1,13 @@
+{
+  "name": "Rizin",
+  "version": "0.8.1",
+  "upstream": "https://github.com/rizinorg/rizin",
+  "release": "https://github.com/rizinorg/rizin/releases/tag/v0.8.1",
+  "archive": "https://github.com/rizinorg/rizin/releases/download/v0.8.1/rizin-windows-shared64-v0.8.1.zip",
+  "archiveSha256": "da552bf93031eae79e443e29daaa7bd79c9617eab6c25ef7f908af50af131e97",
+  "archiveBytes": 10248449,
+  "localExecutable": "tools/rizin-0.8.1/rizin-win-installer-clang_cl-64/bin/rizin.exe",
+  "usage": "REA_RIZIN_COMMAND selects this portable provider for REA execute_rizin_command. Analysis reads the target; the target is not executed.",
+  "license": "LGPL v3; see the upstream repository and original distribution for dependency notices",
+  "verifiedOn": "2026-10-18"
+}

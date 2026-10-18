@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "description": "MEngine — cross-platform game engine (Rust core + TypeScript)",
   "scripts": {
+    "rea:install": "npm --prefix third_party/rea ci --omit=dev --ignore-scripts --no-audit --no-fund --workspaces=false",
+    "rea": "node third_party/rea/node_modules/rea-agents/scripts/rea.mjs",
+    "test:rea": "node scripts/test-rea-mcp.mjs",
     "prepare:native": "node scripts/prepare-native-build.mjs",
     "build": "pnpm.cmd -r --if-present run build",
     "codegen": "cargo run -p mengine-idl -- --idl-dir idl --out-rust crates/mengine-core/src/generated --out-ts packages/api/src/generated",

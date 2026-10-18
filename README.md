@@ -87,3 +87,7 @@ node packages/cli/dist/cli.js build packages/editor/project --debug --clean
 TS 业务组件（SerializeField / Inspector 元数据）：见 [docs/behaviour-guidelines.md](docs/behaviour-guidelines.md)。
 
 See [docs/architecture.md](docs/architecture.md).
+
+## REA reverse engineering MCP workflow
+
+REA is vendored under `third_party/rea/source` from [morluto/rea](https://github.com/morluto/rea), pinned to `6.5.0`. Run `npm.cmd run rea:install` to restore its separate MCP runtime and `npm.cmd run test:rea` to verify it. The project MCP configuration connects both REA and MEngine; use the `reverse_engineer_feature` prompt to carry analysis evidence into engine implementation and verification. **Help > AI Agent Setup** shows the upstream source, pinned commit, and maintenance guide. See [REA setup and maintenance](third_party/rea/README-MENGINE.md).

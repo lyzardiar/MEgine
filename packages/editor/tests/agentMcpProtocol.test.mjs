@@ -567,7 +567,7 @@ test('MCP stdio lists and renders safe workflow prompts with protocol errors', a
   assert.deepEqual(responses[0].result.capabilities.prompts, {});
   assert.deepEqual(
     responses[1].result.prompts.map((prompt) => prompt.name),
-    ['create_ui_button', 'setup_3d_scene', 'inspect_and_fix'],
+    ['reverse_engineer_feature', 'create_ui_button', 'setup_3d_scene', 'inspect_and_fix'],
   );
   assert.equal(responses[2].result.messages[0].role, 'user');
   assert.match(responses[2].result.messages[0].content.text, /"Launch"/);

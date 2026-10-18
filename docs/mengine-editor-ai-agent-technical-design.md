@@ -503,9 +503,12 @@ mengine://console/logs          控制台日志
 create_ui_button      「创建一个可点击的 UI 按钮并绑定回调」
 setup_3d_scene        「搭建一个含相机、灯光、立方体的基础 3D 场景」
 inspect_and_fix       「截图当前场景，检查并修复选中物体的问题」
+reverse_engineer_feature 「通过 REA 分析指定功能，再按请求实现和验证引擎行为」
 ```
 
 MCP 初始化声明 `prompts` 能力，并实现 `prompts/list` / `prompts/get`。模板参数仅接受有界字符串；工作流统一要求先读工程、编辑器、场景和组件 schema，再使用最新 `expectedSceneRevision` 执行领域工具，最后以语义 diff 和后台截图验证。模板不会自行覆盖、丢弃或保存用户工作。
+
+`reverse_engineer_feature` 接收 `targetPath` 与 `feature`，由客户端协调独立的 REA MCP 和现有引擎 MCP。REA 来源、固定版本及提交保存在 `packages/agent/mcp/rea-source.json`，模板与 **Help > AI Agent Setup** 共用此信息。项目 `.codex/config.toml` 注册两个服务；源码、锁定运行包和更新方法见 [REA 接入维护说明](../third_party/rea/README-MENGINE.md)。REA 分析证据与引擎行为验证分别报告，原生分析引擎单独配置。
 
 ### 5.5 MCP 客户端配置示例
 

@@ -11,6 +11,7 @@ import {
 import { EditorWindow } from '../EditorWindow.ts';
 import { registerEditorWindowType, registerMenuItem } from '../registry.ts';
 import './AgentSetupWindow.css';
+import reaSource from '../../../../agent/mcp/rea-source.json';
 
 async function copyText(text: string): Promise<void> {
   if (navigator.clipboard?.writeText) {
@@ -92,6 +93,22 @@ function AgentSetupBody() {
           </span>
         )}
       </header>
+
+      <section aria-labelledby="agent-setup-rea">
+        <h2 id="agent-setup-rea">REA reverse engineering workflow</h2>
+        <p>Optional development companion: REA {reaSource.version}. Connect the separate REA MCP server, then use the MEngine <code>reverse_engineer_feature</code> prompt to investigate, implement, and verify a feature.</p>
+        <dl>
+          <dt>Official GitHub source</dt>
+          <dd><code>{reaSource.upstream}</code></dd>
+          <dt>Source tag / commit</dt>
+          <dd><code>{reaSource.tag} / {reaSource.commit}</code></dd>
+          <dt>Local source</dt>
+          <dd><code>{reaSource.sourceDirectory}</code></dd>
+          <dt>Update and maintenance</dt>
+          <dd><code>{reaSource.maintenanceGuide}</code></dd>
+        </dl>
+        <p>Restore the pinned runtime from the repository root with <code>npm.cmd run rea:install</code>. Check upstream releases with <code>{reaSource.updateCheck}</code>; update the source, lockfile, and provenance together. The REA runtime and native analysis engines are separate from the installed editor.</p>
+      </section>
 
       {!info && !error && <p role="status">Loading packaged Agent adapters…</p>}
       {error && (
