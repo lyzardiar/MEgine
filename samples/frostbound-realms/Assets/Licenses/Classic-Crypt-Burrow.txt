@@ -1,0 +1,1 @@
+Original Warcraft III Burrow data and command textures: Blizzard Entertainment original game asset terms apply. MPQ paths and SHA-256 are retained in crypt-burrow-sources.json. Extraction does not grant redistribution rights.

@@ -1,3 +1,4 @@
+import './test-frost-crypt-burrow.mjs';
 import './test-frost-crypt-units-network.mjs';
 import './test-frost-crypt-units-generated.mjs';
 import './test-frost-undead-army-network.mjs';

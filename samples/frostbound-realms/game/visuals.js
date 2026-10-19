@@ -141,7 +141,7 @@ var FrostVisual=(()=>{
   }
   function classicClip(asset,action,u={}){
     if(asset.classicTier===2&&action==='Attack'&&/\\HumanTower\\/i.test(asset.sourceModel||''))return classicClip(asset,'Stand',u);
-    const tier=asset.classicTier||1,alternate=Frost.cryptLordUnit(u)?!!u.locustSwarm||u.locustActive===true||u.locustLeft>0:Frost.carrionBeetle(u)?Frost.beetleBurrowed(u):Frost.phoenixUnit(u)?u.kind==='phoenixegg':Frost.ancient(u)||asset.classic&&asset.factionBuilding&&/\\(Ancient[^\\]+|TreeofLife)\\/i.test(asset.sourceModel||'')?!u.uprooted:Frost.mountainKingUnit?.(u)?u.mountainAvatarLeft>0:Frost.demonHunterUnit?.(u)?u.metamorphLeft>0:Frost.druidUnit?.(u)?druidRules.units[u.kind].alternate:undefined,cargo=u.cargo>0?(u.cargoKind==='tree'?'lumber':'gold'):null;
+    const tier=asset.classicTier||1,alternate=Frost.cryptLordUnit(u)?!!u.locustSwarm||u.locustActive===true||u.locustLeft>0:Frost.cryptBurrowUnit(u)?Frost.cryptBurrowed(u):Frost.carrionBeetle(u)?Frost.beetleBurrowed(u):Frost.phoenixUnit(u)?u.kind==='phoenixegg':Frost.ancient(u)||asset.classic&&asset.factionBuilding&&/\\(Ancient[^\\]+|TreeofLife)\\/i.test(asset.sourceModel||'')?!u.uprooted:Frost.mountainKingUnit?.(u)?u.mountainAvatarLeft>0:Frost.demonHunterUnit?.(u)?u.metamorphLeft>0:Frost.druidUnit?.(u)?druidRules.units[u.kind].alternate:undefined,cargo=u.cargo>0?(u.cargoKind==='tree'?'lumber':'gold'):null;
     let best=-1,score=-Infinity;
     for(let i=0;i<asset.animations.length;i++){
       const name=asset.animations[i].name.toLowerCase().replace(/eattree/g,'eat tree'),base=action.toLowerCase();if(!name.startsWith(base)&&!(Frost.mountainKingUnit?.(u)&&name.replace(/^alternate /,'').startsWith(base))&&!(base==='attack'&&name==='alternate attack'))continue;
@@ -185,6 +185,8 @@ var FrostVisual=(()=>{
       else if(Frost.infernalUnit(u)&&u.hp>0&&time-u.infernalBorn*Frost.DT<asset.animations[classicClip(asset,'Birth',u)].duration){action='Birth';elapsed=time-u.infernalBorn*Frost.DT;}
       else if(Frost.cryptLordUnit(u)&&u.cryptLordCast&&!walking){action=u.cryptLordCast.slot===0?'Spell Throw':'Spell';progress=castPhase(u,asset,walking);}
       else if(Frost.cryptLordUnit(u)&&u.cryptLordLastSlot!==undefined&&!walking&&!u.stun&&time-u.cryptLordCastFrame*Frost.DT<Frost.cryptLordRules.unit.castBackswing){action=u.cryptLordLastSlot===0?'Spell Throw':'Spell';elapsed=time-u.cryptLordCastFrame*Frost.DT+Frost.cryptLordRules.unit.castPoint;}
+      else if(Frost.cryptBurrowUnit(u)&&(u.cryptShift||u.cryptShiftLeft>0)){const shift=u.cryptShift;action=(shift?shift.burrow:!Frost.cryptBurrowed(u))?'Morph':'Morph Alternate';progress=1-(shift?.left??u.cryptShiftLeft)/Frost.cryptBurrowRules.ability.duration;}
+      else if(Frost.cryptBurrowed(u)&&u.hp>0){action='Stand';}
       else if(Frost.carrionBeetle(u)&&(u.beetleShift||u.beetleShiftLeft>0)){const shift=u.beetleShift;action=(shift?shift.burrow:!Frost.beetleBurrowed(u))?'Morph':'Morph Alternate';progress=1-(shift?.left??u.beetleShiftLeft)/Frost.cryptLordRules.commands['Abu'+u.beetleRank].levels[0].duration;}
       else if(Frost.carrionBeetle(u)&&u.hp>0&&(u.beetleBorn!==undefined||u.beetleAge!==undefined)&&(u.beetleAge??time-u.beetleBorn*Frost.DT)<asset.animations[classicClip(asset,'Birth',u)].duration){action='Birth';elapsed=u.beetleAge??time-u.beetleBorn*Frost.DT;}
       else if(Frost.dreadlordUnit(u)&&u.dreadlordCast&&!walking){action=u.dreadlordCast.slot===0?'Spell Slam':'Spell';progress=castPhase(u,asset,walking);}

@@ -281,3 +281,5 @@ scripts/*lumber-technology*.* text eol=lf
 scripts/*undead-army*.* text eol=lf
 
 scripts/*crypt-units*.* text eol=lf
+
+scripts/*crypt-burrow*.* text eol=lf
