@@ -10,39 +10,9 @@
 // reflection of the sky/clouds/sun and the directional-light glint automatically.
 
 fn water_height(p: vec2<f32>, t: f32) -> f32 {
-    return 0.34 * sin(dot(p, vec2<f32>(0.16, 0.21)) - t * 0.85)
-        + 0.19 * sin(dot(p, vec2<f32>(0.33, -0.14)) - t * 1.25)
-        + 0.07 * sin(dot(p, vec2<f32>(1.05, 0.82)) - t * 2.0)
-        + 0.03 * sin(dot(p, vec2<f32>(2.7, -2.2)) + t * 2.9);
-}
-
-fn hash21(p: vec2<f32>) -> f32 {
-    var q = fract(p * vec2<f32>(123.34, 456.21));
-    q += dot(q, q + 45.32);
-    return fract(q.x * q.y);
-}
-
-fn vnoise(p: vec2<f32>) -> f32 {
-    let i = floor(p);
-    let f = fract(p);
-    let u = f * f * (3.0 - 2.0 * f);
-    let a = hash21(i);
-    let b = hash21(i + vec2<f32>(1.0, 0.0));
-    let c = hash21(i + vec2<f32>(0.0, 1.0));
-    let d = hash21(i + vec2<f32>(1.0, 1.0));
-    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
-}
-
-fn fbm2(p: vec2<f32>) -> f32 {
-    var v = 0.0;
-    var amp = 0.5;
-    var q = p;
-    for (var i = 0; i < 4; i = i + 1) {
-        v += amp * vnoise(q);
-        q *= 2.03;
-        amp *= 0.5;
-    }
-    return v;
+    return 0.24 * sin(dot(p, vec2<f32>(0.105, 0.145)) - t * 0.52)
+        + 0.12 * sin(dot(p, vec2<f32>(0.19, -0.085)) - t * 0.76)
+        + 0.07 * sin(dot(p, vec2<f32>(-0.065, 0.115)) + t * 0.38);
 }
 
 fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
@@ -61,12 +31,7 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     let e = 0.14;
     let dx = (water_height(p + vec2<f32>(e, 0.0), t) - water_height(p - vec2<f32>(e, 0.0), t)) / (2.0 * e);
     let dz = (water_height(p + vec2<f32>(0.0, e), t) - water_height(p - vec2<f32>(0.0, e), t)) / (2.0 * e);
-    // A fine scrolling detail normal adds sparkle on top of the analytic swell.
-    let detail = fbm2(p * 0.9 + vec2<f32>(t * 0.25, -t * 0.18));
-    let fine_x = (fbm2((p + vec2<f32>(e, 0.0)) * 2.4) - fbm2((p - vec2<f32>(e, 0.0)) * 2.4)) * 1.6;
-    let fine_z = (fbm2((p + vec2<f32>(0.0, e)) * 2.4) - fbm2((p - vec2<f32>(0.0, e)) * 2.4)) * 1.6;
-
-    var slope = vec2<f32>(dx + fine_x * 0.25, dz + fine_z * 0.25) * wave;
+    var slope = vec2<f32>(dx, dz) * wave;
     if (style > 0.5 && style < 1.5) {
         // Low-poly: quantise the slope into a few facets.
         slope = floor(slope * 3.0 + 0.5) / 3.0;
@@ -75,22 +40,26 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
 
     // Depth-tinted water: greener over the shoal, deeper navy offshore.
     let depth = clamp(length(world_position.xz) / 120.0, 0.0, 1.0);
-    var water = mix(vec3<f32>(0.05, 0.34, 0.33), vec3<f32>(0.01, 0.09, 0.17), depth);
+    var water = mix(vec3<f32>(0.035, 0.30, 0.32), vec3<f32>(0.01, 0.075, 0.14), depth);
     if (style > 1.5) {
         water = floor(water * 6.0 + 0.5) / 6.0;
     }
     s.base_color = water;
 
     // Foam: brightens and roughens the surface where the swell crests and near the shore ring.
-    let crest = smoothstep(0.25, 0.7, water_height(p, t) * wave + detail * 0.6);
+    let crest = smoothstep(0.24, 0.36, water_height(p, t) * wave);
     let shore = 1.0 - smoothstep(0.0, 1.0, abs(length(world_position.xz) - 74.0) / 8.0);
     let foam = clamp((crest * 0.35 + shore * 0.9) * reveal.z, 0.0, 1.0);
     s.base_color = mix(s.base_color, vec3<f32>(0.92, 0.96, 0.98), foam * 0.85);
 
     // Reflection reveal: lower roughness = a sharper mirror of the sky.
     let reflect = reveal.y;
-    s.roughness = mix(0.55, 0.045, reflect) + foam * 0.5;
+    s.roughness = mix(0.68, 0.18, reflect) + foam * 0.22;
     s.metallic = 0.0;
-    s.emissive = vec3<f32>(0.0);
+    let view = normalize(frame.camera_position.xyz - world_position);
+    let light = normalize(-frame.directional_direction.xyz);
+    let half_direction = normalize(view + light);
+    let sun_glint = pow(max(dot(s.normal, half_direction), 0.0), 96.0) * reflect;
+    s.emissive = water * 0.045 + vec3<f32>(1.0, 0.62, 0.28) * sun_glint * 0.55;
     return s;
 }

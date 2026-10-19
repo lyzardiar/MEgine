@@ -193,13 +193,26 @@ SHORE_HEIGHT = 0.0  # water plane sits at y = 0; land rises above it.
 
 def island_height(x, z):
     d = math.hypot(x, z)
-    # Broad dome falling to sea level at the rim, with a raised back ridge.
+    # Broad dome falling to sea level at the rim, with a cinematic back ridge.
     rim = 1.0 - min(d / ISLAND_RADIUS, 1.0)
-    dome = 15.5 * (rim ** 1.35)
-    hills = 6.2 * fbm(x * 0.018, z * 0.018, 5, 21) * rim
-    ridge = 4.0 * math.exp(-((d - 34.0) ** 2) / 260.0) * fbm(x * 0.02 + 9.0, z * 0.02 - 4.0, 4, 7)
+    dome = 8.0 * (rim ** 1.35)
+    hills = 3.2 * fbm(x * 0.018, z * 0.018, 5, 21) * rim
+    ridge = 2.6 * math.exp(-((d - 34.0) ** 2) / 260.0) * fbm(x * 0.02 + 9.0, z * 0.02 - 4.0, 4, 7)
+    # Several sharp volcanic peaks create the layered silhouette from the reference
+    # frames instead of one smooth mound.
+    def peak(cx, cz, sx, sz, height):
+        q = math.sqrt(((x - cx) / sx) ** 2 + ((z - cz) / sz) ** 2)
+        return height * max(0.0, 1.0 - q) ** 1.05
+
+    mountain = (
+        peak(-35.0, -19.0, 30.0, 32.0, 8.0)
+        + peak(-15.0, -27.0, 25.0, 35.0, 12.0)
+        + peak(8.0, -22.0, 29.0, 31.0, 10.0)
+        + peak(30.0, -12.0, 24.0, 27.0, 7.0)
+    )
+    mountain *= 0.82 + 0.18 * fbm(x * 0.06 + 4.0, z * 0.06 - 2.0, 4, 31)
     beach = -1.4 if d > ISLAND_RADIUS - 9.0 else 0.0  # a shallow shelf below the waterline
-    h = dome + hills + ridge + beach - 2.5
+    h = dome + hills + ridge + mountain + beach - 2.5
     # A freshwater lagoon carved into the meadow near the front.
     lg = math.exp(-(((x - 8.0) ** 2 + (z - 30.0) ** 2) / 90.0))
     h -= 3.4 * lg
@@ -249,12 +262,7 @@ def build_ocean():
         z = -span + 2 * span * j / n
         for i in range(n + 1):
             x = -span + 2 * span * i / n
-            d = math.hypot(x, z)
-            # A full plane: the island rises above it and the carved lagoon holds water,
-            # so no interior hole (and no jagged boundary) is needed.
-            h = 0.22 * math.sin(x * 0.05 + z * 0.04) + 0.13 * math.sin(x * 0.11 - z * 0.09)
-            damp = min(d / 120.0, 1.0)
-            mesh.vert([x, h * damp, z], [0.0, 1.0, 0.0],
+            mesh.vert([x, 0.0, z], [0.0, 1.0, 0.0],
                       [(x + uv_span) / (2 * uv_span), (z + uv_span) / (2 * uv_span)])
     mesh.i = ocean_indices(mesh.p, n, span)
     return mesh
@@ -281,11 +289,11 @@ def ocean_indices(points, n, span):
 def build_rocks():
     """Faceted boulders: deliberately low tessellation with per-face flat normals."""
     rocks = []
-    layouts = [(-30.0, -20.0, 3.4), (26.0, -12.0, 2.2), (41.0, 8.0, 4.6),
-               (-16.0, 40.0, 1.8), (-46.0, 12.0, 2.8), (12.0, -44.0, 3.0)]
+    layouts = [(-30.0, -20.0, 1.8), (26.0, -12.0, 1.3), (41.0, 8.0, 2.4),
+               (-16.0, 40.0, 1.1), (-46.0, 12.0, 1.5), (12.0, -44.0, 1.7)]
     for seed, (cx, cz, scale) in enumerate(layouts):
         mesh = Mesh(with_uv=True)
-        segments, rings = 6, 4  # coarse -> reads as low-poly even before style switching
+        segments, rings = 10, 6  # smooth enough for realistic mode; flat style still facets it
         verts = []
         for j in range(rings + 1):
             phi = math.pi * j / rings
@@ -380,9 +388,9 @@ def write_env_sky(path, cloud_amount=0.0, width=1024, height=512):
     same domain-warped fbm density you would ray-march at runtime. Two variants (clear and
     cloud-rich) are generated so the sample can swap the live sky + its reflections at the
     'volumetric clouds' stage."""
-    zenith = [0.06, 0.26, 0.66]
-    horizon = [1.0, 0.55, 0.28]
-    ground = [0.06, 0.07, 0.10]
+    zenith = [0.018, 0.08, 0.25]
+    horizon = [0.78, 0.25, 0.08]
+    ground = [0.012, 0.018, 0.035]
     sun_dir = [-0.90, 0.16, 0.40]
     sl = math.sqrt(sum(t * t for t in sun_dir))
     sun_dir = [t / sl for t in sun_dir]
@@ -421,10 +429,10 @@ def write_env_sky(path, cloud_amount=0.0, width=1024, height=512):
             disc = 8.0 if cosang > 0.9992 else 0.0
             rgb = [rgb[k] + sun_col[k] * (glow + disc) for k in range(3)]
             if cloud_amount > 0.0:
-                band = max(0.0, min(1.0, (sy + 0.05) * 1.4)) * max(0.0, min(1.0, (0.9 - sy) * 2.0))
-                cloud = max(0.0, min(1.0, (density[col, row] / 255.0 - (0.62 - cloud_amount * 0.35)) * 3.2)) * band
+                band = max(0.0, min(1.0, (sy + 0.16) * 1.7)) * max(0.0, min(1.0, (1.0 - sy) * 1.7))
+                cloud = max(0.0, min(1.0, (density[col, row] / 255.0 - (0.43 - cloud_amount * 0.28)) * 5.2)) * band
                 lit = max(0.0, min(1.0, cosang * 0.6 + 0.55))
-                base_col = [0.55 * lit + 0.35, 0.6 * lit + 0.36, 0.72 * lit + 0.34]
+                base_col = [0.68 * lit + 0.30, 0.72 * lit + 0.32, 0.82 * lit + 0.34]
                 warm = [base_col[k] + sun_col[k] * glow * 0.5 for k in range(3)]
                 rgb = [rgb[k] * (1 - cloud) + warm[k] * cloud for k in range(3)]
             for k in range(3):
@@ -513,21 +521,22 @@ def main():
     # ---- meshes
     island_path = build_island().save("island")
     ocean_path = build_ocean().save("ocean")
+    sky_dome_path = build_sky_dome().save("sky-dome")
     rock_paths = [m.save(f"rock-{i}") for i, m in enumerate(build_rocks())]
 
     # ---- procedural textures
     write_normal_map(TEXTURES / "island-normal.png", 512, 16.0, 2.6)
     write_env_sky(TEXTURES / "sky-clear.png", cloud_amount=0.0)     # clear golden-hour sky
-    write_env_sky(TEXTURES / "sky-clouds.png", cloud_amount=0.7)    # + volumetric-style cumulus
+    write_env_sky(TEXTURES / "sky-clouds.png", cloud_amount=1.0)    # + volumetric-style cumulus
 
     # ---- scene assembly
     s = SceneBuilder()
 
-    camera_pos = [120.0, 46.0, 150.0]
-    camera_target = [0.0, 10.0, 0.0]
+    camera_pos = [92.0, 28.0, 118.0]
+    camera_target = [0.0, 8.0, 0.0]
     cam_id = s.entity("Main Camera", {
         "Transform": s.transform(camera_pos, rotation=look_at_quaternion(camera_pos, camera_target)),
-        "Camera3D": {"fov_y_degrees": 42.0, "near": 0.4, "far": 2000.0, "primary": True,
+        "Camera3D": {"fov_y_degrees": 48.0, "near": 0.4, "far": 2000.0, "primary": True,
                      "clear_flags": "skybox", "background_color": [0.1, 0.12, 0.16, 1.0]},
         "AudioListener": {"primary": True},
     })
@@ -535,21 +544,25 @@ def main():
     sun_rot = look_at_quaternion([0, 0, 0], [-0.90, -0.16, -0.40])  # light travels toward the sun direction
     s.entity("Sun Light", {
         "Transform": s.transform([0, 40, 0], rotation=sun_rot),
-        "DirectionalLight": {"color": [1.0, 0.72, 0.46, 1.0], "intensity": 3.4,
+        "DirectionalLight": {"color": [1.0, 0.82, 0.68, 1.0], "intensity": 1.25,
                              "cast_shadows": True, "shadow_strength": 0.82,
                              "shadow_distance": 260.0, "shadow_bias": 0.0016, "shadow_normal_bias": 0.02},
     })
 
     s.entity("Environment", {
         "EnvironmentLight": {
-            "sky_color": srgb_to_linear("1C4E80"),
-            "equator_color": srgb_to_linear("F2915A"),
+            "sky_color": srgb_to_linear("31506B"),
+            "equator_color": srgb_to_linear("B47B5C"),
             "ground_color": srgb_to_linear("0B0E12"),
-            "diffuse_intensity": 0.7, "specular_intensity": 1.0,
+            "diffuse_intensity": 0.30, "specular_intensity": 0.34,
             "texture": "Assets/Textures/sky-clear.png", "background_enabled": True,
-            "background_intensity": 1.0, "exposure": 0.0, "tone_mapping": True,
+            "background_intensity": 0.40, "exposure": -0.45, "tone_mapping": True,
         }
     })
+
+    sky_dome_id = s.mesh("Sky Backdrop", sky_dome_path, "Assets/Materials/SkyBackdrop.mmat",
+                         cast_shadows=False, receive_shadows=False)
+    s.entities[sky_dome_id - 1]["active"] = False
 
     # Water lagoon + surrounding sea (single custom-shaded ocean grid).
     water_id = s.mesh("Water", ocean_path, "Assets/Materials/Water.mmat",
@@ -559,18 +572,7 @@ def main():
     island_id = s.mesh("Island", island_path, "Assets/Materials/Ground.mmat", receive_shadows=True)
 
     # Faceted boulders reuse the ground shader with rock-appropriate parameters.
-    rock_ids = [s.mesh(f"Rock {i}", rp, "Assets/Materials/Rock.mmat") for i, rp in enumerate(rock_paths)]
-
-    # Drifting pollen / sea-mist particles for cinematic atmosphere (revealed at the grade stage).
-    s.entity("Pollen", {
-        "Transform": s.transform([0, 6, 0]),
-        "ParticleEmitter3D": {"playing": True, "looping": True, "max_particles": 900,
-                              "rate_over_time": 60, "lifetime_min": 6, "lifetime_max": 12,
-                              "size_start": 0.14, "size_end": 0.02,
-                              "color_start": [1.0, 0.86, 0.55, 0.9], "color_end": [1.0, 0.6, 0.3, 0.0],
-                              "gravity": [0.05, 0.12, 0.0], "shape": "box", "shape_size": [150, 24, 150],
-                              "spread_degrees": 12, "blend_mode": "additive", "billboard": True, "seed": 7},
-    })
+    rock_ids = []
 
     # ----- authored defaults so the shader looks correct before Main.ts animates it.
     # MaterialPropertyBlock custom_parameter_values is a float4_array: every entry is 4 numbers.
@@ -612,30 +614,39 @@ def main():
         }
         return e
 
-    deep_panel = [0.03, 0.05, 0.08, 0.82]
-    accent = [0.45, 0.85, 0.95, 1.0]
-    gold = [1.0, 0.78, 0.36, 1.0]
+    deep_panel = [0.015, 0.025, 0.04, 0.90]
+    panel_inner = [0.025, 0.045, 0.065, 0.72]
+    accent = [0.36, 0.82, 0.90, 1.0]
+    gold = [1.0, 0.72, 0.30, 1.0]
+    muted = [0.64, 0.72, 0.78, 0.88]
 
     # Bottom-left narrative panel.
-    image("panel-bg", 440, 250, 800, 400, deep_panel)
-    image("panel-accent", 52, 424, 6, 72, accent)
-    text("panel-badge", 440, 424, 760, 56, "STEP 1 / 6  ·  建立 3D 场景 / ESTABLISH THE 3D STAGE", 28,
+    image("panel-bg", 350, 800, 620, 300, [0.015, 0.025, 0.04, 0.76])
+    image("panel-inner", 350, 826, 570, 188, [0.025, 0.045, 0.065, 0.58])
+    image("panel-accent", 58, 652, 4, 78, accent)
+    image("panel-rule", 350, 738, 540, 2, [0.22, 0.38, 0.42, 0.75])
+    text("panel-badge", 350, 674, 570, 46, "STEP 1 / 6  ·  建立 3D 场景 / ESTABLISH THE 3D STAGE", 21,
          gold, align="Left", valign="Middle")
-    text("panel-code", 436, 250, 760, 250, "// placeholder", 21,
+    text("panel-code", 330, 826, 520, 158, "// placeholder", 15,
          [0.62, 0.9, 0.76, 1.0], align="Left", valign="Top")
     # Bilingual subtitles, centred near the bottom.
-    text("subtitle-cn", 960, 150, 1500, 66, "", 34, [1, 1, 1, 0.96], align="Center")
-    text("subtitle-en", 960, 92, 1500, 44, "", 23, [0.82, 0.88, 0.94, 0.9], align="Center")
+    text("subtitle-cn", 1280, 900, 1100, 58, "", 30, [1, 1, 1, 0.98], align="Left")
+    text("subtitle-en", 1280, 946, 1100, 34, "", 18, [0.78, 0.86, 0.90, 0.88], align="Left")
 
-    # Title + style readout along the top; controls hint bottom-right.
-    text("title", 300, 1030, 560, 52, "LUMEN SHOAL  ·  流光泻湖", 38, [1, 1, 1, 0.96], align="Left")
-    text("mode", 1720, 1030, 360, 40, "REALISTIC / 写实", 26, accent, align="Right")
-    text("hint", 1520, 40, 720, 36, "SPACE 下一步 · Next    1/2/3 风格 · Style    TAB 自动 · Auto    R 重置 · Reset",
-         20, [0.75, 0.8, 0.86, 0.85], align="Right")
+    # Compact HUD: brand and live status at left, study readout at right.
+    text("eyebrow", 300, 34, 520, 26, "MENGINE / REALTIME VISUAL STUDY 01", 16, accent, align="Left")
+    text("title", 360, 68, 620, 44, "LUMEN SHOAL  ·  流光泻湖", 30, [1, 1, 1, 0.98], align="Left")
+    image("status-bg", 142, 112, 246, 30, [0.015, 0.025, 0.04, 0.78])
+    text("status", 142, 112, 230, 26, "●  LIVE PREVIEW  /  AUTO", 14, muted, align="Center")
+    image("stats-bg", 1718, 88, 330, 116, deep_panel)
+    text("stats", 1718, 106, 300, 76, "LUMEN / SHOAL\n6 STAGES  ·  3 STYLES\nREALTIME MATERIAL STUDY", 14, muted, align="Left", valign="Top")
+    text("mode", 1718, 164, 300, 28, "REALISTIC / 写实", 18, accent, align="Right")
+    text("hint", 1450, 42, 820, 28, "SPACE NEXT    1/2/3 STYLE    TAB AUTO    R RESET",
+         16, [0.75, 0.8, 0.86, 0.86], align="Right")
 
     # Progress bar across the very bottom (left-anchored fill).
-    image("progress-rail", 960, 6, 1920, 8, [0.2, 0.3, 0.34, 0.9])
-    e = place("progress-fill", 0, 6, 480, 8, pivot=(0, 0.5))
+    image("progress-rail", 960, 1072, 1920, 5, [0.10, 0.16, 0.19, 0.92])
+    e = place("progress-fill", 0, 1072, 480, 5, pivot=(0, 0.5))
     s.entities[e - 1]["components"]["Image"] = {"sprite": "white", "color": accent, "raycast_target": False}
 
     (OUT / "project.json").write_text(json.dumps({
@@ -651,7 +662,7 @@ def main():
                   "clear_color": [0.05, 0.06, 0.09, 1.0], "selected": cam_id},
     }, indent=2) + "\n")
 
-    print(f"Built {len(s.entities)} entities; meshes: island, ocean, {len(rock_paths)} rocks; "
+    print(f"Built {len(s.entities)} entities; meshes: island, ocean, sky dome, {len(rock_paths)} rocks; "
           "textures: island-normal.png, sky-clear.png, sky-clouds.png")
 
 

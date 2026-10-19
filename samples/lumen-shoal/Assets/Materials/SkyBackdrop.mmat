@@ -1,0 +1,13 @@
+{
+  "version": 10,
+  "name": "Lumen Shoal cinematic backdrop",
+  "shader": "unlit",
+  "surface": "opaque",
+  "base_color": [1, 1, 1, 1],
+  "base_color_texture": "Assets/Textures/sky-cinematic-v4.png",
+  "roughness": 1.0,
+  "metallic": 0.0,
+  "double_sided": true,
+  "wrap_u": "repeat",
+  "wrap_v": "clamp"
+}

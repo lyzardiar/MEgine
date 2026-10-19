@@ -12,9 +12,9 @@
         "components": {
           "Transform": {
             "position": [
-              120.0,
-              46.0,
-              150.0
+              92.0,
+              28.0,
+              118.0
             ],
             "scale": [
               1,
@@ -22,14 +22,14 @@
               1
             ],
             "rotation": [
-              0.08728314427023702,
-              0.32958789089232793,
-              -0.03061727381122941,
-              0.9395829167496693
+              0.06278438185444657,
+              0.3243735653777641,
+              -0.021582950813033786,
+              0.9435963584676843
             ]
           },
           "Camera3D": {
-            "fov_y_degrees": 42.0,
+            "fov_y_degrees": 48.0,
             "near": 0.4,
             "far": 2000.0,
             "primary": true,
@@ -74,11 +74,11 @@
           "DirectionalLight": {
             "color": [
               1.0,
-              0.72,
-              0.46,
+              0.82,
+              0.68,
               1.0
             ],
-            "intensity": 3.4,
+            "intensity": 1.25,
             "cast_shadows": true,
             "shadow_strength": 0.82,
             "shadow_distance": 260.0,
@@ -96,15 +96,15 @@
         "components": {
           "EnvironmentLight": {
             "sky_color": [
-              0.011612245179743885,
-              0.07618538148130785,
-              0.21586050011389926,
+              0.030713443732993635,
+              0.08021982031446832,
+              0.14702726649759498,
               1.0
             ],
             "equator_color": [
-              0.8879231178819663,
-              0.2831487404299921,
-              0.10224173308810132,
+              0.45641102318040466,
+              0.19806931955994886,
+              0.10702310297826761,
               1.0
             ],
             "ground_color": [
@@ -113,21 +113,54 @@
               0.006048833022857054,
               1.0
             ],
-            "diffuse_intensity": 0.7,
-            "specular_intensity": 1.0,
+            "diffuse_intensity": 0.3,
+            "specular_intensity": 0.34,
             "texture": "Assets/Textures/sky-clear.png",
             "background_enabled": true,
-            "background_intensity": 1.0,
-            "exposure": 0.0,
+            "background_intensity": 0.4,
+            "exposure": -0.45,
             "tone_mapping": true
           }
         }
       },
       {
         "entity": 4,
-        "name": "Water",
+        "name": "Sky Backdrop",
         "parent": null,
         "siblingIndex": 3,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Models/sky-dome.glb",
+            "material": "Assets/Materials/SkyBackdrop.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "Water",
+        "parent": null,
+        "siblingIndex": 4,
         "active": true,
         "components": {
           "Transform": {
@@ -184,10 +217,10 @@
         }
       },
       {
-        "entity": 5,
+        "entity": 6,
         "name": "Island",
         "parent": null,
-        "siblingIndex": 4,
+        "siblingIndex": 5,
         "active": true,
         "components": {
           "Transform": {
@@ -244,434 +277,10 @@
         }
       },
       {
-        "entity": 6,
-        "name": "Rock 0",
-        "parent": null,
-        "siblingIndex": 5,
-        "active": true,
-        "components": {
-          "Transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ],
-            "rotation": [
-              0,
-              0,
-              0,
-              1
-            ]
-          },
-          "MeshRenderer": {
-            "mesh": "Assets/Models/rock-0.glb",
-            "material": "Assets/Materials/Rock.mmat",
-            "cast_shadows": true,
-            "receive_shadows": true
-          },
-          "MaterialPropertyBlock": {
-            "custom_parameter_names": [
-              "clock",
-              "reveal",
-              "style"
-            ],
-            "custom_parameter_values": [
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ]
-            ]
-          }
-        }
-      },
-      {
         "entity": 7,
-        "name": "Rock 1",
-        "parent": null,
-        "siblingIndex": 6,
-        "active": true,
-        "components": {
-          "Transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ],
-            "rotation": [
-              0,
-              0,
-              0,
-              1
-            ]
-          },
-          "MeshRenderer": {
-            "mesh": "Assets/Models/rock-1.glb",
-            "material": "Assets/Materials/Rock.mmat",
-            "cast_shadows": true,
-            "receive_shadows": true
-          },
-          "MaterialPropertyBlock": {
-            "custom_parameter_names": [
-              "clock",
-              "reveal",
-              "style"
-            ],
-            "custom_parameter_values": [
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ]
-            ]
-          }
-        }
-      },
-      {
-        "entity": 8,
-        "name": "Rock 2",
-        "parent": null,
-        "siblingIndex": 7,
-        "active": true,
-        "components": {
-          "Transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ],
-            "rotation": [
-              0,
-              0,
-              0,
-              1
-            ]
-          },
-          "MeshRenderer": {
-            "mesh": "Assets/Models/rock-2.glb",
-            "material": "Assets/Materials/Rock.mmat",
-            "cast_shadows": true,
-            "receive_shadows": true
-          },
-          "MaterialPropertyBlock": {
-            "custom_parameter_names": [
-              "clock",
-              "reveal",
-              "style"
-            ],
-            "custom_parameter_values": [
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ]
-            ]
-          }
-        }
-      },
-      {
-        "entity": 9,
-        "name": "Rock 3",
-        "parent": null,
-        "siblingIndex": 8,
-        "active": true,
-        "components": {
-          "Transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ],
-            "rotation": [
-              0,
-              0,
-              0,
-              1
-            ]
-          },
-          "MeshRenderer": {
-            "mesh": "Assets/Models/rock-3.glb",
-            "material": "Assets/Materials/Rock.mmat",
-            "cast_shadows": true,
-            "receive_shadows": true
-          },
-          "MaterialPropertyBlock": {
-            "custom_parameter_names": [
-              "clock",
-              "reveal",
-              "style"
-            ],
-            "custom_parameter_values": [
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ]
-            ]
-          }
-        }
-      },
-      {
-        "entity": 10,
-        "name": "Rock 4",
-        "parent": null,
-        "siblingIndex": 9,
-        "active": true,
-        "components": {
-          "Transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ],
-            "rotation": [
-              0,
-              0,
-              0,
-              1
-            ]
-          },
-          "MeshRenderer": {
-            "mesh": "Assets/Models/rock-4.glb",
-            "material": "Assets/Materials/Rock.mmat",
-            "cast_shadows": true,
-            "receive_shadows": true
-          },
-          "MaterialPropertyBlock": {
-            "custom_parameter_names": [
-              "clock",
-              "reveal",
-              "style"
-            ],
-            "custom_parameter_values": [
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ]
-            ]
-          }
-        }
-      },
-      {
-        "entity": 11,
-        "name": "Rock 5",
-        "parent": null,
-        "siblingIndex": 10,
-        "active": true,
-        "components": {
-          "Transform": {
-            "position": [
-              0,
-              0,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ],
-            "rotation": [
-              0,
-              0,
-              0,
-              1
-            ]
-          },
-          "MeshRenderer": {
-            "mesh": "Assets/Models/rock-5.glb",
-            "material": "Assets/Materials/Rock.mmat",
-            "cast_shadows": true,
-            "receive_shadows": true
-          },
-          "MaterialPropertyBlock": {
-            "custom_parameter_names": [
-              "clock",
-              "reveal",
-              "style"
-            ],
-            "custom_parameter_values": [
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ],
-              [
-                0,
-                0,
-                0,
-                0
-              ]
-            ]
-          }
-        }
-      },
-      {
-        "entity": 12,
-        "name": "Pollen",
-        "parent": null,
-        "siblingIndex": 11,
-        "active": true,
-        "components": {
-          "Transform": {
-            "position": [
-              0,
-              6,
-              0
-            ],
-            "scale": [
-              1,
-              1,
-              1
-            ],
-            "rotation": [
-              0,
-              0,
-              0,
-              1
-            ]
-          },
-          "ParticleEmitter3D": {
-            "playing": true,
-            "looping": true,
-            "max_particles": 900,
-            "rate_over_time": 60,
-            "lifetime_min": 6,
-            "lifetime_max": 12,
-            "size_start": 0.14,
-            "size_end": 0.02,
-            "color_start": [
-              1.0,
-              0.86,
-              0.55,
-              0.9
-            ],
-            "color_end": [
-              1.0,
-              0.6,
-              0.3,
-              0.0
-            ],
-            "gravity": [
-              0.05,
-              0.12,
-              0.0
-            ],
-            "shape": "box",
-            "shape_size": [
-              150,
-              24,
-              150
-            ],
-            "spread_degrees": 12,
-            "blend_mode": "additive",
-            "billboard": true,
-            "seed": 7
-          }
-        }
-      },
-      {
-        "entity": 13,
         "name": "Overlay Canvas",
         "parent": null,
-        "siblingIndex": 12,
+        "siblingIndex": 6,
         "active": true,
         "components": {
           "Canvas": {
@@ -694,9 +303,269 @@
         }
       },
       {
-        "entity": 14,
+        "entity": 8,
         "name": "panel-bg",
-        "parent": 13,
+        "parent": 7,
+        "siblingIndex": 7,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -610,
+              260
+            ],
+            "size_delta": [
+              620,
+              300
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.015,
+              0.025,
+              0.04,
+              0.76
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "panel-inner",
+        "parent": 7,
+        "siblingIndex": 8,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -610,
+              286
+            ],
+            "size_delta": [
+              570,
+              188
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.025,
+              0.045,
+              0.065,
+              0.58
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "panel-accent",
+        "parent": 7,
+        "siblingIndex": 9,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -902,
+              112
+            ],
+            "size_delta": [
+              4,
+              78
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.36,
+              0.82,
+              0.9,
+              1.0
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "panel-rule",
+        "parent": 7,
+        "siblingIndex": 10,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -610,
+              198
+            ],
+            "size_delta": [
+              540,
+              2
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.22,
+              0.38,
+              0.42,
+              0.75
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "panel-badge",
+        "parent": 7,
+        "siblingIndex": 11,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -610,
+              134
+            ],
+            "size_delta": [
+              570,
+              46
+            ]
+          },
+          "Text": {
+            "text": "STEP 1 / 6  \u00b7  \u5efa\u7acb 3D \u573a\u666f / ESTABLISH THE 3D STAGE",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 21,
+            "color": [
+              1.0,
+              0.72,
+              0.3,
+              1.0
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "panel-code",
+        "parent": 7,
+        "siblingIndex": 12,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -630,
+              286
+            ],
+            "size_delta": [
+              520,
+              158
+            ]
+          },
+          "Text": {
+            "text": "// placeholder",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "color": [
+              0.62,
+              0.9,
+              0.76,
+              1.0
+            ],
+            "alignment": "Left",
+            "vertical_align": "Top",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "subtitle-cn",
+        "parent": 7,
         "siblingIndex": 13,
         "active": true,
         "components": {
@@ -714,30 +583,37 @@
               0.5
             ],
             "anchored_position": [
-              -520,
-              -290
+              320,
+              360
             ],
             "size_delta": [
-              800,
-              400
+              1100,
+              58
             ]
           },
-          "Image": {
-            "sprite": "white",
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 30,
             "color": [
-              0.03,
-              0.05,
-              0.08,
-              0.82
+              1,
+              1,
+              1,
+              0.98
             ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
             "raycast_target": false
           }
         }
       },
       {
         "entity": 15,
-        "name": "panel-accent",
-        "parent": 13,
+        "name": "subtitle-en",
+        "parent": 7,
         "siblingIndex": 14,
         "active": true,
         "components": {
@@ -755,30 +631,37 @@
               0.5
             ],
             "anchored_position": [
-              -908,
-              -116
+              320,
+              406
             ],
             "size_delta": [
-              6,
-              72
+              1100,
+              34
             ]
           },
-          "Image": {
-            "sprite": "white",
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
             "color": [
-              0.45,
-              0.85,
-              0.95,
-              1.0
+              0.78,
+              0.86,
+              0.9,
+              0.88
             ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
             "raycast_target": false
           }
         }
       },
       {
         "entity": 16,
-        "name": "panel-badge",
-        "parent": 13,
+        "name": "eyebrow",
+        "parent": 7,
         "siblingIndex": 15,
         "active": true,
         "components": {
@@ -796,22 +679,22 @@
               0.5
             ],
             "anchored_position": [
-              -520,
-              -116
+              -660,
+              -506
             ],
             "size_delta": [
-              760,
-              56
+              520,
+              26
             ]
           },
           "Text": {
-            "text": "STEP 1 / 6  \u00b7  \u5efa\u7acb 3D \u573a\u666f / ESTABLISH THE 3D STAGE",
+            "text": "MENGINE / REALTIME VISUAL STUDY 01",
             "font": "Assets/Fonts/NotoSansSC.ttf",
-            "font_size": 28,
+            "font_size": 16,
             "color": [
-              1.0,
-              0.78,
               0.36,
+              0.82,
+              0.9,
               1.0
             ],
             "alignment": "Left",
@@ -825,8 +708,8 @@
       },
       {
         "entity": 17,
-        "name": "panel-code",
-        "parent": 13,
+        "name": "title",
+        "parent": 7,
         "siblingIndex": 16,
         "active": true,
         "components": {
@@ -844,26 +727,26 @@
               0.5
             ],
             "anchored_position": [
-              -524,
-              -290
+              -600,
+              -472
             ],
             "size_delta": [
-              760,
-              250
+              620,
+              44
             ]
           },
           "Text": {
-            "text": "// placeholder",
+            "text": "LUMEN SHOAL  \u00b7  \u6d41\u5149\u6cfb\u6e56",
             "font": "Assets/Fonts/NotoSansSC.ttf",
-            "font_size": 21,
+            "font_size": 30,
             "color": [
-              0.62,
-              0.9,
-              0.76,
-              1.0
+              1,
+              1,
+              1,
+              0.98
             ],
             "alignment": "Left",
-            "vertical_align": "Top",
+            "vertical_align": "Middle",
             "horizontal_overflow": "Overflow",
             "vertical_overflow": "Overflow",
             "line_spacing": 1.15,
@@ -873,8 +756,8 @@
       },
       {
         "entity": 18,
-        "name": "subtitle-cn",
-        "parent": 13,
+        "name": "status-bg",
+        "parent": 7,
         "siblingIndex": 17,
         "active": true,
         "components": {
@@ -892,37 +775,30 @@
               0.5
             ],
             "anchored_position": [
-              0,
-              -390
+              -818,
+              -428
             ],
             "size_delta": [
-              1500,
-              66
+              246,
+              30
             ]
           },
-          "Text": {
-            "text": "",
-            "font": "Assets/Fonts/NotoSansSC.ttf",
-            "font_size": 34,
+          "Image": {
+            "sprite": "white",
             "color": [
-              1,
-              1,
-              1,
-              0.96
+              0.015,
+              0.025,
+              0.04,
+              0.78
             ],
-            "alignment": "Center",
-            "vertical_align": "Middle",
-            "horizontal_overflow": "Overflow",
-            "vertical_overflow": "Overflow",
-            "line_spacing": 1.15,
             "raycast_target": false
           }
         }
       },
       {
         "entity": 19,
-        "name": "subtitle-en",
-        "parent": 13,
+        "name": "status",
+        "parent": 7,
         "siblingIndex": 18,
         "active": true,
         "components": {
@@ -940,23 +816,23 @@
               0.5
             ],
             "anchored_position": [
-              0,
-              -448
+              -818,
+              -428
             ],
             "size_delta": [
-              1500,
-              44
+              230,
+              26
             ]
           },
           "Text": {
-            "text": "",
+            "text": "\u25cf  LIVE PREVIEW  /  AUTO",
             "font": "Assets/Fonts/NotoSansSC.ttf",
-            "font_size": 23,
+            "font_size": 14,
             "color": [
-              0.82,
-              0.88,
-              0.94,
-              0.9
+              0.64,
+              0.72,
+              0.78,
+              0.88
             ],
             "alignment": "Center",
             "vertical_align": "Middle",
@@ -969,8 +845,8 @@
       },
       {
         "entity": 20,
-        "name": "title",
-        "parent": 13,
+        "name": "stats-bg",
+        "parent": 7,
         "siblingIndex": 19,
         "active": true,
         "components": {
@@ -988,37 +864,30 @@
               0.5
             ],
             "anchored_position": [
-              -660,
-              490
+              758,
+              -452
             ],
             "size_delta": [
-              560,
-              52
+              330,
+              116
             ]
           },
-          "Text": {
-            "text": "LUMEN SHOAL  \u00b7  \u6d41\u5149\u6cfb\u6e56",
-            "font": "Assets/Fonts/NotoSansSC.ttf",
-            "font_size": 38,
+          "Image": {
+            "sprite": "white",
             "color": [
-              1,
-              1,
-              1,
-              0.96
+              0.015,
+              0.025,
+              0.04,
+              0.9
             ],
-            "alignment": "Left",
-            "vertical_align": "Middle",
-            "horizontal_overflow": "Overflow",
-            "vertical_overflow": "Overflow",
-            "line_spacing": 1.15,
             "raycast_target": false
           }
         }
       },
       {
         "entity": 21,
-        "name": "mode",
-        "parent": 13,
+        "name": "stats",
+        "parent": 7,
         "siblingIndex": 20,
         "active": true,
         "components": {
@@ -1036,26 +905,26 @@
               0.5
             ],
             "anchored_position": [
-              760,
-              490
+              758,
+              -434
             ],
             "size_delta": [
-              360,
-              40
+              300,
+              76
             ]
           },
           "Text": {
-            "text": "REALISTIC / \u5199\u5b9e",
+            "text": "LUMEN / SHOAL\n6 STAGES  \u00b7  3 STYLES\nREALTIME MATERIAL STUDY",
             "font": "Assets/Fonts/NotoSansSC.ttf",
-            "font_size": 26,
+            "font_size": 14,
             "color": [
-              0.45,
-              0.85,
-              0.95,
-              1.0
+              0.64,
+              0.72,
+              0.78,
+              0.88
             ],
-            "alignment": "Right",
-            "vertical_align": "Middle",
+            "alignment": "Left",
+            "vertical_align": "Top",
             "horizontal_overflow": "Overflow",
             "vertical_overflow": "Overflow",
             "line_spacing": 1.15,
@@ -1065,8 +934,8 @@
       },
       {
         "entity": 22,
-        "name": "hint",
-        "parent": 13,
+        "name": "mode",
+        "parent": 7,
         "siblingIndex": 21,
         "active": true,
         "components": {
@@ -1084,23 +953,23 @@
               0.5
             ],
             "anchored_position": [
-              560,
-              -500
+              758,
+              -376
             ],
             "size_delta": [
-              720,
-              36
+              300,
+              28
             ]
           },
           "Text": {
-            "text": "SPACE \u4e0b\u4e00\u6b65 \u00b7 Next    1/2/3 \u98ce\u683c \u00b7 Style    TAB \u81ea\u52a8 \u00b7 Auto    R \u91cd\u7f6e \u00b7 Reset",
+            "text": "REALISTIC / \u5199\u5b9e",
             "font": "Assets/Fonts/NotoSansSC.ttf",
-            "font_size": 20,
+            "font_size": 18,
             "color": [
-              0.75,
-              0.8,
-              0.86,
-              0.85
+              0.36,
+              0.82,
+              0.9,
+              1.0
             ],
             "alignment": "Right",
             "vertical_align": "Middle",
@@ -1113,8 +982,8 @@
       },
       {
         "entity": 23,
-        "name": "progress-rail",
-        "parent": 13,
+        "name": "hint",
+        "parent": 7,
         "siblingIndex": 22,
         "active": true,
         "components": {
@@ -1132,31 +1001,79 @@
               0.5
             ],
             "anchored_position": [
-              0,
-              -534
+              490,
+              -498
             ],
             "size_delta": [
-              1920,
-              8
+              820,
+              28
             ]
           },
-          "Image": {
-            "sprite": "white",
+          "Text": {
+            "text": "SPACE NEXT    1/2/3 STYLE    TAB AUTO    R RESET",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 16,
             "color": [
-              0.2,
-              0.3,
-              0.34,
-              0.9
+              0.75,
+              0.8,
+              0.86,
+              0.86
             ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "line_spacing": 1.15,
             "raycast_target": false
           }
         }
       },
       {
         "entity": 24,
-        "name": "progress-fill",
-        "parent": 13,
+        "name": "progress-rail",
+        "parent": 7,
         "siblingIndex": 23,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              532
+            ],
+            "size_delta": [
+              1920,
+              5
+            ]
+          },
+          "Image": {
+            "sprite": "white",
+            "color": [
+              0.1,
+              0.16,
+              0.19,
+              0.92
+            ],
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "progress-fill",
+        "parent": 7,
+        "siblingIndex": 24,
         "active": true,
         "components": {
           "RectTransform": {
@@ -1174,19 +1091,19 @@
             ],
             "anchored_position": [
               -960,
-              -534
+              532
             ],
             "size_delta": [
               480,
-              8
+              5
             ]
           },
           "Image": {
             "sprite": "white",
             "color": [
-              0.45,
-              0.85,
-              0.95,
+              0.36,
+              0.82,
+              0.9,
               1.0
             ],
             "raycast_target": false
