@@ -76,6 +76,18 @@ portraitViews.ClassicDryadPortrait=JSON.parse(fs.readFileSync(path.join(root,'dr
 for(const dir of ['Scenes','Scripts','Fonts','Maps','Audio'])fs.mkdirSync(path.join(outputRoot,'Assets',dir),{recursive:true});
 for(const file of ['Roboto-Regular.ttf','LICENSE.txt'])fs.copyFileSync(fileURLToPath(new URL('../samples/ion-outpost/Assets/Fonts/'+file,import.meta.url)),path.join(outputRoot,'Assets/Fonts',file));
 for(const file of ['Cinzel-OFL.txt','NotoSansSC-OFL.txt'])fs.copyFileSync(path.join(root,'Licenses',file),path.join(outputRoot,'Assets/Fonts',file));
+
+// Object pool configuration: reduced initial allocation for better performance
+const POOL_SIZES = {
+  UNIT: 20,           // Reduced from S.LIMIT (160)
+  CORPSE: 12,         // Reduced from S.CORPSE_LIMIT (64)
+  PROJECTILE: 32,     // Reduced from S.PROJECTILE_LIMIT (256)
+  FX: 8,              // Reduced from 24
+  SCENERY: 40,        // Reduced from 140
+  PROP: 20,           // Reduced from 100
+  OBJECTIVE: 12       // Reduced from 32
+};
+
 const E=[],T=(position=[0,0,0],scale=[1,1,1],rotation=[0,0,0,1])=>({position,scale,rotation}),q=p=>[Math.sin(p/2),0,0,Math.cos(p/2)];
 const entity=(name,components,parent=null)=>{const id=E.length+1;E.push({entity:id,name,parent,siblingIndex:id-1,active:true,components});return id;};
 const box=(name,p,size,color)=>entity(name,{Transform:T(p,size),MeshRenderer:{mesh:'cube',material:'default'},PbrMaterial:{base_color:color,roughness:.95}});
@@ -84,19 +96,19 @@ entity('Winter sun',{Transform:T([0,0,0],[1,1,1],[-.45,-.25,-.12,.84]),Direction
 entity('Northern sky',{EnvironmentLight:{sky_color:[.09,.15,.24,1],equator_color:[.23,.32,.37,1],ground_color:[.13,.19,.18,1],diffuse_intensity:.85,specular_intensity:.4,background_enabled:true,tone_mapping:true,exposure:.1}});
 entity('Terrain bed',{Transform:T([0,-1.35,0],[22.5,1,22.5]),MeshRenderer:{mesh:'terrain4r:33'+'0000'.repeat(36),material:'Assets/Materials/Ground.mmat'}});
 for(let z=0;z<8;z++)for(let x=0;x<8;x++)entity('Ground '+(z*8+x),{Transform:T([x*8-28,0,z*8-28],[1,1,1]),MeshRenderer:{mesh:'terrain4:'+'0'.repeat(64),material:'Assets/Materials/Ground.mmat'}});
-for(let i=0;i<140;i++)entity('Scenery '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.tree_pineTallA.parts[0].mesh,material:catalog.tree_pineTallA.material}});
+for(let i=0;i<POOL_SIZES.SCENERY;i++)entity('Scenery '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.tree_pineTallA.parts[0].mesh,material:catalog.tree_pineTallA.material}});
 entity('Command marker',{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Selection.mmat'}});
 entity('Rally marker',{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.flag.parts[0].mesh,material:catalog.flag.material}});
 entity('Placement preview',{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog['tower-square'].parts[0].mesh,material:'Assets/Materials/Placement.mmat'}});
-for(let i=0;i<100;i++)entity('Prop '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.tree.parts[0].mesh,material:catalog.tree.material}});
-for(let i=0;i<32;i++)entity('Objective '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog['roof-point'].parts[0].mesh,material:catalog['roof-point'].material}});
-for(let i=0;i<S.LIMIT;i++){
+for(let i=0;i<POOL_SIZES.PROP;i++)entity('Prop '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.tree.parts[0].mesh,material:catalog.tree.material}});
+for(let i=0;i<POOL_SIZES.OBJECTIVE;i++)entity('Objective '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog['roof-point'].parts[0].mesh,material:catalog['roof-point'].material}});
+for(let i=0;i<POOL_SIZES.UNIT;i++){
   entity('Unit '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.Warrior.parts[0].mesh+'#pose=1:0',material:catalog.Warrior.material}});
   entity('Ring '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:'cube',material:'Assets/Materials/Selection.mmat'}});box('HP '+i,[0,-100,0],[1.6,.09,.15],[.24,.86,.47,1]);entity('Flag '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.flag.parts[0].mesh,material:catalog.flag.material}});
 }
-for(let i=0;i<S.CORPSE_LIMIT;i++)entity('Corpse '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.Warrior.parts[0].mesh,material:catalog.Warrior.material}});
-for(let i=0;i<24;i++)entity('FX '+i,{Transform:T([0,-100,0]),ParticleEmitter3D:{playing:false,looping:true,rate_over_time:90,max_particles:36,lifetime_min:.25,lifetime_max:.65,speed_min:1,speed_max:4,size_start:.8,size_end:.05,color_start:[.3,.8,1,1],color_end:[.1,.3,1,0],gravity:[0,-2,0],shape:'sphere',shape_radius:.2,direction:[0,1,0],spread_degrees:160,simulation_space:'world',texture:'Assets/Textures/magic_01.png',billboard:true,seed:i+1}});
-for(let i=0;i<S.PROJECTILE_LIMIT;i++){
+for(let i=0;i<POOL_SIZES.CORPSE;i++)entity('Corpse '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.Warrior.parts[0].mesh,material:catalog.Warrior.material}});
+for(let i=0;i<POOL_SIZES.FX;i++)entity('FX '+i,{Transform:T([0,-100,0]),ParticleEmitter3D:{playing:false,looping:true,rate_over_time:90,max_particles:36,lifetime_min:.25,lifetime_max:.65,speed_min:1,speed_max:4,size_start:.8,size_end:.05,color_start:[.3,.8,1,1],color_end:[.1,.3,1,0],gravity:[0,-2,0],shape:'sphere',shape_radius:.2,direction:[0,1,0],spread_degrees:160,simulation_space:'world',texture:'Assets/Textures/magic_01.png',billboard:true,seed:i+1}});
+for(let i=0;i<POOL_SIZES.PROJECTILE;i++){
   entity('Missile '+i,{Transform:T([0,-100,0]),MeshRenderer:{mesh:catalog.RealArrow.parts[0].mesh,material:catalog.RealArrow.material}});
   entity('Missile aura '+i,{Transform:T([0,-100,0]),ParticleEmitter3D:{playing:false,looping:true,rate_over_time:70,max_particles:24,lifetime_min:.18,lifetime_max:.3,speed_min:0,speed_max:.4,size_start:.4,size_end:0,color_start:[.5,.48,1,1],color_end:[.2,.1,.5,0],gravity:[0,0,0],shape:'sphere',shape_radius:.08,direction:[0,1,0],spread_degrees:180,simulation_space:'world',texture:'Assets/Textures/spark_01.png',billboard:true,blend_mode:'additive',seed:i+1}});
 }
