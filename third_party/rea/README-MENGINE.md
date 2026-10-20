@@ -98,3 +98,5 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 防御塔武器：`node scripts/probe-frost-rea-guard-tower.mjs` 以16组探针验证攻击/弹道字段指针、单位索敌/发射/受击位置，以及 RngBuff 从武器行、缓存、参数打包到出手距离检查的路径，并追踪 collision 身体半径、平面距离边界及 acquire 索敌距离。`scripts/import-frost-guard-tower.py` 保留 hgtw 原始武器行、源箭矢、转换及来源摘要；通用武器研究不加成、攻击时序、存档、TCP及原生验收边界见[防御塔维护说明](../../docs/designs/frostbound-realms/guard-tower.md)。
 
 人族建筑昼夜视野：`node scripts/probe-frost-rea-human-sight.mjs` 复核 `sight/nsight` 的源行读取、getter及缓存写入。运行时复用 `human-masonry.json` 和已有来源收据，视野作用于迷雾、敌人渲染、快照和目标检查。源数据、升级刷新、验证和复刻边界见[建筑视野维护说明](../../docs/designs/frostbound-realms/human-building-sight.md)。
+
+反馈伤害：`node scripts/probe-frost-rea-feedback.mjs` 复核8组技能字段、弹丸、伤害打包及护甲／类型缩放证据；`scripts/probe-frost-feedback-binary.py` 执行原DLL的计算分支，覆盖12个CPU用例。源数据、复现命令、引擎验收及原版运行边界见[反馈维护说明](../../docs/designs/frostbound-realms/human-feedback.md)。

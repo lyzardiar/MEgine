@@ -402,3 +402,11 @@ REA16组探针确认collision源行、缓存、单位虚表、身体半径安装
 身体距离3组覆盖六种地空／建筑目标、自动与手动边界、保存恢复和缓冲边界；生成客户端8组、真实TCP7组、原生8组通过，原生控制台错误0、正常退出、runtime缓存因EPERM保留。21项塔资源和6个生成器摘要、原生与生成Main摘要一致。原版移动身体插值和软浮点逐位精度仍待运行对照。维护入口：[防御塔武器](guard-tower.md)；证据：`tmp/docs-artifacts/frost-guard-tower/collision-*.log`。
 
 最终源码主回归 `node scripts/test-frostbound.mjs` 退出码0，735条PASS记录，含24,000帧AI验证。暂存Main与原生及生成产物摘要一致。证据为 `tmp/docs-artifacts/frost-guard-tower/collision-regression.log`、`collision-rea.log`、`collision-native.log` 和 `collision-index-verification.json`。
+
+## 2026-10-21：反馈伤害的护甲与类型结算
+
+REA的8组证据追踪Feedback字段、原版弹丸、实际扣蓝到伤害包，以及总伤害和附加伤害的共同缩放路径。12个原DLL计算用例确认物理护甲与攻击／护甲类型倍率。运行时反馈附加伤害复用`weaponDamage`，效果和存档仍记录实际扣蓝20／4，协议114。
+
+规则4组、生成客户端、真实TCP及原生3组通过，覆盖命中时护甲、飞行中Buff变化、原版粒子、存档和重连。原生控制台错误0、正常退出，runtime缓存因EPERM保留。Main源码生成产物与原生验收摘要一致。维护入口：[反馈伤害](human-feedback.md)；本地证据：`tmp/docs-artifacts/frost-feedback/`。原版完整运行、负护甲查表、特殊防御能力顺序及奥术塔／炮塔升级分支继续对照。
+
+最终源码完整主回归退出码0，741条PASS记录，含24,000帧AI验证。暂存、生成及原生Main一致。证据：`tmp/docs-artifacts/frost-feedback/regression.log`、`native-feedback-armor.json`、`rea-summary.json`、`binary.json`、`index-verification.json`。
