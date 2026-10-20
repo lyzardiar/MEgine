@@ -33,10 +33,18 @@
 - `range-buffer-source/cache/repack/install`：`RngBuff` 两个武器槽由行结构 `+0x734+slot*12` 经缓存 `+0x108+slot*4`、单位参数 `+0xa8+slot*4`、攻击初始化参数 `+0x28+slot*0x68` 安装到攻击能力的 `+0x26c+slot*8` 值字段。`0x6f6532be` 的参数基址是 `ebp-0x1b0`；`0x6f653b26` 将该数组的 `ebp+slot*4-0x108` 复制到打包结构。
 - `range-buffer-release`：攻击回调 `0x6f47ce80` 调用 `0x6f476f80`；`0x6f47708c` 取当前武器距离，`0x6f4770ae` 读取对应缓冲，`0x6f4770c4` 相加后调用 `0x6f03e3a0` 做距离检查。
 - `range-start-check`：开始/继续攻击检查读取正常攻击距离（`+0x258+slot*8`），与出手检查分开。
+- `collision-source/install/minimum`：collision源行 `+0x3f8` 经缓存 `+0x19c` 和 `0x6f656b50` 返回；单位虚表 `0x6fa4a704 + 0x168` 指向 `0x6f656bc0`。`0x6f676e70` 读取并以1为下限，通过 `0x6f03f100` 缩放到身体 `+0x90`。
+- `collision-distance/plane/boundary`：`0x6f03e3a0` 加上两个身体的 `+0x90`，调用平面距离平方函数 `0x6f053660`；`0x6f03ebf0` 将身体 `+0x78/+0x7c` 与 `+0x80/+0x84` 组合成两个平面坐标。边界在 `0x6f03e49c` 起比较，容差常量位于 `0x6fb59398`。
+- `acquisition-source/distance`：acquire源行 `+0x5e4` 经缓存 `+0x194`、`0x6f64bd10` 进入攻击能力 `+0x244`。`0x6f47b720` 读取索敌距离，`0x6f480b12` 调用它后交给同一身体距离检查。
+
+
+源防御塔的自动索敌、手动攻击起手和出手检查使用双方身体半径与平面距离。`human-masonry.json` 保留的 hgtw `collision=72` 对应0.72世界单位；目标优先使用已有源碰撞档案，人族建筑读取 `sourceBalance.collision`，缺少原版档案的目标保留现有半径。源身体最小半径为原游戏1单位。普通射程与索敌距离均为700，对穴居恶魔（32）中心距离边界为804，对石像鬼（8）为780；出手再加250缓冲。飞行高度不参与这一距离判定，目标可见性和可攻击性检查仍生效。
+
+原版距离函数按1/32原游戏单位缩放坐标，比较平面距离平方；平方差小于0.001时接受边界。世界坐标按1/100转换，对应平方差容差0.0001024。当前实现使用现有模拟帧位置和JavaScript数值，原版移动身体插值与软浮点运算的逐位一致性仍需继续对照。
 
 防御塔在前摇期间保留已选目标；出手时使用普通射程加源缓冲检查距离。目标可以在前摇内退远后返回；出手时仍超出缓冲则取消这一箭。新目标索敌与新一轮前摇使用普通距离，缓冲不扩大索敌范围。停止或切换攻击目标的命令清除旧前摇，死亡、不可攻击或不可见目标仍按共享目标规则取消；中途保存恢复保留同一目标和计时。该修正沿用协议114和现有存档/公开字段。
 
-这些探针证明本机字段及上述静态调用链。原版箭矢求解器、目标优先级、碰撞边界、音效和实际逐帧时序尚未运行对照；当前弧线复用引擎已有求解流程。原版列表中的物品、残骸等尚未全部具有可攻击的游戏对象，不将地空单位验收推广到全部目标类别。完整游戏复刻继续进行。
+这些探针证明本机字段及上述静态调用链。原版箭矢求解器、目标优先级、移动身体插值、软浮点边界、音效和实际逐帧时序尚未运行对照；当前弧线复用引擎已有求解流程。原版列表中的物品、残骸等尚未全部具有可攻击的游戏对象，不将地空单位验收推广到全部目标类别。完整游戏复刻继续进行。
 
 ## 复现与验证
 
@@ -47,6 +55,7 @@ node scripts/probe-frost-rea-guard-tower.mjs
 node scripts/build-frostbound.mjs
 node scripts/test-frost-guard-tower.mjs
 node scripts/test-frost-guard-range.mjs
+node scripts/test-frost-guard-collision.mjs
 node scripts/test-frost-guard-tower-client.mjs
 node scripts/test-frost-guard-tower-network.mjs
 $env:MENGINE_EDITOR_EXECUTABLE='D:/MEngineNativeQA/engine-main-sync/target/release/mengine-editor-tauri.exe'
@@ -55,8 +64,8 @@ node scripts/qa-frost-guard-tower.mjs
 
 导入器支持 `--source-sample`、`--game`、`--output`、`--library`。已有来源时优先读取保留原件；无需原游戏安装，但转换仍需对应资产库和上述工具。修改过的输出会在写入前被拒绝。21项输出、4份原件及生成器摘要通过；无安装重建逐字节一致，输出被修改时验证拒绝且内容保持不变。
 
-玩法4组、距离缓冲4组、生成客户端5组、实际TCP4组、REA8组、原生5组通过。原生覆盖G键付款与完整50秒升级、末帧前读档、伤害面板、地空目标的原版箭矢、在途保存恢复和实际命中；地面目标额外连续运行90帧、至少10次发射；原生还覆盖读取前摇存档后目标位于8.5和10.5处的发射/取消，以及原版箭矢显示、S键取消；控制台错误0。原生测试 Main.js SHA-256为 `549ca995628ceba6d2e17dddfd92959ed31d5fc6e823801056cb6906d5a6af93`，与测试副本一致。原生进程正常退出，runtime缓存因EPERM保留。日志、截图和结果均位于 `tmp/docs-artifacts/frost-guard-tower/`。
+玩法4组、距离缓冲4组、身体距离3组、生成客户端8组、实际TCP7组、REA16组、原生8组通过。身体距离覆盖穴居恶魔、石像鬼、步兵、牧师、主城和防御塔的自动／手动攻击边界、双方半径的出手缓冲及读档逐帧一致性。原生覆盖G键付款与完整50秒升级、末帧前读档、伤害面板、地空目标的原版箭矢、在途保存恢复和实际命中；地面目标额外连续运行90帧、至少10次发射。距离用例包含前摇目标位于8.5和11.5处的发射／取消、S键取消，以及穴居恶魔8.039／8.041和石像鬼7.79的自动索敌与箭矢显示；控制台错误0。原生测试 Main.js SHA-256为 `ee7de9e73b9bab90d527192d16e8902e4df9858d0cd8b6ab7ba5c2a0db580fb6`，与测试副本一致。原生进程正常退出，runtime缓存因EPERM保留。原始证据位于 `tmp/docs-artifacts/frost-guard-tower/`。
 
-通用命中特效池与客户端环形索引统一为24槽，生成场景增加FX8–23。相对HEAD核验原有3784个实体内容、引用目标及相对排列未变；当前场景3800实体。特效池客户端16项、场景池、暗影猎手、地穴领主和战争古树生成客户端检查通过。
+通用命中特效池与客户端环形索引统一为24槽，生成场景增加FX8–23。增容时核验原有3784个实体内容、引用目标及相对排列未变；当前场景3800实体。特效池客户端16项、场景池、暗影猎手、地穴领主和战争古树生成客户端检查通过。
 
-主回归 `node scripts/test-frostbound.mjs` 完整运行，含24,000帧暗夜AI，退出码0、718条PASS记录。该运行载入缓冲实现后补充了换目标取消分支；该最终分支单独通过距离缓冲测试，最终生成客户端、真实TCP和原生包也已复验。导入器固定LF，21项已签名输出、全部生成器及原生Main摘要与Git暂存内容一致。日志见 `range-regression.log`、`range-rea.log`、`range-native.log` 和 `range-index-verification.json`。
+最终源码主回归 `node scripts/test-frostbound.mjs` 退出码0，735条PASS记录，含24,000帧AI验证。暂存Main与原生及生成产物摘要一致。证据为 `tmp/docs-artifacts/frost-guard-tower/collision-regression.log`、`collision-rea.log`、`collision-native.log` 和 `collision-index-verification.json`。

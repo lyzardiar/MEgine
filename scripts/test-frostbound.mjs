@@ -19,6 +19,7 @@ import './test-frost-lumber-technology-network.mjs';
 import './test-frost-human-masonry-network.mjs';
 import './test-frost-guard-tower.mjs';
 import './test-frost-guard-range.mjs';
+import './test-frost-guard-collision.mjs';
 import './test-frost-human-sight.mjs';
 import './test-frost-human-sight-network.mjs';
 import './test-frost-guard-tower-client.mjs';

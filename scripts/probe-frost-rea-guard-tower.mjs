@@ -20,6 +20,14 @@ const probes=[
  ['range-buffer-install','pd 5 @ 0x6f47f41c;pd 16 @ 0x6f47f6d8',['ebx, 4','ecx*8 + 0x254','ebx + 0x20','eax, 0x4d','edi + eax*8','ebx + 0x24']],
  ['range-buffer-release','pd 17 @ 0x6f47ce99;pd 55 @ 0x6f477065',['0x6f476f80','0x6f47ad70','eax*8 + 0x26c','0x6f0529d0','0x6f03e3a0','0x6f4779f8']],
  ['range-start-check','pd 13 @ 0x6f47addc;pD 77 @ 0x6f47cd34',['edi*8 + 0x258','0x6f47adf0','0x6f03e3a0']],
+ ['collision-source','pd 6 @ 0x6f69379e;pd 10 @ 0x6f68b560;pd 4 @ 0x6f64f2d4;pd 4 @ 0x6f656bab',['str.collision','esi + 0x3f8','ecx + 0x3f8','0x6f68fb30','ebx + 0x19c','ecx + 0x19c']],
+ ['collision-install','pd 4 @ 0x6f6435d1;pxw 8 @ 0x6fa4a86c;pd 23 @ 0x6f676e70;pd 32 @ 0x6f03f100;pd 12 @ 0x6f10c640',['0x6fa4a704','0x6f656bc0','0x6f676e70','eax + 0x168','edi + 0x164','0x6f03f100','0xfd800000','0x6f10c640','ecx + 0x90']],
+ ['collision-minimum','pd 3 @ 0x6f001b30;pd 13 @ 0x6f656bc0',['edx, 1','0x6fbb81d8','0x6f053b90','ecx + 0x30','0x6f656b50']],
+ ['collision-distance','pd 47 @ 0x6f03e3c3',['0xfd800000','edi + 0x90','esi + 0x90','0x6f0529d0','0x6fb593e8','0x6f0527e0']],
+ ['collision-plane','pd 32 @ 0x6f03e446;pd 47 @ 0x6f03ebf0',['0x6f10d790','0x6f03ebf0','esi + 0x78','edi + 0x78','0x6f053660','ebx + 0x80','ebx + 0x84','ebx + 0x78','ebx + 0x7c']],
+ ['collision-boundary','pd 25 @ 0x6f03e491;pxw 4 @ 0x6fb59398;pxw 4 @ 0x6fb593e8',['0x6f0528b0','0x6fb59398','0x6f03e4d3','0x3a83126f','0x3efae148']],
+ ['acquisition-source','pd 6 @ 0x6f693ad8;pd 10 @ 0x6f6893f0;pd 4 @ 0x6f64eb84;pd 4 @ 0x6f64bd6b',['str.acquire','esi + 0x5e4','ecx + 0x5e4','0x6f6893f0','ebx + 0x194','ecx + 0x194']],
+ ['acquisition-distance','pd 8 @ 0x6f49fb62;pd 13 @ 0x6f67a770;pd 7 @ 0x6f47eca0;pd 23 @ 0x6f47b757;pd 21 @ 0x6f480aff',['0x6f64bd10','0x6f67a770','0x6f47eca0','ecx + 0x240','edi + 0x244','0x6f47ae90','0x6f47b720','0x6f03e3a0']],
 
 ];
 const client=new Client({name:'frostbound-tower-research',version:'1.0.0'}),reports=[];
@@ -40,5 +48,5 @@ try{
   reports.push({name,evidenceId:evidence.evidence_id,stdoutSha256:digest(r.stdout),markers});
   console.log('PASS REA Guard Tower '+name);
  }
- fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence records source control flow; it does not measure original runtime timing or animation.','Range-buffer loading, repacking and launch checks are static evidence; original projectile solver, full collision geometry and frame timing still require runtime comparison.']},null,2)+'\n');
+ fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence records source control flow; it does not measure original runtime timing or animation.','Range-buffer loading, repacking and launch checks are static evidence; body-radius range, planar position and acquisition checks are static evidence; original projectile solver, moving-body interpolation and bit-exact arithmetic still require runtime comparison.']},null,2)+'\n');
 }finally{await client.close();}

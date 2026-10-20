@@ -22,10 +22,16 @@ for(const targetKind of ['cryptfiend','gargoyle']){
  console.log('PASS generated Guard Tower '+targetKind+': damage range, source sampled missile, curved flight, save/load and actual hit');
 }
 
-for(const [x,shots] of [[8.5,1],[10.5,0]]){
+for(const [x,shots] of [[8.5,1],[11.5,0]]){
  const f=guardTowerFixture(S);S.tick(f.s);f.target.x=x;S.visibility(f.s);load(f.s);key('F5');load(storage.get('quicksave'));step(3);const s=context.towerState;assert.equal(s.projectileSerial,shots);assert.equal(s.units.find(u=>u.id===f.tower.id).weaponWindup,undefined);assert.ok(S.restore(s));
  if(shots)assert.ok(world.snapshot.entities.some(e=>e.active&&e.components.MeshRenderer?.mesh.includes('/GuardTowerMissile/')));
  console.log('PASS generated Guard release range '+x+': saved moving target, expected shots '+shots);
 }
 
 {const f=guardTowerFixture(S);S.tick(f.s);f.target.x=8.5;S.visibility(f.s);const s=load(f.s);click(point(s.units.find(u=>u.id===f.tower.id)));key('KeyS');step(3);assert.equal(context.towerState.projectileSerial,0);assert.equal(context.towerState.units.find(u=>u.id===f.tower.id).weaponWindup,undefined);console.log('PASS generated Guard Stop key cancels buffered windup');}
+
+for(const [targetKind,x,shots] of [['cryptfiend',8.039,1],['cryptfiend',8.041,0],['gargoyle',7.79,1]]){
+ const f=guardTowerFixture(S,{targetKind});f.target.x=x;S.visibility(f.s);load(f.s);key('F5');load(storage.get('quicksave'));step(4);assert.equal(context.towerState.projectileSerial,shots);
+ if(shots)assert.ok(world.snapshot.entities.some(e=>e.active&&e.components.MeshRenderer?.mesh.includes('/GuardTowerMissile/')));
+ console.log('PASS generated Guard collision '+targetKind+' at '+x+': saved automatic acquisition, expected shots '+shots);
+}

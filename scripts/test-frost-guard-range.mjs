@@ -12,7 +12,7 @@ for(const order of [null,{type:'attack'}]){
  console.log('PASS Guard range '+(order?.type||'automatic')+': target outside normal range retained through saved windup; closer target cannot steal release');
 }
 {
- const edge=S.guardTowerRules.weapon.range+S.guardTowerRules.weapon.rangeBuffer+(S.types.cryptfiend.radius||.3);
+ const edge=S.guardTowerRules.weapon.range+S.guardTowerRules.weapon.rangeBuffer+.72+S.cryptUnitRules.units.cryptfiend.collision;
  for(const [x,shots] of [[edge-.001,1],[edge+.001,0]]){
   const {s,tower,target}=guardTowerFixture(S);tower.order={type:'attack',target:target.id};S.tick(s);target.x=x;S.visibility(s);step(s,3);
   assert.equal(s.projectileSerial,shots);assert.equal(tower.weaponWindup,undefined);assert.ok(S.restore(s));

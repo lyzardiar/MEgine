@@ -394,3 +394,11 @@ REA的3组探针确认sight/nsight源行、getter和缓存。人族建筑直接�
 规则4组、生成客户端2组、实际TCP2组、原生2组通过；原生控制台错误0、进程正常退出，runtime缓存因EPERM保留。33份原件与规则输出摘要、原生测试Main及暂存Main一致。维护入口：[建筑视野](human-building-sight.md)；本地证据：`tmp/docs-artifacts/frost-human-sight/`。原版地形遮挡、栅格算法与施工视野继续对照。
 
 最终源码完整主回归退出码0，726条PASS记录，包含24,000帧AI场景；日志见 `tmp/docs-artifacts/frost-human-sight/regression.log`。
+
+## 2026-10-21：防御塔身体距离与平面索敌
+
+REA16组探针确认collision源行、缓存、单位虚表、身体半径安装及acquire索敌距离检查；开始攻击与出手都使用双方身体半径和平面距离，出手另加源缓冲。防御塔72、穴居恶魔32对应804原游戏单位的普通中心距离；石像鬼8对应780。实现接入共享攻击与自动索敌流程，源人族建筑读取保留的collision字段，目标已有源碰撞档案直接复用。
+
+身体距离3组覆盖六种地空／建筑目标、自动与手动边界、保存恢复和缓冲边界；生成客户端8组、真实TCP7组、原生8组通过，原生控制台错误0、正常退出、runtime缓存因EPERM保留。21项塔资源和6个生成器摘要、原生与生成Main摘要一致。原版移动身体插值和软浮点逐位精度仍待运行对照。维护入口：[防御塔武器](guard-tower.md)；证据：`tmp/docs-artifacts/frost-guard-tower/collision-*.log`。
+
+最终源码主回归 `node scripts/test-frostbound.mjs` 退出码0，735条PASS记录，含24,000帧AI验证。暂存Main与原生及生成产物摘要一致。证据为 `tmp/docs-artifacts/frost-guard-tower/collision-regression.log`、`collision-rea.log`、`collision-native.log` 和 `collision-index-verification.json`。
