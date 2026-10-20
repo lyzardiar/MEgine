@@ -11,7 +11,7 @@ for(const r of [...receipt.sources.map(r=>({...r,path:r.localPath})),...receipt.
 }
 const cases=[...Object.entries(rules.bindings).map(([kind,source])=>({kind,source})),...rules.hallSources.map((source,i)=>({kind:'hall',source,tier:i+1}))];
 for(const {kind,source,tier} of cases){
- const expected=source==='hgtw'?[1600,800]:source==='hwtw'?[1600,1000]:source==='hvlt'?[1000,750]:[900,600];
+ const expected=['hgtw','hctw'].includes(source)?[1600,800]:source==='hwtw'?[1600,1000]:source==='hvlt'?[1000,750]:[900,600];
  assert.deepEqual(['sight','nsight'].map(k=>Number(rules.units[source].sourceBalance[k])),expected);
  for(const [i,hour] of [12,22].entries()){
   const {s}=humanSightFixture(S,{kind,hour,tier});S.visibility(s);
@@ -19,7 +19,7 @@ for(const {kind,source,tier} of cases){
   assert.deepEqual(S.restore(s).visible[0],s.visible[0]);
  }
 }
-console.log('PASS Human sight: signed source inputs, 13 source IDs, 14 building/tier cases and all 1024 day/night fog cells');
+console.log('PASS Human sight: signed source inputs, 14 source IDs, 15 building/tier cases and all 1024 day/night fog cells');
 {
  const {s,building,enemy}=humanSightFixture(S);s.map.startingHour=0;s.frame=3599;S.visibility(s);const day=[...s.visible[0]];
  assert.ok(S.publicState(s,0).units.some(u=>u.id===enemy.id));assert.equal(S.command(s,0,{type:'attack',ids:[building.id],target:enemy.id}),null);

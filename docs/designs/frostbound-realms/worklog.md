@@ -410,3 +410,13 @@ REA的8组证据追踪Feedback字段、原版弹丸、实际扣蓝到伤害包�
 规则4组、生成客户端、真实TCP及原生3组通过，覆盖命中时护甲、飞行中Buff变化、原版粒子、存档和重连。原生控制台错误0、正常退出，runtime缓存因EPERM保留。Main源码生成产物与原生验收摘要一致。维护入口：[反馈伤害](human-feedback.md)；本地证据：`tmp/docs-artifacts/frost-feedback/`。原版完整运行、负护甲查表、特殊防御能力顺序及奥术塔／炮塔升级分支继续对照。
 
 最终源码完整主回归退出码0，741条PASS记录，含24,000帧AI验证。暂存、生成及原生Main一致。证据：`tmp/docs-artifacts/frost-feedback/regression.log`、`native-feedback-armor.json`、`rea-summary.json`、`binary.json`、`index-verification.json`。
+
+## 2026-10-21：人族炮塔升级与双武器
+
+炮塔从侦察塔升级，要求已完成的车间，追加170金／100木、75秒；支持取消退款、砌石生命比例、维修及魔法岗哨。原版第一武器为地面炮击，第二武器对建筑单体攻击；90–111攻城伤害、源出手时序和弧线、碰撞半径参与溅射、友军误伤、排除自身、地面／树木命令、保存续飞及敌方快照隐私均已接入。新增单位需要联机协议115；旧存档沿用原有验证。
+
+身体使用共享HumanTower的第二升级动作，炮弹和按钮保留原件及转换摘要。32项自有产物、11项原件、204项共享资源、6个生成器摘要可校验；无游戏安装重建逐字节一致，并拒绝覆盖修改或未签名同名文件。REA6组、原DLL CPU21组、规则6组、生成客户端3组、真实TCP及原生3组通过。原生控制台错误0、专用编辑器正常退出，WebView缓存因EPERM保留。
+
+Main生成、暂存及原生验收摘要为`b18378cb0e72c5ea50599149a27598c3d230f1bc963c303ba10aff8eba71d36f`。原版外层目标枚举、完整目标掩码、非圆形建筑轮廓、浮点边界和完整原游戏运行仍需对照；奥术塔分支继续推进。维护入口：[炮塔](cannon-tower.md)；证据：`tmp/docs-artifacts/frost-cannon-tower/`。
+
+最终源码完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共751条PASS记录，包含24,000帧AI验证。日志为 `tmp/docs-artifacts/frost-cannon-tower/regression-complete.log`，摘要验证为 `index-verification.json`。

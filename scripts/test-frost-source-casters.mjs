@@ -8,7 +8,7 @@ export const sourceCasterCases=[{kind:'necromancer',building:'temple',faction:3,
 export const stepCasters=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
 export function sourceCasterFixture(c,options={}){const map=S.defaultMap();for(const key of ['terrain','heights','relief','ramps'])map[key].fill(0);map.props=[];map.units=[];map.players.forEach(p=>p.ai=false);const s=S.create('skirmish',{map,factions:[c.faction,0],ai:[false,false],...options});s.units=[];const hall=S.spawn(s,'hall',0,-24,24),enemyHall=S.spawn(s,'hall',1,24,-24);hall.upgradeTier=3;hall.maxHp=hall.hp=S.mainBase(s,hall).hp;S.updateTechnology(s);s.teams[0].gold=s.teams[0].wood=10000;const producer=S.spawn(s,c.building,0,0,0),unit=S.spawn(s,c.kind,0,-8,-4,{order:{type:'hold'},bloodlustAuto:false});S.visibility(s);return {s,hall,enemyHall,producer,unit};}
 const cmd=(s,u,type,fields={})=>S.command(s,u.team,{type,ids:[u.id],...fields}),near=(a,b)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`),round=x=>Math.floor(Math.fround(Math.fround(x)+.5));
-assert.equal(S.PROTOCOL,114);
+assert.equal(S.PROTOCOL,115);
 for(const c of sourceCasterCases){
  const r=S.sourceCasterRules.units[c.kind],b=S.sourceCasterRules.buildings[c.building],training=S.sourceCasterRules.research[c.key];
  assert.equal(r.food,2);assert.deepEqual([r.damage,r.bonus,r.dice,r.sides,r.initialMana],[8.5,7,1,2,75]);
