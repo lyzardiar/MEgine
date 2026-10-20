@@ -1,0 +1,2 @@
+# Preserve converter output bytes for provenance hashes.
+** -text whitespace=cr-at-eol

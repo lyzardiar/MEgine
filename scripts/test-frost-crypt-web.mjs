@@ -5,7 +5,7 @@ import {cryptUnitFixture} from './test-frost-crypt-units.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`),order=(s,u,type,extra={})=>S.command(s,u.team,{type,ids:[u.id],...extra});
 export function webFixture(researched=false,options={}){const f=cryptUnitFixture(undefined,options),{s,base,unit}=f;base.upgradeTier=2;base.hp=base.maxHp=S.mainBase(s,base).hp;S.updateTechnology(s);if(researched)s.teams[0].cryptWebResearch=1;const target=S.spawn(s,'gargoyle',1,2,-10,{cd:99,order:{type:'hold'}});unit.cryptWebAuto=false;S.visibility(s);return {...f,target};}
 const cast=f=>order(f.s,f.unit,'cryptWeb',{target:f.target.id}),hit=f=>{for(let i=0;i<12&&!S.webbed(f.target);i++)S.tick(f.s);assert.ok(S.webbed(f.target),'Web missile must capture its target');},unitCopy=(s,u)=>s.units.find(v=>v.id===u.id);
-assert.equal(S.PROTOCOL,113);assert.equal(S.create().cryptWebVersion,1);
+assert.equal(S.PROTOCOL,114);assert.equal(S.create().cryptWebVersion,1);
 assert.deepEqual([S.cryptWebRules.research.id,S.cryptWebRules.research.gold,S.cryptWebRules.research.wood,S.cryptWebRules.research.time],['Ruwb',150,150,30]);
 assert.deepEqual([S.cryptWebRules.ability.range,S.cryptWebRules.ability.missileSpeed,S.cryptWebRules.ability.cooldown,S.cryptWebRules.ability.duration,S.cryptWebRules.ability.heroDuration,S.cryptWebRules.caster.castPoint,S.cryptWebRules.caster.castBackswing],[4,15,12,12,7,0,.51]);
 {

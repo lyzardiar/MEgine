@@ -1,0 +1,1 @@
+Warcraft III Guard Tower weapons and missile: Blizzard Entertainment original game terms. Provenance and conversion hashes: guard-tower-sources.json. REA upstream https://github.com/morluto/rea; maintenance third_party/rea/README-MENGINE.md.

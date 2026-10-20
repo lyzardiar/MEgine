@@ -1,0 +1,3 @@
+# Preserve original bytes and source whitespace for provenance hashes.
+** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+**/*.slk binary
