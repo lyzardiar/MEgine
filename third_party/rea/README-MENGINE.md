@@ -102,3 +102,5 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 人族炮塔与迫击炮目标筛选：`node scripts/probe-frost-rea-cannon-tower.mjs` 复核11组原版炮击字段、端点、外圈候选、目标掩码和伤害分档；`scripts/probe-frost-cannon-tower-binary.py` 执行130个原DLL分档、碰撞、边界及目标资格用例。`scripts/import-frost-cannon-tower.py` 保留原件、双武器、按钮、身体与炮弹转换及共享资源摘要。升级、存档、TCP、原生验证和更新命令见[炮塔维护说明](../../docs/designs/frostbound-realms/cannon-tower.md)，GitHub源站与固定版本沿用本文件。
 
 反馈伤害：`node scripts/probe-frost-rea-feedback.mjs` 复核8组技能字段、弹丸、伤害打包及护甲／类型缩放证据；`scripts/probe-frost-feedback-binary.py` 执行原DLL的计算分支，覆盖12个CPU用例。源数据、复现命令、引擎验收及原版运行边界见[反馈维护说明](../../docs/designs/frostbound-realms/human-feedback.md)。
+
+人族奥术塔的反馈、侦察、第三升级塔身和原版特效维护入口见 [奥术塔说明](../../docs/designs/frostbound-realms/arcane-tower.md)。`node scripts/probe-frost-rea-feedback.mjs` 复核反馈发射、命中和护甲调用链；源件摘要与离线重建由 `python scripts/test-frost-arcane-tower-source.py` 校验。

@@ -5,7 +5,7 @@ import {guardTowerFixture} from './frost-guard-tower-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
 {
  const {s,tower,target}=guardTowerFixture(S),w=S.guardTowerRules.weapon;
- assert.equal(S.PROTOCOL,115);assert.equal(tower.damage,25);assert.equal(S.guardTowerUnit(tower),true);assert.deepEqual([w.bonus,w.dice,w.sides,w.range,w.cooldown,w.damagePoint,w.backswing,w.missileSpeed,w.missileArc],[22,1,5,7,.9,.3,.3,18,.15]);
+ assert.equal(S.PROTOCOL,116);assert.equal(tower.damage,25);assert.equal(S.guardTowerUnit(tower),true);assert.deepEqual([w.bonus,w.dice,w.sides,w.range,w.cooldown,w.damagePoint,w.backswing,w.missileSpeed,w.missileArc],[22,1,5,7,.9,.3,.3,18,.15]);
  s.teams[0].upgrade=3;
  const values=new Set();for(let i=0;i<100;i++){s.projectiles=[];assert.equal(S.fire(s,tower,target),true);const p=s.projectiles[0];values.add(p.damage);assert.ok(p.damage>=23&&p.damage<=27);assert.equal(p.art,'guard-tower');assert.equal(p.guardTowerRules,1);near(p.y,S.unitHeight(s,tower)+1.45);near(p.toY,S.unitHeight(s,target)+S.unitType(target).impactHeight);assert.ok(S.restore(s));}
  assert.deepEqual([...values].sort((a,b)=>a-b),[23,24,25,26,27]);

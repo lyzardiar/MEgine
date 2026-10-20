@@ -1,0 +1,1 @@
+Warcraft III Arcane Tower weapon, body, abilities and icons: Blizzard Entertainment original game terms. Provenance, shared geometry and conversion hashes: arcane-tower-sources.json. REA upstream https://github.com/morluto/rea; maintenance third_party/rea/README-MENGINE.md.

@@ -161338,6 +161338,142 @@
             "root": false
           }
         }
+      },
+      {
+        "entity": 90786,
+        "name": "Classic spell 0 arcaneTowerFeedback",
+        "parent": 88755,
+        "siblingIndex": 3800,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/ArcaneTowerEffects/Effects/ArcaneTowerFeedback.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90787,
+        "name": "Classic spell 0 arcaneTowerReveal",
+        "parent": 88755,
+        "siblingIndex": 3801,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/ArcaneTowerEffects/Effects/ArcaneTowerReveal.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90788,
+        "name": "Classic spell 0 arcaneTowerReveal mesh 0",
+        "parent": 90787,
+        "siblingIndex": 0,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/ArcaneTowerEffects/Models/Abilities/Spells/Items/AIta/CrystalBallCaster/geoset-00-animated.glb",
+            "material": "Assets/ArcaneTowerEffects/Materials/Abilities/Spells/Items/AIta/CrystalBallCaster/geoset-00-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
+      },
+      {
+        "entity": 90789,
+        "name": "Classic spell 0 arcaneTowerReveal mesh 1",
+        "parent": 90787,
+        "siblingIndex": 1,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/ArcaneTowerEffects/Models/Abilities/Spells/Items/AIta/CrystalBallCaster/geoset-01-animated.glb",
+            "material": "Assets/ArcaneTowerEffects/Materials/Abilities/Spells/Items/AIta/CrystalBallCaster/geoset-01-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
       }
     ],
     "frame": 0,

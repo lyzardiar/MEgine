@@ -161,6 +161,7 @@ import './test-frost-denies.mjs';
 import './test-frost-lanes.mjs';
 import './test-frost-daynight.mjs';
 import './test-frost-feedback.mjs';
+import './test-frost-arcane-tower.mjs';
 import './test-frost-motion.mjs';
 import './test-frost-corpses.mjs';
 import './test-frost-corpse-stages.mjs';
