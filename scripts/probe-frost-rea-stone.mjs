@@ -29,6 +29,10 @@ const probes=[
  ['transition-timers',functions('0x6f54c6c0','0x6f5315b0'),['0x6f3f78b0','[esi + 0x9c]','0x6f3f74d0','0x6f0529d0','0xd01c4']],
  ['form-commit',functions('0x6f5454f0','0x6f5349b0','0x6f5327e0'),['0x6f5276f0','0x6f5349b0','0x6f5327e0','0x40c','0x414']],
  ['state-events',functions('0x6f5ed6e0','0x6f5edae0','0x6f5e9b60'),['0xd01bf','0x6f5edae0','0x3d8','[edi + 0x18c]','0x6f662bf0','0x6f043700']],
+ ['cast-duration-loader','pd 95 @ 0x6f689ed0;'+functions('0x6f3f6dd0','0x6f3f78b0'),['0x6fb6a078','0x6fb6a080','[eax + ecx + 4]','[eax + ecx + 8]']],
+ ['default-clock-property','pd 55 @ 0x6f3cca20;'+functions('0x6f3fea20'),['[esi + 0x98]','[esi + 0x9c]','0x6fbb81d4','[esi + 0x80]','[esi + 0x88]','[esi + 0x90]']],
+ ['independent-unlock',functions('0x6f534800','0x6f66b660','0x6f65ae90','0x6f3ea000','0x6f3ee460'),['0x6f5454f0','0x6f3ee460','0x6f65ae90','[ecx + 0x198]','[ecx + 0x44]']],
+ ['exit-cooldown','pd 40 @ 0x6f3da4d0;'+functions('0x6f418d20','0x6f4ecf40','0x6f4ece60','0x6f4aaf10','0x6f3ded20'),['0x3c0','0x3a4','0xd01be','0xa0000000','0x200','0xd2']],
 ];
 const client=new Client({name:'frostbound-stone-research',version:'1.0.0'}),reports=[];
 fs.mkdirSync(out,{recursive:true});
@@ -48,5 +52,5 @@ try{
   reports.push({name,evidenceId:evidence.evidence_id,stdoutSha256:digest(r.stdout),markers});
   console.log('PASS REA Stone Form '+name);
  }
- fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence records source control flow; it does not measure original runtime timing or animation.','Source Cast/Dur/Data fields are retained separately; exact phase clocks, cooldown gating, blocked landing and Web interactions still require verification.']},null,2)+'\n');
+ fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence records source control flow; it does not measure original runtime timing or animation.','Phase clocks use the inherited scalar default zero; blocked landing, special buff classification and Web/Ensnare gates still require original runtime verification.']},null,2)+'\n');
 }finally{await client.close();}

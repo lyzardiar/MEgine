@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {spellstealFixture} from './frost-human-spellsteal-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),copy=v=>JSON.parse(JSON.stringify(v)),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},order=(s,u,target)=>S.command(s,u.team,{type:'spellSteal',ids:[u.id],target:target.id});
-assert.equal(S.PROTOCOL,112);assert.equal(S.create().humanSpellbreakerVersion,2);
+assert.equal(S.PROTOCOL,113);assert.equal(S.create().humanSpellbreakerVersion,2);
 {
  const {s,breaker,donor,recipient}=spellstealFixture(S);s.teams[1].humanSanctum.Rhpt=2;s.units=s.units.filter(u=>u!==donor);const priest=S.spawn(s,'humanpriest',1,1,0,{mana:200,sanctumAuto:false,innerFireAuto:false,cd:99,order:{type:'hold'}});S.visibility(s);assert.equal(S.command(s,1,{type:'priestSpell',ids:[priest.id],spell:'Ainf',target:priest.id}),null);step(s,12);assert.ok(priest.innerFire);breaker.mana=200;const remaining=priest.innerFire.left,mana=breaker.mana;assert.equal(order(s,breaker,priest),null);step(s,1);assert.ok(breaker.spellStealCast);assert.ok(Math.abs(breaker.mana-(mana+.08))<1e-7);const restored=S.restore(s);step(s,3);step(restored,3);assert.deepEqual(restored,s);assert.equal(priest.innerFire,undefined);assert.ok(recipient.innerFire.left<=remaining);assert.equal(recipient.innerFire.source,priest.id);assert.equal(recipient.innerFire.team,0);assert.equal(recipient.innerFire.stolen.source,breaker.id);assert.equal(breaker.spellStealCd,3);assert.ok(Math.abs(breaker.mana-(mana+.32-75))<1e-7);assert.ok(S.restore(s));step(s,40);assert.ok(S.restore(s));assert.equal(S.publicState(s,1).units.find(u=>u.id===breaker.id).spellStealAuto,undefined);
 }
