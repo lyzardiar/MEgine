@@ -436,3 +436,11 @@ REA确认外圈候选使用严格碰撞圆距离平方比较，内圈全伤、�
 六种炮塔／迫击炮地面、普通单位、蛇棒目标场景验证保存续飞，生成客户端、双端TCP与原生编辑器均通过。原生12项检查、控制台错误0、专用编辑器正常退出；WebView缓存因EPERM保留。生成、样例与原生验收Main摘要为`5e57f75effd738b8bc9487ecbe1a145ad8c91692c9a5fb6cd0b05b0115fbff8a`。空间索引、全部免疫／联盟组合及飞行中类别变化仍待完整运行验证。证据：`tmp/docs-artifacts/frost-artillery-targets/`；维护入口：[炮塔](cannon-tower.md)、[迫击炮](human-mortar.md)。
 
 完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共757条PASS记录，包含24,000帧AI验证；日志为本阶段证据目录的 `regression.log`。
+
+## 2026-10-21：人族塔的原版升级入口
+
+读取保留的HumanUnitFunc原件，并通过REA确认Upgrade与UpgradesCount的字段加载。原版人族塔在客户端命令卡和共享命令入口按源规则处理；通用等级升级被拒绝，金币、生命和攻击不发生变化。塔防、旧建筑模式及兽族塔保留等级升级，现有存档格式与协议116保持兼容。
+
+针对性玩法5组、生成客户端9组、真实TCP8组通过。原生14项检查、控制台错误0，专用编辑器正常退出；WebView缓存因EPERM保留。生成、样例与原生测试Main摘要为 `486d13187623c974e34a211be36758234f5e4e280ad07c6e496a9c5934b2c6ba`。本阶段未执行原版逐帧UI对照。维护入口：[人族塔升级](human-tower-upgrades.md)；证据：`tmp/docs-artifacts/frost-human-tower-upgrades/`。
+
+完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共766条PASS记录，包含24,000帧AI验证；日志为 `tmp/docs-artifacts/frost-human-tower-upgrades/regression.log`。

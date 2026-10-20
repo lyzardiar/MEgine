@@ -50,5 +50,17 @@ try{
   if(shots)assert.ok((await snapshot()).entities.some(e=>e.active&&e.components.MeshRenderer?.mesh.includes('/GuardTowerMissile/')));
   report.checks.push({collisionTarget:targetKind,x,shots,savedAcquisition:true});console.log('PASS native Guard collision '+targetKind+' at '+x+': expected shots '+shots);
  }
+ for(const kind of ['scouttower','tower','guardtower','cannontower','arcanetower']){
+  const f=guardTowerFixture(S);f.s.units=f.s.units.filter(u=>u.id!==f.tower.id);const tower=S.spawn(f.s,kind,0,0,0);await load(f.s);await worldClick(tower.x,tower.z);
+  const scene=await snapshot(),labels=scene.entities.filter(e=>/^action\d+ label$/.test(e.name)).map(e=>e.components.Text.text);assert.ok(!labels.some(t=>/^Upgrade \d/.test(t)),kind);
+  if(kind==='scouttower')for(const name of ['Guard Tower','Cannon Tower','Arcane Tower'])assert.ok(labels.some(t=>t.startsWith(name)),name);
+  assert.ok(S.restore(await save()));report.checks.push({kind,genericUpgradeAbsent:true});
+ }
+ {
+  const s=S.create('td',{ai:[false,false]});s.units=[];s.teams[0].gold=10000;const tower=S.spawn(s,'tower',0,-16,16);await load(s);await worldClick(tower.x,tower.z);
+  const scene=await snapshot(),button=scene.entities.find(e=>/^action\d+ label$/.test(e.name)&&e.components.Text.text==='Upgrade 100');assert.ok(button);await ui(button.name.replace(' label',''));
+  const saved=await save();assert.equal(saved.units.find(u=>u.id===tower.id).level,2);assert.equal(saved.teams[0].gold,9900);assert.ok(S.restore(saved));report.checks.push({tdUpgrade:true,paidGold:100,savedLevel:2});
+ }
+ console.log('PASS native source tower command cards and functional TD upgrade/save');
  report.testedMainSha256=hash(path.join(sample,'Assets/Scripts/Main.js'));assert.equal(report.testedMainSha256,report.sourceMainSha256);await execute('playback.stop');const logs=await query('console.get_logs',{limit:100});assert.ok(!logs.some(l=>l.level==='error'),JSON.stringify(logs));report.consoleErrors=0;report.passed=true;
 }catch(e){report.error=e.stack;try{report.failedTelemetry=await state();}catch{}process.exitCode=1;console.error(e.stack);}finally{if(playbackStarted)try{await execute('playback.stop');}catch{}closeBridgeConnection();try{report.cleanup=await closeNativeQa(root);if(report.cleanup.normalExit&&report.cleanup.runtimeRemoved)Object.assign(report.cleanup,removeNativeQaFixture(root,storage));}catch(e){report.cleanupError=e.message;}fs.writeFileSync(path.join(out,'native-guard-tower.json'),JSON.stringify(report,null,2));}

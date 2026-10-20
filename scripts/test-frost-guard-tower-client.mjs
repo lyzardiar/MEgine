@@ -13,6 +13,18 @@ const key=k=>{tick({keys:[k],pressedKeys:[k]});tick();},click=p=>{tick({pointer:
 function load(s){storage.set('quicksave',copy(s));if(telemetry().mode==='title')key('F1');if(!telemetry().paused)key('F10');click([640,388]);assert.equal(telemetry().mode,'playing');return context.towerState;}
 
 tick();
+for(const kind of ['scouttower','tower','guardtower','cannontower','arcanetower']){
+ const f=guardTowerFixture(S);f.s.units=f.s.units.filter(u=>u.id!==f.tower.id);const tower=S.spawn(f.s,kind,0,0,0),s=load(f.s);click(point(s.units.find(u=>u.id===tower.id)));
+ const labels=Array.from({length:12},(_,i)=>component('action'+i+' label','Text').text);assert.ok(!labels.some(t=>/^Upgrade \d/.test(t)),kind+' must not offer generic leveling');
+ if(kind==='scouttower')for(const name of ['Guard Tower','Cannon Tower','Arcane Tower'])assert.ok(labels.some(t=>t.startsWith(name)),name);
+ key('F5');assert.ok(S.restore(storage.get('quicksave')));
+}
+{
+ const s=S.create('td',{ai:[false,false]});s.units=[];s.teams[0].gold=10000;const tower=S.spawn(s,'tower',0,-16,16);load(s);click(point(tower));
+ const slot=Array.from({length:12},(_,i)=>i).find(i=>component('action'+i+' label','Text').text==='Upgrade 100');assert.notEqual(slot,undefined,JSON.stringify({telemetry:telemetry(),labels:Array.from({length:12},(_,i)=>component('action'+i+' label','Text').text)}));click(world.canvasPoint('action'+slot+' box'));
+ assert.equal(context.towerState.units.find(u=>u.id===tower.id).level,2);assert.equal(context.towerState.teams[0].gold,9900);key('F5');assert.ok(S.restore(storage.get('quicksave')));
+}
+console.log('PASS generated human tower cards show source branches only; TD upgrade button still pays, upgrades and saves');
 for(const targetKind of ['cryptfiend','gargoyle']){
  const f=guardTowerFixture(S,{targetKind});let s=load(f.s),u=s.units.find(v=>v.id===f.tower.id);click(point(u));
  assert.equal(component('HUD Stat Attack value','Text').text.split('\n')[0],'23 - 27');step(4);s=context.towerState;const p=s.projectiles[0];assert.equal(p.art,'guard-tower');assert.equal(p.guardTowerRules,1);assert.equal(p.born,4);

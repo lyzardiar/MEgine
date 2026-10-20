@@ -4,6 +4,19 @@ import {createRequire} from 'node:module';
 import {guardTowerFixture} from './frost-guard-tower-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
 {
+ assert.equal(S.humanMasonry.units.hwtw.sourceFunc.Upgrade,'hgtw,hctw,hatw');
+ for(const id of ['hgtw','hctw','hatw'])assert.ok(!S.humanMasonry.units[id].sourceFunc.Upgrade);
+ for(const kind of ['scouttower','tower','guardtower','cannontower','arcanetower']){
+  const {s}=guardTowerFixture(S),u=S.spawn(s,kind,0,-5,0),before=S.clone(s);
+  assert.match(S.command(s,0,{type:'towerUpgrade',ids:[u.id]}),/completed tower/);assert.deepEqual(s,before);assert.ok(S.restore(s));
+ }
+ for(const options of [{mode:'td'},{mode:'skirmish',humanMasonryVersion:0},{mode:'skirmish',factions:[1,0]}]){
+  const s=S.create(options.mode,{...options,ai:[false,false]}),u=S.spawn(s,'tower',0,0,0);s.teams[0].gold=10000;
+  assert.equal(S.masonrySource(s,u),null);assert.equal(S.command(s,0,{type:'towerUpgrade',ids:[u.id]}),null);assert.equal(u.level,2);assert.equal(s.teams[0].gold,9900);assert.ok(S.restore(s));
+ }
+ console.log('PASS original human tower upgrade lists reject generic leveling without mutation; TD, legacy and Orc towers retain upgrades');
+}
+{
  const {s,tower,target}=guardTowerFixture(S),w=S.guardTowerRules.weapon;
  assert.equal(S.PROTOCOL,116);assert.equal(tower.damage,25);assert.equal(S.guardTowerUnit(tower),true);assert.deepEqual([w.bonus,w.dice,w.sides,w.range,w.cooldown,w.damagePoint,w.backswing,w.missileSpeed,w.missileArc],[22,1,5,7,.9,.3,.3,18,.15]);
  s.teams[0].upgrade=3;

@@ -28,4 +28,10 @@ try{
   for(const m of messages){assert.equal(m.state.projectiles.filter(p=>p.art==='guard-tower').length,shots);assert.ok(m.state.projectiles.every(p=>p.damage===undefined&&p.guardTowerRules===undefined));}
   console.log('PASS TCP Guard collision '+targetKind+' at '+x+': both peers observe expected shots '+shots);
  }
+ for(const kind of ['scouttower','tower','guardtower','cannontower','arcanetower']){
+  const f=guardTowerFixture(S);f.s.units=f.s.units.filter(u=>u.id!==f.tower.id);const tower=S.spawn(f.s,kind,0,0,0);app.rooms.get(joined.code).state=f.s;
+  const before=[tower.level,tower.damage,tower.maxHp,f.s.teams[0].gold];next=a.next(m=>m.type==='error');a.order({type:'towerUpgrade',ids:[tower.id]});assert.match((await next).message,/completed tower/);
+  assert.deepEqual([tower.level,tower.damage,tower.maxHp,f.s.teams[0].gold],before);assert.ok(S.restore(f.s));
+ }
+ console.log('PASS TCP rejects generic leveling of every source human tower without spending or stat mutation');
 }finally{for(const socket of sockets)socket.destroy();await app.close();}
