@@ -161509,6 +161509,41 @@
             "time_seconds": 0
           }
         }
+      },
+      {
+        "entity": 90791,
+        "name": "Classic spell 0 siegeEngineActor",
+        "parent": 88755,
+        "siblingIndex": 3805,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/SiegeEngineEffects/Effects/ClassicSiegeEngineEmbedded.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
       }
     ],
     "frame": 0,

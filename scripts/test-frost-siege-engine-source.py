@@ -55,7 +55,7 @@ assert fx['statistics']['ClassicSiegeEngineEmbedded']['sourceParticles']==14
 assert fx['statistics']['ClassicSiegeEnginePortraitEmbedded']['sourceParticles']==3
 assert r['reaUpstream']=='https://github.com/morluto/rea' and r['reaVersion']=='6.5.0' and r['reaCommit']=='3b79af28e80785afce9f5998d8f03289402a1847'
 assert r['originalRuntimeVerified'] is False and fx['originalRuntimeVerified'] is False
-assert fx['runtimeIntegrated'] is False
+assert fx['runtimeIntegrated'] is True
 assert '\ufffd' not in (SAMPLE/'siege-engine.json').read_text(encoding='utf-8')
 print('PASS Siege Engine source/output/converter hashes, both forms, weapons, research, transformation, rocket ability, TFT body and animated portrait')
 OUT.mkdir(parents=True,exist_ok=True)

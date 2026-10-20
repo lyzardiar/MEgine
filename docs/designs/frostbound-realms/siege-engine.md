@@ -2,7 +2,7 @@
 
 Author: MiYu
 
-`siege-engine.json` 保留本机《冰封王座》普通攻城坦克 `hmtt`、研究后的 `hrtt`、`Rhrt` 弹幕攻击研究及 `Srtt`／`Aroc` 能力。当前已完成原件保留、确定性转换和独立原生预览；主游戏车间生产、换型、双武器和弹幕战斗仍待接入。现有玩法协议117保持不变。
+`siege-engine.json` 保留本机《冰封王座》普通攻城坦克 `hmtt`、研究后的 `hrtt`、`Rhrt` 弹幕攻击研究及 `Srtt`／`Aroc` 能力。原件保留、确定性转换、车间生产、研究换型、双武器与弹幕战斗均已接入现有游戏架构，联机协议118。
 
 ## 来源与维护
 
@@ -31,7 +31,7 @@ REA上游为 [morluto/rea](https://github.com/morluto/rea)，版本6.5.0，提�
 
 ## 模型、头像与特效
 
-机身保留15个源序列。普通形态Stand/Walk/Attack/Death索引为0/2/4/6；alternate的Stand/Walk/Attack Two/Attack One/Death索引为7/9/11/12/14。原模型序列名称及粒子状态保持完整，原引擎如何分发武器到动画槽仍需独立核对。
+机身保留15个源序列。普通形态Stand/Walk/Attack/Death索引为0/2/4/6；alternate的Stand/Walk/Attack Two/Attack One/Death索引为7/9/11/12/14。原模型序列名称及粒子状态保持完整。原DLL的0x6f47fd80将武器索引0/1映射为动画属性44/45（one/two）；0x6f480ece选择和0x6f47bc38切换路径确认建筑武器使用索引12，对空武器使用索引11。原始MDX炮击事件与粒子轨迹独立印证该映射。
 
 头像保留Portrait与Portrait Alternate两种序列及原透视摄影机（源FOV60度、near8、far1000）。几何和内嵌粒子使用同一序列及采样时间。`SiegeEngineImpact` 为纯粒子炮击；`SiegeEngineRocket` 保留火箭几何、2个粒子和1条拖尾；机身与头像分别保留14和3个内嵌粒子。
 
@@ -73,3 +73,27 @@ node scripts/qa-frost-siege-engine-assets.mjs
 236项机身／头像源输出、93项特效源输出通过摘要核验；两组来源检查验证无游戏安装时逐字节重建及两个导入器的修改输出保护。11组REA探针、16组CPU用例通过。原生独立预览18项通过，覆盖15个机身动作、两种源摄影机头像及攻击效果。255项复制资产与样例摘要一致，控制台／材质管线错误0。专用编辑器正常退出；WebView缓存因EPERM保留在专用QA目录。
 
 证据、CPU报告和截图仅保存在 `tmp/docs-artifacts/frost-siege-engine/`。上述资产预览不证明主游戏玩法、原版完整战斗或完整复刻已完成。
+
+## 主游戏接入与维护
+
+车间第三格按E训练坦克，价格195金／60木／3人口／55秒；城堡建成后第11格按G研究弹幕（50金／150木／40秒）。研究与训练共用三格付费队列，支持取消退款、出口阻塞及存档继续。Rhrt完成后，现存单位及随后完成训练的单位使用hrtt形态，保留ID、生命、位置和指令；普通与升级形态共用一个运行kind，以研究状态选择原件。
+
+普通武器只攻击建筑，按0.5秒前摇造成45–55瞬发攻城伤害。升级后对空武器按0.125秒前摇发射13–14穿刺火箭，并向其他候选目标追加弹幕；额外火箭沿用触发攻击掷骰，主目标排除、数量与预算遵循上述原DLL证据。弹幕空间查询以坦克中心排序；0x6f03ca6f加入源碰撞半径，0x6f03fc07加入目标半径，随后平方比较且相等时包含。源半径与目标半径的边界测试通过；样例沿用现有距离容差，尚未证明所有float32相切值一致。Rhar每级增加2护甲，Rhra每级给两武器各加一颗原骰子（d11／d2）。原DLL CUpgradeAttackDice处理器0x6f698800通过0x6f47aa00取得双武器掩码，再由0x6f478a70修改两组骰子；2个动画选择及5个升级CPU用例通过。
+
+两形态身体、原摄影机头像、内嵌粒子、建筑炮击和火箭几何已接入主游戏。死亡形态按尸体保留的hmtt/hrtt原ID选择；deathType2的机械残骸不能复活。敌方联机快照隐藏研究、生产队列和武器内部状态，仅保留可见形态、攻击动画和弹丸显示字段。旧存档缺失siegeEngineVersion时保留旧生产列表；协议117客户端被118服务器拒绝。
+
+```powershell
+node scripts/build-frostbound.mjs
+node scripts/test-frost-siege-engine.mjs
+node scripts/test-frost-siege-engine-client.mjs
+node scripts/test-frost-siege-engine-network.mjs
+python scripts/probe-frost-siege-engine-animation.py
+node scripts/qa-frost-siege-engine.mjs
+node scripts/test-frostbound.mjs
+```
+
+本次来源验证2组、玩法7组、生成客户端及真实TCP通过。原生主游戏3组验收覆盖E/G城堡条件、完整40／55秒生产研究、F5恢复、两形态机身与头像、双武器动画、原件炮击／火箭及飞行存档命中；控制台错误0。原生编辑器正常退出，专用G盘WebView缓存因EPERM保留。运行报告为 `tmp/docs-artifacts/frost-siege-engine/native-siege-engine.json`，原DLL动画／升级证据为同目录 `rea/animation-source-cpu.json`。
+
+原版完整研究事件时序、所有单位状态的Chaos转换、完整空间候选／免疫掩码、粒子求解器和全部玩法仍需继续对照；本阶段验证不代表完整1:1复刻完成。
+
+完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共785条PASS记录，包含24,000帧AI验证；日志为 `tmp/docs-artifacts/frost-siege-engine/regression-final.log`。
