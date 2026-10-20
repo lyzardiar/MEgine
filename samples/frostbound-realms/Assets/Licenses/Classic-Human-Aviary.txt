@@ -1,0 +1,1 @@
+Warcraft III Frozen Throne Human Gryphon Aviary body, portrait, rules and command textures: Blizzard Entertainment original game asset terms apply. Original archive identities, hashes and converter dependencies: human-aviary-sources.json. REA upstream: https://github.com/morluto/rea.

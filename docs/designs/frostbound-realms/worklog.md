@@ -483,3 +483,12 @@ REA补查与7个原DLL CPU用例确认双武器one/two动画属性、Rhra两武�
 原版完整Chaos状态转换、完整目标掩码／免疫组合及float32相切值仍需继续对照；完整复刻目标未完成。维护入口：[攻城坦克](siege-engine.md)；证据与报告只保存在 `tmp/docs-artifacts/frost-siege-engine/`。
 
 完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共785条PASS记录，包含24,000帧AI验证；日志为 `tmp/docs-artifacts/frost-siege-engine/regression-final.log`。
+
+
+## 2026-10-21：狮鹫笼原件、模型与技能效果
+
+保留hgra狮鹫笼、hgry狮鹫骑士、hdhw龙鹰骑士的源表、原始机身、独立头像／建筑源相机、指令图标及Rhhb/Rhcd/Asth/Aclf/Amls配置。战锤、龙鹰弹丸、乌云、锁镣目标效果和LEAS原光束纹理完整保留；龙鹰死亡绑定四种源羽毛／骨骼／内脏模型粒子。638项签名输出支持离线逐字节重建、三组修改保护及篡改原件拒绝，GitHub源地址、固定版本、原件与转换器摘要随工具保留。
+
+7组REA静态探针与原DLL CPU检查（3组升级、3个索引及第二武器getter链）通过。REA确认风暴战锤研究通过rasd增加穿透距离；地面mline与空中missile分派独立。狮鹫单项弹道列表在空中槽回退末项，未配置homing返回0。穿透主目标独立伤害、次级筛选排除主目标；碰撞回调先衰减再检查目标有效性，完整事件次序和技能通道留待玩法阶段验证。
+
+原生独立预览46项通过，508项资产摘要一致，控制台／材质错误0；专用编辑器正常退出，WebView缓存EPERM保留。此阶段runtimeIntegrated=false，生产、研究、技能与战斗尚未接入。维护入口：[狮鹫笼](human-aviary.md)；原始Evidence、报告与截图只保存在 `tmp/docs-artifacts/frost-human-aviary/`。

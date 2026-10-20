@@ -99,3 +99,14 @@ Assets/SiegeEngineEffects/** -text whitespace=cr-at-eol
 Assets/Art/classic-siege-engine*.png.meta text eol=lf
 Assets/Licenses/Classic-Siege-Engine.txt -text
 Assets/Licenses/Siege-Engine-Effects-W3ModelViewer-MIT.txt -text
+
+/human-aviary*.json text eol=lf
+SourceAssets/HumanAviary/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+SourceAssets/HumanAviaryEffects/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+SourceAssets/HumanAviaryParticles/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+Assets/HumanAviary/** -text whitespace=cr-at-eol
+Assets/HumanAviaryEffects/** -text whitespace=cr-at-eol
+Assets/HumanAviaryParticles/** -text whitespace=cr-at-eol
+Assets/Art/classic-human-aviary*.png.meta text eol=lf
+Assets/Licenses/Classic-Human-Aviary*.txt -text
+Assets/Licenses/Human-Aviary*.txt -text
