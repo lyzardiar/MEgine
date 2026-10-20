@@ -1,7 +1,7 @@
 // Author: MiYu. Original Cannon upgrade, dual weapons, splash exclusions and saved flight.
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {cannonTowerFixture} from './frost-cannon-tower-fixture.mjs';
+import {cannonTowerFixture,cannonBoundaryFixture} from './frost-cannon-tower-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},near=(a,b)=>assert.ok(Math.abs(a-b)<1e-5,`${a} != ${b}`),command=(s,u,type)=>S.command(s,0,{type,ids:[u.id]});
 {
  const {s,tower,workshop,mill}=cannonTowerFixture(S,{upgrade:true});workshop.built=.5;
@@ -50,3 +50,7 @@ for(const [x,shots] of [[8.71,1],[8.73,0]]){
  const {s,tower,target}=cannonTowerFixture(S);target.x=20;S.visibility(s);assert.equal(S.command(s,0,{type:'attackGround',ids:[tower.id],x,z:0}),null);step(s,4);assert.equal(s.projectileSerial,shots);assert.ok(S.restore(s));
 }
 console.log('PASS Cannon ground-command range includes the source tower collision radius');
+for(const kind of ['cryptfiend','cannontower','tree'])for(const radius of [50,100,125])for(const delta of [-.002,0,.00025,.002])for(const diagonal of delta===0?[false]:[false,true]){
+ const {s,victim,expected}=cannonBoundaryFixture(S,{kind,radius,delta,diagonal}),hp=victim.hp,copy=S.restore(s);step(s,15);step(copy,15);assert.deepEqual(s,copy);near(hp-victim.hp,expected);
+}
+console.log('PASS Cannon original inner tolerance and strict outer cutoff: 63 unit/building/tree boundaries with saved flight replay');

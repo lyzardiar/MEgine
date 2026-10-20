@@ -1778,8 +1778,14 @@ var Frost = (() => {
   }
   function mortarImpact(s,p,point,attacker){
     const cannon=cannonTowerUnit(p),bands=(cannon?cannonTowerRules.weapons:mortarRules.unit.weapons)[0].splashBands;
-    for(const v of s.units)if(v.hp>0&&(!cannon||v.id!==p.source)&&!isFlying(v)&&canAttack(p,v)){const band=bands.find(([radius])=>distance(v,point)<=radius+(cannon?attackCollision(v):0));if(band)damage(s,attacker,v,weaponDamage(p,v,p.damage*band[1],s),'splash',undefined,p);}
-    for(let i=0;i<s.resources.length;i++){const tree=s.resources[i];if(tree.kind!=='tree'||tree.amount<=0)continue;const band=bands.find(([radius])=>distance(tree,point)<=radius+(cannon?TREE_RADIUS:0));if(band)damageTree(s,p,i,p.damage*band[1]);}
+    for(const v of s.units)if(v.hp>0&&(!cannon||v.id!==p.source)&&!isFlying(v)&&canAttack(p,v)){const band=cannon?cannonSplashBand(v,point,attackCollision(v)):bands.find(([radius])=>distance(v,point)<=radius);if(band)damage(s,attacker,v,weaponDamage(p,v,p.damage*band[1],s),'splash',undefined,p);}
+    for(let i=0;i<s.resources.length;i++){const tree=s.resources[i];if(tree.kind!=='tree'||tree.amount<=0)continue;const band=cannon?cannonSplashBand(tree,point,TREE_RADIUS):bands.find(([radius])=>distance(tree,point)<=radius);if(band)damageTree(s,p,i,p.damage*band[1]);}
+  }
+  function cannonSplashBand(target,point,collision){
+    const bands=cannonTowerRules.weapons[0].splashBands,d=(target.x-point.x)**2+(target.z-point.z)**2;
+    if(d>(bands[2][0]+collision)**2)return;
+    // Game.dll 03fe90 bounds the candidates; 03e260 adds tolerance only to the inner bands.
+    return bands.find(([radius])=>d<=(radius+collision)**2||Math.abs(d-(radius+collision)**2)<.0001024);
   }
   function glaiveImpact(s,p,point,attacker,target,direct){
     const type=unitType(p),weights=new Map();for(const v of s.units)if((type.splashEnemiesOnly===false||v.team!==p.team)&&v.hp>0&&(!isFlying(v)||phoenixUnit(p)||demonHunterUnit(p))&&(!chimaeraUnit(p)||types[v.kind].speed>0)&&canAttack(p,v)){const band=type.splashBands.find(([radius])=>distance(v,point)<=radius);if(band)weights.set(v,band[1]);}

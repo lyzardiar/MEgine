@@ -12,7 +12,7 @@ Author: MiYu
 
 | 武器 | 目标与行为 |
 | --- | --- |
-| 第一武器 `artillery` | 地面炮击，飞向发射时锁定的地面位置。全伤半径50、半伤100、十分之一伤害125；碰撞半径参与分档。伤及友军、树木和附近建筑，排除发射塔自身。支持攻击地面和攻击树木。 |
+| 第一武器 `artillery` | 地面炮击，飞向发射时锁定的地面位置。全伤半径50、半伤100、十分之一伤害125；碰撞半径参与分档，内圈带原版距离平方容差，最外圈严格截断。伤及友军、树木和附近建筑，排除发射塔自身。支持攻击地面和攻击树木。 |
 | 第二武器 `missile` | 直接攻击建筑，跟踪目标，只结算目标伤害。 |
 
 飞行中保存武器槽、原始伤害、端点、弧线和来源。发射塔死亡后已发出的炮弹继续结算；敌方快照隐藏升级进度，公开炮弹不携带私有伤害预算和武器槽。
@@ -32,14 +32,16 @@ Author: MiYu
 
 ## REA证据与验证
 
-Game.dll SHA-256为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。6组REA探针定位 `CArtillery` 虚表、双槽溅射字段、炮击端点和伤害分档：
+Game.dll SHA-256为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。9组REA探针定位 `CArtillery` 虚表、双槽溅射字段、炮击端点、候选筛选和伤害分档：
 
 - `0x6f6b4860` 返回类名，构造函数 `0x6f5566d0` 安装虚表 `0x6fa054e8`。
 - `0x6f693ca0`、`0x6f694010` 读取每槽 `splashTargs/Farea/Harea`。
 - `0x6f6b4de0` 装载范围和倍率；`0x6f6b8d10` 选择全伤／半伤／外圈倍率。
 - `0x6f03e260` 执行碰撞圆重叠判断；`0x6f6b57d0` 查询炮击端点的地形高度。
+- `0x6f6b4be0` 选择外圈半径，经 `0x6f633a40 → 0x6f02f3c0 → 0x6f042050 → 0x6f03fc80` 枚举候选；`0x6f03fe90` 按身体半径及当前位置执行严格的距离平方比较。`0x6f6afe00` 调用资格检查及分档虚方法。
+- 全伤、半伤重叠检测的原版距离平方容差为0.001（坐标除32后的内部单位），对应引擎0.0001024。最外圈不使用此容差；单位、建筑和树木共用炮塔分档函数。
 
-CPU探针执行原版分档和重叠指令，覆盖21组不同碰撞半径与距离。对象句柄、位置插值和最终伤害回调由夹具提供；最外层目标枚举、完整目标掩码、非圆形建筑寻路轮廓、精确浮点边界及原游戏完整运行尚未对照。引擎沿用现有共享护甲算法；这些验证不代表整款游戏已经完成1:1复刻。
+CPU探针执行112个原版指令用例：28个分档用例，以及84个串联外圈候选距离过滤、回调分发与内圈分档的边界用例，覆盖碰撞0／32／72／80、轴向和斜向偏移。空间候选、对象句柄、位置插值、目标资格和最终伤害回调由夹具提供；空间索引构造、完整目标掩码、非圆形建筑寻路轮廓及原游戏完整运行尚未对照。JavaScript使用双精度，尚不保证所有恰好相切位置与原版单精度舍入逐位一致。引擎沿用现有共享护甲算法；这些验证不代表整款游戏已经完成1:1复刻。
 
 ```powershell
 python scripts/import-frost-cannon-tower.py --pose-probe D:/MEngineNativeQA/attachment-build/release/examples/gltf_bounds.exe --metadata-reader E:/work/codex/worktrees/1339/MEgine/tmp/warcraft-effects/node-metadata/NodeMetadata.dll
@@ -58,8 +60,8 @@ node scripts/qa-frost-cannon-tower.mjs
 node scripts/test-frostbound.mjs
 ```
 
-资源摘要与无安装逐字节重建、修改保护、6组规则、3组生成客户端、真实TCP及3组原生验收通过。原生检查覆盖完整升级、源身体和炮弹、曲线、保存续飞、建筑单体攻击、友军半伤溅射；控制台错误0，专用编辑器正常退出。WebView缓存因EPERM保留。源码生成、样例与原生验收的Main.js SHA-256一致：`b18378cb0e72c5ea50599149a27598c3d230f1bc963c303ba10aff8eba71d36f`。
+资源摘要与无安装逐字节重建、修改保护、7组规则、4组生成客户端、2组真实TCP及6项原生检查通过。规则测试新增63个单位／建筑／树木边界和保存续飞对照；客户端、TCP和原生编辑器均检验全伤、半伤的容差边界与外圈排除。原生检查还覆盖完整升级、源身体和炮弹、曲线、保存续飞、建筑单体攻击和友军半伤溅射；控制台错误0，专用编辑器正常退出。WebView缓存因EPERM保留。源码生成、样例与原生验收的Main.js SHA-256一致：`407cc0b6ef597787e3d3ae5e4a345526fbcfda35e5f51dfb770c665134e076ea`。
 
-临时证据统一位于 `tmp/docs-artifacts/frost-cannon-tower/`，不提交运行截图或诊断JSON。
+REA及原生原始证据位于 `tmp/docs-artifacts/frost-cannon-tower/`，本阶段边界CPU、旧提交负对照、回归日志与摘要汇总位于 `tmp/docs-artifacts/frost-cannon-boundary/`，不提交运行截图或诊断JSON。
 
-最终源码完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共751条PASS记录，包含24,000帧AI验证。日志为 `tmp/docs-artifacts/frost-cannon-tower/regression-complete.log`，摘要验证为 `index-verification.json`。
+最终源码完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共754条PASS记录，包含24,000帧AI验证。日志为 `tmp/docs-artifacts/frost-cannon-boundary/regression.log`，摘要验证为 `verification.json`。

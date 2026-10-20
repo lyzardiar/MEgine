@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
-import {cannonTowerFixture} from './frost-cannon-tower-fixture.mjs';
+import {cannonTowerFixture,cannonBoundaryFixture} from './frost-cannon-tower-fixture.mjs';
 import {clientWorldFixture} from './frost-client-world-fixture.mjs';
 import {nativeQaRoot,configureNativeQa,closeNativeQa,removeNativeQaFixture} from './frost-native-qa-runtime.mjs';
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),root=path.join(nativeQaRoot,'cannon-tower-'+Date.now()),sample=path.join(root,'sample'),out=path.join(repo,'tmp/docs-artifacts','frost-cannon-tower'),S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
@@ -25,6 +25,11 @@ let playbackStarted=false;
 try{
  console.log('START native Cannon Tower QA');for(let attempt=0;;attempt++){try{await query('project.state');break;}catch(e){if(attempt>=20||!/Workspace services are not ready|BridgeConnectionError|request timed out/.test(e.message))throw e;await new Promise(r=>setTimeout(r,500));}}
  await execute('project.open',{root:sample});await execute('playback.play',{paused:true});playbackStarted=true;await step(2);
+ for(const radius of [50,100,125]){
+  const f=cannonBoundaryFixture(S,{radius}),hp=f.victim.hp;await load(f.s);await step(15);const saved=await save();near(hp-saved.units.find(u=>u.id===f.victim.id).hp,f.expected);
+  report.checks.push({splashRadius:radius,innerTolerance:radius<125,strictOuterCutoff:radius===125,actualDamage:f.expected});
+ }
+ console.log('PASS native Cannon inner splash tolerance and strict outer cutoff after saved-flight load');
  {
   const f=cannonTowerFixture(S,{upgrade:true});await load(f.s);await worldClick(f.tower.x,f.tower.z);await key('KeyC');let saved=await save(),tower=saved.units.find(u=>u.id===f.tower.id);
   assert.equal(tower.guardTowerUpgrade.left,75);assert.deepEqual([saved.teams[0].gold,saved.teams[0].wood],[9830,9900]);

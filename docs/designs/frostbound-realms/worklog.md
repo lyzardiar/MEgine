@@ -420,3 +420,11 @@ REA的8组证据追踪Feedback字段、原版弹丸、实际扣蓝到伤害包�
 Main生成、暂存及原生验收摘要为`b18378cb0e72c5ea50599149a27598c3d230f1bc963c303ba10aff8eba71d36f`。原版外层目标枚举、完整目标掩码、非圆形建筑轮廓、浮点边界和完整原游戏运行仍需对照；奥术塔分支继续推进。维护入口：[炮塔](cannon-tower.md)；证据：`tmp/docs-artifacts/frost-cannon-tower/`。
 
 最终源码完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共751条PASS记录，包含24,000帧AI验证。日志为 `tmp/docs-artifacts/frost-cannon-tower/regression-complete.log`，摘要验证为 `index-verification.json`。
+
+## 2026-10-21：炮塔溅射边界
+
+REA确认外圈候选使用严格碰撞圆距离平方比较，内圈全伤、半伤重叠检查带0.001内部单位容差，对应引擎0.0001024。炮塔单位、建筑及树木共用分档函数，保留外圈严格截断。9组静态探针与112个原DLL CPU用例验证调用链及算术；63个游戏边界覆盖存档续飞，生成客户端、真实TCP和原生编辑器均验证全伤／半伤边界及外圈排除。
+
+原生6项检查通过、控制台错误0、专用编辑器正常退出；WebView缓存因EPERM保留。Main生成、样例与原生验收摘要为`407cc0b6ef597787e3d3ae5e4a345526fbcfda35e5f51dfb770c665134e076ea`。空间索引构造、完整目标掩码、所有精确相切位置的单精度舍入及完整原版运行尚未验证。维护入口：[炮塔](cannon-tower.md)；本阶段证据：`tmp/docs-artifacts/frost-cannon-boundary/`。
+
+完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共754条PASS记录，包含24,000帧AI验证；日志为本阶段证据目录的 `regression.log`。

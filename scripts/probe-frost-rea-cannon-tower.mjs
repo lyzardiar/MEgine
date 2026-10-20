@@ -18,6 +18,9 @@ const probes=[
  ['artillery-band-selection','pd 130 @ 0x6f6b8d10',['0x6f03e260','esi + 0xb8','esi + 0xc0','esi + 0xa8','esi + 0xc8','esi + 0xb0','0x6f6b1500']],
  ['artillery-ground-endpoint','pd 36 @ 0x6f6b57d0',['ebx + 4','0x6f76fab0','edi + 0x78','0x6f773840']],
  ['artillery-collision','pd 99 @ 0x6f03e260',['esi + 0x90','0x6f0529d0','0x6f0527e0','0x6f03ebf0','0x6f053660','0x6fb59398']],
+ ['artillery-outer-query','af @ 0x6f6b4be0;pdf @ 0x6f6b4be0;pd 24 @ 0x6f633d10;af @ 0x6f02f3c0;pdf @ 0x6f02f3c0;af @ 0x6f042050;pdf @ 0x6f042050',['0x6f6afe00','push  0x25','0x6f633a40','0x6f02f3c0','0x6f042050','0x6f03fc80']],
+ ['artillery-outer-distance','pd 42 @ 0x6f03fe90',['ebx + 0x78','ebx + 0x7c','ebx + 0x90','0x6f053660','0x6f0529d0','0x6f0527e0','comiss','ja    0x6f03fefe']],
+ ['artillery-candidate-dispatch','pd 22 @ 0x6f6afe00;af @ 0x6f6b0170;pdf @ 0x6f6b0170',['eax + 0xcc','edx + 0xd0','0x6f695270','0x6f6952b0','0x6f68abb0']],
 ];
 const client=new Client({name:'frostbound-cannon-tower-research',version:'1.0.0'}),reports=[];
 fs.mkdirSync(out,{recursive:true});
@@ -37,5 +40,5 @@ try{
   reports.push({name,evidenceId:evidence.evidence_id,stdoutSha256:digest(r.stdout),markers});
   console.log('PASS REA Cannon Tower '+name);
  }
- fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence binds artillery identity, per-slot splash data, damage bands and collision overlap. Full original runtime, target enumeration and target-mask filtering are not exercised.']},null,2)+'\n');
+ fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence binds artillery identity, per-slot splash data, damage bands, collision overlap, outer candidate filtering and eligibility dispatch. Full original runtime, spatial-index construction and complete target-mask behavior are not exercised.']},null,2)+'\n');
 }finally{await client.close();}

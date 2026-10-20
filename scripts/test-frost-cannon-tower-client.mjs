@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {clientWorldFixture} from './frost-client-world-fixture.mjs';
 import {nativeNodeQueries} from './frost-native-node-fixture.mjs';
-import {cannonTowerFixture} from './frost-cannon-tower-fixture.mjs';
+import {cannonTowerFixture,cannonBoundaryFixture} from './frost-cannon-tower-fixture.mjs';
 const root=new URL('../samples/frostbound-realms/',import.meta.url),world=clientWorldFixture(JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world),storage=new Map(),copy=o=>JSON.parse(JSON.stringify(o));
 const engine=Object.assign(world.engine,{network:{poll:()=>[],close(){},send(){}},storage:{load:k=>storage.has(k)?copy(storage.get(k)):null,save:(k,v)=>storage.set(k,copy(v))},playAudio(){},assets:nativeNodeQueries()}),context=vm.createContext({engine});vm.runInContext(fs.readFileSync(new URL('Assets/Scripts/Main.js',root),'utf8'),context);vm.runInContext('const towerRestore=Frost.restore;Frost.restore=raw=>{globalThis.towerState=towerRestore(raw);return towerState;};',context);
 const S=context.Frost,V=context.FrostVisual,component=(name,c)=>world.entity(name).components[c],telemetry=()=>JSON.parse(component('Frost telemetry','Text').text),near=(a,b)=>assert.ok(Math.abs(a-b)<.001,`${a} != ${b}`);
@@ -13,6 +13,10 @@ const key=k=>{tick({keys:[k],pressedKeys:[k]});tick();},click=p=>{tick({pointer:
 function load(s){storage.set('quicksave',copy(s));if(telemetry().mode==='title')key('F1');if(!telemetry().paused)key('F10');click([640,388]);assert.equal(telemetry().mode,'playing');return context.towerState;}
 
 tick();
+for(const radius of [50,100,125]){
+ const f=cannonBoundaryFixture(S,{radius}),hp=f.victim.hp;load(f.s);step(15);near(hp-context.towerState.units.find(u=>u.id===f.victim.id).hp,f.expected);
+}
+console.log('PASS generated Cannon inner splash tolerance and outer cutoff after saved-flight load');
 {
  const f=cannonTowerFixture(S,{upgrade:true});let s=load(f.s),u=s.units.find(v=>v.id===f.tower.id);click(point(u));
  assert.equal(component('action7 icon','Image').sprite,S.cannonTowerRules.unit.icon);
