@@ -461,3 +461,12 @@ REA确认外圈候选使用严格碰撞圆距离平方比较，内圈全伤、�
 生成、样例及原生验收Main摘要为 `ed907f429fdb2a9f13d9da68b5f61825c100fa0073ca2f692adb8052184294ad`。原有3804个场景实体保持不变，追加1个特效模板。原版完整战斗、全部免疫／目标掩码组合、float32相切边界、Detector特殊状态标志和原引擎动画槽分发仍需对照。维护入口：[飞行机器](flying-machine.md)；证据：`tmp/docs-artifacts/frost-flying-machine/`。
 
 完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共776条PASS记录，包含24,000帧AI验证。日志为 `tmp/docs-artifacts/frost-flying-machine/regression-release.log`；最终摘要核对见 `release-verification.json`。
+
+
+## 2026-10-21：攻城坦克原件、资产与弹幕证据
+
+保留hmtt/hrtt两形态源表、Rhrt研究、Srtt换型和Aroc弹幕字段，以及补丁档案中的WarWagon_V1机身、头像、原透视摄影机、普通／alternate动作、炮击和火箭特效。329项源输出支持无游戏安装的逐字节重建，两个导入器都在写入前拒绝覆盖修改产物。上游GitHub地址、固定版本、转换器及全部原件摘要随收据保留。
+
+11组REA探针与16个原DLL CPU用例确认弹幕仅响应普通missile，instant建筑攻击不触发；DataC9允许10个额外目标，主目标另行发射。额外火箭沿用本次攻击伤害，DataA25不进入此路径；预算按完整每发扣减，末发可超过剩余预算。虚表起点、武器分派、目标排除及运算路径均可复现。外部空间候选、能力状态和发射回调由测试提供，未据此宣称完整原游戏运行。
+
+原生独立预览18项通过，涵盖15个机身动作、2种原摄影机头像及攻击效果；255项运行资产摘要匹配，控制台／材质错误0。专用编辑器正常退出，WebView缓存因EPERM保留。主游戏车间生产、研究换型及双武器／弹幕战斗接入继续推进，当前协议117不变。维护入口：[攻城坦克](siege-engine.md)；本地证据：`tmp/docs-artifacts/frost-siege-engine/`。

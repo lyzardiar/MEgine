@@ -1,0 +1,1 @@
+Warcraft III Frozen Throne Siege Engine body, portrait, rules and command textures: Blizzard Entertainment original game asset terms apply. Original archive identities, hashes and converter dependencies: siege-engine-sources.json. REA upstream: https://github.com/morluto/rea.

@@ -108,3 +108,5 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 人族塔升级入口复用源 `Upgrade` 列表和 REA 字段读取证据；遭遇战源塔、塔防和旧存档的行为及复核命令见 [人族塔升级说明](../../docs/designs/frostbound-realms/human-tower-upgrades.md)。
 
 飞行机器接入人族车间生产、炸弹／高射炮火研究、真实视域、铁匠铺升级及双武器战斗，使用保留的资料片模型、头像和攻击特效。`node scripts/probe-frost-rea-flying-machine.mjs` 以六组静态探针复核技能身份、三档碰撞范围、主目标排除及伤害描述传递；资产来源、重建、玩法验证和原版对照限制见 [飞行机器维护说明](../../docs/designs/frostbound-realms/flying-machine.md)。
+
+攻城坦克的普通／升级形态、弹幕研究、原模型、头像与攻击特效保存在独立来源收据中。`node scripts/probe-frost-rea-siege-engine.mjs` 复核 Aroc、Acha、rtma 的原DLL身份和分发路径；离线重建、原生资产预览及后续玩法接入边界见 [攻城坦克维护说明](../../docs/designs/frostbound-realms/siege-engine.md)。
