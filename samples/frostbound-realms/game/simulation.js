@@ -2713,7 +2713,7 @@ var Frost = (() => {
   function stepTick(s){
     for(const u of s.units)if(u.heroDeath){u.heroDeath.age+=DT;if(u.heroDeath.age>=heroDeathDuration(s,u))delete u.heroDeath;}
     for(const r of s.resources)if(r.felled)r.felled.age=Math.min(TREE_FALL_LIFETIME,(Math.round(r.felled.age/DT)+1)*DT);
-    s.corpses=s.corpses.filter(c=>{if(s.winner!==null||!s.units.some(u=>u.hp>0&&!u.inside&&u.order?.type==='cannibalize'&&u.order.active&&u.order.target===c.id))c.age+=DT;return c.age<corpseDuration(s,c);});
+    s.corpses=s.corpses.filter(c=>{if(s.winner!==null||!s.units.some(u=>u.hp>0&&!u.inside&&u.order?.type==='cannibalize'&&u.order.active&&u.order.target===c.id))c.age+=DT;return c.age+1e-8<corpseDuration(s,c);});
     if(s.winner!==null)return;simulating.add(s);const night=isNight(s);s.frame++;updateDevotion(s);s.events=s.pendingEvents||[];s.pendingEvents=[];if(night!==isNight(s))visibility(s);
     updateTechnology(s);updateShops(s);tickFlameStrikes(s);tickShockwaves(s);tickCarrionSwarms(s);tickImpales(s);tickInfernos(s);tickLocustSwarms(s);refreshEndurance(s);refreshUnholy(s);s.healingWaves=s.healingWaves.filter(c=>s.frame-c.frame<Math.round(Number(shadowhunterRules.lightning.HWPB.Duration)/DT));
     if(s.mode==='moba'&&s.frame>=s.nextWave&&spawnLaneWave(s)){s.wave++;s.nextWave=s.frame+Math.round(s.map.waveInterval/DT);}

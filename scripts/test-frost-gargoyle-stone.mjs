@@ -1,7 +1,7 @@
 // Author: MiYu. Stone Form paid research, original bodies, immunity, regeneration and durable transitions.
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {gargoyleStoneClientFixture} from './frost-gargoyle-stone-client-fixture.mjs';
+import {gargoyleStoneClientFixture,gargoyleStoneDeathFixture} from './frost-gargoyle-stone-client-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),fixture=options=>gargoyleStoneClientFixture(S,options),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`),order=(s,u,type,extra={})=>S.command(s,u.team,{type,ids:[u.id],...extra});
 const finish=(s,u)=>{for(let i=0;u.stoneShift&&i<100;i++)S.tick(s);assert.equal(u.stoneShift,undefined);},ready=(s,u)=>step(s,Math.ceil((u.stoneCd||0)/S.DT)+1);
 assert.equal(S.PROTOCOL,113);
@@ -12,6 +12,15 @@ assert.equal(S.PROTOCOL,113);
  console.log('PASS Stone Form original Graveyard/Black Citadel gates, 75/150 debit/refund, duplicate queue rejection, full 40s and saved continuation');
 }
 if(process.argv.includes('--research-only'))process.exit(0);
+{
+ for(const phase of ['stone','flying','entering','leaving']){
+  const {s,unit,corpse:c}=gargoyleStoneDeathFixture(S,phase),source=phase==='stone'?'ugrm':'ugar',duration=phase==='stone'?1:2.5;
+  assert.equal(unit.hp,0);assert.equal(c.sourceUnit,source,phase);assert.equal(S.corpseDuration(s,c),duration);assert.equal(S.corpseUsable(c,s),false);assert.equal(S.publicState(s,0).corpses.find(v=>v.id===c.id).sourceUnit,source);assert.equal(S.publicState(s,1).corpses.find(v=>v.id===c.id).sourceUnit,source);
+  const restored=S.restore(s);step(s,Math.round((duration-c.age)/S.DT)-1);step(restored,Math.round((duration-restored.corpses[0].age)/S.DT)-1);assert.ok(s.corpses.some(v=>v.id===c.id));assert.deepEqual(s,restored);step(s,1);step(restored,1);assert.ok(!s.corpses.some(v=>v.id===c.id));assert.deepEqual(s,restored);
+ }
+ const {s,corpse}=gargoyleStoneDeathFixture(S),wrongKind=S.clone(s);wrongKind.corpses[0].kind='ghoul';assert.throws(()=>S.restore(wrongKind),/corpse/);const disabled=S.clone(s);disabled.gargoyleStoneVersion=0;for(const t of disabled.teams)t.gargoyleStoneResearch=0;assert.throws(()=>S.restore(disabled),/corpse/);const expired=S.clone(s);expired.corpses[0].age=1;assert.throws(()=>S.restore(expired),/corpse/);assert.equal(corpse.sourceUnit,'ugrm');
+ console.log('PASS actual physical death in four Stone phases: source body, exact lifetime, public views, deterministic save/expiry and invalid corpse rejection');
+}
 {
  const {s,unit:u}=fixture({researched:true});u.hp=100;assert.equal(order(s,u,'stoneform'),null);assert.equal(u.stoneCd,undefined);step(s,5);near(S.flightHeight(s,u),0);near(u.armorValue,3);assert.equal(S.gargoyleStone(u),false);step(s,4);near(u.hp,100);S.tick(s);assert.equal(S.gargoyleStone(u),true);near(u.hp,100);near(u.armorValue,15);assert.equal(order(s,u,'unstoneform'),null);assert.equal(u.stoneCd,30);assert.equal(S.gargoyleStone(u),false);near(u.armorValue,3);step(s,5);assert.equal(u.stoneShift,undefined);near(S.flightHeight(s,u),0);step(s,2);near(S.flightHeight(s,u),0);S.tick(s);near(S.flightHeight(s,u),.48);step(s,4);near(S.flightHeight(s,u),2.4);assert.equal(u.stoneFlight,undefined);near(u.hp,100);assert.ok(S.restore(s));
  console.log('PASS REA Stone timeline: 1s enter commit, immediate exit body/CD, .5s exit lock and independent .7–1.2s ascent');

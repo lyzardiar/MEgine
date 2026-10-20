@@ -4,3 +4,11 @@ export function gargoyleStoneClientFixture(S,{researched=false,tier=3,...options
  const base=S.spawn(s,'hall',0,-24,24),enemy=S.spawn(s,'hall',1,24,-24);base.upgradeTier=tier;base.maxHp=base.hp=S.mainBase(s,base).hp;S.updateTechnology(s);s.teams[0].gold=s.teams[0].wood=10000;if(researched)s.teams[0].gargoyleStoneResearch=1;
  const producer=S.spawn(s,'barracks',0,-8,-5),graveyard=S.spawn(s,'graveyard',0,-16,-5),unit=S.spawn(s,'gargoyle',0,0,-6,{cd:99,yaw:.9,order:{type:'hold'}});s.units=[unit,producer,graveyard,base,enemy];S.visibility(s);return {s,producer,unit,base,graveyard};
 }
+export function gargoyleStoneDeathFixture(S,phase='stone'){
+ const f=gargoyleStoneClientFixture(S,{researched:true}),{s,unit}=f;
+ if(phase!=='flying'){S.command(s,0,{type:'stoneform',ids:[unit.id]});for(let i=0;i<(phase==='entering'?2:10);i++)S.tick(s);}
+ if(phase==='leaving')S.command(s,0,{type:'unstoneform',ids:[unit.id]});
+ const attacker=S.spawn(s,'humanrifleman',1,unit.x+.5,unit.z,{cd:99,order:{type:'hold'}});unit.hp=1;S.visibility(s);if(!S.fire(s,attacker,unit))throw Error('Stone death fixture physical attack failed');
+ for(let i=0;unit.hp>0&&i<10;i++)S.tick(s);
+ const corpse=s.corpses.find(c=>c.id===unit.id);if(!corpse)throw Error('Stone death fixture did not create a corpse');return {...f,corpse};
+}
