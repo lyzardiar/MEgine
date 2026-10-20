@@ -15,4 +15,11 @@ try{
  const observed=(await wait(b,state=>state.projectiles.some(p=>p.art==='guard-tower'))).state;assert.equal(observed.projectiles.find(p=>p.art==='guard-tower').art,'guard-tower');
  const closed=new Promise(resolve=>a.socket.once('close',resolve));a.socket.destroy();await closed;a=await peer();next=a.next(m=>m.type==='joined');a.send({type:'resume',code:joined.code,token:joined.token});const resumed=(await next).state;assert.equal(unit(resumed,tower.id).guardTowerRules,1);assert.equal(unit(resumed,tower.id).damage,25);assert.ok(S.restore(s));
  await wait(a,state=>unit(state,target.id)?.hp<target.maxHp);console.log('PASS TCP Guard Tower ownership, full upgrade/payment, source projectile on both clients, reconnect and actual damage');
+ for(const [x,shots] of [[8.5,1],[10.5,0]]){
+  const f=guardTowerFixture(S);S.tick(f.s);f.target.x=x;S.visibility(f.s);const hp=f.target.hp;app.rooms.get(joined.code).state=S.restore(f.s);
+  const [owner,opponent]=await Promise.all([wait(a,state=>state.frame>=4&&unit(state,f.target.id)?.x===x),wait(b,state=>state.frame>=4&&unit(state,f.target.id)?.x===x)]);const current=app.rooms.get(joined.code).state;assert.equal(current.projectileSerial,shots);assert.equal(current.units.find(u=>u.id===f.tower.id).weaponWindup,undefined);
+  for(const m of [owner,opponent]){assert.equal(m.state.projectiles.filter(p=>p.art==='guard-tower').length,shots);assert.ok(m.state.projectiles.every(p=>p.damage===undefined&&p.guardTowerRules===undefined));}
+  if(shots)await wait(a,state=>unit(state,f.target.id)?.hp<hp);console.log('PASS TCP Guard release range '+x+': both clients observe expected shots '+shots);
+ }
+ {const f=guardTowerFixture(S);S.tick(f.s);f.target.x=8.25;S.visibility(f.s);app.rooms.get(joined.code).state=S.restore(f.s);const stopped=wait(a,state=>state.frame>=4&&unit(state,f.target.id)?.x===8.25);a.order({type:'stop',ids:[f.tower.id]});await stopped;const current=app.rooms.get(joined.code).state;assert.equal(current.projectileSerial,0);assert.equal(unit(current,f.tower.id).weaponWindup,undefined);console.log('PASS TCP Guard Stop cancels buffered windup');}
 }finally{for(const socket of sockets)socket.destroy();await app.close();}

@@ -293,3 +293,4 @@ samples/frostbound-realms/Assets/Licenses/Classic-Gargoyle-Stone.txt text eol=lf
 samples/frostbound-realms/gargoyle-stone*.json text eol=lf
 scripts/*gargoyle-stone*.* text eol=lf
 scripts/probe-frost-rea-stone.mjs text eol=lf
+scripts/import-frost-guard-tower.py text eol=lf

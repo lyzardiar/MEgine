@@ -8,6 +8,7 @@
 |---|---|
 | 武器 | 一套 missile / pierce；基础22，1颗5面骰，伤害23–27 |
 | 射程 / 索敌 | 700 / 700，即世界距离7 / 7 |
+| 发射距离缓冲 | RngBuff1=250，即世界距离2.5；用于已开始攻击的出手检查 |
 | 攻击间隔 | 0.9秒 |
 | 前摇 / 后摇字段 | 0.3 / 0.3秒 |
 | 目标列表 | ground、structure、debris、air、item、ward |
@@ -29,7 +30,13 @@
 - `weapon-fields`：验证 Missilearc、Missilespeed、dmgpt1、backSw1 以及 `0x6fa51090` 附近字段指针表。
 - `unit-weapon-loader`：`0x6f693ad8` 起的装载代码读取 acquire、launchX/Y/Z、impactZ 并调用 `0x6f689500`。
 
-这些探针证明本机字段及装载依据。原版箭矢求解器、目标优先级、碰撞边界、音效和实际逐帧时序尚未运行对照；当前弧线复用引擎已有求解流程。原版列表中的物品、残骸等尚未全部具有可攻击的游戏对象，不将地空单位验收推广到全部目标类别。完整游戏复刻继续进行。
+- `range-buffer-source/cache/repack/install`：`RngBuff` 两个武器槽由行结构 `+0x734+slot*12` 经缓存 `+0x108+slot*4`、单位参数 `+0xa8+slot*4`、攻击初始化参数 `+0x28+slot*0x68` 安装到攻击能力的 `+0x26c+slot*8` 值字段。`0x6f6532be` 的参数基址是 `ebp-0x1b0`；`0x6f653b26` 将该数组的 `ebp+slot*4-0x108` 复制到打包结构。
+- `range-buffer-release`：攻击回调 `0x6f47ce80` 调用 `0x6f476f80`；`0x6f47708c` 取当前武器距离，`0x6f4770ae` 读取对应缓冲，`0x6f4770c4` 相加后调用 `0x6f03e3a0` 做距离检查。
+- `range-start-check`：开始/继续攻击检查读取正常攻击距离（`+0x258+slot*8`），与出手检查分开。
+
+防御塔在前摇期间保留已选目标；出手时使用普通射程加源缓冲检查距离。目标可以在前摇内退远后返回；出手时仍超出缓冲则取消这一箭。新目标索敌与新一轮前摇使用普通距离，缓冲不扩大索敌范围。停止或切换攻击目标的命令清除旧前摇，死亡、不可攻击或不可见目标仍按共享目标规则取消；中途保存恢复保留同一目标和计时。该修正沿用协议114和现有存档/公开字段。
+
+这些探针证明本机字段及上述静态调用链。原版箭矢求解器、目标优先级、碰撞边界、音效和实际逐帧时序尚未运行对照；当前弧线复用引擎已有求解流程。原版列表中的物品、残骸等尚未全部具有可攻击的游戏对象，不将地空单位验收推广到全部目标类别。完整游戏复刻继续进行。
 
 ## 复现与验证
 
@@ -39,6 +46,7 @@ python scripts/test-frost-guard-tower-source.py
 node scripts/probe-frost-rea-guard-tower.mjs
 node scripts/build-frostbound.mjs
 node scripts/test-frost-guard-tower.mjs
+node scripts/test-frost-guard-range.mjs
 node scripts/test-frost-guard-tower-client.mjs
 node scripts/test-frost-guard-tower-network.mjs
 $env:MENGINE_EDITOR_EXECUTABLE='D:/MEngineNativeQA/engine-main-sync/target/release/mengine-editor-tauri.exe'
@@ -47,8 +55,8 @@ node scripts/qa-frost-guard-tower.mjs
 
 导入器支持 `--source-sample`、`--game`、`--output`、`--library`。已有来源时优先读取保留原件；无需原游戏安装，但转换仍需对应资产库和上述工具。修改过的输出会在写入前被拒绝。21项输出、4份原件及生成器摘要通过；无安装重建逐字节一致，输出被修改时验证拒绝且内容保持不变。
 
-玩法4组、生成客户端2组、实际TCP1组、REA2组、原生2组通过。原生覆盖G键付款与完整50秒升级、末帧前读档、伤害面板、地空目标的原版箭矢、在途保存恢复和实际命中；地面目标额外连续运行90帧、至少10次发射；控制台错误0。原生测试 Main.js SHA-256为 `4dfe9d15ee2bf2b890ad8941f00d81afbafe2faf5eea485b8a172a91e2ccfbc0`，与测试副本一致。原生进程正常退出，runtime缓存因EPERM保留。日志、截图和结果均位于 `tmp/docs-artifacts/frost-guard-tower/`。
+玩法4组、距离缓冲4组、生成客户端5组、实际TCP4组、REA8组、原生5组通过。原生覆盖G键付款与完整50秒升级、末帧前读档、伤害面板、地空目标的原版箭矢、在途保存恢复和实际命中；地面目标额外连续运行90帧、至少10次发射；原生还覆盖读取前摇存档后目标位于8.5和10.5处的发射/取消，以及原版箭矢显示、S键取消；控制台错误0。原生测试 Main.js SHA-256为 `549ca995628ceba6d2e17dddfd92959ed31d5fc6e823801056cb6906d5a6af93`，与测试副本一致。原生进程正常退出，runtime缓存因EPERM保留。日志、截图和结果均位于 `tmp/docs-artifacts/frost-guard-tower/`。
 
 通用命中特效池与客户端环形索引统一为24槽，生成场景增加FX8–23。相对HEAD核验原有3784个实体内容、引用目标及相对排列未变；当前场景3800实体。特效池客户端16项、场景池、暗影猎手、地穴领主和战争古树生成客户端检查通过。
 
-主回归除已单独通过的24,000帧暗夜AI经济项外完整运行，退出码0、709条PASS记录；AI结果保留在 `ai-economy.json`。运行器与主入口的唯一差异是省略该AI导入。
+主回归 `node scripts/test-frostbound.mjs` 完整运行，含24,000帧暗夜AI，退出码0、718条PASS记录。该运行载入缓冲实现后补充了换目标取消分支；该最终分支单独通过距离缓冲测试，最终生成客户端、真实TCP和原生包也已复验。导入器固定LF，21项已签名输出、全部生成器及原生Main摘要与Git暂存内容一致。日志见 `range-regression.log`、`range-rea.log`、`range-native.log` 和 `range-index-verification.json`。

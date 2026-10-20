@@ -1483,6 +1483,7 @@ var Frost = (() => {
         if(c.type==='attack'&&!canTarget(s,v,target))return;
         const next=c.type==='stop'?null:{type:c.type,x:slots?.get(v.id)?.[0]??0,z:slots?.get(v.id)?.[1]??0,...(c.type==='attack'?{target:c.target}:c.type==='gather'?{resource:c.resource}:c.type==='patrol'?{fromX:clamp(v.x,-30,30),fromZ:clamp(v.z,-30,30)}:{})};
         if(c.append&&v.order){(v.waypoints??=[]).push(next);return;}
+        if(guardTowerUnit(v)&&(c.type==='stop'||c.type==='attack'&&v.weaponWindup?.target!==c.target))delete v.weaponWindup;
         if(c.type==='gather'&&acolyte(s,v)){const occupied=mineWorkers(s,s.resources[c.resource]).filter(w=>w.id!==v.id);next.mineSlot=[0,1,2,3,4].find(i=>!occupied.some(w=>w.order.mineSlot===i));}
         if(c.type==='gather'&&miningWisp(s,v)&&s.resources[c.resource].kind==='mine'){const occupied=wispWorkers(s,s.resources[c.resource]).filter(w=>w.id!==v.id);next.mineSlot=Array.from({length:entangledRules.capacity},(_,i)=>i).find(i=>!occupied.some(w=>w.order.mineSlot===i));}
         if(faerieUnit(v)){stopFlare(v);v.phaseLeft=0;}if(c.type==='stop')delete v.entangleCast;delete v.druidCastLeft;delete v.druidCastSpell;delete v.dryadCastLeft;
@@ -2516,7 +2517,7 @@ var Frost = (() => {
     const radius=unitType(u,target).range+(types[target.kind].radius||.3)-.12,spacing=Math.max(...group.map(movementRadius))*2+.1,count=Math.max(1,Math.min(group.length,Math.floor(Math.PI*2*radius/spacing))),slot=group.findIndex(v=>v.id===u.id),angle=slot%count*Math.PI*2/count-Math.PI/2,ring=radius+Math.floor(slot/count)*spacing,x=target.x+Math.cos(angle)*ring,z=target.z+Math.sin(angle)*ring;
     return Math.abs(x)<=30&&Math.abs(z)<=30&&(isFlying(u)||!solid(s,x,z,u.id,u.team)&&traversable(s.map,x,z,target.x,target.z))?{x,z}:null;
   }
-  function attackInRange(s,u,v){return distance(u,v)>=(unitType(u).minRange||0)&&(cryptUnit(u)&&unitType(u).flying||hippogryphUnit(u)||chimaeraUnit(u)||faerieUnit(u)?distance(u,v):Math.hypot(distance(u,v),unitHeight(s,u)-unitHeight(s,v)))<=attackRange(u,v)+(types[v.kind].radius||.3)&&attackClear(s,u,v);}
+  function attackInRange(s,u,v,buffer=0){return distance(u,v)>=(unitType(u).minRange||0)&&(cryptUnit(u)&&unitType(u).flying||hippogryphUnit(u)||chimaeraUnit(u)||faerieUnit(u)?distance(u,v):Math.hypot(distance(u,v),unitHeight(s,u)-unitHeight(s,v)))<=attackRange(u,v)+buffer+(types[v.kind].radius||.3)&&attackClear(s,u,v);}
   function leavesCorpse(kind,s,u){if(s?.corpseVersion===1&&kind!=='hero'&&types[kind]?.speed>0&&corpseSource(s,u))return true;return kind!=='hero'&&Object.hasOwn(types,kind)&&types[kind].speed>0&&types[kind].leavesCorpse!==false&&!types[kind].mechanical&&types[kind].attack!=='siege';}
   function damage(s,a,b,value,mode='attack',orb,weapon=a,rawAttackDamage=value,defendChecked=false,deflected=false){
     if(b.mobaProtected===true)return;
@@ -2809,12 +2810,13 @@ var Frost = (() => {
       if(u.entangleCast)continue;
       if(ancientWarRules.units[u.kind]&&isHidden(s,u)){delete u.weaponWindup;continue;}
       let target=u.order?.type==='attack'?s.units.find(v=>v.id===u.order.target&&canTarget(s,u,v)&&isVisible(s,u.team,v)):null;
+      if(guardTowerUnit(u)&&u.weaponWindup&&!target)target=s.units.find(v=>v.id===u.weaponWindup.target&&canTarget(s,u,v)&&isVisible(s,u.team,v));
       if(u.order?.type==='attack'&&!target){u.order=null;delete u.searingTarget;}
       if(!u.invisibility&&!u.windWalk&&u.order?.type!=='move'&&u.damage>0&&!target){if(tdTower(s,u))target=tdTarget(s,u);else{let best=Infinity;for(const v of s.units){if(v.team===u.team||v.hp<=0||v.kind==='critter'||asleep(s,v)||!canAttack(u,v)||distance(u,v)<(unitType(u).minRange||0)||(u.team>=0&&!isVisible(s,u.team,v))||u.order?.type==='hold'&&!attackInRange(s,u,v))continue;const d=distance(u,v);if(d<best&&(u.order?.type==='hold'||d<(workerCombat(u)||cryptUnit(u)||guardTowerUnit(u)?unitType(u).acquisition:Math.max(attackRange(u,v),8)))){target=v;best=d;}}}}
       if(target&&u.team===-1&&u.home)u.awakeUntil=s.frame+100;
-      if(u.weaponWindup&&(!target||target.id!==u.weaponWindup.target||cryptUnit(u)&&u.weaponWindup.weaponSlot!==(u.kind==='gargoyle'&&!isFlying(target)?2:1)||!attackInRange(s,u,target))){if(workerCombat(u))clearWorkerAttack(u);else delete u.weaponWindup;}
+      if(u.weaponWindup&&(!target||target.id!==u.weaponWindup.target||cryptUnit(u)&&u.weaponWindup.weaponSlot!==(u.kind==='gargoyle'&&!isFlying(target)?2:1)||!guardTowerUnit(u)&&!attackInRange(s,u,target))){if(workerCombat(u))clearWorkerAttack(u);else delete u.weaponWindup;}
       if(target){const range=attackRange(u,target)+(types[target.kind].radius||.3),inRange=attackInRange(s,u,target),slot=meleeSlot(s,u,target);
-        if(u.weaponWindup){u.weaponWindup.left=Math.max(0,u.weaponWindup.left-DT*attackRate(u));if(u.weaponWindup.left<1e-8&&fire(s,u,target))delete u.weaponWindup;}
+        if(u.weaponWindup){u.weaponWindup.left=Math.max(0,u.weaponWindup.left-DT*attackRate(u));if(u.weaponWindup.left<1e-8&&(guardTowerUnit(u)&&!attackInRange(s,u,target,guardTowerRules.weapon.rangeBuffer)||fire(s,u,target)))delete u.weaponWindup;}
         else if(inRange&&u.cd<=(guardTowerUnit(u)?1e-8:0)){const point=unitType(u,target).damagePoint;if(point){if(workerCombat(u))u.workerAttackActive=true;if(spiritwolf(u)&&u.wolfRank===3)u.wolfVisibleUntil=s.frame+20;revealInvisibility(s,u);u.weaponWindup={target:target.id,left:point,...(cryptUnit(u)?{weaponSlot:undeadWeapon(u,target)}:chimaeraUnit(u)?{weaponSlot:chimaeraWeapon(u,target)}:{})};u.cd=unitType(u,target).cooldown;u.yaw=Math.atan2(target.x-u.x,target.z-u.z);}else fire(s,u,target);}
         if(target.hp>0&&u.order?.type!=='hold'&&!(workerCombat(u)&&u.weaponWindup)){if(slot)move(s,u,slot.x,slot.z,.12);else if(!inRange)move(s,u,target.x,target.z,range*.98);}
       }

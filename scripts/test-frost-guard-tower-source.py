@@ -21,6 +21,7 @@ for record in receipt['generators']:
     assert sha((ROOT/record['path']).read_bytes()) == record['sha256'], record['path']
 rules = json.loads((SAMPLE/'guard-tower.json').read_bytes()); w = rules['weapon']
 assert [w[k] for k in ['damage','bonus','dice','sides','range','acquisition','cooldown','damagePoint','backswing','missileSpeed','missileArc']] == [25,22,1,5,7,7,.9,.3,.3,18,.15]
+assert w['rangeBuffer'] == float(w['sourceRow']['RngBuff1'])/100 == 2.5
 assert w['launch'] == [0,1.45,0] and w['impactHeight'] == 1.2
 assert w['targets'] == ['ground','structure','debris','air','item','ward']
 assert rules['damageTable']['pierce']['fortified'] == .35

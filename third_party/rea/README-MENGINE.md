@@ -95,4 +95,4 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 
 形态切换：`node scripts/probe-frost-rea-stone.mjs` 的36组探针复核石像形态虚表、命令、魔免与驱散、回复修改器、落地/起飞及独立计时，也覆盖默认动画倍率、renderer 时钟、同模型刷新、静止动作回调，以及 Web 通过 Amor 继承关系禁用 Astn 和 Arav、命令拒绝和到期恢复的调用链。下降途中命中 Web 的探针追踪最低高度安装、实时插值接管、弹道传递的下降速度、身体替换保留捕获、定向变形 timer 和当前身体的到期高度。`scripts/import-frost-gargoyle-stone.py` 保留 `Astn`、`Rusf`、两种身体、`ACmi`、字段元数据和原版图标；来源、无游戏安装重建及当前实现边界见 [石像形态维护说明](../../docs/designs/frostbound-realms/gargoyle-stone.md) 和 [德鲁伊维护说明](../../docs/designs/frostbound-realms/druids.md)。
 
-防御塔武器：`node scripts/probe-frost-rea-guard-tower.mjs` 验证攻击/弹道字段指针及单位索敌、发射和受击位置的装载路径。`scripts/import-frost-guard-tower.py` 保留 hgtw 原始武器行、源箭矢、转换及来源摘要；通用武器研究不加成、攻击时序、存档、TCP及原生验收边界见[防御塔维护说明](../../docs/designs/frostbound-realms/guard-tower.md)。
+防御塔武器：`node scripts/probe-frost-rea-guard-tower.mjs` 以8组探针验证攻击/弹道字段指针、单位索敌/发射/受击位置，以及 RngBuff 从武器行、缓存、参数打包到出手距离检查的路径。`scripts/import-frost-guard-tower.py` 保留 hgtw 原始武器行、源箭矢、转换及来源摘要；通用武器研究不加成、攻击时序、存档、TCP及原生验收边界见[防御塔维护说明](../../docs/designs/frostbound-realms/guard-tower.md)。
