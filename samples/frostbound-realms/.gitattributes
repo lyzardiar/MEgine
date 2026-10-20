@@ -69,3 +69,8 @@ Assets/Licenses/Classic-Crypt-Units.txt text eol=lf
 /crypt-burrow*.json text eol=lf
 SourceAssets/CryptBurrow/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
 Assets/Licenses/Classic-Crypt-Burrow.txt text eol=lf
+
+/crypt-web*.json text eol=lf
+SourceAssets/CryptWeb/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+Assets/Art/classic-crypt-web*.png.meta text eol=lf
+Assets/Licenses/Classic-Crypt-Web.txt text eol=lf

@@ -1,0 +1,1 @@
+Original Warcraft III Web data, command textures, effect models and textures: Blizzard Entertainment original game asset terms apply. MPQ paths and SHA-256 are retained in crypt-web-sources.json. Extraction does not grant redistribution rights.
