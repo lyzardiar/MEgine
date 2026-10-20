@@ -46,7 +46,7 @@ JavaScript/Electron 和托管程序集静态分析不需要原生反编译引擎
 
 ## 更新维护
 
-地穴恶魔蛛网的原始参数、原件与二进制调用链可用 `node scripts/probe-frost-rea-web.mjs` 复核。`WebIsMagic`、命中挂载、移动计数、目标分类切换、武器距离修正和高度计算的证据范围见 [蛛网原件说明](../../docs/designs/frostbound-realms/crypt-web.md)；游戏运行时接入仍在进行。
+地穴恶魔蛛网的原始参数、原件与二进制调用链可用 `node scripts/probe-frost-rea-web.mjs` 复核。15 组探针覆盖 `WebIsMagic`、命中挂载、移动计数、目标分类切换、武器距离修正及 `moveHeight`/`moveFloor` 初始化和高度过渡。三套模型、粒子、15 条动画的离线重建及原生预览命令见 [蛛网原件说明](../../docs/designs/frostbound-realms/crypt-web.md)；游戏运行时接入仍在进行。
 
 不死族坟场四条科技、原版骰子与护甲升级可用 `node scripts/probe-frost-rea-rewards.mjs --undead-equipment` 复核。十二级参数、来源摘要、骷髅绑定和验证入口见 [坟场装备维护说明](../../docs/designs/frostbound-realms/undead-equipment.md)。
 

@@ -1,0 +1,1 @@
+Warcraft III Web models and textures: Blizzard Entertainment original game asset terms apply. W3ModelViewer conversion code is MIT licensed; original game art is not. Signed sources and conversion inputs: crypt-web-model-sources.json and crypt-web-sources.json.

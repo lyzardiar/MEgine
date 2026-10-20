@@ -22,6 +22,11 @@ const probes=[
  ['movement-lock','pd 20 @ 0x6f5dd040;pd 68 @ 0x6f5dcf60',['[esi + 0x7c]','0x6f5e2eb0','0x6f67ef60']],
  ['melee-range','pd 95 @ 0x6f5d2950',['[ecx + 0x114]','0x6f47ad70','0x6f478760']],
  ['missile-impact','pxw 16 @ 0x6fa1ddc8;pd 98 @ 0x6f5a9180;pd 80 @ 0x6f5aa080',['0x6f5a9180','0x6f5aa080','0x358','0x35c','0x6f46e090']],
+ ['height-property','pd 20 @ 0x6f6439c0;pd 18 @ 0x6f412340',['[esi + 0x208]','[esi + 0x20c]','[esi + 0x210]','0x6f995708','[ecx + 8]','[ecx + 0xc]','cmova edx, eax']],
+ ['height-source-cache','pd 22 @ 0x6f69328a;pd 10 @ 0x6f695ee0;pd 10 @ 0x6f695ec0;pd 19 @ 0x6f64fad6',['moveHeight','moveFloor','[esi + 0xec]','[esi + 0xf8]','0x6f695ee0','0x6f695ec0','[ebx + 0x1f8]','[ebx + 0x1fc]']],
+ ['height-creation','pd 53 @ 0x6f65b350;pd 53 @ 0x6f65b2e0;pd 14 @ 0x6f65b009;pd 45 @ 0x6f66cd35',['[ecx + 0x1f8]','[ecx + 0x1fc]','[ebx + 0x70]','[ebx + 0x74]','[ebx + 0x204]','[edi + 0x74]','add   edi, 0x70','[esi + 0xc]']],
+ ['height-speed','pd 42 @ 0x6f5ca9cd;pd 18 @ 0x6f5caaab;pd 20 @ 0x6f5bbb7a;pd 63 @ 0x6f67f91a;pd 17 @ 0x6f67f9f1',['[esi + 0x210]','[ebp + 0x1c]','[ebp + 0x18]','0x6f0528b0','0x6f052af0','0x6f66a080','[edi + 0xe8]','[ebx + 0xec]','0x6f67f100','0x6f03af40','0x6f03afb0']],
+ ['height-mutation','pd 30 @ 0x6f67af50;pd 38 @ 0x6f67af00;pd 28 @ 0x6f67b030',['[edi + 0x210]','[edi + 0x204]','[ecx + 0xc]','[ecx + 8]','[ebx + 0x214]']],
 ];
 const client=new Client({name:'frostbound-web-research',version:'1.0.0'}),reports=[];
 fs.mkdirSync(out,{recursive:true});
@@ -39,5 +44,5 @@ try{
   reports.push({name,evidenceId:evidence.evidence_id,stdoutSha256:digest(r.stdout),markers});
   console.log('PASS REA Web '+name);
  }
- fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence does not measure original runtime timing, dispel outcomes or client presentation.','The altitude transition selects unit fields +0x20c/+0x208; linking their initialization to source fields requires further analysis.']},null,2)+'\n');
+ fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence does not measure original runtime timing, dispel outcomes or client presentation.','Height source initialization and speed/target selection are traced; customized height bounds and overlapping modifiers require separate runtime verification.']},null,2)+'\n');
 }finally{await client.close();}

@@ -283,3 +283,6 @@ scripts/*undead-army*.* text eol=lf
 scripts/*crypt-units*.* text eol=lf
 
 scripts/*crypt-burrow*.* text eol=lf
+
+samples/frostbound-realms/Assets/CryptWeb/** -text whitespace=cr-at-eol
+scripts/*crypt-web*.* text eol=lf
