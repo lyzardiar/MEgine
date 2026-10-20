@@ -99,6 +99,6 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 
 人族建筑昼夜视野：`node scripts/probe-frost-rea-human-sight.mjs` 复核 `sight/nsight` 的源行读取、getter及缓存写入。运行时复用 `human-masonry.json` 和已有来源收据，视野作用于迷雾、敌人渲染、快照和目标检查。源数据、升级刷新、验证和复刻边界见[建筑视野维护说明](../../docs/designs/frostbound-realms/human-building-sight.md)。
 
-人族炮塔：`node scripts/probe-frost-rea-cannon-tower.mjs` 复核9组原版炮击字段、端点、外圈候选筛选和伤害分档；`scripts/probe-frost-cannon-tower-binary.py` 执行112个原DLL分档、碰撞及内外圈边界用例。`scripts/import-frost-cannon-tower.py` 保留原件、双武器、按钮、身体与炮弹转换及共享资源摘要。升级、存档、TCP、原生验证和更新命令见[炮塔维护说明](../../docs/designs/frostbound-realms/cannon-tower.md)，GitHub源站与固定版本沿用本文件。
+人族炮塔与迫击炮目标筛选：`node scripts/probe-frost-rea-cannon-tower.mjs` 复核11组原版炮击字段、端点、外圈候选、目标掩码和伤害分档；`scripts/probe-frost-cannon-tower-binary.py` 执行130个原DLL分档、碰撞、边界及目标资格用例。`scripts/import-frost-cannon-tower.py` 保留原件、双武器、按钮、身体与炮弹转换及共享资源摘要。升级、存档、TCP、原生验证和更新命令见[炮塔维护说明](../../docs/designs/frostbound-realms/cannon-tower.md)，GitHub源站与固定版本沿用本文件。
 
 反馈伤害：`node scripts/probe-frost-rea-feedback.mjs` 复核8组技能字段、弹丸、伤害打包及护甲／类型缩放证据；`scripts/probe-frost-feedback-binary.py` 执行原DLL的计算分支，覆盖12个CPU用例。源数据、复现命令、引擎验收及原版运行边界见[反馈维护说明](../../docs/designs/frostbound-realms/human-feedback.md)。

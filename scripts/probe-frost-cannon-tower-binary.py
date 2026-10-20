@@ -28,6 +28,7 @@ def probe(binary, dependencies):
     def returned(n=0,eax=0):
         sp=cpu.reg_read(UC_X86_REG_ESP);cpu.reg_write(UC_X86_REG_EAX,eax);cpu.reg_write(UC_X86_REG_EIP,word(sp));cpu.reg_write(UC_X86_REG_ESP,sp+4+n)
     factors=[]
+    source=target+0x800
     def external(uc,address,size,data):
         sp=cpu.reg_read(UC_X86_REG_ESP)
         if address==stop+0x100:
@@ -39,6 +40,16 @@ def probe(binary, dependencies):
         elif address==0x6f6b1500:
             factors.append(value(word(sp+12)));output=word(sp+4);real(output,1);returned(12,output)
         elif address==stop+0x120: returned(4,1)
+        elif address in [stop+0x130,0x6f667470]: returned(0,0x12345678)
+        elif address==stop+0x140: returned(0,word(cpu.reg_read(UC_X86_REG_ECX)+0x300))
+        elif address==0x6f02a380: returned(4,1)
+        elif address==0x6f1b9690:
+            output=cpu.reg_read(UC_X86_REG_ECX);obj=word(sp+4);integer(output,obj)
+            if obj: integer(obj+4,word(obj+4)+1)
+            returned(4,output)
+        elif address==0x6f044150: returned(0,source)
+        elif address==0x6f470a60: returned(0,0)
+        elif address==0x6f1c4fe0: returned(8,0)
     cpu.hook_add(unicorn.UC_HOOK_CODE,external)
     integer(missile,stop+0x200);integer(stop+0x200+0xa0,stop+0x100)
     integer(target,stop+0x400);integer(stop+0x400+0xb8,stop+0x110)
@@ -79,10 +90,41 @@ def probe(binary, dependencies):
                     factor=factors[0] if factors else 0
                     assert abs(factor-expected)<1e-6,(collision,radius,delta,diagonal,factor,expected)
                     boundary.append(dict(collision=collision,radius=radius,delta=delta,diagonal=diagonal,distance=distance,offset=[x,z],factor=factor))
-    return dict(author='MiYu',passed=True,binarySha256=EXPECTED,cases=cases,boundaryCases=boundary,functions={name:dict(address=hex(a),bytes=n,sha256=hashlib.sha256(image[a-base:a-base+n]).hexdigest()) for name,a,n in [('artilleryBands',0x6f6b8d10,0x19a),('overlap',0x6f03e260,0x139),('outerCandidate',0x6f03fe90,0x6e),('candidateCallback',0x6f6afe00,0x2c)]},limitations=['Spatial-index candidates, object handles, circle bounds, interpolation, target eligibility and final damage callback are supplied; original outer candidate distance filter, callback dispatch, band selection and collision arithmetic execute unmodified.', 'Spatial-index construction, target-mask filtering, full original runtime and non-circular building pathing footprints are not executed. JavaScript uses double precision; exact float32 tangencies remain a fidelity boundary.'])
+    # Decode the original target-token table, then execute eligibility and the common mask validator.
+    masks={}
+    for address in range(0x6fb6a0b0,0x6fb6a240,8):
+        ptr=word(address);name=bytearray()
+        while cpu.mem_read(ptr+len(name),1)!=b'\0': name.extend(cpu.mem_read(ptr+len(name),1))
+        masks[name.decode('ascii')]=word(address+4)
+    assert {k:masks[k] for k in ['ground','air','structure','ward','notself']}==dict(ground=2,air=4,structure=8,ward=16,notself=0x1e000)
+    integer(stop+0x400+0x1c,stop+0x130);integer(stop+0x400+0xec,stop+0x140)
+    integer(target+4,2);integer(target+0xc,123);integer(target+0x10,456);integer(target+0x300,1)
+    integer(source,stop+0x400);integer(source+4,2);integer(source+0x300,0);integer(missile+0x5c,2)
+    cpu.mem_map(0,0x1000)  # Original MSVC exception-registration slot, used only inside this emulation.
+    eligibility=[]
+    for label,mask_names in [('cannon',['ground','structure','debris','tree','wall','notself']),('mortar',['ground','structure','debris','tree','wall'])]:
+        mask=0
+        for name in mask_names: mask|=masks[name]
+        integer(missile+0xa0,mask)
+        for kind in ['ground','air','structure','ward']:
+            integer(target+0x24c,masks[kind])
+            for direct in [False,True]:
+                integer(missile+0x94,123 if direct else 789);integer(missile+0x98,456)
+                integer(stack,stop);integer(stack+4,target);cpu.reg_write(UC_X86_REG_ESP,stack);cpu.reg_write(UC_X86_REG_ECX,missile)
+                cpu.emu_start(0x6f6b0170,stop,count=10000)
+                assert cpu.reg_read(UC_X86_REG_EIP)==stop
+                accepted=bool(cpu.reg_read(UC_X86_REG_EAX));expected=direct or kind in ['ground','structure']
+                assert accepted==expected,(label,kind,direct,accepted)
+                eligibility.append(dict(weapon=label,kind=kind,direct=direct,accepted=accepted))
+        original_source=source;source=target;integer(target+0x24c,masks['structure' if label=='cannon' else 'ground']);integer(missile+0x94,789)
+        integer(stack,stop);integer(stack+4,target);cpu.reg_write(UC_X86_REG_ESP,stack);cpu.reg_write(UC_X86_REG_ECX,missile)
+        cpu.emu_start(0x6f6b0170,stop,count=10000);assert cpu.reg_read(UC_X86_REG_EIP)==stop
+        accepted=bool(cpu.reg_read(UC_X86_REG_EAX));assert accepted==(label=='mortar')
+        eligibility.append(dict(weapon=label,kind='self',direct=False,accepted=accepted));source=original_source
+    return dict(author='MiYu',passed=True,binarySha256=EXPECTED,cases=cases,boundaryCases=boundary,targetMasks=masks,eligibilityCases=eligibility,functions={name:dict(address=hex(a),bytes=n,sha256=hashlib.sha256(image[a-base:a-base+n]).hexdigest()) for name,a,n in [('artilleryBands',0x6f6b8d10,0x19a),('overlap',0x6f03e260,0x139),('outerCandidate',0x6f03fe90,0x6e),('candidateCallback',0x6f6afe00,0x2c),('eligibility',0x6f6b0170,0x1a6),('targetMask',0x6f68aa30,0x175),('targetFlags',0x6f691240,0xe9),('maskDefaults',0x6f68c7b0,0xc0)]},limitations=['Spatial-index candidates, object handles, circle bounds, interpolation and final damage callback are supplied; original outer candidate distance filter, callback dispatch, band selection and collision arithmetic execute unmodified.', 'Eligibility cases execute original direct-target dispatch, target flags, mask defaults and validation with supplied unit categories, owners, visibility, references and Misc lookup. They do not execute spatial-index construction, every immunity/alliance combination, full original runtime or non-circular building pathing footprints. JavaScript uses double precision; exact float32 tangencies remain a fidelity boundary.'])
 
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--binary',type=Path,required=True);parser.add_argument('--dependencies',type=Path);parser.add_argument('--report',type=Path,default=ROOT/'tmp/docs-artifacts/frost-cannon-tower/binary.json')
     args=parser.parse_args();report=probe(args.binary,args.dependencies);args.report.parent.mkdir(parents=True,exist_ok=True);args.report.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
-    print(f"PASS original Cannon artillery bands, outer-circle filter and collision tolerance: {len(report['cases'])+len(report['boundaryCases'])} CPU cases")
+    print(f"PASS original artillery bands, collision and target masks: {len(report['cases'])+len(report['boundaryCases'])+len(report['eligibilityCases'])} CPU cases")

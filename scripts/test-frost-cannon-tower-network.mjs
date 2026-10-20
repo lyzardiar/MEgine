@@ -4,6 +4,7 @@ import net from 'node:net';
 import {createRequire} from 'node:module';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
 import {cannonTowerFixture,cannonBoundaryFixture} from './frost-cannon-tower-fixture.mjs';
+import {artilleryTargetsFixture} from './frost-artillery-targets-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),app=createServer({port:0}),address=await app.listening,sockets=[];
 async function peer(protocol=S.PROTOCOL){const socket=net.connect(address.port,'127.0.0.1'),pending=[];let buffer='',seq=0;sockets.push(socket);socket.setEncoding('utf8');socket.on('error',()=>{});socket.on('data',chunk=>{buffer+=chunk;let end;while((end=buffer.indexOf('\n'))>=0){const message=JSON.parse(buffer.slice(0,end));buffer=buffer.slice(end+1);for(const w of [...pending])if(w.check(message)){pending.splice(pending.indexOf(w),1);clearTimeout(w.timer);w.resolve(message);}}});await new Promise((resolve,reject)=>{socket.once('connect',resolve);socket.once('error',reject);});const send=m=>socket.write(JSON.stringify(m)+'\n'),next=check=>new Promise((resolve,reject)=>{const w={check,resolve,timer:setTimeout(()=>{pending.splice(pending.indexOf(w),1);reject(Error('Cannon Tower TCP timeout: '+check.toString()));},12000)};pending.push(w);});const welcome=next(m=>m.type===(protocol===S.PROTOCOL?'welcome':'error'));send({type:'hello',protocol});const response=await welcome;if(protocol!==S.PROTOCOL){assert.match(response.message,/Protocol version mismatch/);socket.destroy();return;}assert.equal(response.protocol,115);return {socket,send,next,order:command=>send({type:'order',seq:++seq,command})};}
 const unit=(s,id)=>s.units.find(u=>u.id===id),wait=(p,check)=>p.next(m=>m.type==='state'&&check(m.state)).catch(e=>{throw Error(e.message+' predicate: '+check.toString());});
@@ -21,4 +22,12 @@ try{
   assert.ok(Math.abs(hp-unit(hit.state,f.victim.id).hp-f.expected)<1e-5);assert.ok(S.restore(f.s));
  }
  console.log('PASS TCP Cannon authoritative inner splash tolerance and strict outer cutoff');
+ for(const kind of ['cannontower','humanmortar'])for(const mode of ['ground','unit','ward']){
+  const f=artilleryTargetsFixture(S,{kind,mode}),hp=f.primary.hp,other=f.nearby.hp;app.rooms.get(joined.code).state=f.s;
+  await wait(a,state=>state.frame<5&&unit(state,f.attacker.id)?.kind===kind);
+  const states=await Promise.all([wait(a,state=>state.frame>=20&&state.projectiles.length===0),wait(b,state=>state.frame>=20&&state.projectiles.length===0)]);
+  for(const {state} of states){assert.equal(unit(state,f.nearby.id).hp,other);const primary=unit(state,f.primary.id);if(mode==='ward')assert.ok((primary?.hp||0)<hp);else assert.equal(primary.hp,hp);}
+  assert.ok(S.restore(f.s));
+ }
+ console.log('PASS TCP Cannon/Mortar ward target masks and matching impacts for both peers');
 }finally{for(const socket of sockets)socket.destroy();await app.close();}

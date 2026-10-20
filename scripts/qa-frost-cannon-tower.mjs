@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {cannonTowerFixture,cannonBoundaryFixture} from './frost-cannon-tower-fixture.mjs';
+import {artilleryTargetsFixture} from './frost-artillery-targets-fixture.mjs';
 import {clientWorldFixture} from './frost-client-world-fixture.mjs';
 import {nativeQaRoot,configureNativeQa,closeNativeQa,removeNativeQaFixture} from './frost-native-qa-runtime.mjs';
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),root=path.join(nativeQaRoot,'cannon-tower-'+Date.now()),sample=path.join(root,'sample'),out=path.join(repo,'tmp/docs-artifacts','frost-cannon-tower'),S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
@@ -30,6 +31,12 @@ try{
   report.checks.push({splashRadius:radius,innerTolerance:radius<125,strictOuterCutoff:radius===125,actualDamage:f.expected});
  }
  console.log('PASS native Cannon inner splash tolerance and strict outer cutoff after saved-flight load');
+ for(const kind of ['cannontower','humanmortar'])for(const mode of ['ground','unit','ward']){
+  const f=artilleryTargetsFixture(S,{kind,mode}),hp=f.primary.hp,other=f.nearby.hp;await load(f.s);await step(20);const saved=await save(),primary=saved.units.find(u=>u.id===f.primary.id);
+  assert.equal(saved.units.find(u=>u.id===f.nearby.id).hp,other);if(mode==='ward')assert.ok((primary?.hp||0)<hp);else assert.equal(primary.hp,hp);
+  report.checks.push({artillery:kind,targetMode:mode,nearbyWardExcluded:true,primaryWardDamaged:mode==='ward'});
+ }
+ console.log('PASS native Cannon/Mortar ward target masks, direct impact and saved-flight load');
  {
   const f=cannonTowerFixture(S,{upgrade:true});await load(f.s);await worldClick(f.tower.x,f.tower.z);await key('KeyC');let saved=await save(),tower=saved.units.find(u=>u.id===f.tower.id);
   assert.equal(tower.guardTowerUpgrade.left,75);assert.deepEqual([saved.teams[0].gold,saved.teams[0].wood],[9830,9900]);

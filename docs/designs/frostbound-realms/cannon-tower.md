@@ -17,6 +17,8 @@ Author: MiYu
 
 飞行中保存武器槽、原始伤害、端点、弧线和来源。发射塔死亡后已发出的炮弹继续结算；敌方快照隐藏升级进度，公开炮弹不携带私有伤害预算和武器槽。
 
+第一武器可直接攻击守卫，但原始 `splashTargs1` 不包含 `ward`。炮塔和迫击炮读取各自的 `splashTargets`：攻击地面或附近普通单位不会误伤蛇棒；直接指定的蛇棒仍结算炮击伤害，周围其他蛇棒被排除。
+
 ## 模型与来源
 
 身体复用原版 `Buildings/Human/HumanTower/HumanTower.mdx`，选择 `upgrade,second` 动作：Attack索引6、Stand索引7。模型倍率与选择圈取原版 `UnitUI`；身体边界由原生姿态探针重新计算。炮弹使用 `Abilities/Weapons/CannonTowerMissile/CannonTowerMissile.mdx`，并保留原版可用／禁用按钮。
@@ -32,7 +34,7 @@ Author: MiYu
 
 ## REA证据与验证
 
-Game.dll SHA-256为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。9组REA探针定位 `CArtillery` 虚表、双槽溅射字段、炮击端点、候选筛选和伤害分档：
+Game.dll SHA-256为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。11组REA探针定位 `CArtillery` 虚表、双槽溅射字段、炮击端点、候选筛选、目标掩码和伤害分档：
 
 - `0x6f6b4860` 返回类名，构造函数 `0x6f5566d0` 安装虚表 `0x6fa054e8`。
 - `0x6f693ca0`、`0x6f694010` 读取每槽 `splashTargs/Farea/Harea`。
@@ -40,8 +42,9 @@ Game.dll SHA-256为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09
 - `0x6f03e260` 执行碰撞圆重叠判断；`0x6f6b57d0` 查询炮击端点的地形高度。
 - `0x6f6b4be0` 选择外圈半径，经 `0x6f633a40 → 0x6f02f3c0 → 0x6f042050 → 0x6f03fc80` 枚举候选；`0x6f03fe90` 按身体半径及当前位置执行严格的距离平方比较。`0x6f6afe00` 调用资格检查及分档虚方法。
 - 全伤、半伤重叠检测的原版距离平方容差为0.001（坐标除32后的内部单位），对应引擎0.0001024。最外圈不使用此容差；单位、建筑和树木共用炮塔分档函数。
+- `0x6f6b0170` 对直接目标比较对象句柄，周围目标进入 `0x6f68abb0 → 0x6f691240 / 0x6f68aa30`。目标标记表将 `ground/structure/ward` 映射为2／8／16，`0x6f68c7b0` 补齐省略的类别，掩码交集决定周围目标是否接受伤害。蛇棒源 `UnitData.targType` 为 `ward`。
 
-CPU探针执行112个原版指令用例：28个分档用例，以及84个串联外圈候选距离过滤、回调分发与内圈分档的边界用例，覆盖碰撞0／32／72／80、轴向和斜向偏移。空间候选、对象句柄、位置插值、目标资格和最终伤害回调由夹具提供；空间索引构造、完整目标掩码、非圆形建筑寻路轮廓及原游戏完整运行尚未对照。JavaScript使用双精度，尚不保证所有恰好相切位置与原版单精度舍入逐位一致。引擎沿用现有共享护甲算法；这些验证不代表整款游戏已经完成1:1复刻。
+CPU探针执行130个原版指令用例：28个分档、84个串联外圈候选过滤与内圈分档的边界用例，以及18个炮塔／迫击炮的直接目标与周围目标资格用例。边界用例覆盖碰撞0／32／72／80、轴向和斜向偏移；资格用例实际执行原版对象分类、默认掩码、交集判断及直接目标分支。空间候选、对象句柄、位置插值、类别输入、所有者和部分运行环境查询由夹具提供。空间索引构造、所有免疫／联盟组合、飞行中目标类别切换、非圆形建筑寻路轮廓及原游戏完整运行尚未对照。JavaScript使用双精度，尚不保证所有恰好相切位置与原版单精度舍入逐位一致。引擎沿用现有共享护甲算法；这些验证不代表整款游戏已经完成1:1复刻。
 
 ```powershell
 python scripts/import-frost-cannon-tower.py --pose-probe D:/MEngineNativeQA/attachment-build/release/examples/gltf_bounds.exe --metadata-reader E:/work/codex/worktrees/1339/MEgine/tmp/warcraft-effects/node-metadata/NodeMetadata.dll
@@ -53,6 +56,7 @@ $env:MENGINE_FROST_BUILD_OUTPUT='G:/work/github/MEgine/tmp/docs-artifacts/frost-
 node scripts/build-frostbound.mjs
 Copy-Item -LiteralPath tmp/docs-artifacts/frost-cannon-tower/build/Assets/Scripts/Main.js -Destination samples/frostbound-realms/Assets/Scripts/Main.js
 node scripts/test-frost-cannon-tower.mjs
+node scripts/test-frost-artillery-targets.mjs
 node scripts/test-frost-cannon-tower-client.mjs
 node scripts/test-frost-cannon-tower-network.mjs
 $env:MENGINE_EDITOR_EXECUTABLE='D:/MEngineNativeQA/engine-main-sync/target/release/mengine-editor-tauri.exe'
@@ -60,8 +64,8 @@ node scripts/qa-frost-cannon-tower.mjs
 node scripts/test-frostbound.mjs
 ```
 
-资源摘要与无安装逐字节重建、修改保护、7组规则、4组生成客户端、2组真实TCP及6项原生检查通过。规则测试新增63个单位／建筑／树木边界和保存续飞对照；客户端、TCP和原生编辑器均检验全伤、半伤的容差边界与外圈排除。原生检查还覆盖完整升级、源身体和炮弹、曲线、保存续飞、建筑单体攻击和友军半伤溅射；控制台错误0，专用编辑器正常退出。WebView缓存因EPERM保留。源码生成、样例与原生验收的Main.js SHA-256一致：`407cc0b6ef597787e3d3ae5e4a345526fbcfda35e5f51dfb770c665134e076ea`。
+资源摘要与无安装逐字节重建、修改保护、7组炮塔规则、6个守卫筛选场景、5组生成客户端、3组真实TCP及12项原生检查通过。规则测试新增63个单位／建筑／树木边界和保存续飞对照；客户端、TCP和原生编辑器均检验全伤、半伤的容差边界与外圈排除。原生检查还覆盖完整升级、源身体和炮弹、曲线、保存续飞、建筑单体攻击和友军半伤溅射；控制台错误0，专用编辑器正常退出。WebView缓存因EPERM保留。源码生成、样例与原生验收的Main.js SHA-256一致：`5e57f75effd738b8bc9487ecbe1a145ad8c91692c9a5fb6cd0b05b0115fbff8a`。
 
-REA及原生原始证据位于 `tmp/docs-artifacts/frost-cannon-tower/`，本阶段边界CPU、旧提交负对照、回归日志与摘要汇总位于 `tmp/docs-artifacts/frost-cannon-boundary/`，不提交运行截图或诊断JSON。
+REA及原生原始证据位于 `tmp/docs-artifacts/frost-cannon-tower/`，本阶段CPU、旧提交负对照、回归日志与摘要汇总位于 `tmp/docs-artifacts/frost-artillery-targets/`；独立边界阶段证据保留在 `tmp/docs-artifacts/frost-cannon-boundary/`，不提交运行截图或诊断JSON。
 
-最终源码完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共754条PASS记录，包含24,000帧AI验证。日志为 `tmp/docs-artifacts/frost-cannon-boundary/regression.log`，摘要验证为 `verification.json`。
+最终源码完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共757条PASS记录，包含24,000帧AI验证。日志为 `tmp/docs-artifacts/frost-artillery-targets/regression.log`，摘要验证为 `verification.json`。

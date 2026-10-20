@@ -1777,8 +1777,9 @@ var Frost = (() => {
     else if(u.cd<=0){u.weaponWindup={target:0,left:unitType(u).damagePoint};u.cd=unitType(u).cooldown;}
   }
   function mortarImpact(s,p,point,attacker){
-    const cannon=cannonTowerUnit(p),bands=(cannon?cannonTowerRules.weapons:mortarRules.unit.weapons)[0].splashBands;
-    for(const v of s.units)if(v.hp>0&&(!cannon||v.id!==p.source)&&!isFlying(v)&&canAttack(p,v)){const band=cannon?cannonSplashBand(v,point,attackCollision(v)):bands.find(([radius])=>distance(v,point)<=radius);if(band)damage(s,attacker,v,weaponDamage(p,v,p.damage*band[1],s),'splash',undefined,p);}
+    const cannon=cannonTowerUnit(p),weapon=(cannon?cannonTowerRules.weapons:mortarRules.unit.weapons)[0],bands=weapon.splashBands;
+    // Both original artillery splash masks exclude wards; the direct target bypasses that mask.
+    for(const v of s.units)if(v.hp>0&&(!cannon||v.id!==p.source)&&(!serpentward(v)||v.id===p.target||weapon.splashTargets.includes('ward'))&&!isFlying(v)&&canAttack(p,v)){const band=cannon?cannonSplashBand(v,point,attackCollision(v)):bands.find(([radius])=>distance(v,point)<=radius);if(band)damage(s,attacker,v,weaponDamage(p,v,p.damage*band[1],s),'splash',undefined,p);}
     for(let i=0;i<s.resources.length;i++){const tree=s.resources[i];if(tree.kind!=='tree'||tree.amount<=0)continue;const band=cannon?cannonSplashBand(tree,point,TREE_RADIUS):bands.find(([radius])=>distance(tree,point)<=radius);if(band)damageTree(s,p,i,p.damage*band[1]);}
   }
   function cannonSplashBand(target,point,collision){

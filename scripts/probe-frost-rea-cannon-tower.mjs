@@ -21,6 +21,8 @@ const probes=[
  ['artillery-outer-query','af @ 0x6f6b4be0;pdf @ 0x6f6b4be0;pd 24 @ 0x6f633d10;af @ 0x6f02f3c0;pdf @ 0x6f02f3c0;af @ 0x6f042050;pdf @ 0x6f042050',['0x6f6afe00','push  0x25','0x6f633a40','0x6f02f3c0','0x6f042050','0x6f03fc80']],
  ['artillery-outer-distance','pd 42 @ 0x6f03fe90',['ebx + 0x78','ebx + 0x7c','ebx + 0x90','0x6f053660','0x6f0529d0','0x6f0527e0','comiss','ja    0x6f03fefe']],
  ['artillery-candidate-dispatch','pd 22 @ 0x6f6afe00;af @ 0x6f6b0170;pdf @ 0x6f6b0170',['eax + 0xcc','edx + 0xd0','0x6f695270','0x6f6952b0','0x6f68abb0']],
+ ['artillery-target-mask','af @ 0x6f68abb0;pdf @ 0x6f68abb0;af @ 0x6f68aa30;pdf @ 0x6f68aa30;af @ 0x6f691240;pdf @ 0x6f691240',['0x6f691240','0x6f68aa30','0x6f68c7b0','0x6f690dd0','ebx + 0x24c','test  esi, 0x7fe']],
+ ['artillery-target-tokens','pxw 64 @ 0x6fb6a200;pxw 16 @ 0x6fb6a130;px 64 @ 0x6fa4fce0;px 80 @ 0x6fa4fda0;px 8 @ 0x6f9ad110;pd 19 @ 0x6f693ca0;af @ 0x6f689500;pdf @ 0x6f689500',['0x6f9ad110','0x00000010','0x00000002','ground','structure','ward','splashTargs','0x6f68ca80']],
 ];
 const client=new Client({name:'frostbound-cannon-tower-research',version:'1.0.0'}),reports=[];
 fs.mkdirSync(out,{recursive:true});
@@ -40,5 +42,5 @@ try{
   reports.push({name,evidenceId:evidence.evidence_id,stdoutSha256:digest(r.stdout),markers});
   console.log('PASS REA Cannon Tower '+name);
  }
- fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence binds artillery identity, per-slot splash data, damage bands, collision overlap, outer candidate filtering and eligibility dispatch. Full original runtime, spatial-index construction and complete target-mask behavior are not exercised.']},null,2)+'\n');
+ fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence binds artillery identity, per-slot splash data, damage bands, collision overlap, outer candidate filtering, direct-target dispatch and target-mask validation. Full original runtime, spatial-index construction and every immunity/alliance combination are not exercised.']},null,2)+'\n');
 }finally{await client.close();}

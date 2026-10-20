@@ -428,3 +428,11 @@ REA确认外圈候选使用严格碰撞圆距离平方比较，内圈全伤、�
 原生6项检查通过、控制台错误0、专用编辑器正常退出；WebView缓存因EPERM保留。Main生成、样例与原生验收摘要为`407cc0b6ef597787e3d3ae5e4a345526fbcfda35e5f51dfb770c665134e076ea`。空间索引构造、完整目标掩码、所有精确相切位置的单精度舍入及完整原版运行尚未验证。维护入口：[炮塔](cannon-tower.md)；本阶段证据：`tmp/docs-artifacts/frost-cannon-boundary/`。
 
 完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共754条PASS记录，包含24,000帧AI验证；日志为本阶段证据目录的 `regression.log`。
+
+## 2026-10-21：炮塔与迫击炮的守卫筛选
+
+原版直接攻击目标包含ward，溅射目标不包含ward。共用炮击结算读取各武器的splashTargets，排除周围蛇棒并保留直接指定蛇棒的伤害。REA追踪直接目标句柄分支、目标类别表与掩码归一化／交集判断；11组静态探针、130个CPU用例通过，其中18个资格用例也检查炮塔notself。
+
+六种炮塔／迫击炮地面、普通单位、蛇棒目标场景验证保存续飞，生成客户端、双端TCP与原生编辑器均通过。原生12项检查、控制台错误0、专用编辑器正常退出；WebView缓存因EPERM保留。生成、样例与原生验收Main摘要为`5e57f75effd738b8bc9487ecbe1a145ad8c91692c9a5fb6cd0b05b0115fbff8a`。空间索引、全部免疫／联盟组合及飞行中类别变化仍待完整运行验证。证据：`tmp/docs-artifacts/frost-artillery-targets/`；维护入口：[炮塔](cannon-tower.md)、[迫击炮](human-mortar.md)。
+
+完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共757条PASS记录，包含24,000帧AI验证；日志为本阶段证据目录的 `regression.log`。
