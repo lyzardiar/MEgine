@@ -67,6 +67,10 @@ probe 绑定 `Game.dll` SHA-256：
 | `0x6f12fb80` → `0x6f77a500` → `0x6f77a1e0` | 将倍率写入 renderer `+0x48`，实际时间增量乘该倍率；Astn 的 `0x200` 不含重置倍率的 `0x80` |
 | `0x6f65330b` → `0x6f3247b0`，`0x6f6a0b10` | 比较 `modelPath`；同模型跳过重载及其强制 Stand |
 | `0x6f64c6a0/0x6f64c780`，`0x6f66b7b0` | 低运动回调仅把 Walk 改回 Stand；Morph 不被覆盖。身体刷新末尾 Birth/Stand 分支受 `IsStructure` 条件控制，普通石像鬼不进入 |
+| WebAir `+0x35c` → `0x6f5ca8d0` → `0x6f5bb8f0` → `0x6f5bc4a0` | 施加时以 mode 0 遍历能力；`0x6f5cc4f0` 命中的能力通过 `0x6f3e9fa0` 增加禁用计数 `+0x3c` |
+| `0x6f5cc4f0` → `0x6f595280`；`0x6f5036f0` → `0x6f0308c0` | 筛选包含 `Amor` 变形类；Astn 注册的父类为 Amor，父类记录 `+0x78` 由 `0x6f02fc20` 递归匹配，因此石像形态命中禁用 |
+| `0x6f528cb0` → `0x6f3e0e30` → virtual `+0x3dc` = `0x6f3ded20` | 命令先检查通用可用性；`ability+0x3c > 0` 返回 `0xdd`。后续 `unit+0x200` 强制落地分支只跳过着陆寻址，不绕过禁用检查 |
+| `0x6f5bbab0` → `0x6f5bb8f0` → `0x6f3ee3c0` | Web 结束时以 mode 1 遍历相同能力，减少禁用计数，恢复技能可用性 |
 
 JASS 参数说明复用已保留的 `SourceAssets/CombatRewards/Scripts/common.j`。驱散范围是调用参数层面的静态结论；特殊效果是否存续，仍需逐项核对其分类与运行行为。
 
@@ -91,6 +95,8 @@ JASS 参数说明复用已保留的 `SourceAssets/CombatRewards/Scripts/common.j
 
 普通静止施放的 Morph 按原模型 2.5 秒、Morph Alternate 按 .833 秒以默认 1 倍速采样，跨过 1/.5 秒控制锁结束点继续播放。开始帧取 `stoneShift.frame`；解锁后从 `stoneMorphFrame` 和锁时长恢复相同起点。客户端使用游戏帧时钟和本地帧余量，读档或接收快照后仍对齐该起点。返飞后的有效普通命令或实际攻击清除动画尾段标记，拒绝的命令保持原动画；移动和攻击前摇优先显示自身动作。复用现有存档字段，协议仍为113。
 
+蛛网捕获期间，`gargoyleStoneOption` 统一禁用石像形态。客户端沿用该结果显示原版禁用图标，鼠标、F 键及联机命令均不能开始变形。拒绝施放保持单位和捕获状态；读档、重连后继续受限，Web 结束后恢复可用。静态复现入口为 probe 的 `web-disable-dispatch`、`web-morph-filter`、`stone-morph-ancestry`、`web-disabled-order` 四组。
+
 ## 验证与边界
 
 ```powershell
@@ -102,10 +108,10 @@ $env:MENGINE_EDITOR_EXECUTABLE='D:/MEngineNativeQA/engine-main-sync/target/relea
 node scripts/qa-frost-gargoyle-stone.mjs
 ```
 
-源资料验证9项、REA静态探针25组、玩法12组、生成客户端6组、实际TCP3组通过；REA/MEngine MCP集成检查3项通过。覆盖完整研究计时、独立控制锁与高度、每帧转换存档、返飞重连、敌方隐私、死亡身体，以及动画尾段的命令接管。生成客户端和原生均检查解锁后的进入动画第30帧、读档后第45帧，以及返飞第15帧和后续动画结束。原生4组通过，控制台错误0；测试副本与当前Main的SHA-256均为 `6531e4b64154f3d3db9766fd9b9660704f0b10053cd374a66d54d34c23fcbf25`。原生结果见 `tmp/docs-artifacts/frost-gargoyle-stone/native-gargoyle-stone.json`。蛛网生成客户端4组、尸体生成客户端1组相关回归通过。原始诊断、截图和测试日志仅存放在该临时目录。
+本阶段REA静态探针29组、玩法13组、生成客户端7组、实际TCP4组通过。源资料验证9项和REA/MEngine MCP集成检查3项沿用上阶段结果；本阶段未更改导入资料或MCP集成。覆盖完整研究计时、独立控制锁与高度、每帧转换存档、返飞重连、敌方隐私、死亡身体，以及动画尾段的命令接管。生成客户端和原生均检查解锁后的进入动画第30帧、读档后第45帧，以及返飞第15帧和后续动画结束。原生5组通过，控制台错误0；测试副本与当前Main的SHA-256均为 `f37091c6e69d6ffb8f23a3315afc3b83c66444a9e23cc636b392b3d144ecedca`。原生结果见 `tmp/docs-artifacts/frost-gargoyle-stone/native-gargoyle-stone.json`。Web门禁新增覆盖原版禁用图标、鼠标/F键拒绝、保存加载、TCP拒绝及重连、到期恢复。上阶段蛛网生成客户端4组、尸体生成客户端1组相关回归通过。原生进程正常退出；临时runtime目录删除返回EPERM并保留在报告cleanup字段。原始诊断、截图和测试日志仅存放在该临时目录。
 
 默认1倍速及静止时保留动画的依据来自 renderer 时钟、同模型刷新及运动回调的静态调用链。适用条件为普通石像鬼、没有外部脚本改速、没有新的动作接管；不将此结论推广到所有 buff 或特殊运动。复现入口为上述 probe 的 `animation-command`、`animation-default-rate`、`animation-clock`、`same-model-morph`、`unit-rate-and-idle` 五组。详细临时证据见 `animation-rate-handoff.md`、`animation-body-independent-review.md` 及相邻 REA 原始结果。
 
-原版游戏尚未进行逐帧运行测量。原版阻塞地形寻址、特殊效果的物理/魔法分类、Web/Ensnare施放门禁及变形时捕获状态的存续仍需专项实测。当前着陆复用引擎最近可站立位置搜索；完成落地会清除空中捕获状态。上述交互在本引擎已验证可保存、可重连，不代表已经证明原版全部细节一致。继承计时属性默认0已静态确认，尚未穷尽其所有运行时写入路径。
+原版游戏尚未进行逐帧运行测量。Web 对 Astn 的施放门禁已由上述静态链确认并实现；原版阻塞地形寻址、其他特殊效果分类、Ensnare 以及变形途中命中 Web 后的高度和捕获存续仍需专项核对。当前着陆复用引擎最近可站立位置搜索；完成落地会清除空中捕获状态。身体替换的能力整理分支保留 Web，独立变形 timer 的完成事件定向发送给 Astn；通用清理的间接影响及高度写入先后仍未核实，当前完成落地的捕获处理不作为原版一致性结论。专项临时证据见 `tmp/docs-artifacts/frost-stone-web/morph-web-survival-handoff.md`。继承计时属性默认0已静态确认，尚未穷尽其所有运行时写入路径。
 
 上一阶段协议相关回归脚本42个中40个通过；已有的 Crypt Lord 生成客户端粒子实体缺失、Shadow Hunter 旧实体引用测试仍失败，与前一阶段基线相同。该结果不代表全项目测试全部通过。

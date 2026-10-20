@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {clientWorldFixture} from './frost-client-world-fixture.mjs';
 import {nativeNodeQueries} from './frost-native-node-fixture.mjs';
-import {gargoyleStoneClientFixture,gargoyleStoneDeathFixture} from './frost-gargoyle-stone-client-fixture.mjs';
+import {gargoyleStoneClientFixture,gargoyleStoneDeathFixture,gargoyleStoneWebFixture} from './frost-gargoyle-stone-client-fixture.mjs';
 const root=new URL('../samples/frostbound-realms/',import.meta.url),world=clientWorldFixture(JSON.parse(fs.readFileSync(new URL('Assets/Scenes/Main.mscene',root))).world),storage=new Map(),copy=o=>JSON.parse(JSON.stringify(o));
 const engine=Object.assign(world.engine,{network:{poll:()=>[],close(){},send(){}},storage:{load:k=>storage.has(k)?copy(storage.get(k)):null,save:(k,v)=>storage.set(k,copy(v))},playAudio(){},assets:nativeNodeQueries()}),context=vm.createContext({engine});vm.runInContext(fs.readFileSync(new URL('Assets/Scripts/Main.js',root),'utf8'),context);vm.runInContext('const stoneRestore=Frost.restore;Frost.restore=raw=>{globalThis.stoneState=stoneRestore(raw);return stoneState;};',context);
 const S=context.Frost,V=context.FrostVisual,art=context.FrostArt.ClassicGargoyle,component=(name,c)=>world.entity(name).components[c],telemetry=()=>JSON.parse(component('Frost telemetry','Text').text),near=(a,b)=>assert.ok(Math.abs(a-b)<.001,`${a} != ${b}`);
@@ -35,3 +35,9 @@ for(const phase of ['stone','flying','entering','leaving']){
  const f=gargoyleStoneDeathFixture(S,phase),clip=phase==='stone'?9:5;s=load(f.s);deathPose(s,f.unit.id,clip);step(4);const c=deathPose(s,f.unit.id,clip);key('F5');s=load(storage.get('quicksave'));near(deathPose(s,f.unit.id,clip).age,c.age);step(Math.ceil((S.corpseDuration(s,c)-c.age)/S.DT));assert.ok(!s.corpses.some(v=>v.id===c.id));assert.ok(!world.snapshot.entities.some(e=>e.active&&/^Corpse 0(?: mesh \d+)?$/.test(e.name)));
 }
 console.log('PASS generated physical death in four Stone phases: original alternate/normal geosets, corpse save/load and exact disappearance');
+{
+ const f=gargoyleStoneWebFixture(S);s=load(f.s);u=s.units.find(v=>v.id===f.unit.id);click(point(u));assert.equal(component('action8 icon','Image').sprite,S.gargoyleStoneRules.ability.disabledIcon);const buff=copy(u.cryptWeb);
+ key('KeyF');assert.equal(u.stoneShift,undefined);click(world.canvasPoint('action8 box'));assert.equal(u.stoneShift,undefined);assert.deepEqual(copy(u.cryptWeb),buff);
+ ({s,u}=saveLoad(s,u.id));assert.equal(S.gargoyleStoneOption(s,u).enabled,false);while(S.webbed(u))step(1);click(point(u));assert.equal(component('action8 icon','Image').sprite,S.gargoyleStoneRules.ability.icon);key('KeyF');assert.equal(u.stoneShift?.stone,true);
+ console.log('PASS generated Web disables source Stone icon, mouse and F across save/load, then restores after expiry');
+}

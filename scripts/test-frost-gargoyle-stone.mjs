@@ -1,10 +1,18 @@
 // Author: MiYu. Stone Form paid research, original bodies, immunity, regeneration and durable transitions.
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
-import {gargoyleStoneClientFixture,gargoyleStoneDeathFixture} from './frost-gargoyle-stone-client-fixture.mjs';
+import {gargoyleStoneClientFixture,gargoyleStoneDeathFixture,gargoyleStoneWebFixture} from './frost-gargoyle-stone-client-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),fixture=options=>gargoyleStoneClientFixture(S,options),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`),order=(s,u,type,extra={})=>S.command(s,u.team,{type,ids:[u.id],...extra});
 const finish=(s,u)=>{for(let i=0;u.stoneShift&&i<100;i++)S.tick(s);assert.equal(u.stoneShift,undefined);},ready=(s,u)=>step(s,Math.ceil((u.stoneCd||0)/S.DT)+1);
 assert.equal(S.PROTOCOL,113);
+{
+ const {s,unit:u}=gargoyleStoneWebFixture(S),before=S.clone(u),gold=s.teams[0].gold;
+ assert.equal(S.gargoyleStoneOption(s,u).enabled,false);assert.ok(order(s,u,'stoneform'));assert.deepEqual(u,before);assert.equal(s.teams[0].gold,gold);
+ const loaded=S.restore(s),copy=loaded.units.find(v=>v.id===u.id);assert.equal(S.gargoyleStoneOption(loaded,copy).enabled,false);assert.ok(order(loaded,copy,'stoneform'));
+ while(S.webbed(u)){S.tick(s);S.tick(loaded);assert.deepEqual(s,loaded);}
+ assert.equal(S.gargoyleStoneOption(s,u).enabled,true);assert.equal(order(s,u,'stoneform'),null);finish(s,u);assert.equal(S.gargoyleStone(u),true);assert.ok(S.restore(s));
+ console.log('PASS REA Web disables Stone command without mutation, persists across save, and expiry restores availability');
+}
 {
  const {s,unit,producer,base,graveyard}=fixture(),t=s.teams[0],budget=[t.gold,t.wood];assert.equal(S.gargoyleStoneOption(s,unit).enabled,false);assert.ok(order(s,unit,'stoneform'));
  graveyard.hp=0;assert.ok(order(s,producer,'gargoyleStoneResearch'));graveyard.hp=graveyard.maxHp;base.upgradeTier=2;base.hp=base.maxHp=S.mainBase(s,base).hp;S.updateTechnology(s);assert.ok(order(s,producer,'gargoyleStoneResearch'));base.upgradeTier=3;base.hp=base.maxHp=S.mainBase(s,base).hp;S.updateTechnology(s);
