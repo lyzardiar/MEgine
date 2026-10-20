@@ -6,6 +6,29 @@ const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simula
 const finish=(s,u)=>{for(let i=0;u.stoneShift&&i<100;i++)S.tick(s);assert.equal(u.stoneShift,undefined);},ready=(s,u)=>step(s,Math.ceil((u.stoneCd||0)/S.DT)+1);
 assert.equal(S.PROTOCOL,113);
 {
+ for(const delay of [0,3,6]){
+  const {s,unit:u}=gargoyleStoneWebFixture(S,{entering:true,delay}),capture=S.clone(u.cryptWeb),height=S.flightHeight(s,u);
+  assert.equal(u.stoneFlight,undefined);assert.equal(u.stoneShift?.stone,true);if(u.cryptWebFlight)near(u.cryptWebFlight.to,0);
+  if(delay===0){for(const patch of [{stoneFlight:{stone:true,frame:u.stoneShift.frame,fromHeight:u.stoneShift.fromHeight}},{cryptWebFlight:{...u.cryptWebFlight,to:.9}},{cryptWebFlight:{...u.cryptWebFlight,from:2.5}}]){const bad=S.clone(s);Object.assign(bad.units.find(v=>v.id===u.id),patch);assert.throws(()=>S.restore(bad),/Stone|Web/);}}
+  const saved=S.restore(s);let previous=height;
+  while(u.stoneShift){S.tick(s);S.tick(saved);assert.deepEqual(s,saved);assert.ok(S.restore(s));assert.ok(S.flightHeight(s,u)<=previous+1e-8);previous=S.flightHeight(s,u);}
+  assert.equal(S.gargoyleStone(u),true);assert.equal(S.webbed(u),true);assert.equal(u.cryptWeb.frame,capture.frame);assert.ok(order(s,u,'unstoneform'));near(u.armorValue,15);
+  if(delay===0){assert.ok(S.flightHeight(s,u)>0);assert.ok(u.cryptWebFlight);}
+  for(const team of [0,1]){const view=S.publicState(s,team),copy=view.units.find(v=>v.id===u.id);assert.equal(S.webbed(copy),true);near(S.flightHeight(view,copy),S.flightHeight(s,u));}
+  while(S.webbed(u)){S.tick(s);S.tick(saved);assert.deepEqual(s,saved);assert.ok(S.restore(s));}
+  near(S.flightHeight(s,u),0);assert.equal(u.cryptWebFlight,undefined);assert.equal(S.gargoyleStoneOption(s,u).enabled,true);assert.equal(order(s,u,'unstoneform'),null);finish(s,u);step(s,8);near(S.flightHeight(s,u),2.4);assert.ok(S.restore(s));
+ }
+ console.log('PASS REA Web takes over Stone descent to floor zero, survives body commit with exact timer, saves/public height, expires on ground and permits return');
+}
+{
+ for(const committed of [false,true]){
+  const {s,unit:u}=gargoyleStoneWebFixture(S,{entering:true});if(committed)finish(s,u);
+  const attacker=S.spawn(s,'humanrifleman',1,u.x+.5,u.z,{cd:99,order:{type:'hold'}}),before=S.clone(u);u.hp=1;S.visibility(s);assert.equal(S.fire(s,attacker,u),true);for(let i=0;u.hp>0&&i<10;i++)S.tick(s);
+  const c=s.corpses.find(v=>v.id===u.id);assert.ok(c);assert.equal(c.sourceUnit,committed?'ugrm':'ugar');near(c.y,S.elevation(s.map,u.x,u.z)+S.flightHeight(s,before));assert.equal(u.cryptWeb,undefined);assert.equal(u.cryptWebFlight,undefined);assert.ok(S.restore(s));
+ }
+ console.log('PASS captured Stone physical death before/after body commit keeps actual corpse height and body, clears Web and restores');
+}
+{
  const {s,unit:u}=gargoyleStoneWebFixture(S),before=S.clone(u),gold=s.teams[0].gold;
  assert.equal(S.gargoyleStoneOption(s,u).enabled,false);assert.ok(order(s,u,'stoneform'));assert.deepEqual(u,before);assert.equal(s.teams[0].gold,gold);
  const loaded=S.restore(s),copy=loaded.units.find(v=>v.id===u.id);assert.equal(S.gargoyleStoneOption(loaded,copy).enabled,false);assert.ok(order(loaded,copy,'stoneform'));

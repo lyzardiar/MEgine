@@ -41,3 +41,9 @@ console.log('PASS generated physical death in four Stone phases: original altern
  ({s,u}=saveLoad(s,u.id));assert.equal(S.gargoyleStoneOption(s,u).enabled,false);while(S.webbed(u))step(1);click(point(u));assert.equal(component('action8 icon','Image').sprite,S.gargoyleStoneRules.ability.icon);key('KeyF');assert.equal(u.stoneShift?.stone,true);
  console.log('PASS generated Web disables source Stone icon, mouse and F across save/load, then restores after expiry');
 }
+{
+ const f=gargoyleStoneWebFixture(S,{entering:true});s=load(f.s);u=s.units.find(v=>v.id===f.unit.id);const frame=u.cryptWeb.frame;assert.equal(u.stoneFlight,undefined);near(u.cryptWebFlight.to,0);near(component('Unit 0','Transform').position[1],S.unitHeight(s,u));
+ ({s,u}=saveLoad(s,u.id));step(Math.ceil(u.stoneShift.left/S.DT));assert.equal(S.gargoyleStone(u),true);assert.equal(S.webbed(u),true);assert.equal(u.cryptWeb.frame,frame);assert.ok(S.flightHeight(s,u)>0);const rendered=component('Unit 0','Transform').position[1];assert.ok(rendered>=S.unitHeight(s,u)-1e-6&&rendered<=S.unitHeight(s,u)+u.cryptWebFlight.speed*S.DT+1e-6);assert.ok(world.snapshot.entities.some(e=>e.active&&e.components.SampledEffect?.effect.endsWith('/ClassicCryptWebAirTarget.mfx')));
+ ({s,u}=saveLoad(s,u.id));click(point(u));assert.equal(component('action8 icon','Image').sprite,S.gargoyleStoneRules.ability.unicons.disabledIcon);key('KeyF');assert.equal(u.stoneShift,undefined);while(S.webbed(u))step(1);near(S.flightHeight(s,u),0);const parts=world.snapshot.entities.filter(e=>e.active&&/^Unit 0(?: part \d+)?$/.test(e.name));assert.ok(parts.length>0);for(const e of parts)near(e.components.Transform.position[1],S.elevation(s.map,u.x,u.z));assert.equal(S.gargoyleStone(u),true);click(point(u));key('KeyF');assert.equal(u.stoneShift?.stone,false);
+ console.log('PASS generated Stone capture: Web owns descent and persists on alternate body, rendered/saved height, disabled return and ground expiry');
+}

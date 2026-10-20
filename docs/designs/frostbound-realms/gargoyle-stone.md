@@ -71,6 +71,12 @@ probe 绑定 `Game.dll` SHA-256：
 | `0x6f5cc4f0` → `0x6f595280`；`0x6f5036f0` → `0x6f0308c0` | 筛选包含 `Amor` 变形类；Astn 注册的父类为 Amor，父类记录 `+0x78` 由 `0x6f02fc20` 递归匹配，因此石像形态命中禁用 |
 | `0x6f528cb0` → `0x6f3e0e30` → virtual `+0x3dc` = `0x6f3ded20` | 命令先检查通用可用性；`ability+0x3c > 0` 返回 `0xdd`。后续 `unit+0x200` 强制落地分支只跳过着陆寻址，不绕过禁用检查 |
 | `0x6f5bbab0` → `0x6f5bb8f0` → `0x6f3ee3c0` | Web 结束时以 mode 1 遍历相同能力，减少禁用计数，恢复技能可用性 |
+| `0x6f54c420` → `0x6f65b2e0` → `0x6f67af00` | 开始降落时即安装目标身体 `ugrm` 的最低高度0，身体尚未替换 |
+| `0x6f66a080` → `0x6f67f7e0`；`0x6f67af50` | 首次 Web 取当前高度 `+0x214`、释放原插值 `+0x224`，向当前最低高度 `+0x20c` 下降；捕获期间普通高度请求不替换该插值 |
+| `0x6f653380`；`0x6f67f100` → `0x6f67f7e0` | 身体刷新更新普通高度上限、下限和目标，保留实时插值；最后一个 Web 结束时恢复到当前普通目标 `+0x208` |
+| `0x6f6770b0`；WebAir `+0xf0` = `0x6f3fc860` | 身体替换的能力整理分支保留 Web |
+| `0x6f54c6c0` → `0x6f043700/0x6f042fc0` → `0x6f043ad0` | `0xd01c4` 完成事件通过 timer `+8` 保存的接收者定向发送给 Astn |
+| `0x6f5badb0` → `0x6f6b5d20` → `0x6f5aa080` → `0x6f5ca8d0` | Web 的 DataA/DataB 经弹道传递，命中时按 `(最高高度−DataB)/DataA` 计算速度；普通石像鬼为 `(2.4−2.0)/.6` |
 
 JASS 参数说明复用已保留的 `SourceAssets/CombatRewards/Scripts/common.j`。驱散范围是调用参数层面的静态结论；特殊效果是否存续，仍需逐项核对其分类与运行行为。
 
@@ -97,6 +103,8 @@ JASS 参数说明复用已保留的 `SourceAssets/CombatRewards/Scripts/common.j
 
 蛛网捕获期间，`gargoyleStoneOption` 统一禁用石像形态。客户端沿用该结果显示原版禁用图标，鼠标、F 键及联机命令均不能开始变形。拒绝施放保持单位和捕获状态；读档、重连后继续受限，Web 结束后恢复可用。静态复现入口为 probe 的 `web-disable-dispatch`、`web-morph-filter`、`stone-morph-ancestry`、`web-disabled-order` 四组。
 
+若 Web 在进入石像形态的下降途中命中，`cryptWebFlight` 从命中时的实际高度接管下降，目标为已安装的石像最低高度0；速度在命中时固定。原控制锁继续计时，身体替换时保留 Web、剩余时间和高度插值。到期后沿用当前石像身体的普通目标高度0，返飞按钮恢复可用。Web 到期后的残余升高可以被新发起的石像变形接管；同一时刻只保留一个高度插值。存档保留允许来自飞行身体的历史高度，校验目的高度及互斥状态；公开快照传递实际高度，死亡使用死亡时高度及身体来源。静态复现为 `web-landing-floor`、`web-height-owner`、`web-body-height`、`web-preserved-body`、`web-morph-directed-timer`、`web-height-speed` 六组。
+
 ## 验证与边界
 
 ```powershell
@@ -108,10 +116,10 @@ $env:MENGINE_EDITOR_EXECUTABLE='D:/MEngineNativeQA/engine-main-sync/target/relea
 node scripts/qa-frost-gargoyle-stone.mjs
 ```
 
-本阶段REA静态探针29组、玩法13组、生成客户端7组、实际TCP4组通过。源资料验证9项和REA/MEngine MCP集成检查3项沿用上阶段结果；本阶段未更改导入资料或MCP集成。覆盖完整研究计时、独立控制锁与高度、每帧转换存档、返飞重连、敌方隐私、死亡身体，以及动画尾段的命令接管。生成客户端和原生均检查解锁后的进入动画第30帧、读档后第45帧，以及返飞第15帧和后续动画结束。原生5组通过，控制台错误0；测试副本与当前Main的SHA-256均为 `f37091c6e69d6ffb8f23a3315afc3b83c66444a9e23cc636b392b3d144ecedca`。原生结果见 `tmp/docs-artifacts/frost-gargoyle-stone/native-gargoyle-stone.json`。Web门禁新增覆盖原版禁用图标、鼠标/F键拒绝、保存加载、TCP拒绝及重连、到期恢复。上阶段蛛网生成客户端4组、尸体生成客户端1组相关回归通过。原生进程正常退出；临时runtime目录删除返回EPERM并保留在报告cleanup字段。原始诊断、截图和测试日志仅存放在该临时目录。
+本阶段REA静态探针36组、玩法15组、生成客户端8组、实际TCP5组通过。源资料验证9项和REA/MEngine MCP集成检查3项沿用先前结果；本阶段未更改导入资料或MCP集成。覆盖完整研究计时、独立控制锁与高度、每帧转换存档、返飞重连、敌方隐私、死亡身体，以及动画尾段的命令接管。生成客户端和原生均检查解锁后的进入动画第30帧、读档后第45帧，以及返飞第15帧和后续动画结束。原生6组通过，控制台错误0；测试副本与当前Main的SHA-256均为 `d093bbd3f32b7f5a61f29d7db7cf4e0185ec551010df62ea879b97586211bf07`。原生结果见 `tmp/docs-artifacts/frost-gargoyle-stone/native-gargoyle-stone.json`。Web覆盖原版禁用图标、鼠标/F键拒绝、下降早中晚命中、身体替换后保留捕获和高度、每帧保存加载、TCP拒绝及重连、到期恢复和转换中死亡。显示检查考虑客户端已有的一帧插值，并在动画切换后核对实际可见模型分片。德鲁伊玩法9组、蛛网玩法脚本及生成客户端4组回归通过。原生进程正常退出；临时runtime目录删除返回EPERM并保留在报告cleanup字段。原始诊断、截图和测试日志仅存放在 `tmp/docs-artifacts/`。
 
 默认1倍速及静止时保留动画的依据来自 renderer 时钟、同模型刷新及运动回调的静态调用链。适用条件为普通石像鬼、没有外部脚本改速、没有新的动作接管；不将此结论推广到所有 buff 或特殊运动。复现入口为上述 probe 的 `animation-command`、`animation-default-rate`、`animation-clock`、`same-model-morph`、`unit-rate-and-idle` 五组。详细临时证据见 `animation-rate-handoff.md`、`animation-body-independent-review.md` 及相邻 REA 原始结果。
 
-原版游戏尚未进行逐帧运行测量。Web 对 Astn 的施放门禁已由上述静态链确认并实现；原版阻塞地形寻址、其他特殊效果分类、Ensnare 以及变形途中命中 Web 后的高度和捕获存续仍需专项核对。当前着陆复用引擎最近可站立位置搜索；完成落地会清除空中捕获状态。身体替换的能力整理分支保留 Web，独立变形 timer 的完成事件定向发送给 Astn；通用清理的间接影响及高度写入先后仍未核实，当前完成落地的捕获处理不作为原版一致性结论。专项临时证据见 `tmp/docs-artifacts/frost-stone-web/morph-web-survival-handoff.md`。继承计时属性默认0已静态确认，尚未穷尽其所有运行时写入路径。
+原版游戏尚未进行逐帧运行测量。Web 对 Astn 的施放门禁、下降接管、身体替换后保留捕获和当前身体的到期高度已按上述静态链实现；原版身体提交帧的实际像素与时序、所有外部观察者回调、阻塞地形寻址、其他特殊效果分类及 Ensnare 仍需专项核对。当前着陆复用引擎最近可站立位置搜索。专项临时证据见 `tmp/docs-artifacts/frost-stone-web/body-commit-web-preserve-handoff.md` 和 `active-morph-speed-body-followup.md`。继承计时属性默认0已静态确认，尚未穷尽其所有运行时写入路径。
 
 上一阶段协议相关回归脚本42个中40个通过；已有的 Crypt Lord 生成客户端粒子实体缺失、Shadow Hunter 旧实体引用测试仍失败，与前一阶段基线相同。该结果不代表全项目测试全部通过。
