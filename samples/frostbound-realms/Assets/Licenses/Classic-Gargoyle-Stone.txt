@@ -1,0 +1,1 @@
+Original Warcraft III Gargoyle Stone Form data and command textures: Blizzard Entertainment original game asset terms apply. MPQ paths and SHA-256 are retained in gargoyle-stone-sources.json. Extraction does not grant redistribution rights.

@@ -286,3 +286,10 @@ scripts/*crypt-burrow*.* text eol=lf
 
 samples/frostbound-realms/Assets/CryptWeb/** -text whitespace=cr-at-eol
 scripts/*crypt-web*.* text eol=lf
+
+samples/frostbound-realms/SourceAssets/GargoyleStone/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+samples/frostbound-realms/Assets/Art/classic-gargoyle-stone*.png.meta text eol=lf
+samples/frostbound-realms/Assets/Licenses/Classic-Gargoyle-Stone.txt text eol=lf
+samples/frostbound-realms/gargoyle-stone*.json text eol=lf
+scripts/*gargoyle-stone*.* text eol=lf
+scripts/probe-frost-rea-stone.mjs text eol=lf
