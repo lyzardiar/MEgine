@@ -93,4 +93,4 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 
 穴居恶魔蛛网：`node scripts/probe-frost-rea-web.mjs` 复核 15 组分类、移动锁、弹道和高度字段调用链。`scripts/import-frost-crypt-web.py` 保留技能、研究、60 个飞行单位高度及 50 个特效尺寸来源；原版模型、付费研究、施法、存档、TCP 和原生验证入口见 [蛛网维护说明](../../docs/designs/frostbound-realms/crypt-web.md)。GitHub 源站、固定版本和更新流程沿用本文件。
 
-石像鬼石像形态：`node scripts/probe-frost-rea-stone.mjs` 的29组探针复核形态虚表、命令、魔免与驱散、回复修改器、落地/起飞及独立计时，也覆盖默认动画倍率、renderer 时钟、同模型刷新、静止动作回调，以及 Web 通过 Amor 继承关系禁用 Astn、命令拒绝和到期恢复的调用链。`scripts/import-frost-gargoyle-stone.py` 保留 `Astn`、`Rusf`、两种身体、`ACmi`、字段元数据和原版图标；来源、无游戏安装重建及当前实现边界见 [石像形态维护说明](../../docs/designs/frostbound-realms/gargoyle-stone.md)。
+形态切换：`node scripts/probe-frost-rea-stone.mjs` 的30组探针复核石像形态虚表、命令、魔免与驱散、回复修改器、落地/起飞及独立计时，也覆盖默认动画倍率、renderer 时钟、同模型刷新、静止动作回调，以及 Web 通过 Amor 继承关系禁用 Astn 和 Arav、命令拒绝和到期恢复的调用链。`scripts/import-frost-gargoyle-stone.py` 保留 `Astn`、`Rusf`、两种身体、`ACmi`、字段元数据和原版图标；来源、无游戏安装重建及当前实现边界见 [石像形态维护说明](../../docs/designs/frostbound-realms/gargoyle-stone.md) 和 [德鲁伊维护说明](../../docs/designs/frostbound-realms/druids.md)。

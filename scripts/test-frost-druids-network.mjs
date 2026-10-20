@@ -1,5 +1,6 @@
 // Author: MiYu. Verify original Druid research, transformation ownership and reconnect state over the authoritative TCP path.
 import assert from 'node:assert/strict';
+import {druidWebClientFixture} from './frost-crypt-web-client-fixture.mjs';
 import net from 'node:net';
 import {createRequire} from 'node:module';
 import {createServer} from '../samples/frostbound-realms/server.mjs';
@@ -14,4 +15,7 @@ try{
  const closed=new Promise(resolve=>a.socket.once('close',resolve));a.socket.destroy();await closed;const c=await peer();next=c.next(m=>m.type==='joined');c.send({type:'resume',code:joined.code,token:joined.token});const resumed=(await next).state;assert.equal(resumed.druidVersion,1);assert.equal(resumed.teams[0].druidResearch.Redc,2);assert.ok(unit(resumed,claw.id).druidShift||unit(resumed,claw.id).kind==='druidbear');const bear=(await wait(c,state=>unit(state,claw.id)?.kind==='druidbear')).state;assert.equal(unit(bear,claw.id).maxHp,960);assert.equal(unit(bear,claw.id).damage,36.5);assert.ok(S.restore(s));
  next=wait(c,state=>unit(state,wind.id)?.queue.length===0);c.order({type:'cancelTrain',ids:[wind.id],index:0});await next;assert.equal(s.teams[0].gold,10000);assert.equal(s.teams[0].wood,10000);console.log('PASS Druid TCP: actual source research/payment/refund, ownership rejection, hidden research, saved morph and reconnect to original Bear stats');
  s.teams[0].druidResearch.Redt=2;const crow=S.spawn(s,'druidcrow',0,0,10,{damage:0,faerieAuto:false});S.visibility(s);const airborne=(await wait(c,state=>unit(state,crow.id)?.kind==='druidcrow')).state;assert.equal(S.unitHeight(airborne,unit(airborne,crow.id)),2.4);assert.ok(S.restore(s));console.log('PASS Druid TCP: original Crow flight height in authoritative public snapshots');
+ const captured=druidWebClientFixture(S),cu=captured.unit;app.rooms.get(joined.code).state=captured.s;await wait(c,state=>S.webbed(unit(state,cu.id)));next=c.next(m=>m.type==='error');c.order({type:'druidMorph',ids:[cu.id]});assert.match((await next).message,/Web/);assert.equal(cu.druidShift,undefined);
+ const ended=new Promise(resolve=>c.socket.once('close',resolve));c.socket.destroy();await ended;const d=await peer();next=d.next(m=>m.type==='joined');d.send({type:'resume',code:joined.code,token:joined.token});assert.equal(S.webbed(unit((await next).state,cu.id)),true);next=d.next(m=>m.type==='error');d.order({type:'druidMorph',ids:[cu.id]});assert.match((await next).message,/Web/);
+ while(S.webbed(cu))S.tick(captured.s);await wait(d,state=>!S.webbed(unit(state,cu.id)));next=wait(d,state=>unit(state,cu.id)?.druidShift?.kind==='druidtalon');d.order({type:'druidMorph',ids:[cu.id]});await next;await wait(d,state=>unit(state,cu.id)?.kind==='druidtalon');assert.ok(S.restore(captured.s));console.log('PASS TCP Crow Web gate: rejected direct orders before/after reconnect, capture expiry and successful return');
 }finally{for(const socket of sockets)socket.destroy();await app.close();}

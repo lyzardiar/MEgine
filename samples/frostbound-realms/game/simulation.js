@@ -395,6 +395,7 @@ var Frost = (() => {
   function druidLanding(s,u,kind){const radius=movementRadius({kind});return !solid(s,u.x,u.z,u.id,-1,radius)&&s.units.every(v=>v.id===u.id||v.hp<=0||v.inside||isFlying(v)||!mobile(v)||distance(u,v)>=radius+movementRadius(v)+.05);}
   function startDruidMorph(s,u){
     if(!druidUnit(u)||u.hp<=0||u.built!==1||u.stun>0||u.inside||u.sanctuary||u.druidShift)return 'Select an available Druid';
+    if(webbed(u))return 'Web prevents transformation';
     const d=druidRules.units[u.kind],r=druidMorphAbility(u),target=druidMorphTarget(u),required=d.research==='Redc'?2:1;
     if(!d.alternate&&u.druidRank<required)return 'Requires '+(required===2?'Master':'Adept')+' Druid Training';
     if(u.mana<r.cost)return 'Not enough mana';if(u.kind==='druidcrow'&&!druidLanding(s,u,target))return 'Move the Storm Crow onto clear ground before landing';
