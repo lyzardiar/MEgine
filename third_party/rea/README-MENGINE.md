@@ -106,3 +106,5 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 人族奥术塔的反馈、侦察、第三升级塔身和原版特效维护入口见 [奥术塔说明](../../docs/designs/frostbound-realms/arcane-tower.md)。`node scripts/probe-frost-rea-feedback.mjs` 复核反馈发射、命中和护甲调用链；源件摘要与离线重建由 `python scripts/test-frost-arcane-tower-source.py` 校验。
 
 人族塔升级入口复用源 `Upgrade` 列表和 REA 字段读取证据；遭遇战源塔、塔防和旧存档的行为及复核命令见 [人族塔升级说明](../../docs/designs/frostbound-realms/human-tower-upgrades.md)。
+
+飞行机器的资料片模型、头像、攻击特效和源规则已保留；`node scripts/probe-frost-rea-flying-machine.mjs` 复核高射火炮的技能身份、范围分发和主目标排除。资产重建、原生预览及后续玩法接入范围见 [飞行机器维护说明](../../docs/designs/frostbound-realms/flying-machine.md)。

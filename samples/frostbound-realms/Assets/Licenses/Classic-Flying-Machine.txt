@@ -1,0 +1,1 @@
+Warcraft III Frozen Throne Flying Machine body, portrait, rules and command textures: Blizzard Entertainment original game asset terms apply. Original archive identities, hashes and converter dependencies: flying-machine-sources.json. REA upstream: https://github.com/morluto/rea.

@@ -81,3 +81,12 @@ Assets/ArcaneTowerEffects/** -text whitespace=cr-at-eol
 Assets/Art/classic-arcane-tower*.png.meta text eol=lf
 Assets/Licenses/Classic-Arcane-Tower.txt text eol=lf
 Assets/Licenses/Arcane-Tower-Effects-W3ModelViewer-MIT.txt text eol=lf
+
+/flying-machine*.json text eol=lf
+SourceAssets/FlyingMachine/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+SourceAssets/FlyingMachineEffects/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof
+Assets/FlyingMachine/** -text whitespace=cr-at-eol
+Assets/FlyingMachineEffects/** -text whitespace=cr-at-eol
+Assets/Art/classic-flying-machine*.png.meta text eol=lf
+Assets/Licenses/Classic-Flying-Machine.txt text eol=lf
+Assets/Licenses/Flying-Machine-Effects-W3ModelViewer-MIT.txt text eol=lf

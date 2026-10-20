@@ -444,3 +444,9 @@ REA确认外圈候选使用严格碰撞圆距离平方比较，内圈全伤、�
 针对性玩法5组、生成客户端9组、真实TCP8组通过。原生14项检查、控制台错误0，专用编辑器正常退出；WebView缓存因EPERM保留。生成、样例与原生测试Main摘要为 `486d13187623c974e34a211be36758234f5e4e280ad07c6e496a9c5934b2c6ba`。本阶段未执行原版逐帧UI对照。维护入口：[人族塔升级](human-tower-upgrades.md)；证据：`tmp/docs-artifacts/frost-human-tower-upgrades/`。
 
 完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共766条PASS记录，包含24,000帧AI验证；日志为 `tmp/docs-artifacts/frost-human-tower-upgrades/regression.log`。
+
+## 2026-10-21：飞行机器原件与原生资产
+
+保留hgyr双武器、Rhgb/Rhfc研究、Agyv真实视域及Aflk高射火炮源表；导入《冰封王座》Gyrocopter_V1机身、头像、动画、原始摄影机、内嵌粒子及三类攻击特效。REA静态证据确认Aflk身份、三档范围分发及主目标排除回调。229项文件、2组来源验证、3组REA探针通过，模型与特效可在无游戏安装时逐字节重建，修改后的输出会在写入前被拒绝。
+
+独立原生预览6项检查通过，截图确认机身、攻击效果及头像可见；164项运行资产与最终文件相同，控制台／材质管线错误0。专用编辑器正常退出，WebView缓存因EPERM保留。当前交付为可复用源规则和资产包；主游戏的车间生产、研究、侦测和双武器接入尚未完成。维护入口：[飞行机器](flying-machine.md)；证据：`tmp/docs-artifacts/frost-flying-machine/`。
