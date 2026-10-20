@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {spellbreakerFixture} from './frost-human-spellbreaker-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),copy=o=>JSON.parse(JSON.stringify(o)),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);};
-assert.equal(S.PROTOCOL,111);assert.equal(S.create().humanSpellbreakerVersion,2);
+assert.equal(S.PROTOCOL,112);assert.equal(S.create().humanSpellbreakerVersion,2);
 {
  const {s,breaker,victim}=spellbreakerFixture(S),control=S.restore(s);control.humanSpellbreakerVersion=0;const a=control.units.find(u=>u.id===breaker.id),b=control.units.find(u=>u.id===victim.id);assert.ok(S.fire(s,breaker,victim));assert.ok(S.fire(control,a,b));assert.equal(victim.mana,100);assert.equal(victim.feedbackFrame,undefined);assert.equal(s.projectiles.length,1);const restored=S.restore(s);step(s,5);step(restored,5);step(control,5);assert.deepEqual(restored,s);assert.equal(victim.feedbackAmount,20);assert.ok(Math.abs(b.mana-victim.mana-20)<1e-7);assert.ok(Math.abs(b.hp-victim.hp-20)<1e-7);const visible=S.publicState(s,0).units.find(u=>u.id===victim.id);assert.equal(visible.feedbackFrame,victim.feedbackFrame);assert.equal(visible.feedbackAmount,20);assert.equal(S.spellbreakerUnit(breaker),true);assert.equal(S.spellbreakerUnit({...breaker,animateDead:1}),false);
 }

@@ -16,6 +16,7 @@ const mountainKingCatalog = JSON.parse(fs.readFileSync(path.join(root, 'mountain
 const shadowhunterMissiles = JSON.parse(fs.readFileSync(path.join(root, 'shadowhunter-effect-models.json'), 'utf8'));
 
 const modelCatalog = {
+  ...JSON.parse(fs.readFileSync(path.join(root, 'crypt-web-models.json'), 'utf8')),
   ...JSON.parse(fs.readFileSync(path.join(root, 'crypt-unit-models.json'), 'utf8')),
   ...JSON.parse(fs.readFileSync(path.join(root, 'skeleton-rule-models.json'), 'utf8')),
   ...JSON.parse(fs.readFileSync(path.join(root, 'source-caster-models.json'), 'utf8')),
@@ -58,6 +59,7 @@ console.log(`  - model-catalog.json: ${Object.keys(modelCatalog).length} models`
 
 // Effect catalog - 合并所有特效数据
 const effects = JSON.parse(fs.readFileSync(path.join(root, 'effect-catalog.json'), 'utf8'));
+effects.effects.ClassicCryptWebAirTarget = {...modelCatalog.ClassicCryptWebAirTarget, clip: 0};
 Object.assign(effects.effects, JSON.parse(fs.readFileSync(path.join(root, 'lich-effects.json'), 'utf8')));
 Object.assign(effects.effects, JSON.parse(fs.readFileSync(path.join(root, 'death-knight-effects.json'), 'utf8')));
 Object.assign(effects.effects, JSON.parse(fs.readFileSync(path.join(root, 'crypt-lord-effects.json'), 'utf8')));

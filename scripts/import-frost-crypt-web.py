@@ -5,6 +5,7 @@ import importlib
 import io
 import json
 from pathlib import Path
+import re
 import struct
 import uuid
 from PIL import Image
@@ -17,6 +18,7 @@ encode = lambda value: (json.dumps(value, ensure_ascii=False, separators=(',', '
 rows = importlib.import_module('import-frost-wisp-rules').rows
 section = importlib.import_module('import-frost-human-army').section
 slot = importlib.import_module('import-frost-human-sanctum').slot
+ATTACHMENT_SOURCES = ['SourceAssets/HumanArmy/Units/HumanUnitFunc.txt', 'SourceAssets/OrcHeroes/raw/Units/OrcUnitFunc.txt', 'SourceAssets/WarcraftIII/Units/NightElfUnitFunc.txt', 'SourceAssets/CryptUnits/Units/UndeadUnitFunc.txt', 'SourceAssets/WarcraftIII/Units/NeutralUnitFunc.txt']
 
 
 def source_path(path):
@@ -100,6 +102,27 @@ def main():
     source_rows = {name: rows(original('Units/' + name + '.slk'))['ucry'] for name in ['UnitWeapons', 'UnitAbilities']}
     unit_data = rows(original('Units/UnitData.slk'))
     units = {key: dict(moveHeight=float(unit_data[key]['moveHeight'])/100, moveFloor=float(unit_data[key]['moveFloor'])/100, sourceRow=unit_data[key]) for key in ['ucry', 'ugar']}
+    flight_units = {key: dict(moveHeight=float(row['moveHeight'])/100, moveFloor=float(row['moveFloor'])/100, sourceRow=row) for key, row in unit_data.items() if row.get('movetp') == 'fly'}
+    attachment_sources = retained.get('attachmentSources', [])
+    if not attachment_sources:
+        for path in ATTACHMENT_SOURCES:
+            source_file = args.source_sample / path
+            if not source_file.exists(): continue
+            raw = source_file.read_bytes(); identifiers = set(re.findall(rb'^\[([^\]\r\n]+)\]', raw, re.M)); fields = {}
+            for key in flight_units:
+                if key.encode() not in identifiers: continue
+                source_func = section(raw, key)
+                fields[key] = {field: source_func[field] for field in ['Attachmentanimprops'] if field in source_func}
+            attachment_sources.append(dict(path=path, bytes=len(raw), sha256=sha(raw), fields=fields, fieldsSha256=sha(encode(fields))))
+    for record in attachment_sources:
+        source_file = args.source_sample / record['path']
+        if source_file.exists():
+            raw = source_file.read_bytes()
+            assert len(raw) == record['bytes'] and sha(raw) == record['sha256'], 'Corrupt retained attachment source: ' + record['path']
+        assert sha(encode(record['fields'])) == record['fieldsSha256'], 'Corrupt retained attachment fields: ' + record['path']
+        for key, source_func in record['fields'].items():
+            assert key in flight_units and 'attachmentSource' not in flight_units[key], 'Duplicate or invalid flight attachment: ' + key
+            flight_units[key].update(attachmentAnimProps=[v.strip() for v in source_func.get('Attachmentanimprops', '').split(',') if v.strip()], attachmentSource=record['path'], sourceFunc=source_func)
     w = source_rows['UnitWeapons']
     caster = dict(sourceUnit='ucry', castPoint=float(w['castpt']), castBackswing=float(w['castbsw']), autoAbility=source_rows['UnitAbilities']['auto'], sourceRows=source_rows)
     skill = dict(id='Aweb', name=strings['Name'], duration=float(ability['Dur1']), heroDuration=float(ability['HeroDur1']), mana=float(ability['Cost1']), cooldown=float(ability['Cool1']), range=float(ability['Rng1'])/100, landingTime=float(ability['DataA1']), airHeight=float(ability['DataB1'])/100, meleeRange=float(ability['DataC1'])/100, targets=ability['targs1'].split(','), requires=func['Requires'].split(','), slot=slot(func), hotkey=strings['Hotkey'], order=func['Order'], autoOn=func['Orderon'], autoOff=func['Orderoff'], missileSpeed=float(func['Missilespeed'])/100, missileHoming=func['MissileHoming']=='1', sourceRow=ability, sourceFunc=func, sourceStrings=strings, sourceFieldLabels=labels, **icons('web', func['Art']))
@@ -110,7 +133,7 @@ def main():
     for key in ability['BuffID1'].split(','):
         bfunc, bstrings = section(afunc, key), section(astrings, key)
         buffs[key] = dict(sourceRow=buff_rows[key], sourceFunc=bfunc, sourceStrings=bstrings, model=model(bfunc['Targetart']), **icons('web-buff', bfunc['Buffart']))
-    files['crypt-web.json'] = encode(dict(author='MiYu', sourceUnitsPerWorldUnit=100, ability=skill, research=upgrade, caster=caster, units=units, buffs=buffs, metadata=metadata, misc=dict(WebIsMagic=int(misc['WebIsMagic'])), magicRule=dict(sourceFile='Units/MiscGame.txt', sourceSection='Misc', sourceField='WebIsMagic', physicalValue=0, magicalWhenNonzero=True, reaVtable='0x6fa1ddec', reaVtableOffset='0x1d8', reaFunction='0x6f5cca10')))
+    files['crypt-web.json'] = encode(dict(author='MiYu', sourceUnitsPerWorldUnit=100, ability=skill, research=upgrade, caster=caster, units=units, flightUnits=flight_units, buffs=buffs, metadata=metadata, misc=dict(WebIsMagic=int(misc['WebIsMagic'])), magicRule=dict(sourceFile='Units/MiscGame.txt', sourceSection='Misc', sourceField='WebIsMagic', physicalValue=0, magicalWhenNonzero=True, reaVtable='0x6fa1ddec', reaVtableOffset='0x1d8', reaFunction='0x6f5cca10')))
     files['Assets/Licenses/Classic-Crypt-Web.txt'] = b'Original Warcraft III Web data, command textures, effect models and textures: Blizzard Entertainment original game asset terms apply. MPQ paths and SHA-256 are retained in crypt-web-sources.json. Extraction does not grant redistribution rights.\n'
     for _, archive in archives: archive.file.close()
     for path, raw in files.items():
@@ -119,7 +142,7 @@ def main():
     for path, raw in files.items():
         target = args.output / path; target.parent.mkdir(parents=True, exist_ok=True)
         if not target.exists() or target.read_bytes() != raw: target.write_bytes(raw)
-    manifest = dict(author='MiYu', generator='scripts/import-frost-crypt-web.py', generatorSha256=sha(Path(__file__).read_bytes()), gameDirectory=retained.get('gameDirectory', str(args.game)), reaSource='https://github.com/morluto/rea', reaVersion='6.5.0', reaEvidence='tmp/docs-artifacts/frost-crypt-web/', sources=list(sources.values()), files=[dict(path=p, bytes=len(raw), sha256=sha(raw)) for p,raw in files.items()], originalRuntimeVerified=False, license='Blizzard Entertainment original game terms')
+    manifest = dict(author='MiYu', generator='scripts/import-frost-crypt-web.py', generatorSha256=sha(Path(__file__).read_bytes()), gameDirectory=retained.get('gameDirectory', str(args.game)), reaSource='https://github.com/morluto/rea', reaVersion='6.5.0', reaEvidence='tmp/docs-artifacts/frost-crypt-web/', sources=list(sources.values()), attachmentSources=attachment_sources, files=[dict(path=p, bytes=len(raw), sha256=sha(raw)) for p,raw in files.items()], originalRuntimeVerified=False, license='Blizzard Entertainment original game terms')
     (args.output / receipt).write_bytes(encode(manifest))
     print('PASS source Web: research, metadata, magic condition, original icons/models and ' + str(len(files)) + ' signed outputs')
 

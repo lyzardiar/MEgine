@@ -1,8 +1,8 @@
-# 蛛网原件与 REA 证据
+# 蛛网实现与 REA 维护
 
 Author: MiYu
 
-此阶段保留地穴恶魔蛛网 `Aweb`、研究 `Ruwb`、两种效果及其二进制调用链，供游戏行为实现使用。运行时施放、自动施放、弹道、落地状态、存档和联网接入尚未完成；这些原件与静态检查不代表游戏内蛛网已可用。
+地穴恶魔蛛网 `Aweb` 已接入付费研究 `Ruwb`、手动与默认自动施放、独立跟踪弹道、移动限制、空地分类及高度过渡。客户端使用原版按钮和蛛网模型，服务端共享相同规则。协议版本为 112；新遭遇战启用 `cryptWebVersion=1`，旧存档缺少该字段时保留版本 0。
 
 ## 原始数据
 
@@ -26,6 +26,8 @@ Author: MiYu
 原版编辑器字段名来自保留的 `UI/WorldEditStrings.txt`：A 为“空军单位坠落持续时间”，B 为“空中单位高度”，C 为“近战攻击范围”。目录以 100 原版单位对应 1 世界单位换算距离、速度和高度；原始行保留未换算值。
 
 保留 `Bwea`、`Bweb`，三份原始 MDX（Webmissile、WebTarget、Web_AirTarget）及全部四份纹理依赖。八张命令/状态 PNG 直接从原 BLP 转换，并附固定 GUID 的纹理元数据。模型转换见下文。原资产版权说明位于 `Assets/Licenses/Classic-Crypt-Web.txt`。
+
+`flightUnits` 保留 `UnitData.slk` 中全部 60 个飞行单位的原始行与换算后高度、最低高度。50 个单位的特效尺寸属性来自五份已有 `UnitFunc` 原件；来源路径、原件和抽取字段摘要均写入 receipt。其余 10 个单位没有对应的已保留属性，不填猜测值。现有原版单位按源 ID 取高度；自定义飞行单位沿用其已有高度。
 
 ## 二进制证据
 
@@ -78,9 +80,17 @@ Author: MiYu
 - `Assets/CryptWeb/`：GLB、原始节点与材质动画、纹理、配套粒子 MFX 和许可证。
 - `crypt-web-model-sources.json`：原件、转换输入、生成器、工具二进制及全部输出摘要。
 
-三套模型均有一个原版粒子发射器；渲染时需同时加载模型的 `parts` 和 `effect`，使用相同动画索引。共保留 15 条序列，其中空中目标的普通、Medium、Large 三组各有 Birth/Stand/Death。几何与粒子均按原版单位 `/128` 转换，与游戏数据 `/100` 对接时使用 **1.28** 基准缩放，再应用目标原有的模型/挂点缩放。
+三套模型均有一个原版粒子发射器；渲染时同时加载模型的 `parts` 和 `effect`，使用相同动画索引。共保留 15 条序列，其中空中目标的普通、Medium、Large 三组各有 Birth/Stand/Death。几何、粒子和单位模型均按原版单位 `/128` 转换：实战弹道使用现有 `unitScales.worldScale`，目标特效跟随单位模型缩放。独立模型预览采用 `/100` 世界单位对应的 1.28 缩放。
 
-目录保留空中目标 `chest,mount` 与地面目标 `origin` 的原始挂点定义。运行时需根据目标原版挂点动画属性选择尺寸序列；动画 Birth 的 0.5 秒与高度过渡时长分别处理。MFX 为现有转换器采样结果，不代表与原游戏粒子求解器逐帧一致。
+目录保留空中目标 `chest,mount` 与地面目标 `origin` 的原始挂点定义。空军目标使用 `Bwea`，根据目标原版挂点动画属性选择尺寸序列；动画 Birth 的 0.5 秒与高度过渡时长分别处理。MFX 为现有转换器采样结果，不代表与原游戏粒子求解器逐帧一致。原 CryptFiend 模型没有 Spell 序列，保留现有模型动画。
+
+## 行为与保存
+
+研究使用地穴的生产队列并支持取消退款。W 手动指定可见敌方空军，右键按钮切换自动施放；自动模式避开本队已经发射蛛网的目标。手动发出的多个导弹可以刷新同一捕获效果，施法者死亡不取消已发射导弹。
+
+命中立即切换为地面目标并锁定移动，单位仍能攻击；武器槽及寻路、碰撞、法术目标共用当前空地分类。下降到源 `moveFloor`，结束后以相同速度回到 `moveHeight`。石像鬼为 2.4 → 0.9，速度 2/3 世界单位每秒，单程 2.25 秒；回升中再次中网从当前高度下降。近战范围只补足到源下限 1.28。
+
+保存包含研究队列、导弹身份与零伤害限制、捕获来源/时钟、双向高度过渡及地面施法记录。地面法术在蛛网结束后可继续生效；没有施加记录的旋风或闪电盾不能由旧捕获记录推断合法。死亡记录实际高度，凤凰变蛋、复活及乌鸦落地变形清理捕获状态。对手快照仅保留可见效果、时间和高度，隐藏研究、自动开关、冷却、来源和命令。
 
 ## 复现与验证
 
@@ -93,8 +103,14 @@ python scripts/test-frost-crypt-web-source.py
 node scripts/probe-frost-rea-web.mjs
 python scripts/import-frost-crypt-web-models.py
 python scripts/verify-frost-crypt-web-models.py
+node scripts/build-frostbound.mjs
+node scripts/build-frostbound-data.mjs
+node scripts/test-frost-crypt-web.mjs
+node scripts/test-frost-crypt-web-network.mjs
+node scripts/test-frost-crypt-web-client.mjs
 $env:MENGINE_EDITOR_EXECUTABLE='D:/MEngineNativeQA/engine-main-sync/target/release/mengine-editor-tauri.exe'
 node scripts/qa-frost-crypt-web-models.mjs
+node scripts/qa-frost-crypt-web.mjs
 ```
 
 离线重建：
@@ -117,4 +133,8 @@ dotnet build scripts/warcraft-node-metadata/NodeMetadata.csproj "-p:Wc3Core=$wc3
 
 独立原生预览验证了 15 个序列样本的网面、粒子组件、材质状态和 1.28 缩放，控制台无错误；截图 `tmp/docs-artifacts/frost-crypt-web/web-models-native.png` 已人工检查。预览复用游戏的 `FrostVisual.parts`。它验证资源在本引擎中可加载和显示，不覆盖实战施放、目标挂点、存档或联网。
 
-后续行为实现需要覆盖：研究队列及退款、手动与默认自动施放、独立导弹寿命、地面目标分类和武器切换、被捕获单位继续攻击、下降及恢复、原版物理/魔法条件、死亡与复活清理、严格存档、对手快照隐私、TCP 重连和原生可视验证。地面法术的存档校验必须允许“蛛网已到期而后施加的持续效果尚未到期”的合法状态。
+游戏内测试覆盖研究退款、手动/自动施放、重复导弹、地面武器切换、移动限制与攻击、双向高度存档、魔免凤凰、变形/死亡、持续地面法术和非法存档拒绝。TCP 测试覆盖权限、研究及冷却隐私、飞行中和下降中重连。所有运行证据写入上述临时目录；原 Warcraft 运行时尚未进行逐帧对照，二进制结论属于静态证据。
+
+本阶段专项验证：源导入 10 项、REA 15 项、模型 7 项、游戏行为 17 组、生成客户端 4 组、TCP 2 组通过。原生编辑器验证研究/手动目标、网面与粒子、Medium 动画、下降中存档、选择圈及结束恢复，控制台无错误。活动截图 `crypt-web-active-native.png` 的黄绿色网面与源 `Web.png` 一致。
+
+协议断言更新涉及的 40 个测试文件中，38 个通过；Crypt Lord 与 Shadow Hunter 的生成客户端测试仍分别失败于旧粒子模板及旧实体引用。在 `25290d8` 的 Main/场景上复现相同失败（仅将诊断用协议常量匹配为 112），不计作本阶段通过项。额外旧 Crypt Lord 行为测试的工人状态校验失败也在该提交复现；导航缓存测试固定比较更早提交的完整状态，已包含多个后续版本差异。相关基线日志保留在临时验证目录。

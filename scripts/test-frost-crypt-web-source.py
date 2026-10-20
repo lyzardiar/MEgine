@@ -1,7 +1,9 @@
 """Author: MiYu. Verify Web extraction contracts, deterministic offline replay and overwrite protection."""
 import hashlib
+import importlib
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -19,6 +21,9 @@ receipt = json.loads((SAMPLE / RECEIPT).read_bytes())
 rules = json.loads((SAMPLE / 'crypt-web.json').read_bytes())
 paths = [record['path'] for record in receipt['files']] + [RECEIPT]
 checks = []
+sys.path.insert(0, str(ROOT / 'scripts'))
+rows = importlib.import_module('import-frost-wisp-rules').rows
+section = importlib.import_module('import-frost-human-army').section
 
 
 def run(source, output):
@@ -55,6 +60,37 @@ assert a['sourceFieldLabels']['WESTRING_AEVAL_ENS3'] == '\u8fd1\u6218\u653b\u51f
 assert a['name'] == '\u86db\u7f51' and r['name'] == '\u86db\u7f51'
 checks.append('original ability, research, metadata labels, cast timing and physical/magical switch')
 
+unit_data = rows((SAMPLE / 'SourceAssets/CryptWeb/Units/UnitData.slk').read_bytes())
+flying = {key: row for key, row in unit_data.items() if row.get('movetp') == 'fly'}
+assert len(flying) == 60 and set(rules['flightUnits']) == set(flying)
+for key, row in flying.items():
+    unit = rules['flightUnits'][key]
+    assert unit['sourceRow'] == row and (unit['moveHeight'], unit['moveFloor']) == (float(row['moveHeight'])/100, float(row['moveFloor'])/100), key
+assert (rules['flightUnits']['echm']['moveHeight'], rules['flightUnits']['echm']['moveFloor']) == (2.8, .9)
+assert (rules['flightUnits']['uloc']['moveHeight'], rules['flightUnits']['uloc']['moveFloor']) == (1.5, .45)
+assert (rules['flightUnits']['zjug']['moveHeight'], rules['flightUnits']['zjug']['moveFloor']) == (.01, 0)
+checks.append('all 60 original movetp=fly rows retain original heights and floors with exact 1/100 conversion')
+
+attachments = set()
+for record in receipt['attachmentSources']:
+    raw = (SAMPLE / record['path']).read_bytes()
+    assert len(raw) == record['bytes'] and sha(raw) == record['sha256']
+    assert sha((json.dumps(record['fields'], ensure_ascii=False, separators=(',', ':'), allow_nan=False) + '\n').encode('utf-8')) == record['fieldsSha256']
+    identifiers = set(re.findall(rb'^\[([^\]\r\n]+)\]', raw, re.M))
+    assert set(record['fields']) == {key for key in flying if key.encode() in identifiers}
+    for key, fields in record['fields'].items():
+        original = section(raw, key); expected = {field: original[field] for field in ['Attachmentanimprops'] if field in original}
+        assert fields == expected and rules['flightUnits'][key]['sourceFunc'] == expected
+        assert rules['flightUnits'][key]['attachmentSource'] == record['path']
+        assert rules['flightUnits'][key]['attachmentAnimProps'] == [v.strip() for v in expected.get('Attachmentanimprops', '').split(',') if v.strip()]
+        attachments.add(key)
+assert len(attachments) == 50
+assert rules['flightUnits']['ugar']['attachmentAnimProps'] == ['medium']
+assert rules['flightUnits']['echm']['attachmentAnimProps'] == ['large']
+assert rules['flightUnits']['edtm']['attachmentAnimProps'] == []
+assert all('attachmentAnimProps' not in rules['flightUnits'][key] for key in flying.keys() - attachments)
+checks.append('50 flight attachment sections match five existing retained originals; unavailable sections remain unset')
+
 for record in receipt['files']:
     if record['path'].endswith('.png'):
         with Image.open(SAMPLE / record['path']) as image: assert image.size == (64, 64) and image.mode == 'RGBA'
@@ -88,7 +124,14 @@ with tempfile.TemporaryDirectory(prefix='import-check-', dir=OUT) as temp:
     result = run(source, output)
     assert result.returncode != 0 and b'Corrupt retained source' in result.stderr and not output.exists()
     checks.append('corrupt retained source rejects replay before producing output')
+    shutil.copy2(SAMPLE / 'SourceAssets/CryptWeb/Units/AbilityData.slk', damaged)
+    modified = json.loads((source / RECEIPT).read_bytes())
+    modified['attachmentSources'][0]['fields']['hgry']['Attachmentanimprops'] = 'large'
+    (source / RECEIPT).write_text(json.dumps(modified), encoding='utf-8')
+    result = run(source, output)
+    assert result.returncode != 0 and b'Corrupt retained attachment fields' in result.stderr and not output.exists()
+    checks.append('changed retained attachment fields reject offline replay before output creation')
 
-report = dict(passed=len(checks), failed=0, checks=checks, generatedFiles=len(receipt['files']), originalSources=len(receipt['sources']), rulesSha256=sha((SAMPLE / 'crypt-web.json').read_bytes()), receiptSha256=sha((SAMPLE / RECEIPT).read_bytes()))
+report = dict(passed=len(checks), failed=0, checks=checks, generatedFiles=len(receipt['files']), originalSources=len(receipt['sources']), flightUnits=len(flying), attachmentUnits=len(attachments), missingAttachmentUnits=sorted(flying.keys() - attachments), rulesSha256=sha((SAMPLE / 'crypt-web.json').read_bytes()), receiptSha256=sha((SAMPLE / RECEIPT).read_bytes()))
 (OUT / 'import-check.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
 print(json.dumps(report, indent=2))

@@ -90,3 +90,5 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 地穴穴居恶魔/石像鬼：`node scripts/probe-frost-rea-rewards.mjs --crypt-units` 检查双武器字段和装载路径；`scripts/import-frost-crypt-units.py` 保存原件、源身体/武器档案、身体/头像/弹道转换与摘要。维护、复现和技能边界见 [地穴单位说明](../../docs/designs/frostbound-realms/crypt-units.md)。
 
 穴居恶魔钻地：`node scripts/probe-frost-rea-rewards.mjs --crypt-burrow` 保留源类标识、构造、虚表及形态状态方法；`scripts/import-frost-crypt-burrow.py` 保存原技能、研究、地下身体和按钮及摘要。付费队列、隐形探测、存档与运行验证见 [钻地维护说明](../../docs/designs/frostbound-realms/crypt-burrow.md)。
+
+穴居恶魔蛛网：`node scripts/probe-frost-rea-web.mjs` 复核 15 组分类、移动锁、弹道和高度字段调用链。`scripts/import-frost-crypt-web.py` 保留技能、研究、60 个飞行单位高度及 50 个特效尺寸来源；原版模型、付费研究、施法、存档、TCP 和原生验证入口见 [蛛网维护说明](../../docs/designs/frostbound-realms/crypt-web.md)。GitHub 源站、固定版本和更新流程沿用本文件。
