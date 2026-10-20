@@ -33,6 +33,11 @@ const probes=[
  ['default-clock-property','pd 55 @ 0x6f3cca20;'+functions('0x6f3fea20'),['[esi + 0x98]','[esi + 0x9c]','0x6fbb81d4','[esi + 0x80]','[esi + 0x88]','[esi + 0x90]']],
  ['independent-unlock',functions('0x6f534800','0x6f66b660','0x6f65ae90','0x6f3ea000','0x6f3ee460'),['0x6f5454f0','0x6f3ee460','0x6f65ae90','[ecx + 0x198]','[ecx + 0x44]']],
  ['exit-cooldown','pd 40 @ 0x6f3da4d0;'+functions('0x6f418d20','0x6f4ecf40','0x6f4ece60','0x6f4aaf10','0x6f3ded20'),['0x3c0','0x3a4','0xd01be','0xa0000000','0x200','0xd2']],
+ ['animation-command',functions('0x6f527400','0x6f67bb90','0x6f675e90','0x6f6a0ae0'),['push  0x200','push  7','push  4','push  0xb','0x6f6a0ae0','0x6f186590']],
+ ['animation-default-rate','pd 6 @ 0x6f180aa3;pd 22 @ 0x6f18236c;'+functions('0x6f184a40','0x6f12fb80','0x6f77a500'),['0x3f800000','0x174','[edi + 0x190]','0x6f12fb80','0x6f77a500','[ecx + 0x48]']],
+ ['animation-clock','pd 18 @ 0x6f183aa7;'+functions('0x6f77a1e0'),['0x80','0x2c','0x3f800000','[edi + 0x48]','mulss','[edi + 0x50]','0x6f77ba30']],
+ ['same-model-morph','pd 29 @ 0x6f65330b;pd 7 @ 0x6f65b0ee;pxw 4 @ 0x6fa4a78c;'+functions('0x6f3247b0','0x6f6a0b10'),['modelPath','0x6f3247b0','0x6f051310','0x6f653150','[arg_4h], 0','0x6f33def0','push  4']],
+ ['unit-rate-and-idle','pd 4 @ 0x6f67f0bb;'+functions('0x6f677d50','0x6f64c6a0','0x6f64c780'),['[ecx + 0x300], 0x3f800000','[ecx + 0x300]','0x6f186f60','0x6f03d9b0','0x6f03d9f0','cmp   dword [eax], 5','cmp   dword [ecx], 5','push  4','push  5']],
 ];
 const client=new Client({name:'frostbound-stone-research',version:'1.0.0'}),reports=[];
 fs.mkdirSync(out,{recursive:true});

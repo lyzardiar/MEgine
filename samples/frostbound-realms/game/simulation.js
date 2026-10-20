@@ -1484,7 +1484,7 @@ var Frost = (() => {
         if(c.type==='gather'&&acolyte(s,v)){const occupied=mineWorkers(s,s.resources[c.resource]).filter(w=>w.id!==v.id);next.mineSlot=[0,1,2,3,4].find(i=>!occupied.some(w=>w.order.mineSlot===i));}
         if(c.type==='gather'&&miningWisp(s,v)&&s.resources[c.resource].kind==='mine'){const occupied=wispWorkers(s,s.resources[c.resource]).filter(w=>w.id!==v.id);next.mineSlot=Array.from({length:entangledRules.capacity},(_,i)=>i).find(i=>!occupied.some(w=>w.order.mineSlot===i));}
         if(faerieUnit(v)){stopFlare(v);v.phaseLeft=0;}if(c.type==='stop')delete v.entangleCast;delete v.druidCastLeft;delete v.druidCastSpell;delete v.dryadCastLeft;
-        if(wisp(s,v))v.gatherCd=0;delete v.workResume;v.path=[];v.pathAt=-100;v.waypoints=[];v.order=next;
+        if(wisp(s,v))v.gatherCd=0;if(!gargoyleStone(v))delete v.stoneMorphFrame;delete v.workResume;v.path=[];v.pathAt=-100;v.waypoints=[];v.order=next;
       });return null;
     }
     if(c.type==='build'){
@@ -2549,6 +2549,7 @@ var Frost = (() => {
     }else{
       const raw=wolfAttack(s,u,target,bladeAttack(s,u,target,value));damage(s,u,target,weaponDamage(shot,target,raw,s),'attack',undefined,shot,raw);if(types[u.kind].splash)for(const v of s.units)if(v.id!==target.id&&v.team!==u.team&&v.hp>0&&canAttack(u,v)&&distance(v,target)<types[u.kind].splash)damage(s,u,v,weaponDamage(u,v,u.damage*.6*(u.cripple>0?.5:1),s));
     }
+    delete u.stoneMorphFrame;
     if(searing){spendSpellMana(s,u,priestess.spell(u,1).cost);u.searingShotFrame=s.frame;}if(u.searingTarget===target.id){delete u.searingTarget;u.order={type:'hold'};}
     if(giantUnit(u)&&u.warClubAttacks>0){u.warClubAttacks--;if(!u.warClubAttacks)u.warClubDropLeft=Number(giantRules.abilities.Agra.sourceRow.DataB1);updateGiant(s,u);}u.yaw=Math.atan2(target.x-u.x,target.z-u.z);if(!source&&!dryadUnit(u)&&!hippogryphUnit(u)&&!chimaeraUnit(u)&&!faerieUnit(u))u.cd=unitType(u).cooldown||1;s.events.push({type:speed?'launch':'hit',x:target.x,z:target.z,fromX:u.x,fromZ:u.z,fromY:unitHeight(s,u)+1.6,toY:unitHeight(s,target)+1.6,team:u.team,ranged:!!speed,...(u.kind==='rifleman'?{art:'musket'}:{})});return true;
   }

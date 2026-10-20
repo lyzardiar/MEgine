@@ -141,6 +141,7 @@ var FrostVisual=(()=>{
     let clip=asset.animations.findIndex(a=>desired.test(a.name));if(clip<0)clip=0;return mesh(clip,loop(clip,time));
   }
   function classicClip(asset,action,u={}){
+    if(u.kind==='gargoyle'&&['Morph','Morph Alternate'].includes(action))return asset.animations.findIndex(a=>a.name===action);
     if(asset.classicTier===2&&action==='Attack'&&/\\HumanTower\\/i.test(asset.sourceModel||''))return classicClip(asset,'Stand',u);
     const tier=asset.classicTier||1,alternate=Frost.gargoyleStone(u)||u.kind==='gargoyle'&&Number.isFinite(u.age)&&u.sourceUnit==='ugrm'?true:Frost.cryptLordUnit(u)?!!u.locustSwarm||u.locustActive===true||u.locustLeft>0:Frost.cryptBurrowUnit(u)?Frost.cryptBurrowed(u):Frost.carrionBeetle(u)?Frost.beetleBurrowed(u):Frost.phoenixUnit(u)?u.kind==='phoenixegg':Frost.ancient(u)||asset.classic&&asset.factionBuilding&&/\\(Ancient[^\\]+|TreeofLife)\\/i.test(asset.sourceModel||'')?!u.uprooted:Frost.mountainKingUnit?.(u)?u.mountainAvatarLeft>0:Frost.demonHunterUnit?.(u)?u.metamorphLeft>0:Frost.druidUnit?.(u)?druidRules.units[u.kind].alternate:undefined,cargo=u.cargo>0?(u.cargoKind==='tree'?'lumber':'gold'):null;
     let best=-1,score=-Infinity;
@@ -157,8 +158,14 @@ var FrostVisual=(()=>{
     }
     return best;
   }
+  function stoneMorph(u,asset,time){
+    if(u.kind!=='gargoyle'||u.undeadArmyRules!==1||u.hp<=0||!u.stoneShift&&u.stoneMorphFrame===undefined)return null;
+    const stone=u.stoneShift?u.stoneShift.stone:Frost.gargoyleStone(u),action=stone?'Morph':'Morph Alternate',lock=Frost.gargoyleStoneRules.ability.duration+(stone?Frost.gargoyleStoneRules.ability.heightAdjustmentTime:0),elapsed=u.stoneShift?time-u.stoneShift.frame*Frost.DT:time-u.stoneMorphFrame*Frost.DT+lock,duration=asset.animations.find(a=>a.name===action)?.duration||0;
+    return elapsed>=0&&elapsed+1e-8<duration?{action,elapsed}:null;
+  }
   function classicSample(u,asset,walking,time,action,rate=12){
     let elapsed=Math.max(0,time),progress=null;
+    const morph=!action&&!walking&&!u.weaponWindup?stoneMorph(u,asset,time):null;
     if(!action&&(shadowhunterModel(u)||taurenModel(u)||farseerModel(u)||blademasterModel(u)||bloodMageModel(u)||mountainKingModel(u)||lichModel(u)||cryptLordModel(u)||dreadlordModel(u)||deathKnightModel(u)||paladinModel(u)||archmageModel(u)||wardenModel(u)||keeperModel(u)||priestessModel(u))&&/Portrait/i.test(asset.sourceModel||''))action='Portrait';
     if(!action&&Frost.demonHunterUnit(u)&&/HeroDemonHunter_Portrait/i.test(asset.sourceModel||''))action='Portrait';
     if(!action){
@@ -186,7 +193,7 @@ var FrostVisual=(()=>{
       else if(Frost.infernalUnit(u)&&u.hp>0&&time-u.infernalBorn*Frost.DT<asset.animations[classicClip(asset,'Birth',u)].duration){action='Birth';elapsed=time-u.infernalBorn*Frost.DT;}
       else if(Frost.cryptLordUnit(u)&&u.cryptLordCast&&!walking){action=u.cryptLordCast.slot===0?'Spell Throw':'Spell';progress=castPhase(u,asset,walking);}
       else if(Frost.cryptLordUnit(u)&&u.cryptLordLastSlot!==undefined&&!walking&&!u.stun&&time-u.cryptLordCastFrame*Frost.DT<Frost.cryptLordRules.unit.castBackswing){action=u.cryptLordLastSlot===0?'Spell Throw':'Spell';elapsed=time-u.cryptLordCastFrame*Frost.DT+Frost.cryptLordRules.unit.castPoint;}
-      else if(u.stoneShift){action=u.stoneShift.stone?'Morph':'Morph Alternate';progress=1-u.stoneShift.left/u.stoneShift.duration;}
+      else if(morph){action=morph.action;elapsed=morph.elapsed;}
       else if(Frost.gargoyleStone(u)&&u.hp>0){action='Stand';}
       else if(Frost.cryptBurrowUnit(u)&&(u.cryptShift||u.cryptShiftLeft>0)){const shift=u.cryptShift;action=(shift?shift.burrow:!Frost.cryptBurrowed(u))?'Morph':'Morph Alternate';progress=1-(shift?.left??u.cryptShiftLeft)/Frost.cryptBurrowRules.ability.duration;}
       else if(Frost.cryptBurrowed(u)&&u.hp>0){action='Stand';}

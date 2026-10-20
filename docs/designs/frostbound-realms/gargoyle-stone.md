@@ -62,6 +62,11 @@ probe 绑定 `Game.dll` SHA-256：
 | `0x6f54c8a0` / `0x6f534ac0` | 切换身体并安排 `0xd01dc` 事件，后续调整高度 |
 | `0x6f54c6c0` / `0x6f5315b0` | 共享计时组合等级记录值、技能 `+0x9c` 和有条件的高度调整字段；完成事件为 `0xd01c4` |
 | `0x6f5454f0` | 根据当前身体及进入/退出标志调用身体替换和对应完成钩子 |
+| `0x6f527400` → `0x6f67bb90/0x6f675e90` → `0x6f186590` | 提交 Morph 和后续 Stand；参数为序列属性及整数 flags，不传控制锁时长 |
+| `0x6f180aa9` / `0x6f67f0c5` → `0x6f677d50` | Sprite 动画倍率及普通单位倍率初始化为 1.0；单位刷新沿用其当前倍率 |
+| `0x6f12fb80` → `0x6f77a500` → `0x6f77a1e0` | 将倍率写入 renderer `+0x48`，实际时间增量乘该倍率；Astn 的 `0x200` 不含重置倍率的 `0x80` |
+| `0x6f65330b` → `0x6f3247b0`，`0x6f6a0b10` | 比较 `modelPath`；同模型跳过重载及其强制 Stand |
+| `0x6f64c6a0/0x6f64c780`，`0x6f66b7b0` | 低运动回调仅把 Walk 改回 Stand；Morph 不被覆盖。身体刷新末尾 Birth/Stand 分支受 `IsStructure` 条件控制，普通石像鬼不进入 |
 
 JASS 参数说明复用已保留的 `SourceAssets/CombatRewards/Scripts/common.j`。驱散范围是调用参数层面的静态结论；特殊效果是否存续，仍需逐项核对其分类与运行行为。
 
@@ -84,6 +89,8 @@ JASS 参数说明复用已保留的 `SourceAssets/CombatRewards/Scripts/common.j
 
 运行时以 `stoneShift` 保存控制锁，`stoneFlight` 保存独立高度时钟。稳定石像仍属于单位，使用0.32碰撞，保持原朝向，禁止移动攻击；坟场护甲升级继续叠加。额外 +8 与现有荒芜之地基础 +2 分别计算。敌方公开状态保留可见姿态与高度，隐藏研究队列和技能冷却。死亡身体保存死亡时的原版单位来源：稳定石像为 `ugrm`，使用 Death Alternate 和原表1秒死亡阶段；进入尚未提交或已返飞时为 `ugar`，使用普通 Death 和2.5秒死亡阶段。转换中死亡保留实际高度。两种身体的 `deathType=0`，均不能供复活、食尸或骷髅召唤使用。尸体来源通过存档和公开快照传递，模型网格随原版交替动画切换；到期判断包含浮点误差容限，避免1秒边界多停一个模拟帧。
 
+普通静止施放的 Morph 按原模型 2.5 秒、Morph Alternate 按 .833 秒以默认 1 倍速采样，跨过 1/.5 秒控制锁结束点继续播放。开始帧取 `stoneShift.frame`；解锁后从 `stoneMorphFrame` 和锁时长恢复相同起点。客户端使用游戏帧时钟和本地帧余量，读档或接收快照后仍对齐该起点。返飞后的有效普通命令或实际攻击清除动画尾段标记，拒绝的命令保持原动画；移动和攻击前摇优先显示自身动作。复用现有存档字段，协议仍为113。
+
 ## 验证与边界
 
 ```powershell
@@ -95,9 +102,9 @@ $env:MENGINE_EDITOR_EXECUTABLE='D:/MEngineNativeQA/engine-main-sync/target/relea
 node scripts/qa-frost-gargoyle-stone.mjs
 ```
 
-源资料验证9项、REA静态探针20组通过。玩法11组、生成客户端5组、实际TCP3组通过；覆盖完整研究计时、每帧转换存档、退出后仍在上升的重连、敌方隐私、身体/魔免/回血/碰撞，以及返飞低高度中Web的存档回归。原生4组通过，控制台错误0；测试副本与提交Main的SHA-256均为 `46d6b228787a85129c2445b3e77e15efb78fc35d334722da7b71ab883594fc55`。原生结果见 `tmp/docs-artifacts/frost-gargoyle-stone/native-gargoyle-stone.json`。真实物理攻击覆盖稳定石像、普通飞行、进入中、返飞中四种死亡状态；生成客户端和原生验证实际尸体网格、读档与到期隐藏，TCP验证双方视图和死亡中重连。尸体、尸体阶段、尸体联机、尸体生成客户端、Paladin、Death Knight共6个相关回归脚本通过。原始诊断、截图和测试日志仅存放在该临时目录。
+源资料验证9项、REA静态探针25组、玩法12组、生成客户端6组、实际TCP3组通过；REA/MEngine MCP集成检查3项通过。覆盖完整研究计时、独立控制锁与高度、每帧转换存档、返飞重连、敌方隐私、死亡身体，以及动画尾段的命令接管。生成客户端和原生均检查解锁后的进入动画第30帧、读档后第45帧，以及返飞第15帧和后续动画结束。原生4组通过，控制台错误0；测试副本与当前Main的SHA-256均为 `6531e4b64154f3d3db9766fd9b9660704f0b10053cd374a66d54d34c23fcbf25`。原生结果见 `tmp/docs-artifacts/frost-gargoyle-stone/native-gargoyle-stone.json`。蛛网生成客户端4组、尸体生成客户端1组相关回归通过。原始诊断、截图和测试日志仅存放在该临时目录。
 
-动画参数链 `527400 → 67bb90/675e90 → 6a0ae0 → 186590` 传递序列属性和整数 flags，没有传入控制锁时长。当前客户端按控制锁进度采样变形动画；该速度尚未得到原版验证。资源层最终播放时钟、身体替换及后续命令的打断效果仍需核对，不能将原动画数据的使用等同于播放时序一致。静态证据见 `tmp/docs-artifacts/frost-gargoyle-stone/animation-timing-handoff.md` 及相邻 REA 原始结果。
+默认1倍速及静止时保留动画的依据来自 renderer 时钟、同模型刷新及运动回调的静态调用链。适用条件为普通石像鬼、没有外部脚本改速、没有新的动作接管；不将此结论推广到所有 buff 或特殊运动。复现入口为上述 probe 的 `animation-command`、`animation-default-rate`、`animation-clock`、`same-model-morph`、`unit-rate-and-idle` 五组。详细临时证据见 `animation-rate-handoff.md`、`animation-body-independent-review.md` 及相邻 REA 原始结果。
 
 原版游戏尚未进行逐帧运行测量。原版阻塞地形寻址、特殊效果的物理/魔法分类、Web/Ensnare施放门禁及变形时捕获状态的存续仍需专项实测。当前着陆复用引擎最近可站立位置搜索；完成落地会清除空中捕获状态。上述交互在本引擎已验证可保存、可重连，不代表已经证明原版全部细节一致。继承计时属性默认0已静态确认，尚未穷尽其所有运行时写入路径。
 

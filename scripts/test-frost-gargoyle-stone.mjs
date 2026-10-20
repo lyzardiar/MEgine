@@ -13,6 +13,17 @@ assert.equal(S.PROTOCOL,113);
 }
 if(process.argv.includes('--research-only'))process.exit(0);
 {
+ for(const action of ['move','stop','hold','attack','fire']){
+  const {s,unit}=fixture({researched:true});assert.equal(order(s,unit,'stoneform'),null);finish(s,unit);assert.equal(order(s,unit,'unstoneform'),null);finish(s,unit);
+  const frame=unit.stoneMorphFrame;assert.equal(frame,s.frame);assert.ok(order(s,unit,'move',{x:NaN,z:0}));assert.equal(unit.stoneMorphFrame,frame);
+  assert.ok(order(s,unit,'move',{x:2,z:2,append:true}));assert.equal(unit.stoneMorphFrame,frame);
+  const target=S.spawn(s,'humanrifleman',1,unit.x+1,unit.z);S.visibility(s);
+  assert.equal(action==='fire'?S.fire(s,unit,target):order(s,unit,action,{x:2,z:2,target:target.id}),action==='fire'?true:null);
+  assert.equal(unit.stoneMorphFrame,undefined);assert.equal(S.restore(s).units.find(v=>v.id===unit.id).stoneMorphFrame,undefined);
+ }
+ console.log('PASS Stone animation handoff: accepted orders/fire cancel the tail, rejected orders preserve it, saved state restores');
+}
+{
  for(const phase of ['stone','flying','entering','leaving']){
   const {s,unit,corpse:c}=gargoyleStoneDeathFixture(S,phase),source=phase==='stone'?'ugrm':'ugar',duration=phase==='stone'?1:2.5;
   assert.equal(unit.hp,0);assert.equal(c.sourceUnit,source,phase);assert.equal(S.corpseDuration(s,c),duration);assert.equal(S.corpseUsable(c,s),false);assert.equal(S.publicState(s,0).corpses.find(v=>v.id===c.id).sourceUnit,source);assert.equal(S.publicState(s,1).corpses.find(v=>v.id===c.id).sourceUnit,source);
