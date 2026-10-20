@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';
 import {gargoyleStoneClientFixture,gargoyleStoneDeathFixture,gargoyleStoneWebFixture} from './frost-gargoyle-stone-client-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),fixture=options=>gargoyleStoneClientFixture(S,options),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`),order=(s,u,type,extra={})=>S.command(s,u.team,{type,ids:[u.id],...extra});
 const finish=(s,u)=>{for(let i=0;u.stoneShift&&i<100;i++)S.tick(s);assert.equal(u.stoneShift,undefined);},ready=(s,u)=>step(s,Math.ceil((u.stoneCd||0)/S.DT)+1);
-assert.equal(S.PROTOCOL,116);
+assert.equal(S.PROTOCOL,117);
 {
  for(const delay of [0,3,6]){
   const {s,unit:u}=gargoyleStoneWebFixture(S,{entering:true,delay}),capture=S.clone(u.cryptWeb),height=S.flightHeight(s,u);

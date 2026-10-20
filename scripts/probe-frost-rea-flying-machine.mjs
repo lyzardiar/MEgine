@@ -15,6 +15,9 @@ const probes=[
  ['flak-identity','pd 2 @ 0x6f57bdd0;pd 2 @ 0x6f57b460;pxw 8 @ 0x6fa159a0',['CAbilityFlakCannon','0x41666c6b','0x6f57bdd0']],
  ['flak-primary-filter','af @ 0x6f573800;pdf @ 0x6f573800',['cmp   dword [esi + 4], ecx','0x6f573813','0x6f417f20']],
  ['flak-area-dispatch','af @ 0x6f5725e0;pdf @ 0x6f5725e0',['0x6f3f6920','0x6f3f74d0','0x6f3f7410','0x6f3f7530','0x6f3f7470','0x6f3f7590','0x6f573800','push  3','0x6f6b19e0']],
+ ['flak-area-context','af @ 0x6f6b19e0;pdf @ 0x6f6b19e0',['0x6f6af6c0','0x6f6af6b0','0x6f633a40','0x6f661060','0x6f6af530','0x40']],
+ ['flak-area-damage','af @ 0x6f6af530;pdf @ 0x6f6af530;af @ 0x6f6af6c0;pdf @ 0x6f6af6c0',['0x6f685690','esi + 0x58','var_1ch','edx + 0x120','eax + 0xb8','0x6f03e260','edi + 0x38','MagicImmunesResistDamage']],
+ ['flak-damage-packet','af @ 0x6f685690;pdf @ 0x6f685690',['ecx + 0x10','ecx + 0x14','ecx + 0xc','ecx + 0x20','ret   0x14']],
 ];
 const client=new Client({name:'frostbound-flying-machine-research',version:'1.0.0'}),reports=[];
 fs.mkdirSync(out,{recursive:true});
@@ -34,5 +37,5 @@ try{
   reports.push({name,evidenceId:evidence.evidence_id,stdoutSha256:digest(r.stdout),markers});
   console.log('PASS REA Flying Machine '+name);
  }
- fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence binds Aflk to CAbilityFlakCannon and records its area dispatch and primary-target exclusion.','Original damage scaling, target-mask combinations, exact distance boundaries and complete runtime gameplay remain to be verified.']},null,2)+'\n');
+ fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence binds Aflk to CAbilityFlakCannon, three-band collision tests, primary-target exclusion and propagation of the triggering weapon damage descriptor.','Full original damage receiver execution, all target-mask/immunity combinations, float32 tangency and complete original runtime remain unverified.']},null,2)+'\n');
 }finally{await client.close();}

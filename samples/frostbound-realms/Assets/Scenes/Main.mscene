@@ -161474,6 +161474,41 @@
             "receive_shadows": false
           }
         }
+      },
+      {
+        "entity": 90790,
+        "name": "Classic spell 0 flyingMachineActor",
+        "parent": 88755,
+        "siblingIndex": 3804,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/FlyingMachineEffects/Effects/ClassicFlyingMachineEmbedded.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
       }
     ],
     "frame": 0,
