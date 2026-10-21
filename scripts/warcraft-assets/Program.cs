@@ -9,7 +9,7 @@ using System.Numerics;
 using System.Text.Json;
 using Wc3ModelViewer.Core.Formats;
 
-if (args.Length == 3 && args[0] == "--effects") { EffectExport.Write(args[1], args[2]); return; }
+if (args.Length == 3 && (args[0] == "--effects" || args[0] == "--effects-continuous")) { EffectExport.Write(args[1], args[2], args[0] == "--effects-continuous"); return; }
 if (args.Length == 3 && args[0] == "--attachments") {
     var source = MdxReader.Read(File.ReadAllBytes(args[1]));
     var pose = new MdxAnimator(source);

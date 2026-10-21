@@ -10,7 +10,7 @@ function fixture(){const {s,h}=bloodMageFixture(S,6);h.skills=[0,0,0,1];h.skillP
  const view=S.publicState(s,1);for(const k of ['source','phoenixSummoner','phoenixFireProjectile'])assert.ok(view.projectiles.every(p=>p[k]===undefined));
 }
 {
- const {s,v}=fixture();step(s,1);v.x=6;v.z=3;const copy=S.restore(s);step(s,12);step(copy,12);assert.deepEqual(copy,s);assert.ok(v.phoenixFire);assert.equal(s.projectiles.filter(p=>p.phoenixFireProjectile).length,0,'pending target reservation prevents duplicate flight');
+ const {s,v}=fixture();step(s,1);v.x=6;v.z=3;S.visibility(s);const copy=S.restore(s);step(s,12);step(copy,12);assert.deepEqual(copy,s);assert.ok(v.phoenixFire);assert.equal(s.projectiles.filter(p=>p.phoenixFireProjectile).length,0,'pending target reservation prevents duplicate flight');
 }
 {
  const {s,p,v}=fixture();step(s,1);p.hp=1;step(s,1);assert.equal(p.kind,'phoenixegg');const copy=S.restore(s);step(s,8);step(copy,8);assert.deepEqual(copy,s);assert.ok(v.phoenixFire,'already launched fire survives egg transition');

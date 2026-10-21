@@ -161544,6 +161544,214 @@
             "time_seconds": 0
           }
         }
+      },
+      {
+        "entity": 90792,
+        "name": "Classic spell 0 aviaryActor",
+        "parent": 88755,
+        "siblingIndex": 3806,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanAviaryEffects/Effects/KingdomGryphonAviaryEmbedded.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90793,
+        "name": "Classic spell 0 gryphonActor",
+        "parent": 88755,
+        "siblingIndex": 3807,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanAviaryEffects/Effects/ClassicGryphonEmbedded.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90794,
+        "name": "Classic spell 0 dragonhawkActor",
+        "parent": 88755,
+        "siblingIndex": 3808,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanAviaryEffects/Effects/ClassicDragonHawkEmbedded.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90795,
+        "name": "Classic spell 0 aviaryCloud",
+        "parent": 88755,
+        "siblingIndex": 3809,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanAviaryEffects/Effects/CloudOfFog.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90796,
+        "name": "Classic spell 0 aviaryShackle",
+        "parent": 88755,
+        "siblingIndex": 3810,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              -100,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "SampledEffect": {
+            "effect": "Assets/HumanAviaryEffects/Effects/AerialShacklesTarget.mfx",
+            "clip": 0,
+            "playing": false,
+            "looping": false,
+            "speed": 1,
+            "time_seconds": 0
+          }
+        }
+      },
+      {
+        "entity": 90797,
+        "name": "Classic spell 0 aviaryShackle mesh 0",
+        "parent": 90796,
+        "siblingIndex": 0,
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/HumanAviaryEffects/Models/Abilities/Spells/Human/AerialShackles/AerialShacklesTarget/geoset-00-animated.glb",
+            "material": "Assets/HumanAviaryEffects/Materials/Abilities/Spells/Human/AerialShackles/AerialShacklesTarget/geoset-00-layer-0.mmat",
+            "cast_shadows": false,
+            "receive_shadows": false
+          }
+        }
       }
     ],
     "frame": 0,

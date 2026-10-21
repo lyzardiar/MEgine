@@ -1,0 +1,20 @@
+{
+  "version": 8,
+  "name": "Aerial Shackles LEAS",
+  "shader": "custom",
+  "custom_shader": "Assets/Shaders/HumanAviaryLeash.mshader",
+  "surface": "transparent",
+  "blend_mode": "additive",
+  "base_color": [
+    1,
+    1,
+    1,
+    1
+  ],
+  "base_color_texture": "Assets/HumanAviary/Lightning/lariatCaught.png",
+  "double_sided": true,
+  "transparent_depth_write": false,
+  "render_queue": 3000,
+  "wrap_u": "repeat",
+  "wrap_v": "clamp"
+}

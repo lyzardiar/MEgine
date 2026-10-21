@@ -44,7 +44,7 @@ console.log('PASS Phoenix automatic fire, original projectile and saved fire/fli
 }
 console.log('PASS Phoenix source weapon dice, full/half/quarter splash and magic-immune exclusion');
 {
- const {s,h}=bloodMageFixture(S,6);learn(s,h,3);h.mana=S.maxMana(h);assert.equal(cmd(s,h,'spell',{slot:3}),null);step(s,6);const p=s.units.find(S.phoenixUnit),bad=S.clone(s);bad.units.find(u=>u.id===p.id).summoner=h.id+1;assert.throws(()=>S.restore(bad),/Phoenix/);const duplicate=S.clone(s);duplicate.units.push({...duplicate.units.find(u=>u.id===p.id),id:++duplicate.serial});assert.throws(()=>S.restore(duplicate),/Phoenix/);p.hp=1;step(s,1);const egg=S.clone(s);egg.units.find(u=>u.id===p.id).phoenixEggLeft=1;assert.throws(()=>S.restore(egg),/Phoenix/);
+ const {s,h}=bloodMageFixture(S,6);learn(s,h,3);h.mana=S.maxMana(h);assert.equal(cmd(s,h,'spell',{slot:3}),null);step(s,6);const p=s.units.find(S.phoenixUnit),bad=S.clone(s);bad.units.find(u=>u.id===p.id).summoner=h.id+1;assert.throws(()=>S.restore(bad),/Phoenix/);const duplicate=S.clone(s);duplicate.units.push({...duplicate.units.find(u=>u.id===p.id),id:++duplicate.serial});delete duplicate.units.at(-1).aviarySpatial;assert.throws(()=>S.restore(duplicate),/Phoenix/);p.hp=1;step(s,1);const egg=S.clone(s);egg.units.find(u=>u.id===p.id).phoenixEggLeft=1;assert.throws(()=>S.restore(egg),/Phoenix/);
  const f=bloodMageFixture(S,3);learn(f.s,f.h,0);f.h.mana=S.maxMana(f.h);assert.equal(cmd(f.s,f.h,'spell',{slot:0,x:4,z:0}),null);step(f.s,7);const fire=S.clone(f.s);fire.flameStrikes[0].next=fire.flameStrikes[0].age;assert.throws(()=>S.restore(fire),/Flame Strike/);
 }
 console.log('PASS forged Phoenix owners/duplicates/egg timers and off-schedule Flame Strike saves rejected');

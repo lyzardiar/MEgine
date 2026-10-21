@@ -46,7 +46,7 @@ internal static class EffectExport {
         }
         return paths;
     }
-    public static void Write(string source, string target) {
+    public static void Write(string source, string target, bool continuous = false) {
         var bytes = File.ReadAllBytes(source); var model = MdxReader.Read(bytes);
         var modelPaths = RestoreModelEmitters(bytes, model);
         var animator = new MdxAnimator(model);
@@ -108,16 +108,18 @@ internal static class EffectExport {
         var clips = new List<object>();
         var sequences = model.Sequences.Cast<MdxSequence?>().ToList();
         if (sequences.Count == 0) sequences.Add(null);
+        string? previousSequence = null; float previousElapsed = 0;
         foreach (var seq in sequences) {
             float duration = seq is null ? 1 : (seq.IntervalEnd - seq.IntervalStart) / 1000f;
             if (duration <= 0) continue;
             if (duration > 600) throw new InvalidDataException("Effect duration exceeds 600 seconds");
-            simulation.Reset();
+            bool carryParticles = continuous && string.Equals(seq?.Name, "Death", StringComparison.OrdinalIgnoreCase) && string.Equals(previousSequence, "Stand", StringComparison.OrdinalIgnoreCase);
+            if (!carryParticles) simulation.Reset();
             bool looping = seq is null || (seq.Flags & 1) == 0;
-            float prewarmSeconds = 0;
+            float prewarmSeconds = carryParticles ? previousElapsed : 0;
             var constantEmitters = model.ParticleEmitters.Where(e => e.EmissionRate > 0).ToArray();
-            // A sparse looping emitter must carry spawn credit across its source interval.
-            if (looping && constantEmitters.Length > 0 && constantEmitters.All(e => e.EmissionRateTrack is null && e.EmissionRate * duration < 1)) {
+            // Continuous clips retain living particles; sparse emitters also carry spawn credit across source loops.
+            if (looping && constantEmitters.Length > 0 && (continuous || constantEmitters.All(e => e.EmissionRateTrack is null && e.EmissionRate * duration < 1))) {
                 prewarmSeconds = Math.Min(60, constantEmitters.Max(e => e.Life) + 1 / constantEmitters.Min(e => e.EmissionRate));
                 float warm = 0;
                 while (warm < prewarmSeconds) {
@@ -145,6 +147,7 @@ internal static class EffectExport {
                 frames.Add(Frame(seq, exactTime, (long)Math.Round((seconds + prewarmSeconds) * 1000), seconds));
             }
             clips.Add(new { name = seq?.Name ?? "Stand", duration, loop = looping, prewarmSeconds, frames });
+            previousSequence = seq?.Name; previousElapsed = prewarmSeconds + duration;
         }
         var result = new { schemaVersion = 1, fps = 12, name = model.Name, materials, clips, sourceModel = model, scope = "Deterministic sampled viewer simulation. Particle randomness, squirt, model-space transport and ribbon emission differ from the original game solver. Camera and helper tracks are preserved as source metadata." };
         File.WriteAllText(target, JsonSerializer.Serialize(result, new JsonSerializerOptions { IncludeFields = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));

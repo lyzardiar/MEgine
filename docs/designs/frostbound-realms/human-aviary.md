@@ -1,8 +1,8 @@
-# 狮鹫笼原件、模型与规则证据
+# 狮鹫笼生产、战斗、技能与来源维护
 
 Author: MiYu
 
-本阶段保留人族狮鹫笼 `hgra`、狮鹫骑士 `hgry`、龙鹰骑士 `hdhw`，以及风暴战锤 `Rhhb/Asth`、乌云 `Rhcd/Aclf`、空中锁镣 `Amls` 的原件、规则、动画、头像和效果。生产、研究、技能与战斗接入属于后续阶段；本阶段资产收据标记 `runtimeIntegrated=false`。
+本阶段保留人族狮鹫笼 `hgra`、狮鹫骑士 `hgry`、龙鹰骑士 `hdhw`，以及风暴战锤 `Rhhb/Asth`、乌云 `Rhcd/Aclf`、空中锁镣 `Amls` 的原件、规则、动画、头像和效果。生产、研究、双武器、风暴战锤、乌云及空中锁镣已接入主游戏；三份资产收据标记 `runtimeIntegrated=true`、`originalRuntimeVerified=false`。当前联机协议为119。
 
 ## 来源与维护
 
@@ -29,7 +29,7 @@ REA上游为 [morluto/rea](https://github.com/morluto/rea)，6.5.0，固定提�
 
 ## 模型与效果
 
-狮鹫笼、狮鹫和龙鹰分别保留6、7、10个源动作；建筑头像使用机身内Portrait和原Camera01，两飞行单位使用各自独立头像及源摄影机。模型键为 `KingdomGryphonAviary`、`ClassicGryphon`、`ClassicDragonHawk`；独立目录避免修改现有主游戏绑定。
+狮鹫笼、狮鹫和龙鹰分别保留6、7、10个源动作；建筑头像使用机身内Portrait和原Camera01，两飞行单位使用各自独立头像及源摄影机。模型键为 `KingdomGryphonAviary`、`ClassicGryphon`、`ClassicDragonHawk`，主游戏使用这些源模型及头像。
 
 战锤弹丸保留几何与粒子，命中效果、龙鹰弹丸和乌云为源模型中的纯粒子效果。锁镣目标特效保留9个几何动画序列；光束另保留 `LightningData.slk` 的 `LEAS` 行和原 `lariatCaught.blp` 纹理。`Bclf/Xclf/Bmlc/Bmlt` 的源Buff与音效引用均保留。
 
@@ -46,26 +46,58 @@ REA上游为 [morluto/rea](https://github.com/morluto/rea)，6.5.0，固定提�
 
 7组可重复REA探针通过，均验证原DLL摘要、正常完成和输出未截断。原DLL x86 CPU另通过3组研究等级变化、3个单项列表索引（0/1/7）和实际第二武器arc/speed/homing调用链。解析后的列表、模型指针和升级对象由测试提供；单位UI解析器与属性setter使用明确回调，原getter、等级运算和双槽更新循环执行原机器码。
 
-碰撞事件顺序、重叠目标、非法候选、护甲及完整技能通道尚需原运行行为对照。上述证据用于约束后续实现，不表示已运行原游戏完整战斗。
+新增56份有界REA证据及原DLL CPU探针确认：非跟踪弹道采用二次方程较大根，穿透终点在提前量计算前缓存；主目标先受伤，延伸监听首次及后续查询间隔均为0.2秒。相切不算进入，候选半径最小为1源单位；所有新接触先衰减，再筛选目标。网格每格256源单位，按Y/X递增遍历，同格最近进入者在前，新接触通知反序；持续重叠不重复通知。引擎保存网格进入序号及实际移动速度，并校验读档顺序；这些私有字段不发给敌方。
+
+乌云DataA=2经 `0x6f4ac650 → 0x6f4bdb50 → 0x6f49c650` 进入Bclf攻击限制，`UI/UnitEditorData.txt` 的silenceFlags枚举确认bit1为远程攻击。已有Bclf增加引用计数，支持重叠乌云。引擎中停止一个施法者不会解除其他乌云仍在维持的限制。
+
+空中锁镣保存施法者与目标配对，禁止目标移动、攻击和执行新指令；施法者停止、死亡、受控或目标死亡／落地会清理通道。原Bmlt首事件延迟0.01秒，后续零延迟经调度器最小值0.0001秒及运行时时间量化处理；局部伤害字段按原值读写。DataA到每次事件伤害的完整换算尚未闭合。当前引擎按源标称30每秒伤害在0.1秒步长积分，使用源spells护甲系数，不能视为原版逐事件数值复刻。
+
+原游戏完整对局未运行。乌云源目标表没有enemy项，当前按structure/vuln/invu覆盖双方建筑；原加载器默认阵营位、完整免疫组合、锁镣对既有其他技能的精确中断语义仍需对照。实际移动速度使用引擎位移差分，未复现原速度访问器；float32相切、弹道终点与最后接触同时发生的事件次序也未完全确认。
 
 ## 重建
 
 ```powershell
 python scripts/import-frost-human-aviary.py --pose-probe D:/MEngineNativeQA/attachment-build/release/examples/gltf_bounds.exe --metadata-reader E:/work/codex/worktrees/1339/MEgine/tmp/warcraft-effects/node-metadata/NodeMetadata.dll
 python scripts/import-frost-human-aviary-particles.py --sampler E:/work/codex/worktrees/1339/MEgine/tmp/warcraft-effects/farseer-bin/MdxExport.dll --metadata-reader E:/work/codex/worktrees/1339/MEgine/tmp/warcraft-effects/node-metadata/NodeMetadata.dll
-python scripts/import-frost-human-aviary-effects.py --sampler E:/work/codex/worktrees/1339/MEgine/tmp/warcraft-effects/farseer-bin/MdxExport.dll --metadata-reader E:/work/codex/worktrees/1339/MEgine/tmp/warcraft-effects/node-metadata/NodeMetadata.dll
+python scripts/import-frost-human-aviary-effects.py --sampler G:/work/github/MEgine/tmp/warcraft-effects/aviary-bin/MdxExport.dll --metadata-reader E:/work/codex/worktrees/1339/MEgine/tmp/warcraft-effects/node-metadata/NodeMetadata.dll
 python scripts/test-frost-human-aviary-source.py
 node scripts/qa-frost-human-aviary-assets.mjs
 node scripts/probe-frost-rea-human-aviary.mjs
 python scripts/probe-frost-human-aviary-cpu.py
+python scripts/probe-frost-rea-human-aviary-cpu.py
+node scripts/probe-frost-rea-human-aviary-channels.mjs
+node scripts/test-frost-human-aviary.mjs
+node scripts/test-frost-human-aviary-client.mjs
+node scripts/test-frost-human-aviary-network.mjs
+node scripts/test-frostbound.mjs
+$env:MENGINE_QA_ROOT='G:/work/github/MEgine/tmp/docs-artifacts/frost-human-aviary/native-qa'
+$env:MENGINE_EDITOR_EXECUTABLE='D:/MEngineNativeQA/engine-main-sync/target/release/mengine-editor-tauri.exe'
+node scripts/qa-frost-human-aviary.mjs
 ```
 
 CPU检查使用pefile和Unicorn，沿用 `tmp/docs-artifacts/frost-siege-engine/dependencies` 中的依赖；可通过 `python -m pip install --target tmp/docs-artifacts/frost-siege-engine/dependencies pefile unicorn` 准备。CPU结果为 `rea/cpu-results.json`，静态证据索引为 `rea/rea-summary.json`。
 
-二进制路径可通过参数替换，必须支持原PREM模型粒子；收据记录实际二进制摘要。离线重建先恢复身体、再模型粒子、最后特效。完整Evidence、原生截图与临时测试产物统一位于 `tmp/docs-artifacts/frost-human-aviary/`。
+乌云使用采样器 `--effects-continuous`，让Stand预热并将存活粒子带入Death；0.333秒Stand不再每次循环清空寿命3／4.5秒的粒子。新采样器可用以下命令构建，默认效果采样行为保持兼容：
+
+```powershell
+dotnet build scripts/warcraft-assets/MdxExport.csproj -c Release -o tmp/warcraft-effects/aviary-bin -p:Wc3Core=G:/work/github/MEgine/tmp/warcraft-converter/4fe46a0772520fc7b55078bf32cda1237d1b5f2e/upstream/src/Wc3ModelViewer.Core
+```
+
+二进制路径可通过参数替换，必须支持原PREM模型粒子及乌云连续采样；收据记录实际二进制摘要。离线重建先恢复身体、再模型粒子、最后特效。完整Evidence、原生截图与临时测试产物统一位于 `tmp/docs-artifacts/frost-human-aviary/`。
 
 ## 验证结论
 
-来源检查覆盖638项签名输出、三组离线逐字节重建、三个导入器的修改保护及原件篡改拒绝。原生独立预览46项通过：23个主体动作、4个头像姿态（3套源摄影机）、19个独立效果动作；508项运行资产复制摘要与收据一致。已目视检查建筑、头像、龙鹰攻击／死亡模型粒子、乌云和锁镣截图，控制台错误及材质拒绝均为0。
+来源检查覆盖639项签名输出、三组离线逐字节重建、三个导入器的修改保护及原件篡改拒绝。原生独立预览46项通过：23个主体动作、4个头像姿态（3套源摄影机）、19个独立效果动作；508项运行资产复制摘要与收据一致。已目视检查建筑、头像、龙鹰攻击／死亡模型粒子、乌云和锁镣截图，控制台错误及材质拒绝均为0。
 
-专用原生编辑器正常退出；G盘WebView运行缓存因EPERM保留。报告为 `tmp/docs-artifacts/frost-human-aviary/native-assets.json`，来源结论为同目录 `source-verification.json`。本阶段没有修改或验收主游戏生产、战斗与技能接入，不以资产预览代替完整游戏回归。
+专用原生编辑器正常退出；G盘WebView运行缓存因EPERM保留。报告为 `tmp/docs-artifacts/frost-human-aviary/native-assets.json`，来源结论为同目录 `source-verification.json`。资产预览结论保留用于定位源模型问题；主游戏验收另见下文。
+
+
+## 主游戏接入与验证
+
+G建造狮鹫笼，D/G训练龙鹰／狮鹫，C/H研究乌云／风暴战锤。生产研究共用三格队列，原价、时间、前置条件与取消退款进入权威模拟；驯兽术及三级攻击／护甲升级作用于现存和新生单位。客户端提供E/C技能、魔法与冷却、研究锁定、双武器面板、源动作／头像／弹丸和LEAS光束。场景原3806个实体保持不变，追加6个效果实体。
+
+玩法11组、生成客户端、真实TCP和来源离线重建检查通过；TCP覆盖协议118拒绝、所有权、共享队列、重连、双方弹道、技能开销、通道伤害、停止及可见性隐私。乌云只在可见区域发送效果，敌方不接收锁镣目标ID、冷却及私有碰撞记录。严格存档校验覆盖通道配对、网格唯一序号、状态时钟和未完成弹道。
+
+最终完整回归及原生验收结果记录在工作日志。所有原始日志、图像与报告位于 `tmp/docs-artifacts/frost-human-aviary/`；`integration/source-final.log` 为来源检查，`integration/regression-final.log` 为完整回归，`native-human-aviary.json` 为主游戏原生报告。
+
+共享导入器升级同时更新24份既有资产收据的工具摘要及一处依赖摘要，未修改其资产输出。默认效果路径由攻城坦克离线重建验证，默认模型／粒子路径由先知两组逐字节重建验证。先知完整来源测试另有既存血法师脚本摘要失配，详见工作日志。

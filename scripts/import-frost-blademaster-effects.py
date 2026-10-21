@@ -26,8 +26,9 @@ sha, encode = c.sha, nodes.encode
 def main(config=None):
     config = config or {}; defaults = globals()
     PREFIX, RAW, RECEIPT, BINDINGS = [config.get(k, defaults[n]) for k, n in [('prefix', 'PREFIX'), ('raw', 'RAW'), ('receipt', 'RECEIPT'), ('bindings', 'BINDINGS')]]
-    particle_only = set(config.get('particleOnly', []))
+    particle_only = set(config.get('particleOnly', [])); continuous_effects = set(config.get('continuousEffects', []))
     if not particle_only.issubset(key for key, _ in BINDINGS): raise ValueError('Unknown particle-only effect binding')
+    if not continuous_effects.issubset(key for key, _ in BINDINGS): raise ValueError('Unknown continuous effect binding')
     parser = argparse.ArgumentParser(description=config.get('description', __doc__))
     parser.add_argument('--output', type=pathlib.Path, default=SAMPLE)
     parser.add_argument('--source-root', type=pathlib.Path)
@@ -151,7 +152,7 @@ def main(config=None):
 
         for key, path in BINDINGS:
             sampled = work / (key + '-sampled.json')
-            subprocess.run(['dotnet', str(args.sampler), '--effects', str(export / 'raw' / c.relative(path)), str(sampled)], check=True, capture_output=True)
+            subprocess.run(['dotnet', str(args.sampler), '--effects-continuous' if key in continuous_effects else '--effects', str(export / 'raw' / c.relative(path)), str(sampled)], check=True, capture_output=True)
             data = json.loads(sampled.read_bytes()); original_model = data['sourceModel']; textures = original_model['textures']
             for material in data['materials']:
                 if material.get('modelPath'):

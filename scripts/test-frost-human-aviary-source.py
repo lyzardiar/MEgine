@@ -48,6 +48,7 @@ assert rules['research']['Rhhb']['sourceRow']['effect1'] == 'rasd' and rules['re
 assert {k for k in rules['upgradeMetadata']} == {'asdb','asdm'}
 assert rules['abilities']['Asth']['requires'] == ['Rhhb'] and rules['abilities']['Aclf']['requires'] == ['Rhcd']
 assert [rules['abilities']['Aclf'][k] for k in ['cost','cooldown','duration','heroDuration','range','radius','targets']] == [100,20,30,30,10,3,['vuln','invu','structure']]
+assert rules['silenceFlags']['01'] == '1,WESTRING_UE_SILENCEFLAGS_RANGED'
 assert rules['abilities']['Aclf']['sourceRow']['DataA1'] == '2' and rules['abilities']['Aclf']['sourceMetadata']['Nsi1']['type'] == 'silenceFlags'
 assert [rules['abilities']['Amls'][k] for k in ['cost','cooldown','duration','heroDuration','range','radius','targets']] == [75,30,40,10,5.5,None,['air','enemy','organic']]
 assert rules['abilities']['Amls']['sourceRow']['DataA1'] == '30' and rules['abilities']['Amls']['sourceFunc']['LightningEffect'] == 'LEAS'
@@ -57,7 +58,7 @@ assert [rules['lightning']['LEAS'][k] for k in ['file','AvgSegLen','Width','Nois
 assert '\ufffd' not in (SAMPLE / 'human-aviary.json').read_text(encoding='utf-8')
 assert rules['research']['Rhhb']['name'] == '\u98ce\u66b4\u6218\u9524'
 assert rules['research']['Rhcd']['name'] == '\u4e4c\u4e91\u6280\u80fd'
-assert receipt['runtimeIntegrated'] is False and rules['runtimeIntegrated'] is False
+assert receipt['runtimeIntegrated'] is True and rules['runtimeIntegrated'] is True
 art_receipts = {name: read(name) for name in ['human-aviary-particle-sources.json','human-aviary-effects-sources.json']}
 for art in art_receipts.values():
     for record in art['outputs']:
@@ -66,10 +67,14 @@ for art in art_receipts.values():
         raw=(SAMPLE/record['output']).read_bytes();assert len(raw)==record['bytes'] and sha(raw)==record['sha256'],record['output']
     for record in art['generators']:
         assert sha((ROOT/record['path']).read_bytes().replace(b'\r\n',b'\n'))==record['sha256'],record['path']
-    assert art['runtimeIntegrated'] is False and art['originalRuntimeVerified'] is False
+    assert art['runtimeIntegrated'] is True and art['originalRuntimeVerified'] is False
 fx=art_receipts['human-aviary-effects-sources.json'];effects=read('human-aviary-effects.json')
 assert len(effects)==8 and len(read('human-aviary-particle-models.json'))==4
 assert all(effects[k]['particleOnly'] for k in ['GryphonImpact','DragonHawkMissile','CloudOfFog'])
+cloud=read('Assets/HumanAviaryEffects/Effects/CloudOfFog.mfx'); stand=next(c for c in cloud['clips'] if c['name']=='Stand'); death=next(c for c in cloud['clips'] if c['name']=='Death')
+assert stand['prewarmSeconds']>=max(e['life'] for e in cloud['sourceModel']['particleEmitters'])
+assert min(len(f['particles']) for f in stand['frames'])>200 and len(death['frames'][0]['particles'])>200
+assert len(death['frames'][-1]['particles'])<len(death['frames'][0]['particles'])
 assert fx['statistics']['KingdomGryphonAviaryEmbedded']['sourceParticles']==8
 assert fx['statistics']['ClassicDragonHawkEmbedded']['sourceParticles']==6
 rows = importlib.import_module('import-frost-wisp-rules').rows
@@ -107,7 +112,7 @@ with tempfile.TemporaryDirectory(prefix='reproduce-', dir=OUT) as directory:
     assert result.returncode==0,result.stdout+result.stderr
     assert (output/'human-aviary-sources.json').read_bytes()==(SAMPLE/'human-aviary-sources.json').read_bytes()
     for script,receipt_name,changed_path in [('import-frost-human-aviary-particles.py','human-aviary-particle-sources.json','human-aviary-particle-models.json'),('import-frost-human-aviary-effects.py','human-aviary-effects-sources.json','human-aviary-effects.json')]:
-        art_command=[sys.executable,str(ROOT/'scripts'/script),'--output',str(output),'--source-root',str(SAMPLE),'--game',str(output/'no-game'),'--sampler','E:/work/codex/worktrees/1339/MEgine/tmp/warcraft-effects/farseer-bin/MdxExport.dll','--metadata-reader','E:/work/codex/worktrees/1339/MEgine/tmp/warcraft-effects/node-metadata/NodeMetadata.dll','--pose-probe','D:/MEngineNativeQA/attachment-build/release/examples/gltf_bounds.exe']
+        art_command=[sys.executable,str(ROOT/'scripts'/script),'--output',str(output),'--source-root',str(SAMPLE),'--game',str(output/'no-game'),'--sampler',str(ROOT/art_receipts[receipt_name]['binaries'][0]['path']),'--metadata-reader','E:/work/codex/worktrees/1339/MEgine/tmp/warcraft-effects/node-metadata/NodeMetadata.dll','--pose-probe','D:/MEngineNativeQA/attachment-build/release/examples/gltf_bounds.exe']
         result=subprocess.run(art_command,capture_output=True,text=True)
         assert result.returncode==0,result.stdout+result.stderr
         for record in art_receipts[receipt_name]['outputs']:
