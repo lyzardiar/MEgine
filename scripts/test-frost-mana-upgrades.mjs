@@ -9,7 +9,7 @@ export const manaResearch=(s,c,p)=>c.command==='nightResearch'?S.nightResearchOp
 export const manaOrder=(s,c,p)=>S.command(s,0,{type:c.command,ids:[p.id],upgrade:c.key});
 export const manaRegeneration=(s,u)=>u.moonWellRules===1?(S.isNight(s)?(u.nightLevels.Rews?(s.manaUpgradeVersion===1?S.nightTechnology.specialRules.wellSpring.upgradedManaRegen:1.9):S.nightTechnology.units.emow.manaRegen):0):S.sanctumRules.units[u.kind]?S.sanctumRules.units[u.kind].manaRegen+S.sanctumTrainingBonus(u.kind,u.sanctumRank||0).manaRegen:S.druidRules.units[u.kind].manaRegen+.325*u.druidRank;
 const round=x=>Math.floor(Math.fround(Math.fround(x)+.5)),near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`),initialMana=c=>c.kind==='farm'?S.nightTechnology.units.emow.initialMana:(S.sanctumRules.units[c.kind]||S.druidRules.units[c.kind]).initialMana;
-assert.equal(S.PROTOCOL,119);assert.equal(S.create().manaUpgradeVersion,1);
+assert.equal(S.PROTOCOL,120);assert.equal(S.create().manaUpgradeVersion,1);
 assert.equal(S.nightTechnology.research.Rews.sourceRow.effect2,'rmnr');assert.equal(S.nightTechnology.specialRules.wellSpring.manaRegenBonus,.52);
 for(const c of manaCases){
  const {s,producer,unit}=manaFixture(c);assert.equal(unit.mana,initialMana(c));const units=[unit,...Array.from({length:5},(_,i)=>S.spawn(s,c.kind,0,-4-i*3,-4,{...(c.kind==='humanpriest'?{sanctumAuto:false}:{}),...(c.kind==='farm'?{rechargeAuto:false}:{}),order:c.kind==='farm'?null:{type:'hold'}}))];

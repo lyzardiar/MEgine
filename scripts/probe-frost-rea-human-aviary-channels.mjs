@@ -21,6 +21,7 @@ const probes=[
  ['leash-target-check','af @ 0x6f608cf0;pdf @ 0x6f608cf0;af @ 0x6f613e20;pdf @ 0x6f613e20;af @ 0x6f4181c0;pdf @ 0x6f4181c0'],
  ['cloud-mask-and-targets','af @ 0x6f4bdb50;pdf @ 0x6f4bdb50;af @ 0x6f49c650;pdf @ 0x6f49c650;af @ 0x6f4fab00;pdf @ 0x6f4fab00;af @ 0x6f4a17d0;pdf @ 0x6f4a17d0;af @ 0x6f68abb0;pdf @ 0x6f68abb0'],
  ['leash-damage-and-clock','af @ 0x6f4a8890;pdf @ 0x6f4a8890;af @ 0x6f4a8620;pdf @ 0x6f4a8620;af @ 0x6f2298f0;pdf @ 0x6f2298f0;af @ 0x6f0430d0;pdf @ 0x6f0430d0'],
+ ['leash-initialized-period','pd 3 @ 0x6f7718b4;pd 2 @ 0x6f77267c;ii~initterm;pxw 8 @ 0x6f94ebc8;pd 4 @ 0x6f001b30;pd 4 @ 0x6f001a30;af @ 0x6f053b90;pdf @ 0x6f053b90;af @ 0x6f4c7540;pdf @ 0x6f4c7540;pxw 32 @ 0x6fa3e70c;af @ 0x6f685690;pdf @ 0x6f685690'],
 ];
 fs.mkdirSync(out,{recursive:true});
 const client=new Client({name:'frostbound-human-aviary-channels',version:'1.0.0'}),reports=[];

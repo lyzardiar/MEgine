@@ -2,7 +2,7 @@
 
 Author: MiYu
 
-本阶段保留人族狮鹫笼 `hgra`、狮鹫骑士 `hgry`、龙鹰骑士 `hdhw`，以及风暴战锤 `Rhhb/Asth`、乌云 `Rhcd/Aclf`、空中锁镣 `Amls` 的原件、规则、动画、头像和效果。生产、研究、双武器、风暴战锤、乌云及空中锁镣已接入主游戏；三份资产收据标记 `runtimeIntegrated=true`、`originalRuntimeVerified=false`。当前联机协议为119。
+本阶段保留人族狮鹫笼 `hgra`、狮鹫骑士 `hgry`、龙鹰骑士 `hdhw`，以及风暴战锤 `Rhhb/Asth`、乌云 `Rhcd/Aclf`、空中锁镣 `Amls` 的原件、规则、动画、头像和效果。生产、研究、双武器、风暴战锤、乌云及空中锁镣已接入主游戏；三份资产收据标记 `runtimeIntegrated=true`、`originalRuntimeVerified=false`。当前联机协议为120。
 
 ## 来源与维护
 
@@ -50,7 +50,9 @@ REA上游为 [morluto/rea](https://github.com/morluto/rea)，6.5.0，固定提�
 
 乌云DataA=2经 `0x6f4ac650 → 0x6f4bdb50 → 0x6f49c650` 进入Bclf攻击限制，`UI/UnitEditorData.txt` 的silenceFlags枚举确认bit1为远程攻击。已有Bclf增加引用计数，支持重叠乌云。引擎中停止一个施法者不会解除其他乌云仍在维持的限制。
 
-空中锁镣保存施法者与目标配对，禁止目标移动、攻击和执行新指令；施法者停止、死亡、受控或目标死亡／落地会清理通道。原Bmlt首事件延迟0.01秒，后续零延迟经调度器最小值0.0001秒及运行时时间量化处理；局部伤害字段按原值读写。DataA到每次事件伤害的完整换算尚未闭合。当前引擎按源标称30每秒伤害在0.1秒步长积分，使用源spells护甲系数，不能视为原版逐事件数值复刻。
+空中锁镣保存施法者与目标配对，禁止目标移动、攻击和执行新指令；施法者停止、死亡、受控或目标死亡／落地会清理通道。原Bmlt初始化请求首次延迟0.01秒，两个伤害事件分支都请求下一次间隔1秒，再发送本次伤害。DataA30经能力等级getter、buff字段和伤害描述构造原值传入目标伤害入口；引擎按源spells护甲系数结算每次30伤害，在0.1秒固定步长中于通道年龄0.1、1.1……39.1秒触发，共40次，保存恢复保持相位。
+
+周期常量 `0x6fbb81d8` 由CRT初始化表 `0x6f94ebcc → 0x6f001b30 → 0x6f053b90` 写为float1。CRT入口 `0x6f7718b4` 将包含该项的表区间交给MSVCR120 `_initterm`，Bmlt虚表 `0x6fa3e3b4+0x35c` 的 `0x6f4c7540` 读取该值。10组REA通道探针及原DLL CPU探针验证首次／重复计时与15／30／60三种原值伤害传递；CPU执行真实构造器、getter、buff初始化、事件和伤害描述构造，源等级数据、单位状态、计时接收端及最终生命／护甲入口由测试提供。原调度器量化、实际对局及完整护甲／免疫路径未验收。
 
 原游戏完整对局未运行。乌云源目标表没有enemy项，当前按structure/vuln/invu覆盖双方建筑；原加载器默认阵营位、完整免疫组合、锁镣对既有其他技能的精确中断语义仍需对照。实际移动速度使用引擎位移差分，未复现原速度访问器；float32相切、弹道终点与最后接触同时发生的事件次序也未完全确认。
 
@@ -66,6 +68,7 @@ node scripts/probe-frost-rea-human-aviary.mjs
 python scripts/probe-frost-human-aviary-cpu.py
 python scripts/probe-frost-rea-human-aviary-cpu.py
 node scripts/probe-frost-rea-human-aviary-channels.mjs
+python scripts/probe-frost-rea-aviary-channels-cpu.py
 node scripts/test-frost-human-aviary.mjs
 node scripts/test-frost-human-aviary-client.mjs
 node scripts/test-frost-human-aviary-network.mjs
@@ -96,8 +99,8 @@ dotnet build scripts/warcraft-assets/MdxExport.csproj -c Release -o tmp/warcraft
 
 G建造狮鹫笼，D/G训练龙鹰／狮鹫，C/H研究乌云／风暴战锤。生产研究共用三格队列，原价、时间、前置条件与取消退款进入权威模拟；驯兽术及三级攻击／护甲升级作用于现存和新生单位。客户端提供E/C技能、魔法与冷却、研究锁定、双武器面板、源动作／头像／弹丸和LEAS光束。场景原3806个实体保持不变，追加6个效果实体。
 
-玩法11组、生成客户端、真实TCP和来源离线重建检查通过；TCP覆盖协议118拒绝、所有权、共享队列、重连、双方弹道、技能开销、通道伤害、停止及可见性隐私。乌云只在可见区域发送效果，敌方不接收锁镣目标ID、冷却及私有碰撞记录。严格存档校验覆盖通道配对、网格唯一序号、状态时钟和未完成弹道。
+玩法12组、生成客户端、真实TCP和来源离线重建检查通过；当前协议120，TCP覆盖协议119拒绝、所有权、共享队列、重连、双方弹道、技能开销、通道伤害、停止及可见性隐私。乌云只在可见区域发送效果，敌方不接收锁镣目标ID、冷却及私有碰撞记录。严格存档校验覆盖通道配对、网格唯一序号、状态时钟和未完成弹道。
 
-最终完整回归及原生验收结果记录在工作日志。所有原始日志、图像与报告位于 `tmp/docs-artifacts/frost-human-aviary/`；`integration/source-final.log` 为来源检查，`integration/regression-final.log` 为完整回归，`native-human-aviary.json` 为主游戏原生报告。
+最终完整回归及原生验收结果记录在工作日志。所有原始日志、图像与报告位于 `tmp/docs-artifacts/frost-human-aviary/`；`integration/source-final.log` 为来源检查，`leash-timing/regression.log` 为当前完整回归，`native-human-aviary.json` 为主游戏原生报告。
 
 共享导入器升级同时更新24份既有资产收据的工具摘要及一处依赖摘要，未修改其资产输出。默认效果路径由攻城坦克离线重建验证，默认模型／粒子路径由先知两组逐字节重建验证。先知完整来源测试另有既存血法师脚本摘要失配，详见工作日志。
