@@ -46,7 +46,7 @@ JavaScript/Electron 和托管程序集静态分析不需要原生反编译引擎
 
 ## 更新维护
 
-人族狮鹫笼、龙鹰乌云及空中锁镣的原件和接入入口见 [狮鹫笼维护说明](../../docs/designs/frostbound-realms/human-aviary.md)。`node scripts/probe-frost-rea-human-aviary-channels.mjs` 保留10组通道证据；`python scripts/probe-frost-rea-aviary-channels-cpu.py` 执行原DLL初始化、计时与伤害传递，验证首次0.01秒、后续1秒及原值伤害。原调度器量化、完整对局和护甲／免疫路径仍需运行对照。
+人族狮鹫笼、龙鹰乌云及空中锁镣的原件和接入入口见 [狮鹫笼维护说明](../../docs/designs/frostbound-realms/human-aviary.md)。`node scripts/probe-frost-rea-human-aviary-channels.mjs` 保留12组通道证据；`python scripts/probe-frost-rea-aviary-channels-cpu.py` 执行原DLL初始化、计时与伤害传递，验证首次0.01秒、后续1秒及原值伤害。`python scripts/probe-frost-rea-cloud-targets-cpu.py` 另覆盖48组源掩码目标筛选和180组双武器限制分支，明确保留数据加载器及免疫检查的验证边界。原调度器量化、完整对局和护甲／免疫路径仍需运行对照。
 
 地穴恶魔蛛网的原始参数、原件与二进制调用链可用 `node scripts/probe-frost-rea-web.mjs` 复核。15 组探针覆盖 `WebIsMagic`、命中挂载、移动计数、目标分类切换、武器距离修正及 `moveHeight`/`moveFloor` 初始化和高度过渡。三套模型、粒子、15 条动画的离线重建及原生预览命令见 [蛛网原件说明](../../docs/designs/frostbound-realms/crypt-web.md)；游戏运行时接入仍在进行。
 

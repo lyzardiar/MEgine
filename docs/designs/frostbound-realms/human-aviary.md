@@ -52,7 +52,11 @@ REA上游为 [morluto/rea](https://github.com/morluto/rea)，6.5.0，固定提�
 
 空中锁镣保存施法者与目标配对，禁止目标移动、攻击和执行新指令；施法者停止、死亡、受控或目标死亡／落地会清理通道。原Bmlt初始化请求首次延迟0.01秒，两个伤害事件分支都请求下一次间隔1秒，再发送本次伤害。DataA30经能力等级getter、buff字段和伤害描述构造原值传入目标伤害入口；引擎按源spells护甲系数结算每次30伤害，在0.1秒固定步长中于通道年龄0.1、1.1……39.1秒触发，共40次，保存恢复保持相位。
 
-周期常量 `0x6fbb81d8` 由CRT初始化表 `0x6f94ebcc → 0x6f001b30 → 0x6f053b90` 写为float1。CRT入口 `0x6f7718b4` 将包含该项的表区间交给MSVCR120 `_initterm`，Bmlt虚表 `0x6fa3e3b4+0x35c` 的 `0x6f4c7540` 读取该值。10组REA通道探针及原DLL CPU探针验证首次／重复计时与15／30／60三种原值伤害传递；CPU执行真实构造器、getter、buff初始化、事件和伤害描述构造，源等级数据、单位状态、计时接收端及最终生命／护甲入口由测试提供。原调度器量化、实际对局及完整护甲／免疫路径未验收。
+周期常量 `0x6fbb81d8` 由CRT初始化表 `0x6f94ebcc → 0x6f001b30 → 0x6f053b90` 写为float1。CRT入口 `0x6f7718b4` 将包含该项的表区间交给MSVCR120 `_initterm`，Bmlt虚表 `0x6fa3e3b4+0x35c` 的 `0x6f4c7540` 读取该值。12组REA通道探针及原DLL CPU探针验证首次／重复计时与15／30／60三种原值伤害传递；CPU执行真实构造器、getter、buff初始化、事件和伤害描述构造，源等级数据、单位状态、计时接收端及最终生命／护甲入口由测试提供。原调度器量化、实际对局及完整护甲／免疫路径未验收。
+
+乌云目标筛选补证：原token表将vuln／invu／structure合成 `0x300008`；原归一化器 `0x6f68c7b0` 为缺失的关系位补齐 `0x1f000`，`0x6f68a650` 对该组合直接通过。原effect过滤器 `0x6f4a17d0` 的 `+0xcc` 指向返回0的 `0x6f4bf1f0`，不会额外按联盟直接放行。48组CPU用例执行原effect、单位类别组合与目标校验：给定保留的源掩码，三个owner、可伤害／无敌的存活建筑通过；死亡建筑、ground、air、ward被排除。原数据加载器及最后的能力免疫／事件检查未执行，不能由此宣称完整技能目标流程已经验收。
+
+乌云bit1限制进入攻击对象 `+0x228`；原 `0x6f47c060 → 0x6f47bfc0` 读取当前武器槽的类型码与伤害标志，不读取弹丸速度。双槽180组CPU用例确认：类型码2至8且伤害标志不为1／64／128／256时禁止攻击。该探针直接提供类型码和伤害标志，原字段加载映射尚未闭合；现有引擎使用弹丸速度判断远程限制，完整等价性仍需继续验证。结果在 `tmp/docs-artifacts/frost-human-aviary/cloud-targets/cpu.json`。
 
 原游戏完整对局未运行。乌云源目标表没有enemy项，当前按structure/vuln/invu覆盖双方建筑；原加载器默认阵营位、完整免疫组合、锁镣对既有其他技能的精确中断语义仍需对照。实际移动速度使用引擎位移差分，未复现原速度访问器；float32相切、弹道终点与最后接触同时发生的事件次序也未完全确认。
 
@@ -69,6 +73,7 @@ python scripts/probe-frost-human-aviary-cpu.py
 python scripts/probe-frost-rea-human-aviary-cpu.py
 node scripts/probe-frost-rea-human-aviary-channels.mjs
 python scripts/probe-frost-rea-aviary-channels-cpu.py
+python scripts/probe-frost-rea-cloud-targets-cpu.py
 node scripts/test-frost-human-aviary.mjs
 node scripts/test-frost-human-aviary-client.mjs
 node scripts/test-frost-human-aviary-network.mjs
