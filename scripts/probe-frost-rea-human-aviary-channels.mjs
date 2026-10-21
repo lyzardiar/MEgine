@@ -24,6 +24,8 @@ const probes=[
  ['leash-initialized-period','pd 3 @ 0x6f7718b4;pd 2 @ 0x6f77267c;ii~initterm;pxw 8 @ 0x6f94ebc8;pd 4 @ 0x6f001b30;pd 4 @ 0x6f001a30;af @ 0x6f053b90;pdf @ 0x6f053b90;af @ 0x6f4c7540;pdf @ 0x6f4c7540;pxw 32 @ 0x6fa3e70c;af @ 0x6f685690;pdf @ 0x6f685690'],
  ['cloud-target-defaults','pxw 400 @ 0x6fb6a0b0;af @ 0x6f68c7b0;pdf @ 0x6f68c7b0;af @ 0x6f68aa30;pdf @ 0x6f68aa30;af @ 0x6f691240;pdf @ 0x6f691240;af @ 0x6f68a650;pdf @ 0x6f68a650'],
  ['cloud-weapon-gate','pxw 16 @ 0x6f9cc614;af @ 0x6f4bf1f0;pdf @ 0x6f4bf1f0;af @ 0x6f47a670;pdf @ 0x6f47a670;af @ 0x6f47c060;pdf @ 0x6f47c060;af @ 0x6f47bfc0;pdf @ 0x6f47bfc0;af @ 0x6f39c990;pdf @ 0x6f39c990'],
+ ['cloud-weapon-source','pd 20 @ 0x6f693bf1;pd 18 @ 0x6f693c41;af @ 0x6f689580;pdf @ 0x6f689580;af @ 0x6f6896c0;pdf @ 0x6f6896c0;af @ 0x6f68a570;pdf @ 0x6f68a570;af @ 0x6f68bc10;pdf @ 0x6f68bc10'],
+ ['cloud-weapon-loading','pd 14 @ 0x6f64ec55;pd 5 @ 0x6f64ed1d;af @ 0x6f64cdf0;pdf @ 0x6f64cdf0;af @ 0x6f64ce60;pdf @ 0x6f64ce60;pd 8 @ 0x6f65b140;pd 5 @ 0x6f65b1d6;pd 4 @ 0x6f653b0f;pd 2 @ 0x6f653b6c;pd 9 @ 0x6f47f459;pd 2 @ 0x6f47f6ba'],
 ];
 fs.mkdirSync(out,{recursive:true});
 const client=new Client({name:'frostbound-human-aviary-channels',version:'1.0.0'}),reports=[];

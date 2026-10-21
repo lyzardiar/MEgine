@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';
 import {cryptLordFixture} from './frost-crypt-lord-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},hold={cd:10000,order:{type:'hold'}};
 {
- const map=S.defaultMap();map.units=[{kind:'hero',team:0,x:0,z:0,heroClass:3}];const s=S.create('skirmish',{map,factions:[3,0],ai:[false,false]}),h=s.units.find(u=>u.kind==='hero');assert.equal(S.PROTOCOL,120);assert.equal(s.cryptLordVersion,1);assert.equal(h.sourceHero,'Ucrl');assert.equal(h.maxHp,675);assert.ok(S.restore(s));
+ const map=S.defaultMap();map.units=[{kind:'hero',team:0,x:0,z:0,heroClass:3}];const s=S.create('skirmish',{map,factions:[3,0],ai:[false,false]}),h=s.units.find(u=>u.kind==='hero');assert.equal(S.PROTOCOL,121);assert.equal(s.cryptLordVersion,1);assert.equal(h.sourceHero,'Ucrl');assert.equal(h.maxHp,675);assert.ok(S.restore(s));
  const old=S.create('skirmish',{map,factions:[3,0],cryptLordVersion:0,ai:[false,false]});delete old.cryptLordVersion;const legacy=S.restore(old);assert.equal(legacy.cryptLordVersion,0);assert.equal(legacy.units.find(u=>u.kind==='hero').sourceHero,undefined);
  for(const mode of ['moba','rpg','td']){const other=S.create(mode,{factions:[3,0],heroes:[3,0]});assert.ok(!other.units.some(u=>u.sourceHero==='Ucrl'));}
 }

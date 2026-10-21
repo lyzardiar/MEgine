@@ -1,11 +1,12 @@
 // Author: MiYu. Verify source Human Aviary production, upgrades, weapons and authoritative saves.
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
+import {cloudTargetsFixture} from './frost-cloud-targets-fixture.mjs';
 import {mortarFixture} from './frost-human-mortar-fixture.mjs';
 const S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js'),copy=o=>JSON.parse(JSON.stringify(o)),step=(s,n)=>{for(let i=0;i<n;i++)S.tick(s);},order=(s,u,type,rest={})=>S.command(s,u.team,{type,ids:[u.id],...rest}),near=(a,b)=>assert.ok(Math.abs(a-b)<1e-6,`${a} != ${b}`);
 function fixture(){const f=mortarFixture(S);f.aviary=S.spawn(f.s,'gryphonaviary',0,-3,3);f.shop=S.spawn(f.s,'shop',0,-8,3);S.spawn(f.s,'lumbermill',0,-14,3);f.hall.upgradeTier=3;S.updateTechnology(f.s);return f;}
 const flyer=(s,kind='humangryphon',x=0,z=0)=>S.spawn(s,kind,0,x,z,{order:{type:'hold'},cd:999});
-assert.equal(S.PROTOCOL,120);assert.equal(S.create().humanAviaryVersion,1);assert.throws(()=>S.create('skirmish',{humanAviaryVersion:2}),/Aviary/);for(const mode of ['moba','rpg','td'])assert.equal(S.create(mode).humanAviaryVersion,0);
+assert.equal(S.PROTOCOL,121);assert.equal(S.create().humanAviaryVersion,1);assert.throws(()=>S.create('skirmish',{humanAviaryVersion:2}),/Aviary/);for(const mode of ['moba','rpg','td'])assert.equal(S.create(mode).humanAviaryVersion,0);
 {
  const {s,hall,aviary,shop}=fixture();assert.deepEqual(S.trainable(s,aviary),['humangryphon','humandragonhawk']);hall.upgradeTier=2;assert.match(order(s,aviary,'train',{kind:'humangryphon'}),/Castle/);shop.hp=0;assert.match(order(s,aviary,'train',{kind:'humandragonhawk'}),/Vault/);shop.hp=485;hall.upgradeTier=3;
  assert.equal(order(s,aviary,'train',{kind:'humandragonhawk'}),null);assert.equal(order(s,aviary,'train',{kind:'humangryphon'}),null);assert.deepEqual([s.teams[0].gold,s.teams[0].wood],[9520,9900]);step(s,279);assert.equal(s.units.filter(S.aviaryUnit).length,0);const saved=S.restore(s);S.tick(s);S.tick(saved);assert.deepEqual(saved,s);const hawk=s.units.find(u=>u.kind==='humandragonhawk');assert.deepEqual([hawk.maxHp,hawk.damage,hawk.speed,hawk.mana,S.maxMana(hawk)],[575,19,3.5,150.075,300]);step(s,449);assert.equal(s.units.filter(S.aviaryUnit).length,1);S.tick(s);const gryphon=s.units.find(u=>u.kind==='humangryphon');assert.deepEqual([gryphon.maxHp,gryphon.damage,gryphon.speed,gryphon.mana],[825,50,3.2,0]);assert.equal(S.unitType(gryphon).flightHeight,2.4);
@@ -68,3 +69,10 @@ console.log('PASS Aerial Shackles full duration: exactly 40 source pulses over 4
  const {s,aviary}=fixture();assert.equal(order(s,aviary,'aviaryResearch',{upgrade:'Rhcd'}),null);step(s,350);const a=flyer(s,'humandragonhawk',0,0),b=flyer(s,'humandragonhawk',0,1),tower=S.spawn(s,'guardtower',1,4,0,{cd:999}),ally=S.spawn(s,'guardtower',0,4,1,{cd:999}),soldier=S.spawn(s,'humanrifleman',1,4,-1,{order:{type:'hold'},cd:999});S.visibility(s);assert.equal(order(s,a,'aviarySpell',{spell:'Aclf',x:4,z:0}),null);assert.equal(order(s,b,'aviarySpell',{spell:'Aclf',x:4,z:0}),null);step(s,4);assert.equal(tower.aviaryClouded,true);assert.equal(ally.aviaryClouded,true);assert.equal(soldier.aviaryClouded,undefined);assert.equal(S.canAttack(tower,a),false);assert.equal(S.fire(s,tower,a),false);const saved=S.restore(s);step(s,3);step(saved,3);assert.deepEqual(saved,s);assert.equal(order(s,a,'stop'),null);assert.equal(tower.aviaryClouded,true);assert.equal(order(s,b,'stop'),null);assert.equal(tower.aviaryClouded,undefined);assert.equal(S.canAttack(tower,a),true);const raw=copy(s);raw.units.find(u=>u.id===tower.id).aviaryClouded=true;assert.throws(()=>S.restore(raw));
 }
 console.log('PASS Cloud: source ranged restriction/structure targets, mobile-unit exclusion, overlapping sources, immediate interruption cleanup and strict save');
+
+{
+ const {s,caster,ward,tower,ally}=cloudTargetsFixture(S);assert.equal(order(s,caster,'aviarySpell',{spell:'Aclf',x:3,z:0}),null);step(s,4);assert.equal(tower.aviaryClouded,true);assert.equal(ally.aviaryClouded,true);assert.equal(ward.aviaryClouded,undefined);assert.equal(S.canAttack(ward,caster),true);assert.equal(S.canAttack(tower,caster),false);
+ const saved=S.restore(s),raw=copy(s);raw.units.find(u=>u.id===ward.id).aviaryClouded=true;assert.throws(()=>S.restore(raw),/Cloud/);step(s,3);step(saved,3);assert.deepEqual(saved,s);
+ ward.cd=0;ward.order={type:'attack',target:caster.id};const hp=caster.hp;step(s,12);assert.ok(caster.hp<hp);assert.equal(tower.aviaryClouded,true);assert.equal(ward.aviaryClouded,undefined);for(const team of [0,1])assert.equal(S.publicState(s,team).units.find(u=>u.id===ward.id).aviaryClouded,undefined);assert.ok(S.restore(s));
+}
+console.log('PASS Cloud target categories: both-side buildings silenced, Serpent Ward keeps firing, reload preserves exclusions and forged ward restriction rejected');

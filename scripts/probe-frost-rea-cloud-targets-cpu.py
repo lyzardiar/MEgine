@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tmp/docs-artifacts/frost-siege-engine/dependencies'))
 import pefile
 import unicorn
-from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EDX, UC_X86_REG_ESP, UC_X86_REG_EIP
+from unicorn.x86_const import UC_X86_REG_EAX, UC_X86_REG_ECX, UC_X86_REG_EDX, UC_X86_REG_ESP, UC_X86_REG_EIP, UC_X86_REG_EBX, UC_X86_REG_EDI, UC_X86_REG_ESI
 
 binary = Path(sys.argv[1] if len(sys.argv) > 1 else 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Game.dll')
 raw = binary.read_bytes()
@@ -32,12 +32,21 @@ def returned(count, value=0):
     cpu.reg_write(UC_X86_REG_EIP, word(sp))
     cpu.reg_write(UC_X86_REG_ESP, sp + 4 + count)
 
+source_text, cache, bucket, record = 0x1008000, 0x1009000, 0x100a000, 0x100b000
+source_slot = 0
+def string(p): return bytes(cpu.mem_read(p, 80)).split(b'\0')[0].lower()
+
 event_calls = []
 def external(uc, address, size, unused):
     sp = uc.reg_read(UC_X86_REG_ESP)
     if address in [stop + 0x10, 0x6f667470]: returned(0, 0x12345678)
     elif address == stop + 0x20: returned(0, word(target + 0x300))
     elif address == 0x6f470a60: returned(0, 0)
+    elif address == 0x6f68f870:
+        assert word(sp + 8) == effect + 0x674 + source_slot * 12
+        returned(8, source_text)
+    elif address == 0x6f12070c: returned(12, int(string(word(sp + 4)) != string(word(sp + 8))))
+    elif address == 0x6f17a710: returned(0, 0x12345678)
     elif address == 0x6f044150: returned(0, ability)
     elif address == 0x6f1d2e80:
         output = uc.reg_read(UC_X86_REG_ECX)
@@ -101,24 +110,59 @@ for kind in ['ground', 'air', 'structure', 'ward']:
                 assert word(ability + 4) == 2
                 targets.append(dict(kind=kind, owner=owner, dead=dead, invulnerable=invulnerable, accepted=accepted))
 
-# The actual ranged predicate uses cached weapon codes and damage flags, never missile speed.
+# The actual ranged predicate uses cached weapon codes and target masks, never missile speed.
 integer(attack + 0x20, 0x180000)
 weapons = []
 for slot in [0, 1]:
     for weapon_code in range(10):
-        for damage_flag in [1, 2, 4, 8, 16, 32, 64, 128, 256]:
+        for target_mask in [1, 2, 4, 8, 16, 32, 64, 128, 256]:
             integer(attack + 0xdc + slot * 4, weapon_code)
-            integer(attack + 0x218 + slot * 4, damage_flag)
+            integer(attack + 0x218 + slot * 4, target_mask)
             integer(attack + 0x228, 0)
             assert run(0x6f47c060, attack, [slot]) == 1
             integer(attack + 0x228, 1)
             allowed = bool(run(0x6f47c060, attack, [slot]))
-            ranged = 2 <= weapon_code <= 8 and damage_flag not in [1, 64, 128, 256]
-            assert allowed == (not ranged), (slot, weapon_code, damage_flag)
-            weapons.append(dict(slot=slot, weaponCode=weapon_code, damageFlag=damage_flag, cloudAllowsAttack=allowed))
+            ranged = 2 <= weapon_code <= 8 and target_mask not in [1, 64, 128, 256]
+            assert allowed == (not ranged), (slot, weapon_code, target_mask)
+            weapons.append(dict(slot=slot, weaponCode=weapon_code, targetMask=target_mask, cloudAllowsAttack=allowed))
 
-report = dict(author='MiYu', passed=True, binarySha256=digest, sourceTokens=tokens, rawMask=hex(mask), normalizedMask=hex(normalized), targetCases=targets, weaponCases=weapons, limitations=['The preserved source targs tokens are supplied as a raw mask; the original ability-data loader is not executed.', 'Original effect filter, unit flag composition, defaults, target validator and ranged weapon gate execute. Unit category/owner/state fields and object references are fixtures; final ability immunity/event rejection is supplied as success.', 'Weapon codes and damage flags are supplied directly; their source-field loading and complete runtime battle remain unverified. No new original-runtime acceptance is claimed.'])
+# Parse weapTp through the original field getter/converter, then execute cached getters and assignment slices.
+integer(0x6fbec494, 0)
+integer(0x6fbec48c, bucket)
+integer(bucket + 8, cache)
+integer(cache, 0x12345678)
+integer(cache + 0x14, 0x68677477)
+source_weapons = []
+for source_slot in [0, 1]:
+    for name, expected in {'normal': 1, 'missile': 2, 'artillery': 3, 'instant': 4, 'msplash': 5, 'mbounce': 6, 'mline': 7, 'aline': 8}.items():
+        cpu.mem_write(source_text, name.encode() + b'\0')
+        code = run(0x6f689580, effect, [source_slot, 0])
+        assert code == expected
+        integer(cache + 0xf8 + source_slot * 4, code)
+        integer(cache + 0xa0 + source_slot * 4, masks['ground'] | masks['air'])
+        loaded_code = run(0x6f64ce60, 0x68677477, edx=source_slot)
+        loaded_targets = run(0x6f64cdf0, 0x68677477, edx=source_slot)
+        assert loaded_code == code and loaded_targets == masks['ground'] | masks['air']
+        integer(record, loaded_targets)
+        integer(record + 0x38, 1)
+        integer(record + 0x44, loaded_code)
+        cpu.reg_write(UC_X86_REG_EBX, record)
+        cpu.reg_write(UC_X86_REG_EDI, attack)
+        cpu.reg_write(UC_X86_REG_ESI, source_slot)
+        cpu.emu_start(0x6f47f459, 0x6f47f475, count=50)
+        assert cpu.reg_read(UC_X86_REG_EIP) == 0x6f47f475
+        cpu.reg_write(UC_X86_REG_ECX, source_slot)
+        cpu.emu_start(0x6f47f6ba, 0x6f47f6c4, count=50)
+        assert cpu.reg_read(UC_X86_REG_EIP) == 0x6f47f6c4
+        assert word(attack + 0x218 + source_slot * 4) == loaded_targets
+        assert word(attack + 0xdc + source_slot * 4) == code
+        integer(attack + 0x228, 1)
+        allowed = bool(run(0x6f47c060, attack, [source_slot]))
+        assert allowed == (name == 'normal')
+        source_weapons.append(dict(slot=source_slot, sourceWeapTp=name, code=code, targetMask=loaded_targets, cloudAllowsAttack=allowed))
+
+report = dict(author='MiYu', passed=True, binarySha256=digest, sourceTokens=tokens, rawMask=hex(mask), normalizedMask=hex(normalized), targetCases=targets, weaponCases=weapons, sourceWeaponCases=source_weapons, limitations=['The preserved source targs tokens are supplied as a raw mask; the original ability-data loader is not executed.', 'Original effect filter, unit flag composition, defaults, target validator and ranged weapon gate execute. Unit category/owner/state fields and object references are fixtures; final ability immunity/event rejection is supplied as success.', 'Source weapon cases execute the original weapTp field getter/converter, cached getters, assignment slices and restriction gate. Source string retrieval/comparison, parsed cache records, hash and assembly are supplied; full unit construction and original battle are not executed. Target-mask field identity is also traced statically through the targs getter and parser.'])
 out = ROOT / 'tmp/docs-artifacts/frost-human-aviary/cloud-targets/cpu.json'
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
-print(f'PASS original Cloud: {len(targets)} target cases and {len(weapons)} ranged weapon gates')
+print(f'PASS original Cloud: {len(targets)} target cases and {len(weapons)} ranged weapon gates, {len(source_weapons)} source weapon paths')
