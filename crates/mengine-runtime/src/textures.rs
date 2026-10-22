@@ -10,6 +10,10 @@ use std::path::{Component, Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant, SystemTime};
 
+#[cfg(test)]
+#[path = "texture_sync_tests.rs"]
+mod sync_tests;
+
 const UI_MATERIAL_TEXTURE_GRACE_FRAMES: u64 = 120;
 const MAX_CACHED_UI_MATERIAL_TEXTURES: usize = 128;
 
@@ -24,7 +28,7 @@ pub struct TextureLoadFailure {
 pub struct RuntimeTextureCache {
     project_root: Option<PathBuf>,
     attempted_ui: HashMap<String, FileStamp>,
-    attempted_material: HashMap<String, FileStamp>,
+    attempted_material: [HashMap<String, FileStamp>; 2],
     material_last_poll: Option<Instant>,
     attempted_ui_material: HashMap<String, FileStamp>,
     ui_material_last_used: HashMap<String, u64>,
@@ -85,7 +89,7 @@ impl RuntimeTextureCache {
         Self {
             project_root,
             attempted_ui: HashMap::new(),
-            attempted_material: HashMap::new(),
+            attempted_material: Default::default(),
             material_last_poll: None,
             attempted_ui_material: HashMap::new(),
             ui_material_last_used: HashMap::new(),
@@ -102,7 +106,7 @@ impl RuntimeTextureCache {
         }
         self.project_root = project_root;
         self.attempted_ui.clear();
-        self.attempted_material.clear();
+        for variants in &mut self.attempted_material { variants.clear(); }
         self.material_last_poll = None;
         self.attempted_ui_material.clear();
         self.ui_material_last_used.clear();
@@ -114,8 +118,7 @@ impl RuntimeTextureCache {
 
     pub fn invalidate(&mut self, key: &str) {
         self.attempted_ui.remove(key);
-        self.attempted_material
-            .retain(|attempt, _| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
+        for variants in &mut self.attempted_material { variants.remove(key); }
         self.attempted_ui_material
             .retain(|attempt, _| attempt.split_once('\0').is_none_or(|(_, path)| path != key));
         self.ui_material_last_used
@@ -328,20 +331,18 @@ impl RuntimeTextureCache {
         let poll = self.material_last_poll.is_none_or(|last| last.elapsed() >= Duration::from_millis(250));
         if poll { self.material_last_poll = Some(Instant::now()); }
         let stale_attempts = stale_material_texture_attempts(&self.attempted_material, &references);
-        for attempt in stale_attempts {
-            self.attempted_material.remove(&attempt);
-            if let Some((srgb, key)) = split_material_texture_attempt(&attempt) {
-                renderer.remove_material_texture_variant(key, srgb);
-            }
+        for (key, srgb) in stale_attempts {
+            self.attempted_material[usize::from(srgb)].remove(&key);
+            renderer.remove_material_texture_variant(&key, srgb);
         }
         for (key, srgb) in references {
-            let attempt = material_texture_attempt_key(&key, srgb);
-            if !poll && self.attempted_material.contains_key(&attempt) { continue; }
-            let Some(path) = resolve_project_asset_path(root, &key) else {
-                renderer.remove_material_texture_variant(&key, srgb);
-                if should_attempt(&mut self.attempted_material, &attempt, FileStamp::default()) {
+            let attempted = &mut self.attempted_material[usize::from(srgb)];
+            if !poll && attempted.contains_key(key) { continue; }
+            let Some(path) = resolve_project_asset_path(root, key) else {
+                renderer.remove_material_texture_variant(key, srgb);
+                if should_attempt(attempted, key, FileStamp::default()) {
                     failures.push(TextureLoadFailure {
-                        key,
+                        key: key.to_owned(),
                         path: root.to_owned(),
                         error: "material texture must be a project-relative path without '..'"
                             .into(),
@@ -349,30 +350,30 @@ impl RuntimeTextureCache {
                 }
                 continue;
             };
-            if !should_attempt(&mut self.attempted_material, &attempt, file_stamp(&path)) {
+            if !should_attempt(attempted, key, file_stamp(&path)) {
                 continue;
             }
             match load_texture_rgba8(&path) {
                 Ok(texture) => {
                     if let Err(error) = renderer.upload_material_texture_rgba8(
-                        &key,
+                        key,
                         texture.width,
                         texture.height,
                         &texture.pixels,
                         srgb,
                     ) {
-                        renderer.remove_material_texture_variant(&key, srgb);
+                        renderer.remove_material_texture_variant(key, srgb);
                         failures.push(TextureLoadFailure {
-                            key,
+                            key: key.to_owned(),
                             path,
                             error: error.to_string(),
                         });
                     }
                 }
                 Err(error) => {
-                    renderer.remove_material_texture_variant(&key, srgb);
+                    renderer.remove_material_texture_variant(key, srgb);
                     failures.push(TextureLoadFailure {
-                        key,
+                        key: key.to_owned(),
                         path,
                         error: error.to_string(),
                     });
@@ -515,7 +516,7 @@ impl RuntimeTextureCache {
     }
 }
 
-fn material_texture_references<'a>(objects: impl IntoIterator<Item = &'a RenderObject>) -> Vec<(String, bool)> {
+fn material_texture_references<'a>(objects: impl IntoIterator<Item = &'a RenderObject>) -> Vec<(&'a str, bool)> {
     let mut references = HashSet::new();
     for object in objects {
         let material = &object.material;
@@ -538,7 +539,7 @@ fn material_texture_references<'a>(objects: impl IntoIterator<Item = &'a RenderO
             .filter(|(key, _)| !key.is_empty() && !key.eq_ignore_ascii_case("white")),
         );
     }
-    let mut references = references.into_iter().map(|(key, srgb)| (key.to_owned(), srgb)).collect::<Vec<_>>();
+    let mut references = references.into_iter().collect::<Vec<_>>();
     references.sort_by(|left, right| left.0.cmp(&right.0).then(left.1.cmp(&right.1)));
     references
 }
@@ -567,20 +568,15 @@ fn material_texture_attempt_key(key: &str, srgb: bool) -> String {
     format!("{}\0{key}", if srgb { "srgb" } else { "linear" })
 }
 
-fn stale_material_texture_attempts(
-    attempted: &HashMap<String, FileStamp>,
-    references: &[(String, bool)],
-) -> Vec<String> {
-    let live = references
-        .iter()
-        .map(|(key, srgb)| material_texture_attempt_key(key, *srgb))
-        .collect::<HashSet<_>>();
-    let mut stale = attempted
-        .keys()
-        .filter(|attempt| !live.contains(*attempt))
-        .cloned()
-        .collect::<Vec<_>>();
-    stale.sort();
+fn stale_material_texture_attempts(attempted: &[HashMap<String, FileStamp>; 2], references: &[(&str, bool)]) -> Vec<(String, bool)> {
+    let mut stale = Vec::new();
+    for (index, variants) in attempted.iter().enumerate() {
+        let srgb = index != 0;
+        for key in variants.keys() {
+            if references.binary_search_by(|(path, color)| path.cmp(&key.as_str()).then(color.cmp(&srgb))).is_err() { stale.push((key.clone(), srgb)); }
+        }
+    }
+    stale.sort_by(|left, right| left.1.cmp(&right.1).then(left.0.cmp(&right.0)));
     stale
 }
 
@@ -809,20 +805,8 @@ mod tests {
             split_material_texture_attempt("linear\0Assets/Shared.png"),
             Some((false, "Assets/Shared.png"))
         );
-        let attempted = HashMap::from([
-            (
-                material_texture_attempt_key("Assets/Shared.png", true),
-                FileStamp::default(),
-            ),
-            (
-                material_texture_attempt_key("Assets/Shared.png", false),
-                FileStamp::default(),
-            ),
-        ]);
-        assert_eq!(
-            stale_material_texture_attempts(&attempted, &[("Assets/Shared.png".into(), true)]),
-            vec![material_texture_attempt_key("Assets/Shared.png", false)]
-        );
+        let attempted = [HashMap::from([("Assets/Shared.png".into(), FileStamp::default())]), HashMap::from([("Assets/Shared.png".into(), FileStamp::default())])];
+        assert_eq!(stale_material_texture_attempts(&attempted, &[("Assets/Shared.png", true)]), vec![("Assets/Shared.png".into(), false)]);
     }
 
     #[test]

@@ -13,6 +13,9 @@ use std::collections::{BTreeSet, HashMap};
 use std::hash::{BuildHasherDefault, Hasher};
 use std::sync::atomic::{AtomicU64, Ordering};
 
+#[path = "world_component_union.rs"]
+mod component_union;
+
 static NEXT_WORLD_ID: AtomicU64 = AtomicU64::new(1);
 
 // MiYu: TypeId supplies an internal compiler-generated hash; do not use this hasher for external keys.
@@ -387,13 +390,13 @@ impl World {
 
     /// MiYu: Ordered, deduplicated union of component memberships, including inactive entities.
     pub fn entities_with_any_component(&self, type_names: &[&str]) -> impl Iterator<Item = Entity> + '_ {
-        let indices: BTreeSet<_> = type_names.iter().filter_map(|name| self.component_entities.get(*name)).flat_map(|entities| entities.iter().copied()).collect();
+        let mut indices = component_union::ComponentUnion::new(type_names.iter().filter_map(|name| self.component_entities.get(*name)));
         let ordered = self.iteration_order.as_ref().map(|_| {
-            let mut ordered: Vec<_> = indices.iter().copied().collect();
+            let mut ordered: Vec<_> = indices.by_ref().collect();
             ordered.sort_unstable_by_key(|index| self.entities[*index as usize].iteration_rank);
             ordered
         });
-        ordered.into_iter().flatten().chain(indices.into_iter().take(if self.iteration_order.is_none() { usize::MAX } else { 0 })).filter_map(move |index| {
+        ordered.into_iter().flatten().chain(indices).filter_map(move |index| {
             let record = &self.entities[index as usize];
             record.alive.then_some(Entity::new(index, record.generation))
         })

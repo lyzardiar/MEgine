@@ -104,12 +104,34 @@ Release 基准使用 Frostbound 作者场景、960×540，串行与两帧流水�
 
 同脚本前后各采 12 个 native 帧，去前 2 个后取余下 10 个中位数：Scene 总耗时 **3.78→3.85 ms**、Game **14.37→14.16 ms**；对应回读 **2.34→2.27 ms**、**5.18→4.80 ms**。单帧延迟基本持平，不能把两帧批量基准的收益解释为单帧延迟减半。资源增/改/删通知为 0.85/1.91/1.91 秒，仍受两秒轮询相位影响。证据：`frontend-owned-pipeline-tests.txt`、`phase3-editor-build.log`、`phase3-native-build.log`、`phase3-before.json`、`phase3-after.json`、`phase3-comparison.json`；复现沿用 `scripts/qa-editor-performance-risk.mjs`。
 
+## 第四阶段纹理同步与联合查询
+
+材质纹理缓存按 linear/sRGB 分开保存，普通帧直接借用当前 RenderObject 中的路径，不再为引用列表及查找重复分配带颜色空间前缀的字符串。失效检查复用已排序引用列表，实际移除资源才复制键。250 ms 文件轮询、显式 invalidate、新纹理立即加载、失败去重、项目切换和同路径双颜色空间均保留。
+
+组件联合查询直接合并已有的有序成员索引，保留去重、非激活实体、实体槽复用及快照遍历顺序。少量类型使用直接归并，超过 8 个有效成员集合使用最小堆，避免类型数增加导致逐项线性扫描。常规顺序只保留与类型数相关的迭代状态；显式快照顺序仍需结果 Vec 和按 rank 排序。
+
+| Release CPU 工作负载 | 第三阶段 | 第四阶段 |
+| --- | ---: | ---: |
+| 作者场景 65 个物体、8 个纹理变体，普通帧纹理同步 | 0.01383 ms | 0.01204 ms |
+| 全对象池激活 1,381 个物体、213 个纹理变体，普通帧纹理同步 | 0.16324 ms | 0.12685 ms |
+| 20k 实体，重叠组件联合查询 | 0.56491 ms | 0.24528 ms |
+| 同一查询，显式反向遍历顺序 | 0.66824 ms | 0.34442 ms |
+| 20k 实体，24 个互不相交组件类型 | 0.41631 ms | 0.28898 ms |
+
+上述数据各取 5 组中位数，联合查询在同进程交错比较旧实现并逐项核对结果；纹理同步每组 100 次，分别强制普通帧与轮询帧。全对象池的轮询帧约 4.95→5.01 ms，磁盘检查成本仍在；作者场景粒子联合查询仅约 0.00273→0.00203 ms，不能把压力测试收益换算为当前游戏 FPS。材质路径省去重复字符串分配，不延长世界或 RenderObject 生命周期。
+
+复现：`cargo test -p mengine-core --release benchmark_component_union -- --ignored --nocapture`；`cargo test -p mengine-runtime --release --lib benchmark_material_texture_sync_cadence -- --ignored --nocapture --test-threads=1`。本地证据：`phase4-union-benchmark.log`、`phase4-texture-before.log`、`phase4-texture-after.log`。
+
+第四阶段串行 Release 验证：core 26、runtime 233、scene 25、Editor Host 62 项通过；core/runtime/Host 分别忽略 3/2/6 个手动基准。纹理专项包含真实 GPU 变体上传、独立卸载、文件修改、删除与恢复、显式失效和项目切换。日志：phase4-core-tests.log、phase4-texture-tests.log、phase4-integration-tests.log。
+
+配套 SDK 和原生 Release 构建通过。隔离项目完成编辑/undo/redo/持久恢复、外部资源增改删、真实对局、Play/Pause/Step/Stop 和编辑状态恢复；Scene/Game 截图检查通过，控制台 error 为 0，源场景摘要不变，测试编辑器正常退出。对照第三阶段相同 EXE 基线，预热帧中位数 Scene 3.85→3.76 ms、Game 14.16→14.26 ms，整体延迟基本持平。原生材料同步约 1.00→0.98 ms，包含定期文件检查，不能当作普通帧微基准。构建、QA 及对照证据：phase4-sdk-build.log、phase4-native-build.log、phase4-after.json、phase4-comparison.json；基线为 phase3-after.json。
+
 ## 后续风险
 
 - [x] **编辑器 Scene/Game 回读期间占用 renderer/world 锁。** 已使用有界独立 ticket、锁外等待与前端两请求流水线。GPU 数据传输仍需等待；后续以原生交互采样评估剩余成本。
 - [ ] **RenderObject 每帧重新提取。** `frame_compiler.rs` 仍重复规范化 mesh 路径、复制字段；同次共享材质解析已合并，root 过滤会反复沿 Parent 链查找。评估按组件 revision 缓存与加载时路径规范化。
 - [ ] **逐物体绘制及准备。** `renderer.rs` 主 pass/阴影 pass 缺少通用实例化，重复状态设置与材质哈希查找；临时 Vec 和 draw order 可复用。先测量 draw call 与准备时间，再实施 mesh/material 分组。
-- [ ] **ECS 查询集合与存储。** 内建组件 TypeId 查找已完成；`entities_with_any_component` 仍每次建立 BTreeSet，自定义组件保留兼容查找。集合复用与稠密组件存储属于后续架构变更。
+- [ ] **ECS 查询集合与存储。** 内建组件 TypeId 查找和有序联合查询已完成；自定义组件保留兼容查找。稠密组件存储属于后续架构变更。
 - [ ] **命令跨桥批处理。** 本阶段仅减少非组件解析次数，未改变逐条 stringify/跨桥协议。
 - [ ] **UI、timeline、animation、physics 性能审计。** 尚未完成，不能据本阶段数据排除这些模块的开销。
 
