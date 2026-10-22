@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化，视口 GPU 回读流水线的第三阶段、纹理同步／联合查询的第四阶段，以及主画面和嵌入视图共享网格提取的第五阶段优化。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化，视口 GPU 回读流水线的第三阶段、纹理同步／联合查询的第四阶段，主画面和嵌入视图共享网格提取的第五阶段，以及姿态源校验复用的第六阶段优化。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -161,3 +161,21 @@ Release 基准使用 Frostbound 作者场景、960×540，串行与两帧流水�
 串行 Release 集成：Runtime 236、Editor Host 62 项通过，分别忽略3／6个手动基准。Debug／Release配套SDK和Tauri Release已重建，原生验收使用EXE旁的SDK；3,812实体编辑、undo/redo、真实恢复文件、外部资源增改删、Play/Pause/Step/Stop及停止后恢复通过，控制台无error，源场景摘要保持一致。Scene与游戏截图已检查，测试编辑器正常退出；WebView缓存因EPERM保留在临时目录。构建和集成日志为 `phase5-integration-tests.log`、`phase5-sdk-build.log`、`phase5-native-build.log`；SDK摘要为 `phase5-sdk-copy.json`。
 
 原生前后各采12个预热帧，去前2个后取10个中位数；优化后复采一次，以检查首轮Game变慢的波动。三轮Scene总计为 **3.87／3.65／4.24 ms**，Game为 **13.71／14.85／13.62 ms**（基线／首次优化后／复采）。Game编译为2.86／3.21／2.90 ms，网格同步2.24／2.80／2.17 ms。未修改环节也发生变化，不能将多视图微基准解释为普通对局整体加速；目前仅证明同帧重复提取减少与功能一致。两次优化后功能验收均通过，不丢弃首次采样。证据为 `phase5-before.json`、`phase5-after.json`、`phase5-after-repeat.json`、`phase5-comparison.json`、`phase5-comparison-repeat.json`；复现沿用 `scripts/qa-editor-performance-risk.mjs` 和对应 `MENGINE_PERFORMANCE_LABEL`。
+
+## 第六阶段姿态源校验与文件指纹复用
+
+RuntimeMeshCache 在轮询或请求新姿态时，先完整验证已加载源及其依赖，再使用该源版本的主文件时间戳／长度；有效源不再额外读取一次主文件元数据。首次加载、源失效和静态网格仍沿用文件检查与重试路径，250毫秒轮询、新姿态立即校验、显式失效、项目切换及相机专属姿态保持原有规则。
+
+`SharedGltfPoseSource::validate_at` 同时验证本次请求路径的规范路径身份，防止目录联接重定向后继续使用原目标。主模型的指纹来自验证后的已加载版本，不使用加载前观察到的旧指纹；同帧静态网格和姿态网格因此可以共享正确的检查结果。渲染专用兼容加载仍验证其主文件和全部保留依赖，不把兼容源加入脚本共享池。完整依赖检查没有被缓存时间窗口替代。
+
+测试覆盖主文件修改／删除／恢复、外部buffer变化、新姿态在轮询间隔内的刷新、已有姿态的轮询节奏、兼容加载、加载前旧指纹、Windows目录联接重定向。重定向用例保留相同主文件长度和修改时间，确认旧规范路径仍有效时，新请求能识别目标变化，并加载不同的动画数据。
+
+Release CPU对照选择人族建筑和狮鹫笼目录中的17个保留模型源，同进程交错执行，预热后9组、每组25次：校验耗时 **1.52483→1.20812 ms**。额外主文件元数据读取17→0，17次完整源／依赖校验全部保留；这不表示文件系统读取被全部取消，也不直接代表FPS收益。复现：`cargo test -p mengine-runtime --release --lib benchmark_pose_source_validation -- --ignored --nocapture --test-threads=1`；证据为 `phase6-source-benchmark.log` 与 `phase6-source-benchmark.json`。
+
+最终串行Release测试：Assets 94、Runtime 239、Editor Host 62项通过；Runtime／Host分别忽略4／6个手动基准，新增校验基准另行通过。来源、渲染缓存、热更新和相机覆盖的结果保存在 `phase6-integration-tests.log`。
+
+Debug／Release配套运行时和Tauri Release均已重建，原生编辑器使用旁置SDK且摘要一致。前后均通过3,812实体重命名、undo/redo、真实恢复文件、外部资源增改删、Play/Pause/Step/Stop与停止后编辑状态恢复；控制台错误0、作者场景摘要不变，Scene／Game截图已检查，测试编辑器正常退出，WebView缓存因EPERM保留。
+
+前后各12个预热native帧，去前2个后对10个取中位数：Game网格同步 **2.28295→1.83340 ms**；外层文件元数据 **22→5次、0.58600→0.12470 ms**；完整源校验仍17次，耗时1.26710→1.38875 ms。Scene总计3.69365→3.84235 ms，Game总计13.70845→13.75850 ms，整体基本持平，不据此承诺FPS提升。姿态生成与上传次数也会随采样帧变化，完整依赖与路径身份检查仍是剩余成本。
+
+原生证据为 `phase6-before.json`、`phase6-after.json`、`phase6-comparison.json` 及对应日志；构建与SDK证据为 `phase6-sdk-build.log`、`phase6-native-build.log`、`phase6-sdk-copy.json`，均位于 `tmp/docs-artifacts/editor-performance-risk/`。复现沿用 `scripts/qa-editor-performance-risk.mjs`，设置 `MENGINE_PERFORMANCE_LABEL` 区分采样轮次。

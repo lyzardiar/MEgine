@@ -41,6 +41,12 @@ pub struct MeshSyncProfile { pub file_check_ms: f64, pub file_checks: u32, pub s
 struct FrameSourceChecks { stamps: HashMap<String, FileStamp>, prepared: HashSet<String> }
 impl FrameSourceChecks {
     fn stamp(&mut self, asset: &str, path: &Path, profile: &mut MeshSyncProfile) -> FileStamp { *self.stamps.entry(asset.into()).or_insert_with(|| profile_file_stamp(path, profile)) }
+    // Source validation supplies the main-file stamp belonging to the loaded version, including load-time races.
+    fn validate_cached_source(&mut self, asset: &str, path: &Path, cached: Option<&(FileStamp, CachedPoseSource)>, profile: &mut MeshSyncProfile) -> bool {
+        let Some((_, source)) = cached else { return false; };
+        let Some(stamp) = profile_source_stamp(source, path, profile) else { return false; };
+        self.stamps.insert(asset.into(), stamp); true
+    }
 }
 
 // Validated sources are shared; legacy render-only loads never enter the script source pool.
@@ -49,10 +55,10 @@ impl std::ops::Deref for CachedPoseSource {
     type Target = GltfPoseSource;
     fn deref(&self) -> &Self::Target { match self { Self::Shared(source) => source, Self::Legacy { source, .. } => source } }
 }
-impl CachedPoseSource { fn is_current(&self) -> bool { match self { Self::Shared(source) => source.is_current(), Self::Legacy { dependencies, .. } => dependencies.iter().all(|(path, stamp)| file_stamp(path) == *stamp) } } }
-fn profile_source_current(source: &CachedPoseSource, profile: &mut MeshSyncProfile) -> bool {
-    let started = Instant::now(); let current = source.is_current();
-    profile.source_check_ms += started.elapsed().as_secs_f64()*1000.; profile.source_checks += 1; current
+impl CachedPoseSource { fn validate_at(&self, path: &Path) -> Option<FileStamp> { match self { Self::Shared(source) => source.validate_at(path).map(|(modified, length)| FileStamp { modified: Some(modified), length: Some(length) }), Self::Legacy { dependencies, .. } => { let (main, stamp) = dependencies.first()?; (main == path && dependencies.iter().all(|(path, stamp)| file_stamp(path) == *stamp)).then_some(*stamp) } } } }
+fn profile_source_stamp(source: &CachedPoseSource, path: &Path, profile: &mut MeshSyncProfile) -> Option<FileStamp> {
+    let started = Instant::now(); let stamp = source.validate_at(path);
+    profile.source_check_ms += started.elapsed().as_secs_f64()*1000.; profile.source_checks += 1; stamp
 }
 fn load_render_only_source(path: &Path) -> Result<CachedPoseSource, AssetError> {
     let dependency_paths = GltfPoseSource::load(path)?.dependency_paths(path);
@@ -179,12 +185,12 @@ impl RuntimeMeshCache {
             if poll || !self.poses.contains_key(asset) {
                 let ready = if let Some(ready) = checked_assets.get(asset) { *ready } else {
                     let ready = if checks.prepared.contains(asset) { true } else if let Some(path) = resolve_project_asset_path(root,asset) {
-                        let stamp = checks.stamp(asset, &path, &mut self.profile);
-                        if self.poses.get(asset).is_none_or(|(old,source)| *old != stamp || !profile_source_current(source, &mut self.profile)) {
+                        if checks.validate_cached_source(asset, &path, self.poses.get(asset), &mut self.profile) { true } else {
+                            let stamp = checks.stamp(asset, &path, &mut self.profile);
                             forget_pose_attempts(&mut self.attempted, &self.billboard_views, asset);
                             self.poses.remove(asset);
                             match load_pose_source(&path, root, &mut self.profile) { Ok(source) => { self.poses.insert(asset.into(),(stamp,source)); true }, Err(_) => false }
-                        } else { true }
+                        }
                     } else { false };
                     if ready { checks.prepared.insert(asset.to_owned()); }
                     checked_assets.insert(asset.to_owned(),ready); ready
@@ -284,13 +290,13 @@ impl RuntimeMeshCache {
                 }
                 continue;
             };
-            let stamp = checks.stamp(asset_key, &path, &mut self.profile);
             if let Some((asset, _, _, _)) = pose {
-                if !checks.prepared.contains(asset) && checked_poses.insert(asset) && self.poses.get(asset).is_none_or(|(old, source)| *old != stamp || !profile_source_current(source, &mut self.profile)) {
+                if !checks.prepared.contains(asset) && checked_poses.insert(asset) && !checks.validate_cached_source(asset, &path, self.poses.get(asset), &mut self.profile) {
                     self.poses.remove(asset);
                     forget_pose_attempts(&mut self.attempted, &self.billboard_views, asset);
                 }
             }
+            let stamp = checks.stamp(asset_key, &path, &mut self.profile);
             if !should_attempt(&mut self.attempted, key, stamp) { continue; }
             let mesh = if let Some((asset, clip, frame, rate)) = pose {
                 if self.poses.get(asset).is_none_or(|(old, _)| *old != stamp) {
@@ -473,14 +479,14 @@ mod tests {
         assert_eq!(cache.attempted.keys().cloned().collect::<Vec<_>>(), vec!["meshpatch:Assets/b.mpatch#00080"]);
     }
 
-    struct PoseFixture(PathBuf);
+    pub(super) struct PoseFixture(pub(super) PathBuf);
     impl PoseFixture {
-        fn new() -> Self {
+        pub(super) fn new() -> Self {
             let root=std::env::temp_dir().join(format!("mengine-shared-mesh-{}",uuid::Uuid::new_v4()));std::fs::create_dir_all(&root).unwrap();
             let doc=serde_json::json!({"asset":{"version":"2.0"},"buffers":[{"uri":"pose.bin","byteLength":36}],"bufferViews":[{"buffer":0,"byteOffset":0,"byteLength":36}],"accessors":[{"bufferView":0,"componentType":5126,"count":3,"type":"VEC3","min":[-1,-1,0],"max":[1,1,0]}],"meshes":[{"primitives":[{"attributes":{"POSITION":0}}]}],"nodes":[{"mesh":0}],"animations":[{"samplers":[],"channels":[]}]});
             std::fs::write(root.join("pose.gltf"),doc.to_string()).unwrap();let fixture=Self(root);fixture.buffer(0.,false);fixture
         }
-        fn buffer(&self, offset: f32, padding: bool) {
+        pub(super) fn buffer(&self, offset: f32, padding: bool) {
             let mut values=vec![-1.+offset,-1.,0.,1.+offset,-1.,0.,offset,1.,0.];if padding {values.push(0.);}
             std::fs::write(self.0.join("pose.bin"),values.iter().flat_map(|value|value.to_le_bytes()).collect::<Vec<_>>()).unwrap();
         }
@@ -517,10 +523,10 @@ mod tests {
         let fixture=PoseFixture::new();let path=fixture.0.join("pose.gltf");
         let mut doc:serde_json::Value=serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();doc["images"]=serde_json::json!([{"uri":"missing.png"}]);std::fs::write(&path,doc.to_string()).unwrap();
         let mut profile=MeshSyncProfile::default();let source=load_pose_source(&path,&fixture.0,&mut profile).unwrap();
-        assert!(matches!(&source,CachedPoseSource::Legacy {..}));assert!(source.is_current());assert!(SharedGltfPoseSource::load(&path,&fixture.0).is_err());
-        fixture.buffer(10.,true);assert!(!source.is_current());
+        assert!(matches!(&source,CachedPoseSource::Legacy {..}));assert!(source.validate_at(&path).is_some());assert!(SharedGltfPoseSource::load(&path,&fixture.0).is_err());
+        fixture.buffer(10.,true);assert!(source.validate_at(&path).is_none());
         let updated=load_pose_source(&path,&fixture.0,&mut profile).unwrap();assert_eq!(updated.sample_at_rate(0,0,30).unwrap().positions[0][0],9.);
-        std::fs::write(fixture.0.join("missing.png"),b"texture handled by texture loader").unwrap();assert!(!updated.is_current());
+        std::fs::write(fixture.0.join("missing.png"),b"texture handled by texture loader").unwrap();assert!(updated.validate_at(&path).is_none());
         assert!(matches!(load_pose_source(&path,&fixture.0,&mut profile).unwrap(),CachedPoseSource::Shared(_)));
     }
 
@@ -538,7 +544,7 @@ mod tests {
         let work=cache.sync_profile();let upload_parts=[work.vertex_conversion_ms,work.vertex_buffer_ms,work.index_buffer_ms,work.bounds_ms];
         assert_eq!(work.uploads,3);assert!(upload_parts.iter().all(|ms|ms.is_finite()&&*ms>=0.0));assert!(upload_parts.iter().sum::<f64>()<=work.upload_ms+0.001);
         let keys=initial.objects.iter().chain(initial.scene_views.iter().flat_map(|v|&v.objects)).map(|o|o.mesh_key.clone()).collect::<HashSet<_>>();assert_eq!(keys.len(),3);assert!(keys.iter().all(|key|key.starts_with("billboard:")));
-        cache.last_poll=None;assert!(cache.sync_frame(&mut renderer,&mut frame()).is_empty());assert_eq!(cache.stats().uploads,0);assert_eq!(cache.sync_profile().source_checks,1);assert_eq!(cache.sync_profile().file_checks,1);
+        cache.last_poll=None;assert!(cache.sync_frame(&mut renderer,&mut frame()).is_empty());assert_eq!(cache.stats().uploads,0);assert_eq!(cache.sync_profile().source_checks,1);assert_eq!(cache.sync_profile().file_checks,0);
         fixture.buffer(10.,true);cache.last_poll=None;assert!(cache.sync_frame(&mut renderer,&mut frame()).is_empty());assert_eq!(cache.stats().uploads,3);assert_eq!(cache.sync_profile().source_checks,1);assert_eq!(file_stamp(&path),stamp);
         assert_eq!(cache.poses["pose.gltf"].1.sample_at_rate(0,0,30).unwrap().positions[0][0],9.);
         std::fs::remove_file(fixture.0.join("pose.bin")).unwrap();cache.last_poll=None;
@@ -625,3 +631,7 @@ mod tests {
         ));
     }
 }
+
+#[cfg(test)]
+#[path = "mesh_source_validation_tests.rs"]
+mod source_validation_tests;

@@ -14,6 +14,7 @@ impl DependencyStamp {
         Ok(Self { path, request: request.into(), bytes: metadata.len(), modified: metadata.modified()? })
     }
     pub(super) fn is_current(&self) -> bool { Self::read(&self.request).is_ok_and(|stamp| stamp == *self) }
+    fn is_current_at(&self, request: &Path) -> bool { Self::read(request).is_ok_and(|stamp| stamp.path == self.path && stamp.bytes == self.bytes && stamp.modified == self.modified) }
 }
 
 /// Validated source version; cameras and sampled poses remain owned by each caller.
@@ -55,6 +56,8 @@ impl SharedGltfPoseSource {
         POOL.get_or_init(SourcePool::default).load(path, root)
     }
     pub fn is_current(&self) -> bool { self.dependencies.iter().all(DependencyStamp::is_current) }
+    /// Validate the requested path and dependencies, returning the verified main-file modification time and length.
+    pub fn validate_at(&self, path: &Path) -> Option<(SystemTime, u64)> { let (main, rest) = self.dependencies.split_first()?; (main.is_current_at(path) && rest.iter().all(DependencyStamp::is_current)).then_some((main.modified, main.bytes)) }
     /// Source-file budget used by existing caller caches; not a measurement of decoded heap bytes.
     pub fn dependency_bytes(&self) -> u64 { let mut paths = std::collections::HashSet::new(); self.dependencies.iter().filter(|stamp| paths.insert(&stamp.path)).map(|stamp| stamp.bytes).sum() }
 }
@@ -97,7 +100,7 @@ mod tests {
     fn changed_or_missing_buffer_never_reuses_old_version_and_recovery_is_retryable() {
         let fixture = Fixture::new(); let pool = SourcePool::default();
         let first = pool.load(&fixture.path(), &fixture.root()).unwrap().source;
-        fixture.write(8., true); assert!(!first.is_current());
+        fixture.write(8., true); assert!(!first.is_current()); assert!(first.validate_at(&fixture.path()).is_none());
         let next = pool.load(&fixture.path(), &fixture.root()).unwrap(); assert!(!next.reused); assert!(!Arc::ptr_eq(&first, &next.source));
         assert_eq!(first.sample_nodes(0, 6, 12, None).unwrap()[0].matrix.w_axis.x, 0.5);
         assert_eq!(next.source.sample_nodes(0, 6, 12, None).unwrap()[0].matrix.w_axis.x, 4.);
@@ -114,5 +117,54 @@ mod tests {
         doc["buffers"][0]["uri"] = serde_json::json!("../outside.bin"); std::fs::write(fixture.path(), doc.to_string()).unwrap();
         let broad = pool.load(&fixture.path(), &fixture.0).unwrap(); assert!(broad.source.is_current());
         assert!(pool.load(&fixture.path(), &fixture.root()).is_err());
+    }
+
+    #[test]
+    fn requested_main_path_tracks_replacement_removal_and_recovery() {
+        let fixture = Fixture::new(); let pool = SourcePool::default();
+        let first = pool.load(&fixture.path(), &fixture.root()).unwrap().source;
+        assert!(first.validate_at(&fixture.path()).is_some());
+        let original = std::fs::read(fixture.path()).unwrap();
+        let other = fixture.root().join("other.gltf"); std::fs::write(&other, &original).unwrap();
+        assert!(first.validate_at(&other).is_none());
+        let mut changed = original.clone(); changed.push(b'\n'); std::fs::write(fixture.path(), changed).unwrap();
+        assert!(first.validate_at(&fixture.path()).is_none());
+        let next = pool.load(&fixture.path(), &fixture.root()).unwrap().source;
+        assert!(next.validate_at(&fixture.path()).is_some());
+        std::fs::remove_file(fixture.path()).unwrap(); assert!(next.validate_at(&fixture.path()).is_none());
+        std::fs::write(fixture.path(), original).unwrap();
+        assert!(pool.load(&fixture.path(), &fixture.root()).unwrap().source.validate_at(&fixture.path()).is_some());
+    }
+
+    #[test]
+    fn requested_directory_link_cannot_keep_a_source_after_retargeting() {
+        fn link(target: &Path, path: &Path) {
+            #[cfg(windows)] {
+                use std::os::windows::process::CommandExt;
+                let output = std::process::Command::new("cmd.exe").args(["/c", "mklink", "/J"]).arg(path).arg(target).creation_flags(0x08000000).output().unwrap();
+                assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+            }
+            #[cfg(unix)] std::os::unix::fs::symlink(target, path).unwrap();
+        }
+        let fixture = Fixture::new(); let alias = fixture.0.join("selected"); let alternate = fixture.0.join("alternate");
+        std::fs::create_dir(&alternate).unwrap();
+        for name in ["pose.gltf", "pose data.bin"] {
+            let original = fixture.root().join(name); let copy = alternate.join(name); std::fs::copy(&original, &copy).unwrap();
+            let modified = std::fs::metadata(original).unwrap().modified().unwrap();
+            std::fs::OpenOptions::new().write(true).open(copy).unwrap().set_times(std::fs::FileTimes::new().set_modified(modified)).unwrap();
+        }
+        let buffer = alternate.join("pose data.bin"); let modified = std::fs::metadata(&buffer).unwrap().modified().unwrap();
+        std::fs::write(&buffer, [0f32, 1., 0., 0., 0., 8., 0., 0.].iter().flat_map(|value| value.to_le_bytes()).collect::<Vec<_>>()).unwrap();
+        std::fs::OpenOptions::new().write(true).open(buffer).unwrap().set_times(std::fs::FileTimes::new().set_modified(modified)).unwrap();
+        link(&fixture.root(), &alias); let requested = alias.join("pose.gltf"); let pool = SourcePool::default();
+        let source = pool.load(&requested, &fixture.0).unwrap().source;
+        let before = std::fs::metadata(&requested).unwrap(); assert!(source.validate_at(&requested).is_some());
+        #[cfg(windows)] std::fs::remove_dir(&alias).unwrap();
+        #[cfg(unix)] std::fs::remove_file(&alias).unwrap();
+        link(&alternate, &alias);
+        let after = std::fs::metadata(&requested).unwrap(); assert_eq!(before.len(), after.len()); assert_eq!(before.modified().unwrap(), after.modified().unwrap());
+        assert!(source.is_current()); assert!(source.validate_at(&requested).is_none());
+        assert_eq!(source.sample_nodes(0, 6, 12, None).unwrap()[0].matrix.w_axis.x, 0.5);
+        assert_eq!(pool.load(&requested, &fixture.0).unwrap().source.sample_nodes(0, 6, 12, None).unwrap()[0].matrix.w_axis.x, 4.);
     }
 }
