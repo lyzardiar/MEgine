@@ -16,7 +16,7 @@ test('decoded native frames cross a task boundary when hidden WebViews suspend a
     assert.notEqual(firstFrame, -1, `${frameRef} completion must detect the first frame`);
     const assignment = viewport.indexOf(`${frameRef} = {`, firstFrame);
     assert.notEqual(assignment, -1, `${frameRef} assignment must exist`);
-    const completion = viewport.slice(assignment, assignment + 850);
+    const completion = viewport.slice(assignment, assignment + 1000);
     const completed = completion.indexOf('request.reportedError = false;');
     const repainted = completion.indexOf('paint();');
     const deferred = completion.indexOf('if (firstFrame) window.setTimeout(paint, 0);');

@@ -8,7 +8,7 @@ use mengine_core::generated::{
 use mengine_core::{TransformHierarchy, World};
 use mengine_rhi::{
     look_at, orthographic, perspective, FrameCamera, OffscreenRenderTarget, RenderMaterial,
-    RenderTarget, Renderer,
+    OffscreenReadbackTicket, RenderTarget, Renderer,
 };
 use mengine_runtime::effekseer::EffekseerWorld;
 use mengine_runtime::fonts::RuntimeFontCache;
@@ -51,6 +51,36 @@ pub struct EditorViewportFrame {
     pub rgba: Vec<u8>,
     pub has_authored_camera: bool,
     pub profile: EditorViewportProfile,
+}
+
+/// A frame whose submitted GPU copy owns its pixels independently of the renderer and world.
+pub struct EditorViewportSubmission { pub frame: EditorViewportFrame, readback: Option<OffscreenReadbackTicket>, started: Instant, submitted: Instant }
+impl std::ops::Deref for EditorViewportSubmission { type Target = EditorViewportFrame; fn deref(&self) -> &Self::Target { &self.frame } }
+impl std::ops::DerefMut for EditorViewportSubmission { fn deref_mut(&mut self) -> &mut Self::Target { &mut self.frame } }
+impl AsMut<EditorViewportFrame> for EditorViewportSubmission { fn as_mut(&mut self) -> &mut EditorViewportFrame { &mut self.frame } }
+impl AsMut<EditorViewportFrame> for EditorViewportFrame { fn as_mut(&mut self) -> &mut EditorViewportFrame { self } }
+impl EditorViewportSubmission {
+    /// Call after releasing renderer/world locks; this ticket always returns its own submitted frame.
+    pub fn finish(mut self) -> Result<EditorViewportFrame> {
+        let pending_ms = self.submitted.elapsed().as_secs_f64() * 1000.0;
+        self.frame.profile.call_tree.children.push(EditorViewportProfileNode { name: "Pending frame scheduling".into(), total_ms: pending_ms, self_ms: pending_ms, calls: 1, children: Vec::new() });
+        if let Some(ticket) = self.readback.take() {
+            let (rgba, readback) = ticket.finish().context("could not read the editor viewport")?;
+            self.frame.rgba = rgba;
+            let children: Vec<_> = [
+                ("Readback buffer prepare", readback.buffer_prepare_ms), ("Readback copy submit", readback.copy_submit_ms), ("Readback GPU map wait", readback.gpu_wait_ms), ("Readback GPU query decode", readback.gpu_query_read_ms), ("Readback RGBA row pack", readback.rgba_pack_ms), ("Readback unmap", readback.unmap_ms),
+            ].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect();
+            let total_ms = children.iter().map(|node| node.total_ms).sum();
+            let stage = EditorViewportProfileNode { name: "Renderer.read_offscreen_rgba8".into(), total_ms, self_ms: 0.0, calls: 1, children };
+            let backend = self.frame.profile.call_tree.children.iter_mut().find(|node| node.name == "Render backend").expect("render backend stage exists");
+            backend.total_ms += total_ms; backend.children.push(stage);
+            if let Some(gpu) = readback.gpu { self.frame.profile.gpu = Some(EditorViewportGpuProfile { timestamp_period_ns: gpu.timestamp_period_ns, total_pass_ms: gpu.stages.iter().map(|stage| stage.milliseconds).sum(), stages: gpu.stages.into_iter().map(|stage| EditorViewportProfileNode { name: stage.name.into(), total_ms: stage.milliseconds, self_ms: stage.milliseconds, calls: 1, children: Vec::new() }).collect() }); }
+        }
+        self.frame.profile.total_ms = self.started.elapsed().as_secs_f64() * 1000.0;
+        self.frame.profile.call_tree.total_ms = self.frame.profile.total_ms;
+        self.frame.profile.call_tree.self_ms = (self.frame.profile.total_ms - self.frame.profile.call_tree.children.iter().map(|node| node.total_ms).sum::<f64>()).max(0.0);
+        Ok(self.frame)
+    }
 }
 
 /// A submitted surface frame; no CPU pixels or physical scanout timestamp are implied.
@@ -347,7 +377,16 @@ impl EditorViewportRenderer {
         width: u32,
         height: u32,
     ) -> Result<EditorViewportFrame> {
-        self.render_world(world, width, height, None, true, None, 0)
+        self.submit_game(world, width, height).and_then(EditorViewportSubmission::finish)
+    }
+
+    pub fn submit_game(
+        &mut self,
+        world: &World,
+        width: u32,
+        height: u32,
+    ) -> Result<EditorViewportSubmission> {
+        self.submit_world_to(world, width, height, None, true, None, 0, ViewportDestination::Readback)
     }
 
     /// Submit Game pixels directly to the owned window without mapping a readback buffer.
@@ -368,7 +407,17 @@ impl EditorViewportRenderer {
         height: u32,
         camera: EditorCameraPreview,
     ) -> Result<EditorViewportFrame> {
-        self.render_world(
+        self.submit_camera(world, width, height, camera).and_then(EditorViewportSubmission::finish)
+    }
+
+    pub fn submit_camera(
+        &mut self,
+        world: &World,
+        width: u32,
+        height: u32,
+        camera: EditorCameraPreview,
+    ) -> Result<EditorViewportSubmission> {
+        self.submit_world_to(
             world,
             width,
             height,
@@ -376,6 +425,7 @@ impl EditorViewportRenderer {
             true,
             None,
             camera.target_display,
+            ViewportDestination::Readback,
         )
     }
 
@@ -386,6 +436,16 @@ impl EditorViewportRenderer {
         height: u32,
         camera: EditorSceneCamera,
     ) -> Result<EditorViewportFrame> {
+        self.submit_scene(world, width, height, camera).and_then(EditorViewportSubmission::finish)
+    }
+
+    pub fn submit_scene(
+        &mut self,
+        world: &World,
+        width: u32,
+        height: u32,
+        camera: EditorSceneCamera,
+    ) -> Result<EditorViewportSubmission> {
         let aspect = width.max(1) as f32 / height.max(1) as f32;
         let eye = Vec3::from_array(camera.eye);
         let target = Vec3::from_array(camera.target);
@@ -408,7 +468,7 @@ impl EditorViewportRenderer {
             background_color: world.time.clear_color.to_array(),
             entity: None,
         };
-        self.render_world(world, width, height, Some(view_camera), false, None, 0)
+        self.submit_world_to(world, width, height, Some(view_camera), false, None, 0, ViewportDestination::Readback)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -585,6 +645,10 @@ impl EditorViewportRenderer {
 
     #[allow(clippy::too_many_arguments)]
     fn render_world_to(&mut self, world: &World, width: u32, height: u32, view_camera: Option<ActiveFrameCamera>, include_ui: bool, material_override: Option<RenderMaterial>, target_display: i32, destination: ViewportDestination) -> Result<EditorViewportFrame> {
+        self.submit_world_to(world, width, height, view_camera, include_ui, material_override, target_display, destination)?.finish()
+    }
+
+    fn submit_world_to(&mut self, world: &World, width: u32, height: u32, view_camera: Option<ActiveFrameCamera>, include_ui: bool, material_override: Option<RenderMaterial>, target_display: i32, destination: ViewportDestination) -> Result<EditorViewportSubmission> {
         let render_started = Instant::now();
         let mut stages = Vec::new();
         let size = normalized_size(width, height);
@@ -790,17 +854,10 @@ impl EditorViewportRenderer {
             pipelines.self_ms = (pipelines.total_ms - pipelines.children.iter().map(|child| child.total_ms).sum::<f64>()).max(0.);
             ui.self_ms = (ui.total_ms - ui.children.iter().map(|child| child.total_ms).sum::<f64>()).max(0.);
         }
-        let stage_started = Instant::now();
-        let (rgba, readback) = if destination == ViewportDestination::Window { (Vec::new(), None) } else {
-            let (rgba, readback) = self
-                .renderer
-                .read_offscreen_rgba8_profiled(self.target.as_ref().expect("capture target initialized"))
-                .context("could not read the editor viewport")?;
-            stages.push(ProfileStage { name: "Renderer.read_offscreen_rgba8", duration_ms: stage_started.elapsed().as_secs_f64() * 1000.0, children: [
-                ("Readback buffer prepare", readback.buffer_prepare_ms), ("Readback copy submit", readback.copy_submit_ms), ("Readback GPU map wait", readback.gpu_wait_ms), ("Readback GPU query decode", readback.gpu_query_read_ms), ("Readback RGBA row pack", readback.rgba_pack_ms), ("Readback unmap", readback.unmap_ms),
-            ].into_iter().map(|(name, ms)| EditorViewportProfileNode { name: name.into(), total_ms: ms, self_ms: ms, calls: 1, children: Vec::new() }).collect() });
-            (rgba, Some(readback))
+        let readback = if destination == ViewportDestination::Window { None } else {
+            Some(self.renderer.begin_offscreen_rgba8_profiled(self.target.as_ref().expect("capture target initialized")).context("could not submit editor viewport readback")?)
         };
+        let readback_bytes = if readback.is_some() { size.width as usize * size.height as usize * 4 } else { 0 };
         let stage_started = Instant::now();
         let mut resource_stages = Vec::new();
         let (resources, resources_truncated, resource_sample_age_ms, resource_sampling) = self.resource_sampler.sample(&frame, &mut resource_stages, self.resource_generation);
@@ -814,7 +871,7 @@ impl EditorViewportRenderer {
             size.width,
             size.height,
             self.target.as_ref().map(OffscreenRenderTarget::size),
-            rgba.len(),
+            readback_bytes,
             stages,
             render_started,
         );
@@ -839,9 +896,6 @@ impl EditorViewportRenderer {
         profile.resident_memory_estimate_bytes += mesh_cache.bytes as u64;
         profile.memory.push(EditorViewportMemoryCategory { name:"GPU idle mesh vertex buffers".into(), domain:"gpu".into(), bytes:vertex_pool_bytes as u64, certainty:"estimate".into(), source:"Retained idle vertex-buffer payload capacities; active meshes and driver overhead are excluded".into() });
         profile.resident_memory_estimate_bytes += vertex_pool_bytes as u64;
-        if let Some(gpu) = readback.and_then(|readback| readback.gpu) {
-            profile.gpu = Some(EditorViewportGpuProfile { timestamp_period_ns: gpu.timestamp_period_ns, total_pass_ms: gpu.stages.iter().map(|stage| stage.milliseconds).sum(), stages: gpu.stages.into_iter().map(|stage| EditorViewportProfileNode { name: stage.name.into(), total_ms: stage.milliseconds, self_ms: stage.milliseconds, calls: 1, children: Vec::new() }).collect() });
-        }
         // Snapshot construction is intentionally reported as profiler overhead.
         let profile_overhead_ms = stage_started.elapsed().as_secs_f64() * 1_000.0;
         let mut profile = profile;
@@ -865,13 +919,7 @@ impl EditorViewportRenderer {
                 children: resource_stages,
             }],
         });
-        Ok(EditorViewportFrame {
-            width: size.width,
-            height: size.height,
-            rgba,
-            has_authored_camera: frame.has_authored_camera,
-            profile,
-        })
+        Ok(EditorViewportSubmission { frame: EditorViewportFrame { width: size.width, height: size.height, rgba: Vec::new(), has_authored_camera: frame.has_authored_camera, profile }, readback, started: render_started, submitted: Instant::now() })
     }
 }
 
@@ -1205,6 +1253,10 @@ fn log_texture_failures(failures: impl IntoIterator<Item = TextureLoadFailure>) 
         );
     }
 }
+
+#[cfg(test)]
+#[path = "viewport_submission_tests.rs"]
+mod submission_tests;
 
 #[cfg(test)]
 mod tests {

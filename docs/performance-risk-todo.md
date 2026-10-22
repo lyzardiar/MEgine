@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，以及资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化，以及视口 GPU 回读流水线的第三阶段实现。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -88,13 +88,29 @@
 
 构建日志：`phase2-editor-build.log`、`phase2-sdk-build.log`、`phase2-native-build.log`；原生证据：`phase2-before.json`、`phase2-after.json`、`phase2-comparison.json`。复现时设置 `MENGINE_EDITOR_EXECUTABLE` 和可选 `MENGINE_PERFORMANCE_LABEL`，运行 `node scripts/qa-editor-performance-risk.mjs`。下一阶段继续处理 GPU 回读的帧归属、mesh 来源校验和纹理同步开销。
 
+## 第三阶段视口 GPU 回读流水线
+
+Scene/Game 将渲染提交与 GPU 回读完成拆开。每个提交持有独立像素 staging buffer、GPU 时间查询 mask、世界 revision 和 profile；Tauri 先释放 renderer/world 锁，再等待此提交的 GPU copy。完成时再次校验项目和 Play generation，旧会话结果不会发布到新会话。同步 API 保留为 submit/finish 包装。
+
+每个 renderer 最多保留 3 个回读槽，槽满立即返回 busy，前端重试完整请求。Scene/Game 每窗口最多 2 个请求在途，相机预览最多 1 个；无效或乱序返回在上传像素前释放，截图先排空旧请求再取得新帧。调度间隔单列为 `Pending frame scheduling`，不归入本帧 CPU self。
+
+Release 基准使用 Frostbound 作者场景、960×540，串行与两帧流水线交错运行，每组 24 帧，取 5 组中位数：**4.1749→2.0331 ms/帧**，全部像素一致。这是批量 CPU/GPU 吞吐量，不是交互 FPS 或单帧延迟。复现：`cargo test -p mengine-editor-host --release --lib benchmark_viewport_submission_pipeline -- --ignored --nocapture --test-threads=1`。
+
+内存取舍：每个回读槽保留所请求的最大尺寸容量，最多 3 份带行对齐的像素缓冲；两请求流水线通常使用 2 份。GPU 时间查询 staging 也随槽独立保留。GPU 到 CPU 的传输和 RGBA 行转换仍存在。
+
+串行 Release 库测试：Host 62 通过、6 个手动基准忽略；RHI 74 通过、1 个手动基准忽略。覆盖反序完成、resize、renderer/target 释放后完成、三槽背压、取消复用、映射失败、RGBA/BGRA 行对齐及逐帧 GPU 查询 mask。证据：`phase3-integrated-tests.log`、`phase3-pipeline-benchmark.log`。
+
+前端相关回归 125/125 通过，TypeScript、前端构建、Tauri Release 检查与构建通过。最终 EXE 使用旁置配套 SDK，在隔离 Frostbound 项目通过重命名、undo/redo、真实恢复文件、资源增改删、进入对局、Play/Pause/Step/Stop 及停止后恢复；Scene/Game 截图已检查，控制台无 error，源场景 SHA-256 不变。测试编辑器正常退出，部分 WebView 缓存因 EPERM 留在临时目录。
+
+同脚本前后各采 12 个 native 帧，去前 2 个后取余下 10 个中位数：Scene 总耗时 **3.78→3.85 ms**、Game **14.37→14.16 ms**；对应回读 **2.34→2.27 ms**、**5.18→4.80 ms**。单帧延迟基本持平，不能把两帧批量基准的收益解释为单帧延迟减半。资源增/改/删通知为 0.85/1.91/1.91 秒，仍受两秒轮询相位影响。证据：`frontend-owned-pipeline-tests.txt`、`phase3-editor-build.log`、`phase3-native-build.log`、`phase3-before.json`、`phase3-after.json`、`phase3-comparison.json`；复现沿用 `scripts/qa-editor-performance-risk.mjs`。
+
 ## 后续风险
 
-- [ ] **编辑器 3D Scene 的同步 GPU 回读。** 已核实调用链：Tauri `render_native_scene_view` → `EditorViewportRenderer::render_scene` → 非 Window 目标的 `read_offscreen_rgba8_profiled` → `device.poll(Maintain::Wait)`。该链路用于 WebView Scene 展示，独立 Window 输出不走这条回读。后续评估 2～3 个 buffer 轮转、延迟映射，覆盖画面版本、资源生命周期、选择/拖拽和截图一致性。
+- [x] **编辑器 Scene/Game 回读期间占用 renderer/world 锁。** 已使用有界独立 ticket、锁外等待与前端两请求流水线。GPU 数据传输仍需等待；后续以原生交互采样评估剩余成本。
 - [ ] **RenderObject 每帧重新提取。** `frame_compiler.rs` 仍重复规范化 mesh 路径、复制字段；同次共享材质解析已合并，root 过滤会反复沿 Parent 链查找。评估按组件 revision 缓存与加载时路径规范化。
 - [ ] **逐物体绘制及准备。** `renderer.rs` 主 pass/阴影 pass 缺少通用实例化，重复状态设置与材质哈希查找；临时 Vec 和 draw order 可复用。先测量 draw call 与准备时间，再实施 mesh/material 分组。
 - [ ] **ECS 查询集合与存储。** 内建组件 TypeId 查找已完成；`entities_with_any_component` 仍每次建立 BTreeSet，自定义组件保留兼容查找。集合复用与稠密组件存储属于后续架构变更。
 - [ ] **命令跨桥批处理。** 本阶段仅减少非组件解析次数，未改变逐条 stringify/跨桥协议。
 - [ ] **UI、timeline、animation、physics 性能审计。** 尚未完成，不能据本阶段数据排除这些模块的开销。
 
-下一阶段优先分析原生 Scene 的渲染与回读采样，按真实帧耗时选择实施项；ECS 存储重构单独安排。
+后续按原生 Scene/Game 的实际采样继续处理 mesh 来源校验、纹理同步和逐物体准备成本；ECS 存储重构单独安排。

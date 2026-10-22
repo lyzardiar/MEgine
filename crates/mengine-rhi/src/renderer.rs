@@ -8,6 +8,7 @@ use crate::sky::SkyBackground;
 use crate::spatial::{Frustum, SpatialIndex};
 use crate::ui::{UiBatchPlan, UiFrameStats, UiRenderer, UiTextureError};
 use crate::RhiError;
+use crate::readback::{begin_readback, OffscreenReadbackTicket, ReadbackPool};
 use glam::{Mat4, Vec3, Vec4};
 use mengine_core::surface_shader::{
     parse_surface_shader_schema, MAX_SURFACE_SHADER_PARAMETERS, MAX_SURFACE_SHADER_TEXTURES,
@@ -425,8 +426,6 @@ pub struct FrameSubmissionProfile {
     pub surface_frames: u32,
 }
 
-struct OffscreenReadbackBuffer { buffer: wgpu::Buffer, allocations: u64 }
-
 impl OffscreenRenderTarget {
     pub fn texture(&self) -> &wgpu::Texture {
         &self.texture
@@ -716,7 +715,7 @@ pub struct Renderer {
     pub graph: RenderGraph,
     size: PhysicalSize<u32>,
     scene_textures: HashMap<String, SceneTextureGpu>,
-    offscreen_readback: Mutex<Option<OffscreenReadbackBuffer>>,
+    offscreen_readback: Arc<Mutex<ReadbackPool>>,
     gpu_profiler: Option<GpuFrameProfiler>,
     submission_profile: FrameSubmissionProfile,
 }
@@ -1357,7 +1356,7 @@ impl Renderer {
             graph: RenderGraph::default_forward(),
             size,
             scene_textures: HashMap::new(),
-            offscreen_readback: Mutex::new(None),
+            offscreen_readback: Arc::new(Mutex::new(ReadbackPool::default())),
             gpu_profiler,
             submission_profile: FrameSubmissionProfile::default(),
         })
@@ -1432,7 +1431,7 @@ impl Renderer {
 
     pub fn offscreen_readback_stats(&self) -> (u64, u64) {
         let cache = self.offscreen_readback.lock().unwrap_or_else(|error| error.into_inner());
-        cache.as_ref().map_or((0, 0), |cached| (cached.buffer.size(), cached.allocations))
+        cache.stats()
     }
 
     pub fn gpu_timing_supported(&self) -> bool { self.device.features().contains(wgpu::Features::TIMESTAMP_QUERY) }
@@ -1445,112 +1444,14 @@ impl Renderer {
         else if !enabled { self.gpu_profiler = None; }
     }
 
-    /// Reuse one unmapped staging buffer, growing only for a larger padded target.
+    /// MiYu: submit this image's copy and maps without waiting for GPU completion.
+    pub fn begin_offscreen_rgba8_profiled(&self, target: &OffscreenRenderTarget) -> Result<OffscreenReadbackTicket, RhiError> {
+        begin_readback(&self.device, &self.queue, &target.texture, target.size.width, target.size.height, target.format, self.gpu_profiler.as_ref(), &self.offscreen_readback)
+    }
+
+    /// Read one exact image using an owned staging slot; at most three tickets may be outstanding.
     pub fn read_offscreen_rgba8_profiled(&self, target: &OffscreenRenderTarget) -> Result<(Vec<u8>, OffscreenReadbackProfile), RhiError> {
-        let started = Instant::now();
-        let bgra = matches!(target.format, wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb);
-        if !bgra && !matches!(target.format, wgpu::TextureFormat::Rgba8Unorm | wgpu::TextureFormat::Rgba8UnormSrgb) {
-            return Err(RhiError::InvalidTarget(format!("RGBA8 readback does not support {:?}", target.format)));
-        }
-        let width = target.size.width;
-        let height = target.size.height;
-        let row_bytes = width * 4;
-        let alignment = wgpu::COPY_BYTES_PER_ROW_ALIGNMENT;
-        let padded_row_bytes = row_bytes.div_ceil(alignment) * alignment;
-        let required_bytes = u64::from(padded_row_bytes) * u64::from(height);
-        let mut cache = self.offscreen_readback.lock().map_err(|error| RhiError::InvalidTarget(format!("readback buffer lock failed: {error}")))?;
-        let buffer_reused = cache.as_ref().is_some_and(|cached| cached.buffer.size() >= required_bytes);
-        if !buffer_reused {
-            let allocations = cache.as_ref().map_or(1, |cached| cached.allocations + 1);
-            let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
-                label: Some("mengine_offscreen_readback"),
-                size: required_bytes,
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-                mapped_at_creation: false,
-            });
-            *cache = Some(OffscreenReadbackBuffer { buffer, allocations });
-        }
-        let cached = cache.as_ref().expect("readback buffer initialized above");
-        let buffer = &cached.buffer;
-        let mut profile = OffscreenReadbackProfile { buffer_prepare_ms: started.elapsed().as_secs_f64() * 1000.0, buffer_reused, buffer_bytes: buffer.size(), buffer_allocations: cached.allocations, ..Default::default() };
-        let started = Instant::now();
-        let mut encoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("mengine_offscreen_readback"),
-            });
-        if let Some(profiler) = &self.gpu_profiler { profiler.begin_copy(&mut encoder); }
-        encoder.copy_texture_to_buffer(
-            wgpu::TexelCopyTextureInfo {
-                texture: &target.texture,
-                mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
-            },
-            wgpu::TexelCopyBufferInfo {
-                buffer,
-                layout: wgpu::TexelCopyBufferLayout {
-                    offset: 0,
-                    bytes_per_row: Some(padded_row_bytes),
-                    rows_per_image: Some(height),
-                },
-            },
-            wgpu::Extent3d {
-                width,
-                height,
-                depth_or_array_layers: 1,
-            },
-        );
-        if let Some(profiler) = &self.gpu_profiler { profiler.finish_copy(&mut encoder); }
-        self.queue.submit(std::iter::once(encoder.finish()));
-        profile.copy_submit_ms = started.elapsed().as_secs_f64() * 1000.0;
-
-        let started = Instant::now();
-        let slice = buffer.slice(..required_bytes);
-        let (sender, receiver) = std::sync::mpsc::sync_channel(1);
-        slice.map_async(wgpu::MapMode::Read, move |result| {
-            let _ = sender.send(result);
-        });
-        let query_receiver = self.gpu_profiler.as_ref().map(|profiler| {
-            let (sender, receiver) = std::sync::mpsc::sync_channel(1);
-            profiler.readback.slice(..).map_async(wgpu::MapMode::Read, move |result| { let _ = sender.send(result); });
-            receiver
-        });
-        let _ = self.device.poll(wgpu::Maintain::Wait);
-        let mapped_result = receiver
-            .recv()
-            .map_err(|error| RhiError::InvalidTarget(format!("readback callback failed: {error}")))
-            .and_then(|result| result.map_err(|error| RhiError::InvalidTarget(format!("readback mapping failed: {error}"))));
-        profile.gpu_wait_ms = started.elapsed().as_secs_f64() * 1000.0;
-        if let (Some(profiler), Some(receiver)) = (&self.gpu_profiler, query_receiver) {
-            let started = Instant::now();
-            if receiver.recv().is_ok_and(|result| result.is_ok()) {
-                let mapped = profiler.readback.slice(..).get_mapped_range();
-                profile.gpu = Some(profiler.decode(&mapped, f64::from(self.queue.get_timestamp_period())));
-                drop(mapped);
-            }
-            profiler.readback.unmap();
-            profile.gpu_query_read_ms = started.elapsed().as_secs_f64() * 1000.0;
-        }
-        if let Err(error) = mapped_result { buffer.unmap(); return Err(error); }
-
-        let started = Instant::now();
-        let mapped = slice.get_mapped_range();
-        let mut rgba = Vec::with_capacity((row_bytes * height) as usize);
-        for row in mapped.chunks_exact(padded_row_bytes as usize) {
-            rgba.extend_from_slice(&row[..row_bytes as usize]);
-        }
-        if bgra {
-            for pixel in rgba.chunks_exact_mut(4) {
-                pixel.swap(0, 2);
-            }
-        }
-        drop(mapped);
-        profile.rgba_pack_ms = started.elapsed().as_secs_f64() * 1000.0;
-        let started = Instant::now();
-        buffer.unmap();
-        profile.unmap_ms = started.elapsed().as_secs_f64() * 1000.0;
-        Ok((rgba, profile))
+        self.begin_offscreen_rgba8_profiled(target)?.finish()
     }
 
     pub fn render(
@@ -4418,7 +4319,7 @@ mod tests {
         let renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).expect("GPU adapter for mapping recovery acceptance");
         let (target, expected) = readback_fixture(&renderer, 32, 32, wgpu::TextureFormat::Rgba8Unorm, 17);
         let buffer = renderer.device.create_buffer(&wgpu::BufferDescriptor { label: Some("mapping failure fixture"), size: 256 * 32, usage: wgpu::BufferUsages::COPY_DST, mapped_at_creation: false });
-        *renderer.offscreen_readback.lock().unwrap() = Some(OffscreenReadbackBuffer { buffer, allocations: 1 });
+        renderer.offscreen_readback.lock().unwrap().replace_test_buffer(buffer);
         for _ in 0..2 {
             renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
             let error = renderer.read_offscreen_rgba8(&target).unwrap_err();
@@ -4426,14 +4327,14 @@ mod tests {
             assert!(pollster::block_on(renderer.device.pop_error_scope()).is_some());
             assert!(!renderer.offscreen_readback.is_poisoned());
         }
-        *renderer.offscreen_readback.lock().unwrap() = None;
+        *renderer.offscreen_readback.lock().unwrap() = ReadbackPool::default();
         renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
         assert_eq!(renderer.read_offscreen_rgba8(&target).unwrap(), expected);
         assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
     }
 
     #[test]
-    fn offscreen_readback_serializes_shared_buffer_mapping_for_separate_targets() {
+    fn offscreen_readback_owns_separate_mapping_slots_for_concurrent_targets() {
         let renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).expect("GPU adapter for shared readback acceptance");
         renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
         let (first, first_pixels) = readback_fixture(&renderer, 65, 5, wgpu::TextureFormat::Rgba8Unorm, 7);
@@ -4443,6 +4344,63 @@ mod tests {
             let two = scope.spawn(|| renderer.read_offscreen_rgba8(&second).unwrap());
             assert_eq!(one.join().unwrap(), first_pixels); assert_eq!(two.join().unwrap(), second_pixels);
         });
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+    }
+
+    #[test]
+    fn offscreen_readback_tickets_preserve_reverse_completion_resize_capacity_and_renderer_lifetime() {
+        let renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).expect("GPU adapter for ticket acceptance");
+        let device = renderer.device.clone();
+        device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let (first, first_pixels) = readback_fixture(&renderer, 65, 5, wgpu::TextureFormat::Rgba8Unorm, 7);
+        let (second, second_pixels) = readback_fixture(&renderer, 129, 7, wgpu::TextureFormat::Bgra8Unorm, 23);
+        let one = renderer.begin_offscreen_rgba8_profiled(&first).unwrap();
+        let two = renderer.begin_offscreen_rgba8_profiled(&second).unwrap();
+        let canceled = renderer.begin_offscreen_rgba8_profiled(&first).unwrap();
+        assert!(matches!(renderer.begin_offscreen_rgba8_profiled(&second), Err(RhiError::ReadbackBusy)));
+        drop(canceled);
+        let replacement = renderer.begin_offscreen_rgba8_profiled(&second).unwrap();
+        assert_eq!(replacement.finish().unwrap().0, second_pixels);
+        assert_eq!(two.finish().unwrap().0, second_pixels);
+        let allocations = renderer.offscreen_readback_stats().1;
+        let canceled = renderer.begin_offscreen_rgba8_profiled(&second).unwrap();
+        drop(canceled);
+        assert_eq!(renderer.offscreen_readback_stats().1, allocations, "canceled mapping returns an existing slot");
+        drop(first); drop(second); drop(renderer);
+        assert_eq!(one.finish().unwrap().0, first_pixels, "ticket retains its device and buffers after renderer/target destruction");
+        assert!(pollster::block_on(device.pop_error_scope()).is_none());
+    }
+
+    #[test]
+    fn offscreen_readback_tickets_capture_gpu_query_mask_across_frames_and_timing_toggle() {
+        let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).expect("GPU adapter for query ticket acceptance");
+        assert!(renderer.gpu_timing_supported(), "GPU timestamp acceptance requires hardware timestamp support");
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        renderer.set_gpu_timings(true);
+        let target = renderer.create_offscreen_target(PhysicalSize::new(32, 32));
+        let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+        let ui = UiBatchPlan::build(vec![crate::ui::UiPrimitive::solid([0.0, 0.0, 32.0, 32.0], [0.0, 1.0, 0.0, 1.0])]);
+        let mut lighting = FrameLighting::default(); lighting.directional = None; lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false;
+        let clear = ClearColor { r: 0.0, g: 0.0, b: 1.0, a: 1.0 };
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &[], lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        let first = renderer.begin_offscreen_rgba8_profiled(&target).unwrap();
+        lighting.directional = Some(DirectionalLightData { direction: -Vec3::Z, color: [1.0; 3], intensity: 1.0, cast_shadows: true, shadow_strength: 1.0, shadow_bias: 0.001, shadow_normal_bias: 0.001, shadow_distance: 60.0 });
+        renderer.submit_frame_to(&RenderFrame { clear, camera, objects: &[], lighting: &lighting, ui: Some(&ui), scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        let second = renderer.begin_offscreen_rgba8_profiled(&target).unwrap();
+        renderer.set_gpu_timings(false);
+        let third = renderer.begin_offscreen_rgba8_profiled(&target).unwrap();
+        let (green, profile) = second.finish().unwrap();
+        assert!(green.chunks_exact(4).all(|pixel| pixel == [0, 255, 0, 255]));
+        let names = profile.gpu.unwrap().stages.iter().map(|stage| stage.name).collect::<Vec<_>>();
+        assert!(names.contains(&"UI overlay") && names.contains(&"Shadow depth"));
+        let (blue, profile) = first.finish().unwrap();
+        assert!(blue.chunks_exact(4).all(|pixel| pixel == [0, 0, 255, 255]));
+        let names = profile.gpu.unwrap().stages.iter().map(|stage| stage.name).collect::<Vec<_>>();
+        assert!(!names.contains(&"UI overlay") && !names.contains(&"Shadow depth"));
+        let (pixels, profile) = third.finish().unwrap(); assert_eq!(pixels, green); assert!(profile.gpu.is_none());
+        renderer.set_gpu_timings(true);
+        let canceled = renderer.begin_offscreen_rgba8_profiled(&target).unwrap(); drop(canceled);
+        assert_eq!(renderer.read_offscreen_rgba8(&target).unwrap(), green);
         assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
     }
 

@@ -4,6 +4,7 @@ mod ibl;
 mod gpu_profiler;
 mod mesh;
 mod post_process;
+mod readback;
 mod render_graph;
 mod renderer;
 mod shader_targets;
@@ -15,6 +16,7 @@ pub use mesh::{MeshGpu, MeshUploadProfile, Vertex};
 // Author: MiYu. Safe owned window targets for native editor panels and host windows.
 pub use wgpu::SurfaceTarget;
 pub use gpu_profiler::{GpuFrameProfile, GpuProfileStage};
+pub use readback::OffscreenReadbackTicket;
 pub use render_graph::{PassDesc, RenderGraph};
 pub use renderer::{
     look_at, orthographic, perspective, project_world_to_viewport, validate_surface_shader_hook,
@@ -41,6 +43,8 @@ pub enum RhiError {
     RequestDevice(String),
     #[error("no adapter")]
     NoAdapter,
+    #[error("offscreen readback busy: all three slots have outstanding tickets")]
+    ReadbackBusy,
     #[error("invalid render target: {0}")]
     InvalidTarget(String),
 }

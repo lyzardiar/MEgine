@@ -15,7 +15,6 @@ pub(crate) fn profiling_features(supported: wgpu::Features, requested: bool) -> 
 pub(crate) struct GpuFrameProfiler {
     query: wgpu::QuerySet,
     resolved: wgpu::Buffer,
-    pub readback: wgpu::Buffer,
     active: u8,
     copy_timestamps: bool,
 }
@@ -25,8 +24,7 @@ impl GpuFrameProfiler {
         if !device.features().contains(wgpu::Features::TIMESTAMP_QUERY) { return None; }
         let query = device.create_query_set(&wgpu::QuerySetDescriptor { label: Some("viewport GPU timings"), ty: wgpu::QueryType::Timestamp, count: PASS_NAMES.len() as u32 * 2 });
         let resolved = device.create_buffer(&wgpu::BufferDescriptor { label: Some("viewport GPU query resolve"), size: BUFFER_BYTES, usage: wgpu::BufferUsages::QUERY_RESOLVE | wgpu::BufferUsages::COPY_SRC, mapped_at_creation: false });
-        let readback = device.create_buffer(&wgpu::BufferDescriptor { label: Some("viewport GPU query readback"), size: BUFFER_BYTES, usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ, mapped_at_creation: false });
-        Some(Self { query, resolved, readback, active: 0, copy_timestamps: device.features().contains(wgpu::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS) })
+        Some(Self { query, resolved, active: 0, copy_timestamps: device.features().contains(wgpu::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS) })
     }
 
     pub fn begin_frame(&mut self, shadows: bool, ui: bool) { self.active = 0b001110 | u8::from(shadows) | (u8::from(ui) << 4); }
@@ -41,15 +39,19 @@ impl GpuFrameProfiler {
 
     pub fn begin_copy(&self, encoder: &mut wgpu::CommandEncoder) { if self.copy_timestamps { encoder.write_timestamp(&self.query, 10); } }
 
-    pub fn finish_copy(&self, encoder: &mut wgpu::CommandEncoder) {
+    pub fn finish_copy(&self, encoder: &mut wgpu::CommandEncoder, readback: &wgpu::Buffer) {
         if self.copy_timestamps { encoder.write_timestamp(&self.query, 11); encoder.resolve_query_set(&self.query, 10..12, &self.resolved, 5 * QUERY_STRIDE); }
-        encoder.copy_buffer_to_buffer(&self.resolved, 0, &self.readback, 0, BUFFER_BYTES);
+        encoder.copy_buffer_to_buffer(&self.resolved, 0, readback, 0, BUFFER_BYTES);
     }
 
-    pub fn decode(&self, bytes: &[u8], period_ns: f64) -> GpuFrameProfile { decode_timestamps(bytes, self.active | (u8::from(self.copy_timestamps) << 5), period_ns) }
+    pub fn active_mask(&self) -> u8 { self.active | (u8::from(self.copy_timestamps) << 5) }
+
+    pub fn create_readback(device: &wgpu::Device) -> wgpu::Buffer {
+        device.create_buffer(&wgpu::BufferDescriptor { label: Some("viewport GPU query readback"), size: BUFFER_BYTES, usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ, mapped_at_creation: false })
+    }
 }
 
-fn decode_timestamps(bytes: &[u8], active: u8, period_ns: f64) -> GpuFrameProfile {
+pub(crate) fn decode_timestamps(bytes: &[u8], active: u8, period_ns: f64) -> GpuFrameProfile {
     let mut profile = GpuFrameProfile { timestamp_period_ns: period_ns, stages: Vec::new() };
     if !period_ns.is_finite() || period_ns <= 0.0 { return profile; }
     for (index, name) in PASS_NAMES.into_iter().enumerate() {

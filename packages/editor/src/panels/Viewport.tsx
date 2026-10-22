@@ -52,6 +52,8 @@ import {
 } from '../math3d';
 import { clearModelPreview, modelPreview, type PreviewMesh } from '../modelPreview';
 import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
+import { projectAssetSessionGeneration } from '../projectAssets';
+import { beginNativeViewportRequest, captureLatestNativeViewportFrames, createNativeViewportRequestState, finishNativeViewportRequest, nativeViewportReadbackBusy, nativeViewportSessionExpired, nativeViewportRequestCanPublish, retryNativeViewportReadback, synchronizeNativeViewportRequestOwner, waitNativeViewportRequests } from '../nativeViewportRequests';
 import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGameRequestInterval, nativeGamePreviewSize, nativeSceneWorldReference, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
 import { releaseNativeViewportFrame, requestRevisionedNativeViewportFrame } from '../nativeViewportTransport';
 import {
@@ -726,14 +728,7 @@ export function Viewport(props: {
     requestKey: string;
     presentationKey: string;
   } | null>(null);
-  const nativeGameRequestRef = useRef({
-    generation: 0,
-    inFlight: false,
-    lastRequestAt: 0,
-    reportedError: false,
-    ready: null as Promise<void> | null,
-    resumeTimer: null as number | null,
-  });
+  const nativeGameRequestRef = useRef(createNativeViewportRequestState());
   const nativeSceneFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
     width: number;
@@ -744,28 +739,14 @@ export function Viewport(props: {
     world: NativeViewportFrameWorld<Ent>;
   } | null>(null);
   const nativeSceneMeshHitRef = useRef(createNativeSceneMeshHitCache());
-  const nativeSceneRequestRef = useRef({
-    inFlight: false,
-    lastRequestAt: 0,
-    reportedError: false,
-    generation: 0,
-    ready: null as Promise<void> | null,
-    resumeTimer: null as number | null,
-    captures: 0,
-  });
+  const nativeSceneRequestRef = useRef(createNativeViewportRequestState());
   const nativeCameraPreviewFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
     entity: number;
     key: string;
     world: NativeViewportFrameWorld<Ent>;
   } | null>(null);
-  const nativeCameraPreviewRequestRef = useRef({
-    inFlight: false,
-    lastRequestAt: 0,
-    reportedError: false,
-    generation: 0,
-    ready: null as Promise<void> | null,
-  });
+  const nativeCameraPreviewRequestRef = useRef(createNativeViewportRequestState(1));
   const hitsRef = useRef<HitCandidate[]>([]);
   const gizmoHitsRef = useRef<GizmoHit[]>([]);
   const rectGizmoHitsRef = useRef<RectGizmoHit[]>([]);
@@ -993,7 +974,7 @@ export function Viewport(props: {
   // a screenshot of the rendered scene/game view (Phase 1 observation surface).
   useEffect(() => {
     return agentBridge.registerViewportCapture(props.tab, async (format, quality, maxSize = 2_048) => {
-      const sceneRequest = propsRef.current.tab === 'scene' ? nativeSceneRequestRef.current : null;
+      const sceneRequest = propsRef.current.tab === 'scene' ? nativeSceneRequestRef.current : nativeGameRequestRef.current;
       if (sceneRequest) {
         sceneRequest.captures++;
         if (sceneRequest.resumeTimer != null) window.clearTimeout(sceneRequest.resumeTimer);
@@ -1001,7 +982,9 @@ export function Viewport(props: {
       }
       try {
       if (propsRef.current.tab === 'game' && '__TAURI_INTERNALS__' in window) {
-        const p = currentViewportProps();
+        if (!await waitNativeViewportRequests([nativeGameRequestRef.current], NATIVE_CAPTURE_READY_TIMEOUT_MS)) return null;
+        const p = currentViewportProps(), world = createNativeViewportWorldArgs(p), generation = nativeGameRequestRef.current.generation, projectGeneration = projectAssetSessionGeneration();
+        const captureKey = JSON.stringify([p.gameResolution, p.gameDisplay, p.timelineCameraPreview]);
         const sourceWidth = p.gameResolution?.width ?? canvasRef.current?.width ?? 1280;
         const sourceHeight = p.gameResolution?.height ?? canvasRef.current?.height ?? 720;
         const scale = Math.min(1, maxSize / Math.max(sourceWidth, sourceHeight));
@@ -1009,7 +992,9 @@ export function Viewport(props: {
         const height = Math.max(1, Math.round(sourceHeight * scale));
         // Render the current world at the requested output size. The Game View's
         // display label and letterbox are editor chrome, not game pixels.
-        const frame = await invoke<{ pngBase64: string }>('render_native_game_view', { width, height, ...createNativeViewportWorldArgs(p).snapshotArgs() });
+        const frame = await retryNativeViewportReadback(() => invoke<{ pngBase64: string }>('render_native_game_view', { width, height, ...world.snapshotArgs() }), NATIVE_CAPTURE_READY_TIMEOUT_MS);
+        const current = currentViewportProps();
+        if (projectAssetSessionGeneration() !== projectGeneration || nativeGameRequestRef.current.generation !== generation || !nativeViewportFrameWorldCurrent(world.frameWorld(), current) || captureKey !== JSON.stringify([current.gameResolution, current.gameDisplay, current.timelineCameraPreview])) return null;
         let dataUrl = `data:image/png;base64,${frame.pngBase64}`;
         if (format === 'image/jpeg') {
           const image = await decodeNativeFrame(frame.pngBase64);
@@ -1022,29 +1007,13 @@ export function Viewport(props: {
       const nativeRequests = propsRef.current.tab === 'game'
         ? [nativeGameRequestRef.current]
         : [nativeSceneRequestRef.current, nativeCameraPreviewRequestRef.current];
-      const pending = nativeRequests.filter(request => request.inFlight && request.ready).map(request => request.ready!);
-      if (pending.length) {
-        await Promise.race([Promise.all(pending), new Promise<void>(resolve => window.setTimeout(resolve, NATIVE_CAPTURE_READY_TIMEOUT_MS))]);
-        if (nativeRequests.some(request => request.inFlight)) return null;
-      }
-      for (const request of nativeRequests) request.lastRequestAt = -Infinity;
-      // Hidden WebView2 windows can throttle requestAnimationFrame. Paint on
-      // demand so an Agent capture always reflects the latest store revision.
-      paint(false, false, false, true);
-      if ('__TAURI_INTERNALS__' in window) {
-        const requests = propsRef.current.tab === 'game'
-          ? [nativeGameRequestRef.current.ready]
-          : [nativeSceneRequestRef.current.ready, nativeCameraPreviewRequestRef.current.ready];
-        const ready = requests.filter((request): request is Promise<void> => request != null);
-        if (ready.length) {
-          await Promise.race([
-            Promise.all(ready),
-            new Promise<void>((resolve) => window.setTimeout(resolve, NATIVE_CAPTURE_READY_TIMEOUT_MS)),
-          ]);
-          if (nativeRequests.some(request => request.inFlight)) return null;
-          paint();
-        }
-      }
+      // Freeze automatic submissions and require the newly submitted sequence to reach presentation.
+      const captured = await captureLatestNativeViewportFrames(nativeRequests, () => {
+        for (const request of nativeRequests) { request.lastRequestAt = -Infinity; request.retryAt = 0; }
+        paint(false, false, false, true);
+      }, NATIVE_CAPTURE_READY_TIMEOUT_MS, '__TAURI_INTERNALS__' in window && !scene2DRef.current);
+      if (!captured) return null;
+      paint();
       const canvas = canvasRef.current;
       if (!canvas) return null;
       try {
@@ -1082,7 +1051,7 @@ export function Viewport(props: {
         return null;
       }
       } finally {
-        if (sceneRequest && --sceneRequest.captures === 0 && propsRef.current.tab === 'scene' && propsRef.current.playing && !scene2DRef.current) paint(false, false, true);
+        if (--sceneRequest.captures === 0) paint(false, false, true);
       }
     });
   }, [props.tab]);
@@ -1348,6 +1317,8 @@ export function Viewport(props: {
 
   useEffect(() => () => {
     const request = nativeSceneRequestRef.current;
+    nativeCameraPreviewRequestRef.current.generation++;
+    if (nativeCameraPreviewRequestRef.current.resumeTimer != null) window.clearTimeout(nativeCameraPreviewRequestRef.current.resumeTimer);
     request.generation++;
     if (request.resumeTimer != null) window.clearTimeout(request.resumeTimer);
     request.resumeTimer = null;
@@ -1358,10 +1329,10 @@ export function Viewport(props: {
     paint();
     const request = nativeGameRequestRef.current, generation = request.generation;
     const remaining = 1000 / 60 - (performance.now() - request.lastRequestAt);
-    if (!propsRef.current.playing || request.inFlight || request.resumeTimer != null || remaining <= 0) return;
+    if (!propsRef.current.playing || request.full || request.resumeTimer != null || remaining <= 0) return;
     request.resumeTimer = window.setTimeout(() => {
       request.resumeTimer = null;
-      if (request.generation === generation && propsRef.current.tab === 'game' && propsRef.current.playing) paint();
+      if (request.generation === generation && propsRef.current.tab === 'game') paint();
     }, Math.ceil(remaining));
   }), [props.subscribeRuntimeFrames]);
 
@@ -1418,8 +1389,8 @@ export function Viewport(props: {
     const scenePaintState = { key: JSON.stringify([nativeSceneFrameRef.current?.camera ?? sc, rect.width, rect.height, window.devicePixelRatio, hoverGizmoRef.current, activeGizmoRef.current, uiHoverRef.current, uiPressRef.current]), epoch: scenePaintEpochRef.current, frame: nativeSceneFrameRef.current, preview: nativeCameraPreviewFrameRef.current };
     const browserAnimation = editScene && propsRef.current.entities.some(entity => (entity.components.SpineSkeleton || entity.components.EffekseerEffect || entity.components.ParticleEmitter2D || entity.components.ParticleEmitter3D || entity.components.TrailRenderer2D || entity.components.AnimatedSprite2D) && (propsRef.current.activeInHierarchy?.(entity.entity) ?? entity.active !== false));
     const skipUnchangedScenePaint = (animationFrame || resumeSceneRequest) && nativeScene3D && !browserAnimation && pendingNativeScenePaintUnchanged(previousScenePaintRef.current, scenePaintState);
-    if (skipUnchangedScenePaint && nativeSceneRequestRef.current.inFlight) return;
     previousScenePaintRef.current = scenePaintState;
+    const projectGeneration = projectAssetSessionGeneration();
     const requestedProps = currentViewportProps();
     let p = requestedProps;
     const worldKey = JSON.stringify([requestedProps.tab, requestedProps.clearColor, requestedProps.simulationTime]);
@@ -1435,7 +1406,7 @@ export function Viewport(props: {
       nativeWorld.frameWorld();
       return requestRevisionedNativeViewportFrame(command, { ...args, ...worldArgs }, nativeWorld.snapshotArgs).then(buffer => { if (retainedEdit) nativeWorld.markSceneWorldUploaded(); return buffer; });
     };
-    const presentationKey = JSON.stringify([p.gameResolution, p.gameDisplay]);
+    const presentationKey = JSON.stringify([p.gameResolution, p.gameDisplay, p.timelineCameraPreview]);
     if (nativeGameFrameRef.current && (!nativeViewportFrameWorldCurrent(nativeGameFrameRef.current.world, requestedProps) || nativeGameFrameRef.current.presentationKey !== presentationKey)) nativeGameFrameRef.current = null;
     if (nativeSceneFrameRef.current && !nativeViewportFrameWorldCurrent(nativeSceneFrameRef.current.world, requestedProps)) nativeSceneFrameRef.current = null;
     if (nativeCameraPreviewFrameRef.current && !nativeViewportFrameWorldCurrent(nativeCameraPreviewFrameRef.current.world, requestedProps)) nativeCameraPreviewFrameRef.current = null;
@@ -1473,27 +1444,40 @@ export function Viewport(props: {
     lastVpRef.current = vp;
 
     const gameRequestKey = JSON.stringify([presentationKey, vp.w, vp.h, dpr, nativeGpuTimingRevisionRef.current]);
+    const gameCompatibilityKey = JSON.stringify([p.tab, p.playing, p.runtimeSessionId, presentationKey, vp.w, vp.h, dpr]);
+    const requestedGpuTimingRevision = nativeGpuTimingRevisionRef.current;
+    const syncRequestOwner = (request: ReturnType<typeof createNativeViewportRequestState>, key: string) => {
+      const source = p.runtimeSessionId == null ? requestedProps.entities : p.runtimeSessionId;
+      synchronizeNativeViewportRequestOwner(request, source, `${projectGeneration}:${key}`);
+    };
+    syncRequestOwner(nativeGameRequestRef.current, gameCompatibilityKey);
+    const currentGameRequestKey = () => {
+      const current = currentViewportProps(), bounds = canvas.getBoundingClientRect(), view = letterbox(Math.max(1, Math.floor(bounds.width)), Math.max(1, Math.floor(bounds.height)), current.gameResolution);
+      return JSON.stringify([JSON.stringify([current.gameResolution, current.gameDisplay, current.timelineCameraPreview]), view.w, view.h, window.devicePixelRatio || 1, requestedGpuTimingRevision]);
+    };
     const gameRequestInterval = nativeGameRequestInterval(!!p.playing, nativeGameFrameRef.current, p, gameRequestKey);
     if (
       isGame
       && '__TAURI_INTERNALS__' in window
-      && !nativeGameRequestRef.current.inFlight
+      && !nativeGameRequestRef.current.full
+      && nativeGameRequestRef.current.captures === 0
+      && now >= nativeGameRequestRef.current.retryAt
       && now - nativeGameRequestRef.current.lastRequestAt >= gameRequestInterval
       && (!p.playing || !nativeGameFrameMatchesRequest(nativeGameFrameRef.current, nativeWorld.worldArgs(), JSON.stringify([presentationKey, vp.w, vp.h, dpr, nativeGpuTimingRevisionRef.current])))
     ) {
       const request = nativeGameRequestRef.current;
       if (request.resumeTimer != null) window.clearTimeout(request.resumeTimer);
       request.resumeTimer = null;
-      const generation = ++request.generation;
+      const generation = request.generation;
       const requestKey = gameRequestKey;
-      request.inFlight = true;
       request.lastRequestAt = now;
       // Fixed-pixel Canvas layouts depend on the selected resolution, even in a small panel.
       const fixedPixelCanvas = p.entities.some(entity => entity.components.Canvas && (entity.components.Canvas as Record<string, unknown>).render_mode !== 'WorldSpace' && (entity.components.CanvasScaler as Record<string, unknown> | undefined)?.ui_scale_mode !== 'ScaleWithScreenSize' && (p.activeInHierarchy?.(entity.entity) ?? true));
       const { width: nativeWidth, height: nativeHeight } = nativeGamePreviewSize(p.gameResolution?.width ?? vp.w * dpr, p.gameResolution?.height ?? vp.h * dpr, vp.w * dpr, vp.h * dpr, fixedPixelCanvas);
-      request.ready = requestWorldFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight })
+      const ticket = beginNativeViewportRequest(request, JSON.stringify([gameRequestKey, nativeWorld.requestKey(), p.simulationTime]));
+      if (ticket) ticket.ready = requestWorldFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight })
         .then((buffer) => {
-          if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
+          if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || currentViewportProps().tab !== 'game' || currentGameRequestKey() !== requestKey || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
           const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
           recordOwnedNativeViewportProfile('game', { ...result.profile, updateMode: p.playing ? 'live' : gameRequestInterval ? 'edit-poll' : 'edit-change', pollIntervalMs: p.playing ? undefined : 300, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
           const image = result.image;
@@ -1510,6 +1494,7 @@ export function Viewport(props: {
             requestKey,
             presentationKey,
           };
+          request.presentedSequence = ticket.sequence; request.retryAt = 0;
           request.reportedError = false;
           // Hidden WebViews may suspend requestAnimationFrame. Commit the decoded frame
           // immediately so first-open output never waits for a click or resize event.
@@ -1517,23 +1502,31 @@ export function Viewport(props: {
           if (firstFrame) window.setTimeout(paint, 0);
         })
         .catch((error) => {
-          if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
+          if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
+          if (nativeViewportReadbackBusy(error) || nativeViewportSessionExpired(error)) { request.retryAt = performance.now() + 16; return; }
           if (!request.reportedError) {
             console.warn('Native Game View rendering is unavailable', error);
             request.reportedError = true;
           }
         })
         .finally(() => {
-          request.inFlight = false;
-          request.ready = null;
-          if (request.generation !== generation || request.reportedError || propsRef.current.tab !== 'game') return;
-          if (!propsRef.current.playing) { paint(); return; }
+          finishNativeViewportRequest(request, ticket);
+          if (request.generation !== generation || request.reportedError || request.captures > 0 || propsRef.current.tab !== 'game') return;
+          if (!propsRef.current.playing && performance.now() >= request.retryAt) { paint(); return; }
+          if (request.resumeTimer != null) return;
           request.resumeTimer = window.setTimeout(() => {
             request.resumeTimer = null;
-            if (request.generation === generation && propsRef.current.tab === 'game' && propsRef.current.playing) paint();
-          }, Math.max(0, Math.ceil(1000 / 60 - (performance.now() - request.lastRequestAt))));
+            if (request.generation === generation && propsRef.current.tab === 'game') paint();
+          }, Math.max(0, Math.ceil(request.retryAt - performance.now()), Math.ceil(1000 / 60 - (performance.now() - request.lastRequestAt))));
         });
     }
+
+    const scheduleRequest = (request: ReturnType<typeof createNativeViewportRequestState>, repaint: () => void) => {
+      if (request.full || request.captures > 0 || request.resumeTimer != null || request.reportedError || !request.inFlight && request.retryAt <= performance.now()) return;
+      const generation = request.generation;
+      request.resumeTimer = window.setTimeout(() => { request.resumeTimer = null; if (request.generation === generation && !request.reportedError) repaint(); }, Math.max(1, Math.ceil(request.retryAt - performance.now()), Math.ceil(1000 / 60 - (performance.now() - request.lastRequestAt))));
+    };
+    if (isGame && p.playing && '__TAURI_INTERNALS__' in window) scheduleRequest(nativeGameRequestRef.current, () => paint());
 
     // Native Game requests continue even when the displayed canvas needs no new pixels.
     let nativeGamePaint = false;
@@ -1596,25 +1589,31 @@ export function Viewport(props: {
         )
       : null;
     const sceneRequest = nativeSceneRequestRef.current;
+    syncRequestOwner(sceneRequest, JSON.stringify([p.tab, p.playing, p.runtimeSessionId, nativeSceneIdentity?.key]));
+    const currentSceneRequestKey = () => {
+      const current = currentViewportProps(), live = liveCam.current, bounds = canvas.getBoundingClientRect();
+      if (current.tab !== 'scene' || scene2DRef.current) return null;
+      return nativeSceneFrameRequestIdentity({ eye: orbitEye(live.pivot, live.yaw, live.pitch, live.distance), target: live.pivot, fovYDeg: 60, projection: 'perspective' }, { w: Math.max(1, Math.floor(bounds.width)), h: Math.max(1, Math.floor(bounds.height)) }, window.devicePixelRatio || 1, current.sceneHiddenIds ?? [], MAX_NATIVE_SCENE_VIEW_DIMENSION).key;
+    };
     const sceneRenderNeeded = (sceneRequest.captures === 0 || captureSceneFrame) && (!completedSceneFrame || now - lastAnimationFrameAtRef.current > 100) && !isGame && !scene2DActive && '__TAURI_INTERNALS__' in window && (draggingRef.current || p.playing || (!sceneRequest.reportedError && nativeSceneFrameRef.current?.key !== nativeSceneIdentity?.key) || now - sceneRequest.lastRequestAt >= 200);
     const sceneRequestInterval = p.playing || now - lastAnimationFrameAtRef.current > 100 ? 1000 / 60 : 0;
-    const sceneRequestDelay = Math.max(0, sceneRequestInterval - (now - sceneRequest.lastRequestAt));
-    if (sceneRenderNeeded && !sceneRequest.inFlight && sceneRequest.captures === 0 && sceneRequestDelay > 0 && sceneRequest.resumeTimer == null) {
+    const sceneRequestDelay = Math.max(0, sceneRequest.retryAt - now, sceneRequestInterval - (now - sceneRequest.lastRequestAt));
+    if (sceneRenderNeeded && !sceneRequest.full && sceneRequest.captures === 0 && sceneRequestDelay > 0 && sceneRequest.resumeTimer == null) {
       const generation = sceneRequest.generation;
       sceneRequest.resumeTimer = window.setTimeout(() => {
         sceneRequest.resumeTimer = null;
         if (sceneRequest.generation === generation && propsRef.current.tab === 'scene' && !scene2DRef.current) paint(false, false, true);
       }, Math.ceil(sceneRequestDelay));
     }
-    if (sceneRenderNeeded && !sceneRequest.inFlight && (sceneRequest.captures > 0 || sceneRequestDelay === 0)) {
+    if (sceneRenderNeeded && !sceneRequest.full && (sceneRequest.captures > 0 || sceneRequestDelay === 0)) {
       const request = sceneRequest;
       if (request.resumeTimer != null) window.clearTimeout(request.resumeTimer);
       request.resumeTimer = null;
-      const generation = ++request.generation;
+      const generation = request.generation;
       const requestedSceneCamera = structuredClone(cam);
-      request.inFlight = true;
       request.lastRequestAt = now;
-      request.ready = requestWorldFrame('render_native_scene_view', {
+      const ticket = beginNativeViewportRequest(request, JSON.stringify([nativeSceneIdentity?.key, nativeWorld.requestKey(), p.simulationTime]));
+      if (ticket) ticket.ready = requestWorldFrame('render_native_scene_view', {
         request: {
           width: nativeSceneIdentity!.width,
           height: nativeSceneIdentity!.height,
@@ -1626,7 +1625,7 @@ export function Viewport(props: {
           hiddenEntityIds: p.sceneHiddenIds ?? [],
         },
       }).then((buffer) => {
-        if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
+        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || currentSceneRequestKey() !== nativeSceneIdentity?.key || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
         const result = uploadNativeViewportFrame(buffer, nativeSceneFrameRef.current?.image);
         recordOwnedNativeViewportProfile('scene', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
         const image = result.image;
@@ -1640,46 +1639,50 @@ export function Viewport(props: {
           camera: requestedSceneCamera,
           world: nativeWorld.frameWorld(),
         };
+        request.presentedSequence = ticket.sequence; request.retryAt = 0;
         request.reportedError = false;
         if (firstFrame) paint();
         if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
-        if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
+        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
+        if (nativeViewportReadbackBusy(error) || nativeViewportSessionExpired(error)) { request.retryAt = performance.now() + 16; return; }
         if (!request.reportedError) {
           console.warn('Native Scene View rendering is unavailable', error);
           request.reportedError = true;
         }
       }).finally(() => {
-        request.inFlight = false;
-        request.ready = null;
+        finishNativeViewportRequest(request, ticket);
         // Present Play pixels before yielding to the next request; background Scene views continue without rAF.
         if (request.generation !== generation || request.reportedError || request.captures > 0 || propsRef.current.tab !== 'scene' || scene2DRef.current) return;
         if (!propsRef.current.playing && performance.now() - lastAnimationFrameAtRef.current <= 100) return;
         paint(false, true);
-        if (request.inFlight || request.resumeTimer != null || !propsRef.current.playing) return;
+        if (request.full || request.resumeTimer != null || !propsRef.current.playing) return;
         request.resumeTimer = window.setTimeout(() => {
           request.resumeTimer = null;
           if (request.generation === generation && propsRef.current.tab === 'scene' && propsRef.current.playing && !scene2DRef.current) paint(false, false, true);
-        }, Math.max(0, Math.ceil(1000 / 60 - (performance.now() - request.lastRequestAt))));
+        }, Math.max(0, Math.ceil(request.retryAt - performance.now()), Math.ceil(1000 / 60 - (performance.now() - request.lastRequestAt))));
       });
     }
+    if (!isGame && !scene2DActive && p.playing && '__TAURI_INTERNALS__' in window) scheduleRequest(sceneRequest, () => paint(false, false, true));
+    syncRequestOwner(nativeCameraPreviewRequestRef.current, JSON.stringify([p.tab, p.playing, p.runtimeSessionId, cameraPreviewKey]));
     if (
       selectedCamera
       && (nativeSceneRequestRef.current.captures === 0 || captureSceneFrame)
       && '__TAURI_INTERNALS__' in window
-      && !nativeCameraPreviewRequestRef.current.inFlight
+      && !nativeCameraPreviewRequestRef.current.full
+      && now >= nativeCameraPreviewRequestRef.current.retryAt
       && now - nativeCameraPreviewRequestRef.current.lastRequestAt >= (p.playing ? 120 : 500)
     ) {
       const request = nativeCameraPreviewRequestRef.current;
-      const generation = ++request.generation;
-      request.inFlight = true;
+      const generation = request.generation;
       request.lastRequestAt = now;
       const aspect = p.gameResolution
         ? p.gameResolution.width / Math.max(1, p.gameResolution.height)
         : 16 / 9;
       const previewWidth = 320;
       const previewHeight = Math.max(120, Math.round(previewWidth / Math.max(0.5, Math.min(2.5, aspect))));
-      request.ready = requestWorldFrame('render_native_scene_view', {
+      const ticket = beginNativeViewportRequest(request, cameraPreviewKey!);
+      if (ticket) ticket.ready = requestWorldFrame('render_native_scene_view', {
         request: {
           width: previewWidth,
           height: previewHeight,
@@ -1698,9 +1701,9 @@ export function Viewport(props: {
           hiddenEntityIds: [],
         },
       }).then((buffer) => {
-        if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
+        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
         const current = currentViewportProps(), camera = current.selected != null ? gameCameraForEntity(current.entities, current.selected) : null;
-        if (!camera || JSON.stringify([camera, current.gameResolution, current.gameDisplay]) !== cameraPreviewKey) { releaseNativeViewportFrame(buffer); return; }
+        if (current.tab !== 'scene' || !camera || JSON.stringify([camera, current.gameResolution, current.gameDisplay]) !== cameraPreviewKey) { releaseNativeViewportFrame(buffer); return; }
         const { image } = uploadNativeViewportFrame(buffer, nativeCameraPreviewFrameRef.current?.image);
         const firstFrame = nativeCameraPreviewFrameRef.current == null;
         nativeCameraPreviewFrameRef.current = {
@@ -1709,19 +1712,21 @@ export function Viewport(props: {
           key: cameraPreviewKey!,
           world: nativeWorld.frameWorld(),
         };
+        request.presentedSequence = ticket.sequence; request.retryAt = 0;
         request.reportedError = false;
         if (firstFrame || performance.now() - lastProfilerFrameRef.current > 100) paint();
         if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
-        if (request.generation !== generation || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
+        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
+        if (nativeViewportReadbackBusy(error) || nativeViewportSessionExpired(error)) { request.lastRequestAt = -Infinity; request.retryAt = performance.now() + 16; return; }
         if (!request.reportedError) {
           console.warn('Native Camera Preview rendering is unavailable', error);
           p.onLog?.(`Camera Preview: ${error instanceof Error ? error.message : String(error)}`, 'error');
           request.reportedError = true;
         }
       }).finally(() => {
-        request.inFlight = false;
-        request.ready = null;
+        finishNativeViewportRequest(request, ticket);
+        if (request.generation === generation && request.retryAt > 0 && nativeSceneRequestRef.current.captures === 0) scheduleRequest(request, () => paint());
       });
     }
     if (skipUnchangedScenePaint && scenePaintState.frame === nativeSceneFrameRef.current && scenePaintState.preview === nativeCameraPreviewFrameRef.current) return;

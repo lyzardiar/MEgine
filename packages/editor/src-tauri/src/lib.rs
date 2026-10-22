@@ -4403,7 +4403,7 @@ async fn render_native_game_view(
     let started = Instant::now();
     if scene_world_key.as_ref().is_some_and(|key| key.is_empty() || key.len() > 128) { return Err("Invalid Game viewport revision key".into()); }
     if scene_world_key.is_some() && play_session_id.is_some() { return Err("Edit and Play viewport references cannot be combined".into()); }
-    let (project_root, snapshot, resource_generation) = {
+    let (project_root, snapshot, resource_generation, runtime_generation) = {
         let project = state.project.lock();
         let session = project
             .as_ref()
@@ -4412,14 +4412,15 @@ async fn render_native_game_view(
             session.project_root().to_owned(),
             snapshot.or_else(|| (play_session_id.is_none() && scene_world_key.is_none()).then(|| WorldSnapshot::from_world(session.active_world()))),
             mengine_editor_host::resource_sample_generation(),
+            state.play_runtime.generation(),
         )
     };
-    let retained_key = scene_world_key.map(|key| serde_json::to_string(&(project_root.clone(), window.label(), key))).transpose().map_err(|error| error.to_string())?;
+    let retained_key = scene_world_key.map(|key| serde_json::to_string(&(project_root.clone(), window.label(), key))).transpose().map_err(|error| format!("{error:#}"))?;
     let runtime = state.play_runtime.clone();
     let queued = Instant::now();
     let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
         let worker_queue_ms = queued.elapsed().as_secs_f64() * 1000.0;
-        let render = move |world: &mengine_core::World| -> Result<EditorViewportFrame, String> {
+        let render = move |world: &mengine_core::World| -> Result<mengine_editor_host::EditorViewportSubmission, String> {
         let viewport = VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
         let waiting = Instant::now();
         let mut viewport = viewport.lock();
@@ -4430,7 +4431,7 @@ async fn render_native_game_view(
         {
             *viewport = Some(
                 pollster::block_on(EditorViewportRenderer::new(project_root, width, height))
-                    .map_err(|error| error.to_string())?,
+                    .map_err(|error| format!("{error:#}"))?,
             );
         }
         let mut frame = viewport
@@ -4438,14 +4439,14 @@ async fn render_native_game_view(
             .expect("viewport renderer initialized above")
             .with_resource_generation(resource_generation)
             .with_gpu_timings(native_gpu_timings::enabled(GpuTimingSource::Game))
-            .render_game(world, width, height)
-            .map_err(|error| error.to_string())?;
+            .submit_game(world, width, height)
+            .map_err(|error| format!("{error:#}"))?;
         frame.profile.worker_queue_ms = Some(worker_queue_ms);
         frame.profile.renderer_lock_wait_ms = Some(renderer_lock_wait_ms);
         drop(viewport);
         Ok(frame)
         };
-        match (snapshot, play_session_id) {
+        let submitted = match (snapshot, play_session_id) {
             (snapshot, _) if snapshot.is_some() || retained_key.is_some() => {
                 let waiting = Instant::now();
                 let mut mirror = GAME_SNAPSHOT_WORLD.get_or_init(|| Mutex::new(mengine_editor_host::SceneSnapshotWorld::default())).lock();
@@ -4453,12 +4454,17 @@ async fn render_native_game_view(
                 let sync = Instant::now(); let world = mirror.update(retained_key, snapshot).map_err(str::to_owned)?; let sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
                 let mut frame = render(world)?; frame.profile.world_sync_ms = Some(sync_ms); frame.profile.world_lock_wait_ms = Some(wait_ms); Ok(frame)
             },
-            (None, Some(id)) => runtime.render_revision(id, play_revision, render),
+            (None, Some(id)) => runtime.submit_revision(id, play_revision, render),
             _ => Err("viewport world is unavailable".into()),
-        }
+        }?;
+        // World and renderer guards have left scope before waiting for this exact submitted frame.
+        let frame = submitted.finish().map_err(|error| format!("{error:#}"))?;
+        if runtime.generation() != runtime_generation { return Err("Viewport session expired".into()); }
+        Ok(frame)
     })
     .await
     .map_err(|error| format!("Game viewport worker failed: {error}"))??;
+    if state.play_runtime.generation() != runtime_generation { return Err("Viewport session expired".into()); }
     native_viewport_response(frame, raw.unwrap_or(false), "viewport", shared_request, shared_buffer_reuse.unwrap_or(false), window, started).await
 }
 
@@ -4478,7 +4484,7 @@ async fn render_native_scene_view(
     let started = Instant::now();
     if scene_world_key.as_ref().is_some_and(|key| key.is_empty() || key.len() > 128) { return Err("Invalid Scene viewport revision key".into()); }
     if scene_world_key.is_some() && play_session_id.is_some() { return Err("Scene and Play viewport references cannot be combined".into()); }
-    let (project_root, snapshot, resource_generation) = {
+    let (project_root, snapshot, resource_generation, runtime_generation) = {
         let project = state.project.lock();
         let session = project
             .as_ref()
@@ -4487,9 +4493,10 @@ async fn render_native_scene_view(
             session.project_root().to_owned(),
             snapshot.or_else(|| (play_session_id.is_none() && scene_world_key.is_none()).then(|| WorldSnapshot::from_world(session.active_world()))),
             mengine_editor_host::resource_sample_generation(),
+            state.play_runtime.generation(),
         )
     };
-    let retained_key = scene_world_key.map(|key| serde_json::to_string(&(project_root.clone(), window.label(), key, if request.camera_entity.is_none() { request.hidden_entity_ids.clone() } else { Vec::new() }))).transpose().map_err(|error| error.to_string())?;
+    let retained_key = scene_world_key.map(|key| serde_json::to_string(&(project_root.clone(), window.label(), key, if request.camera_entity.is_none() { request.hidden_entity_ids.clone() } else { Vec::new() }))).transpose().map_err(|error| format!("{error:#}"))?;
     let mut snapshot = snapshot;
     if let Some(snapshot) = snapshot.as_mut() { filter_scene_view_snapshot(snapshot, &mut request); }
     if snapshot.is_none() && retained_key.is_some() { request.hidden_entity_ids.clear(); }
@@ -4498,7 +4505,7 @@ async fn render_native_scene_view(
     let queued = Instant::now();
     let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
         let worker_queue_ms = queued.elapsed().as_secs_f64() * 1000.0;
-        let render = move |world: &mengine_core::World, source: Option<&mengine_core::snapshot::SharedWorldSnapshot>| -> Result<EditorViewportFrame, String> {
+        let render = move |world: &mengine_core::World, source: Option<&mengine_core::snapshot::SharedWorldSnapshot>| -> Result<mengine_editor_host::EditorViewportSubmission, String> {
         let mut filtered_world;
         let mut filtered_sync_ms = 0.0;
         let world = if request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty() {
@@ -4523,7 +4530,7 @@ async fn render_native_scene_view(
                     request.width,
                     request.height,
                 ))
-                .map_err(|error| error.to_string())?,
+                .map_err(|error| format!("{error:#}"))?,
             );
         }
         let viewport = viewport_guard
@@ -4532,7 +4539,7 @@ async fn render_native_scene_view(
             .with_resource_generation(resource_generation)
             .with_gpu_timings(native_gpu_timings::enabled(GpuTimingSource::Scene));
         let mut frame = if request.camera_entity.is_some() {
-            viewport.render_camera(
+            viewport.submit_camera(
                 world,
                 request.width,
                 request.height,
@@ -4563,7 +4570,7 @@ async fn render_native_scene_view(
                 },
             )
         } else {
-            viewport.render_scene(
+            viewport.submit_scene(
                 world,
                 request.width,
                 request.height,
@@ -4576,14 +4583,14 @@ async fn render_native_scene_view(
                 },
             )
         }
-        .map_err(|error| error.to_string())?;
+        .map_err(|error| format!("{error:#}"))?;
         if filtered_sync_ms > 0.0 { frame.profile.world_sync_ms = Some(filtered_sync_ms); }
         frame.profile.worker_queue_ms = Some(worker_queue_ms);
         frame.profile.renderer_lock_wait_ms = Some(renderer_lock_wait_ms);
         drop(viewport_guard);
         Ok(frame)
         };
-        match (snapshot, play_session_id) {
+        let submitted = match (snapshot, play_session_id) {
             (snapshot, _) if snapshot.is_some() || retained_key.is_some() => {
                 let waiting = Instant::now();
                 let mut mirror = if camera_preview { &CAMERA_PREVIEW_SNAPSHOT_WORLD } else { &SCENE_SNAPSHOT_WORLD }.get_or_init(|| Mutex::new(mengine_editor_host::SceneSnapshotWorld::default())).lock();
@@ -4591,13 +4598,18 @@ async fn render_native_scene_view(
                 let sync = Instant::now(); let world = mirror.update(retained_key, snapshot).map_err(str::to_owned)?; let sync_ms = sync.elapsed().as_secs_f64() * 1000.0;
                 let mut frame = render(world, None)?; frame.profile.world_sync_ms = Some(sync_ms); frame.profile.world_lock_wait_ms = Some(wait_ms); Ok(frame)
             },
-            (None, Some(id)) if camera_preview => runtime.render_preview_revision_with_snapshot(id, play_revision, move |world, source| render(world, Some(source))),
-            (None, Some(id)) => runtime.render_scene_revision_with_snapshot(id, play_revision, move |world, source| render(world, Some(source))),
+            (None, Some(id)) if camera_preview => runtime.submit_preview_revision_with_snapshot(id, play_revision, move |world, source| render(world, Some(source))),
+            (None, Some(id)) => runtime.submit_scene_revision_with_snapshot(id, play_revision, move |world, source| render(world, Some(source))),
             _ => Err("viewport world is unavailable".into()),
-        }
+        }?;
+        // World and renderer guards have left scope before waiting for this exact submitted frame.
+        let frame = submitted.finish().map_err(|error| format!("{error:#}"))?;
+        if runtime.generation() != runtime_generation { return Err("Viewport session expired".into()); }
+        Ok(frame)
     })
     .await
     .map_err(|error| format!("Scene viewport worker failed: {error}"))??;
+    if state.play_runtime.generation() != runtime_generation { return Err("Viewport session expired".into()); }
     native_viewport_response(frame, raw.unwrap_or(false), "Scene viewport", shared_request, shared_buffer_reuse.unwrap_or(false), window, started).await
 }
 

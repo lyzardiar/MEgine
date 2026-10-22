@@ -63,13 +63,13 @@ export function createNativeViewportWorldArgs<E extends { entity?: number; paren
     if (args) return args;
     const retained = worldReference();
     if (retained) return args = { playSessionId: retained.sessionId, playRevision: retained.revision };
-    const sessionId = requiresBrowserSnapshot() ? undefined : props.nativeSessionId;
-    return args = sessionId != null ? { playSessionId: sessionId } : snapshotArgs();
+    return args = snapshotArgs();
   };
   const sceneWorldArgs = () => ({ sceneWorldKey: sceneWorldKey ??= crypto.randomUUID(), ...(!sceneWorldUploaded ? snapshotArgs() : {}) });
   const scenePlayWorldArgs = () => { const retained = sceneWorldReference(); return retained ? { playSessionId: retained.sessionId, playRevision: retained.revision } : worldArgs(); };
   const markSceneWorldUploaded = () => { sceneWorldUploaded = true; };
-  return { worldArgs, snapshotArgs, frameWorld, requiresBrowserSnapshot, sceneWorldArgs, scenePlayWorldArgs, markSceneWorldUploaded };
+  const requestKey = () => { const retained = worldReference() ?? sceneWorldReference(); return retained ? `${retained.sessionId}:${retained.revision}` : sceneWorldKey ??= crypto.randomUUID(); };
+  return { requestKey, worldArgs, snapshotArgs, frameWorld, requiresBrowserSnapshot, sceneWorldArgs, scenePlayWorldArgs, markSceneWorldUploaded };
 }
 
 /** Match the pixels actually displayed; explicit captures still render at the requested output size. */

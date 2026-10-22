@@ -230,7 +230,20 @@ impl EditorPlayRuntime {
         self.render_revision_from_world(generation, revision, &self.preview_render_world, render)
     }
 
-    fn render_revision_from_world(&self, generation: u64, revision: Option<u64>, render_world: &PlayRenderWorld, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String> + Send + 'static) -> Result<EditorViewportFrame, String> {
+    /// Submit the exact Game revision while borrowing its mirror; finish the ticket after this method returns.
+    pub fn submit_revision(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World) -> Result<crate::EditorViewportSubmission, String> + Send + 'static) -> Result<crate::EditorViewportSubmission, String> {
+        self.render_revision_from_world(generation, revision, &self.render_world, move |world, _| render(world))
+    }
+
+    pub fn submit_scene_revision_with_snapshot(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<crate::EditorViewportSubmission, String> + Send + 'static) -> Result<crate::EditorViewportSubmission, String> {
+        self.render_revision_from_world(generation, revision, &self.scene_render_world, render)
+    }
+
+    pub fn submit_preview_revision_with_snapshot(&self, generation: u64, revision: Option<u64>, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<crate::EditorViewportSubmission, String> + Send + 'static) -> Result<crate::EditorViewportSubmission, String> {
+        self.render_revision_from_world(generation, revision, &self.preview_render_world, render)
+    }
+
+    fn render_revision_from_world<T: AsMut<EditorViewportFrame>>(&self, generation: u64, revision: Option<u64>, render_world: &PlayRenderWorld, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<T, String> + Send + 'static) -> Result<T, String> {
         let published = if let Some(revision) = revision {
             let history = self.render_history.lock();
             if self.generation() != generation { return Err("Play session expired".into()); }
@@ -243,7 +256,7 @@ impl EditorPlayRuntime {
         self.render_published_snapshot(generation, revision, published, render_world, render)
     }
 
-    fn render_published_snapshot(&self, generation: u64, revision: Option<u64>, published: PlayRenderSnapshot, render_world: &PlayRenderWorld, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<EditorViewportFrame, String>) -> Result<EditorViewportFrame, String> {
+    fn render_published_snapshot<T: AsMut<EditorViewportFrame>>(&self, generation: u64, revision: Option<u64>, published: PlayRenderSnapshot, render_world: &PlayRenderWorld, render: impl FnOnce(&World, &SharedWorldSnapshot) -> Result<T, String>) -> Result<T, String> {
         let (snapshot, step_ms, stages) = published;
         let waiting = Instant::now();
         let mut mirror = render_world.lock().map_err(|error| format!("Play render world: {error}"))?;
@@ -255,13 +268,14 @@ impl EditorPlayRuntime {
         let world_sync_ms = started.elapsed().as_secs_f64() * 1000.0;
         let frame = render(mirror.1.world(), &snapshot);
         if self.generation() != generation { return Err("Play session expired".into()); }
-        let mut frame = frame?;
+        let mut output = frame?;
+        let frame = output.as_mut();
         frame.profile.world_lock_wait_ms = Some(world_lock_wait_ms);
         frame.profile.world_sync_ms = Some(world_sync_ms + frame.profile.world_sync_ms.unwrap_or(0.0));
         frame.profile.simulation_ms = Some(step_ms);
         frame.profile.simulation_stages = stages;
         frame.profile.world_revision = revision;
-        Ok(frame)
+        Ok(output)
     }
 }
 
@@ -505,7 +519,7 @@ mod tests {
         let queued_runtime = runtime.clone(); let (queued, pending) = mpsc::channel();
         let waiting_scene = std::thread::spawn(move || {
             queued.send(()).unwrap();
-            queued_runtime.render_published_snapshot(id, Some(0), published, &queued_runtime.scene_render_world, |_, _| panic!("queued old Scene must not render"))
+            queued_runtime.render_published_snapshot::<EditorViewportFrame>(id, Some(0), published, &queued_runtime.scene_render_world, |_, _| panic!("queued old Scene must not render"))
         });
         pending.recv_timeout(Duration::from_secs(3)).unwrap();
         runtime.stop_session(id); let next = runtime.begin();
@@ -569,7 +583,7 @@ mod tests {
         runtime.sender.send(Request::RenderSnapshot { generation: id, revision: Some(0), reply }).unwrap();
         let published = result.recv_timeout(Duration::from_secs(3)).unwrap().unwrap();
         let renderer = runtime.clone();
-        let rendering = std::thread::spawn(move || renderer.render_published_snapshot(id, Some(0), published, &renderer.render_world, |_, _| panic!("expired renderer must not execute")));
+        let rendering = std::thread::spawn(move || renderer.render_published_snapshot::<EditorViewportFrame>(id, Some(0), published, &renderer.render_world, |_, _| panic!("expired renderer must not execute")));
         runtime.stop_session(id); let next = runtime.begin();
         runtime.start(next, String::new(), WorldSnapshot::default(), PlayProject::default()).unwrap();
         drop(mirror);

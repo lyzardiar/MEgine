@@ -45,18 +45,15 @@ test('native frame rejects invalid magic, dimensions, metadata length and trunca
   assert.throws(()=>parseNativeViewportFrame(packet().slice(0,-1)));assert.throws(()=>parseNativeViewportFrame(new ArrayBuffer(8)));
 });
 
-test('one paint resolves native session once and the next paint reads fresh state', () => {
-  let reads=0, session=12;
-  const props={entities:[{components:{}}],clearColor:[0,0,0,1],simulationTime:1,get nativeSessionId(){reads++;return session;}};
-  const first=createNativeViewportWorldArgs(props);
-  assert.equal(reads,0);
-  assert.deepEqual(first.worldArgs(),{playSessionId:12});
-  assert.equal(first.worldArgs(),first.worldArgs());
-  assert.equal(first.requiresBrowserSnapshot(),false);
-  assert.equal(reads,1);
-  session=13;
-  assert.deepEqual(createNativeViewportWorldArgs(props).worldArgs(),{playSessionId:13});
-  assert.equal(reads,2);
+test('unrevisioned native sessions use the same owned snapshot as browser pixels', () => {
+  let reads = 0;
+  const props = { entities: [{ components: { Transform: { x: 1 } } }], clearColor: [0, 0, 0, 1], simulationTime: 1, get nativeSessionId() { reads++; return 12; } };
+  const first = createNativeViewportWorldArgs(props), args = first.worldArgs();
+  assert.equal(args.snapshot.entities, first.frameWorld().entities);
+  assert.equal(first.worldArgs(), args); assert.equal(reads, 0);
+  props.entities[0].components.Transform.x = 2;
+  assert.equal(args.snapshot.entities[0].components.Transform.x, 1);
+  assert.equal(createNativeViewportWorldArgs(props).worldArgs().snapshot.entities[0].components.Transform.x, 2);
 });
 
 test('Scene render snapshots exclude inactive subtrees while browser ownership retains editable records', () => {
@@ -79,8 +76,8 @@ test('interactive snapshot skips session fingerprint and refreshes after UI chan
   assert.equal(paint.requiresBrowserSnapshot(),true);
   assert.equal(reads,0);
   props.entities=[{components:{}}];
-  assert.deepEqual(createNativeViewportWorldArgs(props).worldArgs(),{playSessionId:12});
-  assert.equal(reads,1);
+  assert.deepEqual(createNativeViewportWorldArgs(props).worldArgs().snapshot.entities,props.entities);
+  assert.equal(reads,0);
   const detached=createNativeViewportWorldArgs({...props,nativeSessionId:undefined});
   assert.deepEqual(detached.worldArgs().snapshot.entities,props.entities);
   assert.notEqual(detached.worldArgs().snapshot.entities,props.entities);
