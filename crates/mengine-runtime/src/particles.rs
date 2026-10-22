@@ -239,6 +239,8 @@ pub struct ParticleWorld {
 }
 
 impl ParticleWorld {
+    pub fn restart(&mut self) { self.emitters.clear(); self.skip_step_once.clear(); self.sampled_effects.restart(); }
+
     pub fn reset_entity(&mut self, entity: Entity) {
         self.sampled_effects.reset_entity(entity);
         self.emitters.remove(&entity);

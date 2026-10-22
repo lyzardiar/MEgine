@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：已完成十二个编辑器性能优化阶段，并补齐第十三阶段固定负载原生采样；覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据及密集UI批次构建。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：已完成十二个编辑器性能优化阶段，并补齐第十三阶段固定负载原生采样与第十四阶段Play特效时钟；覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据及密集UI批次构建。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -353,7 +353,21 @@ QA 在暂停状态下完成固定 9 步（0.144 秒）后保存游戏世界，�
 
 待跟进：
 
-- [ ] 将 Play 中粒子、采样特效及拖尾的渲染时钟与模拟暂停／单步对齐，保留编辑模式特效预览；覆盖恢复、场景切换和时间回退。
-- [ ] 为完整动态原生负载建立确定性的特效状态与逐帧工作量对照，补充排序缓存失效场景；当前固定副本不替代此项。
+- [x] Play中的粒子、采样特效、Effekseer及拖尾跟随模拟暂停／单步；保留编辑模式预览，退出Play、新会话和时间回退清理播放状态，见第十四阶段。
+- [ ] 为完整动态原生负载建立确定性的特效状态与逐帧工作量对照，补充排序缓存失效、同会话场景替换及隐藏视口重开的历史重建；当前固定副本不替代此项。
 
 复现：设置 `MENGINE_EDITOR_EXECUTABLE` 和 `MENGINE_PERFORMANCE_LABEL`，清除 SDK 环境覆盖，运行 `node scripts/qa-editor-performance-risk.mjs`。证据位于 `tmp/docs-artifacts/editor-performance-risk/`：`phase13-before.json`、`phase13-after.json`、`phase13-comparison.json`、两版 `phase13-builds/*/receipt.json`、构建日志及 `native-qa/*/fixed-game-*.json/png`。原始诊断数据不提交。
+
+## 第十四阶段Play特效时钟
+
+Game、Scene及相机预览按Play会话和世界模拟时间计算特效增量。同一时刻的重复渲染增量为0，单步只消费一次时间差；完整截图和过期revision后的快照回退也保留Play会话身份，并拒绝过期会话。编辑模式继续使用墙钟。退出Play、新会话或时间回退会清理粒子、拖尾、采样特效及Effekseer播放状态；采样资源与模型缓存继续复用。
+
+采样特效先推进有效时间增量，再选择绘制帧，零增量重绘不会再显露上次绘制之后偷偷推进的状态。组件的显式起始／跳转时间直接采用，不叠加当前增量。保留既有每次渲染最多0.25秒的推进上限；首次观察一个会话从当前组件的起始状态建立播放状态，不重建视口未观察到的运动轨迹。因此本阶段解决暂停／重复渲染的时钟问题，尚不支持把不同可见历史的动态视口当作完全确定性的对照。
+
+验证包括：纯时钟的暂停、单步、会话切换、回退、非有限时间和编辑预览；实际GPU上的粒子／拖尾冻结、单步变化、回退／重启清理和恢复编辑动画；官方Effekseer示例连续30个模拟步后的重复捕获。采样特效覆盖零增量稳定、播放中显式跳转、暂停、热更新、资源恢复及重启保留资源缓存。
+
+前端39项通过，TypeScript与前端构建通过；串行Release Runtime 246项通过、8个手动基准忽略，Host全套64项通过、6个手动基准忽略；随后新增的官方Effekseer GPU专项1项通过，补充的采样特效跳转用例单独复验通过。Debug／Release SDK与原生Release构建通过，旁置SDK摘要一致。
+
+原生旧版对照被新增回归准确拒绝：暂停世界摘要不变，但连续4次截图的图元为423／438／446／453，像素持续变化。新版完整Frostbound保留217个粒子组件和238个采样特效组件；首次暂停6次捕获均为412图元。正常播放后再次暂停，6次捕获均为509图元、277个RenderObject，像素SHA-256均为 `2eaeebbe29f83825f694ed21b382a710aae9bc6ee977d6d75784c0f13d612421`，网格上传为0；这验证了已产生的特效保持冻结。独立固定副本的世界和像素摘要仍与第十三阶段相同。编辑、undo/redo、真实恢复文件、资源增改删、播放恢复及停止后的编辑状态恢复全部通过，控制台error为0，源场景与HEAD一致，QA程序正常退出。截图已检查；WebView缓存因EPERM保留。本阶段未测得可归因的整体FPS增益。
+
+复现沿用 `scripts/qa-editor-performance-risk.mjs`。证据在 `tmp/docs-artifacts/editor-performance-risk/`：`phase14-before.json`（预期失败的旧版对照）、`phase14-after-final.json`、`phase14-final-validation.json`、`phase14-frontend-tests.log`、`phase14-runtime-tests.log`、`phase14-host-tests.log`、`phase14-effekseer-test.log`、`phase14-sampled-effect-test.log`及构建／SDK记录。

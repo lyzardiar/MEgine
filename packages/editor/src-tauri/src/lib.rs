@@ -4403,6 +4403,7 @@ async fn render_native_game_view(
     let started = Instant::now();
     if scene_world_key.as_ref().is_some_and(|key| key.is_empty() || key.len() > 128) { return Err("Invalid Game viewport revision key".into()); }
     if scene_world_key.is_some() && play_session_id.is_some() { return Err("Edit and Play viewport references cannot be combined".into()); }
+    if play_session_id.is_some_and(|id| id != state.play_runtime.generation()) { return Err("Play session expired".into()); }
     let (project_root, snapshot, resource_generation, runtime_generation) = {
         let project = state.project.lock();
         let session = project
@@ -4439,6 +4440,7 @@ async fn render_native_game_view(
             .expect("viewport renderer initialized above")
             .with_resource_generation(resource_generation)
             .with_gpu_timings(native_gpu_timings::enabled(GpuTimingSource::Game))
+            .with_play_session(play_session_id)
             .submit_game(world, width, height)
             .map_err(|error| format!("{error:#}"))?;
         frame.profile.worker_queue_ms = Some(worker_queue_ms);
@@ -4484,6 +4486,7 @@ async fn render_native_scene_view(
     let started = Instant::now();
     if scene_world_key.as_ref().is_some_and(|key| key.is_empty() || key.len() > 128) { return Err("Invalid Scene viewport revision key".into()); }
     if scene_world_key.is_some() && play_session_id.is_some() { return Err("Scene and Play viewport references cannot be combined".into()); }
+    if play_session_id.is_some_and(|id| id != state.play_runtime.generation()) { return Err("Play session expired".into()); }
     let (project_root, snapshot, resource_generation, runtime_generation) = {
         let project = state.project.lock();
         let session = project
@@ -4537,7 +4540,8 @@ async fn render_native_scene_view(
             .as_mut()
             .expect("Scene viewport renderer initialized above")
             .with_resource_generation(resource_generation)
-            .with_gpu_timings(native_gpu_timings::enabled(GpuTimingSource::Scene));
+            .with_gpu_timings(native_gpu_timings::enabled(GpuTimingSource::Scene))
+            .with_play_session(play_session_id);
         let mut frame = if request.camera_entity.is_some() {
             viewport.submit_camera(
                 world,

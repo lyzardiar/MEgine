@@ -57,7 +57,7 @@ export function createNativeViewportWorldArgs<E extends { entity?: number; paren
       const active = activeSceneOnly ? createHierarchyActiveLookup(world.entities as (E & { entity: number })[]) : undefined;
       snapshot = { entities: active ? world.entities.filter(entity => entity.entity == null || active(entity.entity)) : world.entities, clearColor: world.clearColor, simulationTime: world.simulationTime };
     }
-    return { snapshot };
+    return { snapshot, ...(frameWorld().runtimeSessionId != null ? { playSessionId: frameWorld().runtimeSessionId } : {}) };
   };
   const worldArgs = () => {
     if (args) return args;

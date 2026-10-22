@@ -35,6 +35,10 @@ use winit::dpi::PhysicalSize;
 mod resource_sampling;
 use resource_sampling::ResourceSampler;
 
+#[path = "viewport_effect_clock.rs"]
+mod effect_clock;
+use effect_clock::ViewportEffectClock;
+
 #[derive(Clone, Debug, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ResourceSamplingProfile { pub ready: bool, pub pending: bool, pub delayed: bool, pub unavailable: bool, pub metadata_ms: Option<f64> }
@@ -308,7 +312,8 @@ pub struct EditorViewportRenderer {
     particles: ParticleWorld,
     trails: TrailWorld,
     effekseer: Option<EffekseerWorld>,
-    last_effect_frame: Instant,
+    effect_clock: ViewportEffectClock,
+    play_session: Option<u64>,
     preview_restart: u64,
     sorting_layers: SortingLayers,
     resource_sampler: ResourceSampler,
@@ -353,7 +358,8 @@ impl EditorViewportRenderer {
             effekseer: EffekseerWorld::new(Some(project_root.clone()))
                 .map_err(|error| log::warn!("Effekseer viewport runtime is unavailable: {error}"))
                 .ok(),
-            last_effect_frame: Instant::now(),
+            effect_clock: ViewportEffectClock::default(),
+            play_session: None,
             preview_restart: 0,
             sorting_layers,
             resource_sampler: ResourceSampler::new(project_root.clone()),
@@ -370,6 +376,8 @@ impl EditorViewportRenderer {
     pub fn with_resource_generation(&mut self, generation: u64) -> &mut Self { self.resource_generation = generation; self }
 
     pub fn with_gpu_timings(&mut self, enabled: bool) -> &mut Self { self.renderer.set_gpu_timings(enabled); self }
+
+    pub fn with_play_session(&mut self, session: Option<u64>) -> &mut Self { self.play_session = session; self }
 
     pub fn render_game(
         &mut self,
@@ -666,12 +674,12 @@ impl EditorViewportRenderer {
         let stage_started = Instant::now();
         let hierarchy = TransformHierarchy::build(world);
         finish_stage(&mut stages, "TransformHierarchy.build", stage_started);
-        let now = Instant::now();
-        let effect_delta = now
-            .duration_since(self.last_effect_frame)
-            .as_secs_f32()
-            .min(0.25);
-        self.last_effect_frame = now;
+        let (effect_delta, restart_effects) = self.effect_clock.sample(self.play_session, world.time.elapsed, Instant::now());
+        if restart_effects {
+            self.particles.restart();
+            self.trails.restart();
+            if let Some(effekseer) = self.effekseer.as_mut() { effekseer.restart(); }
+        }
         let stage_started = Instant::now();
         if let Some(effekseer) = self.effekseer.as_mut() {
             for failure in

@@ -4,6 +4,33 @@ use super::*;
 fn project_root() -> PathBuf { Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms") }
 
 #[test]
+fn play_effects_freeze_step_restart_and_return_to_edit_preview() {
+    use mengine_core::generated::{Camera2D, ParticleEmitter2D, TrailRenderer2D};
+    let mut world = World::new();
+    let camera = world.spawn_empty(); world.insert_component(camera, Transform { position: [0.0, 0.0, 10.0], ..Default::default() }); world.insert_component(camera, Camera2D::default());
+    let emitter = world.spawn_empty(); world.insert_component(emitter, Transform::default());
+    world.insert_component(emitter, ParticleEmitter2D { rate_over_time: 120.0, lifetime_min: 10.0, lifetime_max: 10.0, speed_min: 1.0, speed_max: 1.0, gravity: [0.0, 0.0], shape: "point".into(), ..Default::default() });
+    world.insert_component(emitter, TrailRenderer2D { min_vertex_distance: 0.01, width_start: 0.5, ..Default::default() });
+    let mut viewport = pollster::block_on(EditorViewportRenderer::new(project_root(), 64, 64)).unwrap();
+    viewport.with_play_session(Some(1));
+    let initial = viewport.render_game(&world, 64, 64).unwrap();
+    world.time.elapsed = 0.125;
+    let stepped = viewport.render_game(&world, 64, 64).unwrap();
+    assert!(stepped.profile.counts.ui_primitives > initial.profile.counts.ui_primitives);
+    assert_ne!(stepped.rgba, initial.rgba);
+    for _ in 0..3 { let frozen = viewport.render_game(&world, 64, 64).unwrap(); assert_eq!(frozen.rgba, stepped.rgba); assert_eq!(frozen.profile.counts.ui_primitives, stepped.profile.counts.ui_primitives); }
+    world.time.elapsed = 0.25; world.get_component_mut::<Transform>(emitter).unwrap().position[0] = 1.0;
+    let moved = viewport.render_game(&world, 64, 64).unwrap(); assert_ne!(moved.rgba, stepped.rgba);
+    world.time.elapsed = 0.0;
+    let rewound = viewport.render_game(&world, 64, 64).unwrap(); assert_eq!(rewound.rgba, initial.rgba);
+    world.time.elapsed = 0.125; viewport.render_game(&world, 64, 64).unwrap();
+    viewport.with_play_session(Some(2)); assert_eq!(viewport.render_game(&world, 64, 64).unwrap().rgba, initial.rgba);
+    viewport.with_play_session(None); assert_eq!(viewport.render_game(&world, 64, 64).unwrap().rgba, initial.rgba);
+    std::thread::sleep(std::time::Duration::from_millis(50));
+    assert!(viewport.render_game(&world, 64, 64).unwrap().profile.counts.ui_primitives > initial.profile.counts.ui_primitives);
+}
+
+#[test]
 fn submitted_frames_preserve_pixels_profiles_resize_and_renderer_lifetime() {
     let mut viewport = pollster::block_on(EditorViewportRenderer::new(project_root(), 32, 24)).unwrap();
     let mut world = World::new(); world.time.clear_color = glam::Vec4::new(1.0, 0.0, 0.0, 1.0);
@@ -24,6 +51,22 @@ fn submitted_frames_preserve_pixels_profiles_resize_and_renderer_lifetime() {
         let stages = &frame.profile.call_tree.children.iter().find(|node| node.name == "Render backend").unwrap().children;
         assert_eq!(stages.iter().filter(|node| node.name == "Renderer.read_offscreen_rgba8").count(), 1);
         assert!(frame.profile.memory.iter().any(|category| category.name == "CPU readback RGBA" && category.bytes == frame.rgba.len() as u64));
+    }
+}
+
+#[test]
+fn official_effekseer_sample_repaints_the_same_paused_simulation_frame() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/effekseer-fire");
+    let mut world = World::new(); mengine_scene::load_scene(&root.join("Assets/Scenes/Main.mscene"), &mut world).unwrap();
+    let mut viewport = pollster::block_on(EditorViewportRenderer::new(root, 96, 54)).unwrap();
+    viewport.with_play_session(Some(4));
+    for step in 0..30 { world.time.elapsed = f64::from(step) / 60.0; viewport.render_game(&world, 96, 54).unwrap(); }
+    let paused = viewport.render_game(&world, 96, 54).unwrap();
+    assert!(paused.profile.counts.ui_primitives > 0);
+    for _ in 0..3 {
+        let repeated = viewport.render_game(&world, 96, 54).unwrap();
+        assert_eq!(repeated.rgba, paused.rgba);
+        assert_eq!(repeated.profile.counts.ui_primitives, paused.profile.counts.ui_primitives);
     }
 }
 

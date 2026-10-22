@@ -27,6 +27,8 @@ pub struct TrailWorld {
 }
 
 impl TrailWorld {
+    pub fn restart(&mut self) { self.trails.clear(); }
+
     pub fn update_and_collect_world_with_hierarchy(
         &mut self,
         world: &World,

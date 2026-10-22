@@ -157,6 +157,22 @@ try{
   const worldHash=world=>createHash('sha256').update(JSON.stringify(world,(_,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.keys(value).sort().map(key=>[key,value[key]])):value)).digest('hex');
   report.fixedGameWorldHash=worldHash(fixedWorld);
   fs.writeFileSync(path.join(root,'fixed-game-world.json'),JSON.stringify(fixedWorld));
+  async function verifyPausedGame(key,world){
+    const pausedWorldHash=worldHash(world),frames=[];let pixelHash;
+    for(let frame=0;frame<6;frame++){
+      const shot=await query('view.screenshot',{target:'game',maxSize:850,includeNativeProfile:true});
+      const png=Buffer.from(shot.dataUrl.split(',')[1],'base64');
+      const pixels=createHash('sha256').update(png).digest('hex');
+      frames.push({...shot.nativeProfile,pixelSha256:pixels});
+      report[key+'Frames']=frames;
+      assert.equal(worldHash(await snapshot()),pausedWorldHash,'Paused capture must not change the full game world');
+      if(frame>=2){pixelHash??=pixels;assert.equal(pixels,pixelHash,'Paused effects must not advance during repeated captures');}
+      if(frame===5)fs.writeFileSync(path.join(out,label+'-'+key+'.png'),png);
+    }
+    report[key+'PixelHash']=pixelHash;
+  }
+  await verifyPausedGame('pausedGame',fixedGame);
+  console.log('PASS paused native Game captures including particles and sampled effects');
   await execute('playback.pause');
   await sleep(3000);
   await execute('playback.pause');
@@ -176,6 +192,8 @@ try{
     });
     report.gameWarmFrames.push(report.profiles.game.nativeLatest);
   }
+  await verifyPausedGame('resumedPausedGame',await snapshot());
+  assert.ok(report.resumedPausedGameFrames[2].counts.uiPrimitives>report.pausedGameFrames[2].counts.uiPrimitives,'Resumed gameplay must populate particles before its paused-frame check');
   await execute('playback.stop');
   assert.equal((await snapshot()).entities.find(entity=>entity.entity===target.entity).name,target.name);
   report.checks.push({playPauseStepStop:true,editStateRestored:true});

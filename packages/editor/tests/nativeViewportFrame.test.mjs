@@ -93,6 +93,7 @@ test('revisioned interactive frames retain one owned world and reject a differen
   props.entities[0].components.Button.label='second';props.simulationTime=2;
   assert.equal(paint.snapshotArgs().snapshot.entities[0].components.Button.label,'first');
   assert.equal(paint.snapshotArgs().snapshot.simulationTime,1);
+  assert.equal(paint.snapshotArgs().playSessionId,12,'full captures retain the simulation clock domain');
   assert.equal(nativeViewportFrameWorldCurrent(frame,props),true);
   assert.equal(nativeViewportFrameWorldCurrent(frame,{entities:props.entities,runtimeSessionId:13}),false);
   assert.equal(nativeViewportFrameWorldCurrent(frame,{entities:props.entities,runtimeSessionId:undefined}),false);
@@ -107,6 +108,7 @@ test('full snapshot captures own deep UI values and preserve explicit capture di
   assert.equal(frame.entities[0].components.InputField.text,'first');assert.equal(frame.clearColor[0],0);
   const request={width:1920,height:1080,...paint.snapshotArgs()};
   assert.deepEqual([request.width,request.height],[1920,1080]);
+  assert.equal(request.playSessionId,undefined,'edit captures retain the wall-clock preview domain');
   assert.equal(nativeViewportFrameWorldCurrent(frame,props),true);
   assert.equal(nativeViewportFrameWorldCurrent(frame,{...props,entities:props.entities.slice()}),false);
 });
@@ -121,12 +123,12 @@ test('filtered Scene revisions share immutable records while camera previews and
   assert.equal(reads, 1); assert.equal(paint.frameWorld(), frame); assert.equal(frame.entities, owned.entities);
   assert.deepEqual(snapshot.entities, [visible], 'hidden roots and their children stay absent from the native payload');
   assert.equal(snapshot.entities[0], visible); assert.equal(frame.runtimeSessionId, 12);
-  assert.equal(paint.worldArgs().playSessionId, undefined); assert.equal(snapshot.simulationTime, 4);
+  assert.equal(paint.worldArgs().playSessionId, 12); assert.equal(paint.worldArgs().playRevision, undefined); assert.equal(snapshot.simulationTime, 4);
   assert.deepEqual(paint.scenePlayWorldArgs(), { playSessionId: 12, playRevision: 7 }); assert.equal(reads, 1);
   live.entities[1].components.Transform.position[0] = 9; live.clearColor[0] = .8;
   assert.equal(frame.entities[1].components.Transform.position[0], 3); assert.equal(frame.clearColor[0], .1);
   const dirtyArgs = createNativeViewportWorldArgs({ ...live, nativeSceneWorldReference: undefined }, true), dirty = dirtyArgs.frameWorld();
-  assert.equal(dirtyArgs.scenePlayWorldArgs().playSessionId, undefined); assert.ok(dirtyArgs.scenePlayWorldArgs().snapshot);
+  assert.equal(dirtyArgs.scenePlayWorldArgs().playSessionId, 12); assert.ok(dirtyArgs.scenePlayWorldArgs().snapshot);
   assert.equal(dirty.entities[1].components.Transform.position[0], 9); assert.equal(dirty.clearColor[0], .8);
   assert.notEqual(dirty.entities[1], live.entities[1], 'unverified edits still require a detached deep copy');
   assert.equal(nativeViewportFrameWorldCurrent(frame, { ...live, runtimeSessionId: 13 }), false);

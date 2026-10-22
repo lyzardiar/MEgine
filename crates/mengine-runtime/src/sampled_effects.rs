@@ -30,6 +30,7 @@ impl SampledEffectWorld {
         if self.root.as_deref() != root { *self = Self { root: root.map(Path::to_path_buf), ..Self::default() }; }
     }
     pub fn reset_entity(&mut self, entity: Entity) { self.players.remove(&entity); }
+    pub fn restart(&mut self) { self.players.clear(); }
 
     pub fn collect(&mut self, world: &World, hierarchy: &TransformHierarchy, camera: FrameCamera, delta: f32, lighting: &mut FrameLighting) -> Vec<WorldPrimitive> {
         self.failures.clear();
@@ -52,17 +53,19 @@ impl SampledEffectWorld {
             }
             live.insert(entity);
             let signature = (key.clone(), component.clip, component.time_seconds.to_bits());
-            let player = self.players.entry(entity).or_insert_with(|| Playback { key: signature.clone(), elapsed: component.time_seconds.max(0.) });
-            if player.key != signature { player.key = signature; player.elapsed = component.time_seconds.max(0.); }
+            let mut initialized = false;
+            let player = self.players.entry(entity).or_insert_with(|| { initialized = true; Playback { key: signature.clone(), elapsed: component.time_seconds.max(0.) } });
+            if player.key != signature { initialized = true; player.key = signature; player.elapsed = component.time_seconds.max(0.); }
             let Ok(asset) = &self.assets[&key].asset else { continue; };
             let Some(clip) = usize::try_from(component.clip).ok().and_then(|index| asset.clips.get(index)) else { continue; };
-            let frame = clip.sample(player.elapsed, component.looping && clip.looping);
-            collect_frame(frame, &asset.materials, transform, camera, lighting, &mut output);
-            collect_model_particles(frame, &asset.materials, transform, camera, root, &mut self.models, &mut used_models, &mut self.failures, &mut output);
-            if component.playing && delta.is_finite() && component.speed.is_finite() {
+            // Authored start/seek is exact. Otherwise advance before sampling so zero-delta repaint is stable.
+            if !initialized && component.playing && delta.is_finite() && component.speed.is_finite() {
                 let next = (player.elapsed + delta.max(0.) * component.speed).max(0.);
                 player.elapsed = if component.looping && clip.looping { next.rem_euclid(clip.duration) } else { next.min(clip.duration) };
             }
+            let frame = clip.sample(player.elapsed, component.looping && clip.looping);
+            collect_frame(frame, &asset.materials, transform, camera, lighting, &mut output);
+            collect_model_particles(frame, &asset.materials, transform, camera, root, &mut self.models, &mut used_models, &mut self.failures, &mut output);
         }
         self.players.retain(|entity, _| live.contains(entity)); self.assets.retain(|key, _| used.contains(key));
         self.models.retain(|key, _| used_models.contains(key));
@@ -283,9 +286,15 @@ mod tests {
         let mut world=World::new();let entity=world.spawn_empty();world.insert_component(entity,Transform::default());world.insert_component(entity,SampledEffect { effect:"Assets/a.mfx".into(),looping:false,..SampledEffect::default() });
         let camera=FrameCamera { view:mengine_rhi::look_at(Vec3::new(0.,0.,10.),Vec3::ZERO,Vec3::Y),proj:mengine_rhi::orthographic(10.,1.,0.1,100.),position:Vec3::new(0.,0.,10.) };
         let collect=|effects:&mut SampledEffectWorld,world:&World,delta|effects.collect(world,&TransformHierarchy::build(world),camera,delta,&mut FrameLighting::default());
-        assert!(collect(&mut effects,&world,1.).is_empty());assert_eq!(collect(&mut effects,&world,0.).len(),1);
+        assert!(collect(&mut effects,&world,0.).is_empty());assert_eq!(collect(&mut effects,&world,1.).len(),1);
+        for _ in 0..3 { assert_eq!(collect(&mut effects,&world,0.).len(),1); }
+        effects.restart();assert_eq!(effects.assets.len(),1);assert!(effects.players.is_empty());
+        assert!(collect(&mut effects,&world,1.).is_empty());assert_eq!(collect(&mut effects,&world,1.).len(),1);
         world.get_component_mut::<SampledEffect>(entity).unwrap().playing=false;assert_eq!(collect(&mut effects,&world,4.).len(),1);
         world.get_component_mut::<SampledEffect>(entity).unwrap().time_seconds=0.5;assert!(collect(&mut effects,&world,4.).is_empty());
+        let component=world.get_component_mut::<SampledEffect>(entity).unwrap();component.playing=true;component.time_seconds=0.25;
+        assert!(collect(&mut effects,&world,4.).is_empty());assert_eq!(effects.players[&entity].elapsed,0.25);
+        assert!(collect(&mut effects,&world,0.).is_empty());assert_eq!(collect(&mut effects,&world,0.75).len(),1);
         data["clips"][0]["frames"][1]["particles"]=serde_json::json!([]);std::fs::write(&path,data.to_string()).unwrap();world.get_component_mut::<SampledEffect>(entity).unwrap().time_seconds=1.;assert!(collect(&mut effects,&world,0.).is_empty());
         assert!(effects.failures.is_empty());world.set_editor_state(entity,0,false);collect(&mut effects,&world,0.);assert!(effects.players.is_empty());assert!(effects.assets.is_empty());
         world.set_editor_state(entity,0,true);std::fs::write(&path,"invalid").unwrap();collect(&mut effects,&world,0.);assert_eq!(effects.failures.len(),1);collect(&mut effects,&world,0.);assert!(effects.failures.is_empty());
