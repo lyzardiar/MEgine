@@ -49,6 +49,12 @@ pub struct UiTextCacheKey {
 
 pub trait UiFontResolver {
     fn cached_text(&mut self, _key: &UiTextCacheKey) -> Option<Vec<UiPrimitive>> { None }
+    /// Append cached geometry on a hit; leave the destination untouched on a miss.
+    fn append_cached_text(&mut self, key: &UiTextCacheKey, primitives: &mut Vec<UiPrimitive>) -> bool {
+        let Some(cached) = self.cached_text(key) else { return false; };
+        primitives.extend(cached);
+        true
+    }
     fn cache_text(&mut self, _key: UiTextCacheKey, _primitives: &[UiPrimitive]) {}
 
     fn measure_glyph(
@@ -7164,8 +7170,7 @@ fn push_text_styled_rich_internal(
         flags: [align_by_geometry, support_rich_text, best_fit],
         clip,
     };
-    if let Some(cached) = font_resolver.cached_text(&cache_key) {
-        primitives.extend(cached);
+    if font_resolver.append_cached_text(&cache_key, primitives) {
         return;
     }
     let primitive_start = primitives.len();

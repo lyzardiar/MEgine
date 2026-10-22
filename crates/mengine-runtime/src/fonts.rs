@@ -454,6 +454,13 @@ impl UiFontResolver for RuntimeFontCache {
         self.text_geometry.get(key).cloned()
     }
 
+    fn append_cached_text(&mut self, key: &UiTextCacheKey, primitives: &mut Vec<UiPrimitive>) -> bool {
+        if self.font(&key.strings[1]).is_none() { return false; }
+        let Some(cached) = self.text_geometry.get(key) else { return false; };
+        primitives.extend_from_slice(cached);
+        true
+    }
+
     fn cache_text(&mut self, key: UiTextCacheKey, primitives: &[UiPrimitive]) {
         // Bound both changing text variants and retained glyph geometry per viewport.
         if primitives.len() > 4096 || key.strings[0].len() > 16_384 || !self.fonts.get(&key.strings[1]).is_some_and(|font| font.result.is_ok()) { return; }
@@ -753,8 +760,26 @@ mod tests {
         let key = UiTextCacheKey { strings: ["AV", "Assets/Fonts/Test.ttf", "Normal", "Left", "Top", "Overflow", "Overflow"].map(str::to_owned), values: [0; 19], flags: [false; 3], clip: mengine_rhi::UiClipRect { x: 0, y: 0, width: 100, height: 100 } };
         cache.cache_text(key.clone(), &[UiPrimitive::solid([0.0, 0.0, 10.0, 10.0], [1.0; 4])]);
         assert_eq!(cache.cached_text(&key).unwrap().len(), 1);
+        let prefix = UiPrimitive::solid([3.0, 4.0, 5.0, 6.0], [0.1, 0.2, 0.3, 0.4]);
+        let mut appended = vec![prefix.clone()];
+        assert!(cache.append_cached_text(&key, &mut appended));
+        assert_eq!(format!("{:?}", appended[0]), format!("{prefix:?}"));
+        assert_eq!(format!("{:?}", &appended[1..]), format!("{:?}", cache.cached_text(&key).unwrap()));
+        appended[1].key.stencil = mengine_rhi::UiStencilMode::Test { reference: 3 };
+        appended[1].key.material = "per-control-override".into();
+        appended[1].rect[0] = 42.0;
+        appended.truncate(1);
+        assert!(cache.append_cached_text(&key, &mut appended));
+        assert_eq!(format!("{:?}", &appended[1..]), format!("{:?}", cache.cached_text(&key).unwrap()), "per-frame mutations must not reach cached geometry");
         let mut changed = key.clone(); changed.strings[0] = "changed".into();
         assert!(cache.cached_text(&changed).is_none());
+        let before_miss = format!("{appended:?}");
+        assert!(!cache.append_cached_text(&changed, &mut appended));
+        assert_eq!(format!("{appended:?}"), before_miss);
+        let mut empty = key.clone(); empty.strings[0].clear();
+        cache.cache_text(empty.clone(), &[]);
+        assert!(cache.append_cached_text(&empty, &mut appended), "empty cached text is a hit");
+        assert_eq!(format!("{appended:?}"), before_miss);
         cache.begin_frame();
         assert!(cache.checked_fonts.is_empty());
         assert!(cache
@@ -767,12 +792,52 @@ mod tests {
         assert!(cache.measure_glyph("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal").is_some());
         cache.last_font_check = None;
         cache.begin_frame();
+        assert!(!cache.append_cached_text(&key, &mut appended));
+        assert_eq!(format!("{appended:?}"), before_miss, "invalidated font must not append stale text");
         assert!(cache.measure_glyph("Assets/Fonts/Test.ttf", 'W', 24.0, "Normal").is_none());
         assert!(cache.glyph_metrics.is_empty());
         assert!(cache.kerning.is_empty());
         assert!(cache.text_geometry.is_empty());
         assert!(cache.cached_text(&key).is_none());
         let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    #[ignore = "manual cached text append CPU benchmark"]
+    fn benchmark_cached_text_append() {
+        let source = [PathBuf::from(r"C:\Windows\Fonts\arial.ttf"), PathBuf::from("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"), PathBuf::from("/System/Library/Fonts/Supplemental/Arial.ttf")].into_iter().find(|path| path.is_file()).expect("benchmark requires an installed font");
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tmp/docs-artifacts/editor-performance-risk/font-append-benchmark");
+        std::fs::create_dir_all(root.join("Assets/Fonts")).unwrap();
+        std::fs::copy(source, root.join("Assets/Fonts/Test.ttf")).unwrap();
+        let mut cache = RuntimeFontCache::new(Some(root));
+        assert!(cache.measure_glyph("Assets/Fonts/Test.ttf", 'A', 16.0, "Normal").is_some());
+        let key = UiTextCacheKey { strings: ["cached text", "Assets/Fonts/Test.ttf", "Normal", "Left", "Top", "Overflow", "Overflow"].map(str::to_owned), values: [0; 19], flags: [false; 3], clip: mengine_rhi::UiClipRect { x: 0, y: 0, width: 800, height: 600 } };
+        let mut reports = Vec::new();
+        for count in [16, 256, 4096] {
+            let primitives: Vec<_> = (0..count).map(|index| UiPrimitive::solid([index as f32, 2.0, 3.0, 4.0], [0.2, 0.4, 0.6, 0.8])).collect();
+            cache.cache_text(key.clone(), &primitives);
+            let mut output = Vec::with_capacity(count + 1);
+            output.push(UiPrimitive::solid([0.0; 4], [0.0; 4]));
+            assert!(cache.append_cached_text(&key, &mut output));
+            assert_eq!(format!("{:?}", &output[1..]), format!("{primitives:?}"));
+            output.truncate(1);
+            let mut samples = [Vec::new(), Vec::new()];
+            for group in 0..11 {
+                for method in if group % 2 == 0 { [0, 1] } else { [1, 0] } {
+                    let start = std::time::Instant::now();
+                    for _ in 0..100 {
+                        if method == 0 { output.extend(cache.cached_text(&key).unwrap()); }
+                        else { assert!(cache.append_cached_text(&key, &mut output)); }
+                        std::hint::black_box(&output);
+                        output.truncate(1);
+                    }
+                    if group >= 2 { samples[method].push(start.elapsed().as_secs_f64() * 10.0); }
+                }
+            }
+            for values in &mut samples { values.sort_by(f64::total_cmp); }
+            reports.push(serde_json::json!({"primitives":count,"clone_then_append_ms":samples[0][4],"direct_append_ms":samples[1][4],"groups":9,"iterations":100}));
+        }
+        println!("CACHED_TEXT_APPEND_BENCHMARK={}", serde_json::json!(reports));
     }
 
     #[test]

@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：编辑器性能与验证工作已推进至第十五阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟及截图原生世界复用。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：编辑器性能与验证工作已推进至第十六阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用及字体缓存直接追加。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -389,3 +389,25 @@ PNG响应和二进制帧共用revision回退逻辑；PNG／JPEG编码、默认�
 同步耗时独立于原生渲染耗时；客户端等待还包含截图节流、编码、IPC和Bridge传输，是本QA调用方式下的观察值。截图吞吐仍受250ms间隔约束，实时Game渲染路径未修改，不宣称游戏FPS提升。优化后的两轮初始捕获全部返回原生revision 9；播放后再次暂停的6次捕获也各自对应一个固定revision，图像稳定。默认QA要求该原生revision，旧版对照仅通过显式 `MENGINE_ALLOW_SNAPSHOT_CAPTURES=1` 放行历史完整快照路径，报告记录此设置；日常验收不设置该变量。
 
 三轮均通过编辑、undo/redo、恢复文件、资源增改删、播放／暂停／单步／停止、已有特效冻结及固定副本验证，控制台error为0，源场景与HEAD一致，测试程序正常退出。优化后截图已检查，WebView缓存因EPERM保留。证据位于 `tmp/docs-artifacts/editor-performance-risk/`：`phase15-before.json`、`phase15-after.json`、`phase15-after-repeat.json`、`phase15-comparison.json`、`phase15-builds/*/receipt.json`及前端测试／构建日志。复现沿用 `scripts/qa-editor-performance-risk.mjs`。
+
+## 第十六阶段字体缓存直接追加
+
+命中字体现有几何缓存时，直接将独立图元副本追加到本帧数组，省去中间Vec分配和整段搬运。每个图元的字符串等字段仍复制，本帧的材质、位置及stencil修改不污染缓存。`UiFontResolver::cached_text` 保留原有公开接口；新增追加接口默认委托该方法，现有第三方resolver继续生效。Runtime字体缓存提供直接追加实现，仍先检查字体状态，保留250ms文件检查、失效处理和原有缓存容量限制。
+
+Release同进程对照缓存命中路径，交替执行“复制为临时数组后追加”和“直接追加”，每项预热2组后取9组中位数，每组100次。目标数组提前留出容量并保留前缀图元；计时包含字体查询、图元复制和本次副本释放，不包含排版、生成、GPU提交。缓存图元为合成数据，完整字段与追加结果核对一致。
+
+| 单条缓存图元数 | 临时数组后追加 | 直接追加 |
+| --- | ---: | ---: |
+| 16 | 0.001193 ms | 0.001104 ms |
+| 256 | 0.023501 ms | 0.022929 ms |
+| 4,096 | 0.975787 ms | 0.371655 ms |
+
+小文本收益很小，大缓存收益不能外推到普通Frostbound界面或整体FPS。默认位图文字仍按亮点生成图元；其首次生成、图元数量和字体缓存未命中的工作量未在此阶段优化。
+
+复现：`cargo test -p mengine-runtime --release --lib benchmark_cached_text_append -- --ignored --nocapture --test-threads=1`。原始基准在 `tmp/docs-artifacts/editor-performance-risk/phase16-font-benchmark.log`。
+
+串行Release测试：Runtime 246项通过、9个手动基准忽略；Editor Host 65项通过、6个手动基准忽略。扩充字体回归覆盖追加前缀、空缓存命中、未命中不写入、本帧位置／材质／stencil修改后的缓存隔离，以及追加请求直接检测字体失效；现有只实现旧缓存接口的resolver回归继续通过。最终字体失效用例另行通过。Debug／Release SDK与原生Release构建通过，旁置SDK复制摘要一致。
+
+原生QA通过编辑、undo/redo、持久恢复、外部资源增改删、播放／暂停／单步／停止和固定画面验证，控制台error为0、源场景与HEAD逐字节一致、测试编辑器正常退出。两次暂停均保持完整特效画面稳定，播放后6次截图都是509个UI图元、277个RenderObject、网格上传0，revision固定为186；截图已检查。WebView缓存因EPERM保留。
+
+对照使用第十五阶段已验收的相同旧EXE和SDK（`phase15-after-repeat.json`），本阶段产物另存旧／新构建副本。初始暂停仍为相同完整世界和像素摘要、850×478、4,031实体、187个RenderObject、412个UI图元、34次UI绘制。每轮6次去前2次预热后，Canvas布局和文字中位数 **0.60240→0.57920 ms**，原生整帧 **10.83645→10.85690 ms**。普通场景整体基本持平，不能据此声称FPS提升。证据：`phase16-integration-tests.log`、`phase16-font-invalidation-final.log`、`phase16-after.json`、`phase16-comparison.json`、`phase16-sdk-copy.json`及构建日志，均在上述临时目录；原生复现沿用 `scripts/qa-editor-performance-risk.mjs`。
