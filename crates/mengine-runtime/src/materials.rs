@@ -15,11 +15,15 @@ use mengine_rhi::{
     UiRenderMaterial,
 };
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant, SystemTime};
 
 const ASSET_CHECK_INTERVAL: Duration = Duration::from_millis(250);
+
+#[cfg(test)]
+#[path = "material_resolution_tests.rs"]
+mod resolution_tests;
 
 #[derive(Clone)]
 struct CachedMaterial {
@@ -105,7 +109,7 @@ impl RuntimeMaterialCache {
         if !is_material_path(normalized) {
             return None;
         }
-        match self.resolve_asset(normalized) {
+        match self.resolve_shared_asset(normalized) {
             Ok(material) => {
                 let mut render = render_material_from_asset(&material);
                 if material.shader == MaterialShader::Custom {
@@ -203,7 +207,7 @@ impl RuntimeMaterialCache {
         if !is_material_path(normalized) {
             return None;
         }
-        let result = self.resolve_asset(normalized).and_then(|material| {
+        let result = self.resolve_shared_asset(normalized).and_then(|material| {
             if material.shader != MaterialShader::Custom {
                 return Err(
                     "Graphic material requires a custom shader with mengine_ui_hook".into(),
@@ -308,6 +312,11 @@ impl RuntimeMaterialCache {
     }
 
     pub fn resolve_asset(&mut self, key: &str) -> Result<MaterialAsset, String> {
+        self.resolve_shared_asset(key).map(Arc::unwrap_or_clone)
+    }
+
+    // MiYu: rendering reads the cached source; editable assets and instance overrides own their copies.
+    fn resolve_shared_asset(&mut self, key: &str) -> Result<Arc<MaterialAsset>, String> {
         let mut chain = Vec::new();
         self.resolve_asset_inner(key.trim(), &mut chain)
     }
@@ -316,7 +325,7 @@ impl RuntimeMaterialCache {
         &mut self,
         key: &str,
         chain: &mut Vec<PathBuf>,
-    ) -> Result<MaterialAsset, String> {
+    ) -> Result<Arc<MaterialAsset>, String> {
         if chain.len() >= 32 {
             return Err("material instance inheritance exceeds 32 levels".into());
         }
@@ -338,15 +347,17 @@ impl RuntimeMaterialCache {
             ));
         }
         chain.push(path);
+        let path = chain.last().expect("material resolution path was pushed");
         let lower = key.to_ascii_lowercase();
         let resolved = if lower.ends_with(".minst") {
-            let instance = self.load_instance(key)?;
+            let instance = self.load_instance(path)?;
             let parent = self.resolve_asset_inner(&instance.parent, chain)?;
             instance
-                .apply_to(parent)
+                .apply_to(Arc::unwrap_or_clone(parent))
+                .map(Arc::new)
                 .map_err(|error| error.to_string())?
         } else if lower.ends_with(".mmat") || lower.ends_with(".mat") {
-            (*self.load(key)?).clone()
+            self.load(path)?
         } else {
             return Err("material path must end with .mmat, .mat, or .minst".into());
         };
@@ -354,62 +365,49 @@ impl RuntimeMaterialCache {
         Ok(resolved)
     }
 
-    fn load(&mut self, key: &str) -> Result<Arc<MaterialAsset>, String> {
-        let root = self
-            .project_root
-            .as_deref()
-            .ok_or_else(|| "runtime requires --project-root to resolve materials".to_owned())?;
-        let path = resolve_project_asset_path(root, key)
-            .ok_or_else(|| "material path must be project-relative without '..'".to_owned())?;
-        if let Some(cached) = self.materials.get(&path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
-        let modified = std::fs::metadata(&path)
+    fn load(&mut self, path: &Path) -> Result<Arc<MaterialAsset>, String> {
+        if let Some(cached) = self.materials.get(path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
+        let modified = std::fs::metadata(path)
             .and_then(|metadata| metadata.modified())
             .ok();
         let reload = self
             .materials
-            .get(&path)
+            .get(path)
             .is_none_or(|cached| cached.modified != modified);
         if reload {
-            let result = load_material_asset(&path)
+            let result = load_material_asset(path)
                 .map(Arc::new)
                 .map_err(|error| error.to_string());
             self.materials
-                .insert(path.clone(), CachedMaterial { checked_at: Instant::now(), modified, result });
+                .insert(path.to_path_buf(), CachedMaterial { checked_at: Instant::now(), modified, result });
         }
-        self.materials.get_mut(&path).expect("material cache inserted").checked_at = Instant::now();
+        self.materials.get_mut(path).expect("material cache inserted").checked_at = Instant::now();
         self.materials
-            .get(&path)
+            .get(path)
             .expect("material cache inserted")
             .result
             .clone()
     }
 
-    fn load_instance(&mut self, key: &str) -> Result<Arc<MaterialInstanceAsset>, String> {
-        let root = self
-            .project_root
-            .as_deref()
-            .ok_or_else(|| "runtime requires --project-root to resolve materials".to_owned())?;
-        let path = resolve_project_asset_path(root, key).ok_or_else(|| {
-            "material instance path must be project-relative without '..'".to_owned()
-        })?;
-        if let Some(cached) = self.instances.get(&path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
-        let modified = std::fs::metadata(&path)
+    fn load_instance(&mut self, path: &Path) -> Result<Arc<MaterialInstanceAsset>, String> {
+        if let Some(cached) = self.instances.get(path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
+        let modified = std::fs::metadata(path)
             .and_then(|metadata| metadata.modified())
             .ok();
         let reload = self
             .instances
-            .get(&path)
+            .get(path)
             .is_none_or(|cached| cached.modified != modified);
         if reload {
-            let result = load_material_instance_asset(&path)
+            let result = load_material_instance_asset(path)
                 .map(Arc::new)
                 .map_err(|error| error.to_string());
             self.instances
-                .insert(path.clone(), CachedMaterialInstance { checked_at: Instant::now(), modified, result });
+                .insert(path.to_path_buf(), CachedMaterialInstance { checked_at: Instant::now(), modified, result });
         }
-        self.instances.get_mut(&path).expect("material instance cache inserted").checked_at = Instant::now();
+        self.instances.get_mut(path).expect("material instance cache inserted").checked_at = Instant::now();
         self.instances
-            .get(&path)
+            .get(path)
             .expect("material instance cache inserted")
             .result
             .clone()

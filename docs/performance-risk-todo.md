@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化，视口 GPU 回读流水线的第三阶段、纹理同步／联合查询的第四阶段，主画面和嵌入视图共享网格提取的第五阶段、姿态源校验复用的第六阶段，以及跨绘制pass材质准备复用的第七阶段优化。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化，视口 GPU 回读流水线的第三阶段、纹理同步／联合查询的第四阶段，主画面和嵌入视图共享网格提取的第五阶段、姿态源校验复用的第六阶段、跨绘制pass材质准备复用的第七阶段，以及共享材质源读取的第八阶段优化。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -129,7 +129,7 @@ Release 基准使用 Frostbound 作者场景、960×540，串行与两帧流水�
 ## 后续风险
 
 - [x] **编辑器 Scene/Game 回读期间占用 renderer/world 锁。** 已使用有界独立 ticket、锁外等待与前端两请求流水线。GPU 数据传输仍需等待；后续以原生交互采样评估剩余成本。
-- [ ] **RenderObject 每帧重新提取。** `frame_compiler.rs` 仍重复规范化 mesh 路径、复制字段；同次共享材质解析已合并，第五阶段已在同一编译帧内让嵌入视图复用主画面提取结果；root 过滤仍沿 Parent 链查找，跨帧提取仍需评估组件 revision 与路径缓存。
+- [ ] **RenderObject 每帧重新提取。** `frame_compiler.rs` 仍重复规范化 mesh 路径、复制字段；同次共享材质解析已合并，第五阶段已在同一编译帧内让嵌入视图复用主画面提取结果，第八阶段消除渲染读取时的材质源深拷贝和重复路径构造；root 过滤仍沿 Parent 链查找，跨帧提取仍需评估组件 revision 与路径缓存。
 - [ ] **逐物体绘制及准备。** 第七阶段让主 pass／阴影 pass 复用单次提交的材质键和错误状态，减少纹理键字符串复制、Shader指纹计算与缺失纹理检查。通用实例化、重复GPU状态设置、材质哈希查找和临时Vec／draw order复用仍待评估；绘制次数及透明物体顺序保持不变。
 - [ ] **ECS 查询集合与存储。** 内建组件 TypeId 查找和有序联合查询已完成；自定义组件保留兼容查找。稠密组件存储属于后续架构变更。
 - [ ] **命令跨桥批处理。** 本阶段仅减少非组件解析次数，未改变逐条 stringify/跨桥协议。
@@ -203,3 +203,26 @@ Renderer 对相机／阴影视锥可见集合的并集，每个物体只生成�
 Debug／Release SDK与原生Release构建通过，EXE旁置SDK摘要核对一致。前后原生验收均通过3,812实体重命名、undo/redo、真实恢复文件、资源增改删、进入对局、Play/Pause/Step/Stop与编辑状态恢复；无控制台error，作者场景摘要不变，Scene／Game截图已检查。测试编辑器正常退出，部分WebView缓存因EPERM保留在临时目录。
 
 原生前后各采12帧，去前2帧后取10帧中位数：Game材质准备 **0.22710→0.23875 ms**，阴影编码 **0.27725→0.26565 ms**，主画面编码 **0.41470→0.29245 ms**；Scene主画面编码 **0.12650→0.09490 ms**。Scene总耗时3.86195→4.11895 ms，Game总耗时13.33100→13.51850 ms；网格同步、纹理同步和GPU等待等未修改环节仍有波动，当前不能据此宣称整体FPS提升。原生证据为 `phase7-before.json`、`phase7-after.json`、`phase7-comparison.json`；构建记录为 `phase7-sdk-build.log`、`phase7-native-build.log`、`phase7-sdk-copy.json`。原生复现仍使用 `scripts/qa-editor-performance-risk.mjs`。
+
+## 第八阶段共享不可变材质源
+
+RuntimeMaterialCache 的3D／UI渲染解析直接读取缓存中的不可变Arc材质源，再生成本物体独立的渲染材质。普通.mmat／.mat不再先深拷贝完整源资产；公开resolve_asset仍返回可编辑的独立值。材质实例覆盖在独立父值上执行，嵌套实例中仅独占的临时父值可以直接移交，不改写缓存源。材质路径经过原有项目相对路径校验后传入加载函数，取消同层加载时的重复路径构造。
+
+保持250毫秒轮询、显式invalidate、父材质热更新、错误诊断去重及修复后清除、Shader验证与实例继承32层限制。没有新增跨帧RenderObject缓存，也没有缓存已合并的实例结果；自定义Shader绑定解析和最终渲染材质字段复制仍按原流程执行。
+
+Release基准使用Frostbound作者场景与全部对象池激活场景，预热后9组、每组80次。每组计时前将文件检查时间设为当前时间，专门测量普通缓存命中帧，不包含250毫秒轮询中的磁盘检查；轮询及失效语义由单独回归验证。
+
+| 网格提取工作负载 | 第七阶段 | 第八阶段 |
+| --- | ---: | ---: |
+| 作者场景65网格、1个文件材质源 | 0.05797 ms | 0.05639 ms |
+| 全部对象池1,381网格、291个文件材质源 | 1.12614 ms | 0.98334 ms |
+
+前后完整RenderObject字段逐项一致。该压力基准不代表通常对局的FPS；作者场景收益很小。复现：设置MENGINE_PERFORMANCE_LABEL，运行 `cargo test -p mengine-runtime --release --lib benchmark_shared_material_sources -- --ignored --nocapture --test-threads=1`。证据为 `phase8-material-benchmark-before.log`／`phase8-material-benchmark-after.log` 和对应字段快照，均位于 `tmp/docs-artifacts/editor-performance-risk/`。
+
+材质专项17项通过，1个手动基准另行运行。新增回归覆盖源共享身份、可编辑副本与嵌套实例隔离、逐物体渲染副本、跨项目隔离、路径拒绝、父源轮询热更新、显式失效、删除／恢复和诊断清理、继承循环及31层实例加根材质可用／32层实例超限。现有UI自定义材质及Shader热更新测试也通过；日志为 `phase8-material-tests-final.log`。
+
+串行Release集成测试：Assets 94、Runtime 242、Editor Host 62项通过，Runtime／Host分别忽略5／6个手动基准。日志为 `phase8-integration-tests.log`。
+
+Debug／Release SDK与原生Release均已重建，原生编辑器使用摘要核对一致的旁置SDK。前后均通过3,812实体编辑、undo/redo、真实恢复文件、资源增改删、进入对局、Play/Pause/Step/Stop及编辑状态恢复；控制台无error，作者场景摘要不变，测试编辑器正常退出。Scene截图逐字节一致，Game截图已检查；部分WebView缓存因EPERM保留。
+
+前后各采12个native帧，去前2个后取10帧中位数：Game网格提取 **1.42805→1.45465 ms**，帧编译2.85830→2.76035 ms；Scene总计3.93610→4.00195 ms，Game总计13.49075→13.86255 ms。真实采样未体现缓存命中基准中的网格提取收益，不能宣称整体FPS提高；轮询、实际对象状态和其他帧阶段的成本仍需继续分解。原生记录为 `phase8-before.json`、`phase8-after.json`、`phase8-comparison.json`；构建记录为 `phase8-sdk-build.log`、`phase8-native-build.log`、`phase8-sdk-copy.json`。复现沿用 `scripts/qa-editor-performance-risk.mjs`。
