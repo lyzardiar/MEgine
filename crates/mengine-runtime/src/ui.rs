@@ -1958,7 +1958,7 @@ fn screen_space_camera_depth(camera: FrameCamera, distance: f32) -> f32 {
 
 #[allow(clippy::too_many_arguments)]
 fn walk(
-    tree: &UiChildren,
+    tree: &UiLayoutTree,
     world: &World,
     entity: Entity,
     canvas_root: Entity,
@@ -3392,22 +3392,28 @@ fn walk(
     primitives.extend(mask_pop);
 }
 
-type UiChildren = HashMap<Entity, Vec<Entity>>;
+// Child order and width-sensitive subtree measurements live for one UI collection only.
+#[derive(Default)]
+struct UiLayoutTree {
+    children: HashMap<Entity, Vec<Entity>>,
+    metrics: std::cell::RefCell<HashMap<(Entity, Option<u32>), LayoutChildMetrics>>,
+    cyclic_layout: std::cell::Cell<bool>,
+}
 
 #[cfg(test)]
 #[path = "ui_traversal_tests.rs"]
 mod traversal_tests;
 
-fn index_ui_children(world: &World) -> UiChildren {
-    let mut children = UiChildren::new();
+fn index_ui_children(world: &World) -> UiLayoutTree {
+    let mut children: HashMap<Entity, Vec<Entity>> = HashMap::new();
     for entity in world.iter_entities().filter(|entity| world.entity_active(*entity)) {
         if let Some(parent) = world.get_component::<Parent>(entity) { children.entry(parent.entity).or_default().push(entity); }
     }
     for siblings in children.values_mut() { siblings.sort_by_key(|entity| world.sibling_index(*entity)); }
-    children
+    UiLayoutTree { children, ..Default::default() }
 }
 
-fn children_of(tree: &UiChildren, parent: Entity) -> &[Entity] { tree.get(&parent).map(Vec::as_slice).unwrap_or_default() }
+fn children_of(tree: &UiLayoutTree, parent: Entity) -> &[Entity] { tree.children.get(&parent).map(Vec::as_slice).unwrap_or_default() }
 
 // MiYu: layout children retain sibling order; reverse drawing changes traversal, not assigned rectangles.
 fn child_placements<'a>(children: &'a [Entity], layout_children: &'a [Entity], rects: &'a [UiRect], reverse: bool) -> impl Iterator<Item = (Entity, Option<UiRect>)> + 'a {
@@ -4692,7 +4698,7 @@ fn participates_in_layout(world: &World, entity: Entity) -> bool {
         .is_some_and(|element| element.ignore_layout)
 }
 
-fn layout_children_of(tree: &UiChildren, world: &World, parent: Entity) -> Vec<Entity> {
+fn layout_children_of(tree: &UiLayoutTree, world: &World, parent: Entity) -> Vec<Entity> {
     children_of(tree, parent)
         .iter()
         .copied()
@@ -4701,7 +4707,7 @@ fn layout_children_of(tree: &UiChildren, world: &World, parent: Entity) -> Vec<E
 }
 
 fn layout_children_metrics(
-    tree: &UiChildren,
+    tree: &UiLayoutTree,
     world: &World,
     children: &[Entity],
     measured_widths: Option<&[f32]>,
@@ -4718,7 +4724,7 @@ fn layout_children_metrics(
 }
 
 fn layout_children_metrics_with_guard(
-    tree: &UiChildren,
+    tree: &UiLayoutTree,
     world: &World,
     children: &[Entity],
     measured_widths: Option<&[f32]>,
@@ -4742,17 +4748,24 @@ fn layout_children_metrics_with_guard(
 }
 
 fn layout_child_metrics_recursive(
-    tree: &UiChildren,
+    tree: &UiLayoutTree,
     world: &World,
     entity: Entity,
     measured_width: Option<f32>,
     font_resolver: &mut Option<&mut dyn UiFontResolver>,
     resolving: &mut HashSet<Entity>,
 ) -> LayoutChildMetrics {
+    let group = world.get_component::<LayoutGroup>(entity);
+    let key = (entity, measured_width.map(f32::to_bits));
+    if group.is_some() && !tree.cyclic_layout.get() {
+        if let Some(metrics) = tree.metrics.borrow().get(&key).copied() { return metrics; }
+    }
     if !resolving.insert(entity) {
+        // Cyclic measurements depend on the current ancestor guard; keep their original traversal semantics.
+        tree.cyclic_layout.set(true); tree.metrics.borrow_mut().clear();
         return layout_child_metrics(world, entity, measured_width, font_resolver, None);
     }
-    let nested_content = world.get_component::<LayoutGroup>(entity).map(|group| {
+    let nested_content = group.map(|group| {
         let children = layout_children_of(tree, world, entity);
         let initial =
             layout_children_metrics_with_guard(tree, world, &children, None, font_resolver, resolving);
@@ -4801,11 +4814,12 @@ fn layout_child_metrics_recursive(
     let metrics =
         layout_child_metrics(world, entity, measured_width, font_resolver, nested_content);
     resolving.remove(&entity);
+    if group.is_some() && !tree.cyclic_layout.get() { tree.metrics.borrow_mut().insert(key, metrics); }
     metrics
 }
 
 fn layout_children_metrics_for_rect(
-    tree: &UiChildren,
+    tree: &UiLayoutTree,
     world: &World,
     children: &[Entity],
     group: &LayoutGroup,

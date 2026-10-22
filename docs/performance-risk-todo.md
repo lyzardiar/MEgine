@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：编辑器性能与验证工作已推进至第二十阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验及层级变换构建。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：编辑器性能与验证工作已推进至第二十一阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建及嵌套UI布局测量复用。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -135,7 +135,7 @@ Release 基准使用 Frostbound 作者场景、960×540，串行与两帧流水�
 - [ ] **逐物体绘制及准备。** 第七阶段让主 pass／阴影 pass 复用单次提交的材质键和错误状态，减少纹理键字符串复制、Shader指纹计算与缺失纹理检查。通用实例化、重复GPU状态设置、材质哈希查找和临时Vec／draw order复用仍待评估；绘制次数及透明物体顺序保持不变。
 - [ ] **ECS 查询集合与存储。** 内建组件 TypeId 查找和有序联合查询已完成；自定义组件保留兼容查找。稠密组件存储属于后续架构变更。
 - [ ] **命令跨桥批处理。** 本阶段仅减少非组件解析次数，未改变逐条 stringify/跨桥协议。
-- [ ] **UI、timeline、animation、physics 性能审计。** 第九阶段已优化UI子节点借用、布局结果顺序匹配及按需建立索引；第十阶段消除普通控件图元的临时数组分配和往返搬运；第十一阶段跳过无软裁剪帧的裁剪数据打包／上传和Shader裁剪循环；第十二阶段按有效图元数量细化批次空间网格。默认位图文字按亮点生成独立图元，数量、批次构建和其他实例数据上传成本仍在；文本／嵌套布局和其他模块仍需审计，不能据局部数据排除剩余开销。
+- [ ] **UI、timeline、animation、physics 性能审计。** 第九阶段已优化UI子节点借用、布局结果顺序匹配及按需建立索引；第十阶段消除普通控件图元的临时数组分配和往返搬运；第十一阶段跳过无软裁剪帧的裁剪数据打包／上传和Shader裁剪循环；第十二阶段按有效图元数量细化批次空间网格。默认位图文字按亮点生成独立图元，数量、批次构建和其他实例数据上传成本仍在；第二十一阶段已复用同帧同宽度的嵌套LayoutGroup尺寸；其他文本／布局路径及模块仍需审计，不能据局部数据排除剩余开销。
 
 后续按原生 Scene/Game 的实际采样继续处理 mesh 来源校验、纹理同步和逐物体准备成本；ECS 存储重构单独安排。
 
@@ -523,3 +523,26 @@ Debug／Release SDK和原生Release构建通过，旁置SDK摘要一致。隔离
 | 原生整帧 | 8.94735 ms | 9.02015 ms |
 
 本轮确认层级构建成本下降，整帧仍受其他阶段和GPU等待波动影响，未观察到整体帧耗时改善。证据在同一临时目录：`phase20-after.json`、`phase20-native-qa.log`、`phase20-comparison.json`、`phase20-final-validation.json`、`phase20-sdk-copy.json`及构建日志。原生复现沿用 `scripts/qa-editor-performance-risk.mjs`。
+
+## 第二十一阶段嵌套布局测量复用
+
+每次UI收集创建独立的布局树，按LayoutGroup实体和测量宽度的精确浮点位缓存子树尺寸。父布局初测、宽度重测及ContentSizeFitter共用同帧结果，缓存随本次收集释放。普通图片／文字叶节点直接测量；检测到循环布局后清空并停用本次缓存，保留基于当前祖先集合的回退结果。
+
+基准使用真实字体缓存，场景加载、层级构建和首次字体预热在计时外；每组50次生成并释放UI结果，预热2组后取9组中位数。单独测量父子索引成本，用于区分全世界索引和布局生成。四组修改前后的完整RuntimeUiFrame摘要、图元数及控件数一致。
+
+| UI生成负载 | 之前 | 之后 |
+| --- | ---: | ---: |
+| 作者场景，3,812实体／249图元 | 0.13950 ms | 0.15442 ms |
+| 暂停游戏，4,031实体／412图元 | 0.23618 ms | 0.24155 ms |
+| 水平布局，2,000图片／控件 | 3.05775 ms | 2.84330 ms |
+| 7层嵌套布局＋ContentSizeFitter，9实体／1图元 | 0.44043 ms | 0.03291 ms |
+
+收益集中在重复测量的嵌套布局，普通Frostbound场景没有稳定收益。基准不包含GPU绘制或IPC；父子索引仍约0.06～0.08ms。复现：`cargo test -p mengine-runtime --release --lib benchmark_ui_collection_breakdown -- --ignored --nocapture --test-threads=1`，用 `MENGINE_PERFORMANCE_WORLD` 指定完整暂停世界。证据位于 `tmp/docs-artifacts/editor-performance-risk/phase21-ui-before-final.log`、`phase21-ui-after-final.log` 和 `phase21-ui-comparison.json`。
+
+串行Release验证Runtime 249项、Editor Host 65项通过，分别忽略13／6个手动基准。新增测试覆盖50／100宽度下不同的文本换行高度、相同宽度重复测量、下一帧文字／激活变化、循环子树的祖先回退及深层字体测量次数；七层子树结果与不使用缓存时相等，字体测量调用少于四分之一。证据：`phase21-runtime-tests.log`、`phase21-editor-host-tests.log`。
+
+Debug／Release SDK和原生Release构建通过，旁置SDK摘要一致。完整隔离样例通过编辑、undo/redo、持久恢复、外部资源变化、播放／暂停／单步／停止及特效冻结；材质、Shader、UI纹理、3D纹理和模型热更新均改变画面，恢复后像素精确一致，控制台error为0，测试编辑器正常退出。源场景、测试PNG及GLB与HEAD逐字节一致，暂停截图已检查。
+
+对照第二十阶段已验收的EXE／SDK和 `phase20-after.json`，初始暂停各6帧去前2帧，完整世界和像素摘要一致；850×478、4,031实体、187个RenderObject、412个UI图元、34次UI绘制、网格上传0、Play revision 9。Canvas布局／文字中位数0.61960→0.68570ms，整帧9.02015→9.09005ms，未证明普通场景提速。该固定负载没有LayoutGroup；七层布局收益由上述CPU基准及字段一致性验证，原生对照覆盖既有渲染和交互回归。
+
+原生证据：同目录的 `phase21-after.json`、`phase21-native-qa.log`、`phase21-comparison.json`、`phase21-final-validation.json`、`phase21-sdk-copy.json`及构建日志；复现沿用 `scripts/qa-editor-performance-risk.mjs`。

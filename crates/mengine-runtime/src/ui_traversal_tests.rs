@@ -25,7 +25,7 @@ fn borrowed_children_keep_snapshot_ties_reparenting_and_activation() {
     for &child in &children { world.set_editor_state(child, 0, true); }
     let mut order: Vec<_> = world.iter_entities().collect(); order.reverse(); assert!(world.set_entity_iteration_order(&order));
     let tree = index_ui_children(&world); assert_eq!(children_of(&tree, parent), children.iter().rev().copied().collect::<Vec<_>>());
-    assert!(std::ptr::eq(children_of(&tree, parent).as_ptr(), tree[&parent].as_ptr()));
+    assert!(std::ptr::eq(children_of(&tree, parent).as_ptr(), tree.children[&parent].as_ptr()));
     world.set_editor_state(children[2], 0, false); world.set_parent(children[1], Some(other));
     let tree = index_ui_children(&world);
     assert_eq!(children_of(&tree, parent), [children[3], children[0]]); assert_eq!(children_of(&tree, other), [children[1]]);
@@ -205,4 +205,114 @@ fn benchmark_ui_generation_and_batching() {
         reports.push(serde_json::json!({"name":name,"primitives":count,"generation_ms":median(0),"batching_ms":median(1),"drop_ms":median(2),"groups":9,"iterations":8}));
     }
     println!("UI_GENERATION_BATCHING_BENCHMARK={}", serde_json::json!(reports));
+}
+
+#[test]
+#[ignore = "manual Canvas collection and child-index CPU breakdown"]
+fn benchmark_ui_collection_breakdown() {
+    use std::{fmt::Write, hash::Hasher, hint::black_box, time::Instant};
+    struct Digest(std::hash::DefaultHasher);
+    impl std::fmt::Write for Digest { fn write_str(&mut self, value: &str) -> std::fmt::Result { self.0.write(value.as_bytes()); Ok(()) } }
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    let scene: serde_json::Value = serde_json::from_slice(&std::fs::read(root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
+    let mut inputs = vec![("authored", scene["world"].clone())];
+    if let Ok(path) = std::env::var("MENGINE_PERFORMANCE_WORLD") { inputs.push(("paused-game", serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap())); }
+    let mut worlds: Vec<_> = inputs.into_iter().map(|(name, value)| { let mut world = World::new(); mengine_scene::apply_snapshot(&mut world, &serde_json::from_value(value).unwrap()); (name, world) }).collect();
+    worlds.push(("images", layout_fixture(2000, false)));
+    worlds.push(("nested-layout", nested_layout_fixture(7)));
+    let mut reports = Vec::new();
+    for (name, world) in worlds {
+        let hierarchy = TransformHierarchy::build(&world); let mut fonts = crate::fonts::RuntimeFontCache::new(Some(root.clone()));
+        let mut collect = || { fonts.begin_frame(); collect_ui_primitives(&world, &hierarchy, 850, 478, None, None, 0, UiInteractionState::default(), None, Some(&mut fonts)) };
+        let expected = collect(); let mut digest = Digest(std::hash::DefaultHasher::new()); write!(digest, "{expected:?}").unwrap();
+        let mut samples = [Vec::new(), Vec::new()];
+        for group in 0..11 {
+            let started = Instant::now(); for _ in 0..50 { black_box(index_ui_children(&world)); }
+            let index_ms = started.elapsed().as_secs_f64() * 1000.0 / 50.0;
+            let started = Instant::now(); for _ in 0..50 { black_box(collect()); }
+            if group >= 2 { samples[0].push(index_ms); samples[1].push(started.elapsed().as_secs_f64() * 1000.0 / 50.0); }
+        }
+        for values in &mut samples { values.sort_by(f64::total_cmp); }
+        reports.push(serde_json::json!({"name":name,"entities":world.iter_entities().count(),"controls":expected.controls.len(),"primitives":expected.plan.primitives.len(),"all_fields_digest":format!("{:016x}", digest.0.finish()),"child_index_ms":samples[0][4],"collection_ms":samples[1][4],"groups":9,"iterations":50}));
+    }
+    println!("UI_COLLECTION_BREAKDOWN={}", serde_json::json!(reports));
+}
+
+fn nested_layout_fixture(depth: usize) -> World {
+    let mut world = World::new(); let canvas = world.spawn_empty(); world.insert_component(canvas, Canvas::default());
+    world.insert_component(canvas, RectTransform { anchor_max: [1.0, 1.0], size_delta: [0.0, 0.0], ..Default::default() });
+    let mut parent = canvas;
+    for _ in 0..depth {
+        let group = world.spawn_empty(); world.set_parent(group, Some(parent));
+        world.insert_component(group, RectTransform { size_delta: [320.0, 180.0], ..Default::default() });
+        world.insert_component(group, LayoutGroup { direction: "Horizontal".into(), ..Default::default() });
+        world.insert_component(group, ContentSizeFitter { horizontal_fit: "PreferredSize".into(), vertical_fit: "PreferredSize".into() });
+        parent = group;
+    }
+    let leaf = world.spawn_empty(); world.set_parent(leaf, Some(parent));
+    world.insert_component(leaf, RectTransform { size_delta: [32.0, 24.0], ..Default::default() });
+    world.insert_component(leaf, Image { source_size: [32.0, 24.0], ..Default::default() });
+    world
+}
+
+struct CountingLayoutFont { calls: usize }
+impl UiFontResolver for CountingLayoutFont {
+    fn measure_glyph(&mut self, _: &str, _: char, _: f32, _: &str) -> Option<UiFontGlyphMetrics> {
+        self.calls += 1;
+        Some(UiFontGlyphMetrics { advance: 20.0, metric_width: 18.0, line_height: 30.0, geometry: Some((0.0, 18.0)) })
+    }
+    fn resolve_glyph_texture(&mut self, _: &str, _: char, _: f32, _: &str, _: f32) -> Option<UiFontGlyphTexture> { None }
+}
+
+#[test]
+fn layout_subtree_cache_preserves_width_sensitive_text_and_refreshes_next_frame() {
+    let mut world = nested_layout_fixture(1);
+    let group = world.entities_with_components(&["LayoutGroup"]).next().unwrap();
+    let text = world.entities_with_components(&["Image"]).next().unwrap();
+    world.remove_component_by_name(text, "Image");
+    world.insert_component(text, Text { text: "AAAA".into(), font: "Assets/Fonts/Wrapped.ttf".into(), font_size: 10.0, horizontal_overflow: "Wrap".into(), ..Default::default() });
+    world.insert_component(group, LayoutGroup { direction: "Vertical".into(), padding: [0.0; 4], spacing: [0.0; 2], child_force_expand: false, child_force_expand_width: true, ..Default::default() });
+    fn measure(world: &World, tree: &UiLayoutTree, entity: Entity, width: f32, font: &mut CountingLayoutFont) -> LayoutChildMetrics {
+        layout_children_metrics(tree, world, &[entity], Some(&[width]), &mut Some(font as &mut dyn UiFontResolver))[0]
+    }
+    let tree = index_ui_children(&world); let mut font = CountingLayoutFont { calls: 0 };
+    let narrow = measure(&world, &tree, group, 50.0, &mut font); let first_calls = font.calls;
+    assert!(first_calls > 0); assert_eq!(narrow.preferred_height, Some(60.0));
+    assert_eq!(narrow, measure(&world, &tree, group, 50.0, &mut font)); assert_eq!(font.calls, first_calls);
+    let wide = measure(&world, &tree, group, 100.0, &mut font);
+    assert_eq!(wide.preferred_height, Some(30.0)); assert!(font.calls > first_calls);
+    let uncached = index_ui_children(&world); uncached.cyclic_layout.set(true);
+    assert_eq!(narrow, measure(&world, &uncached, group, 50.0, &mut font)); assert_eq!(wide, measure(&world, &uncached, group, 100.0, &mut font));
+    world.get_component_mut::<Text>(text).unwrap().text = "AAAAAAAA".into();
+    let next = measure(&world, &index_ui_children(&world), group, 50.0, &mut font);
+    assert_eq!(next.preferred_height, Some(120.0));
+    world.set_editor_state(text, 0, false);
+    assert_ne!(next, measure(&world, &index_ui_children(&world), group, 50.0, &mut font));
+}
+
+#[test]
+fn cyclic_layout_measurements_keep_guard_dependent_results_uncached() {
+    let mut world = nested_layout_fixture(2);
+    let groups: Vec<_> = world.entities_with_components(&["LayoutGroup"]).collect();
+    world.insert_component(groups[0], Parent { entity: groups[1] });
+    let tree = index_ui_children(&world); let uncached = index_ui_children(&world); uncached.cyclic_layout.set(true);
+    for entity in [groups[0], groups[1], groups[0]] {
+        let actual = layout_children_metrics(&tree, &world, &[entity], Some(&[50.0]), &mut None);
+        let expected = layout_children_metrics(&uncached, &world, &[entity], Some(&[50.0]), &mut None);
+        assert_eq!(actual, expected); assert!(tree.cyclic_layout.get()); assert!(tree.metrics.borrow().is_empty());
+    }
+}
+
+#[test]
+fn nested_layout_measurement_reuses_subtrees_without_changing_results() {
+    let mut world = nested_layout_fixture(7);
+    let group = world.entities_with_components(&["LayoutGroup"]).next().unwrap();
+    let text = world.entities_with_components(&["Image"]).next().unwrap();
+    world.remove_component_by_name(text, "Image");
+    world.insert_component(text, Text { text: "Nested layout".into(), font: "Assets/Fonts/Wrapped.ttf".into(), horizontal_overflow: "Wrap".into(), ..Default::default() });
+    let tree = index_ui_children(&world); let uncached = index_ui_children(&world); uncached.cyclic_layout.set(true);
+    let mut font = CountingLayoutFont { calls: 0 }; let mut baseline_font = CountingLayoutFont { calls: 0 };
+    let actual = layout_children_metrics(&tree, &world, &[group], Some(&[320.0]), &mut Some(&mut font as &mut dyn UiFontResolver));
+    let expected = layout_children_metrics(&uncached, &world, &[group], Some(&[320.0]), &mut Some(&mut baseline_font as &mut dyn UiFontResolver));
+    assert_eq!(actual, expected); assert!(font.calls > 0); assert!(font.calls * 4 < baseline_font.calls, "cached {} uncached {}", font.calls, baseline_font.calls);
 }
