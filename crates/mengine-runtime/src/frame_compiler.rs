@@ -1,5 +1,5 @@
 //! Shared CPU-side scene evaluation for every runtime render target.
-//! Author: MiYu. Borrow resource objects across main and embedded scene views.
+//! Author: MiYu. Share per-frame mesh extraction across main and embedded scene views.
 
 use crate::fonts::{FontLoadFailure, RuntimeFontCache};
 use crate::lighting2d::apply_2d_lighting;
@@ -173,8 +173,9 @@ impl FrameCompiler<'_> {
         let has_authored_camera = active_camera.entity.is_some();
         let has_scene_camera = has_authored_camera || request.view_camera.is_some();
         phase("Camera selection");
+        let mut mesh_entities = Vec::new();
         let objects = if has_scene_camera {
-            collect_objects(request.world, request.hierarchy, self.materials)
+            collect_mesh_objects(request.world, request.hierarchy, self.materials, None, request.include_ui.then_some(&mut mesh_entities))
         } else {
             Vec::new()
         };
@@ -254,7 +255,7 @@ impl FrameCompiler<'_> {
             ui.plan.primitives = primitives;
         }
         phase("Particles, trails and sorting");
-        let scene_views = collect_scene_views(request.world, request.hierarchy, &mut ui.plan, self.materials, request.scene_clear, &authored_lighting);
+        let scene_views = collect_scene_views(request.world, request.hierarchy, &mut ui.plan, self.materials, request.scene_clear, &authored_lighting, (has_scene_camera && request.include_ui).then_some((mesh_entities.as_slice(), objects.as_slice())));
         let view_resources = if has_scene_camera { Vec::new() } else { scene_views.iter().flat_map(|view| view.objects.iter().cloned()).collect() };
         texture_failures.extend(
             self.textures
@@ -283,7 +284,7 @@ impl FrameCompiler<'_> {
     }
 }
 
-fn collect_scene_views(world: &World, hierarchy: &TransformHierarchy, ui: &mut UiBatchPlan, materials: &mut RuntimeMaterialCache, scene_clear: Vec4, lighting: &FrameLighting) -> Vec<SceneTextureFrame> {
+fn collect_scene_views(world: &World, hierarchy: &TransformHierarchy, ui: &mut UiBatchPlan, materials: &mut RuntimeMaterialCache, scene_clear: Vec4, lighting: &FrameLighting, meshes: Option<(&[Entity], &[RenderObject])>) -> Vec<SceneTextureFrame> {
     let mut views = Vec::new();
     let mut seen = std::collections::HashSet::new();
     for primitive in &mut ui.primitives {
@@ -302,7 +303,7 @@ fn collect_scene_views(world: &World, hierarchy: &TransformHierarchy, ui: &mut U
         let camera = camera.unwrap().active(size[0] as f32 / size[1] as f32);
         let mut lighting = lighting.clone();
         let clear = resolve_camera_background(&camera, scene_clear, &mut lighting);
-        views.push(SceneTextureFrame { key: primitive.key.texture.clone(), size, clear: clear.into(), camera: camera.frame, objects: collect_view_objects(world, hierarchy, materials, root), lighting });
+        views.push(SceneTextureFrame { key: primitive.key.texture.clone(), size, clear: clear.into(), camera: camera.frame, objects: meshes.map_or_else(|| collect_view_objects(world, hierarchy, materials, root), |(entities, objects)| collect_shared_view_objects(world, entities, objects, root)), lighting });
     }
     views
 }
@@ -549,31 +550,21 @@ pub fn collect_objects(
     hierarchy: &TransformHierarchy,
     materials: &mut RuntimeMaterialCache,
 ) -> Vec<RenderObject> {
-    collect_mesh_objects(world, hierarchy, materials, None)
+    collect_mesh_objects(world, hierarchy, materials, None, None)
 }
 
 fn collect_view_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>) -> Vec<RenderObject> {
-    collect_mesh_objects(world, hierarchy, materials, root)
+    collect_mesh_objects(world, hierarchy, materials, root, None)
 }
 
-fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>) -> Vec<RenderObject> {
+fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>, mut entities: Option<&mut Vec<Entity>>) -> Vec<RenderObject> {
     let mut out = Vec::new();
     // MiYu: resolve a shared authored material once per extraction; each object's overrides stay private.
     let mut resolved_materials = HashMap::<&str, RenderMaterial>::new();
     for entity in world.entities_with_components(&["MeshRenderer"]) {
         // MiYu: resolve eligibility before reading pooled renderer components.
         let Some(transform) = hierarchy.get(entity) else { continue; };
-        if let Some(root) = root {
-            let mut current = entity;
-            let mut matches = current == root;
-            for _ in 0..128 {
-                if matches { break; }
-                let Some(parent) = world.get_component::<Parent>(current) else { break; };
-                current = parent.entity;
-                matches = current == root;
-            }
-            if !matches { continue; }
-        }
+        if !within_render_root(world, entity, root) { continue; }
         if let Some(mesh) = world.get_component::<MeshRenderer>(entity) {
             let mut material = world
                 .get_component::<PbrMaterial>(entity)
@@ -584,6 +575,7 @@ fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials
             if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
                 material = apply_material_property_block(material, block);
             }
+            if let Some(entities) = entities.as_deref_mut() { entities.push(entity); }
             out.push(RenderObject {
                 mesh_key: mesh.mesh.trim().replace('\\', "/"),
                 model: transform.matrix,
@@ -594,6 +586,22 @@ fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials
         }
     }
     out
+}
+
+// MiYu: one immutable compile owns the source objects; each view keeps independently mutable copies.
+fn collect_shared_view_objects(world: &World, entities: &[Entity], objects: &[RenderObject], root: Option<Entity>) -> Vec<RenderObject> {
+    debug_assert_eq!(entities.len(), objects.len());
+    entities.iter().zip(objects).filter(|(entity, _)| within_render_root(world, **entity, root)).map(|(_, object)| object.clone()).collect()
+}
+
+fn within_render_root(world: &World, mut entity: Entity, root: Option<Entity>) -> bool {
+    let Some(root) = root else { return true; };
+    for _ in 0..128 {
+        if entity == root { return true; }
+        let Some(parent) = world.get_component::<Parent>(entity) else { return false; };
+        entity = parent.entity;
+    }
+    entity == root
 }
 
 pub fn collect_lighting(world: &World, hierarchy: &TransformHierarchy) -> FrameLighting {
@@ -813,15 +821,15 @@ mod scene_view_tests {
         primitive.key.texture = key.clone();
         let mut plan = UiBatchPlan::build(vec![primitive.clone()]);
         let mut materials = RuntimeMaterialCache::new(None);
-        let views = collect_scene_views(&world, &TransformHierarchy::build(&world), &mut plan, &mut materials, Vec4::ZERO, &FrameLighting::default());
+        let views = collect_scene_views(&world, &TransformHierarchy::build(&world), &mut plan, &mut materials, Vec4::ZERO, &FrameLighting::default(), None);
         assert_eq!(views.len(), 1); assert_eq!(views[0].size, [132, 136]); assert_eq!(views[0].objects.len(), 1);
         assert_eq!(views[0].camera.position, Vec3::new(0.0, 2.0, 8.0)); assert!((views[0].clear.r - 0.2).abs() < 0.000001);
         world.set_editor_state(mesh, 0, false);
-        let views = collect_scene_views(&world, &TransformHierarchy::build(&world), &mut plan, &mut materials, Vec4::ZERO, &FrameLighting::default());
+        let views = collect_scene_views(&world, &TransformHierarchy::build(&world), &mut plan, &mut materials, Vec4::ZERO, &FrameLighting::default(), None);
         assert!(views[0].objects.is_empty());
         world.despawn(camera);
         plan = UiBatchPlan::build(vec![primitive]);
-        assert!(collect_scene_views(&world, &TransformHierarchy::build(&world), &mut plan, &mut materials, Vec4::ZERO, &FrameLighting::default()).is_empty());
+        assert!(collect_scene_views(&world, &TransformHierarchy::build(&world), &mut plan, &mut materials, Vec4::ZERO, &FrameLighting::default(), None).is_empty());
         assert_eq!(plan.primitives[0].key.texture, "fallback");
     }
 }

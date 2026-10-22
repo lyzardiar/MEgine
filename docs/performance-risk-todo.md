@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化，以及视口 GPU 回读流水线的第三阶段实现。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化，视口 GPU 回读流水线的第三阶段、纹理同步／联合查询的第四阶段，以及主画面和嵌入视图共享网格提取的第五阶段优化。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -129,10 +129,35 @@ Release 基准使用 Frostbound 作者场景、960×540，串行与两帧流水�
 ## 后续风险
 
 - [x] **编辑器 Scene/Game 回读期间占用 renderer/world 锁。** 已使用有界独立 ticket、锁外等待与前端两请求流水线。GPU 数据传输仍需等待；后续以原生交互采样评估剩余成本。
-- [ ] **RenderObject 每帧重新提取。** `frame_compiler.rs` 仍重复规范化 mesh 路径、复制字段；同次共享材质解析已合并，root 过滤会反复沿 Parent 链查找。评估按组件 revision 缓存与加载时路径规范化。
+- [ ] **RenderObject 每帧重新提取。** `frame_compiler.rs` 仍重复规范化 mesh 路径、复制字段；同次共享材质解析已合并，第五阶段已在同一编译帧内让嵌入视图复用主画面提取结果；root 过滤仍沿 Parent 链查找，跨帧提取仍需评估组件 revision 与路径缓存。
 - [ ] **逐物体绘制及准备。** `renderer.rs` 主 pass/阴影 pass 缺少通用实例化，重复状态设置与材质哈希查找；临时 Vec 和 draw order 可复用。先测量 draw call 与准备时间，再实施 mesh/material 分组。
 - [ ] **ECS 查询集合与存储。** 内建组件 TypeId 查找和有序联合查询已完成；自定义组件保留兼容查找。稠密组件存储属于后续架构变更。
 - [ ] **命令跨桥批处理。** 本阶段仅减少非组件解析次数，未改变逐条 stringify/跨桥协议。
 - [ ] **UI、timeline、animation、physics 性能审计。** 尚未完成，不能据本阶段数据排除这些模块的开销。
 
 后续按原生 Scene/Game 的实际采样继续处理 mesh 来源校验、纹理同步和逐物体准备成本；ECS 存储重构单独安排。
+
+## 第五阶段主画面与嵌入视图共享提取
+
+同一 `FrameCompiler::compile` 调用内，主画面保存可见 MeshRenderer 对应的实体序列；头像和嵌入场景视图按原有根节点边界筛选，并复制已提取的 RenderObject。每个视图仍拥有可独立修改的网格键和材质，摄像机专属 billboard 不会污染主画面或其他视图。没有主摄像机的 UI-only 画面按原路径提取所需网格；不含 UI 的帧不创建实体序列。
+
+复用范围限于单次不可变世界编译。材质文件继续按既有轮询规则在后续帧刷新，材质组件与逐物体覆盖、实体顺序、激活状态及重新设置父级即时参与新帧。根节点包含自身，最多追溯128层，保留原有深度边界与环终止行为。额外内存为单帧可见网格的实体ID数组，未跨帧保留 RenderObject。
+
+| Release CPU 工作负载（主画面加嵌入视图） | 独立提取 | 同帧复用 |
+| --- | ---: | ---: |
+| 作者场景65个网格，无嵌入视图 | 0.05893 ms | 0.05985 ms |
+| 作者场景65个网格，一个仅含1个网格的局部视图 | 0.09504 ms | 0.06206 ms |
+| 作者场景65个网格，一个完整视图 | 0.11577 ms | 0.07925 ms |
+| 作者场景65个网格，八个完整视图 | 0.54924 ms | 0.24179 ms |
+| 激活全部对象池1,381个网格，无嵌入视图 | 1.06044 ms | 1.04590 ms |
+| 激活全部对象池1,381个网格，一个局部视图 | 1.23323 ms | 1.19829 ms |
+| 激活全部对象池1,381个网格，一个完整视图 | 2.14797 ms | 1.62039 ms |
+| 激活全部对象池1,381个网格，八个完整视图 | 10.40940 ms | 5.76349 ms |
+
+同进程交错执行，预热后9组中位数，每组20次；各组输出按网格、矩阵、阴影标志和材质逐项核对。无视图情况包含维护实体序列的开销；多视图压力数据不代表通常只有一个头像的实际对局帧率。
+
+复现：`cargo test -p mengine-runtime --release --lib frame_compiler -- --include-ignored --nocapture --test-threads=1`。10项通过，包含两个手动基准，以及同帧副本隔离、重设父级、激活、材质热更新、128层边界与环、主摄像机／UI-only／不含UI组合。原始数据为 `tmp/docs-artifacts/editor-performance-risk/phase5-frame-benchmark.log` 和 `phase5-extraction-benchmark.json`。
+
+串行 Release 集成：Runtime 236、Editor Host 62 项通过，分别忽略3／6个手动基准。Debug／Release配套SDK和Tauri Release已重建，原生验收使用EXE旁的SDK；3,812实体编辑、undo/redo、真实恢复文件、外部资源增改删、Play/Pause/Step/Stop及停止后恢复通过，控制台无error，源场景摘要保持一致。Scene与游戏截图已检查，测试编辑器正常退出；WebView缓存因EPERM保留在临时目录。构建和集成日志为 `phase5-integration-tests.log`、`phase5-sdk-build.log`、`phase5-native-build.log`；SDK摘要为 `phase5-sdk-copy.json`。
+
+原生前后各采12个预热帧，去前2个后取10个中位数；优化后复采一次，以检查首轮Game变慢的波动。三轮Scene总计为 **3.87／3.65／4.24 ms**，Game为 **13.71／14.85／13.62 ms**（基线／首次优化后／复采）。Game编译为2.86／3.21／2.90 ms，网格同步2.24／2.80／2.17 ms。未修改环节也发生变化，不能将多视图微基准解释为普通对局整体加速；目前仅证明同帧重复提取减少与功能一致。两次优化后功能验收均通过，不丢弃首次采样。证据为 `phase5-before.json`、`phase5-after.json`、`phase5-after-repeat.json`、`phase5-comparison.json`、`phase5-comparison-repeat.json`；复现沿用 `scripts/qa-editor-performance-risk.mjs` 和对应 `MENGINE_PERFORMANCE_LABEL`。
