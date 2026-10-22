@@ -349,6 +349,7 @@ fn same_ui_material_bindings(left: Option<&Arc<UiRenderMaterial>>, right: Option
 
 const DEFAULT_CANVAS_SORTING_GRID_SIZE: f32 = 0.1;
 const MAX_CANVAS_SORTING_GRID_AXIS: usize = 128;
+const TARGET_CANVAS_GRID_OCCUPANCY: usize = 64;
 const MAX_CANVAS_SORTING_GRID_REFERENCES: usize = 1_048_576;
 const MAX_CANVAS_OVERLAP_EDGES: usize = 262_144;
 
@@ -463,8 +464,9 @@ fn canvas_segment_order(primitives: &[UiPrimitive], grid_size: f32) -> Vec<usize
             total
         },
     );
-    let axis = ((1.0 / normalized_canvas_grid_size(grid_size)).ceil() as usize)
-        .clamp(1, MAX_CANVAS_SORTING_GRID_AXIS);
+    let requested_axis = (1.0 / normalized_canvas_grid_size(grid_size)).ceil() as usize;
+    let density_axis = (non_empty.len() as f32 / TARGET_CANVAS_GRID_OCCUPANCY as f32).sqrt().ceil() as usize;
+    let axis = requested_axis.max(density_axis).clamp(1, MAX_CANVAS_SORTING_GRID_AXIS);
     let cell_width = ((area.max_x - area.min_x) / axis as f32).max(f32::EPSILON);
     let cell_height = ((area.max_y - area.min_y) / axis as f32).max(f32::EPSILON);
     let cell_range = |value: PrimitiveBounds| {
@@ -2522,6 +2524,10 @@ fn fs_main(input: VsOut) -> @location(0) vec4<f32> {
 #[cfg(test)]
 #[path = "ui_soft_clip_tests.rs"]
 mod soft_clip_tests;
+
+#[cfg(test)]
+#[path = "ui_batch_density_tests.rs"]
+mod batch_density_tests;
 
 #[cfg(test)]
 mod tests {

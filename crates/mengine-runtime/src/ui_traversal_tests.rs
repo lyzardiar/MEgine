@@ -174,3 +174,35 @@ fn benchmark_ui_traversal() {
     }
     println!("UI_TRAVERSAL_BENCHMARK={}", serde_json::json!(reports));
 }
+
+#[test]
+#[ignore = "manual UI generation and batching CPU breakdown"]
+fn benchmark_ui_generation_and_batching() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let value: serde_json::Value = serde_json::from_slice(&std::fs::read(root.join("samples/frostbound-realms/Assets/Scenes/Main.mscene")).unwrap()).unwrap();
+    let snapshot: mengine_core::snapshot::WorldSnapshot = serde_json::from_value(value["world"].clone()).unwrap();
+    let mut authored = World::new(); mengine_scene::apply_snapshot(&mut authored, &snapshot);
+    let mut reports = Vec::new();
+    for (name, world) in [("authored", authored), ("input-forward", graphic_storage_fixture(512, false)), ("input-reverse", graphic_storage_fixture(512, true))] {
+        let hierarchy = TransformHierarchy::build(&world);
+        let mut samples = Vec::new(); let mut count = 0;
+        for group in 0..11 {
+            let mut totals = [0.; 3];
+            for _ in 0..8 {
+                let start = std::time::Instant::now();
+                let mut frame = collect_ui_primitives(&world, &hierarchy, 4096, 1024, None, None, 0, UiInteractionState::default(), None, None);
+                let generation = start.elapsed().as_secs_f64() * 1000.;
+                count = frame.plan.primitives.len();
+                let start = std::time::Instant::now();
+                frame.plan = UiBatchPlan::build(std::mem::take(&mut frame.plan.primitives));
+                let batching = start.elapsed().as_secs_f64() * 1000.;
+                let start = std::time::Instant::now(); drop(std::hint::black_box(frame));
+                totals[0] += generation; totals[1] += batching; totals[2] += start.elapsed().as_secs_f64() * 1000.;
+            }
+            if group > 1 { samples.push(totals.map(|value| value / 8.)); }
+        }
+        let median = |column: usize| { let mut values: Vec<_> = samples.iter().map(|sample| sample[column]).collect(); values.sort_by(f64::total_cmp); values[4] };
+        reports.push(serde_json::json!({"name":name,"primitives":count,"generation_ms":median(0),"batching_ms":median(1),"drop_ms":median(2),"groups":9,"iterations":8}));
+    }
+    println!("UI_GENERATION_BATCHING_BENCHMARK={}", serde_json::json!(reports));
+}
