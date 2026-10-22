@@ -36,6 +36,36 @@ fn benchmark_material_texture_sync_cadence() {
     println!("TEXTURE_SYNC_CADENCE={}", serde_json::json!(reports));
 }
 
+#[test]
+#[ignore = "manual UI texture file-check benchmark"]
+fn benchmark_ui_texture_sync() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    let authored: serde_json::Value = serde_json::from_slice(&std::fs::read(root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
+    let mut inputs = vec![("authored", authored["world"].clone())];
+    if let Ok(path) = std::env::var("MENGINE_PERFORMANCE_WORLD") { inputs.push(("paused-game", serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap())); }
+    let mut renderer = pollster::block_on(Renderer::new_headless(winit::dpi::PhysicalSize::new(32, 32))).unwrap();
+    let mut reports = Vec::new();
+    for (name, value) in inputs {
+        let mut world = World::new(); mengine_scene::apply_snapshot(&mut world, &serde_json::from_value(value).unwrap());
+        let mut materials = RuntimeMaterialCache::new(Some(root.clone())); let mut textures = RuntimeTextureCache::new(Some(root.clone())); let mut fonts = RuntimeFontCache::new(Some(root.clone()));
+        let mut particles = ParticleWorld::default(); let mut trails = TrailWorld::default();
+        let frame = FrameCompiler { materials: &mut materials, particles: &mut particles, trails: &mut trails, textures: &mut textures, fonts: &mut fonts, ui_batch_order: None }.compile(FrameCompileRequest {
+            world: &world, hierarchy: &TransformHierarchy::build(&world), viewport: [850, 478], scene_clear: glam::Vec4::ZERO, camera_override: None, view_camera: None,
+            include_ui: true, target_display: 0, interaction: UiInteractionState::default(), button_tints: &HashMap::new(), focused_ui: None, sorting_layers: &SortingLayers::default(), delta_seconds: 0.0,
+        });
+        assert!(textures.sync(&mut renderer, &frame.ui).is_empty());
+        let mut samples = Vec::new();
+        for group in 0..7 {
+            let start = Instant::now();
+            for _ in 0..100 { assert!(textures.sync(&mut renderer, &frame.ui).is_empty()); }
+            if group >= 2 { samples.push(start.elapsed().as_secs_f64() * 10.0); }
+        }
+        samples.sort_by(f64::total_cmp);
+        reports.push(serde_json::json!({"name":name,"primitives":frame.ui.primitives.len(),"batches":frame.ui.batches.len(),"file_textures":textures.attempted_ui.len(),"median_ms":samples[2],"groups":5,"iterations":100}));
+    }
+    println!("UI_TEXTURE_SYNC_BENCHMARK={}", serde_json::json!(reports));
+}
+
 struct TextureFixture(PathBuf);
 impl TextureFixture {
     fn new() -> Self { let root = std::env::temp_dir().join(format!("mengine-texture-sync-{}", uuid::Uuid::new_v4())); std::fs::create_dir_all(root.join("Assets")).unwrap(); Self(root) }
@@ -51,9 +81,18 @@ fn material_sync_preserves_variants_hot_reload_removal_and_project_ownership() {
     let mut cache = RuntimeTextureCache::new(Some(fixture.0.clone())); let mut objects = vec![texture_object()];
     let stats = |renderer: &Renderer| { let stats = renderer.material_texture_stats(); (stats.color, stats.data) };
     assert!(cache.sync_materials(&mut renderer, &objects).is_empty()); assert_eq!(stats(&renderer), (1, 1));
+    let mut image = UiPrimitive::solid([0.0, 0.0, 16.0, 16.0], [1.0; 4]); image.key.texture = "Assets/Shared.png".into();
+    let plan = UiBatchPlan::build(vec![image]);
+    assert!(cache.sync(&mut renderer, &plan).is_empty());
     let first = cache.attempted_material[0]["Assets/Shared.png"];
-    fixture.write(5); cache.material_last_poll = None;
+    fixture.write(5);
+    std::fs::File::options().write(true).open(fixture.0.join("Assets/Shared.png")).unwrap().set_modified(first.modified.unwrap()).unwrap();
+    cache.material_last_poll = None;
     assert!(cache.sync_materials(&mut renderer, &objects).is_empty());
+    assert!(cache.sync(&mut renderer, &plan).is_empty());
+    let second = cache.attempted_material[0]["Assets/Shared.png"];
+    assert_eq!(second.modified, first.modified); assert_ne!(second.length, first.length, "length changes must reload textures even with the same timestamp");
+    assert_eq!(cache.attempted_ui["Assets/Shared.png"], second);
     assert_ne!(first, cache.attempted_material[0]["Assets/Shared.png"]); assert_eq!(cache.attempted_material[0], cache.attempted_material[1]);
     objects[0].material.normal_texture.clear();
     assert!(cache.sync_materials(&mut renderer, &objects).is_empty()); assert_eq!(stats(&renderer), (1, 0));

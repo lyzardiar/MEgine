@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：编辑器性能与验证工作已推进至第十七阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加及Windows材质文件检查。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：编辑器性能与验证工作已推进至第十八阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加及Windows材质／纹理文件检查。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -435,3 +435,35 @@ Release基准每项预热2组后取9组中位数，每组20次。世界和Transf
 固定世界对照第十六阶段已验收的EXE／SDK和 `phase16-after.json`：完整世界及像素摘要一致，均为850×478、4,031实体、187个RenderObject、412个UI图元、34次UI绘制，预热后网格上传0。各取6帧去前2帧后，网格／材质提取 **1.07895→0.52365 ms**，原生整帧 **10.85690→10.60730 ms**，Canvas布局／文字0.57920→0.64645ms，客户端截图等待110.69430→119.83135ms。其他阶段与传输仍有波动，不能据此声称整体FPS提升。
 
 原生QA额外在隔离副本修改 `Ground.mmat` 和 `ClassicGround.mshader`，分别确认像素发生变化，恢复后均精确回到原始像素摘要；整个过程中世界摘要不变。资源刷新使旧截图被拒绝时，仅在原有30秒等待窗口内重试明确的canvas `NOT_READY`，其他错误直接失败；最终材质恢复经历1次重试，Shader恢复未重试。截图已检查。证据：`phase17-after-final.json`、`phase17-native-qa-final.log`、`phase17-comparison.json`、`phase17-sdk-copy.json`及构建日志，位于同一临时目录；复现沿用 `scripts/qa-editor-performance-risk.mjs`。
+
+## 第十八阶段Windows纹理文件检查
+
+平台层 `file_change_stamp` 同时返回修改时间和文件长度，普通Windows文件复用一次属性查询；目录和重解析点使用标准metadata，错误与不可直接处理的路径继续回退。已有 `file_modified_time` 保留接口与错误行为。纹理缓存将该信息映射为原有FileStamp，继续用时间和长度共同判断变化。3D材质纹理保留250ms轮询，UI纹理保留逐帧检查；未改变线性／sRGB变体、失败去重、删除／恢复及项目切换处理。
+
+Release基准每项预热2组后取5组中位数，每组100次。Renderer、已编译帧、资源首次加载和上传均在计时外；材质测试交替测普通帧与强制轮询帧，UI测试使用真实字体解析器编译的静态图元。阶段内仅测资源同步，不计排版、绘制和GPU回读。
+
+| 纹理同步负载 | 之前 | 之后 |
+| --- | ---: | ---: |
+| 作者场景，65物体／8纹理变体，普通帧 | 0.01233 ms | 0.01183 ms |
+| 作者场景，3D纹理轮询帧 | 0.18292 ms | 0.04056 ms |
+| 全对象池，1,381物体／213纹理变体，普通帧 | 0.12759 ms | 0.12796 ms |
+| 全对象池，3D纹理轮询帧 | 4.93705 ms | 1.05933 ms |
+| 作者UI，249图元／13批次／4文件纹理 | 0.07544 ms | 0.01666 ms |
+| 暂停游戏UI，412图元／34批次／20文件纹理 | 0.39218 ms | 0.08196 ms |
+
+普通帧基本持平；文件查询收益不等同于整体FPS。复现：`cargo test -p mengine-runtime --release --lib textures::sync_tests::benchmark_ -- --ignored --nocapture --test-threads=1`；暂停游戏UI同样通过 `MENGINE_PERFORMANCE_WORLD` 指定QA的固定世界。证据在 `tmp/docs-artifacts/editor-performance-risk/phase18-texture-before.log`、`phase18-ui-before.log` 和 `phase18-texture-after.log`。
+
+平台层回归新增固定mtime下的文件长度变化、目录长度及链接目标信息核对；真实GPU纹理回归覆盖同mtime不同长度的PNG在3D线性／sRGB和UI路径重新加载。串行Release结果为Platform 3、Runtime 246、Host 65项通过，Runtime／Host分别忽略11／6个手动基准；当前Windows仍以真实junction验证重解析点回退，文件符号链接受本机权限限制。Debug／Release SDK及原生Release构建通过，旁置SDK摘要一致。证据：`phase18-platform-tests.log`、`phase18-texture-tests.log`、`phase18-integration-tests.log`、`phase18-sdk-copy.json`和构建日志。
+
+原生对照使用第十七阶段已验收的EXE／SDK和 `phase17-after-final.json`。每轮初始暂停6帧去前2帧，完整世界和像素摘要相同，850×478、4,031实体、187个RenderObject、412个UI图元、34次UI绘制，网格上传为0，Play revision固定为9。
+
+| 原生固定负载中位数 | 第十七阶段 | 第十八阶段 |
+| --- | ---: | ---: |
+| UI纹理同步 | 0.52235 ms | 0.12205 ms |
+| 3D材质纹理同步 | 0.87250 ms | 0.23130 ms |
+| 资源同步合计 | 2.60430 ms | 1.51725 ms |
+| 原生整帧 | 10.60730 ms | 9.05225 ms |
+
+整帧还包含其他阶段与GPU等待的波动，当前数据是固定负载观察值，不是持续FPS验收。原生QA完成编辑、undo/redo、持久恢复、外部资源增改删、播放／暂停／单步／停止和完整特效冻结，控制台error为0，测试编辑器正常退出，源场景与HEAD逐字节一致。
+
+热更新QA覆盖材质、Shader、UI金币图标和3D队伍色纹理，分别确认画面变化，恢复后像素精确回到原始摘要，世界摘要始终不变。PNG采用同尺寸现有图像作为临时替换内容，通过临时文件原子替换隔离副本来断开硬链接；原始样例PNG与HEAD逐字节一致。材质／Shader各遇1次有界canvas `NOT_READY`重试，两项纹理未重试。截图已检查，WebView缓存因EPERM保留。证据：`phase18-after.json`、`phase18-native-qa.log`、`phase18-comparison.json`及隔离构建receipt，仍在同一临时目录；原生复现沿用 `scripts/qa-editor-performance-risk.mjs`。

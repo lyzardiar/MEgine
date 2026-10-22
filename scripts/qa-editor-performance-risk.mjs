@@ -233,13 +233,21 @@ try{
   }
   console.log('PASS fixed-state native captures; world and warmed pixels unchanged');
 
-  report.materialHotReload=[];
+  const replaceIsolatedResource=(file,bytes)=>{
+    const relative=path.relative(sample,file);assert.ok(relative&&!relative.startsWith('..')&&!path.isAbsolute(relative));
+    const temporary=file+'.performance-qa-'+process.pid+'.tmp';
+    fs.writeFileSync(temporary,bytes,{flag:'wx'});
+    try{fs.renameSync(temporary,file);}finally{fs.rmSync(temporary,{force:true});}
+  };
+  report.resourceHotReload=[];
   for(const [relative,change] of [
-    ['Assets/Materials/Ground.mmat',raw=>JSON.stringify({...JSON.parse(raw),shader:'unlit',base_color:[1,0,1,1],base_color_texture:''})],
-    ['Assets/Shaders/ClassicGround.mshader',raw=>{const marker='s.base_color=mix(color,rock,cliff);';assert.ok(raw.includes(marker));return raw.replace(marker,'s.base_color=vec3<f32>(1.0,0.0,1.0);');}],
+    ['Assets/Materials/Ground.mmat',raw=>JSON.stringify({...JSON.parse(raw.toString('utf8')),shader:'unlit',base_color:[1,0,1,1],base_color_texture:''})],
+    ['Assets/Shaders/ClassicGround.mshader',bytes=>{const raw=bytes.toString('utf8'),marker='s.base_color=mix(color,rock,cliff);';assert.ok(raw.includes(marker));return raw.replace(marker,'s.base_color=vec3<f32>(1.0,0.0,1.0);');}],
+    ['Assets/Art/console-gold.png',()=>fs.readFileSync(path.join(sample,'Assets/Art/console-lumber.png'))],
+    ['Assets/WarcraftIII/Textures/ReplaceableTextures/TeamColor/TeamColor01.png',()=>fs.readFileSync(path.join(sample,'Assets/WarcraftIII/Textures/ReplaceableTextures/TeamColor/TeamColor00.png'))],
   ]){
     const file=path.join(sample,relative),original=fs.readFileSync(file),sourceFile=path.join(source,relative),sourceDigest=hash(sourceFile);
-    const result={asset:relative};report.materialHotReload.push(result);
+    const result={asset:relative};report.resourceHotReload.push(result);
     const captureHash=async()=>{
       let shot;
       try{shot=await query('view.screenshot',{target:'game',maxSize:fixedCaptureSize,includeNativeProfile:true});}
@@ -248,14 +256,14 @@ try{
       return createHash('sha256').update(Buffer.from(shot.dataUrl.split(',')[1],'base64')).digest('hex');
     };
     try{
-      fs.writeFileSync(file,change(original.toString('utf8')));
-      await waitUntil('native material hot reload '+relative,async()=>{const pixels=await captureHash();if(!pixels||pixels===report.fixedGamePixelHash)return false;result.changedPixelHash=pixels;return true;});
-    }finally{fs.writeFileSync(file,original);}
-    await waitUntil('native material restoration '+relative,async()=>{const pixels=await captureHash();if(pixels!==report.fixedGamePixelHash)return false;result.restoredPixelHash=pixels;return true;});
+      replaceIsolatedResource(file,change(original));
+      await waitUntil('native resource hot reload '+relative,async()=>{const pixels=await captureHash();if(!pixels||pixels===report.fixedGamePixelHash)return false;result.changedPixelHash=pixels;return true;});
+    }finally{replaceIsolatedResource(file,original);}
+    await waitUntil('native resource restoration '+relative,async()=>{const pixels=await captureHash();if(pixels!==report.fixedGamePixelHash)return false;result.restoredPixelHash=pixels;return true;});
     assert.equal(hash(file),createHash('sha256').update(original).digest('hex'));
     assert.equal(hash(sourceFile),sourceDigest,'Source sample assets must stay unchanged');
   }
-  console.log('PASS native material and shader hot reload and exact pixel restoration');
+  console.log('PASS native material, shader and texture hot reload and exact pixel restoration');
 
   const logs=await query('console.get_logs',{limit:300});
   report.logs=logs;

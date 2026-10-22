@@ -4,7 +4,7 @@ mod input;
 mod files;
 
 pub use input::{InputState, KeyCode, PointerState};
-pub use files::file_modified_time;
+pub use files::{file_change_stamp, file_modified_time, FileChangeStamp};
 
 use std::path::{Path, PathBuf};
 

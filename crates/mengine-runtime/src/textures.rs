@@ -706,10 +706,10 @@ fn compose_uv(region: [f32; 4], authored: [f32; 4]) -> [f32; 4] {
 }
 
 fn file_stamp(path: &Path) -> FileStamp {
-    match std::fs::metadata(path) {
+    match mengine_platform::file_change_stamp(path) {
         Ok(metadata) => FileStamp {
-            modified: metadata.modified().ok(),
-            length: Some(metadata.len()),
+            modified: metadata.modified,
+            length: Some(metadata.length),
         },
         Err(_) => FileStamp::default(),
     }
