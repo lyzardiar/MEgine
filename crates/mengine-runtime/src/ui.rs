@@ -1157,7 +1157,7 @@ pub(crate) fn collect_ui_primitives(
         .collect();
     canvases.sort_by_key(|entity| canvas_sort_key(world, *entity, sorting_layers));
 
-    let tree = &index_ui_children(world);
+    let mut tree = None;
     let mut primitives = Vec::new();
     let mut world_primitives = Vec::new();
     let mut controls = Vec::new();
@@ -1237,7 +1237,7 @@ pub(crate) fn collect_ui_primitives(
         let primitive_start = primitives.len();
         let control_start = controls.len();
         walk(
-            tree,
+            tree.get_or_insert_with(|| index_ui_children(world)),
             world,
             canvas_entity,
             canvas_entity,
@@ -3301,7 +3301,7 @@ fn walk(
     if let Some(tab_view) = world.get_component::<TabView>(entity) {
         if !children.is_empty() {
             let selected = tab_view.selected_index.clamp(0, children.len() as i32 - 1) as usize;
-            children = vec![children[selected]];
+            children = &children[selected..selected + 1];
         }
     }
     let layout = world.get_component::<LayoutGroup>(entity);
@@ -3359,14 +3359,8 @@ fn walk(
             [group.child_control_width, group.child_control_height]
         }
     });
-    if layout.is_some_and(|group| group.reverse_z_order) {
-        children.reverse();
-    }
-    for child in children {
-        let forced = layout_children
-            .iter()
-            .position(|candidate| *candidate == child)
-            .and_then(|index| forced_rects.get(index).copied());
+    let reverse = layout.is_some_and(|group| group.reverse_z_order);
+    for (child, forced) in child_placements(children, &layout_children, &forced_rects, reverse) {
         walk(
             tree,
             world,
@@ -3395,6 +3389,10 @@ fn walk(
 
 type UiChildren = HashMap<Entity, Vec<Entity>>;
 
+#[cfg(test)]
+#[path = "ui_traversal_tests.rs"]
+mod traversal_tests;
+
 fn index_ui_children(world: &World) -> UiChildren {
     let mut children = UiChildren::new();
     for entity in world.iter_entities().filter(|entity| world.entity_active(*entity)) {
@@ -3404,7 +3402,21 @@ fn index_ui_children(world: &World) -> UiChildren {
     children
 }
 
-fn children_of(tree: &UiChildren, parent: Entity) -> Vec<Entity> { tree.get(&parent).cloned().unwrap_or_default() }
+fn children_of(tree: &UiChildren, parent: Entity) -> &[Entity] { tree.get(&parent).map(Vec::as_slice).unwrap_or_default() }
+
+// MiYu: layout children retain sibling order; reverse drawing changes traversal, not assigned rectangles.
+fn child_placements<'a>(children: &'a [Entity], layout_children: &'a [Entity], rects: &'a [UiRect], reverse: bool) -> impl Iterator<Item = (Entity, Option<UiRect>)> + 'a {
+    let mut layout_index = if reverse { layout_children.len() } else { 0 };
+    (0..children.len()).map(move |offset| {
+        let child = children[if reverse { children.len() - 1 - offset } else { offset }];
+        let index = if reverse { layout_index.checked_sub(1) } else { Some(layout_index) };
+        let forced = index.filter(|&index| layout_children.get(index) == Some(&child)).and_then(|index| {
+            layout_index = if reverse { index } else { index + 1 };
+            rects.get(index).copied()
+        });
+        (child, forced)
+    })
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 struct ContentSize {
@@ -4677,7 +4689,8 @@ fn participates_in_layout(world: &World, entity: Entity) -> bool {
 
 fn layout_children_of(tree: &UiChildren, world: &World, parent: Entity) -> Vec<Entity> {
     children_of(tree, parent)
-        .into_iter()
+        .iter()
+        .copied()
         .filter(|entity| participates_in_layout(world, *entity))
         .collect()
 }

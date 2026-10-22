@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化，视口 GPU 回读流水线的第三阶段、纹理同步／联合查询的第四阶段，主画面和嵌入视图共享网格提取的第五阶段、姿态源校验复用的第六阶段、跨绘制pass材质准备复用的第七阶段，以及共享材质源读取的第八阶段优化。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：已完成九个编辑器性能优化阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理和UI遍历。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -133,7 +133,7 @@ Release 基准使用 Frostbound 作者场景、960×540，串行与两帧流水�
 - [ ] **逐物体绘制及准备。** 第七阶段让主 pass／阴影 pass 复用单次提交的材质键和错误状态，减少纹理键字符串复制、Shader指纹计算与缺失纹理检查。通用实例化、重复GPU状态设置、材质哈希查找和临时Vec／draw order复用仍待评估；绘制次数及透明物体顺序保持不变。
 - [ ] **ECS 查询集合与存储。** 内建组件 TypeId 查找和有序联合查询已完成；自定义组件保留兼容查找。稠密组件存储属于后续架构变更。
 - [ ] **命令跨桥批处理。** 本阶段仅减少非组件解析次数，未改变逐条 stringify/跨桥协议。
-- [ ] **UI、timeline、animation、physics 性能审计。** 尚未完成，不能据本阶段数据排除这些模块的开销。
+- [ ] **UI、timeline、animation、physics 性能审计。** 第九阶段已优化UI子节点借用、布局结果顺序匹配及按需建立索引；大量InputField生成图元的成本已记录，文本／嵌套布局和其他模块仍需审计，不能据局部数据排除剩余开销。
 
 后续按原生 Scene/Game 的实际采样继续处理 mesh 来源校验、纹理同步和逐物体准备成本；ECS 存储重构单独安排。
 
@@ -226,3 +226,30 @@ Release基准使用Frostbound作者场景与全部对象池激活场景，预热
 Debug／Release SDK与原生Release均已重建，原生编辑器使用摘要核对一致的旁置SDK。前后均通过3,812实体编辑、undo/redo、真实恢复文件、资源增改删、进入对局、Play/Pause/Step/Stop及编辑状态恢复；控制台无error，作者场景摘要不变，测试编辑器正常退出。Scene截图逐字节一致，Game截图已检查；部分WebView缓存因EPERM保留。
 
 前后各采12个native帧，去前2个后取10帧中位数：Game网格提取 **1.42805→1.45465 ms**，帧编译2.85830→2.76035 ms；Scene总计3.93610→4.00195 ms，Game总计13.49075→13.86255 ms。真实采样未体现缓存命中基准中的网格提取收益，不能宣称整体FPS提高；轮询、实际对象状态和其他帧阶段的成本仍需继续分解。原生记录为 `phase8-before.json`、`phase8-after.json`、`phase8-comparison.json`；构建记录为 `phase8-sdk-build.log`、`phase8-native-build.log`、`phase8-sdk-copy.json`。复现沿用 `scripts/qa-editor-performance-risk.mjs`。
+
+## 第九阶段UI子节点与布局遍历
+
+UI编译按需建立单帧子节点索引：没有符合显示条件的Canvas时跳过索引构造；有多个Canvas时共享同一索引。节点遍历直接借用子节点切片，Tab选择也使用切片，不再逐节点复制Vec。布局结果按有序子集顺序匹配，替代每个子节点遍历查找，从平方级降为线性匹配。逆序绘制从末尾匹配对应布局结果，布局矩形及ignore_layout行为保持一致。
+
+索引与借用仅存在于本次不可变世界编译，后续帧仍重新读取激活、同级顺序、父级和Canvas状态。未引入跨帧UI缓存，文本生成、嵌套布局度量及图元数量仍保留原实现。
+
+Release CPU基准包含完整UI帧生成和批次构造，层级预先构建，字体使用默认测量器；各预热2组后取9组中位数，每组25次。普通作者场景首次优化后较慢，因此复采一次，两个结果都保留。四种工作负载前后及复采的全部UI输出字段一致。
+
+| 工作负载 | 第八阶段 | 首次优化后 | 复采 |
+| --- | ---: | ---: | ---: |
+| Frostbound作者场景，1,103图元 | 0.75636 ms | 0.81906 ms | 0.77329 ms |
+| 无Canvas，20,001实体 | 0.93139 ms | 0.00004 ms | 0.00004 ms |
+| 2,000个Image，正序布局 | 4.02134 ms | 3.16584 ms | 2.83779 ms |
+| 2,000个Image，逆序布局 | 3.54379 ms | 3.14164 ms | 2.84507 ms |
+
+无Canvas数据仅表示省去空UI编译的索引工作，不含世界层级构造或整个编辑器帧。普通Frostbound场景未显示稳定收益，不能将布局压力数据换算为实际FPS。早期2,000个InputField负载生成304,000图元，正／逆序基线为209.44／185.61 ms；该负载的图元数量和生成成本另列后续风险，本阶段没有对其作优化后性能验收。原始记录保留在 `phase9-inputfields-baseline.log`。
+
+复现：设置MENGINE_PERFORMANCE_LABEL，运行 `cargo test -p mengine-runtime --release --lib benchmark_ui_traversal -- --ignored --nocapture --test-threads=1`。主要基准证据为 `phase9-ui-benchmark-before.log`、`phase9-ui-benchmark-after.log`、`phase9-ui-benchmark-after-repeat.log`。全部原始数据位于 `tmp/docs-artifacts/editor-performance-risk/`。
+
+UI专项88项通过，1个手动基准另行运行。新增用例穷举8个子节点的所有布局子集、正／逆序及矩形数量边界，并验证快照同级排序、重新设父级、激活、Tab选择和Canvas显示状态变化；现有屏幕／世界Canvas、布局、文字、裁剪和射线回归均通过。日志为 `phase9-ui-tests-final.log`。
+
+串行Release集成测试：Runtime 245、Editor Host 62项通过，各忽略6个手动基准；日志为 `phase9-integration-tests.log`。
+
+Debug／Release SDK及原生Release构建通过，旁置SDK摘要核对一致。前后原生验收均通过3,812实体编辑、undo/redo、真实恢复文件、资源增改删、进入对局、Play/Pause/Step/Stop和编辑状态恢复；控制台error为0，作者场景摘要不变，测试编辑器正常退出。Scene截图逐字节一致，Game截图已检查；WebView缓存因EPERM保留。
+
+前后各12个预热native帧，去前2帧后取10帧中位数：Game Canvas布局／文字 **0.70255→0.76070 ms**，UI批次0.15255→0.17045 ms，帧编译2.79815→2.86460 ms；Scene总计4.02265→3.75055 ms，Game总计13.17755→13.42970 ms。原生普通UI场景未显示本阶段收益，不据此宣称整体FPS提升。证据为 `phase9-before.json`、`phase9-after.json`、`phase9-comparison.json`，构建与SDK记录为 `phase9-sdk-build.log`、`phase9-native-build.log`、`phase9-sdk-copy.json`。原生复现沿用 `scripts/qa-editor-performance-risk.mjs`。
