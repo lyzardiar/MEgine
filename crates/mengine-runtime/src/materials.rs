@@ -367,9 +367,7 @@ impl RuntimeMaterialCache {
 
     fn load(&mut self, path: &Path) -> Result<Arc<MaterialAsset>, String> {
         if let Some(cached) = self.materials.get(path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
-        let modified = std::fs::metadata(path)
-            .and_then(|metadata| metadata.modified())
-            .ok();
+        let modified = mengine_platform::file_modified_time(path).ok();
         let reload = self
             .materials
             .get(path)
@@ -391,9 +389,7 @@ impl RuntimeMaterialCache {
 
     fn load_instance(&mut self, path: &Path) -> Result<Arc<MaterialInstanceAsset>, String> {
         if let Some(cached) = self.instances.get(path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
-        let modified = std::fs::metadata(path)
-            .and_then(|metadata| metadata.modified())
-            .ok();
+        let modified = mengine_platform::file_modified_time(path).ok();
         let reload = self
             .instances
             .get(path)
@@ -428,9 +424,7 @@ impl RuntimeMaterialCache {
         let path = resolve_project_asset_path(root, normalized)
             .ok_or_else(|| "shader path must be project-relative without '..'".to_owned())?;
         if let Some(cached) = self.surface_shaders.get(&path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
-        let modified = std::fs::metadata(&path)
-            .and_then(|metadata| metadata.modified())
-            .ok();
+        let modified = mengine_platform::file_modified_time(&path).ok();
         let reload = self
             .surface_shaders
             .get(&path)

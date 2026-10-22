@@ -233,6 +233,30 @@ try{
   }
   console.log('PASS fixed-state native captures; world and warmed pixels unchanged');
 
+  report.materialHotReload=[];
+  for(const [relative,change] of [
+    ['Assets/Materials/Ground.mmat',raw=>JSON.stringify({...JSON.parse(raw),shader:'unlit',base_color:[1,0,1,1],base_color_texture:''})],
+    ['Assets/Shaders/ClassicGround.mshader',raw=>{const marker='s.base_color=mix(color,rock,cliff);';assert.ok(raw.includes(marker));return raw.replace(marker,'s.base_color=vec3<f32>(1.0,0.0,1.0);');}],
+  ]){
+    const file=path.join(sample,relative),original=fs.readFileSync(file),sourceFile=path.join(source,relative),sourceDigest=hash(sourceFile);
+    const result={asset:relative};report.materialHotReload.push(result);
+    const captureHash=async()=>{
+      let shot;
+      try{shot=await query('view.screenshot',{target:'game',maxSize:fixedCaptureSize,includeNativeProfile:true});}
+      catch(error){if(error.code!=='NOT_READY'||!error.message.includes('canvas is not available yet'))throw error;result.notReadyRetries=(result.notReadyRetries??0)+1;return null;}
+      assert.equal(worldHash(await snapshot()),fixedLoadedHash,'Asset hot reload must not mutate the captured world');
+      return createHash('sha256').update(Buffer.from(shot.dataUrl.split(',')[1],'base64')).digest('hex');
+    };
+    try{
+      fs.writeFileSync(file,change(original.toString('utf8')));
+      await waitUntil('native material hot reload '+relative,async()=>{const pixels=await captureHash();if(!pixels||pixels===report.fixedGamePixelHash)return false;result.changedPixelHash=pixels;return true;});
+    }finally{fs.writeFileSync(file,original);}
+    await waitUntil('native material restoration '+relative,async()=>{const pixels=await captureHash();if(pixels!==report.fixedGamePixelHash)return false;result.restoredPixelHash=pixels;return true;});
+    assert.equal(hash(file),createHash('sha256').update(original).digest('hex'));
+    assert.equal(hash(sourceFile),sourceDigest,'Source sample assets must stay unchanged');
+  }
+  console.log('PASS native material and shader hot reload and exact pixel restoration');
+
   const logs=await query('console.get_logs',{limit:300});
   report.logs=logs;
   assert.equal(logs.filter(log=>log.level==='error').length,0,JSON.stringify(logs));

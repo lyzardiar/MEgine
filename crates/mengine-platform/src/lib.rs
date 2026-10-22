@@ -1,8 +1,10 @@
 //! Platform abstractions: window helpers, input state, paths.
 
 mod input;
+mod files;
 
 pub use input::{InputState, KeyCode, PointerState};
+pub use files::file_modified_time;
 
 use std::path::{Path, PathBuf};
 

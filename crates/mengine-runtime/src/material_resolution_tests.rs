@@ -116,3 +116,53 @@ fn benchmark_shared_material_sources() {
     }
     println!("MATERIAL_SOURCE_BENCHMARK={}", serde_json::json!(reports));
 }
+
+#[test]
+#[ignore = "manual material extraction CPU cost breakdown"]
+fn benchmark_material_extraction_breakdown() {
+    use crate::frame_compiler::collect_objects;
+    use mengine_core::generated::{MeshRenderer, PbrMaterial};
+    use mengine_core::{TransformHierarchy, World};
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    let authored: serde_json::Value = serde_json::from_slice(&std::fs::read(root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
+    let mut inputs = vec![("authored", authored["world"].clone(), false), ("all-pools", authored["world"].clone(), true)];
+    if let Ok(path) = std::env::var("MENGINE_PERFORMANCE_WORLD") { inputs.push(("paused-game", serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap(), false)); }
+    let mut reports = Vec::new();
+    for (name, value, activate) in inputs {
+        let mut world = World::new(); mengine_scene::apply_snapshot(&mut world, &serde_json::from_value(value).unwrap());
+        if activate { for e in world.iter_entities().collect::<Vec<_>>() { world.set_editor_state(e, 0, true); } }
+        let hierarchy = TransformHierarchy::build(&world);
+        let mut cache = RuntimeMaterialCache::new(Some(root.clone()));
+        let expected = collect_objects(&world, &hierarchy, &mut cache);
+        let mut keys: Vec<_> = world.entities_with_components(&["MeshRenderer"]).filter(|&e| hierarchy.get(e).is_some() && world.get_component::<PbrMaterial>(e).is_none()).filter_map(|e| world.get_component::<MeshRenderer>(e).map(|m| m.material.clone())).filter(|key| is_material_path(key)).collect();
+        keys.sort(); keys.dedup();
+        for polling in [false, true] {
+            let mut stages = Vec::new();
+            for stage in 0..4 {
+                let mut samples = Vec::new();
+                for group in 0..11 {
+                    let mut elapsed = 0.0;
+                    for _ in 0..20 {
+                        let checked = Instant::now() - if polling { ASSET_CHECK_INTERVAL } else { Duration::ZERO };
+                        for entry in cache.materials.values_mut() { entry.checked_at = checked; }
+                        for entry in cache.instances.values_mut() { entry.checked_at = checked; }
+                        for entry in cache.surface_shaders.values_mut() { entry.checked_at = checked; }
+                        let start = Instant::now();
+                        match stage {
+                            0 => { std::hint::black_box(collect_objects(&world, &hierarchy, &mut cache)); }
+                            1 => { for key in &keys { std::hint::black_box(cache.resolve(key)); } }
+                            2 => { for key in &keys { std::hint::black_box(cache.resolve_shared_asset(key).unwrap()); } }
+                            _ => { for key in &keys { std::hint::black_box(resolve_project_asset_path(&root, key).unwrap()); } }
+                        }
+                        elapsed += start.elapsed().as_secs_f64() * 1000.0;
+                    }
+                    if group >= 2 { samples.push(elapsed / 20.0); }
+                }
+                samples.sort_by(f64::total_cmp); stages.push(samples[4]);
+            }
+            reports.push(serde_json::json!({"name":name,"polling":polling,"objects":expected.len(),"unique_materials":keys.len(),"source_materials":cache.materials.len(),"instances":cache.instances.len(),"shaders":cache.surface_shaders.len(),"extraction_ms":stages[0],"resolve_ms":stages[1],"source_ms":stages[2],"paths_ms":stages[3]}));
+        }
+        assert_eq!(format!("{expected:?}"), format!("{:?}", collect_objects(&world, &hierarchy, &mut cache)));
+    }
+    println!("MATERIAL_EXTRACTION_BREAKDOWN={}", serde_json::json!(reports));
+}

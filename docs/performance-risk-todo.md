@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：编辑器性能与验证工作已推进至第十六阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用及字体缓存直接追加。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：编辑器性能与验证工作已推进至第十七阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加及Windows材质文件检查。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -411,3 +411,27 @@ Release同进程对照缓存命中路径，交替执行“复制为临时数组�
 原生QA通过编辑、undo/redo、持久恢复、外部资源增改删、播放／暂停／单步／停止和固定画面验证，控制台error为0、源场景与HEAD逐字节一致、测试编辑器正常退出。两次暂停均保持完整特效画面稳定，播放后6次截图都是509个UI图元、277个RenderObject、网格上传0，revision固定为186；截图已检查。WebView缓存因EPERM保留。
 
 对照使用第十五阶段已验收的相同旧EXE和SDK（`phase15-after-repeat.json`），本阶段产物另存旧／新构建副本。初始暂停仍为相同完整世界和像素摘要、850×478、4,031实体、187个RenderObject、412个UI图元、34次UI绘制。每轮6次去前2次预热后，Canvas布局和文字中位数 **0.60240→0.57920 ms**，原生整帧 **10.83645→10.85690 ms**。普通场景整体基本持平，不能据此声称FPS提升。证据：`phase16-integration-tests.log`、`phase16-font-invalidation-final.log`、`phase16-after.json`、`phase16-comparison.json`、`phase16-sdk-copy.json`及构建日志，均在上述临时目录；原生复现沿用 `scripts/qa-editor-performance-risk.mjs`。
+
+## 第十七阶段Windows材质文件检查
+
+新增材质提取分项基准，将完整提取、唯一材质解析、源资源解析和路径构造分开测量，并区分普通帧与强制轮询帧。暂停游戏的18个唯一材质／4个Shader在普通帧解析约0.014ms，轮询帧约0.475ms；路径构造约0.003ms。当前峰值主要来自同步文件检查，继续增加解析结果缓存对该峰值帮助有限。
+
+平台层新增 `file_modified_time`。Windows普通文件通过 `GetFileAttributesExW` 查询最后写入时间，保留100ns精度；重解析点、查询失败及无法直接处理的路径回退 `std::fs::metadata`，继续跟随链接目标。其他平台使用原有metadata。材质、材质实例和自定义Shader使用该接口；250ms轮询、显式失效、继承／错误处理与读取内容的路径均保持现有行为。依赖沿用仓库已有的windows-sys 0.61.2。
+
+Release基准每项预热2组后取9组中位数，每组20次。世界和TransformHierarchy提前建立；每次计时前单独设置文件检查期限，计时包含提取及其临时结果释放。暂停游戏使用原生QA保存的固定世界，排除特效组件不影响本基准的MeshRenderer提取。
+
+| 提取负载 | 普通帧之前 | 普通帧之后 | 轮询帧之前 | 轮询帧之后 |
+| --- | ---: | ---: | ---: | ---: |
+| 作者场景，65物体 | 0.06601 ms | 0.05881 ms | 0.11607 ms | 0.06990 ms |
+| 全对象池，1,381物体／291材质 | 1.02716 ms | 1.02736 ms | 10.67818 ms | 4.05855 ms |
+| 暂停游戏，187物体／18材质 | 0.16887 ms | 0.19452 ms | 0.69677 ms | 0.26755 ms |
+
+普通帧没有稳定收益；轮询成本降低，但仍同步执行，不能据此推算整体FPS。复现：`cargo test -p mengine-runtime --release --lib benchmark_material_extraction_breakdown -- --ignored --nocapture --test-threads=1`；可用 `MENGINE_PERFORMANCE_WORLD` 指定QA输出的 `fixed-game-world.json`。证据：`tmp/docs-artifacts/editor-performance-risk/phase17-breakdown-before.log` 和 `phase17-breakdown-after.log`。
+
+平台测试3项通过，覆盖写入时间变化、100ns精度及Unix纪元两侧、中文／空格路径、目录、硬链接、缺失文件、NUL错误、长路径及显式扩展路径。当前机器无法创建文件符号链接，测试实际创建目录junction，验证重解析点走metadata并读取目标目录时间；文件符号链接的运行验收仍受此权限限制。Runtime 246项通过、10个手动基准忽略；Host 65项通过、6个手动基准忽略，包含材质继承、删除／恢复、失效和Shader热更新。日志为 `phase17-platform-final.log`、`phase17-runtime-tests.log` 及 `phase17-integration-tests.log` 中的Host测试段。
+
+配套Debug／Release SDK和原生Release构建通过，旁置SDK摘要一致。原生QA完成编辑、undo/redo、持久恢复、资源增改删、播放／暂停／单步／停止及特效冻结验证，控制台error为0，测试编辑器正常退出。源场景与HEAD逐字节一致，原始样例资源未改动；WebView缓存因EPERM保留。
+
+固定世界对照第十六阶段已验收的EXE／SDK和 `phase16-after.json`：完整世界及像素摘要一致，均为850×478、4,031实体、187个RenderObject、412个UI图元、34次UI绘制，预热后网格上传0。各取6帧去前2帧后，网格／材质提取 **1.07895→0.52365 ms**，原生整帧 **10.85690→10.60730 ms**，Canvas布局／文字0.57920→0.64645ms，客户端截图等待110.69430→119.83135ms。其他阶段与传输仍有波动，不能据此声称整体FPS提升。
+
+原生QA额外在隔离副本修改 `Ground.mmat` 和 `ClassicGround.mshader`，分别确认像素发生变化，恢复后均精确回到原始像素摘要；整个过程中世界摘要不变。资源刷新使旧截图被拒绝时，仅在原有30秒等待窗口内重试明确的canvas `NOT_READY`，其他错误直接失败；最终材质恢复经历1次重试，Shader恢复未重试。截图已检查。证据：`phase17-after-final.json`、`phase17-native-qa-final.log`、`phase17-comparison.json`、`phase17-sdk-copy.json`及构建日志，位于同一临时目录；复现沿用 `scripts/qa-editor-performance-risk.mjs`。
