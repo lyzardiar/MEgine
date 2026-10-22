@@ -246,6 +246,7 @@ type CaptureFn = (
   format: 'image/png' | 'image/jpeg',
   quality?: number,
   maxSize?: number,
+  includeNativeProfile?: boolean,
 ) => ScreenshotResult | null | Promise<ScreenshotResult | null>;
 
 const DEFAULT_SCREENSHOT_MAX_SIZE = 2_048;
@@ -781,16 +782,19 @@ class AgentBridge {
     format: 'image/png' | 'image/jpeg' = 'image/png',
     quality?: number,
     maxSize = DEFAULT_SCREENSHOT_MAX_SIZE,
+    includeNativeProfile = false,
   ): Promise<ScreenshotResult> {
+    if (includeNativeProfile && tab !== 'game') throw new BridgeError('INVALID_ARGS', 'Native screenshot profiling requires the Game viewport');
     return this.scheduleScreenshot(async () => {
       const fn = this.captures.get(tab);
       if (!fn) {
         throw new BridgeError('NOT_READY', `No viewport capture registered for "${tab}"`);
       }
-      const result = await fn(format, quality, normalizeScreenshotMaxSize(maxSize));
+      const result = await fn(format, quality, normalizeScreenshotMaxSize(maxSize), includeNativeProfile);
       if (!result) {
         throw new BridgeError('NOT_READY', `Viewport "${tab}" canvas is not available yet`);
       }
+      if (includeNativeProfile && !result.nativeProfile) throw new BridgeError('NOT_READY', 'Native screenshot profiling requires the desktop Game renderer');
       return result;
     });
   }
@@ -5404,6 +5408,7 @@ class AgentBridge {
           typeof params.maxSize === 'number'
             ? params.maxSize
             : DEFAULT_SCREENSHOT_MAX_SIZE,
+          params.includeNativeProfile === true,
         );
       case 'view.canvas_plan':
         return this.getCanvasPlan(params);

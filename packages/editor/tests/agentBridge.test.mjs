@@ -1233,7 +1233,7 @@ test('project close is loss-aware, native-atomic, and reconnects the background 
   assert.match(transport, /invoke<CloseProjectResult>\('close_project', \{ discardDirty \}\)/);
   assert.match(
     projectSession,
-    /const result = await closeProject\(discardDirty\);\s*currentProject = null;\s*resetProjectAssetState\(\)/,
+    /const result = await closeProject\(discardDirty\);\s*currentProject = null;\s*sceneGeneration\+\+;\s*resetProjectAssetState\(\)/,
   );
   assert.match(app, /if \(store\.mode !== 'edit'\)/);
   assert.match(app, /dirtyPanels\.length > 0 && !discardDirty/);

@@ -115,6 +115,7 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
     component: nonEmptyString('Exact component type'),
   }, ['id', 'component']),
   'view.screenshot': objectSchema({
+    includeNativeProfile: { type: 'boolean', description: 'Include the profile of this exact native Game capture; desktop Game only, default false' },
     target: {
       type: 'string',
       enum: ['scene', 'game'],

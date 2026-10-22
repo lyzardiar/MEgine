@@ -134,11 +134,35 @@ try{
   await execute('playback.step',{deltaTime:0.016,steps:3});
   report.telemetry=JSON.parse((await snapshot()).entities.find(entity=>entity.name==='Frost telemetry').components.Text.text);
   assert.equal(report.telemetry.mode,'playing');
+  // Preserve an identical simulation state before the wall-clock playback check.
+  const fixedGame=await snapshot();
+  fs.writeFileSync(path.join(root,'fixed-game-simulation-world.json'),JSON.stringify(fixedGame));
+  const fixedWorld={entities:structuredClone(fixedGame.entities),frame:fixedGame.frame,sim_frame:fixedGame.simFrame,elapsed:fixedGame.simulationTime,clear_color:fixedGame.clearColor};
+  // Runtime-created siblings can share an index; saved scene imports require unique sibling slots.
+  const siblings=new Map();
+  for(const entity of fixedWorld.entities){const key=entity.parent??null;if(!siblings.has(key))siblings.set(key,[]);siblings.get(key).push(entity);}
+  report.fixedGameNormalizedSiblingIndices=0;
+  for(const children of siblings.values())children.sort((a,b)=>(a.siblingIndex??0)-(b.siblingIndex??0)).forEach((entity,index)=>{
+    if(entity.siblingIndex!==index)report.fixedGameNormalizedSiblingIndices++;
+    entity.siblingIndex=index;
+  });
+  report.fixedGameExcludedComponents={};
+  // Renderer-owned particles/effects advance on wall time even while Play is paused.
+  // Keep the full dynamic QA below, and isolate static rendering in a saved gameplay fixture.
+  for(const entity of fixedWorld.entities)for(const type of Object.keys(entity.components)){
+    if(!/^(ParticleEmitter2D|ParticleEmitter3D|TrailRenderer2D|EffekseerEffect|SampledEffect)$/.test(type))continue;
+    delete entity.components[type];
+    report.fixedGameExcludedComponents[type]=(report.fixedGameExcludedComponents[type]??0)+1;
+  }
+  const worldHash=world=>createHash('sha256').update(JSON.stringify(world,(_,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.keys(value).sort().map(key=>[key,value[key]])):value)).digest('hex');
+  report.fixedGameWorldHash=worldHash(fixedWorld);
+  fs.writeFileSync(path.join(root,'fixed-game-world.json'),JSON.stringify(fixedWorld));
   await execute('playback.pause');
   await sleep(3000);
   await execute('playback.pause');
   await execute('playback.step',{deltaTime:0.016,steps:3});
   const gameShot=await query('view.screenshot',{target:'game'});
+  assert.equal(gameShot.nativeProfile,undefined,'Default screenshot response must omit native profiling');
   fs.writeFileSync(path.join(out,'native-game.png'),Buffer.from(gameShot.dataUrl.split(',')[1],'base64'));
   report.profiles.game=await query('profiler.get_samples',{source:'game',limit:120});
   assert.ok(report.profiles.game.nativeProfileCount>0,'Game must render through the native viewport');
@@ -155,6 +179,38 @@ try{
   await execute('playback.stop');
   assert.equal((await snapshot()).entities.find(entity=>entity.entity===target.entity).name,target.name);
   report.checks.push({playPauseStepStop:true,editStateRestored:true});
+  await execute('scene.load_json',{json:JSON.stringify({version:1,name:'PerformanceFixedGame',world:fixedWorld})});
+  await execute('panel.focus',{kind:'game'});
+  const fixedLoaded=await snapshot();
+  assert.equal(fixedLoaded.entities.length,fixedWorld.entities.length);
+  fs.writeFileSync(path.join(root,'fixed-game-loaded-world.json'),JSON.stringify(fixedLoaded));
+  const fixedLoadedHash=worldHash(fixedLoaded);
+  report.fixedGameLoadedWorldHash=fixedLoadedHash;
+  const displayedSize=report.profiles.game.nativeLatest.renderSize;
+  assert.ok(displayedSize?.length===2,'Fixed capture must match the measured native viewport size');
+  const fixedCaptureSize=Math.max(...displayedSize);
+  assert.ok(fixedCaptureSize>=256&&fixedCaptureSize<=4096);
+  report.fixedGameFrames=[];
+  await assert.rejects(query('view.screenshot',{target:'scene',includeNativeProfile:true}),/Native screenshot profiling requires the Game viewport/);
+  for(let frame=0;frame<12;frame++){
+    const shot=await query('view.screenshot',{target:'game',maxSize:fixedCaptureSize,includeNativeProfile:true});
+    assert.ok(shot.nativeProfile?.callTree,'Fixed capture must return its own native profile');
+    assert.ok(Number.isFinite(shot.nativeProfile.worldSyncMs),'Snapshot capture must report world synchronization');
+    assert.deepEqual(shot.nativeProfile.renderSize,[shot.width,shot.height]);
+    assert.deepEqual(shot.nativeProfile.renderSize,displayedSize,'Fixed capture must avoid render-target resize work');
+    const png=Buffer.from(shot.dataUrl.split(',')[1],'base64');
+    const pngHash=createHash('sha256').update(png).digest('hex');
+    fs.writeFileSync(path.join(root,`fixed-game-${frame}.png`),png);
+    report.fixedGameFrames.push({...shot.nativeProfile,pixelSha256:pngHash});
+    assert.equal(worldHash(await snapshot()),fixedLoadedHash,'Fixed capture must not advance the world');
+    if(frame>=2){
+      report.fixedGamePixelHash??=pngHash;
+      assert.equal(pngHash,report.fixedGamePixelHash,'Warmed fixed-state pixels must remain identical');
+    }
+    if(frame===11)fs.writeFileSync(path.join(out,label+'-fixed-game.png'),png);
+  }
+  console.log('PASS fixed-state native captures; world and warmed pixels unchanged');
+
   const logs=await query('console.get_logs',{limit:300});
   report.logs=logs;
   assert.equal(logs.filter(log=>log.level==='error').length,0,JSON.stringify(logs));

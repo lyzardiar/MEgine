@@ -106,6 +106,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
       format: 'image/jpeg',
       quality: 0.8,
       maxSize: 2_048,
+      includeNativeProfile: true,
     }],
     ['view.canvas_plan', {
       canvasEntity: 1,
@@ -212,6 +213,7 @@ test('query schemas accept documented read shapes and reject malformed or extra 
     ['view.screenshot', { target: 'window' }],
     ['view.screenshot', { quality: 2 }],
     ['view.screenshot', { maxSize: 255 }],
+    ['view.screenshot', { includeNativeProfile: 'true' }],
     ['view.canvas_plan', { limit: 501 }],
     ['view.canvas_plan', { offset: 1 }],
     ['view.canvas_plan', {

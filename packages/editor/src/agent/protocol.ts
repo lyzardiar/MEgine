@@ -10,6 +10,7 @@
 import type { SceneViewPreferences } from '../sceneViewPreferences';
 import type { TimelineEditorPreferences } from '../timelineEditorPreferences';
 import type { CanvasWorkspacePreferences } from '../canvasWorkspace';
+import type { NativeViewportProfilePayload } from '../editorProfiler';
 
 /** A captured image, returned as a data URL so any client can consume it. */
 export interface ScreenshotResult {
@@ -25,6 +26,8 @@ export interface ScreenshotResult {
   scale: number;
   /** Unix epoch milliseconds recorded when encoding completed. */
   capturedAt: number;
+  /** Opt-in native Game render profile belonging to these exact captured pixels. */
+  nativeProfile?: NativeViewportProfilePayload;
   /** Present for whole-window captures. */
   windowLabel?: string;
   /** Native implementation used for the capture. */

@@ -21,6 +21,7 @@ import type { PlayInput } from '../playRuntime';
 import {
   recordOwnedNativeViewportProfile,
   recordViewportProfilerFrame,
+  type NativeViewportProfilePayload,
 } from '../editorProfiler';
 import { agentBridge } from '../agent/AgentBridge';
 import {
@@ -973,7 +974,7 @@ export function Viewport(props: {
   // Expose this viewport's canvas to the AgentBridge so AI agents can capture
   // a screenshot of the rendered scene/game view (Phase 1 observation surface).
   useEffect(() => {
-    return agentBridge.registerViewportCapture(props.tab, async (format, quality, maxSize = 2_048) => {
+    return agentBridge.registerViewportCapture(props.tab, async (format, quality, maxSize = 2_048, includeNativeProfile = false) => {
       const sceneRequest = propsRef.current.tab === 'scene' ? nativeSceneRequestRef.current : nativeGameRequestRef.current;
       if (sceneRequest) {
         sceneRequest.captures++;
@@ -992,7 +993,7 @@ export function Viewport(props: {
         const height = Math.max(1, Math.round(sourceHeight * scale));
         // Render the current world at the requested output size. The Game View's
         // display label and letterbox are editor chrome, not game pixels.
-        const frame = await retryNativeViewportReadback(() => invoke<{ pngBase64: string }>('render_native_game_view', { width, height, ...world.snapshotArgs() }), NATIVE_CAPTURE_READY_TIMEOUT_MS);
+        const frame = await retryNativeViewportReadback(() => invoke<{ pngBase64: string; profile: NativeViewportProfilePayload }>('render_native_game_view', { width, height, ...world.snapshotArgs() }), NATIVE_CAPTURE_READY_TIMEOUT_MS);
         const current = currentViewportProps();
         if (projectAssetSessionGeneration() !== projectGeneration || nativeGameRequestRef.current.generation !== generation || !nativeViewportFrameWorldCurrent(world.frameWorld(), current) || captureKey !== JSON.stringify([current.gameResolution, current.gameDisplay, current.timelineCameraPreview])) return null;
         let dataUrl = `data:image/png;base64,${frame.pngBase64}`;
@@ -1002,7 +1003,7 @@ export function Viewport(props: {
           const context = canvas.getContext('2d'); if (!context) return null;
           context.drawImage(image, 0, 0); dataUrl = canvas.toDataURL(format, quality);
         }
-        return { dataUrl, width, height, mime: format, sourceWidth, sourceHeight, scale, capturedAt: Date.now() };
+        return { dataUrl, width, height, mime: format, sourceWidth, sourceHeight, scale, capturedAt: Date.now(), ...(includeNativeProfile ? { nativeProfile: { ...frame.profile, renderSize: [width, height] as [number, number] } } : {}) };
       }
       const nativeRequests = propsRef.current.tab === 'game'
         ? [nativeGameRequestRef.current]
