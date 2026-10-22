@@ -115,6 +115,38 @@ test('evicted filtered Scene revisions retain visibility and use their exact own
   assert.equal(requests[1].playSessionId, undefined); assert.equal(requests[1].playRevision, undefined);
 });
 
+test('image captures reuse the exact Play revision without constructing a snapshot', async () => {
+  const { requestRevisionedNativeViewport } = await import('../src/nativeViewportTransport.ts');
+  const args={width:850,height:478,playSessionId:7,playRevision:0};
+  const image={pngBase64:'owned-image',profile:{worldRevision:0}};
+  const result=await requestRevisionedNativeViewport(args,()=>{throw Error('snapshot must stay lazy');},async request=>{assert.equal(request,args);assert.equal(request.raw,undefined);return image;});
+  assert.equal(result,image);
+});
+
+test('image revision fallback preserves capture ownership and fails closed for other errors', async () => {
+  const { requestRevisionedNativeViewport } = await import('../src/nativeViewportTransport.ts');
+  const { createNativeViewportWorldArgs } = await import('../src/nativeViewportFrame.ts');
+  const retained={entities:[{components:{Text:{text:'owned'}}}],clearColor:[0,0,0,1],simulationTime:1,sessionId:7,revision:2};
+  const props={entities:[],clearColor:[1,0,0,1],simulationTime:2,runtimeSessionId:7,nativeWorldReference:retained};
+  const world=createNativeViewportWorldArgs(props),args={width:320,height:180,...world.worldArgs()},requests=[];
+  const image={pngBase64:'fallback-image',profile:{}};
+  const result=await requestRevisionedNativeViewport(args,world.snapshotArgs,async request=>{
+    requests.push(request);
+    if(request.playRevision!=null){props.nativeWorldReference={...retained,simulationTime:9};throw Error('Play viewport revision expired');}
+    return image;
+  });
+  assert.equal(result,image);assert.equal(requests.length,2);
+  assert.deepEqual(requests[1],{width:320,height:180,playSessionId:7,snapshot:{entities:retained.entities,clearColor:retained.clearColor,simulationTime:1}});
+  for(const message of ['Play session expired','GPU device unavailable','unrelated failure']){
+    let count=0;
+    await assert.rejects(requestRevisionedNativeViewport(args,()=>{throw Error('unexpected fallback');},async()=>{count++;throw Error(message);}),error=>error.message===message);
+    assert.equal(count,1);
+  }
+  let count=0;
+  await assert.rejects(requestRevisionedNativeViewport(args,world.snapshotArgs,async()=>{count++;throw Error('Play viewport revision expired');}),/Play viewport revision expired/);
+  assert.equal(count,2,'snapshot fallback is bounded');
+});
+
 test('evicted edit Scene world reuploads its owned snapshot under the same revision key', async t => {
   const original = globalThis.window, requests = [], bytes = new ArrayBuffer(24), snapshot = { entities: [], clearColor: [0, 0, 0, 1], simulationTime: 0 };
   let failure = 'Scene viewport revision expired';

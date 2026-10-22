@@ -124,13 +124,17 @@ export function requestNativeViewportFrame(command: string, args: Record<string,
 }
 
 /** Only an evicted revision falls back to the same owned browser snapshot; other failures propagate. */
-export async function requestRevisionedNativeViewportFrame(command: string, args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>): Promise<ArrayBuffer> {
-  try { return await requestNativeViewportFrame(command, args); }
+export async function requestRevisionedNativeViewport<T>(args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>, request: (args: Record<string, unknown>) => Promise<T>): Promise<T> {
+  try { return await request(args); }
   catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    if (args.sceneWorldKey != null && message.includes('Scene viewport revision expired')) return requestNativeViewportFrame(command, { ...args, ...snapshotFallback() });
+    if (args.sceneWorldKey != null && message.includes('Scene viewport revision expired')) return request({ ...args, ...snapshotFallback() });
     if (args.playRevision == null || !message.includes('Play viewport revision expired')) throw error;
     const { playSessionId: _session, playRevision: _revision, ...view } = args;
-    return requestNativeViewportFrame(command, { ...view, ...snapshotFallback() });
+    return request({ ...view, ...snapshotFallback() });
   }
+}
+
+export function requestRevisionedNativeViewportFrame(command: string, args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>): Promise<ArrayBuffer> {
+  return requestRevisionedNativeViewport(args, snapshotFallback, next => requestNativeViewportFrame(command, next));
 }

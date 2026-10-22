@@ -178,7 +178,7 @@ MEngine 编辑器当前对人类友好，但对 AI Agent 不够友好。AI Agent
 
 | query id | 参数 | 返回 | 集成点 |
 | --- | --- | --- | --- |
-| `view.screenshot` | `{ target?: "scene"\|"game", format?: "image/png"\|"image/jpeg", quality?, maxSize?: 256..4096, includeNativeProfile?: boolean }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, capturedAt, mime, nativeProfile? }` | 默认最长边 2048；桌面 Game 使用原生渲染读回，其他视口按需编码 canvas。`includeNativeProfile: true` 仅支持桌面 Game，返回生成本次截图的同帧性能数据与渲染尺寸；默认省略该字段，Scene 返回 `INVALID_ARGS`，原生渲染不可用返回 `NOT_READY` |
+| `view.screenshot` | `{ target?: "scene"\|"game", format?: "image/png"\|"image/jpeg", quality?, maxSize?: 256..4096, includeNativeProfile?: boolean }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, capturedAt, mime, nativeProfile? }` | 默认最长边 2048；桌面 Game 使用原生渲染读回，Play 优先复用发布的 revision，过期时回退该请求持有的快照；其他视口按需编码 canvas。`includeNativeProfile: true` 仅支持桌面 Game，返回生成本次截图的同帧性能数据与渲染尺寸；默认省略该字段，Scene 返回 `INVALID_ARGS`，原生渲染不可用返回 `NOT_READY` |
 | `view.window_screenshot` | `{ windowLabel?: string, maxSize?: 256..4096 }` | `{ dataUrl, width, height, sourceWidth, sourceHeight, scale, capturedAt, mime, windowLabel, captureMethod, backgroundSafe }` | Windows 桌面版通过 WebView2 DevTools `Page.captureScreenshot` 在目标 webview 内离屏缩放渲染；不会激活窗口，也不读取前台屏幕像素；默认最长边 2048 |
 | `view.screenshot_to_file` | `{ path, target? }` | `{ path, width, height }` | 同上，写入磁盘供 Agent 读取 |
 | `view.capture_region` | `{ windowLabel?, x, y, width, height, maxSize? }` | `{ dataUrl, width, height, region, backgroundSafe }` | ✅ 使用 WebView2 DevTools clip 直接截取后台 WebView CSS 像素区域；坐标可直接复用 `window.ui_snapshot` 的元素 rect，越界明确拒绝 |

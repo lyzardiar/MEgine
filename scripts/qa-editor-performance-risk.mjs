@@ -41,7 +41,7 @@ const execute=async(name,args={})=>{
   assert.ok(response.ok,JSON.stringify(response));return response.result;
 };
 const snapshot=()=>query('scene.snapshot');
-const report={root,passed:false,editorSha256:hash(process.env.MENGINE_EDITOR_EXECUTABLE),checks:[],profiles:{}};
+const report={root,passed:false,editorSha256:hash(process.env.MENGINE_EDITOR_EXECUTABLE),allowSnapshotCaptures:process.env.MENGINE_ALLOW_SNAPSHOT_CAPTURES==='1',checks:[],profiles:{}};
 const sourceScene=path.join(source,'Assets/Scenes/Main.mscene'),sourceHash=hash(sourceScene);
 const recoveryFile=path.join(sample,'.mengine/Recovery/scene.recovery.json');
 async function waitUntil(label,check,timeout=30000){
@@ -160,13 +160,17 @@ try{
   async function verifyPausedGame(key,world){
     const pausedWorldHash=worldHash(world),frames=[];let pixelHash;
     for(let frame=0;frame<6;frame++){
+      const captureStarted=performance.now();
       const shot=await query('view.screenshot',{target:'game',maxSize:850,includeNativeProfile:true});
+      const captureWallMs=performance.now()-captureStarted;
+      // Only historical baseline runs may omit the retained Play revision.
+      if(!report.allowSnapshotCaptures)assert.ok(Number.isSafeInteger(shot.nativeProfile?.worldRevision),'Paused native capture must reuse its published Play revision');
       const png=Buffer.from(shot.dataUrl.split(',')[1],'base64');
       const pixels=createHash('sha256').update(png).digest('hex');
-      frames.push({...shot.nativeProfile,pixelSha256:pixels});
+      frames.push({...shot.nativeProfile,pixelSha256:pixels,captureWallMs});
       report[key+'Frames']=frames;
       assert.equal(worldHash(await snapshot()),pausedWorldHash,'Paused capture must not change the full game world');
-      if(frame>=2){pixelHash??=pixels;assert.equal(pixels,pixelHash,'Paused effects must not advance during repeated captures');}
+      if(frame>=2){pixelHash??=pixels;assert.equal(pixels,pixelHash,'Paused effects must not advance during repeated captures');assert.equal(shot.nativeProfile.worldRevision,frames[2].worldRevision);}
       if(frame===5)fs.writeFileSync(path.join(out,label+'-'+key+'.png'),png);
     }
     report[key+'PixelHash']=pixelHash;

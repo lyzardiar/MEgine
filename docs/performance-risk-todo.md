@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：已完成十二个编辑器性能优化阶段，并补齐第十三阶段固定负载原生采样与第十四阶段Play特效时钟；覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据及密集UI批次构建。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：编辑器性能与验证工作已推进至第十五阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟及截图原生世界复用。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -328,7 +328,7 @@ Debug／Release SDK及原生Release构建通过，旁置SDK摘要一致。原生
 
 ## 第十三阶段原生固定负载与同帧采样
 
-`view.screenshot` 新增可选 `includeNativeProfile`，桌面 Game 返回生成本次截图的原生性能数据及渲染尺寸，默认响应保持原样。Scene 请求该选项返回 `INVALID_ARGS`，原生捕获不可用返回 `NOT_READY`。沿用项目、世界和视口 generation 校验，避免把另一次 `profiler.get_samples` 查询的帧误配到截图。截图使用完整世界快照，版本号不作为该路径的归属依据。
+`view.screenshot` 新增可选 `includeNativeProfile`，桌面 Game 返回生成本次截图的原生性能数据及渲染尺寸，默认响应保持原样。Scene 请求该选项返回 `INVALID_ARGS`，原生捕获不可用返回 `NOT_READY`。沿用项目、世界和视口 generation 校验，避免把另一次 `profiler.get_samples` 查询的帧误配到截图。Play捕获可携带原生 `worldRevision`；完整快照路径通过请求持有的世界内容和最终归属校验确认对应关系。
 
 QA 在暂停状态下完成固定 9 步（0.144 秒）后保存游戏世界，完整动态播放验收仍单独运行。固定渲染副本排除 217 个 `ParticleEmitter3D` 和 238 个 `SampledEffect`；这些渲染器内部状态使用墙钟推进，单纯暂停 Play 不会使画面静止。运行时新增实体允许同级排序索引重复，导入测试场景时按原有同级顺序生成唯一索引。所有处理只发生在隔离副本，源场景不变。
 
@@ -371,3 +371,21 @@ Game、Scene及相机预览按Play会话和世界模拟时间计算特效增量�
 原生旧版对照被新增回归准确拒绝：暂停世界摘要不变，但连续4次截图的图元为423／438／446／453，像素持续变化。新版完整Frostbound保留217个粒子组件和238个采样特效组件；首次暂停6次捕获均为412图元。正常播放后再次暂停，6次捕获均为509图元、277个RenderObject，像素SHA-256均为 `2eaeebbe29f83825f694ed21b382a710aae9bc6ee977d6d75784c0f13d612421`，网格上传为0；这验证了已产生的特效保持冻结。独立固定副本的世界和像素摘要仍与第十三阶段相同。编辑、undo/redo、真实恢复文件、资源增改删、播放恢复及停止后的编辑状态恢复全部通过，控制台error为0，源场景与HEAD一致，QA程序正常退出。截图已检查；WebView缓存因EPERM保留。本阶段未测得可归因的整体FPS增益。
 
 复现沿用 `scripts/qa-editor-performance-risk.mjs`。证据在 `tmp/docs-artifacts/editor-performance-risk/`：`phase14-before.json`（预期失败的旧版对照）、`phase14-after-final.json`、`phase14-final-validation.json`、`phase14-frontend-tests.log`、`phase14-runtime-tests.log`、`phase14-host-tests.log`、`phase14-effekseer-test.log`、`phase14-sampled-effect-test.log`及构建／SDK记录。
+
+## 第十五阶段截图复用发布的原生世界
+
+桌面Game截图优先使用当前请求持有的Play会话和revision，与实时视口复用同一原生世界镜像，省去重复上传完整实体快照。仅在revision过期时惰性构造该请求原有快照并重试一次；保留尺寸、会话身份和组件内容。会话失效、GPU错误及其他异常直接返回，项目／视口generation和捕获配置校验仍生效。编辑状态或无法确认原生revision的浏览器世界继续使用完整快照。
+
+PNG响应和二进制帧共用revision回退逻辑；PNG／JPEG编码、默认截图响应及250ms最小截图间隔保持原有行为。新增测试验证正常捕获不调用快照工厂、revision 0有效、回退保留原有世界而非较新状态、重试次数有界，以及错误传播。原有共享缓冲、帧所有权、编辑Scene回退与MCP相关测试一起通过，共41项；TypeScript、前端和原生Release构建通过。
+
+原生对照采用第十四阶段EXE和当前EXE，配套SDK相同且复制摘要一致。每轮初始暂停世界均为0.144秒、4,031实体，保留完整粒子和采样特效；850×478、187个RenderObject、412个UI图元、34次UI绘制，预热后网格上传为0。每轮6次截图，去掉2次预热取4次中位数，优化后额外复测一轮。完整世界摘要均为 `c61c3d59472d61e0dae354f871cc9d4ee43a43a4721aa63d727848c4980f73b6`，像素摘要均为 `2ea14ee0ffa7817ed746b2e9ed1911738aee55506559f9a83fa8205027471a2f`，几何／可见性／上传计数一致。
+
+| 暂停Game截图 | 完整快照 | 原生revision | 原生revision复测 |
+| --- | ---: | ---: | ---: |
+| 世界同步 | 5.65285 ms | 0.41865 ms | 0.41770 ms |
+| 原生渲染 | 11.45140 ms | 10.74210 ms | 10.83645 ms |
+| QA客户端等待截图返回 | 228.18605 ms | 117.80740 ms | 117.00230 ms |
+
+同步耗时独立于原生渲染耗时；客户端等待还包含截图节流、编码、IPC和Bridge传输，是本QA调用方式下的观察值。截图吞吐仍受250ms间隔约束，实时Game渲染路径未修改，不宣称游戏FPS提升。优化后的两轮初始捕获全部返回原生revision 9；播放后再次暂停的6次捕获也各自对应一个固定revision，图像稳定。默认QA要求该原生revision，旧版对照仅通过显式 `MENGINE_ALLOW_SNAPSHOT_CAPTURES=1` 放行历史完整快照路径，报告记录此设置；日常验收不设置该变量。
+
+三轮均通过编辑、undo/redo、恢复文件、资源增改删、播放／暂停／单步／停止、已有特效冻结及固定副本验证，控制台error为0，源场景与HEAD一致，测试程序正常退出。优化后截图已检查，WebView缓存因EPERM保留。证据位于 `tmp/docs-artifacts/editor-performance-risk/`：`phase15-before.json`、`phase15-after.json`、`phase15-after-repeat.json`、`phase15-comparison.json`、`phase15-builds/*/receipt.json`及前端测试／构建日志。复现沿用 `scripts/qa-editor-performance-risk.mjs`。

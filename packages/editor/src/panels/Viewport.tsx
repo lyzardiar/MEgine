@@ -56,7 +56,7 @@ import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlane
 import { projectAssetSessionGeneration } from '../projectAssets';
 import { beginNativeViewportRequest, captureLatestNativeViewportFrames, createNativeViewportRequestState, finishNativeViewportRequest, nativeViewportReadbackBusy, nativeViewportSessionExpired, nativeViewportRequestCanPublish, retryNativeViewportReadback, synchronizeNativeViewportRequestOwner, waitNativeViewportRequests } from '../nativeViewportRequests';
 import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGameRequestInterval, nativeGamePreviewSize, nativeSceneWorldReference, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
-import { releaseNativeViewportFrame, requestRevisionedNativeViewportFrame } from '../nativeViewportTransport';
+import { releaseNativeViewportFrame, requestRevisionedNativeViewport, requestRevisionedNativeViewportFrame } from '../nativeViewportTransport';
 import {
   clearMaterialPreviews,
   materialAssetPreviewState,
@@ -993,7 +993,7 @@ export function Viewport(props: {
         const height = Math.max(1, Math.round(sourceHeight * scale));
         // Render the current world at the requested output size. The Game View's
         // display label and letterbox are editor chrome, not game pixels.
-        const frame = await retryNativeViewportReadback(() => invoke<{ pngBase64: string; profile: NativeViewportProfilePayload }>('render_native_game_view', { width, height, ...world.snapshotArgs() }), NATIVE_CAPTURE_READY_TIMEOUT_MS);
+        const frame = await retryNativeViewportReadback(() => requestRevisionedNativeViewport({ width, height, ...world.worldArgs() }, world.snapshotArgs, args => invoke<{ pngBase64: string; profile: NativeViewportProfilePayload }>('render_native_game_view', args)), NATIVE_CAPTURE_READY_TIMEOUT_MS);
         const current = currentViewportProps();
         if (projectAssetSessionGeneration() !== projectGeneration || nativeGameRequestRef.current.generation !== generation || !nativeViewportFrameWorldCurrent(world.frameWorld(), current) || captureKey !== JSON.stringify([current.gameResolution, current.gameDisplay, current.timelineCameraPreview])) return null;
         let dataUrl = `data:image/png;base64,${frame.pngBase64}`;
