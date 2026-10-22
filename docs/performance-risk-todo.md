@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：已完成十个编辑器性能优化阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理和UI遍历与图元存储。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：已完成十一个编辑器性能优化阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储及按需上传软裁剪数据。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -133,7 +133,7 @@ Release 基准使用 Frostbound 作者场景、960×540，串行与两帧流水�
 - [ ] **逐物体绘制及准备。** 第七阶段让主 pass／阴影 pass 复用单次提交的材质键和错误状态，减少纹理键字符串复制、Shader指纹计算与缺失纹理检查。通用实例化、重复GPU状态设置、材质哈希查找和临时Vec／draw order复用仍待评估；绘制次数及透明物体顺序保持不变。
 - [ ] **ECS 查询集合与存储。** 内建组件 TypeId 查找和有序联合查询已完成；自定义组件保留兼容查找。稠密组件存储属于后续架构变更。
 - [ ] **命令跨桥批处理。** 本阶段仅减少非组件解析次数，未改变逐条 stringify/跨桥协议。
-- [ ] **UI、timeline、animation、physics 性能审计。** 第九阶段已优化UI子节点借用、布局结果顺序匹配及按需建立索引；第十阶段消除普通控件图元的临时数组分配和往返搬运。默认位图文字按亮点生成独立图元，数量、批次构建和GPU上传成本仍在；文本／嵌套布局和其他模块仍需审计，不能据局部数据排除剩余开销。
+- [ ] **UI、timeline、animation、physics 性能审计。** 第九阶段已优化UI子节点借用、布局结果顺序匹配及按需建立索引；第十阶段消除普通控件图元的临时数组分配和往返搬运；第十一阶段跳过无软裁剪帧的裁剪数据打包／上传和Shader裁剪循环。默认位图文字按亮点生成独立图元，数量、批次构建和其他实例数据上传成本仍在；文本／嵌套布局和其他模块仍需审计，不能据局部数据排除剩余开销。
 
 后续按原生 Scene/Game 的实际采样继续处理 mesh 来源校验、纹理同步和逐物体准备成本；ECS 存储重构单独安排。
 
@@ -274,3 +274,28 @@ Debug／Release SDK及原生Release构建通过，旁置SDK摘要核对一致。
 Debug／Release SDK及原生Release构建通过，旁置SDK摘要一致。前后原生验收均通过3,812实体编辑、undo/redo、真实恢复文件、外部资源增改删、进入对局、Play/Pause/Step/Stop及编辑状态恢复；控制台error为0，源场景与HEAD逐字节一致。Scene截图逐字节一致，Game截图已检查；测试编辑器正常退出，WebView缓存因EPERM保留在临时目录。
 
 前后各12个预热native帧，去前2帧后取10帧中位数：Game Canvas布局／文字 **0.76405→0.65440 ms**，UI批次0.15770→0.19290 ms，帧编译2.79160→2.83665 ms；Scene总计4.00910→3.84570 ms，Game总计13.51235→13.57765 ms。单项改善没有转化为整体Game帧耗时下降，不据此宣称FPS提升。证据为 `phase10-before.json`、`phase10-after.json`、`phase10-comparison.json`；构建与SDK摘要见 `phase10-sdk-build.log`、`phase10-native-build.log`、`phase10-sdk-copy.json`。原生复现沿用 `scripts/qa-editor-performance-risk.mjs`。
+
+## 第十一阶段按需准备UI软裁剪
+
+UI准备阶段检查当前帧是否含有软裁剪槽；无裁剪时跳过每图元256字节裁剪数据的CPU打包和GPU上传，并通过帧uniform让内建、自定义及错误材质的片元Shader跳过8槽裁剪循环。帧uniform保持16字节，顶点实例大小保持184字节。Stencil、Scissor及几何布局继续使用原有路径。
+
+裁剪缓冲独立扩容，初始仅保留一个256字节绑定占位；有裁剪时按图元数量增长至下一次幂并完整上传。已分配的容量保留供后续复用，无裁剪帧不读取旧内容；从无裁剪切回裁剪时重新写入本帧数据。混合裁剪／普通图元的帧继续按原有逐实例布局上传全部裁剪槽。
+
+| Release UI准备CPU负载 | 修改前 | 修改后 | 修改后复测 |
+| --- | ---: | ---: | ---: |
+| 1,103图元，无裁剪 | 0.060875 ms | 0.029708 ms | 0.029325 ms |
+| 77,824图元，无裁剪 | 12.672400 ms | 6.120325 ms | 6.167092 ms |
+| 1,103图元，有裁剪 | 0.062008 ms | 0.058533 ms | 0.052925 ms |
+| 77,824图元，有裁剪 | 12.558700 ms | 11.802608 ms | 12.025992 ms |
+
+每项预热2组、测量9组，每组12次，取组中位数。计划提前构造；计时涵盖整个 `UiRenderer::prepare`，每次计时后提交队列并等待GPU完成写入，等待时间不计入上述CPU数据。负载采用同材质图元，数量对应普通作者场景和输入框压力场景，不等同于完整Frostbound渲染。77,824图元无裁剪时，每帧减少19 MiB上传；从未使用裁剪的同规模renderer，其裁剪缓冲从32 MiB变为256字节。首次实际裁剪仍分配完整缓冲，已分配容量不自动收缩。
+
+GPU对照覆盖513个普通图元、裁剪启停、空帧、稀疏与8层裁剪、混合图元、自定义／错误材质、Stencil、投影及32／48像素尺寸切换。无裁剪输出同时与显式全视口硬裁剪对照，修改前后全部24幅RGBA结果逐字节一致。额外用例验证独立容量在1／1,024／4,096之间按需求增长，以及旧裁剪状态不会延续到普通帧；UI专项24项通过，1个手动基准另行运行。
+
+复现：`cargo test -p mengine-rhi --release --lib ui::soft_clip_tests -- --test-threads=1`；基准过滤 `benchmark_ui_soft_clip_preparation` 并添加 `--ignored --nocapture`。主要证据为 `phase11-gpu-{before,after}.log`、`phase11-benchmark-{before,after,after-repeat}.log`、`phase11-benchmark-comparison.json` 和配对RGBA，均在 `tmp/docs-artifacts/editor-performance-risk/`。
+
+串行Release集成RHI 77、Runtime 246、Editor Host 62项通过，分别忽略3／7／6个手动基准。包含真实GPU材质、MSAA、视口回读、场景恢复及资源热更新；日志为 `phase11-integration-tests.log`。
+
+Debug／Release SDK与原生Release构建通过，旁置SDK摘要一致。前后原生验收均通过3,812实体编辑、undo/redo、真实恢复文件、资源增改删、对局播放／暂停／单步／停止及编辑状态恢复；控制台error为0、源场景摘要不变。Scene截图逐字节一致，Game截图已检查，测试编辑器正常退出；WebView缓存因EPERM保留。
+
+前后各12个预热native帧，去前2帧后取10帧中位数：Game UI准备 **0.07470→0.06155 ms**，其中实例打包0.03680→0.02075 ms、缓冲写入0.02100→0.01615 ms；Scene UI准备0.01700→0.01200 ms。Scene总计4.04170→3.79005 ms、Game总计13.37275→13.54710 ms；普通场景的局部收益很小，未建立整体Game帧耗时或FPS改善。证据为 `phase11-before.json`、`phase11-after.json`、`phase11-comparison.json`，构建与SDK记录为 `phase11-sdk-build.log`、`phase11-native-build.log`、`phase11-sdk-copy.json`。原生复现沿用 `scripts/qa-editor-performance-risk.mjs`。

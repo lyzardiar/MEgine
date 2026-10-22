@@ -708,7 +708,8 @@ impl From<&UiPrimitive> for UiInstance {
 #[derive(Clone, Copy, Pod, Zeroable)]
 struct UiUniform {
     viewport: [f32; 2],
-    _padding: [f32; 2],
+    soft_clip_count: u32,
+    _padding: u32,
 }
 
 #[repr(C)]
@@ -918,6 +919,8 @@ pub(crate) struct UiRenderer {
     shader_channel_buffer: wgpu::Buffer,
     material_buffer: wgpu::Buffer,
     instance_capacity: usize,
+    soft_clip_capacity: usize,
+    soft_clip_count: u32,
     shader_channel_capacity: usize,
     material_capacity: usize,
     uniform_buffer: wgpu::Buffer,
@@ -1030,7 +1033,8 @@ impl UiRenderer {
         });
         let instance_capacity = 256;
         let instance_buffer = create_instance_buffer(device, instance_capacity);
-        let soft_clip_buffer = create_soft_clip_buffer(device, instance_capacity);
+        let soft_clip_capacity = 1;
+        let soft_clip_buffer = create_soft_clip_buffer(device, soft_clip_capacity);
         let shader_channel_capacity = 1;
         let shader_channel_buffer = create_shader_channel_buffer(device, shader_channel_capacity);
         let material_capacity = 1;
@@ -1039,7 +1043,8 @@ impl UiRenderer {
             label: Some("ui_frame_uniform"),
             contents: bytemuck::bytes_of(&UiUniform {
                 viewport: [width.max(1) as f32, height.max(1) as f32],
-                _padding: [0.0; 2],
+                soft_clip_count: 0,
+                _padding: 0,
             }),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
@@ -1048,7 +1053,7 @@ impl UiRenderer {
             entries: &[
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
+                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -1228,6 +1233,8 @@ impl UiRenderer {
             shader_channel_buffer,
             material_buffer,
             instance_capacity,
+            soft_clip_capacity,
+            soft_clip_count: 0,
             shader_channel_capacity,
             material_capacity,
             uniform_buffer,
@@ -1353,8 +1360,14 @@ impl UiRenderer {
         if plan.primitives.len() > self.instance_capacity {
             self.instance_capacity = plan.primitives.len().next_power_of_two();
             self.instance_buffer = create_instance_buffer(device, self.instance_capacity);
-            self.soft_clip_buffer = create_soft_clip_buffer(device, self.instance_capacity);
-            self.prepare_profile.buffer_allocations += 2;
+            self.prepare_profile.buffer_allocations += 1;
+        }
+        let needs_soft_clips = plan.primitives.iter().any(|value| value.soft_clips.iter().any(Option::is_some));
+        self.soft_clip_count = if needs_soft_clips { 8 } else { 0 };
+        if needs_soft_clips && plan.primitives.len() > self.soft_clip_capacity {
+            self.soft_clip_capacity = plan.primitives.len().next_power_of_two();
+            self.soft_clip_buffer = create_soft_clip_buffer(device, self.soft_clip_capacity);
+            self.prepare_profile.buffer_allocations += 1;
             recreate_bind_group = true;
         }
         let needs_shader_channels = plan
@@ -1398,16 +1411,14 @@ impl UiRenderer {
             let started = Instant::now();
             queue.write_buffer(&self.instance_buffer, 0, bytemuck::cast_slice(&instances));
             self.prepare_profile.buffer_write_ms += started.elapsed().as_secs_f64() * 1000.0;
-            let started = Instant::now();
-            let soft_clips: Vec<UiSoftClipInstance> = plan
-                .primitives
-                .iter()
-                .map(UiSoftClipInstance::from)
-                .collect();
-            self.prepare_profile.packing_ms += started.elapsed().as_secs_f64() * 1000.0;
-            let started = Instant::now();
-            queue.write_buffer(&self.soft_clip_buffer, 0, bytemuck::cast_slice(&soft_clips));
-            self.prepare_profile.buffer_write_ms += started.elapsed().as_secs_f64() * 1000.0;
+            if needs_soft_clips {
+                let started = Instant::now();
+                let soft_clips: Vec<UiSoftClipInstance> = plan.primitives.iter().map(UiSoftClipInstance::from).collect();
+                self.prepare_profile.packing_ms += started.elapsed().as_secs_f64() * 1000.0;
+                let started = Instant::now();
+                queue.write_buffer(&self.soft_clip_buffer, 0, bytemuck::cast_slice(&soft_clips));
+                self.prepare_profile.buffer_write_ms += started.elapsed().as_secs_f64() * 1000.0;
+            }
             if needs_shader_channels {
                 let started = Instant::now();
                 let shader_channels: Vec<UiShaderChannelInstance> = plan
@@ -1529,7 +1540,8 @@ impl UiRenderer {
             0,
             bytemuck::bytes_of(&UiUniform {
                 viewport: [self.viewport[0] as f32, self.viewport[1] as f32],
-                _padding: [0.0; 2],
+                soft_clip_count: self.soft_clip_count,
+                _padding: 0,
             }),
         );
     }
@@ -2306,7 +2318,8 @@ fn ui_shader_fingerprint(source: &str, keywords: &[String]) -> u64 {
 const UI_WGSL: &str = r#"
 struct UiFrame {
     viewport: vec2<f32>,
-    padding: vec2<f32>,
+    soft_clip_count: u32,
+    padding: u32,
 };
 @group(0) @binding(0) var<uniform> frame: UiFrame;
 struct UiSoftClip {
@@ -2486,7 +2499,7 @@ fn fs_main(input: VsOut) -> @location(0) vec4<f32> {
         discard;
     }
     var clip_alpha = 1.0;
-    for (var index = 0u; index < 8u; index = index + 1u) {
+    for (var index = 0u; index < frame.soft_clip_count; index = index + 1u) {
         let clip = soft_clip_instances[input.instance_index].clips[index];
         if clip.softness.z > 0.5 {
             let distance = min(
@@ -2505,6 +2518,10 @@ fn fs_main(input: VsOut) -> @location(0) vec4<f32> {
     return color;
 }
 "#;
+
+#[cfg(test)]
+#[path = "ui_soft_clip_tests.rs"]
+mod soft_clip_tests;
 
 #[cfg(test)]
 mod tests {
