@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "mode": "multiple",
+  "pixels_per_unit": 260,
+  "slices": [
+    {
+      "name": "chain_lightning",
+      "rect": [
+        0,
+        0,
+        627,
+        627
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "meteor_shower",
+      "rect": [
+        627,
+        0,
+        627,
+        627
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "moon_boomerang",
+      "rect": [
+        0,
+        627,
+        627,
+        627
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    },
+    {
+      "name": "frost_pulse",
+      "rect": [
+        627,
+        627,
+        627,
+        627
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ]
+    }
+  ]
+}

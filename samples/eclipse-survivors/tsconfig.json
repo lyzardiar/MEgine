@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "module": "None",
+    "strict": true,
+    "noEmit": true,
+    "lib": [
+      "ES2019"
+    ]
+  },
+  "files": [
+    "Assets/Scripts/Main.ts",
+    "Assets/Scripts/mengine.d.ts"
+  ]
+}

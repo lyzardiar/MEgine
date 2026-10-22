@@ -1,0 +1,291 @@
+{
+  "version": 1,
+  "effects": [
+    {
+      "id": "fire_sustain",
+      "label": "Fire Sustain",
+      "effect": "Assets/Effects/ef_fire01.efkefc",
+      "group": "sustained-area",
+      "tags": ["fire", "orange", "loop", "ground", "damage-over-time"],
+      "summary": "Persistent flame body for hazards, burning ground, torches, or channelled attacks.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.0
+    },
+    {
+      "id": "fire_impact",
+      "label": "Fire Impact",
+      "effect": "Assets/Effects/ef_fire02.efkefc",
+      "group": "burst-impact",
+      "tags": ["fire", "orange", "burst", "hit", "explosion"],
+      "summary": "Short fire burst suited to impacts, skill confirmation, and explosive accents.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.0
+    },
+    {
+      "id": "fire_strike",
+      "label": "Fire Strike",
+      "effect": "Assets/Effects/ef_fire03.efkefc",
+      "group": "directional-strike",
+      "tags": ["fire", "orange", "attack", "directional", "skill"],
+      "summary": "Directional fire motion for projectiles, weapon skills, and attack trails.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.0
+    },
+    {
+      "id": "holy_aura",
+      "label": "Holy Aura",
+      "effect": "Assets/Effects/ef_holy01.efkefc",
+      "group": "aura-field",
+      "tags": ["holy", "white", "gold", "aura", "heal", "buff", "magic"],
+      "summary": "Bright holy field for healing, buffs, charge-up, shields, and UI rarity reveals.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.0
+    },
+    {
+      "id": "ice_impact",
+      "label": "Ice Impact",
+      "effect": "Assets/Effects/ef_ice01.efkefc",
+      "group": "burst-impact",
+      "tags": ["ice", "cyan", "blue", "burst", "freeze", "hit"],
+      "summary": "Cold impact accent for freeze hits, shard breaks, and blue-white contact flashes.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.0
+    },
+    {
+      "id": "ice_arc",
+      "label": "Ice Arc",
+      "effect": "Assets/Effects/ef_ice02.efkefc",
+      "group": "directional-strike",
+      "tags": ["ice", "cyan", "arc", "slash", "shield", "sweep"],
+      "summary": "Cyan directional arc for blade waves, guard arcs, and sweeping frost attacks.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.0
+    },
+    {
+      "id": "ice_field",
+      "label": "Ice Field",
+      "effect": "Assets/Effects/ef_ice03.efkefc",
+      "group": "aura-field",
+      "tags": ["ice", "cyan", "field", "ground", "freeze", "control"],
+      "summary": "Cold field layer for area control, frozen ground, and sustained chill states.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.0
+    },
+    {
+      "id": "lightning_column",
+      "label": "Lightning Column",
+      "effect": "Assets/Effects/ef_lightning01.efkefc",
+      "group": "sustained-area",
+      "tags": ["lightning", "vertical", "column", "red", "beam", "channel"],
+      "summary": "Tall lightning body for the vertical energy column seen in combat references.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.15
+    },
+    {
+      "id": "lightning_strike",
+      "label": "Lightning Strike",
+      "effect": "Assets/Effects/ef_lightning02.efkefc",
+      "group": "directional-strike",
+      "tags": ["lightning", "bolt", "strike", "beam", "fast", "skill"],
+      "summary": "Fast bolt layer for targeted strikes, diagonal energy attacks, and chained skills.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.0
+    },
+    {
+      "id": "lightning_impact",
+      "label": "Lightning Impact",
+      "effect": "Assets/Effects/ef_lightning03.efkefc",
+      "group": "burst-impact",
+      "tags": ["lightning", "burst", "impact", "electric", "hit"],
+      "summary": "Electric contact burst that closes a lightning strike or powers a hit confirmation.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.0
+    },
+    {
+      "id": "hit_core",
+      "label": "Hit Core",
+      "effect": "Assets/Effects/ef_parts_hit01.efkefc",
+      "group": "burst-impact",
+      "tags": ["hit", "white", "spark", "contact", "feedback", "ui"],
+      "summary": "Neutral contact flash that layers under any element without changing its identity.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 0.8
+    },
+    {
+      "id": "hit_sparks",
+      "label": "Hit Sparks",
+      "effect": "Assets/Effects/ef_parts_hit02.efkefc",
+      "group": "burst-impact",
+      "tags": ["hit", "sparks", "streak", "contact", "multi-hit", "ui"],
+      "summary": "Secondary streak and spark layer for heavier impacts and repeated attacks.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 0.8,
+      "renderStatus": "experimental",
+      "limitations": ["Current custom-material approximation can expose rectangular streak geometry in some frames."]
+    },
+    {
+      "id": "wind_slash",
+      "label": "Wind Slash",
+      "effect": "Assets/Effects/ef_wind01.efkefc",
+      "group": "directional-strike",
+      "tags": ["wind", "green", "teal", "slash", "blade", "arc"],
+      "summary": "Clean wind slash for sword waves, fast melee arcs, and directional cuts.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.0,
+      "renderStatus": "experimental",
+      "limitations": ["The authored mt_slash01 custom material is approximated and can render dark ribbon edges."]
+    },
+    {
+      "id": "wind_blade",
+      "label": "Wind Blade",
+      "effect": "Assets/Effects/ef_wind02.efkefc",
+      "group": "directional-strike",
+      "tags": ["wind", "green", "teal", "large", "blade", "sweep"],
+      "summary": "Broad teal motion suited to the large blade-wave silhouettes in the reference image.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.2,
+      "renderStatus": "experimental",
+      "limitations": ["The authored mt_wind02 custom material is approximated and can render opaque dark geometry."]
+    },
+    {
+      "id": "wind_vortex",
+      "label": "Wind Vortex",
+      "effect": "Assets/Effects/ef_wind03.efkefc",
+      "group": "aura-field",
+      "tags": ["wind", "green", "teal", "vortex", "field", "motion"],
+      "summary": "Rotational wind body for vortices, sustained blade storms, and ambient motion.",
+      "modes": ["world", "screen"],
+      "suggestedScale": 1.0,
+      "renderStatus": "experimental",
+      "limitations": ["The authored wind custom material is approximated and can render opaque rings."]
+    }
+  ],
+  "presets": [
+    {
+      "id": "arcane_multi_hit",
+      "label": "Arcane Multi-hit",
+      "summary": "Staggered violet lightning, holy light, and neutral hit cores create a readable multi-hit finisher.",
+      "promptHints": ["白紫连斩", "多段命中", "arcane slash", "multi hit", "combo finisher"],
+      "mode": "world",
+      "layers": [
+        { "name": "Arcane Body", "effect": "Assets/Effects/ef_holy01.efkefc", "scale": [0.75, 0.75, 0.75], "speed": 1.1 },
+        { "name": "Left Arc", "effect": "Assets/Effects/ef_lightning02.efkefc", "position": [-0.32, 0.1, 0.0], "rotation": [0.0, 0.0, -0.382683, 0.92388], "scale": [0.85, 0.85, 0.85], "speed": 1.35, "startFrame": 2 },
+        { "name": "Right Arc", "effect": "Assets/Effects/ef_lightning02.efkefc", "position": [0.32, 0.1, 0.0], "rotation": [0.0, 0.0, 0.382683, 0.92388], "scale": [0.85, 0.85, 0.85], "speed": 1.35, "startFrame": 7 },
+        { "name": "First Contact", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "position": [-0.22, 0.0, 0.1], "scale": [0.65, 0.65, 0.65], "startFrame": 3 },
+        { "name": "Second Contact", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "position": [0.24, 0.18, 0.1], "scale": [0.55, 0.55, 0.55], "startFrame": 9 }
+      ]
+    },
+    {
+      "id": "chain_lightning_barrage",
+      "label": "Chain Lightning Barrage",
+      "summary": "Three angled bolts and an electric impact form the scattered lightning barrage visible above clustered enemies.",
+      "promptHints": ["连锁闪电", "雷电弹幕", "chain lightning", "lightning barrage", "群体雷击"],
+      "mode": "world",
+      "layers": [
+        { "name": "Left Bolt", "effect": "Assets/Effects/ef_lightning02.efkefc", "position": [-0.55, 0.25, 0.0], "rotation": [0.0, 0.0, -0.21644, 0.976296], "scale": [0.8, 0.8, 0.8], "speed": 1.2 },
+        { "name": "Center Bolt", "effect": "Assets/Effects/ef_lightning02.efkefc", "position": [0.0, 0.45, 0.0], "scale": [0.95, 0.95, 0.95], "speed": 1.0, "startFrame": 5 },
+        { "name": "Right Bolt", "effect": "Assets/Effects/ef_lightning02.efkefc", "position": [0.55, 0.2, 0.0], "rotation": [0.0, 0.0, 0.21644, 0.976296], "scale": [0.8, 0.8, 0.8], "speed": 1.25, "startFrame": 10 },
+        { "name": "Electric Burst", "effect": "Assets/Effects/ef_lightning03.efkefc", "scale": [1.0, 1.0, 1.0], "startFrame": 4 },
+        { "name": "Contact Core", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "scale": [0.6, 0.6, 0.6], "startFrame": 8 }
+      ]
+    },
+    {
+      "id": "crimson_thunder_column",
+      "label": "Crimson Thunder Column",
+      "summary": "A tall lightning body, branching bolt, electric impact, and warm ground burst form the reference's high-value vertical strike.",
+      "promptHints": ["红色雷柱", "闪电劈落", "vertical lightning", "energy column", "boss skill"],
+      "mode": "world",
+      "layers": [
+        { "name": "Thunder Column", "effect": "Assets/Effects/ef_lightning01.efkefc", "scale": [1.15, 1.7, 1.15], "speed": 0.85, "prewarm": true },
+        { "name": "Thunder Branches", "effect": "Assets/Effects/ef_lightning02.efkefc", "scale": [1.35, 1.35, 1.35], "speed": 1.2, "startFrame": 4 },
+        { "name": "Electric Contact", "effect": "Assets/Effects/ef_lightning03.efkefc", "scale": [0.9, 0.9, 0.9], "startFrame": 7 },
+        { "name": "Warm Ground Burst", "effect": "Assets/Effects/ef_fire02.efkefc", "scale": [0.65, 0.65, 0.65], "speed": 1.15, "startFrame": 6 },
+        { "name": "Thunder Contact", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "scale": [0.7, 0.7, 0.7], "startFrame": 8 }
+      ]
+    },
+    {
+      "id": "frost_nova",
+      "label": "Frost Nova",
+      "summary": "An ice field, mirrored shards, and a sweeping arc create a compact crowd-control burst.",
+      "promptHints": ["冰霜新星", "冻结爆发", "frost nova", "ice burst", "范围控制"],
+      "mode": "world",
+      "layers": [
+        { "name": "Frozen Field", "effect": "Assets/Effects/ef_ice03.efkefc", "scale": [1.1, 1.1, 1.1], "speed": 0.85, "prewarm": true },
+        { "name": "Left Shard", "effect": "Assets/Effects/ef_ice01.efkefc", "position": [-0.35, 0.05, 0.0], "scale": [0.7, 0.7, 0.7], "startFrame": 2 },
+        { "name": "Right Shard", "effect": "Assets/Effects/ef_ice01.efkefc", "position": [0.35, 0.05, 0.0], "scale": [0.7, 0.7, 0.7], "startFrame": 8 },
+        { "name": "Nova Arc", "effect": "Assets/Effects/ef_ice02.efkefc", "rotation": [0.0, 0.0, 0.707107, 0.707107], "scale": [0.85, 0.85, 0.85], "speed": 1.15, "startFrame": 5 }
+      ]
+    },
+    {
+      "id": "holy_ascension",
+      "label": "Holy Ascension",
+      "summary": "Layered holy blooms and a compact electric crown create a white-gold ultimate or recovery effect.",
+      "promptHints": ["圣光升腾", "白色大招", "holy ascension", "healing ultimate", "神圣爆发"],
+      "mode": "world",
+      "layers": [
+        { "name": "Holy Core", "effect": "Assets/Effects/ef_holy01.efkefc", "scale": [0.95, 0.95, 0.95], "speed": 0.9, "prewarm": true },
+        { "name": "Left Bloom", "effect": "Assets/Effects/ef_holy01.efkefc", "position": [-0.38, 0.15, 0.0], "scale": [0.5, 0.5, 0.5], "speed": 1.15, "startFrame": 8 },
+        { "name": "Right Bloom", "effect": "Assets/Effects/ef_holy01.efkefc", "position": [0.38, 0.15, 0.0], "scale": [0.5, 0.5, 0.5], "speed": 1.15, "startFrame": 15 },
+        { "name": "Radiant Crown", "effect": "Assets/Effects/ef_lightning03.efkefc", "position": [0.0, 0.45, 0.0], "scale": [0.65, 0.65, 0.65], "startFrame": 5 }
+      ]
+    },
+    {
+      "id": "inferno_domain",
+      "label": "Inferno Domain",
+      "summary": "A sustained flame body with staggered side bursts creates burning ground for area damage.",
+      "promptHints": ["烈焰领域", "持续火场", "inferno domain", "burning ground", "范围伤害"],
+      "mode": "world",
+      "layers": [
+        { "name": "Flame Body", "effect": "Assets/Effects/ef_fire01.efkefc", "scale": [1.1, 1.1, 1.1], "speed": 0.8, "prewarm": true },
+        { "name": "Left Flame", "effect": "Assets/Effects/ef_fire02.efkefc", "position": [-0.45, 0.0, 0.0], "scale": [0.55, 0.55, 0.55], "startFrame": 5 },
+        { "name": "Right Flame", "effect": "Assets/Effects/ef_fire02.efkefc", "position": [0.45, 0.0, 0.0], "scale": [0.55, 0.55, 0.55], "startFrame": 13 }
+      ]
+    },
+    {
+      "id": "inferno_impact",
+      "label": "Inferno Impact",
+      "summary": "A directional fire strike collapses into a broad burst and bright contact core for a heavy finisher.",
+      "promptHints": ["火焰斩击", "烈火爆点", "inferno impact", "fire finisher", "爆炸命中"],
+      "mode": "world",
+      "layers": [
+        { "name": "Fire Strike", "effect": "Assets/Effects/ef_fire03.efkefc", "rotation": [0.0, 0.0, -0.173648, 0.984808], "scale": [1.05, 1.05, 1.05], "speed": 1.1 },
+        { "name": "Fire Burst", "effect": "Assets/Effects/ef_fire02.efkefc", "scale": [1.15, 1.15, 1.15], "speed": 1.0, "startFrame": 5 },
+        { "name": "Impact Core", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "scale": [0.75, 0.75, 0.75], "startFrame": 7 }
+      ]
+    },
+    {
+      "id": "jade_blade_storm",
+      "label": "Jade Blade Storm",
+      "summary": "Three staggered cyan ice arcs replace the unsupported wind material while preserving the reference's oversized blade-wave rhythm.",
+      "promptHints": ["青色剑气", "翡翠刀光", "jade blade", "teal sword wave", "multi slash"],
+      "mode": "world",
+      "layers": [
+        { "name": "Left Jade Blade", "effect": "Assets/Effects/ef_ice02.efkefc", "position": [-0.55, 0.1, 0.0], "rotation": [0.0, 0.0, -0.21644, 0.976296], "scale": [1.15, 1.35, 1.15], "speed": 0.85, "prewarm": true },
+        { "name": "Center Jade Blade", "effect": "Assets/Effects/ef_ice02.efkefc", "position": [0.0, 0.35, 0.0], "scale": [1.35, 1.55, 1.35], "speed": 0.75, "startFrame": 5 },
+        { "name": "Right Jade Blade", "effect": "Assets/Effects/ef_ice02.efkefc", "position": [0.55, 0.05, 0.0], "rotation": [0.0, 0.0, 0.21644, 0.976296], "scale": [1.15, 1.35, 1.15], "speed": 0.9, "startFrame": 10 },
+        { "name": "Blade Contact", "effect": "Assets/Effects/ef_ice01.efkefc", "scale": [0.6, 0.6, 0.6], "startFrame": 6 }
+      ]
+    },
+    {
+      "id": "cyan_guard_arc_ui",
+      "label": "Cyan Guard Arc UI",
+      "summary": "Canvas-hosted ice arc and holy glow for shields, skill buttons, or screen-space feedback.",
+      "promptHints": ["青色护盾弧", "冰盾", "cyan guard arc", "skill button effect", "UI shield"],
+      "mode": "screen",
+      "layers": [
+        { "name": "Guard Arc", "effect": "Assets/Effects/ef_ice02.efkefc", "size": [520, 260], "screenScale": 0.85, "sortingOrder": 20 },
+        { "name": "Guard Glow", "effect": "Assets/Effects/ef_holy01.efkefc", "size": [300, 300], "screenScale": 0.55, "sortingOrder": 19, "startFrame": 6 }
+      ]
+    },
+    {
+      "id": "ui_hit_confirm",
+      "label": "UI Hit Confirm",
+      "summary": "Compact two-layer Canvas hit for damage numbers, buttons, and combat HUD feedback.",
+      "promptHints": ["命中反馈", "暴击闪光", "hit confirm", "damage number", "HUD impact"],
+      "mode": "screen",
+      "layers": [
+        { "name": "UI Hit Core", "effect": "Assets/Effects/ef_parts_hit01.efkefc", "size": [240, 240], "screenScale": 0.35, "sortingOrder": 30 }
+      ]
+    }
+  ]
+}

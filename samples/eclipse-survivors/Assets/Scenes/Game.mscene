@@ -1,0 +1,1797 @@
+{
+  "version": 3,
+  "name": "Game",
+  "world": {
+    "entities": [
+      {
+        "entity": 1,
+        "name": "Main Camera",
+        "parent": null,
+        "siblingIndex": 0,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              10
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "Camera2D": {
+            "size": 5,
+            "primary": true,
+            "target_display": 0,
+            "clear_flags": "solid_color",
+            "background_color": [
+              0.018,
+              0.021,
+              0.05,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "entity": 2,
+        "name": "Arena Background",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              -2
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "SpriteRenderer": {
+            "sprite": "Assets/Art/Generated/eclipse-citadel.png",
+            "color": [
+              0.26,
+              0.31,
+              0.53,
+              1
+            ],
+            "size": [
+              17.78,
+              10
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "sorting_layer": "default",
+            "sorting_order": -100
+          }
+        }
+      },
+      {
+        "entity": 3,
+        "name": "Player",
+        "parent": null,
+        "siblingIndex": 2,
+        "active": true,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "AnimatedSprite2D": {
+            "frames": [
+              "Assets/Art/Generated/eclipse-warden-aligned.png#idle_0",
+              "Assets/Art/Generated/eclipse-warden-aligned.png#idle_1"
+            ],
+            "fps": 2.5,
+            "playing": true,
+            "looped": true,
+            "frame": 0,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "size": [
+              1.26,
+              1.26
+            ],
+            "pivot": [
+              0.5,
+              0.47
+            ],
+            "flip_x": false,
+            "flip_y": false,
+            "sorting_layer": "default",
+            "sorting_order": 50
+          }
+        }
+      },
+      {
+        "entity": 4,
+        "name": "Canvas",
+        "parent": null,
+        "siblingIndex": 1,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Canvas": {
+            "render_mode": "ScreenSpaceOverlay",
+            "sorting_order": 0,
+            "plane_distance": 100
+          },
+          "CanvasScaler": {
+            "ui_scale_mode": "ScaleWithScreenSize",
+            "reference_resolution": [
+              1920,
+              1080
+            ],
+            "match_width_or_height": 0.5,
+            "scale_factor": 1
+          },
+          "GraphicRaycaster": {
+            "enabled": true,
+            "ignore_reversed_graphics": true,
+            "blocking_objects": "None",
+            "blocking_mask": -1
+          }
+        }
+      },
+      {
+        "entity": 5,
+        "name": "HUD Top",
+        "parent": 4,
+        "siblingIndex": 5,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -485
+            ],
+            "size_delta": [
+              1920,
+              110
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.015,
+              0.02,
+              0.065,
+              0.88
+            ],
+            "border_color": [
+              0.25,
+              0.6,
+              0.85,
+              0.45
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 6,
+        "name": "HUD Stage",
+        "parent": 4,
+        "siblingIndex": 6,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -725,
+              -485
+            ],
+            "size_delta": [
+              430,
+              70
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "蚀月庭院",
+            "color": [
+              0.82,
+              0.76,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 22,
+            "font_style": "Normal",
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 7,
+        "name": "HUD Timer",
+        "parent": 4,
+        "siblingIndex": 7,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -485
+            ],
+            "size_delta": [
+              280,
+              70
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "03:00",
+            "color": [
+              0.94,
+              0.97,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 32,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 8,
+        "name": "HUD Stats",
+        "parent": 4,
+        "siblingIndex": 8,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              630,
+              -485
+            ],
+            "size_delta": [
+              440,
+              70
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "等级 1  ·  击败 0  ·  金币 0",
+            "color": [
+              0.55,
+              0.86,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 14,
+            "font_style": "Normal",
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 9,
+        "name": "Health Bar",
+        "parent": 4,
+        "siblingIndex": 9,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -640,
+              480
+            ],
+            "size_delta": [
+              430,
+              28
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "ProgressBar": {
+            "min_value": 0,
+            "max_value": 100,
+            "value": 100,
+            "direction": "LeftToRight",
+            "background_color": [
+              0.12,
+              0.04,
+              0.09,
+              0.92
+            ],
+            "fill_color": [
+              0.91,
+              0.16,
+              0.35,
+              1
+            ],
+            "text_color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "show_label": true,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 13
+          }
+        }
+      },
+      {
+        "entity": 10,
+        "name": "Experience Bar",
+        "parent": 4,
+        "siblingIndex": 10,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              506
+            ],
+            "size_delta": [
+              800,
+              20
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "ProgressBar": {
+            "min_value": 0,
+            "max_value": 10,
+            "value": 0,
+            "direction": "LeftToRight",
+            "background_color": [
+              0.035,
+              0.05,
+              0.12,
+              0.94
+            ],
+            "fill_color": [
+              0.22,
+              0.74,
+              0.97,
+              1
+            ],
+            "text_color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "show_label": false,
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 12
+          }
+        }
+      },
+      {
+        "entity": 11,
+        "name": "Skill Tray",
+        "parent": 4,
+        "siblingIndex": 11,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              610,
+              425
+            ],
+            "size_delta": [
+              570,
+              120
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.015,
+              0.02,
+              0.065,
+              0.88
+            ],
+            "border_color": [
+              0.38,
+              0.28,
+              0.7,
+              0.5
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 12,
+        "name": "HUD Skills",
+        "parent": 4,
+        "siblingIndex": 12,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              610,
+              425
+            ],
+            "size_delta": [
+              520,
+              90
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "星芒飞弹 Lv.1",
+            "color": [
+              0.8,
+              0.83,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 16,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 13,
+        "name": "Run Toast",
+        "parent": 4,
+        "siblingIndex": 13,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -325
+            ],
+            "size_delta": [
+              900,
+              70
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "蚀月升起，守住阵线！",
+            "color": [
+              0.55,
+              0.9,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 24,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 14,
+        "name": "Controls Hint",
+        "parent": 4,
+        "siblingIndex": 14,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -700,
+              425
+            ],
+            "size_delta": [
+              450,
+              65
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "WASD 移动  ·  技能自动释放",
+            "color": [
+              0.55,
+              0.63,
+              0.78,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 13,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 15,
+        "name": "Pause Button",
+        "parent": 4,
+        "siblingIndex": 15,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              865,
+              -485
+            ],
+            "size_delta": [
+              90,
+              44
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.08,
+              0.12,
+              0.24,
+              0.95
+            ],
+            "highlighted_color": [
+              0.28,
+              0.58,
+              0.82,
+              1
+            ],
+            "pressed_color": [
+              0.168,
+              0.348,
+              0.49199999999999994,
+              1
+            ],
+            "selected_color": [
+              0.28,
+              0.58,
+              0.82,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "暂停",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": "pause"
+          }
+        }
+      },
+      {
+        "entity": 16,
+        "name": "Pause Overlay",
+        "parent": 4,
+        "siblingIndex": 16,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              1600
+            ],
+            "size_delta": [
+              640,
+              420
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.025,
+              0.035,
+              0.1,
+              0.96
+            ],
+            "border_color": [
+              0.45,
+              0.3,
+              0.8,
+              0.8
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 17,
+        "name": "Pause Title",
+        "parent": 16,
+        "siblingIndex": 17,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -110
+            ],
+            "size_delta": [
+              520,
+              80
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "战斗暂停",
+            "color": [
+              0.9,
+              0.84,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 34,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 18,
+        "name": "Pause Summary",
+        "parent": 16,
+        "siblingIndex": 18,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -25
+            ],
+            "size_delta": [
+              520,
+              80
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "在蚀月下稍作喘息",
+            "color": [
+              0.65,
+              0.72,
+              0.87,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 16,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 19,
+        "name": "Resume Button",
+        "parent": 16,
+        "siblingIndex": 19,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              70
+            ],
+            "size_delta": [
+              360,
+              58
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.11,
+              0.24,
+              0.39,
+              0.98
+            ],
+            "highlighted_color": [
+              0.17,
+              0.67,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.10200000000000001,
+              0.402,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.17,
+              0.67,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "继续战斗",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": "resume"
+          }
+        }
+      },
+      {
+        "entity": 20,
+        "name": "Abandon Button",
+        "parent": 16,
+        "siblingIndex": 20,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              145
+            ],
+            "size_delta": [
+              360,
+              48
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.27,
+              0.08,
+              0.17,
+              1
+            ],
+            "highlighted_color": [
+              0.7,
+              0.18,
+              0.38,
+              1
+            ],
+            "pressed_color": [
+              0.42,
+              0.108,
+              0.22799999999999998,
+              1
+            ],
+            "selected_color": [
+              0.7,
+              0.18,
+              0.38,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "放弃本局",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": "abandon"
+          }
+        }
+      },
+      {
+        "entity": 21,
+        "name": "Skill Choice Overlay",
+        "parent": 4,
+        "siblingIndex": 21,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              1600
+            ],
+            "size_delta": [
+              1140,
+              620
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Panel": {
+            "color": [
+              0.018,
+              0.03,
+              0.09,
+              0.985
+            ],
+            "border_color": [
+              0.28,
+              0.78,
+              0.94,
+              0.9
+            ],
+            "border_width": 1,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 22,
+        "name": "Choice Title",
+        "parent": 21,
+        "siblingIndex": 22,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -240
+            ],
+            "size_delta": [
+              1000,
+              70
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "等级提升",
+            "color": [
+              0.75,
+              0.97,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 31,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 23,
+        "name": "Choice Subtitle",
+        "parent": 21,
+        "siblingIndex": 23,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -180
+            ],
+            "size_delta": [
+              1000,
+              44
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Text": {
+            "text": "选择一项能力，战斗将暂停",
+            "color": [
+              0.58,
+              0.68,
+              0.8,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 15,
+            "font_style": "Normal",
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "support_rich_text": true,
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false,
+            "outline_color": [
+              0.01,
+              0.02,
+              0.06,
+              0.9
+            ],
+            "outline_width": 0
+          }
+        }
+      },
+      {
+        "entity": 24,
+        "name": "Choice Button 1",
+        "parent": 21,
+        "siblingIndex": 24,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -360,
+              40
+            ],
+            "size_delta": [
+              310,
+              370
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.065,
+              0.105,
+              0.2,
+              1
+            ],
+            "highlighted_color": [
+              0.18,
+              0.68,
+              0.88,
+              1
+            ],
+            "pressed_color": [
+              0.108,
+              0.40800000000000003,
+              0.528,
+              1
+            ],
+            "selected_color": [
+              0.18,
+              0.68,
+              0.88,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "技能一",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": "choose-skill:0"
+          }
+        }
+      },
+      {
+        "entity": 25,
+        "name": "Choice Button 2",
+        "parent": 21,
+        "siblingIndex": 25,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              40
+            ],
+            "size_delta": [
+              310,
+              370
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.085,
+              0.07,
+              0.2,
+              1
+            ],
+            "highlighted_color": [
+              0.48,
+              0.3,
+              0.86,
+              1
+            ],
+            "pressed_color": [
+              0.288,
+              0.18,
+              0.516,
+              1
+            ],
+            "selected_color": [
+              0.48,
+              0.3,
+              0.86,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "技能二",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": "choose-skill:1"
+          }
+        }
+      },
+      {
+        "entity": 26,
+        "name": "Choice Button 3",
+        "parent": 21,
+        "siblingIndex": 26,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              360,
+              40
+            ],
+            "size_delta": [
+              310,
+              370
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Button": {
+            "interactable": true,
+            "transition": "ColorTint",
+            "normal_color": [
+              0.12,
+              0.07,
+              0.16,
+              1
+            ],
+            "highlighted_color": [
+              0.78,
+              0.28,
+              0.58,
+              1
+            ],
+            "pressed_color": [
+              0.46799999999999997,
+              0.168,
+              0.348,
+              1
+            ],
+            "selected_color": [
+              0.78,
+              0.28,
+              0.58,
+              1
+            ],
+            "disabled_color": [
+              0.15,
+              0.16,
+              0.2,
+              0.5
+            ],
+            "color_multiplier": 1,
+            "fade_duration": 0.08,
+            "label": "技能三",
+            "text_color": [
+              0.94,
+              0.98,
+              1,
+              1
+            ],
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 18,
+            "on_click": "choose-skill:2"
+          }
+        }
+      },
+      {
+        "entity": 27,
+        "name": "Choice Icon 1",
+        "parent": 21,
+        "siblingIndex": 27,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -360,
+              -30
+            ],
+            "size_delta": [
+              112,
+              112
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/skills-v2-atlas.png#chain_lightning",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 28,
+        "name": "Choice Icon 2",
+        "parent": 21,
+        "siblingIndex": 28,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -30
+            ],
+            "size_delta": [
+              112,
+              112
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/skills-v2-atlas.png#meteor_shower",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      },
+      {
+        "entity": 29,
+        "name": "Choice Icon 3",
+        "parent": 21,
+        "siblingIndex": 29,
+        "active": true,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              360,
+              -30
+            ],
+            "size_delta": [
+              112,
+              112
+            ],
+            "local_rotation": 0,
+            "local_scale": [
+              1,
+              1
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/Art/Generated/skills-v2-atlas.png#frost_pulse",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "image_type": "Simple",
+            "preserve_aspect": false,
+            "raycast_target": false
+          }
+        }
+      }
+    ],
+    "frame": 0,
+    "sim_frame": 0,
+    "clear_color": [
+      0.018,
+      0.021,
+      0.05,
+      1
+    ],
+    "selected": 3
+  },
+  "gameResolution": {
+    "width": 1280,
+    "height": 720
+  }
+}

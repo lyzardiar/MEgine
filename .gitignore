@@ -10,6 +10,15 @@ dist
 *.tsbuildinfo
 .turbo
 
+# Python and .NET caches
+__pycache__/
+*.py[cod]
+obj/
+
+# Local temporary files and Eclipse Survivors builds
+/tmp/
+/samples/eclipse-survivors/Builds/
+
 # IDE
 .idea
 .vscode/*
@@ -37,7 +46,6 @@ packages/editor/src-tauri/build-sdk/*
 !packages/editor/src-tauri/build-sdk/.gitkeep
 
 # Local documentation snapshots and validation artifacts (see AGENTS.md)
-/tmp/docs-artifacts/
 /docs/**/*.[pP][nN][gG]
 /docs/**/*.[jJ][pP][gG]
 /docs/**/*.[jJ][pP][eE][gG]
