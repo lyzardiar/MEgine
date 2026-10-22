@@ -8,11 +8,25 @@ use crate::schedule::Schedule;
 use crate::time::Time;
 use glam::{Quat, Vec3, Vec4};
 use serde_json::Value;
-use std::any::Any;
+use std::any::{Any, TypeId};
 use std::collections::{BTreeSet, HashMap};
+use std::hash::{BuildHasherDefault, Hasher};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static NEXT_WORLD_ID: AtomicU64 = AtomicU64::new(1);
+
+// MiYu: TypeId supplies an internal compiler-generated hash; do not use this hasher for external keys.
+#[derive(Default)]
+struct ComponentTypeHasher(u64);
+impl Hasher for ComponentTypeHasher {
+    fn finish(&self) -> u64 { self.0 }
+    fn write_u64(&mut self, value: u64) { self.0 = value; }
+    fn write(&mut self, bytes: &[u8]) { for byte in bytes { self.0 = self.0.rotate_left(8) ^ u64::from(*byte); } }
+}
+
+#[cfg(test)]
+#[path = "world_component_lookup_tests.rs"]
+mod component_lookup_tests;
 
 struct EntityRecord {
     iteration_rank: usize,
@@ -21,6 +35,7 @@ struct EntityRecord {
     alive: bool,
     name: Option<String>,
     components: HashMap<String, ComponentBox>,
+    component_lookup_fallback: bool,
     serialized_components: HashMap<String, Value>,
     sibling_index: i32,
     active: bool,
@@ -34,6 +49,7 @@ pub struct World {
     iteration_order: Option<Vec<u32>>,
     free_list: Vec<u32>,
     component_entities: HashMap<String, BTreeSet<u32>>,
+    component_types: HashMap<TypeId, Option<String>, BuildHasherDefault<ComponentTypeHasher>>,
     pub time: Time,
     pub commands: CommandBuffer,
     pub schedule: Schedule,
@@ -63,6 +79,7 @@ impl World {
             iteration_order: None,
             free_list: Vec::new(),
             component_entities: HashMap::new(),
+            component_types: HashMap::default(),
             time: Time::default(),
             commands: CommandBuffer::new(),
             schedule: Schedule::new(),
@@ -80,6 +97,7 @@ impl World {
             rec.generation = rec.generation.wrapping_add(1);
             rec.name = None;
             rec.components.clear();
+            rec.component_lookup_fallback = false;
             rec.serialized_components.clear();
             rec.sibling_index = 0;
             rec.active = true;
@@ -95,6 +113,7 @@ impl World {
                 alive: true,
                 name: None,
                 components: HashMap::new(),
+                component_lookup_fallback: false,
                 serialized_components: HashMap::new(),
                 sibling_index: 0,
                 active: true,
@@ -187,6 +206,8 @@ impl World {
             return;
         }
         let name = T::type_name();
+        let fallback = self.index_component_type(name, &value);
+        self.entities[entity.index as usize].component_lookup_fallback |= fallback;
         self.entities[entity.index as usize].revision += 1;
         if self.entities[entity.index as usize].components.insert(name.to_string(), Box::new(value)).is_none() { self.component_entities.entry(name.to_string()).or_default().insert(entity.index); }
     }
@@ -196,10 +217,13 @@ impl World {
         if !self.is_alive(entity) {
             return None;
         }
-        self.entities[entity.index as usize]
-            .components
-            .values()
-            .find_map(|c| c.as_any().downcast_ref::<T>())
+        let record = &self.entities[entity.index as usize];
+        let components = &record.components;
+        if record.component_lookup_fallback { return components.values().find_map(|component| component.as_any().downcast_ref::<T>()); }
+        match self.component_types.get(&TypeId::of::<T>())? {
+            Some(name) => components.get(name)?.as_any().downcast_ref::<T>(),
+            None => components.values().find_map(|component| component.as_any().downcast_ref::<T>()),
+        }
     }
 
     pub fn get_component_mut<T: Any + Send + Sync>(&mut self, entity: Entity) -> Option<&mut T> {
@@ -207,14 +231,30 @@ impl World {
             return None;
         }
         let record = &mut self.entities[entity.index as usize];
-        let value = record.components
-            .values_mut()
-            .find_map(|c| c.as_any_mut().downcast_mut::<T>());
+        let value = if record.component_lookup_fallback {
+            record.components.values_mut().find_map(|component| component.as_any_mut().downcast_mut::<T>())
+        } else {
+            match self.component_types.get(&TypeId::of::<T>())? {
+                Some(name) => record.components.get_mut(name)?.as_any_mut().downcast_mut::<T>(),
+                None => record.components.values_mut().find_map(|component| component.as_any_mut().downcast_mut::<T>()),
+            }
+        };
         if value.is_some() { record.revision += 1; }
         value
     }
 
     pub(crate) fn entity_revision(&self, entity: Entity) -> u64 { self.entities[entity.index as usize].revision }
+
+    fn index_component_type(&mut self, name: &str, component: &dyn Component) -> bool {
+        let concrete = component.type_id();
+        let indexed = self.component_types.entry(concrete).or_insert_with(|| {
+            // MiYu: only native implementations with stable self views use direct lookup; custom Any views keep scan semantics.
+            let stable = concrete == TypeId::of::<Parent>() || concrete == TypeId::of::<Children>() || crate::generated::component_from_value(name, Value::Object(Default::default())).ok().flatten().is_some_and(|value| value.as_ref().type_id() == concrete);
+            stable.then(|| name.to_owned())
+        });
+        if indexed.as_ref().is_some_and(|previous| previous != name) { *indexed = None; }
+        indexed.is_none()
+    }
 
     /// Serialize the live typed component, including runtime mutations.
     pub fn component_value(&self, entity: Entity, name: &str) -> Option<Value> {
@@ -487,6 +527,8 @@ impl World {
             }
             other => match crate::generated::component_from_value(other, value) {
                 Ok(Some(component)) => {
+                    let fallback = self.index_component_type(other, component.as_ref());
+                    self.entities[entity.index as usize].component_lookup_fallback |= fallback;
                     if self.entities[entity.index as usize].components.insert(other.to_string(), component).is_none() { self.component_entities.entry(other.to_string()).or_default().insert(entity.index); }
                 }
                 Ok(None) => {

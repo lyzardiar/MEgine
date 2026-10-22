@@ -441,7 +441,7 @@ export function ProjectAssetSlot(props: {
   const pickerBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    void refreshProjectFiles().then(() => setRevision((value) => value + 1));
+    void refreshProjectFiles({ force: false }).then(() => setRevision((value) => value + 1));
   }, []);
 
   const assets = useMemo(() => {

@@ -65,6 +65,7 @@ import {
   pollProjectFileChanges,
   projectAssetHasExternalWriteConflict,
   refreshProjectFiles,
+  refreshProjectFilesForEvent,
   type ProjectAssetChange,
 } from './projectAssets';
 import { DockWorkspace, type PanelKind } from './panels/DockWorkspace';
@@ -920,7 +921,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     };
     const assetsChanged = (event: Event) => {
       const detail = (event as CustomEvent<
-        (ProjectAssetLifecycleDetail & { remote?: boolean }) | undefined
+        (ProjectAssetLifecycleDetail & { remote?: boolean; changes?: ProjectAssetChange[] }) | undefined
       >).detail;
       if (detail?.remote && (detail.action === 'renamed' || detail.action === 'deleted')) {
         const remap = (value: string | null): string | null => {
@@ -958,7 +959,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           spriteAtlas: current.spriteAtlas + 1,
         }));
       }
-      bumpScenes();
+      if (!Array.isArray(detail?.changes)) void refreshProjectFilesForEvent(event).then(() => bumpScenes());
     };
     window.addEventListener(OPEN_MATERIAL_EVENT, openMaterial);
     window.addEventListener(OPEN_SURFACE_SHADER_EVENT, openShader);
@@ -986,7 +987,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         changes?: ProjectAssetChange[];
       }>).detail;
       const changes = detail?.changes ?? [];
-      await refreshProjectFiles();
+      await refreshProjectFilesForEvent(event);
       bumpScenes();
       const changed = new Map(changes.map((change) => [change.relPath.toLocaleLowerCase(), change]));
       const reload = async (

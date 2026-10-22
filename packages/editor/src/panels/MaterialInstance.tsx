@@ -32,6 +32,7 @@ import {
   normalizeProjectAssetPath,
   readProjectAssetText,
   refreshProjectFiles,
+  refreshProjectFilesForEvent,
   writeProjectAssetText,
 } from '../projectAssets';
 import {
@@ -241,7 +242,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
     setLoading(true);
     void Promise.all([
       readProjectAssetText(props.assetPath, { replaceWriteBaseline: true }),
-      refreshProjectFiles(),
+      refreshProjectFiles({ force: false }),
     ])
       .then(([text]) => {
         if (cancelled) return;
@@ -372,7 +373,7 @@ export function MaterialInstanceEditor(props: MaterialEditorProps) {
 
   useEffect(() => {
     const refresh = (event: Event) => {
-      void refreshProjectFiles().finally(() => {
+      void refreshProjectFilesForEvent(event).finally(() => {
         setAssetRevision((revision) => revision + 1);
       });
       const detail = (event as CustomEvent<unknown>).detail;

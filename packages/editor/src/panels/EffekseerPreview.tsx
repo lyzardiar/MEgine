@@ -16,9 +16,8 @@ import {
 } from 'react';
 import {
   PROJECT_ASSETS_CHANGED_EVENT,
-  PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT,
 } from '../assetEditorEvents';
-import { refreshProjectFiles, type ProjectFileAsset } from '../projectAssets';
+import { refreshProjectFilesForEvent, refreshProjectFiles, type ProjectFileAsset } from '../projectAssets';
 import { isDesktopEditor } from '../transport/editorTransport';
 
 type NativeViewportFrame = {
@@ -70,8 +69,8 @@ export function EffekseerPreview(props: {
 
   useEffect(() => {
     let active = true;
-    const load = () => {
-      void refreshProjectFiles().then((files) => {
+    const load = (event?: Event) => {
+      void (event ? refreshProjectFilesForEvent(event) : refreshProjectFiles({ force: false })).then((files) => {
         if (!active) return;
         const effects = files
           .filter((asset) => asset.kind === 'effekseer-effect')
@@ -82,11 +81,9 @@ export function EffekseerPreview(props: {
     };
     load();
     window.addEventListener(PROJECT_ASSETS_CHANGED_EVENT, load);
-    window.addEventListener(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, load);
     return () => {
       active = false;
       window.removeEventListener(PROJECT_ASSETS_CHANGED_EVENT, load);
-      window.removeEventListener(PROJECT_ASSETS_EXTERNAL_CHANGE_EVENT, load);
     };
   }, [props.onSelectPath, props.selectedPath]);
 

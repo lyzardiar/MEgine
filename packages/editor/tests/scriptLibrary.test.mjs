@@ -77,8 +77,9 @@ test('script IDE URIs preserve drive roots and encode reserved path characters',
 test('desktop script refresh is wired to the active native project', () => {
   const source = fs.readFileSync(path.join(root, 'src', 'scriptLibrary.ts'), 'utf8');
   assert.match(source, /if \(isDesktopEditor\(\)\)/);
-  assert.match(source, /invoke<ProjectSnapshot>\('get_project_snapshot'\)/);
-  assert.match(source, /invoke<IndexedScriptAsset\[]>\('list_project_assets'\)/);
+  assert.doesNotMatch(source, /get_project_snapshot|list_project_assets/);
+  assert.match(source, /getDesktopProject\(\)/);
+  assert.match(source, /indexedAssets \?\? await refreshProjectFiles\(\)/);
   assert.match(source, /desktopScriptAssets\(project\.projectRoot, assets\)/);
   assert.match(source, /candidate\.id === script\.id/);
   assert.match(source, /const res = await fetch\(`\$\{API\}\/scripts`\)/);

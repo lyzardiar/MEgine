@@ -558,6 +558,8 @@ fn collect_view_objects(world: &World, hierarchy: &TransformHierarchy, materials
 
 fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>) -> Vec<RenderObject> {
     let mut out = Vec::new();
+    // MiYu: resolve a shared authored material once per extraction; each object's overrides stay private.
+    let mut resolved_materials = HashMap::<&str, RenderMaterial>::new();
     for entity in world.entities_with_components(&["MeshRenderer"]) {
         // MiYu: resolve eligibility before reading pooled renderer components.
         let Some(transform) = hierarchy.get(entity) else { continue; };
@@ -577,9 +579,7 @@ fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials
                 .get_component::<PbrMaterial>(entity)
                 .map(render_material_from_component)
                 .unwrap_or_else(|| {
-                    materials
-                        .resolve(&mesh.material)
-                        .unwrap_or_else(|| material_preset(&mesh.material))
+                    resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material))).clone()
                 });
             if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
                 material = apply_material_property_block(material, block);
@@ -708,6 +708,10 @@ fn safe_rotation(value: [f32; 4]) -> Quat {
         Quat::IDENTITY
     }
 }
+
+#[cfg(test)]
+#[path = "frame_mesh_cache_tests.rs"]
+mod mesh_cache_tests;
 
 #[cfg(test)]
 mod lighting_tests {

@@ -10,6 +10,8 @@ const repo=fileURLToPath(new URL('../',import.meta.url));
 const out=path.join(repo,'tmp/docs-artifacts/editor-performance-risk');
 const root=path.join(out,'native-qa',String(Date.now())),sample=path.join(root,'sample');
 const source=path.join(repo,'samples/frostbound-realms');
+const label=process.env.MENGINE_PERFORMANCE_LABEL||'native-editor-qa';
+assert.match(label,/^[a-z0-9-]+$/);
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const hash=file=>createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 assert.ok(process.env.MENGINE_EDITOR_EXECUTABLE,'Set MENGINE_EDITOR_EXECUTABLE to the freshly built packaged editor');
@@ -53,7 +55,6 @@ async function waitRecovery(name){
     return JSON.parse(fs.readFileSync(recoveryFile,'utf8')).world.entities.some(entity=>entity.name===name);
   });
 }
-let playing=false;
 try{
   console.log('START isolated native editor performance QA',root);
   for(let attempt=0;;attempt++){
@@ -121,12 +122,18 @@ try{
   await execute('history.undo');
   assert.equal((await snapshot()).entities.find(entity=>entity.entity===target.entity).name,target.name);
   await execute('panel.focus',{kind:'game'});
-  await execute('playback.play',{paused:true});playing=true;
+  await execute('playback.play',{paused:true});
   await execute('playback.step',{deltaTime:0.016,steps:5});
   let game=await snapshot();
   const telemetry=game.entities.find(entity=>entity.name==='Frost telemetry');
   assert.ok(telemetry?.components.Text.text);
-  report.telemetry=JSON.parse(telemetry.components.Text.text);
+  assert.equal(JSON.parse(telemetry.components.Text.text).mode,'title');
+  await execute('playback.input',{keys:['F1']});
+  await execute('playback.step',{deltaTime:0.016,steps:1});
+  await execute('playback.input',{keys:[]});
+  await execute('playback.step',{deltaTime:0.016,steps:3});
+  report.telemetry=JSON.parse((await snapshot()).entities.find(entity=>entity.name==='Frost telemetry').components.Text.text);
+  assert.equal(report.telemetry.mode,'playing');
   await execute('playback.pause');
   await sleep(3000);
   await execute('playback.pause');
@@ -135,7 +142,17 @@ try{
   fs.writeFileSync(path.join(out,'native-game.png'),Buffer.from(gameShot.dataUrl.split(',')[1],'base64'));
   report.profiles.game=await query('profiler.get_samples',{source:'game',limit:120});
   assert.ok(report.profiles.game.nativeProfileCount>0,'Game must render through the native viewport');
-  await execute('playback.stop');playing=false;
+  report.gameWarmFrames=[];
+  for(let frame=0;frame<12;frame++){
+    const before=report.profiles.game.nativeLatest?.timestamp;
+    await execute('playback.step',{deltaTime:0.016,steps:1});
+    await waitUntil('native gameplay frame',async()=>{
+      report.profiles.game=await query('profiler.get_samples',{source:'game',limit:120});
+      return report.profiles.game.nativeLatest&&report.profiles.game.nativeLatest.timestamp!==before;
+    });
+    report.gameWarmFrames.push(report.profiles.game.nativeLatest);
+  }
+  await execute('playback.stop');
   assert.equal((await snapshot()).entities.find(entity=>entity.entity===target.entity).name,target.name);
   report.checks.push({playPauseStepStop:true,editStateRestored:true});
   const logs=await query('console.get_logs',{limit:300});
@@ -149,5 +166,5 @@ finally{
   try{await execute('playback.stop');await execute('project.close',{discardDirty:true});}catch(error){report.projectCloseError=error.message;}
   closeBridgeConnection();
   try{report.cleanup=await closeNativeQa(root);}catch(error){report.cleanupError=error.message;}
-  fs.writeFileSync(path.join(out,'native-editor-qa.json'),JSON.stringify(report,null,2));
+  fs.writeFileSync(path.join(out,label+'.json'),JSON.stringify(report,null,2));
 }

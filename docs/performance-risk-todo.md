@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，以及资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -9,6 +9,11 @@
 - [x] 自动恢复点缩小响应并移入工作线程。`checkpoint_snapshot` 返回 revision、dirty、恢复点信息，不回传世界；恢复文件使用紧凑 JSON，保持原子替换和持久化写入。Tauri 使用 `spawn_blocking`，在同一项目锁内保证顺序。校验项目、场景及 revision；前端排队时校验场景 generation，普通同场景保存不会误丢随后编辑。canonical 世界按需取回，失败也使旧缓存失效。
 - [x] 脚本快照按实体缓存 JSON 片段。以 Arc/Weak 身份识别不变实体，多数实体变化时直接全量序列化；稳定后预热片段。每帧元数据和 JS 对象保持独立，删除实体及注入世界会清理缓存。V8、QuickJS 使用相同语义。
 - [x] 规范 op-first 非组件脚本命令不再尝试两次反序列化；保留大组件数组与任意字段顺序的兼容解析。
+
+- [x] 资源变化后的刷新合并。本窗口监听事件直接复用已发布索引，远端/内部事件共享一次扫描；脚本列表读取项目元数据，取消完整世界快照请求。Project 只在纹理/切片依赖变化时重新发现精灵。旧刷新不能覆盖较新的轮询结果或新项目，主动刷新仍强制扫描。
+- [x] 空间索引增量 refit。移动只更新所属节点和祖先的内容 bounds；增删、已知/未知 bounds 转换及空间质量退化时重建。保留深度上限和原始物体顺序，未知 bounds 保持可见。
+- [x] 内建组件 TypeId 索引。仅对确认具有稳定 Any 类型的生成组件和 Parent/Children 使用直接查找；自定义组件保留逐项查找，兼容运行中改变投影视图、同名替换和实体槽复用。成功的可写访问仍推进实体 revision。
+- [x] 同次 mesh 提取复用共享材质。缓存仅限本次提取，逐物体覆盖作用于副本；下一帧仍经过既有材质热更新检查。mesh 路径和完整 RenderObject 尚未跨帧缓存。
 
 ## 性能实测
 
@@ -47,13 +52,48 @@
 
 所有原始数据、构建/测试日志及隔离 QA 项目保存在 `tmp/docs-artifacts/editor-performance-risk/`，不提交。主要文件：`undo-before.json`、`undo-after.json`、`recovery-benchmark.log`、`asset-index-native.json`、`asset-index-web.json`、`script-bridge-benchmarks.json`、`native-editor-qa.json`。
 
+## 第二阶段 CPU 基准
+
+| 工作负载 | 第一阶段实现 | 第二阶段实现 | 测量范围 |
+| --- | ---: | ---: | --- |
+| 20k bounds，1% 移动，更新 + 3 次查询 | 1.2819 ms | 0.2937 ms | 3 次交错进程基准中位数，逐项核对查询结果 |
+| 20k bounds，全量移动，更新 + 3 次查询 | 1.2998 ms | 0.4038 ms | 同上 |
+| Frostbound 每实体 15 次混合组件读写，57,180 次查询 | 1.2522 ms | 0.9665 ms | Release，9 组样本中位数 |
+| 20k 实体、40k 组件插入 | 8.7612 ms | 8.9451 ms | 类型索引维护增加约 0.184 ms |
+| Frostbound 作者场景，65 个 mesh 材质提取 | 0.1173 ms | 0.0568 ms | Release，同进程交错运行，9 组样本中位数 |
+| 全部对象池激活，1,381 个 mesh 材质提取 | 2.1969 ms | 1.0468 ms | 同上，输出对象逐项一致 |
+
+空间索引保留容量从约 0.94 增至 1.30 MB（20k，不含分配器开销）；同一静止负载总耗时 0.2529→0.2740 ms，增加约 0.021 ms。更新仍比较全部输入 bounds，大范围瞬移仍可能触发重建。上述 CPU 数据不代表真实游戏 FPS。
+
+第二阶段验证：编辑器资源相关测试 26 通过、前端构建通过；最终 core 24 通过、2 个手动基准忽略，查询基准另行通过。串行 Release 库测试 RHI 72、runtime 232、scene 25 通过（RHI/runtime 各忽略 1 个手动基准），包含 GPU 相机/阴影可见集合、mesh bounds 更新、独立材质覆盖和热更新。core 后续补充自定义组件初始 self 视图再切换投影的兼容回归；原生集成使用最终版本。首次并行 RHI 全套测试以 Windows STATUS_HEAP_CORRUPTION 退出，串行全套通过；未将该异常视为已定位修复。
+
+复现：`cargo test -p mengine-core --release`；`cargo test -p mengine-runtime -p mengine-rhi -p mengine-scene --release --lib -- --test-threads=1`；CPU 基准分别筛选 `benchmark_component_type_lookup`、`benchmark_moving_spatial_updates`、`benchmark_mesh_material_extraction` 并增加 `-- --ignored --nocapture`。原始证据保存于同一临时目录：`core-component-benchmark.log`、`spatial-comparison.json`、`mesh-material-benchmark.log`、`phase2-integration-serial-tests.log`。
+
+## 第二阶段原生编辑器对照
+
+使用同一 Release QA 脚本、Frostbound 隔离副本和 EXE 旁配套 SDK，前后均通过 3,812 实体编辑、undo/redo、真实恢复文件、资源增改删、进入真实对局、Play/Pause/Step/Stop 和停止后的编辑状态恢复；无 console error，源场景 SHA-256 不变。两轮各采 12 个预热 native 帧，去前 2 个，对余下 10 个取中间两项平均。
+
+| 原生观察项 | 第一阶段 | 第二阶段 |
+| --- | ---: | ---: |
+| 外部资源新增通知 | 1.13 s | 1.94 s |
+| 外部资源修改通知 | 5.50 s | 1.92 s |
+| 外部资源删除通知 | 9.26 s | 1.91 s |
+| Scene viewport 总耗时中位数 | 4.17 ms | 3.65 ms |
+| Scene 帧编译中位数 | 0.408 ms | 0.283 ms |
+| 对局 viewport 总耗时中位数 | 15.23 ms | 14.27 ms |
+| 对局帧编译中位数 | 3.99 ms | 2.93 ms |
+| 对局 mesh/材质提取中位数 | 1.97 ms | 1.48 ms |
+
+资源通知仍采用两秒轮询，单次新增延迟受轮询相位影响；主要收益是后续修改/删除不再积压。Game 的 GPU 回读仍约 5.11→5.26 ms，mesh 同步约 2.09→2.36 ms，尚未优化；整体采样包含 GPU/运行状态波动，不据此承诺 FPS 增幅。QA 创建的编辑器正常退出，部分 WebView 缓存因 EPERM 保留在临时目录。
+
+构建日志：`phase2-editor-build.log`、`phase2-sdk-build.log`、`phase2-native-build.log`；原生证据：`phase2-before.json`、`phase2-after.json`、`phase2-comparison.json`。复现时设置 `MENGINE_EDITOR_EXECUTABLE` 和可选 `MENGINE_PERFORMANCE_LABEL`，运行 `node scripts/qa-editor-performance-risk.mjs`。下一阶段继续处理 GPU 回读的帧归属、mesh 来源校验和纹理同步开销。
+
 ## 后续风险
 
 - [ ] **编辑器 3D Scene 的同步 GPU 回读。** 已核实调用链：Tauri `render_native_scene_view` → `EditorViewportRenderer::render_scene` → 非 Window 目标的 `read_offscreen_rgba8_profiled` → `device.poll(Maintain::Wait)`。该链路用于 WebView Scene 展示，独立 Window 输出不走这条回读。后续评估 2～3 个 buffer 轮转、延迟映射，覆盖画面版本、资源生命周期、选择/拖拽和截图一致性。
-- [ ] **RenderObject 每帧重新提取。** `frame_compiler.rs` 重复规范化 mesh 路径、解析材质、复制字段；root 过滤会反复沿 Parent 链查找。评估按组件 revision 缓存与加载时路径规范化。
-- [ ] **空间索引移动后整树重建。** `spatial.rs` 每帧构造并比较 bounds，任意单位移动触发重建。根据实测选择静态/动态分离或增量 refit。
+- [ ] **RenderObject 每帧重新提取。** `frame_compiler.rs` 仍重复规范化 mesh 路径、复制字段；同次共享材质解析已合并，root 过滤会反复沿 Parent 链查找。评估按组件 revision 缓存与加载时路径规范化。
 - [ ] **逐物体绘制及准备。** `renderer.rs` 主 pass/阴影 pass 缺少通用实例化，重复状态设置与材质哈希查找；临时 Vec 和 draw order 可复用。先测量 draw call 与准备时间，再实施 mesh/material 分组。
-- [ ] **ECS 查询。** `get_component<T>` 遍历实体的组件 values 并 downcast；`entities_with_any_component` 每次建立 BTreeSet。先考虑 TypeId 索引与集合复用；稠密组件存储属于后续架构变更。
+- [ ] **ECS 查询集合与存储。** 内建组件 TypeId 查找已完成；`entities_with_any_component` 仍每次建立 BTreeSet，自定义组件保留兼容查找。集合复用与稠密组件存储属于后续架构变更。
 - [ ] **命令跨桥批处理。** 本阶段仅减少非组件解析次数，未改变逐条 stringify/跨桥协议。
 - [ ] **UI、timeline、animation、physics 性能审计。** 尚未完成，不能据本阶段数据排除这些模块的开销。
 

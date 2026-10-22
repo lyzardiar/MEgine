@@ -65,6 +65,9 @@ let projectFiles: ProjectFileAsset[] = [];
 let watchedProjectFiles: ProjectFileAsset[] = [];
 let watchBaselineInitialized = false;
 let assetSessionGeneration = 0;
+let indexMutation = 0;
+let projectFilesInitialized = false;
+let refreshPromise: Promise<ProjectFileAsset[]> | null = null;
 let watchedIndexRevision: string | null = null;
 let audioPreview: { path: string; audio: HTMLAudioElement; url: string } | null = null;
 const writeBaselines = new Map<string, string>();
@@ -83,8 +86,13 @@ export function listProjectFiles(): ProjectFileAsset[] {
   return projectFiles;
 }
 
+export function projectAssetSessionGeneration(): number { return assetSessionGeneration; }
+
 export function resetProjectAssetState(): void {
   assetSessionGeneration += 1;
+  indexMutation += 1;
+  projectFilesInitialized = false;
+  refreshPromise = null;
   projectFiles = [];
   watchedProjectFiles = [];
   watchBaselineInitialized = false;
@@ -141,21 +149,36 @@ async function fetchProjectFiles(): Promise<ProjectFileAsset[]> {
   return (Array.isArray(body.assets) ? body.assets : []).map(normalizeListedAsset);
 }
 
-export async function refreshProjectFiles(): Promise<ProjectFileAsset[]> {
-  const generation = assetSessionGeneration;
-  try {
-    const current = await fetchProjectFiles();
-    if (generation !== assetSessionGeneration) return projectFiles;
-    projectFiles = current;
-    if (!watchBaselineInitialized) {
-      watchedProjectFiles = projectFiles;
-      watchBaselineInitialized = true;
+/** MiYu: explicit refreshes share one request; cached readers never restart a completed watcher scan. */
+export function refreshProjectFiles(options: { force?: boolean } = {}): Promise<ProjectFileAsset[]> {
+  if (refreshPromise) return refreshPromise;
+  if (options.force === false && projectFilesInitialized) return Promise.resolve(projectFiles);
+  const generation = assetSessionGeneration, mutation = indexMutation;
+  const request = (async () => {
+    try {
+      const current = await fetchProjectFiles();
+      if (generation !== assetSessionGeneration || mutation !== indexMutation) return projectFiles;
+      projectFiles = current;
+      projectFilesInitialized = true;
+      indexMutation += 1;
+      if (!watchBaselineInitialized) {
+        watchedProjectFiles = projectFiles;
+        watchBaselineInitialized = true;
+      }
+    } catch {
+      // A failed scan retains the last complete index.
     }
-  } catch {
-    // A transient scan failure must not make the Project window pretend every
-    // asset was deleted. The last known-good index remains authoritative.
-  }
-  return projectFiles;
+    return projectFiles;
+  })();
+  refreshPromise = request;
+  void request.finally(() => { if (refreshPromise === request) refreshPromise = null; });
+  return request;
+}
+
+/** A local watcher event already published its index. Other windows share one disk refresh. */
+export function refreshProjectFilesForEvent(event: Event): Promise<ProjectFileAsset[]> {
+  const detail = (event as CustomEvent<{ remote?: boolean; changes?: unknown }>).detail;
+  return detail?.remote === false && Array.isArray(detail.changes) ? Promise.resolve(projectFiles) : refreshProjectFiles();
 }
 
 /**
@@ -182,6 +205,7 @@ export async function readProjectFileInfo(relativePath: string): Promise<Project
   const duplicate = cached?.guid === fresh.guid && cached.metaStatus === 'duplicate' || fresh.guid != null && projectFiles.some((asset) => assetKey(asset.relPath) !== key && asset.guid === fresh.guid);
   const current = duplicate ? { ...fresh, metaStatus: 'duplicate' as const, metaError: cached?.metaError ?? `asset GUID ${fresh.guid} is shared by multiple indexed files` } : fresh;
   projectFiles = [...projectFiles.filter((asset) => assetKey(asset.relPath) !== key), current];
+  indexMutation += 1;
   return current;
 }
 
@@ -192,6 +216,8 @@ export async function resetProjectAssetWatchBaseline(): Promise<ProjectFileAsset
     const current = await fetchProjectFiles();
     if (generation !== assetSessionGeneration) return projectFiles;
     projectFiles = current;
+    projectFilesInitialized = true;
+    indexMutation += 1;
     watchedProjectFiles = projectFiles;
     watchBaselineInitialized = true;
   } catch {
@@ -266,6 +292,8 @@ export async function pollProjectFileChanges(): Promise<ProjectAssetChange[]> {
   const previous = watchedProjectFiles;
   if (!watchBaselineInitialized) {
     projectFiles = current;
+    projectFilesInitialized = true;
+    indexMutation += 1;
     watchedProjectFiles = current;
     watchBaselineInitialized = true;
     return [];
@@ -283,6 +311,8 @@ export async function pollProjectFileChanges(): Promise<ProjectAssetChange[]> {
     return true;
   });
   projectFiles = current;
+  projectFilesInitialized = true;
+  indexMutation += 1;
   watchedProjectFiles = current;
   watchBaselineInitialized = true;
   const previousRevisions = new Map(previous.map((asset) => [assetKey(asset.relPath), watchedAssetRevision(asset)]));
@@ -298,6 +328,7 @@ export async function pollProjectFileChanges(): Promise<ProjectAssetChange[]> {
 function acceptWrittenAsset(asset: ProjectFileAsset | null | undefined): void {
   if (!asset) return;
   const normalized = normalizeListedAsset(asset);
+  indexMutation += 1;
   const key = normalized.relPath.toLocaleLowerCase();
   projectFiles = [
     ...projectFiles.filter((candidate) => candidate.relPath.toLocaleLowerCase() !== key),

@@ -1,13 +1,14 @@
 /** Script assets in Project → active native project on desktop, Vite bridge in browser preview. */
 
-import { invoke } from '@tauri-apps/api/core';
 import {
   desktopScriptAssets,
   vscodeFileUri,
   type IndexedScriptAsset,
   type ScriptAsset,
 } from './scriptLibraryModel.ts';
-import { isDesktopEditor, type ProjectSnapshot } from './transport/editorTransport.ts';
+import { isDesktopEditor } from './transport/editorTransport.ts';
+import { getDesktopProject } from './transport/desktopProjectSession.ts';
+import { projectAssetSessionGeneration, refreshProjectFiles } from './projectAssets.ts';
 
 const API = '/__mengine';
 
@@ -20,21 +21,24 @@ export function listScripts(): ScriptAsset[] {
   return _scripts;
 }
 
-export async function refreshScripts(): Promise<ScriptAsset[]> {
+export async function refreshScripts(indexedAssets?: IndexedScriptAsset[]): Promise<ScriptAsset[]> {
+  const generation = projectAssetSessionGeneration();
   try {
     if (isDesktopEditor()) {
-      const [project, assets] = await Promise.all([
-        invoke<ProjectSnapshot>('get_project_snapshot'),
-        invoke<IndexedScriptAsset[]>('list_project_assets'),
-      ]);
+      const assets = indexedAssets ?? await refreshProjectFiles();
+      if (generation !== projectAssetSessionGeneration()) return _scripts;
+      const project = getDesktopProject();
+      if (!project) { _scripts = []; _ready = true; return _scripts; }
       _scripts = desktopScriptAssets(project.projectRoot, assets);
     } else {
       const res = await fetch(`${API}/scripts`);
       if (!res.ok) throw new Error(String(res.status));
       const body = (await res.json()) as { scripts: ScriptAsset[] };
+      if (generation !== projectAssetSessionGeneration()) return _scripts;
       _scripts = Array.isArray(body.scripts) ? body.scripts : [];
     }
   } catch {
+    if (generation !== projectAssetSessionGeneration()) return _scripts;
     _scripts = [];
   }
   _ready = true;

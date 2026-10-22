@@ -27,6 +27,7 @@ import {
   projectAssetUrl,
   readProjectAssetText,
   refreshProjectFiles,
+  refreshProjectFilesForEvent,
   writeProjectAssetText,
   type ProjectFileAsset,
 } from '../projectAssets';
@@ -326,7 +327,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
     setLoading(true);
     void Promise.all([
       readProjectAssetText(props.assetPath, { replaceWriteBaseline: true }),
-      refreshProjectFiles(),
+      refreshProjectFiles({ force: false }),
     ])
       .then(([text]) => {
         if (cancelled) return;
@@ -419,7 +420,7 @@ function BaseMaterialEditor(props: MaterialEditorProps) {
   useEffect(() => () => props.onDocumentsChange?.([]), [props.onDocumentsChange]);
   useEffect(() => {
     const refresh = (event: Event) => {
-      void refreshProjectFiles().finally(() => {
+      void refreshProjectFilesForEvent(event).finally(() => {
         setAssetRevision((revision) => revision + 1);
       });
       const detail = (event as CustomEvent<unknown>).detail;

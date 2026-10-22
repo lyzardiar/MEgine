@@ -43,20 +43,18 @@ import { listScenes, sceneFileName, type SceneMeta } from '../sceneLibrary';
 import {
   listScripts,
   openScriptInIde,
-  refreshScripts,
   type ScriptAsset,
 } from '../scriptLibrary';
 import {
   listAssetFolders,
   listSprites,
-  refreshSprites,
   spriteAssetUrl,
   type SpriteAsset,
 } from '../spriteLibrary';
 import { pingProjectAsset, subscribePing } from '../pingBus';
+import { refreshProjectLibraries } from '../projectAssetLibraries';
 import {
   listProjectFiles,
-  refreshProjectFiles,
   toggleProjectAudioPreview,
   type ProjectFileAsset,
 } from '../projectAssets';
@@ -243,7 +241,7 @@ export function Project(props: {
   }, [ctx]);
 
   useEffect(() => {
-    void Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()])
+    void refreshProjectLibraries()
       .then(() => setLibTick((t) => t + 1));
   }, [props.sceneTick]);
 
@@ -517,7 +515,7 @@ export function Project(props: {
     setCtx(null);
     try {
       const result = await props.onCreateAsset(kind);
-      await Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()]);
+      await refreshProjectLibraries(true);
       setLibTick((tick) => tick + 1);
       if (result.primaryPath) pingProjectAsset(result.primaryPath);
       props.onLog?.(`Created ${result.createdPaths.join(', ')}.`);
@@ -1248,7 +1246,7 @@ export function Project(props: {
             className="project-icon-button"
             title="Refresh assets"
             aria-label="Refresh assets"
-            onClick={() => void Promise.all([refreshScripts(), refreshSprites(), refreshProjectFiles()])
+            onClick={() => void refreshProjectLibraries(true)
               .then(() => setLibTick((tick) => tick + 1))}
           ><RefreshCw size={13} /></button>
           <div className="project-view-toggle" role="group" aria-label="Asset view">
