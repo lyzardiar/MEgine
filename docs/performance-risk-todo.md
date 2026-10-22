@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：编辑器性能与验证工作已推进至第十九阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查及共享模型源校验。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：编辑器性能与验证工作已推进至第二十阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验及层级变换构建。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -14,6 +14,8 @@
 - [x] 空间索引增量 refit。移动只更新所属节点和祖先的内容 bounds；增删、已知/未知 bounds 转换及空间质量退化时重建。保留深度上限和原始物体顺序，未知 bounds 保持可见。
 - [x] 内建组件 TypeId 索引。仅对确认具有稳定 Any 类型的生成组件和 Parent/Children 使用直接查找；自定义组件保留逐项查找，兼容运行中改变投影视图、同名替换和实体槽复用。成功的可写访问仍推进实体 revision。
 - [x] 同次 mesh 提取复用共享材质。缓存仅限本次提取，逐物体覆盖作用于副本；下一帧仍经过既有材质热更新检查。mesh 路径和完整 RenderObject 尚未跨帧缓存。
+
+- [x] 层级变换直接构建结果表，消除单次解析结束后的整表分配、哈希及复制；完整World和指定实体子集共用实现，保留循环失活、祖先变换及实体generation语义。
 
 ## 性能实测
 
@@ -490,3 +492,34 @@ Debug／Release SDK及原生Release构建通过，旁置SDK摘要一致。原生
 整帧及客户端截图等待仍有波动，当前固定负载观察值不能代替持续FPS验收。原生QA新增TownHall模型位置热更新：只修改隔离GLB的POSITION顶点和对应边界，重新打包JSON及二进制块，以原子替换断开硬链接，最后恢复原始字节。模型、材质、Shader、UI图标和3D纹理五项均确认画面变化及精确像素恢复，世界摘要不变。材质／Shader／3D纹理各遇1次有界canvas `NOT_READY`重试，模型未重试。暂停画面已检查，WebView缓存保留。
 
 证据位于 `tmp/docs-artifacts/editor-performance-risk/`：`phase19-after.json`、`phase19-native-qa.log`、`phase19-comparison.json`、`phase19-final-validation.json`、`phase19-sdk-copy.json`及构建日志。复现沿用 `scripts/qa-editor-performance-risk.mjs`。
+
+## 第二十阶段层级变换结果表
+
+TransformHierarchy在一次构建内直接填充最终节点表，解析祖先时以无效节点标记尚未完成的路径，循环引用仍使整条分支失活。返回前所有已访问的存活节点均完成解析，免去状态表到结果表的再次分配、哈希和复制。公开查询接口、变换组合次序、非均匀缩放／剪切、无Transform父节点、失活祖先和实体generation检查保持原有语义；每次构建独立读取当前World。
+
+Release基准每组100次构建并释放结果，预热2组后取9组中位数，场景加载在计时外。作者场景／全部对象池使用Main.mscene，暂停游戏使用第十九阶段完整世界快照；子集从有有效Transform的实体中取16个，并验证包含祖先的结果与完整构建一致。
+
+| 层级构建负载 | 之前 | 之后 |
+| --- | ---: | ---: |
+| 作者场景，3,812实体／271个有效Transform | 0.20418 ms | 0.15026 ms |
+| 全对象池激活，3,812实体／2,043个有效Transform | 1.96603 ms | 0.96719 ms |
+| 暂停游戏，4,031实体／395个有效Transform | 0.22385 ms | 0.16064 ms |
+| 作者场景，16实体子集及祖先 | 0.00428 ms | 0.00311 ms |
+| 全对象池，16实体子集及祖先 | 0.00429 ms | 0.00299 ms |
+| 暂停游戏，16实体子集及祖先 | 0.00426 ms | 0.00289 ms |
+
+复现：`cargo test -p mengine-runtime --release --lib benchmark_transform_hierarchy_build -- --ignored --nocapture --test-threads=1`，通过 `MENGINE_PERFORMANCE_WORLD` 指定QA输出的 `fixed-game-simulation-world.json`。证据为 `tmp/docs-artifacts/editor-performance-risk/phase20-hierarchy-before.log`、`phase20-hierarchy-after.log`及 `phase20-hierarchy-comparison.json`。结果仅代表层级构建CPU成本。
+
+串行Release库测试Core 27、Physics 17、Script（V8）39、Runtime 246、Editor Host 65项通过，分别忽略3／0／3／12／6个手动基准。新增核心回归验证自循环、双节点循环及其下游节点、失效父实体的槽位复用、逆序／重复请求和父子关系修复后的再次构建；既有祖先失活／恢复、稀疏子集、旋转缩放和无Transform父节点测试通过。日志为同目录的 `phase20-core-tests.log`、`phase20-physics-tests.log`、`phase20-script-tests.log`、`phase20-runtime-tests.log` 和 `phase20-editor-host-tests.log`。
+
+Debug／Release SDK和原生Release构建通过，旁置SDK摘要一致。隔离原生QA完成编辑、undo/redo、持久恢复、外部资源增改删、播放／暂停／单步／停止及完整特效冻结；五类材质／Shader／纹理／模型热更新均改变画面，恢复后像素精确还原，控制台error为0，测试编辑器正常退出。源场景、测试PNG及GLB与HEAD逐字节一致，暂停截图已检查。
+
+对照第十九阶段已验收的EXE／SDK和 `phase19-after.json`，每组初始暂停6帧去前2帧；完整世界和像素摘要一致，850×478、4,031实体、187个RenderObject、412个UI图元、34次UI绘制、网格上传0，Play revision为9。
+
+| 原生固定负载中位数 | 第十九阶段 | 第二十阶段 |
+| --- | ---: | ---: |
+| 层级变换构建 | 0.44720 ms | 0.36205 ms |
+| 帧编译合计（含层级） | 1.78415 ms | 1.64365 ms |
+| 原生整帧 | 8.94735 ms | 9.02015 ms |
+
+本轮确认层级构建成本下降，整帧仍受其他阶段和GPU等待波动影响，未观察到整体帧耗时改善。证据在同一临时目录：`phase20-after.json`、`phase20-native-qa.log`、`phase20-comparison.json`、`phase20-final-validation.json`、`phase20-sdk-copy.json`及构建日志。原生复现沿用 `scripts/qa-editor-performance-risk.mjs`。

@@ -1,3 +1,4 @@
+// Author: MiYu. Resolve hierarchy transforms directly into the immutable frame cache.
 use crate::generated::Transform;
 use crate::{Entity, Parent, World};
 use glam::{Mat4, Quat, Vec3};
@@ -81,12 +82,6 @@ impl ResolvedNode {
     };
 }
 
-#[derive(Clone, Copy, Debug)]
-enum ResolveState {
-    Visiting,
-    Done(ResolvedNode),
-}
-
 /// Immutable per-frame hierarchy cache shared by render, physics, audio, and tooling systems.
 #[derive(Clone, Debug, Default)]
 pub struct TransformHierarchy {
@@ -99,17 +94,8 @@ impl TransformHierarchy {
 
     /// Resolves the requested entities and their ancestors without traversing unrelated branches.
     pub fn build_for_entities(world: &World, entities: impl IntoIterator<Item = Entity>) -> Self {
-        let mut states = HashMap::new();
-        for entity in entities {
-            resolve_node(world, entity, &mut states);
-        }
-        let nodes = states
-            .into_iter()
-            .filter_map(|(entity, state)| match state {
-                ResolveState::Done(node) => Some((entity, node)),
-                ResolveState::Visiting => None,
-            })
-            .collect();
+        let mut nodes = HashMap::new();
+        for entity in entities { resolve_node(world, entity, &mut nodes); }
         Self { nodes }
     }
 
@@ -140,20 +126,13 @@ impl TransformHierarchy {
     }
 }
 
-fn resolve_node(
-    world: &World,
-    entity: Entity,
-    states: &mut HashMap<Entity, ResolveState>,
-) -> ResolvedNode {
-    match states.get(&entity).copied() {
-        Some(ResolveState::Done(node)) => return node,
-        Some(ResolveState::Visiting) => return ResolvedNode::INVALID,
-        None => {}
-    }
+fn resolve_node(world: &World, entity: Entity, nodes: &mut HashMap<Entity, ResolvedNode>) -> ResolvedNode {
+    if let Some(node) = nodes.get(&entity) { return *node; }
     if !world.is_alive(entity) {
         return ResolvedNode::INVALID;
     }
-    states.insert(entity, ResolveState::Visiting);
+    // Re-entering an ancestor while it is being resolved disables the cyclic branch.
+    nodes.insert(entity, ResolvedNode::INVALID);
 
     let parent = world
         .get_component::<Parent>(entity)
@@ -164,7 +143,7 @@ fn resolve_node(
             has_transform: false,
             aggregate: WorldTransform::IDENTITY,
         },
-        |parent| resolve_node(world, parent, states),
+        |parent| resolve_node(world, parent, nodes),
     );
     let local = world
         .get_component::<Transform>(entity)
@@ -176,7 +155,7 @@ fn resolve_node(
             parent_node.aggregate.compose(local)
         }),
     };
-    states.insert(entity, ResolveState::Done(node));
+    nodes.insert(entity, node);
     node
 }
 
@@ -218,6 +197,37 @@ mod tests {
             rotation: [rotation.x, rotation.y, rotation.z, rotation.w],
             scale,
         }
+    }
+
+    #[test]
+    fn cycles_and_stale_parent_generations_do_not_poison_independent_branches() {
+        let mut world = World::new();
+        let dead = world.spawn_empty(); world.despawn(dead);
+        let root = world.spawn_empty(); assert_eq!(dead.index, root.index); assert_ne!(dead.generation, root.generation);
+        let group = world.spawn_empty(); let child = world.spawn_empty(); let orphan = world.spawn_empty();
+        let first = world.spawn_empty(); let second = world.spawn_empty(); let dependent = world.spawn_empty(); let self_loop = world.spawn_empty();
+        world.insert_component(root, transform([3.0, 4.0, 5.0], Quat::IDENTITY, [1.0; 3]));
+        world.insert_component(child, transform([1.0, 2.0, 3.0], Quat::IDENTITY, [1.0; 3]));
+        world.set_parent(group, Some(root)); world.set_parent(child, Some(group));
+        for (entity, parent) in [(orphan, dead), (first, second), (second, first), (dependent, first), (self_loop, self_loop)] {
+            world.insert_component(entity, Transform::default()); world.insert_component(entity, Parent { entity: parent });
+        }
+        for reverse in [false, true] {
+            let mut requests = vec![dead, child, orphan, first, second, dependent, self_loop, child, root];
+            if reverse { requests.reverse(); }
+            let hierarchy = TransformHierarchy::build_for_entities(&world, requests);
+            assert_eq!(hierarchy.nodes.len(), 8); assert!(!hierarchy.nodes.contains_key(&dead));
+            assert_eq!(hierarchy.get(child).unwrap().position, Vec3::new(4.0, 6.0, 8.0));
+            assert_eq!(hierarchy.parent_world(&world, child), hierarchy.get(root));
+            assert!(hierarchy.is_active(group)); assert_eq!(hierarchy.get(group), None);
+            for invalid in [orphan, first, second, dependent, self_loop] {
+                assert!(!hierarchy.is_active(invalid)); assert_eq!(hierarchy.get(invalid), None); assert_eq!(hierarchy.parent_world(&world, invalid), None);
+            }
+        }
+        world.set_parent(orphan, Some(root)); world.remove_component_by_name(second, "Parent"); world.remove_component_by_name(self_loop, "Parent");
+        let repaired = TransformHierarchy::build(&world);
+        for entity in [orphan, first, second, dependent, self_loop] { assert!(repaired.is_active(entity)); assert!(repaired.get(entity).is_some()); }
+        assert_eq!(repaired.get(orphan).unwrap().position, Vec3::new(3.0, 4.0, 5.0));
     }
 
     #[test]

@@ -202,3 +202,33 @@ fn benchmark_shared_view_extraction() {
     }
     println!("SHARED_VIEW_EXTRACTION_BENCHMARK={}", serde_json::json!(reports));
 }
+
+#[test]
+#[ignore = "manual Frostbound transform hierarchy CPU benchmark"]
+fn benchmark_transform_hierarchy_build() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    let scene: serde_json::Value = serde_json::from_slice(&std::fs::read(root.join("Assets/Scenes/Main.mscene")).unwrap()).unwrap();
+    let mut inputs = vec![("authored", scene["world"].clone(), false), ("all-pools", scene["world"].clone(), true)];
+    if let Ok(path) = std::env::var("MENGINE_PERFORMANCE_WORLD") { inputs.push(("paused-game", serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap(), false)); }
+    let mut reports = Vec::new();
+    for (name, value, activate) in inputs {
+        let mut world = World::new(); mengine_scene::apply_snapshot(&mut world, &serde_json::from_value(value).unwrap());
+        if activate { for entity in world.iter_entities().collect::<Vec<_>>() { world.set_editor_state(entity, 0, true); } }
+        let entities: Vec<_> = world.iter_entities().collect();
+        let expected = TransformHierarchy::build(&world);
+        let subset: Vec<_> = entities.iter().copied().filter(|&entity| expected.get(entity).is_some()).take(16).collect();
+        let partial = TransformHierarchy::build_for_entities(&world, subset.iter().copied());
+        for &entity in &subset { assert_eq!(partial.get(entity), expected.get(entity)); assert_eq!(partial.parent_world(&world, entity), expected.parent_world(&world, entity)); }
+        for partial in [false, true] {
+            let mut samples = Vec::new();
+            for group in 0..11 {
+                let started = Instant::now();
+                for _ in 0..100 { black_box(if partial { TransformHierarchy::build_for_entities(&world, subset.iter().copied()) } else { TransformHierarchy::build(&world) }); }
+                if group >= 2 { samples.push(started.elapsed().as_secs_f64() * 1000.0 / 100.0); }
+            }
+            samples.sort_by(f64::total_cmp);
+            reports.push(serde_json::json!({"scene":name,"entities":entities.len(),"active_transforms":entities.iter().filter(|&&entity| expected.get(entity).is_some()).count(),"subset":partial,"requested":if partial { subset.len() } else { entities.len() },"median_ms":samples[4],"samples":9,"iterations":100}));
+        }
+    }
+    println!("TRANSFORM_HIERARCHY_BENCHMARK={}", serde_json::json!(reports));
+}
