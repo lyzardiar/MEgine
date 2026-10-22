@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化，视口 GPU 回读流水线的第三阶段、纹理同步／联合查询的第四阶段，主画面和嵌入视图共享网格提取的第五阶段，以及姿态源校验复用的第六阶段优化。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：完成编辑器资源轮询、撤销历史、自动恢复点和脚本快照桥的第一阶段优化，资源刷新合并、组件查询、空间索引和共享材质提取的第二阶段优化，视口 GPU 回读流水线的第三阶段、纹理同步／联合查询的第四阶段，主画面和嵌入视图共享网格提取的第五阶段、姿态源校验复用的第六阶段，以及跨绘制pass材质准备复用的第七阶段优化。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -130,7 +130,7 @@ Release 基准使用 Frostbound 作者场景、960×540，串行与两帧流水�
 
 - [x] **编辑器 Scene/Game 回读期间占用 renderer/world 锁。** 已使用有界独立 ticket、锁外等待与前端两请求流水线。GPU 数据传输仍需等待；后续以原生交互采样评估剩余成本。
 - [ ] **RenderObject 每帧重新提取。** `frame_compiler.rs` 仍重复规范化 mesh 路径、复制字段；同次共享材质解析已合并，第五阶段已在同一编译帧内让嵌入视图复用主画面提取结果；root 过滤仍沿 Parent 链查找，跨帧提取仍需评估组件 revision 与路径缓存。
-- [ ] **逐物体绘制及准备。** `renderer.rs` 主 pass/阴影 pass 缺少通用实例化，重复状态设置与材质哈希查找；临时 Vec 和 draw order 可复用。先测量 draw call 与准备时间，再实施 mesh/material 分组。
+- [ ] **逐物体绘制及准备。** 第七阶段让主 pass／阴影 pass 复用单次提交的材质键和错误状态，减少纹理键字符串复制、Shader指纹计算与缺失纹理检查。通用实例化、重复GPU状态设置、材质哈希查找和临时Vec／draw order复用仍待评估；绘制次数及透明物体顺序保持不变。
 - [ ] **ECS 查询集合与存储。** 内建组件 TypeId 查找和有序联合查询已完成；自定义组件保留兼容查找。稠密组件存储属于后续架构变更。
 - [ ] **命令跨桥批处理。** 本阶段仅减少非组件解析次数，未改变逐条 stringify/跨桥协议。
 - [ ] **UI、timeline、animation、physics 性能审计。** 尚未完成，不能据本阶段数据排除这些模块的开销。
@@ -179,3 +179,27 @@ Debug／Release配套运行时和Tauri Release均已重建，原生编辑器使�
 前后各12个预热native帧，去前2个后对10个取中位数：Game网格同步 **2.28295→1.83340 ms**；外层文件元数据 **22→5次、0.58600→0.12470 ms**；完整源校验仍17次，耗时1.26710→1.38875 ms。Scene总计3.69365→3.84235 ms，Game总计13.70845→13.75850 ms，整体基本持平，不据此承诺FPS提升。姿态生成与上传次数也会随采样帧变化，完整依赖与路径身份检查仍是剩余成本。
 
 原生证据为 `phase6-before.json`、`phase6-after.json`、`phase6-comparison.json` 及对应日志；构建与SDK证据为 `phase6-sdk-build.log`、`phase6-native-build.log`、`phase6-sdk-copy.json`，均位于 `tmp/docs-artifacts/editor-performance-risk/`。复现沿用 `scripts/qa-editor-performance-risk.mjs`，设置 `MENGINE_PERFORMANCE_LABEL` 区分采样轮次。
+
+## 第七阶段跨绘制pass复用材质准备
+
+Renderer 对相机／阴影视锥可见集合的并集，每个物体只生成一次纹理集合键和Shader管线键、检查一次纹理可用性。主画面与阴影pass按已有uniform槽位复用结果；保留剔除、透明排序、逐物体参数与绘制次数。预热管线接口继续使用相同的管线创建逻辑。
+
+准备结果仅存在于本次提交，包含当前错误材质状态；每次新提交重新查询纹理和Shader，因此纹理上传、替换、删除／恢复及Shader修复立即参与绘制。额外保留与提交物体数量成正比的临时材质键数组及路径字符串，提交返回时释放，不跨帧保存世界或材质副本。纹理集合缓存首次建立时复制一次键，命中后两种pass不再分别复制键。
+
+256×256真实GPU提交基准使用64／1,024个带纹理立方体，含透明物体和48／768个阴影绘制物体；两个版本各预热2组后取9组中位数，每组20帧。每帧回读核对稳定性，前后RGBA逐字节一致。完整提交耗时包含准备、绘制编码、queue submit及临时数据释放，不包含随后GPU回读等待。
+
+| 工作负载 | 第六阶段 | 第七阶段 |
+| --- | ---: | ---: |
+| 64物体，完整CPU提交 | 0.22675 ms | 0.21580 ms |
+| 1,024物体，完整CPU提交 | 1.53515 ms | 1.45091 ms |
+| 1,024物体，材质准备 | 0.19597 ms | 0.20358 ms |
+| 1,024物体，阴影pass编码 | 0.42325 ms | 0.39284 ms |
+| 1,024物体，主画面pass编码 | 0.68566 ms | 0.59088 ms |
+
+材质准备略有增加，净收益主要来自两个绘制pass少做重复工作。该合成负载不能代表Frostbound实际帧率；GPU绘制次数没有减少。复现：设置 `MENGINE_PERFORMANCE_LABEL`，运行 `cargo test -p mengine-rhi --release --lib benchmark_material_submission -- --ignored --nocapture --test-threads=1`。基线为5562452的Renderer配合同一基准；证据为 `phase7-submission-before-total.log`、`phase7-submission-after-total.log` 和对应RGBA。初次仅记录分段耗时的基准也保留在 `phase7-submission-before.log`／`phase7-submission-after.log`。
+
+串行Release集成测试：RHI 75、Runtime 239、Editor Host 62项通过，分别忽略2／4／6个手动基准。新增GPU回归覆盖剔除后槽位映射、纹理颜色空间、同路径纹理替换、删除／恢复、错误Shader修复、显式错误材质、混合／深度／剔除状态、自定义纹理。现有多视图、阴影可见性、透明排序和回读所有权回归全部通过；日志为 `phase7-integration-tests.log`。所有原始验证产物位于 `tmp/docs-artifacts/editor-performance-risk/`。
+
+Debug／Release SDK与原生Release构建通过，EXE旁置SDK摘要核对一致。前后原生验收均通过3,812实体重命名、undo/redo、真实恢复文件、资源增改删、进入对局、Play/Pause/Step/Stop与编辑状态恢复；无控制台error，作者场景摘要不变，Scene／Game截图已检查。测试编辑器正常退出，部分WebView缓存因EPERM保留在临时目录。
+
+原生前后各采12帧，去前2帧后取10帧中位数：Game材质准备 **0.22710→0.23875 ms**，阴影编码 **0.27725→0.26565 ms**，主画面编码 **0.41470→0.29245 ms**；Scene主画面编码 **0.12650→0.09490 ms**。Scene总耗时3.86195→4.11895 ms，Game总耗时13.33100→13.51850 ms；网格同步、纹理同步和GPU等待等未修改环节仍有波动，当前不能据此宣称整体FPS提升。原生证据为 `phase7-before.json`、`phase7-after.json`、`phase7-comparison.json`；构建记录为 `phase7-sdk-build.log`、`phase7-native-build.log`、`phase7-sdk-copy.json`。原生复现仍使用 `scripts/qa-editor-performance-risk.mjs`。

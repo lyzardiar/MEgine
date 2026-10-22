@@ -517,6 +517,10 @@ struct MaterialTextureGpu {
     view: wgpu::TextureView,
 }
 
+#[cfg(test)]
+#[path = "material_submission_tests.rs"]
+mod material_submission_tests;
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct MaterialTextureSetKey {
     base_color: String,
@@ -554,6 +558,13 @@ struct MaterialPipelineKey {
     depth_write: bool,
     depth_equal: bool,
     shader_fingerprint: u64,
+}
+
+// MiYu: one submission owns these keys; shadow and world passes share the same validated material.
+struct PreparedObjectMaterial {
+    pipeline: MaterialPipelineKey,
+    textures: MaterialTextureSetKey,
+    use_error_pipeline: bool,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1575,20 +1586,9 @@ impl Renderer {
         self.submission_profile.ui_preparation.accumulate(self.ui.prepare_profile());
         self.submission_profile.ui_prepare_ms += ui_prepare_started.elapsed().as_secs_f64() * 1000.0;
         let material_started = Instant::now();
+        let mut prepared_materials = Vec::with_capacity(submitted.len());
         for &index in &submitted {
-            let object = &objects[index];
-            self.ensure_material_pipeline(&object.material);
-            let missing_texture = material_has_missing_textures(&object.material, |key, srgb| {
-                if srgb {
-                    self.material_color_textures.contains_key(key)
-                } else {
-                    self.material_data_textures.contains_key(key)
-                }
-            });
-            if missing_texture {
-                self.ensure_error_material_pipeline(MaterialPipelineKey::from(&object.material));
-            }
-            self.ensure_material_texture_set(&object.material);
+            prepared_materials.push(self.prepare_object_material(&objects[index].material));
         }
         self.prune_material_pipeline_cache();
         self.submission_profile.material_prepare_ms += material_started.elapsed().as_secs_f64() * 1000.0;
@@ -1660,10 +1660,10 @@ impl Renderer {
                     &self.shadow_pass_bind_group,
                     &[(uniform_slots[index] as u64 * self.object_stride) as u32],
                 );
-                let texture_key = MaterialTextureSetKey::from(&object.material);
+                let material = &prepared_materials[uniform_slots[index]];
                 let texture_set = self
                     .material_texture_sets
-                    .get(&texture_key)
+                    .get(&material.textures)
                     .expect("material texture set prepared before shadow pass");
                 pass.set_bind_group(1, texture_set, &[]);
                 pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
@@ -1743,20 +1743,9 @@ impl Renderer {
                     continue;
                 };
                 if mesh.index_count == 0 { continue; }
-                let pipeline_key = MaterialPipelineKey::from(&object.material);
-                let use_error_pipeline = object.material.is_error
-                    || (pipeline_key.shader_fingerprint != 0
-                        && self
-                            .invalid_surface_shaders
-                            .contains_key(&pipeline_key.shader_fingerprint))
-                    || material_has_missing_textures(&object.material, |key, srgb| {
-                        if srgb {
-                            self.material_color_textures.contains_key(key)
-                        } else {
-                            self.material_data_textures.contains_key(key)
-                        }
-                    });
-                let pipeline = if use_error_pipeline {
+                let material = &prepared_materials[uniform_slots[index]];
+                let pipeline_key = material.pipeline;
+                let pipeline = if material.use_error_pipeline {
                     self.error_material_pipelines
                         .get(&error_material_pipeline_key(pipeline_key))
                         .expect("error material pipeline prepared before render pass")
@@ -1777,10 +1766,9 @@ impl Renderer {
                     &self.bind_group,
                     &[(uniform_slots[index] as u64 * self.object_stride) as u32],
                 );
-                let texture_key = MaterialTextureSetKey::from(&object.material);
                 let texture_set = self
                     .material_texture_sets
-                    .get(&texture_key)
+                    .get(&material.textures)
                     .expect("material texture set prepared before render pass");
                 pass.set_bind_group(1, texture_set, &[]);
                 pass.set_bind_group(2, &self.shadow_sample_bind_group, &[]);
@@ -1936,11 +1924,28 @@ impl Renderer {
         );
     }
 
+    fn prepare_object_material(&mut self, material: &RenderMaterial) -> PreparedObjectMaterial {
+        let pipeline = MaterialPipelineKey::from(material);
+        self.ensure_material_pipeline_with_key(material, pipeline);
+        let missing_texture = material_has_missing_textures(material, |key, srgb| {
+            if srgb { self.material_color_textures.contains_key(key) } else { self.material_data_textures.contains_key(key) }
+        });
+        if missing_texture { self.ensure_error_material_pipeline(pipeline); }
+        let use_error_pipeline = material.is_error || missing_texture || (pipeline.shader_fingerprint != 0 && self.invalid_surface_shaders.contains_key(&pipeline.shader_fingerprint));
+        let textures = MaterialTextureSetKey::from(material);
+        self.ensure_material_texture_set(&textures);
+        PreparedObjectMaterial { pipeline, textures, use_error_pipeline }
+    }
+
     fn ensure_material_pipeline(
         &mut self,
         material: &RenderMaterial,
     ) -> MaterialPipelinePrepareResult {
         let key = MaterialPipelineKey::from(material);
+        self.ensure_material_pipeline_with_key(material, key)
+    }
+
+    fn ensure_material_pipeline_with_key(&mut self, material: &RenderMaterial, key: MaterialPipelineKey) -> MaterialPipelinePrepareResult {
         if material.is_error {
             self.ensure_error_material_pipeline(key);
             return MaterialPipelinePrepareResult::ErrorFallback;
@@ -2073,9 +2078,8 @@ impl Renderer {
         }
     }
 
-    fn ensure_material_texture_set(&mut self, material: &RenderMaterial) {
-        let key = MaterialTextureSetKey::from(material);
-        if self.material_texture_sets.contains_key(&key) {
+    fn ensure_material_texture_set(&mut self, key: &MaterialTextureSetKey) {
+        if self.material_texture_sets.contains_key(key) {
             return;
         }
         if !self.material_samplers.contains_key(&key.sampler) {
@@ -2159,7 +2163,7 @@ impl Renderer {
             layout: &self.material_texture_layout,
             entries: &entries,
         });
-        self.material_texture_sets.insert(key, bind_group);
+        self.material_texture_sets.insert(key.clone(), bind_group);
     }
 
     pub fn ui_stats(&self) -> UiFrameStats {
