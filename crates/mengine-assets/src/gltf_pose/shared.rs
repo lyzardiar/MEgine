@@ -1,5 +1,7 @@
 // Author: MiYu. Share validated immutable pose sources without retaining unused project assets.
 use super::GltfPoseSource;
+#[path = "file_metadata.rs"]
+mod file_metadata;
 use crate::AssetError;
 use parking_lot::Mutex;
 use std::{collections::HashMap, ops::Deref, path::{Path, PathBuf}, sync::{Arc, OnceLock, Weak}, time::SystemTime};
@@ -8,8 +10,7 @@ use std::{collections::HashMap, ops::Deref, path::{Path, PathBuf}, sync::{Arc, O
 pub(super) struct DependencyStamp { pub path: PathBuf, request: PathBuf, pub(super) bytes: u64, modified: SystemTime }
 impl DependencyStamp {
     pub(super) fn read(request: &Path) -> Result<Self, AssetError> {
-        let path = request.canonicalize()?;
-        let metadata = std::fs::metadata(&path)?;
+        let (path, metadata) = file_metadata::canonical_file_metadata(request)?;
         if !metadata.is_file() { return Err(AssetError::Gltf("pose dependency is not a file".into())); }
         Ok(Self { path, request: request.into(), bytes: metadata.len(), modified: metadata.modified()? })
     }

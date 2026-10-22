@@ -1,6 +1,6 @@
 # 性能风险与实施进度
 
-2026-10-23：编辑器性能与验证工作已推进至第十八阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加及Windows材质／纹理文件检查。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-23：编辑器性能与验证工作已推进至第十九阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查及共享模型源校验。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 ## 已完成
 
@@ -467,3 +467,26 @@ Release基准每项预热2组后取5组中位数，每组100次。Renderer、已
 整帧还包含其他阶段与GPU等待的波动，当前数据是固定负载观察值，不是持续FPS验收。原生QA完成编辑、undo/redo、持久恢复、外部资源增改删、播放／暂停／单步／停止和完整特效冻结，控制台error为0，测试编辑器正常退出，源场景与HEAD逐字节一致。
 
 热更新QA覆盖材质、Shader、UI金币图标和3D队伍色纹理，分别确认画面变化，恢复后像素精确回到原始摘要，世界摘要始终不变。PNG采用同尺寸现有图像作为临时替换内容，通过临时文件原子替换隔离副本来断开硬链接；原始样例PNG与HEAD逐字节一致。材质／Shader各遇1次有界canvas `NOT_READY`重试，两项纹理未重试。截图已检查，WebView缓存因EPERM保留。证据：`phase18-after.json`、`phase18-native-qa.log`、`phase18-comparison.json`及隔离构建receipt，仍在同一临时目录；原生复现沿用 `scripts/qa-editor-performance-risk.mjs`。
+
+## 第十九阶段Windows共享模型源校验
+
+共享姿态源的依赖检查在Windows使用同一文件句柄取得规范路径和metadata，减少重复打开文件。路径解析失败时回退到原有标准库调用；其他平台保持标准库实现。保留规范路径、修改时间、长度、项目边界和外部buffer检查，链接重新指向同长度／同时间文件仍会失效。短路径使用栈缓冲区，长路径按需要分配；文件句柄由RAII关闭。
+
+Release基准对17个源采样9组，每组25次。当前共享路径的校验中位数 **1.10507→0.82280 ms**，减少约26%；两侧均为17次源校验，额外主文件metadata读取为0。两版均取基准输出的 `shared_ms` 字段。复现：`cargo test -p mengine-runtime --release --lib benchmark_pose_source_validation -- --ignored --nocapture --test-threads=1`。证据：`tmp/docs-artifacts/editor-performance-risk/phase19-source-before.log` 和 `phase19-source-after-final.log`。
+
+串行Release库测试Assets 95、Runtime 246、Host 65项通过，Runtime／Host分别忽略11／6个手动基准。覆盖中文／空格／点路径、目录、硬链接、固定mtime下长度变化、缺失文件、NUL错误、长路径和显式扩展路径；共享源回归包含并发复用、外部buffer删除／恢复、项目边界及真实目录junction重定向。日志为同目录的 `phase19-assets-tests.log`、`phase19-runtime-tests.log` 和 `phase19-host-tests.log`。
+
+Debug／Release SDK及原生Release构建通过，旁置SDK摘要一致。原生验收完成编辑、undo/redo、持久恢复、外部资源增改删、播放／暂停／单步／停止及完整特效冻结，控制台error为0，测试编辑器正常退出。源场景、测试PNG和GLB均与HEAD逐字节一致。
+
+固定世界对照第十八阶段已验收的EXE／SDK和 `phase18-after.json`；每组6帧去前2帧，完整世界和像素摘要一致，850×478、4,031实体、187个RenderObject、412个UI图元、34次UI绘制、网格上传0，Play revision固定为9。
+
+| 原生固定负载中位数 | 第十八阶段 | 第十九阶段 |
+| --- | ---: | ---: |
+| 模型源校验 | 0.96345 ms | 0.83550 ms |
+| 网格缓存同步 | 1.15375 ms | 1.02810 ms |
+| 资源同步合计 | 1.51725 ms | 1.38445 ms |
+| 原生整帧 | 9.05225 ms | 8.94735 ms |
+
+整帧及客户端截图等待仍有波动，当前固定负载观察值不能代替持续FPS验收。原生QA新增TownHall模型位置热更新：只修改隔离GLB的POSITION顶点和对应边界，重新打包JSON及二进制块，以原子替换断开硬链接，最后恢复原始字节。模型、材质、Shader、UI图标和3D纹理五项均确认画面变化及精确像素恢复，世界摘要不变。材质／Shader／3D纹理各遇1次有界canvas `NOT_READY`重试，模型未重试。暂停画面已检查，WebView缓存保留。
+
+证据位于 `tmp/docs-artifacts/editor-performance-risk/`：`phase19-after.json`、`phase19-native-qa.log`、`phase19-comparison.json`、`phase19-final-validation.json`、`phase19-sdk-copy.json`及构建日志。复现沿用 `scripts/qa-editor-performance-risk.mjs`。

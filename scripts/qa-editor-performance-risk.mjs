@@ -44,6 +44,25 @@ const snapshot=()=>query('scene.snapshot');
 const report={root,passed:false,editorSha256:hash(process.env.MENGINE_EDITOR_EXECUTABLE),allowSnapshotCaptures:process.env.MENGINE_ALLOW_SNAPSHOT_CAPTURES==='1',checks:[],profiles:{}};
 const sourceScene=path.join(source,'Assets/Scenes/Main.mscene'),sourceHash=hash(sourceScene);
 const recoveryFile=path.join(sample,'.mengine/Recovery/scene.recovery.json');
+function translatedGlbPositions(bytes){
+  assert.equal(bytes.readUInt32LE(0),0x46546c67);assert.equal(bytes.readUInt32LE(4),2);assert.equal(bytes.readUInt32LE(8),bytes.length);
+  const chunks=[];
+  for(let offset=12;offset<bytes.length;){const length=bytes.readUInt32LE(offset),type=bytes.readUInt32LE(offset+4);assert.equal(length%4,0);assert.ok(offset+8+length<=bytes.length);chunks.push({type,data:Buffer.from(bytes.subarray(offset+8,offset+8+length))});offset+=8+length;}
+  const jsonChunk=chunks.find(c=>c.type===0x4e4f534a),binary=chunks.find(c=>c.type===0x004e4942);assert.ok(jsonChunk&&binary);
+  const document=JSON.parse(jsonChunk.data.toString('utf8'));
+  const positions=new Set(document.meshes.flatMap(mesh=>mesh.primitives.map(p=>p.attributes.POSITION)));assert.ok(positions.size>0);
+  for(const index of positions){
+    const accessor=document.accessors[index],view=document.bufferViews[accessor.bufferView];
+    assert.equal(accessor.type,'VEC3');assert.equal(accessor.componentType,5126);assert.ok(!accessor.sparse);assert.equal(view.buffer,0);assert.ok(!document.buffers[0].uri);
+    const start=(view.byteOffset??0)+(accessor.byteOffset??0),stride=view.byteStride??12;
+    let minimum=Infinity,maximum=-Infinity;
+    for(let vertex=0;vertex<accessor.count;vertex++){const offset=start+vertex*stride;assert.ok(offset>=0&&offset+12<=binary.data.length);const x=Math.fround(binary.data.readFloatLE(offset)+3);assert.ok(Number.isFinite(x));binary.data.writeFloatLE(x,offset);minimum=Math.min(minimum,x);maximum=Math.max(maximum,x);}
+    assert.ok(Number.isFinite(minimum)&&accessor.min?.length===3&&accessor.max?.length===3);accessor.min[0]=minimum;accessor.max[0]=maximum;
+  }
+  const json=Buffer.from(JSON.stringify(document));jsonChunk.data=Buffer.alloc(Math.ceil(json.length/4)*4,0x20);json.copy(jsonChunk.data);
+  const header=Buffer.from(bytes.subarray(0,12));header.writeUInt32LE(12+chunks.reduce((size,c)=>size+8+c.data.length,0),8);
+  return Buffer.concat([header,...chunks.flatMap(c=>{const h=Buffer.alloc(8);h.writeUInt32LE(c.data.length,0);h.writeUInt32LE(c.type,4);return[h,c.data];})]);
+}
 async function waitUntil(label,check,timeout=30000){
   const deadline=Date.now()+timeout;
   while(Date.now()<deadline){if(await check())return;await sleep(250);}
@@ -245,6 +264,7 @@ try{
     ['Assets/Shaders/ClassicGround.mshader',bytes=>{const raw=bytes.toString('utf8'),marker='s.base_color=mix(color,rock,cliff);';assert.ok(raw.includes(marker));return raw.replace(marker,'s.base_color=vec3<f32>(1.0,0.0,1.0);');}],
     ['Assets/Art/console-gold.png',()=>fs.readFileSync(path.join(sample,'Assets/Art/console-lumber.png'))],
     ['Assets/WarcraftIII/Textures/ReplaceableTextures/TeamColor/TeamColor01.png',()=>fs.readFileSync(path.join(sample,'Assets/WarcraftIII/Textures/ReplaceableTextures/TeamColor/TeamColor00.png'))],
+    ['Assets/WarcraftIII/Models/Buildings/Human/TownHall/TownHall/geoset-11-animated.glb',translatedGlbPositions],
   ]){
     const file=path.join(sample,relative),original=fs.readFileSync(file),sourceFile=path.join(source,relative),sourceDigest=hash(sourceFile);
     const result={asset:relative};report.resourceHotReload.push(result);
@@ -263,7 +283,7 @@ try{
     assert.equal(hash(file),createHash('sha256').update(original).digest('hex'));
     assert.equal(hash(sourceFile),sourceDigest,'Source sample assets must stay unchanged');
   }
-  console.log('PASS native material, shader and texture hot reload and exact pixel restoration');
+  console.log('PASS native material, shader, texture and model hot reload and exact pixel restoration');
 
   const logs=await query('console.get_logs',{limit:300});
   report.logs=logs;
