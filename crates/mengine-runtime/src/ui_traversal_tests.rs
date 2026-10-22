@@ -71,6 +71,80 @@ fn layout_fixture(count: usize, reverse: bool) -> World {
     world
 }
 
+fn graphic_storage_fixture(count: usize, reverse: bool) -> World {
+    let mut world = layout_fixture(count, reverse);
+    let children: Vec<_> = world.entities_with_components(&["Image"]).collect();
+    for child in children {
+        world.remove_component_by_name(child, "Image");
+        world.insert_component(child, InputField::default());
+    }
+    world
+}
+
+#[test]
+fn multi_primitive_controls_keep_mask_depth_and_sibling_order() {
+    let mut world = World::new();
+    let canvas = world.spawn_empty(); world.insert_component(canvas, Canvas::default());
+    let mask = world.spawn_empty(); world.set_parent(mask, Some(canvas));
+    world.insert_component(mask, RectTransform::default()); world.insert_component(mask, Image::default()); world.insert_component(mask, Mask::default());
+    for parent in [mask, canvas] {
+        let input = world.spawn_empty(); world.set_parent(input, Some(parent));
+        world.insert_component(input, RectTransform::default()); world.insert_component(input, InputField::default());
+    }
+    world.set_editor_state(mask, 0, false);
+    let plain = collect_ui_frame(&world, 800, 600);
+    let input_count = plain.plan.primitives.len();
+    assert!(input_count > 5);
+    assert!(plain.plan.primitives.iter().all(|p| p.key.stencil == UiStencilMode::Disabled));
+    world.set_editor_state(mask, 0, true);
+    for show in [false, true] {
+        for enabled in [false, true] {
+            world.get_component_mut::<Mask>(mask).unwrap().show_mask_graphic = show;
+            world.get_component_mut::<Image>(mask).unwrap().enabled = enabled;
+            let frame = collect_ui_frame(&world, 800, 600);
+            let mut expected = Vec::new();
+            if enabled && show { expected.push(UiStencilMode::Disabled); }
+            if enabled { expected.push(UiStencilMode::Push { reference: 0 }); }
+            expected.extend(std::iter::repeat_n(UiStencilMode::Test { reference: 1 }, input_count));
+            if enabled { expected.push(UiStencilMode::Pop { reference: 1 }); }
+            expected.extend(std::iter::repeat_n(UiStencilMode::Disabled, input_count));
+            assert_eq!(frame.plan.primitives.iter().map(|p| p.key.stencil).collect::<Vec<_>>(), expected, "show={show}, enabled={enabled}");
+            let tail = &frame.plan.primitives[frame.plan.primitives.len() - input_count..];
+            for (actual, expected) in tail.iter().zip(&plain.plan.primitives) { assert_eq!(format!("{actual:?}"), format!("{expected:?}")); }
+        }
+    }
+}
+
+#[test]
+#[ignore = "manual UI graphic storage CPU benchmark"]
+fn benchmark_ui_graphic_storage() {
+    use std::fmt::Write;
+    use std::hash::Hasher;
+    struct Digest(std::hash::DefaultHasher);
+    impl std::fmt::Write for Digest {
+        fn write_str(&mut self, value: &str) -> std::fmt::Result { self.0.write(value.as_bytes()); Ok(()) }
+    }
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let value: serde_json::Value = serde_json::from_slice(&std::fs::read(root.join("samples/frostbound-realms/Assets/Scenes/Main.mscene")).unwrap()).unwrap();
+    let snapshot: mengine_core::snapshot::WorldSnapshot = serde_json::from_value(value["world"].clone()).unwrap();
+    let mut authored = World::new(); mengine_scene::apply_snapshot(&mut authored, &snapshot);
+    let mut reports = Vec::new();
+    for (name, world) in [("authored", authored), ("images", layout_fixture(2000, false)), ("input-forward", graphic_storage_fixture(512, false)), ("input-reverse", graphic_storage_fixture(512, true))] {
+        let hierarchy = TransformHierarchy::build(&world);
+        let expected = collect_ui_frame_with_hierarchy(&world, &hierarchy, 4096, 1024);
+        let mut digest = Digest(std::hash::DefaultHasher::new()); write!(digest, "{expected:?}").unwrap();
+        let mut times = Vec::new();
+        for run in 0..11 {
+            let started = std::time::Instant::now();
+            for _ in 0..8 { std::hint::black_box(collect_ui_frame_with_hierarchy(&world, &hierarchy, 4096, 1024)); }
+            if run > 1 { times.push(started.elapsed().as_secs_f64() * 1000.0 / 8.0); }
+        }
+        times.sort_by(f64::total_cmp);
+        reports.push(serde_json::json!({"name":name,"entities":world.iter_entities().count(),"controls":expected.controls.len(),"primitives":expected.plan.primitives.len(),"all_fields_digest":format!("{:016x}", digest.0.finish()),"median_ms":times[4],"samples":9,"iterations":8}));
+    }
+    println!("UI_GRAPHIC_STORAGE_BENCHMARK={}", serde_json::json!(reports));
+}
+
 #[test]
 #[ignore = "manual UI traversal CPU benchmark"]
 fn benchmark_ui_traversal() {

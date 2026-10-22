@@ -3157,8 +3157,8 @@ fn walk(
         mask.is_some() && has_mask_graphic && state.stencil_depth < state.mask_regions.len() as u8;
     let mut mask_pop = Vec::new();
     if graphic_start < primitives.len() {
-        let mut graphic: Vec<UiPrimitive> = primitives.drain(graphic_start..).collect();
         if let Some(mask) = mask.filter(|_| mask_enabled) {
+            let mut graphic: Vec<UiPrimitive> = primitives.drain(graphic_start..).collect();
             if mask.show_mask_graphic {
                 let mut visible = graphic.clone();
                 if state.stencil_depth > 0 {
@@ -3185,13 +3185,12 @@ fn walk(
             state.stencil_depth += 1;
         } else {
             if graphic_maskable && state.stencil_depth > 0 {
-                for primitive in &mut graphic {
+                for primitive in &mut primitives[graphic_start..] {
                     primitive.key.stencil = UiStencilMode::Test {
                         reference: state.stencil_depth,
                     };
                 }
             }
-            primitives.extend(graphic);
         }
     } else if mask_enabled {
         // Unity MaskEnabled only requires an associated Graphic. A disabled Graphic
