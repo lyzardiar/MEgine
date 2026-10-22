@@ -1,6 +1,7 @@
 """Author: MiYu. Execute original Cloud target masks and ranged-attack restriction gates."""
 import hashlib
 import json
+import subprocess
 import struct
 import sys
 from pathlib import Path
@@ -115,7 +116,7 @@ integer(attack + 0x20, 0x180000)
 weapons = []
 for slot in [0, 1]:
     for weapon_code in range(10):
-        for target_mask in [1, 2, 4, 8, 16, 32, 64, 128, 256]:
+        for target_mask in [0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 65, 192, 320, 314, 318, 498, 0xffffffff]:
             integer(attack + 0xdc + slot * 4, weapon_code)
             integer(attack + 0x218 + slot * 4, target_mask)
             integer(attack + 0x228, 0)
@@ -161,7 +162,27 @@ for source_slot in [0, 1]:
         assert allowed == (name == 'normal')
         source_weapons.append(dict(slot=source_slot, sourceWeapTp=name, code=code, targetMask=loaded_targets, cloudAllowsAttack=allowed))
 
-report = dict(author='MiYu', passed=True, binarySha256=digest, sourceTokens=tokens, rawMask=hex(mask), normalizedMask=hex(normalized), targetCases=targets, weaponCases=weapons, sourceWeaponCases=source_weapons, limitations=['The preserved source targs tokens are supplied as a raw mask; the original ability-data loader is not executed.', 'Original effect filter, unit flag composition, defaults, target validator and ranged weapon gate execute. Unit category/owner/state fields and object references are fixtures; final ability immunity/event rejection is supplied as success.', 'Source weapon cases execute the original weapTp field getter/converter, cached getters, assignment slices and restriction gate. Source string retrieval/comparison, parsed cache records, hash and assembly are supplied; full unit construction and original battle are not executed. Target-mask field identity is also traced statically through the targs getter and parser.'])
+# Compare original machine results directly with the shipped simulation predicate and source catalog.
+simulation = "const S=require('./samples/frostbound-realms/game/simulation.js');let input='';process.stdin.on('data',s=>input+=s);process.stdin.on('end',()=>console.log(JSON.stringify({allowed:JSON.parse(input).map(w=>!S.rangedWeapon(w.weaponCode,w.targetMask)),units:S.cloudWeaponRules.units})));"
+actual = json.loads(subprocess.run(['node', '-e', simulation], input=json.dumps(weapons), text=True, capture_output=True, check=True, cwd=ROOT).stdout)
+assert actual['allowed'] == [w['cloudAllowsAttack'] for w in weapons]
+for unit, slots in actual['units'].items():
+    for slot, profile in slots.items():
+        index = int(slot) - 1
+        source_slot = index
+        cpu.mem_write(source_text, profile['weaponType'].encode() + b'\0')
+        code = run(0x6f689580, effect, [index, 0])
+        assert code == profile['weaponCode'], (unit, slot)
+        source_mask = 0
+        for token in profile['targets']: source_mask |= masks[token]
+        assert source_mask == profile['targetMask'], (unit, slot)
+        integer(attack + 0xdc + index * 4, code)
+        integer(attack + 0x218 + index * 4, source_mask)
+        integer(attack + 0x228, 1)
+        assert bool(run(0x6f47c060, attack, [index])) == (not (2 <= code <= 8 and source_mask not in [1, 64, 128, 256]))
+print(f"PASS original Cloud parity: {len(weapons)} simulation predicates and {len(actual['units']) * 2} preserved source slots")
+
+report = dict(author='MiYu', passed=True, simulationParityCases=len(weapons), sourceSlotCases=sum(len(slots) for slots in actual['units'].values()), binarySha256=digest, sourceTokens=tokens, rawMask=hex(mask), normalizedMask=hex(normalized), targetCases=targets, weaponCases=weapons, sourceWeaponCases=source_weapons, limitations=['The preserved source targs tokens are supplied as a raw mask; the original ability-data loader is not executed.', 'Original effect filter, unit flag composition, defaults, target validator and ranged weapon gate execute. Unit category/owner/state fields and object references are fixtures; final ability immunity/event rejection is supplied as success.', 'Source weapon cases execute the original weapTp field getter/converter, cached getters, assignment slices and restriction gate. Source string retrieval/comparison, parsed cache records, hash and assembly are supplied; full unit construction and original battle are not executed. Target-mask field identity is also traced statically through the targs getter and parser.'])
 out = ROOT / 'tmp/docs-artifacts/frost-human-aviary/cloud-targets/cpu.json'
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

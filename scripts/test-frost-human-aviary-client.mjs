@@ -1,5 +1,6 @@
 // Author: MiYu. Generated Human Aviary production, research, source weapons and Dragonhawk spell rendering.
 import assert from 'node:assert/strict';
+import {checkCloudWeapons} from './test-frost-cloud-weapons.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {clientWorldFixture} from './frost-client-world-fixture.mjs';
@@ -10,6 +11,7 @@ const S=context.Frost,V=context.FrostVisual,component=(name,c)=>world.entity(nam
 function tick(input={},dt=.001){engine.input={keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,230],viewport:[1280,720],...input};world.render(dt=>context.onTick(dt),dt);}
 const key=k=>{tick({keys:[k],pressedKeys:[k]});tick();},click=p=>{tick({pointer:p,buttons:[0],pressedButtons:[0]});tick({pointer:p,releasedButtons:[0]});},point=u=>{const t=telemetry(),angle=Math.atan2(32,42);return [640+(u.x-t.camera[0])/t.zoom*360,360+((u.z-t.camera[1])*Math.sin(angle)-(u.kind?S.unitHeight(context.aviaryState,u):0)*Math.cos(angle))/t.zoom*360];},step=n=>{for(let i=0;i<n;i++)tick({},.1);};
 function load(s){storage.set('quicksave',copy(s));if(telemetry().mode==='title')key('F1');if(!telemetry().paused)key('F10');click([640,388]);assert.equal(telemetry().mode,'playing');return context.aviaryState;}
+checkCloudWeapons(S);
 tick();
 const f=mortarFixture(S);f.s.units=f.s.units.filter(u=>u!==f.workshop);const aviary=S.spawn(f.s,'gryphonaviary',0,0,6),gryphon=S.spawn(f.s,'humangryphon',0,-5,6,{order:{type:'hold'},cd:999}),dragonhawk=S.spawn(f.s,'humandragonhawk',0,-8,6,{order:{type:'hold'},cd:999}),worker=S.spawn(f.s,'worker',0,-4,0);f.s.units=[aviary,gryphon,dragonhawk,worker,...f.s.units.filter(u=>![aviary,gryphon,dragonhawk,worker].includes(u))];S.visibility(f.s);let s=load(f.s),building=s.units.find(u=>u.id===aviary.id);click(point(building));
 assert.deepEqual(telemetry().selected,[building.id]);assert.equal(component('action0 label','Text').text,'Dragonhawk Rider [D] LOCKED');assert.equal(component('action1 label','Text').text,'Gryphon Rider [G] LOCKED');for(const [key,slot] of [['hdhw',0],['hgry',1]])assert.equal(component('action'+slot+' icon','Image').sprite,S.aviaryRules.units[key].disabledIcon);for(const id of ['Rhhb','Rhcd']){const r=S.aviaryRules.research[id];assert.equal(component('action'+r.slot+' icon','Image').sprite,r.disabledIcon);key('Key'+r.hotkey);}key('KeyD');key('KeyG');assert.equal(building.queue.length,0);assert.equal(V.model(s,building).key,'KingdomGryphonAviary');assert.equal(component('Portrait camera','Camera3D').projection,'perspective');assert.equal(component('Portrait model','SampledEffect').clip,3);assert.ok(effectVisible('KingdomGryphonAviaryEmbedded'));

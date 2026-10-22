@@ -54,6 +54,7 @@ import './test-frost-human-mortar.mjs';
 import './test-frost-siege-engine.mjs';
 import './test-frost-siege-engine-client.mjs';
 import './test-frost-siege-engine-network.mjs';
+import './test-frost-cloud-weapons.mjs';
 import './test-frost-human-aviary.mjs';
 import './test-frost-human-aviary-client.mjs';
 import './test-frost-human-aviary-network.mjs';

@@ -538,3 +538,15 @@ REA静态探针扩展至14组，闭合weapTp转换器、targs解析器、缓存g
 引擎远程武器分类仍使用弹丸速度；原版instant也属于远程，现有建筑全部武器及动态变化仍需核对。原游戏完整对局、能力加载器和最终免疫路径未验收，完整复刻目标尚未完成。REA源站、固定版本及更新说明继续保留于工具README。维护入口：[狮鹫笼](human-aviary.md)；本地验证证据位于 `tmp/docs-artifacts/frost-human-aviary/cloud-ward/`，不提交原始产物。
 
 完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共802条PASS，包含24,000帧AI验证；日志为 `tmp/docs-artifacts/frost-human-aviary/cloud-ward/regression.log`。精确提交清单61个文件，文档仅含维护说明与验证结论。
+
+## 2026-10-23：乌云按原版武器类型与目标掩码限制攻击
+
+攻击资格与发射入口共用当前武器槽的源分类：类型码2至8，目标掩码不恰好等于none／tree／wall／debris时受乌云限制。目录保存四族三级主基地、源防御塔、生产古树及instant武器共25个单位／50个武器槽。炮塔依目标选择武器，古树依扎根／拔起选择武器；Frostbound自定义塔与旧hall保留显式missile分类。协议122拒绝121，存档字段保持现有格式。
+
+14组REA通道静态探针、原DLL的48组目标筛选／340组双槽门控／16组源字段路径通过；门控结果与当前模拟逐项一致，全部50个目录槽通过原转换器核验。来源测试验证源SLK、Game.dll、生成器和输出摘要，临时目录精确重建，篡改输入拒绝且不覆盖已有输出。回归覆盖两处攻击入口、正弹速normal、零弹速instant、精确掩码例外与组合掩码、四族主基地、炮塔和古树切换；恢复弹速判定的负对照失败。该核验不包含原游戏完整对局、完整能力加载器与最终免疫流程。
+
+生成客户端和真实TCP路径通过。原生8组检查通过、控制台错误0，乌云下防御塔读档后连续20帧不攻击，蛇棒读档后仍能造成伤害；源模型、头像、双武器、付费队列和通道表现通过，截图已检查。原生Main摘要与样例一致，为 `81c7babc6ce14060cddd70375610bfb8561a9a594a2ee6494ff5bc54b23399f0`。截图请求等待Game视口就绪，测试编辑器正常退出，WebView缓存因EPERM保留在临时目录。
+
+来源入口、固定REA源站与版本、更新和验证命令见 [狮鹫笼维护说明](human-aviary.md)。原始证据位于 `tmp/docs-artifacts/frost-human-aviary/cloud-weapons/`、`cloud-targets/cpu.json` 与 `native-human-aviary.json`，不提交运行产物。完整复刻目标继续进行。
+
+完整主回归 `node scripts/test-frostbound.mjs` 退出码0，共810条PASS，包含24,000帧AI验证；日志为 `tmp/docs-artifacts/frost-human-aviary/cloud-weapons/regression.log`。新增武器套件在主模拟及生成客户端均执行；后补飞行机器双槽断言另经专项和生成客户端重跑通过。

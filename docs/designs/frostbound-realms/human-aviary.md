@@ -56,9 +56,9 @@ REA上游为 [morluto/rea](https://github.com/morluto/rea)，6.5.0，固定提�
 
 乌云目标筛选补证：原token表将vuln／invu／structure合成 `0x300008`；原归一化器 `0x6f68c7b0` 为缺失的关系位补齐 `0x1f000`，`0x6f68a650` 对该组合直接通过。原effect过滤器 `0x6f4a17d0` 的 `+0xcc` 指向返回0的 `0x6f4bf1f0`，不会额外按联盟直接放行。48组CPU用例执行原effect、单位类别组合与目标校验：给定保留的源掩码，三个owner、可伤害／无敌的存活建筑通过；死亡建筑、ground、air、ward被排除。原数据加载器及最后的能力免疫／事件检查未执行，不能由此宣称完整技能目标流程已经验收。
 
-乌云bit1限制进入攻击对象 `+0x228`；原 `0x6f47c060 → 0x6f47bfc0` 读取当前武器槽的类型码和目标掩码，不读取弹丸速度。`weapTp` 经 `0x6f6896c0 → 0x6f689580` 转换为normal1、missile2、artillery3、instant4、msplash5、mbounce6、mline7、aline8，再通过缓存 `+0xf8` 与 `0x6f64ce60` 写到攻击对象 `+0xdc`。`targs` 经 `0x6f68a570 → 0x6f68bc10` 解析到缓存 `+0xa0`，通过 `0x6f64cdf0` 写到攻击对象 `+0x218`。类型2至8且目标掩码不等于none1／tree64／wall128／debris256时，原版禁止攻击。180组双槽门控与16组源字段用例执行原转换器、getter、赋值指令段和攻击限制；文本读取／比较、缓存记录及记录组装由测试提供，完整单位构造未执行。
+乌云bit1限制进入攻击对象 `+0x228`；原 `0x6f47c060 → 0x6f47bfc0` 读取当前武器槽的类型码和目标掩码，不读取弹丸速度。`weapTp` 经 `0x6f6896c0 → 0x6f689580` 转换为normal1、missile2、artillery3、instant4、msplash5、mbounce6、mline7、aline8，再通过缓存 `+0xf8` 与 `0x6f64ce60` 写到攻击对象 `+0xdc`。`targs` 经 `0x6f68a570 → 0x6f68bc10` 解析到缓存 `+0xa0`，通过 `0x6f64cdf0` 写到攻击对象 `+0x218`。类型2至8且目标掩码不等于none1／tree64／wall128／debris256时，原版禁止攻击。340组双槽门控与16组源字段用例执行原转换器、getter、赋值指令段和攻击限制；文本读取／比较、缓存记录及记录组装由测试提供，完整单位构造未执行。
 
-主模拟的乌云目标筛选明确排除蛇棒，建筑限制、多个乌云重叠及存档校验共用此入口。蛇棒在乌云内仍能正常发射和造成伤害，双方快照与重连保持一致，伪造蛇棒受乌云限制的存档会被拒绝。原版目标筛选48组CPU用例与此类别边界一致。引擎的远程武器判断目前仍使用弹丸速度；原版instant武器也属于远程，现有建筑的全部类型与动态武器变化仍需逐项核对。原始结果为 `tmp/docs-artifacts/frost-human-aviary/cloud-targets/cpu.json`，当前运行证据为 `cloud-ward/`。
+主模拟的乌云目标筛选明确排除蛇棒，建筑限制、多个乌云重叠及存档校验共用此入口。蛇棒在乌云内仍能正常发射和造成伤害，双方快照与重连保持一致，伪造蛇棒受乌云限制的存档会被拒绝。原版目标筛选48组CPU用例与此类别边界一致。引擎按当前武器槽的源类型码与目标掩码判断远程限制，攻击资格与发射入口共用此判定。保留的25个单位、50个武器槽覆盖四族三级主基地、源防御塔、生产古树及instant武器；炮塔按目标选择武器，古树按扎根／拔起选择武器。原版50项目标token按位或组合，none／tree／wall／debris仅在掩码恰好等于对应单值时例外。原DLL门控与主模拟逐项对照340组通过，50个源槽通过原转换器核验。Frostbound原有自定义hall／frosttower／flametower按既有远程设计显式归为missile，不将其当作原版单位来源。原始结果为 `tmp/docs-artifacts/frost-human-aviary/cloud-targets/cpu.json`，当前武器分类验证证据为 `cloud-weapons/`。
 
 原游戏完整对局未运行。乌云源目标表没有enemy项，当前按structure/vuln/invu覆盖双方建筑；原加载器默认阵营位、完整免疫组合、锁镣对既有其他技能的精确中断语义仍需对照。实际移动速度使用引擎位移差分，未复现原速度访问器；float32相切、弹道终点与最后接触同时发生的事件次序也未完全确认。
 
@@ -76,6 +76,9 @@ python scripts/probe-frost-rea-human-aviary-cpu.py
 node scripts/probe-frost-rea-human-aviary-channels.mjs
 python scripts/probe-frost-rea-aviary-channels-cpu.py
 python scripts/probe-frost-rea-cloud-targets-cpu.py
+python scripts/import-frost-cloud-weapons.py
+python scripts/test-frost-cloud-weapons-source.py
+node scripts/test-frost-cloud-weapons.mjs
 node scripts/test-frost-human-aviary.mjs
 node scripts/test-frost-human-aviary-client.mjs
 node scripts/test-frost-human-aviary-network.mjs
@@ -108,6 +111,8 @@ G建造狮鹫笼，D/G训练龙鹰／狮鹫，C/H研究乌云／风暴战锤。�
 
 玩法13组、生成客户端、真实TCP和来源离线重建检查通过；当前协议121，TCP覆盖协议120拒绝、所有权、共享队列、重连、双方弹道、技能开销、通道伤害、停止及可见性隐私。乌云只在可见区域发送效果，敌方不接收锁镣目标ID、冷却及私有碰撞记录。严格存档校验覆盖通道配对、网格唯一序号、状态时钟和未完成弹道。
 
-最终完整回归及原生验收结果记录在工作日志。所有原始日志、图像与报告位于 `tmp/docs-artifacts/frost-human-aviary/`；`integration/source-final.log` 为来源检查，`cloud-ward/regression.log` 为当前完整回归，`native-human-aviary.json` 为主游戏原生报告。
+最终完整回归及原生验收结果记录在工作日志。所有原始日志、图像与报告位于 `tmp/docs-artifacts/frost-human-aviary/`；`integration/source-final.log` 为来源检查，`cloud-weapons/regression.log` 为当前完整回归，`native-human-aviary.json` 为主游戏原生报告。
 
 共享导入器升级同时更新24份既有资产收据的工具摘要及一处依赖摘要，未修改其资产输出。默认效果路径由攻城坦克离线重建验证，默认模型／粒子路径由先知两组逐字节重建验证。先知完整来源测试另有既存血法师脚本摘要失配，详见工作日志。
+
+乌云武器目录维护：`cloud-weapon-rules.json` 保存运行时分类，`cloud-weapon-sources.json` 保存源SLK、Game.dll、生成器、输出摘要及REA源站、固定版本和提交。导入器支持 `--source`、`--binary` 和 `--output`，输入必须匹配已核对的原件摘要；升级游戏版本时需重新用REA核对token表、转换器及攻击门控后更新导入器与CPU探针。来源测试在临时目录精确重建，并确认变更输入被拒绝、已有输出不被覆盖。协议122拒绝121，存档沿用现有字段。此规则分类阶段不代表原游戏完整对局、技能加载器或最终免疫流程已经验收。
