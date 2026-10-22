@@ -18,7 +18,7 @@ pub use project::{
     AssetRenameRequest, AssetRenameResult, AssetRenameUpdate, AssetRestoreRequest,
     AssetRestoreResult, AssetTrashEntry, AssetTrashInventory, AssetTrashRequest, AssetTrashResult,
     BuildAssetMode, EditorFailure, EditorRequest, EditorResult, ProjectError, ProjectManifest,
-    ProjectSession, ProjectSnapshot, SceneRecoveryInfo,
+    ProjectSession, ProjectSnapshot, SceneRecoveryInfo, SceneRecoveryCheckpoint,
 };
 pub use session::{EditorMode, EditorSession};
 pub use undo::{EditorCommand, UndoStack};

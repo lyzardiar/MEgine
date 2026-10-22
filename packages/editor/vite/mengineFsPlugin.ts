@@ -155,6 +155,7 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     guid: string | null;
     metaStatus: 'ready' | 'auxiliary' | 'invalid' | 'duplicate';
     metaError: string | null;
+    metaRevision?: string | null;
   };
 
   function assetFileRevision(stat: fs.Stats): string {
@@ -354,71 +355,99 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
     return target;
   }
 
-  function listProjectAssets(): ProjectFileAsset[] {
-    const assets: ProjectFileAsset[] = [];
-    const walk = (dir: string, folder: string) => {
-      if (!fs.existsSync(dir)) return;
-      for (const file of fs.readdirSync(dir)) {
-        if (file.startsWith('.') || file.endsWith('.meta')) continue;
-        const abs = path.join(dir, file);
-        const stat = fs.lstatSync(abs);
-        if (stat.isSymbolicLink()) continue;
-        if (stat.isDirectory()) {
-          walk(abs, `${folder}/${file}`);
-          continue;
-        }
-        const lower = file.toLowerCase();
-        const kind: ProjectFileAsset['kind'] | null = lower.endsWith('.sprite.json')
-          ? 'sprite-import'
-          : lower.endsWith('.mscene')
-            ? 'scene'
-          : /\.(m?js|ts)$/.test(lower)
-            ? 'script'
-          : lower.endsWith('.matlas')
-            ? 'sprite-atlas'
-          : lower.endsWith('.manim')
-          ? 'animation'
-          : lower.endsWith('.mcontroller')
-            ? 'animator-controller'
-          : lower.endsWith('.mavatar')
-            ? 'avatar-mask'
-          : lower.endsWith('.mtimeline')
-            ? 'timeline'
-            : /\.(wav|ogg|mp3|flac)$/.test(lower)
-              ? 'audio'
-            : lower.endsWith('.mmat') || lower.endsWith('.mat') || lower.endsWith('.minst')
-              ? 'material'
-            : lower.endsWith('.mshader')
-              ? 'shader'
-              : lower.endsWith('.gltf') || lower.endsWith('.glb')
-                ? 'model'
-              : /\.(png|jpe?g|webp|gif|bmp|tga|tiff?|hdr|exr)$/.test(lower)
-                ? 'texture'
-              : lower.endsWith('.prefab')
-                ? 'prefab'
-                : lower.endsWith('.atlas')
-                  ? 'spine-atlas'
-                  : lower.endsWith('.skel')
-                    ? 'spine-binary'
-                    : lower.endsWith('.json')
-                      ? 'spine-json'
-                      : null;
-        if (!kind) continue;
-        const relPath = `Assets/${path.relative(assetsRoot, abs).replace(/\\/g, '/')}`;
-        const metadata = assetMetadata(abs, kind);
-        assets.push({
-          id: relPath,
-          name: file,
-          folder,
-          relPath,
-          kind,
-          revision: assetFileRevision(stat),
-          size: stat.size,
-          ...metadata,
-        });
+  // MiYu: Native recursive events keep large asset directories out of the polling scan path.
+  let indexedAssets: ProjectFileAsset[] | null = null;
+  let indexedAssetRecords = new Map<string, ProjectFileAsset>();
+  let assetIndexRevision = randomUUID();
+  let assetIndexRescan = true;
+  let assetWatcher: fs.FSWatcher | undefined;
+  let assetWatcherFailed = false;
+  const dirtyAssetPaths = new Set<string>();
+
+  function listProjectAssets(force = true): ProjectFileAsset[] {
+    if (assetWatcherFailed) force = true;
+    if (!force && indexedAssets && !assetIndexRescan && dirtyAssetPaths.size === 0) return indexedAssets;
+    const records = force || assetIndexRescan ? new Map<string, ProjectFileAsset>() : new Map(indexedAssetRecords);
+    const walk = (abs: string) => {
+      const stat = fs.lstatSync(abs, { throwIfNoEntry: false });
+      if (!stat) return;
+      const file = path.basename(abs);
+      if (file.startsWith('.') || file.endsWith('.meta') || stat.isSymbolicLink()) return;
+      if (stat.isDirectory()) {
+        for (const name of fs.readdirSync(abs)) walk(path.join(abs, name));
+        return;
       }
+      if (!stat.isFile()) return;
+      const lower = file.toLowerCase();
+      const kind: ProjectFileAsset['kind'] | null = lower.endsWith('.sprite.json')
+        ? 'sprite-import'
+        : lower.endsWith('.mscene')
+          ? 'scene'
+        : /\.(m?js|ts)$/.test(lower)
+          ? 'script'
+        : lower.endsWith('.matlas')
+          ? 'sprite-atlas'
+        : lower.endsWith('.manim')
+        ? 'animation'
+        : lower.endsWith('.mcontroller')
+          ? 'animator-controller'
+        : lower.endsWith('.mavatar')
+          ? 'avatar-mask'
+        : lower.endsWith('.mtimeline')
+          ? 'timeline'
+          : /\.(wav|ogg|mp3|flac)$/.test(lower)
+            ? 'audio'
+          : lower.endsWith('.mmat') || lower.endsWith('.mat') || lower.endsWith('.minst')
+            ? 'material'
+          : lower.endsWith('.mshader')
+            ? 'shader'
+            : lower.endsWith('.gltf') || lower.endsWith('.glb')
+              ? 'model'
+            : /\.(png|jpe?g|webp|gif|bmp|tga|tiff?|hdr|exr)$/.test(lower)
+              ? 'texture'
+            : lower.endsWith('.prefab')
+              ? 'prefab'
+              : lower.endsWith('.atlas')
+                ? 'spine-atlas'
+                : lower.endsWith('.skel')
+                  ? 'spine-binary'
+                  : lower.endsWith('.json')
+                    ? 'spine-json'
+                    : null;
+      if (!kind) return;
+      const relPath = `Assets/${path.relative(assetsRoot, abs).replace(/\\/g, '/')}`;
+      const metadata = assetMetadata(abs, kind);
+      const folder = path.posix.dirname(relPath);
+      records.set(abs, { id: relPath, name: file, folder, relPath, kind, revision: assetFileRevision(stat), size: stat.size, ...metadata,
+        metaRevision: fs.existsSync(`${abs}.meta`) ? assetFileRevision(fs.lstatSync(`${abs}.meta`)) : null });
     };
-    walk(assetsRoot, 'Assets');
+    try {
+      if (force || assetIndexRescan) walk(assetsRoot);
+      else {
+        const covered: string[] = [];
+        for (const changed of [...dirtyAssetPaths].sort()) {
+          const abs = changed.endsWith('.meta') ? changed.slice(0, -5) : changed;
+          if (path.relative(assetsRoot, abs).split(path.sep).some((part) => part.startsWith('.'))) continue;
+          if (covered.some((parent) => isUnder(parent, abs))) continue;
+          covered.push(abs);
+          for (const key of records.keys()) if (isUnder(abs, key)) records.delete(key);
+          const parts = path.relative(assetsRoot, abs).split(path.sep);
+          let ancestor = assetsRoot, blocked = false;
+          for (const part of ['', ...parts]) {
+            ancestor = path.join(ancestor, part);
+            if (fs.lstatSync(ancestor, { throwIfNoEntry: false })?.isSymbolicLink()) { blocked = true; break; }
+          }
+          if (!blocked) walk(abs);
+        }
+      }
+    } catch (error) {
+      assetIndexRescan = true;
+      throw error; // Keep the last complete index authoritative after a failed scan.
+    }
+    indexedAssetRecords = records;
+    dirtyAssetPaths.clear();
+    assetIndexRescan = false;
+    const assets = [...records.values()].map((asset) => ({ ...asset }));
     const owners = new Map<string, ProjectFileAsset[]>();
     for (const asset of assets) {
       if (asset.metaStatus !== 'ready' || !asset.guid) continue;
@@ -434,7 +463,10 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
         asset.metaError = `asset GUID ${guid} is shared by multiple files: ${files}`;
       }
     }
-    return assets.sort((a, b) => a.relPath.localeCompare(b.relPath));
+    assets.sort((a, b) => a.relPath.localeCompare(b.relPath));
+    if (JSON.stringify(assets) !== JSON.stringify(indexedAssets)) assetIndexRevision = randomUUID();
+    indexedAssets = assets;
+    return assets;
   }
 
   function normalizedAssetPath(relRaw: string): string | null {
@@ -1962,7 +1994,9 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
 
       // GET /__mengine/assets → Spine authoring assets visible in Project.
       if (pathname === `${API}/assets` && method === 'GET') {
-        return sendJson(res, 200, { assets: listProjectAssets() });
+        const query = new URL(req.url ?? '', 'http://localhost').searchParams;
+        const assets = listProjectAssets(query.get('poll') !== '1');
+        return sendJson(res, 200, { revision: assetIndexRevision, assets: query.get('revision') === assetIndexRevision ? null : assets });
       }
 
       if (pathname === `${API}/assets/rename` && method === 'POST') {
@@ -2391,8 +2425,23 @@ export function mengineFsPlugin(opts: MengineFsOptions | string): Plugin {
 
   return {
     name: 'mengine-fs',
+    closeBundle() { assetWatcher?.close(); assetWatcher = undefined; },
     configureServer(server: ViteDevServer) {
       ensureDirs();
+      try {
+        assetWatcher = fs.watch(projectRoot, { recursive: true }, (event, changed) => {
+          if (changed === null) { assetIndexRescan = true; dirtyAssetPaths.clear(); return; }
+          const absolute = path.resolve(projectRoot, String(changed));
+          if (!isUnder(assetsRoot, absolute) || assetIndexRescan) return;
+          // A directory's timestamp event accompanies its child events; it does not invalidate the subtree.
+          try {
+            if (event === 'change' && fs.lstatSync(absolute, { throwIfNoEntry: false })?.isDirectory()) return;
+          } catch { assetIndexRescan = true; dirtyAssetPaths.clear(); return; }
+          dirtyAssetPaths.add(absolute);
+          if (dirtyAssetPaths.size > 4096) { assetIndexRescan = true; dirtyAssetPaths.clear(); }
+        });
+        assetWatcher.on('error', () => { assetWatcherFailed = true; assetIndexRescan = true; dirtyAssetPaths.clear(); });
+      } catch { assetWatcherFailed = true; }
       server.middlewares.use(handle);
       const rel = path.relative(process.cwd(), scenesDir);
       server.config.logger.info(`[mengine-fs] scenes → ${rel || scenesDir}`);

@@ -300,7 +300,7 @@ export async function initSceneLibrary(): Promise<{
 }> {
   const desktopProject = getDesktopProject();
   if (desktopProject) {
-    const json = desktopProjectSceneJson();
+    const json = await desktopProjectSceneJson();
     const name =
       desktopProject.scenePath?.split('/').pop()?.replace(/\.mscene$/i, '') ?? 'Untitled';
     const scenes = await listProjectScenes();
@@ -441,7 +441,7 @@ export async function writeScene(name: string, json: string) {
 export async function reloadSceneFromBackend(name: string): Promise<string> {
   if (_backend === 'desktop') {
     await openDesktopScene(name);
-    const json = desktopProjectSceneJson();
+    const json = await desktopProjectSceneJson();
     if (!json) throw new Error(`desktop host did not return ${sceneFileName(name)}`);
     _data.set(name, json);
     _index = sortIndex([

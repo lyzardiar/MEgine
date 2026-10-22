@@ -17,8 +17,10 @@ import {
 import { invoke } from '@tauri-apps/api/core';
 import { resetProjectAssetState } from '../projectAssets';
 
-let currentProject: ProjectSnapshot | null = null;
+export type DesktopProjectMetadata = Omit<ProjectSnapshot, 'world'>;
+let currentProject: (DesktopProjectMetadata & { world?: HostWorldSnapshot }) | null = null;
 let sessionQueue: Promise<void> = Promise.resolve();
+let sceneGeneration = 0;
 
 function enqueueSessionOperation<T>(operation: () => Promise<T>): Promise<T> {
   const result = sessionQueue.then(operation, operation);
@@ -26,7 +28,7 @@ function enqueueSessionOperation<T>(operation: () => Promise<T>): Promise<T> {
   return result;
 }
 
-export function getDesktopProject(): ProjectSnapshot | null {
+export function getDesktopProject(): DesktopProjectMetadata | null {
   return currentProject;
 }
 
@@ -35,9 +37,10 @@ export async function attachDesktopProject(): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
     resetProjectAssetState();
     try {
-      currentProject = await getProjectSnapshot();
+      const fullProject = currentProject = await getProjectSnapshot();
       resetProjectAssetState();
-      return currentProject;
+      sceneGeneration++;
+      return fullProject;
     } catch (error) {
       currentProject = null;
       throw error;
@@ -48,9 +51,10 @@ export async function attachDesktopProject(): Promise<ProjectSnapshot> {
 export async function startDesktopProject(root: string): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
     resetProjectAssetState();
-    currentProject = await openProject(root);
+    const fullProject = currentProject = await openProject(root);
     resetProjectAssetState();
-    return currentProject;
+    sceneGeneration++;
+    return fullProject;
   });
 }
 
@@ -60,9 +64,10 @@ export async function createDesktopProject(
 ): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
     resetProjectAssetState();
-    currentProject = await createProject(parent, name);
+    const fullProject = currentProject = await createProject(parent, name);
     resetProjectAssetState();
-    return currentProject;
+    sceneGeneration++;
+    return fullProject;
   });
 }
 
@@ -73,13 +78,19 @@ export async function closeDesktopProject(
     if (!currentProject) throw new Error('no desktop project is open');
     const result = await closeProject(discardDirty);
     currentProject = null;
+    sceneGeneration++;
     resetProjectAssetState();
     return result;
   });
 }
 
-export function desktopProjectSceneJson(): string | null {
-  return currentProject ? projectSnapshotAsSceneJson(currentProject) : null;
+export async function desktopProjectSceneJson(): Promise<string | null> {
+  return enqueueSessionOperation(async () => {
+    if (!currentProject) return null;
+    // MiYu: request the canonical world only when a caller needs it, never for a recovery acknowledgement.
+    if (!currentProject.world) currentProject = await getProjectSnapshot();
+    return projectSnapshotAsSceneJson({ ...currentProject, world: currentProject.world! });
+  });
 }
 
 function browserWorldToHost(sceneJson: string): HostWorldSnapshot {
@@ -128,19 +139,22 @@ export async function persistDesktopScene(
 ): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
     if (!currentProject) throw new Error('no desktop project is open');
-    currentProject = await invoke<ProjectSnapshot>('persist_scene_snapshot', {
+    const previousProject = currentProject;
+    const fullProject = currentProject = await invoke<ProjectSnapshot>('persist_scene_snapshot', {
       relativePath: `Assets/Scenes/${name}.mscene`,
       snapshot: browserWorldToHost(sceneJson),
     });
-    return currentProject;
+    if (previousProject.projectId !== fullProject.projectId || previousProject.scenePath !== fullProject.scenePath) sceneGeneration++;
+    return fullProject;
   });
 }
 
 export async function openDesktopScene(name: string): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
     if (!currentProject) throw new Error('no desktop project is open');
-    currentProject = await openProjectScene(`Assets/Scenes/${name}.mscene`);
-    return currentProject;
+    const fullProject = currentProject = await openProjectScene(`Assets/Scenes/${name}.mscene`);
+    sceneGeneration++;
+    return fullProject;
   });
 }
 
@@ -150,8 +164,10 @@ export async function renameDesktopScene(
 ): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
     if (!currentProject) throw new Error('no desktop project is open');
-    currentProject = await renameProjectScene(oldName, newName);
-    return currentProject;
+    const previousProject = currentProject;
+    const fullProject = currentProject = await renameProjectScene(oldName, newName);
+    if (previousProject.projectId !== fullProject.projectId || previousProject.scenePath !== fullProject.scenePath) sceneGeneration++;
+    return fullProject;
   });
 }
 
@@ -161,22 +177,38 @@ export async function deleteDesktopScene(
 ): Promise<ProjectSnapshot> {
   return enqueueSessionOperation(async () => {
     if (!currentProject) throw new Error('no desktop project is open');
-    currentProject = await deleteProjectScene(name, expectedRevision);
-    return currentProject;
+    const previousProject = currentProject;
+    const fullProject = currentProject = await deleteProjectScene(name, expectedRevision);
+    if (previousProject.projectId !== fullProject.projectId || previousProject.scenePath !== fullProject.scenePath) sceneGeneration++;
+    return fullProject;
   });
 }
 
 export async function checkpointDesktopScene(sceneJson: string): Promise<SceneRecoveryInfo | null> {
+  const expectedGeneration = sceneGeneration;
+  const expectedProject = currentProject?.projectId;
+  const expectedScene = currentProject?.scenePath;
   return enqueueSessionOperation(async () => {
-    if (!currentProject) return null;
+    if (!currentProject || sceneGeneration !== expectedGeneration || currentProject.projectId !== expectedProject || currentProject.scenePath !== expectedScene) return null;
+    const snapshot = browserWorldToHost(sceneJson);
+    // A failed durable write can still advance the host world; invalidate before dispatch as well.
+    const { world: _world, ...metadata } = currentProject;
+    currentProject = metadata;
     const result = await invoke<{
-      snapshot: ProjectSnapshot;
+      revision: number;
+      documentRevision: number;
+      saveRevision: number;
+      dirty: boolean;
       recovery: SceneRecoveryInfo | null;
     }>('checkpoint_scene_snapshot', {
-      snapshot: browserWorldToHost(sceneJson),
+      projectId: currentProject.projectId,
+      scenePath: currentProject.scenePath,
+      snapshot,
     });
-    currentProject = result.snapshot;
-    return result.recovery;
+    // MiYu: Rust normalizes entities and remaps IDs; invalidate the world instead of treating input as canonical.
+    const { recovery, ...revisions } = result;
+    currentProject = { ...metadata, ...revisions };
+    return recovery;
   });
 }
 
@@ -193,10 +225,11 @@ export async function restoreDesktopSceneRecovery(): Promise<{
 }> {
   return enqueueSessionOperation(async () => {
     if (!currentProject) throw new Error('no desktop project is open');
-    currentProject = await restoreSceneRecovery();
+    const fullProject = currentProject = await restoreSceneRecovery();
+    sceneGeneration++;
     return {
-      snapshot: currentProject,
-      sceneJson: projectSnapshotAsSceneJson(currentProject),
+      snapshot: fullProject,
+      sceneJson: projectSnapshotAsSceneJson(fullProject),
     };
   });
 }

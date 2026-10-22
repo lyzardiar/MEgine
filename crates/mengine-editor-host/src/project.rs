@@ -91,6 +91,17 @@ pub struct SceneRecoveryInfo {
     pub entity_count: usize,
 }
 
+/// MiYu: recovery acknowledgements carry revisions, without echoing the scene over IPC.
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SceneRecoveryCheckpoint {
+    pub revision: u64,
+    pub document_revision: u64,
+    pub save_revision: u64,
+    pub dirty: bool,
+    pub recovery: Option<SceneRecoveryInfo>,
+}
+
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AssetRenameUpdate {
@@ -1730,21 +1741,35 @@ impl ProjectSession {
         base_revision: u64,
         snapshot: WorldSnapshot,
     ) -> Result<ProjectSnapshot, ProjectError> {
+        self.replace_snapshot_revision(base_revision, &snapshot)?;
+        Ok(self.snapshot())
+    }
+
+    fn replace_snapshot_revision(&mut self, base_revision: u64, snapshot: &WorldSnapshot) -> Result<(), ProjectError> {
         if base_revision != self.revision {
             return Err(ProjectError::StaleRevision {
                 expected: self.revision,
                 actual: base_revision,
             });
         }
-        let changes_document = WorldSnapshot::from_world(&self.editor.edit_world) != snapshot;
+        let changes_document = WorldSnapshot::from_world(&self.editor.edit_world) != *snapshot;
         if changes_document {
-            self.editor.replace_edit_snapshot(&snapshot);
+            self.editor.replace_edit_snapshot(snapshot);
         }
         self.revision = self.revision.saturating_add(1);
         if changes_document {
             self.document_revision = self.document_revision.saturating_add(1);
         }
-        Ok(self.snapshot())
+        Ok(())
+    }
+
+    pub fn checkpoint_snapshot(&mut self, project_id: Uuid, scene_path: &str, base_revision: u64, snapshot: WorldSnapshot) -> Result<SceneRecoveryCheckpoint, ProjectError> {
+        if project_id != self.project_id { return Err(ProjectError::ProjectMismatch); }
+        let relative = normalize_scene_asset_path(Path::new(scene_path))?;
+        if self.scene_relative_path.as_ref() != Some(&relative) { return Err(ProjectError::InvalidPath("recovery scene is no longer active".into())); }
+        self.replace_snapshot_revision(base_revision, &snapshot)?;
+        let recovery = self.write_scene_recovery()?;
+        Ok(SceneRecoveryCheckpoint { revision: self.revision, document_revision: self.document_revision, save_revision: self.save_revision, dirty: self.document_revision != self.save_revision, recovery })
     }
 
     pub fn save_scene(
@@ -1813,7 +1838,7 @@ impl ProjectSession {
             document_revision: self.document_revision,
             world: WorldSnapshot::from_world(&self.editor.edit_world),
         };
-        let mut bytes = serde_json::to_vec_pretty(&record)?;
+        let mut bytes = serde_json::to_vec(&record)?;
         bytes.push(b'\n');
         let path = self.resolve_for_write(Path::new(SCENE_RECOVERY_PATH))?;
         if path.exists() {
@@ -3485,6 +3510,82 @@ mod tests {
         assert!(!saved.dirty);
         assert!(!root.join(SCENE_RECOVERY_PATH).exists());
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn compact_checkpoint_preserves_recovery_and_rejects_stale_context() {
+        let root = make_project();
+        let mut session = ProjectSession::open(&root).unwrap();
+        let opened = session.open_main_scene().unwrap().unwrap();
+        let mut changed = opened.world.clone();
+        changed.clear_color = [0.2, 0.4, 0.6, 1.0];
+        assert!(matches!(session.checkpoint_snapshot(Uuid::new_v4(), "Assets/Scenes/Main.mscene", opened.revision, changed.clone()), Err(ProjectError::ProjectMismatch)));
+        assert!(session.checkpoint_snapshot(opened.project_id, "Assets/Scenes/Other.mscene", opened.revision, changed.clone()).is_err());
+        assert!(!root.join(SCENE_RECOVERY_PATH).exists());
+        assert_eq!(session.current_revision(), opened.revision);
+        let result = session.checkpoint_snapshot(opened.project_id, "Assets/Scenes/Main.mscene", opened.revision, changed.clone()).unwrap();
+        assert!(result.dirty);
+        let response = serde_json::to_vec(&result).unwrap();
+        assert!(response.len() < 512);
+        assert!(serde_json::to_value(&result).unwrap().get("world").is_none());
+        let record = session.read_scene_recovery().unwrap().unwrap();
+        assert_eq!(record.world, session.snapshot().world);
+        assert_eq!(record.world.clear_color, changed.clear_color);
+        assert_eq!(record.document_revision, result.document_revision);
+        assert!(matches!(session.checkpoint_snapshot(opened.project_id, "Assets/Scenes/Main.mscene", opened.revision, opened.world), Err(ProjectError::StaleRevision { .. })));
+        assert_eq!(session.read_scene_recovery().unwrap().unwrap().world, record.world);
+        let same = session.checkpoint_snapshot(opened.project_id, "Assets/Scenes/Main.mscene", result.revision, changed).unwrap();
+        assert_eq!(same.document_revision, result.document_revision);
+        drop(session);
+        let mut reopened = ProjectSession::open(&root).unwrap();
+        reopened.open_main_scene().unwrap();
+        assert_eq!(reopened.restore_scene_recovery().unwrap().world, record.world);
+        reopened.save_scene(None).unwrap();
+        assert!(!root.join(SCENE_RECOVERY_PATH).exists());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    #[ignore = "Frostbound recovery CPU/IO benchmark; run explicitly with --nocapture"]
+    fn benchmark_recovery_checkpoint() {
+        use std::time::Instant;
+        let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms/Assets/Scenes/Main.mscene");
+        let value: serde_json::Value = serde_json::from_slice(&std::fs::read(source).unwrap()).unwrap();
+        let snapshot: WorldSnapshot = serde_json::from_value(value["world"].clone()).unwrap();
+        let roots = [make_project(), make_project()];
+        let mut sessions: Vec<_> = roots.iter().map(|root| { let mut s = ProjectSession::open(root).unwrap(); s.open_main_scene().unwrap(); s }).collect();
+        let mut samples = [Vec::new(), Vec::new()];
+        let mut response_bytes = [0, 0];
+        let mut file_bytes = [0, 0];
+        for iteration in 0..12 {
+            for index in if iteration % 2 == 0 { [0, 1] } else { [1, 0] } {
+                let mut input = snapshot.clone();
+                input.clear_color[0] = iteration as f32 / 20.0;
+                let session = &mut sessions[index];
+                let started = Instant::now();
+                if index == 0 {
+                    // Original checkpoint: comparison, discarded reply, recovery snapshot and final full reply.
+                    session.replace_snapshot(session.revision, input).unwrap();
+                    let record = SceneRecoveryRecord { schema_version: SCENE_RECOVERY_SCHEMA_VERSION, scene_path: "Assets/Scenes/Main.mscene".into(), recorded_at_ms: 1, document_revision: session.document_revision, world: WorldSnapshot::from_world(&session.editor.edit_world) };
+                    let mut bytes = serde_json::to_vec_pretty(&record).unwrap(); bytes.push(b'\n');
+                    let recovery_path = session.resolve_for_write(Path::new(SCENE_RECOVERY_PATH)).unwrap();
+                    write_replace_synced(&recovery_path, &bytes).unwrap();
+                    response_bytes[index] = serde_json::to_vec(&json!({"snapshot": session.snapshot(), "recovery": scene_recovery_info(&record)})).unwrap().len();
+                } else {
+                    let result = session.checkpoint_snapshot(session.project_id, "Assets/Scenes/Main.mscene", session.revision, input).unwrap();
+                    response_bytes[index] = serde_json::to_vec(&result).unwrap().len();
+                }
+                let ms = started.elapsed().as_secs_f64() * 1000.0;
+                if iteration >= 2 { samples[index].push(ms); }
+                file_bytes[index] = std::fs::metadata(roots[index].join(SCENE_RECOVERY_PATH)).unwrap().len();
+            }
+            assert_eq!(sessions[0].snapshot().world, sessions[1].snapshot().world);
+            assert_eq!(sessions[0].read_scene_recovery().unwrap().unwrap().world, sessions[1].read_scene_recovery().unwrap().unwrap().world);
+        }
+        for values in &mut samples { values.sort_by(f64::total_cmp); }
+        println!("{}", json!({"scope":"Frostbound recovery CPU, durable disk write and response serialization; excludes request IPC and UI", "entities": snapshot.entities.len(), "outputEqual": true, "beforeMedianMs": samples[0][5], "afterMedianMs": samples[1][5], "responseBytes": response_bytes, "fileBytes": file_bytes, "samplesMs": samples}));
+        drop(sessions);
+        for root in roots { std::fs::remove_dir_all(root).unwrap(); }
     }
 
     #[test]

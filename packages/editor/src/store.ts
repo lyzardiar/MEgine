@@ -194,6 +194,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let gestureUndoState: EditorUndoState<EntityRec> | null = null;
   let gestureUndoToken: EditorUndoToken | null = null;
   let gestureHistoryCheckpoint: EditorUndoCheckpoint | null = null;
+  let lastUndoState: EditorUndoState<EntityRec> | null = null;
   let expanded = new Set<number>();
   let sceneHiddenIds = new Set<number>();
   let sceneUnpickableIds = new Set<number>();
@@ -386,6 +387,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     playEntities = null;
     playSpin = 0;
     undoService.clear('scene');
+    lastUndoState = null;
     clipboard = null;
     gizmoDragging = false;
     editGestureDepth = 0;
@@ -400,17 +402,18 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
 
   const list = () => (mode === 'edit' ? editEntities : playEntities ?? editEntities);
 
-  const captureUndoState = () => captureEditorUndoState(
+  const captureUndoState = (): EditorUndoState<EntityRec> => lastUndoState = captureEditorUndoState(
     editEntities,
     selectedIds,
     selectionAnchor,
     nextId,
     clearColor,
+    lastUndoState,
   );
 
-  const pushUndo = (label = 'Scene Change') => {
+  const pushUndo = (label = 'Scene Change', capturedState?: EditorUndoState<EntityRec>) => {
     if (mode !== 'edit') return null;
-    const state = captureUndoState();
+    const state = capturedState ?? captureUndoState();
     return undoService.recordSnapshot({
       scope: 'scene',
       label,
@@ -427,6 +430,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     selectionAnchor = restored.selectionAnchor;
     nextId = restored.nextId;
     clearColor = restored.clearColor;
+    lastUndoState = state;
   };
 
   const lookup = (id: number) => list().find((e) => e.entity === id);
@@ -963,7 +967,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       gameOrientation?: unknown;
     };
     if (recordUndo) pushUndo('Load Scene');
-    else undoService.clear('scene');
+    else {
+      undoService.clear('scene');
+      lastUndoState = null;
+    }
     behaviourRunner.unmount();
     const ents = (data.world?.entities ?? data.entities ?? []) as EntityRec[];
     privatePlayEntities = null; ownedPlayWorld = undefined;
@@ -1959,7 +1966,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (editGestureDepth === 0) {
         gestureHistoryCheckpoint = undoService.checkpoint();
         gestureUndoState = captureUndoState();
-        gestureUndoToken = pushUndo(label);
+        gestureUndoToken = pushUndo(label, gestureUndoState);
         gizmoDragging = true;
       }
       editGestureDepth++;

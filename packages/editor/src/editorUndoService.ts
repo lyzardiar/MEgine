@@ -1,9 +1,7 @@
 export type EditorUndoToken = { readonly id: number };
 
-export type EditorUndoCheckpoint = {
-  readonly undo: readonly EditorUndoEntry[];
-  readonly redo: readonly EditorUndoEntry[];
-};
+declare const editorUndoCheckpoint: unique symbol;
+export type EditorUndoCheckpoint = { readonly [editorUndoCheckpoint]: true };
 
 export type EditorUndoSnapshot<T> = {
   scope: string;
@@ -36,6 +34,7 @@ export function createEditorUndoService(limit = 128) {
   let restoring = false;
   let undoStack: EditorUndoEntry[] = [];
   let redoStack: EditorUndoEntry[] = [];
+  const checkpoints = new WeakMap<EditorUndoCheckpoint, { undo: EditorUndoEntry[]; redo: EditorUndoEntry[] }>();
   const listeners = new Set<() => void>();
 
   const notify = () => {
@@ -110,12 +109,17 @@ export function createEditorUndoService(limit = 128) {
       if (undoStack.length !== previousUndo || redoStack.length !== previousRedo) notify();
     },
     checkpoint(): EditorUndoCheckpoint {
-      return { undo: [...undoStack], redo: [...redoStack] };
+      // MiYu: checkpoints retain history privately; callers receive no mutable entries or scene records.
+      const checkpoint = Object.freeze({}) as EditorUndoCheckpoint;
+      checkpoints.set(checkpoint, { undo: [...undoStack], redo: [...redoStack] });
+      return checkpoint;
     },
     restoreCheckpoint(checkpoint: EditorUndoCheckpoint) {
       if (restoring) throw new Error('Cannot restore an editor history checkpoint while history is restoring.');
-      undoStack = [...checkpoint.undo];
-      redoStack = [...checkpoint.redo];
+      const saved = checkpoints.get(checkpoint);
+      if (!saved) throw new Error('Checkpoint does not belong to this editor history.');
+      undoStack = [...saved.undo];
+      redoStack = [...saved.redo];
       trim(undoStack);
       trim(redoStack);
       notify();

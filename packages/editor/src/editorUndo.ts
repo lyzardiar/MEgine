@@ -14,9 +14,15 @@ export function captureEditorUndoState<T extends UndoEntity>(
   selectionAnchor: number | null,
   nextId: number,
   clearColor: [number, number, number, number],
+  previous?: EditorUndoState<T> | null,
 ): EditorUndoState<T> {
+  // History owns these snapshots. Live and restored records never share their mutable data.
+  const previousEntities = new Map(previous?.entities.map(entity => [entity.entity, entity]));
   return {
-    entities: structuredClone(entities),
+    entities: entities.map(entity => {
+      const retained = previousEntities.get(entity.entity);
+      return retained && undoValuesEqual(entity, retained) ? retained : structuredClone(entity);
+    }),
     selectedIds: [...selectedIds],
     selectionAnchor,
     nextId,
@@ -54,6 +60,8 @@ function undoValuesEqual(left: unknown, right: unknown): boolean {
     if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
     return left.every((value, index) => undoValuesEqual(value, right[index]));
   }
+  // Scene records are plain data. Other structured-clone types must get their own copy.
+  if (Object.getPrototypeOf(left) !== Object.prototype || Object.getPrototypeOf(right) !== Object.prototype) return false;
   const leftRecord = left as Record<string, unknown>;
   const rightRecord = right as Record<string, unknown>;
   const leftKeys = Object.keys(leftRecord);

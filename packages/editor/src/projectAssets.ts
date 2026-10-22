@@ -34,6 +34,7 @@ export type ProjectFileAsset = {
   size: number;
   metaStatus: 'ready' | 'auxiliary' | 'invalid' | 'duplicate';
   metaError: string | null;
+  metaRevision?: string | null;
 };
 
 export type ProjectAssetChange = {
@@ -64,10 +65,15 @@ let projectFiles: ProjectFileAsset[] = [];
 let watchedProjectFiles: ProjectFileAsset[] = [];
 let watchBaselineInitialized = false;
 let assetSessionGeneration = 0;
+let watchedIndexRevision: string | null = null;
 let audioPreview: { path: string; audio: HTMLAudioElement; url: string } | null = null;
 const writeBaselines = new Map<string, string>();
 const internalWrites = new Map<string, number>();
 const acknowledgedRevisions = new Map<string, string | null>();
+
+function watchedAssetRevision(asset: ProjectFileAsset | null | undefined): string | null {
+  return asset ? JSON.stringify([asset.revision, asset.metaRevision, asset.guid, asset.metaStatus, asset.metaError]) : null;
+}
 
 function assetKey(path: string): string {
   return path.replace(/\\/g, '/').toLocaleLowerCase();
@@ -82,6 +88,7 @@ export function resetProjectAssetState(): void {
   projectFiles = [];
   watchedProjectFiles = [];
   watchBaselineInitialized = false;
+  watchedIndexRevision = null;
   writeBaselines.clear();
   internalWrites.clear();
   acknowledgedRevisions.clear();
@@ -107,7 +114,7 @@ export function endInternalProjectFileWrite(relativePath: string): void {
 export function acknowledgeProjectFileWrite(relativePath: string): void {
   const key = assetKey(relativePath);
   const asset = projectFiles.find((candidate) => assetKey(candidate.relPath) === key);
-  acknowledgedRevisions.set(key, asset?.revision ?? null);
+  acknowledgedRevisions.set(key, watchedAssetRevision(asset));
 }
 
 function normalizeListedAsset(asset: ProjectFileAsset): ProjectFileAsset {
@@ -217,6 +224,7 @@ export function diffProjectFiles(
       || prior.guid !== asset.guid
       || prior.metaStatus !== asset.metaStatus
       || prior.metaError !== asset.metaError
+      || prior.metaRevision !== asset.metaRevision
     ) {
       changes.push({
         type: 'modified',
@@ -238,7 +246,22 @@ export function diffProjectFiles(
 
 export async function pollProjectFileChanges(): Promise<ProjectAssetChange[]> {
   const generation = assetSessionGeneration;
-  const current = await fetchProjectFiles();
+  let current: ProjectFileAsset[];
+  if (isDesktopEditor()) {
+    const snapshot = await invoke<{ revision: string; assets: ProjectFileAsset[] | null }>('poll_project_assets', { knownRevision: watchedIndexRevision });
+    if (generation !== assetSessionGeneration) return [];
+    watchedIndexRevision = snapshot.revision;
+    if (snapshot.assets === null) return [];
+    current = snapshot.assets.map(normalizeListedAsset);
+  } else {
+    const response = await fetch(`/__mengine/assets${watchedIndexRevision === null ? '?poll=1' : `?poll=1&revision=${encodeURIComponent(watchedIndexRevision)}`}`);
+    if (!response.ok) throw new Error(String(response.status));
+    const snapshot = await response.json() as { revision?: string; assets: ProjectFileAsset[] | null };
+    if (generation !== assetSessionGeneration) return [];
+    watchedIndexRevision = snapshot.revision ?? null;
+    if (snapshot.assets === null) return [];
+    current = (snapshot.assets ?? []).map(normalizeListedAsset);
+  }
   if (generation !== assetSessionGeneration) return [];
   const previous = watchedProjectFiles;
   if (!watchBaselineInitialized) {
@@ -252,7 +275,7 @@ export async function pollProjectFileChanges(): Promise<ProjectAssetChange[]> {
     if (internalWrites.has(key)) return false;
     if (
       acknowledgedRevisions.has(key)
-      && acknowledgedRevisions.get(key) === (change.current?.revision ?? null)
+      && acknowledgedRevisions.get(key) === watchedAssetRevision(change.current)
     ) {
       acknowledgedRevisions.delete(key);
       return false;
@@ -262,9 +285,11 @@ export async function pollProjectFileChanges(): Promise<ProjectAssetChange[]> {
   projectFiles = current;
   watchedProjectFiles = current;
   watchBaselineInitialized = true;
+  const previousRevisions = new Map(previous.map((asset) => [assetKey(asset.relPath), watchedAssetRevision(asset)]));
+  const currentRevisions = new Map(current.map((asset) => [assetKey(asset.relPath), watchedAssetRevision(asset)]));
   for (const [key, revision] of acknowledgedRevisions) {
-    const before = previous.find((asset) => assetKey(asset.relPath) === key)?.revision ?? null;
-    const after = current.find((asset) => assetKey(asset.relPath) === key)?.revision ?? null;
+    const before = previousRevisions.get(key) ?? null;
+    const after = currentRevisions.get(key) ?? null;
     if (before === revision && after === revision) acknowledgedRevisions.delete(key);
   }
   return changes;
@@ -282,7 +307,7 @@ function acceptWrittenAsset(asset: ProjectFileAsset | null | undefined): void {
     ...watchedProjectFiles.filter((candidate) => candidate.relPath.toLocaleLowerCase() !== key),
     normalized,
   ].sort((left, right) => left.relPath.localeCompare(right.relPath));
-  acknowledgedRevisions.set(key, normalized.revision);
+  acknowledgedRevisions.set(key, watchedAssetRevision(normalized));
 }
 
 export function normalizeProjectAssetPath(raw: string): string {

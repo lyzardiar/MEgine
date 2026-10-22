@@ -109,6 +109,29 @@ test('failed capture or restore leaves both history stacks unchanged', () => {
   assert.equal(captureFailure.redoDepth, 0);
 });
 
+test('checkpoints are opaque, service-owned handles and retain reusable stack state', () => {
+  const service = createEditorUndoService();
+  const value = recorder();
+  service.recordSnapshot({ scope: 'scene', label: 'Original', state: 0, capture: value.capture, restore: value.restore });
+  value.value = 1;
+  service.undo();
+  const checkpoint = service.checkpoint();
+  assert.deepEqual(Reflect.ownKeys(checkpoint), []);
+  assert.equal(Object.isFrozen(checkpoint), true);
+  assert.throws(() => { checkpoint.undo = []; }, TypeError);
+  assert.throws(() => service.restoreCheckpoint({}), /does not belong/);
+  assert.throws(() => service.restoreCheckpoint(createEditorUndoService().checkpoint()), /does not belong/);
+  assert.equal(service.undoDepth, 0);
+  assert.equal(service.redoDepth, 1);
+  service.clear();
+  service.restoreCheckpoint(checkpoint);
+  assert.equal(service.redo(), true);
+  assert.equal(value.value, 1);
+  service.restoreCheckpoint(checkpoint);
+  assert.equal(service.undoDepth, 0);
+  assert.equal(service.redoDepth, 1);
+});
+
 test('restore callbacks cannot record a nested transaction', () => {
   const service = createEditorUndoService();
   service.recordSnapshot({

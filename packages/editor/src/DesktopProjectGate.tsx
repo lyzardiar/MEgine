@@ -42,7 +42,7 @@ function errorCode(reason: unknown): string {
     : '';
 }
 
-function projectSummary(snapshot: ProjectSnapshot | null): AgentProjectSummary | null {
+function projectSummary(snapshot: Omit<ProjectSnapshot, 'world'> | null): AgentProjectSummary | null {
   if (!snapshot) return null;
   return {
     id: snapshot.projectId,

@@ -1,14 +1,54 @@
 use crate::{ScriptError, ScriptInput};
-use mengine_core::{command::{CommandBuffer, WorldCommand}, snapshot::{SharedWorldSnapshot, WorldSnapshotCache}, World};
+use mengine_core::{command::{CommandBuffer, WorldCommand}, snapshot::{EntitySnapshot, SharedWorldSnapshot, WorldSnapshotCache}, World};
 use crate::vm::ScriptVm;
 use serde_json::Value as JsonValue;
-use std::{cell::RefCell, rc::Rc, time::{Duration, Instant}};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::{Arc, Weak}, time::{Duration, Instant}};
+
+#[cfg(test)]
+#[path = "snapshot_cache_tests.rs"]
+mod snapshot_cache_tests;
 
 #[derive(Default)]
 struct ScriptSnapshot {
     revision: u64,
     world: Option<SharedWorldSnapshot>,
     json: Option<String>,
+    // MiYu: weak identities prevent address reuse without retaining replaced entity payloads.
+    entity_json: HashMap<u64, (Weak<EntitySnapshot>, Option<Box<serde_json::value::RawValue>>, u64)>,
+}
+
+impl ScriptSnapshot {
+    fn json(&mut self) -> &str {
+        if self.json.is_none() {
+            self.json = Some(if let Some(world) = &self.world {
+                let unchanged = world.entities.iter().filter(|entity| self.entity_json.get(&entity.entity).is_some_and(|cached| cached.0.as_ptr() == Arc::as_ptr(entity))).count();
+                // MiYu: dense changes serialize directly; retain identities so a stable next frame can warm fragments.
+                let use_fragments = unchanged >= world.entities.len().div_ceil(2);
+                for entity in &world.entities {
+                    let cached = self.entity_json.entry(entity.entity).or_insert_with(|| (Arc::downgrade(entity), None, self.revision));
+                    if cached.0.as_ptr() != Arc::as_ptr(entity) {
+                        cached.0 = Arc::downgrade(entity);
+                        cached.1 = None;
+                    }
+                    if use_fragments && cached.1.is_none() { cached.1 = Some(serde_json::value::to_raw_value(entity).expect("entity snapshot serializes")); }
+                    cached.2 = self.revision;
+                }
+                self.entity_json.retain(|_, cached| cached.2 == self.revision);
+                // MiYu: entity fragments stay immutable; frame metadata and each VM's parsed object remain fresh.
+                #[derive(serde::Serialize)]
+                struct SnapshotJson<'a> {
+                    entities: Vec<&'a serde_json::value::RawValue>,
+                    frame: u64, sim_frame: u64, elapsed: f64, clear_color: [f32; 4], selected: Option<u64>,
+                }
+                let SharedWorldSnapshot { entities, frame, sim_frame, elapsed, clear_color, selected } = world;
+                if use_fragments {
+                    let entities = entities.iter().map(|entity| self.entity_json[&entity.entity].1.as_deref().unwrap()).collect();
+                    serde_json::to_string(&SnapshotJson { entities, frame: *frame, sim_frame: *sim_frame, elapsed: *elapsed, clear_color: *clear_color, selected: *selected }).expect("world snapshot serializes")
+                } else { serde_json::to_string(world).expect("world snapshot serializes") }
+            } else { "null".into() });
+        }
+        self.json.as_deref().unwrap()
+    }
 }
 
 /// MiYu: native script timings separate world publication, script callbacks and committed commands.
@@ -121,12 +161,14 @@ pub struct ScriptHost {
 }
 
 fn parse_command(json: &str) -> Option<WorldCommand> {
-    // Deserialize large component arrays once, without serde's tagged-enum buffer.
+    // MiYu: JSON.stringify commands keep op first; preserve the large-array fast path without probing every other command.
     #[derive(serde::Deserialize)]
     struct ComponentCommand { op: String, entity: u64, component: String, value: JsonValue }
-    if let Ok(command) = serde_json::from_str::<ComponentCommand>(json) {
-        if command.op == "setComponent" {
-            return Some(WorldCommand::SetComponent { entity: command.entity, component: command.component, value: command.value });
+    if !json.starts_with("{\"op\":\"") || json.starts_with("{\"op\":\"setComponent\"") {
+        if let Ok(command) = serde_json::from_str::<ComponentCommand>(json) {
+            if command.op == "setComponent" {
+                return Some(WorldCommand::SetComponent { entity: command.entity, component: command.component, value: command.value });
+            }
         }
     }
     serde_json::from_str(json).ok()
@@ -170,8 +212,7 @@ impl NativeBindings {
     }
     pub fn snapshot(&self) -> String {
         let mut state = self.snapshot.borrow_mut();
-        if state.json.is_none() { state.json = Some(serde_json::to_string(&state.world).expect("world snapshot serializes")); }
-        state.json.as_ref().unwrap().clone()
+        state.json().to_owned()
     }
 }
 
@@ -241,6 +282,7 @@ impl ScriptHost {
         serde_json::from_str::<JsonValue>(json).map_err(|error| ScriptError::Other(error.to_string()))?;
         let mut state = self.snapshot.borrow_mut();
         state.revision += 1; state.world = None; state.json = Some(json.to_owned());
+        state.entity_json.clear();
         drop(state);
         self.restore_snapshot_properties()
     }

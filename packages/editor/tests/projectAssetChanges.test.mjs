@@ -52,6 +52,7 @@ test('asset metadata identity and health changes invalidate the project index', 
 
   const invalid = { ...before, guid: null, metaStatus: 'invalid', metaError: 'broken metadata' };
   assert.equal(diffProjectFiles([before], [invalid])[0]?.type, 'modified');
+  assert.equal(diffProjectFiles([{ ...before, metaRevision: 'old' }], [{ ...before, metaRevision: 'new' }])[0]?.type, 'modified');
 });
 
 test('case-only path renames remain visible as a modification', () => {

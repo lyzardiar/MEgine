@@ -7,7 +7,7 @@ use mengine_editor_host::{
     AssetRenameResult, AssetRestoreRequest, AssetRestoreResult, AssetTrashInventory,
     AssetTrashRequest, AssetTrashResult, BuildAssetMode, EditorCameraPreview, EditorFailure,
     EditorRequest, EditorResult, EditorSceneCamera, EditorViewportFrame, EditorViewportRenderer,
-    ProjectSession, ProjectSnapshot, SceneRecoveryInfo,
+    ProjectSession, ProjectSnapshot, SceneRecoveryInfo, SceneRecoveryCheckpoint,
 };
 use parking_lot::Mutex;
 use sha2::{Digest, Sha256};
@@ -26,6 +26,7 @@ mod native_viewport_transport;
 mod native_gpu_timings;
 use native_gpu_timings::{get_native_gpu_timings, set_native_gpu_timings, GpuTimingSource};
 mod play_compiler;
+mod project_asset_index;
 use agent_bridge::{
     agent_bridge_broadcast, agent_bridge_respond, agent_bridge_set_transport_ready,
     capture_editor_window, capture_editor_window_element, cleanup_bridge_discovery,
@@ -159,7 +160,7 @@ impl Drop for OwnedTemporaryDirectory {
     }
 }
 
-#[derive(serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ProjectAssetInfo {
     id: String,
@@ -172,6 +173,7 @@ struct ProjectAssetInfo {
     size: u64,
     meta_status: String,
     meta_error: Option<String>,
+    meta_revision: Option<String>,
 }
 
 #[derive(serde::Serialize)]
@@ -217,13 +219,6 @@ struct ProjectSceneInfo {
     name: String,
     updated_at: u64,
     json: String,
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-struct SceneRecoveryCheckpoint {
-    snapshot: ProjectSnapshot,
-    recovery: Option<SceneRecoveryInfo>,
 }
 
 #[derive(serde::Serialize)]
@@ -3719,33 +3714,33 @@ fn project_asset_kind(name: &str) -> Option<&'static str> {
     }
 }
 
-fn collect_project_assets(root: &Path, dir: &Path, output: &mut Vec<ProjectAssetInfo>) {
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return;
+fn collect_project_assets(root: &Path, dir: &Path, output: &mut Vec<ProjectAssetInfo>) -> Result<(), String> {
+    if std::fs::symlink_metadata(dir).is_ok_and(|metadata| metadata.file_type().is_symlink()) { return Ok(()); }
+    let entries = match std::fs::read_dir(dir) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(format!("cannot scan {}: {error}", dir.display())),
     };
-    for entry in entries.flatten() {
-        if output.len() >= 10_000 {
-            return;
-        }
+    for entry in entries {
+        let entry = entry.map_err(|error| error.to_string())?;
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().into_owned();
         if name.starts_with('.') || name.ends_with(".meta") {
             continue;
         }
-        let Ok(file_type) = entry.file_type() else {
-            continue;
-        };
+        let file_type = entry.file_type().map_err(|error| error.to_string())?;
         if file_type.is_symlink() {
             continue;
         }
         if file_type.is_dir() {
-            collect_project_assets(root, &path, output);
+            collect_project_assets(root, &path, output)?;
             continue;
         }
-        if let Some(asset) = project_asset_info(root, &path) {
-            output.push(asset);
+        if file_type.is_file() && project_asset_kind(&name).is_some() {
+            output.push(project_asset_info(root, &path).ok_or_else(|| format!("asset changed while scanning {}", path.display()))?);
         }
     }
+    Ok(())
 }
 
 fn mark_duplicate_project_asset_guids(assets: &mut [ProjectAssetInfo]) {
@@ -3816,6 +3811,7 @@ fn project_asset_info(root: &Path, path: &Path) -> Option<ProjectAssetInfo> {
         size: metadata.len(),
         meta_status,
         meta_error,
+        meta_revision: std::fs::symlink_metadata(format!("{}.meta", path.display())).ok().map(|metadata| project_file_revision(&metadata)),
     })
 }
 
@@ -6116,14 +6112,19 @@ async fn list_project_assets(state: State<'_, AppState>) -> Result<Vec<ProjectAs
         let root = Path::new(&project_root)
             .canonicalize()
             .map_err(|error| error.to_string())?;
-        let mut assets = Vec::new();
-        collect_project_assets(&root, &root.join("Assets"), &mut assets);
-        mark_duplicate_project_asset_guids(&mut assets);
-        assets.sort_by(|left, right| left.rel_path.cmp(&right.rel_path));
-        Ok(assets)
+        Ok(project_asset_index::snapshot(&root, None, true)?.assets.unwrap_or_default())
     })
     .await
     .map_err(|error| format!("Asset discovery worker failed: {error}"))?
+}
+
+#[tauri::command]
+async fn poll_project_assets(known_revision: Option<String>, state: State<'_, AppState>) -> Result<project_asset_index::AssetIndexSnapshot, String> {
+    let root = state.project.lock().as_ref().map(|session| session.project_root().to_owned()).ok_or_else(|| no_project().message)?;
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = root.canonicalize().map_err(|error| error.to_string())?;
+        project_asset_index::snapshot(&root, known_revision.as_deref(), false)
+    }).await.map_err(|error| format!("Asset watcher worker failed: {error}"))?
 }
 
 #[tauri::command]
@@ -6179,23 +6180,22 @@ fn persist_scene_snapshot(
 }
 
 #[tauri::command]
-fn checkpoint_scene_snapshot(
+async fn checkpoint_scene_snapshot(
+    app: tauri::AppHandle,
+    project_id: uuid::Uuid,
+    scene_path: String,
     snapshot: WorldSnapshot,
     state: State<'_, AppState>,
 ) -> Result<SceneRecoveryCheckpoint, EditorFailure> {
-    let mut guard = state.project.lock();
-    let session = guard.as_mut().ok_or_else(no_project)?;
-    let revision = session.current_revision();
-    session
-        .replace_snapshot(revision, snapshot)
-        .map_err(|error| error.failure(Some(session.current_revision())))?;
-    let recovery = session
-        .write_scene_recovery()
-        .map_err(|error| error.failure(Some(session.current_revision())))?;
-    Ok(SceneRecoveryCheckpoint {
-        snapshot: session.snapshot(),
-        recovery,
-    })
+    let revision = state.project.lock().as_ref().ok_or_else(no_project)?.current_revision();
+    // MiYu: serialize and durably replace recovery files on a worker, preserving project ordering.
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<AppState>();
+        let mut guard = state.project.lock();
+        let session = guard.as_mut().ok_or_else(no_project)?;
+        session.checkpoint_snapshot(project_id, &scene_path, revision, snapshot)
+            .map_err(|error| error.failure(Some(session.current_revision())))
+    }).await.map_err(|error| EditorFailure { code: "recoveryWorker", message: error.to_string(), current_revision: None })?
 }
 
 #[tauri::command]
@@ -6574,6 +6574,7 @@ pub fn run() {
             list_project_asset_trash,
             restore_project_asset,
             list_project_assets,
+            poll_project_assets,
             get_project_asset_info,
             list_project_sprites,
             open_scene,
@@ -8425,14 +8426,14 @@ mod tests {
         }
 
         let mut found = Vec::new();
-        collect_project_assets(&root, &assets, &mut found);
+        collect_project_assets(&root, &assets, &mut found).unwrap();
         mark_duplicate_project_asset_guids(&mut found);
         let first_guids = found
             .iter()
             .map(|asset| (asset.rel_path.clone(), asset.guid.clone()))
             .collect::<BTreeMap<_, _>>();
         let mut rescanned = Vec::new();
-        collect_project_assets(&root, &assets, &mut rescanned);
+        collect_project_assets(&root, &assets, &mut rescanned).unwrap();
         mark_duplicate_project_asset_guids(&mut rescanned);
         assert_eq!(
             first_guids,
@@ -8527,7 +8528,7 @@ mod tests {
         std::fs::write(assets.join("Broken.mmat.meta"), b"broken").unwrap();
 
         let mut found = Vec::new();
-        collect_project_assets(&root, &assets, &mut found);
+        collect_project_assets(&root, &assets, &mut found).unwrap();
         mark_duplicate_project_asset_guids(&mut found);
         assert_eq!(
             found
