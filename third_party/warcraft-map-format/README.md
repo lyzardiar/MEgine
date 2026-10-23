@@ -22,3 +22,5 @@ Author: MiYu。
 `scripts/warcraft_terrain.py` 与 `scripts/build-frost-original-terrain.py` 使用相同固定提交的 `src/viewer/handlers/w3x/map.ts`、地面／水面 shader，核对四角顺序、图集掩码、变体与源高度。坡道入口和双格占用同时参考 [Retera/WarsmashModEngine](https://github.com/Retera/WarsmashModEngine)，固定提交 `f1bcb4ae54f0ff4a8d5e4bd5892b6a6622441b15` 的 `core/src/com/etheller/warsmash/viewer5/handlers/w3x/environment/Terrain.java`。其 MIT 许可保留在 [LICENSE-Warsmash](LICENSE-Warsmash)。原版 MDX 顶点及本仓库已验证的 ClassicCliffs 模板用于生成实际几何。
 
 更新时运行 `python scripts/test-warcraft-terrain.py --project <生成项目>` 与原生 `qa-frost-original-terrain.mjs`。还需检查近景地表混合、四向坡道、接缝和透明水面，不能仅凭字段一致或全景截图验收。
+
+单位视觉转换参考同一固定提交的 `src/viewer/handlers/w3x/{map,unit}.ts`：读取源模型、位置、角度、缩放、移动高度及RGB。单位资源仍来自原地图与本地游戏归档，模型转换工具许可与摘要保留在生成项目。REA字段字符串探针为 `probe-frost-rea-map-formats.mjs --unit-appearance`；生成与真实验收范围见[单位视觉场景](../../docs/designs/frostbound-realms/original-map-import.md#单位视觉场景)，独立预览参考不构成原版运行语义证明。

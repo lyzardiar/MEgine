@@ -65,8 +65,9 @@ def moving_clip(raw,clip):
 
 
 class SceneAssets:
-    def __init__(self,project,read,sampler,metadata_reader):
+    def __init__(self,project,read,sampler,metadata_reader,prefix=PREFIX):
         self.project,self.read,self.sampler,self.metadata_reader=project,read,sampler,metadata_reader
+        self.prefix=prefix
         self.models,self.collections,self.materials,self.prepared={},{},{},{}
         self.texture_sources,self.textures,self.collection_hashes={},{},{}
         self.records=[]
@@ -80,7 +81,7 @@ class SceneAssets:
                 if source.suffix.lower() in ('.blp','.tga','.png'):
                     self.texture_sources[(pack,key('Assets/WarcraftIII/Textures/'+source.with_suffix('.png').as_posix()))]=record['path']
             for name in ['W3ModelViewer-MIT.txt','converter-sources.json']:
-                self.write('Assets/Licenses/OriginalDoodads/'+pack+'/'+name,(base/'Licenses'/name).read_bytes())
+                self.write('Assets/Licenses/'+Path(prefix).name+'/'+pack+'/'+name,(base/'Licenses'/name).read_bytes())
             catalog=json.loads(self.verified(pack,'Assets/WarcraftIII/model-catalog.json'))
             for model in catalog['models']:self.models[key(model['source'])]=(pack,model)
 
@@ -98,7 +99,7 @@ class SceneAssets:
     def texture(self,path):
         normalized=key(path)
         if normalized in self.textures:return self.textures[normalized]
-        raw=self.read(path);target=PREFIX+'Textures/'+sha(raw)+'.png'
+        raw=self.read(path);target=self.prefix+'Textures/'+sha(raw)+'.png'
         if not (self.project/target).exists():
             image=converter.decode_texture(raw);buffer=io.BytesIO();image.save(buffer,format='PNG');self.write(target,buffer.getvalue())
         self.textures[normalized]=target;return target
@@ -114,8 +115,11 @@ class SceneAssets:
                 if source is None:raise ValueError('Texture has no direct source binding: '+mat[field])
                 mat[field]=self.texture(source)
         if replacement:mat['base_color_texture']=self.texture(replacement)
-        raw=encode(mat);self.materials[pair]=self.write(PREFIX+'Materials/'+sha(raw)+'.mmat',raw)
+        raw=encode(mat);self.materials[pair]=self.write(self.prefix+'Materials/'+sha(raw)+'.mmat',raw)
         return self.materials[pair]
+
+    def particle_model(self,path):
+        raise ValueError('Model-particle binding required: '+path)
 
     def prepare(self,path):
         normalized=key(path)
@@ -134,7 +138,7 @@ class SceneAssets:
             for part in model['parts']:
                 mesh_raw=self.verified(pack,part['animatedMesh']);doc,_=nodes.read_glb(mesh_raw)
                 if doc.get('skins'):mesh_raw,_=nodes.annotate(mesh_raw,metadata,part['geoset'])
-                mesh=self.write(PREFIX+'Models/'+sha(mesh_raw)+'.glb',mesh_raw)
+                mesh=self.write(self.prefix+'Models/'+sha(mesh_raw)+'.glb',mesh_raw)
                 states=[]
                 for clip in tracks['clips']:
                     sequence=[]
@@ -155,12 +159,15 @@ class SceneAssets:
             subprocess.run(['dotnet',str(self.sampler),'--effects',str(source),str(sampled)],check=True,capture_output=True)
             effect=json.loads(sampled.read_bytes());textures=effect['sourceModel']['textures']
             for mat in effect['materials']:
-                if mat.get('modelPath'):raise ValueError('Model-particle binding required: '+mat['modelPath'])
+                if mat.get('modelPath'):
+                    mat['model']=self.particle_model(mat['modelPath']);mat['texture']='';continue
                 texture=textures[mat['textureId']] if 0<=mat['textureId']<len(textures) else {}
                 replacement=mat['replaceableId'] or texture.get('replaceableId',0)
-                mat['texture']=self.texture(converter.REPLACEMENTS.get(replacement,texture.get('fileName','')))
+                texture_path=converter.REPLACEMENTS.get(replacement,texture.get('fileName',''))
+                if not texture_path:raise ValueError('Unresolved effect texture; sampler must preserve original model-particle bindings: '+path)
+                mat['texture']=self.texture(texture_path)
             result['effectClips']=[dict(name=c['name'],duration=c['duration'],loop=c['loop'],frameCount=len(c['frames'])) for c in effect['clips']]
-            result['effect']=self.write(PREFIX+'Effects/'+sha(raw)+'.mfx',encode(effect))
+            result['effect']=self.write(self.prefix+'Effects/'+sha(raw)+'.mfx',encode(effect))
             if not result['clips']:result['clips']=result['effectClips']
         if not result['parts'] and not result.get('effect'):raise ValueError('No native representation for source: '+path)
         source_clips=mdx_sequence_rarities(raw)

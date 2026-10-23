@@ -30,7 +30,7 @@ Author: MiYu。
 
 `warcraft_units.py` 读取经典版本7／子版本9和版本8／子版本11；`map.json.units` 保留字段、源坐标与顺序，`coverage.units=decoded-editor-placements`。随机标志支持-1（无附加记录）、0（原始24位level字节与物品类别）、1（无符号全局表索引）、2（自定义ID／概率表）。不把默认值-1、保留位或未知对象ID替换为样例默认值。未知版本／随机模式、截断、非法计数、非有限浮点数和尾部数据明确拒绝。
 
-`war3map.w3u`、`.w3t`、`.w3a` 原件及摘要一并保存，coverage分别标为 `preserved-unparsed`；尚未应用单位、物品和能力覆盖。导出收据含 `unitReaderSha256`。`load-frost-warcraft-map.py` 输出 `editorUnitPlacements`，表示源记录数，不代表预览项目创建了这些实体。
+`war3map.w3u`、`.w3t`、`.w3a` 原件及摘要一并保存，coverage分别标为 `preserved-unparsed`；尚未应用单位、物品和能力覆盖。导出收据含 `unitReaderSha256`。`load-frost-warcraft-map.py` 输出 `editorUnitPlacements`（源记录）及 `renderedUnitPlacements`（生成视觉对象），两者都不表示已经执行单位玩法。
 
 REA命令 `node scripts/probe-frost-rea-map-formats.mjs --units` 使用本机WorldEdit.exe，SHA-256 `811130e637b4885c08c3c8cb707d0e02a7692ddcddc4c1d57c783c3379ef4b90`。`0x0059f940` 返回 `Units.doo` 字符串；`0x0062ad05` 起引用 `CreateAllUnits`、`CreateNeutralHostileBuildings`、`CreateNeutralPassiveBuildings`。这是编辑器文件名入口与脚本生成引用证据，不能证明运行时直接从放置文件创建单位。正式2组探针通过，报告位于 `tmp/docs-artifacts/frost-original-maps/unit-evidence/`；早期Game.dll精确字符串查询无命中，不据此断言文件未使用。
 
@@ -48,6 +48,31 @@ node scripts/test-warcraft-units-reference.mjs <临时证据目录>
 python scripts/test-frost-unit-placement-jass.py <临时证据目录>/map-0 <临时证据目录>/map-1
 node scripts/probe-frost-rea-map-formats.mjs --units
 ```
+
+### 单位视觉场景
+
+`build-frost-original-units.py` 在同一地图的既有地形／装饰项目上添加单位视觉对象，输出要求新目录。它核对原地图与基础地形网格摘要，保留已有实体、资源和脚本，再合入单位动画分组；不重新生成地形或既有装饰。`load-frost-warcraft-map.py` 默认串联地图导出、装饰项目和单位项目；可通过 `--base-project <项目>` 复用已生成的同图项目，输出仍是 `<output>/project/`。中间装饰项目保留在 `doodad-project/`，用于复现及失败后接续。
+
+模型路径、`modelScale`、RGB来自源UnitUI，移动高度来自UnitData；按`(X,Z,-Y)/128`保留编辑器放置位置，纵轴加源移动高度，轴向缩放再乘modelScale。队伍纹理取放置自定义颜色、源行teamColor或玩家颜色，经典中立玩家使用颜色12；此解析尚未通过原DLL同视角对照。`sloc`保留为起点记录，不创建游戏单位。固定ID记录中的randomFlag元数据不触发随机生成；随机占位ID、未知单位／物品定义及W3U／W3T／W3A覆盖需解析后才允许生成，不能静默跳过。
+
+模型与状态轨道复用经摘要校验的转换库；基础纹理和TeamColor／TeamGlow按源归档优先级读取。单位资产位于`Assets/OriginalUnits/`，许可位于`Assets/Licenses/OriginalUnits/`，放置映射与来源分别写入`unit-placements.json`、`unit-scene-sources.json`。同模型、材质颜色和动画状态共享更新组，静止部件不更新；12Hz采样帧未变化时不发布命令。单位待机预览使用源clip循环属性，不声称已经实现原版单位动画命令与随机调度。
+
+PREM模型粒子使用原始模型及独立年龄推进，保留模型动画、纹理与材质状态。当前Amazonia飞羊需要`SharedModels/Feather1.MDX`；源KPEV在Stand／Walk为0，仅Death的18300–18467ms发射。必须使用支持PREM模型路径和可见性轨道的采样器；本阶段复用`tmp/warcraft-effects/farseer-bin/MdxExport.dll`，摘要记录在收据中。模型粒子子模型如有嵌套发射器则明确拒绝；源粒子求解器一致性仍待验证。
+
+原版表字段经REA `--unit-appearance`确认字符串位置，报告`tmp/docs-artifacts/frost-original-maps/unit-appearance-evidence/`；字符串不证明变换公式。坐标、移动高度、RGB与modelScale的独立预览参考为固定上游`src/viewer/handlers/w3x/unit.ts`，源站与许可见[格式维护](../../../third_party/warcraft-map-format/README.md)。
+
+2026-10-23生成项目`tmp/docs-artifacts/warcraft-map-tests/amazonia-units/project/`：98条记录中96个视觉对象、2个起点，新增561实体；连同复用的28个地形实体共589实体，33个源模型（含羽毛）、148个动画组、338个单位资产。2组变换／边界检查、资源摘要及原地形网格／实体不变检查通过。主样例未切换；本项目只有地形与单位，既有装饰项目未重复生成。
+
+原生报告`B001/original-units-1792732411819.json`中，全部变换／父子关系、动画、暂停、Stop恢复及金矿／石头人／飞羊像素贡献与重开一致已通过，最后的“待机羽毛可见”断言失败。根据源可见性轨道改为Death采样后，仅重测该项，`B001/original-units-1792732541325.json`通过：死亡0.5秒模型粒子有像素贡献、重开一致、控制台0 error。该检查手动设置SampledEffect，不代表死亡玩法已接入。两次Editor正常退出，复用本批EXE；打开加快照约0.72秒，仅为这次589实体场景的观察值，不作为性能提升结论。
+
+```powershell
+python scripts/build-frost-original-units.py <地图导出> --base-project <同图地形或装饰项目> --output <新项目目录>
+python scripts/test-frost-original-units.py --project <单位项目>
+node scripts/qa-frost-original-units.mjs <单位项目>
+# 只重测飞羊源Death模型粒子：附加 --effects-only
+```
+
+尚未完成：单位对象覆盖与物品视觉、运行时地形贴合、完整单位出生／死亡／资源／战斗、随机与掉落、动态阴影、碰撞／寻路、JASS、保存及联机；编辑器放置视觉不能代替原版实际对局验收。
 
 ### 地形与信息来源
 

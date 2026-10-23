@@ -32,7 +32,7 @@ MDX 工具沿用 [Darithos/W3ModelViewer](https://github.com/Darithos/W3ModelVie
 python scripts/load-frost-warcraft-map.py 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Maps/(2)BootyBay.w3m'
 ```
 
-入口支持经典 `.w3m/.w3x`，输出默认位于 `tmp/docs-artifacts/warcraft-map-tests/<地图名-时间>/`。`source-map/` 保存原地图及成员摘要，`project/project.json` 是编辑器打开入口；可通过 `--output <新目录>` 固定输出位置。地图资源覆盖、未支持对象和转换依赖沿用本文生成器约束。输入原件只读，现有输出不会覆盖；失败产物保留用于诊断，再次执行需使用新目录。
+入口支持经典 `.w3m/.w3x`，输出默认位于 `tmp/docs-artifacts/warcraft-map-tests/<地图名-时间>/`。`source-map/` 保存原地图及成员摘要，`doodad-project/` 保存装饰阶段；随后添加[原版单位视觉](original-map-import.md#单位视觉场景)，`project/project.json` 为最终编辑器入口。`--base-project` 可复用同图既有地形或装饰项目；`--output <新目录>` 固定输出位置。地图资源覆盖、未支持对象和转换依赖沿用相应生成器约束。输入原件只读，现有输出不会覆盖；失败后可利用已完成的中间项目接续。需要独立装饰项目时仍直接调用本文的 `build-frost-original-doodads.py`。
 
 针对画面修改可执行 `node scripts/qa-frost-original-doodads.mjs <project目录> --visual-only`。设置 `MENGINE_EDITOR_EXECUTABLE` 指向现有原生编辑器，设置独立的 `MENGINE_DOODAD_LABEL` 保存报告。该模式只加载、截取全景及树木／水岸近景、检查控制台并退出，跳过动画／性能完整回归；截图须人工查看，不等于原版画面验收。
 
