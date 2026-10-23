@@ -5,7 +5,7 @@ use mengine_assets::MaterialAsset;
 use mengine_core::generated::{
     DirectionalLight, EffekseerEffect, EnvironmentLight, MeshRenderer, Transform,
 };
-use mengine_core::{TransformHierarchy, World};
+use mengine_core::{transform_hierarchy::TransformHierarchyCache, World};
 use mengine_rhi::{
     look_at, orthographic, perspective, FrameCamera, OffscreenRenderTarget, RenderMaterial,
     OffscreenReadbackTicket, RenderTarget, Renderer,
@@ -301,6 +301,7 @@ fn camera_preview_frame(
 
 /// RHI host for captured editor views and native window presentation.
 pub struct EditorViewportRenderer {
+    hierarchy_cache: TransformHierarchyCache,
     renderer: Renderer,
     target: Option<OffscreenRenderTarget>,
     project_root: PathBuf,
@@ -346,6 +347,7 @@ impl EditorViewportRenderer {
             .map_err(anyhow::Error::msg)
             .context("could not load sorting layers")?;
         Ok(Self {
+            hierarchy_cache: TransformHierarchyCache::default(),
             renderer,
             target: None,
             materials: RuntimeMaterialCache::new(Some(project_root.clone())),
@@ -672,7 +674,7 @@ impl EditorViewportRenderer {
         finish_stage(&mut stages, "ViewportTarget.ensure_size", stage_started);
 
         let stage_started = Instant::now();
-        let hierarchy = TransformHierarchy::build(world);
+        let hierarchy = self.hierarchy_cache.build(world);
         finish_stage(&mut stages, "TransformHierarchy.build", stage_started);
         let (effect_delta, restart_effects) = self.effect_clock.sample(self.play_session, world.time.elapsed, Instant::now());
         if restart_effects {

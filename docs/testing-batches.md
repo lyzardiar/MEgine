@@ -603,3 +603,20 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 证据：tmp/docs-artifacts/frost-original-maps/unit-bindings-*，最终 ground-native.log、ground-checks.json、ground-package.log；REA unit-selection-evidence 只提供名称证据。未重跑整库、全地图或 FPS 基准。本项为原地图接入补充，不另增批次数。
 
 待测／未实现：移动单位的动态贴地、悬崖／水面／可行走装饰、地形编辑、原客户端精确拾取与遮挡、框选多选、原联盟语义、完整HUD与高窗口状态条布局、完整原图启动／移动战斗AI。共享资源新地图完整转换及其他 BLP 资产迁移待相关批次验证。现有编辑器实际输入延迟、强制竞态、独立窗口、父级 Undo／激活、缓存内存待测项继续保留；本次不替代这些结果。
+
+
+### B001 编辑器变换层级缓存
+
+变更：mengine-core 的 transform_hierarchy_cache、World.hierarchy_revision，以及 editor-host 的 EditorViewportRenderer。返回各帧独立层级数据，依赖局部输入和父级版本复用；稀疏场景使用原 resolver。Transform／Parent／active 失效与其他组件变更分开，自定义投影逐次读取，跨 World 和 generation 隔离。
+
+快速检查：核心库34项通过、6项手动基准忽略；新增局部基准1项通过，三类变更×两真实场景输出对照一致。基准细节、额外缓存容量及全变换更新时的代价见 performance-risk-todo 第五十七阶段。只有相关核心库检查，没有运行全仓测试。
+
+原生定向计划：复用本次唯一构建，运行 `qa-frost-map-session.mjs --continuous-profile --transport-profile --simulation-profile --viewport-transitions --runtime-edits`，检查连续模拟、实际Inspector修改／恢复、Scene/Game/相机预览／轨道／分辨率和Stop。原生父级Undo、激活UI、强制竞态／独立窗口、缓存总内存与真实操作延迟仍需后续相关批次验收；核心值对照不替代这些实际交互。
+
+
+原生Release构建1分26秒通过，仅既有 world_from_snapshot 未使用告警；EXE SHA256 `b09afab0956b20576c023ac697a01324a699a7fb468023ca8393221f85aded54`。原生报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792796299328.json` 通过连续模拟、Game／Scene／相机预览／轨道／分辨率、Inspector高度0→3.2经30步保留与恢复、三层动画和Stop还原，0 error、正常退出，截图已目视查看。此次不重复资源热更和全库测试。
+
+7,411实体／850×478，末尾240次呈现平均54.9388次/秒，间隔18.2021ms／P95 27.9ms，原生渲染11.0336ms、世界同步1.2703ms，239个不同模拟版本。与此前独立运行55.0269次/秒相比，仍无稳定整体FPS收益或60 FPS结论。最新单帧TransformHierarchy.build为0.4897ms，仅用于定位，不充当平均或严格原生前后对照。摘要为 tmp/docs-artifacts/editor-performance-risk/hierarchy-cache-native-summary.json。
+
+
+补充像素验收复用同EXE，仅运行 `qa-frost-map-session.mjs --runtime-edits-only`，报告 `B001/map-session-1792796459914.json` 通过，0 error、正常退出。QA将Scene相机对准受测岩石根节点，在截图前清除选择，避免选中框／gizmo变化代替实际网格变化；暂停时修改Inspector高度使原生像素变化，还原后图像SHA256与修改前完全一致。前后截图已目视确认岩石升起。随后30步的修改保留、动画／时钟、恢复和Stop也通过。测试脚本记录三张图的摘要；没有再次构建或重跑连续性能采样。WebView锁缓存按既有约定保留。

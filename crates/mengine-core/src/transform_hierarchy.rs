@@ -4,6 +4,10 @@ use crate::{Entity, Parent, World};
 use glam::{Mat4, Quat, Vec3};
 use std::collections::HashMap;
 
+#[path = "transform_hierarchy_cache.rs"]
+mod cache;
+pub use cache::TransformHierarchyCache;
+
 /// Resolved world-space TRS and exact hierarchy matrix for one entity.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct WorldTransform {

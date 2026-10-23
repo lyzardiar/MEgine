@@ -34,6 +34,7 @@ mod component_lookup_tests;
 struct EntityRecord {
     iteration_rank: usize,
     revision: u64,
+    hierarchy_revision: u64,
     generation: u32,
     alive: bool,
     name: Option<String>,
@@ -97,6 +98,7 @@ impl World {
             let rec = &mut self.entities[index as usize];
             rec.alive = true;
             rec.revision = 0;
+            rec.hierarchy_revision = 0;
             rec.generation = rec.generation.wrapping_add(1);
             rec.name = None;
             rec.components.clear();
@@ -112,6 +114,7 @@ impl World {
             self.entities.push(EntityRecord {
                 iteration_rank: index as usize,
                 revision: 0,
+                hierarchy_revision: 0,
                 generation: 1,
                 alive: true,
                 name: None,
@@ -212,6 +215,7 @@ impl World {
         let fallback = self.index_component_type(name, &value);
         self.entities[entity.index as usize].component_lookup_fallback |= fallback;
         self.entities[entity.index as usize].revision += 1;
+        if matches!(name, "Transform" | "Parent") { self.entities[entity.index as usize].hierarchy_revision += 1; }
         if self.entities[entity.index as usize].components.insert(name.to_string(), Box::new(value)).is_none() { self.component_entities.entry(name.to_string()).or_default().insert(entity.index); }
     }
 
@@ -242,11 +246,20 @@ impl World {
                 None => record.components.values_mut().find_map(|component| component.as_any_mut().downcast_mut::<T>()),
             }
         };
-        if value.is_some() { record.revision += 1; }
+        if value.is_some() {
+            record.revision += 1;
+            if TypeId::of::<T>() == TypeId::of::<Transform>() || TypeId::of::<T>() == TypeId::of::<Parent>() { record.hierarchy_revision += 1; }
+        }
         value
     }
 
     pub(crate) fn entity_revision(&self, entity: Entity) -> u64 { self.entities[entity.index as usize].revision }
+
+    // Custom Any projections may change through interior state without a World mutation.
+    pub(crate) fn stable_hierarchy_revision(&self, entity: Entity) -> Option<u64> {
+        let record = self.entities.get(entity.index as usize)?;
+        (record.alive && record.generation == entity.generation && !record.component_lookup_fallback).then_some(record.hierarchy_revision)
+    }
 
     fn index_component_type(&mut self, name: &str, component: &dyn Component) -> bool {
         let concrete = component.type_id();
@@ -296,6 +309,7 @@ impl World {
         }
         let name = canonical_component_name(name);
         self.entities[entity.index as usize].revision += 1;
+        if matches!(name, "Transform" | "Parent") { self.entities[entity.index as usize].hierarchy_revision += 1; }
         if self.entities[entity.index as usize].components.remove(name).is_some() { self.component_entities.get_mut(name).expect("live component index").remove(&entity.index); }
         self.entities[entity.index as usize]
             .serialized_components
@@ -313,6 +327,7 @@ impl World {
         if let Some(record) = self.entities.get_mut(entity.index as usize) {
             if record.alive && record.generation == entity.generation {
                 if record.sibling_index != sibling_index || record.active != active { record.revision += 1; }
+                if record.active != active { record.hierarchy_revision += 1; }
                 record.sibling_index = sibling_index;
                 record.active = active;
             }

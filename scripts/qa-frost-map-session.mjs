@@ -74,6 +74,17 @@ async function checkRuntimeEdits(){
     await execute('window.ui_set_value',{windowLabel:'main',selector:item.selector,expectedSnapshotRevision:page.snapshotRevision,value:String(value)});
     assert.ok(Math.abs((await snapshot()).entities.find(e=>e.entity===target.entity).components.Transform.position[1]-value)<1e-5,'Inspector writes the live editable world');
   }
+  await execute('view.set_camera',{pivot:target.components.Transform.position,yaw:35,pitch:35,distance:8});
+  async function pixels(name){
+    await execute('selection.set',{ids:[]});await execute('panel.focus',{kind:'scene'});
+    const shot=await query('view.screenshot',{target:'scene',maxSize:1280}),bytes=Buffer.from(shot.dataUrl.split(',')[1],'base64');
+    fs.writeFileSync(path.join(out,label+'-'+name+'.png'),bytes);
+    await execute('selection.set',{ids:[target.entity]});await execute('panel.focus',{kind:'inspector'});return hash(bytes);
+  }
+  const originalPixels=await pixels('runtime-transform-before');
+  await setHeight(edited);const editedPixels=await pixels('runtime-transform-raised');assert.notEqual(editedPixels,originalPixels,'Paused native geometry responds to Inspector transform without selection overlays');
+  await setHeight(original);const restoredPixels=await pixels('runtime-transform-restored');assert.equal(restoredPixels,originalPixels,'Restored transform restores exact paused native pixels');
+  report.runtimeTransformPixels={original:originalPixels,edited:editedPixels,restored:restoredPixels};
   await setHeight(edited);await step(30);const changed=await snapshot();
   assert.ok(Math.abs(changed.entities.find(e=>e.entity===target.entity).components.Transform.position[1]-edited)<1e-5,'Native simulation retains the uploaded Inspector edit');
   const originals=new Map(before.entities.map(e=>[e.entity,JSON.stringify(e.components)])),layers={doodads:0,units:0,water:0};
@@ -83,7 +94,7 @@ async function checkRuntimeEdits(){
   await execute('panel.focus',{kind:'game'});await capture('runtime-edited');
   await setHeight(original);await step(2);const restored=await snapshot();assert.ok(Math.abs(restored.entities.find(e=>e.entity===target.entity).components.Transform.position[1]-original)<1e-5,'Restored Inspector value reaches native simulation');
   report.runtimeEdits={entity:target.entity,name:target.name,original,edited,layers,elapsedBefore:status(before).elapsed,elapsedAfter:status(changed).elapsed};
-  report.checks.push('Actual paused Inspector edits persist through native steps, three animation layers and clock advance, and restored values survive subsequent steps');
+  report.checks.push('Paused Inspector transforms change native Scene pixels and restore exactly without selection overlays; edits persist through native steps, three animation layers and clock advance');
 }
 async function checkEffectReload(){
   // Move the original camera from the empty start clearing to the authored fire props.

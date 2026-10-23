@@ -1099,3 +1099,35 @@ start_editor_play 调用 play_compiler::source，按解码后的 UTF-8 源码字
 
 
 Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用警告。EXE SHA256 `7e8e4e9b2f32cec3c8a75342ba0bf5932d2c7a12856bd778718cd670ee87f93a`。原生报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792794409250.json` 确认大入口脚本能进入 Play、进行地图交互并 Stop 恢复，0 error、进程正常退出；该报告的选择圈组件断言不代替视觉验收，后续贴图修复与截图结论另记。源码 LF 规范化发生在构建后，未改变 Rust 语义。没有重跑完整编辑器回归或帧率基准。
+
+
+## 第五十七阶段编辑器变换层级增量计算
+
+EditorViewportRenderer 持有 TransformHierarchyCache，以 World 身份、实体 generation、局部 Transform 原始位、Parent、激活状态和父级计算版本判断复用。World 为 Transform／Parent 的写入、可写访问、移除及激活状态改变维护独立 hierarchy_revision；网格动画、材质、名称和兄弟排序不触发无关的局部变换读取。自定义 Any 投影不信任 revision，每次读取实际输入。父级计算改变会传播到子级；循环仍按当前遍历顺序插入无效占位并禁用该分支。
+
+每次返回独立拥有的 TransformHierarchy，不让旧帧引用可变缓存。新 World、实体槽复用和计数边界会重置对应状态；稀疏／高槽号场景继续使用原有有界 HashMap 计算，释放稠密缓存。没有缓存镜头投影、材质或对象活动过滤结果。该缓存目前仅接入编辑器视口，独立 Player 仍采用原有构建路径。
+
+核心定向检查 34 项通过、6 项手动基准忽略，覆盖原有 World／snapshot／层级行为及新增重复帧、非变换编辑、父级改动、局部变换、激活、移除 Transform、循环／自环、反向顺序、失效父级、generation 复用、非有限值、跨 World、自定义实时 Any 投影和计数边界。原生构建与实际编辑器结果另记。本次涉及核心失效规则，因此在批次内提前执行相关原生变换／多视图专项，不重复全库和资源热更验收。
+
+手动局部对照使用实际作者场景，原 stateless TransformHierarchy::build 与新 cache.build 在相同 World 上各预热2组、交替9组×40次。每次移动一个相机；另测所有 MeshRenderer 可写访问，以及所有 Transform 都变化。计时包含可写访问和独立输出分配，不包含GPU、IPC或整个编辑器。所有场景输出与原构建结果一致。
+
+| 场景／每帧变更 | 原构建 | 缓存构建 | 额外缓存 |
+| --- | ---: | ---: | ---: |
+| Amazonia／相机 | 0.669668 ms | 0.444190 ms | 1,778,400 B |
+| Amazonia／相机及全部网格 | 0.895037 ms | 0.659703 ms | 1,778,400 B |
+| Amazonia／全部变换 | 0.854058 ms | 0.971197 ms | 1,778,400 B |
+| 菜单／相机 | 0.158313 ms | 0.163808 ms | 0 B |
+| 菜单／相机及全部网格 | 0.201780 ms | 0.204115 ms | 0 B |
+| 菜单／全部变换 | 0.213673 ms | 0.208615 ms | 0 B |
+
+Amazonia前两种局部场景分别减少约33.67%与26.29%；全部变换每帧变化时增加约0.117ms，不能宣称所有动态场景提速。缓存字节仅为缓存 Vec 容量×元素大小，不是整个进程内存增量；World 另增加每记录一个 u64 版本字段。菜单使用稀疏回退，微小计时差异不作为提升结论。
+
+复现：`cargo test -p mengine-core --release --lib -- --test-threads=1`；`cargo test -p mengine-core --release --lib benchmark_hierarchy_cache -- --ignored --nocapture --test-threads=1`。证据：tmp/docs-artifacts/editor-performance-risk/hierarchy-cache-{tests.log,benchmark.log,summary.json}，包含样本和场景摘要。首次新基准的 Rust 小数常量缺整数部分导致编译失败，修正测试后通过；原始失败日志保留。没有将局部 CPU 收益换算成 FPS。
+
+
+原生Release构建1分26秒通过，仅既有 world_from_snapshot 未使用告警；EXE SHA256 `b09afab0956b20576c023ac697a01324a699a7fb468023ca8393221f85aded54`。原生报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792796299328.json` 通过连续模拟、Game／Scene／相机预览／轨道／分辨率、Inspector高度0→3.2经30步保留与恢复、三层动画和Stop还原，0 error、正常退出，截图已目视查看。此次不重复资源热更和全库测试。
+
+7,411实体／850×478，末尾240次呈现平均54.9388次/秒，间隔18.2021ms／P95 27.9ms，原生渲染11.0336ms、世界同步1.2703ms，239个不同模拟版本。与此前独立运行55.0269次/秒相比，仍无稳定整体FPS收益或60 FPS结论。最新单帧TransformHierarchy.build为0.4897ms，仅用于定位，不充当平均或严格原生前后对照。摘要为 tmp/docs-artifacts/editor-performance-risk/hierarchy-cache-native-summary.json。
+
+
+补充像素验收复用同EXE，仅运行 `qa-frost-map-session.mjs --runtime-edits-only`，报告 `B001/map-session-1792796459914.json` 通过，0 error、正常退出。QA将Scene相机对准受测岩石根节点，在截图前清除选择，避免选中框／gizmo变化代替实际网格变化；暂停时修改Inspector高度使原生像素变化，还原后图像SHA256与修改前完全一致。前后截图已目视确认岩石升起。随后30步的修改保留、动画／时钟、恢复和Stop也通过。测试脚本记录三张图的摘要；没有再次构建或重跑连续性能采样。WebView锁缓存按既有约定保留。
