@@ -4358,9 +4358,7 @@ async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state
         command.arg("compile-play-script").arg(project_root);
         let output = play_compiler::output(command, std::time::Duration::from_secs(30)).await?;
         if !output.status.success() { return Err(command_failure("Play script compilation", &output)); }
-        if output.stdout.len() > 16 * 1024 * 1024 { return Err("Play script exceeds 16 MiB".into()); }
-        let result: serde_json::Value = serde_json::from_slice(&output.stdout).map_err(|error| error.to_string())?;
-        result.get("source").and_then(serde_json::Value::as_str).map(str::to_owned).ok_or_else(|| "Play compiler did not return script source".to_string())?
+        play_compiler::source(&output.stdout)?
     };
     if state.play_runtime.generation() != generation || !state.project.lock().as_ref().is_some_and(|session| session.snapshot().project_id == project.project_id) {
         return Err("Play initialization was superseded".into());

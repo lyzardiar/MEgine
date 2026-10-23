@@ -2,7 +2,7 @@
 
 后续实现按[批次测试台账](testing-batches.md)执行：逐任务提交代码和资产，登记待测内容，默认累计3个功能／修复任务后合并验证。下文已完成阶段的历史测试结果保留；其中的全量命令不作为每次提交的必跑清单。
 
-2026-10-24：编辑器性能与验证已推进至第五十五阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-24：编辑器性能与验证已推进至第五十六阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 B001地图视觉修复补充：地表图集按64像素对齐、逐mip夹紧并限制至单图块1×1级；水面按128像素帧对齐、帧内循环过滤并限制至单帧1×1级，避免跨块／跨帧串色。Amazonia地表与水面图集基础像素量分别减少约11.4%／6%。原生地表六色与水面16组RGBA对照、实际地图动画／暂停／恢复通过。相同场景1280×720硬件timestamp对照中，地表GPU pass增加约0.02ms，水面增加约0.11ms；不能从贴图缩小推断FPS提升。复现入口与原始报告路径见[图集性能说明](designs/frostbound-realms/original-terrain-scene.md#同场景图集性能)，归入B001-01，不新开测试批次。
 
@@ -1087,3 +1087,15 @@ prepare_billboards在一个视图内借用无需billboard的源键，重复对�
 原生报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792791223023.json` 通过，EXE SHA256 `46eecf10edec16a1fa35e82ee3ff675d18626f7383fd66a1f26d2e1d825d1887`。连续Amazonia、Game／Scene／相机预览／轨道、分辨率、Stop还原通过，0 error、正常退出；Game截图已目视核对。7,410实体，末尾240次呈现平均55.0269次/秒，间隔18.1729ms／P95 27.0ms；原生渲染11.4975ms，世界同步1.2744ms，239个不同模拟版本计时完整。
 
 请求起点相邻间隔平均18.1778ms，相对上一帧完成平均间隔2.0226ms。此前独立运行分别为54.1908次/秒、18.4276ms和2.5707ms；两次单独运行不能证明稳定提速或60 FPS。确定性测试证明请求被拒绝时不再推迟截止时间，到期完成不再依赖额外timer；原生验收证明正常集成路径可用。摘要为 `tmp/docs-artifacts/editor-performance-risk/native-pacing-summary.json`，原始构建与QA日志使用同前缀。此轮未重复资源热更新、Inspector编辑和全库测试，上一批相关结果保留；真实操作延迟、强制在途竞态和脱离窗口等专项保持待测。
+
+
+## 第五十六阶段 Play 编译结果的大小校验与脚本所有权
+
+原地图单位绑定的原生验证触发“Play script exceeds 16 MiB”。复现时入口脚本为 15,993,429 字节，编译器 JSON 输出为 16,795,948 字节，既有检查把 JSON 转义开销计入 16,777,216 字节的脚本上限，因而拒绝了仍在范围内的脚本。证据：tmp/docs-artifacts/frost-original-maps/unit-bindings-compiler-size.json；首次原生失败报告 B001/map-session-1792794010926.json。
+
+start_editor_play 调用 play_compiler::source，按解码后的 UTF-8 源码字节数检查原有 16 MiB 上限；编码响应另按 JSON 最坏六倍转义开销加信封余量设界限。直接反序列化到拥有 String 的结构并转移所有权，避免先构造 serde_json::Value 再复制整份源码。没有增大脚本上限，也没有改变编译超时、Play generation 或项目归属校验。
+
+两项 Rust 边界测试通过：大量反斜杠／引号／换行造成的合法大 JSON、中文源码精确边界、实际超限脚本、缺失／错误类型 source 和非法 JSON。命令 cargo test -p mengine-editor-tauri --release --lib play_compiler::source_tests -- --test-threads=1。该修复解决启动误拒绝与一次源码复制，不作为稳定 FPS 或实测内存峰值收益。入口仍接近上限，后续资源模块化应按真实加载需求设计。
+
+
+Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用警告。EXE SHA256 `7e8e4e9b2f32cec3c8a75342ba0bf5932d2c7a12856bd778718cd670ee87f93a`。原生报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792794409250.json` 确认大入口脚本能进入 Play、进行地图交互并 Stop 恢复，0 error、进程正常退出；该报告的选择圈组件断言不代替视觉验收，后续贴图修复与截图结论另记。源码 LF 规范化发生在构建后，未改变 Rust 语义。没有重跑完整编辑器回归或帧率基准。

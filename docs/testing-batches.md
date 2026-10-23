@@ -580,3 +580,13 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 原生定向命令 `node scripts/qa-frost-map-session.mjs --unit-initialization-only` 通过，报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792792615135.json`：96 单位／26 触发器登记、连续帧、重载、返回清空、重新进入及 Stop 恢复通过，0 error，进程正常退出。复用 EXE SHA256 `46eecf10edec16a1fa35e82ee3ff675d18626f7383fd66a1f26d2e1d825d1887`，未重新构建；启动脚本摘要 `03a809825e618507fd470bddf1e747a9162990b819ce62507203889a1df5fe99`。WebView 锁缓存保留。此结果证明 MEngine 内执行本入口，不表示原 Warcraft 完整对局兼容或新增性能收益。
 
 维护链补充：refresh-frost-map-camera.py 验证并保留 JASS 数据段，镜头控制器更新仍拒绝未知边界。包测试包含真实 Amazonia 脚本尾部分离与无损拼接、非法尾部拒绝；实际已安装地图升级器重复执行三个输出文件摘要一致。Python AST、修改的 JS 工具语法及 git diff --check 通过。
+
+
+### B001 编辑器 Play 编译大小校验
+
+变更：packages/editor/src-tauri/src/play_compiler.rs、lib.rs。16 MiB 限制作用于解码后的 UTF-8 源码，编码信封另设界限；拥有型反序列化后直接交付 String。原来有效的 15,993,429 字节脚本被 16,795,948 字节 JSON 输出误拒绝；失败原生报告 map-session-1792794010926.json 保留。
+
+必要快速检查：play_compiler::source_tests 两项通过，覆盖 JSON 转义／中文边界、真实超限与非法信封。因本项阻断本批 Play，复用最终原生构建进行单位选择专项验收；不扩大到已通过的连续帧、资源热更和所有编辑器功能。风险及源码大小口径见 performance-risk-todo 第五十六阶段。
+
+
+Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用警告。EXE SHA256 `7e8e4e9b2f32cec3c8a75342ba0bf5932d2c7a12856bd778718cd670ee87f93a`。原生报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792794409250.json` 确认大入口脚本能进入 Play、进行地图交互并 Stop 恢复，0 error、进程正常退出；该报告的选择圈组件断言不代替视觉验收，后续贴图修复与截图结论另记。源码 LF 规范化发生在构建后，未改变 Rust 语义。没有重跑完整编辑器回归或帧率基准。
