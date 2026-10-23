@@ -251,3 +251,10 @@ QA增加 `--cache-project <前次隔离项目>`，校验源地图和共享文件
 快速检查：frame_compiler相关10通过、0失败、6手动忽略；最终同进程交替基准2747对象，3.353525→2.515425ms，24.99%，完整输出一致。最终容量4096→2747；该输出数组节省不等于进程总内存。详见performance-risk-todo第二十八阶段，证据 `tmp/docs-artifacts/editor-performance-risk/mesh-output-*`。
 
 待批次：与来源设备路径优化共同构建一次原生Editor，再验证原地图Scene／Game、嵌入视图、动画／暂停／Stop恢复、主文件／依赖热更新并采样实际帧成本；不能用既有EXE宣称本项已集成。
+
+
+### B001-01 来源校验与输出分配原生合并验证
+
+0b9c6f4与30eb1a2共用一次原生构建，EXE `544fb7fc2ee301653197ab39153814e0d83f168d8f5432c96a23e402ecf243fa`。`MENGINE_MAP_PROFILE_FRAMES=12 node scripts/qa-frost-original-map-composition.mjs tmp/docs-artifacts/warcraft-map-tests/amazonia-complete-visuals/project` 与 `node scripts/qa-frost-warcraft-ui.mjs --main-only` 通过，原地图Scene／Game、动画／暂停／Stop恢复／确定性重启、主菜单嵌入视图均覆盖。两份报告0 error、正常退出；输入与旧固定画面像素摘要一致。
+
+原生报告 `B001/original-map-composition-1792767053644.json`、`war3-ui/native-1792767119833.json`。固定Game后10帧总耗时中位27.7694ms、来源校验8.30915ms、对象／材质3.80875ms；历史同输入样本仅供对照，非严格交替EXE基准或实时FPS。原始日志与汇总入口见性能todo。本次关闭这两项的常规原生集成待测；真实编辑器主文件／外部依赖热更新、目录重定向与跨平台边界仍待专门场景验证，底层定向测试保持已有通过结果。B001仍3/3未结算，不重复02／03或完整玩法回归。

@@ -719,3 +719,12 @@ cargo test -p mengine-runtime --release --lib source_validation_tests -- --test-
 `cargo test -p mengine-runtime --release --lib frame_compiler -- --test-threads=1`：10通过、0失败、6项手动基准忽略。覆盖材质热更新／私有属性覆盖、池激活／父变换／实体slot复用、根深度／循环、多视图对象私有性、主相机和UI-only帧、视图背景策略。无全库测试。手动诊断入口为benchmark_large_map_material_steps；对照为benchmark_mesh_output_allocation，均需设置MENGINE_MATERIAL_PROJECT到保留地图工程。
 
 待与第二十七阶段合并构建原生Editor，验证同输入地图Scene／Game、嵌入视图与Play／Stop恢复。上述CPU基准不是整体帧耗时或持续FPS证明。原始日志为material-stages.log、mesh-output-tests.log、mesh-output-allocation-final.log，仅保留在临时目录。
+
+
+### 第二十七、二十八阶段原生合并验证
+
+两项代码提交0b9c6f4、30eb1a2共同构建一次Editor：`cargo build -p mengine-editor-tauri --release --features custom-protocol`，1分53秒，EXE SHA256 `544fb7fc2ee301653197ab39153814e0d83f168d8f5432c96a23e402ecf243fa`。复用已构建的前端；原生只有既有world_from_snapshot未使用警告。没有全库测试、SDK重建或地图重新转换。
+
+保留原地图输入通过Scene／Game、三层动画、暂停稳定画面、12次固定Game像素一致、Stop完整恢复与确定性重启，7403实体／2452装饰／96渲染单位、0 error，进程正常退出。报告 `B001/original-map-composition-1792767053644.json`。同EXE主菜单嵌入模型／相机视图报告 `war3-ui/native-1792767119833.json` 通过、0 error；截图已目视核验。锁定的WebView缓存保留。两项实现已进入该EXE；新的真实热更新／UNC／挂载变化仍以待测记录为准。
+
+固定Game后10帧中位：总27.7694ms，来源校验8.30915ms，对象／材质3.80875ms，Frame compile7.095ms，世界通道编码2.55315ms。与历史同场景／脚本／分辨率的29.67195ms、10.1771ms、3.9204ms对照，固定像素哈希均为e6394c096b674ef9acab0c908c40278f3fad0f06da339c101cf4d5728957f471。历史与新样本并非同场交替的新旧EXE测量，不将差值当作稳定原生提速比例。独立CPU测试的24.99%也不能代替原生对象提取结果；截图间隔使每帧触发来源轮询，不能换算持续FPS。汇总 `B001/phase27-28-native-summary.json`，原始构建／运行日志 `editor-performance-risk/phase27-28-native-*.log`。
