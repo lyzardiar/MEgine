@@ -138,10 +138,10 @@ async function checkHierarchyPresentation(s){
   await execute('window.ui_press_key',{windowLabel:'main',selector:selectRow.item.selector,expectedSnapshotRevision:selectRow.snapshot.snapshotRevision,key:'a',ctrlKey:true});
   assert.deepEqual(await selected(),new Set(roots),'Ctrl+A selects collapsed roots');
   await button('Expand all hierarchy nodes');await button('Edit');
-  const menuPage=await ui(),selectAll=menuPage.elements.find(e=>e.name.startsWith('Select All'));assert.ok(selectAll);
+  const menuPage=await ui(),selectAll=menuPage.elements.find(e=>e.name?.startsWith('Select All'));assert.ok(selectAll);
   await execute('window.ui_click',{windowLabel:'main',selector:selectAll.selector,expectedSnapshotRevision:menuPage.snapshotRevision});
   assert.deepEqual(await selected(),new Set(s.entities.map(e=>e.entity)),'Edit menu selects expanded hierarchy');
-  await execute('selection.set',{ids:[root.entity]});await execute('selection.reveal',{id:child.entity});
+  await execute('selection.reveal',{id:child.entity});await execute('selection.set',{ids:[root.entity]});
   const rangeEnd=await element(child.name);
   await execute('window.ui_click',{windowLabel:'main',selector:rangeEnd.item.selector,expectedSnapshotRevision:rangeEnd.snapshot.snapshotRevision,shiftKey:true});
   const range=await selected();assert.ok(range.has(root.entity)&&range.has(child.entity),'Shift-click includes anchor and target');

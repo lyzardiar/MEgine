@@ -480,3 +480,9 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 变更：store内部范围/全选/子节点/方向导航使用只读查询；新增hierarchyReadOwnership测试；map-session新增--hierarchy-interactions，覆盖菜单、Ctrl+A、范围选择、聚焦和换图。属于现有性能补充，不新增功能计数。
 
 快速检查：29项通过，前端构建通过。新测试确认连续内部选择不暴露可编辑记录，显式公共引用修改仍上传。与6370937/c8902a0共用一次原生构建，运行continuous-profile、transport-profile、simulation-profile、viewport-transitions、runtime-edits、hierarchy-interactions。待记录结果；全库测试和全量地图导入不在本次范围，原有特殊材质与交互生命周期风险保留。
+
+
+本批已完成一次前端/原生构建，EXE f00c7f2e53e6b59257b80270cb0d5ee5bcef7abea35f288cf544b7d0bf94757c。首次QA的连续模拟计时、Scene/Game/预览、Inspector编辑与动画、双击/空格聚焦通过；新增菜单测试空名称异常、后续范围测试锚点准备错误分别修正，仅重测hierarchy-only。保留失败报告1792785972914/1792786047637，不把整次失败报告记为通过。性能采样55.1382次呈现/秒、模拟准备0.02720ms/世界同步1.26488ms，口径及局限见performance-risk-todo第五十阶段。
+
+
+最终定向报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792786117908.json` 通过：折叠Ctrl+A、展开菜单全选、Shift范围选择、展开/折叠/左右键、双击/空格聚焦、换图后重复操作和Stop作者场景恢复全部通过，编辑器正常退出。结合首次采样已通过的阶段，本批关闭三项优化的上述正常集成覆盖；其余专项待测保持开放。

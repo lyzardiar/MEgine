@@ -984,3 +984,13 @@ SharedSnapshotWorld保留源ID与本地Entity的顺序表。新快照的数量�
 定向29项通过，覆盖选择/活动/移动、真实菜单渲染及原生记录归属。新增测试在Vite测试环境观察实际记录暴露，连续三轮范围/全选/子节点/方向导航新增暴露为0；验证选择结果、空/无效节点、模拟步无需上传、公共节点引用修改仍完整上传且不污染已发布快照。前端构建通过。日志为tmp/docs-artifacts/editor-performance-risk/hierarchy-read-{tests,editor-build}.log。
 
 与6370937菜单查询、c8902a0稳定原生同步合并一次原生构建及相关地图验证。QA新增--hierarchy-interactions，在连续采样后覆盖实际双击/空格聚焦、折叠Ctrl+A、展开菜单全选、Shift范围选择及换图后的重复操作；结合Scene/Game/相机预览和Inspector运行编辑核对真实动态路径。执行结果追加于本阶段，未覆盖的特殊材质、强制竞态、跨窗口/EditUndo和真实输入延迟继续保留。
+
+
+三项共用一次前端构建和1分14秒原生构建，EXE SHA256 f00c7f2e53e6b59257b80270cb0d5ee5bcef7abea35f288cf544b7d0bf94757c，仅既有world_from_snapshot未使用告警。首次原生报告B001/map-session-1792785972914.json完成连续采样、Scene/Game/预览/分辨率、Inspector高度0→3.2经30步保留及恢复、动画和双击/空格聚焦，随后新增菜单测试对空名称调用startsWith中断。修正后同EXE仅重跑hierarchy-only；B001/map-session-1792786047637.json的Ctrl+A/菜单全选通过，范围断言因测试用selection.reveal重设锚点失败。按API的选择语义将揭示操作移到设置锚点之前，再定向重测。两次失败均保留原始报告，未重建产品或重复性能采样。
+
+已完成的10秒采样为7,410实体、850×478、末尾240次呈现：55.1382次/秒，间隔均值18.13625ms/P95 27.8ms，渲染12.56645ms，世界同步1.26488ms。239个去重模拟版本平均准备0.02720ms、invoke 6.05941ms、增量应用0.47322ms、编辑器接收0.13264ms、请求总计6.69582ms；原生模拟2.11095ms、命令2.32918ms。此前独立运行准备1.78844ms/世界同步2.03981ms，当前读路径与同步成本下降，但独立运行不能证明受控整体提速或稳定60 FPS。invoke减命令3.73024ms仍含编码、投递、解码与回调等待。
+
+本地证据为tmp/docs-artifacts/editor-performance-risk/hierarchy-read-{native-build,native-qa,interactions-retest,interactions-final}.log及hierarchy-read-summary.json；Game采样截图已目视核对。强制在途竞态、跨窗口、特殊材质、Edit父级/重排与Undo、真实输入延迟仍待测；未以本批正常路径验证关闭这些风险。
+
+
+最终定向报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792786117908.json` 通过：折叠Ctrl+A、展开菜单全选、Shift范围选择、展开/折叠/左右键、双击/空格聚焦、换图后重复操作和Stop作者场景恢复全部通过，编辑器正常退出。结合首次采样已通过的阶段，本批关闭三项优化的上述正常集成覆盖；其余专项待测保持开放。
