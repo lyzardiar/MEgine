@@ -14,6 +14,7 @@ def main():
     parser.add_argument('map', type=Path, help='Original Warcraft III .w3m/.w3x file; read-only')
     parser.add_argument('--game', type=Path, default=Path('E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne'))
     parser.add_argument('--output', type=Path, help='New folder containing source export and the Editor project')
+    parser.add_argument('--animation-seed', type=int, default=1, help='Reproducible initial Stand choices')
     args = parser.parse_args()
     source = args.map.resolve()
     if source.suffix.lower() not in ('.w3m', '.w3x') or not source.is_file():
@@ -25,7 +26,7 @@ def main():
     data = importlib.import_module('import-frost-original-map').export_map(source, exported)
     project = output/'project'
     result = importlib.import_module('build-frost-original-doodads').build(exported, args.game, project,
-        ROOT/'tmp/warcraft-effects/sentinel-bin/MdxExport.dll', ROOT/'tmp/warcraft-effects/node-metadata/NodeMetadata.dll')
+        ROOT/'tmp/warcraft-effects/sentinel-bin/MdxExport.dll', ROOT/'tmp/warcraft-effects/node-metadata/NodeMetadata.dll', args.animation_seed)
     print(json.dumps(dict(project=str(project), source=str(source), sourceSha256=data['source']['sha256'],
         placements=result['placements'], entities=result['entities'], gameplay=False,
         validationCommand=f'node scripts/qa-frost-original-doodads.mjs "{project}" --visual-only'), ensure_ascii=False))

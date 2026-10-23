@@ -3,7 +3,98 @@
 Reference and MIT notice: third_party/warcraft-map-format/README.md.
 """
 import struct
+import math
 from warcraft_map import Reader
+
+
+# Registered by source 0x6f6a6f50; unknown words and numeric suffixes are not animation tags.
+ANIMATION_TAGS = frozenset('alternate alternateex attack berserk birth chain channel cinematic complete critical death decay defend dissipate drain eattree entangle fast fifth fill fire first five flail flesh four fourth gold hit large left light looping lumber medium moderate morph off one portrait puke ready right second severe slam sleep small spell spiked spin stand swim talk third three throw turn two upgrade victory walk work wounded'.split())
+
+
+def stand_sequence_candidates(clips):
+    """Source 0x6f6f19f0 ranking: most requested tags, then fewest additional known tags."""
+    best = (0, -1000)
+    candidates = []
+    for index, clip in enumerate(clips):
+        tags = [word for word in clip['name'].lower().split(' ') if word in ANIMATION_TAGS]
+        matches = int('stand' in tags)
+        score = (matches, matches - len(tags))
+        if score < best:
+            continue
+        if score > best:
+            best = score
+            candidates.clear()
+        candidates.append(index)
+    return candidates
+
+
+class MsvcRandom:
+    """MSVCR120 rand stream, explicitly seeded for reproducible generated previews."""
+    def __init__(self, seed=1):
+        self.state = seed & 0xffffffff
+
+    def __call__(self):
+        self.state = (self.state * 214013 + 2531011) & 0xffffffff
+        return (self.state >> 16) & 0x7fff
+
+
+def sequence_weight(rarity):
+    """Source renderer 0x6f785330 normalizes rarity before 0x6f6f1c0e converts to integer weight."""
+    f32 = lambda value: struct.unpack('<f', struct.pack('<f', value))[0]
+    if not math.isfinite(rarity) or rarity <= -128:
+        raise ValueError('Unsupported sequence rarity')
+    if rarity >= 128:
+        return 0
+    normalized = f32(1 / f32(2 ** f32(rarity)))
+    if normalized > 0x7fffffff / 100:
+        raise ValueError('Sequence rarity overflows the source integer weight')
+    weight = int(f32(normalized * 100))
+    if weight > 0x7fffffff:
+        raise ValueError('Sequence rarity overflows the source integer weight')
+    return weight
+
+
+def stand_sequence_index(clips, rand):
+    candidates = stand_sequence_candidates(clips)
+    if not candidates:
+        return None
+    if len(candidates) == 1:
+        return candidates[0]
+    weights = [sequence_weight(clips[index]['rarity']) for index in candidates]
+    total = sum(weights)
+    if total > 0x7fffffff:
+        raise ValueError('Sequence weights overflow the source signed accumulator')
+    # Source range helper uses an exclusive upper bound; zero total falls through to model index zero.
+    roll = 1 + rand() % (total - 1) if total > 1 else 1
+    cumulative = 0
+    for index, weight in zip(candidates, weights):
+        cumulative += weight
+        if roll <= cumulative:
+            return index
+    return 0
+
+
+def mdx_sequence_rarities(raw):
+    if raw[:4] != b'MDLX':
+        raise ValueError('Expected original MDX')
+    offset = 4
+    result = []
+    while offset < len(raw):
+        if offset + 8 > len(raw):
+            raise ValueError('Truncated MDX chunk header')
+        tag, size = struct.unpack_from('<4sI', raw, offset)
+        offset += 8
+        if offset + size > len(raw):
+            raise ValueError('Truncated MDX chunk')
+        if tag == b'SEQS':
+            if size % 132:
+                raise ValueError('Invalid classic sequence record size')
+            for start in range(offset, offset + size, 132):
+                begin, end = struct.unpack_from('<II', raw, start + 80)
+                if end > begin:
+                    result.append(dict(name=raw[start:start+80].split(b'\0')[0].decode('utf-8'),rarity=struct.unpack_from('<f',raw,start+96)[0]))
+        offset += size
+    return result
 
 
 def placement_kind(is_destructable, flags):

@@ -56,7 +56,7 @@ fixtures=[[],[''],['Stand'],['Stand','Death Alternate'],['Death Alternate','Stan
     ['Stand','Death - 1'],['Stand','Death\t'],['','DEATH']]
 cases=[]
 for labels in fixtures:
-    clips=[dict(name=name) for name in labels]
+    clips=[dict(name=name,rarity=0) for name in labels]
     for i,name in enumerate(labels):cpu.mem_write(names+i*128,name.encode('ascii')+b'\0')
     expected=named_sequence_index(clips,'death')
     for at_end in (False,True):

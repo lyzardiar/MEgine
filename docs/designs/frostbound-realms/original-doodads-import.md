@@ -46,7 +46,17 @@ REA 的 `node scripts/probe-frost-rea-doodads.mjs --life` 对同一固定 Game.d
 
 `python scripts/probe-frost-rea-doodad-sequence-cpu.py` 对15组名称输入执行上述原机器码，分别检查首／末帧定位、循环标记输出及死亡状态转换，共75组通过，并对照生成器的选择与保持标记。覆盖 `Death Alternate`、`Death1`、`Undeath`、前后空白、大小写、重复名、空名和空表。模型元数据、Storm大小写比较及最终模型API使用桩；这是命名扫描／状态分支验证，不包含原版模型渲染和Stand随机调度。证据为 `tmp/docs-artifacts/warcraft-map-tests/doodad-runtime/sequence-cpu.json`；DLL摘要、依赖与更换版本约束同生命分支。
 
-生成器只在完整Death存在时固定末帧；缺失时保留预览的初始选择及网格动画分组／发射器播放。当前初始Stand选择仍待与源候选评分、权重和随机数路径对齐，不能将此修正写成完整动画一致。
+生成器只在完整Death存在时固定末帧；缺失时保留预览的初始选择及网格动画分组／发射器播放。初始Stand候选与权重规则见下节，完整调度仍未对齐。
+
+### 初始Stand候选与权重
+
+`node scripts/probe-frost-rea-doodads.mjs --stand` 保存3组固定Game.dll证据。`0x6f6a6f50` 注册64个动画标签；`0x6f707d80` 按空格分词并忽略未注册词（包括数字和横线）。`0x6f6f19f0` 优先保留匹配请求标签最多、额外已知标签最少的候选，保留源顺序。完整名称Stand与Stand - 2可属于同一候选组，Stand Work的额外标签则参与评分。
+
+源SEQS为132字节记录，rarity位于记录+96。渲染器 `0x6f785330` 将其转换为单精度 `1 / float32(pow(2, rarity))`，元数据读取 `0x6f778ab0` 保留归一化值；`0x6f6f1c0e` 单精度乘100并截断为整数权重。`0x6f7011a0` 累积权重，`0x6f704ee0` 通过MSVCR120 rand取 `[1,total)` 范围（上界不包含）；累计权重首次达到抽取值即选择该序列。单候选直接返回，不取随机数；多候选总权重为0时返回模型索引0。超出源有符号整数累积能力的输入明确拒绝。
+
+`python scripts/probe-frost-rea-doodad-stand-cpu.py` 执行原标签注册、候选评分、rarity转换、权重累积及随机范围机器码，与生产函数对照：64标签、265组选择、60组权重／范围、17组rarity通过；种子0／1／127／0xffffffff各64次输出与本机MSVCR120.dll一致。Storm分词、字典存取、模型元数据、pow及rand输入使用桩，本机C运行库另记录摘要。证据 `tmp/docs-artifacts/warcraft-map-tests/doodad-runtime/stand-cpu.json` 及 `tmp/docs-artifacts/frost-original-doodads/rea-stand-summary.json`。
+
+生成器从保留MDX读取rarity，以独立的MSVCR120随机流选择初始Stand，默认种子1；地图入口和生成器均支持 `--animation-seed`，收据记录种子与各放置的最终clip。网格和发射器使用一次选择，不重复消耗随机数。独立预览的调用顺序不等于原游戏共享随机流，原版种子／其他调用者／创建顺序和结束后重选仍待接入。源序列与采样序列的顺序必须一致，原版完整渲染和调度仍未验收。
 
 ### 放置标志分流
 

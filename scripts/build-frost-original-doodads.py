@@ -12,7 +12,7 @@ import struct
 import subprocess
 import tempfile
 from warcraft_map import load_map
-from warcraft_doodads import placement_kind, named_sequence_index
+from warcraft_doodads import placement_kind, named_sequence_index, stand_sequence_index, MsvcRandom, mdx_sequence_rarities
 from warcraft_mpq import mpyq, read_archive
 
 terrain_builder = importlib.import_module('build-frost-original-terrain')
@@ -39,13 +39,12 @@ def model_path(row,variation):
     return path+(str(min(variation,count-1)) if count>1 else '')+'.mdx'
 
 
-def placement_clip(clips,dead=False):
+def placement_clip(clips,dead=False,rand=None):
     if not clips:raise ValueError('Source model has no sampled animation clips')
     death=named_sequence_index(clips,'death') if dead else None
     if death is not None:return death,True
     # A missing named sequence leaves the initial animation unchanged, including playback.
-    exact=named_sequence_index(clips,'stand')
-    found=exact if exact is not None else next((i for i,c in enumerate(clips) if c['name'].lower().startswith('stand')),None)
+    found=stand_sequence_index(clips,rand if rand is not None else MsvcRandom())
     return (found if found is not None else 0),False
 
 
@@ -164,13 +163,18 @@ class SceneAssets:
             result['effect']=self.write(PREFIX+'Effects/'+sha(raw)+'.mfx',encode(effect))
             if not result['clips']:result['clips']=result['effectClips']
         if not result['parts'] and not result.get('effect'):raise ValueError('No native representation for source: '+path)
+        source_clips=mdx_sequence_rarities(raw)
+        if not source_clips and len(result['clips'])==1:source_clips=[dict(name=result['clips'][0]['name'],rarity=0)]
+        if [c['name'] for c in source_clips]!=[c['name'] for c in result['clips']]:raise ValueError('Sampled/source sequence order differs: '+path)
+        result['clips']=[dict(clip,rarity=source['rarity']) for clip,source in zip(result['clips'],source_clips)]
+        if result.get('effect') and [c['name'] for c in result['effectClips']]!=[c['name'] for c in result['clips']]:raise ValueError('Mesh/effect sequence order differs: '+path)
         self.records.append(dict(source=path,sha256=sha(raw),parts=len(result['parts']),effect=result.get('effect'),clips=result['clips']))
         self.prepared[normalized]=result
         print('Prepared source model',len(self.prepared),path,flush=True)
         return result
 
 
-def build(export,game,output,sampler,metadata_reader):
+def build(export,game,output,sampler,metadata_reader,animation_seed=1):
     export,output=export.resolve(),output.resolve()
     if output.exists():raise FileExistsError('Preserve existing output: '+str(output))
     binaries=[sampler,metadata_reader,sampler.with_name('Wc3ModelViewer.Core.dll'),metadata_reader.with_name('Wc3ModelViewer.Core.dll')]
@@ -201,13 +205,13 @@ def build(export,game,output,sampler,metadata_reader):
             raise FileNotFoundError(relative)
         definitions=rows(read('Doodads/Doodads.slk'));destructables=rows(read('Units/DestructableData.slk'));definitions.update(destructables)
         assets=SceneAssets(project,read,sampler,metadata_reader)
-        scene=json.loads((project/'Assets/Scenes/Main.mscene').read_bytes());entities=scene['world']['entities'];groups={};placements=[]
+        scene=json.loads((project/'Assets/Scenes/Main.mscene').read_bytes());entities=scene['world']['entities'];groups={};placements=[];animation_rand=MsvcRandom(animation_seed)
         def entity(name,components,parent=None,active=True):
             item=dict(entity=len(entities)+1,name=name,active=active,components=components)
             if parent is not None:item['parent']=parent
             entities.append(item);return item['entity']
         for index,d in enumerate(data['doodads']['doodads']):
-            row=definitions[d['id']];model=assets.prepare(model_path(row,d['variation']));dead=d['id'] in destructables and d['life']==0;ci,held=placement_clip(model['clips'],dead);clip=model['clips'][ci]
+            row=definitions[d['id']];model=assets.prepare(model_path(row,d['variation']));dead=d['id'] in destructables and d['life']==0;ci,held=placement_clip(model['clips'],dead,animation_rand);clip=model['clips'][ci]
             kind=placement_kind(d['id'] in destructables,d['flags'])
             name=f'Doodad-{index}-{d["id"]}-{d["editorId"]}';parent=entity(name,dict(Transform=placement_transform(d)),active=kind!='suppressed')
             tint=[float(row.get('color'+c,row.get(f'vert{c}{min(d["variation"],int(row["numVar"])-1)+1:02}',255)))/255 for c in 'RGB']
@@ -227,15 +231,16 @@ def build(export,game,output,sampler,metadata_reader):
                     group=dict(mesh=p['mesh'],clip=ci,frames=len(states),duration=clip['duration'],loop=clip['loop'],moving=moving,states=states)
                     signature=sha(encode(group));groups.setdefault(signature,dict(group,names=[]))['names'].append(part_name)
             if model.get('effect'):
-                ei,effect_held=placement_clip(model['effectClips'],dead);effect_clip=model['effectClips'][ei]
-                entity(name+'-effect',dict(Transform=dict(position=[0,0,0]),SampledEffect=dict(effect=model['effect'],clip=ei,playing=not effect_held,looping=effect_clip['loop'],speed=1,time_seconds=effect_clip['duration'] if effect_held else 0)),parent)
-            placements.append(dict(index=index,name=name,source=d,kind=kind,model=model['source'],parts=part_names))
+                effect_clip=model['effectClips'][ci]
+                entity(name+'-effect',dict(Transform=dict(position=[0,0,0]),SampledEffect=dict(effect=model['effect'],clip=ci,playing=not held,looping=effect_clip['loop'],speed=1,time_seconds=effect_clip['duration'] if held else 0)),parent)
+            placements.append(dict(index=index,name=name,source=d,kind=kind,model=model['source'],parts=part_names,animation=dict(clip=ci,held=held)))
         (project/'Assets/Scenes/Main.mscene').write_bytes(encode(scene))
         script=Path(__file__).with_name('frost-original-doodads-client.js').read_text(encoding='utf-8')
         with (project/'Assets/Scripts/Main.js').open('a',encoding='utf-8',newline='\n') as stream:stream.write('\nvar originalDoodadGroups='+json.dumps(list(groups.values()),separators=(',',':'))+';\n'+script)
         (project/'doodad-placements.json').write_bytes(encode(placements))
         tools=[Path(__file__),Path(__file__).with_name('warcraft_doodads.py'),Path(__file__).with_name('frost-original-doodads-client.js'),Path(nodes.__file__),Path(converter.__file__),ROOT/'scripts/warcraft-node-metadata/Program.cs',ROOT/'scripts/warcraft-assets/Program.cs',*binaries]
         result=dict(mapSha256=sha(raw),placements=len(placements),entities=len(entities),animatedGroups=len(groups),animatedParts=sum(len(g['names']) for g in groups.values()),models=assets.records,sources=list(source_records.values()),sourceCollections=assets.collection_hashes,tools=[dict(path=str(p),sha256=sha(p.read_bytes())) for p in tools],upstream=dict(repository=converter.UPSTREAM,commit=converter.COMMIT),coverage=dict(models=True,sampledAnimation=True,sampledEmitters=True,gameplay=False,originalRuntimeParity=False),limitations=['Sampled viewer particles and ribbons are not verified against the original game solver','Placement dispatch assumes source runtime mode zero; complete creation, collision, pathing and random animation scheduling remain unverified','Object overrides, terrain doodad deformation and model particles are rejected'])
+        result['animationSeed']=animation_seed&0xffffffff
         terrain_receipt=json.loads((project/'terrain-sources.json').read_bytes());terrain_receipt['entities']=len(entities);terrain_receipt['coverage']['doodads']=True;(project/'terrain-sources.json').write_bytes(encode(terrain_receipt))
         result['generatedFiles']=[dict(path=p.relative_to(project).as_posix(),bytes=p.stat().st_size,sha256=sha(p.read_bytes())) for p in sorted(project.rglob('*')) if p.is_file() and 'SourceAssets' not in p.relative_to(project).parts]
         (project/'doodad-scene-sources.json').write_bytes(encode(result))
@@ -248,5 +253,6 @@ def build(export,game,output,sampler,metadata_reader):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('export',type=Path);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--game',type=Path,default=Path('E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne'));parser.add_argument('--sampler',type=Path,default=ROOT/'tmp/warcraft-effects/sentinel-bin/MdxExport.dll');parser.add_argument('--metadata-reader',type=Path,default=ROOT/'tmp/warcraft-effects/node-metadata/NodeMetadata.dll')
-    args=parser.parse_args();result=build(args.export,args.game,args.output,args.sampler,args.metadata_reader)
+    parser.add_argument('--animation-seed',type=int,default=1,help='Reproducible initial Stand choices; original runtime RNG call order is not reproduced')
+    args=parser.parse_args();result=build(args.export,args.game,args.output,args.sampler,args.metadata_reader,args.animation_seed)
     print(json.dumps({k:v for k,v in result.items() if k not in ['models','sources','tools']},ensure_ascii=False))
