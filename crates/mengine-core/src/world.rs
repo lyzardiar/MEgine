@@ -402,6 +402,14 @@ impl World {
         })
     }
 
+    /// MiYu: Ordered candidates for typed reads; callers must still validate each requested component.
+    /// Sparse native memberships use the index. Dense queries and custom Any projections retain a full scan.
+    pub fn typed_component_candidates(&self, names: &[&str]) -> impl Iterator<Item = Entity> + '_ {
+        let memberships: usize = names.iter().filter_map(|name| self.component_entities.get(*name)).map(BTreeSet::len).sum();
+        let scan = memberships > (self.entities.len() - self.free_list.len()) / 4 || self.component_types.values().any(Option::is_none);
+        self.iter_entities().take(if scan { usize::MAX } else { 0 }).chain((!scan).then(|| self.entities_with_any_component(names)).into_iter().flatten())
+    }
+
     pub fn set_parent(&mut self, entity: Entity, parent: Option<Entity>) {
         if !self.is_alive(entity) {
             return;

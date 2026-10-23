@@ -13,6 +13,8 @@ use rapier3d::prelude::{
 };
 use std::collections::{HashMap, HashSet};
 
+const PHYSICS_COMPONENTS: &[&str] = &["RigidBody3D", "BoxCollider3D", "SphereCollider3D"];
+
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct CollisionPair {
     pub first: Entity,
@@ -141,8 +143,8 @@ impl PhysicsWorld {
     }
 
     pub fn step(&mut self, world: &mut World, dt: f32) -> PhysicsStepEvents {
-        if self.bodies.is_empty() && !["RigidBody3D", "BoxCollider3D", "SphereCollider3D"].iter().any(|name| world.has_component_type(name)) { return PhysicsStepEvents::default(); }
-        let hierarchy = TransformHierarchy::build(world);
+        if self.bodies.is_empty() && !PHYSICS_COMPONENTS.iter().any(|name| world.has_component_type(name)) { return PhysicsStepEvents::default(); }
+        let hierarchy = TransformHierarchy::build_for_entities(world, world.typed_component_candidates(PHYSICS_COMPONENTS).filter(|entity| world.entity_active(*entity)));
         let definitions = collect_definitions(world, &hierarchy);
         self.remove_stale_bodies(&definitions);
         for (entity, definition) in &definitions {
@@ -419,8 +421,7 @@ fn collect_definitions(
     world: &World,
     hierarchy: &TransformHierarchy,
 ) -> HashMap<Entity, BodyDefinition> {
-    world
-        .iter_entities()
+    world.typed_component_candidates(PHYSICS_COMPONENTS)
         .filter_map(|entity| {
             if !hierarchy.is_active(entity) { return None; }
             let rigid_body = world.get_component::<RigidBody3D>(entity).cloned();
@@ -554,6 +555,47 @@ mod tests {
     use super::*;
     use mengine_core::Parent;
 
+
+    #[test]
+    fn sparse_physics_keeps_ancestor_space_and_component_lifecycles() {
+        let mut world = World::new(); let root = world.spawn_empty();
+        world.insert_component(root, Transform { position: [7.0, 3.0, 2.0], rotation: glam::Quat::from_rotation_z(0.3).to_array(), scale: [2.0; 3] });
+        let group = world.spawn_empty(); world.set_parent(group, Some(root));
+        let child = spawn_body(&mut world, [1.0, 2.0, 0.0], Some(RigidBody3D { body_type: "kinematic".into(), ..Default::default() }), Some(BoxCollider3D::default()), Some(SphereCollider3D::default()));
+        world.set_parent(child, Some(group));
+        let unrelated: Vec<_> = (0..100).map(|_| { let entity = world.spawn_empty(); world.insert_component(entity, Transform::default()); entity }).collect();
+        let collect = |world: &World| { let hierarchy = TransformHierarchy::build_for_entities(world, world.typed_component_candidates(PHYSICS_COMPONENTS)); let definitions = collect_definitions(world, &hierarchy); (hierarchy, definitions) };
+        let (hierarchy, definitions) = collect(&world); let full = TransformHierarchy::build(&world);
+        assert_eq!(definitions.len(), 1); assert_eq!(hierarchy.get(child), full.get(child)); assert_eq!(hierarchy.parent_world(&world, child), full.parent_world(&world, child));
+        assert!(unrelated.iter().all(|entity| hierarchy.get(*entity).is_none()));
+        let mut physics = PhysicsWorld::new(); physics.step(&mut world, 0.016); assert_eq!(physics.collider_count(), 2);
+        world.set_editor_state(root, 0, false); physics.step(&mut world, 0.016); assert_eq!(physics.body_count(), 0);
+        world.set_editor_state(root, 0, true); world.set_parent(child, None); physics.step(&mut world, 0.016); assert_eq!(physics.collider_count(), 2);
+        world.remove_component_by_name(child, "RigidBody3D"); world.remove_component_by_name(child, "BoxCollider3D"); world.remove_component_by_name(child, "SphereCollider3D");
+        physics.step(&mut world, 0.016); assert_eq!(physics.body_count(), 0); assert_eq!(physics.collider_count(), 0);
+        world.despawn(root); let replacement = world.spawn_empty(); world.insert_component(replacement, Transform::default());
+        world.insert_component(child, BoxCollider3D::default()); world.insert_component(child, mengine_core::Parent { entity: root });
+        physics.step(&mut world, 0.016); assert_eq!(physics.body_count(), 0);
+        world.set_parent(child, Some(replacement)); physics.step(&mut world, 0.016); assert_eq!(physics.body_count(), 1);
+    }
+    #[test]
+    #[ignore = "manual physics preparation CPU benchmark"]
+    fn benchmark_physics_preparation() {
+        use std::{hint::black_box, time::Instant, hash::{Hasher, DefaultHasher}};
+        for (count, ordered) in [(0, false), (8, false), (4096, false), (8, true), (4096, true)] {
+            let mut world = World::new(); let mut parent = None;
+            for _ in 0..8 { let entity = world.spawn_empty(); world.insert_component(entity, Transform { position: [0.25, 0.0, 0.0], ..Default::default() }); world.set_parent(entity, parent); parent = Some(entity); }
+            for index in 0..4096 { let entity = world.spawn_empty(); world.insert_component(entity, Transform { position: [index as f32 * 3.0, 2.0, 0.0], ..Default::default() }); world.set_parent(entity, parent); if index < count { world.insert_component(entity, RigidBody3D { body_type: "fixed".into(), ..Default::default() }); world.insert_component(entity, BoxCollider3D::default()); } }
+            if ordered { let order: Vec<_> = world.iter_entities().collect(); assert!(world.set_entity_iteration_order(&order.into_iter().rev().collect::<Vec<_>>())); }
+            let prepare = || { let hierarchy = TransformHierarchy::build_for_entities(&world, world.typed_component_candidates(PHYSICS_COMPONENTS).filter(|entity| world.entity_active(*entity))); let definitions = collect_definitions(&world, &hierarchy); (hierarchy, definitions) };
+            let (hierarchy, definitions) = prepare(); assert_eq!(definitions.len(), count);
+            let mut order: Vec<_> = definitions.iter().collect(); order.sort_by_key(|(entity, _)| entity.to_u64()); let mut digest = DefaultHasher::new();
+            for (entity, definition) in order { digest.write(format!("{:?}{:?}{:?}{:?}{:?}", entity, definition.transform, definition.rigid_body, definition.signature, hierarchy.parent_world(&world, *entity)).as_bytes()); }
+            let mut samples = Vec::new();
+            for group in 0..11 { let start = Instant::now(); for _ in 0..50 { black_box(prepare()); } if group >= 2 { samples.push(start.elapsed().as_secs_f64() * 1000.0 / 50.0); } }
+            samples.sort_by(f64::total_cmp); println!("PHYSICS_PREP 3d bodies={} ordered={} entities=4104 median_ms={:.6} digest={:016x}", count, ordered, samples[4], digest.finish());
+        }
+    }
     #[test]
     fn inactive_parent_removes_and_reactivates_child_physics() {
         let mut world = World::new();let parent = world.spawn_empty();let child = spawn_body(&mut world, [0.0;3], None, Some(BoxCollider3D::default()), None);world.set_parent(child, Some(parent));let mut physics = PhysicsWorld::new();

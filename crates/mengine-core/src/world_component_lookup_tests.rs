@@ -262,3 +262,25 @@ fn benchmark_component_type_lookup() {
     let weighted = weighted_query_benchmark(&mut world, &entities);
     println!("COMPONENT_LOOKUP_BENCHMARK={}", serde_json::json!({"scene":"Frostbound Main.mscene","read":rows,"mutable_transform":{"baseline_median_ns":median(before),"indexed_median_ns":median(after)},"weighted":weighted,"insertion":insertion_benchmark()}));
 }
+
+#[test]
+fn typed_candidates_preserve_sparse_dense_and_dynamic_views() {
+    let mut world = World::new(); let entities: Vec<_> = (0..100).map(|_| world.spawn_empty()).collect();
+    for entity in &entities[..2] { world.insert_component(*entity, RigidBody3D::default()); }
+    world.set_editor_state(entities[0], 0, false);
+    assert_eq!(world.typed_component_candidates(&["RigidBody3D"]).collect::<Vec<_>>(), entities[..2]);
+    assert!(world.set_entity_iteration_order(&entities.iter().rev().copied().collect::<Vec<_>>()));
+    assert_eq!(world.typed_component_candidates(&["RigidBody3D"]).collect::<Vec<_>>(), [entities[1], entities[0]]);
+    world.remove_component_by_name(entities[0], "RigidBody3D"); world.despawn(entities[1]);
+    let replacement = world.spawn_empty(); world.insert_component(replacement, RigidBody3D::default());
+    assert_eq!(world.typed_component_candidates(&["RigidBody3D"]).collect::<Vec<_>>(), [replacement]);
+    for entity in &entities[2..60] { world.insert_component(*entity, RigidBody3D::default()); }
+    assert_eq!(world.typed_component_candidates(&["RigidBody3D"]).collect::<Vec<_>>(), world.iter_entities().collect::<Vec<_>>());
+    let mut projected = World::new(); let entity = projected.spawn_empty();
+    projected.insert_component(entity, SelfThenView { project: false, value: 72 });
+    for _ in 0..100 { projected.spawn_empty(); }
+    assert!(projected.typed_component_candidates(&["u32"]).any(|candidate| candidate == entity));
+    projected.get_component_mut::<SelfThenView>(entity).unwrap().project = true;
+    let values: Vec<_> = projected.typed_component_candidates(&["u32"]).filter_map(|candidate| projected.get_component::<u32>(candidate).copied()).collect();
+    assert_eq!(values, [72]);
+}
