@@ -495,3 +495,20 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 快速检查：层级9项、渲染11项、物理5项、音频1项通过；新增密度边界单项重测通过；手动局部基准1项通过。Amazonia层级构建中位1.023467→0.636240ms，菜单稀疏场景基本持平；结果一致，不代表整帧收益。完整口径及日志见performance-risk-todo第五十一阶段。
 
 待合并验证：下一相关前端/原生批次覆盖真实Game/Scene/相机预览、动画/失活复活、父级和Undo/Redo、换图/Stop，采集连续TransformHierarchy.build与呈现耗时。当前f00c7f2e EXE未包含本项，本轮未重复原生构建、完整地图QA、全库测试或全量导入。其他专项和生命周期待测不关闭。
+
+
+### B001-01 密集层级原生集成
+
+3af0a3d与大厅文本提交共用一次前端／原生Release构建，EXE SHA256 `3371f8fc2dfb46bf16bf871569bbc570e7feecd594d45ae4934339b261ae1054`。`node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile --simulation-profile --viewport-transitions --runtime-edits` 报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792788103376.json` 通过，0 error、正常退出。覆盖Scene/Game、相机预览／轨道、两种分辨率、Inspector高度0→3.2经30步保留及恢复、三层动画／时钟推进与Stop还原。
+
+7,410实体、850×478的末尾240次呈现平均54.4452次/秒，间隔18.3671ms/P95 27.7ms，原生渲染12.4069ms／世界同步1.3059ms。与前次55.1382次/秒属于独立运行，不能据此宣称整帧提升或稳定60 FPS。单帧TransformHierarchy.build 1.4908ms不是平均值。父级编辑／Undo、失活复活、强制在途切换、脱离窗口、特殊材质和真实操作延迟继续待测。
+
+### B001-03 等待大厅与真实文本提交
+
+变更：GameChatroom布局提取／还原脚本、NetworkDialog prefab及生成场景／脚本，client/server房间聊天与房主直接开始；Editor PlayInput/store/Viewport/App及mengine-script增加帧内InputField提交，脚本声明与运行文档同步。属于既有界面还原补充，不增加新任务计数。
+
+定向检查：创建／LAN／大厅脚本通过；TCP聊天隔离、Unicode界限、身份、历史、重连、选英雄后无需重新准备及权限通过；提交队列1项、原生脚本提交1项通过；前端／原生Release构建通过。既有test-frostbound的准备门槛断言同步为房主直接开始，仅语法检查，完整规则套件未重跑。TCP补充测试曾误消费旧room事件，断言加入所选heroClass后定向通过；产品逻辑未因此调整。
+
+`node scripts/qa-frost-warcraft-ui.mjs --lobby-only` 最终报告 `tmp/docs-artifacts/war3-ui/native-1792788057530.json` 通过，0 error、正常退出。真实DOM文本代理、Enter→原生脚本→TCP回显、两人大厅开始通过；4张截图覆盖草稿与消息、1280×720及960×900，已目视检查。此前失败报告7194319、7666811、7734988、7788538、7872551、7952363（文件名前缀native-179278）保留在war3-ui目录，原因与边界见warcraft-ui-fidelity。最终测试使用实时Play保持心跳，未延长产品超时。锁定WebView缓存保留，原始报告／截图不提交。
+
+待测／待实现：中文IME实机、emoji字形回退、独立Player文本输入、旧原生QA大厅入口迁移、完整规则套件；原版12槽／队伍／观察者、种族颜色让步菜单、滚动条／斜杠命令、动态地图详情与逐像素对照。其余界面和编辑器性能待测保持开放。

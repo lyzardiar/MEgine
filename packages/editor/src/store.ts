@@ -317,6 +317,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     const started = performance.now();
     const generation = playGeneration;
     const input = structuredClone(playInput);
+    playInput.uiSubmits = [];
     playInput.pressedKeys = []; playInput.releasedKeys = [];
     playInput.pressedButtons = []; playInput.releasedButtons = []; playInput.pointerDelta = [0, 0];
     const snapshot = playRuntime.retainsWorld && playWorldMatches() ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: (playClearColor ?? clearColor).slice() as WorldSnapshotView['clearColor'], selected: primarySelected() };
@@ -1743,6 +1744,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     async waitForPlayRuntime() { await playPending; if (playError) throw playError; },
     get playBusy() { return playBusy; },
     get playGeneration() { return playGeneration; },
+    queuePlayUiSubmit(entity: number, value: string) {
+      const input = lookup(entity)?.components.InputField as Record<string, unknown> | undefined;
+      if (mode === 'edit' || !input || input.interactable === false || !activeInHierarchy(entity)) return;
+      (playInput.uiSubmits ??= []).push({ entity, component: 'InputField', value });
+    },
     setPlayInput(input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'pointerDelta' | 'pointerLocked' | 'viewport' | 'buttons'>>) {
       if (mode === 'edit') return;
       for (const [field, pressed, released] of [['keys', 'pressedKeys', 'releasedKeys'], ['buttons', 'pressedButtons', 'releasedButtons']] as const) {

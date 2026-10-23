@@ -81,6 +81,9 @@ function onTick(dt: number): void {
 ```
 
 键盘采用物理按键代码，例如 `KeyA`、`ArrowLeft` 和 `Space`。失焦释放输入。
+
+Editor Game 的 InputField 提交通过 `engine.input.uiSubmits` 传给原生脚本，每项为 `{entity, component: "InputField", value}`。value 是提交时捕获的文本；普通输入变化和失焦不产生提交事件。事件只属于下一输入帧，在途请求不会消费后来排队的事件，Stop／重启清空队列。失焦释放按键时保留已接受的提交。旧输入载荷缺少该字段时默认为空数组；既有 Behaviour 回调继续执行。此处覆盖 Editor 文本代理，独立 Player 的文本输入接入仍需单独验收。
+
 Agent 可调用 `playback.input`（MCP `set_game_input`）设置 held 状态，结合 `playback.pause`
 和 `playback.step` 做可重复的交互验收。`playback.play {paused:true}` 在首帧前暂停，避免初始化后自动推进。`playback.step {deltaTime:0.02, steps:100}` 顺序执行 100 帧；`steps` 默认为 1，范围为 1–600。按住的输入保持，按下/释放边沿仅在首帧消费；用户停止播放会中断剩余步数。Play 和 Step 的返回值会等待脚本完成，截图会等待新帧。批量步进的 MCP 超时为 5 分钟。
 

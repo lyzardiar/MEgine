@@ -30,7 +30,7 @@ pub use asset_nodes::AssetNodeProfile;
 pub use storage::project_storage_root;
 
 pub use bridge::{ScriptAnimationEvent, ScriptHost, ScriptRuntimeRequest, ScriptTickProfile, ScriptTimelineSignal};
-pub use input::ScriptInput;
+pub use input::{ScriptInput, ScriptUiSubmit};
 
 use thiserror::Error;
 

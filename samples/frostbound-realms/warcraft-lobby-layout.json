@@ -1,0 +1,741 @@
+{
+  "schemaVersion": 1,
+  "referenceCanvas": [
+    960,
+    720
+  ],
+  "coordinateSystem": "center origin; +x right; +y down; rect=[centerX,centerY,width,height]",
+  "sourceCoordinateSize": [
+    0.8,
+    0.6
+  ],
+  "scale": 1200,
+  "generator": "scripts/extract-frost-warcraft-lobby.py",
+  "generatorSha256": "a162a3d3bcd5c09a56107d988ad6151536f850281d9b673e15b75c158d46319d",
+  "sources": [
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/StandardTemplates.fdf",
+      "sha256": "5abcba7ab502e5bb5f703eb6e6428aa557f675a4e626049b56fbf256c0c3d73a"
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+      "sha256": "7e804da84514766625f0f36898dedf21e30ed899a793907a208d3e465521a3fd"
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/GlobalStrings.fdf",
+      "sha256": "8f15e34c8b05a915daa4c3f55c5e00b5eaae6f5a792992a88056ab09bd9552d7"
+    },
+    {
+      "path": "Assets/Fonts/Warcraft-Master.ttf",
+      "sha256": "da03874db48b05256fe961f56783f388bd37617eaf1791981fcfb3bbcd73aafb"
+    },
+    {
+      "path": "../../scripts/extract-frost-warcraft-options.py",
+      "sha256": "281834489ca3fb53e69e5245a0b1db32f460e44e4f6008fb55c0feb7d385720f"
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/MiscUI.txt",
+      "sha256": "d9ed958d99793d9cf54b85bc234dff6bbde7ed2bc4686e2d61642ebc24696f3b"
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/PlayerSlot.fdf",
+      "sha256": "b11458c7a831873ea85f7713e10886164ef068ef30d0e60b68cc203b05348be3"
+    }
+  ],
+  "textMetrics": {
+    "engine": "Pillow 12.2.0",
+    "font": "Assets/Fonts/Warcraft-Master.ttf",
+    "supersampling": 64,
+    "autoWidth": "getlength",
+    "autoHeight": "(ascent + descent) * line count"
+  },
+  "pages": {
+    "lobby": [
+      {
+        "name": "TeamSetupContainer",
+        "type": "FRAME",
+        "text": "",
+        "textKey": null,
+        "fontSize": null,
+        "color": null,
+        "rect": [
+          -183.75,
+          -87.75,
+          556.5,
+          468.0
+        ],
+        "template": null,
+        "templateChain": [],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "GameChatroom",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.015,
+              -0.031875
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 13
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": null,
+        "parent": "GameChatroom",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "ChatTextArea",
+        "type": "TEXTAREA",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -185.625,
+          240.375,
+          554.25,
+          113.25
+        ],
+        "template": null,
+        "templateChain": [],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "GameChatroom",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.014375,
+              -0.453125
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 20
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "ChatTextArea",
+        "parent": "GameChatroom",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "ChatEditBox",
+        "type": "SLASHCHATBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": null,
+        "color": null,
+        "rect": [
+          -184.875,
+          320.25,
+          563.25,
+          48.0
+        ],
+        "template": "StandardEditBoxTemplate",
+        "templateChain": [
+          "StandardEditBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ChatTextArea",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              -0.003125,
+              0.000625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 37
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": null,
+        "parent": "GameChatroom",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "MapInfoPaneContainer",
+        "type": "FRAME",
+        "text": "",
+        "textKey": null,
+        "fontSize": null,
+        "color": null,
+        "rect": [
+          308.625,
+          -157.5,
+          281.25,
+          270.0
+        ],
+        "template": null,
+        "templateChain": [],
+        "anchors": [
+          {
+            "point": "TOPRIGHT",
+            "relative": "GameChatroom",
+            "relativePoint": "TOPRIGHT",
+            "offset": [
+              -0.025625,
+              -0.05625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 47
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": null,
+        "parent": "MapDisplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "GameNameLabel",
+        "type": "TEXT",
+        "text": "游戏名字：",
+        "textKey": "COLON_GAME_NAME",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          308.625,
+          -309.904688,
+          281.25,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "BOTTOM",
+            "relative": "MapInfoPaneContainer",
+            "relativePoint": "TOP",
+            "offset": [
+              0.0,
+              0.008
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 53
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "GameNameLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "GameNameLabel",
+        "parent": "MapDisplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": []
+      },
+      {
+        "name": "GameNameValue",
+        "type": "TEXT",
+        "text": "",
+        "textKey": null,
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          308.625,
+          -309.904688,
+          281.25,
+          15.609375
+        ],
+        "template": "StandardValueTextTemplate",
+        "templateChain": [
+          "StandardValueTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "GameNameLabel",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.0,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 59
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "GameNameValue",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "GameNameValue",
+        "parent": "MapDisplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYRIGHT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": []
+      },
+      {
+        "name": "AdvancedOptionsContainer",
+        "type": "FRAME",
+        "text": "",
+        "textKey": null,
+        "fontSize": null,
+        "color": null,
+        "rect": [
+          308.625,
+          62.1,
+          281.25,
+          150.0
+        ],
+        "template": null,
+        "templateChain": [],
+        "anchors": [
+          {
+            "point": "TOP",
+            "relative": "MapInfoPaneContainer",
+            "relativePoint": "BOTTOM",
+            "offset": [
+              0.0,
+              -0.008
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 65
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": null,
+        "parent": "MapDisplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "StartGameBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": null,
+        "color": null,
+        "rect": [
+          318.0,
+          232.8,
+          288.0,
+          76.8
+        ],
+        "template": "StandardMenuButtonBaseBackdrop",
+        "templateChain": [
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "BOTTOMRIGHT",
+            "relative": "GameChatroom",
+            "relativePoint": "BOTTOMRIGHT",
+            "offset": [
+              -0.015,
+              0.074
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 73
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": null,
+        "parent": "GameChatroom",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": "UI\\Widgets\\Glues\\GlueScreen-Button1-Border.blp",
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "StartGameButton",
+        "type": "GLUETEXTBUTTON",
+        "text": "",
+        "textKey": null,
+        "fontSize": null,
+        "color": null,
+        "rect": [
+          346.8,
+          232.8,
+          201.6,
+          37.2
+        ],
+        "template": "StandardButtonTemplate",
+        "templateChain": [
+          "StandardButtonTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPRIGHT",
+            "relative": "StartGameBackdrop",
+            "relativePoint": "TOPRIGHT",
+            "offset": [
+              -0.012,
+              -0.0165
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 77
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": null,
+        "parent": "StartGameBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": "S"
+      },
+      {
+        "name": "StartGameButtonText",
+        "type": "TEXT",
+        "text": "开始游戏(|CffffffffS|R)",
+        "textKey": "KEY_START_GAME",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          346.8,
+          232.8,
+          201.6,
+          37.2
+        ],
+        "template": "StandardButtonTextTemplate",
+        "templateChain": [
+          "StandardButtonTextTemplate"
+        ],
+        "anchors": [],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 84
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "StartGameButtonText",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "StartGameButtonText",
+        "parent": "StartGameButton",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": []
+      },
+      {
+        "name": "CancelBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": null,
+        "color": null,
+        "rect": [
+          318.0,
+          294.6,
+          288.0,
+          76.8
+        ],
+        "template": "StandardMenuButtonBaseBackdrop",
+        "templateChain": [
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "BOTTOMRIGHT",
+            "relative": "GameChatroom",
+            "relativePoint": "BOTTOMRIGHT",
+            "offset": [
+              -0.015,
+              0.0225
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 90
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": null,
+        "parent": "GameChatroom",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": "UI\\Widgets\\Glues\\GlueScreen-Button1-Border.blp",
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "CancelButton",
+        "type": "GLUETEXTBUTTON",
+        "text": "",
+        "textKey": null,
+        "fontSize": null,
+        "color": null,
+        "rect": [
+          346.8,
+          294.6,
+          201.6,
+          37.2
+        ],
+        "template": "StandardButtonTemplate",
+        "templateChain": [
+          "StandardButtonTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPRIGHT",
+            "relative": "CancelBackdrop",
+            "relativePoint": "TOPRIGHT",
+            "offset": [
+              -0.012,
+              -0.0165
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 94
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": null,
+        "parent": "CancelBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": "A"
+      },
+      {
+        "name": "CancelButtonText",
+        "type": "TEXT",
+        "text": "取消(|CffffffffA|R)",
+        "textKey": "KEY_CANCEL",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          346.8,
+          294.6,
+          201.6,
+          37.2
+        ],
+        "template": "StandardButtonTextTemplate",
+        "templateChain": [
+          "StandardButtonTextTemplate"
+        ],
+        "anchors": [],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+          "line": 101
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "CancelButtonText",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "CancelButtonText",
+        "parent": "CancelButton",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": []
+      }
+    ]
+  },
+  "unresolved": [],
+  "limitations": [
+    "Unspecified text dimensions use Pillow metrics from the preserved MasterFont TTF at the inherited FDF font size; Warcraft native font rasterization, glyph spacing, baseline and line-box rules have not been measured.",
+    "SetPoint offsets and explicit dimensions are evaluated directly without layout adjustments; text measurement differences propagate through dependent anchors.",
+    "Slot grouping follows confirmed team order and source row/header metrics; full native force policy, observer controls, race/color/handicap menus and map detail internals remain pending.",
+    "The room service currently supports two gameplay seats; this layout does not make its protocol equivalent to Warcraft multiplayer.",
+    "Chat keeps 128 messages; original scrollbar, line wrapping and slash-command behavior remain pending."
+  ],
+  "fonts": {
+    "ChatroomTextArea": 13.2,
+    "ChatroomChatEditBox": 18.0,
+    "ChatroomHeaders": 13.2
+  },
+  "slot": {
+    "height": 30.0,
+    "headerHeight": 16.800000031292438,
+    "columns": {
+      "DownloadValue": 27.0,
+      "NameMenu": 213.75,
+      "RaceMenu": 96.0,
+      "TeamButton": 96.0,
+      "ColorButton": 48.0,
+      "HandicapMenu": 72.0
+    },
+    "nameInset": 4.2
+  },
+  "strings": {
+    "TEAM_FORMAT": "队伍%d",
+    "COLON_OBSERVERS": "观看者：",
+    "COMPUTER_NORMAL": "电脑 (中等难度的)",
+    "OPEN": "打开",
+    "HUMAN": "人族",
+    "ORC": "兽族",
+    "UNDEAD": "不死族",
+    "NIGHT_ELF": "暗夜精灵"
+  },
+  "chatMaxLines": 128,
+  "runtimeEvidence": {
+    "binarySha256": "e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a",
+    "initialization": "0x6f2bcd60",
+    "teamArrangement": "0x6f2998f0",
+    "headerExtraHeightAddress": "0x6f97b458",
+    "headerExtraHeightBytes": "a69b443b",
+    "probe": "scripts/probe-frost-rea-lobby.mjs"
+  }
+}

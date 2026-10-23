@@ -1,3 +1,4 @@
+// Author: MiYu. Frame-local UI submissions accompany physical input in the script runtime.
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
@@ -6,6 +7,7 @@ use std::collections::BTreeSet;
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ScriptInput {
+    pub ui_submits: Vec<ScriptUiSubmit>,
     pub keys: BTreeSet<String>,
     pub pressed_keys: BTreeSet<String>,
     pub released_keys: BTreeSet<String>,
@@ -16,6 +18,15 @@ pub struct ScriptInput {
     pub buttons: BTreeSet<u8>,
     pub pressed_buttons: BTreeSet<u8>,
     pub released_buttons: BTreeSet<u8>,
+}
+
+/// A committed Game text field submission; its value belongs to this input frame.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ScriptUiSubmit {
+    pub entity: u64,
+    pub component: String,
+    pub value: String,
 }
 
 impl ScriptInput {
@@ -32,6 +43,7 @@ impl ScriptInput {
     }
 
     pub fn finish_frame(&mut self) {
+        self.ui_submits.clear();
         self.pointer_delta = [0.0; 2];
         self.pressed_keys.clear();
         self.released_keys.clear();

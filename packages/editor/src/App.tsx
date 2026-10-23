@@ -3220,6 +3220,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
                 }
                 refresh();
               }}
+              onUiSubmit={(entity, value) => store.queuePlayUiSubmit(entity, value)}
               onUiValueChange={(entity, component, patch, callback) => {
                 if (component === 'Toggle' && typeof patch.is_on === 'boolean') {
                   store.setToggleValue(entity, patch.is_on);

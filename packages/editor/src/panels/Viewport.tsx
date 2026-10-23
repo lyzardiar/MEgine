@@ -710,6 +710,7 @@ export function Viewport(props: {
   onInstantiateSprite: (path: string, position: Vec3) => void;
   onLog?: (message: string, level?: 'info' | 'warn' | 'error') => void;
   onUiClick?: (entity: number, onClick: unknown) => void;
+  onUiSubmit?: (entity: number, value: string) => void;
   onUiValueChange?: (
     entity: number,
     component: 'Toggle' | 'Slider' | 'Scrollbar' | 'InputField' | 'Dropdown' | 'ListView' | 'ScrollView' | 'TabView',
@@ -949,6 +950,7 @@ export function Viewport(props: {
     if (!force && next === inputProxyValueRef.current) return next;
     inputProxyValueRef.current = next;
     propsRef.current.onUiValueChange?.(entity, 'InputField', { text: next }, callback);
+    if (force) propsRef.current.onUiSubmit?.(entity, next);
     return next;
   };
 

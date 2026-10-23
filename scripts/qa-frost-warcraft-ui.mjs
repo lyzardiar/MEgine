@@ -14,17 +14,18 @@ const config=JSON.parse(fs.readFileSync(path.join(sample,'project.json'),'utf8')
 Object.assign(process.env,{MENGINE_AGENT_EDITOR_MODE:'auto-background',MENGINE_EDITOR_CONFIG_DIR:path.join(root,'config'),WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows'});fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(name,args={})=>{const r=await bridgeExecute(name,args,{requestId:crypto.randomUUID(),timeoutMs:120000});assert.ok(r.ok,JSON.stringify(r));return r.result;};
-const sleep=ms=>new Promise(r=>setTimeout(r,ms)),snapshot=()=>query('scene.snapshot'),step=(steps=1)=>execute('playback.step',{steps,deltaTime:1/60});
+let liveInput=false;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),snapshot=()=>query('scene.snapshot'),step=(steps=1)=>liveInput?sleep(Math.max(100,steps*1000/60)):execute('playback.step',{steps,deltaTime:1/60});
 let viewport=[1280,720];
 async function input(args){await execute('playback.input',{keys:[],buttons:[],viewport,...args});await step();}
 async function key(k){await input({keys:[k]});await input({});await step(6);}
 async function click(name){const pointer=clientWorldFixture(await snapshot()).canvasPoint(name,viewport,false);await input({pointer,buttons:[0]});await input({pointer});await step(6);}
 const report={passed:false,label,editorSha256:createHash('sha256').update(fs.readFileSync(process.env.MENGINE_EDITOR_EXECUTABLE)).digest('hex'),screens:[]};
-let lanServer,lanHost;
+let lanServer,lanHost,lanHeartbeat;
 async function capture(name){await step(10);for(let i=0;;i++)try{const shot=await query('view.screenshot',{target:'game',maxSize:1280,includeNativeProfile:true});const file=path.join(out,label+'-'+name+'.png');fs.writeFileSync(file,Buffer.from(shot.dataUrl.split(',')[1],'base64'));report.screens.push({name,file,viewport,profile:shot.nativeProfile});console.log('Captured '+name);return;}catch(error){if(i>20||!/NOT_READY|canvas is not available yet/.test(error.message))throw error;await sleep(500);}}
 const mode=s=>JSON.parse(s.entities.find(e=>e.name==='Frost telemetry').components.Text.text).mode;
 try{
-  if(process.argv.includes('--lan-only')||process.argv.includes('--create-only')){
+  if(process.argv.includes('--lan-only')||process.argv.includes('--create-only')||process.argv.includes('--lobby-only')){
     const {createServer}=await import('../samples/frostbound-realms/server.mjs');lanServer=createServer({port:0});const {port}=await lanServer.listening;
     const scriptPath=path.join(sample,'Assets/Scripts/Main.js'),script=fs.readFileSync(scriptPath,'utf8'),patched=script.replace("address='127.0.0.1:7788'","address='127.0.0.1:"+port+"'");assert.notEqual(patched,script);fs.writeFileSync(scriptPath,patched);
     report.lan={address:'127.0.0.1:'+port,sourceScriptSha256:createHash('sha256').update(script).digest('hex'),testedScriptSha256:createHash('sha256').update(patched).digest('hex'),fixtureChange:'Default TCP endpoint only'};
@@ -32,7 +33,29 @@ try{
   for(let i=0;;i++)try{await query('project.state');break;}catch(error){if(i===20||!/BridgeConnectionError|request timed out|not ready/.test(error.message))throw error;await sleep(500);}
   await execute('project.open',{root:sample});await execute('scene.open',{name:'Main',discardDirty:true});await execute('panel.focus',{kind:'game'});await execute('playback.play',{paused:true});await step(12);
   assert.equal(mode(await snapshot()),'title');
-  if(process.argv.includes('--create-only')){
+  if(process.argv.includes('--lobby-only')){
+    await click('network box');for(let i=0;mode(await snapshot())!=='rooms';i++){assert.ok(i<30,'LAN connection');await sleep(100);await step();}
+    await click('lanCreate box');await click('createStart box');for(let i=0;mode(await snapshot())!=='lobby';i++){assert.ok(i<30,'Native lobby creation');await sleep(100);await step();}
+    const room=[...lanServer.rooms.values()][0],S=createRequire(import.meta.url)('../samples/frostbound-realms/game/simulation.js');
+    lanHost=net.createConnection({host:'127.0.0.1',port:Number(report.lan.address.split(':')[1])});lanHost.on('data',()=>{});await new Promise((resolve,reject)=>{lanHost.once('connect',resolve);lanHost.once('error',reject);});
+    lanHost.write(JSON.stringify({type:'hello',protocol:S.PROTOCOL,name:'原版大厅测试玩家'})+'\n'+JSON.stringify({type:'join',code:room.code,faction:3})+'\n');
+    for(let i=0;room.players.length!==2;i++){assert.ok(i<30,'Second lobby player');await sleep(100);await step();}
+    lanHeartbeat=setInterval(()=>{if(!lanHost.destroyed)lanHost.write(JSON.stringify({type:'ping'})+'\n');},2000);await execute('playback.pause');liveInput=true;await step(12);let world=await snapshot();assert.equal(clientWorldFixture(world).visible('Warcraft Lobby Page'),true);assert.equal(clientWorldFixture(world).visible('Modal shade'),false);
+    await execute('view.set_game_resolution',{resolution:{width:1280,height:720}});await click('Warcraft Lobby Chat input');await capture('lobby-before-input');await sleep(500);
+    let ui=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});const canvas=ui.elements.find(e=>e.name==='Game viewport');assert.ok(canvas);
+    const pointer=clientWorldFixture(world).canvasPoint('Warcraft Lobby Chat input',viewport,false),scale=Math.min(canvas.rect.width/viewport[0],canvas.rect.height/viewport[1]);
+    assert.ok(canvas.actions.includes('dragBy'),'Game canvas pointer gesture');await execute('window.ui_drag_by',{windowLabel:'main',selector:canvas.selector,expectedSnapshotRevision:ui.snapshotRevision,deltaX:1,deltaY:0,offsetX:(canvas.rect.width-viewport[0]*scale)/2+pointer[0]*scale,offsetY:(canvas.rect.height-viewport[1]*scale)/2+pointer[1]*scale});
+    await sleep(100);ui=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});let field=ui.elements.find(e=>e.name==='Game InputField text editor');assert.ok(field,'Real Game InputField DOM editor');
+    await execute('window.ui_set_value',{windowLabel:'main',selector:field.selector,expectedSnapshotRevision:ui.snapshotRevision,value:'大厅聊天 Chinese 😀'});assert.equal(room.phase,'lobby','Text edits must not start the match');
+    await input({});await capture('lobby-draft');await sleep(500);ui=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});await execute('window.ui_drag_by',{windowLabel:'main',selector:canvas.selector,expectedSnapshotRevision:ui.snapshotRevision,deltaX:1,deltaY:0,offsetX:(canvas.rect.width-viewport[0]*scale)/2+pointer[0]*scale,offsetY:(canvas.rect.height-viewport[1]*scale)/2+pointer[1]*scale});await sleep(100);ui=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});field=ui.elements.find(e=>e.name==='Game InputField text editor');assert.ok(field);assert.equal(field.value,'大厅聊天 Chinese 😀');
+    await execute('window.ui_press_key',{windowLabel:'main',selector:field.selector,expectedSnapshotRevision:ui.snapshotRevision,key:'Enter'});await step(6);
+    for(let i=0;!room.chat.length;i++){assert.ok(i<30,'Native chat message');await sleep(100);await step();}
+    assert.equal(room.chat.at(-1).text,'大厅聊天 Chinese 😀');await capture('lobby-chat');
+    world=await snapshot();assert.ok(world.entities.find(e=>e.name==='Warcraft Lobby ChatTextArea').components.Text.text.includes('大厅聊天'));
+    viewport=[960,900];await execute('view.set_game_resolution',{resolution:{width:960,height:900}});await input({pointer:[480,450]});await capture('lobby-chat-tall');
+    assert.ok(room.players.every(p=>!p.ready));await click('lobbyStart box');for(let i=0;mode(await snapshot())!=='playing';i++){assert.ok(i<30,'Host start');await sleep(100);await step();}
+    report.lobby={players:room.players.length,chatMessages:room.chat.length,started:room.phase==='playing',input:'Real Game InputField DOM editing and Enter submit, native script input and TCP echo'};
+  }else if(process.argv.includes('--create-only')){
     await click('network box');for(let i=0;mode(await snapshot())!=='rooms';i++){assert.ok(i<30,'LAN connection');await sleep(100);await step();}
     await click('lanCreate box');assert.equal(mode(await snapshot()),'network');await click('netMoba box');assert.equal(mode(await snapshot()),'network');await capture('create-map');
     viewport=[960,900];await execute('view.set_game_resolution',{resolution:{width:960,height:900}});await input({pointer:[480,450]});await capture('create-map-tall');await click('createStart box');
@@ -65,4 +88,4 @@ try{
   }
   report.errors=(await query('console.get_logs',{limit:300})).filter(e=>e.level==='error');assert.equal(report.errors.length,0,JSON.stringify(report.errors));report.passed=true;
 }catch(error){report.error=error.stack;process.exitCode=1;console.error(error.stack);}
-finally{try{await execute('playback.stop');await execute('scene.open',{name:'Main',discardDirty:true});}catch{}lanHost?.destroy();await lanServer?.close();closeBridgeConnection();try{report.cleanup=await closeNativeQa(root);}catch(error){report.cleanupError=error.message;process.exitCode=1;}fs.writeFileSync(path.join(out,label+'.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,label,screens:report.screens.length,error:report.error}));}
+finally{try{await execute('playback.stop');await execute('scene.open',{name:'Main',discardDirty:true});}catch{}clearInterval(lanHeartbeat);lanHost?.destroy();await lanServer?.close();closeBridgeConnection();try{report.cleanup=await closeNativeQa(root);}catch(error){report.cleanupError=error.message;process.exitCode=1;}fs.writeFileSync(path.join(out,label+'.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,label,screens:report.screens.length,error:report.error}));}

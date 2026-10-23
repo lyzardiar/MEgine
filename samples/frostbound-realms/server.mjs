@@ -12,7 +12,7 @@ export function createServer({host='127.0.0.1',port=7788}={}) {
   function publish(r){if(!r.players.some(p=>p.seat===r.owner&&p.client))r.owner=r.players.find(p=>p.client)?.seat??r.owner;for(const p of r.players)if(p.client)send(p.client,roomInfo(r));}
   function view(r,p){const state=S.publicState(r.state,p.team);for(const u of state.units){delete u.path;delete u.dest;delete u.route;delete u.home;}state.events=state.events.slice(-24);return state;}
   function leave(c,retain=false){const r=c.room,p=c.player;if(!r||!p)return;c.room=null;c.player=null;p.client=null;p.expires=Date.now()+(retain?15000:0);if(!retain){r.players=r.players.filter(v=>v!==p);if(r.state&&r.map.mode!=='td')S.setAI(r.state,p.team,true);}if(!r.players.some(v=>v.client)&&!retain)rooms.delete(r.code);else publish(r);}
-  function join(c,r,p){leave(c);p.client=c;p.expires=0;c.room=r;c.player=p;c.lastSeq=0;send(c,{type:'joined',seat:p.seat,team:p.team,token:p.token,code:r.code,state:r.state?view(r,p):null});publish(r);}
+  function join(c,r,p){leave(c);p.client=c;p.expires=0;c.room=r;c.player=p;c.lastSeq=0;send(c,{type:'joined',seat:p.seat,team:p.team,token:p.token,code:r.code,chat:r.chat??[],state:r.state?view(r,p):null});publish(r);}
   function handle(c,m){
     if(!m||typeof m!=='object'||Array.isArray(m))return fail(c,'Invalid message');
     if(m.type==='hello'){if(m.protocol!==S.PROTOCOL)return fail(c,'Protocol version mismatch');c.hello=true;c.name=String(m.name||'Commander').replace(/[\r\n]/g,'').slice(0,20);return send(c,{type:'welcome',protocol:S.PROTOCOL});}
@@ -24,7 +24,7 @@ export function createServer({host='127.0.0.1',port=7788}={}) {
     if(m.type==='create'){
       if(rooms.size>=24)return fail(c,'Server room limit reached');let map;try{map=S.validateMap(m.map||S.defaultMap(m.mode));}catch(e){return fail(c,e.message);}
       if(!['skirmish','moba','td'].includes(map.mode))return fail(c,'This map is single player');
-      const code=randomBytes(3).toString('hex').toUpperCase(),r={code,map,players:[],owner:0,phase:'lobby',sharedHeroClass:m.heroClass??0,sharedFaction:S.clamp(Number.isInteger(m.faction)?m.faction:0,0,3),state:null,queue:[]};rooms.set(code,r);
+      const code=randomBytes(3).toString('hex').toUpperCase(),r={code,map,players:[],owner:0,phase:'lobby',chat:[],chatSequence:0,sharedHeroClass:m.heroClass??0,sharedFaction:S.clamp(Number.isInteger(m.faction)?m.faction:0,0,3),state:null,queue:[]};rooms.set(code,r);
       const p={seat:0,team:0,token:randomBytes(18).toString('hex'),name:c.name,ready:false,heroClass:m.heroClass??0,faction:S.clamp(Number.isInteger(m.faction)?m.faction:0,0,3)};r.players.push(p);join(c,r,p);return;
     }
     if(m.type==='join'){
@@ -33,10 +33,17 @@ export function createServer({host='127.0.0.1',port=7788}={}) {
     }
     if(m.type==='resume'){const r=rooms.get(String(m.code)),p=r?.players.find(v=>v.token===m.token&&!v.client&&v.expires>Date.now());if(!p)return fail(c,'Reconnect token expired');join(c,r,p);return;}
     const r=c.room,p=c.player;if(!r||!p)return fail(c,'Join a room first');
+    if(m.type==='chat'){
+      if(r.phase!=='lobby')return fail(c,'Lobby chat is unavailable during a match');
+      if(typeof m.text!=='string')return fail(c,'Invalid chat message');
+      const text=[...m.text.replace(/[\u0000-\u001f\u007f]/g,' ').trim()].slice(0,256).join('');if(!text)return;
+      const message={type:'chat',id:++r.chatSequence,seat:p.seat,name:p.name,text};r.chat.push(message);if(r.chat.length>128)r.chat.shift();
+      for(const player of r.players)if(player.client)send(player.client,message);return;
+    }
     if(m.type==='pick'){if(r.phase!=='lobby')return fail(c,'Match already started');if(r.map.mode==='td'&&p.seat!==r.owner)return fail(c,'Only the host can choose the shared hero');if(!S.validHero(m.heroClass))return fail(c,'Invalid hero selection');p.heroClass=m.heroClass;if(r.map.mode==='td')r.sharedHeroClass=m.heroClass;for(const v of r.players)v.ready=false;publish(r);return;}
     if(m.type==='ready'){if(r.phase!=='lobby')return fail(c,'Match already started');p.ready=!!m.ready;publish(r);return;}
     if(m.type==='start'){
-      if(p.seat!==r.owner)return fail(c,'Only the host can start');if(r.phase!=='lobby')return fail(c,'Match already started');if(r.players.some(v=>!v.ready||!v.client))return fail(c,'All commanders must be ready');
+      if(p.seat!==r.owner)return fail(c,'Only the host can start');if(r.phase!=='lobby')return fail(c,'Match already started');if(r.players.some(v=>!v.client))return fail(c,'All players must be connected');
       const commander=t=>r.players.find(p=>p.team===t&&(r.map.mode!=='td'||p.seat===r.owner));
       const state=S.create(r.map.mode,{map:r.map,ai:[0,1].map(t=>r.map.mode!=='td'&&!commander(t)),heroes:[0,1].map(t=>r.map.mode==='td'&&t===0?r.sharedHeroClass:commander(t)?.heroClass??r.map.players[t].heroClass),factions:[0,1].map(t=>r.map.mode==='td'&&t===0?r.sharedFaction:commander(t)?.faction??r.map.players[t].faction)}),error=S.tdMapError(state);if(error)return fail(c,error);r.state=state;r.phase='playing';r.queue=[];publish(r);for(const v of r.players)if(v.client)send(v.client,{type:'state',state:view(r,v)});return;
     }

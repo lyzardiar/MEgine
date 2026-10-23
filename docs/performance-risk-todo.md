@@ -1005,3 +1005,12 @@ SharedSnapshotWorld保留源ID与本地Entity的顺序表。新快照的数量�
 手动局部benchmark_dense_hierarchy通过：两组预热、九组交替样本，每组30次构建。真实Amazonia 7,409实体解析5,411节点，中位1.023467→0.636240ms（约37.8%）；菜单4,340实体解析1,640节点，保留稀疏存储，中位0.157127→0.156907ms，基本持平。输出逐项相同。Amazonia密集槽数组为1,066,896字节（7,409×144），不包含临时请求数组和分配器元数据；未测整个Editor内存或FPS。
 
 复现：`cargo test -p mengine-core --release --lib benchmark_dense_hierarchy -- --ignored --nocapture --test-threads=1`。证据保存在tmp/docs-artifacts/editor-performance-risk/dense-hierarchy-{tests,equivalence,density,consumers,audio,physics,benchmark}.log及dense-hierarchy-summary.json（源场景摘要、完整样本、内存口径）。本项未重建原生Editor或重跑地图QA；当前f00c7f2e EXE尚不含本项。下一相关原生批次核对Game/Scene/预览、动画/失活及复活、父级与Undo/Redo、正常地图切换/Stop，观察连续层级构建及总呈现耗时。已有特殊材质、强制竞态、跨窗口和真实输入延迟待测继续保留。
+
+
+### 密集层级的原生集成结果
+
+与大厅文本提交共用EXE `3371f8fc2dfb46bf16bf871569bbc570e7feecd594d45ae4934339b261ae1054`，前端构建及原生Release构建通过，原生耗时1分27秒，仅既有world_from_snapshot未使用告警。B001/map-session-1792788103376.json通过，0 error、正常退出；覆盖Scene/Game／相机预览／轨道、分辨率、真实Inspector修改与恢复、三层动画、模拟时钟和Stop还原。运行截图已检查。
+
+7,410实体、850×478、末尾240次呈现：54.4452次/秒，间隔平均18.3671ms/P95 27.7ms，原生渲染12.4069ms，世界同步1.3059ms；239个模拟版本分段数据完整。此前独立运行55.1382次/秒，本轮没有证据支持稳定整帧提速或60 FPS。最新单帧TransformHierarchy.build为1.4908ms，不作平均收益结论。此前CPU基准的局部收益与本次真实呈现口径分开保留。
+
+证据为 `tmp/docs-artifacts/editor-performance-risk/dense-hierarchy-native-{qa.log,summary.json}`，完整报告见测试批次。父级修改与Undo/Redo、失活／复活、强制切换竞态、脱离窗口、材质专项和真实操作延迟仍待后续相关批次验证。本次未重跑全库、全量地图导入或其他已通过的专项。

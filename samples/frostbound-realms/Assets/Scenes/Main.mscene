@@ -152765,7 +152765,7 @@
         "entity": 90658,
         "name": "UI NetworkDialog / Presentation",
         "parent": 90657,
-        "siblingIndex": 2,
+        "siblingIndex": 3,
         "active": true,
         "tag": "Untagged",
         "layer": 0,
@@ -153024,7 +153024,7 @@
         "entity": 90663,
         "name": "UI NetworkDialog / Controls",
         "parent": 90657,
-        "siblingIndex": 3,
+        "siblingIndex": 4,
         "active": true,
         "tag": "Untagged",
         "layer": 0,
@@ -180243,7 +180243,7 @@
         "entity": 91238,
         "name": "Warcraft LAN Browser",
         "parent": 90657,
-        "siblingIndex": 1,
+        "siblingIndex": 2,
         "active": true,
         "tag": "Untagged",
         "layer": 0,
@@ -183251,7 +183251,7 @@
         "entity": 91294,
         "name": "Warcraft Create Page",
         "parent": 90657,
-        "siblingIndex": 0,
+        "siblingIndex": 1,
         "active": true,
         "tag": "Untagged",
         "layer": 0,
@@ -184877,6 +184877,1811 @@
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
             "node": "d1dae3bb-0138-5fb6-a003-316646363b25",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91326,
+        "name": "Warcraft Lobby Page",
+        "parent": 90657,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "69c5ef3c-e965-5109-af4d-abd9c86b62ef",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91327,
+        "name": "Warcraft Lobby TeamSetupContainer",
+        "parent": 91326,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -183.75,
+              -87.75
+            ],
+            "size_delta": [
+              556.5,
+              468
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "a9e4e98b-5368-566c-ae29-42d17e1a7260",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91328,
+        "name": "Warcraft Lobby ChatTextArea",
+        "parent": 91326,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -185.625,
+              240.375
+            ],
+            "size_delta": [
+              554.25,
+              113.25
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Bottom",
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "0df2c54f-eb34-58bc-a5ca-bd7216fbee3f",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91329,
+        "name": "Warcraft Lobby ChatEditBox",
+        "parent": 91326,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -184.875,
+              320.25
+            ],
+            "size_delta": [
+              563.25,
+              48
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardEditBox-96x48.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              24,
+              24,
+              24,
+              24
+            ],
+            "source_size": [
+              96,
+              48
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "295e5a59-05df-58ad-ad45-7e65df14f612",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91330,
+        "name": "Warcraft Lobby Chat input",
+        "parent": 91329,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              -21.6,
+              -12
+            ]
+          },
+          "InputField": {
+            "text": "",
+            "placeholder": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 18,
+            "character_limit": 256,
+            "multiline": false,
+            "interactable": true,
+            "background_color": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "text_color": [
+              1,
+              1,
+              1,
+              1
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "f468dcb3-ca13-5519-a154-38cba7cee5fa",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91331,
+        "name": "Warcraft Lobby MapInfoPaneContainer",
+        "parent": 91326,
+        "siblingIndex": 3,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              308.625,
+              -157.5
+            ],
+            "size_delta": [
+              281.25,
+              270
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "9959ca94-c60f-5d5b-ae7b-dbe8b20ef2ce",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91332,
+        "name": "Warcraft Lobby GameNameLabel",
+        "parent": 91326,
+        "siblingIndex": 4,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              308.625,
+              -309.904688
+            ],
+            "size_delta": [
+              281.25,
+              15.609375
+            ]
+          },
+          "Text": {
+            "text": "游戏名字：",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "ea4a26a1-d536-5ac9-a6f2-eab7c3cda946",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91333,
+        "name": "Warcraft Lobby GameNameValue",
+        "parent": 91326,
+        "siblingIndex": 5,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              308.625,
+              -309.904688
+            ],
+            "size_delta": [
+              281.25,
+              15.609375
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "2a38298a-e1f2-54b2-a6c5-7ec52baba92c",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91334,
+        "name": "Warcraft Lobby AdvancedOptionsContainer",
+        "parent": 91326,
+        "siblingIndex": 6,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              308.625,
+              62.1
+            ],
+            "size_delta": [
+              281.25,
+              150
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "1cc61173-bc54-5f1f-a627-5c7bc4cf458b",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91335,
+        "name": "Warcraft Lobby StartGameBackdrop",
+        "parent": 91326,
+        "siblingIndex": 7,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              318,
+              232.8
+            ],
+            "size_delta": [
+              288,
+              76.8
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/GlueScreen-Button1-Border.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "5b786e1f-1161-5802-ae1a-045fe20508e7",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91336,
+        "name": "UI Control lobbyStart",
+        "parent": 91326,
+        "siblingIndex": 8,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              346.8,
+              232.8
+            ],
+            "size_delta": [
+              201.6,
+              37.2
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "e931f644-151a-5b03-a7a9-2623055367f6",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91337,
+        "name": "lobbyStart border",
+        "parent": 91336,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "d242fe7b-daba-5396-a020-c1ffcbb0c9c9",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91338,
+        "name": "lobbyStart box",
+        "parent": 91336,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              19,
+              19,
+              19,
+              19
+            ],
+            "source_size": [
+              256,
+              64
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "c53c26df-9ee5-5667-ae0e-f18e781c9938",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91339,
+        "name": "lobbyStart label",
+        "parent": 91336,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Text": {
+            "text": "开始游戏(S)",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "d33aee67-5291-5fa7-a299-459895985469",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91340,
+        "name": "Warcraft Lobby CancelBackdrop",
+        "parent": 91326,
+        "siblingIndex": 9,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              318,
+              294.6
+            ],
+            "size_delta": [
+              288,
+              76.8
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/GlueScreen-Button1-Border.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "e9e8c559-d20a-5509-ac58-2b830d21b33e",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91341,
+        "name": "UI Control lobbyCancel",
+        "parent": 91326,
+        "siblingIndex": 10,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              346.8,
+              294.6
+            ],
+            "size_delta": [
+              201.6,
+              37.2
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "4df3c874-d657-55ef-a51e-575770bfa3fb",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91342,
+        "name": "lobbyCancel border",
+        "parent": 91341,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "d4c10d03-963d-5869-a926-23503c79047c",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91343,
+        "name": "lobbyCancel box",
+        "parent": 91341,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              19,
+              19,
+              19,
+              19
+            ],
+            "source_size": [
+              256,
+              64
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "e9ab7251-4d2b-5e2c-a2e0-8cd488104637",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91344,
+        "name": "lobbyCancel label",
+        "parent": 91341,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Text": {
+            "text": "取消(A)",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "0a269854-71bb-573c-a5c3-b1c16f24d992",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91345,
+        "name": "Warcraft Lobby Team 0",
+        "parent": 91326,
+        "siblingIndex": 11,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -183.75,
+              -313.34999998435376
+            ],
+            "size_delta": [
+              556.5,
+              16.800000031292438
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "e295fd29-aa67-5e0b-abfb-26f026574e3d",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91346,
+        "name": "Warcraft Lobby Slot 0 DownloadValue",
+        "parent": 91326,
+        "siblingIndex": 12,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -448.5,
+              -289.9499999687076
+            ],
+            "size_delta": [
+              27,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "850f1265-9cbc-5b1c-ab42-40fc5503cb81",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91347,
+        "name": "Warcraft Lobby Slot 0 NameMenu",
+        "parent": 91326,
+        "siblingIndex": 13,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -323.925,
+              -289.9499999687076
+            ],
+            "size_delta": [
+              213.75,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "1e85f9f7-a096-5d6c-a5d9-1fbe442eccbc",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91348,
+        "name": "Warcraft Lobby Slot 0 RaceMenu",
+        "parent": 91326,
+        "siblingIndex": 14,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -169.05,
+              -289.9499999687076
+            ],
+            "size_delta": [
+              96,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "35f6ffd4-ac7b-5005-a4d5-478c8d10634d",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91349,
+        "name": "Warcraft Lobby Slot 0 TeamButton",
+        "parent": 91326,
+        "siblingIndex": 15,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -73.05000000000001,
+              -289.9499999687076
+            ],
+            "size_delta": [
+              96,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "e5a3ef6d-3cd1-5a3c-a8e3-b598c7befee0",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91350,
+        "name": "Warcraft Lobby Slot 0 ColorButton",
+        "parent": 91326,
+        "siblingIndex": 16,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -1.0500000000000114,
+              -289.9499999687076
+            ],
+            "size_delta": [
+              48,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "d85fe23f-ee4a-5f5d-aaa9-356660d86e43",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91351,
+        "name": "Warcraft Lobby Slot 0 HandicapMenu",
+        "parent": 91326,
+        "siblingIndex": 17,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              58.94999999999999,
+              -289.9499999687076
+            ],
+            "size_delta": [
+              72,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "bb6bfb39-64a3-54b3-af3a-58fd056b065f",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91352,
+        "name": "Warcraft Lobby Team 1",
+        "parent": 91326,
+        "siblingIndex": 18,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -183.75,
+              -266.54999995306133
+            ],
+            "size_delta": [
+              556.5,
+              16.800000031292438
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "8b6f31c7-49fb-5345-a2b6-cfb5d32c8810",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91353,
+        "name": "Warcraft Lobby Slot 1 DownloadValue",
+        "parent": 91326,
+        "siblingIndex": 19,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -448.5,
+              -243.14999993741515
+            ],
+            "size_delta": [
+              27,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "9c6081b8-d79c-5165-a134-618450afa3b2",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91354,
+        "name": "Warcraft Lobby Slot 1 NameMenu",
+        "parent": 91326,
+        "siblingIndex": 20,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -323.925,
+              -243.14999993741515
+            ],
+            "size_delta": [
+              213.75,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "26477dc7-f44b-5a2d-adc1-bdbe8e46ae32",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91355,
+        "name": "Warcraft Lobby Slot 1 RaceMenu",
+        "parent": 91326,
+        "siblingIndex": 21,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -169.05,
+              -243.14999993741515
+            ],
+            "size_delta": [
+              96,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "cae30aba-eb3d-5228-abb9-85c996378dbf",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91356,
+        "name": "Warcraft Lobby Slot 1 TeamButton",
+        "parent": 91326,
+        "siblingIndex": 22,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -73.05000000000001,
+              -243.14999993741515
+            ],
+            "size_delta": [
+              96,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "0326ca1f-6aa1-558a-a657-f881ee8b5448",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91357,
+        "name": "Warcraft Lobby Slot 1 ColorButton",
+        "parent": 91326,
+        "siblingIndex": 23,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -1.0500000000000114,
+              -243.14999993741515
+            ],
+            "size_delta": [
+              48,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "aea9f6b8-5786-5b20-af2f-fe135d125108",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91358,
+        "name": "Warcraft Lobby Slot 1 HandicapMenu",
+        "parent": 91326,
+        "siblingIndex": 24,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              58.94999999999999,
+              -243.14999993741515
+            ],
+            "size_delta": [
+              72,
+              30
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "43677616-23c2-57aa-a372-baee90773a39",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91359,
+        "name": "Warcraft Lobby Map information",
+        "parent": 91326,
+        "siblingIndex": 25,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              308.625,
+              -157.5
+            ],
+            "size_delta": [
+              281.25,
+              270
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Top",
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Truncate",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "75f8a96f-fed6-5fd2-a9c8-a4a56cc64b6c",
             "root": false
           }
         }

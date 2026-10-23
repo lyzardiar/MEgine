@@ -792,6 +792,18 @@ mod tests {
     }
 
     #[test]
+    fn script_ui_submissions_are_frame_local_and_legacy_inputs_default_empty() {
+        let mut input: ScriptInput = serde_json::from_value(serde_json::json!({"uiSubmits":[{"entity":4294967296u64,"component":"InputField","value":"中文 😀"}]})).unwrap();
+        let mut host = ScriptHost::new().unwrap(); let mut world = World::new();
+        host.set_input(&input).unwrap();
+        host.eval("function onTick() { const events=engine.input.uiSubmits; if(events.length!==1 || events[0].entity!==4294967296 || events[0].component!=='InputField' || events[0].value!=='中文 😀') throw new Error('UI submit missing'); }").unwrap();
+        host.tick(&mut world, 0.01).unwrap(); input.release_all(); assert_eq!(input.ui_submits.len(), 1);
+        input.finish_frame(); assert!(input.ui_submits.is_empty()); host.set_input(&input).unwrap();
+        host.eval("function onTick() { if(engine.input.uiSubmits.length) throw new Error('UI submit repeated'); }").unwrap(); host.tick(&mut world, 0.01).unwrap();
+        let legacy: ScriptInput = serde_json::from_str("{}").unwrap(); assert!(legacy.ui_submits.is_empty());
+    }
+
+    #[test]
     fn script_reads_world_and_input_edges_and_reports_failed_ticks() {
         let mut host = ScriptHost::new().unwrap();
         let mut world = World::new();

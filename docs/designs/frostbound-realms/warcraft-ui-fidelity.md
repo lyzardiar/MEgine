@@ -14,10 +14,11 @@ python scripts/import-frost-menu-background.py
 python scripts/extract-frost-warcraft-options.py
 python scripts/extract-frost-warcraft-lan.py
 python scripts/extract-frost-warcraft-create.py
+python scripts/extract-frost-warcraft-lobby.py
 node scripts/restore-frost-warcraft-ui.mjs
 ```
 
-前两项负责可复现导入，拒绝覆盖已被手动修改的生成资源。三项extract脚本读取保留的FDF生成布局，最后一项应用原版布局到 UI prefab；它会覆盖对应控件的布局，请将需长期维护的布局变更同步至脚本。日常直接编辑 prefab 后只执行 `node scripts/sync-frost-ui.mjs`，该命令保留既有实体 ID，更新场景、控件注册与脚本。完整样例构建仍通过 `build-frostbound.mjs` 读取 prefab。
+前两项负责可复现导入，拒绝覆盖已被手动修改的生成资源。四项extract脚本读取保留的FDF生成布局，最后一项应用原版布局到 UI prefab；它会覆盖对应控件的布局，请将需长期维护的布局变更同步至脚本。日常直接编辑 prefab 后只执行 `node scripts/sync-frost-ui.mjs`，该命令保留既有实体 ID，更新场景、控件注册与脚本。完整样例构建仍通过 `build-frostbound.mjs` 读取 prefab。
 
 ## 坐标与呈现
 
@@ -40,7 +41,8 @@ FDF `.8 × .6` 映射到 `960 × 720`，每源单位 1200 像素，字体、按�
 | 暂停 | 原Human石框、金边按钮及FDF排列，快捷键、保存、装载、返回；选项返回保留对局 | 其他种族皮肤、保存／装载浏览器、原帮助与提示面板、独立暂停语义 |
 | 对局HUD | 原Console资源基础上使用原字体，任务／菜单／盟友／聊天四槽 | 盟友／聊天完整面板与功能，其他细节逐项原版对照 |
 | 局域网浏览 | 按原LocalMultiplayerJoin的25个源节点生成；玩家名、游戏列表、创建者与速度、底部按钮；真实TCP刷新／加入／断线恢复 | 原列表行皮肤、地图预览和高级选项内容、原LAN发现协议 |
-| 创建游戏 | 按原LocalMultiplayerCreate的21个源节点生成；原速度条、大按钮底座、分区和创建／取消；先选图再创建 | 原目录列表、地图缩略图、原动态详情；服务器调速／高级选项；等待大厅与玩家槽布局 |
+| 创建游戏 | 按原LocalMultiplayerCreate的21个源节点生成；原速度条、大按钮底座、分区和创建／取消；先选图再创建 | 原目录列表、地图缩略图、原动态详情；服务器调速／高级选项 |
+| 等待大厅 | GameChatroom的13个源节点、原聊天字体、队伍行指标、开始／取消；真实房间聊天与房主开始 | 12槽／队伍／观察者协议、种族／颜色／让步下拉、地图详情、高级选项、聊天滚动条及斜杠命令 |
 | 鸣谢／退出／重命名／提示 | 保留现有功能并使用原字体 | 对应原版页面、交互和边框；工程来源说明保留真实署名 |
 
 此表持续跟进；资源来自原版不代表所有界面已经1:1完成。
@@ -73,7 +75,7 @@ FDF `.8 × .6` 映射到 `960 × 720`，每源单位 1200 像素，字体、按�
 
 进入局域网会浏览配置的TCP服务器。玩家名支持原字体输入、持久化与实际握手；输入时不触发创建游戏快捷键。游戏列表支持选择、翻页、刷新、按房间代码保留选择；满员或已开始的房间禁止加入。连接失败保留浏览页，允许改地址、重试或取消；退出后忽略迟到的网络事件。多人存档装载按钮禁用。
 
-静态几何来自源FDF，动态列表行、翻页／服务器设置和右侧摘要内容由当前运行能力提供，尚未按原客户端还原列表滚动条、地图预览与高级选项。创建游戏页见下节，等待大厅布局仍待还原。TCP服务器状态明确显示；不据此宣称支持原版UDP自动发现或Warcraft联机协议。原客户端逐像素对照、中文IME实机输入、键盘Tab焦点仍待验收。
+静态几何来自源FDF，动态列表行、翻页／服务器设置和右侧摘要内容由当前运行能力提供，尚未按原客户端还原列表滚动条、地图预览与高级选项。创建游戏页见下节，等待大厅见下节。TCP服务器状态明确显示；不据此宣称支持原版UDP自动发现或Warcraft联机协议。原客户端逐像素对照、中文IME实机输入、键盘Tab焦点仍待验收。
 
 定向检查：`node scripts/test-frost-warcraft-lan.mjs` 校验来源摘要、源几何、两个窗口比例、玩家名与输入保护、选中／翻页／满员禁入、刷新／创建返回、取消迟到事件及断线恢复。`qa-frost-warcraft-ui.mjs --lan-only` 复用现有Editor，与随机端口的真实本地TCP服务器完成房间浏览和加入；隔离副本只覆盖默认服务器地址，并记录源脚本和实际脚本摘要。最终原生报告 `native-1792763499711.json` 为0 error；三张截图覆盖空列表、房间详情及实际960×900游戏渲染分辨率。原始证据保留于 `tmp/docs-artifacts/war3-ui/`。
 
@@ -82,14 +84,14 @@ FDF `.8 × .6` 映射到 `960 × 720`，每源单位 1200 像素，字体、按�
 
 保留War3Patch中的 `LocalMultiplayerCreate.fdf`、原三档速度条BLP与大按钮底座BLP。`extract-frost-warcraft-create.py` 记录21个源节点的继承、锚点、文字、尺寸、来源行和摘要；`restore-frost-warcraft-create.mjs` 写入NetworkDialog prefab。原按钮底座和速度条直接使用源纹理；未解析的动态控件不补造源坐标。公共UI来源收据现有54个源成员、178个文件摘要。
 
-局域网浏览页的创建入口打开此页。现有三种联网地图先选择、显示名称和描述，再按创建按钮或C／Enter发出创建请求；上下键切换，取消／A／Escape返回浏览，断线回到选图页。等待房间保留现有联机功能。服务器当前为固定速度，速度条和高级选项禁用；联网仍使用现有地图协议，单人任意w3x／w3m导入流程保持原入口。原版目录、地图缩略图、动态详情与等待大厅还需还原。
+局域网浏览页的创建入口打开此页。现有三种联网地图先选择、显示名称和描述，再按创建按钮或C／Enter发出创建请求；上下键切换，取消／A／Escape返回浏览，断线回到选图页。等待房间保留现有联机功能。服务器当前为固定速度，速度条和高级选项禁用；联网仍使用现有地图协议，单人任意w3x／w3m导入流程保持原入口。原版目录、地图缩略图与动态详情还需还原。
 
 定向检查：`node scripts/test-frost-warcraft-create.mjs` 覆盖来源摘要、源布局、两个长宽比的选图／快捷键、选择不发送创建、创建载荷、禁用选项、断线与取消；LAN入口集成检查通过。全部4308个既有场景实体ID保留，现有4340实体。`qa-frost-warcraft-ui.mjs --create-only` 复用现有EXE，实际TCP创建moba房间，1280×720与960×900截图通过、0 error、进程正常退出。最终报告 `tmp/docs-artifacts/war3-ui/native-1792765684295.json`；此前报告1792765608846因QA误读服务端room.mode字段失败，最终检查使用实际room.map.mode。原始产物不纳入提交；测试不能证明未完成的逐像素／全部界面等价。
 
 
 ## 等待大厅原始定义与运行时依据
 
-等待大厅对应GameChatroom。原件已加入UI导入收据：GameChatroom.fdf来自War3xLocal.mpq，TeamSetup.fdf、AdvancedOptionsDisplay.fdf与UI/MiscUI.txt来自War3Patch.mpq；PlayerSlot.fdf已随公共UI保留。当前收据58个源成员、182个文件摘要。该来源补充不改变当前大厅界面，原版布局与交互仍待接入。
+等待大厅对应GameChatroom。原件已加入UI导入收据：GameChatroom.fdf来自War3xLocal.mpq，TeamSetup.fdf、AdvancedOptionsDisplay.fdf与UI/MiscUI.txt来自War3Patch.mpq；PlayerSlot.fdf已随公共UI保留。当前收据58个源成员、182个文件摘要。布局与当前协议支持的交互已接入，完整玩家槽行为见下节限制。
 
 `node scripts/probe-frost-rea-lobby.mjs` 通过固定REA 6.5.0与Rizin检查原Game.dll，SHA256 e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a。四组证据确认：注册表0x6fb690c4将GameChatroom（界面编号11）绑定工厂0x6f2a29c0；工厂创建544字节对象并调用0x6f2a77d0；构造函数安装虚表0x6f982f7c；其0xdc槽0x6f2bcd60绑定TeamSetup、聊天、地图详情、高级选项与开始／取消控件。原始报告写入 `tmp/docs-artifacts/war3-ui/lobby-source/`。工具源站与版本维护入口见 [REA说明](../../../third_party/rea/README-MENGINE.md)。
 
@@ -97,4 +99,17 @@ FDF `.8 × .6` 映射到 `960 × 720`，每源单位 1200 像素，字体、按�
 
 TeamSetup.fdf只有容器，实际玩家行由动态代码建立。探针另覆盖8组TeamSetup证据：注册表0x6fb69124绑定工厂0x6f2a4520，分配404字节，构造0x6f2890a0安装主虚表0x6f979e74；初始化槽0x6f2910c0调用事件绑定0x6f29a860。变更处理0x6f296ce0调用0x6f29a520，按当前槽数和槽索引创建PlayerSlot，再调用0x6f2998f0排列。该排列函数的分组分支依次遍历0至12组，按槽记录的队伍字段筛选并保持槽索引顺序；12组使用COLON_OBSERVERS，其他组使用TEAM_FORMAT或地图队伍名称。完整地图强制队伍、可见性和不分组策略仍需追踪。
 
-组标题高度使用MiscUI的ChatroomHeaders 0.011加原DLL常量0x6f97b458（float约0.003），逻辑高度约0.014；PlayerSlot外层FDF高度0.025。在960×720参考画布分别约16.8px和30px。位置累加读取布局虚表0x1c的实际缩放高度；不能把所有行写成同一固定间距。探针验证原DLL摘要、输出完整性、上述代码标记及MiscUI/PlayerSlot指标，并记录源文件摘要。等待大厅布局尚未接入；现有服务器的两人准备／英雄选择逻辑不能视为原版槽位、队伍和观察者功能等价。
+组标题高度使用MiscUI的ChatroomHeaders 0.011加原DLL常量0x6f97b458（float约0.003），逻辑高度约0.014；PlayerSlot外层FDF高度0.025。在960×720参考画布分别约16.8px和30px。位置累加读取布局虚表0x1c的实际缩放高度；不能把所有行写成同一固定间距。探针验证原DLL摘要、输出完整性、上述代码标记及MiscUI/PlayerSlot指标，并记录源文件摘要。大厅使用上述布局指标；两人协议仍不等价于原版完整槽位、队伍和观察者功能。
+
+
+## 等待大厅接入与文本提交
+
+`extract-frost-warcraft-lobby.py` 生成 `warcraft-lobby-layout.json`，保留13个源节点、锚点、按钮底座、MiscUI字体、PlayerSlot列宽与动态队伍标题指标，以及REA探针和原文件摘要。`restore-frost-warcraft-lobby.mjs` 应用到NetworkDialog；场景4,340个既有实体ID全部保留，增加34个大厅节点。合作模式共享队伍标题，不重复显示同队标题。
+
+房主直接开始，取消返回LAN浏览。房间聊天由服务器使用连接身份标注玩家名和席位，限制256个Unicode码点、128条历史，规范化控制字符；仅本房间成员收到消息，重连恢复历史。输入时保护开始／取消快捷键。Game真实InputField通过帧内 `engine.input.uiSubmits` 传递提交值，不依赖DOM已消费的Enter键是否进入游戏按键列表。
+
+原生报告 `tmp/docs-artifacts/war3-ui/native-1792788057530.json` 通过，0 error、正常退出，EXE SHA256 `3371f8fc2dfb46bf16bf871569bbc570e7feecd594d45ae4934339b261ae1054`。真实文本代理编辑中文与emoji、重新聚焦／Enter提交、原生脚本、TCP回显、两人未准备时房主开始均通过；1280×720与960×900截图已检查。emoji数据完整往返，但原字体缺少对应字形，显示回退仍待处理，不能称为完整字形验收。
+
+`test-frost-warcraft-lobby.mjs` 覆盖来源摘要、几何、字体、两种长宽比、聊天去重、快捷键、离线／客人禁止开始和合作行距；`test-frost-lobby-network.mjs` 覆盖真实TCP隔离、身份、文本界限、历史、重连与房主权限。前端提交队列1项、原生脚本提交1项通过，前端和原生Release构建通过。早期原生报告保留失败状态：Play中组件补丁被拒绝、画布无click语义、未就绪的命中布局、setValue失焦，以及暂停测试停止心跳后断线。最终QA在实时Play中驱动DOM，测试客人发送心跳；未放宽产品超时规则。
+
+当前服务仍只有两个游戏席位。玩家行暂为文本呈现，完整12槽、队伍／观察者／地图强制规则、种族／颜色／让步交互、原聊天滚动条和斜杠命令、地图详情与高级选项继续待实现；中文IME实机输入及与原客户端逐像素对照继续待验收。

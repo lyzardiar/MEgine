@@ -18,6 +18,7 @@ function createFrostClient(){
   const settings=optionControls.settings;
   let optionsPage='gameplay',optionsReturn='title';
   let playerName='玩家',lanNameFocused=false;
+  let lobbyChat=[],lobbyChatFocused=false;
   let menuBackgroundFrame=-1;
   let menuDecorationPage='';
   const menuMaps=[['冬落盆地','skirmish','2 人遭遇战\n采集资源，建立基地。\n消灭敌方主基地获得胜利。'],['远古遗迹','moba','Dota · 双方阵营 / 三路\n选择英雄，购买装备。\n摧毁对方的远古要塞。'],['蜿蜒守望','td','塔防 · 12 波进攻\n建造与升级防御塔。\n守住路线终点。'],['破碎盟约','rpg','战役 · 4 阶段任务\n探索北境，收集遗物。\n击败寒霜领主。'],['冬落围城','skirmish','2 人攻城战\n突破山口与城墙。\n攻占敌方城堡。']];
@@ -90,7 +91,7 @@ function createFrostClient(){
   function init(){if(typeof FrostSceneInitNames!=='undefined'&&typeof engine.findEntitiesByName==='function'){for(const n of FrostSceneInactive)active[n]=false;registerEntities(FrostSceneInitNames);registerEntities(FrostEffectPoolTemplates);}else for(const e of engine.snapshot.entities)if(e.name){entities[e.name]=e;authored[e.name]=e.components;}if(typeof FrostUIManifest!=='undefined')uiManager=FrostUI.create(FrostUIManifest,entities,authored,active,activate,writeComponent);presentationNames=Object.keys(entities).filter(n=>/^(Sound |Menu |Title |Solo |Front |Map |Options |Credits |Quit |Modal |Rename |Pause |HUD Frame |HUD Stat )/.test(n));soundNames=presentationNames.filter(n=>n.startsWith('Sound '));hudFrameNames=presentationNames.filter(n=>n.startsWith('HUD Frame ')||n==='Pause frame');hudStatNames=presentationNames.filter(n=>n.startsWith('HUD Stat '));activate('Frost telemetry',false);for(let i=0;i<S.PROJECTILE_LIMIT;i++){activate('Missile '+i,false);activate('Missile aura '+i,false);}try{const saved=engine.storage.load('settings');optionControls.load(saved);}catch{}applySettings();state=S.create();editMap=S.clone(state.map);initialized=true;}
   function persist(key,value){try{engine.storage.save(key,value);message('Saved '+key+' to your project user-data folder');return true;}catch(e){message('Save failed: '+e.message);return false;}}
   function load(key){try{return engine.storage.load(key);}catch(e){message('Load failed: '+e.message);return null;}}
-  function stopNetwork(){FrostEffects.resetAviary();if(connected)engine.network.send({type:'leave'});engine.network.close();online=false;connected=false;room=null;code='';token='';missileView.reset();sentinelView.reset();sentinelPositions.clear();unitView.reset();unitPositions.clear();cryptWebViews.clear();for(const id of Object.keys(previous))delete previous[id];fx=[];damageText=[];pendingFx=[];lastFrame=-1;}
+  function stopNetwork(){lobbyChat=[];lobbyChatFocused=false;FrostEffects.resetAviary();if(connected)engine.network.send({type:'leave'});engine.network.close();online=false;connected=false;room=null;code='';token='';missileView.reset();sentinelView.reset();sentinelPositions.clear();unitView.reset();unitPositions.clear();cryptWebViews.clear();for(const id of Object.keys(previous))delete previous[id];fx=[];damageText=[];pendingFx=[];lastFrame=-1;}
   function solo(kind,map){const custom=!!map;map=map||presetMap(kind);const next=S.create(kind,{map,...(custom?{}:{factions:[faction,(faction+1)%4],heroes:[heroClass,(heroClass+1)%S.heroes.length]})}),error=S.tdMapError(next);if(error)throw Error(error);stopNetwork();state=next;team=0;mode='playing';heroPanel='skills';shopHero=0;paused=false;selected=state.units.filter(u=>u.team===0&&u.kind==='hero').map(u=>u.id);if(!selected.length){const worker=state.units.find(u=>u.team===0&&u.kind==='worker');if(worker)selected=[worker.id];}camera=state.map.spawns[0].map(v=>S.clamp(v,-18,18));zoom=16;accumulator=0;lastFrame=-1;armed=null;groups={};notice='';selectHero(0);}
   function title(){stopNetwork();mode='title';state=S.create();camera=[0,0];zoom=27;paused=false;selected=[];armed=null;returnEditor=false;}
   function order(command){const c={ids:[...selected],...command};if(['move','attackMove','build','construct','repair','gather'].includes(c.type)&&(engine.input?.keys||[]).some(k=>k==='ShiftLeft'||k==='ShiftRight'))c.append=true;if(online){if(connected)engine.network.send({type:'order',seq:++seq,command:c});else message('Reconnecting; orders are paused');}else{const error=S.command(state,team,c);if(error)message(error);else{sound('order');if(Number.isFinite(c.x)&&Number.isFinite(c.z))commandMarker={x:c.x,z:c.z,until:time+1.2};}}}
@@ -164,12 +165,14 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
       if(e.type==='closed')disconnected(now);
       if(e.type!=='message')continue;const m=e.data;lastReceive=now;
       if(m.type==='joined'){
+        lobbyChat=Array.isArray(m.chat)?m.chat.slice(-128):[];lobbyChatFocused=false;clearLobbyChat();
         missileView.reset();sentinelView.reset();sentinelPositions.clear();unitView.reset();unitPositions.clear();cryptWebViews.clear();for(const id of Object.keys(previous))delete previous[id];
         const resumed=intent==='resume'&&!!m.state;team=m.team;seat=m.seat??m.team;token=m.token;code=m.code;seq=0;if(m.state){state=m.state;collectEvents();mode=state.winner===null?'playing':'finished';}else mode='lobby';
         if(resumed){selected=selected.filter(id=>state.units.some(u=>u.id===id&&S.canControl(state,team,u)&&u.hp>0&&!u.inside));message('Connection restored.');}
         else{selected=[];camera=[...(m.state?.map.spawns[team]||[team?23:-23,team?-23:23])];zoom=18;notice='';noticeUntil=0;}
       }
       if(m.type==='room')room=m;
+      if(m.type==='chat'&&mode==='lobby'&&!lobbyChat.some(line=>line.id===m.id)){lobbyChat.push(m);if(lobbyChat.length>128)lobbyChat.shift();renderAt=0;}
       if(m.type==='rooms'){const selectedCode=rooms[roomIndex]?.code;rooms=m.rooms;const selectedIndex=rooms.findIndex(r=>r.code===selectedCode);roomIndex=selectedIndex>=0?selectedIndex:S.clamp(roomIndex,0,Math.max(0,rooms.length-1));}
       if(m.type==='state'){if(mode==='lobby'&&m.state.mode==='td'){const worker=m.state.units.find(u=>u.team===team&&u.kind==='worker');if(worker)camera=[worker.x,worker.z];}state=m.state;collectEvents();netStates++;mode=state.winner===null?'playing':'finished';if(!selected.length)selected=state.units.filter(u=>u.team===team&&u.kind==='hero').map(u=>u.id);}
       if(m.type==='error'){message(m.message);if(intent==='resume'&&m.message.includes('expired')){stopNetwork();mode='network';}}
@@ -193,9 +196,11 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
   function hovered(button,p){if(!button||button.hidden||button.disabled||button.optionsPage&&button.optionsPage!==optionsPage||uiManager&&!uiManager.interactive(button.id))return false;const r=uiManager?.buttonRect(button.id)??button;return Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.y-r.y)<r.h/2;}
   function saveMap(){try{editMap=S.validateMap(editMap);persist('map'+slot,editMap);}catch(e){message(e.message);}}
   function restoreMap(){const map=load('map'+slot);if(map){try{editMap=S.validateMap(map);editorState();message('Loaded map slot '+slot);}catch(e){message(e.message);}}else message('Map slot '+slot+' is empty');}
+  function clearLobbyChat(){const n='Warcraft Lobby Chat input';if(authored[n]?.InputField){delete sent[n+'/InputField'];set(n,'InputField',{...authored[n].InputField,text:''});}}
+  function sendLobbyChat(value){const text=value??engine.findEntitiesByName(['Warcraft Lobby Chat input'])[0]?.components.InputField?.text??'';if(connected&&text.trim())engine.network.send({type:'chat',text});clearLobbyChat();}
   function primary(){
     if(mode==='network')connect('create');else if(mode==='rooms'){if(canJoinRoom()){capturePlayerName();engine.network.send({type:'hello',protocol:S.PROTOCOL,name:playerName});engine.network.send({type:'join',code:rooms[roomIndex].code,faction,heroClass});}}
-    else if(mode==='lobby'){const p=room?.players.find(p=>(p.seat??p.team)===seat);if(!p?.ready)engine.network.send({type:'ready',ready:true});else if(room?.owner===seat)engine.network.send({type:'start'});}
+    else if(mode==='lobby'){if(connected&&room?.owner===seat&&room.players.every(p=>p.online))engine.network.send({type:'start'});}
     else if(mode==='address'){address=edit||'127.0.0.1:7788';openNetwork();}
     else if(mode==='finished'){if(returnEditor)enterEditor();else title();}
   }
@@ -209,6 +214,8 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
       else if(id==='lanPrevious'||id==='lanNext')roomIndex=S.clamp((Math.floor(roomIndex/8)+(id==='lanNext'?1:-1))*8,0,Math.max(0,rooms.length-1));
       renderAt=0;return;
     }
+    if(id==='lobbyStart'){primary();return;}
+    if(id==='lobbyCancel'){openNetwork();return;}
     if(id==='createStart'){primary();return;}
     if(id==='createCancel'){openNetwork();return;}
     if(['netSkirmish','netMoba','netTd'].includes(id)){selectNetworkMap(id);return;}
@@ -376,13 +383,20 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
       if(lanNameFocused){if(press('Escape')||press('Enter'))capturePlayerName();return;}
       if(mode==='connecting'&&press('Escape')){title();return;}
     }
+    if(mode==='lobby'){
+      const submissions=input.uiSubmits??[];if(submissions.length){const field=engine.findEntitiesByName(['Warcraft Lobby Chat input'])[0]?.entity;for(const event of submissions)if(event.entity===field&&event.component==='InputField')sendLobbyChat(event.value);lobbyChatFocused=false;return;}
+      if(input.pressedButtons.includes(0)){const r=authored['Warcraft Lobby ChatEditBox'].RectTransform;lobbyChatFocused=Math.abs(p.x-r.anchored_position[0])<r.size_delta[0]/2&&Math.abs(p.y-r.anchored_position[1])<r.size_delta[1]/2;}
+      if(press('Enter')){sendLobbyChat();return;}
+      if(lobbyChatFocused){if(press('Escape'))lobbyChatFocused=false;return;}
+    }
     if(press('F10')){if(mode==='options'){action('optionsCancel');}else if(mode==='playing'){paused=true;}else if(returnEditor)enterEditor();else title();return;}
     if(mode==='options'&&optionControls.input(input,p,optionsPage))return;
     if(mode==='playing'&&paused){if(press('Escape'))paused=false;else if(press('KeyX')||press('KeyE'))action('pauseExit');else if(press('KeyS'))action('pauseSave');else if(press('KeyL'))action('pauseLoad');else if(press('KeyO'))action('pauseOptions');else if(press('KeyH'))action('pauseHelp');else if(press('KeyT'))action('pauseTips');else if(press('KeyM')||press('KeyR'))action('pauseResume');else if(input.pressedButtons.includes(0)){const b=FrostButtons.find(b=>b.group==='pause'&&hovered(b,p));if(b)action(b.id);}return;}
     if(mode==='address'){for(const k of input.pressedKeys){if(k==='Backspace')edit=edit.slice(0,-1);else if(/^Digit\d$/.test(k))edit+=k.slice(5);else if(k==='Period')edit+='.';else if(k==='Semicolon')edit+=':';else if(/^Key[A-Z]$/.test(k))edit+=k.slice(3).toLowerCase();}edit=edit.slice(0,64);if(press('Enter'))primary();if(press('Escape'))openNetwork();}
     else if(mode==='network'){if(press('Escape')||press('KeyA')){openNetwork();return;}if(press('F1'))selectNetworkMap('netSkirmish');if(press('F2'))selectNetworkMap('netMoba');if(press('F4'))selectNetworkMap('netTd');const rows=networkMapList(),index=Math.max(0,rows.findIndex(row=>row[1].mode===editMap.mode));if(press('ArrowDown'))selectNetworkMap(rows[(index+1)%rows.length][0]);if(press('ArrowUp'))selectNetworkMap(rows[(index+rows.length-1)%rows.length][0]);if(press('Enter')||press('KeyC'))primary();}
     else if(mode==='rooms'){if(press('Escape')||press('KeyA')){title();return;}if(press('KeyC'))action('lanCreate');if(press('KeyJ'))primary();if(press('ArrowDown'))roomIndex=(roomIndex+1)%Math.max(1,rooms.length);if(press('ArrowUp'))roomIndex=(roomIndex+rooms.length-1)%Math.max(1,rooms.length);if(press('F5'))action('lanRefresh');if(press('Enter'))primary();}
-    else if(mode==='lobby'||mode==='finished'){if(mode==='lobby'&&press('KeyH'))action('lobbyHero');if(press('Enter'))primary();}
+    else if(mode==='lobby'){if(press('Escape')||press('KeyA')){openNetwork();return;}if(press('KeyS'))primary();}
+    else if(mode==='finished'){if(press('Enter'))primary();}
     else if(mode==='title'){for(const [key,id] of [['KeyS','solo'],['KeyL','network'],['KeyO','options'],['KeyC','credits'],['KeyQ','quit']])if(press(key))action(id);if(press('KeyH'))action('heroChoice');if(press('F1')){returnEditor=false;solo('skirmish');}if(press('F2'))action('moba');if(press('F3'))action('td');if(press('F4'))enterEditor();if(press('F8'))action('rpg');if(press('F9'))action('siege');if(press('Enter'))action('network');if(press('Escape'))action('quit');}
     else if(mode==='single'){if(press('Enter')||press('KeyG'))action('custom');if(press('KeyL'))action('continue');if(press('Escape')||press('KeyA'))title();}
     else if(mode==='custom'){if(press('ArrowDown'))mapChoice=(mapChoice+1)%menuMaps.length;if(press('ArrowUp'))mapChoice=(mapChoice+menuMaps.length-1)%menuMaps.length;if(press('KeyH'))action('heroChoice');if(press('Enter')||press('KeyS'))action('mapStart');if(press('Escape')||press('KeyA'))action('mapBack');}
@@ -530,8 +544,9 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
   function render(input){
     uiManager?.update({mode,paused,rename:!!rename},input);
     updateActions(input);
-    const playing=['playing','finished','reconnecting'].includes(mode),editing=mode==='editor',world=playing||editing,lan=lanVisible(),modal=!lan&&['address','connecting','lobby','reconnecting','finished'].includes(mode),front=['custom','options','credits','quit'].includes(mode),allVisible=!playing;
-    show('Warcraft LAN Browser',lan);show('Warcraft Create Page',mode==='network');
+    const playing=['playing','finished','reconnecting'].includes(mode),editing=mode==='editor',world=playing||editing,lan=lanVisible(),modal=!lan&&['address','connecting','reconnecting','finished'].includes(mode),front=['custom','options','credits','quit'].includes(mode),allVisible=!playing;
+    show('Warcraft LAN Browser',lan);show('Warcraft Create Page',mode==='network');show('Warcraft Lobby Page',mode==='lobby');
+    FrostButtons.find(b=>b.id==='lobbyStart').disabled=!connected||room?.owner!==seat||!room?.players.every(p=>p.online);
     for(const n of presentationNames)if(n.startsWith('Modal '))show(n,modal);
     for(const [id,disabled] of [['lanJoin',!canJoinRoom()],['lanPrevious',roomIndex<8],['lanNext',Math.floor(roomIndex/8)*8+8>=rooms.length],['lanRefresh',mode==='connecting']])FrostButtons.find(b=>b.id===id).disabled=disabled;
     const light=world?Math.round(S.daylight(state)*100)/100:1,mix=(a,b)=>a.map((v,i)=>v+(b[i]-v)*light),sun=authored['Winter sun'].DirectionalLight,sky=authored['Northern sky'].EnvironmentLight;
@@ -693,11 +708,19 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
       if(mode==='connecting'||mode==='reconnecting'){title='正在连接';body=address+'\n\n'+notice;primaryLabel='等待连接';}
       if(mode==='address'){title='服务器地址';body=edit+'|\n\n输入 IPv4:端口 或 localhost:端口\n按 Enter 应用地址。';primaryLabel='确定';}
       if(mode==='rooms'){title='加入游戏';body=rooms.length?'':'没有可加入的游戏，请创建游戏或刷新列表。';primaryLabel='加入游戏';}
-      if(mode==='lobby'){title='游戏大厅 · '+code;body=(room?.players||[]).map(p=>((p.seat??p.team)===seat?'> ':'   ')+p.name+(room?.mode==='td'?' / 守方': ' / '+S.heroes[p.heroClass??0].label)+' / '+(p.ready?'已准备':'未准备')).join('\n')+(room?.mode==='td'?'\n\n合作塔防：共享单位、金币、视野和生命。\n房主选择共享英雄；双方准备后开始。\n任一玩家离线，另一位可继续防守。':'\n\n更换英雄后，玩家需要重新准备。\n空缺的对手位置由电脑控制。\n双方准备后，房主开始游戏。');primaryLabel=room?.players.find(p=>(p.seat??p.team)===seat)?.ready?(room?.owner===seat?'开始游戏':'已准备'):'准备';}
       if(mode==='finished'){title=state.winner===team?'VICTORY':'DEFEAT';body=state.map.name+'\n\nEnemy units defeated: '+state.teams[team].kills+'\nBattle time: '+Math.floor(state.frame/600)+'m '+Math.floor(state.frame/10)%60+'s';primaryLabel=returnEditor?'RETURN TO EDITOR':'RETURN TO MENU';}
       label('Modal title',title);label('Modal text',body);label('modalPrimary label',primaryLabel);
       const r=authored['Modal text'].RectTransform;set('Modal text','RectTransform',{...r,anchored_position:[0,-30],size_delta:[870,294]});
-      label('lobbyHero label',(room?.mode==='td'?'共享英雄：':'英雄：')+S.heroes[(room?.mode==='td'?room.sharedHeroClass:room?.players.find(p=>(p.seat??p.team)===seat)?.heroClass)??heroClass].label);
+    }
+    if(mode==='lobby'){
+      label('Warcraft Lobby GameNameValue',room?.name??'');label('Warcraft Lobby ChatTextArea',lobbyChat.slice(-8).map(line=>line.name+': '+line.text).join('\n'));
+      const players=room?.players??[],lobby=FrostWarcraftLobby,teamLabel=index=>lobby.strings.TEAM_FORMAT.replace('%d',String(index+1));
+      for(let i=0;i<2;i++){
+        const p=players.find(p=>(p.seat??p.team)===i),teamIndex=room?.mode==='td'?0:i;
+        label('Warcraft Lobby Team '+i,room?.mode==='td'&&i===1?'':teamLabel(teamIndex));
+        for(const [name,value] of Object.entries({DownloadValue:'',NameMenu:p?p.name+(p.online?'':'（离线）'):room?.mode==='td'?lobby.strings.OPEN:lobby.strings.COMPUTER_NORMAL,RaceMenu:['HUMAN','ORC','NIGHT_ELF','UNDEAD'].map(key=>lobby.strings[key])[p?.faction??(i%4)],TeamButton:teamLabel(teamIndex),ColorButton:'',HandicapMenu:'100%'})){const n='Warcraft Lobby Slot '+i+' '+name,r=authored[n].RectTransform;label(n,value);set(n,'RectTransform',{...r,anchored_position:[r.anchored_position[0],r.anchored_position[1]-(room?.mode==='td'&&i===1?lobby.slot.headerHeight:0)]});}
+      }
+      label('Warcraft Lobby Map information',(room?.name??'')+'\n\n'+(networkMapList().find(row=>row[1].mode===room?.mode)?.[2]??'')+'\n\n玩家：'+players.length+' / 2');
     }
     if(mode==='network'){
       const choices=networkMapList(),selectedMap=choices.find(row=>row[1].mode===editMap.mode);
