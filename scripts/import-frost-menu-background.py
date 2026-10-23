@@ -128,6 +128,9 @@ def generate():
     assert sha(raw) == source['sha256']
     camera = importlib.import_module('import-frost-animated-portrait').convert(raw)
     assert camera['initialSequence'] == 0 and camera['sequences'][0]['name'] == 'Stand'
+    # The menu renderer applies its own projection convention to the stored MDX field of view.
+    camera['view']['camera3D']['fov_y_degrees'] *= 0.6
+    camera['projectionReference'] = dict(fovScale=0.6, scope='Menu background only', source='https://github.com/Retera/WarsmashModEngine/blob/f1bcb4ae54f0ff4a8d5e4bd5892b6a6622441b15/core/src/com/etheller/warsmash/WarsmashGdxMenuScreen.java#L674', originalGameDllVerified=False)
     lighting = source_lighting(raw)
     logo_source = originals['replaceabletextures/worldeditui/warcraftiiiftlogo.blp']
     read('SourceAssets/' + logo_source['path'].replace('\\', '/'))

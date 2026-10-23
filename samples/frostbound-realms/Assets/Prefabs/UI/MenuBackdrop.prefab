@@ -3469,7 +3469,7 @@
           },
           "Camera3D": {
             "projection": "perspective",
-            "fov_y_degrees": 59.963473817970886,
+            "fov_y_degrees": 35.97808429078253,
             "near": 2.5859375,
             "far": 546.875,
             "primary": false,

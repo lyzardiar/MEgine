@@ -45,7 +45,7 @@ const backdrop=add('MenuBackdrop',node('Warcraft menu backdrop',{RectTransform:f
 prefabs.MenuBackdrop.root.children=[backdrop,...prefabs.MenuBackdrop.root.children.filter(n=>n!==backdrop)];
 const modelNode=add('MenuBackdrop',node('Menu background model',{Transform:{...identity,position:[2000,0,0]}},model.parts.map((p,i)=>node('Menu background model mesh '+i,{Transform:identity,MeshRenderer:{mesh:p.mesh+'#pose=0:0',material:p.material,cast_shadows:false,receive_shadows:false}}))));
 for(const light of background.lighting.engineLights){const n=node(light.name,structuredClone(light.components));if(!nodes.has(n.name)){modelNode.children.push(n);nodes.set(n.name,n);}}
-const view=background.camera.view,camera=add('MenuBackdrop',node('Menu background camera',{Transform:{...view.camera,position:[2000+view.camera.position[0],...view.camera.position.slice(1)]},Camera3D:{...view.camera3D,primary:false,clear_flags:'solidcolor',background_color:[0,0,0,1]}}));
+const view=background.camera.view,cameraComponents={Transform:{...view.camera,position:[2000+view.camera.position[0],...view.camera.position.slice(1)]},Camera3D:{...view.camera3D,primary:false,clear_flags:'solidcolor',background_color:[0,0,0,1]}},camera=add('MenuBackdrop',node('Menu background camera',cameraComponents));Object.assign(camera.components,cameraComponents);
 const painting=place('Menu painting',0,0,960,720);delete painting.components.Image;
 painting.components.RawImage={render_camera:{$mengine_entity_ref:{kind:'prefab_node',node:camera.id}},render_root:{$mengine_entity_ref:{kind:'prefab_node',node:modelNode.id}},color:[1,1,1,1],raycast_target:false};
 const decorationRoot=add('MenuBackdrop',node('Menu decoration model',{Transform:identity}));

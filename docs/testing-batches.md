@@ -198,4 +198,6 @@ QA增加 `--cache-project <前次隔离项目>`，校验源地图和共享文件
 
 原生针对性检查复用现有EXE（SHA256 `03e55ada83c9a26a2c194bc84ec529c01d82260ea86d7c3bfa3fa5357318ff7c`），命令 `node scripts/qa-frost-warcraft-ui.mjs --options-only`。报告 `tmp/docs-artifacts/war3-ui/native-1792760716663.json` 三页及960×900声音页共4张截图，0 error；最终 `native-1792760888302.json` 复验原输入框切片参数和禁用文本，4张截图、0 error，进程正常退出。截图确认原字体的破折号字形不适合作为空值占位，禁用值明确显示不可用。
 
-待批次：原客户端文字度量／焦点导航对照，真实音频听感、生命条与高级提示的实机交互，导入地图独立运行脚本的设置绑定；未支持的图像、设备／音频、录像及队形设置保持禁用。背景底部黑区、摄像机FOV／动画、光照、粒子与billboard继续来源核对。不得将菜单控件验收等同于所有界面1:1完成。
+待批次：原客户端文字度量／焦点导航对照，真实音频听感、生命条与高级提示的实机交互，导入地图独立运行脚本的设置绑定；未支持的图像、设备／音频、录像及队形设置保持禁用。摄像机与原客户端构图对照、动画、光照、粒子与billboard继续来源核对。不得将菜单控件验收等同于所有界面1:1完成。
+
+选项页同阶段的菜单相机修正：`import-frost-menu-background.py` 使用固定Warsmash提交的菜单FOV×0.6约定；catalog、MenuBackdrop prefab、场景／脚本同步。定向静态检查确认35.97808429078253度一致。`qa-frost-warcraft-ui.mjs --main-only` 复用同EXE，`tmp/docs-artifacts/war3-ui/native-1792761287966.json` 单张主菜单复验通过、0 error，海面覆盖底缘，进程正常退出。未重跑选项交互、全量地图或引擎构建；原Game.dll公式与完整动态视觉仍待对照。

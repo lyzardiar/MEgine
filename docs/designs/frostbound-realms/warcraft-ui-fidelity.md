@@ -53,6 +53,12 @@ FDF `.8 × .6` 映射到 `960 × 720`，每源单位 1200 像素，字体、按�
 
 `restore-frost-warcraft-options.mjs` 将布局写入Options prefab的三页根节点，`game/warcraft-options.js` 控制显示与设置事务。音乐／音效支持拖拽、越界钳制、释放停止、独立静音及恢复原音量；设置在确定时保存，取消／Escape／F10恢复进入前的值。键盘／鼠标边缘滚屏速度影响实际相机；生命条可切换为选中、悬停或Alt时显示；高级工具提示开关控制说明正文。导入地图自有脚本的相机／音频仍需独立接入这些设置。
 
-没有对应运行能力的选项保持原位置并禁用，下拉与端口显示不可用；不提供虚假的图像档位或音频驱动。背景透视、底部黑区与源摄像机语义仍待核对。声音听感、系统音频输出、键盘焦点、原版逐像素对照均不属于脚本检查通过的结论。
+没有对应运行能力的选项保持原位置并禁用，下拉与端口显示不可用；不提供虚假的图像档位或音频驱动。菜单背景采用固定参考实现的独立FOV约定；完整原客户端构图仍待对照。声音听感、系统音频输出、键盘焦点、原版逐像素对照均不属于脚本检查通过的结论。
 
 生成链：`python scripts/import-frost-warcraft-ui.py` → `python scripts/extract-frost-warcraft-options.py` → `node scripts/restore-frost-warcraft-ui.mjs`。日常prefab修改使用 `sync-frost-ui.mjs`。
+
+## 菜单背景投影
+
+菜单使用源Camera02good的姿态和裁剪面，纵向视角按MDX值乘0.6，得到35.97808429078253度。依据固定参考提交 [WarsmashGdxMenuScreen.java:674](https://github.com/Retera/WarsmashModEngine/blob/f1bcb4ae54f0ff4a8d5e4bd5892b6a6622441b15/core/src/com/etheller/warsmash/WarsmashGdxMenuScreen.java#L674) 的菜单相机实现；参考地址和范围写入catalog的 `camera.projectionReference`。该换算仅用于菜单背景，头像相机保持其自身路径。恢复脚本会把生成的相机参数同步到已有prefab节点。
+
+主菜单原生报告 `native-1792761287966.json` 为0 error；截图显示海面覆盖画面底部，王座主体和天空在新投影下正常显示。依据为固定第三方实现与本工程原生图像核验；原Game.dll投影公式、光照和完整动态效果仍未验收。
