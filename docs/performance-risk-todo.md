@@ -140,7 +140,7 @@ Release 基准使用 Frostbound 作者场景、960×540，串行与两帧流水�
 
 - [x] **编辑器 Scene/Game 回读期间占用 renderer/world 锁。** 已使用有界独立 ticket、锁外等待与前端两请求流水线。GPU 数据传输仍需等待；后续以原生交互采样评估剩余成本。
 - [ ] **RenderObject 每帧重新提取。** `frame_compiler.rs` 仍重复规范化 mesh 路径、复制字段；同次共享材质解析已合并，第五阶段已在同一编译帧内让嵌入视图复用主画面提取结果，第八阶段消除渲染读取时的材质源深拷贝和重复路径构造；第二十五阶段的单次视图共享祖先距离复用已通过 B001 行为与性能验证；跨帧提取仍需评估组件 revision 与路径缓存。
-- [ ] **逐物体绘制及准备。** 第七阶段让主 pass／阴影 pass 复用单次提交的材质键和错误状态，减少纹理键字符串复制、Shader指纹计算与缺失纹理检查。第二十六阶段消除同一pass内重复的管线／纹理／网格绑定，阴影与环境共享绑定只提交一次；定向GPU对照通过，原生编辑器集成待批次验证。通用实例化、材质哈希查找和临时Vec／draw order复用仍待评估；绘制次数及透明物体顺序保持不变。
+- [ ] **逐物体绘制及准备。** 第七阶段让主 pass／阴影 pass 复用单次提交的材质键和错误状态，减少纹理键字符串复制、Shader指纹计算与缺失纹理检查。第二十六阶段消除同一pass内重复的管线／纹理／网格绑定，阴影与环境共享绑定只提交一次；定向GPU对照及Amazonia原生Scene/Game、播放恢复验收通过；嵌入菜单视图复用同EXE的已有验证。通用实例化、材质哈希查找和临时Vec／draw order复用仍待评估；绘制次数及透明物体顺序保持不变。
 - [ ] **ECS 查询集合与存储。** 内建组件 TypeId 查找和有序联合查询已完成；自定义组件保留兼容查找。稠密组件存储属于后续架构变更。
 - [ ] **命令跨桥批处理。** 第二十四阶段的 V8／QuickJS 有序 JSON 批次接口与装饰动画已通过 B001 行为和原生验证；QuickJS 大批次微基准获益，V8 与原生整帧未证明加速。JSON 与逐命令组件写入仍有成本。
 - [ ] **UI、timeline、animation、physics 性能审计。** 第九阶段已优化UI子节点借用、布局结果顺序匹配及按需建立索引；第十阶段消除普通控件图元的临时数组分配和往返搬运；第十一阶段跳过无软裁剪帧的裁剪数据打包／上传和Shader裁剪循环；第十二阶段按有效图元数量细化批次空间网格。默认位图文字按亮点生成独立图元，数量、批次构建和其他实例数据上传成本仍在；第二十一阶段已复用同帧同宽度的嵌套LayoutGroup尺寸；第二十二阶段已优化稀疏物理的候选和层级准备；其他文本／布局路径、timeline、animation及物理解算器本身仍需审计，不能据局部数据排除剩余开销。
@@ -662,7 +662,7 @@ Amazonia组合场景的7,403实体报告`B001/original-map-composition-179273346
 
 另补4,096物体的混合材质／纹理／网格输入，包含透明、裁剪、自定义Shader和缺失纹理诊断；同样交替测量并逐帧核对像素，阴影2.980450→2.749225ms，世界4.879525→4.351100ms。此项只运行新增混合输入，沿用前三组共享资源结果。
 
-证据为`tmp/docs-artifacts/testing-batches/B001-draw-bindings-{check,tests,views,benchmark,mixed}.log`。本变更登记为B001-01大图性能修复，下一次相关Editor构建合并验证原地图Scene／Game／嵌入视图及Play恢复，不为此单项立即重建整套或重复旧QA。当前原生EXE仍是上一版，不能用旧截图证明新实现的原生收益。
+证据为`tmp/docs-artifacts/testing-batches/B001-draw-bindings-{check,tests,views,benchmark,mixed}.log`。本变更登记为B001-01大图性能修复，下一次相关Editor构建合并验证原地图Scene／Game／嵌入视图及Play恢复，不为此单项立即重建整套或重复旧QA。后续地图加载进度构建已更新原生EXE；同版本原生集成结果见本阶段补验。原生收益仍需同一输入下的新旧版本对照。
 
 ```powershell
 cargo test -p mengine-rhi --release --lib material_submission_tests -- --test-threads=1
@@ -670,3 +670,15 @@ cargo test -p mengine-rhi --release --lib live_scene_views_render_independently_
 cargo test -p mengine-rhi --release --lib benchmark_reused_draw_bindings -- --ignored --nocapture --test-threads=1
 # 混合材质／纹理／网格压力输入：设置 MENGINE_DRAW_BINDING_MIXED=1 后运行上一条基准
 ```
+
+### 第二十六阶段原生补验
+
+复用后续地图加载进度构建的Editor（SHA256 `03e55ada83c9a26a2c194bc84ec529c01d82260ea86d7c3bfa3fa5357318ff7c`）。构建日志 `B001/map-progress/native-build.log`、RHI编译指纹2026-10-23 16:05和EXE生成时间20:05，均晚于绘制绑定提交 `76bf8ac`。本轮没有重复构建、重新转换地图或改动用户未提交的资产代码。
+
+`qa-frost-original-map-composition.mjs` 支持 `MENGINE_MAP_PROFILE_FRAMES=12`，记录源场景／脚本摘要、采样场景与逐帧像素摘要。原版Amazonia输入7403实体、2452装饰、96可渲染单位通过Scene/Game显示、三层动画、暂停、Stop恢复及确定性重新播放；12次固定Game截图像素一致，控制台0 error。原生编辑器正常退出；WebView锁缓存保留。Scene截图通过截图接口，Scene性能来自 `profiler.get_samples`；Game截图返回其自身原生profile，二者不混作同一种逐帧采样。
+
+报告 `tmp/docs-artifacts/testing-batches/B001/original-map-composition-1792762023404.json`，截图已目视核对；首次脚本错误把Scene请求设为Game专用profiling参数，失败报告 `original-map-composition-1792761964519.json` 保留，修正参数后复验。已有同EXE的Warcraft主菜单及三页选项报告覆盖RawImage嵌入模型视图，不重复运行。独立GPU测试仍是阴影／透明／自定义Shader／纹理替换的像素对照证据，本原图输入没有可见阴影物体，不扩大其覆盖声明。
+
+固定Game采样取后10帧中位数：截图总耗时29.672ms；来源校验10.177ms、网格缓存同步12.443ms、对象／材质提取3.920ms、Frame compile7.085ms、世界通道编码2.493ms。来源校验是网格同步子节点，对象提取是Frame compile子节点，不能相加为独立总成本。10帧均包含来源校验；截图间隔触发文件轮询，不能换算成实时FPS。2746个可见提交物体、0次mesh上传，汇总 `B001/draw-bindings-native-summary.json`。本次没有新旧EXE同输入对照，不声称原生提速。
+
+下一步先细分来源路径身份／依赖检查与对象材质开销。原图4745个MeshRenderer有339种key、4719个PropertyBlock；所有key已使用正斜杠且无首尾空白，现有owned String输出仍需复制。未据总提取耗时直接增加字符串缓存；继续保留热更新、路径身份、实体generation、层级与相机专属billboard行为。

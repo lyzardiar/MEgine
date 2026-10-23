@@ -201,3 +201,11 @@ QA增加 `--cache-project <前次隔离项目>`，校验源地图和共享文件
 待批次：原客户端文字度量／焦点导航对照，真实音频听感、生命条与高级提示的实机交互，导入地图独立运行脚本的设置绑定；未支持的图像、设备／音频、录像及队形设置保持禁用。摄像机与原客户端构图对照、动画、光照、粒子与billboard继续来源核对。不得将菜单控件验收等同于所有界面1:1完成。
 
 选项页同阶段的菜单相机修正：`import-frost-menu-background.py` 使用固定Warsmash提交的菜单FOV×0.6约定；catalog、MenuBackdrop prefab、场景／脚本同步。定向静态检查确认35.97808429078253度一致。`qa-frost-warcraft-ui.mjs --main-only` 复用同EXE，`tmp/docs-artifacts/war3-ui/native-1792761287966.json` 单张主菜单复验通过、0 error，海面覆盖底缘，进程正常退出。未重跑选项交互、全量地图或引擎构建；原Game.dll公式与完整动态视觉仍待对照。
+
+### B001-01 大图绘制绑定原生补验
+
+第二十六阶段的定向GPU验证继续有效。本轮扩展 `qa-frost-original-map-composition.mjs`，可按 `MENGINE_MAP_PROFILE_FRAMES` 记录最多60次固定Game采样及像素摘要，并记录Scene截图／独立profiler数据；默认仍保留原来的短流程。来源场景、脚本和实际EXE摘要进入报告。
+
+复用现有EXE `03e55ada83c9a26a2c194bc84ec529c01d82260ea86d7c3bfa3fa5357318ff7c`，没有重建。`MENGINE_MAP_PROFILE_FRAMES=12 node scripts/qa-frost-original-map-composition.mjs tmp/docs-artifacts/warcraft-map-tests/amazonia-complete-visuals/project` 通过：7403实体，Scene/Game、三层动画、12次固定Game像素一致、Stop完整恢复、确定性重启，0 error。报告 `B001/original-map-composition-1792762023404.json`，统计 `B001/draw-bindings-native-summary.json`；首次Scene参数错误记录保留于 `original-map-composition-1792761964519.json`。两次测试进程均正常退出，锁定WebView缓存保留。
+
+该EXE在第二十六阶段提交之后构建；已通过的同EXE菜单／选项报告复用为嵌入视图证据。完整性能口径见 `docs/performance-risk-todo.md`：固定截图样本不代表实时FPS，也未新增原生前后提速结论。仍待独立Player分发、原客户端完整视觉和JASS／对局兼容性，B001保持3/3未结算，不重新运行已通过的02／03。

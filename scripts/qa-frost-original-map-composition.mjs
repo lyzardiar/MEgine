@@ -11,6 +11,8 @@ assert.ok(process.argv[2]&&process.env.MENGINE_EDITOR_EXECUTABLE,'Provide combin
 const read=file=>JSON.parse(fs.readFileSync(path.join(source,file),'utf8'));
 const units=read('unit-placements.json'),doodads=read('doodad-placements.json'),terrain=read('terrain-sources.json');
 assert.ok(units.some(p=>p.rendered)&&doodads.length,'Expected both source placement layers');
+const profileFrames=Number(process.env.MENGINE_MAP_PROFILE_FRAMES||0);
+assert.ok(Number.isSafeInteger(profileFrames)&&profileFrames>=0&&profileFrames<=60,'MENGINE_MAP_PROFILE_FRAMES must be an integer in 0..60');
 const label='original-map-composition-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample');
 configureNativeQa(root);fs.cpSync(source,sample,{recursive:true,filter:file=>!file.includes(path.sep+'SourceAssets')});
 Object.assign(process.env,{MENGINE_AGENT_EDITOR_MODE:'auto-background',MENGINE_EDITOR_CONFIG_DIR:path.join(root,'config'),WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows'});
@@ -18,10 +20,10 @@ fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(name,args={})=>{const r=await bridgeExecute(name,args,{requestId:crypto.randomUUID(),timeoutMs:120000});assert.ok(r.ok,JSON.stringify(r));return r.result;};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms)),snapshot=()=>query('scene.snapshot'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-const report={source,label,passed:false,mapSha256:terrain.mapSha256,editorSha256:hash(fs.readFileSync(process.env.MENGINE_EDITOR_EXECUTABLE)),scriptSha256:hash(fs.readFileSync(path.join(source,'Assets/Scripts/Main.js'))),checks:[],frames:[]};
-async function capture(name){
+const report={source,label,passed:false,mapSha256:terrain.mapSha256,editorSha256:hash(fs.readFileSync(process.env.MENGINE_EDITOR_EXECUTABLE)),scriptSha256:hash(fs.readFileSync(path.join(source,'Assets/Scripts/Main.js'))),sceneSha256:hash(fs.readFileSync(path.join(source,'Assets/Scenes/Main.mscene'))),checks:[],frames:[]};
+async function capture(name,target='game',scenario=name||'repeat'){
   const deadline=Date.now()+30000;
-  for(;;)try{const shot=await query('view.screenshot',{target:'game',maxSize:1280,includeNativeProfile:true});if(name)fs.writeFileSync(path.join(out,label+'-'+name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));report.frames.push(shot.nativeProfile);return shot.dataUrl;}
+  for(;;)try{const shot=await query('view.screenshot',{target,maxSize:1280,...(target==='game'?{includeNativeProfile:true}:{})});const pixels=Buffer.from(shot.dataUrl.split(',')[1],'base64');if(name)fs.writeFileSync(path.join(out,label+'-'+name+'.png'),pixels);report.frames.push({...shot.nativeProfile,target,scenario,pixelSha256:hash(pixels)});return shot.dataUrl;}
   catch(error){if(Date.now()>=deadline||!/NOT_READY|canvas is not available yet/.test(error.message))throw error;await sleep(500);}
 }
 try{
@@ -34,6 +36,10 @@ try{
   }
   report.entities=authored.entities.length;report.doodads=doodads.length;report.units=units.filter(p=>p.rendered).length;
   report.checks.push('Combined placement names and parent references');
+  if(profileFrames){
+    await execute('panel.focus',{kind:'scene'});await execute('view.set_scene_preferences',{mode2D:false});await capture('scene','scene','authored-scene');
+    for(let i=0;;i++){report.sceneProfile=await query('profiler.get_samples',{source:'scene',limit:1});if(report.sceneProfile.nativeLatest)break;assert.ok(i<20,'Scene native profile was not published');await sleep(250);}
+  }
   await execute('panel.focus',{kind:'game'});await execute('playback.play',{paused:true});
   await execute('playback.step',{steps:1,deltaTime:1/60});const initial=await snapshot();await capture('overview');
   await execute('playback.step',{steps:30,deltaTime:1/60});const animated=await snapshot(),previous=new Map(initial.entities.map(e=>[e.name,e]));
@@ -41,6 +47,7 @@ try{
   report.changed={doodads:changed.filter(e=>e.name.startsWith('Doodad-')).length,units:changed.filter(e=>e.name.startsWith('Unit-')).length,terrain:changed.filter(e=>!e.name.startsWith('Doodad-')&&!e.name.startsWith('Unit-')).length};
   for(const [layer,count] of Object.entries(report.changed))assert.ok(count>0,layer+' animation advances in combined callback');
   const pixels=await capture('animated');assert.equal(await capture(),pixels,'Paused combined pixels remain stable');
+  if(profileFrames){report.animatedWorldSha256=hash(JSON.stringify(animated));for(let i=0;i<profileFrames;i++)assert.equal(await capture(null,'game','fixed-game'),pixels,'Fixed Game pixels remain stable');}
   await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities,'Stop restores all layers');
   await execute('playback.play',{paused:true});await execute('playback.step',{steps:31,deltaTime:1/60});
   assert.deepEqual((await snapshot()).entities,animated.entities,'Fresh playback reproduces all layer states');
