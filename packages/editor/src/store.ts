@@ -467,11 +467,11 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     return true;
   };
 
-  const childrenOf = (parent: number | null, source = list()) =>
+  const readChildren = (parent: number | null, source = list()) =>
     source
       .filter((e) => (e.parent ?? null) === parent)
-      .map(exposePlayRecord)
       .sort((a, b) => a.siblingIndex - b.siblingIndex || a.entity - b.entity);
+  const childrenOf = (parent: number | null, source = list()) => readChildren(parent, source).map(exposePlayRecord);
 
   const isDescendant = (ancestor: number, node: number): boolean => {
     let cur: number | null | undefined = node;
@@ -533,6 +533,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     return out;
   };
   const getVisibleFlat = () => buildVisibleFlat(list(), true);
+  const visibleIds = () => buildVisibleFlat(list(), false).map(n => n.entity.entity);
 
   const activeInHierarchy = (id: number): boolean => {
     let cur: number | null | undefined = id;
@@ -564,7 +565,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       }
       selectionAnchor = clicked;
     } else if (modeSel === 'range' && clicked != null) {
-      const flat = getVisibleFlat().map((n) => n.entity.entity);
+      const flat = visibleIds();
       const anchor = selectionAnchor ?? clicked;
       const a = flat.indexOf(anchor);
       const b = flat.indexOf(clicked);
@@ -1296,13 +1297,13 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       else selectInternal([id], 'replace');
     },
     selectAllVisible() {
-      selectedIds = getVisibleFlat().map((n) => n.entity.entity);
+      selectedIds = visibleIds();
       selectionAnchor = selectedIds[selectedIds.length - 1] ?? null;
     },
     selectChildren() {
       const p = primarySelected();
       if (p == null) return;
-      selectedIds = childrenOf(p).map((c) => c.entity);
+      selectedIds = readChildren(p).map((c) => c.entity);
       selectionAnchor = selectedIds[0] ?? p;
     },
     toggleExpand(id: number) {
@@ -1654,7 +1655,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return true;
     },
     navigateVisible(delta: number) {
-      const flat = getVisibleFlat().map((n) => n.entity.entity);
+      const flat = visibleIds();
       if (!flat.length) return;
       const cur = primarySelected();
       const idx = cur == null ? -1 : flat.indexOf(cur);
@@ -1664,19 +1665,20 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     navigateHorizontal(dir: -1 | 1) {
       const cur = primarySelected();
       if (cur == null) return;
-      const e = find(cur);
+      const e = lookup(cur);
       if (!e) return;
+      const children = readChildren(cur);
       if (dir < 0) {
-        if (expanded.has(cur) && childrenOf(cur).length) {
+        if (expanded.has(cur) && children.length) {
           expanded.delete(cur);
         } else if (e.parent != null) {
           selectInternal([e.parent], 'replace');
         }
       } else {
-        if (childrenOf(cur).length) {
+        if (children.length) {
           if (!expanded.has(cur)) expanded.add(cur);
           else {
-            const first = childrenOf(cur)[0];
+            const first = children[0];
             if (first) selectInternal([first.entity], 'replace');
           }
         }

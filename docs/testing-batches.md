@@ -473,3 +473,10 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 快速检查：既有5项、新增等价1项、Play运行时集成26项通过；手动基准1项通过，4项其他手动基准忽略。初次对照的本地槽位差异与基准的部分Transform字段假设已修正，仅定向重测。Amazonia时钟/64 Transform局部同步中位0.675540→0.144000ms、0.864505→0.358015ms；每份mirror多保留约116 KiB顺序表。详细口径和证据见performance-risk-todo第四十九阶段。
 
 待合并验证：与6370937菜单修复共用下一次前端/原生构建及map-session连续simulation-profile、viewport-transitions、runtime-edits；核对worldSyncMs、prepareMs、真实动画/编辑/镜头、Stop/重启/换图，补重排和父级修改。当前EXE不含两项，本轮未重建原生Editor、运行地图QA或全库测试。原有特殊材质与交互/生命周期待测不关闭。
+
+
+### B001-01 节点选择只读访问与三项性能集成
+
+变更：store内部范围/全选/子节点/方向导航使用只读查询；新增hierarchyReadOwnership测试；map-session新增--hierarchy-interactions，覆盖菜单、Ctrl+A、范围选择、聚焦和换图。属于现有性能补充，不新增功能计数。
+
+快速检查：29项通过，前端构建通过。新测试确认连续内部选择不暴露可编辑记录，显式公共引用修改仍上传。与6370937/c8902a0共用一次原生构建，运行continuous-profile、transport-profile、simulation-profile、viewport-transitions、runtime-edits、hierarchy-interactions。待记录结果；全库测试和全量地图导入不在本次范围，原有特殊材质与交互生命周期风险保留。

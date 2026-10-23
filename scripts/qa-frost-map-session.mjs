@@ -27,6 +27,7 @@ const editorFeedback=process.argv.includes('--editor-feedback');
 const returnOnly=process.argv.includes('--return-only');
 const cameraOnly=process.argv.includes('--camera-only');
 const hierarchyOnly=process.argv.includes('--hierarchy-only');
+const hierarchyInteractions=process.argv.includes('--hierarchy-interactions');
 const label='map-session-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
 fs.cpSync(source,sample,{recursive:true,filter:file=>!['SourceAssets','.mengine','Builds'].includes(path.basename(file))});
@@ -130,6 +131,22 @@ async function checkHierarchyPresentation(s){
   await execute('selection.set',{ids:[root.entity]});const item=await element(root.name);
   await execute('window.ui_press_key',{windowLabel:'main',selector:item.item.selector,expectedSnapshotRevision:item.snapshot.snapshotRevision,key:'ArrowLeft'});await element('Expand '+root.name);
   const folded=await element(root.name);await execute('window.ui_press_key',{windowLabel:'main',selector:folded.item.selector,expectedSnapshotRevision:folded.snapshot.snapshotRevision,key:'ArrowRight'});await element('Collapse '+root.name);
+  const selected=async()=>new Set((await query('selection.get')).selectedIds);
+  const roots=s.entities.filter(e=>e.parent==null).map(e=>e.entity);
+  await button('Collapse all hierarchy nodes');await execute('selection.reveal',{id:root.entity});
+  const selectRow=await element(root.name);
+  await execute('window.ui_press_key',{windowLabel:'main',selector:selectRow.item.selector,expectedSnapshotRevision:selectRow.snapshot.snapshotRevision,key:'a',ctrlKey:true});
+  assert.deepEqual(await selected(),new Set(roots),'Ctrl+A selects collapsed roots');
+  await button('Expand all hierarchy nodes');await button('Edit');
+  const menuPage=await ui(),selectAll=menuPage.elements.find(e=>e.name.startsWith('Select All'));assert.ok(selectAll);
+  await execute('window.ui_click',{windowLabel:'main',selector:selectAll.selector,expectedSnapshotRevision:menuPage.snapshotRevision});
+  assert.deepEqual(await selected(),new Set(s.entities.map(e=>e.entity)),'Edit menu selects expanded hierarchy');
+  await execute('selection.set',{ids:[root.entity]});await execute('selection.reveal',{id:child.entity});
+  const rangeEnd=await element(child.name);
+  await execute('window.ui_click',{windowLabel:'main',selector:rangeEnd.item.selector,expectedSnapshotRevision:rangeEnd.snapshot.snapshotRevision,shiftKey:true});
+  const range=await selected();assert.ok(range.has(root.entity)&&range.has(child.entity),'Shift-click includes anchor and target');
+  await execute('selection.set',{ids:[root.entity]});await execute('panel.focus',{kind:'game'});
+  report.checks.push('Native Ctrl+A on collapsed roots, expanded Edit menu Select All and Shift-click range selection');
   report.checks.push('Native hierarchy collapse/expand, hidden descendant reveal, scrolling and left/right keys for runtime root '+root.entity);
 }
 try{
@@ -178,7 +195,7 @@ try{
         report.simulationProfile={distinctRevisions:unique.length,timings:unique};
         report.checks.push('Simulation timing scopes retain distinct session/revision ownership and nested wall times');
       }
-      report.continuousProfile={elapsedMs,...profiles};await execute('playback.pause');await capture('profile-view');if(effectReload)await checkEffectReload();if(viewportTransitions)await checkViewportTransitions();if(runtimeEdits)await checkRuntimeEdits();await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities,'Stop restores the authored scene after profiling');
+      report.continuousProfile={elapsedMs,...profiles};await execute('playback.pause');await capture('profile-view');if(effectReload)await checkEffectReload();if(viewportTransitions)await checkViewportTransitions();if(runtimeEdits)await checkRuntimeEdits();if(hierarchyInteractions){await checkHierarchyFocus(await snapshot());await checkHierarchyPresentation(await snapshot());await click('Map session return');await click('mapStart box');s=await waitMap('amazonia');await checkHierarchyPresentation(s);report.checks.push('Hierarchy selection after map reload');}await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities,'Stop restores the authored scene after profiling');
       report.checks.push('10-second live Amazonia presentation and WebView sample window without Agent polling, followed by Stop restoration');
     }else{
     const native=[];
