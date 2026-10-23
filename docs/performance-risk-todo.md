@@ -1147,3 +1147,14 @@ Play模拟、Game和连续Scene请求按60Hz固定时间轴推进截止时刻。
 原生定向结果：前端构建3.14秒、Release构建1分04秒通过，仅既有 world_from_snapshot 未使用告警。报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792797179807.json` 通过连续模拟、Game／Scene切换、相机预览／轨道、宽高分辨率及Stop还原，0 error、正常退出，截图已目视查看。EXE SHA256 `457b1b5c4c977ef9cc5585cea21ea49ca8cb4f87cf29d5e19e5c9da31e5dd55a`。测试临时WebView缓存因EPERM保留在本报告对应native-qa/runtime目录，发现文件已清理。
 
 10秒采样窗口，7,411实体／850×478；末尾240次呈现平均59.9970次/秒、间隔16.6675ms／P95 24.6ms，原生渲染10.8891ms、世界同步1.2092ms，237个不同模拟版本。239个推算请求起点间隔平均16.6686ms，完成至下一起点平均1.4653ms。上一独立运行54.9388次/秒仅作为同场景参考；当前短窗口平均接近60，不代表长期无抖动或跨机器稳定60 FPS。摘要为 tmp/docs-artifacts/editor-performance-risk/frame-cadence-native-summary.json。
+
+
+## 第五十九阶段跨窗口会话序列化
+
+独立面板存在时，主窗口播放循环约每33ms通过scene-state发送完整会话。会话JSON采用紧凑格式；原生运行世界与私有编辑副本一致时，复用已冻结实体的JSON片段，只重新序列化变更实体和时钟、选择、镜头等元数据。缓存按对象身份保存于WeakMap，不持有旧实体；重排、删除、实体ID复用和跨场景使用当前实体顺序与身份。Inspector或外部引用直接修改使原生基线不匹配时，走实时序列化。自定义全局toJSON／JSON.stringify时停用缓存并清空缓存入口。作者场景saveSceneJson仍使用原来的两空格缩进，落盘格式保持一致。
+
+局部对照使用作者Amazonia地图7,410实体，Node进程内预热2次，9组交替×每组12次。原会话路径按全部实体投影并两空格格式化，中位15.9624ms；仅紧凑序列化9.0770ms；当前真实Store.saveSessionSceneJson（含运行世界一致性检查）4.9892ms。解析后的文档深比较一致。新缓存首次填充另测9次，中位8.8916ms，仅统计序列化器，不含创建运行世界。UTF-8消息6,062,161→3,347,805字节；静态实体片段UTF-8合计3,340,120字节，不是V8堆内存或整个编辑器内存。强动态场景会重新生成变化实体片段，不能套用静态收益。
+
+31项相关检查通过：新会话测试3项；复用本次同步／快照／Play世界检查28项通过结果。覆盖独立Store加载、运行改动、实体重排、删除／替换、选择、镜头、Stop作者实体恢复、提交时钟和原生revision；初次新测试对Stop后镜头／选择也应回退的假设不符合既有语义，已修正并仅重跑3项新测试。TypeScript检查通过。没有运行全库、前端打包或原生构建。
+
+命令：node --test packages/editor/tests/sessionSceneSerialization.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs packages/editor/tests/presentationSnapshot.test.mjs packages/editor/tests/playWorldSync.test.mjs；pnpm --filter @mengine/editor exec tsc --noEmit。原始结果与基准输入SHA在tmp/docs-artifacts/editor-performance-risk/session-serialization-{tests.log,tests-final.log,types.log,benchmark.json,benchmark.mjs}。局部测量不包含BroadcastChannel复制、接收端JSON解析／世界重建或真实输入延迟，不作为FPS结论。接收端仍全量处理；原生双窗口长期运行、接收端增量复用及总内存待后续相关批次。

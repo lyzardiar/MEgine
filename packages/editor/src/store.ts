@@ -4,6 +4,7 @@ import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, retainedNativePlayWorld, type PlayInput, type PlayRuntimeDriver, type PlayRuntimeWorld } from './playRuntime';
 import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord, retainedPlayWorldChanges } from './playWorldSync';
 import { normalizeEntity, type EntityRec } from './entityRecord';
+import { createSessionSceneSerializer } from './sessionSceneSerialization';
 export type { EntityRec } from './entityRecord';
 import {
   createBehaviourRunner,
@@ -914,21 +915,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     return structuredClone(entities);
   };
 
-  const serializeScene = (sceneName: string, source: EntityRec[], runtime = false) => JSON.stringify(
+  const sceneDocument = (sceneName: string, entities: EntityRec[], runtime = false) => (
     {
       version: CURRENT_SCENE_VERSION,
       name: sceneName,
       world: {
-        entities: source.map((e) => ({
-          entity: e.entity,
-          name: e.name,
-          parent: e.parent,
-          siblingIndex: e.siblingIndex,
-          active: e.active,
-          tag: e.tag,
-          layer: e.layer,
-          components: e.components,
-        })),
+        entities,
         frame,
         clearColor: runtime ? playClearColor ?? clearColor : clearColor,
         ...(runtime ? { simulationTime: playWorldRevision != null ? playWorldSimulationTime : playSpin } : {}),
@@ -938,10 +930,10 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       sceneCamera,
       gameResolution,
       gameDisplay,
-    },
-    null,
-    2,
+    }
   );
+  const serializeScene = (sceneName: string, source: EntityRec[], runtime = false, space?: number) => JSON.stringify(sceneDocument(sceneName, source.map(snapshotEntity), runtime), null, space);
+  const serializeSessionScene = createSessionSceneSerializer();
 
   const revealEntityAncestors = (id: number) => {
     const byId = new Map(list().map((e) => [e.entity, e]));
@@ -2899,11 +2891,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     },
     saveSceneJson(sceneName = 'Untitled') {
       // Always persist edit state so Play mode clones never overwrite authoring data.
-      return serializeScene(sceneName, editEntities);
+      return serializeScene(sceneName, editEntities, false, 2);
     },
     /** Session-only serialization used to mirror live Play state to detached windows. */
     saveSessionSceneJson(sceneName = 'Untitled') {
-      return serializeScene(sceneName, list(), mode !== 'edit');
+      const retained = mode !== 'edit' ? playWorldSync.presentationSnapshot(playEntities, playClearColor ?? clearColor) : undefined;
+      return retained ? serializeSessionScene(sceneDocument(sceneName, retained.entities as EntityRec[], true)) : serializeScene(sceneName, list(), mode !== 'edit');
     },
     newScene() {
       if (mode !== 'edit') return false;

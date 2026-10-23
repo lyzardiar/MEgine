@@ -634,3 +634,10 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 原生定向结果：前端构建3.14秒、Release构建1分04秒通过，仅既有 world_from_snapshot 未使用告警。报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792797179807.json` 通过连续模拟、Game／Scene切换、相机预览／轨道、宽高分辨率及Stop还原，0 error、正常退出，截图已目视查看。EXE SHA256 `457b1b5c4c977ef9cc5585cea21ea49ca8cb4f87cf29d5e19e5c9da31e5dd55a`。测试临时WebView缓存因EPERM保留在本报告对应native-qa/runtime目录，发现文件已清理。
 
 10秒采样窗口，7,411实体／850×478；末尾240次呈现平均59.9970次/秒、间隔16.6675ms／P95 24.6ms，原生渲染10.8891ms、世界同步1.2092ms，237个不同模拟版本。239个推算请求起点间隔平均16.6686ms，完成至下一起点平均1.4653ms。上一独立运行54.9388次/秒仅作为同场景参考；当前短窗口平均接近60，不代表长期无抖动或跨机器稳定60 FPS。摘要为 tmp/docs-artifacts/editor-performance-risk/frame-cadence-native-summary.json。
+
+
+### B001 跨窗口紧凑会话与实体JSON复用
+
+变更：store.ts、sessionSceneSerialization.ts和对应测试。会话采用紧凑JSON，复用冻结实体的序列化片段；实时直接编辑回退，作者场景落盘格式保持不变。Node局部结果15.9624→4.9892ms／消息6,062,161→3,347,805字节，范围与内存口径见performance-risk-todo第五十九阶段。
+
+快速检查：相关31项与TypeScript通过。未重建原生编辑器；当前EXE不包含此优化。待合并验证：同时打开独立Scene、Game和Inspector，持续Play／Pause／Step／Stop，主窗口和独立窗口分别编辑组件，切换地图／重开，核对选择、相机、动画、原生session/revision及停止恢复；记录主窗口输入延迟、BroadcastChannel传输与接收端重建、窗口关闭后的内存。测试不重复无关地图转换／全库资源遍历。
