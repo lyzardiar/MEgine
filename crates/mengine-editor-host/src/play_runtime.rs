@@ -20,6 +20,17 @@ pub struct PlayProject {
     pub build_scenes: Vec<PathBuf>,
 }
 
+/// Wall-clock durations for one successful revision; command excludes response serialization.
+#[derive(Clone, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayStepTiming {
+    pub worker_queue_ms: f64,
+    pub simulation_ms: f64,
+    pub worker_ms: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub command_ms: Option<f64>,
+}
+
 /// MiYu: fresh frame metadata and changed payloads; entity order is sent on structural changes or resets.
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -31,12 +42,14 @@ pub struct PlayWorldUpdate<S = WorldSnapshot> {
     pub base_revision: u64,
     pub revision: u64,
     pub reset: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timing: Option<PlayStepTiming>,
 }
 
 impl PlayWorldUpdate<SharedWorldSnapshot> {
     /// Keep independently editable results available to host callers; IPC serializes shared records directly.
     pub fn into_owned(self) -> PlayWorldUpdate {
-        PlayWorldUpdate { snapshot: self.snapshot.into_owned(), quit_requested: self.quit_requested, entity_order: self.entity_order, base_revision: self.base_revision, revision: self.revision, reset: self.reset }
+        PlayWorldUpdate { snapshot: self.snapshot.into_owned(), quit_requested: self.quit_requested, entity_order: self.entity_order, base_revision: self.base_revision, revision: self.revision, reset: self.reset, timing: self.timing }
     }
 }
 
@@ -62,7 +75,7 @@ impl PlaySnapshotStream {
         };
         self.entities = current;
         snapshot.entities = changed;
-        PlayWorldUpdate { snapshot, entity_order, base_revision, revision: self.revision, reset, quit_requested: false }
+        PlayWorldUpdate { snapshot, entity_order, base_revision, revision: self.revision, reset, quit_requested: false, timing: None }
     }
 }
 
@@ -88,7 +101,7 @@ impl PlayRenderHistory {
 enum Request {
     Start { generation: u64, source: String, snapshot: WorldSnapshot, project: PlayProject, reply: Sender<Result<WorldSnapshot, String>> },
     Step { generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<WorldSnapshot, String>> },
-    StepUpdate { generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<PlayWorldUpdate<SharedWorldSnapshot>, String>> },
+    StepUpdate { queued_at: Instant, generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<PlayWorldUpdate<SharedWorldSnapshot>, String>> },
     RenderSnapshot { generation: u64, revision: Option<u64>, reply: Sender<Result<PlayRenderSnapshot, String>> },
     Stop { generation: u64 },
     #[cfg(test)]
@@ -132,7 +145,9 @@ impl Default for EditorPlayRuntime {
                         if result.is_err() { session = None; }
                         let _ = reply.send(result);
                     }
-                    Request::StepUpdate { generation, snapshot, input, dt, reply } => {
+                    Request::StepUpdate { queued_at, generation, snapshot, input, dt, reply } => {
+                        let worker_started = Instant::now();
+                        let worker_queue_ms = worker_started.duration_since(queued_at).as_secs_f64() * 1000.0;
                         if current.load(Ordering::SeqCst) != generation { let _ = reply.send(Err("Play session expired".into())); continue; }
                         let reset = snapshot.is_some();
                         let result = session.as_mut().filter(|(id, _)| *id == generation).ok_or_else(|| "Play Mode is not initialized".to_string()).and_then(|(_, session)| {
@@ -147,6 +162,8 @@ impl Default for EditorPlayRuntime {
                             let mut published = published.lock();
                             let (_, history) = published.as_mut().filter(|(id, _)| *id == generation).ok_or_else(|| "Play session expired".to_string())?;
                             history.record(update.revision, checkpoint, session.step_ms, session.step_stages.clone());
+                            drop(published);
+                            update.timing = Some(PlayStepTiming { worker_queue_ms, simulation_ms: session.step_ms, worker_ms: worker_started.elapsed().as_secs_f64() * 1000.0, command_ms: None });
                             Ok(update)
                         });
                         if result.is_err() { session = None; *published.lock() = None; }
@@ -213,7 +230,7 @@ impl EditorPlayRuntime {
     pub fn advance_shared_update(&self, generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<PlayWorldUpdate<SharedWorldSnapshot>, String> {
         if !dt.is_finite() || dt <= 0.0 || dt > 1.0 { return Err("Play step delta must be in (0, 1]".into()); }
         let (reply, result) = mpsc::channel();
-        self.sender.send(Request::StepUpdate { generation, snapshot, input, dt, reply }).map_err(|error| error.to_string())?;
+        self.sender.send(Request::StepUpdate { queued_at: Instant::now(), generation, snapshot, input, dt, reply }).map_err(|error| error.to_string())?;
         result.recv_timeout(Duration::from_secs(15)).map_err(|error| format!("Play step: {error}"))?
     }
 
@@ -426,7 +443,7 @@ mod tests {
         let (entered, ready) = mpsc::channel(); let (release, resume) = mpsc::channel();
         runtime.sender.send(Request::Barrier { entered, resume }).unwrap(); ready.recv_timeout(Duration::from_secs(3)).unwrap();
         let (reply, update) = mpsc::channel();
-        runtime.sender.send(Request::StepUpdate { generation: id, snapshot: None, input: ScriptInput::default(), dt: 0.01, reply }).unwrap();
+        runtime.sender.send(Request::StepUpdate { queued_at: Instant::now(), generation: id, snapshot: None, input: ScriptInput::default(), dt: 0.01, reply }).unwrap();
         assert_eq!(runtime.render_revision(id, Some(0), |world| { assert_eq!(world.time.frame, 0); Err("retained world rendered".into()) }).err().unwrap(), "retained world rendered");
         assert_eq!(runtime.render_revision(id, Some(1), |_| panic!("unpublished revision must not render")).err().unwrap(), PLAY_VIEWPORT_REVISION_EXPIRED);
         release.send(()).unwrap();
@@ -780,7 +797,7 @@ mod tests {
         let shared = SharedWorldSnapshot { entities: source.entities.into_iter().map(Arc::new).collect(), frame: source.frame, sim_frame: source.sim_frame, elapsed: source.elapsed, clear_color: source.clear_color, selected: source.selected };
         for count in [64.min(shared.entities.len()), shared.entities.len()] {
             let mut payload = shared.clone(); payload.entities.truncate(count);
-            let update = || PlayWorldUpdate { snapshot: payload.clone(), entity_order: None, base_revision: 1, revision: 2, reset: false, quit_requested: false };
+            let update = || PlayWorldUpdate { snapshot: payload.clone(), entity_order: None, base_revision: 1, revision: 2, reset: false, quit_requested: false, timing: None };
             assert_eq!(serde_json::to_value(update()).unwrap(), serde_json::to_value(update().into_owned()).unwrap());
             let mut rows = Vec::new(); let iterations = 20;
             for sample in 0..11 {
@@ -888,6 +905,26 @@ mod tests {
         assert!(runtime.advance_update(next, None, ScriptInput::default(), 0.1).is_ok());
         runtime.stop_session(next);
         assert!(runtime.advance_update(next, None, ScriptInput::default(), 0.1).is_err());
+    }
+
+    #[test]
+    fn shared_step_timing_follows_revision_and_preserves_owned_serialization() {
+        let runtime = EditorPlayRuntime::default(); let id = runtime.begin();
+        runtime.start(id, "".into(), WorldSnapshot::default(), PlayProject::default()).unwrap();
+        let (reply, result) = mpsc::channel();
+        runtime.sender.send(Request::StepUpdate { queued_at: Instant::now() - Duration::from_millis(5), generation: id, snapshot: None, input: ScriptInput::default(), dt: 0.1, reply }).unwrap();
+        let update = result.recv_timeout(Duration::from_secs(3)).unwrap().unwrap();
+        assert_eq!(update.revision, 1);
+        let timing = update.timing.as_ref().unwrap();
+        assert!(timing.worker_queue_ms >= 5.0 && timing.worker_queue_ms.is_finite());
+        assert!(timing.simulation_ms >= 0.0 && timing.worker_ms >= timing.simulation_ms && timing.worker_ms.is_finite());
+        assert_eq!(timing.command_ms, None);
+        let json = serde_json::to_value(&update).unwrap();
+        assert!(json["timing"]["workerQueueMs"].is_number()); assert!(json["timing"].get("commandMs").is_none());
+        assert_eq!(json, serde_json::to_value(update.into_owned()).unwrap());
+        let next = runtime.advance_shared_update(id, None, ScriptInput::default(), 0.1).unwrap();
+        assert_eq!(next.revision, 2); assert!(next.timing.is_some());
+        runtime.stop(); assert!(runtime.advance_shared_update(id, None, ScriptInput::default(), 0.1).is_err());
     }
 
     #[test]

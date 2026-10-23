@@ -17,6 +17,7 @@ import {
   ScanLine,
 } from 'lucide-react';
 import type { GizmoMode, SceneCamera, TransformData } from '../store';
+import type { PlayStepTiming } from '../playStepTiming';
 import type { PlayInput } from '../playRuntime';
 import {
   recordOwnedNativeViewportProfile,
@@ -623,8 +624,9 @@ export function Viewport(props: {
   runtimeSessionId?: number;
   readRuntimeSessionId?: () => number | undefined;
   simulationRequestMs?: number;
+  simulationTiming?: Readonly<PlayStepTiming>;
   subscribeRuntimeFrames?: (listener: () => void) => () => void;
-  runtimeSnapshot?: () => { entities: Ent[]; clearColor: [number, number, number, number]; simulationTime?: number; nativeSessionId?: number; nativeWorldReference?: NativeViewportWorldReference<Ent>; runtimeSessionId?: number; simulationRequestMs?: number } | null;
+  runtimeSnapshot?: () => { entities: Ent[]; clearColor: [number, number, number, number]; simulationTime?: number; nativeSessionId?: number; nativeWorldReference?: NativeViewportWorldReference<Ent>; runtimeSessionId?: number; simulationRequestMs?: number; simulationTiming?: Readonly<PlayStepTiming> } | null;
   selected: number | null;
   selectedIds?: number[];
   sceneHiddenIds?: readonly number[];
@@ -870,7 +872,7 @@ export function Viewport(props: {
       get nativeSessionId() { return hidden.length ? undefined : live.nativeSessionId; },
       get nativeWorldReference() { return hidden.length ? undefined : live.nativeWorldReference; },
       get nativeSceneWorldReference() { return hidden.length ? nativeSceneWorldReference(live.nativeWorldReference, live.entities, entities, hidden) : undefined; },
-      runtimeSessionId: live.runtimeSessionId, simulationRequestMs: live.simulationRequestMs, entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime,
+      runtimeSessionId: live.runtimeSessionId, simulationRequestMs: live.simulationRequestMs, simulationTiming: live.simulationTiming, entities, clearColor: live.clearColor, simulationTime: live.simulationTime ?? p.simulationTime,
     };
   };
 
@@ -1510,7 +1512,7 @@ export function Viewport(props: {
           const current = propsRef.current;
           if (current.tab !== 'game' || currentGameRequestKey(current) !== requestKey || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) { releaseNativeViewportFrame(buffer); return; }
           const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
-          recordOwnedNativeViewportProfile('game', { ...result.profile, updateMode: p.playing ? 'live' : gameRequestInterval ? 'edit-poll' : 'edit-change', pollIntervalMs: p.playing ? undefined : 300, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now, frontendPrepareMs: requestPreparedAt - now, frontendCompleteMs: performance.now() - completionStartedAt });
+          recordOwnedNativeViewportProfile('game', { ...result.profile, updateMode: p.playing ? 'live' : gameRequestInterval ? 'edit-poll' : 'edit-change', pollIntervalMs: p.playing ? undefined : 300, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, simulationTiming: p.simulationTiming, transportMs: performance.now() - now, frontendPrepareMs: requestPreparedAt - now, frontendCompleteMs: performance.now() - completionStartedAt });
           const image = result.image;
           const firstFrame = nativeGameFrameRef.current == null;
           nativeGameFrameRef.current = {
@@ -1659,7 +1661,7 @@ export function Viewport(props: {
         const current = propsRef.current;
         if (currentSceneRequestKey(current) !== nativeSceneIdentity?.key || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) { releaseNativeViewportFrame(buffer); return; }
         const result = uploadNativeViewportFrame(buffer, nativeSceneFrameRef.current?.image);
-        recordOwnedNativeViewportProfile('scene', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
+        recordOwnedNativeViewportProfile('scene', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, simulationTiming: p.simulationTiming, transportMs: performance.now() - now });
         const image = result.image;
         const firstFrame = nativeSceneFrameRef.current == null;
         nativeSceneFrameRef.current = {

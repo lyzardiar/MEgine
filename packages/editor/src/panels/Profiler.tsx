@@ -1,3 +1,4 @@
+import { playStepTimingStages } from '../playStepTiming';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
@@ -763,6 +764,13 @@ export function Profiler() {
               {nativeViewportRequestStages(latestNative).map(stage => <tr key={stage.name}><td>{stage.name}</td><td>{stage.ms != null ? formatMs(stage.ms) : '—'}</td></tr>)}
             </tbody></table>
             <p>Native frame intervals measure completed uploads, not compositor presentation. Simulation and GPU timestamps overlap these scopes.</p>
+          </section>}
+          {module === 'cpu' && latestNative?.simulationTiming && <section className="profiler-detail-section" aria-label="Simulation request latency">
+            <h3>Simulation Request · {latestNative.simulationTiming.totalMs != null ? formatMs(latestNative.simulationTiming.totalMs) : '—'}</h3>
+            <p>Session {latestNative.simulationTiming.sessionId} · Revision {latestNative.simulationTiming.revision}. Latest completed simulation request; separate from the displayed render revision.</p>
+            <table><thead><tr><th>Stage</th><th>Wall time</th></tr></thead><tbody>
+              {playStepTimingStages(latestNative.simulationTiming).map(stage => <tr key={stage.name}><td>{stage.name}</td><td>{stage.ms != null ? formatMs(stage.ms) : '—'}</td></tr>)}
+            </tbody></table>
           </section>}
           {module === 'cpu' && <section className="profiler-detail-section" aria-label="Native CPU call tree">
             <header>

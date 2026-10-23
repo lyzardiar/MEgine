@@ -1,4 +1,5 @@
 // Author: MiYu. Editor scene state, hierarchy and runtime interaction.
+import type { PlayStepTiming } from './playStepTiming';
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, retainedNativePlayWorld, type PlayInput, type PlayRuntimeDriver, type PlayRuntimeWorld } from './playRuntime';
 import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord, retainedPlayWorldChanges } from './playWorldSync';
@@ -261,6 +262,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     for (const listener of playFrameListeners) queueMicrotask(() => { if (generation === playGeneration && mode !== 'edit' && playFrameListeners.has(listener)) listener(); });
   };
   let playStepRequestMs = 0;
+  let playStepTiming: Readonly<PlayStepTiming> | undefined;
   let remotePlaySessionId: number | undefined;
   let playWorldRevision: number | undefined;
   let playWorldSessionId: number | undefined;
@@ -274,7 +276,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   };
   const mutablePlayViewportSnapshot = () => {
     exposePlayEntities();
-    return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected(), get nativeSessionId() { return nativePlaySessionId(); }, get nativeWorldReference() { return nativeWorldReference(); }, runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs } : null;
+    return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected(), get nativeSessionId() { return nativePlaySessionId(); }, get nativeWorldReference() { return nativeWorldReference(); }, runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs, simulationTiming: playStepTiming?.sessionId === playRuntime?.sessionId ? playStepTiming : undefined } : null;
   };
 
   const trackPlayOperation = (operation: Promise<void>, generation: number) => {
@@ -305,6 +307,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     playEntities = null;
     mode = 'edit';
     playSpin = 0;
+    playStepTiming = undefined;
     animationPreview = null;
     timelinePreview = null;
   };
@@ -317,11 +320,17 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     playInput.pressedKeys = []; playInput.releasedKeys = [];
     playInput.pressedButtons = []; playInput.releasedButtons = []; playInput.pointerDelta = [0, 0];
     const snapshot = playRuntime.retainsWorld && playWorldMatches() ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: (playClearColor ?? clearColor).slice() as WorldSnapshotView['clearColor'], selected: primarySelected() };
-    trackPlayOperation(playRuntime.step(snapshot, input, dt).then((result) => {
+    const prepared = performance.now();
+    const runtime = playRuntime;
+    trackPlayOperation(runtime.step(snapshot, input, dt).then((result) => {
       if (generation !== playGeneration || mode === 'edit') return;
       if (playRuntime?.quitRequested) { stopPlay(); return; }
+      const accepting = performance.now();
       acceptRuntimeWorld(result);
-      playStepRequestMs = performance.now() - started;
+      const completed = performance.now();
+      playStepRequestMs = completed - started;
+      const timing = runtime.stepTiming;
+      playStepTiming = timing && timing.sessionId === result.nativeSessionId && timing.revision === result.nativeRevision ? Object.freeze({ ...timing, prepareMs: prepared - started, acceptMs: completed - accepting, totalMs: playStepRequestMs }) : undefined;
     }), generation);
   };
 
@@ -1126,7 +1135,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     playRenderSnapshot() {
       if (!ownedPlayWorld || !playWorldSync.presentationMatches(playEntities, playClearColor ?? clearColor)) return mutablePlayViewportSnapshot();
       const { entities, clearColor: color } = ownedPlayWorld;
-      return { entities, frame, simFrame: frame, simulationTime: playSpin, clearColor: color, selected: primarySelected(), nativeSessionId: nativePlaySessionId(true), nativeWorldReference: nativeWorldReference({ entities, clearColor: color }), runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs };
+      return { entities, frame, simFrame: frame, simulationTime: playSpin, clearColor: color, selected: primarySelected(), nativeSessionId: nativePlaySessionId(true), nativeWorldReference: nativeWorldReference({ entities, clearColor: color }), runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs, simulationTiming: playStepTiming?.sessionId === playRuntime?.sessionId ? playStepTiming : undefined };
     },
     get nativePlaySessionId() { return nativePlaySessionId(); },
     get nativePlayRevision() { return nativePlaySessionId() === playWorldSessionId ? playWorldRevision : undefined; },

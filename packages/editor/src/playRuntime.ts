@@ -1,4 +1,5 @@
 // Author: MiYu. Native Play lifecycle, delta validation and immutable publication.
+import type { NativePlayStepTiming, PlayStepTiming } from './playStepTiming';
 import { invoke } from '@tauri-apps/api/core';
 import type { WorldSnapshotView } from '@mengine/api';
 import { toWorldSnapshotView, type HostWorldSnapshot } from './transport/editorTransport';
@@ -26,6 +27,7 @@ export type PlayRuntimeDriver = {
   readonly retainsWorld?: boolean;
   readonly sessionId?: number | null;
   readonly quitRequested?: boolean;
+  readonly stepTiming?: Readonly<PlayStepTiming>;
   start(snapshot: WorldSnapshotView): Promise<PlayRuntimeWorld | void>;
   step(snapshot: WorldSnapshotView | undefined, input: PlayInput, dt: number): Promise<PlayRuntimeWorld>;
   stop(): void;
@@ -40,6 +42,7 @@ export type PlayWorldUpdate = {
   revision: number;
   reset: boolean;
   quitRequested?: boolean;
+  timing?: NativePlayStepTiming;
 };
 
 export function applyPlayWorldUpdate(previous: WorldSnapshotView, revision: number, update: PlayWorldUpdate): WorldSnapshotView {
@@ -92,12 +95,14 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
   let backendSessionId: number | null = null;
   let lifecycle: Promise<void> = Promise.resolve();
   let quitRequested = false;
+  let stepTiming: Readonly<PlayStepTiming> | undefined;
   return {
     retainsWorld: true,
     get sessionId() { return sessionId; },
     get quitRequested() { return quitRequested; },
+    get stepTiming() { return stepTiming; },
     async start(snapshot) {
-      quitRequested = false;
+      quitRequested = false; stepTiming = undefined;
       const current = ++generation;
       const starting = lifecycle.then(async () => {
         if (current !== generation) return;
@@ -112,7 +117,9 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
     async step(snapshot, input, dt) {
       if (sessionId === null || world === null) throw new Error('Play Mode is initializing');
       const current = generation;
+      const started = performance.now();
       const update = await invoke<PlayWorldUpdate>('step_editor_play', { sessionId, snapshot, input, dt });
+      const received = performance.now();
       if (current !== generation || world === null) throw new Error('Play session expired');
       if (update.baseRevision !== revision || update.revision !== revision + 1) throw new Error('Play snapshot revision mismatch');
       if (!update.reset && update.entityOrder === undefined) {
@@ -123,10 +130,11 @@ export function createNativePlayRuntime(onError: PlayRuntimeDriver['onError']): 
       }
       revision = update.revision;
       quitRequested = update.quitRequested === true;
+      stepTiming = Object.freeze({ sessionId, revision, invokeMs: received - started, applyMs: performance.now() - received, native: update.timing && Object.freeze({ ...update.timing }) });
       return world;
     },
     stop() {
-      quitRequested = false;
+      quitRequested = false; stepTiming = undefined;
       generation++; sessionId = null; world = null; revision = 0;
       lifecycle = lifecycle.then(async () => {
         const stopped = backendSessionId;

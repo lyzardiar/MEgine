@@ -4374,10 +4374,12 @@ async fn start_editor_play(snapshot: WorldSnapshot, app: tauri::AppHandle, state
 
 #[tauri::command]
 async fn step_editor_play(session_id: u64, snapshot: Option<WorldSnapshot>, input: mengine_editor_host::ScriptInput, dt: f32, state: State<'_, AppState>) -> Result<mengine_editor_host::PlayWorldUpdate<mengine_core::snapshot::SharedWorldSnapshot>, String> {
+    let started = std::time::Instant::now();
     if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
     let runtime = state.play_runtime.clone();
-    let result = tauri::async_runtime::spawn_blocking(move || runtime.advance_shared_update(session_id, snapshot, input, dt)).await.map_err(|error| error.to_string())??;
+    let mut result = tauri::async_runtime::spawn_blocking(move || runtime.advance_shared_update(session_id, snapshot, input, dt)).await.map_err(|error| error.to_string())??;
     if state.play_runtime.generation() != session_id { return Err("Play session expired".into()); }
+    if let Some(timing) = &mut result.timing { timing.command_ms = Some(started.elapsed().as_secs_f64() * 1000.0); }
     Ok(result)
 }
 

@@ -444,3 +444,14 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 快速检查：提取7项、RHI材质提交2项、纹理同步1项通过；手动局部基准1项通过。runtime/editor-host/rhi tests/examples和Tauri release编译通过。Amazonia提取中位1.731245→1.022065ms，输出值一致；不作为整帧、总内存或FPS结论。完整边界及本地日志见performance-risk-todo第四十六阶段。
 
 待合并验证：下一相关原生构建后执行map-session的continuous-profile、transport-profile、viewport-transitions、effect-reload、runtime-edits；另覆盖材质预览与单对象编辑隔离、材质/纹理/着色器热更新、透明/自定义材质和阴影。重点核对共享载荷是否影响实际Game/Scene及相机视图，记录真实连续性能。当前EXE不包含本项，本轮未重复原生地图QA、全库测试或全量构建；原有强制竞态/脱离窗口/Edit状态及Undo/真实延迟待测继续保留。
+
+
+### B001-01 模拟请求分段计时与材质共享集成
+
+变更：host PlayWorldUpdate增加可选timing，Tauri补命令计时，playRuntime/store保存成功会话/版本的不可变样本，Viewport/Profiler传递并展示分段；playStepTiming测试覆盖嵌套范围、缺失/非法值、采样副本隔离、Stop/重启/过期返回。map-session新增--simulation-profile，校验去重版本及真实嵌套范围。属于既有编辑器性能补充，不增加功能计数。
+
+快速检查：前端21项通过，Stop清空补充后计时/视口/归属5项通过（含2项重测），原生计时1项通过，TypeScript/Tauri编译通过。首次原生测试编译缺少既有内部Request的queued_at，修正后定向通过。完整口径见performance-risk-todo第四十七阶段。
+
+与c12e856共用一次前端/原生构建，EXE aa67609c2f6c6b2b3cd975d0cbb54b797793cebfbf1d3b282f61a68c81c4686b。命令 `node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile --simulation-profile --viewport-transitions --effect-reload --runtime-edits` 的B001/map-session-1792784239971.json通过，0 error、正常退出。225个去重模拟样本完整，Scene/Game/相机预览、分辨率、Inspector编辑/动画推进、特效修改和精确恢复、Stop还原通过。正常材质共享地图路径已集成，未执行全库测试或全量地图导入。
+
+最新呈现51.6562次/秒，独立运行不证明整体提速；模拟请求去重平均11.0116ms，原生排队0.01135ms，invoke减命令5.41515ms（含编码/投递/解码/回调等待）。继续分解前端准备和该剩余范围。待测保留原生材质/纹理/着色器专项热更新、材质预览及特殊透明/自定义材质；强制在途竞态、脱离窗口、隐藏/重试、Edit状态/Undo和真实输入延迟不关闭。Profiler新增表格尚未单独目视验收，真实采样传递已由原生QA验证。

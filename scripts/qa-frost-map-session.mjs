@@ -11,6 +11,8 @@ assert.ok(process.env.MENGINE_EDITOR_EXECUTABLE,'Set MENGINE_EDITOR_EXECUTABLE')
 const logsOnly=process.argv.includes('--logs-only');
 const continuousProfile=process.argv.includes('--continuous-profile');
 const transportProfile=process.argv.includes('--transport-profile');
+const simulationProfile=process.argv.includes('--simulation-profile');
+assert.ok(!simulationProfile||transportProfile,'--simulation-profile requires --transport-profile');
 const viewportTransitionsOnly=process.argv.includes('--viewport-transitions-only');
 const viewportTransitions=process.argv.includes('--viewport-transitions')||viewportTransitionsOnly;
 assert.ok(!viewportTransitions||continuousProfile||viewportTransitionsOnly,'--viewport-transitions requires --continuous-profile');
@@ -162,6 +164,20 @@ try{
       assert.ok(profiles.nativeProfileCount>=15,'Expected completed live viewport frames');assert.ok(profiles.returnedSamples>0,'Expected WebView paint samples');
       if(transportProfile)assert.ok(profiles.nativeTimings?.filter(p=>Number.isFinite(p.sharedTransport?.publicationReadyToEventMs)).length>=15,'Expected correlated native publication-to-WebView timings');
       if(transportProfile)assert.ok(profiles.nativeTimings?.filter(p=>Number.isFinite(p.frontendPrepareMs)&&p.frontendPrepareMs>=0&&Number.isFinite(p.frontendCompleteMs)&&p.frontendCompleteMs>=0).length>=15,'Expected split frontend preparation and completion timings');
+      if(simulationProfile){
+        const timings=profiles.nativeTimings?.map(p=>p.simulationTiming).filter(Boolean)??[];
+        const unique=[...new Map(timings.map(t=>[`${t.sessionId}:${t.revision}`,t])).values()];
+        assert.ok(unique.length>=15,'Expected at least 15 distinct completed simulation revisions');
+        for(const timing of unique){
+          for(const value of [timing.totalMs,timing.prepareMs,timing.invokeMs,timing.applyMs,timing.acceptMs,timing.native?.workerQueueMs,timing.native?.workerMs,timing.native?.simulationMs,timing.native?.commandMs])assert.ok(Number.isFinite(value)&&value>=0,'Expected complete nonnegative simulation timings');
+          assert.ok(timing.native.workerMs+0.00001>=timing.native.simulationMs,'Worker contains simulation');
+          assert.ok(timing.native.commandMs+0.00001>=timing.native.workerQueueMs+timing.native.workerMs,'Command contains queue and worker');
+          assert.ok(timing.invokeMs+0.1>=timing.native.commandMs,'Invoke contains native command');
+          assert.ok(timing.totalMs+0.1>=timing.prepareMs+timing.invokeMs+timing.applyMs+timing.acceptMs,'Request contains frontend scopes');
+        }
+        report.simulationProfile={distinctRevisions:unique.length,timings:unique};
+        report.checks.push('Simulation timing scopes retain distinct session/revision ownership and nested wall times');
+      }
       report.continuousProfile={elapsedMs,...profiles};await execute('playback.pause');await capture('profile-view');if(effectReload)await checkEffectReload();if(viewportTransitions)await checkViewportTransitions();if(runtimeEdits)await checkRuntimeEdits();await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities,'Stop restores the authored scene after profiling');
       report.checks.push('10-second live Amazonia presentation and WebView sample window without Agent polling, followed by Stop restoration');
     }else{

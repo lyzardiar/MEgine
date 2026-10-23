@@ -935,3 +935,21 @@ Rust源码构造接口有变化：RenderObject.material从RenderMaterial变为Sh
 手动benchmark_shared_render_materials 1项通过：以82417af的独占材质生产提取实现为对照，两组预热、九组交替采样，每组20次，完整对象/材质值一致。Amazonia 2,747对象共享224份材质载荷，提取中位1.731245→1.022065ms（减少40.96%）；菜单219对象共享155份，中位0.207100→0.178775ms。RenderObject结构800→112字节，704字节材质载荷在Arc中单独分配；该结构尺寸不代表总内存降幅。结果仅为CPU提取，不含绘制、IPC或实际FPS。
 
 原始日志为tmp/docs-artifacts/editor-performance-risk/shared-render-material-{check,tests,benchmark,rhi-tests,texture-tests,integration-check}.log；shared-render-material-summary.json记录两份场景SHA256及逐组数据。未重建Editor EXE或运行地图QA，当前ff659f5a版本不包含本项。下次相关原生批次合并验证Game/Scene/相机预览、对象材质修改、材质/纹理/着色器热更新、透明/自定义材质、阴影及连续性能；既有交互和竞态待测项继续保留。
+
+
+## 第四十七阶段模拟请求分段计时
+
+PlayWorldUpdate增加可选timing：请求进入模拟线程的排队时间、模拟与快照增量时间、包含历史发布的worker总耗时，以及Tauri命令从入口到返回前的耗时。命令计时不含响应序列化；独占转换保留timing。Rust直接构造PlayWorldUpdate需要补timing: None；旧前端可忽略新增JSON字段，前端也允许旧后端缺少timing。
+
+原生driver在成功验证会话/版本并应用增量后保存不可变计时，store补充输入/世界准备、接受运行世界及请求总耗时。Stop清空计时，过期响应不能发布；Game/Scene记录请求开始时最新完成的模拟样本，样本保留独立sessionId/revision，不能按渲染worldRevision当作同一帧。Profiler CPU面板展示互不重叠的范围，缺失或不合法计时显示不可用。profiler.get_samples的includeNativeTimings保留这份小型元数据，不附带世界或资源表。
+
+分段为准备、模拟排队、模拟/快照增量、worker发布及簿记、命令调度/返回、IPC编码/投递/解码、前端增量应用、编辑器接收和剩余前端工作。IPC范围仍含WebView投递/回调调度，不是纯传输；不把模拟请求与另一个渲染版本的simulationMs直接相减。QA新增--simulation-profile（要求--transport-profile和--continuous-profile），按会话/版本去重并校验至少15个完整样本及嵌套范围。
+
+定向前端21项通过；补充Stop清空后，计时/视口完成/归属5项通过（其中2项计时检查为重测）。原生shared_step_timing测试通过，验证队列时间、成功版本、独占序列化等价和Stop拒绝。首次测试编译发现既有并发测试的内部Request构造缺少queued_at，补齐后通过。Tauri release检查与TypeScript通过，仅既有world_from_snapshot未使用告警。
+
+
+与c12e856材质共享共用一次前端/原生构建（Rust 1分15秒），EXE SHA256 aa67609c2f6c6b2b3cd975d0cbb54b797793cebfbf1d3b282f61a68c81c4686b。执行 `node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile --simulation-profile --viewport-transitions --effect-reload --runtime-edits`，报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792784239971.json` 通过、0 error、正常退出。Scene/Game/相机预览与环绕、分辨率切换、运行Inspector修改经30步保留、动画/时钟、特效文件修改后精确像素恢复及Stop还原均通过；Scene预览截图已核对。WebView锁缓存保留。
+
+7,410实体、850×478、末尾240次呈现：51.6562次/秒，平均间隔19.35875ms/P95 31.9ms，渲染12.7287ms、命令15.4554ms、世界同步2.0398ms。225个去重模拟版本的平均耗时：准备1.7884ms、invoke 7.8738ms、增量应用0.5347ms、编辑器接收0.8098ms、总计11.0116ms；原生排队0.01135ms、模拟2.21565ms、worker 2.40051ms、命令2.45863ms。invoke减命令为5.41515ms，范围包含编码/序列化、投递、解码与WebView回调等待；证据支持继续分解该范围及前端准备，不能直接归因于传输或模拟队列。两种平均请求值口径不同：呈现样本可引用重复模拟版本，模拟分解先按会话/版本去重。
+
+这是独立运行采样，不证明材质共享带来整体FPS改善或已达60 FPS。原始日志为 `tmp/docs-artifacts/editor-performance-risk/play-timing-{check,typescript,tests,viewport-tests,native-tests,native-retest,editor-build,native-build,native-qa}.log`，`play-timing-summary.json`保存二进制摘要和指标。阶段46的正常地图/视口/编辑/特效路径已集成；原生材质预览、材质/纹理/着色器真实热更新和特殊透明/自定义材质的专项覆盖继续待测，既有强制在途竞态/脱离窗口/Edit状态及Undo/真实输入延迟仍未完成。
