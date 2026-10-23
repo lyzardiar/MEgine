@@ -59,7 +59,8 @@ fn tcp_bridge_preserves_authoritative_numbers_and_exact_entity_strings() {
     let server=std::thread::spawn(move || {
         let deadline=Instant::now()+Duration::from_secs(4);
         let mut peer=loop { match listener.accept() { Ok((peer,_))=>break peer,Err(e) if e.kind()==std::io::ErrorKind::WouldBlock && Instant::now()<deadline=>std::thread::sleep(Duration::from_millis(2)),Err(e)=>panic!("accept: {e}") } };
-        peer.set_read_timeout(Some(Duration::from_secs(4))).unwrap();let mut line=String::new();BufReader::new(peer.try_clone().unwrap()).read_line(&mut line).unwrap();
+        // MiYu: accepted Windows sockets may inherit the listener's nonblocking mode.
+        peer.set_nonblocking(false).unwrap();peer.set_read_timeout(Some(Duration::from_secs(4))).unwrap();let mut line=String::new();BufReader::new(peer.try_clone().unwrap()).read_line(&mut line).unwrap();
         assert!(line.contains("112.00000000000001"));peer.write_all(line.as_bytes()).unwrap();
     });
     let mut host=ScriptHost::new().unwrap();let mut world=World::new();

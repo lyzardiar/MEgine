@@ -4,6 +4,9 @@ use crate::vm::ScriptVm;
 use serde_json::Value as JsonValue;
 use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::{Arc, Weak}, time::{Duration, Instant}};
 
+#[path = "command_batch.rs"]
+mod command_batch;
+
 #[cfg(test)]
 #[path = "snapshot_cache_tests.rs"]
 mod snapshot_cache_tests;
@@ -197,12 +200,11 @@ impl NativeBindings {
         match operation { "connect" => client.connect(value).to_string(), "send" => client.send(value).to_string(), "poll" => client.poll(), "close" => { client.close(); "true".into() }, _ => "false".into() }
     }
     pub fn command(&self, json: &str) { if let Some(command) = parse_command(json) { self.commands.borrow_mut().push(command); } }
-    // MiYu: validate the entire array before appending; raw slices preserve command numbers and field order.
+    // MiYu: parse and validate the complete array before appending commands in order.
     pub fn command_batch(&self, json: &str) -> bool {
-        let Ok(raw) = serde_json::from_str::<Vec<&serde_json::value::RawValue>>(json) else { return false; };
-        let Some(parsed) = raw.into_iter().map(|value| parse_command(value.get())).collect::<Option<Vec<_>>>() else { return false; };
+        let Ok(parsed) = serde_json::from_str::<Vec<command_batch::BatchCommand>>(json) else { return false; };
         let mut commands = self.commands.borrow_mut();
-        for command in parsed { commands.push(command); }
+        for command in parsed { commands.push(command.0); }
         true
     }
     pub fn sprite_batch(&self, entity: u64, instances: Vec<[f32; 4]>, colors: Vec<[f32; 4]>) -> bool {

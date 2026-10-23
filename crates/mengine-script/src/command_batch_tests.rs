@@ -17,6 +17,27 @@ fn command_batch_preserves_order_exact_numbers_and_component_payloads() {
 }
 
 #[test]
+fn command_batch_component_parser_matches_single_command_validation() {
+    for json in [
+        r#"{"op":"setComponent","entity":9007199254740993,"component":"Custom","value":{"a":112.00000000000001,"b":-10.875644347017863,"v":[null,true,18446744073709551615]}}"#,
+        r#"{"extra":[1,2],"entity":1,"component":"Custom","value":null,"op":"setComponent"}"#,
+        r#"{"op":"setComponent","ignored":{"x":[1,2]},"entity":1,"component":"Custom","value":null}"#,
+        r#"{"op":"setComponent","entity":1,"component":"Custom"}"#,
+        r#"{"op":"setComponent","entity":1,"component":"Custom","value":null,"value":{}}"#,
+        r#"{"op":"setComponent","entity":1,"component":"Custom","value":null,"op":null}"#,
+        r#"{"op":"setComponent","entity":1,"entity":2,"component":"Custom","value":{}}"#,
+        r#"{"op":"setComponent","entity":1,"component":null,"value":{}}"#,
+        r#"{"op":"setComponent","entity":1.5,"component":"Custom","value":{}}"#,
+        r#"{"op":"spawn","components":{"Custom":{"p":1.0000000000000002}}}"#,
+        r#"{"entity":1,"op":"setParent","parent":null}"#,
+    ] {
+        let expected = parse_command(json).map(|command| serde_json::to_value(command).unwrap());
+        let actual = serde_json::from_str::<command_batch::BatchCommand>(json).ok().map(|command| serde_json::to_value(command.0).unwrap());
+        assert_eq!(actual,expected,"{json}");
+    }
+}
+
+#[test]
 fn command_batch_rejects_whole_invalid_array_without_touching_prior_commands() {
     let mut host = ScriptHost::new().unwrap();
     for json in ["null", "{}", "[", "[{},null]", r#"[{"op":"despawn","entity":1},{"op":"unknown"}]"#, r#"[{"op":"despawn","entity":1},]"#, r#"[{"op":"setComponent","entity":-1,"component":"Text","value":{}}]"#, "[] trailing"] {

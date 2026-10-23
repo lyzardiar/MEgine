@@ -2,7 +2,7 @@
 
 Author: MiYu。
 
-`scripts/build-frost-original-doodads.py` 在原版地形上生成独立的装饰预览项目，消费完整 `war3map.doo`、源 SLK、MDX 与贴图。主游戏 `samples/frostbound-realms` 尚未切换到生成地图；砍伐、碰撞、掉落、保存、寻路、单位放置与联机仍待接入。当前状态为**已实现，待 B001 批次运行验证**。
+`scripts/build-frost-original-doodads.py` 在原版地形上生成独立的装饰预览项目，消费完整 `war3map.doo`、源 SLK、MDX 与贴图。主游戏 `samples/frostbound-realms` 尚未切换到生成地图；砍伐、碰撞、掉落、保存、寻路、单位放置与联机仍待接入。当前两图生成与 MEngine 原生检查通过，原版 flags／life／动画调度对照仍列入 B001 待测。
 
 ## 数据与更新方式
 
@@ -31,7 +31,7 @@ node scripts/test-frost-original-doodads.mjs --callback-smoke
 
 2026-10-23 必要生成冒烟完成：Booty Bay 的 2,011 条放置使用 67 个模型，生成 5,541 个实体；6 个模型含发射器，92 个部件归入 22 个动态状态组。Python 和生成 JavaScript 语法检查通过；定向回调检查通过，覆盖原地形回调、运行时 ID、相同帧去重、暂停、循环及新上下文。这里的生成数量不表示画面或性能验收。
 
-批次执行以下检查，当前均为**待测**：
+两图已按本批最终客户端执行以下生成与资源完整性检查并通过；输出目录已存在，后续重建需选择新目录：
 
 ```powershell
 python scripts/build-frost-original-doodads.py tmp/docs-artifacts/frost-original-doodads/exported/booty-bay --output tmp/docs-artifacts/testing-batches/B001/booty-bay-doodads
@@ -40,8 +40,12 @@ python scripts/build-frost-original-doodads.py tmp/docs-artifacts/frost-original
 node scripts/test-frost-original-doodads.mjs --project tmp/docs-artifacts/testing-batches/B001/amazonia-doodads
 ```
 
-完整项目检查核对全部源放置、变换、父子关系、输出／源摘要和网格／材质／贴图／粒子引用。首次执行后按结果修复，不预先宣称通过。
+完整项目检查核对全部源放置、变换、父子关系、输出／源摘要和网格／材质／贴图／粒子引用。Booty Bay 为2,011放置、5,541实体、92动态部件、30个发射器实体；Amazonia 为2,452放置、6,842实体、98动态部件、65个发射器实体。
 
-原生 Editor 分别打开两份生成项目，核对树木、鱼群、火盆、瀑布及 Amazonia 两个纯发射器；观察父子变换、透明材质、billboard、暂停／单步／Stop／重开与控制台错误。源 flags、life 与动画选择另与原版地图对照。使用同一二进制、视角和窗口尺寸，采集地形项目与装饰项目的加载、空闲、Play 帧时间及内存；数千实体的成本与现有 Frostbound 受影响场景合并评估。该批不默认扩大为所有地图或整个仓库回归。
+`qa-frost-original-doodads.mjs <project>` 已在两图验证全部放置和运行时父子ID、动画推进、暂停像素冻结、Stop恢复及重开像素重现；查看了全景、树木、鱼群与火盆近景，控制台error为0。Amazonia另以 `--effects-only` 对两个纯发射器各运行2秒，关闭目标发射器后重放相同时间，像素不同，证明其实际参与绘制。`--single` 用于强制客户端逐条提交；Booty Bay批量／逐条路径的5组对应截图逐字节相同。设置 `MENGINE_EDITOR_EXECUTABLE` 和不同的 `MENGINE_DOODAD_LABEL` 选择二进制及报告名称。
+
+同一新二进制下 Booty Bay 地形54实体截图总耗时中位数4.71175ms，加入装饰后5,541实体25.18910ms；Amazonia装饰项目33.47670ms。Booty Bay装饰项目批量／逐条两次采样分别25.18910／22.84035ms，未观察到原生整帧加速。数据包含GPU、回读及采样波动，且动画每12Hz变化，不能用每次截图对应的最后一个模拟步代表所有动画更新成本。详见性能文档第二十四／二十五阶段与本批报告。
+
+源 flags／life／动画选择尚未与原版实际运行对照。近景可见地表层边界，原版渲染、粒子求解器和逐像素一致性也未验收；不得将以上原生检查写成完整1:1复刻完成。
 
 生成冒烟及日志保留在 `tmp/docs-artifacts/frost-original-doodad-scene/`；批次画面与性能证据保留在 `tmp/docs-artifacts/testing-batches/B001/`。详情见[测试台账](../../testing-batches.md)。

@@ -68,7 +68,7 @@ if (!accepted) throw new Error('Invalid command batch');
 
 V8 与 QuickJS 共用批次解析：完整数组及每条命令都能解析时返回 `true`，按数组顺序追加至既有队列；空数组也返回 `true`。非法 JSON、非数组或任意无法解析的命令返回 `false`，整批不入队，之前已排队的命令保留。单条命令、批次和 `setSpriteBatchData` 按调用顺序入队；脚本回调失败仍丢弃该帧所有命令。这里的成功仅表示入队，实体存在性和组件应用沿用帧末 `World.commit` 规则，不提供世界应用事务或立即更新 snapshot。
 
-批次直接解析原始 JSON 片段，保留原生解析器的整数精度与字段顺序兼容；调用方先在 JS 中构造不精确 Number 的情况不会因此修复。原有 `pushCommandJson` 保持单命令行为。批次减少跨桥次数，但 JSON 序列化、命令解析及组件写入仍然存在。当前实现的原生运行和性能测量列入 [B001](testing-batches.md)，尚未形成加速结论。
+批次对 op 在首字段的 `setComponent` 直接读取字段和组件载荷，其余排列／命令沿用通用解析；保留原生整数精度、重复字段拒绝和字段顺序兼容。调用方先在 JS 中构造不精确 Number 的情况不会因此修复。原有 `pushCommandJson` 保持单命令行为。批次减少跨桥次数，但 JSON 序列化、命令解析及组件写入仍然存在。验收与测量记录于 [B001](testing-batches.md)，跨桥次数减少不等于整帧加速。
 
 ```ts
 function onTick(dt: number): void {
