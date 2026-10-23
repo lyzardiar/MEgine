@@ -7,13 +7,13 @@ Author: MiYu。2026-10-23起执行，规则入口为[AGENTS.md](../AGENTS.md)。
 ## 当前批次 B001
 
 - 计数起点：`f90ccb1ac6fede47ff1b7a4909ecc93babed7d95`之后的新功能／修复任务。
-- 已登记：0 / 3。
+- 已登记：1 / 3。
 - 状态：收集待测任务。
 - 此前已执行的验证沿用各阶段记录；本次规则更新不增加计数。
 
 | 任务标识 | 变更路径／提交 | 待测场景与预期 | 执行命令／人工操作 | 已做快速检查 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| 暂无 | — | — | — | — | — |
+| B001-01 原版装饰场景 | `scripts/build-frost-original-doodads.py`、`scripts/frost-original-doodads-client.js`、`scripts/test-frost-original-doodads.mjs`；生成资产复用已提交的转换库，验证项目保留本地 | 两图全部放置／变换／摘要／资源引用；原生父子变换、网格与纯粒子、透明／billboard、暂停重开；原版 flags／life／动画语义对照；数千实体加载、空闲、Play 性能 | 按[场景说明的批次命令与操作](designs/frostbound-realms/original-doodad-scene.md#生成与批次验证)执行；Booty Bay 复用本次生成物，Amazonia 生成后检查；同一二进制对比地形与装饰项目，按累计影响合并 Frostbound 回归 | Booty Bay 生成冒烟成功：2,011 放置、67 模型、5,541 实体；Python／生成 JS 语法及定向回调检查通过 | 已实现，待批次验证；尚无原生画面或性能结论 |
 
 ## 登记要求
 

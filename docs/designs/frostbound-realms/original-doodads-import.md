@@ -13,7 +13,7 @@ Author: MiYu。
 - 未知主版本、错误标识、负数／越界计数、任意字段截断、非有限坐标及额外尾部均拒绝。严格读取不会静默删掉无法解释的记录。
 - `war3mapUnits.doo`是另一种记录布局，仅保留原件。对象覆盖`war3map.w3b/.w3d`也保留原件并标记`preserved-unparsed`；后续场景消费必须先处理实际存在的覆盖，不能只使用默认SLK。
 
-当前交付是原版放置数据消费基础。地形项目尚未实例化这些对象；可破坏物状态、砍伐、碰撞、粒子、动画、掉落、保存及联机仍需接入，不把读取通过等同于原版运行一致。
+当前读取器是原版放置数据消费基础。[装饰场景生成器](original-doodad-scene.md)已将源模型、采样动画与发射器加入独立地形项目，等待 B001 批次运行验证。可破坏物交互、砍伐、碰撞、掉落、保存及联机仍需接入，不把读取通过等同于原版运行一致。
 
 ## 来源与验证
 
@@ -40,4 +40,4 @@ node scripts/probe-frost-rea-doodads.mjs
 
 重新运行[地图导出及独立格式检查](original-map-import.md)可得到包含装饰记录的新输出；已有输出目录保留，必须选择新目录。证据目录为`tmp/docs-artifacts/frost-original-doodads/`，包含`corpus.json`、`rea-summary.json`、`reference-check-report.json`及`exported/`。合成样例由`test-warcraft-doodads.py`中的`fixture(8)`写入地图测试MPQ，再通过正常导入器导出。
 
-下一步从源SLK及地图覆盖解析对象资源，再按源放置变换实例化模型。初步资源核对中，Booty Bay所需模型在既有本地转换库均有条目；Amazonia的`BubbleGeyserSteam`和`BubbleGeyser`为需单独接入的纯粒子模型，不能当作普通GLB跳过或替换。两图均没有W3B/W3D覆盖成员。该资源核对是后续工作的输入，不是运行验收。
+后续消费使用[装饰场景生成器](original-doodad-scene.md)。Booty Bay所需模型在既有本地转换库均有条目；Amazonia的`BubbleGeyserSteam`和`BubbleGeyser`属于纯粒子模型，使用发射器路径，完整地图生成与原生运行留待批次验证。两图均没有W3B/W3D覆盖成员；含覆盖的其他地图需先实现覆盖解析。
