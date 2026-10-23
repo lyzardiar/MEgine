@@ -728,3 +728,14 @@ cargo test -p mengine-runtime --release --lib source_validation_tests -- --test-
 保留原地图输入通过Scene／Game、三层动画、暂停稳定画面、12次固定Game像素一致、Stop完整恢复与确定性重启，7403实体／2452装饰／96渲染单位、0 error，进程正常退出。报告 `B001/original-map-composition-1792767053644.json`。同EXE主菜单嵌入模型／相机视图报告 `war3-ui/native-1792767119833.json` 通过、0 error；截图已目视核验。锁定的WebView缓存保留。两项实现已进入该EXE；新的真实热更新／UNC／挂载变化仍以待测记录为准。
 
 固定Game后10帧中位：总27.7694ms，来源校验8.30915ms，对象／材质3.80875ms，Frame compile7.095ms，世界通道编码2.55315ms。与历史同场景／脚本／分辨率的29.67195ms、10.1771ms、3.9204ms对照，固定像素哈希均为e6394c096b674ef9acab0c908c40278f3fad0f06da339c101cf4d5728957f471。历史与新样本并非同场交替的新旧EXE测量，不将差值当作稳定原生提速比例。独立CPU测试的24.99%也不能代替原生对象提取结果；截图间隔使每帧触发来源轮询，不能换算持续FPS。汇总 `B001/phase27-28-native-summary.json`，原始构建／运行日志 `editor-performance-risk/phase27-28-native-*.log`。
+
+
+## 第二十九阶段普通编辑快照复用
+
+App 的普通 Edit 刷新复用已经生成的 presentation entities，避免再为 Timeline 深拷贝一次完整世界。动画预览或 Timeline 预览期间仍单独读取 authored entities，保证属性录制和预览检查读取原始编辑值；退出预览恢复复用。Play 使用既有运行快照。是否显示 Timeline 不参与这个判断，隐藏面板仍可能保留录制状态。
+
+Amazonia 固定输入7,409实体、场景5,429,683字节；实际 store 的普通快照与 authored entities 深比较相等。Node 定向测量8次，额外复制均值15.073ms，范围13.456–21.546ms，每次临时堆增长约9.44MiB。移除的是该重复复制与分配，不是整个场景快照；此数据不能换算实时FPS或宣称所有地图卡顿已解决。原始脚本和报告在 `tmp/docs-artifacts/testing-batches/B001/authored-clone-cost.{mjs,json}`。
+
+`node --test packages/editor/tests/authoredPresentation.test.mjs` 通过，执行实际App表达式与store，覆盖普通编辑不复制、两类预览保留原始值、退出预览和Play运行值。另有独立只读复核确认Timeline不修改传入快照。原生构建及节点/镜头集成证据见 `docs/testing-batches.md` 本阶段条目。
+
+实时Amazonia稀疏原生样本中来源校验和frame compile仍占主要CPU开销。采样由最新帧查询去重得到，不覆盖全部渲染帧，不将调用数总和或截图间隔当成持续帧率。后续优化需同时记录脚本、WebView呈现/输入延迟和native整帧，保持热更新与来源身份校验语义。

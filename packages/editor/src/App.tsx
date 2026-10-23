@@ -823,14 +823,21 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (syncReady.current && !applyingRemote.current && booted.current) syncChannel.current?.postMessage({ type: 'scene-camera', sender: syncSender.current, sceneName: sceneNameRef.current, camera: store.sceneCamera } satisfies WorkspaceSyncMessage);
   };
   const frameSelection = async () => {
-    const request = ++frameRequestRef.current, entities = frameWorldRef.current, selected = store.selectedIds;
+    const request = ++frameRequestRef.current, entities = frameWorldRef.current, selected = [...store.selectedIds];
+    if (!selected.length) return;
+    const scene = sceneNameRef.current, mode = store.mode;
+    // MiYu: frame immediately; live snapshots may refresh while model bounds are loading.
+    window.dispatchEvent(new CustomEvent('mengine:focus-panel', { detail: { panel: 'scene', activateWindow: false } }));
+    const aspect = () => { const rect = document.querySelector<HTMLCanvasElement>('canvas[data-scene-viewport="true"]')?.getBoundingClientRect(); return rect && rect.height > 0 ? rect.width / rect.height : 1; };
+    store.frameSelected(aspect());
+    publishSceneCamera(store.sceneCamera);
     const cameraKey = JSON.stringify(store.sceneCamera);
     const paths = [...new Set(sceneFrameEntities(entities, selected).map(entity => String((entity.components.MeshRenderer as { mesh?: string } | undefined)?.mesh ?? '')).filter(path => /\.(gltf|glb)$/i.test(path)))];
     const models = new Map<string, Bounds>();
+    if (!paths.length) return;
     await Promise.all(paths.map(async path => { const mesh = await loadModelPreview(path), bounds = mesh && pointBounds(mesh.positions); if (bounds) models.set(path, bounds); }));
-    if (request !== frameRequestRef.current || entities !== frameWorldRef.current || JSON.stringify(selected) !== JSON.stringify(store.selectedIds) || cameraKey !== JSON.stringify(store.sceneCamera)) return;
-    const rect = document.querySelector<HTMLCanvasElement>('canvas[data-scene-viewport="true"]')?.getBoundingClientRect();
-    store.frameSelected(rect && rect.height > 0 ? rect.width / rect.height : 1, models);
+    if (request !== frameRequestRef.current || scene !== sceneNameRef.current || mode !== store.mode || JSON.stringify(selected) !== JSON.stringify(store.selectedIds) || cameraKey !== JSON.stringify(store.sceneCamera)) return;
+    store.frameSelected(aspect(), models);
     publishSceneCamera(store.sceneCamera);
   };
   frameSelectionRef.current = () => { void frameSelection(); };
@@ -2918,7 +2925,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     ? selectedIds.filter((id) => sceneQuery().sceneVisible(id) && sceneQuery().scenePickable(id))
     : selectedIds;
   const timelinePreviewActive = store.timelinePreviewActive();
-  const authoredEntities = useMemo(() => mode === 'edit' ? store.authoredEntities() : snap.entities, [store, mode, snap.entities]);
+  const scenePreviewActive = store.scenePreviewActive();
+  const authoredEntities = useMemo(() => scenePreviewActive ? store.authoredEntities() : snap.entities, [store, scenePreviewActive, snap.entities]);
   const authoredInspectorEntities = timelinePreviewActive
     ? authoredEntities
     : snap.entities;

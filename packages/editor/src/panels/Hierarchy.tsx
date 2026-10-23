@@ -263,7 +263,7 @@ export function Hierarchy(props: {
     const now = Date.now();
     if (!ev.ctrlKey && !ev.metaKey && !ev.shiftKey && (ev.detail === 2 || (lastClick.current.id === id && now - lastClick.current.t <= 250))) {
       lastClick.current = { id: -1, t: 0 };
-      props.store.select(id); props.onSelectionChange(); props.onFrame(); return;
+      return;
     }
     const slowDbl =
       lastClick.current.id === id &&
@@ -780,6 +780,7 @@ export function Hierarchy(props: {
               aria-expanded={n.hasChildren ? n.expanded : undefined}
               aria-selected={selected}
               onClick={(e) => onRowClick(id, e)}
+              onDoubleClick={(event) => { if (editing === id || event.ctrlKey || event.metaKey || event.shiftKey) return; event.preventDefault(); props.store.select(id); props.onSelectionChange(); props.onFrame(); }}
               onKeyDown={(event) => {
                 if (event.target !== event.currentTarget) return;
                 if (editing === id) return;

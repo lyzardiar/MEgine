@@ -14,6 +14,7 @@ import numpy as np
 from PIL import Image
 from warcraft_mpq import mpyq, read_archive
 from warcraft_terrain import ground_layers, ground_normals, placed_template, terrain_layout
+from warcraft_camera import camera_config, camera_transform, camera_script
 
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE = ROOT / 'samples/frostbound-realms'
@@ -203,10 +204,8 @@ def build(export, game, output, chunk_size=32, resource_cache=None):
             entities.append(dict(entity=len(entities)+1, name=name, active=True, components=components))
             return entities[-1]['entity']
 
-        extent = max(width-1, (height-1)*1.5)
-        center_x, center_z = ox/128+(width-1)/2, -oy/128-(height-1)/2
-        angle = -math.pi/2
-        entity('Camera', dict(Transform=dict(position=[center_x,extent,center_z], rotation=[math.sin(angle/2),0,0,math.cos(angle/2)]), Camera3D=dict(primary=True, projection='orthographic', orthographic_size=max((width-1)*.32,(height-1)*.55), near=.1, far=extent*4)))
+        camera = camera_config(map_data, read('UI/MiscData.txt'))
+        entity('Camera', dict(Transform=camera_transform(camera), Camera3D=dict(primary=True, projection='perspective', fov_y_degrees=camera['presets'][0]['fov'], near=camera['near'], far=camera['far'])))
         entity('Sun', dict(Transform=dict(rotation=[-.4,-.2,0,.894427]), DirectionalLight=dict(intensity=2.2,color=[1,1,1,1],cast_shadows=True)))
         water_names = []
         for (x,y,kind,material), batch in sorted(batches.items()):
@@ -223,6 +222,7 @@ def build(export, game, output, chunk_size=32, resource_cache=None):
         write_json(temporary/'Assets/Scenes/Main.mscene', scene)
         script = '// Author: MiYu. Original water animation advances only with simulation time.\n'
         script += 'var waterNames='+json.dumps(water_names)+';var waterEntities=null,elapsed=0,lastFrame=-1;\nfunction onTick(dt){waterEntities??=engine.findEntitiesByName(waterNames).map(e=>e.entity);elapsed+=Math.max(0,dt);const frame=Math.floor(elapsed*'+water_row['texRate']+')%'+water_row['numTex']+';if(frame===lastFrame)return;lastFrame=frame;for(const entity of waterEntities)engine.pushCommandJson(JSON.stringify({op:"setComponent",entity,component:"MaterialPropertyBlock",value:{custom_parameter_names:["water_time"],custom_parameter_values:[[frame,0,0,0]]}}));}\n'
+        script += camera_script(camera)
         (temporary/'Assets/Scripts').mkdir()
         (temporary/'Assets/Scripts/Main.js').write_text(script,encoding='utf-8')
         write_json(temporary/'project.json',dict(name=map_data['name']+' original terrain',version=1,language='javascript',mainScene='Assets/Scenes/Main.mscene',startupScript='Assets/Scripts/Main.js',buildScenes=['Assets/Scenes/Main.mscene']))
@@ -235,6 +235,7 @@ def build(export, game, output, chunk_size=32, resource_cache=None):
                        rampEntrances=len(layout['rampEntrances']), waterTiles=water_count, entities=len(entities), atlasTiles=len(tiles), groundAtlas=dict(tileSize=64,maxMip=6,size=list(atlas.size),sampling='per-tile-clamped-trilinear'), meshes=mesh_records,
                        waterAtlas=dict(frameSize=size,maxMip=int(math.log2(size)),size=list(water_atlas.size),frames=len(water_frames),sampling='per-frame-repeat-trilinear'),
                        sources=list(sources.values()), templateSha256=sha(patches_path.read_bytes()), templateCatalogSha256=sha((SAMPLE/'Assets/WarcraftIII/classic-cliff-catalog.json').read_bytes()),
+                       camera=dict(source='UI/MiscData.txt',config={key:value for key,value in camera.items() if key!='terrain'}, projectionConvention='Source FOV applied as engine vertical FOV; original projection convention remains to be measured'), cameraTools=[dict(path=p.name,sha256=sha(p.read_bytes())) for p in [ROOT/'scripts/warcraft_camera.py',ROOT/'scripts/frost-original-camera-client.js']],
                        compilerSha256=sha(Path(__file__).read_bytes()), layoutSha256=sha((ROOT/'scripts/warcraft_terrain.py').read_bytes()), converterSha256=sha((ROOT/'scripts/convert-warcraft-assets.py').read_bytes()),
                        coverage=dict(terrainScene=True, gameplay=False, doodads=False, units=False, shorelineModels=False, originalRuntimeVisualParity=False))
         write_json(temporary/'terrain-sources.json',receipt)

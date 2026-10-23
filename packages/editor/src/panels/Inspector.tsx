@@ -126,6 +126,12 @@ function uiInspectorGroup(component: string): UiInspectorGroup {
   return 'Advanced';
 }
 
+// MiYu: snapshot component maps have no presentation order; use type names within each UI group.
+function compareInspectorComponents(left: string, right: string, grouped = false): number {
+  const group = grouped ? UI_GROUP_ORDER.indexOf(uiInspectorGroup(left)) - UI_GROUP_ORDER.indexOf(uiInspectorGroup(right)) : 0;
+  return group || (left < right ? -1 : left > right ? 1 : 0);
+}
+
 const MIXED_SELECT_VALUE = '__mengine_mixed_value__';
 
 /** Unity-style: drag label horizontally to scrub number. Shift=快, Alt=细 */
@@ -1525,7 +1531,7 @@ function MultiSelectionInspector(props: {
       && type !== 'Name'
       && !type.startsWith('__')
       && props.entities.every((entity) => entity.components[type] != null)
-    ));
+    )).sort((left, right) => compareInspectorComponents(left, right, props.primary.components.RectTransform != null));
 
   useEffect(() => {
     if (!componentMenuOpen) return;
@@ -2123,12 +2129,7 @@ export function Inspector(props: {
   const extras = Object.keys(entity.components).filter(
     (k) => k !== 'Transform' && k !== 'RectTransform' && k !== 'Name' && !k.startsWith('__'),
   );
-  const orderedExtras = hasRect
-    ? [...extras].sort((left, right) => (
-        UI_GROUP_ORDER.indexOf(uiInspectorGroup(left))
-        - UI_GROUP_ORDER.indexOf(uiInspectorGroup(right))
-      ))
-    : extras;
+  const orderedExtras = extras.sort((left, right) => compareInspectorComponents(left, right, hasRect));
   const catalog = getComponentCatalog();
   const available = catalog.filter((c) => {
     if (entity.components[c.type] != null) {

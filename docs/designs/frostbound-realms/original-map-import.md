@@ -223,3 +223,12 @@ python scripts/prepare-frost-map-import.py
 2026-10-23 验证：Amazonia 与 Echo Isles 的新包共用 298 个资源文件，避免 56,854,680 字节（约 54.2 MiB）的跨地图重复存储；不包含旧包清理收益。Echo Isles 第二图导入命中 179 次源成员读取、101 次贴图转换、53 次节点元数据和 12 次特效转换，新资源仍按需生成。保留共享缓存、在原生 QA 中重新生成 Echo Isles 包时，225 次源成员读取全命中，贴图／节点／网格／特效处理均命中缓存，没有新的成员解包或派生构建。地图本身的地形、放置与脚本组合仍按图生成。
 
 本次只执行共享缓存相关验证：资源缓存 Python 6 项、地图缓存 Python 5 项、Node 共享依赖测试、实际生成脚本切图检查通过；复用现有 Editor 二进制的 `arbitrary-map-1792746961699.json` 原生检查通过，7,221 实体、0 error，截图已检查。首轮 Amazonia 发现本机旧模型转换器缺少 FlyingSheep 的粒子模型字段，使用 `prepare-frost-map-import.py` 重建后通过；失败日志保留。证据统一位于 `tmp/docs-artifacts/testing-batches/B001/`，统计为 `shared-maps/sharing-summary.json`。共享包独立 Player 分发、跨盘发布及旧缓存迁移仍待批次处理。
+
+
+## 原地图运行镜头
+
+地形转换器从原安装包的 `UI/MiscData.txt` 读取Camera/CameraRates，按原六档AOA、Distance、Rotation、NearZ、FarZ和移动速度生成透视镜头。使用地图玩家出生点与cameraBounds确定初始目标/可移动范围，目标高度跟随原地形。Amazonia起始俯角56度、距离1650/128；按Game后用WASD/方向键移动、+/-或PageUp/PageDown切换档位、中键拖动。空格暂停地图动画期间仍可移动镜头。任意地图转换缓存指纹包含相机工具，更新后会重新生成地图包，公共资源继续走共享缓存。
+
+维护入口：`scripts/warcraft_camera.py`、`scripts/frost-original-camera-client.js`；既有未升级地图包可用 `python scripts/refresh-frost-map-camera.py samples/frostbound-realms amazonia` 单独升级，脚本核验保留地图摘要并拒绝重复追加控制器。Amazonia保留 `Assets/Maps/amazonia/Source/UI/MiscData.txt` 原件，manifest.camera记录来源War3Patch.mpq、文件摘要与工具摘要；后续修改工具应更新相应收据/地图包。
+
+当前将原FOV数值作为引擎垂直FOV，原客户端投影换算尚未核对，因此斜视镜头与控制可用不等于逐像素构图已还原。JASS/完整对局语义仍保持既有待实现范围。

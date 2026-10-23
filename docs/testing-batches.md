@@ -263,3 +263,12 @@ QA增加 `--cache-project <前次隔离项目>`，校验源地图和共享文件
 ### B001-01 等待大厅来源准备
 
 UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原件，58源成员／182文件摘要全部核对。REA lobby脚本四组注册／工厂／构造／初始化探针通过，确认聊天字体存在MiscUI运行时覆盖。仅源证据与维护入口补充，不计新功能，不重跑已有UI截图，也不宣称大厅已还原。待接入原大厅布局／玩家槽／聊天／配置覆盖，并核对原运行时行排列和队伍语义；验证入口与边界见warcraft-ui-fidelity文档。
+
+
+### B001-01 编辑器顺序、地图镜头、聚焦与快照性能
+
+变更：Inspector单选/多选组件按类型稳定排序，UI分组内也使用同一规则；Hierarchy标准双击与空格聚焦，App先立即定位再异步细化模型包围盒，运行快照刷新不取消仍有效的聚焦，用户换场景/模式/选择或移动镜头时取消旧细化；Play搜索使用运行世界。普通Edit刷新复用已有快照，预览期间保留原始编辑值独立副本。地图转换器与Amazonia接入原MiscData斜视镜头和控制，来源原件/摘要随地图保留。属于同批编辑器/原图补充，B001保持3/3未结算。
+
+快速检查：Inspector顺序、App异步聚焦与sceneNavigation共11项通过；新增authoredPresentation 1项与nativePlayOwnership中hierarchy定向1项通过；相机脚本、map-session功能/资产摘要检查通过，4个相关Python文件编译通过。没有全库回归或全地图重导。性能复制环节数据与边界见performance-risk-todo第二十九阶段。
+
+原生前端与Release构建通过（既有world_from_snapshot未使用告警），EXE SHA256 `4ca390526edd5f48329efd990b9667850ddb170a70ac66385c947fc67b5131d3`。`qa-frost-map-session.mjs --editor-feedback` 的报告 `B001/map-session-1792770198151.json` 已验证运行地图搜索、真实双击/空格聚焦两个不同根节点、三层动画、暂停像素稳定、镜头移动及重新加载；后段再次进入地图时QA观察实体尚未更新，故该整份报告标记失败。统一等待地图状态就绪后，复用同EXE仅补测 `--return-only`，`B001/map-session-1792770298806.json` 通过返回/重入/键盘返回/既有skirmish/Stop还原，0 error。两个原生进程均正常退出；WebView锁缓存保留。运行截图已目视核对斜视构图。构建与原生日志位于 `tmp/docs-artifacts/war3-ui/editor-issues-*`。待后续批次：编辑器持续操作延迟/完整性能基准、原客户端FOV与构图对照、边缘滚屏和完整对局控制；不得把当前定向检查等同完整Warcraft运行兼容。

@@ -4609,14 +4609,14 @@
     {
       "path": "Assets/Maps/amazonia/Scenes/Main.mscene",
       "sourceSha256": "9b78e84725d0634395789e58947b86fb2a58fa5c54d21ab7ba75e62244d5283c",
-      "sha256": "921567f04eddab3d85b93c01ce756f330376214e61e8a935ccf8971e0948fff7",
-      "bytes": 5429510
+      "sha256": "2fb0c1e9891307d89d9a6818c8f6a56f212e4e09b5b2946195060c716ae3e438",
+      "bytes": 5429683
     },
     {
       "path": "Assets/Maps/amazonia/Scripts/Main.js",
       "sourceSha256": "a2aad0824c4f9fde43b53b7c7b103436d18c47e086c89dcf9fb756c689278d38",
-      "sha256": "894dc9ed67bc28c41ac3518a3fada64c4aac84b660779aa49494b70ef9cf3101",
-      "bytes": 990075
+      "sha256": "35dbce2fb5648db8b3bc1d8f48dd144071c5beb396b730f115b81cceeafa6221",
+      "bytes": 1090249
     },
     {
       "path": "Assets/Maps/amazonia/Shaders/Ground.mshader",
@@ -4686,5 +4686,74 @@
     "path": "scripts/install-frost-map-package.mjs",
     "sha256": "d7c3e9bcdac6b1e292e6d60a06e40b2e7720607a425c1c0ddc9ef2c5570085ad",
     "previewExporterSha256": "4726739ef4ff00d0a7fd04e0d7e81ec591401094a0962f7a192e64a5cadc99d4"
+  },
+  "camera": {
+    "source": "Assets/Maps/amazonia/Source/UI/MiscData.txt",
+    "archive": "War3Patch.mpq",
+    "sha256": "d097d3cbb4a03719a97591900b45ab42fdb847385819c3d5e7dd7b47d7d9b516",
+    "config": {
+      "version": 1,
+      "bounds": [
+        -36.0,
+        36.0,
+        -36.0,
+        40.0
+      ],
+      "target": [
+        26.0,
+        -24.0
+      ],
+      "yaw": 0.0,
+      "presets": [
+        {
+          "pitch": -0.9773843811168246,
+          "distance": 12.890625,
+          "fov": 70.0
+        },
+        {
+          "pitch": -0.8552113334772214,
+          "distance": 12.5,
+          "fov": 70.0
+        },
+        {
+          "pitch": -0.7330382858376184,
+          "distance": 11.71875,
+          "fov": 70.0
+        },
+        {
+          "pitch": -0.6108652381980153,
+          "distance": 10.9375,
+          "fov": 70.0
+        },
+        {
+          "pitch": -0.4886921905584123,
+          "distance": 9.9609375,
+          "fov": 70.0
+        },
+        {
+          "pitch": -0.3665191429188092,
+          "distance": 8.59375,
+          "fov": 70.0
+        }
+      ],
+      "near": 0.78125,
+      "far": 39.0625,
+      "speed": 23.4375
+    },
+    "tools": [
+      {
+        "path": "scripts/refresh-frost-map-camera.py",
+        "sha256": "efe25a20fb5f3fc11d64ec1b8d37009fa4703e1d0ae6255e95c7f92f2fc5734a"
+      },
+      {
+        "path": "scripts/warcraft_camera.py",
+        "sha256": "58e89f9670ffd0f2c69d3ae227453e62a49bb990d0d644fa0c4ca96f51abc507"
+      },
+      {
+        "path": "scripts/frost-original-camera-client.js",
+        "sha256": "f9e7e975413e9d14514c2a44820ffe90d951ef04bdc4a5de7bb9015d1249635d"
+      }
+    ],
+    "projectionConvention": "Source FOV applied as engine vertical FOV; original projection convention remains to be measured"
   }
 }

@@ -76,6 +76,7 @@ test('hierarchy presentation uses the displayed world and keeps live reference e
   store.step(.1); await store.waitForPlayRuntime(); assert.equal(upload, undefined);
   assert.equal(store.hierarchyPresentation(store.presentationSnapshot().entities)[1].entity.name, 'Next child');
   assert.equal(store.hierarchyPresentation(first.entities)[1].entity.name, 'Child');
+  assert.equal(store.hierarchySearchSource()[1].name, 'Next child'); assert.ok(Object.isFrozen(store.hierarchySearchSource()[1]));
   store.collapseAll(); assert.equal(store.hierarchyPresentation(first.entities).length, 2); store.expandAll();
   const editable = store.getVisibleFlat()[1].entity; editable.components.Custom.values.push(7); editable.parent = 3;
   assert.equal(store.playRenderSnapshot().nativeWorldReference, undefined); assert.equal(store.activeInHierarchy(2), false);
@@ -85,6 +86,7 @@ test('hierarchy presentation uses the displayed world and keeps live reference e
   assert.equal(store.hierarchyPresentation(first.entities)[1].entity.parent, 1); store.stop();
   store.rename(2, 'Authored child');
   assert.equal(store.hierarchyPresentation(first.entities)[1].entity.name, 'Authored child');
+  assert.equal(store.hierarchySearchSource()[1].name, 'Authored child');
 }));
 
 test('render snapshots freeze native records, preserve array identity and allow unbound fallback callbacks', async () => fixture(async ({ mockIPC, runtime, createEditorStore }) => {

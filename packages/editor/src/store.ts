@@ -1135,7 +1135,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return structuredClone(editEntities);
     },
     /** Read-only hierarchy search source, without copying large mesh/component payloads. */
-    hierarchySearchSource(): readonly EntityRec[] { return editEntities; },
+    hierarchySearchSource(): readonly EntityRec[] { return mode === 'edit' ? editEntities : this.presentationSnapshot().entities.map(entity => isRetainedPlayRecord(entity) ? entity as EntityRec : normalizeEntity(entity)); },
     sceneContentFingerprint() {
       return sceneContentFingerprint(editEntities, clearColor);
     },
@@ -1164,6 +1164,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     timelineCameraPreview() {
       return mode === 'edit' ? timelinePreview?.camera ?? null : null;
     },
+    scenePreviewActive() { return mode === 'edit' && (timelinePreview != null || animationPreview != null); },
     timelinePreviewActive() {
       return mode === 'edit' && timelinePreview != null;
     },
