@@ -10,7 +10,7 @@ fn baseline_objects(world: &World, hierarchy: &TransformHierarchy, materials: &m
         if let Some(mesh) = world.get_component::<MeshRenderer>(entity) {
             let mut material = world.get_component::<PbrMaterial>(entity).map(render_material_from_component).unwrap_or_else(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material)));
             if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) { material = apply_material_property_block(material, block); }
-            out.push(RenderObject { mesh_key: mesh.mesh.trim().replace('\\', "/"), model: transform.matrix, cast_shadows: mesh.cast_shadows, receive_shadows: mesh.receive_shadows, material });
+            out.push(RenderObject { mesh_key: mesh.mesh.trim().replace('\\', "/"), model: transform.matrix, cast_shadows: mesh.cast_shadows, receive_shadows: mesh.receive_shadows, material: material.into() });
         }
     }
     out
@@ -50,7 +50,7 @@ fn benchmark_large_map_material_steps() {
                 let values: Vec<_> = values.into_iter().zip(&inputs).map(|(material, (_, _, _, block))| if let Some(block) = block { apply_material_property_block(material, block) } else { material }).collect();
                 times[4] += start.elapsed().as_secs_f64();
                 let start = Instant::now();
-                let out: Vec<_> = values.into_iter().zip(&inputs).map(|(material, (transform, mesh, _, _))| RenderObject { mesh_key: mesh.mesh.trim().replace('\\', "/"), model: transform.matrix, cast_shadows: mesh.cast_shadows, receive_shadows: mesh.receive_shadows, material }).collect();
+                let out: Vec<_> = values.into_iter().zip(&inputs).map(|(material, (transform, mesh, _, _))| RenderObject { mesh_key: mesh.mesh.trim().replace('\\', "/"), model: transform.matrix, cast_shadows: mesh.cast_shadows, receive_shadows: mesh.receive_shadows, material: material.into() }).collect();
                 times[5] += start.elapsed().as_secs_f64();
                 if run == 0 { assert_objects_equal(&out, &expected); }
                 let start = Instant::now(); drop(black_box(out)); drop(resolved); drop(inputs); times[6] += start.elapsed().as_secs_f64();
@@ -360,7 +360,7 @@ fn growable_output_objects(world: &World, hierarchy: &TransformHierarchy, materi
                 model: transform.matrix,
                 cast_shadows: mesh.cast_shadows,
                 receive_shadows: mesh.receive_shadows,
-                material,
+                material: material.into(),
             });
         }
     }
@@ -440,7 +440,7 @@ fn aggregate_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materia
             model: transform.matrix,
             cast_shadows: mesh.cast_shadows,
             receive_shadows: mesh.receive_shadows,
-            material,
+            material: material.into(),
         });
     }
     out
@@ -499,8 +499,96 @@ fn value_override_mesh_objects(world: &World, hierarchy: &TransformHierarchy, ma
             model: transform.matrix,
             cast_shadows: mesh.cast_shadows,
             receive_shadows: mesh.receive_shadows,
+            material: material.into(),
+        });
+    }
+    out
+}
+
+
+#[test]
+fn shared_render_materials_detach_for_object_and_view_edits() {
+    let mut world = World::new();
+    let ids: Vec<_> = (0..4).map(|_| { let entity = world.spawn_empty(); world.insert_component(entity, Transform::default()); world.insert_component(entity, MeshRenderer { mesh: "cube".into(), material: "default".into(), ..Default::default() }); entity }).collect();
+    for &entity in &ids[..3] { world.insert_component(entity, MaterialPropertyBlock { override_base_color: true, base_color: [0.3, 0.4, 0.5, 1.0], ..Default::default() }); }
+    world.get_component_mut::<MaterialPropertyBlock>(ids[2]).unwrap().override_metallic = true;
+    world.get_component_mut::<MaterialPropertyBlock>(ids[2]).unwrap().metallic = 0.7;
+    let hierarchy = TransformHierarchy::build(&world); let mut materials = RuntimeMaterialCache::new(None);
+    let mut objects = collect_objects(&world, &hierarchy, &mut materials);
+    assert_objects_equal(&objects, &baseline_objects(&world, &hierarchy, &mut materials));
+    assert!(std::ptr::eq(&*objects[0].material, &*objects[1].material));
+    assert!(!std::ptr::eq(&*objects[0].material, &*objects[2].material));
+    assert_eq!(objects[2].material.metallic, 0.7);
+    let mut view = collect_shared_view_objects(&world, &ids, &objects, None);
+    assert!(std::ptr::eq(&*view[0].material, &*objects[0].material));
+    view[0].material.base_color = [0.0, 1.0, 0.0, 1.0];
+    assert_eq!(objects[0].material.base_color, [0.3, 0.4, 0.5, 1.0]);
+    objects[0].material.base_color_texture = "local.png".into();
+    assert_ne!(objects[1].material.base_color_texture, "local.png");
+    world.get_component_mut::<MaterialPropertyBlock>(ids[1]).unwrap().base_color[0] = 0.8;
+    let next = collect_objects(&world, &hierarchy, &mut materials);
+    assert_eq!(next[1].material.base_color[0], 0.8); assert_eq!(objects[1].material.base_color[0], 0.3);
+    assert_objects_equal(&next, &baseline_objects(&world, &hierarchy, &mut materials));
+}
+
+#[derive(Debug)]
+struct OwnedMaterialObject { mesh_key: String, model: glam::Mat4, material: RenderMaterial, cast_shadows: bool, receive_shadows: bool }
+fn owned_material_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>, mut entities: Option<&mut Vec<Entity>>) -> Vec<OwnedMaterialObject> {
+    let mut root_filter = RenderRootFilter::new(root);
+    // Compact borrowed inputs size the large owned RenderObject buffer once, without copying materials during growth.
+    let inputs: Vec<_> = world.entities_with_components(&["MeshRenderer"]).filter_map(|entity| {
+        let transform = hierarchy.get_ref(entity)?;
+        if !root_filter.contains(world, entity) { return None; }
+        Some((entity, transform, world.get_component::<MeshRenderer>(entity)?))
+    }).collect();
+    let mut out = Vec::with_capacity(inputs.len());
+    // MiYu: resolve a shared authored material once per extraction; each object's overrides stay private.
+    let mut resolved_materials = HashMap::<&str, RenderMaterial>::new();
+    for (entity, transform, mesh) in inputs {
+        let mut material = world
+            .get_component::<PbrMaterial>(entity)
+            .map(render_material_from_component)
+            .unwrap_or_else(|| {
+                resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material))).clone()
+            });
+        if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
+            apply_material_property_block_in_place(&mut material, block);
+        }
+        if let Some(entities) = entities.as_deref_mut() { entities.push(entity); }
+        out.push(OwnedMaterialObject {
+            mesh_key: mesh.mesh.trim().replace('\\', "/"),
+            model: transform.matrix,
+            cast_shadows: mesh.cast_shadows,
+            receive_shadows: mesh.receive_shadows,
             material,
         });
     }
     out
+}
+
+#[test]
+#[ignore = "manual material ownership comparison on authored Amazonia and menu scenes"]
+fn benchmark_shared_render_materials() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    for scene in ["Assets/Maps/amazonia/Scenes/Main.mscene", "Assets/Scenes/Main.mscene"] {
+        let mut world = World::new(); mengine_scene::load_scene(&root.join(scene), &mut world).unwrap();
+        let hierarchy = TransformHierarchy::build(&world); let mut materials = RuntimeMaterialCache::new(Some(root.clone()));
+        let previous = owned_material_objects(&world, &hierarchy, &mut materials, None, None);
+        let current = collect_objects(&world, &hierarchy, &mut materials);
+        assert_eq!(previous.len(), current.len());
+        for (old, new) in previous.iter().zip(&current) {
+            assert_eq!(old.mesh_key, new.mesh_key); assert_eq!(old.model, new.model); assert_eq!(old.cast_shadows, new.cast_shadows); assert_eq!(old.receive_shadows, new.receive_shadows);
+            assert_eq!(format!("{:?}", old.material), format!("{:?}", *new.material));
+        }
+        let unique_materials = current.iter().map(|object| (&*object.material) as *const RenderMaterial).collect::<std::collections::HashSet<_>>().len();
+        let mut samples = [Vec::new(), Vec::new()];
+        for run in 0..11 {
+            for mode in [run % 2, 1 - run % 2] {
+                let started = Instant::now();
+                for _ in 0..20 { if mode == 0 { black_box(owned_material_objects(&world, &hierarchy, &mut materials, None, None)); } else { black_box(collect_objects(&world, &hierarchy, &mut materials)); } }
+                if run >= 2 { samples[mode].push(started.elapsed().as_secs_f64() * 1000.0 / 20.0); }
+            }
+        }
+        println!("SHARED_RENDER_MATERIAL {}", serde_json::json!({"scene":scene,"objects":current.len(),"uniqueMaterials":unique_materials,"ownedObjectBytes":std::mem::size_of::<OwnedMaterialObject>(),"sharedObjectBytes":std::mem::size_of::<RenderObject>(),"materialBytes":std::mem::size_of::<RenderMaterial>(),"samples":samples,"iterations":20,"warmups":2,"scope":"Previous production extraction with inline owned materials versus shared per-extraction materials; excludes renderer and IPC"}));
+    }
 }

@@ -754,7 +754,7 @@ mod tests {
         use crate::frame_compiler::CompiledFrame;
         use glam::{Vec3, Vec4};
         use mengine_rhi::{FrameCamera, RenderMaterial};
-        let object = |material| RenderObject { mesh_key:"cube".into(), model:Mat4::IDENTITY, material, cast_shadows:true, receive_shadows:true };
+        let object = |material: RenderMaterial| RenderObject { mesh_key:"cube".into(), model:Mat4::IDENTITY, material: material.into(), cast_shadows:true, receive_shadows:true };
         let mut view = RenderMaterial { base_color_texture:" WHITE ".into(), ..Default::default() };
         view.custom_textures[0] = " Assets/Shared.png ".into(); view.custom_texture_srgb[0] = false;
         view.custom_textures[1] = "Assets/Portrait.png".into(); view.custom_texture_srgb[1] = true;
@@ -786,7 +786,7 @@ mod tests {
         let object = RenderObject {
             mesh_key: "cube".into(),
             model: Mat4::IDENTITY,
-            material,
+            material: material.into(),
             cast_shadows: true,
             receive_shadows: true,
         };

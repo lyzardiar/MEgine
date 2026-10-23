@@ -72,7 +72,7 @@ impl TextureFixture {
     fn write(&self, width: u32) { image::RgbaImage::from_pixel(width, 2, image::Rgba([64, 128, 192, 255])).save(self.0.join("Assets/Shared.png")).unwrap(); }
 }
 impl Drop for TextureFixture { fn drop(&mut self) { let _ = std::fs::remove_dir_all(&self.0); } }
-fn texture_object() -> RenderObject { RenderObject { mesh_key: "cube".into(), model: glam::Mat4::IDENTITY, material: mengine_rhi::RenderMaterial { base_color_texture: " Assets/Shared.png ".into(), normal_texture: "Assets/Shared.png".into(), ..Default::default() }, cast_shadows: true, receive_shadows: true } }
+fn texture_object() -> RenderObject { RenderObject { mesh_key: "cube".into(), model: glam::Mat4::IDENTITY, material: mengine_rhi::RenderMaterial { base_color_texture: " Assets/Shared.png ".into(), normal_texture: "Assets/Shared.png".into(), ..Default::default() }.into(), cast_shadows: true, receive_shadows: true } }
 
 #[test]
 fn material_sync_preserves_variants_hot_reload_removal_and_project_ownership() {

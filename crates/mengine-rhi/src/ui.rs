@@ -2810,7 +2810,7 @@ mod tests {
         renderer.upload_ui_texture_rgba8("effect_pixels", 2, 2, &[230,100,40,128, 40,220,100,230, 80,60,240,200, 200,170,60,80]).unwrap();
         let vertices = [[-1.,-1.,0.4],[0.,-1.,0.4],[-1.,1.,0.4],[0.,1.,0.4]].map(|position| Vertex { position, normal: [0.,0.,1.], uv: [0.,0.] });
         renderer.upload_gltf_static("effect_occluder", &vertices, &[0,1,2,2,1,3]);
-        let objects = [RenderObject { mesh_key: "effect_occluder".into(), model: Mat4::IDENTITY, material: RenderMaterial { unlit: true, double_sided: true, base_color: [0.2,0.3,0.5,1.], ..Default::default() }, cast_shadows: false, receive_shadows: false }];
+        let objects = [RenderObject { mesh_key: "effect_occluder".into(), model: Mat4::IDENTITY, material: RenderMaterial { unlit: true, double_sided: true, base_color: [0.2,0.3,0.5,1.], ..Default::default() }.into(), cast_shadows: false, receive_shadows: false }];
         let target = renderer.create_offscreen_target(PhysicalSize::new(32,32));
         let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
         let clear = ClearColor { r: 0.4, g: 0.6, b: 0.8, a: 1. };

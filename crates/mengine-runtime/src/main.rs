@@ -264,7 +264,7 @@ impl App {
         };
         let materials = objects
             .iter()
-            .map(|object| object.material.clone())
+            .map(|object| (*object.material).clone())
             .collect::<Vec<_>>();
         let report = renderer.prepare_material_pipelines(&materials);
         log::info!(

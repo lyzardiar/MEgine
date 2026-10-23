@@ -17,7 +17,7 @@ fn binding_test_objects(count: usize, mixed: bool) -> Vec<RenderObject> {
                 _ => {}
             }
         }
-        RenderObject { mesh_key: if mixed && index % 3 == 2 { "alternate-cube" } else { "cube" }.into(), model: Mat4::from_scale_rotation_translation(Vec3::splat(step * 0.45), glam::Quat::IDENTITY, Vec3::new(-0.9 + (index % side) as f32 * step, -0.9 + (index / side) as f32 * step, 0.5)), material, cast_shadows: true, receive_shadows: true }
+        RenderObject { mesh_key: if mixed && index % 3 == 2 { "alternate-cube" } else { "cube" }.into(), model: Mat4::from_scale_rotation_translation(Vec3::splat(step * 0.45), glam::Quat::IDENTITY, Vec3::new(-0.9 + (index % side) as f32 * step, -0.9 + (index / side) as f32 * step, 0.5)), material: material.into(), cast_shadows: true, receive_shadows: true }
     }).collect()
 }
 
@@ -113,8 +113,8 @@ fn prepared_materials_refresh_textures_shader_errors_and_pass_state() {
     let render = |renderer: &mut Renderer, material: &RenderMaterial| {
         // The visible object is slot 1 in the input but slot 0 after culling.
         let objects = [
-            RenderObject { mesh_key: "cube".into(), model: Mat4::from_translation(Vec3::splat(100.0)), material: RenderMaterial::error(), cast_shadows: false, receive_shadows: false },
-            RenderObject { mesh_key: "cube".into(), model: Mat4::from_scale_rotation_translation(Vec3::splat(0.8), glam::Quat::IDENTITY, Vec3::new(0.0, 0.0, 0.5)), material: material.clone(), cast_shadows: false, receive_shadows: false },
+            RenderObject { mesh_key: "cube".into(), model: Mat4::from_translation(Vec3::splat(100.0)), material: RenderMaterial::error().into(), cast_shadows: false, receive_shadows: false },
+            RenderObject { mesh_key: "cube".into(), model: Mat4::from_scale_rotation_translation(Vec3::splat(0.8), glam::Quat::IDENTITY, Vec3::new(0.0, 0.0, 0.5)), material: material.clone().into(), cast_shadows: false, receive_shadows: false },
         ];
         renderer.submit_frame_to(&RenderFrame { clear: ClearColor { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
         assert_eq!(renderer.spatial_stats.submitted, 1);
@@ -174,7 +174,7 @@ fn benchmark_material_submission() {
         let objects: Vec<_> = (0..count).map(|index| {
             let side = (count as f32).sqrt() as usize;
             let step = 1.8 / side as f32;
-            RenderObject { mesh_key: "cube".into(), model: Mat4::from_scale_rotation_translation(Vec3::splat(step * 0.4), glam::Quat::IDENTITY, Vec3::new(-0.9 + (index % side) as f32 * step, -0.9 + (index / side) as f32 * step, 0.5)), material: RenderMaterial { base_color_texture: "Assets/Textures/Shared.png".into(), unlit: true, double_sided: true, transparent: index % 4 == 0, base_color: [1.0, 1.0, 1.0, if index % 4 == 0 { 0.5 } else { 1.0 }], ..Default::default() }, cast_shadows: true, receive_shadows: true }
+            RenderObject { mesh_key: "cube".into(), model: Mat4::from_scale_rotation_translation(Vec3::splat(step * 0.4), glam::Quat::IDENTITY, Vec3::new(-0.9 + (index % side) as f32 * step, -0.9 + (index / side) as f32 * step, 0.5)), material: RenderMaterial { base_color_texture: "Assets/Textures/Shared.png".into(), unlit: true, double_sided: true, transparent: index % 4 == 0, base_color: [1.0, 1.0, 1.0, if index % 4 == 0 { 0.5 } else { 1.0 }], ..Default::default() }.into(), cast_shadows: true, receive_shadows: true }
         }).collect();
         let frame = RenderFrame { clear: ClearColor { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] };
         let mut samples = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];

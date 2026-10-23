@@ -265,11 +265,28 @@ impl RenderMaterial {
     }
 }
 
+/// MiYu: immutable render payloads share material storage; editing a handle detaches it on demand.
+#[derive(Clone, Debug, Default)]
+pub struct SharedRenderMaterial(Arc<RenderMaterial>);
+
+impl From<RenderMaterial> for SharedRenderMaterial {
+    fn from(material: RenderMaterial) -> Self { Self(Arc::new(material)) }
+}
+
+impl std::ops::Deref for SharedRenderMaterial {
+    type Target = RenderMaterial;
+    fn deref(&self) -> &Self::Target { &self.0 }
+}
+
+impl std::ops::DerefMut for SharedRenderMaterial {
+    fn deref_mut(&mut self) -> &mut Self::Target { Arc::make_mut(&mut self.0) }
+}
+
 #[derive(Clone, Debug)]
 pub struct RenderObject {
     pub mesh_key: String,
     pub model: Mat4,
-    pub material: RenderMaterial,
+    pub material: SharedRenderMaterial,
     pub cast_shadows: bool,
     pub receive_shadows: bool,
 }
@@ -4189,7 +4206,7 @@ mod tests {
         let left = [[-1.,-1.,0.25],[0.,-1.,0.25],[-1.,1.,0.25],[0.,1.,0.25]].map(|position| Vertex { position, normal:[0.,0.,1.], uv:[0.,0.] });
         let right = left.map(|mut vertex| { vertex.position[0] += 1.; vertex });
         let indices = [0,1,2,2,1,3];
-        let object = |key: &str, color| RenderObject { mesh_key:key.into(), model:Mat4::IDENTITY, material:RenderMaterial { unlit:true, double_sided:true, base_color:color, ..Default::default() }, cast_shadows:false, receive_shadows:false };
+        let object = |key: &str, color| RenderObject { mesh_key:key.into(), model:Mat4::IDENTITY, material:RenderMaterial { unlit:true, double_sided:true, base_color:color, ..Default::default() }.into(), cast_shadows:false, receive_shadows:false };
         let red = object("moving", [1.,0.,0.,1.]);
         let blue = object("live", [0.,0.,1.,1.]);
         assert!(!renderer.upload_gltf_static_profiled("moving", &left, &indices).vertex_buffer_reused);
@@ -4441,7 +4458,7 @@ mod tests {
         let target = renderer.create_offscreen_target(PhysicalSize::new(32, 32));
         let clear = ClearColor { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
         let camera = FrameCamera { view: Mat4::look_at_rh(Vec3::new(0.0, 0.0, 5.0), Vec3::ZERO, Vec3::Y), proj: Mat4::perspective_rh(1.0, 1.0, 0.1, 100.0), position: Vec3::new(0.0, 0.0, 5.0) };
-        let object = |x, color| RenderObject { mesh_key: "cube".into(), model: Mat4::from_translation(Vec3::new(x, 0.0, 0.0)), material: RenderMaterial { unlit: true, base_color: color, ..Default::default() }, cast_shadows: true, receive_shadows: true };
+        let object = |x, color| RenderObject { mesh_key: "cube".into(), model: Mat4::from_translation(Vec3::new(x, 0.0, 0.0)), material: RenderMaterial { unlit: true, base_color: color, ..Default::default() }.into(), cast_shadows: true, receive_shadows: true };
         let mut objects: Vec<_> = (0..10000).map(|i| object(1000.0 + i as f32, [0.0, 0.0, 1.0, 1.0])).collect();
         objects.push(object(0.0, [1.0, 0.0, 0.0, 1.0]));
         objects.push(object(10.0, [0.0, 1.0, 0.0, 1.0]));
@@ -4490,7 +4507,7 @@ mod tests {
         renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
         let vertices = [[-1.0,-1.0,0.25],[1.0,-1.0,0.25],[-1.0,1.0,0.25]].map(|position| Vertex { position, normal: [0.0,0.0,1.0], uv: [0.0,0.0] });
         renderer.upload_gltf_static("msaa_triangle", &vertices, &[0,1,2]);
-        let mut objects = [RenderObject { mesh_key: "msaa_triangle".into(), model: Mat4::IDENTITY, material: RenderMaterial { unlit: true, double_sided: true, base_color: [1.0;4], ..Default::default() }, cast_shadows: false, receive_shadows: false }];
+        let mut objects = [RenderObject { mesh_key: "msaa_triangle".into(), model: Mat4::IDENTITY, material: RenderMaterial { unlit: true, double_sided: true, base_color: [1.0;4], ..Default::default() }.into(), cast_shadows: false, receive_shadows: false }];
         let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
         let mut lighting = FrameLighting::default();lighting.environment.tone_mapping = false;
         let clear = ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 };
@@ -4566,7 +4583,7 @@ mod tests {
         let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
         let mut lighting = FrameLighting::default(); lighting.environment.tone_mapping = false;
         let clear = ClearColor { r:0.0,g:0.0,b:0.0,a:1.0 };
-        let make_view = |key: &str, color| SceneTextureFrame { key:key.into(), size:[16,16], clear, camera, lighting:lighting.clone(), objects:vec![RenderObject { mesh_key:"portrait_quad".into(), model:Mat4::IDENTITY, material:RenderMaterial { unlit:true, double_sided:true, base_color:color, ..Default::default() }, cast_shadows:false, receive_shadows:false }] };
+        let make_view = |key: &str, color| SceneTextureFrame { key:key.into(), size:[16,16], clear, camera, lighting:lighting.clone(), objects:vec![RenderObject { mesh_key:"portrait_quad".into(), model:Mat4::IDENTITY, material:RenderMaterial { unlit:true, double_sided:true, base_color:color, ..Default::default() }.into(), cast_shadows:false, receive_shadows:false }] };
         let mut views = vec![make_view("$scene-view:red", [1.0,0.0,0.0,1.0]), make_view("$scene-view:blue", [0.0,0.0,1.0,1.0])];
         let mut red = UiPrimitive::solid([0.0,0.0,32.0,32.0], [1.0;4]); red.key.texture = views[0].key.clone();
         let mut blue = UiPrimitive::solid([32.0,0.0,32.0,32.0], [1.0;4]); blue.key.texture = views[1].key.clone();
@@ -4901,9 +4918,9 @@ mod tests {
                 ],
                 custom_texture_srgb: [true, false, false, false, false, false],
                 ..Default::default()
-            },
+            }.into(),
         };
-        let key = MaterialTextureSetKey::from(&object.material);
+        let key = MaterialTextureSetKey::from(&*object.material);
         assert_eq!(key.base_color, "base.png");
         assert_eq!(key.normal, "normal.png");
         assert_eq!(key.metallic_roughness, "orm.png");
@@ -5010,7 +5027,7 @@ mod tests {
         let object = RenderObject {
             mesh_key: "cube".into(),
             model: Mat4::IDENTITY,
-            material,
+            material: material.into(),
             cast_shadows: true,
             receive_shadows: true,
         };
@@ -5080,7 +5097,7 @@ mod tests {
                 transparent,
                 render_queue: queue,
                 ..Default::default()
-            },
+            }.into(),
         };
         let objects = vec![
             object(3000, true, 2.0),

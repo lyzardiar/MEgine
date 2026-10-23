@@ -720,7 +720,7 @@ impl EditorViewportRenderer {
             delta_seconds: effect_delta,
         });
         if let (Some(material), Some(object)) = (material_override, frame.objects.first_mut()) {
-            object.material = material;
+            object.material = material.into();
         }
         finish_stage(&mut stages, "FrameCompiler.compile", stage_started);
 

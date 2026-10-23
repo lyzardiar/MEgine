@@ -25,7 +25,7 @@ use mengine_core::{Entity, Parent, TransformHierarchy, World};
 use mengine_rhi::{
     look_at, orthographic, perspective, ClearColor, DirectionalLightData, EnvironmentLightData,
     FrameCamera, FrameLighting, PointLightData, RenderFrame, RenderMaterial, RenderObject,
-    SceneTextureFrame, SpotLightData, UiBatchPlan,
+    SceneTextureFrame, SharedRenderMaterial, SpotLightData, UiBatchPlan,
 };
 use std::collections::HashMap;
 
@@ -569,17 +569,27 @@ fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials
     }).collect();
     let mut out = Vec::with_capacity(inputs.len());
     // MiYu: resolve a shared authored material once per extraction; each object's overrides stay private.
-    let mut resolved_materials = HashMap::<&str, RenderMaterial>::new();
+    let mut resolved_materials = HashMap::<&str, SharedRenderMaterial>::new();
+    let mut tinted_materials = HashMap::<(&str, [u32; 4]), SharedRenderMaterial>::new();
     for (entity, transform, mesh) in inputs {
-        let mut material = world
-            .get_component::<PbrMaterial>(entity)
-            .map(render_material_from_component)
-            .unwrap_or_else(|| {
-                resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material))).clone()
-            });
-        if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
-            apply_material_property_block_in_place(&mut material, block);
-        }
+        let block = world.get_component::<MaterialPropertyBlock>(entity);
+        let material = if let Some(pbr) = world.get_component::<PbrMaterial>(entity) {
+            let mut material = render_material_from_component(pbr);
+            if let Some(block) = block { apply_material_property_block_in_place(&mut material, block); }
+            material.into()
+        } else {
+            let base = resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material)).into());
+            match block {
+                None => base.clone(),
+                Some(block) if material_block_is_tint_only(block) => {
+                    if !block.override_base_color { base.clone() }
+                    else { tinted_materials.entry((&mesh.material, block.base_color.map(f32::to_bits))).or_insert_with(|| {
+                        let mut material = base.clone(); apply_material_property_block_in_place(&mut material, block); material
+                    }).clone() }
+                }
+                Some(block) => { let mut material = base.clone(); apply_material_property_block_in_place(&mut material, block); material }
+            }
+        };
         if let Some(entities) = entities.as_deref_mut() { entities.push(entity); }
         out.push(RenderObject {
             mesh_key: mesh.mesh.trim().replace('\\', "/"),
@@ -590,6 +600,10 @@ fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials
         });
     }
     out
+}
+
+fn material_block_is_tint_only(block: &MaterialPropertyBlock) -> bool {
+    !block.override_metallic && !block.override_roughness && !block.override_ior && !block.override_clearcoat && !block.override_clearcoat_roughness && !block.override_emissive && !block.override_emissive_strength && block.custom_parameter_names.is_empty() && block.custom_texture_names.is_empty()
 }
 
 // MiYu: one immutable compile owns the source objects; each view keeps independently mutable copies.

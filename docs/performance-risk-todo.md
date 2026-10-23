@@ -922,3 +922,16 @@ c694440、8679fcb共用一次前端/原生Release构建，Rust耗时1分09秒，
 本次10秒无Agent轮询采样保留末尾240帧，7,410实体、850×478：完成呈现间隔均值19.0871ms/P95 29ms，52.3915次完成呈现/秒；原生渲染12.8643ms/P95 22.0056ms，命令15.5247ms，完整请求21.3817ms，世界同步1.9938ms；前端准备1.9921ms/P95 2.3ms，完成0.5979ms/P95 0.8ms，上传0.3592ms；模拟2.2117ms，模拟请求9.6704ms。前次独立采样53.0997次/秒、模拟请求9.8946ms；这些结果不证明整体稳定提速或60 FPS，也不能将局部复制基准的差额直接当作真实帧收益。
 
 构建与运行日志 `tmp/docs-artifacts/editor-performance-risk/shared-clock-{editor-build,native-build,native-qa,runtime-edits-qa}.log`，指标汇总 `shared-clock-timing-summary.json`。阶段43/44的正常传输、时钟/动画、真实Inspector修改和Stop恢复已有原生证据；强制在途Stop/重启/换图/截图/UI命中竞态、脱离窗口、隐藏/重试恢复、Edit父级/活动/隐藏及Undo、真实输入延迟继续待测。模拟请求与原生模拟之间的差额仍需分解，不能直接归因于IPC。
+
+
+## 第四十六阶段帧内材质共享与修改隔离
+
+RenderObject改为持有SharedRenderMaterial；同次提取中的相同基础材质、相同基础材质加纯颜色覆盖共享Arc数据，其他属性覆盖与PbrMaterial保持独立值。修改对象或相机视图的材质时通过Arc::make_mut分离，后续帧重新解析资源。颜色键保留f32原始位；含其他覆盖或自定义参数/纹理的属性块不走纯颜色缓存。
+
+Rust源码构造接口有变化：RenderObject.material从RenderMaterial变为SharedRenderMaterial，已有独占材质初始化需要material.into()；需要独占RenderMaterial的管线预热使用(*object.material).clone()。已更新仓内调用点，GPU参数、资源格式和TypeScript接口不变。
+
+定向检查：runtime/frame_compiler::mesh_cache_tests 7通过、9项手动基准忽略；RHI/material_submission_tests 2通过、2项手动基准忽略；material_sync_preserves_variants_hot_reload_removal_and_project_ownership 1通过。覆盖对象/视图修改隔离、下一帧更新、材质与纹理/着色器热更新、提交像素等价及项目切换。runtime/editor-host/rhi的tests/examples编译和Tauri release接口编译通过，仅既有world_from_snapshot未使用告警。
+
+手动benchmark_shared_render_materials 1项通过：以82417af的独占材质生产提取实现为对照，两组预热、九组交替采样，每组20次，完整对象/材质值一致。Amazonia 2,747对象共享224份材质载荷，提取中位1.731245→1.022065ms（减少40.96%）；菜单219对象共享155份，中位0.207100→0.178775ms。RenderObject结构800→112字节，704字节材质载荷在Arc中单独分配；该结构尺寸不代表总内存降幅。结果仅为CPU提取，不含绘制、IPC或实际FPS。
+
+原始日志为tmp/docs-artifacts/editor-performance-risk/shared-render-material-{check,tests,benchmark,rhi-tests,texture-tests,integration-check}.log；shared-render-material-summary.json记录两份场景SHA256及逐组数据。未重建Editor EXE或运行地图QA，当前ff659f5a版本不包含本项。下次相关原生批次合并验证Game/Scene/相机预览、对象材质修改、材质/纹理/着色器热更新、透明/自定义材质、阴影及连续性能；既有交互和竞态待测项继续保留。

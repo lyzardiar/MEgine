@@ -435,3 +435,12 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3abec8b26631da5c245a55a69180f861cf4a1e281`。QA新增真实Inspector运行中修改检查及独立重测入口。`B001/map-session-1792782700435.json` 连续时序、特效修改/精确恢复、Scene/Game/相机预览/环绕和分辨率切换通过，新增Inspector测试的步长输入不合法使整份报告失败；修正测试后只跑 `--runtime-edits-only`，`B001/map-session-1792782801041.json` 通过，0 error、正常退出。
 
 真实Inspector高度0→3.2经30个模拟步仍保留，三层动画和地图时钟推进；恢复0经后续模拟保持，Stop还原作者场景。完整采样52.3915次呈现/秒、模拟请求9.6704ms，未证明整体稳定提速。详细范围、失败原因及日志见performance-risk-todo第四十五阶段。仅关闭阶段43/44上述正常集成待测；强制在途竞态、脱离窗口、隐藏/重试、Edit状态及Undo、真实输入延迟继续待测。
+
+
+### B001-01 渲染对象共享材质
+
+变更：mengine-rhi的RenderObject.material使用SharedRenderMaterial；mengine-runtime/frame_compiler按本次提取共享基础材质和纯颜色覆盖，写入时分离；同步runtime与editor-host构造/预览/预热调用及测试。Rust构造调用需要.into()，数据格式不变。属于现有编辑器性能补充，不新增功能计数。
+
+快速检查：提取7项、RHI材质提交2项、纹理同步1项通过；手动局部基准1项通过。runtime/editor-host/rhi tests/examples和Tauri release编译通过。Amazonia提取中位1.731245→1.022065ms，输出值一致；不作为整帧、总内存或FPS结论。完整边界及本地日志见performance-risk-todo第四十六阶段。
+
+待合并验证：下一相关原生构建后执行map-session的continuous-profile、transport-profile、viewport-transitions、effect-reload、runtime-edits；另覆盖材质预览与单对象编辑隔离、材质/纹理/着色器热更新、透明/自定义材质和阴影。重点核对共享载荷是否影响实际Game/Scene及相机视图，记录真实连续性能。当前EXE不包含本项，本轮未重复原生地图QA、全库测试或全量构建；原有强制竞态/脱离窗口/Edit状态及Undo/真实延迟待测继续保留。
