@@ -30,7 +30,7 @@ test('production pending Game gate preserves wakeups, ownership, new pixels and 
    let now=110,worldReads=0,environment=0;const rect={width:850,height:478},canvas={getContext:()=>({}),getBoundingClientRect:()=>rect};
    const p={tab:'game',playing:true,gameResolution:null,gameDisplay:0,timelineCameraPreview:null,readRuntimeSessionId:()=>0};
    const request=requests.createNativeViewportRequestState(),frame={world:{runtimeSessionId:0}},capabilities={hasSpine:false,requiresBrowserSnapshot:false};
-   const scope={propsRef:{current:p},nativeGameRequestRef:{current:request},nativeGameFrameRef:{current:frame},nativePresentationRef:{current:()=>capabilities},previousGamePaintRef:{current:null},nativeGamePaintUnchanged,
+   const scope={propsRef:{current:p},nativeGameRequestRef:{current:request},nativeGameFrameRef:{current:frame},nativePresentationRef:{current:()=>capabilities},previousGamePaintRef:{current:null},nativeGamePaintUnchanged,nativeViewportRequestDelay:requests.nativeViewportRequestDelay,
     window:{__TAURI_INTERNALS__:{},devicePixelRatio:1},uiHoverRef:{current:null},uiPressRef:{current:null},scenePaintEpochRef:{current:0},environmentPreviewRevision:()=>environment,
     performance:{now:()=>now},lastAnimationFrameAtRef:{current:0},lastProfilerFrameRef:{current:0},canvasRef:{current:canvas},liveCam:{current:{}},scene2DRef:{current:false},nativeSceneFrameRef:{current:null},nativeCameraPreviewFrameRef:{current:null},hoverGizmoRef:{current:null},activeGizmoRef:{current:null},previousScenePaintRef:{current:null},projectAssetSessionGeneration:()=>4,
     currentViewportProps:()=>{worldReads++;return p;}};
@@ -39,7 +39,7 @@ test('production pending Game gate preserves wakeups, ownership, new pixels and 
    scope.pendingNativeGamePaintUnchanged=compile(expressions.pendingNativeGamePaintUnchanged,scope);
    const presentationKey=JSON.stringify([null,0,null]),vp=scope.letterbox(850,478,null);
    requests.synchronizeNativeViewportRequestOwner(request,0,'4:'+JSON.stringify(['game',true,0,presentationKey,vp.w,vp.h,1]));
-   request.lastRequestAt=100;request.resumeTimer=42;
+   request.lastRequestAt=100;request.nextRequestAt=100+1000/60;request.resumeTimer=42;
    scope.previousGamePaintRef.current=scope.currentNativeGamePaintState(canvas,presentationKey,vp,1,true);
    return {scope,p,request,frame,capabilities,rect,canvas,check:(project=4)=>scope.pendingNativeGamePaintUnchanged(canvas,rect,now,project),paint:compile(prefix,scope),reads:()=>worldReads,setNow:value=>{now=value;},setEnvironment:value=>{environment=value;}};
   }

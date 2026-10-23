@@ -1077,7 +1077,7 @@ prepare_billboards在一个视图内借用无需billboard的源键，重复对�
 
 上一原生报告1792790439071的240帧中，请求起点相邻间隔平均18.4276ms；由完成时间减去transportMs还原起点，相对上一帧完成平均间隔2.5707ms（含20次重叠提交）。这些数据用于定位调度，不把全部等待归因于同一个定时器。代码确认Game、Scene和相机预览在beginNativeViewportRequest判定重复之前就更新lastRequestAt，未提交的请求也会推迟后续截止时间。
 
-现在由beginNativeViewportRequest在真正接受ticket时记录调用者的请求起点；容量满或重复键保持原时间戳。到期的Game完成回调直接进入下一次paint，未到期或处于原生busy／会话重试期则按剩余时间唤醒。已到期的重复请求不再建立短周期轮询，等待原请求完成或新世界通知。保留60Hz最小提交间隔、双在途容量、单相机预览容量、generation／世界归属校验、截图排空及失败重试。
+现在由beginNativeViewportRequest在真正接受ticket时记录调用者的请求起点；容量满或重复键保持原时间戳。到期的Game完成回调直接进入下一次paint，未到期或处于原生busy／会话重试期则按剩余时间唤醒。已到期的重复请求不再建立短周期轮询，等待原请求完成或新世界通知。保留双在途容量、单相机预览容量、generation／世界归属校验、截图排空及失败重试；运行帧节拍采用第五十八阶段的固定时间轴。
 
 56项定向测试通过，涵盖Game／Scene完成节拍、重复与容量限制、到期立即提交、无rAF／整数定时器、busy恢复、乱序完成、项目／会话／分辨率切换、截图与卸载。新增测试确认拒绝重复键不延后新版本提交、等待期间不产生短周期timer、到期提交不增加零延时task。旧测试环境补齐当前视口归属与准备计时接口，Scene绘制判断提取范围限定为Scene逻辑；未修改产品归属规则。复现：`node --test packages/editor/tests/nativeViewportRequests.test.mjs packages/editor/tests/nativeGameCompletionScheduling.test.mjs packages/editor/tests/nativeSceneCompletionScheduling.test.mjs`。
 
@@ -1131,3 +1131,19 @@ Amazonia前两种局部场景分别减少约33.67%与26.29%；全部变换每帧
 
 
 补充像素验收复用同EXE，仅运行 `qa-frost-map-session.mjs --runtime-edits-only`，报告 `B001/map-session-1792796459914.json` 通过，0 error、正常退出。QA将Scene相机对准受测岩石根节点，在截图前清除选择，避免选中框／gizmo变化代替实际网格变化；暂停时修改Inspector高度使原生像素变化，还原后图像SHA256与修改前完全一致。前后截图已目视确认岩石升起。随后30步的修改保留、动画／时钟、恢复和Stop也通过。测试脚本记录三张图的摘要；没有再次构建或重跑连续性能采样。WebView锁缓存按既有约定保留。
+
+
+## 第五十八阶段模拟与视口固定时间轴
+
+Play模拟、Game和连续Scene请求按60Hz固定时间轴推进截止时刻。定时器迟到后仍沿当前时间轴选择下一个时隙；长耗时跳过已经错过的时隙，不补发积压工作。相邻实际启动至少间隔半个周期（约8.33ms），限制恢复相位时的密集请求。模拟继续串行、实际dt上限0.25秒，视口继续最多两个在途请求；重复键／容量满不会推进截止时刻，busy／会话过期仍受16ms退避约束。首次进入、项目／会话／模式／尺寸变化沿既有归属规则重置请求状态，截图继续排空并拥有请求入口。静态编辑轮询、相机预览独立节流及资源刷新保持既有行为。
+
+定位证据来自上一原生报告1792796299328：240条呈现记录推算的239个请求起点间隔平均18.1523ms，完成至下一起点平均2.6255ms，存在负值重叠。不能把所有差额都归因于定时器；代码确认模拟和视口都从实际启动时间再次加16.67ms，整数取整与迟到会沿每次启动向后累积。原始推算样本在 tmp/docs-artifacts/editor-performance-risk/frame-cadence-baseline.json。
+
+定向调度71项与生产视口3项检查通过。新增测试在模拟、Game、Scene中注入每次1.3ms迟到，验证2秒内相位误差不累积；Game／Scene含初始帧各120次提交，模拟初次延迟启动共119次。覆盖600ms阻塞后跳过时隙、实际dt上限、半周期最小间隔、单步／暂停／重启、无rAF、整数timer、过期结果丢弃、乱序完成、并发容量、重复键、busy、截图、卸载、选中与浏览器覆盖层。已有精确时刻断言按固定时间轴更新；生产pending gate测试环境补入实际deadline helper及截止时刻，首次失败日志保留。
+
+命令：node --test packages/editor/tests/playbackCompletionScheduling.test.mjs packages/editor/tests/nativeViewportRequests.test.mjs packages/editor/tests/nativeGameCompletionScheduling.test.mjs packages/editor/tests/nativeSceneCompletionScheduling.test.mjs；另运行viewportGameCompletion／viewportSceneCompletion／viewportPendingPaint三个生产代码集成检查。结果为 frame-cadence-tests-final.log、frame-cadence-viewport-tests.log、frame-cadence-pending-final.log。前端与原生共用一次构建，因真实WebView计时行为必须验证，执行连续原生呈现／多视图专项；不重复全库或资源热更。
+
+
+原生定向结果：前端构建3.14秒、Release构建1分04秒通过，仅既有 world_from_snapshot 未使用告警。报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792797179807.json` 通过连续模拟、Game／Scene切换、相机预览／轨道、宽高分辨率及Stop还原，0 error、正常退出，截图已目视查看。EXE SHA256 `457b1b5c4c977ef9cc5585cea21ea49ca8cb4f87cf29d5e19e5c9da31e5dd55a`。测试临时WebView缓存因EPERM保留在本报告对应native-qa/runtime目录，发现文件已清理。
+
+10秒采样窗口，7,411实体／850×478；末尾240次呈现平均59.9970次/秒、间隔16.6675ms／P95 24.6ms，原生渲染10.8891ms、世界同步1.2092ms，237个不同模拟版本。239个推算请求起点间隔平均16.6686ms，完成至下一起点平均1.4653ms。上一独立运行54.9388次/秒仅作为同场景参考；当前短窗口平均接近60，不代表长期无抖动或跨机器稳定60 FPS。摘要为 tmp/docs-artifacts/editor-performance-risk/frame-cadence-native-summary.json。

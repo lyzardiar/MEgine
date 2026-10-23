@@ -17,11 +17,15 @@ function deferredRequest(state, key, publish = true) {
 
 test('only an accepted request advances the pacing timestamp', () => {
   const state = createNativeViewportRequestState();
-  const first = beginNativeViewportRequest(state, 'revision:1', 100); assert.ok(first);
-  assert.equal(beginNativeViewportRequest(state, 'revision:1', 120), null); assert.equal(state.lastRequestAt, 100);
-  assert.ok(beginNativeViewportRequest(state, 'revision:2', 121));
-  assert.equal(beginNativeViewportRequest(state, 'revision:3', 140), null); assert.equal(state.lastRequestAt, 121);
-  finishNativeViewportRequest(state, first); assert.ok(beginNativeViewportRequest(state, 'revision:3', 141)); assert.equal(state.lastRequestAt, 141);
+  const first = beginNativeViewportRequest(state, 'revision:1', 100, 1000 / 60); assert.ok(first);
+  assert.ok(Math.abs(state.nextRequestAt - 116.6666666667) < 1e-6);
+  const firstDeadline = state.nextRequestAt;
+  assert.equal(beginNativeViewportRequest(state, 'revision:1', 120, 1000 / 60), null); assert.equal(state.lastRequestAt, 100); assert.equal(state.nextRequestAt, firstDeadline);
+  assert.ok(beginNativeViewportRequest(state, 'revision:2', 121, 1000 / 60)); assert.ok(Math.abs(state.nextRequestAt - 133.3333333333) < 1e-6);
+  const secondDeadline = state.nextRequestAt;
+  assert.equal(beginNativeViewportRequest(state, 'revision:3', 140, 1000 / 60), null); assert.equal(state.lastRequestAt, 121); assert.equal(state.nextRequestAt, secondDeadline);
+  finishNativeViewportRequest(state, first); assert.ok(beginNativeViewportRequest(state, 'revision:3', 141, 1000 / 60)); assert.equal(state.lastRequestAt, 141);
+  synchronizeNativeViewportRequestOwner(state, 2, 'new session'); assert.equal(state.nextRequestAt, -Infinity);
 });
 
 test('two requests retain independent slots, deduplicate revisions and publish monotonically', async () => {

@@ -14,6 +14,7 @@ import {
 import { createEditorUndoService } from './editorUndoService';
 import { applyPlaybackAction, playbackShortcut, type PlaybackAction } from './editorPlayback';
 import { createNativePlayRuntime, type PlayInput } from './playRuntime';
+import { advanceFrameDeadline, frameCadenceDelay } from './frameCadence';
 import {
   legacyGameResolution,
   normalizeGameDisplay,
@@ -2761,17 +2762,21 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   useEffect(() => {
     if (props.detachedPanel) return;
     let lastTick = performance.now();
+    let nextTick = lastTick + 1000 / 60;
     let lastPanelRefresh = 0;
     let disposed = false;
     let timer: number | null = null;
-    const schedule = (delay: number) => { if (timer != null) window.clearTimeout(timer); timer = window.setTimeout(tick, delay); };
+    const schedule = (delay: number) => { if (timer != null) window.clearTimeout(timer); timer = window.setTimeout(tick, Math.ceil(delay)); };
     const tick = () => {
       if (disposed) return;
       schedule(1000 / 60);
       const now = performance.now();
-      if (store.mode !== 'play') { lastTick = now; return; }
+      if (store.mode !== 'play') { lastTick = now; nextTick = now + 1000 / 60; return; }
       if (store.playBusy) return;
+      const delay = frameCadenceDelay(nextTick, lastTick, now, 1000 / 60);
+      if (delay > 0) { schedule(delay); return; }
       const generation = store.playGeneration;
+      nextTick = advanceFrameDeadline(nextTick, now, 1000 / 60);
       store.tick(Math.min((now - lastTick) / 1000, 0.25));
       lastTick = now;
       // Viewports read completed Play frames directly. Inspector and hierarchy refresh
@@ -2784,7 +2789,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         refresh(!props.detachedPanel);
       }).catch(() => {}).finally(() => {
         if (disposed || generation !== store.playGeneration || store.mode !== 'play') return;
-        schedule(Math.max(0, 1000 / 60 - (performance.now() - lastTick)));
+        schedule(frameCadenceDelay(nextTick, lastTick, performance.now(), 1000 / 60));
       });
     };
     schedule(1000 / 60);

@@ -9,20 +9,20 @@ const source = readFileSync(new URL('../src/panels/Viewport.tsx', import.meta.ur
 const start = source.indexOf('    const sceneRequest = nativeSceneRequestRef.current;'), end = source.indexOf('    if (\n      selectedCamera', start);
 assert.ok(start > 0 && end > start);
 const compile = code => ts.transpileModule(code, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
-const helpers = compile(readFileSync(new URL('../src/nativeViewportRequests.ts', import.meta.url), 'utf8').replaceAll('export ', ''));
+const helpers = compile((readFileSync(new URL('../src/frameCadence.ts', import.meta.url), 'utf8')+'\n'+readFileSync(new URL('../src/nativeViewportRequests.ts', import.meta.url), 'utf8').replace(/^import .*$/gm, '')).replaceAll('export ', ''));
 const scheduler = compile(source.slice(source.indexOf('    const scheduleRequest ='), source.indexOf('    // Native Game requests continue')));
 const requestBlock = compile(`(function(p, now, nativeSceneIdentity, cam, requestWorldFrame) { ${source.slice(start, end)} })`);
 const cleanupStart = source.indexOf('  useEffect(() => () => {\n    const request = nativeSceneRequestRef.current;'), cleanupEnd = source.indexOf('  useEffect(() => props.subscribeRuntimeFrames', cleanupStart);
 assert.ok(cleanupStart > 0 && cleanupEnd > cleanupStart);
 const captureStart = source.indexOf('    return agentBridge.registerViewportCapture(props.tab, async'), captureEnd = source.indexOf('\n  }, [props.tab]);', captureStart);
 const captureBlock = compile(`(function() { ${source.slice(captureStart, captureEnd)} })`);
-function fixture(duration, playing = true) {
+function fixture(duration, playing = true, wakeDelay = 0) {
   let now = 0, serial = 0, active = 0, maxActive = 0, released = 0, shown = 0;
   const tasks = new Map(), starts = [], uploaded = [];
   const propsRef = { current: { tab: 'scene', playing, runtimeSessionId: 1, key: 'camera-a' } };
   const nativeSceneRequestRef = { current: null }, nativeSceneFrameRef = { current: null };
   const scene2DRef = { current: false }, draggingRef = { current: false }, lastProfilerFrameRef = { current: 1 };
-  const setTimeout = (callback, delay) => { const id = ++serial; tasks.set(id, { callback, at: now + Math.trunc(delay) }); return id; };
+  const setTimeout = (callback, delay) => { const id = ++serial; tasks.set(id, { callback, at: now + Math.trunc(delay) + wakeDelay }); return id; };
   const canvasRef = { current: { width: 640, height: 360, toDataURL: () => 'data:image/png;frame=' + shown } };
   const env = { window: { __TAURI_INTERNALS__: {}, setTimeout, clearTimeout: id => tasks.delete(id) }, performance: { now: () => now }, lastAnimationFrameAtRef: { current: -Infinity }, structuredClone, propsRef, nativeSceneRequestRef, nativeSceneFrameRef, nativeCameraPreviewRequestRef: { current: { inFlight: false, ready: null, lastRequestAt: 0 } }, scene2DRef, draggingRef, lastProfilerFrameRef, currentViewportOwner: () => propsRef.current, currentViewportProps: () => propsRef.current, nativeWorld: { frameWorld: () => ({ runtimeSessionId: 1 }) }, nativeViewportFrameWorldCurrent: (world, props) => world.runtimeSessionId === props.runtimeSessionId, releaseNativeViewportFrame: () => released++, uploadNativeViewportFrame: buffer => { uploaded.push(buffer); return { profile: {}, image: {}, width: 640, height: 360 }; }, recordNativeViewportProfile() {}, console: { warn() {} }, canvasRef, NATIVE_CAPTURE_READY_TIMEOUT_MS: 8000 };
   Object.assign(env, { clearTimeout: env.window.clearTimeout, setTimeout, projectGeneration: 0, projectAssetSessionGeneration: () => 0, canvas: { getBoundingClientRect: () => ({ width: 640, height: 360 }) }, liveCam: { current: { pivot: 'camera-a' } }, orbitEye: pivot => [pivot, 4, 7], nativeSceneFrameRequestIdentity: camera => ({ key: camera.eye[0] }), MAX_NATIVE_SCENE_VIEW_DIMENSION: 4096, cameraPreviewKey: undefined, recordOwnedNativeViewportProfile() {}, isGame: false, p: propsRef.current });
@@ -61,10 +61,10 @@ function fixture(duration, playing = true) {
   return { starts, uploaded, propsRef, env, nativeSceneRequestRef, nativeSceneFrameRef, scene2DRef, draggingRef, paint, advance, dispose, capture: () => capture('image/png', .9, 2048), get maxActive() { return maxActive; }, get released() { return released; } };
 }
 test('slow Scene renders present and continue on completion without animation', async () => {
-  const f = fixture(24); await f.advance(95); assert.deepEqual(f.starts.map(s => s.at), [0, 17, 34, 51, 68, 85]); assert.equal(f.maxActive, 2); f.dispose();
+  const f = fixture(24); await f.advance(95); assert.deepEqual(f.starts.map(s => s.at), [0, 17, 34, 50, 67, 84]); assert.equal(f.maxActive, 2); f.dispose();
 });
 test('fast Scene renders respect 60 Hz with integer WebView timers', async () => {
-  const f = fixture(5); await f.advance(95); assert.deepEqual(f.starts.map(s => s.at), [0, 17, 34, 51, 68, 85]); assert.equal(f.maxActive, 1); f.dispose();
+  const f = fixture(5); await f.advance(95); assert.deepEqual(f.starts.map(s => s.at), [0, 17, 34, 50, 67, 84]); assert.equal(f.maxActive, 1); f.dispose();
 });
 test('final camera changes continue at the deadline after dragging stops', async () => {
   const f = fixture(5, false); f.draggingRef.current = true; f.propsRef.current = { ...f.propsRef.current, key: 'camera-b' }; await f.advance(6); f.draggingRef.current = false;
@@ -192,4 +192,11 @@ test('Scene busy and expired tickets retry in a hidden view without disabling re
     f.env.fail = false; await f.advance(50);
     assert.ok(f.uploaded.length > 0); assert.ok(f.starts[1].at >= 21); assert.ok(f.maxActive <= 2); f.dispose();
   }
+});
+
+
+test('late WebView wakeups do not accumulate drift in live Scene scheduling', async () => {
+  const f=fixture(5,true,1.3);await f.advance(2000);assert.equal(f.starts.length,120);assert.equal(f.maxActive,1);
+  for(let i=1;i<f.starts.length;i++){assert.ok(Math.abs(f.starts[i].at-i*1000/60)<2.31);assert.ok(f.starts[i].at-f.starts[i-1].at>=1000/120-1e-8);}
+  f.dispose();
 });

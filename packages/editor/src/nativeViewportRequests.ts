@@ -1,10 +1,11 @@
 // Author: MiYu. Bound owned native requests and publish complete frames monotonically.
+import { advanceFrameDeadline, frameCadenceDelay } from './frameCadence.ts';
 export type NativeViewportRequestTicket = { sequence: number; generation: number; key: string; ready: Promise<void> };
 export function createNativeViewportRequestState(capacity = 2) {
   const pending = new Map<number, NativeViewportRequestTicket>();
   return {
     owner: undefined as unknown, compatibilityKey: '', generation: 0, nextSequence: 0, presentedSequence: 0, pending, capacity,
-    lastRequestAt: 0, retryAt: 0, reportedError: false, resumeTimer: null as number | null, captures: 0,
+    lastRequestAt: 0, nextRequestAt: -Infinity, retryAt: 0, reportedError: false, resumeTimer: null as number | null, captures: 0,
     get inFlight() { return pending.size > 0; },
     get full() { return pending.size >= capacity; },
     get ready(): Promise<void> | null { return pending.size ? Promise.all([...pending.values()].map(ticket => ticket.ready)).then(() => {}) : null; },
@@ -15,12 +16,16 @@ export function synchronizeNativeViewportRequestOwner(state: NativeViewportReque
   if (state.owner === owner && state.compatibilityKey === compatibilityKey) return;
   state.owner = owner; state.compatibilityKey = compatibilityKey; state.generation++;
   if (state.resumeTimer != null) clearTimeout(state.resumeTimer);
-  state.resumeTimer = null; state.lastRequestAt = -Infinity; state.retryAt = 0; state.reportedError = false;
+  state.resumeTimer = null; state.lastRequestAt = -Infinity; state.nextRequestAt = -Infinity; state.retryAt = 0; state.reportedError = false;
 }
-export function beginNativeViewportRequest(state: NativeViewportRequestState, key: string, requestedAt = performance.now()): NativeViewportRequestTicket | null {
+export function nativeViewportRequestDelay(state: NativeViewportRequestState, now: number, interval: number): number {
+  return interval === 1000 / 60 && Number.isFinite(state.lastRequestAt) ? frameCadenceDelay(state.nextRequestAt, state.lastRequestAt, now, interval) : Math.max(0, interval - (now - state.lastRequestAt));
+}
+export function beginNativeViewportRequest(state: NativeViewportRequestState, key: string, requestedAt = performance.now(), interval = 0): NativeViewportRequestTicket | null {
   if (state.full || [...state.pending.values()].some(ticket => ticket.generation === state.generation && ticket.key === key)) return null;
   const ticket = { sequence: ++state.nextSequence, generation: state.generation, key, ready: Promise.resolve() };
   state.pending.set(ticket.sequence, ticket); state.lastRequestAt = requestedAt;
+  state.nextRequestAt = interval > 0 ? advanceFrameDeadline(state.nextRequestAt, requestedAt, interval) : -Infinity;
   return ticket;
 }
 export function nativeViewportRequestCanPublish(state: NativeViewportRequestState, ticket: NativeViewportRequestTicket): boolean {

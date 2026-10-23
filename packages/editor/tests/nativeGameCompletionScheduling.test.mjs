@@ -7,7 +7,7 @@ import ts from '../node_modules/typescript/lib/typescript.js';
 import { nativeGameFrameMatchesRequest, nativeGameRequestInterval } from '../src/nativeViewportFrame.ts';
 
 const source = readFileSync(new URL('../src/panels/Viewport.tsx', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
-const helpers = ts.transpileModule(readFileSync(new URL('../src/nativeViewportRequests.ts', import.meta.url), 'utf8').replaceAll('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
+const helpers = ts.transpileModule((readFileSync(new URL('../src/frameCadence.ts', import.meta.url), 'utf8')+'\n'+readFileSync(new URL('../src/nativeViewportRequests.ts', import.meta.url), 'utf8').replace(/^import .*$/gm, '')).replaceAll('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const start = source.indexOf('    const gameRequestKey =');
 const end = source.indexOf('    // Native Game requests continue', start);
 assert.ok(start >= 0 && end > start);
@@ -19,12 +19,12 @@ const cleanup = ts.transpileModule(`(function () { ${source.slice(cleanupStart, 
 
 const subscription = ts.transpileModule(source.slice(source.indexOf('  useEffect(() => props.subscribeRuntimeFrames'), source.indexOf('  useEffect(() => {', source.indexOf('  useEffect(() => props.subscribeRuntimeFrames'))), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 
-function fixture(duration, timerDelay = 0, integerTimers = false, revision, capacity = 2) {
+function fixture(duration, timerDelay = 0, integerTimers = false, revision, capacity = 2, wakeDelay = 0) {
   let now = 0, serial = 0, active = 0, maxActive = 0, released = 0;
   const tasks = new Map(), starts = [], uploaded = [];
   const propsRef = { current: { tab: 'game', playing: true, runtimeSessionId: 1, revision, entities: [], clearColor: [0, 0, 0, 1], simulationTime: 0, gameResolution: { width: 1280, height: 720 } } };
   const nativeGameRequestRef = { current: null }, nativeGameFrameRef = { current: null }, lastProfilerFrameRef = { current: 1 };
-  const setTimeout = (callback, delay) => { const id = ++serial; tasks.set(id, { callback, at: now + (integerTimers ? Math.trunc(delay) : delay) + (delay === 0 ? timerDelay : 0) }); return id; };
+  const setTimeout = (callback, delay) => { const id = ++serial; tasks.set(id, { callback, at: now + (integerTimers ? Math.trunc(delay) : delay) + (delay === 0 ? timerDelay : wakeDelay) }); return id; };
   const env = { window: { __TAURI_INTERNALS__: {}, setTimeout, clearTimeout: id => tasks.delete(id) }, performance: { now: () => now }, propsRef, nativeGameRequestRef, nativeGameFrameRef, lastProfilerFrameRef, vp: { w: 640, h: 360 }, dpr: 1, nativeGpuTimingRevisionRef: { current: 0 }, nativeGameRequestInterval, nativeGameFrameMatchesRequest, nativeGamePreviewSize: () => ({ width: 1280, height: 720 }), currentViewportOwner: () => propsRef.current, currentViewportProps: () => propsRef.current, nativeViewportFrameWorldCurrent: (world, props) => world.runtimeSessionId === props.runtimeSessionId, releaseNativeViewportFrame: () => released++, uploadNativeViewportFrame: buffer => { uploaded.push(buffer); return { profile: { counts: {}, worldRevision: buffer.revision }, image: {}, width: 1280, height: 720 }; }, recordNativeViewportProfile() {}, console: { warn() {} }, raf: 0, cancelAnimationFrame() {} };
   Object.assign(env, { clearTimeout: env.window.clearTimeout, setTimeout, projectGeneration: 0, projectAssetSessionGeneration: () => 0, canvas: { getBoundingClientRect: () => ({ width: env.vp.w, height: env.vp.h }) }, letterbox: () => env.vp, recordOwnedNativeViewportProfile() {} });
   Object.defineProperty(env.window, 'devicePixelRatio', { get: () => env.dpr });
@@ -63,20 +63,20 @@ function fixture(duration, timerDelay = 0, integerTimers = false, revision, capa
 
 test('slow native Game requests continue on completion without waiting for animation', async () => {
   const f = fixture(24); await f.advance(95);
-  assert.deepEqual(f.starts, [0, 17, 34, 51, 68, 85]); assert.equal(f.maxActive, 2); f.dispose();
+  assert.deepEqual(f.starts, [0, 17, 34, 50, 67, 84]); assert.equal(f.maxActive, 2); f.dispose();
 });
 
-test('fast and slow-to-fast requests retain the 60 Hz minimum period', async () => {
+test('fast and slow-to-fast requests retain 60 Hz phase with bounded spacing', async () => {
   for (const duration of [5, n => n === 1 ? 24 : 1]) {
     const f = fixture(duration); await f.advance(95);
-    for (let i = 1; i < f.starts.length; i++) assert.ok(f.starts[i] - f.starts[i - 1] >= 1000 / 60 - 1e-8);
+    for (let i = 1; i < f.starts.length; i++) { assert.ok(f.starts[i] - f.starts[i - 1] >= 1000 / 120 - 1e-8); assert.ok(Math.abs(f.starts[i] - i * 1000 / 60) < 1); }
     assert.equal(f.maxActive, typeof duration === 'number' ? 1 : 2); f.dispose();
   }
 });
 
 test('animation cancels delayed completion retries instead of duplicating requests', async () => {
   const f = fixture(24, 20); await f.advance(95);
-  assert.deepEqual(f.starts, [0, 17, 34, 51, 68, 85]); assert.equal(f.maxActive, 2); f.dispose();
+  assert.deepEqual(f.starts, [0, 17, 34, 50, 67, 84]); assert.equal(f.maxActive, 2); f.dispose();
 });
 
 test('stopping Play requests one owned edit frame and stops the live completion loop', async () => {
@@ -91,7 +91,7 @@ test('switching to Scene cancels the pending completion path', async () => {
 
 test('integer WebView timers keep fast requests advancing without animation frames', async () => {
   const f = fixture(5, 0, true); await f.advance(95, false);
-  assert.deepEqual(f.starts, [0, 17, 34, 51, 68, 85]); assert.equal(f.maxActive, 1); f.dispose();
+  assert.deepEqual(f.starts, [0, 17, 34, 50, 67, 84]); assert.equal(f.maxActive, 1); f.dispose();
 });
 
 test('unmount cancels the scheduled completion timer', async () => {
@@ -140,7 +140,7 @@ test('simulation completion wakes a reused frame and preserves the pending reque
   const f = fixture(5, 0, true, 0); await f.advance(20, false); assert.deepEqual(f.starts,[0]);
   f.propsRef.current = {...f.propsRef.current,revision:1}; f.notify(); await f.advance(36,false);
   f.propsRef.current = {...f.propsRef.current,revision:2}; f.notify(); await f.advance(45,false);
-  assert.deepEqual(f.starts,[0,20,37]); assert.deepEqual(f.uploaded.map(buffer=>buffer.revision),[0,1,2]); assert.equal(f.maxActive,1); f.dispose();
+  assert.deepEqual(f.starts,[0,20,36]); assert.deepEqual(f.uploaded.map(buffer=>buffer.revision),[0,1,2]); assert.equal(f.maxActive,1); f.dispose();
 });
 
 test('full unmount unsubscribes simulation notifications before clearing pending timers', async () => {
@@ -211,4 +211,12 @@ test('a pending duplicate neither moves the submission deadline nor polls while 
   assert.equal(f.nativeGameRequestRef.current.resumeTimer, null); assert.equal(f.pendingTasks, 1);
   f.propsRef.current.revision = 1; f.notify();
   assert.deepEqual(f.starts, [0, 20]); assert.equal(f.maxActive, 2); f.dispose();
+});
+
+
+test('late WebView wakeups do not accumulate drift in live Game scheduling', async () => {
+  const f=fixture(5,0,true,undefined,2,1.3);await f.advance(2000,false);
+  assert.equal(f.starts.length,120);assert.equal(f.maxActive,1);
+  for(let i=1;i<f.starts.length;i++){assert.ok(Math.abs(f.starts[i]-i*1000/60)<2.31);assert.ok(f.starts[i]-f.starts[i-1]>=1000/120-1e-8);}
+  f.dispose();
 });

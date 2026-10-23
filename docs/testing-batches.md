@@ -620,3 +620,17 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 
 
 补充像素验收复用同EXE，仅运行 `qa-frost-map-session.mjs --runtime-edits-only`，报告 `B001/map-session-1792796459914.json` 通过，0 error、正常退出。QA将Scene相机对准受测岩石根节点，在截图前清除选择，避免选中框／gizmo变化代替实际网格变化；暂停时修改Inspector高度使原生像素变化，还原后图像SHA256与修改前完全一致。前后截图已目视确认岩石升起。随后30步的修改保留、动画／时钟、恢复和Stop也通过。测试脚本记录三张图的摘要；没有再次构建或重跑连续性能采样。WebView锁缓存按既有约定保留。
+
+
+### B001 模拟与视口固定时间轴
+
+变更：frameCadence.ts、App.tsx的Play循环、nativeViewportRequests.ts及Viewport.tsx的Game／Scene节拍；对应调度和生产视口测试。沿60Hz时间轴恢复相位，跳过错过时隙，相邻启动至少8.33ms；模拟保持串行／dt≤0.25秒，视口容量、归属、截图和错误退避继续保留。
+
+快速检查：调度71项、生产视口3项通过；记录、命令、首次旧计时期望及测试环境修正见performance-risk-todo第五十八阶段。前端和原生一次构建后，仅运行连续Amazonia／transport／simulation／viewport-transitions原生专项。不重跑上一阶段Inspector像素恢复、资源热更或全库；原生实测结果见下。
+
+剩余专项：实际输入延迟、强制在途竞态、独立窗口、父级Undo／激活UI、进程缓存内存及跨机器长期帧率；确定性调度测试不代替这些运行验收。
+
+
+原生定向结果：前端构建3.14秒、Release构建1分04秒通过，仅既有 world_from_snapshot 未使用告警。报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792797179807.json` 通过连续模拟、Game／Scene切换、相机预览／轨道、宽高分辨率及Stop还原，0 error、正常退出，截图已目视查看。EXE SHA256 `457b1b5c4c977ef9cc5585cea21ea49ca8cb4f87cf29d5e19e5c9da31e5dd55a`。测试临时WebView缓存因EPERM保留在本报告对应native-qa/runtime目录，发现文件已清理。
+
+10秒采样窗口，7,411实体／850×478；末尾240次呈现平均59.9970次/秒、间隔16.6675ms／P95 24.6ms，原生渲染10.8891ms、世界同步1.2092ms，237个不同模拟版本。239个推算请求起点间隔平均16.6686ms，完成至下一起点平均1.4653ms。上一独立运行54.9388次/秒仅作为同场景参考；当前短窗口平均接近60，不代表长期无抖动或跨机器稳定60 FPS。摘要为 tmp/docs-artifacts/editor-performance-risk/frame-cadence-native-summary.json。
