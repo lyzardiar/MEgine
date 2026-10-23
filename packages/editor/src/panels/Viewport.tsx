@@ -1400,11 +1400,13 @@ export function Viewport(props: {
     const nativeWorld = cachedWorld?.source === requestedProps.entities && cachedWorld.key === worldKey ? cachedWorld.args : createNativeViewportWorldArgs(requestedProps, requestedProps.tab === 'scene');
     if (cacheEditWorld) sceneWorldArgsRef.current = { source: requestedProps.entities, key: worldKey, args: nativeWorld };
     else sceneWorldArgsRef.current = null;
+    let requestPreparedAt = now;
     const requestWorldFrame = (command: string, args: Record<string, unknown>) => {
       const retainedEdit = cacheEditWorld && (command === 'render_native_game_view' || editScene && command === 'render_native_scene_view');
       const sceneView = command === 'render_native_scene_view' && (args.request as { cameraEntity?: number } | undefined)?.cameraEntity == null;
       const worldArgs = retainedEdit ? nativeWorld.sceneWorldArgs() : sceneView ? nativeWorld.scenePlayWorldArgs() : nativeWorld.worldArgs();
       nativeWorld.frameWorld();
+      requestPreparedAt = performance.now();
       return requestRevisionedNativeViewportFrame(command, { ...args, ...worldArgs }, nativeWorld.snapshotArgs).then(buffer => { if (retainedEdit) nativeWorld.markSceneWorldUploaded(); return buffer; });
     };
     const presentationKey = JSON.stringify([p.gameResolution, p.gameDisplay, p.timelineCameraPreview]);
@@ -1452,8 +1454,8 @@ export function Viewport(props: {
       synchronizeNativeViewportRequestOwner(request, source, `${projectGeneration}:${key}`);
     };
     syncRequestOwner(nativeGameRequestRef.current, gameCompatibilityKey);
-    const currentGameRequestKey = () => {
-      const current = currentViewportProps(), bounds = canvas.getBoundingClientRect(), view = letterbox(Math.max(1, Math.floor(bounds.width)), Math.max(1, Math.floor(bounds.height)), current.gameResolution);
+    const currentGameRequestKey = (current: ReturnType<typeof currentViewportProps>) => {
+      const bounds = canvas.getBoundingClientRect(), view = letterbox(Math.max(1, Math.floor(bounds.width)), Math.max(1, Math.floor(bounds.height)), current.gameResolution);
       return JSON.stringify([JSON.stringify([current.gameResolution, current.gameDisplay, current.timelineCameraPreview]), view.w, view.h, window.devicePixelRatio || 1, requestedGpuTimingRevision]);
     };
     const gameRequestInterval = nativeGameRequestInterval(!!p.playing, nativeGameFrameRef.current, p, gameRequestKey);
@@ -1478,9 +1480,13 @@ export function Viewport(props: {
       const ticket = beginNativeViewportRequest(request, JSON.stringify([gameRequestKey, nativeWorld.requestKey(), p.simulationTime]));
       if (ticket) ticket.ready = requestWorldFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight })
         .then((buffer) => {
-          if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || currentViewportProps().tab !== 'game' || currentGameRequestKey() !== requestKey || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
+          const completionStartedAt = performance.now();
+          if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket)) { releaseNativeViewportFrame(buffer); return; }
+          // MiYu: one fresh snapshot owns all checks in this synchronous completion callback.
+          const current = currentViewportProps();
+          if (current.tab !== 'game' || currentGameRequestKey(current) !== requestKey || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), current)) { releaseNativeViewportFrame(buffer); return; }
           const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
-          recordOwnedNativeViewportProfile('game', { ...result.profile, updateMode: p.playing ? 'live' : gameRequestInterval ? 'edit-poll' : 'edit-change', pollIntervalMs: p.playing ? undefined : 300, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
+          recordOwnedNativeViewportProfile('game', { ...result.profile, updateMode: p.playing ? 'live' : gameRequestInterval ? 'edit-poll' : 'edit-change', pollIntervalMs: p.playing ? undefined : 300, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now, frontendPrepareMs: requestPreparedAt - now, frontendCompleteMs: performance.now() - completionStartedAt });
           const image = result.image;
           const firstFrame = nativeGameFrameRef.current == null;
           nativeGameFrameRef.current = {

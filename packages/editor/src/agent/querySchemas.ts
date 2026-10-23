@@ -449,6 +449,7 @@ export const QUERY_PARAMS_SCHEMAS: Record<string, AgentJsonSchema> = {
       description: 'Viewport sample source; default game',
     },
     limit: boundedInteger(1, 480, 'Maximum recent samples; default 120'),
+    includeNativeTimings: { type: 'boolean', description: 'Include compact per-frame native timings, bounded by limit and retained history; default false' },
   }),
   'profiler.get_timeline': objectSchema({
     assetPath: nonEmptyString('Optional exact Assets/*.mtimeline path'),

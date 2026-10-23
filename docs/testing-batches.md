@@ -361,3 +361,14 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 与2e8c4be和3fd5b17共用一次Rust Release构建通过，EXE `4e429e11e48deacb53be7bb8509fd40de71bd21708dec72e757820c576a74faa`。`qa-frost-map-session.mjs --continuous-profile --effect-reload`报告`B001/map-session-1792777658238.json`通过Amazonia加载、原动画连续呈现、暂停特效修改/恢复、场景不变及Stop快照还原，0 error、正常退出。锁定WebView缓存保留，原生Game画面已核对；脚本增加Stop后显式快照断言。
 
 关闭这三项常规Game加载/连续呈现/暂停恢复/Stop待测。父级/活动状态编辑、Undo及Scene视图仍保留；未重跑不相关窗口同步或全库回归。连续采样仅保留末尾240帧，46.979次完成呈现/秒，未证明整体流畅度提高；完整口径与日志见performance-risk-todo第三十七阶段。
+
+
+### B001-01 Game 完成校验与原生时序查询
+
+变更：editorProfiler、AgentBridge/querySchemas、MCP server 增加按需轻量原生时序；map-session QA 增加 --transport-profile。Viewport 的有效 Game 帧完成回调复用一次新鲜快照，并记录请求前准备/完成回调两个分段；新增 agentProfilerTimings 与 viewportGameCompletion 定向测试，校正 nativePlayOwnership 完整快照的既有会话时钟断言。属于现有性能修复补充，不新增批次计数。
+
+诊断查询版本已完成一次前端/原生构建和 `--continuous-profile --transport-profile`，报告 `B001/map-session-1792778305733.json` 通过、0 error、正常退出，Stop 快照恢复通过。EXE `e869302c07b4edf5cd96d5cd22bd450a7a15f058ead7c230f32cfd6293f2e214`，47.132 次完成呈现/秒；时序、范围和本地日志见 performance-risk-todo 第三十八阶段。该 EXE 不含随后新增的 Game 快照复用与前端分段字段。
+
+最终快速检查：agentProfilerTimings、viewportGameCompletion、nativePlayOwnership、nativeViewportFrame 共 29 通过、0 失败；TypeScript、JS 语法及 diff 检查通过。未重复原生构建、地图全量导入或全库回归。
+
+待合并验证：下一次相关原生构建运行 `node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile`，验证 frontendPrepareMs/frontendCompleteMs 字段及相同视口的实际耗时；增加请求进行中 Game/Scene 切换、调整分辨率、重载地图、Stop 后过期帧拒绝。既有父级/活动状态编辑与 Undo 的 Scene 原生待测项继续保留。状态：实现及快速检查完成，最终 Game 优化的原生验证待批次执行。

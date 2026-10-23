@@ -34,7 +34,7 @@ test('Scene visibility and camera-preview snapshots share verified native record
   };
   const first = scene([1]), firstWorld = first.frameWorld(), initial = store.playRenderSnapshot();
   assert.equal(firstWorld.entities[1], initial.entities[2]); assert.ok(Object.isFrozen(firstWorld.entities[1]));
-  assert.deepEqual(first.worldArgs().snapshot.entities.map(e => e.entity), [3]); assert.equal(first.worldArgs().playSessionId, undefined);
+  assert.deepEqual(first.worldArgs().snapshot.entities.map(e => e.entity), [3]); assert.equal(first.worldArgs().playSessionId, 81); assert.equal(first.worldArgs().playRevision, undefined);
   assert.deepEqual(first.scenePlayWorldArgs(), { playSessionId: 81, playRevision: 0 });
   assert.deepEqual(scene([]).worldArgs().snapshot.entities.map(e => e.entity), [1, 2, 3]);
   const viewport = { w: 800, h: 600 }, camera = { eye: [0, 3, 8], target: [0, 0, 0], fovYDeg: 60 }, identity = nativeSceneFrameRequestIdentity(camera, viewport, 1, [1]);
@@ -44,7 +44,7 @@ test('Scene visibility and camera-preview snapshots share verified native record
   assert.equal(store.playRenderSnapshot().nativeWorldReference, undefined);
   const dirty = scene([1]), dirtyWorld = dirty.frameWorld();
   assert.equal(dirtyWorld.entities[1].components.Text.text, 'second'); assert.notEqual(dirtyWorld.entities[1], editable); assert.equal(dirty.worldArgs().snapshot.entities.length, 0);
-  assert.equal(dirty.scenePlayWorldArgs().playSessionId, undefined); assert.equal(dirty.scenePlayWorldArgs().snapshot.entities.length, 0);
+  assert.equal(dirty.scenePlayWorldArgs().playSessionId, 81); assert.equal(dirty.scenePlayWorldArgs().playRevision, undefined); assert.equal(dirty.scenePlayWorldArgs().snapshot.entities.length, 0);
   editable.components.Text.text = 'third'; assert.equal(dirtyWorld.entities[1].components.Text.text, 'second'); assert.equal(firstWorld.entities[1].components.Text.text, 'first');
   store.stop(); assert.equal(store.playRenderSnapshot(), null);
   store.play(); await store.waitForPlayRuntime(); store.pause();

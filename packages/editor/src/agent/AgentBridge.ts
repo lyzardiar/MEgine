@@ -173,6 +173,7 @@ import {
   readNativeViewportProfiles,
   summarizeEditorProfilerSamples,
   summarizeNativeViewportProfiles,
+  nativeViewportTimingSample,
   type EditorProfilerSource,
 } from '../editorProfiler';
 import {
@@ -5582,15 +5583,16 @@ class AgentBridge {
         }
         const allSamples = readEditorProfilerSamples(source as EditorProfilerSource);
         const samples = allSamples.slice(-Number(limit));
-        const nativeProfiles = readNativeViewportProfiles(source as EditorProfilerSource);
+        const nativeProfiles = readNativeViewportProfiles(source as EditorProfilerSource, false);
         return {
           source,
           scope: 'editor-and-native-viewport',
           note: 'WebView timing plus instrumented native editor-host/RHI call tree, memory provenance, and render-bound resources. GPU bytes are estimates; optional hardware timestamps cover main viewport passes. Process-wide heap sampling is not claimed.',
           summary: summarizeEditorProfilerSamples(allSamples),
-          nativeLatest: nativeProfiles.at(-1) ?? null,
+          nativeLatest: nativeProfiles.length ? structuredClone(nativeProfiles.at(-1)) : null,
           nativeProfileCount: nativeProfiles.length,
           nativeSummary: summarizeNativeViewportProfiles(nativeProfiles),
+          ...(params.includeNativeTimings ? { nativeTimings: nativeProfiles.slice(-Number(limit)).map(nativeViewportTimingSample) } : {}),
           totalSamples: allSamples.length,
           returnedSamples: samples.length,
           truncated: samples.length < allSamples.length,

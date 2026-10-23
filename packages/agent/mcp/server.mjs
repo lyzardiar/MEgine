@@ -2387,6 +2387,7 @@ const TOOLS = [
           maximum: 480,
           description: 'Recent samples to return; defaults to 120',
         },
+        includeNativeTimings: { type: 'boolean', description: 'Include compact native frame timings, bounded by limit and retained history; defaults to false' },
       },
       additionalProperties: false,
     },

@@ -828,3 +828,18 @@ TransformHierarchy提供只读get_ref入口，既有get仍返回独立值。网�
 2e8c4be、3fd5b17、576913a共用一次Rust Release构建（1分28秒），复用未变更的前端产物，仅既有world_from_snapshot未使用告警。EXE SHA256 `4e429e11e48deacb53be7bb8509fd40de71bd21708dec72e757820c576a74faa`。`qa-frost-map-session.mjs --continuous-profile --effect-reload`报告`tmp/docs-artifacts/testing-batches/B001/map-session-1792777658238.json`通过：原地图加载与连续呈现、37份特效修改/恢复（图元880→68→880且暂停像素精确还原）、Stop恢复原作者实体。0 error、正常退出，锁定WebView缓存保留；Game截图已目视核对。脚本补充Stop后的显式快照断言。日志为`hierarchy-material-{native-build.log,map-qa.log}`。
 
 850×478、7,410实体含QA节点，10秒不轮询采样窗口末尾保留240帧（约5.11秒）：呈现间隔均值21.2863ms、P95 33.9ms，46.979次完成呈现/秒；渲染均值13.1459ms、完整请求26.1829ms、模拟请求13.4942ms，38个WebView采样段平均绘制3.3323ms。阶段会重叠，不能相加，也不是显示器或新模拟帧率。相比此前单次采样48.475次/秒，本次没有证明整体提升；不同次运行不是受控A/B，也不能把差异直接归因于本项。下一步应拆查模拟/呈现调度、请求等待与传输成本。Scene视图、父级/活动编辑及Undo仍待相关原生场景；本次Game通过不关闭整体性能或完整Warcraft复刻目标。
+
+
+## 第三十八阶段请求耗时拆分与 Game 完成校验
+
+Agent `profiler.get_samples` 与 MCP `get_profiler_samples` 增加可选 `includeNativeTimings`，默认不返回逐帧时序。启用时只返回限制数量内的标量、渲染尺寸和共享传输阶段，最多沿用 240 帧历史；资源清单、调用树、内存明细不进入时序列表。查询汇总读取保留数据，只有返回的最新完整帧和轻量时序字段复制，避免为了查询深拷贝全部历史。返回值修改不会污染保留数据。
+
+`qa-frost-map-session.mjs --continuous-profile --transport-profile` 启用已有原生传输追踪，10 秒不轮询 Agent 后读取时序。诊断版本 EXE SHA256 `e869302c07b4edf5cd96d5cd22bd450a7a15f058ead7c230f32cfd6293f2e214` 的前端/原生构建通过；报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792778305733.json` 通过、0 error、正常退出，并验证 Stop 恢复作者快照。该版本只含查询与传输诊断，不含下述 Game 完成校验优化和新增前端分段字段。
+
+Amazonia 7,410 实体、850×478，末尾 240 帧：完成呈现间隔均值 21.2171ms、P95 32.6ms，47.132 次/秒；原生渲染均值 13.0717ms，命令 15.9531ms，paint 起点至上传结束 25.5371ms。共享请求至事件 19.8054ms，其中发布至 WebView 事件均值 2.6927ms、P95 7.4939ms；原生 UI 排队 0.0761ms、复制 0.1187ms、分配 0.0006ms，Canvas 上传 0.3413ms。前后两个请求口径平均相差约 5.7317ms，包含前端请求准备、完成校验、上传及调度，不能全部归因于 IPC。不同阶段可能重叠，不相加；这次独立采样没有证明整体 FPS 提升。
+
+Game 返回帧在同一同步回调中取得一次新鲜运行时快照，复用于当前面板、显示配置及世界归属检查。有效帧的快照读取由三次减至一次，不跨异步边界缓存；项目代次和请求票据检查仍先执行，拒绝路径释放缓冲区。新增 `frontendPrepareMs`（paint 起点至世界准备完成、调用原生请求之前）和 `frontendCompleteMs`（完成回调开始至归属校验及 Canvas 上传结束），供后续真实运行定位使用。两者不是纯 CPU 测量，未报告尚未采集的节省量。
+
+定向测试 29 通过、0 失败，覆盖生产完成回调、过期项目/请求/呈现顺序、面板/尺寸/显示器/会话/编辑实体变化，保留世界的深层编辑、直接别名、重启以及诊断字段边界。nativePlayOwnership 中两处完整快照断言按既有 96cb4ea 的模拟时钟契约校正：保留会话 ID，仍无可复用 revision。TypeScript 检查通过。原始结果位于 `tmp/docs-artifacts/editor-performance-risk/` 的 `native-timing-{query-tests.log,editor-build.log,native-build.log,map-qa.log,summary.json}` 和 `game-completion-tests.log`。
+
+待下一批相关原生构建验证新增前端时序、Game/Scene 切换、分辨率变化、运行地图切换与 Stop 后旧帧拒绝；复用相同视口采样并单列前端阶段，不能把减少读取次数当作已证明的整图提速。本轮未再次构建原生 Editor、重导地图或运行全库回归。

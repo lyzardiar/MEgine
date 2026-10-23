@@ -10,6 +10,9 @@ const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'
 assert.ok(process.env.MENGINE_EDITOR_EXECUTABLE,'Set MENGINE_EDITOR_EXECUTABLE');
 const logsOnly=process.argv.includes('--logs-only');
 const continuousProfile=process.argv.includes('--continuous-profile');
+const transportProfile=process.argv.includes('--transport-profile');
+assert.ok(!transportProfile||continuousProfile,'--transport-profile requires --continuous-profile');
+if(transportProfile)process.env.MENGINE_NATIVE_VIEWPORT_TRANSPORT_TRACE='1';
 const effectReload=process.argv.includes('--effect-reload');
 const profileOnly=process.argv.includes('--profile-only')||continuousProfile;
 const editorFeedback=process.argv.includes('--editor-feedback');
@@ -106,8 +109,10 @@ try{
     await step(180);await execute('playback.pause');await sleep(1500);
     if(continuousProfile){
       await execute('profiler.clear');const started=performance.now();await sleep(10000);const elapsedMs=performance.now()-started;
-      const profiles=await query('profiler.get_samples',{source:'game',limit:480});
+      const profiles=await query('profiler.get_samples',{source:'game',limit:480,...(transportProfile?{includeNativeTimings:true}:{})});
       assert.ok(profiles.nativeProfileCount>=15,'Expected completed live viewport frames');assert.ok(profiles.returnedSamples>0,'Expected WebView paint samples');
+      if(transportProfile)assert.ok(profiles.nativeTimings?.filter(p=>Number.isFinite(p.sharedTransport?.publicationReadyToEventMs)).length>=15,'Expected correlated native publication-to-WebView timings');
+      if(transportProfile)assert.ok(profiles.nativeTimings?.filter(p=>Number.isFinite(p.frontendPrepareMs)&&p.frontendPrepareMs>=0&&Number.isFinite(p.frontendCompleteMs)&&p.frontendCompleteMs>=0).length>=15,'Expected split frontend preparation and completion timings');
       report.continuousProfile={elapsedMs,...profiles};await execute('playback.pause');await capture('profile-view');if(effectReload)await checkEffectReload();await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities,'Stop restores the authored scene after profiling');
       report.checks.push('10-second live Amazonia presentation and WebView sample window without Agent polling, followed by Stop restoration');
     }else{
