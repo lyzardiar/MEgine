@@ -20,10 +20,10 @@ tick();click('solo box');click('custom box');assert.equal(world.visible('mapOpen
 context.onContentImport({status:'importing',file:'任意地图.w3x'});for(let i=0;i<12;i++)tick({},1);assert.ok(context.FrostMapSession.importStatus().busy);assert.match(world.entity('Map description').components.Text.text,/任意地图/);
 assert.equal(world.visible('Map loading back'),true);assert.match(world.entity('Map loading status').components.Text.text,/准备地图转换/);
 context.onContentImport({status:'progress',step:3,steps:8,message:'转换装饰物',completed:20,total:100});tick();
-assert.match(world.entity('Map loading status').components.Text.text,/20\/100/);const partial=world.entity('Map loading fill').components.RectTransform.size_delta[0];assert.equal(partial,350*3.2/8);
+assert.match(world.entity('Map loading status').components.Text.text,/20\/100/);const partial=world.entity('Map loading fill').components.RectTransform.size_delta[0];assert.equal(partial,world.entity('Map loading back').components.RectTransform.size_delta[0]*3.2/8);
 for(let i=0;i<20;i++)tick({},1);assert.equal(world.entity('Map loading fill').components.RectTransform.size_delta[0],partial,'time must not fabricate progress');
-context.onContentImport({status:'progress',step:3,steps:8,message:'转换装饰物',completed:100,total:100});tick();assert.equal(world.entity('Map loading fill').components.RectTransform.size_delta[0],175);
-context.onContentImport({status:'progress',step:3,steps:0,message:'invalid'});tick();assert.equal(world.entity('Map loading fill').components.RectTransform.size_delta[0],175);
+context.onContentImport({status:'progress',step:3,steps:8,message:'转换装饰物',completed:100,total:100});tick();assert.equal(world.entity('Map loading fill').components.RectTransform.size_delta[0],world.entity('Map loading back').components.RectTransform.size_delta[0]/2);
+context.onContentImport({status:'progress',step:3,steps:0,message:'invalid'});tick();assert.equal(world.entity('Map loading fill').components.RectTransform.size_delta[0],world.entity('Map loading back').components.RectTransform.size_delta[0]/2);
 click('mapStart box');assert.equal(engine.scene.path,'Assets/Scenes/Main.mscene');click('mapOpen box');assert.equal(cancels,1);
 context.onContentImport({status:'complete',content});tick();assert.equal(context.FrostMapPackages.length,1,'cancelled late completion must not load');
 tick({},.1);assert.equal(world.visible('Map loading back'),false);

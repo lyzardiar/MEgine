@@ -176,7 +176,7 @@
               },
               "Text": {
                 "text": "编辑名称 / 任务公告",
-                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
                 "font_size": 26,
                 "color": [
                   0.81,
@@ -224,7 +224,7 @@
               },
               "Text": {
                 "text": "点击输入框，使用键盘或输入法编辑；点击保存应用到地图。",
-                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
                 "font_size": 17,
                 "color": [
                   0.48,
@@ -471,7 +471,7 @@
                   },
                   "Text": {
                     "text": "清空",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 16,
                     "color": [
                       0.84,
@@ -635,7 +635,7 @@
                   },
                   "Text": {
                     "text": "保存",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 16,
                     "color": [
                       0.84,
@@ -799,7 +799,7 @@
                   },
                   "Text": {
                     "text": "取消",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 16,
                     "color": [
                       0.84,

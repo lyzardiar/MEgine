@@ -126,34 +126,34 @@
                 ],
                 "anchored_position": [
                   0,
-                  -20
+                  0
                 ],
                 "size_delta": [
-                  394,
-                  406
+                  345.6,
+                  460.8
                 ]
               },
               "Image": {
-                "sprite": "Assets/Art/hud-human-frame.png",
-                "image_type": "Sliced",
-                "border": [
-                  350,
-                  350,
-                  350,
-                  350
-                ],
-                "source_size": [
-                  1254,
-                  1254
-                ],
-                "pixels_per_unit_multiplier": 8,
+                "sprite": "Assets/WarcraftUI/Textures/EscPanel-Normal-346x461.png",
                 "color": [
                   1,
                   1,
                   1,
                   1
                 ],
-                "raycast_target": false
+                "raycast_target": false,
+                "image_type": "Sliced",
+                "border": [
+                  58,
+                  58,
+                  58,
+                  58
+                ],
+                "source_size": [
+                  346,
+                  461
+                ],
+                "pixels_per_unit_multiplier": 1
               }
             },
             "children": []
@@ -186,15 +186,6 @@
                   326,
                   338
                 ]
-              },
-              "Image": {
-                "color": [
-                  0.024,
-                  0.034,
-                  0.044,
-                  0.98
-                ],
-                "raycast_target": false
               }
             },
             "children": []
@@ -221,17 +212,17 @@
                 ],
                 "anchored_position": [
                   0,
-                  -172
+                  -181
                 ],
                 "size_delta": [
-                  330,
-                  42
+                  300,
+                  28
                 ]
               },
               "Text": {
                 "text": "游戏菜单",
-                "font": "Assets/Fonts/NotoSansSC.ttf",
-                "font_size": 28,
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
+                "font_size": 21,
                 "color": [
                   0.81,
                   0.65,
@@ -302,11 +293,11 @@
                 ],
                 "anchored_position": [
                   0,
-                  -102
+                  173.4
                 ],
                 "size_delta": [
-                  298,
-                  48
+                  273.6,
+                  42
                 ]
               }
             },
@@ -336,18 +327,9 @@
                       0
                     ],
                     "size_delta": [
-                      2,
-                      2
+                      0,
+                      0
                     ]
-                  },
-                  "Image": {
-                    "color": [
-                      0.3,
-                      0.24,
-                      0.13,
-                      1
-                    ],
-                    "raycast_target": false
                   }
                 },
                 "children": []
@@ -382,14 +364,26 @@
                     ]
                   },
                   "Image": {
-                    "material": "Assets/Materials/Panel.mmat",
+                    "sprite": "Assets/WarcraftUI/Textures/EscButton-Normal-256x64.png",
                     "color": [
-                      0.2,
-                      0.17,
-                      0.11,
+                      1,
+                      1,
+                      1,
                       1
                     ],
-                    "raycast_target": false
+                    "raycast_target": false,
+                    "image_type": "Sliced",
+                    "border": [
+                      15,
+                      15,
+                      15,
+                      15
+                    ],
+                    "source_size": [
+                      256,
+                      64
+                    ],
+                    "pixels_per_unit_multiplier": 1
                   }
                 },
                 "children": []
@@ -419,25 +413,38 @@
                       0
                     ],
                     "size_delta": [
-                      -30,
+                      -10,
                       0
                     ]
                   },
                   "Text": {
-                    "text": "返回游戏 (Esc)",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
-                    "font_size": 16,
+                    "text": "回到游戏(R)",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
+                    "font_size": 15.6,
                     "color": [
-                      0.84,
-                      0.9,
-                      0.91,
+                      0.99,
+                      0.827,
+                      0.0705,
                       1
                     ],
-                    "alignment": "Left",
+                    "alignment": "Center",
                     "vertical_align": "Middle",
                     "horizontal_overflow": "Overflow",
                     "vertical_overflow": "Overflow",
                     "raycast_target": false
+                  },
+                  "Shadow": {
+                    "effect_color": [
+                      0,
+                      0,
+                      0,
+                      0.9
+                    ],
+                    "effect_distance": [
+                      1.2,
+                      1.2
+                    ],
+                    "use_graphic_alpha": true
                   }
                 },
                 "children": []
@@ -466,11 +473,11 @@
                 ],
                 "anchored_position": [
                   0,
-                  -37
+                  -84.6
                 ],
                 "size_delta": [
-                  298,
-                  48
+                  273.6,
+                  42
                 ]
               }
             },
@@ -500,18 +507,9 @@
                       0
                     ],
                     "size_delta": [
-                      2,
-                      2
+                      0,
+                      0
                     ]
-                  },
-                  "Image": {
-                    "color": [
-                      0.3,
-                      0.24,
-                      0.13,
-                      1
-                    ],
-                    "raycast_target": false
                   }
                 },
                 "children": []
@@ -546,14 +544,26 @@
                     ]
                   },
                   "Image": {
-                    "material": "Assets/Materials/Panel.mmat",
+                    "sprite": "Assets/WarcraftUI/Textures/EscButton-Normal-256x64.png",
                     "color": [
-                      0.2,
-                      0.17,
-                      0.11,
+                      1,
+                      1,
+                      1,
                       1
                     ],
-                    "raycast_target": false
+                    "raycast_target": false,
+                    "image_type": "Sliced",
+                    "border": [
+                      15,
+                      15,
+                      15,
+                      15
+                    ],
+                    "source_size": [
+                      256,
+                      64
+                    ],
+                    "pixels_per_unit_multiplier": 1
                   }
                 },
                 "children": []
@@ -583,25 +593,38 @@
                       0
                     ],
                     "size_delta": [
-                      -30,
+                      -10,
                       0
                     ]
                   },
                   "Text": {
-                    "text": "保存游戏",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
-                    "font_size": 16,
+                    "text": "保存游戏(S)",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
+                    "font_size": 15.6,
                     "color": [
-                      0.84,
-                      0.9,
-                      0.91,
+                      0.99,
+                      0.827,
+                      0.0705,
                       1
                     ],
-                    "alignment": "Left",
+                    "alignment": "Center",
                     "vertical_align": "Middle",
                     "horizontal_overflow": "Overflow",
                     "vertical_overflow": "Overflow",
                     "raycast_target": false
+                  },
+                  "Shadow": {
+                    "effect_color": [
+                      0,
+                      0,
+                      0,
+                      0.9
+                    ],
+                    "effect_distance": [
+                      1.2,
+                      1.2
+                    ],
+                    "use_graphic_alpha": true
                   }
                 },
                 "children": []
@@ -630,11 +653,11 @@
                 ],
                 "anchored_position": [
                   0,
-                  28
+                  -40.2
                 ],
                 "size_delta": [
-                  298,
-                  48
+                  273.6,
+                  42
                 ]
               }
             },
@@ -664,18 +687,9 @@
                       0
                     ],
                     "size_delta": [
-                      2,
-                      2
+                      0,
+                      0
                     ]
-                  },
-                  "Image": {
-                    "color": [
-                      0.3,
-                      0.24,
-                      0.13,
-                      1
-                    ],
-                    "raycast_target": false
                   }
                 },
                 "children": []
@@ -710,14 +724,26 @@
                     ]
                   },
                   "Image": {
-                    "material": "Assets/Materials/Panel.mmat",
+                    "sprite": "Assets/WarcraftUI/Textures/EscButton-Normal-256x64.png",
                     "color": [
-                      0.2,
-                      0.17,
-                      0.11,
+                      1,
+                      1,
+                      1,
                       1
                     ],
-                    "raycast_target": false
+                    "raycast_target": false,
+                    "image_type": "Sliced",
+                    "border": [
+                      15,
+                      15,
+                      15,
+                      15
+                    ],
+                    "source_size": [
+                      256,
+                      64
+                    ],
+                    "pixels_per_unit_multiplier": 1
                   }
                 },
                 "children": []
@@ -747,25 +773,38 @@
                       0
                     ],
                     "size_delta": [
-                      -30,
+                      -10,
                       0
                     ]
                   },
                   "Text": {
-                    "text": "载入游戏",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
-                    "font_size": 16,
+                    "text": "装载游戏(L)",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
+                    "font_size": 15.6,
                     "color": [
-                      0.84,
-                      0.9,
-                      0.91,
+                      0.99,
+                      0.827,
+                      0.0705,
                       1
                     ],
-                    "alignment": "Left",
+                    "alignment": "Center",
                     "vertical_align": "Middle",
                     "horizontal_overflow": "Overflow",
                     "vertical_overflow": "Overflow",
                     "raycast_target": false
+                  },
+                  "Shadow": {
+                    "effect_color": [
+                      0,
+                      0,
+                      0,
+                      0.9
+                    ],
+                    "effect_distance": [
+                      1.2,
+                      1.2
+                    ],
+                    "use_graphic_alpha": true
                   }
                 },
                 "children": []
@@ -797,8 +836,8 @@
                   93
                 ],
                 "size_delta": [
-                  298,
-                  48
+                  273.6,
+                  42
                 ]
               }
             },
@@ -828,18 +867,9 @@
                       0
                     ],
                     "size_delta": [
-                      2,
-                      2
+                      0,
+                      0
                     ]
-                  },
-                  "Image": {
-                    "color": [
-                      0.3,
-                      0.24,
-                      0.13,
-                      1
-                    ],
-                    "raycast_target": false
                   }
                 },
                 "children": []
@@ -874,14 +904,26 @@
                     ]
                   },
                   "Image": {
-                    "material": "Assets/Materials/Panel.mmat",
+                    "sprite": "Assets/WarcraftUI/Textures/EscButton-Normal-256x64.png",
                     "color": [
-                      0.2,
-                      0.17,
-                      0.11,
+                      1,
+                      1,
+                      1,
                       1
                     ],
-                    "raycast_target": false
+                    "raycast_target": false,
+                    "image_type": "Sliced",
+                    "border": [
+                      15,
+                      15,
+                      15,
+                      15
+                    ],
+                    "source_size": [
+                      256,
+                      64
+                    ],
+                    "pixels_per_unit_multiplier": 1
                   }
                 },
                 "children": []
@@ -911,25 +953,38 @@
                       0
                     ],
                     "size_delta": [
-                      -30,
+                      -10,
                       0
                     ]
                   },
                   "Text": {
-                    "text": "结束游戏 (X)",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
-                    "font_size": 16,
+                    "text": "结束游戏(E)",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
+                    "font_size": 15.6,
                     "color": [
-                      0.84,
-                      0.9,
-                      0.91,
+                      0.99,
+                      0.827,
+                      0.0705,
                       1
                     ],
-                    "alignment": "Left",
+                    "alignment": "Center",
                     "vertical_align": "Middle",
                     "horizontal_overflow": "Overflow",
                     "vertical_overflow": "Overflow",
                     "raycast_target": false
+                  },
+                  "Shadow": {
+                    "effect_color": [
+                      0,
+                      0,
+                      0,
+                      0.9
+                    ],
+                    "effect_distance": [
+                      1.2,
+                      1.2
+                    ],
+                    "use_graphic_alpha": true
                   }
                 },
                 "children": []
@@ -991,16 +1046,16 @@
                 ],
                 "anchored_position": [
                   0,
-                  157
+                  248
                 ],
                 "size_delta": [
-                  340,
+                  350,
                   24
                 ]
               },
               "Text": {
                 "text": "单人游戏暂停 · 联机对局继续运行",
-                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
                 "font_size": 12,
                 "color": [
                   0.48,
@@ -1013,6 +1068,726 @@
                 "horizontal_overflow": "Overflow",
                 "vertical_overflow": "Overflow",
                 "raycast_target": false
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "232afb2f-82c5-5592-affc-2e99f71df182",
+        "name": "UI Control pauseToggle",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              -129
+            ],
+            "size_delta": [
+              273.6,
+              42
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "3e9f1273-3376-5488-ab0f-e395d770e26c",
+            "name": "pauseToggle border",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "cba9eca6-db6f-5842-a9b9-34a23a8ec273",
+            "name": "pauseToggle box",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              },
+              "Image": {
+                "sprite": "Assets/WarcraftUI/Textures/EscButton-Normal-256x64.png",
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false,
+                "image_type": "Sliced",
+                "border": [
+                  15,
+                  15,
+                  15,
+                  15
+                ],
+                "source_size": [
+                  256,
+                  64
+                ],
+                "pixels_per_unit_multiplier": 1
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "b2edc88b-a6e0-5e9a-a003-2df54d4996b9",
+            "name": "pauseToggle label",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  -10,
+                  0
+                ]
+              },
+              "Text": {
+                "text": "暂停游戏(M)",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
+                "font_size": 15.6,
+                "color": [
+                  0.99,
+                  0.827,
+                  0.0705,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              },
+              "Shadow": {
+                "effect_color": [
+                  0,
+                  0,
+                  0,
+                  0.9
+                ],
+                "effect_distance": [
+                  1.2,
+                  1.2
+                ],
+                "use_graphic_alpha": true
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "8f3354fe-724e-57b3-acc0-8aaf219562d5",
+        "name": "UI Control pauseOptions",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              4.2
+            ],
+            "size_delta": [
+              273.6,
+              42
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "176fb88a-8f22-5204-a631-0837561952b9",
+            "name": "pauseOptions border",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "fdf576f4-9e87-541a-a581-6010d16e5e21",
+            "name": "pauseOptions box",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              },
+              "Image": {
+                "sprite": "Assets/WarcraftUI/Textures/EscButton-Normal-256x64.png",
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false,
+                "image_type": "Sliced",
+                "border": [
+                  15,
+                  15,
+                  15,
+                  15
+                ],
+                "source_size": [
+                  256,
+                  64
+                ],
+                "pixels_per_unit_multiplier": 1
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "6415a144-03fb-5e2a-a905-71caeeb4da04",
+            "name": "pauseOptions label",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  -10,
+                  0
+                ]
+              },
+              "Text": {
+                "text": "选项(O)",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
+                "font_size": 15.6,
+                "color": [
+                  0.99,
+                  0.827,
+                  0.0705,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              },
+              "Shadow": {
+                "effect_color": [
+                  0,
+                  0,
+                  0,
+                  0.9
+                ],
+                "effect_distance": [
+                  1.2,
+                  1.2
+                ],
+                "use_graphic_alpha": true
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "7f79f68f-31e8-5c22-a4ef-300ca4a1ed3d",
+        "name": "UI Control pauseHelp",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -70.8,
+              48.6
+            ],
+            "size_delta": [
+              132,
+              42
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "45eb94af-3a6e-5003-ad40-806e655b6ee8",
+            "name": "pauseHelp border",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "e61963ca-ad1f-54e4-ae10-462603e22447",
+            "name": "pauseHelp box",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              },
+              "Image": {
+                "sprite": "Assets/WarcraftUI/Textures/EscButton-Normal-256x64.png",
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false,
+                "image_type": "Sliced",
+                "border": [
+                  15,
+                  15,
+                  15,
+                  15
+                ],
+                "source_size": [
+                  256,
+                  64
+                ],
+                "pixels_per_unit_multiplier": 1
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "0aaade4b-328c-5589-ac95-066c1ed7705c",
+            "name": "pauseHelp label",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  -10,
+                  0
+                ]
+              },
+              "Text": {
+                "text": "帮助(H)",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
+                "font_size": 15.6,
+                "color": [
+                  0.99,
+                  0.827,
+                  0.0705,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              },
+              "Shadow": {
+                "effect_color": [
+                  0,
+                  0,
+                  0,
+                  0.9
+                ],
+                "effect_distance": [
+                  1.2,
+                  1.2
+                ],
+                "use_graphic_alpha": true
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "f0f0f481-0801-5c09-afa8-44d3418abde5",
+        "name": "UI Control pauseTips",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              70.8,
+              48.6
+            ],
+            "size_delta": [
+              132,
+              42
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "8d40167f-3fa0-5096-a025-6ed7ce44670c",
+            "name": "pauseTips border",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "1244737c-35db-5727-a118-fe99bb539dba",
+            "name": "pauseTips box",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              },
+              "Image": {
+                "sprite": "Assets/WarcraftUI/Textures/EscButton-Normal-256x64.png",
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false,
+                "image_type": "Sliced",
+                "border": [
+                  15,
+                  15,
+                  15,
+                  15
+                ],
+                "source_size": [
+                  256,
+                  64
+                ],
+                "pixels_per_unit_multiplier": 1
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "ccab29af-0fec-5b32-a0c5-3e80e8ed4397",
+            "name": "pauseTips label",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  -10,
+                  0
+                ]
+              },
+              "Text": {
+                "text": "提示(T)",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
+                "font_size": 15.6,
+                "color": [
+                  0.99,
+                  0.827,
+                  0.0705,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              },
+              "Shadow": {
+                "effect_color": [
+                  0,
+                  0,
+                  0,
+                  0.9
+                ],
+                "effect_distance": [
+                  1.2,
+                  1.2
+                ],
+                "use_graphic_alpha": true
               }
             },
             "children": []

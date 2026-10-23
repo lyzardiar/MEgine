@@ -1,0 +1,1555 @@
+{
+  "author": "MiYu",
+  "game": "E:\\Program Files (x86)\\dzclient\\Game\\Warcraft III Frozen Throne",
+  "precedence": [
+    "War3Patch.mpq",
+    "War3xLocal.mpq",
+    "War3x.mpq",
+    "war3.mpq"
+  ],
+  "gameDllSha256": "e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a",
+  "generator": "scripts/import-frost-warcraft-ui.py",
+  "generatorSha256": "891af939f50757fb6e38a23bfe14bc4d01c53a863d8c006a2c4c9788044338fc",
+  "sourceCoordinateSize": [
+    0.8,
+    0.6
+  ],
+  "font": {
+    "path": "Assets/Fonts/Warcraft-Master.ttf",
+    "source": "Fonts\\dfst-m3u.ttf"
+  },
+  "textures": {
+    "GlueScreen-Button1-Border": {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-Border.png",
+      "source": "UI/Widgets/Glues/GlueScreen-Button1-Border.blp",
+      "size": [
+        512,
+        128
+      ]
+    },
+    "GlueScreen-Button1-SmallBorder": {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-SmallBorder.png",
+      "source": "UI/Widgets/Glues/GlueScreen-Button1-SmallBorder.blp",
+      "size": [
+        512,
+        128
+      ]
+    },
+    "GlueScreen-Button1-BackdropBackground": {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBackground.png",
+      "source": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground.blp",
+      "size": [
+        32,
+        32
+      ]
+    },
+    "GlueScreen-Button1-BackdropBackground-Disabled": {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBackground-Disabled.png",
+      "source": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground-Disabled.blp",
+      "size": [
+        32,
+        32
+      ]
+    },
+    "GlueScreen-Button1-BackdropBorder": {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder.png",
+      "source": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder.blp",
+      "size": [
+        256,
+        32
+      ]
+    },
+    "GlueScreen-Button1-BackdropBorder-Down": {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder-Down.png",
+      "source": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Down.blp",
+      "size": [
+        256,
+        32
+      ]
+    },
+    "GlueScreen-Button1-BackdropBorder-Disabled": {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder-Disabled.png",
+      "source": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Disabled.blp",
+      "size": [
+        256,
+        32
+      ]
+    },
+    "GlueScreen-Button1-BackdropBorder-DisabledDown": {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder-DisabledDown.png",
+      "source": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-DisabledDown.blp",
+      "size": [
+        256,
+        32
+      ]
+    },
+    "GlueScreen-Button-KeyboardHighlight": {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button-KeyboardHighlight.png",
+      "source": "UI/Widgets/Glues/GlueScreen-Button-KeyboardHighlight.blp",
+      "size": [
+        128,
+        64
+      ]
+    },
+    "ButtonMouseHighlight": {
+      "path": "Assets/WarcraftUI/Textures/ButtonMouseHighlight.png",
+      "source": "UI/Widgets/BattleNet/bnet-button01-highlight-mouse.blp",
+      "size": [
+        128,
+        64
+      ]
+    },
+    "Human-EscMenuBackground": {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuBackground.png",
+      "source": "UI/Widgets/EscMenu/Human/human-options-menu-background.blp",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "Human-EscMenuBorder": {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuBorder.png",
+      "source": "UI/Widgets/EscMenu/Human/human-options-menu-border.blp",
+      "size": [
+        512,
+        64
+      ]
+    },
+    "Human-EscMenuButtonMouseOverHighlight": {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonMouseOverHighlight.png",
+      "source": "UI/Widgets/EscMenu/Human/human-options-button-highlight.blp",
+      "size": [
+        256,
+        32
+      ]
+    },
+    "Human-EscMenuButtonBackground": {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonBackground.png",
+      "source": "UI/Widgets/EscMenu/Human/human-options-menu-background.blp",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "Human-EscMenuButtonBorder": {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonBorder.png",
+      "source": "UI/Widgets/EscMenu/Human/human-options-button-border-up.blp",
+      "size": [
+        128,
+        16
+      ]
+    },
+    "Human-EscMenuButtonPushedBackground": {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonPushedBackground.png",
+      "source": "UI/Widgets/EscMenu/Human/human-options-menu-background.blp",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "Human-EscMenuButtonPushedBorder": {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonPushedBorder.png",
+      "source": "UI/Widgets/EscMenu/Human/human-options-button-border-down.blp",
+      "size": [
+        128,
+        16
+      ]
+    },
+    "Human-EscMenuButtonDisabledBackground": {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledBackground.png",
+      "source": "UI/Widgets/EscMenu/Human/human-options-button-background-disabled.blp",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "Human-EscMenuButtonDisabledBorder": {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledBorder.png",
+      "source": "UI/Widgets/EscMenu/Human/human-options-button-border-up.blp",
+      "size": [
+        128,
+        16
+      ]
+    },
+    "Human-EscMenuButtonDisabledPushedBackground": {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledPushedBackground.png",
+      "source": "UI/Widgets/EscMenu/Human/human-options-button-background-disabled.blp",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "Human-EscMenuButtonDisabledPushedBorder": {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledPushedBorder.png",
+      "source": "UI/Widgets/EscMenu/Human/human-options-button-border-down.blp",
+      "size": [
+        128,
+        16
+      ]
+    }
+  },
+  "sources": [
+    {
+      "path": "UI/FrameDef/Glue/MainMenu.fdf",
+      "archive": "War3xLocal.mpq",
+      "sha256": "aad3950a1e7195b5a8f94e010b7fe6f47aa896707bb55461002bd796c12b0f65",
+      "bytes": 20075,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/MainMenu.fdf"
+    },
+    {
+      "path": "UI/FrameDef/Glue/StandardTemplates.fdf",
+      "archive": "War3xLocal.mpq",
+      "sha256": "5abcba7ab502e5bb5f703eb6e6428aa557f675a4e626049b56fbf256c0c3d73a",
+      "bytes": 42243,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/StandardTemplates.fdf"
+    },
+    {
+      "path": "UI/FrameDef/Glue/SinglePlayerMenu.fdf",
+      "archive": "War3xLocal.mpq",
+      "sha256": "d8bb12302f980782034c39416c06b262c64fa304e9282ff13b5b30337cf4480d",
+      "bytes": 10184,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/SinglePlayerMenu.fdf"
+    },
+    {
+      "path": "UI/FrameDef/Glue/Skirmish.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "5065a84925aa43b6d93a4a9de17b6799d15083a48c28a6f2d808e7522c5f3419",
+      "bytes": 5077,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/Skirmish.fdf"
+    },
+    {
+      "path": "UI/FrameDef/Glue/OptionsMenu.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "9fbd1b7013d0d33b22989cdf89034b7361bdae08dcffb584a062cefd9d27fe85",
+      "bytes": 27371,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf"
+    },
+    {
+      "path": "UI/FrameDef/Glue/DialogWar3.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "b036b6b6ec2e02bafc0ce0a1ca6c128234abb269813ff016d3647c27b96ef452",
+      "bytes": 3166,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/DialogWar3.fdf"
+    },
+    {
+      "path": "UI/FrameDef/Glue/MapInfoPane.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "d05e98bc50ab3bd748e2bb41bd2b351131bed1556501c82fecab149c587e962b",
+      "bytes": 4448,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/MapInfoPane.fdf"
+    },
+    {
+      "path": "UI/FrameDef/Glue/MapListBox.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "57115224ac342277fcc3254b2d37bf943c9a8497dd786bbbc8a04340e975f504",
+      "bytes": 604,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/MapListBox.fdf"
+    },
+    {
+      "path": "UI/FrameDef/Glue/PlayerSlot.fdf",
+      "archive": "War3xLocal.mpq",
+      "sha256": "b11458c7a831873ea85f7713e10886164ef068ef30d0e60b68cc203b05348be3",
+      "bytes": 8593,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/PlayerSlot.fdf"
+    },
+    {
+      "path": "UI/FrameDef/UI/EscMenuMainPanel.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "867070f699d3612e14d60b8dcfafccf3fdc9811b07f60e4223e96f27d44f6754",
+      "bytes": 12135,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/UI/EscMenuMainPanel.fdf"
+    },
+    {
+      "path": "UI/FrameDef/UI/EscMenuTemplates.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "89467e8c1905e0894e381195225c5b0d7c7258f900d7018582694ec8193a4ea7",
+      "bytes": 16134,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/UI/EscMenuTemplates.fdf"
+    },
+    {
+      "path": "UI/FrameDef/UI/EscMenuOptionsPanel.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "50800656634111843bf0d1aa4c59c7f296914c8279a592ff8367b6a9b0812659",
+      "bytes": 28826,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/UI/EscMenuOptionsPanel.fdf"
+    },
+    {
+      "path": "UI/FrameDef/UI/ConsoleUI.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "76a3208eef2cbfa8e77f3926c8df035b3c9e7338d30271ef6c24627ed09cfcdd",
+      "bytes": 1963,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/UI/ConsoleUI.fdf"
+    },
+    {
+      "path": "UI/FrameDef/UI/ResourceBar.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "88a62703a9a8a0239c8faed95ac471f2aa924d1b1424432960f4eb7305d4ad2e",
+      "bytes": 1584,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/UI/ResourceBar.fdf"
+    },
+    {
+      "path": "UI/FrameDef/UI/UpperButtonBar.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "f185b4f4dc4d7eca1a732451c6fd85ced15fcfb32dd6bb700ad43adc765d3e1c",
+      "bytes": 2916,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/UI/UpperButtonBar.fdf"
+    },
+    {
+      "path": "UI/FrameDef/UI/InfoPanelUnitDetail.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "ef7502df3d60cdd97d159cfe873d1a7a1c21480c893236ae9a8a3c8c5de897c3",
+      "bytes": 5618,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/UI/InfoPanelUnitDetail.fdf"
+    },
+    {
+      "path": "UI/FrameDef/UI/InfoPanelTemplates.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "18faeb19d0b648775f78261c4ee37dda4e2e43eee19af4efae6c3edbd5075208",
+      "bytes": 1930,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/UI/InfoPanelTemplates.fdf"
+    },
+    {
+      "path": "UI/war3skins.txt",
+      "archive": "War3Patch.mpq",
+      "sha256": "53cedda87d59c6d27ad2d30680d37faa410d37e9917c00b21d473cce9eed70c7",
+      "bytes": 43953,
+      "preserved": "SourceAssets/WarcraftUI/UI/war3skins.txt"
+    },
+    {
+      "path": "UI/WorldEditStrings.txt",
+      "archive": "War3Patch.mpq",
+      "sha256": "434929fc86e4f519afa9dcd028d05b86b75199c76d7ed8d103b3a573e898c533",
+      "bytes": 378235,
+      "preserved": "SourceAssets/WarcraftUI/UI/WorldEditStrings.txt"
+    },
+    {
+      "path": "UI/FrameDef/GlobalStrings.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "8f15e34c8b05a915daa4c3f55c5e00b5eaae6f5a792992a88056ab09bd9552d7",
+      "bytes": 69972,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/GlobalStrings.fdf"
+    },
+    {
+      "path": "Fonts/dfst-m3u.ttf",
+      "archive": "war3.mpq",
+      "sha256": "da03874db48b05256fe961f56783f388bd37617eaf1791981fcfb3bbcd73aafb",
+      "bytes": 6221576,
+      "preserved": "SourceAssets/WarcraftUI/Fonts/dfst-m3u.ttf"
+    },
+    {
+      "path": "UI/Widgets/Glues/GlueScreen-Button1-Border.blp",
+      "archive": "war3.mpq",
+      "sha256": "5fb1d807e94e84dfdbbbab232980e7ef120451d09dc6e72b09f2ce2eeccf228a",
+      "bytes": 175946,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-Border.blp"
+    },
+    {
+      "path": "UI/Widgets/Glues/GlueScreen-Button1-SmallBorder.blp",
+      "archive": "war3.mpq",
+      "sha256": "a59a29081fd15fa5a55d6939a8e90460266f59bbb4f075936e1e612f863abcf1",
+      "bytes": 175946,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-SmallBorder.blp"
+    },
+    {
+      "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground.blp",
+      "archive": "war3.mpq",
+      "sha256": "049d834cad049fc7a72297f6b6bd06d5e81769c45818fa0ba8b115441c51eb82",
+      "bytes": 2545,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground.blp"
+    },
+    {
+      "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground-Disabled.blp",
+      "archive": "war3.mpq",
+      "sha256": "7e51b5e5e306141d84517cd9589d2e8b3035277cef3fe5f83c5108d64b1e9aea",
+      "bytes": 2545,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground-Disabled.blp"
+    },
+    {
+      "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder.blp",
+      "archive": "war3.mpq",
+      "sha256": "e3e3fc30fcc8badf73b6cc9a905e3bdcef6037243c372e908c1846c06aa59fae",
+      "bytes": 23034,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder.blp"
+    },
+    {
+      "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Down.blp",
+      "archive": "war3.mpq",
+      "sha256": "69414402aac62b910b060ba8c749ad6b368f2fa36288412b3b1f41b38815faaa",
+      "bytes": 23034,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Down.blp"
+    },
+    {
+      "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Disabled.blp",
+      "archive": "war3.mpq",
+      "sha256": "e668f81eddb27319ee7bdb8aceb14008d94790bc4e43f5987b6fa241c73f456f",
+      "bytes": 23034,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Disabled.blp"
+    },
+    {
+      "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-DisabledDown.blp",
+      "archive": "war3.mpq",
+      "sha256": "d5bc05e8b44c39267222b3e619d1770d02f2c9cd23c086c73ab5eda75ada6aa1",
+      "bytes": 23034,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-DisabledDown.blp"
+    },
+    {
+      "path": "UI/Widgets/Glues/GlueScreen-Button-KeyboardHighlight.blp",
+      "archive": "war3.mpq",
+      "sha256": "85cdd6114df503558dec7da5e2bf5d1eab7f21c5724c47c2d16abf2cf9c28edc",
+      "bytes": 12103,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button-KeyboardHighlight.blp"
+    },
+    {
+      "path": "UI/Widgets/BattleNet/bnet-button01-highlight-mouse.blp",
+      "archive": "war3.mpq",
+      "sha256": "68f2cca778680e6b6bc157f488fbe5147c5de748466cefba23f57af373162ad8",
+      "bytes": 12103,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/BattleNet/bnet-button01-highlight-mouse.blp"
+    },
+    {
+      "path": "UI/Widgets/EscMenu/Human/human-options-menu-background.blp",
+      "archive": "war3.mpq",
+      "sha256": "2c6e5d612961a491d9477fa6961877a75450186fd07ba4256bfe5df613896e09",
+      "bytes": 175942,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-menu-background.blp"
+    },
+    {
+      "path": "UI/Widgets/EscMenu/Human/human-options-menu-border.blp",
+      "archive": "war3.mpq",
+      "sha256": "3380e7d8f4008212a4578ac5738e89e296273f847777b65a1f25d32701087e23",
+      "bytes": 88570,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-menu-border.blp"
+    },
+    {
+      "path": "UI/Widgets/EscMenu/Human/human-options-button-highlight.blp",
+      "archive": "war3.mpq",
+      "sha256": "7a3d1cc16d8d75d2b99097f41983a0b2feabf9e0a9db77fa758d48cd312eb9b7",
+      "bytes": 12107,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-button-highlight.blp"
+    },
+    {
+      "path": "UI/Widgets/EscMenu/Human/human-options-button-border-up.blp",
+      "archive": "war3.mpq",
+      "sha256": "bebcc9063fb7153ca63ff8116e86e405835da36370c34d017632e3e28b37ed86",
+      "bytes": 6650,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-button-border-up.blp"
+    },
+    {
+      "path": "UI/Widgets/EscMenu/Human/human-options-button-border-down.blp",
+      "archive": "war3.mpq",
+      "sha256": "cd3c709c2147602cb39b439a38cc18339a2cfd5c75c7de43b38eabf8446ccc73",
+      "bytes": 6650,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-button-border-down.blp"
+    },
+    {
+      "path": "UI/Widgets/EscMenu/Human/human-options-button-background-disabled.blp",
+      "archive": "war3.mpq",
+      "sha256": "e9fc540fa2fe474e121307b1631ad6df6873001f5a96eeb860e22697923d41b9",
+      "bytes": 44870,
+      "preserved": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-button-background-disabled.blp"
+    }
+  ],
+  "buttonBackdrops": {
+    "definition": "UI/FrameDef/Glue/StandardTemplates.fdf",
+    "referenceCanvas": [
+      960,
+      720
+    ],
+    "standardSize": [
+      0.179,
+      0.031
+    ],
+    "cornerSize": 0.016,
+    "backgroundSize": 0.032,
+    "backgroundInsets": [
+      0.004,
+      0.004,
+      0.004,
+      0.004
+    ],
+    "rasterCorner": 19,
+    "rasterTile": 38,
+    "rasterInset": 5,
+    "edgeSlices": [
+      {
+        "name": "L",
+        "rect": [
+          0,
+          0,
+          32,
+          32
+        ],
+        "clockwiseDegrees": 0
+      },
+      {
+        "name": "R",
+        "rect": [
+          32,
+          0,
+          32,
+          32
+        ],
+        "clockwiseDegrees": 0
+      },
+      {
+        "name": "T",
+        "rect": [
+          64,
+          0,
+          32,
+          32
+        ],
+        "clockwiseDegrees": 90
+      },
+      {
+        "name": "B",
+        "rect": [
+          96,
+          0,
+          32,
+          32
+        ],
+        "clockwiseDegrees": 90
+      },
+      {
+        "name": "UL",
+        "rect": [
+          128,
+          0,
+          32,
+          32
+        ],
+        "clockwiseDegrees": 0
+      },
+      {
+        "name": "UR",
+        "rect": [
+          160,
+          0,
+          32,
+          32
+        ],
+        "clockwiseDegrees": 0
+      },
+      {
+        "name": "BL",
+        "rect": [
+          192,
+          0,
+          32,
+          32
+        ],
+        "clockwiseDegrees": 0
+      },
+      {
+        "name": "BR",
+        "rect": [
+          224,
+          0,
+          32,
+          32
+        ],
+        "clockwiseDegrees": 0
+      }
+    ],
+    "images": {
+      "StandardButton-Normal-215x37": {
+        "path": "Assets/WarcraftUI/Textures/StandardButton-Normal-215x37.png",
+        "size": [
+          215,
+          37
+        ],
+        "sha256": "502a3f9b4acc0fa260efe3936db3f3830eab057b8005bc86c46acf31159970dc",
+        "rasterCorner": 19,
+        "rasterTile": 38,
+        "rasterInset": 5,
+        "sources": [
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground.blp",
+            "sha256": "049d834cad049fc7a72297f6b6bd06d5e81769c45818fa0ba8b115441c51eb82"
+          },
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder.blp",
+            "sha256": "e3e3fc30fcc8badf73b6cc9a905e3bdcef6037243c372e908c1846c06aa59fae"
+          }
+        ],
+        "state": "Normal"
+      },
+      "StandardButton-Down-215x37": {
+        "path": "Assets/WarcraftUI/Textures/StandardButton-Down-215x37.png",
+        "size": [
+          215,
+          37
+        ],
+        "sha256": "0c3a3e034fa6579aa759329d20b22c6e3e56167a8ac5b06b76281bf1d87b005f",
+        "rasterCorner": 19,
+        "rasterTile": 38,
+        "rasterInset": 5,
+        "sources": [
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground.blp",
+            "sha256": "049d834cad049fc7a72297f6b6bd06d5e81769c45818fa0ba8b115441c51eb82"
+          },
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Down.blp",
+            "sha256": "69414402aac62b910b060ba8c749ad6b368f2fa36288412b3b1f41b38815faaa"
+          }
+        ],
+        "state": "Down"
+      },
+      "StandardButton-Disabled-215x37": {
+        "path": "Assets/WarcraftUI/Textures/StandardButton-Disabled-215x37.png",
+        "size": [
+          215,
+          37
+        ],
+        "sha256": "9cdf92c8fe1a977aa9f7969dafc713eac0c6985cb4cad1a356dab55de596f99d",
+        "rasterCorner": 19,
+        "rasterTile": 38,
+        "rasterInset": 5,
+        "sources": [
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground-Disabled.blp",
+            "sha256": "7e51b5e5e306141d84517cd9589d2e8b3035277cef3fe5f83c5108d64b1e9aea"
+          },
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Disabled.blp",
+            "sha256": "e668f81eddb27319ee7bdb8aceb14008d94790bc4e43f5987b6fa241c73f456f"
+          }
+        ],
+        "state": "Disabled"
+      },
+      "StandardButton-DisabledDown-215x37": {
+        "path": "Assets/WarcraftUI/Textures/StandardButton-DisabledDown-215x37.png",
+        "size": [
+          215,
+          37
+        ],
+        "sha256": "d23639f9deaabdbf640e91c4a77628899377c90c6270b7181ebfe4a7a49de095",
+        "rasterCorner": 19,
+        "rasterTile": 38,
+        "rasterInset": 5,
+        "sources": [
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground-Disabled.blp",
+            "sha256": "7e51b5e5e306141d84517cd9589d2e8b3035277cef3fe5f83c5108d64b1e9aea"
+          },
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-DisabledDown.blp",
+            "sha256": "d5bc05e8b44c39267222b3e619d1770d02f2c9cd23c086c73ab5eda75ada6aa1"
+          }
+        ],
+        "state": "DisabledDown"
+      },
+      "StandardButton-Normal-256x64": {
+        "path": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+        "size": [
+          256,
+          64
+        ],
+        "sha256": "9f5f83ed6ee945bd1e98edd9d9526be8f0ebd6cbdb43df77cfa6dd7401f7cd76",
+        "rasterCorner": 19,
+        "rasterTile": 38,
+        "rasterInset": 5,
+        "sources": [
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground.blp",
+            "sha256": "049d834cad049fc7a72297f6b6bd06d5e81769c45818fa0ba8b115441c51eb82"
+          },
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder.blp",
+            "sha256": "e3e3fc30fcc8badf73b6cc9a905e3bdcef6037243c372e908c1846c06aa59fae"
+          }
+        ],
+        "sprite": {
+          "border": [
+            19,
+            19,
+            19,
+            19
+          ],
+          "source_size": [
+            256,
+            64
+          ],
+          "pixels_per_unit": 1,
+          "image_type": "Sliced",
+          "centerBehavior": "Stretch; original FDF tiles the background and edges"
+        },
+        "state": "Normal"
+      },
+      "StandardButton-Down-256x64": {
+        "path": "Assets/WarcraftUI/Textures/StandardButton-Down-256x64.png",
+        "size": [
+          256,
+          64
+        ],
+        "sha256": "a576576ef07ade7f67da147234a2c653d7e9c4473c0880f24bc78b2ca4954d8b",
+        "rasterCorner": 19,
+        "rasterTile": 38,
+        "rasterInset": 5,
+        "sources": [
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground.blp",
+            "sha256": "049d834cad049fc7a72297f6b6bd06d5e81769c45818fa0ba8b115441c51eb82"
+          },
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Down.blp",
+            "sha256": "69414402aac62b910b060ba8c749ad6b368f2fa36288412b3b1f41b38815faaa"
+          }
+        ],
+        "sprite": {
+          "border": [
+            19,
+            19,
+            19,
+            19
+          ],
+          "source_size": [
+            256,
+            64
+          ],
+          "pixels_per_unit": 1,
+          "image_type": "Sliced",
+          "centerBehavior": "Stretch; original FDF tiles the background and edges"
+        },
+        "state": "Down"
+      },
+      "StandardButton-Disabled-256x64": {
+        "path": "Assets/WarcraftUI/Textures/StandardButton-Disabled-256x64.png",
+        "size": [
+          256,
+          64
+        ],
+        "sha256": "fdd9ffd4b03491c0c82fa63bb7ca022577e18b7e197f2f2ee1212a672edb9dbf",
+        "rasterCorner": 19,
+        "rasterTile": 38,
+        "rasterInset": 5,
+        "sources": [
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground-Disabled.blp",
+            "sha256": "7e51b5e5e306141d84517cd9589d2e8b3035277cef3fe5f83c5108d64b1e9aea"
+          },
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Disabled.blp",
+            "sha256": "e668f81eddb27319ee7bdb8aceb14008d94790bc4e43f5987b6fa241c73f456f"
+          }
+        ],
+        "sprite": {
+          "border": [
+            19,
+            19,
+            19,
+            19
+          ],
+          "source_size": [
+            256,
+            64
+          ],
+          "pixels_per_unit": 1,
+          "image_type": "Sliced",
+          "centerBehavior": "Stretch; original FDF tiles the background and edges"
+        },
+        "state": "Disabled"
+      },
+      "StandardButton-DisabledDown-256x64": {
+        "path": "Assets/WarcraftUI/Textures/StandardButton-DisabledDown-256x64.png",
+        "size": [
+          256,
+          64
+        ],
+        "sha256": "9be437351c8028cc2bad5692710d1f4122a1d693bbfafc69f45fae2758fba9ab",
+        "rasterCorner": 19,
+        "rasterTile": 38,
+        "rasterInset": 5,
+        "sources": [
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground-Disabled.blp",
+            "sha256": "7e51b5e5e306141d84517cd9589d2e8b3035277cef3fe5f83c5108d64b1e9aea"
+          },
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-DisabledDown.blp",
+            "sha256": "d5bc05e8b44c39267222b3e619d1770d02f2c9cd23c086c73ab5eda75ada6aa1"
+          }
+        ],
+        "sprite": {
+          "border": [
+            19,
+            19,
+            19,
+            19
+          ],
+          "source_size": [
+            256,
+            64
+          ],
+          "pixels_per_unit": 1,
+          "image_type": "Sliced",
+          "centerBehavior": "Stretch; original FDF tiles the background and edges"
+        },
+        "state": "DisabledDown"
+      }
+    }
+  },
+  "escBackdrops": {
+    "race": "Human",
+    "skinSource": "UI/war3skins.txt",
+    "resolvedSkin": {
+      "EscMenuBackground": "UI\\Widgets\\EscMenu\\Human\\human-options-menu-background.blp",
+      "EscMenuBorder": "UI\\Widgets\\EscMenu\\Human\\human-options-menu-border.blp",
+      "EscMenuButtonMouseOverHighlight": "UI\\Widgets\\EscMenu\\Human\\human-options-button-highlight.blp",
+      "EscMenuButtonBackground": "UI\\Widgets\\EscMenu\\Human\\human-options-menu-background.blp",
+      "EscMenuButtonBorder": "UI\\Widgets\\EscMenu\\Human\\human-options-button-border-up.blp",
+      "EscMenuButtonPushedBackground": "UI\\Widgets\\EscMenu\\Human\\human-options-menu-background.blp",
+      "EscMenuButtonPushedBorder": "UI\\Widgets\\EscMenu\\Human\\human-options-button-border-down.blp",
+      "EscMenuButtonDisabledBackground": "UI\\Widgets\\EscMenu\\Human\\human-options-button-background-disabled.blp",
+      "EscMenuButtonDisabledBorder": "UI\\Widgets\\EscMenu\\Human\\human-options-button-border-up.blp",
+      "EscMenuButtonDisabledPushedBackground": "UI\\Widgets\\EscMenu\\Human\\human-options-button-background-disabled.blp",
+      "EscMenuButtonDisabledPushedBorder": "UI\\Widgets\\EscMenu\\Human\\human-options-button-border-down.blp"
+    },
+    "buttonDefinition": "UI/FrameDef/UI/EscMenuTemplates.fdf",
+    "panelDefinition": "UI/FrameDef/UI/EscMenuMainPanel.fdf",
+    "referenceCanvas": [
+      960,
+      720
+    ],
+    "buttonCornerSize": 0.0125,
+    "panelCornerSize": 0.048,
+    "backgroundSize": 0.256,
+    "buttonBackgroundInsets": [
+      0.005,
+      0.005,
+      0.005,
+      0.005
+    ],
+    "panelBackgroundInsets": [
+      0.01,
+      0.01,
+      0.01,
+      0.01
+    ],
+    "images": {
+      "EscButton-Normal-256x64": {
+        "path": "Assets/WarcraftUI/Textures/EscButton-Normal-256x64.png",
+        "size": [
+          256,
+          64
+        ],
+        "sha256": "5fd3b1965b3ea407bb1f6e799b5c3fa62aa12bbec2d9007c36f988773ade842d",
+        "rasterCorner": 15,
+        "rasterTile": 307,
+        "rasterInset": 6,
+        "sources": [
+          {
+            "path": "UI/Widgets/EscMenu/Human/human-options-menu-background.blp",
+            "sha256": "2c6e5d612961a491d9477fa6961877a75450186fd07ba4256bfe5df613896e09"
+          },
+          {
+            "path": "UI/Widgets/EscMenu/Human/human-options-button-border-up.blp",
+            "sha256": "bebcc9063fb7153ca63ff8116e86e405835da36370c34d017632e3e28b37ed86"
+          }
+        ],
+        "sprite": {
+          "border": [
+            15,
+            15,
+            15,
+            15
+          ],
+          "source_size": [
+            256,
+            64
+          ],
+          "pixels_per_unit": 1,
+          "image_type": "Sliced",
+          "centerBehavior": "Stretch; original FDF tiles the background and edges"
+        },
+        "state": "Normal"
+      },
+      "EscButton-Down-256x64": {
+        "path": "Assets/WarcraftUI/Textures/EscButton-Down-256x64.png",
+        "size": [
+          256,
+          64
+        ],
+        "sha256": "9a4579ccee3e9684eeca35c01fac08c5749bf2363e858bc97ccf325fd4e7d107",
+        "rasterCorner": 15,
+        "rasterTile": 307,
+        "rasterInset": 6,
+        "sources": [
+          {
+            "path": "UI/Widgets/EscMenu/Human/human-options-menu-background.blp",
+            "sha256": "2c6e5d612961a491d9477fa6961877a75450186fd07ba4256bfe5df613896e09"
+          },
+          {
+            "path": "UI/Widgets/EscMenu/Human/human-options-button-border-down.blp",
+            "sha256": "cd3c709c2147602cb39b439a38cc18339a2cfd5c75c7de43b38eabf8446ccc73"
+          }
+        ],
+        "sprite": {
+          "border": [
+            15,
+            15,
+            15,
+            15
+          ],
+          "source_size": [
+            256,
+            64
+          ],
+          "pixels_per_unit": 1,
+          "image_type": "Sliced",
+          "centerBehavior": "Stretch; original FDF tiles the background and edges"
+        },
+        "state": "Down"
+      },
+      "EscButton-Disabled-256x64": {
+        "path": "Assets/WarcraftUI/Textures/EscButton-Disabled-256x64.png",
+        "size": [
+          256,
+          64
+        ],
+        "sha256": "5ce2ced2b61019dd45765632ba6a95825abc4acfad34dc98d5fe4b5af2b9669d",
+        "rasterCorner": 15,
+        "rasterTile": 307,
+        "rasterInset": 6,
+        "sources": [
+          {
+            "path": "UI/Widgets/EscMenu/Human/human-options-button-background-disabled.blp",
+            "sha256": "e9fc540fa2fe474e121307b1631ad6df6873001f5a96eeb860e22697923d41b9"
+          },
+          {
+            "path": "UI/Widgets/EscMenu/Human/human-options-button-border-up.blp",
+            "sha256": "bebcc9063fb7153ca63ff8116e86e405835da36370c34d017632e3e28b37ed86"
+          }
+        ],
+        "sprite": {
+          "border": [
+            15,
+            15,
+            15,
+            15
+          ],
+          "source_size": [
+            256,
+            64
+          ],
+          "pixels_per_unit": 1,
+          "image_type": "Sliced",
+          "centerBehavior": "Stretch; original FDF tiles the background and edges"
+        },
+        "state": "Disabled"
+      },
+      "EscButton-DisabledDown-256x64": {
+        "path": "Assets/WarcraftUI/Textures/EscButton-DisabledDown-256x64.png",
+        "size": [
+          256,
+          64
+        ],
+        "sha256": "3866cb8c495c5c7f36eac9c265eb5a8752702eda2d741f13ab5ee685b4cc58c3",
+        "rasterCorner": 15,
+        "rasterTile": 307,
+        "rasterInset": 6,
+        "sources": [
+          {
+            "path": "UI/Widgets/EscMenu/Human/human-options-button-background-disabled.blp",
+            "sha256": "e9fc540fa2fe474e121307b1631ad6df6873001f5a96eeb860e22697923d41b9"
+          },
+          {
+            "path": "UI/Widgets/EscMenu/Human/human-options-button-border-down.blp",
+            "sha256": "cd3c709c2147602cb39b439a38cc18339a2cfd5c75c7de43b38eabf8446ccc73"
+          }
+        ],
+        "sprite": {
+          "border": [
+            15,
+            15,
+            15,
+            15
+          ],
+          "source_size": [
+            256,
+            64
+          ],
+          "pixels_per_unit": 1,
+          "image_type": "Sliced",
+          "centerBehavior": "Stretch; original FDF tiles the background and edges"
+        },
+        "state": "DisabledDown"
+      },
+      "EscPanel-Normal-346x461": {
+        "path": "Assets/WarcraftUI/Textures/EscPanel-Normal-346x461.png",
+        "size": [
+          346,
+          461
+        ],
+        "sha256": "c7bbf6d063ba9ce8295bf1c333e9c649e873f4335e170c6999840b9ed6edaf1e",
+        "rasterCorner": 58,
+        "rasterTile": 307,
+        "rasterInset": 12,
+        "sources": [
+          {
+            "path": "UI/Widgets/EscMenu/Human/human-options-menu-background.blp",
+            "sha256": "2c6e5d612961a491d9477fa6961877a75450186fd07ba4256bfe5df613896e09"
+          },
+          {
+            "path": "UI/Widgets/EscMenu/Human/human-options-menu-border.blp",
+            "sha256": "3380e7d8f4008212a4578ac5738e89e296273f847777b65a1f25d32701087e23"
+          }
+        ],
+        "sprite": {
+          "border": [
+            58,
+            58,
+            58,
+            58
+          ],
+          "source_size": [
+            346,
+            461
+          ],
+          "pixels_per_unit": 1,
+          "image_type": "Sliced",
+          "centerBehavior": "Stretch; original FDF tiles the background and edges"
+        }
+      }
+    }
+  },
+  "files": [
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/MainMenu.fdf",
+      "sha256": "aad3950a1e7195b5a8f94e010b7fe6f47aa896707bb55461002bd796c12b0f65",
+      "bytes": 20075
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/StandardTemplates.fdf",
+      "sha256": "5abcba7ab502e5bb5f703eb6e6428aa557f675a4e626049b56fbf256c0c3d73a",
+      "bytes": 42243
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/SinglePlayerMenu.fdf",
+      "sha256": "d8bb12302f980782034c39416c06b262c64fa304e9282ff13b5b30337cf4480d",
+      "bytes": 10184
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/Skirmish.fdf",
+      "sha256": "5065a84925aa43b6d93a4a9de17b6799d15083a48c28a6f2d808e7522c5f3419",
+      "bytes": 5077
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+      "sha256": "9fbd1b7013d0d33b22989cdf89034b7361bdae08dcffb584a062cefd9d27fe85",
+      "bytes": 27371
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/DialogWar3.fdf",
+      "sha256": "b036b6b6ec2e02bafc0ce0a1ca6c128234abb269813ff016d3647c27b96ef452",
+      "bytes": 3166
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/MapInfoPane.fdf",
+      "sha256": "d05e98bc50ab3bd748e2bb41bd2b351131bed1556501c82fecab149c587e962b",
+      "bytes": 4448
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/MapListBox.fdf",
+      "sha256": "57115224ac342277fcc3254b2d37bf943c9a8497dd786bbbc8a04340e975f504",
+      "bytes": 604
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/PlayerSlot.fdf",
+      "sha256": "b11458c7a831873ea85f7713e10886164ef068ef30d0e60b68cc203b05348be3",
+      "bytes": 8593
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/UI/EscMenuMainPanel.fdf",
+      "sha256": "867070f699d3612e14d60b8dcfafccf3fdc9811b07f60e4223e96f27d44f6754",
+      "bytes": 12135
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/UI/EscMenuTemplates.fdf",
+      "sha256": "89467e8c1905e0894e381195225c5b0d7c7258f900d7018582694ec8193a4ea7",
+      "bytes": 16134
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/UI/EscMenuOptionsPanel.fdf",
+      "sha256": "50800656634111843bf0d1aa4c59c7f296914c8279a592ff8367b6a9b0812659",
+      "bytes": 28826
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/UI/ConsoleUI.fdf",
+      "sha256": "76a3208eef2cbfa8e77f3926c8df035b3c9e7338d30271ef6c24627ed09cfcdd",
+      "bytes": 1963
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/UI/ResourceBar.fdf",
+      "sha256": "88a62703a9a8a0239c8faed95ac471f2aa924d1b1424432960f4eb7305d4ad2e",
+      "bytes": 1584
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/UI/UpperButtonBar.fdf",
+      "sha256": "f185b4f4dc4d7eca1a732451c6fd85ced15fcfb32dd6bb700ad43adc765d3e1c",
+      "bytes": 2916
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/UI/InfoPanelUnitDetail.fdf",
+      "sha256": "ef7502df3d60cdd97d159cfe873d1a7a1c21480c893236ae9a8a3c8c5de897c3",
+      "bytes": 5618
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/UI/InfoPanelTemplates.fdf",
+      "sha256": "18faeb19d0b648775f78261c4ee37dda4e2e43eee19af4efae6c3edbd5075208",
+      "bytes": 1930
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/war3skins.txt",
+      "sha256": "53cedda87d59c6d27ad2d30680d37faa410d37e9917c00b21d473cce9eed70c7",
+      "bytes": 43953
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/WorldEditStrings.txt",
+      "sha256": "434929fc86e4f519afa9dcd028d05b86b75199c76d7ed8d103b3a573e898c533",
+      "bytes": 378235
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/GlobalStrings.fdf",
+      "sha256": "8f15e34c8b05a915daa4c3f55c5e00b5eaae6f5a792992a88056ab09bd9552d7",
+      "bytes": 69972
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/Fonts/dfst-m3u.ttf",
+      "sha256": "da03874db48b05256fe961f56783f388bd37617eaf1791981fcfb3bbcd73aafb",
+      "bytes": 6221576
+    },
+    {
+      "path": "Assets/Fonts/Warcraft-Master.ttf",
+      "sha256": "da03874db48b05256fe961f56783f388bd37617eaf1791981fcfb3bbcd73aafb",
+      "bytes": 6221576
+    },
+    {
+      "path": "Assets/Fonts/Warcraft-Master.ttf.meta",
+      "sha256": "2c74a494bb6d063cfc3dcfb2bcebb15eb892ffb266a300681c6d6dec3423886f",
+      "bytes": 97
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-Border.blp",
+      "sha256": "5fb1d807e94e84dfdbbbab232980e7ef120451d09dc6e72b09f2ce2eeccf228a",
+      "bytes": 175946
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-Border.png",
+      "sha256": "a4569947f0362fda8c11030737bb0ed4e2740f9fe4b9f21e56c57cc450a3d825",
+      "bytes": 43050
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-Border.png.meta",
+      "sha256": "3ce11c06b9c8f0912d28cce1c5bf2fcc92e6173f6cfee26d56079488ffb2c439",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-SmallBorder.blp",
+      "sha256": "a59a29081fd15fa5a55d6939a8e90460266f59bbb4f075936e1e612f863abcf1",
+      "bytes": 175946
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-SmallBorder.png",
+      "sha256": "400d9a740da5f4c3b5112beb9f47d76c3be9184d3a525fdff8568e27836bc8c6",
+      "bytes": 37904
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-SmallBorder.png.meta",
+      "sha256": "056e1ad2b397c54a699ca9a665e656b763d02dd695d3031385c8e14df614cd59",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground.blp",
+      "sha256": "049d834cad049fc7a72297f6b6bd06d5e81769c45818fa0ba8b115441c51eb82",
+      "bytes": 2545
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBackground.png",
+      "sha256": "3e4cef17c2dd002003af0286f54dc39ea403a0c4758fc6240a0fa33dfd7bf80f",
+      "bytes": 110
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBackground.png.meta",
+      "sha256": "a2d08e4847eeec8f7daa3741c245b78f7c48403940fb7ef31e3efd9146a8396c",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBackground-Disabled.blp",
+      "sha256": "7e51b5e5e306141d84517cd9589d2e8b3035277cef3fe5f83c5108d64b1e9aea",
+      "bytes": 2545
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBackground-Disabled.png",
+      "sha256": "9a5875a5fed1ff9bc3c2677c41365fd9cc2a72f263fdd6bbfe28a3f34d898470",
+      "bytes": 110
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBackground-Disabled.png.meta",
+      "sha256": "7659e11439d7407f404fc7197985d6241f9b74f861277641e6e71666a27fb9d6",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder.blp",
+      "sha256": "e3e3fc30fcc8badf73b6cc9a905e3bdcef6037243c372e908c1846c06aa59fae",
+      "bytes": 23034
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder.png",
+      "sha256": "e55850c645cda0d0beb803dbc4cdb0e58dd820bf7b62fc2e40ab369feaf7bde7",
+      "bytes": 2160
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder.png.meta",
+      "sha256": "a4e92890cbf138ce5732cf7c096e8a7cb83dd66f3059909a446b92475d230bff",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Down.blp",
+      "sha256": "69414402aac62b910b060ba8c749ad6b368f2fa36288412b3b1f41b38815faaa",
+      "bytes": 23034
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder-Down.png",
+      "sha256": "05cfb3c72b2a35a4e0b2de73dadae13e9b7bcf05e698622dd29759cff4ce704f",
+      "bytes": 1940
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder-Down.png.meta",
+      "sha256": "73b22e64acff9e16da76292ebc30afc999d6a3745e9c43df6511c73135f24325",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-Disabled.blp",
+      "sha256": "e668f81eddb27319ee7bdb8aceb14008d94790bc4e43f5987b6fa241c73f456f",
+      "bytes": 23034
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder-Disabled.png",
+      "sha256": "a6c853fa7b34d8f0b2b3c9ad10c80f44f31af3a2f1eb4b8a8b18e1bd8ac73893",
+      "bytes": 1897
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder-Disabled.png.meta",
+      "sha256": "d5374c7879c03d1e32aa57ffff4a68daf55bbf41b05e5a6e62d612f5ff810348",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button1-BackdropBorder-DisabledDown.blp",
+      "sha256": "d5bc05e8b44c39267222b3e619d1770d02f2c9cd23c086c73ab5eda75ada6aa1",
+      "bytes": 23034
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder-DisabledDown.png",
+      "sha256": "038d217b3c1b33cf6f4fdc0a3581e640f561446ef09f0bff85f3e198d49b6f8a",
+      "bytes": 1775
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button1-BackdropBorder-DisabledDown.png.meta",
+      "sha256": "55b80dff96248275f604900ac72f1e69dfe29c54233e76fe2aeaa92fe6f14985",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/Glues/GlueScreen-Button-KeyboardHighlight.blp",
+      "sha256": "85cdd6114df503558dec7da5e2bf5d1eab7f21c5724c47c2d16abf2cf9c28edc",
+      "bytes": 12103
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button-KeyboardHighlight.png",
+      "sha256": "a83c65ece62bbd77c3eade4c991fbd85b5f4632420c10d8630d16fd61ac10563",
+      "bytes": 10244
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/GlueScreen-Button-KeyboardHighlight.png.meta",
+      "sha256": "e5d5b7a5e01f73a20cdd4edc5ae72579d6ffeba42a6642a72dbbdb8c810be581",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/BattleNet/bnet-button01-highlight-mouse.blp",
+      "sha256": "68f2cca778680e6b6bc157f488fbe5147c5de748466cefba23f57af373162ad8",
+      "bytes": 12103
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/ButtonMouseHighlight.png",
+      "sha256": "520f865c7ff788458ec37f14392bdb34e3f101c80319be5d42672556f249793b",
+      "bytes": 6583
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/ButtonMouseHighlight.png.meta",
+      "sha256": "7f2f05d98c338e431ad7b28340b2436c3b380b64a5ba5ea5cab38551215d62f0",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Normal-215x37.png",
+      "sha256": "502a3f9b4acc0fa260efe3936db3f3830eab057b8005bc86c46acf31159970dc",
+      "bytes": 1617
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Normal-215x37.png.meta",
+      "sha256": "0ff54c38fe60e0222be7d084e04062423e6460646751d496e26cafed04a34a0c",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Down-215x37.png",
+      "sha256": "0c3a3e034fa6579aa759329d20b22c6e3e56167a8ac5b06b76281bf1d87b005f",
+      "bytes": 1382
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Down-215x37.png.meta",
+      "sha256": "064fcc0fca387de35bdeb0a076172f1dd07afcf0396409838c716b37f27b7a1c",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Disabled-215x37.png",
+      "sha256": "9cdf92c8fe1a977aa9f7969dafc713eac0c6985cb4cad1a356dab55de596f99d",
+      "bytes": 1285
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Disabled-215x37.png.meta",
+      "sha256": "68069e4ab0a5ee5254e4ebe56375d3e8f0d45b39e3480a01554a0734c2ad8ecc",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-DisabledDown-215x37.png",
+      "sha256": "d23639f9deaabdbf640e91c4a77628899377c90c6270b7181ebfe4a7a49de095",
+      "bytes": 1121
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-DisabledDown-215x37.png.meta",
+      "sha256": "831a2a6cf522384e901dbdc0bbcf457078ba9ef3d290a2b0ec1a721d43e2be49",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+      "sha256": "9f5f83ed6ee945bd1e98edd9d9526be8f0ebd6cbdb43df77cfa6dd7401f7cd76",
+      "bytes": 2013
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png.meta",
+      "sha256": "11d49f64189477633bb6a571478ba0d0021f87f8be05b49d238504d1d7a3894a",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Down-256x64.png",
+      "sha256": "a576576ef07ade7f67da147234a2c653d7e9c4473c0880f24bc78b2ca4954d8b",
+      "bytes": 1722
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Down-256x64.png.meta",
+      "sha256": "4e8512993f906b94968a171b9f636cb01f6c7634df2b0e4dfc949aba70c8a609",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Disabled-256x64.png",
+      "sha256": "fdd9ffd4b03491c0c82fa63bb7ca022577e18b7e197f2f2ee1212a672edb9dbf",
+      "bytes": 1570
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-Disabled-256x64.png.meta",
+      "sha256": "4b1902298daacc7bc6024d8348c8a7cea1e1280d5366b26a979906b94cec9339",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-DisabledDown-256x64.png",
+      "sha256": "9be437351c8028cc2bad5692710d1f4122a1d693bbfafc69f45fae2758fba9ab",
+      "bytes": 1363
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/StandardButton-DisabledDown-256x64.png.meta",
+      "sha256": "5d82d2e729440e6844faee8280e2ebfbf49446896412b77369df84466a274e0b",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-menu-background.blp",
+      "sha256": "2c6e5d612961a491d9477fa6961877a75450186fd07ba4256bfe5df613896e09",
+      "bytes": 175942
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuBackground.png",
+      "sha256": "fd89414c9ed5585961cde9e135979d1189e0455763b2999088f48ebb69cf2000",
+      "bytes": 73188
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuBackground.png.meta",
+      "sha256": "c86202f6944db6388cc53f9eb6e018a207ab2372b3165bf507ba74b5f7227e61",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-menu-border.blp",
+      "sha256": "3380e7d8f4008212a4578ac5738e89e296273f847777b65a1f25d32701087e23",
+      "bytes": 88570
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuBorder.png",
+      "sha256": "df7f33e074674d912d1470a6f28f4f9ee6054142a4c3d5d4ef93728041e68ca0",
+      "bytes": 22731
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuBorder.png.meta",
+      "sha256": "97a72804d09c49955fa104e871e3551dd81cec1b93b0d4868ebb4c31552b77d7",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-button-highlight.blp",
+      "sha256": "7a3d1cc16d8d75d2b99097f41983a0b2feabf9e0a9db77fa758d48cd312eb9b7",
+      "bytes": 12107
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonMouseOverHighlight.png",
+      "sha256": "8388a5fa4e16f968e253af53aa4a8bc7c887d2eacd9d828de3c7f26381387a6f",
+      "bytes": 4543
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonMouseOverHighlight.png.meta",
+      "sha256": "1baa18c2522f2a65e42a426e392d2d4681d4a846c56f4524c647b0537d5c24bf",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonBackground.png",
+      "sha256": "fd89414c9ed5585961cde9e135979d1189e0455763b2999088f48ebb69cf2000",
+      "bytes": 73188
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonBackground.png.meta",
+      "sha256": "82d0e729dca1e106f1de780d626f0bb3932768ed1270243a65a9580d40cb94bc",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-button-border-up.blp",
+      "sha256": "bebcc9063fb7153ca63ff8116e86e405835da36370c34d017632e3e28b37ed86",
+      "bytes": 6650
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonBorder.png",
+      "sha256": "4cf74f7b811ab33cb821905dafa019f77d160ff34b169330deb3e5ad11cdc469",
+      "bytes": 1294
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonBorder.png.meta",
+      "sha256": "061dbc6e02bd78ec99d9933b07d851b385078e134f67e89bf3727235360c9f7c",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonPushedBackground.png",
+      "sha256": "fd89414c9ed5585961cde9e135979d1189e0455763b2999088f48ebb69cf2000",
+      "bytes": 73188
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonPushedBackground.png.meta",
+      "sha256": "e9f509d9154c05d827b26600ec177c65fef9d6ba5dd825037e9197928424d0ac",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-button-border-down.blp",
+      "sha256": "cd3c709c2147602cb39b439a38cc18339a2cfd5c75c7de43b38eabf8446ccc73",
+      "bytes": 6650
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonPushedBorder.png",
+      "sha256": "ce9cd850a9cda0d2f071d9e9cbf6ddd51e50e49a76faaf770bb9626e3ab3b797",
+      "bytes": 1269
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonPushedBorder.png.meta",
+      "sha256": "e25e0ec62d176f804bf4f2e6a846265c0318b529afd5d2b639c445bbdaeefe6d",
+      "bytes": 100
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/Widgets/EscMenu/Human/human-options-button-background-disabled.blp",
+      "sha256": "e9fc540fa2fe474e121307b1631ad6df6873001f5a96eeb860e22697923d41b9",
+      "bytes": 44870
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledBackground.png",
+      "sha256": "37ae9503ec86d890e87bef1b75b4dfa5b59026e28ea2ab185a738857aba6d436",
+      "bytes": 11033
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledBackground.png.meta",
+      "sha256": "d42f51cb5e0b5b38fe5444bd7080a200931f9164afa958eba772ec153cef24b1",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledBorder.png",
+      "sha256": "4cf74f7b811ab33cb821905dafa019f77d160ff34b169330deb3e5ad11cdc469",
+      "bytes": 1294
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledBorder.png.meta",
+      "sha256": "5cfc5f0a502880b3f07abd064ce8a94e7ae954c793dc9f7426c0e967be7f4c55",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledPushedBackground.png",
+      "sha256": "37ae9503ec86d890e87bef1b75b4dfa5b59026e28ea2ab185a738857aba6d436",
+      "bytes": 11033
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledPushedBackground.png.meta",
+      "sha256": "7856a36000b84af2c500af10ecd699fd8ff7ca8f96e674b0fef4940a5e55a9ff",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledPushedBorder.png",
+      "sha256": "ce9cd850a9cda0d2f071d9e9cbf6ddd51e50e49a76faaf770bb9626e3ab3b797",
+      "bytes": 1269
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/Human-EscMenuButtonDisabledPushedBorder.png.meta",
+      "sha256": "9df09baf2c70e42df1d7618543f4226cd23653839a4780ad92172c045ceb30c3",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/EscButton-Normal-256x64.png",
+      "sha256": "5fd3b1965b3ea407bb1f6e799b5c3fa62aa12bbec2d9007c36f988773ade842d",
+      "bytes": 15630
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/EscButton-Normal-256x64.png.meta",
+      "sha256": "666aa1303e13cb97811b8556daf6da490be4bfc01a008f351890cd96c8ce96e1",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/EscButton-Down-256x64.png",
+      "sha256": "9a4579ccee3e9684eeca35c01fac08c5749bf2363e858bc97ccf325fd4e7d107",
+      "bytes": 15443
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/EscButton-Down-256x64.png.meta",
+      "sha256": "4c2fd7edff43d4e5f0e1265211fd498dc295c9fe2e90801007034a2dcee5e3cf",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/EscButton-Disabled-256x64.png",
+      "sha256": "5ce2ced2b61019dd45765632ba6a95825abc4acfad34dc98d5fe4b5af2b9669d",
+      "bytes": 7327
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/EscButton-Disabled-256x64.png.meta",
+      "sha256": "bcb34dbea0456c9363f8edcad43443ab8d04781d07695b20eaa9b52d15b077fe",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/EscButton-DisabledDown-256x64.png",
+      "sha256": "3866cb8c495c5c7f36eac9c265eb5a8752702eda2d741f13ab5ee685b4cc58c3",
+      "bytes": 7748
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/EscButton-DisabledDown-256x64.png.meta",
+      "sha256": "87ff8b18956888f36dc008dcf61943d4e8451b9f8629d4e48da47a23dc7d9436",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/EscPanel-Normal-346x461.png",
+      "sha256": "c7bbf6d063ba9ce8295bf1c333e9c649e873f4335e170c6999840b9ed6edaf1e",
+      "bytes": 199162
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/EscPanel-Normal-346x461.png.meta",
+      "sha256": "eb396c1f6716e30f23fdfae087c49394aebf7ee2f7273293f08d2211152965f2",
+      "bytes": 100
+    }
+  ]
+}

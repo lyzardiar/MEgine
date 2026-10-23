@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import {composeGameModules,readMapPackages} from './frost-script-bundle.mjs';
 import {applyUiPrefabs} from './frost-ui-prefabs.mjs';
+import {configureWarcraftButtons} from './frost-warcraft-ui.mjs';
 import {groupFrostScene} from './frost-scene-groups.mjs';
 import {buildShadowHunterLightning} from './frost-shadowhunter-lightning.mjs';
 import {buildFarseerLightning} from './frost-farseer-lightning.mjs';
@@ -299,7 +300,9 @@ for(const e of E){
   e.active=e.name==='Status'||/^(Menu |Title )/.test(e.name)||titleButtonParts.has(e.name);
   if(e.name.startsWith('Title chain'))e.active=e.components.RectTransform.anchored_position[1]<-215;
 }
+configureWarcraftButtons(buttons);
 const uiManifest=applyUiPrefabs(E,buttons,root,outputRoot);
+configureWarcraftButtons(buttons,uiManifest);
 addSpellTemplates(arcaneSpellSlots);
 addSpellTemplates(flyingMachineSpellSlots);
 addSpellTemplates(aviarySpellSlots);

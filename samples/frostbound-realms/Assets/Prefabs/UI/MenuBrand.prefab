@@ -84,16 +84,16 @@
                   0.5
                 ],
                 "anchored_position": [
-                  -388,
-                  -270
+                  -200,
+                  -246
                 ],
                 "size_delta": [
-                  460,
-                  160
+                  420,
+                  210
                 ]
               },
               "Image": {
-                "sprite": "Assets/Art/classic-title-logo.png",
+                "sprite": "Assets/WarcraftUI/MenuBackground/Textures/ReplaceableTextures/WorldEditUI/WarcraftIIIFTLogo.png",
                 "color": [
                   1,
                   1,
@@ -133,22 +133,6 @@
                   450,
                   34
                 ]
-              },
-              "Text": {
-                "text": "THE FROZEN THRONE",
-                "font": "Assets/Fonts/Cinzel.ttf",
-                "font_size": 19,
-                "color": [
-                  0.59,
-                  0.74,
-                  0.83,
-                  1
-                ],
-                "alignment": "Center",
-                "vertical_align": "Middle",
-                "horizontal_overflow": "Overflow",
-                "vertical_overflow": "Overflow",
-                "raycast_target": false
               }
             },
             "children": []
@@ -181,22 +165,6 @@
                   450,
                   30
                 ]
-              },
-              "Text": {
-                "text": "冰 封 王 座",
-                "font": "Assets/Fonts/NotoSansSC.ttf",
-                "font_size": 22,
-                "color": [
-                  0.79,
-                  0.84,
-                  0.85,
-                  1
-                ],
-                "alignment": "Center",
-                "vertical_align": "Middle",
-                "horizontal_overflow": "Overflow",
-                "vertical_overflow": "Overflow",
-                "raycast_target": false
               }
             },
             "children": []

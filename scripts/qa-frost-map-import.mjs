@@ -50,7 +50,7 @@ async function waitForMap(cached){
       assert.equal(world.entity('Map name').components.Text.text,'任意岛屿');assert.equal(world.entity('mapStart label').components.Text.text,'加载地图');
       report[cached?'cacheEvents':'coldEvents']=t.qaProgress;await capture(cached?'cache-entering':'cold-entering');capturedEntering=true;
     }else if(t.qaLoading.progress?.value>0&&!capturedProgress){
-      assert.equal(world.visible('Map loading fill'),true);assert.equal(world.entity('Map loading fill').components.RectTransform.size_delta[0],350*t.qaLoading.progress.value);
+      assert.equal(world.visible('Map loading fill'),true);assert.equal(world.entity('Map loading fill').components.RectTransform.size_delta[0],world.entity('Map loading back').components.RectTransform.size_delta[0]*t.qaLoading.progress.value);
       await capture(cached?'cache-progress':'cold-progress');capturedProgress=true;
     }
     return false;

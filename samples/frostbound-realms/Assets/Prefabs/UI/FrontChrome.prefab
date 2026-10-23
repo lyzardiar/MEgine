@@ -91,16 +91,6 @@
                   1000,
                   570
                 ]
-              },
-              "Image": {
-                "material": "Assets/Materials/ClassicPanel.mmat",
-                "color": [
-                  1,
-                  1,
-                  1,
-                  1
-                ],
-                "raycast_target": false
               }
             },
             "children": []
@@ -133,28 +123,6 @@
                   1020,
                   590
                 ]
-              },
-              "Image": {
-                "sprite": "Assets/Art/classic-iron-frame.png",
-                "image_type": "Sliced",
-                "border": [
-                  250,
-                  250,
-                  250,
-                  250
-                ],
-                "source_size": [
-                  1254,
-                  1254
-                ],
-                "pixels_per_unit_multiplier": 12,
-                "color": [
-                  1,
-                  1,
-                  1,
-                  1
-                ],
-                "raycast_target": false
               }
             },
             "children": []
@@ -180,17 +148,17 @@
                   0.5
                 ],
                 "anchored_position": [
-                  0,
-                  -230
+                  -373.5,
+                  -312
                 ],
                 "size_delta": [
-                  860,
-                  44
+                  163,
+                  32
                 ]
               },
               "Text": {
-                "text": "自定义游戏",
-                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "text": "游戏设置",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
                 "font_size": 32,
                 "color": [
                   0.81,

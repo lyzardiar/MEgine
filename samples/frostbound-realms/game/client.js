@@ -14,6 +14,9 @@ function createFrostClient(){
   function armSentinel(u){if(!S.nightRank(state,team,'Resc'))message('Requires Sentinel research');else if(u.sentinelUsed)message('This Huntress has already used Sentinel');else armed={type:'sentinel'};}
   let portalTap=null;
   let mapChoice=0,settings={music:1,sfx:1,snow:true};
+  let optionsPage='gameplay',optionsReturn='title';
+  let menuBackgroundFrame=-1;
+  let menuDecorationPage='';
   const menuMaps=[['冬落盆地','skirmish','2 人遭遇战\n采集资源，建立基地。\n消灭敌方主基地获得胜利。'],['远古遗迹','moba','Dota · 双方阵营 / 三路\n选择英雄，购买装备。\n摧毁对方的远古要塞。'],['蜿蜒守望','td','塔防 · 12 波进攻\n建造与升级防御塔。\n守住路线终点。'],['破碎盟约','rpg','战役 · 4 阶段任务\n探索北境，收集遗物。\n击败寒霜领主。'],['冬落围城','skirmish','2 人攻城战\n突破山口与城墙。\n攻占敌方城堡。']];
   function presetMap(key){return typeof FrostMapCatalog!=='undefined'&&FrostMapCatalog[key]?S.clone(FrostMapCatalog[key]):key==='siege'?S.siegeMap():S.defaultMap(key);}
   for(const pack of typeof FrostMapPackages==='undefined'?[]:FrostMapPackages)menuMaps.push([pack.title,'package',pack.description,pack]);
@@ -176,7 +179,7 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
   }
   function screenWorld(u,input){const position=S.types[u.kind]&&unitPositions.get(u.id)||u;const [w,h]=input.viewport?.every(v=>v>1)?input.viewport:[1280,720],scale=FrostHUD.viewport(input).scale;return {x:(position.x-camera[0])/zoom*h/2/scale,y:((position.z-camera[1])*sin-(u.y??position.y??S.unitHeight(state,u))*Math.cos(pitch))/zoom*h/2/scale};}
   function attackAt(input,p,includeAllies=false){let target=null,best=28;for(const u of state.units){if(u.hp<=0||!S.isVisible(state,team,u)||u.team===team&&!includeAllies&&!S.canDeny(state,team,u))continue;const point=screenWorld(u,input),distance=Math.hypot(point.x-p.x,point.y-p.y);if(distance<best){target=u;best=distance;}}return target;}
-  function hovered(button,p){if(!button||uiManager&&!uiManager.interactive(button.id))return false;const r=uiManager?.buttonRect(button.id)??button;return Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.y-r.y)<r.h/2;}
+  function hovered(button,p){if(!button||button.hidden||button.disabled||button.optionsPage&&button.optionsPage!==optionsPage||uiManager&&!uiManager.interactive(button.id))return false;const r=uiManager?.buttonRect(button.id)??button;return Math.abs(p.x-r.x)<r.w/2&&Math.abs(p.y-r.y)<r.h/2;}
   function saveMap(){try{editMap=S.validateMap(editMap);persist('map'+slot,editMap);}catch(e){message(e.message);}}
   function restoreMap(){const map=load('map'+slot);if(map){try{editMap=S.validateMap(map);editorState();message('Loaded map slot '+slot);}catch(e){message(e.message);}}else message('Map slot '+slot+' is empty');}
   function primary(){
@@ -186,6 +189,14 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
     else if(mode==='finished'){if(returnEditor)enterEditor();else title();}
   }
   function action(id){
+    if(FrostButtons.find(b=>b.id===id)?.disabled)return;
+    if(id==='pauseOptions'){optionsReturn='playing';optionsPage='gameplay';mode='options';return;}
+    if(id==='optionsBack'){if(optionsReturn==='playing'){mode='playing';paused=true;}else title();return;}
+    if(['optionsGameplay','optionsVideo','optionsSound'].includes(id)){optionsPage=id.slice(7).toLowerCase();renderAt=0;return;}
+    if(id==='pauseToggle'){paused=false;return;}
+    if(id==='pauseHelp'){message('右键移动或攻击 · A 攻击 · S 停止 · F10 游戏菜单');return;}
+    if(id==='pauseTips'){message('选择工人采集资源，建造兵营训练部队。');return;}
+    if(id==='options'){optionsReturn='title';optionsPage='gameplay';}
     if(FrostMapSession.importStatus().loading)return;
     if(id==='mapOpen'){if(FrostMapSession.importStatus().busy)FrostMapSession.cancelImport();else FrostMapSession.importFile();return;}
     if(id==='mapBack')FrostMapSession.cancelImport();
@@ -338,16 +349,16 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
       if(press('Escape')){finishRename(false);return;}
       if(input.pressedButtons.includes(0)){const b=FrostButtons.find(b=>b.group==='rename'&&hovered(b,p));if(b?.id==='renameSave')finishRename(true);else if(b?.id==='renameCancel')finishRename(false);else if(b?.id==='renameClear'){delete sent['Rename input/InputField'];set('Rename input','InputField',{...authored['Rename input'].InputField,text:'',character_limit:rename.entry<0?40:120});}}return;
     }
-    if(press('F10')){if(mode==='playing'){paused=true;}else if(returnEditor)enterEditor();else title();return;}
-    if(mode==='playing'&&paused){if(press('Escape'))paused=false;else if(press('KeyX'))action('pauseExit');else if(input.pressedButtons.includes(0)){const b=FrostButtons.find(b=>b.group==='pause'&&hovered(b,p));if(b)action(b.id);}return;}
+    if(press('F10')){if(mode==='options'&&optionsReturn==='playing'){mode='playing';paused=true;}else if(mode==='playing'){paused=true;}else if(returnEditor)enterEditor();else title();return;}
+    if(mode==='playing'&&paused){if(press('Escape'))paused=false;else if(press('KeyX')||press('KeyE'))action('pauseExit');else if(press('KeyS'))action('pauseSave');else if(press('KeyL'))action('pauseLoad');else if(press('KeyO'))action('pauseOptions');else if(press('KeyH'))action('pauseHelp');else if(press('KeyT'))action('pauseTips');else if(press('KeyM')||press('KeyR'))action('pauseResume');else if(input.pressedButtons.includes(0)){const b=FrostButtons.find(b=>b.group==='pause'&&hovered(b,p));if(b)action(b.id);}return;}
     if(mode==='address'){for(const k of input.pressedKeys){if(k==='Backspace')edit=edit.slice(0,-1);else if(/^Digit\d$/.test(k))edit+=k.slice(5);else if(k==='Period')edit+='.';else if(k==='Semicolon')edit+=':';else if(/^Key[A-Z]$/.test(k))edit+=k.slice(3).toLowerCase();}edit=edit.slice(0,64);if(press('Enter'))primary();if(press('Escape'))mode='network';}
     else if(mode==='network'){if(press('F1')){editMap=S.defaultMap('skirmish');connect('create');}if(press('F2')){editMap=S.defaultMap('moba');connect('create');}if(press('F3'))connect('browse');if(press('F4'))action('netTd');if(press('KeyI')){mode='address';edit=address;}if(press('Enter'))primary();}
     else if(mode==='rooms'){if(press('ArrowDown'))roomIndex=(roomIndex+1)%Math.max(1,rooms.length);if(press('ArrowUp'))roomIndex=(roomIndex+rooms.length-1)%Math.max(1,rooms.length);if(press('F5'))engine.network.send({type:'list'});if(press('Enter'))primary();}
     else if(mode==='lobby'||mode==='finished'){if(mode==='lobby'&&press('KeyH'))action('lobbyHero');if(press('Enter'))primary();}
-    else if(mode==='title'){if(press('KeyH'))action('heroChoice');if(press('F1')){returnEditor=false;solo('skirmish');}if(press('F2'))action('moba');if(press('F3'))action('td');if(press('F4'))enterEditor();if(press('F8'))action('rpg');if(press('F9'))action('siege');if(press('Enter'))action('network');if(press('Escape'))action('quit');}
-    else if(mode==='single'){if(press('Enter'))mode='custom';if(press('Escape'))title();}
-    else if(mode==='custom'){if(press('ArrowDown'))mapChoice=(mapChoice+1)%menuMaps.length;if(press('ArrowUp'))mapChoice=(mapChoice+menuMaps.length-1)%menuMaps.length;if(press('KeyH'))action('heroChoice');if(press('Enter'))action('mapStart');if(press('Escape'))action('mapBack');}
-    else if(['options','credits','quit'].includes(mode)){if(press('Escape'))title();else if(press('Enter'))action(mode==='quit'?'quitConfirm':mode+'Back');}
+    else if(mode==='title'){for(const [key,id] of [['KeyS','solo'],['KeyL','network'],['KeyO','options'],['KeyC','credits'],['KeyQ','quit']])if(press(key))action(id);if(press('KeyH'))action('heroChoice');if(press('F1')){returnEditor=false;solo('skirmish');}if(press('F2'))action('moba');if(press('F3'))action('td');if(press('F4'))enterEditor();if(press('F8'))action('rpg');if(press('F9'))action('siege');if(press('Enter'))action('network');if(press('Escape'))action('quit');}
+    else if(mode==='single'){if(press('Enter')||press('KeyG'))action('custom');if(press('KeyL'))action('continue');if(press('Escape')||press('KeyA'))title();}
+    else if(mode==='custom'){if(press('ArrowDown'))mapChoice=(mapChoice+1)%menuMaps.length;if(press('ArrowUp'))mapChoice=(mapChoice+menuMaps.length-1)%menuMaps.length;if(press('KeyH'))action('heroChoice');if(press('Enter')||press('KeyS'))action('mapStart');if(press('Escape')||press('KeyA'))action('mapBack');}
+    else if(['options','credits','quit'].includes(mode)){if(mode==='options'){if(press('KeyG'))action('optionsGameplay');if(press('KeyV'))action('optionsVideo');if(press('KeyS'))action('optionsSound');}if(press('Escape')){if(mode==='options')action('optionsBack');else title();}else if(press('Enter'))action(mode==='quit'?'quitConfirm':mode+'Back');}
     else if(mode==='playing'||mode==='editor'){
       if(press('Escape')){if(armed)armed=null;else if(workerOrders)workerOrders=0;else if(mode==='playing'){const u=state.units.find(u=>u.id===selected[0]&&S.canControl(state,team,u));if(u?.zigguratUpgrade)order({type:'cancelZigguratUpgrade'});else paused=!paused;}}
       if(mode==='playing'&&press('F5')){if(online)message('Network matches are saved on the server during reconnect');else persist('quicksave',state);}
@@ -475,6 +486,18 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
       label('Map loading status',p?.label||'等待选择地图…');
     }
   }
+  function renderMenuBackground(){
+    const visible=!['playing','finished','reconnecting','editor','exited'].includes(mode);
+    activate('Menu background model',visible);activate('Menu background camera',visible);
+    const page=['title','single','custom','options'].includes(mode)?mode:null;
+    activate('Menu decoration model',!!page);activate('Menu decoration camera',!!page);activate('Menu decoration image',!!page);
+    if(!visible){menuBackgroundFrame=-1;menuDecorationPage='';return;}
+    if(page&&page!==menuDecorationPage){menuDecorationPage=page;for(const [name,key] of [['Menu decoration left','ClassicWarcraftMenuTopLeft'],['Menu decoration right','ClassicWarcraftMenuTopRight']]){const asset=FrostWarcraftMenu.models[key],clip=asset.clipsByPage[page];actor(name,FrostVisual.parts(asset,asset.parts[0].mesh+'#pose='+clip+':'+asset.animations[clip].frames),[3000,0,0],[128,128,128],[0,0,0,1],[1,1,1,1],true);}}
+    const clip=FrostWarcraftMenu.playback,frame=Math.min(clip.frames-1,Math.floor((time%clip.duration)*clip.fps));
+    if(frame===menuBackgroundFrame)return;menuBackgroundFrame=frame;
+    const asset=FrostWarcraftMenu.models.ClassicWarcraftMenuBackground;
+    actor('Menu background model',FrostVisual.parts(asset,asset.parts[0].mesh+'#pose='+clip.clip+':'+frame),[2000,0,0],[1,1,1],[0,0,0,1],[1,1,1,1],true);
+  }
   function render(input){
     uiManager?.update({mode,paused,rename:!!rename},input);
     updateActions(input);
@@ -483,18 +506,21 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
     set('Winter sun','DirectionalLight',{...sun,color:mix([.55,.67,1,1],sun.color),intensity:.65+(sun.intensity-.65)*light});set('Northern sky','EnvironmentLight',{...sky,sky_color:mix([.065,.105,.20,1],sky.sky_color),equator_color:mix([.15,.21,.29,1],sky.equator_color),ground_color:mix([.08,.12,.16,1],sky.ground_color),diffuse_intensity:.65+(sky.diffuse_intensity-.65)*light,specular_intensity:.16+(sky.specular_intensity-.16)*light});
     if(!uiManager)for(const n of presentationNames){if(n.startsWith('Menu '))show(n,!world);if(n.startsWith('Title '))show(n,mode==='title');if(n.startsWith('Solo '))show(n,mode==='single');if(n.startsWith('Front '))show(n,front);if(n.startsWith('Map '))show(n,mode==='custom');if(n.startsWith('Options '))show(n,mode==='options');if(n.startsWith('Credits '))show(n,mode==='credits');if(n.startsWith('Quit '))show(n,mode==='quit');if(n.startsWith('Modal '))show(n,modal);if(n.startsWith('Rename '))show(n,!!rename);if(n.startsWith('Pause '))show(n,mode==='playing'&&paused);}
     const hover=screenPointer(input);
-    for(const n of ['Menu logo','Menu subtitle','Menu subtitle cn'])show(n,['title','single'].includes(mode));
-    set('Interface','CanvasScaler',{...authored.Interface.CanvasScaler,reference_resolution:world?[960,720]:[1280,720],match_width_or_height:world?FrostHUD.viewport(input).match:0});
-    if(!world){const [w,h]=input.viewport?.every(v=>v>1)?input.viewport:[1280,720],height=Math.max(720,h/w*1280);for(const n of ['Menu painting','Menu outer frame'])set(n,'RectTransform',{...authored[n].RectTransform,size_delta:[1280,height]});for(const x of [343,557])for(let i=0;i<35;i++){const y=-height/2+8+i*10;for(const prefix of ['Title chain ','Title chain glint ','Title chain hole ']){const n=prefix+x+' '+i;show(n,mode==='title'&&y<-215);if(y<-215)set(n,'RectTransform',{...authored[n].RectTransform,anchored_position:[authored[n].RectTransform.anchored_position[0],y]});}}}
-    for(const b of FrostButtons){const on=b.group==='pause'?mode==='playing'&&paused&&(b.id!=='pauseLoad'||!online):b.group==='toolbar'?world:b.group==='inventory'?playing&&state.units.some(u=>u.id===selected[0]&&u.kind==='hero'):b.group==='rename'?!!rename:b.group==='menu'?mode==='title':b.group==='modal'?modal&&(b.id!=='modalPrimary'||!['connecting','reconnecting'].includes(mode)):b.group==='hud'?world&&!!actions[Number(b.id.slice(6))]:b.group===mode&&!(mode==='custom'&&(/^map[0-3]$/.test(b.id)&&!menuMaps[Math.floor(mapChoice/4)*4+Number(b.id.slice(3))]||menuMaps[mapChoice][3]&&['faction','heroChoice'].includes(b.id)));uiManager?.showControl(b.id,on);if(!uiManager||uiManager.changedButton(b.id,on+'/'+editing)){for(const suffix of [' box',' border',' label',' detail',' icon'])show(b.id+suffix,on&&!(editing&&suffix===' icon')&&!(b.group==='hud'&&suffix===' label'&&!editing));}if(on&&authored[b.id+' box']?.Image.material==='Assets/Materials/ClassicButton.mmat'){const picked=mode==='custom'&&b.id==='map'+(mapChoice%4),over=hovered(b,hover);set(b.id+' box','Image',{...authored[b.id+' box'].Image,color:over?[1.7,1.6,1.3,1]:picked?[1.4,1.4,1.2,1]:[1,1,1,1]});label(b.id+' label',sent[b.id+' label/Text']?JSON.parse(sent[b.id+' label/Text']).text:authored[b.id+' label'].Text.text,over||picked?[1,.92,.64,1]:[.92,.79,.45,1]);}}
-    for(let i=0;i<70;i++){const n='Menu snow '+i;show(n,!world&&settings.snow);if(!world&&settings.snow){const r=authored[n].RectTransform;set(n,'RectTransform',{...r,anchored_position:[-640+(i*197+time*(12+i%5))%1280,-360+(i*149+time*(20+i%13))%720]});set(n,'Image',{...authored[n].Image,color:[.7,.82,1,.18+i%4*.08]});}}
-    if(front)label('Front title',{custom:'自定义游戏',options:'选项',credits:'制作人员',quit:'退出游戏'}[mode]);
+    show('Menu logo',['title','single'].includes(mode));
+    set('Interface','CanvasScaler',{...authored.Interface.CanvasScaler,reference_resolution:[960,720],match_width_or_height:FrostHUD.viewport(input).match});
+    for(const b of FrostButtons){const visible=b.group==='pause'?mode==='playing'&&paused&&(b.id!=='pauseLoad'||!online):b.group==='toolbar'?world:b.group==='inventory'?playing&&state.units.some(u=>u.id===selected[0]&&u.kind==='hero'):b.group==='rename'?!!rename:b.group==='menu'?mode==='title':b.group==='modal'?modal&&(b.id!=='modalPrimary'||!['connecting','reconnecting'].includes(mode)):b.group==='hud'?world&&!!actions[Number(b.id.slice(6))]:b.group===mode&&!(mode==='custom'&&(/^map[0-3]$/.test(b.id)&&!menuMaps[Math.floor(mapChoice/4)*4+Number(b.id.slice(3))]||menuMaps[mapChoice][3]&&['faction','heroChoice'].includes(b.id)));const on=visible&&!b.hidden&&(!b.optionsPage||b.optionsPage===optionsPage);uiManager?.showControl(b.id,on);if(!uiManager||uiManager.changedButton(b.id,on+'/'+editing)){for(const suffix of [' box',' border',' label',' detail',' icon'])show(b.id+suffix,on&&!(editing&&suffix===' icon')&&!(b.group==='hud'&&suffix===' label'&&!editing));}if(on&&authored[b.id+' box']?.Image?.sprite?.startsWith('Assets/WarcraftUI/Textures/')){
+      const picked=mode==='custom'&&b.id==='map'+(mapChoice%4)||mode==='options'&&b.id==='options'+optionsPage[0].toUpperCase()+optionsPage.slice(1),over=hovered(b,hover),down=over&&input.buttons?.includes(0),source=authored[b.id+' box'].Image;
+      set(b.id+' box','Image',{...source,sprite:source.sprite.replace('-Normal-',b.disabled?'-Disabled-':down?'-Down-':'-Normal-'),color:[1,1,1,1]});
+      label(b.id+' label',sent[b.id+' label/Text']?JSON.parse(sent[b.id+' label/Text']).text:authored[b.id+' label']?.Text?.text??'',b.disabled?[.5,.5,.5,1]:over||picked?[1,1,1,1]:[.99,.827,.0705,1]);
+    }}
+
+    show('Front title',mode==='custom');if(mode==='custom')label('Front title','游戏设置');if(mode==='options'){label('Options heading',{gameplay:'游戏性设置',video:'图像设置',sound:'声音设置'}[optionsPage]);label('Warcraft option availability',optionsPage==='sound'?'':optionsPage==='video'?'图像设置接入中':'游戏性设置接入中');}
     if(mode==='custom'){const preview=menuMap(),page=Math.floor(mapChoice/4),pack=menuMaps[mapChoice][3];set('Map preview backing','Image',{...authored['Map preview backing'].Image,...(pack?.previewImage?{sprite:pack.previewImage,color:[1,1,1,1]}:{})});for(let row=0;row<4;row++)label('map'+row+' label',menuMaps[page*4+row]?.[0]||'');label('map4 label','下一页  '+(page+1)+' / '+Math.ceil(menuMaps.length/4));label('mapStart label',pack?'加载地图':'开始游戏');label('Map settings hint',pack?'原地图场景 · 对局规则接入中':'玩家 1：指挥官       玩家 2：电脑');label('Map name',menuMaps[mapChoice][0]);label('mapOpen label',FrostMapSession.importStatus().busy?'取消地图导入':'打开地图文件…');label('Map description',FrostMapSession.importStatus().message||menuMaps[mapChoice][2]);for(let i=0;i<256;i++){show('Map tile '+i,!pack?.previewImage);const index=Math.floor(i/16)*64+(i%16)*2,kind=pack?pack.preview[i]:preview.terrain[index],color=kind===1?[.05,.18,.31,1]:kind===2?[.43,.33,.21,1]:[.41,.51,.48,1];set('Map tile '+i,'Image',{...authored['Map tile '+i].Image,color});}}
     label('musicVolume label','音乐音量：'+Math.round(settings.music*100)+'%');label('sfxVolume label','音效音量：'+Math.round(settings.sfx*100)+'%');label('menuSnow label','背景飘雪：'+(settings.snow?'开启':'关闭'));
     for(const n of ['Header','Brand','Resources','Clock','Bottom','Bottom rule','Minimap','Selection title','Selection stats','Selection queue','Controls','Portrait','Health back','Health fill','Mana back','Mana fill'])show(n,world);
     for(const n of FrostHUD.editorNames)set(n,'RectTransform',hudRect(n));
     const hudRace=state.teams[team].faction,hudSkin=['human','orc','night-elf','undead'][hudRace],hudTint=[[.026,.023,.018,1],[.033,.013,.006,1],[.018,.012,.032,1],[.012,.022,.016,1]][hudRace];
-    for(const n of hudFrameNames){if(n.startsWith('HUD Frame '))show(n,world&&editing&&n!=='HUD Frame Inventory');set(n,'Image',{...authored[n].Image,...(hudRace===0&&n!=='Pause frame'?{sprite:'Assets/Art/hud-human-battlements.png#panel',border:[35,65,35,35],source_size:[583,344],pixels_per_unit_multiplier:2.7}:{sprite:'Assets/Art/hud-'+hudSkin+'-frame.png'})});}
+    for(const n of hudFrameNames){if(n==='Pause frame')continue;if(n.startsWith('HUD Frame '))show(n,world&&editing&&n!=='HUD Frame Inventory');set(n,'Image',{...authored[n].Image,...(hudRace===0&&n!=='Pause frame'?{sprite:'Assets/Art/hud-human-battlements.png#panel',border:[35,65,35,35],source_size:[583,344],pixels_per_unit_multiplier:2.7}:{sprite:'Assets/Art/hud-'+hudSkin+'-frame.png'})});}
     for(const n of ['Header','Bottom','Tooltip panel'])set(n,'Image',{...authored[n].Image,material:'Assets/Materials/RacePanel.mmat',color:hudTint});
     show('HUD Skyline',false);set('HUD Skyline','Image',{...authored['HUD Skyline'].Image,sprite:hudRace===0?'Assets/Art/hud-human-battlements.png#skyline':'Assets/Art/hud-'+hudSkin+'-frame.png#skyline',...(hudRace===0?{}:{image_type:'Sliced',border:[350,0,350,0],source_size:[1254,350],pixels_per_unit_multiplier:10})});
     for(let i=0;i<9;i++){const n='HUD Console '+i;show(n,world&&!editing);if(world)set(n,'Image',{...authored[n].Image,sprite:'Assets/Art/console-'+hudSkin+'-'+i+'.png'});}
@@ -752,7 +778,7 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
     for(let i=0;i<Math.max(sentinelCount,owls.length);i++){const name='Classic Sentinel '+i,o=owls[i],current=o&&live.get(o.source);if(!current||!state.visible[team]?.[S.index(o.x,o.z)]){actor(name,null,hidden,[1,1,1],[0,0,0,1],[1,1,1,1],true);continue;}const visual=FrostVisual.sentinel(state,{...o,perched:current.perched},clock);visual.target.y+=o.y-visual.position[1];visual.position[1]=o.y;sentinelPositions.set(o.source,visual.target);set(name,'SampledEffect',visual.component);actor(name,visual.parts,visual.position,visual.scale,visual.rotation,[1,1,1,1],true);}
     sentinelCount=owls.length;
   }
-  function tick(dt){if(!initialized)init();effectPool.beginFrame();dt=Math.min(.2,Math.max(0,dt));time+=dt;const input=engine.input||{keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720]};receive();uiManager?.update({mode,paused,rename:!!rename},input);if(!FrostMapSession.importStatus().loading)controls(input,dt);if(mode==='playing'&&paused&&!online)for(const f of fx)if(FrostDetonateArt.effects[f.e.art]){f.start+=dt;f.until+=dt;}
+  function tick(dt){if(!initialized)init();effectPool.beginFrame();dt=Math.min(.2,Math.max(0,dt));time+=dt;renderMenuBackground();const input=engine.input||{keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720]};receive();uiManager?.update({mode,paused,rename:!!rename},input);if(!FrostMapSession.importStatus().loading)controls(input,dt);if(mode==='playing'&&paused&&!online)for(const f of fx)if(FrostDetonateArt.effects[f.e.art]){f.start+=dt;f.until+=dt;}
     if(mode==='playing'&&(!paused||online)){portraitTime+=dt;unitTime+=dt;}
     if((mode==='playing'||mode==='finished')&&!online&&!paused){accumulator+=dt;while(accumulator>=S.DT){S.tick(state);collectEvents();accumulator-=S.DT;}if(mode==='playing'&&state.winner!==null){mode='finished';sound('victory');}}
     transform('Strategy camera',[camera[0],FrostVisual.camera.height,camera[1]+FrostVisual.camera.depth],[1,1,1],[Math.sin(pitch/2),0,0,Math.cos(pitch/2)]);set('Strategy camera','Camera3D',{...authored['Strategy camera'].Camera3D,orthographic_size:zoom});

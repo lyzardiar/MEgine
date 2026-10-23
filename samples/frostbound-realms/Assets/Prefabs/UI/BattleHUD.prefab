@@ -376,7 +376,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 15,
                     "color": [
                       0.81,
@@ -424,7 +424,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 15,
                     "color": [
                       0.84,
@@ -472,7 +472,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 11,
                     "color": [
                       0.81,
@@ -543,12 +543,12 @@
                       0.5
                     ],
                     "anchored_position": [
-                      52.5,
-                      14
+                      54,
+                      16.8
                     ],
                     "size_delta": [
-                      94.5,
-                      22
+                      102,
+                      26.4
                     ]
                   }
                 },
@@ -578,18 +578,9 @@
                           0
                         ],
                         "size_delta": [
-                          3,
-                          4
+                          0,
+                          0
                         ]
-                      },
-                      "Image": {
-                        "color": [
-                          0.035,
-                          0.043,
-                          0.057,
-                          1
-                        ],
-                        "raycast_target": false
                       }
                     },
                     "children": []
@@ -624,14 +615,26 @@
                         ]
                       },
                       "Image": {
-                        "material": "Assets/Materials/ClassicButton.mmat",
+                        "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
                         "color": [
                           1,
                           1,
                           1,
                           1
                         ],
-                        "raycast_target": false
+                        "raycast_target": false,
+                        "image_type": "Sliced",
+                        "border": [
+                          19,
+                          19,
+                          19,
+                          19
+                        ],
+                        "source_size": [
+                          256,
+                          64
+                        ],
+                        "pixels_per_unit_multiplier": 1
                       }
                     },
                     "children": []
@@ -661,18 +664,18 @@
                           0
                         ],
                         "size_delta": [
-                          -9,
+                          -10,
                           0
                         ]
                       },
                       "Text": {
-                        "text": "任务 (F9)",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
-                        "font_size": 13,
+                        "text": "任务(F9)",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
+                        "font_size": 12,
                         "color": [
-                          0.92,
-                          0.79,
-                          0.45,
+                          0.99,
+                          0.827,
+                          0.0705,
                           1
                         ],
                         "alignment": "Center",
@@ -680,6 +683,19 @@
                         "horizontal_overflow": "Overflow",
                         "vertical_overflow": "Overflow",
                         "raycast_target": false
+                      },
+                      "Shadow": {
+                        "effect_color": [
+                          0,
+                          0,
+                          0,
+                          0.9
+                        ],
+                        "effect_distance": [
+                          1.2,
+                          1.2
+                        ],
+                        "use_graphic_alpha": true
                       }
                     },
                     "children": []
@@ -707,12 +723,12 @@
                       0.5
                     ],
                     "anchored_position": [
-                      154.5,
-                      14
+                      156,
+                      16.8
                     ],
                     "size_delta": [
-                      94.5,
-                      22
+                      102,
+                      26.4
                     ]
                   }
                 },
@@ -742,18 +758,9 @@
                           0
                         ],
                         "size_delta": [
-                          3,
-                          4
+                          0,
+                          0
                         ]
-                      },
-                      "Image": {
-                        "color": [
-                          0.035,
-                          0.043,
-                          0.057,
-                          1
-                        ],
-                        "raycast_target": false
                       }
                     },
                     "children": []
@@ -788,14 +795,26 @@
                         ]
                       },
                       "Image": {
-                        "material": "Assets/Materials/ClassicButton.mmat",
+                        "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
                         "color": [
                           1,
                           1,
                           1,
                           1
                         ],
-                        "raycast_target": false
+                        "raycast_target": false,
+                        "image_type": "Sliced",
+                        "border": [
+                          19,
+                          19,
+                          19,
+                          19
+                        ],
+                        "source_size": [
+                          256,
+                          64
+                        ],
+                        "pixels_per_unit_multiplier": 1
                       }
                     },
                     "children": []
@@ -825,18 +844,18 @@
                           0
                         ],
                         "size_delta": [
-                          -9,
+                          -10,
                           0
                         ]
                       },
                       "Text": {
-                        "text": "菜单 (F10)",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
-                        "font_size": 13,
+                        "text": "菜单(F10)",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
+                        "font_size": 12,
                         "color": [
-                          0.92,
-                          0.79,
-                          0.45,
+                          0.99,
+                          0.827,
+                          0.0705,
                           1
                         ],
                         "alignment": "Center",
@@ -844,6 +863,19 @@
                         "horizontal_overflow": "Overflow",
                         "vertical_overflow": "Overflow",
                         "raycast_target": false
+                      },
+                      "Shadow": {
+                        "effect_color": [
+                          0,
+                          0,
+                          0,
+                          0.9
+                        ],
+                        "effect_distance": [
+                          1.2,
+                          1.2
+                        ],
+                        "use_graphic_alpha": true
                       }
                     },
                     "children": []
@@ -909,15 +941,6 @@
                           3,
                           4
                         ]
-                      },
-                      "Image": {
-                        "color": [
-                          0.035,
-                          0.043,
-                          0.057,
-                          1
-                        ],
-                        "raycast_target": false
                       }
                     },
                     "children": []
@@ -950,16 +973,6 @@
                           0,
                           0
                         ]
-                      },
-                      "Image": {
-                        "material": "Assets/Materials/ClassicButton.mmat",
-                        "color": [
-                          1,
-                          1,
-                          1,
-                          1
-                        ],
-                        "raycast_target": false
                       }
                     },
                     "children": []
@@ -992,22 +1005,6 @@
                           -9,
                           0
                         ]
-                      },
-                      "Text": {
-                        "text": "英雄 (Space)",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
-                        "font_size": 13,
-                        "color": [
-                          0.92,
-                          0.79,
-                          0.45,
-                          1
-                        ],
-                        "alignment": "Center",
-                        "vertical_align": "Middle",
-                        "horizontal_overflow": "Overflow",
-                        "vertical_overflow": "Overflow",
-                        "raycast_target": false
                       }
                     },
                     "children": []
@@ -1120,7 +1117,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 13,
                     "color": [
                       0.81,
@@ -1210,7 +1207,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 13,
                     "color": [
                       0.81,
@@ -1300,7 +1297,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 13,
                     "color": [
                       0.81,
@@ -20005,7 +20002,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 16,
                     "color": [
                       0.81,
@@ -20053,7 +20050,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 12,
                     "color": [
                       0.84,
@@ -20101,7 +20098,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 10,
                     "color": [
                       0.48,
@@ -20191,7 +20188,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 12,
                     "color": [
                       0.84,
@@ -20281,7 +20278,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 12,
                     "color": [
                       0.84,
@@ -20329,7 +20326,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 12,
                     "color": [
                       0.84,
@@ -20377,7 +20374,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 10,
                     "color": [
                       0.84,
@@ -20671,7 +20668,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 9,
                     "color": [
                       0.84,
@@ -20719,7 +20716,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 9,
                     "color": [
                       0.84,
@@ -20842,7 +20839,7 @@
                   },
                   "Text": {
                     "text": "物品栏",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 12,
                     "color": [
                       0.81,
@@ -21037,7 +21034,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 16,
                         "color": [
                           0.84,
@@ -21127,7 +21124,7 @@
                       },
                       "Text": {
                         "text": "1",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 10,
                         "color": [
                           0.81,
@@ -21291,7 +21288,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 16,
                         "color": [
                           0.84,
@@ -21381,7 +21378,7 @@
                       },
                       "Text": {
                         "text": "2",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 10,
                         "color": [
                           0.81,
@@ -21545,7 +21542,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 16,
                         "color": [
                           0.84,
@@ -21635,7 +21632,7 @@
                       },
                       "Text": {
                         "text": "3",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 10,
                         "color": [
                           0.81,
@@ -21799,7 +21796,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 16,
                         "color": [
                           0.84,
@@ -21889,7 +21886,7 @@
                       },
                       "Text": {
                         "text": "4",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 10,
                         "color": [
                           0.81,
@@ -22053,7 +22050,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 16,
                         "color": [
                           0.84,
@@ -22143,7 +22140,7 @@
                       },
                       "Text": {
                         "text": "5",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 10,
                         "color": [
                           0.81,
@@ -22307,7 +22304,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 16,
                         "color": [
                           0.84,
@@ -22397,7 +22394,7 @@
                       },
                       "Text": {
                         "text": "6",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 10,
                         "color": [
                           0.81,
@@ -22627,7 +22624,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -22717,7 +22714,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -22881,7 +22878,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -22971,7 +22968,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -23135,7 +23132,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -23225,7 +23222,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -23389,7 +23386,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -23479,7 +23476,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -23643,7 +23640,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -23733,7 +23730,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -23897,7 +23894,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -23987,7 +23984,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -24151,7 +24148,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -24241,7 +24238,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -24405,7 +24402,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -24495,7 +24492,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -24659,7 +24656,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -24749,7 +24746,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -24913,7 +24910,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -25003,7 +25000,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -25167,7 +25164,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -25257,7 +25254,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -25421,7 +25418,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 12,
                         "color": [
                           0.84,
@@ -25511,7 +25508,7 @@
                       },
                       "Text": {
                         "text": "",
-                        "font": "Assets/Fonts/NotoSansSC.ttf",
+                        "font": "Assets/Fonts/Warcraft-Master.ttf",
                         "font_size": 11,
                         "color": [
                           0.81,
@@ -26714,7 +26711,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 12,
                     "color": [
                       0.81,
@@ -26886,7 +26883,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 12,
                     "color": [
                       0.81,
@@ -27091,7 +27088,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 12,
                     "color": [
                       0.81,
@@ -27172,7 +27169,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 18,
                     "color": [
                       0.81,
@@ -27412,7 +27409,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 12,
                     "color": [
                       0.84,
@@ -27502,7 +27499,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 12,
                     "color": [
                       0.84,
@@ -27592,7 +27589,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 12,
                     "color": [
                       0.84,
@@ -27673,7 +27670,7 @@
                   },
                   "Text": {
                     "text": "",
-                    "font": "Assets/Fonts/NotoSansSC.ttf",
+                    "font": "Assets/Fonts/Warcraft-Master.ttf",
                     "font_size": 11,
                     "color": [
                       0.81,
@@ -29039,6 +29036,366 @@
                 "children": []
               }
             ]
+          }
+        ]
+      },
+      {
+        "id": "5f9d93ec-f114-5c01-af08-e126eea8ba75",
+        "name": "UI Control hudAllies",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              258,
+              16.8
+            ],
+            "size_delta": [
+              102,
+              26.4
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "a91619f8-a916-50dd-aec3-c54a29e6fa94",
+            "name": "hudAllies border",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "27ed8d4c-53c7-5c95-abb0-7da7f4d8709c",
+            "name": "hudAllies box",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              },
+              "Image": {
+                "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false,
+                "image_type": "Sliced",
+                "border": [
+                  19,
+                  19,
+                  19,
+                  19
+                ],
+                "source_size": [
+                  256,
+                  64
+                ],
+                "pixels_per_unit_multiplier": 1
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "415902c8-13b1-595a-aa02-f508a0547e54",
+            "name": "hudAllies label",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  -10,
+                  0
+                ]
+              },
+              "Text": {
+                "text": "盟友",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
+                "font_size": 12,
+                "color": [
+                  0.99,
+                  0.827,
+                  0.0705,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              },
+              "Shadow": {
+                "effect_color": [
+                  0,
+                  0,
+                  0,
+                  0.9
+                ],
+                "effect_distance": [
+                  1.2,
+                  1.2
+                ],
+                "use_graphic_alpha": true
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "927e5e78-6504-55f9-a640-03d58e85797f",
+        "name": "UI Control hudChat",
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              0,
+              0
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              360,
+              16.8
+            ],
+            "size_delta": [
+              102,
+              26.4
+            ]
+          }
+        },
+        "children": [
+          {
+            "id": "5c4d7de8-3c2b-52a9-ae1b-bdb46512abc2",
+            "name": "hudChat border",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "a78dc496-3dd4-5e5c-a294-42bd3b82c786",
+            "name": "hudChat box",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  0,
+                  0
+                ]
+              },
+              "Image": {
+                "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+                "color": [
+                  1,
+                  1,
+                  1,
+                  1
+                ],
+                "raycast_target": false,
+                "image_type": "Sliced",
+                "border": [
+                  19,
+                  19,
+                  19,
+                  19
+                ],
+                "source_size": [
+                  256,
+                  64
+                ],
+                "pixels_per_unit_multiplier": 1
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "768988ea-fed0-58ff-ab98-8c824a2acd46",
+            "name": "hudChat label",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0,
+                  0
+                ],
+                "anchor_max": [
+                  1,
+                  1
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  0,
+                  0
+                ],
+                "size_delta": [
+                  -10,
+                  0
+                ]
+              },
+              "Text": {
+                "text": "聊天",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
+                "font_size": 12,
+                "color": [
+                  0.99,
+                  0.827,
+                  0.0705,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              },
+              "Shadow": {
+                "effect_color": [
+                  0,
+                  0,
+                  0,
+                  0.9
+                ],
+                "effect_distance": [
+                  1.2,
+                  1.2
+                ],
+                "use_graphic_alpha": true
+              }
+            },
+            "children": []
           }
         ]
       }

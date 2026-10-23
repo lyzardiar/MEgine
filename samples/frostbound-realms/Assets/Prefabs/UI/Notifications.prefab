@@ -94,7 +94,7 @@
               },
               "Text": {
                 "text": "",
-                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
                 "font_size": 14,
                 "color": [
                   0.81,
@@ -142,7 +142,7 @@
               },
               "Text": {
                 "text": "",
-                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
                 "font_size": 10,
                 "color": [
                   0.48,
@@ -190,7 +190,7 @@
               },
               "Text": {
                 "text": "{}",
-                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font": "Assets/Fonts/Warcraft-Master.ttf",
                 "font_size": 1,
                 "color": [
                   0.84,
