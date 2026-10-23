@@ -32,6 +32,7 @@ def main():
             ROOT/'tmp/warcraft-effects/sentinel-bin/MdxExport.dll', ROOT/'tmp/warcraft-effects/node-metadata/NodeMetadata.dll', args.animation_seed)
     result = importlib.import_module('build-frost-original-units').build(exported, base_project, args.game, project,
         ROOT/'tmp/warcraft-effects/farseer-bin/MdxExport.dll', ROOT/'tmp/warcraft-effects/node-metadata/NodeMetadata.dll')
+    importlib.import_module('install-frost-original-pathing').install(exported, project)
     entities = len(json.loads((project/'Assets/Scenes/Main.mscene').read_bytes())['world']['entities'])
     validation = 'qa-frost-original-map-composition.mjs' if (project/'doodad-placements.json').is_file() else 'qa-frost-original-units.mjs'
     print(json.dumps(dict(project=str(project), source=str(source), sourceSha256=data['source']['sha256'],

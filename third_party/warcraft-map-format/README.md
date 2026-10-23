@@ -24,3 +24,5 @@ Author: MiYu。
 更新时运行 `python scripts/test-warcraft-terrain.py --project <生成项目>` 与原生 `qa-frost-original-terrain.mjs`。还需检查近景地表混合、四向坡道、接缝和透明水面，不能仅凭字段一致或全景截图验收。
 
 单位视觉转换参考同一固定提交的 `src/viewer/handlers/w3x/{map,unit}.ts`：读取源模型、位置、角度、缩放、移动高度及RGB。单位资源仍来自原地图与本地游戏归档，模型转换工具许可与摘要保留在生成项目。REA字段字符串探针为 `probe-frost-rea-map-formats.mjs --unit-appearance`；生成与真实验收范围见[单位视觉场景](../../docs/designs/frostbound-realms/original-map-import.md#单位视觉场景)，独立预览参考不构成原版运行语义证明。
+
+WPM运行时`game/warcraft-pathing.js`与安装器复用上述格式读取器，保留源32单位路径格、W3E原点及全部基础标志。类型掩码与置位／清位行为来自本机Game.dll（SHA-256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`）的REA控制流和限定CPU执行；通过`probe-frost-rea-map-formats.mjs --pathing`、`probe-frost-pathing-cpu.py`重现。更新游戏版本须重新定位函数及验证，不复用旧地址。此依据只覆盖基础标志，不证明完整JASS寻路查询或动态阻挡；范围和测试入口见[运行时说明](../../docs/designs/frostbound-realms/original-map-import.md#原始寻路网格运行时)。

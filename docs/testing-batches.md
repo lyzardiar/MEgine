@@ -77,6 +77,14 @@ B001仍3/3，02／03已通过；01剩余原版行为／同视角、对象覆盖�
 
 状态：实现及定向GPU验证完成，**原生集成待批次执行**。下一次相关构建只做一次Editor构建，在Amazonia组合项目验证Scene／Game切换、不同相机／材质下绘制、Play／Pause／Stop与错误日志；涉及嵌入视图的原生场景一并验证。需要性能结论时固定相机／世界状态并对齐轮询帧做新旧比较。未重建原生EXE、未重跑地图QA或全库；上一版截图不作为此次修改的运行证明。B001-01其余原版行为与主玩法待测项继续保留。
 
+### B001-01 原始WPM运行时
+
+新增`game/warcraft-pathing.js`、`install-frost-original-pathing.py`、`test-frost-original-pathing.mjs`、`probe-frost-pathing-cpu.py`，地图入口自动安装；REA探针增加`--pathing`。原尺寸／原点／轴向的基础格查询、可变标志和独立快照接入生成项目脚本。此为地图接入补充，不增加3/3计数。
+
+已完成定向检查：REA2组入口／类型／修改证据、原DLL259组掩码和4,608组标志写入、对应JS组合及矩形边界／畸形数据；Amazonia147,456格、Booty Bay294,912格在生成脚本中逐格匹配原WPM，Node VM重建恢复原值；重复安装和不同地图拒绝且原脚本保持。证据`tmp/docs-artifacts/frost-original-maps/pathing-evidence/`，Booty脚本夹具`tmp/docs-artifacts/warcraft-map-tests/pathing-runtime/booty-bay/`。新增来源摘要的首次断言因CRLF归一化失败；修复后只复测CRLF／LF字节保留、摘要、相同网格及生成脚本，结果见`pathing-evidence/installer.json`。容量拒绝及语法已检查，沿用不受影响的逐格结果。
+
+**待合并原生验证**：与绘制状态修复共用下一次Editor构建，检查原地图项目加载及Play／Stop，核对新增`originalMapPathing`状态和场景恢复。尚未接入主模拟的移动／视野／保存、动态阻挡、路径搜索或JASS；静态网格查询不作为原版完整寻路行为验收。本次没有原生QA／全库／全地图或构建，B001-01继续保留。
+
 ### B001-02 执行命令
 
 ```powershell

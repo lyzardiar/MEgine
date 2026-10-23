@@ -90,6 +90,29 @@ node scripts/qa-frost-original-map-composition.mjs <输出目录>/project
 
 加载入口针对包含装饰的项目返回该组合检查命令；复用纯地形基础项目时仍返回单位检查命令。组合测试覆盖编辑器加载与播放，不能作为原版同视角、JASS、寻路、战斗或联机验收。
 
+### 原始寻路网格运行时
+
+`samples/frostbound-realms/game/warcraft-pathing.js`保留WPM全部8位基础标志、矩形尺寸与W3E原点。地图入口在单位项目完成后调用`install-frost-original-pathing.py`，读取并校验保留的原地图归档，向生成项目加入`Assets/Data/OriginalPathing.json`、`pathing-sources.json`和脚本全局`originalMapPathing`。现有项目可单独安装，不需重建地形、模型或贴图；重复安装、不同地图基础项目和修改过的源归档会被拒绝。
+
+源32单位路径格对应引擎0.25单位，使用`sourceCell(x,y)`或`engineCell(x,z)`定位，后者按`(x*128,-z*128)`回到源坐标；不缩放到32格或把越界点夹到边缘。`getSource/getEngine/getCell`返回完整标志字节，越界返回`null`，非有限坐标拒绝。源坐标采用左下包含、右上不包含的半开区间；引擎Z轴反向后，相应包含边也反向。`cellCenter`返回引擎XZ，支持非方形地图。
+
+`typeMask`按原版类型0–7映射到`255,2,4,8,16,32,64,128`，其余int32为0。`setCell/setEngine`的`pathable=true`清除所选基础标志，false置位，其他位保持；实际变化才增加revision。`snapshot()`保留当前基础网格，可创建独立实例；新Play重新构造原始数据。运行时不修改原地图，也不把此基础位判断冒充完整`IsTerrainPathable`：原版查询还涉及动态阻挡和引擎世界状态。
+
+原DLL SHA见下节。REA `--pathing`确认`IsTerrainPathable`注册到`0x6f1e8440`、`SetTerrainPathable`到`0x6f1f6c60`；掩码函数`0x6f1e3be0`与表`0x6f1e3c18`、单格修改`0x6f036e20`已定位。`probe-frost-pathing-cpu.py`无外部调用替身地执行259组掩码与4,608组修改，原生32位格子的低24位保持不变。低24位语义尚未核对，JS运行时仅持有WPM基础字节。
+
+定向验证通过：所有8位组合、矩形边界／轴反向、实例隔离、重复写入revision、快照恢复、畸形RLE及尺寸；原始Amazonia的384×384共147,456格与Booty Bay的768×384共294,912格在引擎坐标下逐格匹配原WPM，生成脚本在Node VM重建后恢复原值。RLE数据分别28,013和40,904字节，每次脚本实例创建只解码一次。没有重复原生QA、整图资源生成、全库或引擎构建。
+
+Amazonia组合项目现已安装此模块；之前原生组合截图的脚本版本早于本模块。Booty Bay验证使用`tmp/docs-artifacts/warcraft-map-tests/pathing-runtime/booty-bay/`的脚本／收据夹具，不是完整可打开场景。REA／CPU证据位于`tmp/docs-artifacts/frost-original-maps/pathing-evidence/`。安装器保留原脚本字节与换行，并记录其SHA-256；新增大图容量拒绝与收据字段不改变网格。已有生成收据保留当时安装器摘要，最终安装器另以CRLF／LF脚本夹具验证来源摘要与字节保留。
+
+```powershell
+node scripts/probe-frost-rea-map-formats.mjs --pathing
+python scripts/probe-frost-pathing-cpu.py
+python scripts/install-frost-original-pathing.py <地图导出目录> <尚未安装寻路模块的同图项目>
+node scripts/test-frost-original-pathing.mjs <项目目录>
+```
+
+主模拟仍有固定32格的移动、视野、建造、技能与存档校验，当前尚未接到本运行时；原单位／装饰动态路径纹理、移动类型、碰撞半径、路径搜索和JASS执行仍待完成。后续须让各子系统共同使用源坐标接口，不能只修改`SIZE`就声明原尺寸地图可对局。新的原生运行验证与绘制状态优化合并在B001执行。
+
 ### 地形与信息来源
 
 - [REA 源站、固定版本与维护](../../../third_party/rea/README-MENGINE.md)：`morluto/rea` 6.5.0。
