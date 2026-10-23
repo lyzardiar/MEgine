@@ -49,6 +49,25 @@ class CacheTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate(self.project, entry, self.source_sha)
 
+    def test_shared_assets_are_content_addressed_and_confined(self):
+        data = b'shared-png'
+        sha = hashlib.sha256(data).hexdigest()
+        relative = 'Assets/WarcraftShared/v1/' + sha + '.png'
+        shared = self.project / relative
+        shared.parent.mkdir(parents=True)
+        shared.write_bytes(data)
+        file = self.package/'manifest.json'
+        manifest = json.loads(file.read_bytes())
+        record = dict(path=relative, storage='shared', sha256=sha)
+        manifest['assets'].append(record)
+        file.write_text(json.dumps(manifest))
+        self.assertEqual(validate(self.project, self.entry, self.source_sha), self.entry)
+        for path in ['Assets/WarcraftShared/v1/../../outside.png', 'Assets/WarcraftShared/v1/'+'0'*64+'.png']:
+            record['path'] = path
+            file.write_text(json.dumps(manifest))
+            with self.assertRaises(ValueError):
+                validate(self.project, self.entry, self.source_sha)
+
 
 if __name__ == '__main__':
     unittest.main()

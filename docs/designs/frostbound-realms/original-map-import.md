@@ -191,10 +191,23 @@ python scripts/prepare-frost-map-import.py
 
 准备工具使用 [W3ModelViewer](https://github.com/Darithos/W3ModelViewer) 固定提交 `4fe46a0772520fc7b55078bf32cda1237d1b5f2e`，复用 `convert-warcraft-assets.py` 的下载、来源摘要和构建逻辑。运行时入口为 `scripts/runtime-import-frost-map.py`，通用引擎 API 是 `engine.importContent(importer, path?)`、`engine.cancelContentImport()` 和 `onContentImport(event)`；不传路径时显示文件选择框。转换程序从项目配置读取，不接受游戏脚本指定任意命令。回调只登记生成脚本工厂，实际地图实例在 `onSceneLoaded` 后创建。
 
-缓存位于 `Assets/Maps/user-v1-<原文件SHA256>/`，未登记到固定 catalog，也不修改应用 Main.js 或项目构建列表。引擎只为验证过的本次导入结果登记场景。原图、源成员、转换来源和安装摘要保留在 `Source/`、`Provenance/` 与 `manifest.json`；命中缓存时校验原件和资产摘要。转换先写作业目录，成功后完整发布缓存；失败不发布半成品。缓存被修改或缺失时报告具体文件，不覆盖现有内容。转换算法有不兼容更新时递增运行时入口的 `VERSION`，按新命名空间重建。用户地图缓存不提交 Git。
+地图包位于 `Assets/Maps/user-v2-<地图与转换环境摘要>/`，场景、运行脚本、路径格与缩略图保留在包内，公共资源引用 `Assets/WarcraftShared/v1/<内容SHA256>.<扩展名>`。运行时不修改 catalog、应用 Main.js 或项目构建列表。引擎只登记验证过的本次导入场景。原图、源成员、转换来源和安装摘要保留在 `Source/`、`Provenance/` 与 `manifest.json`；清单中的 `storage` 区分包内与共享资源，并记录源路径、源摘要和最终摘要。命中地图缓存时校验原件与所有依赖；损坏或缺失直接报告错误，不覆盖现有内容。地图包身份包含原图、按优先级排列的游戏档案摘要、转换工具与实际生成输入，输入变化会生成新版本。已预装地图和旧 v1 缓存保留兼容，新文件导入采用共享结构；不自动删除或改写旧资产。地图缓存与生成的共享资源均不提交 Git。
 
-作业、失败日志和临时验证输出位于 `tmp/docs-artifacts/`。跨盘作业发布时会先复制到目标盘的 `.import-*` 临时目录；中途取消可能留下该目录，停止导入后可按实际路径清理。缓存与原地图文件独立，转换不修改源游戏目录。
+作业、失败日志和临时验证输出位于 `tmp/docs-artifacts/`。成功后清理本次独占创建的 `source-map/`、`doodad-project/`、`converted/` 和 `stage/`，保留 `result.json`、`converter.log` 与文件选择记录；失败作业保留诊断内容。跨盘发布先复制到目标盘的 `.import-*` 临时目录，中途取消可能留下目录，停止导入后可按实际路径清理。持久资源缓存与成功地图包不随作业清理，转换不修改源游戏目录。
 
 文件选择没有地图名称白名单。解析器仍对未支持的格式、对象覆盖、随机放置和模型特性明确报错；加密／保护地图或自定义脚本并非都能运行。JASS 只作为来源数据保留，当前仅执行转换器生成的场景脚本。完整对局、独立 Player 分发环境与非 Windows 文件框继续待验收。
 
 2026-10-23 定向验证：真实生成脚本的打开按钮、长时间转换状态、取消／迟到回调、Esc、失败重试、动态加入地图、返回与缓存去重通过；Rust 内容导入 3 个用例及脚本桥接 1 个用例通过。新增夹具首次因 UI 80ms 刷新时机、PowerShell 扩展路径格式失败，修正夹具后复测通过。原生报告 `tmp/docs-artifacts/testing-batches/B001/arbitrary-map-1792745402307.json`：文件框启动／取消、工程外中文路径的 Echo Isles 冷转换、转换期间菜单操作、同次 Play 加载 7,221 实体、返回选图及第二次缓存加载全部通过，0 error。原生自动化通过同一引擎 API 提交文件路径，未自动操作文件框内的选择／确认控件；截图已检查。测试编辑器正常退出，WebView 锁缓存保留。
+
+
+## 跨地图资源缓存
+
+`warcraft_resource_cache.py` 为运行时导入提供持久缓存，默认目录 `G:/work/github/MEgine/tmp/warcraft-resource-cache/v1/`，可通过转换脚本的 `--cache-root` 指定。`files/` 记录档案／工具摘要，依据绝对路径、文件标识、大小与时间戳复用摘要；文件状态变化后重算。`members/` 以 MPQ reader 版本、源档案摘要和规范化成员路径索引 `blobs/`，包含不存在成员的查询结果；命中后直接读取已解包的原始字节。每次查找仍遵守地图 → Patch → Local → Expansion → Base，地图内覆盖资源不会被公共同名文件替换。缺失或损坏的 blob 作为错误处理，不能继续退到下层档案。
+
+`derived/` 记录贴图 PNG、节点元数据、模型特效、标注网格和动画变化分析的结果。键包含转换工具／依赖版本、源字节摘要及实际参数；最终贴图替换和材质绑定仍依据当前地图的来源解析执行。地图包输入与纯资源转换输入分别记录，单纯的包模板变化无需让相同纯转换结果全部失效。缓存文件采用完整临时文件加原子发布，已有内容只校验、不覆盖。运行时结果里的 `resourceCache` 给出解包次数、命中次数和各转换步骤的构建／命中数，便于后续维护。
+
+`frost-shared-map-assets.mjs` 递归解析转换产物依赖，先重写子资源引用，再按最终内容摘要发布资源。贴图变化会改变引用它的材质／模型／特效身份；相同文件名但内容不同的资源保持隔离。GLB 的 JSON 依赖会重写，二进制段和 `#pose` 片段保留；未知引用和依赖循环直接拒绝。新地图包只引用共享文件，不再复制一份公共资源。
+
+2026-10-23 验证：Amazonia 与 Echo Isles 的新包共用 298 个资源文件，避免 56,854,680 字节（约 54.2 MiB）的跨地图重复存储；不包含旧包清理收益。Echo Isles 第二图导入命中 179 次源成员读取、101 次贴图转换、53 次节点元数据和 12 次特效转换，新资源仍按需生成。保留共享缓存、在原生 QA 中重新生成 Echo Isles 包时，225 次源成员读取全命中，贴图／节点／网格／特效处理均命中缓存，没有新的成员解包或派生构建。地图本身的地形、放置与脚本组合仍按图生成。
+
+本次只执行共享缓存相关验证：资源缓存 Python 6 项、地图缓存 Python 5 项、Node 共享依赖测试、实际生成脚本切图检查通过；复用现有 Editor 二进制的 `arbitrary-map-1792746961699.json` 原生检查通过，7,221 实体、0 error，截图已检查。首轮 Amazonia 发现本机旧模型转换器缺少 FlyingSheep 的粒子模型字段，使用 `prepare-frost-map-import.py` 重建后通过；失败日志保留。证据统一位于 `tmp/docs-artifacts/testing-batches/B001/`，统计为 `shared-maps/sharing-summary.json`。共享包独立 Player 分发、跨盘发布及旧缓存迁移仍待批次处理。

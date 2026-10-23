@@ -55,7 +55,7 @@ def appearance(unit, ui, data):
     return dict(model=model+'.mdx',transform=transform,tint=[float(row[c])/255 for c in ['red','green','blue']],teamColor=color,modelScale=scale,moveHeight=height)
 
 
-def build(export, base_project, game, output, sampler, metadata_reader):
+def build(export, base_project, game, output, sampler, metadata_reader, resource_cache=None):
     export,base_project,output=export.resolve(),base_project.resolve(),output.resolve()
     if output.exists():raise FileExistsError('Preserve existing output: '+str(output))
     source=json.loads((export/'map.json').read_bytes());original=(export/source['source']['preservedArchive']).resolve();original.relative_to(export)
@@ -75,17 +75,18 @@ def build(export, base_project, game, output, sampler, metadata_reader):
         archives=[('map',mpyq.MPQArchive(io.BytesIO(raw[data['source']['mpqOffset']:]),listfile=False))]
         archives += [(name,mpyq.MPQArchive(str(game/name),listfile=False)) for name in ['War3Patch.mpq','War3xLocal.mpq','War3x.mpq','war3.mpq']]
         records={};cache={}
+        archive_ids={name:source['source']['sha256'] if name=='map' else resource_cache.file_identity(game/name) for name,_ in archives} if resource_cache else {}
         def read(path):
             relative=shared.converter.relative(path).as_posix();key=relative.lower()
             if key in cache:return cache[key]
             for name,archive in archives:
-                try:value=read_archive(archive,relative.replace('/','\\'))
+                try:value=resource_cache.member(archive,relative,archive_ids[name]) if resource_cache else read_archive(archive,relative.replace('/','\\'))
                 except FileNotFoundError:continue
                 target=project/'SourceAssets'/relative;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(value)
                 records[key]=dict(path=relative,archive=name,sha256=shared.sha(value),bytes=len(value));cache[key]=value;return value
             raise FileNotFoundError(relative)
         ui=shared.rows(read('Units/UnitUI.slk'));stats=shared.rows(read('Units/UnitData.slk'))
-        assets=UnitSceneAssets(project,read,sampler,metadata_reader,PREFIX)
+        assets=UnitSceneAssets(project,read,sampler,metadata_reader,PREFIX,resource_cache=resource_cache)
         scene=json.loads((project/'Assets/Scenes/Main.mscene').read_bytes());entities=scene['world']['entities'];first=len(entities);groups={};placements=[];rng=MsvcRandom()
         next_id=max(e['entity'] for e in entities)+1
         def entity(name,components,parent=None,active=True):

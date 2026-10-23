@@ -41,7 +41,7 @@ def padded(image, border=2):
     return result
 
 
-def build(export, game, output, chunk_size=32):
+def build(export, game, output, chunk_size=32, resource_cache=None):
     if chunk_size not in (8, 16, 32):
         raise ValueError('Chunk size must be 8, 16 or 32 tiles')
     output = Path(output).resolve()
@@ -63,6 +63,10 @@ def build(export, game, output, chunk_size=32):
     archives = [('map', mpyq.MPQArchive(io.BytesIO(archive_raw[map_data['source']['mpqOffset']:]), listfile=False))]
     archives += [(name, mpyq.MPQArchive(str(game / name), listfile=False)) for name in ['War3Patch.mpq', 'War3xLocal.mpq', 'War3x.mpq', 'war3.mpq']]
     sources, raw_sources = {}, {}
+    archive_ids = {name: data['source']['sha256'] if name == 'map' else resource_cache.file_identity(game / name) for name, _ in archives} if resource_cache else {}
+
+    def decode(raw):
+        return resource_cache.texture(raw, converter.decode_texture) if resource_cache else converter.decode_texture(raw)
 
     def read(relative):
         relative = converter.relative(relative).as_posix()
@@ -70,7 +74,7 @@ def build(export, game, output, chunk_size=32):
             return raw_sources[relative]
         for name, archive in archives:
             try:
-                raw = read_archive(archive, relative.replace('/', '\\'))
+                raw = resource_cache.member(archive, relative, archive_ids[name]) if resource_cache else read_archive(archive, relative.replace('/', '\\'))
                 sources[relative] = dict(path=relative, archive=name, bytes=len(raw), sha256=sha(raw))
                 raw_sources[relative] = raw
                 return raw
@@ -94,8 +98,8 @@ def build(export, game, output, chunk_size=32):
     textures = []
     for code in terrain['groundTilesets']:
         row = ground_rows[code]
-        textures.append(converter.decode_texture(read(row['dir']+'/'+row['file']+'.blp')))
-    textures.append(converter.decode_texture(read('TerrainArt/Blight/'+BLIGHTS[terrain['tileset']]+'_Blight.blp')))
+        textures.append(decode(read(row['dir']+'/'+row['file']+'.blp')))
+    textures.append(decode(read('TerrainArt/Blight/'+BLIGHTS[terrain['tileset']]+'_Blight.blp')))
     if any(image.size not in [(256, 256), (512, 256)] for image in textures):
         raise ValueError('Unsupported terrain texture dimensions')
     extended = [image.width == 512 for image in textures]
@@ -136,7 +140,7 @@ def build(export, game, output, chunk_size=32):
         (temporary/'Assets/Shaders/Ground.mshader').write_text(ground_shader(atlas.size),encoding='utf-8')
         write_json(temporary / ground_material, dict(version=8, name='Original map ground', shader='custom', custom_shader='Assets/Shaders/Ground.mshader', surface='opaque', base_color=[1,1,1,1], roughness=1, wrap_u='clamp', wrap_v='clamp'))
         for index, row in enumerate(cliff_rows):
-            image = converter.decode_texture(read(row['texDir']+'/'+row['texFile']+'.blp'))
+            image = decode(read(row['texDir']+'/'+row['texFile']+'.blp'))
             relative = f'Assets/Textures/Cliff{index}.png'
             save_image(relative, image)
             write_json(temporary / f'Assets/Materials/Cliff{index}.mmat', dict(version=8, name='Original cliff '+row['cliffID'], shader='pbr', surface='opaque', base_color=[1,1,1,1], base_color_texture=relative, roughness=1, wrap_u='clamp', wrap_v='clamp'))
@@ -168,7 +172,7 @@ def build(export, game, output, chunk_size=32):
             if sha(read(model['model'])) != model['sourceSha256']:
                 raise ValueError('Cliff template is stale or map overrides source model: '+model['id'])
             append('Cliff', placement['cell'], f'Assets/Materials/Cliff{placement["texture"]}.mmat', placed_template(terrain, layout, placement, template), template['normals'], template['uvs'], template['indices'])
-        water_frames = [converter.decode_texture(read(water_row['texFile']+f'{i:02}.blp')) for i in range(int(water_row['numTex']))]
+        water_frames = [decode(read(water_row['texFile']+f'{i:02}.blp')) for i in range(int(water_row['numTex']))]
         size = water_frames[0].width
         if any(image.size != (size, size) for image in water_frames):
             raise ValueError('Water animation frame dimensions differ')

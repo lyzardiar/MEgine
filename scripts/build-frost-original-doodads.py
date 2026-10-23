@@ -65,9 +65,10 @@ def moving_clip(raw,clip):
 
 
 class SceneAssets:
-    def __init__(self,project,read,sampler,metadata_reader,prefix=PREFIX):
+    def __init__(self,project,read,sampler,metadata_reader,prefix=PREFIX,resource_cache=None):
         self.project,self.read,self.sampler,self.metadata_reader=project,read,sampler,metadata_reader
         self.prefix=prefix
+        self.resource_cache=resource_cache
         self.models,self.collections,self.materials,self.prepared={},{},{},{}
         self.texture_sources,self.textures,self.collection_hashes={},{},{}
         self.records=[]
@@ -101,8 +102,19 @@ class SceneAssets:
         if normalized in self.textures:return self.textures[normalized]
         raw=self.read(path);target=self.prefix+'Textures/'+sha(raw)+'.png'
         if not (self.project/target).exists():
-            image=converter.decode_texture(raw);buffer=io.BytesIO();image.save(buffer,format='PNG');self.write(target,buffer.getvalue())
+            self.write(target,self.resource_cache.texture_bytes(raw,converter.decode_texture) if self.resource_cache else self.texture_bytes(raw))
         self.textures[normalized]=target;return target
+
+    @staticmethod
+    def texture_bytes(raw):
+        image=converter.decode_texture(raw);buffer=io.BytesIO();image.save(buffer,format='PNG');return buffer.getvalue()
+
+    def tool_json(self,kind,raw,tool,source,output,flags=()):
+        def build():
+            subprocess.run(['dotnet',str(tool),*flags,str(source),str(output)],check=True,capture_output=True)
+            return output.read_bytes()
+        value=self.resource_cache.produce(kind,[sha(raw)],build) if self.resource_cache else build()
+        return json.loads(value)
 
     def material(self,pack,path,replacement=None):
         pair=(pack,key(path),key(replacement) if replacement else None)
@@ -130,14 +142,15 @@ class SceneAssets:
             pack,model=self.models[normalized];record=self.collections[pack][2][normalized]
             if record['sha256']!=sha(raw):raise ValueError('Source MDX differs from converted library: '+path)
             metadata_path=source.with_suffix('.nodes.json')
-            subprocess.run(['dotnet',str(self.metadata_reader),str(source),str(metadata_path)],check=True,capture_output=True)
-            metadata=json.loads(metadata_path.read_bytes())
+            metadata=self.tool_json('node-metadata',raw,self.metadata_reader,source,metadata_path)
             tracks=json.loads(self.verified(pack,model['stateTracks']))
             result['clips']=model['clips']
             if not result['clips'] or tracks.get('fps')!=12 or len(tracks['clips'])!=len(result['clips']):raise ValueError('Unsupported source animation tracks: '+path)
             for part in model['parts']:
                 mesh_raw=self.verified(pack,part['animatedMesh']);doc,_=nodes.read_glb(mesh_raw)
-                if doc.get('skins'):mesh_raw,_=nodes.annotate(mesh_raw,metadata,part['geoset'])
+                if doc.get('skins'):
+                    before=mesh_raw
+                    mesh_raw=self.resource_cache.produce('annotated-mesh',[sha(before),sha(encode(metadata)),part['geoset']],lambda:nodes.annotate(before,metadata,part['geoset'])[0]) if self.resource_cache else nodes.annotate(before,metadata,part['geoset'])[0]
                 mesh=self.write(self.prefix+'Models/'+sha(mesh_raw)+'.glb',mesh_raw)
                 states=[]
                 for clip in tracks['clips']:
@@ -146,7 +159,9 @@ class SceneAssets:
                         geo=frame['geosets'][part['geoset']];layer=frame['materials'][part['materialIndex']][part['layer']]
                         sequence.append(dict(color=[*geo['color'],geo['alpha']*layer['alpha']],texture=layer['texture']))
                     states.append(sequence)
-                result['parts'].append(dict(part,mesh=mesh,pack=pack,states=states,moving=[moving_clip(mesh_raw,i) for i in range(len(result['clips']))]))
+                def movement():return encode([moving_clip(mesh_raw,i) for i in range(len(result['clips']))])
+                moving=json.loads(self.resource_cache.produce('mesh-movement',[sha(mesh_raw),len(result['clips'])],movement) if self.resource_cache else movement())
+                result['parts'].append(dict(part,mesh=mesh,pack=pack,states=states,moving=moving))
         # Source emitters are retained even when the MDX also has ordinary geosets.
         if raw[:4]!=b'MDLX':raise ValueError('Expected original MDX: '+path)
         chunks=[];offset=4
@@ -156,8 +171,7 @@ class SceneAssets:
         if offset!=len(raw):raise ValueError('Invalid MDX chunk bounds: '+path)
         if any(tag in (b'PREM',b'PRE2',b'RIBB',b'LITE') and size for tag,size in chunks):
             sampled=source.with_suffix('.effects.json')
-            subprocess.run(['dotnet',str(self.sampler),'--effects',str(source),str(sampled)],check=True,capture_output=True)
-            effect=json.loads(sampled.read_bytes());textures=effect['sourceModel']['textures']
+            effect=self.tool_json('model-effects',raw,self.sampler,source,sampled,('--effects',));textures=effect['sourceModel']['textures']
             for mat in effect['materials']:
                 if mat.get('modelPath'):
                     mat['model']=self.particle_model(mat['modelPath']);mat['texture']='';continue
@@ -182,7 +196,7 @@ class SceneAssets:
         return result
 
 
-def build(export,game,output,sampler,metadata_reader,animation_seed=1):
+def build(export,game,output,sampler,metadata_reader,animation_seed=1,resource_cache=None):
     export,output=export.resolve(),output.resolve()
     if output.exists():raise FileExistsError('Preserve existing output: '+str(output))
     binaries=[sampler,metadata_reader,sampler.with_name('Wc3ModelViewer.Core.dll'),metadata_reader.with_name('Wc3ModelViewer.Core.dll')]
@@ -197,22 +211,23 @@ def build(export,game,output,sampler,metadata_reader,animation_seed=1):
     if any(name in members for name in ['war3map.w3b','war3map.w3d']):raise ValueError('Map object overrides must be resolved before scene generation')
     output.parent.mkdir(parents=True,exist_ok=True);work=Path(tempfile.mkdtemp(prefix='.doodad-scene-',dir=output.parent));archives=[]
     try:
-        project=work/'project';terrain_builder.build(export,game,project)
+        project=work/'project';terrain_builder.build(export,game,project,resource_cache=resource_cache)
         archives=[('map',mpyq.MPQArchive(io.BytesIO(raw[data['source']['mpqOffset']:]),listfile=False))]
         archives += [(name,mpyq.MPQArchive(str(game/name),listfile=False)) for name in ['War3Patch.mpq','War3xLocal.mpq','War3x.mpq','war3.mpq']]
         source_records={};source_cache={}
+        archive_ids={name:receipt['source']['sha256'] if name=='map' else resource_cache.file_identity(game/name) for name,_ in archives} if resource_cache else {}
         def read(path):
             relative=converter.relative(path).as_posix();normalized=relative.lower()
             if normalized in source_cache:return source_cache[normalized]
             for archive_name,archive in archives:
-                try:value=read_archive(archive,relative.replace('/','\\'))
+                try:value=resource_cache.member(archive,relative,archive_ids[archive_name]) if resource_cache else read_archive(archive,relative.replace('/','\\'))
                 except FileNotFoundError:continue
                 destination=project/'SourceAssets'/relative;destination.parent.mkdir(parents=True,exist_ok=True);destination.write_bytes(value)
                 source_records[normalized]=dict(path=relative,archive=archive_name,sha256=sha(value),bytes=len(value));source_cache[normalized]=value
                 return value
             raise FileNotFoundError(relative)
         definitions=rows(read('Doodads/Doodads.slk'));destructables=rows(read('Units/DestructableData.slk'));definitions.update(destructables)
-        assets=SceneAssets(project,read,sampler,metadata_reader)
+        assets=SceneAssets(project,read,sampler,metadata_reader,resource_cache=resource_cache)
         scene=json.loads((project/'Assets/Scenes/Main.mscene').read_bytes());entities=scene['world']['entities'];groups={};placements=[];animation_rand=MsvcRandom(animation_seed)
         bindings={};definitions_cache={};animation_definitions=[];actors=[]
         def binding(model,row,tint,ci):

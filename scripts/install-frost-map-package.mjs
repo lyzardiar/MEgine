@@ -7,6 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {composeGameModules,gameScriptPrefix,readMapPackages} from './frost-script-bundle.mjs';
+import {prepareSharedMapAssets,rewriteGlb} from './frost-shared-map-assets.mjs';
 
 const gameSource=fileURLToPath(new URL('../samples/frostbound-realms/',import.meta.url));
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -14,12 +15,6 @@ const read=file=>JSON.parse(fs.readFileSync(file,'utf8'));
 const walk=folder=>fs.readdirSync(folder,{withFileTypes:true}).flatMap(e=>{const file=path.join(folder,e.name);if(e.isSymbolicLink())throw Error('Linked package files are unsupported: '+file);return e.isDirectory()?walk(file):[file];});
 const json=value=>JSON.stringify(value,null,2)+'\n';
 function write(file,bytes){fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,bytes);}
-function rewriteGlb(bytes,rewrite){
-  if(bytes.toString('ascii',0,4)!=='glTF'||bytes.readUInt32LE(4)!==2||bytes.readUInt32LE(8)!==bytes.length)throw Error('Invalid GLB');
-  const chunks=[];
-  for(let offset=12;offset<bytes.length;){const size=bytes.readUInt32LE(offset),type=bytes.readUInt32LE(offset+4);let data=bytes.subarray(offset+8,offset+8+size);if(data.length!==size)throw Error('Truncated GLB');if(type===0x4e4f534a){const text=rewrite(data.toString('utf8').trimEnd());JSON.parse(text);data=Buffer.from(text+' '.repeat((4-Buffer.byteLength(text)%4)%4));}const header=Buffer.alloc(8);header.writeUInt32LE(data.length);header.writeUInt32LE(type,4);chunks.push(header,data);offset+=8+size;}
-  const header=Buffer.from(bytes.subarray(0,12));header.writeUInt32LE(12+chunks.reduce((n,c)=>n+c.length,0),8);return Buffer.concat([header,...chunks]);
-}
 function addControls(scene,project,title){
   const base=read(path.join(project,'Assets/Scenes/Main.mscene')).world.entities,templates=new Map(base.map(e=>[e.name,e]));
   let next=Math.max(...scene.world.entities.map(e=>e.entity))+1;
@@ -33,7 +28,7 @@ function addControls(scene,project,title){
   }
   const status=clone('mapBack label');status.RectTransform=rect(190,-318,830,60);status.Text={...status.Text,text:title+' · 场景运行',font_size:18};entity('Map session status',status,root);
 }
-export function installMapPackage(source,project,id,title,{register=true}={}){
+export function installMapPackage(source,project,id,title,{register=true,sharedRoot}={}){
   source=path.resolve(source);project=path.resolve(project);
   if(!/^[a-z0-9][a-z0-9-]*$/.test(id))throw Error('Map ID must use lowercase letters, digits and hyphens');
   const catalog=readMapPackages(project),relative='Assets/Maps/'+id,output=path.join(project,relative);
@@ -48,32 +43,46 @@ export function installMapPackage(source,project,id,title,{register=true}={}){
   if(config.mainScene!=='Assets/Scenes/Main.mscene'||config.startupScript!=='Assets/Scripts/Main.js')throw Error('Expected Frostbound game project');
   const prefix=gameScriptPrefix(gameSource,fs.readFileSync(mainFile,'utf8')),rewrite=text=>text.replaceAll('Assets/',relative+'/');
   const records=[];
-  // Every original asset gets its own path. Editor metadata is regenerated for the new namespace.
+  const shared=sharedRoot?prepareSharedMapAssets(source,relative,path.resolve(sharedRoot)):null;
+  if(shared){
+    shared.publish();
+    for(const asset of shared.assets){
+      let bytes=asset.bytes;
+      if(asset.record.sourcePath==='Assets/Scenes/Main.mscene'){const scene=JSON.parse(bytes);scene.name=title;addControls(scene,project,title);bytes=Buffer.from(json(scene));}
+      if(asset.record.storage==='local')write(path.join(project,asset.path),bytes);
+      records.push({...asset.record,sha256:hash(bytes),bytes:bytes.length});
+    }
+  }else{
+  // Editor metadata is regenerated for the map namespace.
   for(const file of walk(path.join(source,'Assets'))){
     if(file.endsWith('.meta'))continue;
     const suffix=path.relative(path.join(source,'Assets'),file).replaceAll('\\','/'),target=path.join(output,suffix),before=fs.readFileSync(file),extension=path.extname(file).toLowerCase();
     let bytes=extension==='.glb'?rewriteGlb(before,rewrite):['.json','.mscene','.mmat','.mshader','.js','.gltf','.prefab'].includes(extension)?Buffer.from(rewrite(before.toString('utf8'))):before;
     if(suffix==='Scenes/Main.mscene'){const scene=JSON.parse(bytes);scene.name=title;addControls(scene,project,title);bytes=Buffer.from(json(scene));}
-    write(target,bytes);records.push({path:relative+'/'+suffix,sourceSha256:hash(before),sha256:hash(bytes),bytes:bytes.length});
+    write(target,bytes);records.push({path:relative+'/'+suffix,storage:'local',sourcePath:'Assets/'+suffix,sourceSha256:hash(before),sha256:hash(bytes),bytes:bytes.length});
+  }
   }
   write(path.join(output,'Source/original'+path.extname(map.source.preservedArchive)),archive);
   for(const file of walk(path.join(exported,'source'))){if(path.basename(file).startsWith('original.'))continue;write(path.join(output,'Source',path.basename(file)),fs.readFileSync(file));}
   for(const file of fs.readdirSync(source).filter(name=>name.endsWith('-sources.json')))write(path.join(output,'Provenance',file),fs.readFileSync(path.join(source,file)));
   const previewSource=JSON.parse(execFileSync('python',[fileURLToPath(new URL('./export-frost-map-preview.py',import.meta.url)),path.join(exported,map.source.preservedArchive),path.join(output,'Textures/MapPreview.png')],{encoding:'utf8',windowsHide:true}));
-  if(previewSource)for(const name of ['MapPreview.png',previewSource.member]){const bytes=fs.readFileSync(path.join(output,'Textures',name));records.push({path:relative+'/Textures/'+name,sourceSha256:previewSource.sourceSha256,sha256:hash(bytes),bytes:bytes.length});}
+  if(previewSource)for(const name of ['MapPreview.png',previewSource.member]){const bytes=fs.readFileSync(path.join(output,'Textures',name));records.push({path:relative+'/Textures/'+name,storage:'local',sourcePath:previewSource.member,sourceSha256:previewSource.sourceSha256,sha256:hash(bytes),bytes:bytes.length});}
   const preview=Array.from({length:256},(_,i)=>{const x=Math.min(grid.size[0]-1,Math.floor((i%16+.5)*grid.size[0]/16)),y=Math.min(grid.size[1]-1,Math.floor((15-Math.floor(i/16)+.5)*grid.size[1]/16));return grid.getCell(x,y)&2?1:0;});
   const entry={id,title,description:'Warcraft III 原地图\n地形、水面、装饰与单位动画\n场景运行；对局规则接入中',runtime:'warcraft-scene',gameplay:false,scene:relative+'/Scenes/Main.mscene',script:relative+'/Scripts/Main.js',sourceSha256:map.source.sha256,preview};
   if(previewSource)entry.previewImage=relative+'/Textures/MapPreview.png';
   const maps=[...catalog,entry],script=register?prefix+composeGameModules(gameSource,project,maps):null;if(script)new vm.Script(script,{filename:mainFile});
   const installer={path:'scripts/install-frost-map-package.mjs',sha256:hash(fs.readFileSync(fileURLToPath(import.meta.url))),previewExporterSha256:hash(fs.readFileSync(fileURLToPath(new URL('./export-frost-map-preview.py',import.meta.url))))};
   const provenance={version:1,id,source:map.source,installedSource:relative+'/Source/original'+path.extname(map.source.preservedArchive),sourceInfo:map.info,installer,previewSource,conversion:{coordinateScale:terrain.coordinateScale,axes:terrain.axes},capabilities:{terrain:true,doodads:true,units:true,animation:true,basePathing:true,gameplay:false,jass:false},assets:records};
+  if(shared){provenance.sharedAssetsVersion=1;installer.sharedAssetsSha256=hash(fs.readFileSync(fileURLToPath(new URL('./frost-shared-map-assets.mjs',import.meta.url))));}
   write(path.join(output,'manifest.json'),json(provenance));
   write(path.join(output,'entry.json'),json(entry));
   if(register){config.buildScenes=[...new Set([...(config.buildScenes||[config.mainScene]),entry.scene])];write(path.join(project,'Assets/Maps/catalog.json'),json({version:1,maps}));write(path.join(project,'project.json'),json(config));write(mainFile,script);}
   return {...entry,files:records.length,bytes:records.reduce((n,r)=>n+r.bytes,0)};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
-  const [source,id,title,project=gameSource]=process.argv.slice(2).filter(arg=>arg!=='--runtime');
-  if(!source||!id||!title)throw Error('Usage: node scripts/install-frost-map-package.mjs <converted-project> <id> <title> [game-project]');
-  console.log(JSON.stringify(installMapPackage(source,project,id,title,{register:!process.argv.includes('--runtime')})));
+  const positional=[];let register=true,sharedRoot;
+  for(let index=2;index<process.argv.length;index++){const arg=process.argv[index];if(arg==='--runtime')register=false;else if(arg==='--shared-root'){sharedRoot=process.argv[++index];if(!sharedRoot||sharedRoot.startsWith('--'))throw Error('--shared-root requires a project path');}else if(arg.startsWith('--'))throw Error('Unknown option: '+arg);else positional.push(arg);}
+  const [source,id,title,project=gameSource]=positional;
+  if(!source||!id||!title||positional.length>4)throw Error('Usage: node scripts/install-frost-map-package.mjs <converted-project> <id> <title> [game-project] [--runtime] [--shared-root <project>]');
+  console.log(JSON.stringify(installMapPackage(source,project,id,title,{register,sharedRoot})));
 }

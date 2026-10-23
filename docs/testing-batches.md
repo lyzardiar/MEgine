@@ -152,3 +152,16 @@ SDK与原生EXE只为本批统一构建一次，版本摘要见 `sdk-binaries.js
 待测：文件框内人工选中文件并确认、跨盘作业发布／取消残留清理、新机器转换器准备及独立 Player 分发。完整地图格式／JASS／对局兼容性仍属 B001-01 未完成项；本次不重复其他玩法、全库回归或性能基准，不据此宣称完整 War3 地图兼容。
 
 补充缓存完整性检查：`python scripts/test-frost-map-cache.py` 4 通过，覆盖有效缓存、原图被修改、资产被修改／缺失和跨包路径拒绝；最终 Echo Isles 缓存摘要复验通过。证据 `B001/map-cache-tests.log` 与 `B001/arbitrary-echo/final-cache-result.json`。
+
+
+### B001-01 跨地图资源共享
+
+变更：`warcraft_resource_cache.py`，地形／装饰／单位构建器的可选缓存参数，`frost-shared-map-assets.mjs`、地图安装器、运行时导入器 v2 与三个窄测试。公共 MPQ 成员和纯转换结果持久缓存；最终依赖按内容摘要发布到 `Assets/WarcraftShared/v1/`，地图覆盖资源保持档案优先级，损坏缓存禁止来源降级。整图缓存身份包含游戏档案、reader、工具和实际生成输入；成功作业只清理本次独占创建的中间目录。属于 B001-01 接入补充，计数仍为 3/3。
+
+已执行：`python scripts/test-warcraft-resource-cache.py` 6 通过，`python scripts/test-frost-map-cache.py` 5 通过；`node scripts/test-frost-shared-map-assets.mjs` 的递归依赖、跨图共用、同名不同内容、GLB片段／二进制、循环／缺失引用和不可变发布通过。独立只读审核发现并修复缺失blob误降级、遗漏缓存失效输入和复用既有stage后误清理问题，修复后复核通过。实际生成脚本的菜单切换测试通过。
+
+两图定向导入：最终 Amazonia／Echo Isles 在 `shared-maps/amazonia-final` 与 `shared-maps/echo-final`；共享 298 个文件、56,854,680 字节，清理成功作业的中间文件；统计 `shared-maps/sharing-summary.json`。首轮 Amazonia 失败由本机旧 sentinel 转换器缺少粒子模型字段引起，保留 `shared-amazonia.log`，运行准备脚本后恢复；相关 `.NET` 构建只用于更新实际转换工具，没有重建 Editor 或扩大到全库测试。
+
+原生 `arbitrary-map-1792746961699.json` 通过，0 error、7,221实体；复用 EXE SHA256 `604ac3e46f7eb559cf310568da80a311c2fac69429bedf9c84c78176e3670fcf`。验证共享资源的实际渲染、转换期间菜单响应、同次Play切图／返回、整图缓存和Stop恢复。重新生成地图包时 225 次公共成员读取全命中，120 次纹理解码、79 次节点解析、183 次网格标注、183 次动画变化分析、19 次特效转换均命中缓存，0 新成员解包／0 新派生构建。所有日志、报告、截图仍存 `tmp/docs-artifacts/testing-batches/B001/`。
+
+待批次：共享包独立 Player 分发、跨盘发布、旧预装／v1缓存迁移与历史空间回收；旧包本次保持兼容，未删除。未新增完整War3对局、JASS、全部地图格式或性能帧率结论，不重复已通过的B001-02／03及无关玩法测试。
