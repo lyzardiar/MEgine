@@ -30,6 +30,21 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def decode_texture(raw):
+    """MiYu: BLP1 JPEG stores BGRA planes; CMYK conversion would discard alpha."""
+    if raw[:4] == b'BLP1' and struct.unpack_from('<I', raw, 4)[0] == 0:
+        header_size = struct.unpack_from('<I', raw, 156)[0]
+        offset, size = struct.unpack_from('<I', raw, 28)[0], struct.unpack_from('<I', raw, 92)[0]
+        jpeg = Image.open(io.BytesIO(raw[160:160+header_size] + raw[offset:offset+size]))
+        jpeg.tile = [jpeg.tile[0]._replace(args=(jpeg.mode, jpeg.mode))]
+        jpeg.load()
+        planes = jpeg.split()
+        b, g, r = planes[:3]
+        alpha = planes[3] if len(planes) == 4 and struct.unpack_from('<I', raw, 8)[0] else Image.new('L', jpeg.size, 255)
+        return Image.merge('RGBA', (r, g, b, alpha))
+    return Image.open(io.BytesIO(raw)).convert('RGBA')
+
+
 def relative(path):
     value = pathlib.PureWindowsPath(path)
     if value.is_absolute() or any(x in ('.', '..') for x in value.parts) or ':' in path:
@@ -302,16 +317,7 @@ def main():
         png = PREFIX / 'Textures' / path.with_suffix('.png')
         if path.suffix.lower()=='.blp' and not (output / png).exists():
             raw=(output / 'SourceAssets' / path).read_bytes()
-            if raw[:4]==b'BLP1' and struct.unpack_from('<I',raw,4)[0]==0:
-                header_size=struct.unpack_from('<I',raw,156)[0]
-                offset,size=struct.unpack_from('<I',raw,28)[0],struct.unpack_from('<I',raw,92)[0]
-                jpeg=Image.open(io.BytesIO(raw[160:160+header_size]+raw[offset:offset+size]))
-                jpeg.tile=[jpeg.tile[0]._replace(args=(jpeg.mode,jpeg.mode))];jpeg.load()
-                planes=jpeg.split();b,g,r=planes[:3]
-                alpha=planes[3] if len(planes)==4 and struct.unpack_from('<I',raw,8)[0] else Image.new('L',jpeg.size,255)
-                image=Image.merge('RGBA',(r,g,b,alpha))
-            else:
-                image=Image.open(io.BytesIO(raw)).convert('RGBA')
+            image=decode_texture(raw)
             (output / png).parent.mkdir(parents=True,exist_ok=True)
             image.save(output / png)
         if path.suffix.lower() != '.blp':

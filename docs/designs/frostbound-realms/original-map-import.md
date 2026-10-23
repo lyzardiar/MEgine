@@ -55,3 +55,5 @@ python scripts/test-warcraft-map.py --maps 'E:/Program Files (x86)/dzclient/Game
 证据：`tmp/docs-artifacts/frost-original-maps/{tests.log,corpus.json,rea-summary.json,reference-check/report.json}`，以及两个导出目录。该阶段没有修改游戏逻辑或引擎生产代码，没有新增原生 Editor／Player 运行验收，也不声明帧率改善。
 
 后续接入需同时处理任意地图尺寸、原版路径格、原点和轴向、地形网格与材质、玩家槽、资源与装饰、脚本开局、序列化及网络协议；使用本阶段原件和坐标作为验证依据，避免通过缩小地图获得表面兼容。
+
+原生地形消费入口已实现，见 [原版地形场景](original-terrain-scene.md)：保留地图尺寸、原版地表／悬崖／坡道／水面，生成独立 MEngine 项目；完整对局执行继续推进。
