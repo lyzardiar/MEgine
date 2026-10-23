@@ -108,8 +108,8 @@ try{
       await execute('profiler.clear');const started=performance.now();await sleep(10000);const elapsedMs=performance.now()-started;
       const profiles=await query('profiler.get_samples',{source:'game',limit:480});
       assert.ok(profiles.nativeProfileCount>=15,'Expected completed live viewport frames');assert.ok(profiles.returnedSamples>0,'Expected WebView paint samples');
-      report.continuousProfile={elapsedMs,...profiles};await execute('playback.pause');await capture('profile-view');if(effectReload)await checkEffectReload();await execute('playback.stop');
-      report.checks.push('10-second live Amazonia presentation and WebView sample window without Agent polling');
+      report.continuousProfile={elapsedMs,...profiles};await execute('playback.pause');await capture('profile-view');if(effectReload)await checkEffectReload();await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities,'Stop restores the authored scene after profiling');
+      report.checks.push('10-second live Amazonia presentation and WebView sample window without Agent polling, followed by Stop restoration');
     }else{
     const native=[];
     for(let i=0;i<100;i++){

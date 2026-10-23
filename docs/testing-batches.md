@@ -358,4 +358,6 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 
 快速检查：属性覆盖边界1通过，mesh_cache_tests 6通过、8手动忽略，均0失败；新手动基准单独通过。Amazonia2,747对象中位1.62840→1.58706ms，主菜单219对象0.22755→0.20856ms；CPU局部口径见performance-risk-todo第三十七阶段。diff检查通过。
 
-待合并验证：与2e8c4be和3fd5b17共用一次原生构建，验证Amazonia加载、动画连续呈现、暂停特效修改/恢复与Stop。父级/活动状态编辑、Undo以及相关Scene视图仍按已有条目保留待测；不重跑不相关窗口同步或全库回归。
+与2e8c4be和3fd5b17共用一次Rust Release构建通过，EXE `4e429e11e48deacb53be7bb8509fd40de71bd21708dec72e757820c576a74faa`。`qa-frost-map-session.mjs --continuous-profile --effect-reload`报告`B001/map-session-1792777658238.json`通过Amazonia加载、原动画连续呈现、暂停特效修改/恢复、场景不变及Stop快照还原，0 error、正常退出。锁定WebView缓存保留，原生Game画面已核对；脚本增加Stop后显式快照断言。
+
+关闭这三项常规Game加载/连续呈现/暂停恢复/Stop待测。父级/活动状态编辑、Undo及Scene视图仍保留；未重跑不相关窗口同步或全库回归。连续采样仅保留末尾240帧，46.979次完成呈现/秒，未证明整体流畅度提高；完整口径与日志见performance-risk-todo第三十七阶段。

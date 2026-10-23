@@ -822,4 +822,9 @@ TransformHierarchy提供只读get_ref入口，既有get仍返回独立值。网�
 
 真实Amazonia 2,747对象与主菜单219对象，在同进程交替测量等价的按值和就地覆盖提取路径，2组预热、9组有效样本、每组20次。完整RenderObject输出相等；中位分别1.62840→1.58706ms、0.22755→0.20856ms。该小幅局部CPU差异不含真实IPC或原生呈现，不能直接换算FPS或保证每次提取都同幅提速。输入摘要与完整样本见`tmp/docs-artifacts/editor-performance-risk/inplace-material-summary.json`。
 
-属性覆盖边界测试1通过，mesh_cache_tests 6通过、8手动基准忽略，均0失败；单独benchmark_material_override_moves通过。原始日志`inplace-material-{property-tests.log,mesh-tests.log,benchmark.log}`位于同一临时目录。正在与第三十五、三十六阶段合并构建原生Editor，原生集成结论待补充。
+属性覆盖边界测试1通过，mesh_cache_tests 6通过、8手动基准忽略，均0失败；单独benchmark_material_override_moves通过。原始日志`inplace-material-{property-tests.log,mesh-tests.log,benchmark.log}`位于同一临时目录。第三十五、三十六、三十七阶段已合并完成下面的原生Game集成验证。
+
+
+2e8c4be、3fd5b17、576913a共用一次Rust Release构建（1分28秒），复用未变更的前端产物，仅既有world_from_snapshot未使用告警。EXE SHA256 `4e429e11e48deacb53be7bb8509fd40de71bd21708dec72e757820c576a74faa`。`qa-frost-map-session.mjs --continuous-profile --effect-reload`报告`tmp/docs-artifacts/testing-batches/B001/map-session-1792777658238.json`通过：原地图加载与连续呈现、37份特效修改/恢复（图元880→68→880且暂停像素精确还原）、Stop恢复原作者实体。0 error、正常退出，锁定WebView缓存保留；Game截图已目视核对。脚本补充Stop后的显式快照断言。日志为`hierarchy-material-{native-build.log,map-qa.log}`。
+
+850×478、7,410实体含QA节点，10秒不轮询采样窗口末尾保留240帧（约5.11秒）：呈现间隔均值21.2863ms、P95 33.9ms，46.979次完成呈现/秒；渲染均值13.1459ms、完整请求26.1829ms、模拟请求13.4942ms，38个WebView采样段平均绘制3.3323ms。阶段会重叠，不能相加，也不是显示器或新模拟帧率。相比此前单次采样48.475次/秒，本次没有证明整体提升；不同次运行不是受控A/B，也不能把差异直接归因于本项。下一步应拆查模拟/呈现调度、请求等待与传输成本。Scene视图、父级/活动编辑及Undo仍待相关原生场景；本次Game通过不关闭整体性能或完整Warcraft复刻目标。
