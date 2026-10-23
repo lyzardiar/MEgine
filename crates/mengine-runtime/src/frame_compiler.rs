@@ -559,12 +559,13 @@ fn collect_view_objects(world: &World, hierarchy: &TransformHierarchy, materials
 
 fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>, mut entities: Option<&mut Vec<Entity>>) -> Vec<RenderObject> {
     let mut out = Vec::new();
+    let mut root_filter = RenderRootFilter::new(root);
     // MiYu: resolve a shared authored material once per extraction; each object's overrides stay private.
     let mut resolved_materials = HashMap::<&str, RenderMaterial>::new();
     for entity in world.entities_with_components(&["MeshRenderer"]) {
         // MiYu: resolve eligibility before reading pooled renderer components.
         let Some(transform) = hierarchy.get(entity) else { continue; };
-        if !within_render_root(world, entity, root) { continue; }
+        if !root_filter.contains(world, entity) { continue; }
         if let Some(mesh) = world.get_component::<MeshRenderer>(entity) {
             let mut material = world
                 .get_component::<PbrMaterial>(entity)
@@ -591,9 +592,42 @@ fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials
 // MiYu: one immutable compile owns the source objects; each view keeps independently mutable copies.
 fn collect_shared_view_objects(world: &World, entities: &[Entity], objects: &[RenderObject], root: Option<Entity>) -> Vec<RenderObject> {
     debug_assert_eq!(entities.len(), objects.len());
-    entities.iter().zip(objects).filter(|(entity, _)| within_render_root(world, **entity, root)).map(|(_, object)| object.clone()).collect()
+    let mut filter = RenderRootFilter::new(root);
+    entities.iter().zip(objects).filter(|(entity, _)| filter.contains(world, **entity)).map(|(_, object)| object.clone()).collect()
 }
 
+// MiYu: cache shared ancestor distances only within this immutable view extraction.
+struct RenderRootFilter { root: Option<Entity>, distances: HashMap<Entity, Option<u16>>, path: Vec<Entity> }
+
+impl RenderRootFilter {
+    fn new(root: Option<Entity>) -> Self { Self { root, distances: HashMap::new(), path: Vec::new() } }
+
+    fn contains(&mut self, world: &World, entity: Entity) -> bool {
+        let Some(root) = self.root else { return true; };
+        if entity == root { return true; }
+        let Some(parent) = world.get_component::<Parent>(entity) else { return false; };
+        if parent.entity == root { return true; }
+        self.path.clear();self.path.push(entity);
+        let mut cursor = parent.entity;
+        let mut distance = loop {
+            if cursor == root { break Some(0u16); }
+            if let Some(distance) = self.distances.get(&cursor) { break *distance; }
+            // A truncated suffix may still reach the root within 128 steps from another candidate.
+            if self.path.len() == 128 { return false; }
+            self.path.push(cursor);
+            let Some(parent) = world.get_component::<Parent>(cursor) else { break None; };
+            cursor = parent.entity;
+        };
+        for (index, ancestor) in self.path.iter().enumerate().rev() {
+            distance = distance.and_then(|value| (value < 128).then_some(value + 1));
+            // Mesh leaves are usually visited once; retain shared ancestors instead of every leaf.
+            if index != 0 { self.distances.insert(*ancestor, distance); }
+        }
+        distance.is_some()
+    }
+}
+
+#[cfg(test)]
 fn within_render_root(world: &World, mut entity: Entity, root: Option<Entity>) -> bool {
     let Some(root) = root else { return true; };
     for _ in 0..128 {

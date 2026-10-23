@@ -128,6 +128,69 @@ fn root_filter_preserves_inclusive_depth_limit_and_terminates_cycles() {
 }
 
 #[test]
+fn cached_root_filter_matches_depth_cutoffs_in_every_query_order() {
+    let mut world = World::new();let root = world.spawn_empty();let unrelated = world.spawn_empty();
+    let mut chain = vec![root];
+    for _ in 0..260 { let child = world.spawn_empty();world.insert_component(child, Parent { entity: *chain.last().unwrap() });chain.push(child); }
+    let cycle_a = world.spawn_empty();let cycle_b = world.spawn_empty();
+    world.insert_component(cycle_a, Parent { entity: cycle_b });world.insert_component(cycle_b, Parent { entity: cycle_a });
+    let removed = world.spawn_empty();world.despawn(removed);let replacement = world.spawn_empty();
+    let stale_child = world.spawn_empty();world.insert_component(stale_child, Parent { entity: removed });
+    let mut candidates = chain.clone();candidates.extend([unrelated,cycle_a,cycle_b,stale_child,replacement]);
+    for selected in [None,Some(root),Some(chain[64]),Some(unrelated),Some(cycle_a),Some(replacement)] {
+        for reverse in [true,false] {
+            let mut filter = RenderRootFilter::new(selected);
+            let mut ordered = candidates.clone();if reverse { ordered.reverse(); }
+            for entity in ordered.iter().chain(ordered.iter().rev()) {
+                assert_eq!(filter.contains(&world,*entity),within_render_root(&world,*entity,selected),"root={selected:?} entity={entity:?}");
+            }
+        }
+    }
+    // The first truncated query cannot poison the shorter suffix used by the next mesh.
+    let mut filter = RenderRootFilter::new(Some(root));
+    assert!(!filter.contains(&world,chain[129]));assert!(filter.contains(&world,chain[128]));assert!(!filter.contains(&world,chain[130]));
+}
+
+#[test]
+fn cached_root_filter_retains_shared_ancestors_without_caching_flat_leaves() {
+    let mut world = World::new();let root = world.spawn_empty();let parent = world.spawn_empty();world.insert_component(parent,Parent {entity:root});
+    let direct = world.spawn_empty();world.insert_component(direct,Parent {entity:root});
+    let children: Vec<_> = (0..64).map(|_| {let child=world.spawn_empty();world.insert_component(child,Parent {entity:parent});child}).collect();
+    let mut filter = RenderRootFilter::new(Some(root));assert!(filter.contains(&world,direct));assert!(filter.distances.is_empty());assert!(filter.path.is_empty());
+    for child in &children {assert!(filter.contains(&world,*child));}
+    assert_eq!(filter.distances.len(),1);assert_eq!(filter.distances[&parent],Some(1));
+    world.insert_component(parent,Parent {entity:direct});
+    let mut next_view = RenderRootFilter::new(Some(direct));
+    for child in &children {assert!(next_view.contains(&world,*child));}
+    world.remove_component_by_name(parent,"Parent");
+    let mut next_view = RenderRootFilter::new(Some(root));
+    for child in children {assert!(!next_view.contains(&world,child));}
+}
+
+#[test]
+#[ignore = "manual shared-ancestor view filter benchmark for the integration batch"]
+fn benchmark_cached_render_root_filter() {
+    let mut reports = Vec::new();
+    for depth in [1,16,64] {
+        let mut world=World::new();let root=world.spawn_empty();let outside=world.spawn_empty();let mut parents=[root,outside];
+        for _ in 1..depth {for parent in &mut parents {let child=world.spawn_empty();world.insert_component(child,Parent {entity:*parent});*parent=child;}}
+        let entities: Vec<_>=(0..4096).map(|index| {let child=world.spawn_empty();world.insert_component(child,Parent {entity:parents[index%2]});child}).collect();
+        let baseline=|| entities.iter().map(|entity|within_render_root(&world,*entity,Some(root))).collect::<Vec<_>>();
+        let cached=|| {let mut filter=RenderRootFilter::new(Some(root));let result=entities.iter().map(|entity|filter.contains(&world,*entity)).collect::<Vec<_>>();(result,filter.distances.len())};
+        let expected=baseline();let (actual,ancestors)=cached();assert_eq!(expected,actual);assert_eq!(actual.iter().filter(|value|**value).count(),2048);
+        let mut samples=[Vec::new(),Vec::new()];
+        for sample in 0..11 {for mode in [sample%2,(sample+1)%2] {
+            let started=std::time::Instant::now();
+            for _ in 0..30 {if mode==0 {std::hint::black_box(baseline());}else {std::hint::black_box(cached());}}
+            if sample>=2 {samples[mode].push(started.elapsed().as_secs_f64()*1000.0/30.0);}
+        }}
+        for values in &mut samples {values.sort_by(f64::total_cmp);}
+        reports.push(serde_json::json!({"depth":depth,"candidates":entities.len(),"cached_ancestors":ancestors,"baseline_ms":samples[0][4],"cached_ms":samples[1][4],"results_equal":true}));
+    }
+    println!("RENDER_ROOT_FILTER_BENCHMARK={}",serde_json::json!(reports));
+}
+
+#[test]
 fn compiled_views_match_with_main_camera_and_ui_only_frames() {
     use mengine_core::generated::{Canvas, RectTransform};
     let mut world = World::new();
