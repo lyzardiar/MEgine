@@ -197,7 +197,7 @@ def build(export,game,output,sampler,metadata_reader):
                 source_records[normalized]=dict(path=relative,archive=archive_name,sha256=sha(value),bytes=len(value));source_cache[normalized]=value
                 return value
             raise FileNotFoundError(relative)
-        definitions=rows(read('Doodads/Doodads.slk'));definitions.update(rows(read('Units/DestructableData.slk')))
+        definitions=rows(read('Doodads/Doodads.slk'));destructables=rows(read('Units/DestructableData.slk'));definitions.update(destructables)
         assets=SceneAssets(project,read,sampler,metadata_reader)
         scene=json.loads((project/'Assets/Scenes/Main.mscene').read_bytes());entities=scene['world']['entities'];groups={};placements=[]
         def entity(name,components,parent=None,active=True):
@@ -205,7 +205,7 @@ def build(export,game,output,sampler,metadata_reader):
             if parent is not None:item['parent']=parent
             entities.append(item);return item['entity']
         for index,d in enumerate(data['doodads']['doodads']):
-            row=definitions[d['id']];model=assets.prepare(model_path(row,d['variation']));dead=d['life']==0;ci=clip_index(model['clips'],dead);clip=model['clips'][ci]
+            row=definitions[d['id']];model=assets.prepare(model_path(row,d['variation']));dead=d['id'] in destructables and d['life']==0;ci=clip_index(model['clips'],dead);clip=model['clips'][ci]
             name=f'Doodad-{index}-{d["id"]}-{d["editorId"]}';parent=entity(name,dict(Transform=placement_transform(d)),active=bool(d['flags']&2))
             tint=[float(row.get('color'+c,row.get(f'vert{c}{min(d["variation"],int(row["numVar"])-1)+1:02}',255)))/255 for c in 'RGB']
             part_names=[]

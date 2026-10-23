@@ -32,6 +32,14 @@ Author: MiYu。
 
 ## 复现与后续消费
 
+### 生命状态分支
+
+REA 的 `node scripts/probe-frost-rea-doodads.mjs --life` 对同一固定 Game.dll 提供3组新增证据：DOO生命字节读取、可破坏物生命状态、按名称选择Death及定位末帧。`0x6f7571c0` 读取生命字节，`0x6f74eaa0` 将其传给 `0x6f75c5f0`；后者先检查对象分类位 `[entity+0x87]&1`，普通装饰物不进入生命修改。可破坏物百分比限制在0到100，归零时由 `0x6f7592a0` 的状态3选择 `death`，并向 `0x6f6f1f50` 传末帧标志；后者按序列长度调用 `0x6f12f500`。
+
+`python scripts/probe-frost-rea-doodad-life-cpu.py` 在 Unicorn 中执行以上原始机器码，1,024组输入通过：两种对象类别、初始生命0／100、全部256种生命字节。它执行实际状态和命名动画分支；外部模型元数据、路径／注册／纹理更新和Stand变体选择使用桩，不启动原游戏。故只证明该分支，不能证明flags可见性、随机动画调度或渲染一致。依赖沿用 `tmp/docs-artifacts/frost-siege-engine/dependencies` 中的 pefile／unicorn；更换DLL必须重新定位地址及核验摘要。
+
+生成器据源SLK类别处理生命：普通装饰物即使life=0仍保留Stand动画；死亡树木使用Death末帧。`python scripts/test-frost-doodad-life.py` 从Booty Bay原件派生3条放置的测试地图，通过真实MPQ导出与生成路径核对：零生命风车5部件保持Stand和动画分组，死亡树2部件固定Death末帧，活树2部件保持Stand。夹具只用于定向验证，不替代原地图展示。已通过的结果在 `tmp/docs-artifacts/warcraft-map-tests/life-fixture-00_e69ab/result.json`；原DLL执行结果为 `doodad-runtime/life-cpu.json`，REA证据为 `tmp/docs-artifacts/frost-original-doodads/doodad-life-*-rea.json` 与 `doodad-death-seek-rea.json`。
+
 ```powershell
 python scripts/test-warcraft-doodads.py --maps 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Maps'
 python scripts/test-warcraft-map.py
