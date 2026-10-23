@@ -35,7 +35,15 @@ Author: MiYu。2026-10-23起执行，规则入口为[AGENTS.md](../AGENTS.md)。
 
 复用本批EXE，没有全图生成、整库测试或构建；无整图性能改善结论。B001-01继续保留原版共享RNG初始化／调用顺序、隐藏／离屏更新、特殊状态队列、完整创建／模式、缺失Death原生展示、粒子求解器和同视角画面待测项。按[场景说明](designs/frostbound-realms/original-doodad-scene.md#stand结束重选验证)复现本补充；后续只验证上述剩余项与新增修复影响范围。
 
-B001-01 地表图集采样补充：`build-frost-original-terrain.py` 生成64像素对齐图集和逐级边界约束Shader，防止缩小时混入其他地表图块；原地图位置／法线／索引、纹理层和基础像素不变。`test-frost-terrain-atlas.py` 与 `qa-frost-terrain-atlas.mjs` 的六色GPU对照通过：7种LOD下区域与各自中心基准最大差0，整图mip对照在LOD3／6的最大差201／205。Amazonia 26网格／1,502图块对比、原生远近景、重开／恢复与0 error通过，EXE复用，图集基础像素量减少约11.4%，未宣称整帧提速。证据 `B001/terrain-atlas-1792729576774.json`，GPU截图复用 `terrain-atlas-1792729481847.json`；测试入口修正前的失败记录均保留。新项目 `tmp/docs-artifacts/warcraft-map-tests/amazonia-atlas/project/`；其余既有完整装饰项目保留原版本。此为B001-01修复，不增加3/3计数，不重跑全库／全地图或构建。待补新Shader同场景性能对照、水面图集采样及原版同视角验收；具体命令见[地表采样说明](designs/frostbound-realms/original-terrain-scene.md#地表缩小采样隔离)。
+B001-01 地表图集采样补充：`build-frost-original-terrain.py` 生成64像素对齐图集和逐级边界约束Shader，防止缩小时混入其他地表图块；原地图位置／法线／索引、纹理层和基础像素不变。`test-frost-terrain-atlas.py` 与 `qa-frost-terrain-atlas.mjs` 的六色GPU对照通过：7种LOD下区域与各自中心基准最大差0，整图mip对照在LOD3／6的最大差201／205。Amazonia 26网格／1,502图块对比、原生远近景、重开／恢复与0 error通过，EXE复用，图集基础像素量减少约11.4%，未宣称整帧提速。证据 `B001/terrain-atlas-1792729576774.json`，GPU截图复用 `terrain-atlas-1792729481847.json`；测试入口修正前的失败记录均保留。新项目 `tmp/docs-artifacts/warcraft-map-tests/amazonia-atlas/project/`；其余既有完整装饰项目保留原版本。此为B001-01修复，不增加3/3计数，不重跑全库／全地图或构建。新Shader同场景性能对照和水面采样见下节，原版同视角验收仍待补；具体命令见[地表采样说明](designs/frostbound-realms/original-terrain-scene.md#地表缩小采样隔离)。
+
+### B001-01 水面采样与图集性能补充
+
+变更为 `scripts/build-frost-original-terrain.py`、`test-frost-water-atlas.py`、`qa-frost-water-atlas.mjs`、`qa-frost-atlas-performance.mjs`。水面按源帧对齐，逐级帧内repeat双线性与相邻mip插值；源45帧RGBA、26个GLB、场景／时钟／地表／深度纹理保持一致，基础像素量约减少6%。Python／JS语法与差异检查通过。
+
+原生16组帧／LOD对照通过：色调映射前RGBA误差≤1/256，映射后平均通道差≤0.00311、最大13；旧路径LOD7最大差63。真实Amazonia水动画、Pause、Stop恢复、重新Play像素与0 error通过，报告 `B001/water-atlas-1792730970604.json`。复用 `1792730626971` 的固定／参考截图和 `1792730892027` 的线性比较截图；原始像素断言失败和项目切换失败记录保留。新地形项目 `tmp/docs-artifacts/warcraft-map-tests/amazonia-water-atlas-v2/project/`，不含装饰、单位或对局接入。
+
+同Editor相同场景交替旧／新采样，每视角每模式18帧硬件timestamp：地表GPU pass全景1.08268→1.10280ms、近景1.30742→1.32826ms；水面全景1.10208→1.21182ms、近景1.32942→1.44512ms。报告分别为 `B001/atlas-performance-ground-1792730050507.json`、`B001/atlas-performance-water-1792730993831.json`。已补地表Shader成本与水面采样检查，未证明FPS提升。继续保留原版同视角、粒子求解器、完整创建／共享调度语义和主游戏接入待测；B001仍3/3，未重建引擎、重跑全库或全地图。
 
 ### B001-02 执行命令
 

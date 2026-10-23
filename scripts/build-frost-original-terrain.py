@@ -172,9 +172,11 @@ def build(export, game, output, chunk_size=32):
         size = water_frames[0].width
         if any(image.size != (size, size) for image in water_frames):
             raise ValueError('Water animation frame dimensions differ')
-        water_atlas = Image.new('RGBA', ((size+4)*8, (size+4)*math.ceil(len(water_frames)/8)))
+        if size < 1 or size & (size-1):
+            raise ValueError('Water mip isolation requires power-of-two frame dimensions')
+        water_atlas = Image.new('RGBA', (size*8, size*math.ceil(len(water_frames)/8)))
         for i, frame in enumerate(water_frames):
-            water_atlas.paste(padded(frame), ((i%8)*(size+4), (i//8)*(size+4)))
+            water_atlas.paste(frame, ((i%8)*size, (i//8)*size))
         save_image('Assets/Textures/Water.png', water_atlas)
         shader = water_shader(water_row, size, water_atlas.size, [ox/128, oy/128], [width,height])
         (temporary / 'Assets/Shaders/Water.mshader').write_text(shader, encoding='utf-8')
@@ -227,6 +229,7 @@ def build(export, game, output, chunk_size=32):
         receipt = dict(mapSha256=data['source']['sha256'], terrainTiles=terrain['tileSize'], coordinateScale=1/128, axes=['X','Z','-Y'], chunkSize=chunk_size,
                        sourceExport=str(exported), groundTiles=len(layout['ground']), cliffInstances=len(layout['cliffs']), rampTransitions=sum('Trans' in p['model'] for p in layout['cliffs']),
                        rampEntrances=len(layout['rampEntrances']), waterTiles=water_count, entities=len(entities), atlasTiles=len(tiles), groundAtlas=dict(tileSize=64,maxMip=6,size=list(atlas.size),sampling='per-tile-clamped-trilinear'), meshes=mesh_records,
+                       waterAtlas=dict(frameSize=size,maxMip=int(math.log2(size)),size=list(water_atlas.size),frames=len(water_frames),sampling='per-frame-repeat-trilinear'),
                        sources=list(sources.values()), templateSha256=sha(patches_path.read_bytes()), templateCatalogSha256=sha((SAMPLE/'Assets/WarcraftIII/classic-cliff-catalog.json').read_bytes()),
                        compilerSha256=sha(Path(__file__).read_bytes()), layoutSha256=sha((ROOT/'scripts/warcraft_terrain.py').read_bytes()), converterSha256=sha((ROOT/'scripts/convert-warcraft-assets.py').read_bytes()),
                        coverage=dict(terrainScene=True, gameplay=False, doodads=False, units=False, shorelineModels=False, originalRuntimeVisualParity=False))
@@ -267,10 +270,34 @@ fn mengine_lit_surface_hook(surface:MEngineSurface,uv:vec2<f32>,world_position:v
 '''
 
 
+def water_atlas_sampling(size, atlas_size):
+    return f'''// Author: MiYu. Repeat within one water frame, including bilinear taps across its edges.
+fn source_water_level(frame:u32,local:vec2<f32>,level:f32) -> vec4<f32> {{
+    let n=i32({size}u>>u32(level));let origin=vec2<i32>(i32(frame%8u),i32(frame/8u))*n;
+    if n==1 {{return textureLoad(mengine_custom_texture_0,origin,i32(level));}}
+    let pixel=local*f32(n)-vec2<f32>(0.5);let lo=vec2<i32>(floor(pixel));let f=fract(pixel);
+    let wrapped=((lo%vec2<i32>(n))+vec2<i32>(n))%vec2<i32>(n);
+    if all(wrapped+vec2<i32>(1)<vec2<i32>(n)) {{
+        let uv=(vec2<f32>(origin+wrapped)+f+vec2<f32>(0.5))/vec2<f32>(textureDimensions(mengine_custom_texture_0,u32(level)));
+        return textureSampleLevel(mengine_custom_texture_0,material_sampler,uv,level);
+    }}
+    let a=origin+wrapped;let b=origin+(wrapped+vec2<i32>(1))%vec2<i32>(n);
+    let sw=textureLoad(mengine_custom_texture_0,a,i32(level));let se=textureLoad(mengine_custom_texture_0,vec2<i32>(b.x,a.y),i32(level));
+    let nw=textureLoad(mengine_custom_texture_0,vec2<i32>(a.x,b.y),i32(level));let ne=textureLoad(mengine_custom_texture_0,b,i32(level));
+    return mix(mix(sw,se,f.x),mix(nw,ne,f.x),f.y);
+}}
+fn source_water_sample(frame:u32,local:vec2<f32>,lod:f32) -> vec4<f32> {{
+    let level=clamp(lod,0.0,{float(int(math.log2(size)))});let lower=floor(level);let a=source_water_level(frame,local,lower);
+    if level==lower {{return a;}}
+    return mix(a,source_water_level(frame,local,lower+1.0),level-lower);
+}}
+'''
+
+
 def water_shader(row, size, atlas_size, origin, vertex_size):
     colors = {key:[float(row[key+'_'+c])/255 for c in ['R','G','B','A']] for key in ['Smin','Smax','Dmin','Dmax']}
     vec = lambda values:'vec4<f32>('+','.join(str(float(v)) for v in values)+')'
-    return '/* MENGINE_PARAMETERS\n'+json.dumps(dict(parameters=[dict(name='water_time',type='vector4',default=[0,0,0,0])],textures=[dict(name='water',type='color',default='Assets/Textures/Water.png'),dict(name='water_depth',type='data',default='Assets/Textures/WaterDepth.png')]))+'\n*/\n'+f'''// Author: MiYu. Source W3E water heights and Water.slk colors, frames and lattice.
+    return '/* MENGINE_PARAMETERS\n'+json.dumps(dict(parameters=[dict(name='water_time',type='vector4',default=[0,0,0,0])],textures=[dict(name='water',type='color',default='Assets/Textures/Water.png'),dict(name='water_depth',type='data',default='Assets/Textures/WaterDepth.png')]))+'\n*/\n'+water_atlas_sampling(size,atlas_size)+f'''// Author: MiYu. Source W3E water heights and Water.slk colors, frames and lattice.
 fn source_water_tint(cell:vec2<i32>) -> vec4<f32> {{
     let packed=vec4<u32>(textureLoad(mengine_custom_texture_1,clamp(cell,vec2<i32>(0),vec2<i32>({vertex_size[0]-1},{vertex_size[1]-1})),0)*255.0+vec4<f32>(0.5));
     let depth=clamp(bitcast<f32>(packed.r|(packed.g<<8u)|(packed.b<<16u)|(packed.a<<24u)),0.0,1.0);
@@ -281,10 +308,10 @@ fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_positi
     var s=surface;
     let frame=u32(max(0.0,mengine_param_water_time().x))%{int(row['numTex'])}u;
     let lattice=(vec2<f32>(world_position.x,-world_position.z)-vec2<f32>({float(origin[0])},{float(origin[1])}))/{float(row['cells'])};
-    let local=vec2<f32>(fract(lattice.x),1.0-fract(lattice.y));
-    let offset=vec2<f32>(f32(frame%8u),f32(frame/8u))*{float(size+4)}+vec2<f32>(2.0);
-    let atlasSize=vec2<f32>({float(atlas_size[0])},{float(atlas_size[1])});
-    let pixel=textureSampleGrad(mengine_custom_texture_0,material_sampler,(offset+local*{float(size)})/atlasSize,dpdx(lattice)*vec2<f32>(1.0,-1.0)*{float(size)}/atlasSize,dpdy(lattice)*vec2<f32>(1.0,-1.0)*{float(size)}/atlasSize);
+    let local=vec2<f32>(lattice.x,-lattice.y);
+    let dx=dpdx(lattice)*{float(size)};let dy=dpdy(lattice)*{float(size)};
+    let lod=0.5*log2(max(max(dot(dx,dx),dot(dy,dy)),0.000001));
+    let pixel=source_water_sample(frame,local,lod);
     let grid=lattice*{float(row['cells'])};let cell=vec2<i32>(floor(grid));let f=fract(grid);
     let sw=source_water_tint(cell);let nw=source_water_tint(cell+vec2<i32>(0,1));let ne=source_water_tint(cell+vec2<i32>(1,1));let se=source_water_tint(cell+vec2<i32>(1,0));
     var tint=sw*(1.0-f.x-f.y)+se*f.x+nw*f.y;

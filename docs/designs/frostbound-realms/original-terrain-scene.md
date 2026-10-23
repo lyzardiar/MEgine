@@ -55,7 +55,7 @@ Booty Bay 包含 15,999 个普通地面格、2,413 个悬崖实例（其中 20 �
 
 `test-frost-terrain-atlas.py` 生成六色、3×2图块的原生夹具；`qa-frost-terrain-atlas.mjs <fixture> <terrain-project>` 检查LOD 0／2.5／3／4／5.5／6／8。所有图块的测试区域与其LOD0中心基准逐通道相同；基准包含原生环境光输出。对照路径复现图块串色，最大通道差为201／205。报告 `tmp/docs-artifacts/testing-batches/B001/terrain-atlas-1792729576774.json` 复用 `terrain-atlas-1792729481847.json` 的九张GPU截图，未重复采集已通过输入；夹具为 `tmp/docs-artifacts/warcraft-map-tests/atlas-fixture-3nb2ye_b/`。
 
-Amazonia 更新项目为 `tmp/docs-artifacts/warcraft-map-tests/amazonia-atlas/project/`，只含地形。26个网格的位置／法线／索引和1,502块基础图像逐项相同，UV与材质按新采样布局生成；图集2652²→2496²，基础像素量减少约11.4%。原生全景、近景、重开像素重现、Stop恢复和0 error通过，测试Editor正常退出，复用本批EXE。未重新运行装饰、单位或全库测试，也没有整帧加速结论；每级夹紧的额外Shader成本仍需同场景性能采样，水面动画图集继续沿用其已有采样路径。
+Amazonia 更新项目为 `tmp/docs-artifacts/warcraft-map-tests/amazonia-atlas/project/`，只含地形。26个网格的位置／法线／索引和1,502块基础图像逐项相同，UV与材质按新采样布局生成；图集2652²→2496²，基础像素量减少约11.4%。原生全景、近景、重开像素重现、Stop恢复和0 error通过，测试Editor正常退出，复用本批EXE。未重新运行装饰、单位或全库测试；同场景采样成本见下文。
 
 ```powershell
 python scripts/test-frost-terrain-atlas.py
@@ -65,3 +65,27 @@ node scripts/qa-frost-terrain-atlas.mjs <六色夹具目录> <新地形项目>
 ```
 
 仅重算截图断言或继续实际地图验收时，可传 `--atlas-report <原GPU报告>`；工具核对夹具路径、地表Shader和EXE摘要及九张输入，再复用原截图。首次运行的夹具缺少MaterialPropertyBlock、绝对零通道断言未计环境光，以及只运行地图时未聚焦Game面板的问题均保留在本地失败报告中；已修正测试入口与断言。
+
+### 水面动画图集隔离
+
+水面帧按原始2幂尺寸对齐，逐级限制LOD至单帧1×1级；双线性过滤跨重复边界时，四个采样点在同一帧内循环，内部区域使用硬件过滤，再插值相邻两级。RGB及alpha均遵循该规则。Amazonia 45帧128²图集由1056×792减至1024×768，基础像素量减少约6%；源帧像素、26个GLB、场景、动画脚本和地面／水深纹理逐字节一致。源ASha动画速率为12帧／秒。
+
+最新地形项目：`tmp/docs-artifacts/warcraft-map-tests/amazonia-water-atlas-v2/project/`。原生报告 `tmp/docs-artifacts/testing-batches/B001/water-atlas-1792730970604.json` 验证真实水动画、暂停稳定、Stop恢复、重新播放像素一致与0 error。它复用已有截图，并核对EXE、生产Shader及夹具输入摘要，未重新构建引擎。
+
+合成夹具使用负坐标、多个重复周期及高对比RGBA帧，检查帧0／7／8／44和LOD 0／2.5／7／10共16组。每个片元在色调映射前对照独立单帧repeat纹理，内部区域全部RGBA绝对误差≤1/256；色调映射后平均通道差≤0.00311，最大差13，不宣称截图逐像素一致。LOD 7／10截图完全一致；旧图集LOD7最大通道差63。最初的截图最大差≤3断言失败已保留，线性误差上限通过实际GPU比较确认，具体硬件过滤差异未单独归因。夹具路径为 `tmp/docs-artifacts/warcraft-map-tests/water-atlas-fixture-nv2ve0xb/`。
+
+```powershell
+python scripts/test-frost-water-atlas.py
+python scripts/test-frost-water-atlas.py --compare-map <旧水面地形项目> <新水面地形项目>
+node scripts/qa-frost-water-atlas.mjs <水面夹具目录> <新水面地形项目>
+```
+
+`--reuse-pixels <报告>` 复用摘要一致的固定／参考截图；报告已包含通过的线性比较时，同时核对比较Shader与材质后复用该截图。项目切换需关闭当前项目并等待界面重载，测试仅操作独立临时副本。首次项目切换失败记录保留。
+
+### 同场景图集性能
+
+`qa-frost-atlas-performance.mjs <旧项目> <新项目> Ground|Water` 在同一Editor、相同场景和1280×720下交替采集旧／新材质，顺序为旧、新、新、旧、旧、新；每块8帧，剔除前2帧预热，每视角每模式18个有效帧。使用硬件GPU timestamp，复用本批EXE。
+
+地表报告：`tmp/docs-artifacts/testing-batches/B001/atlas-performance-ground-1792730050507.json`。GPU pass中位数全景1.08268→1.10280ms，近景1.30742→1.32826ms，约增加0.02ms；viewport中位数分别3.71665→3.76260ms、3.70085→3.67690ms。贴图缩小不代表整帧加速，截图视口耗时也不等同游戏FPS。
+
+水面报告：`tmp/docs-artifacts/testing-batches/B001/atlas-performance-water-1792730993831.json`。GPU pass中位数全景1.10208→1.21182ms，近景1.32942→1.44512ms，增加约0.11ms；viewport中位数分别3.66600→3.70685ms、3.70355→3.82500ms。该成本用于帧内循环过滤与mip隔离，未证明整帧提速；两组测试控制台均为0 error，测试Editor正常退出。
