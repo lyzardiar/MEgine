@@ -28,7 +28,7 @@ def main():
     result = importlib.import_module('build-frost-original-doodads').build(exported, args.game, project,
         ROOT/'tmp/warcraft-effects/sentinel-bin/MdxExport.dll', ROOT/'tmp/warcraft-effects/node-metadata/NodeMetadata.dll', args.animation_seed)
     print(json.dumps(dict(project=str(project), source=str(source), sourceSha256=data['source']['sha256'],
-        placements=result['placements'], entities=result['entities'], gameplay=False,
+        placements=result['placements'], editorUnitPlacements=len(data['units']['units']) if data['units'] else 0, entities=result['entities'], gameplay=False,
         validationCommand=f'node scripts/qa-frost-original-doodads.mjs "{project}" --visual-only'), ensure_ascii=False))
 
 

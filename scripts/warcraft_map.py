@@ -198,7 +198,7 @@ def load_map(source):
         raise ValueError(f'{source.name}: expected MPQ or 512-byte HM3W wrapper')
     archive = mpyq.MPQArchive(io.BytesIO(raw[offset:]), listfile=False)
     members = {name: read_archive(archive, name) for name in ['war3map.w3e', 'war3map.w3i', 'war3map.wpm']}
-    for name in ['war3map.wts', 'war3map.doo', 'war3mapUnits.doo', 'war3map.w3b', 'war3map.w3d', 'war3map.j']:
+    for name in ['war3map.wts', 'war3map.doo', 'war3mapUnits.doo', 'war3map.w3b', 'war3map.w3d', 'war3map.w3u', 'war3map.w3t', 'war3map.w3a', 'war3map.j']:
         try:
             members[name] = read_archive(archive, name)
         except FileNotFoundError:
@@ -208,6 +208,8 @@ def load_map(source):
         raise ValueError('WPM dimensions must be four cells per W3E tile on both axes')
     from warcraft_doodads import parse_doodads
     doodads = parse_doodads(members['war3map.doo']) if 'war3map.doo' in members else None
+    from warcraft_units import parse_units
+    units = parse_units(members['war3mapUnits.doo']) if 'war3mapUnits.doo' in members else None
     diagnostics = []
     try:
         strings = parse_strings(members.get('war3map.wts', b''))
@@ -218,11 +220,14 @@ def load_map(source):
     result = dict(schema='mengine.warcraft-map', schemaVersion=1, name=resolve_string(info['name'], strings),
                   source=dict(path=str(source.resolve()), sha256=sha(raw), bytes=len(raw), mpqOffset=offset,
                               members={name: dict(sha256=sha(data), bytes=len(data)) for name, data in members.items()}),
-                  terrain=terrain, pathing=pathing, info=info, strings=strings, doodads=doodads, diagnostics=diagnostics,
+                  terrain=terrain, pathing=pathing, info=info, strings=strings, doodads=doodads, units=units, diagnostics=diagnostics,
                   coverage=dict(terrain='decoded', pathing='decoded', info='decoded', strings='preserved-unparsed' if diagnostics else 'decoded' if 'war3map.wts' in members else 'absent',
                                 doodads='decoded' if doodads is not None else 'absent',
                                 destructibleOverrides='preserved-unparsed' if 'war3map.w3b' in members else 'absent',
                                 doodadOverrides='preserved-unparsed' if 'war3map.w3d' in members else 'absent',
-                                units='preserved-unparsed' if 'war3mapUnits.doo' in members else 'absent',
+                                units='decoded-editor-placements' if units is not None else 'absent',
+                                unitOverrides='preserved-unparsed' if 'war3map.w3u' in members else 'absent',
+                                itemOverrides='preserved-unparsed' if 'war3map.w3t' in members else 'absent',
+                                abilityOverrides='preserved-unparsed' if 'war3map.w3a' in members else 'absent',
                                 script='preserved-not-executed' if 'war3map.j' in members else 'absent', runtimePlayable=False))
     return result, members

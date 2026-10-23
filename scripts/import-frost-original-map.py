@@ -33,6 +33,7 @@ def export_map(source, output):
         data['importer'] = dict(path='scripts/import-frost-original-map.py', sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                                 readerSha256=hashlib.sha256((ROOT / 'scripts/warcraft_map.py').read_bytes()).hexdigest(),
                                 doodadReaderSha256=hashlib.sha256((ROOT / 'scripts/warcraft_doodads.py').read_bytes()).hexdigest(),
+                                unitReaderSha256=hashlib.sha256((ROOT / 'scripts/warcraft_units.py').read_bytes()).hexdigest(),
                                 formatReference='https://github.com/flowtsohg/mdx-m3-viewer/tree/2ff0bc00c6363f425016e23d88c0fb2929d3b3cc/src/parsers/w3x')
         (temporary / 'map.json').write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':'), allow_nan=False) + '\n', encoding='utf-8')
         # Publish only a complete export; never merge into a pre-existing directory.
@@ -52,7 +53,7 @@ def main():
     output = args.output or ROOT / 'tmp/docs-artifacts/frost-original-maps' / args.source.stem
     data = export_map(args.source, output)
     print(json.dumps(dict(name=data['name'], output=str(output.resolve()), terrainTiles=data['terrain']['tileSize'], pathingCells=data['pathing']['size'],
-                          players=len(data['info']['players']), sourceSha256=data['source']['sha256'], diagnostics=data['diagnostics'], runtimePlayable=False), ensure_ascii=False))
+                          players=len(data['info']['players']), editorUnitPlacements=len(data['units']['units']) if data['units'] else 0, sourceSha256=data['source']['sha256'], diagnostics=data['diagnostics'], runtimePlayable=False), ensure_ascii=False))
 
 
 if __name__ == '__main__':

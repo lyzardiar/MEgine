@@ -8,10 +8,10 @@ import {fileURLToPath} from 'node:url';
 
 const root=fileURLToPath(new URL('../',import.meta.url)),rea=path.join(root,'third_party/rea'),require=createRequire(path.join(rea,'package.json'));
 const {Client}=require('@modelcontextprotocol/client'),{StdioClientTransport}=require('@modelcontextprotocol/client/stdio'),provider=require(path.join(rea,'rizin-source.json'));
-const binary=process.argv[2]||'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Game.dll',expected='e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a';
-const digest=raw=>createHash('sha256').update(raw).digest('hex'),out=path.join(root,'tmp/docs-artifacts/frost-original-maps');
-assert.equal(digest(fs.readFileSync(binary)),expected,'Version-specific addresses require this original Game.dll');
-const probes=[['map-file-strings','iz~w3e;iz~wpm;iz~w3i',['.w3e','.wpm','.w3i']],['map-loader','pd 10 @ 0x6f76e9da;pd 19 @ 0x6f76eb7c;pd 12 @ 0x6f6f0dfc',['0x6f965e58','0x6f965e60','0x6fa56e0c','0x6f72f180','0x6f819118','str.Path.tga','0x6f702d60']]];
+const units=process.argv.includes('--units'),binary=process.argv.slice(2).find(a=>a!=='--units')||'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/'+(units?'WorldEdit.exe':'Game.dll'),expected=units?'811130e637b4885c08c3c8cb707d0e02a7692ddcddc4c1d57c783c3379ef4b90':'e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a';
+const digest=raw=>createHash('sha256').update(raw).digest('hex'),out=path.join(root,'tmp/docs-artifacts/frost-original-maps',units?'unit-evidence':'');
+assert.equal(digest(fs.readFileSync(binary)),expected,'Version-specific addresses require the pinned original binary');
+const probes=units?[['unit-editor-strings','iz~Units.doo;iz~CreateAllUnits',['Units.doo','CreateAllUnits']],['unit-editor-accessor','pd 2 @ 0x0059f940;pd 8 @ 0x0062ad05',['str.Units.doo','str.CreateAllUnits','0x6237d0','str.CreateNeutralHostileBuildings','str.CreateNeutralPassiveBuildings']]]:[['map-file-strings','iz~w3e;iz~wpm;iz~w3i',['.w3e','.wpm','.w3i']],['map-loader','pd 10 @ 0x6f76e9da;pd 19 @ 0x6f76eb7c;pd 12 @ 0x6f6f0dfc',['0x6f965e58','0x6f965e60','0x6fa56e0c','0x6f72f180','0x6f819118','str.Path.tga','0x6f702d60']]];
 const client=new Client({name:'frostbound-map-research',version:'1.0.0'}),reports=[];
 fs.mkdirSync(out,{recursive:true});
 try{
@@ -31,5 +31,5 @@ try{
   reports.push({name,evidenceId:evidence.evidence_id,stdoutSha256:digest(r.stdout),markers});
   console.log('PASS REA original map formats '+name);
  }
- fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:['Static evidence records source control flow; it does not prove original runtime map behavior.','Map file references are static evidence; parser semantics and original runtime map behavior require separate verification.']},null,2)+'\n');
+ fs.writeFileSync(path.join(out,'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:units?['World Editor filename accessor and script-generation references only; record parsing is checked independently.','Editor placements do not execute generated JASS or prove runtime unit creation.']:['Static evidence records source control flow; it does not prove original runtime map behavior.','Map file references are static evidence; parser semantics and original runtime map behavior require separate verification.']},null,2)+'\n');
 }finally{await client.close();}

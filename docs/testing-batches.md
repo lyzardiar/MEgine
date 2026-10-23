@@ -45,6 +45,14 @@ B001-01 地表图集采样补充：`build-frost-original-terrain.py` 生成64像
 
 同Editor相同场景交替旧／新采样，每视角每模式18帧硬件timestamp：地表GPU pass全景1.08268→1.10280ms、近景1.30742→1.32826ms；水面全景1.10208→1.21182ms、近景1.32942→1.44512ms。报告分别为 `B001/atlas-performance-ground-1792730050507.json`、`B001/atlas-performance-water-1792730993831.json`。已补地表Shader成本与水面采样检查，未证明FPS提升。继续保留原版同视角、粒子求解器、完整创建／共享调度语义和主游戏接入待测；B001仍3/3，未重建引擎、重跑全库或全地图。
 
+### B001-01 原版单位放置数据补充
+
+原地图接入继续使用B001：`warcraft_units.py` 接入 `warcraft_map.py`、导出器与地图加载入口，保留经典7/9、8/11的单位／物品／金矿／起点、四种随机模式及全部配置字段；额外保留W3U／W3T／W3A覆盖原件，尚未应用。新增Python布局及导出测试、固定上游读取器对照、JASS字面量审计，REA探针增加WorldEdit `--units`。
+
+5组单位检查与受影响导入器9组检查通过；8夹具及两图159条记录的独立字段／字节对照通过。两图155条CreateUnit、4个起点、10处资源量匹配；REA2组文件名／脚本生成引用通过。单次unittest discover因连字符模块名发现0项，不计通过；新增导出用例随后用importlib显式执行1项通过。产物 `tmp/docs-artifacts/warcraft-map-tests/unit-placements/` 与 `tmp/docs-artifacts/frost-original-maps/unit-evidence/`，命令和字段范围见[单位说明](designs/frostbound-realms/original-map-import.md#单位与物品放置)。未构建、重跑原生QA、遍历全地图或全库。
+
+这些是开局数据与源文本对照；单位尚未实例化、JASS未执行。原尺寸坐标／寻路、对象覆盖、随机表求值、单位资源与出生流程、保存／联机及原版对局验收继续待测。B001保持3/3，02／03已通过，01未结算。
+
 ### B001-02 执行命令
 
 ```powershell

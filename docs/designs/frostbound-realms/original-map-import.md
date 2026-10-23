@@ -4,7 +4,7 @@ Author: MiYu。
 
 `scripts/import-frost-original-map.py` 从本机原版 `.w3m` / `.w3x` 生成可验证的 `map.json`，保留源地图、提取成员和 SHA-256。输入地图只读；输出要求新目录，完整写入临时目录后再发布。默认产物位于 `tmp/docs-artifacts/frost-original-maps/<地图文件名>/`。
 
-导入器提供离线格式读取。`coverage.runtimePlayable` 为 `false`：现有 Frostbound 模拟仍使用 32×32 地形、双队状态和 160 单位上限；地形已有独立原生场景，完整原地图尚未接入遭遇战、寻路、存档或联机。装饰放置记录已解码，单位、对象覆盖和 JASS 保留原件，尚未执行。导入结果尚未加入现有地图菜单。
+导入器提供离线格式读取。`coverage.runtimePlayable` 为 `false`：现有 Frostbound 模拟仍使用 32×32 地形、双队状态和 160 单位上限；地形已有独立原生场景，完整原地图尚未接入遭遇战、寻路、存档或联机。装饰与单位／物品放置记录已解码，对象覆盖和 JASS 保留原件，尚未执行。导入结果尚未加入现有地图菜单。
 
 ## 支持的布局
 
@@ -16,6 +16,7 @@ Author: MiYu。
 | W3I 18/25 | 地图信息、相机边界、可玩范围、玩家槽和起点、势力、科技及升级限制、随机单位／物品表、资料片环境参数 |
 | WTS | UTF-8／BOM、多行文本、记录间和记录头注释；保留 `TRIGSTR` 原字段并提供字符串表 |
 | DOO 7/8 | `war3map.doo` 中的对象ID、变体、位置、角度、缩放、状态、生命比例、掉落集合、编辑器ID及地形装饰，详见[装饰数据说明](original-doodads-import.md) |
+| Units DOO 7/9、8/11 | `war3mapUnits.doo` 中的单位／物品ID、变换、玩家、生命／魔法、金矿资源、英雄属性、掉落、背包、能力、自定义颜色、传送门及随机单位配置 |
 
 `map.json` 使用 `schema=mengine.warcraft-map`、`schemaVersion=1`。`terrain.corners` 按源文件行序排列，每项为 `[i16地面高度,u16水位,u8纹理标志,u8变体,u8悬崖层级]`，包括保留位。`terrain.vertexSize` 是顶点数，`tileSize` 为顶点数减一。`pathing.cells[y*width+x]` 保存源字节。
 
@@ -24,6 +25,31 @@ Author: MiYu。
 未知版本、截断、无效计数、非有限坐标、尺寸不一致、额外二进制尾部均拒绝。无法完整解析的可选 WTS 原件仍保留，`diagnostics` 记录问题，`coverage.strings=preserved-unparsed`，字符串引用不替换。缺失可选成员标为 `absent`。
 
 ## REA 与独立格式参考
+
+### 单位与物品放置
+
+`warcraft_units.py` 读取经典版本7／子版本9和版本8／子版本11；`map.json.units` 保留字段、源坐标与顺序，`coverage.units=decoded-editor-placements`。随机标志支持-1（无附加记录）、0（原始24位level字节与物品类别）、1（无符号全局表索引）、2（自定义ID／概率表）。不把默认值-1、保留位或未知对象ID替换为样例默认值。未知版本／随机模式、截断、非法计数、非有限浮点数和尾部数据明确拒绝。
+
+`war3map.w3u`、`.w3t`、`.w3a` 原件及摘要一并保存，coverage分别标为 `preserved-unparsed`；尚未应用单位、物品和能力覆盖。导出收据含 `unitReaderSha256`。`load-frost-warcraft-map.py` 输出 `editorUnitPlacements`，表示源记录数，不代表预览项目创建了这些实体。
+
+REA命令 `node scripts/probe-frost-rea-map-formats.mjs --units` 使用本机WorldEdit.exe，SHA-256 `811130e637b4885c08c3c8cb707d0e02a7692ddcddc4c1d57c783c3379ef4b90`。`0x0059f940` 返回 `Units.doo` 字符串；`0x0062ad05` 起引用 `CreateAllUnits`、`CreateNeutralHostileBuildings`、`CreateNeutralPassiveBuildings`。这是编辑器文件名入口与脚本生成引用证据，不能证明运行时直接从放置文件创建单位。正式2组探针通过，报告位于 `tmp/docs-artifacts/frost-original-maps/unit-evidence/`；早期Game.dll精确字符串查询无命中，不据此断言文件未使用。
+
+2026-10-23定向验证：
+
+- 5组Python检查通过（4组布局／畸形输入与1组导出集成），覆盖两版本、四随机模式、所有截断点、原始位、嵌套记录、覆盖原件及收据；受影响导入器原有9组检查通过。
+- 固定上游读取器对8个夹具和Booty Bay／Amazonia逐字段比较、独立重建字节全部通过。两图分别61／98条记录，各包含2个`sloc`起点，金矿分别6／4个。
+- `test-frost-unit-placement-jass.py` 对两图JASS字面量分别匹配59／96条CreateUnit：ID、玩家、位置（源文本0.1单位精度）与朝向（0.001度精度）一致；10处SetResourceAmount与金矿数据一致，4个起点与W3I一致。此工具只审计指定字面量模式；不执行函数、触发器或随机表，不作为通用JASS解释器，也不证明运行顺序。
+
+证据目录 `tmp/docs-artifacts/warcraft-map-tests/unit-placements/` 包含8个夹具、两图独立导出、`reference/report.json`、两份`map-*/unit-jass-audit.json`。未重新生成地形／装饰或运行全地图、全库、原生QA。主样例仍需原尺寸坐标／寻路、对象覆盖、脚本创建和运行验收。
+
+```powershell
+python scripts/test-warcraft-units.py --output <新的临时证据目录> --maps '<BootyBay.w3m>' '<Amazonia.w3x>'
+node scripts/test-warcraft-units-reference.mjs <临时证据目录>
+python scripts/test-frost-unit-placement-jass.py <临时证据目录>/map-0 <临时证据目录>/map-1
+node scripts/probe-frost-rea-map-formats.mjs --units
+```
+
+### 地形与信息来源
 
 - [REA 源站、固定版本与维护](../../../third_party/rea/README-MENGINE.md)：`morluto/rea` 6.5.0。
 - Game.dll SHA-256：`e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。
