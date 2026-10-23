@@ -40,7 +40,7 @@ impl ScriptVm {
         let mut vm = Self { watchdog, tick: None, restore: None, context, isolate, heap_limit };
         let (restore, tick) = vm.with_scope(Duration::from_secs(1), |scope| {
             let global = scope.get_current_context().global(scope);
-            for (id, name) in ["__mengineAssetNodes", "__mengineStorage", "__mengineNetwork", "__mengineCommand", "__mengineSpriteBatch", "__mengineRequest", "__mengineRevision", "__mengineFindEntities", "__mengineSnapshot"].iter().enumerate() {
+            for (id, name) in ["__mengineAssetNodes", "__mengineStorage", "__mengineNetwork", "__mengineCommand", "__mengineSpriteBatch", "__mengineRequest", "__mengineRevision", "__mengineFindEntities", "__mengineSnapshot", "__mengineCommandBatch"].iter().enumerate() {
                 let key = v8::String::new(scope, name)?;
                 let data = v8::Integer::new(scope, id as i32);
                 let function = v8::Function::builder(native_callback).data(data.into()).build(scope)?;
@@ -147,6 +147,7 @@ fn native_callback(scope: &mut v8::PinScope, args: v8::FunctionCallbackArguments
         1 => { let (Some(a), Some(b), Some(c)) = (argument(scope, &args, 0), argument(scope, &args, 1), argument(scope, &args, 2)) else { return; }; bindings.storage(&a, &b, &c) }
         2 => { let (Some(a), Some(b)) = (argument(scope, &args, 0), argument(scope, &args, 1)) else { return; }; bindings.network(&a, &b) }
         3 => { if let Some(json) = argument(scope, &args, 0) { bindings.command(&json); } return; }
+        9 => { result.set_bool(argument(scope, &args, 0).is_some_and(|json| bindings.command_batch(&json))); return; }
         4 => {
             let Some(entity) = argument(scope, &args, 0) else { return; };
             let Ok(entity) = entity.parse::<u64>() else { result.set_bool(false); return; };

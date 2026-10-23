@@ -2,6 +2,7 @@
 var originalTerrainTick=onTick,originalDoodadElapsed=0,originalDoodadIds=null;
 onTick=function(dt){
   originalTerrainTick(dt);
+  const commands=[],frames=[];
   originalDoodadElapsed+=Math.max(0,dt);
   if(!originalDoodadIds){
     const names=originalDoodadGroups.flatMap(g=>g.names);
@@ -15,10 +16,16 @@ onTick=function(dt){
     const before=group.states[previous],state=group.states[frame],materialChanged=state.material!==before.material,colorChanged=state.color.some((v,i)=>v!==before.color[i]);
     for(const name of group.names){
       const entity=originalDoodadIds.get(name);
-      if(group.moving||materialChanged)engine.pushCommandJson(JSON.stringify({op:'setComponent',entity,component:'MeshRenderer',value:{mesh:group.mesh+'#pose='+group.clip+':'+(group.moving?frame:0),material:state.material}}));
-      if(colorChanged)engine.pushCommandJson(JSON.stringify({op:'setComponent',entity,component:'MaterialPropertyBlock',value:{override_base_color:true,base_color:state.color}}));
-      if((state.color[3]>.001)!==(before.color[3]>.001))engine.pushCommandJson(JSON.stringify({op:'setActive',entity,active:state.color[3]>.001}));
+      if(group.moving||materialChanged)commands.push({op:'setComponent',entity,component:'MeshRenderer',value:{mesh:group.mesh+'#pose='+group.clip+':'+(group.moving?frame:0),material:state.material}});
+      if(colorChanged)commands.push({op:'setComponent',entity,component:'MaterialPropertyBlock',value:{override_base_color:true,base_color:state.color}});
+      if((state.color[3]>.001)!==(before.color[3]>.001))commands.push({op:'setActive',entity,active:state.color[3]>.001});
     }
-    group.lastFrame=frame;
+    frames.push([group,frame]);
   }
+  if(commands.length){
+    if(typeof engine.pushCommandsJson==='function'){
+      if(!engine.pushCommandsJson(JSON.stringify(commands)))throw new Error('Invalid doodad command batch');
+    }else for(const command of commands)engine.pushCommandJson(JSON.stringify(command));
+  }
+  for(const [group,frame] of frames)group.lastFrame=frame;
 };

@@ -8,7 +8,7 @@ Author: MiYu。
 
 - 从保留的地图原件重新读取 DOO 并核对摘要，保留每条原始放置记录。位置使用 `(X,Z,-Y)/128`，缩放使用 `(sx,sz,sy)`，角度转换为绕引擎 Y 轴的四元数。父实体保存放置变换，网格与发射器是其子实体。
 - 资源按地图、War3Patch、War3xLocal、War3x、war3 的顺序读取。模型路径及变体来自 `Doodads.slk`／`DestructableData.slk`。模型必须与已转换库的来源摘要一致；材质引用贴图直接按上述优先级重新解码，因此保留地图内同名贴图覆盖。源替换贴图与网格顶点色从 SLK 取得。
-- 复用 `asset-library/warcraft-iii/{game-ready,remaining-ready}`，核对目录、GLB、材质和状态轨道的转换摘要。为蒙皮网格加入源 MDX 节点与轨道，保留 billboard 数据。静止部件不加入动画更新；相同状态分组共享，12 Hz 采样帧不变时不重复发布命令，实体 ID 在运行时按名称解析一次。
+- 复用 `asset-library/warcraft-iii/{game-ready,remaining-ready}`，核对目录、GLB、材质和状态轨道的转换摘要。为蒙皮网格加入源 MDX 节点与轨道，保留 billboard 数据。静止部件不加入动画更新；相同状态分组共享，12 Hz 采样帧不变时不重复发布命令，实体 ID 在运行时按名称解析一次。有变化的帧通过 `pushCommandsJson` 一次提交；旧 Host 沿用逐条路径，批次原生验收必须使用支持新接口的二进制。
 - 包含 PREM／PRE2／RIBB／LITE 的模型生成 `SampledEffect`，包括无普通网格的纯发射器模型。发射器沿用现有 viewer 采样器；其随机、发射及运动行为尚未证明与原版求解器一致。
 - 当前预览选择 Stand；life=0 使用 Death 末帧；父实体初始可见性取 flags 的第 1 位。完整源字节仍保留，这些运行语义及源动画调度需要与原版实际画面对照。
 - 对象覆盖 W3B／W3D、地形装饰变形、模型粒子、无采样序列、无法追溯到原贴图的合成材质暂不支持，遇到时明确报错。未知或已改动模型不会被静默遗漏。
@@ -34,7 +34,8 @@ node scripts/test-frost-original-doodads.mjs --callback-smoke
 批次执行以下检查，当前均为**待测**：
 
 ```powershell
-node scripts/test-frost-original-doodads.mjs --project tmp/docs-artifacts/frost-original-doodad-scene/booty-bay
+python scripts/build-frost-original-doodads.py tmp/docs-artifacts/frost-original-doodads/exported/booty-bay --output tmp/docs-artifacts/testing-batches/B001/booty-bay-doodads
+node scripts/test-frost-original-doodads.mjs --project tmp/docs-artifacts/testing-batches/B001/booty-bay-doodads
 python scripts/build-frost-original-doodads.py tmp/docs-artifacts/frost-original-doodads/exported/amazonia --output tmp/docs-artifacts/testing-batches/B001/amazonia-doodads
 node scripts/test-frost-original-doodads.mjs --project tmp/docs-artifacts/testing-batches/B001/amazonia-doodads
 ```

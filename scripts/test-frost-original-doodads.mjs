@@ -9,12 +9,13 @@ import {fileURLToPath} from 'node:url';
 const client=fs.readFileSync(new URL('./frost-original-doodads-client.js',import.meta.url),'utf8');
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 function callbackSmoke(){
-  function start(missing=false){
-    const commands=[],requests=[];
+  function start(missing=false,batch=false){
+    const commands=[],requests=[],batches=[];
     const context=vm.createContext({engine:{findEntitiesByName(names){requests.push(names);return missing?[]:names.map((name,i)=>({name,entity:1000+i}));},pushCommandJson(raw){commands.push(JSON.parse(raw));}}});
+    if(batch)context.engine.pushCommandsJson=raw=>{const values=JSON.parse(raw);batches.push(values);commands.push(...values);return true;};
     const group={mesh:'mesh.glb',clip:0,frames:3,duration:.25,loop:true,moving:true,names:['a','b'],states:[{material:'a.mmat',color:[1,1,1,1]},{material:'b.mmat',color:[.5,1,1,0]},{material:'b.mmat',color:[.5,1,1,0]}]};
     vm.runInContext('var calls=0;function onTick(dt){calls++;}\nvar originalDoodadGroups='+JSON.stringify([group])+';\n'+client,context);
-    return {context,commands,requests};
+    return {context,commands,requests,batches};
   }
   const {context,commands,requests}=start();
   context.onTick(0);assert.equal(context.calls,1,'The terrain callback runs exactly once without recursion');assert.equal(commands.length,0);
@@ -26,6 +27,14 @@ function callbackSmoke(){
   context.onTick(.09);assert.equal(commands.length,14,'Loop restores mesh, material, color and visibility');assert.equal(requests.length,1);
   const fresh=start();fresh.context.onTick(0);assert.equal(fresh.commands.length,0,'Fresh script context starts from the authored frame');
   assert.throws(()=>start(true).context.onTick(0),/Missing runtime doodad part/);
+  const batched=start(false,true);
+  for(const dt of [0,.09,0,.001,.08,.09])batched.context.onTick(dt);
+  assert.deepEqual(batched.commands,commands,'Batch and single transports preserve identical command order and values');
+  assert.deepEqual(batched.batches.map(values=>values.length),[6,2,6],'One batch per changed frame');
+  const rejected=start(false,true);rejected.context.engine.pushCommandsJson=()=>false;
+  assert.throws(()=>rejected.context.onTick(.09),/Invalid doodad command batch/);
+  rejected.context.engine.pushCommandsJson=raw=>{rejected.commands.push(...JSON.parse(raw));return true;};
+  rejected.context.onTick(0);assert.deepEqual(rejected.commands,commands.slice(0,6),'Rejected batch does not advance the published frame');
   console.log('PASS doodad callback smoke: original callback, runtime IDs, frame deduplication, pause, loop and fresh context');
 }
 

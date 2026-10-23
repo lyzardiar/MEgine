@@ -44,6 +44,7 @@ interface EngineApi {
   network: { connect(address: string): boolean; send(message: unknown): boolean; poll(): Array<{ type: 'connected' | 'message' | 'closed'; data?: any; error?: string | null }>; close(): void };
   setClearColor(r: number, g: number, b: number, a?: number): void;
   pushCommandJson(json: string): void;
+  pushCommandsJson(json: string): boolean;
   setSpriteBatchData(entity: number | string | bigint, instances: number[][], colors?: number[][]): boolean;
   loadScene(scene: string | number): boolean;
   reloadScene(): boolean;

@@ -56,6 +56,20 @@ Editor 的 Timeline 粒子 seek 和相机 override 尚未接入视口；运行�
 `engine.snapshot` 在每帧脚本及物理事件前更新，`elapsed` 是当前场景的模拟秒数。暂停冻结该时间，场景重载归零；原生序列帧动画使用同一时钟。通过 `engine.pushCommandJson` 提交修改，
 不要把修改 snapshot 对象当成修改引擎世界。每个脚本宿主的命令队列彼此隔离。
 
+`engine.pushCommandsJson(json): boolean` 一次跨桥提交 JSON 命令数组，例如：
+
+```ts
+const accepted = engine.pushCommandsJson(JSON.stringify([
+  {op: 'setComponent', entity, component: 'Transform', value: {position: [1, 0, 0]}},
+  {op: 'setActive', entity, active: true},
+]));
+if (!accepted) throw new Error('Invalid command batch');
+```
+
+V8 与 QuickJS 共用批次解析：完整数组及每条命令都能解析时返回 `true`，按数组顺序追加至既有队列；空数组也返回 `true`。非法 JSON、非数组或任意无法解析的命令返回 `false`，整批不入队，之前已排队的命令保留。单条命令、批次和 `setSpriteBatchData` 按调用顺序入队；脚本回调失败仍丢弃该帧所有命令。这里的成功仅表示入队，实体存在性和组件应用沿用帧末 `World.commit` 规则，不提供世界应用事务或立即更新 snapshot。
+
+批次直接解析原始 JSON 片段，保留原生解析器的整数精度与字段顺序兼容；调用方先在 JS 中构造不精确 Number 的情况不会因此修复。原有 `pushCommandJson` 保持单命令行为。批次减少跨桥次数，但 JSON 序列化、命令解析及组件写入仍然存在。当前实现的原生运行和性能测量列入 [B001](testing-batches.md)，尚未形成加速结论。
+
 ```ts
 function onTick(dt: number): void {
   const input = engine.input;

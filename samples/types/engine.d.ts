@@ -10,6 +10,8 @@ interface EngineApi {
   network: { connect(address: string): boolean; send(message: unknown): boolean; poll(): Array<{ type: 'connected' | 'message' | 'closed'; data?: any; error?: string | null }>; close(): void };
   setClearColor(r: number, g: number, b: number, a?: number): void;
   pushCommandJson(json: string): void;
+  /** MiYu: Append a JSON command array in order; reject the entire array if any command cannot be parsed. */
+  pushCommandsJson(json: string): boolean;
   setActive(entity: number, active: boolean): void;
   setSpriteBatchData(entity: number | string | bigint, instances: number[][], colors?: number[][]): boolean;
   loadScene(scene: string | number): boolean;

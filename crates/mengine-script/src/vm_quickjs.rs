@@ -39,6 +39,8 @@ impl ScriptVm {
                 let b = bindings.clone();
                 ctx.globals().set("__mengineCommand", Function::new(ctx.clone(), move |j: String| b.command(&j))?)?;
                 let b = bindings.clone();
+                ctx.globals().set("__mengineCommandBatch", Function::new(ctx.clone(), move |j: String| b.command_batch(&j))?)?;
+                let b = bindings.clone();
                 ctx.globals().set("__mengineSpriteBatch", Function::new(ctx.clone(), move |entity: String, instances: rquickjs::Array, colors: rquickjs::Array| -> rquickjs::Result<bool> {
                     let Ok(entity) = entity.parse::<u64>() else { return Ok(false); };
                     if instances.len() > 8192 || colors.len() > 8192 { return Ok(false); }
