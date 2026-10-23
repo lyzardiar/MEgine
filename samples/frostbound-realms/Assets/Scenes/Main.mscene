@@ -161943,6 +161943,157 @@
             "root": false
           }
         }
+      },
+      {
+        "entity": 90802,
+        "name": "Map loading back",
+        "parent": 89667,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              245,
+              188
+            ],
+            "size_delta": [
+              350,
+              14
+            ]
+          },
+          "Image": {
+            "color": [
+              0.02,
+              0.04,
+              0.06,
+              1
+            ],
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/MapSelection.prefab",
+            "instance": "63313134-40ed-55da-a96a-1437489e79f4",
+            "node": "5c1b59f0-aafd-5c25-a335-7c4f20ad5dc4",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 90803,
+        "name": "Map loading fill",
+        "parent": 89667,
+        "siblingIndex": 3,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              245,
+              188
+            ],
+            "size_delta": [
+              350,
+              14
+            ]
+          },
+          "Image": {
+            "color": [
+              0.28,
+              0.68,
+              0.83,
+              1
+            ],
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/MapSelection.prefab",
+            "instance": "63313134-40ed-55da-a96a-1437489e79f4",
+            "node": "cff5b05c-831d-5033-a44c-32bb372bd15c",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 90804,
+        "name": "Map loading status",
+        "parent": 89667,
+        "siblingIndex": 4,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              245,
+              209
+            ],
+            "size_delta": [
+              370,
+              20
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 12,
+            "color": [
+              0.81,
+              0.65,
+              0.36,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/MapSelection.prefab",
+            "instance": "63313134-40ed-55da-a96a-1437489e79f4",
+            "node": "930b0fa4-b1e0-55f9-a508-427b41d0a314",
+            "root": false
+          }
+        }
       }
     ],
     "frame": 0,

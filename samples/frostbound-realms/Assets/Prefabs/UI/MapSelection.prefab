@@ -12824,6 +12824,136 @@
               }
             },
             "children": []
+          },
+          {
+            "id": "5c1b59f0-aafd-5c25-a335-7c4f20ad5dc4",
+            "name": "Map loading back",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  245,
+                  188
+                ],
+                "size_delta": [
+                  350,
+                  14
+                ]
+              },
+              "Image": {
+                "color": [
+                  0.02,
+                  0.04,
+                  0.06,
+                  1
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "cff5b05c-831d-5033-a44c-32bb372bd15c",
+            "name": "Map loading fill",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  245,
+                  188
+                ],
+                "size_delta": [
+                  350,
+                  14
+                ]
+              },
+              "Image": {
+                "color": [
+                  0.28,
+                  0.68,
+                  0.83,
+                  1
+                ],
+                "raycast_target": false
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "930b0fa4-b1e0-55f9-a508-427b41d0a314",
+            "name": "Map loading status",
+            "active": true,
+            "tag": "Untagged",
+            "layer": 0,
+            "components": {
+              "RectTransform": {
+                "anchor_min": [
+                  0.5,
+                  0.5
+                ],
+                "anchor_max": [
+                  0.5,
+                  0.5
+                ],
+                "pivot": [
+                  0.5,
+                  0.5
+                ],
+                "anchored_position": [
+                  245,
+                  209
+                ],
+                "size_delta": [
+                  370,
+                  20
+                ]
+              },
+              "Text": {
+                "text": "",
+                "font": "Assets/Fonts/NotoSansSC.ttf",
+                "font_size": 12,
+                "color": [
+                  0.81,
+                  0.65,
+                  0.36,
+                  1
+                ],
+                "alignment": "Center",
+                "vertical_align": "Middle",
+                "horizontal_overflow": "Overflow",
+                "vertical_overflow": "Overflow",
+                "raycast_target": false
+              }
+            },
+            "children": []
           }
         ]
       },

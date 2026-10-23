@@ -36,7 +36,7 @@ key('Escape');tick();assert.equal(engine.scene.path,main);assert.equal(telemetry
 click('mapStart box');tick();key('Escape');tick();click('map4 box');click('map0 box');click('mapStart box');tick();assert.equal(telemetry().mode,'playing');
 // Failed scene requests must leave the old menu usable and allow retry.
 context.FrostClient.openMaps(5);tick();assert.equal(context.FrostMapSession.start(pack.id,5),true);assert.equal(context.FrostMapSession.start(pack.id,5),false);requests.splice(0);
-for(let i=0;i<12;i++)tick({},1,false);assert.equal(context.FrostMapSession.status().pending,null);assert.equal(engine.scene.path,main);assert.equal(context.FrostMapSession.start(pack.id,5),true);scene(requests.shift());
+for(let i=0;i<13;i++)tick({},1,false);assert.equal(context.FrostMapSession.status().pending,null);assert.equal(engine.scene.path,main);requests.splice(0);assert.equal(context.FrostMapSession.start(pack.id,5),true);tick();assert.equal(world.visible('Map loading back'),true);tick();
 // Independent map sessions retain neither changed pathing flags nor animation clocks.
 const a=context.FrostMapPackages[0].create(),b=context.FrostMapPackages[0].create(),old=b.pathing.getCell(0,0);a.pathing.setCell(0,0,0,old===255);assert.equal(b.pathing.getCell(0,0),old);assert.equal(b.pathing.revision,0);
 const manifest=read('Assets/Maps/amazonia/manifest.json'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');

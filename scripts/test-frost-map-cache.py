@@ -5,8 +5,10 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 validate = importlib.import_module('runtime-import-frost-map').validate_cached
+ImportProgress = importlib.import_module('runtime-import-frost-map').ImportProgress
 
 
 class CacheTests(unittest.TestCase):
@@ -30,6 +32,24 @@ class CacheTests(unittest.TestCase):
 
     def test_valid_cache(self):
         self.assertEqual(validate(self.project, self.entry, self.source_sha), self.entry)
+
+    def test_cached_progress_counts_verified_assets(self):
+        counts = []
+        validate(self.project, self.entry, self.source_sha, lambda done, total: counts.append((done, total)))
+        self.assertEqual(counts, [(0, 2), (1, 2), (2, 2)])
+
+    def test_progress_snapshots_are_atomic_throttled_and_preserve_completion(self):
+        target = self.project / 'progress.json'
+        progress = ImportProgress(target)
+        with patch('time.monotonic', return_value=10):
+            progress.report(3, '转换装饰物', 0, 100)
+            progress.report(3, '转换装饰物', 1, 100)
+            self.assertEqual(json.loads(target.read_bytes())['completed'], 0)
+            progress.report(3, '转换装饰物', 100, 100)
+            self.assertEqual(json.loads(target.read_bytes())['completed'], 100)
+            progress.report(4, '转换单位')
+            self.assertEqual(json.loads(target.read_bytes()), dict(step=4, steps=8, message='转换单位'))
+        self.assertFalse(target.with_suffix('.tmp').exists())
 
     def test_changed_original(self):
         (self.package/'original.w3x').write_bytes(b'changed')

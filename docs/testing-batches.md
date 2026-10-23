@@ -165,3 +165,11 @@ SDK与原生EXE只为本批统一构建一次，版本摘要见 `sdk-binaries.js
 原生 `arbitrary-map-1792746961699.json` 通过，0 error、7,221实体；复用 EXE SHA256 `604ac3e46f7eb559cf310568da80a311c2fac69429bedf9c84c78176e3670fcf`。验证共享资源的实际渲染、转换期间菜单响应、同次Play切图／返回、整图缓存和Stop恢复。重新生成地图包时 225 次公共成员读取全命中，120 次纹理解码、79 次节点解析、183 次网格标注、183 次动画变化分析、19 次特效转换均命中缓存，0 新成员解包／0 新派生构建。所有日志、报告、截图仍存 `tmp/docs-artifacts/testing-batches/B001/`。
 
 待批次：共享包独立 Player 分发、跨盘发布、旧预装／v1缓存迁移与历史空间回收；旧包本次保持兼容，未删除。未新增完整War3对局、JASS、全部地图格式或性能帧率结论，不重复已通过的B001-02／03及无关玩法测试。
+
+### B001-01 地图加载进度条
+
+变更：`content_import.rs` 的工作线程进度转发和项目脚本类型；运行时地图导入器／装饰物／单位构建器的步骤与数量快照；`game/{client,map-session}.js`、MapSelection prefab、Main 场景／生成脚本及构建源。转换条按实际步骤和数量推进；缓存校验、取消和失败状态可见。场景切换前先提交加载界面，等待 `onSceneLoaded`；同步场景加载期间不估算百分比。本项为地图入口补充，B001 仍为 3/3。
+
+本次快速检查：`cargo test -p mengine-runtime --lib content_import::tests -- --test-threads=1` 4 通过，包含真实子进程进度转发、取消与迟到结果、异常快照；`python scripts/test-frost-map-cache.py` 7 通过，包含数量回调、原子快照和节流；Python 语法检查通过。`node scripts/test-frost-map-import.mjs tmp/docs-artifacts/testing-batches/B001/shared-maps/echo-final/result.json` 与 `node scripts/test-frost-map-session.mjs` 通过，覆盖真实生成脚本／UI实体、进度不随时间虚增、进入提示先于场景请求、失败重试、取消收起、预装与动态地图入口。Rust日志为 `tmp/docs-artifacts/testing-batches/B001/map-progress/runtime-tests.log`。
+
+待批次验证：在同一次集成 Editor／Player 构建上运行 `qa-frost-map-import.mjs <map.w3x>`，观察冷转换各阶段及数量、热缓存校验、取消／失败恢复、预装地图直接进入和不同窗口尺寸的进度条布局。验收须确认界面在同步场景加载前已实际呈现，并记录首次资源绘制期间的停顿；脚本夹具不能替代该原生验收。本次不执行全量地图转换、Editor发布构建、无关玩法或已通过批次项目回归。

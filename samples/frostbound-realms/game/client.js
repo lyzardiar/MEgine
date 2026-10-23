@@ -186,6 +186,7 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
     else if(mode==='finished'){if(returnEditor)enterEditor();else title();}
   }
   function action(id){
+    if(FrostMapSession.importStatus().loading)return;
     if(id==='mapOpen'){if(FrostMapSession.importStatus().busy)FrostMapSession.cancelImport();else FrostMapSession.importFile();return;}
     if(id==='mapBack')FrostMapSession.cancelImport();
     if(id==='mapStart'&&FrostMapSession.importStatus().busy)return;
@@ -461,6 +462,15 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
     const visual=FrostVisual.scenery(i,edge,zoom,tileset);sceneryVisuals[i]={edge,tileset,far,visual};return visual;
   }
   const minimapTiles=[];let minimapLayout='';
+  function renderMapLoading(){
+    const loading=FrostMapSession.importStatus(),loadingVisible=mode==='custom'&&loading.visible;
+    for(const name of ['Map loading back','Map loading fill','Map loading status'])show(name,loadingVisible);
+    if(loadingVisible){
+      const p=loading.progress,r=authored['Map loading fill'].RectTransform,width=r.size_delta[0],determinate=Number.isFinite(p?.value),fill=determinate?p.value:.22,offset=determinate?0:(.5-.5*Math.cos(time*3))*(1-fill);
+      set('Map loading fill','RectTransform',{...r,size_delta:[width*fill,r.size_delta[1]],anchored_position:[r.anchored_position[0]+width*(offset-(1-fill)/2),r.anchored_position[1]]});
+      label('Map loading status',p?.label||'等待选择地图…');
+    }
+  }
   function render(input){
     uiManager?.update({mode,paused,rename:!!rename},input);
     updateActions(input);
@@ -738,13 +748,14 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
     for(let i=0;i<Math.max(sentinelCount,owls.length);i++){const name='Classic Sentinel '+i,o=owls[i],current=o&&live.get(o.source);if(!current||!state.visible[team]?.[S.index(o.x,o.z)]){actor(name,null,hidden,[1,1,1],[0,0,0,1],[1,1,1,1],true);continue;}const visual=FrostVisual.sentinel(state,{...o,perched:current.perched},clock);visual.target.y+=o.y-visual.position[1];visual.position[1]=o.y;sentinelPositions.set(o.source,visual.target);set(name,'SampledEffect',visual.component);actor(name,visual.parts,visual.position,visual.scale,visual.rotation,[1,1,1,1],true);}
     sentinelCount=owls.length;
   }
-  function tick(dt){if(!initialized)init();effectPool.beginFrame();dt=Math.min(.2,Math.max(0,dt));time+=dt;const input=engine.input||{keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720]};receive();uiManager?.update({mode,paused,rename:!!rename},input);controls(input,dt);if(mode==='playing'&&paused&&!online)for(const f of fx)if(FrostDetonateArt.effects[f.e.art]){f.start+=dt;f.until+=dt;}
+  function tick(dt){if(!initialized)init();effectPool.beginFrame();dt=Math.min(.2,Math.max(0,dt));time+=dt;const input=engine.input||{keys:[],pressedKeys:[],buttons:[],pressedButtons:[],releasedButtons:[],pointer:[640,360],viewport:[1280,720]};receive();uiManager?.update({mode,paused,rename:!!rename},input);if(!FrostMapSession.importStatus().loading)controls(input,dt);if(mode==='playing'&&paused&&!online)for(const f of fx)if(FrostDetonateArt.effects[f.e.art]){f.start+=dt;f.until+=dt;}
     if(mode==='playing'&&(!paused||online)){portraitTime+=dt;unitTime+=dt;}
     if((mode==='playing'||mode==='finished')&&!online&&!paused){accumulator+=dt;while(accumulator>=S.DT){S.tick(state);collectEvents();accumulator-=S.DT;}if(mode==='playing'&&state.winner!==null){mode='finished';sound('victory');}}
     transform('Strategy camera',[camera[0],FrostVisual.camera.height,camera[1]+FrostVisual.camera.depth],[1,1,1],[Math.sin(pitch/2),0,0,Math.cos(pitch/2)]);set('Strategy camera','Camera3D',{...authored['Strategy camera'].Camera3D,orthographic_size:zoom});
     renderUnits(input);const priestEffects=FrostEffects.priestDispels(state,state.frame*S.DT+(online?0:accumulator),team);for(let i=0;i<Math.max(priestEffects.length,priestDispelCount);i++)spell('Classic spell '+i+' priestDispel',priestEffects[i]);priestDispelCount=priestEffects.length;renderLocusts();renderImpales();const dreadEffects=['playing','finished','reconnecting'].includes(mode)?FrostEffects.dreadWorld(state,state.frame*S.DT+(online?0:accumulator),team):{swarms:[],impacts:[]};for(let i=0;i<Math.max(dreadEffects.swarms.length,dreadSwarmCount);i++)spell('Classic spell '+i+' carrionSwarm',dreadEffects.swarms[i]);dreadSwarmCount=dreadEffects.swarms.length;for(let i=0;i<Math.max(dreadEffects.impacts.length,infernalImpactCount);i++)spell('Classic spell '+i+' infernalImpact',dreadEffects.impacts[i]);infernalImpactCount=dreadEffects.impacts.length;const decays=['playing','finished','reconnecting'].includes(mode)?FrostEffects.decays(state,state.frame*S.DT+(online?0:accumulator),team):[];for(let i=0;i<Math.max(decays.length,deathDecayCount);i++)spell('Classic spell '+i+' deathDecayArea',decays[i]);deathDecayCount=decays.length;const clouds=['playing','finished','reconnecting'].includes(mode)?FrostEffects.aviaryClouds(state,state.frame*S.DT+(online?0:accumulator),team):[];for(let i=0;i<Math.max(clouds.length,aviaryCloudCount);i++)spell('Classic spell '+i+' aviaryCloud',clouds[i]);aviaryCloudCount=clouds.length;const flames=FrostEffects.flames(state,state.frame*S.DT+(online?0:accumulator),team);flamePool(flames.length);for(let i=0;i<flameRegistered;i++)for(const slot of ['flame','target','embers'])spell('Classic Flame Strike '+i+' '+slot,flames[i]?.[slot]);
     renderResources();
     const viewport=input.viewport||[1280,720],resized=viewport.some((v,i)=>v!==renderViewport[i]);if(resized||time>=renderAt||input.pressedKeys.length||input.pressedButtons.length||input.releasedButtons.length||armed?.type==='build'||drag){renderViewport=[...viewport];renderAt=time+.08;render(input);}
+    renderMapLoading();
     renderMissiles(dt);
     renderSentinels();
   }

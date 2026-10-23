@@ -3023,7 +3023,7 @@ interface EngineTimelineSignalInfo {
 declare const engine: EngineApi;
 declare function onTick(dt: number, frame: number): void;
 declare function onSceneLoaded(scene: EngineSceneInfo): void;
-declare function onContentImport(event: { status: string; message?: string; content?: unknown }): void;
+declare function onContentImport(event: { status: string; file?: string; message?: string; content?: unknown; step?: number; steps?: number; completed?: number; total?: number }): void;
 declare function onCollisionEnter(event: PhysicsCollisionInfo): void;
 declare function onCollisionExit(event: PhysicsCollisionInfo): void;
 declare function onTriggerEnter(event: PhysicsCollisionInfo): void;

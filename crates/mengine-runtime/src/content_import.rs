@@ -102,13 +102,30 @@ fn hidden(command: &mut Command) {
     #[cfg(not(windows))] let _ = command;
 }
 
-fn wait(child: &mut Child, cancelled: &AtomicBool) -> Result<std::process::ExitStatus, String> {
+fn progress_event(path: &Path) -> Option<Value> {
+    if fs::metadata(path).ok()?.len() > 8192 { return None; }
+    let mut event: Value = serde_json::from_slice(&fs::read(path).ok()?).ok()?;
+    let step = event["step"].as_u64()?; let steps = event["steps"].as_u64()?;
+    if steps == 0 || step >= steps || event["message"].as_str()?.len() > 1024 { return None; }
+    if !event["total"].is_null() && (event["total"].as_u64()? == 0 || event["completed"].as_u64()? > event["total"].as_u64()?) { return None; }
+    event["status"] = json!("progress"); Some(event)
+}
+
+fn wait(child: &mut Child, cancelled: &AtomicBool, progress: Option<(&Path, &mpsc::Sender<Value>)>) -> Result<std::process::ExitStatus, String> {
+    let mut previous = Value::Null;
+    let mut next_poll = std::time::Instant::now();
     loop {
         if let Some(status) = child.try_wait().map_err(|e| e.to_string())? { return Ok(status); }
         if cancelled.load(Ordering::Acquire) {
             // The process and its converter children belong exclusively to this import job.
             #[cfg(windows)] { let mut command = Command::new("taskkill"); command.args(["/PID", &child.id().to_string(), "/T", "/F"]).stdout(Stdio::null()).stderr(Stdio::null()); hidden(&mut command); let _ = command.status(); }
             let _ = child.kill(); let _ = child.wait(); return Err("Content import cancelled".into());
+        }
+        if std::time::Instant::now() >= next_poll {
+            if let Some((path, sender)) = progress {
+                if let Some(event) = progress_event(path) { if event != previous { let _ = sender.send(event.clone()); previous = event; } }
+            }
+            next_poll = std::time::Instant::now() + Duration::from_millis(200);
         }
         std::thread::sleep(Duration::from_millis(50));
     }
@@ -121,7 +138,7 @@ fn pick_file(config: &Importer, job: &Path, cancelled: &AtomicBool) -> Result<Op
     let source = "Add-Type -AssemblyName System.Windows.Forms; $picker = New-Object System.Windows.Forms.OpenFileDialog; $picker.Title = $env:MENGINE_PICK_TITLE; $picker.Filter = $env:MENGINE_PICK_FILTER; $picker.InitialDirectory = $env:MENGINE_PICK_DIRECTORY; $picker.CheckFileExists = $true; $picker.Multiselect = $false; if ($picker.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { [System.IO.File]::WriteAllText($env:MENGINE_PICK_RESULT, $picker.FileName, (New-Object System.Text.UTF8Encoding($false))) }; $picker.Dispose()";
     let mut command = Command::new("powershell.exe");
     command.args(["-NoProfile", "-STA", "-Command", source]).env("MENGINE_PICK_TITLE", &config.title).env("MENGINE_PICK_FILTER", format!("{}|{}", config.title.replace('|', " "), filter)).env("MENGINE_PICK_DIRECTORY", config.initial_directory.as_deref().unwrap_or("")).env("MENGINE_PICK_RESULT", &destination).stdout(Stdio::null()).stderr(Stdio::null()); hidden(&mut command);
-    let status = wait(&mut command.spawn().map_err(|e| e.to_string())?, cancelled)?;
+    let status = wait(&mut command.spawn().map_err(|e| e.to_string())?, cancelled, None)?;
     if !status.success() { return Err("Unable to open the file selection dialog".into()); }
     if !destination.exists() { return Ok(None); }
     fs::read_to_string(destination).map(|value| Some(PathBuf::from(value))).map_err(|e| e.to_string())
@@ -147,8 +164,9 @@ fn run(root: Option<&Path>, importer: &str, source: Option<&str>, cancelled: &At
     let result = job.join("result.json"); let log_path = job.join("converter.log"); let log = fs::File::create(&log_path).map_err(|e| e.to_string())?;
     let program = if Path::new(&config.program).components().count() > 1 { root.join(&config.program) } else { PathBuf::from(&config.program) };
     let mut command = Command::new(program);
-    command.current_dir(&root).args(&config.args).arg("--project").arg(&root).arg("--source").arg(&source).arg("--result").arg(&result).stdin(Stdio::null()).stdout(log.try_clone().map_err(|e| e.to_string())?).stderr(log); hidden(&mut command);
-    let status = wait(&mut command.spawn().map_err(|e| format!("Cannot start content converter: {e}"))?, cancelled)?;
+    let progress = job.join("progress.json");
+    command.current_dir(&root).args(&config.args).arg("--project").arg(&root).arg("--source").arg(&source).arg("--result").arg(&result).env("MENGINE_CONTENT_PROGRESS", &progress).stdin(Stdio::null()).stdout(log.try_clone().map_err(|e| e.to_string())?).stderr(log); hidden(&mut command);
+    let status = wait(&mut command.spawn().map_err(|e| format!("Cannot start content converter: {e}"))?, cancelled, Some((&progress, sender)))?;
     let payload: Value = fs::read(&result).ok().and_then(|bytes| serde_json::from_slice(&bytes).ok()).unwrap_or(Value::Null);
     if !status.success() || payload["error"].is_string() { return Err(format!("{} (log: {})", payload["error"].as_str().unwrap_or("Map conversion failed; check converter prerequisites"), log_path.display())); }
     if !payload.is_object() { return Err("Converter did not produce a content receipt".into()); }
@@ -158,6 +176,16 @@ fn run(root: Option<&Path>, importer: &str, source: Option<&str>, cancelled: &At
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn progress_snapshots_reject_partial_invalid_and_oversized_data() {
+        let path = std::env::temp_dir().join(format!("mengine-progress-{}.json", uuid::Uuid::new_v4()));
+        for payload in ["{".to_owned(), json!({"step":0,"steps":0,"message":"bad"}).to_string(), json!({"step":2,"steps":8,"message":"bad","completed":2,"total":1}).to_string(), " ".repeat(8193)] {
+            fs::write(&path, payload).unwrap(); assert!(progress_event(&path).is_none());
+        }
+        fs::write(&path, json!({"step":3,"steps":8,"message":"models","completed":1,"total":2,"status":"complete"}).to_string()).unwrap();
+        let event = progress_event(&path).unwrap(); assert_eq!(event["status"], "progress"); assert_eq!(event["completed"], 1);
+        fs::remove_file(path).unwrap();
+    }
     #[test]
     fn imported_files_are_project_scoped_and_existing() {
         let root = std::env::temp_dir().join(format!("mengine-content-{}", uuid::Uuid::new_v4())); fs::create_dir_all(root.join("Assets/Maps")).unwrap(); fs::write(root.join("Assets/Maps/a.js"), "").unwrap();
@@ -191,6 +219,7 @@ mod tests {
 $project=$project.Replace('\\?\','');$result=$result.Replace('\\?\','')
 if(Test-Path "$project/delay"){[IO.File]::WriteAllText("$project/started","started");Start-Sleep -Seconds 60}
 if(Test-Path "$project/fail"){[IO.File]::WriteAllText($result,'{"error":"unsupported fixture"}');exit 1}
+[IO.File]::WriteAllText($env:MENGINE_CONTENT_PROGRESS.Replace('\\?\',''),'{"step":3,"steps":8,"message":"models","completed":1,"total":2}');Start-Sleep -Milliseconds 400
 [IO.File]::WriteAllText($result,'{"scene":"Assets/Maps/map.mscene","script":"Assets/Maps/map.js"}')
 "#).unwrap();
         fs::write(root.join("project.json"), json!({"contentImporters":{"test":{"program":"powershell.exe","args":["-NoProfile","-File","convert.ps1"],"extensions":["w3x"],"title":"test","workDirectory":"jobs"}}}).to_string()).unwrap();
@@ -200,11 +229,11 @@ if(Test-Path "$project/fail"){[IO.File]::WriteAllText($result,'{"error":"unsuppo
             let mut imports = ContentImports::new(Some(root.clone()));
             imports.apply(&request);
             let mut script = ScriptHost::new().unwrap();
-            script.eval("var result;function onContentImport(event){result=event;}").unwrap();
+            script.eval("var result,progress;function onContentImport(event){result=event;if(event.status==='progress')progress=event;}").unwrap();
             let mut scenes = SceneManager::new(Some(root.clone()), vec![], true);
             let start = std::time::Instant::now();
             while imports.cancelled.is_some() { assert!(start.elapsed().as_secs()<15); imports.update(&mut script, &mut scenes).unwrap(); std::thread::sleep(Duration::from_millis(10)); }
-            script.eval(if fail { "if(result.status!=='failed')throw Error('expected failure');" } else { "if(result.status!=='complete'||result.content.scriptSource!=='var generated=true;')throw Error('expected receipt');" }).unwrap();
+            script.eval(if fail { "if(result.status!=='failed')throw Error('expected failure');" } else { "if(result.status!=='complete'||result.content.scriptSource!=='var generated=true;')throw Error('expected receipt');if(!progress||progress.completed!==1)throw Error('expected progress');" }).unwrap();
             assert_eq!(scenes.build_scenes().len(), if fail {0} else {1});
         }
         fs::remove_file(root.join("fail")).unwrap();fs::write(root.join("delay"), "").unwrap();

@@ -55,7 +55,7 @@ def appearance(unit, ui, data):
     return dict(model=model+'.mdx',transform=transform,tint=[float(row[c])/255 for c in ['red','green','blue']],teamColor=color,modelScale=scale,moveHeight=height)
 
 
-def build(export, base_project, game, output, sampler, metadata_reader, resource_cache=None):
+def build(export, base_project, game, output, sampler, metadata_reader, resource_cache=None, progress=None):
     export,base_project,output=export.resolve(),base_project.resolve(),output.resolve()
     if output.exists():raise FileExistsError('Preserve existing output: '+str(output))
     source=json.loads((export/'map.json').read_bytes());original=(export/source['source']['preservedArchive']).resolve();original.relative_to(export)
@@ -96,6 +96,7 @@ def build(export, base_project, game, output, sampler, metadata_reader, resource
             entities.append(item);return item['entity']
         effect_cache={}
         for index,unit in enumerate(data['units']['units']):
+            if progress:progress(index,len(data['units']['units']))
             info=appearance(unit,ui,stats)
             if info is None:
                 placements.append(dict(index=index,source=unit,kind='start-location',rendered=False));continue
@@ -124,6 +125,7 @@ def build(export, base_project, game, output, sampler, metadata_reader, resource
                 group=dict(effect=effect,clip=ci,frames=model['effectClips'][ci]['frameCount'],duration=clip['duration'],loop=clip['loop'])
                 groups.setdefault(shared.sha(shared.encode(group)),dict(group,names=[]))['names'].append(name+'-effect')
             placements.append(dict(index=index,source=unit,kind='unit-visual',rendered=True,name=name,parts=names,effect=effect_path,appearance=info,animation=dict(clip=ci)))
+        if progress:progress(len(placements),len(data['units']['units']))
         (project/'Assets/Scenes/Main.mscene').write_bytes(shared.encode(scene));(project/'unit-placements.json').write_bytes(shared.encode(placements))
         script_path=project/'Assets/Scripts/Main.js';script=script_path.read_text(encoding='utf-8');packed=json.dumps(list(groups.values()),separators=(',',':'))
         if 'var originalDoodadGroups=' in script:script+='\noriginalDoodadGroups=originalDoodadGroups.concat('+packed+');\n'

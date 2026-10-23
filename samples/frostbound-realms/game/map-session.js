@@ -2,19 +2,25 @@
 var FrostMapSession=(()=>{
   const main='Assets/Scenes/Main.mscene',buttons=JSON.parse(JSON.stringify(FrostButtons));
   let active=null,runtime=null,pending=null,selected=0,loaded=false,elapsed=0,camera=null,statusLabel=null,paused=false,notice='';
-  let importing=false,importMessage='',cancelRequested=false;
+  let importing=false,importMessage='',cancelRequested=false,progress=null;
   function importFile(path=null){
     if(importing||pending||active)return false;
-    importing=true;cancelRequested=false;importMessage='请选择 .w3m / .w3x 地图文件';
+    importing=true;cancelRequested=false;progress=null;importMessage='请选择 .w3m / .w3x 地图文件';
     engine.importContent('warcraft-map',path);return true;
   }
   function cancelImport(){if(importing){cancelRequested=true;importMessage='正在取消地图导入…';engine.cancelContentImport();}}
   function contentImported(event){
     if(!importing)return;
-    if(['complete','failed','cancelled'].includes(event.status))importing=false;
+    if(['complete','failed','cancelled'].includes(event.status)){importing=false;progress=null;}
     if(cancelRequested){if(!importing)importMessage='已取消地图导入';return;}
     if(event.status==='choosing')importMessage='请选择 .w3m / .w3x 地图文件';
-    else if(event.status==='importing')importMessage='正在转换 '+event.file+'\n首次加载需要转换资源，请稍候。可随时取消。';
+    else if(event.status==='importing'){importMessage='正在转换 '+event.file+'\n首次加载需要转换资源，请稍候。可随时取消。';progress={value:null,label:'准备地图转换…'};}
+    else if(event.status==='progress'){
+      if(!Number.isInteger(event.step)||!Number.isInteger(event.steps)||event.steps<1||event.step<0||event.step>=event.steps||typeof event.message!=='string')return;
+      const counted=Number.isInteger(event.completed)&&Number.isInteger(event.total)&&event.total>0&&event.completed>=0&&event.completed<=event.total;
+      const fraction=(event.step+(counted?event.completed/event.total:0))/event.steps;
+      progress={value:Math.max(progress?.value||0,Math.min(1,fraction)),label:event.message+(counted?' '+event.completed+'/'+event.total:'')+' · 步骤 '+(event.step+1)+'/'+event.steps};
+    }
     else if(event.status==='cancelled')importMessage='已取消地图选择';
     else if(event.status==='failed')importMessage='地图导入失败：'+event.message;
     else if(event.status==='complete'){
@@ -30,21 +36,26 @@ var FrostMapSession=(()=>{
       }catch(error){importMessage='地图导入失败：'+error.message;}
     }
   }
-  function request(scene,id){if(pending)return false;pending={scene,id,seconds:0};engine.loadScene(scene);return true;}
+  function request(scene,id){if(pending)return false;pending={scene,id,seconds:0,frames:0,sent:false};if(scene===main||active){pending.sent=true;engine.loadScene(scene);}return true;}
   function start(id,index){const entry=FrostMapPackages.find(map=>map.id===id);if(!entry||importing)return false;selected=index;return request(entry.scene,id);}
   function back(){return request(main,null);}
   function reload(){return active?request(active.scene,active.id):false;}
   function sceneLoaded(scene){
     const entry=FrostMapPackages.find(map=>map.scene===scene.path),returning=loaded;
     if(scene.path!==main&&!entry)throw Error('Unregistered game map: '+scene.path);
-    pending=null;active=entry||null;elapsed=0;camera=null;statusLabel=null;paused=false;notice='';importMessage='';
+    pending=null;progress=null;active=entry||null;elapsed=0;camera=null;statusLabel=null;paused=false;notice='';importMessage='';
     if(entry){runtime=entry.create();FrostClient=null;}
     else {runtime=null;FrostButtons=JSON.parse(JSON.stringify(buttons));FrostClient=createFrostClient();if(returning)FrostClient.openMaps(selected);}
     loaded=true;
   }
   function write(entity,component,value){engine.pushCommandJson(JSON.stringify({op:'setComponent',entity,component,value}));}
   function tick(dt){
-    if(pending){pending.seconds+=Math.max(0,dt);if(pending.seconds>10){pending=null;notice='地图加载未完成，请重试';if(FrostClient)FrostClient.mapError(notice);}}
+    if(pending){
+      pending.seconds+=Math.max(0,dt);
+      // Present loading UI before the synchronous scene switch; completion comes from onSceneLoaded.
+      if(!pending.sent&&++pending.frames>=2){pending.sent=true;pending.seconds=0;engine.loadScene(pending.scene);}
+      if(pending.sent&&pending.seconds>10){pending=null;progress=null;notice='地图加载未完成，请重试';importMessage=notice;if(FrostClient)FrostClient.mapError(notice);}
+    }
     if(!active){FrostClient.tick(dt);return;}
     const input=engine.input||{},pressed=input.pressedKeys||[],keys=input.keys||[],[width,height]=input.viewport||[1280,720],point=input.pointer||[-1,-1];
     const x=(point[0]-width/2)*1280/width,y=(point[1]-height/2)*1280/width,click=(input.pressedButtons||[]).includes(0);
@@ -66,7 +77,7 @@ var FrostMapSession=(()=>{
     const text=notice||(active.title+' · '+(paused?'已暂停':'场景运行')+' | WASD / 方向键移动 · +/- 缩放 · 空格暂停\n对局规则尚未接入');
     if(statusLabel&&statusLabel.components.Text.text!==text){statusLabel.components.Text={...statusLabel.components.Text,text};write(statusLabel.entity,'Text',statusLabel.components.Text);}
   }
-  return {start,back,reload,tick,sceneLoaded,importFile,cancelImport,contentImported,importStatus:()=>({busy:importing,message:importMessage}),status:()=>({map:active?.id||null,scene:engine.scene?.path||null,pending:pending?.scene||null,importing,importMessage,elapsed,paused,pathing:runtime?.pathing?{size:[...runtime.pathing.size],revision:runtime.pathing.revision,sourceSha256:runtime.pathing.sourceSha256}:null})};
+  return {start,back,reload,tick,sceneLoaded,importFile,cancelImport,contentImported,importStatus:()=>({busy:importing,loading:!!pending,message:importMessage,progress:pending?{value:null,label:'正在进入地图…'}:cancelRequested&&importing?{value:null,label:'正在取消地图导入…'}:progress,visible:importing||!!pending}),status:()=>({map:active?.id||null,scene:engine.scene?.path||null,pending:pending?.scene||null,importing,importMessage,elapsed,paused,pathing:runtime?.pathing?{size:[...runtime.pathing.size],revision:runtime.pathing.revision,sourceSha256:runtime.pathing.sourceSha256}:null})};
 })();
 function onContentImport(event){FrostMapSession.contentImported(event);}
 function onSceneLoaded(scene){FrostMapSession.sceneLoaded(scene);}

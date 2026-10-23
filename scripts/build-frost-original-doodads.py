@@ -196,7 +196,7 @@ class SceneAssets:
         return result
 
 
-def build(export,game,output,sampler,metadata_reader,animation_seed=1,resource_cache=None):
+def build(export,game,output,sampler,metadata_reader,animation_seed=1,resource_cache=None,progress=None):
     export,output=export.resolve(),output.resolve()
     if output.exists():raise FileExistsError('Preserve existing output: '+str(output))
     binaries=[sampler,metadata_reader,sampler.with_name('Wc3ModelViewer.Core.dll'),metadata_reader.with_name('Wc3ModelViewer.Core.dll')]
@@ -250,6 +250,7 @@ def build(export,game,output,sampler,metadata_reader,animation_seed=1,resource_c
             if parent is not None:item['parent']=parent
             entities.append(item);return item['entity']
         for index,d in enumerate(data['doodads']['doodads']):
+            if progress:progress(index,len(data['doodads']['doodads']))
             row=definitions[d['id']];model=assets.prepare(model_path(row,d['variation']));dead=d['id'] in destructables and d['life']==0
             kind=placement_kind(d['id'] in destructables,d['flags'])
             ci,held=placement_clip(model['clips'],dead,animation_rand if kind!='suppressed' else MsvcRandom());clip=model['clips'][ci]
@@ -288,6 +289,7 @@ def build(export,game,output,sampler,metadata_reader,animation_seed=1,resource_c
             stream.write('var originalDoodadDefinitions='+json.dumps(animation_definitions,separators=(',',':'))+';\nvar originalDoodadActors='+json.dumps(actors,separators=(',',':'))+';\nvar originalDoodadRandomState='+str(animation_rand.state)+';\n'+script)
         (project/'doodad-placements.json').write_bytes(encode(placements))
         tools=[Path(__file__),Path(__file__).with_name('warcraft_doodads.py'),Path(__file__).with_name('frost-original-doodads-client.js'),Path(nodes.__file__),Path(converter.__file__),ROOT/'scripts/warcraft-node-metadata/Program.cs',ROOT/'scripts/warcraft-assets/Program.cs',*binaries]
+        if progress:progress(len(placements),len(data['doodads']['doodads']))
         result=dict(mapSha256=sha(raw),placements=len(placements),entities=len(entities),animatedGroups=len(groups),animatedParts=sum(len(g['names']) for g in groups.values()),models=assets.records,sources=list(source_records.values()),sourceCollections=assets.collection_hashes,tools=[dict(path=str(p),sha256=sha(p.read_bytes())) for p in tools],upstream=dict(repository=converter.UPSTREAM,commit=converter.COMMIT),coverage=dict(models=True,sampledAnimation=True,sampledEmitters=True,gameplay=False,originalRuntimeParity=False),limitations=['Sampled viewer particles and ribbons are not verified against the original game solver','Placement dispatch assumes source runtime mode zero; complete creation, collision, pathing and random animation scheduling remain unverified','Object overrides, terrain doodad deformation and model particles are rejected'])
         result['animationSeed']=animation_seed&0xffffffff
         result['scheduledActors']=len(actors);result['animationDefinitions']=len(animation_definitions)

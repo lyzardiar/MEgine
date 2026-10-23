@@ -18,12 +18,21 @@ function tick(input={},dt=1/60){engine.input={keys:[],pressedKeys:[],buttons:[],
 function click(name){const pointer=world.canvasPoint(name,[1280,720],false);tick({pointer,buttons:[0],pressedButtons:[0]});tick({pointer,releasedButtons:[0]});}
 tick();click('solo box');click('custom box');assert.equal(world.visible('mapOpen box'),true);click('mapOpen box');assert.deepEqual(imports,[['warcraft-map',null]]);
 context.onContentImport({status:'importing',file:'任意地图.w3x'});for(let i=0;i<12;i++)tick({},1);assert.ok(context.FrostMapSession.importStatus().busy);assert.match(world.entity('Map description').components.Text.text,/任意地图/);
+assert.equal(world.visible('Map loading back'),true);assert.match(world.entity('Map loading status').components.Text.text,/准备地图转换/);
+context.onContentImport({status:'progress',step:3,steps:8,message:'转换装饰物',completed:20,total:100});tick();
+assert.match(world.entity('Map loading status').components.Text.text,/20\/100/);const partial=world.entity('Map loading fill').components.RectTransform.size_delta[0];assert.equal(partial,350*3.2/8);
+for(let i=0;i<20;i++)tick({},1);assert.equal(world.entity('Map loading fill').components.RectTransform.size_delta[0],partial,'time must not fabricate progress');
+context.onContentImport({status:'progress',step:3,steps:8,message:'转换装饰物',completed:100,total:100});tick();assert.equal(world.entity('Map loading fill').components.RectTransform.size_delta[0],175);
+context.onContentImport({status:'progress',step:3,steps:0,message:'invalid'});tick();assert.equal(world.entity('Map loading fill').components.RectTransform.size_delta[0],175);
 click('mapStart box');assert.equal(engine.scene.path,'Assets/Scenes/Main.mscene');click('mapOpen box');assert.equal(cancels,1);
 context.onContentImport({status:'complete',content});tick();assert.equal(context.FrostMapPackages.length,1,'cancelled late completion must not load');
+tick({},.1);assert.equal(world.visible('Map loading back'),false);
 click('mapOpen box');context.onContentImport({status:'failed',message:'不支持的地图数据'});tick({},.1);assert.match(world.entity('Map description').components.Text.text,/不支持的地图数据/);assert.equal(context.FrostMapSession.importStatus().busy,false);
 click('mapOpen box');tick({pressedKeys:['Escape']});assert.equal(cancels,2);context.onContentImport({status:'cancelled'});tick();
-context.FrostClient.openMaps();tick({},.1);click('mapOpen box');context.onContentImport({status:'complete',content});tick();tick();assert.equal(engine.scene.path,entry.scene,JSON.stringify(context.FrostMapSession.status())+' requests='+imports.length);assert.equal(context.FrostMapSession.status().map,entry.id);assert.ok(world.snapshot.entities.some(e=>e.name.startsWith('Unit-')));
+context.FrostClient.openMaps();tick({},.1);click('mapOpen box');context.onContentImport({status:'complete',content});tick();
+assert.equal(engine.scene.path,'Assets/Scenes/Main.mscene');assert.equal(world.visible('Map loading back'),true);assert.match(world.entity('Map loading status').components.Text.text,/正在进入地图/);
+tick();assert.equal(engine.scene.path,entry.scene,JSON.stringify(context.FrostMapSession.status())+' requests='+imports.length);assert.equal(context.FrostMapSession.status().map,entry.id);assert.ok(world.snapshot.entities.some(e=>e.name.startsWith('Unit-')));
 const first=context.FrostMapSession.status().pathing;tick({pressedKeys:['Escape']});tick();assert.equal(world.entity('Map name').components.Text.text,entry.title);
 click('mapStart box');tick();assert.equal(context.FrostMapSession.status().pathing.revision,0);assert.deepEqual(context.FrostMapSession.status().pathing.size,first.size);
 tick({pressedKeys:['Escape']});tick();click('mapOpen box');context.onContentImport({status:'complete',content:{...content,cached:true}});tick();assert.equal(context.FrostMapPackages.length,2,'cached imports replace the same entry');
-console.log('PASS arbitrary map UI, long async import, cancellation/late completion/Escape, failure retry, dynamic scene load, return/reload and cache deduplication');
+console.log('PASS arbitrary map UI, measured progress without timer estimates, pre-switch loading UI, cancellation/late completion/Escape, failure retry, dynamic scene load, return/reload and cache deduplication');
