@@ -523,3 +523,12 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 待合并验证：下一相关原生构建执行Game/Scene／相机预览、连续性能、材质及纹理／shader热更新、普通材质与自定义材质互换、属性覆盖编辑及旧帧隔离；覆盖资源删除恢复和项目切换，测量缓存保留内存。当前EXE3371f8fc仍为上一原生批次，未重跑前端构建、完整地图QA或全库测试。既有父级／Undo、竞态、脱离窗口与真实输入延迟待测保持开放。
 
 原生集成检查 `cargo check -p mengine-editor-tauri --release --features custom-protocol` 通过，耗时13.34秒，仅既有world_from_snapshot未使用告警；日志 `tmp/docs-artifacts/editor-performance-risk/prepared-material-integration-check.log`。该检查不生成本次可验收的Editor EXE。
+
+
+### B001-01 网格同步提前去重
+
+变更：mengine-runtime/meshes.rs及mesh_sync_dedup_tests.rs。主视图和嵌套视图按完整GPU键在解析前去重，减少重复姿势解析、路径分配与缓存使用帧更新。每个相机专属billboard键仍独立同步，轮询／失败重试／淘汰不变。属于现有性能任务补充，不新增功能计数。
+
+快速检查：18项网格测试通过，固定0a7f7d2旧实现的局部对照基准1项通过。实际Amazonia作者网格列表的非轮询热缓存遍历中位0.460216→0.133081ms，菜单0.039481→0.037798ms；缓存状态一致。此数据不包含billboard准备、源加载、GPU上传和IPC，不能推算实际FPS。完整口径及本地产物见performance-risk-todo第五十三阶段。
+
+待合并验证：与第五十二阶段普通材质复用共用下一相关原生构建，覆盖连续Amazonia性能、Game／Scene／多相机预览、姿势及billboard、资源热更新／删除恢复、缓存淘汰和地图切换／Stop。当前EXE3371f8fc不含这两阶段代码；未重复前端构建、全库测试或完整地图QA。既有材质专项、父级／Undo、竞态、脱离窗口与真实操作延迟待测保持开放。

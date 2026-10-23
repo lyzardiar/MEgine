@@ -2,7 +2,7 @@
 
 后续实现按[批次测试台账](testing-batches.md)执行：逐任务提交代码和资产，登记待测内容，默认累计3个功能／修复任务后合并验证。下文已完成阶段的历史测试结果保留；其中的全量命令不作为每次提交的必跑清单。
 
-2026-10-24：编辑器性能与验证已推进至第五十二阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-24：编辑器性能与验证已推进至第五十三阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 B001地图视觉修复补充：地表图集按64像素对齐、逐mip夹紧并限制至单图块1×1级；水面按128像素帧对齐、帧内循环过滤并限制至单帧1×1级，避免跨块／跨帧串色。Amazonia地表与水面图集基础像素量分别减少约11.4%／6%。原生地表六色与水面16组RGBA对照、实际地图动画／暂停／恢复通过。相同场景1280×720硬件timestamp对照中，地表GPU pass增加约0.02ms，水面增加约0.11ms；不能从贴图缩小推断FPS提升。复现入口与原始报告路径见[图集性能说明](designs/frostbound-realms/original-terrain-scene.md#同场景图集性能)，归入B001-01，不新开测试批次。
 
@@ -1030,3 +1030,21 @@ SharedSnapshotWorld保留源ID与本地Entity的顺序表。新快照的数量�
 对照固定9d3e983的完整提取／材质解析实现，两个版本各预热2组，再交替9组×20次；完整RenderObject与材质输出相等。Amazonia局部耗时减少约21.77%，菜单约13.19%，不包含GPU、IPC、整帧或实际FPS。基准保留正常源文件检查，原始样本与场景摘要在 `tmp/docs-artifacts/editor-performance-risk/prepared-material-summary.json`。
 
 材质解析19项、提取8项通过，手动基准1项通过；覆盖跨帧共享、编辑隔离、正常轮询／别名失效、缺失／损坏恢复、实例父级更新、自定义shader切换／恢复、项目隔离、颜色边界与场景视图。首次新增shader断言未考虑加载器规范化末尾换行，修正断言后通过；一次提取测试过滤名未命中，已改用mesh_cache_tests实际执行8项。日志为prepared-material-{tests,final-tests,extraction-final,final-benchmark}.log。原生集成编译结果与待批次范围见testing-batches；本阶段未重建Editor EXE或重跑完整地图QA，现有3371f8fc EXE尚不含此优化。
+
+
+## 第五十三阶段网格同步提前去重
+
+Amazonia作者场景包含2,747个活动网格对象、246个不同网格键，其中2,721个对象使用220个姿势键。RuntimeMeshCache在主视图与嵌套视图的合并迭代入口按完整GPU网格键去重，再解析姿势、规范化扩展名与更新使用帧。每个键保留首次出现的顺序；不同相机／模型变换生成的billboard键继续独立处理。去重集合只存活于本次同步，250ms文件轮询、源验证、失败重试、上传和缓存淘汰规则保持不变；需要逐对象变换的prepare_billboards不受影响。
+
+18项网格定向测试通过，2项手动基准默认忽略。新增测试以0a7f7d2完整sync_objects为固定对照，比较跨主／嵌套视图重复键和空白、静态网格、姿势、地形、非法patch／pose、缺失源，以及外部buffer修改／删除／恢复的错误顺序、轮询次数、上传、缓存字节和使用帧。既有不同相机billboard、源热更新及淘汰检查同时通过。复现：`cargo test -p mengine-runtime --release --lib meshes:: -- --test-threads=1`。
+
+手动benchmark_warm_mesh_key_dedup通过，固定旧实现与当前实现各预热2组、交替9组×200次。使用实际作者场景的网格列表，预置已尝试状态并在计时中固定为非轮询帧，只比较热缓存遍历；不包含billboard准备、源加载、GPU上传或IPC。两边缓存状态相等。
+
+| 作者场景 | 对象／不同键 | 原遍历中位 | 当前遍历中位 |
+| --- | ---: | ---: | ---: |
+| Amazonia | 2,747／246 | 0.460216 ms | 0.133081 ms |
+| 主菜单 | 219／156 | 0.039481 ms | 0.037798 ms |
+
+Amazonia此局部路径减少约71.08%，菜单约4.26%；不代表整个RuntimeMeshCache.sync、内存总量或实际FPS收益。复现：`cargo test -p mengine-runtime --release --lib benchmark_warm_mesh_key_dedup -- --ignored --nocapture --test-threads=1`。完整样本、源场景SHA256和日志保存在 `tmp/docs-artifacts/editor-performance-risk/mesh-key-dedup-{summary.json,tests.log,benchmark.log}`；测试参考实现固定于0a7f7d2。
+
+本轮未重建原生Editor、运行完整地图QA或全库测试。与第五十二阶段材质优化合并进入下一相关原生批次：连续Amazonia性能、Game／Scene／多相机预览、动画与billboard、资源热更新及删除恢复、换图／Stop和缓存淘汰。当前EXE仍为3371f8fc，不能用于证明本阶段已通过原生验收。

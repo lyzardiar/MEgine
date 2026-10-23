@@ -228,9 +228,10 @@ impl RuntimeMeshCache {
         let mut checked_poses = HashSet::new();
         for object in objects {
             let key = object.mesh_key.trim();
+            // Main and embedded views share GPU keys; parse and touch usage once per frame.
+            if !frame_keys.insert(key) { continue; }
             if key.starts_with("meshpatch:") {
                 if let Some(used) = self.pose_usage.get_mut(key) { used.frame = self.frame; } else { self.pose_usage.insert(key.into(), PoseUsage { frame:self.frame, bytes:0 }); }
-                if !frame_keys.insert(key) { continue; }
                 if !poll && self.attempted.contains_key(key) { continue; }
                 let Some((asset, cells)) = parse_mesh_patch_key(key) else {
                     if should_attempt(&mut self.attempted, key, FileStamp::default()) { failures.push(MeshLoadFailure { key:key.into(), path:root.to_owned(), error:"invalid mesh patch key".into() }); }
@@ -274,9 +275,6 @@ impl RuntimeMeshCache {
             let asset_key = pose.map(|p| p.0).unwrap_or(key);
             let lower = asset_key.to_ascii_lowercase();
             if !lower.ends_with(".gltf") && !lower.ends_with(".glb") {
-                continue;
-            }
-            if !frame_keys.insert(key) {
                 continue;
             }
             if !poll && self.attempted.contains_key(key) { continue; }
@@ -635,3 +633,7 @@ mod tests {
 #[cfg(test)]
 #[path = "mesh_source_validation_tests.rs"]
 mod source_validation_tests;
+
+#[cfg(test)]
+#[path = "mesh_sync_dedup_tests.rs"]
+mod sync_dedup_tests;
