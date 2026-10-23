@@ -341,3 +341,12 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 快速检查：`cargo test -p mengine-core --release --lib transform_hierarchy -- --test-threads=1` 7通过、0失败、1手动基准忽略；单独执行`benchmark_hierarchy_capacity -- --ignored --nocapture --test-threads=1`通过。真实Amazonia和主菜单旧/新输出逐项一致，构建CPU中位分别1.11017→0.97115ms、0.18387→0.15269ms。采样口径与本地证据见performance-risk-todo第三十五阶段；diff检查通过。
 
 待合并验证：下次相关原生构建后验证Scene/Game加载、父级/活动状态编辑及Undo、Play/Stop、Amazonia连续呈现；目标是结果一致与实际帧耗时，不能以局部CPU基准宣布整体不卡顿。未执行全库测试、原生重建、全地图遍历或重复已通过的多窗口/特效QA。现有c90e966 EXE不包含本项。
+
+
+### B001-01 网格提取借用层级结果
+
+变更：TransformHierarchy增加只读get_ref，frame_compiler的中间网格输入借用当前层级聚合；最终对象仍拥有独立矩阵/材质。新增手动benchmark_mesh_transform_borrows，与原值复制提取逐项对照。属于既有编辑器性能补充，不新增批次计数。
+
+快速检查：层级定向7通过、1手动忽略；mesh_cache_tests 6通过、7手动忽略，均0失败；新手动基准单独通过。Amazonia2,747对象的有效临时输入字节351,616→65,928，完整输出相等。CPU样本有场景差异，不作为稳定提速结论。证据与口径见performance-risk-todo第三十六阶段；diff检查通过。
+
+待合并验证：与2e8c4be共同构建后核对Scene/Game、父级/活动状态编辑、Undo、Play/Stop、原地图连续呈现。未执行全库回归、原生重建、重复多窗口/特效QA；现有Editor EXE不包含这两项。既有材质热更新定向测试通过不替代新EXE的运行验收。

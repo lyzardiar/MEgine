@@ -108,11 +108,11 @@ impl TransformHierarchy {
         self.nodes.get(&entity).is_some_and(|node| node.active)
     }
 
-    pub fn get(&self, entity: Entity) -> Option<WorldTransform> {
-        self.nodes
-            .get(&entity)
-            .filter(|node| node.active && node.has_transform)
-            .map(|node| node.aggregate)
+    pub fn get(&self, entity: Entity) -> Option<WorldTransform> { self.get_ref(entity).copied() }
+
+    /// MiYu: Borrow the immutable aggregate when a consumer only needs part of its transform.
+    pub fn get_ref(&self, entity: Entity) -> Option<&WorldTransform> {
+        self.nodes.get(&entity).filter(|node| node.active && node.has_transform).map(|node| &node.aggregate)
     }
 
     /// Returns the parent's resolved aggregate, or identity for root entities.

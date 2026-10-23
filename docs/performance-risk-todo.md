@@ -2,7 +2,7 @@
 
 后续实现按[批次测试台账](testing-batches.md)执行：逐任务提交代码和资产，登记待测内容，默认累计3个功能／修复任务后合并验证。下文已完成阶段的历史测试结果保留；其中的全量命令不作为每次提交的必跑清单。
 
-2026-10-24：编辑器性能与验证已推进至第三十五阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-24：编辑器性能与验证已推进至第三十六阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 B001地图视觉修复补充：地表图集按64像素对齐、逐mip夹紧并限制至单图块1×1级；水面按128像素帧对齐、帧内循环过滤并限制至单帧1×1级，避免跨块／跨帧串色。Amazonia地表与水面图集基础像素量分别减少约11.4%／6%。原生地表六色与水面16组RGBA对照、实际地图动画／暂停／恢复通过。相同场景1280×720硬件timestamp对照中，地表GPU pass增加约0.02ms，水面增加约0.11ms；不能从贴图缩小推断FPS提升。复现入口与原始报告路径见[图集性能说明](designs/frostbound-realms/original-terrain-scene.md#同场景图集性能)，归入B001-01，不新开测试批次。
 
@@ -803,3 +803,14 @@ TransformHierarchy完整构建先收集当前活动实体ID，按请求数量预
 `cargo test -p mengine-core --release --lib transform_hierarchy -- --test-threads=1` 7通过、0失败、1手动基准忽略；随后单独执行`benchmark_hierarchy_capacity -- --ignored --nocapture --test-threads=1`通过。覆盖稀疏子集、重复请求、失活祖先、循环、旧generation、无Transform父级、非均匀缩放及遍历逆序。原始日志及含输入SHA256的汇总在`tmp/docs-artifacts/editor-performance-risk/hierarchy-capacity-{tests.log,benchmark.log,summary.json}`。
 
 本次未重建原生Editor或重复全图QA；待后续相关改动合并构建后验证Scene/Game、激活/父级编辑和运行地图连续呈现。网格／材质提取在上轮原生单帧仍约2.79ms，是接下来的重点；层级局部节省不关闭Amazonia整体性能风险。
+
+
+## 第三十六阶段网格提取借用层级变换
+
+TransformHierarchy提供只读get_ref入口，既有get仍返回独立值。网格提取的临时输入借用本帧不可变层级结果，生成RenderObject时仅复制需要的矩阵，避免先将完整位置／旋转／缩放／矩阵写入临时数组再搬出。借用由Rust生命周期约束，不延长到后续帧、不引入实体或材质缓存；文件轮询、对象覆盖、渲染根过滤、遍历顺序和材质热更新沿用现有路径。
+
+真实Amazonia场景2,747个渲染对象，中间输入单元素128→24字节，有效元素字节351,616→65,928（减少81.25%）；主菜单219对象为28,032→5,256字节。数字不包含Vec空余容量、分配器开销或最终渲染对象，不代表进程峰值内存。旧/新同进程交替，2组预热、9组测量、每组20次，完整渲染对象字段一致。Amazonia单轮CPU中位1.58698→1.54558ms，主菜单0.19375→0.20269ms；小场景样本略慢，不能据此宣称稳定CPU或整体FPS提升。
+
+定向`cargo test -p mengine-core --release --lib transform_hierarchy -- --test-threads=1` 7通过、1手动忽略；`cargo test -p mengine-runtime --release --lib frame_compiler::mesh_cache_tests -- --test-threads=1` 6通过、7手动忽略，均0失败。单独`benchmark_mesh_transform_borrows -- --ignored --nocapture --test-threads=1`通过。覆盖失活/循环/旧generation、父级变换、共享视图独立性、根过滤边界和材质覆盖/热更新。原始日志在`tmp/docs-artifacts/editor-performance-risk/borrowed-transform-{core-tests.log,mesh-tests.log,mesh-benchmark.log}`，输入摘要及样本在`borrowed-transform-summary.json`。
+
+现有分项测量也确认Amazonia非轮询材质解析约0.139ms、完整提取约2.250ms，不能将所有开销归于材质加载。此分项记录为独立CPU采样，见`material-breakdown-current.log`，不是原生整帧归因。下一轮原生合并构建需验证第三十五／三十六阶段对Scene/Game和编辑操作的实际影响；本轮未重建Editor或全图回归，整体性能风险仍开放。

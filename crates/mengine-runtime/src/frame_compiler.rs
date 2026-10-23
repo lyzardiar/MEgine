@@ -561,7 +561,7 @@ fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials
     let mut root_filter = RenderRootFilter::new(root);
     // Compact borrowed inputs size the large owned RenderObject buffer once, without copying materials during growth.
     let inputs: Vec<_> = world.entities_with_components(&["MeshRenderer"]).filter_map(|entity| {
-        let transform = hierarchy.get(entity)?;
+        let transform = hierarchy.get_ref(entity)?;
         if !root_filter.contains(world, entity) { return None; }
         Some((entity, transform, world.get_component::<MeshRenderer>(entity)?))
     }).collect();
