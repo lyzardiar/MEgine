@@ -61,6 +61,14 @@ B001-01 地表图集采样补充：`build-frost-original-terrain.py` 生成64像
 
 新项目 `tmp/docs-artifacts/warcraft-map-tests/amazonia-units/project/` 只含地形与单位。完整装饰＋单位组合入口、其他地图、实际Unit创建／JASS／寻路／保存联机、原版同视角继续待测，B001仍3/3。复现命令见[单位视觉场景](designs/frostbound-realms/original-map-import.md#单位视觉场景)。
 
+### B001-01 原地图组合入口验收
+
+完整入口生成Amazonia地形／水面／装饰／单位项目：`tmp/docs-artifacts/warcraft-map-tests/amazonia-complete-visuals/project/`，2,452装饰放置、96单位视觉对象、7,403实体。新增`qa-frost-original-map-composition.mjs`，加载入口按项目内容返回组合或单位检查命令；本补充不增加任务计数。
+
+原生定向报告`B001/original-map-composition-1792733463253.json`通过：合并后的放置名称与父引用、三层动画同时推进、暂停像素、Stop全部恢复、重开状态与像素一致，控制台0 error。单位资产与基础6,842实体／地形网格完整性检查通过。复用EXE，未运行旧单层QA、全库或构建；打开加快照5.01秒和截图耗时仅为观察值。全景／金矿周边截图保留本地，Editor正常退出，WebView锁缓存保留。
+
+B001仍3/3，02／03已通过；01剩余原版行为／同视角、对象覆盖及主玩法接入未结算。复现入口见[合并地图说明](designs/frostbound-realms/original-map-import.md#合并原地图测试项目)。
+
 ### B001-02 执行命令
 
 ```powershell

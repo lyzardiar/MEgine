@@ -74,6 +74,22 @@ node scripts/qa-frost-original-units.mjs <单位项目>
 
 尚未完成：单位对象覆盖与物品视觉、运行时地形贴合、完整单位出生／死亡／资源／战斗、随机与掉落、动态阴影、碰撞／寻路、JASS、保存及联机；编辑器放置视觉不能代替原版实际对局验收。
 
+### 合并原地图测试项目
+
+2026-10-23已用完整加载入口生成 Amazonia：`tmp/docs-artifacts/warcraft-map-tests/amazonia-complete-visuals/project/`。在 MEngine 打开此目录即可查看原尺寸地形、水面、2,452个装饰放置及96个单位视觉对象，共7,403个实体；另有2条起点记录。原地图位于游戏安装目录 `Maps/FrozenThrone/(2)Amazonia.w3x`，SHA-256为`211c74b708f0caa9774741aab8f761de66fb9ea68271ff10cdef72b0da7adf60`。项目保留来源与工具摘要、原件及资源许可，中间装饰项目位于相邻`doodad-project/`。主样例未切换，完整对局仍待接入。
+
+`qa-frost-original-map-composition.mjs` 专门检查各层合并后的引用、共享回调、暂停、停止与重开。原生报告`tmp/docs-artifacts/testing-batches/B001/original-map-composition-1792733463253.json`通过：164个装饰实体、328个单位实体及9个地形实体在同次推进中改变；暂停像素稳定，Stop恢复全部实体，重新Play的状态与像素一致，控制台0 error。单位资源完整性检查确认基础6,842实体与地形网格保持一致。全景和金矿周边截图在报告同目录，以同名为前缀。
+
+本次复用现有EXE，只验收首次合并输入，没有重跑两图旧用例、完整原生QA、全库测试或引擎构建。打开加快照约5.01秒，五次截图总耗时29.47–55.06ms；冷暖状态与视角不同，仅用于后续定位，不证明性能改善或稳定帧率。编辑器正常退出；WebView缓存锁导致临时缓存保留。
+
+```powershell
+python scripts/load-frost-warcraft-map.py 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Maps/FrozenThrone/(2)Amazonia.w3x' --output <新的输出目录>
+$env:MENGINE_EDITOR_EXECUTABLE='G:/work/github/MEgine/target/release/mengine-editor-tauri.exe'
+node scripts/qa-frost-original-map-composition.mjs <输出目录>/project
+```
+
+加载入口针对包含装饰的项目返回该组合检查命令；复用纯地形基础项目时仍返回单位检查命令。组合测试覆盖编辑器加载与播放，不能作为原版同视角、JASS、寻路、战斗或联机验收。
+
 ### 地形与信息来源
 
 - [REA 源站、固定版本与维护](../../../third_party/rea/README-MENGINE.md)：`morluto/rea` 6.5.0。

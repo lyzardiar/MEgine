@@ -33,9 +33,10 @@ def main():
     result = importlib.import_module('build-frost-original-units').build(exported, base_project, args.game, project,
         ROOT/'tmp/warcraft-effects/farseer-bin/MdxExport.dll', ROOT/'tmp/warcraft-effects/node-metadata/NodeMetadata.dll')
     entities = len(json.loads((project/'Assets/Scenes/Main.mscene').read_bytes())['world']['entities'])
+    validation = 'qa-frost-original-map-composition.mjs' if (project/'doodad-placements.json').is_file() else 'qa-frost-original-units.mjs'
     print(json.dumps(dict(project=str(project), source=str(source), sourceSha256=data['source']['sha256'],
         doodadPlacements=len(data['doodads']['doodads']) if data['doodads'] else 0, editorUnitPlacements=result['placements'], renderedUnitPlacements=result['rendered'], entities=entities, gameplay=False,
-        validationCommand=f'node scripts/qa-frost-original-units.mjs "{project}"'), ensure_ascii=False))
+        validationCommand=f'node scripts/{validation} "{project}"'), ensure_ascii=False))
 
 
 if __name__ == '__main__':
