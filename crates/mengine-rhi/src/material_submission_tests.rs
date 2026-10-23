@@ -1,6 +1,94 @@
 // Author: MiYu. Validate material preparation across passes and measure actual submission CPU work.
 use super::*;
 
+fn binding_test_objects(count: usize, mixed: bool) -> Vec<RenderObject> {
+    let side = (count as f32).sqrt().ceil() as usize;
+    (0..count).map(|index| {
+        let step = 1.8 / side as f32;
+        let mut material = RenderMaterial { base_color_texture: "binding-red".into(), double_sided: true, roughness: 0.8, ..Default::default() };
+        if mixed {
+            match index % 8 {
+                2 => { material.base_color_texture = "binding-blue".into(); material.wrap_u = MaterialWrap::Clamp; }
+                3 => { material.transparent = true; material.base_color[3] = 0.5; material.depth_write = false; }
+                4 => { material.transparent = true; material.blend_mode = MaterialBlendMode::Additive; material.depth_write = false; }
+                5 => { material.base_color_texture = "missing-binding-texture".into(); }
+                6 => { material.surface_shader = Arc::from("fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, position: vec3<f32>, normal: vec3<f32>) -> vec4<f32> { return vec4<f32>(color.rgb * vec3<f32>(0.5, 1.0, 0.5), color.a); }"); }
+                7 => { material.alpha_cutoff = 0.5; }
+                _ => {}
+            }
+        }
+        RenderObject { mesh_key: if mixed && index % 3 == 2 { "alternate-cube" } else { "cube" }.into(), model: Mat4::from_scale_rotation_translation(Vec3::splat(step * 0.45), glam::Quat::IDENTITY, Vec3::new(-0.9 + (index % side) as f32 * step, -0.9 + (index / side) as f32 * step, 0.5)), material, cast_shadows: true, receive_shadows: true }
+    }).collect()
+}
+
+#[test]
+fn reused_draw_bindings_match_repeated_bindings_across_passes_and_resource_changes() {
+    let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(128, 128))).unwrap();
+    renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    renderer.meshes.insert("alternate-cube".into(), MeshGpu::unit_cube(&renderer.device));
+    renderer.upload_material_texture_rgba8("binding-red", 1, 1, &[255, 20, 10, 255], true).unwrap();
+    renderer.upload_material_texture_rgba8("binding-blue", 1, 1, &[10, 20, 255, 255], true).unwrap();
+    let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+    let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false;
+    lighting.directional = Some(DirectionalLightData { direction: -Vec3::Z, color: [1.0; 3], intensity: 1.0, cast_shadows: true, shadow_strength: 1.0, shadow_bias: 0.001, shadow_normal_bias: 0.001, shadow_distance: 10.0 });
+    let target = renderer.create_offscreen_target(PhysicalSize::new(128, 128));
+    let mut objects = binding_test_objects(64, true);
+    // Culled/missing meshes must not disturb the state remembered for the next actual draw.
+    let mut culled = objects[0].clone(); culled.model = Mat4::from_translation(Vec3::splat(100.0)); objects.insert(1, culled);
+    let mut missing = objects[0].clone(); missing.mesh_key = "missing-mesh".into(); objects.insert(3, missing);
+    let render = |renderer: &mut Renderer, objects: &[RenderObject], repeat: bool| {
+        renderer.repeat_draw_bindings = repeat;
+        renderer.submit_frame_to(&RenderFrame { clear: ClearColor { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }, camera, objects, lighting: &lighting, ui: None, scene_views: &[] }, RenderTarget::Offscreen(&target)).unwrap();
+        renderer.read_offscreen_rgba8(&target).unwrap()
+    };
+    let first = render(&mut renderer, &objects, true);
+    assert_eq!(render(&mut renderer, &objects, false), first);
+    assert!(first.chunks_exact(4).any(|pixel| pixel[..3] != [0, 0, 0]), "comparison must include visible geometry");
+    renderer.upload_material_texture_rgba8("binding-red", 1, 1, &[20, 255, 10, 255], true).unwrap();
+    renderer.meshes.insert("alternate-cube".into(), MeshGpu::unit_cube(&renderer.device));
+    let changed = render(&mut renderer, &objects, false); assert_ne!(changed, first);
+    assert_eq!(render(&mut renderer, &objects, true), changed);
+    objects.reverse(); assert_eq!(render(&mut renderer, &objects, true), render(&mut renderer, &objects, false));
+    assert_eq!(render(&mut renderer, &[], true), render(&mut renderer, &[], false));
+    assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+}
+
+#[test]
+#[ignore = "manual alternating draw binding GPU submission benchmark"]
+fn benchmark_reused_draw_bindings() {
+    let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(128, 128))).unwrap();
+    renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    renderer.meshes.insert("alternate-cube".into(), MeshGpu::unit_cube(&renderer.device));
+    renderer.upload_material_texture_rgba8("binding-red", 1, 1, &[220, 180, 100, 255], true).unwrap();
+    renderer.upload_material_texture_rgba8("binding-blue", 1, 1, &[10, 20, 255, 255], true).unwrap();
+    let camera = FrameCamera { view: Mat4::IDENTITY, proj: Mat4::IDENTITY, position: Vec3::Z };
+    let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false;
+    lighting.directional = Some(DirectionalLightData { direction: -Vec3::Z, color: [1.0; 3], intensity: 1.0, cast_shadows: true, shadow_strength: 1.0, shadow_bias: 0.001, shadow_normal_bias: 0.001, shadow_distance: 10.0 });
+    let target = renderer.create_offscreen_target(PhysicalSize::new(128, 128));
+    let mixed = std::env::var_os("MENGINE_DRAW_BINDING_MIXED").is_some();
+    let counts: &[usize] = if mixed { &[4096] } else { &[64, 1024, 4096] };
+    for &count in counts {
+        let objects = binding_test_objects(count, mixed);
+        let frame = RenderFrame { clear: ClearColor { r: 0.0, g: 0.0, b: 0.0, a: 1.0 }, camera, objects: &objects, lighting: &lighting, ui: None, scene_views: &[] };
+        let mut samples = [Vec::new(), Vec::new()]; let mut reference = None;
+        for round in 0..11 {
+            for mode in if round % 2 == 0 { [0, 1] } else { [1, 0] } {
+                renderer.repeat_draw_bindings = mode == 0; let mut times = [0.0; 2];
+                for _ in 0..4 {
+                    renderer.submit_frame_to(&frame, RenderTarget::Offscreen(&target)).unwrap();
+                    let profile = renderer.submission_profile(); times[0] += profile.shadow_encode_ms; times[1] += profile.world_encode_ms;
+                    let pixels = renderer.read_offscreen_rgba8(&target).unwrap();
+                    if let Some(reference) = &reference { assert_eq!(&pixels, reference); } else { reference = Some(pixels); }
+                }
+                if round >= 2 { samples[mode].push(times.map(|ms| ms / 4.0)); }
+            }
+        }
+        let medians = samples.map(|values| std::array::from_fn::<_, 2, _>(|stage| { let mut times: Vec<_> = values.iter().map(|sample| sample[stage]).collect(); times.sort_by(f64::total_cmp); times[4] }));
+        println!("DRAW_BINDINGS count={count} mixed={mixed} repeated_shadow_ms={:.6} reused_shadow_ms={:.6} repeated_world_ms={:.6} reused_world_ms={:.6}", medians[0][0], medians[1][0], medians[0][1], medians[1][1]);
+    }
+    assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+}
+
 #[test]
 fn prepared_materials_refresh_textures_shader_errors_and_pass_state() {
     let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32, 32))).unwrap();

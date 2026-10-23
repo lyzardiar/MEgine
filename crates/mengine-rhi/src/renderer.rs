@@ -1,3 +1,4 @@
+// Author: MiYu. Reuse unchanged draw bindings within each render pass.
 use crate::ibl::{BrdfLut, EnvironmentPrefilter, PrefilteredEnvironment};
 use crate::gpu_profiler::{profiling_features, GpuFrameProfiler};
 use crate::GpuFrameProfile;
@@ -665,7 +666,15 @@ fn material_has_missing_textures(
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SpatialCullingStats { pub total: usize, pub camera_visible: usize, pub shadow_visible: usize, pub submitted: usize }
 
+// Resource maps stay immutable during a pass, so identity also distinguishes fallback pipelines and samplers.
+fn draw_binding_changed<'a, T>(bound: &mut Option<&'a T>, next: &'a T) -> bool {
+    if bound.is_some_and(|previous| std::ptr::eq(previous, next)) { return false; }
+    *bound = Some(next); true
+}
+
 pub struct Renderer {
+    #[cfg(test)]
+    repeat_draw_bindings: bool,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     surface: Option<wgpu::Surface<'static>>,
@@ -1302,6 +1311,8 @@ impl Renderer {
 
         let gpu_profiler = std::env::var("MENGINE_GPU_TIMINGS").is_ok_and(|value| value == "1").then(|| GpuFrameProfiler::new(&device)).flatten();
         Ok(Self {
+            #[cfg(test)]
+            repeat_draw_bindings: false,
             device,
             queue,
             surface,
@@ -1621,6 +1632,10 @@ impl Renderer {
         };
         self.submission_profile.target_prepare_ms += view_started.elapsed().as_secs_f64() * 1000.0;
         let shadow_started = Instant::now();
+        #[cfg(test)]
+        let reuse_draw_bindings = !self.repeat_draw_bindings;
+        #[cfg(not(test))]
+        let reuse_draw_bindings = true;
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -1644,6 +1659,7 @@ impl Renderer {
                 ..Default::default()
             });
             pass.set_pipeline(&self.shadow_pipeline);
+            let (mut bound_textures, mut bound_mesh) = (None, None);
             for &index in &shadow_order {
                 let object = &objects[index];
                 if !object.cast_shadows
@@ -1665,9 +1681,11 @@ impl Renderer {
                     .material_texture_sets
                     .get(&material.textures)
                     .expect("material texture set prepared before shadow pass");
-                pass.set_bind_group(1, texture_set, &[]);
-                pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
-                pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                if !reuse_draw_bindings || draw_binding_changed(&mut bound_textures, texture_set) { pass.set_bind_group(1, texture_set, &[]); }
+                if !reuse_draw_bindings || draw_binding_changed(&mut bound_mesh, mesh) {
+                    pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+                    pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                }
                 pass.draw_indexed(0..mesh.index_count, 0, 0..1);
             }
         }
@@ -1737,6 +1755,9 @@ impl Renderer {
                 ..Default::default()
             });
 
+            // MiYu: all forward/error pipelines share pipeline_layout; bindings live only in this pass.
+            let (mut bound_pipeline, mut bound_textures, mut bound_mesh) = (None, None, None);
+            let mut shared_bindings_set = false;
             for index in draw_order {
                 let object = &objects[index];
                 let Some(mesh) = self.meshes.get(&object.mesh_key) else {
@@ -1760,7 +1781,7 @@ impl Renderer {
                         })
                         .expect("built-in material pipeline variants are created at startup")
                 };
-                pass.set_pipeline(pipeline);
+                if !reuse_draw_bindings || draw_binding_changed(&mut bound_pipeline, pipeline) { pass.set_pipeline(pipeline); }
                 pass.set_bind_group(
                     0,
                     &self.bind_group,
@@ -1770,11 +1791,16 @@ impl Renderer {
                     .material_texture_sets
                     .get(&material.textures)
                     .expect("material texture set prepared before render pass");
-                pass.set_bind_group(1, texture_set, &[]);
-                pass.set_bind_group(2, &self.shadow_sample_bind_group, &[]);
-                pass.set_bind_group(3, environment_bind_group, &[]);
-                pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
-                pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                if !reuse_draw_bindings || draw_binding_changed(&mut bound_textures, texture_set) { pass.set_bind_group(1, texture_set, &[]); }
+                if !reuse_draw_bindings || !shared_bindings_set {
+                    pass.set_bind_group(2, &self.shadow_sample_bind_group, &[]);
+                    pass.set_bind_group(3, environment_bind_group, &[]);
+                    shared_bindings_set = true;
+                }
+                if !reuse_draw_bindings || draw_binding_changed(&mut bound_mesh, mesh) {
+                    pass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+                    pass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
+                }
                 pass.draw_indexed(0..mesh.index_count, 0, 0..1);
             }
         }

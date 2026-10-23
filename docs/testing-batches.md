@@ -69,6 +69,14 @@ B001-01 地表图集采样补充：`build-frost-original-terrain.py` 生成64像
 
 B001仍3/3，02／03已通过；01剩余原版行为／同视角、对象覆盖及主玩法接入未结算。复现入口见[合并地图说明](designs/frostbound-realms/original-map-import.md#合并原地图测试项目)。
 
+### B001-01 大图绘制状态复用
+
+变更：`crates/mengine-rhi/src/{renderer.rs,material_submission_tests.rs}`。shadow／forward pass内部复用未变化的纹理和网格绑定，forward同时复用管线、阴影采样及环境绑定；保留逐物体动态uniform、绘制次数与排序。该项处理组合原地图暴露的重复绘制准备，计入B001-01补充，不增加3/3计数。
+
+已做定向验证：`cargo check -p mengine-rhi --lib`；材质提交2项GPU用例、独立嵌入视图1项通过；共享资源和混合资源各1次交替基准通过，像素与重复绑定基准逐字节一致。4,096共享物体世界通道3.299325→2.454825ms，混合输入4.879525→4.351100ms，均为CPU编码耗时。完整数值和命令见[第二十六阶段](performance-risk-todo.md#第二十六阶段大图绘制状态复用)，日志`tmp/docs-artifacts/testing-batches/B001-draw-bindings-*.log`。
+
+状态：实现及定向GPU验证完成，**原生集成待批次执行**。下一次相关构建只做一次Editor构建，在Amazonia组合项目验证Scene／Game切换、不同相机／材质下绘制、Play／Pause／Stop与错误日志；涉及嵌入视图的原生场景一并验证。需要性能结论时固定相机／世界状态并对齐轮询帧做新旧比较。未重建原生EXE、未重跑地图QA或全库；上一版截图不作为此次修改的运行证明。B001-01其余原版行为与主玩法待测项继续保留。
+
 ### B001-02 执行命令
 
 ```powershell
