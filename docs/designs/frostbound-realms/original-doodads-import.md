@@ -38,7 +38,15 @@ REA 的 `node scripts/probe-frost-rea-doodads.mjs --life` 对同一固定 Game.d
 
 `python scripts/probe-frost-rea-doodad-life-cpu.py` 在 Unicorn 中执行以上原始机器码，1,024组输入通过：两种对象类别、初始生命0／100、全部256种生命字节。它执行实际状态和命名动画分支；外部模型元数据、路径／注册／纹理更新和Stand变体选择使用桩，不启动原游戏。故只证明该分支，不能证明flags可见性、随机动画调度或渲染一致。依赖沿用 `tmp/docs-artifacts/frost-siege-engine/dependencies` 中的 pefile／unicorn；更换DLL必须重新定位地址及核验摘要。
 
-生成器据源SLK类别处理生命：普通装饰物即使life=0仍保留Stand动画；死亡树木使用Death末帧。`python scripts/test-frost-doodad-life.py` 从Booty Bay原件派生测试地图，通过真实MPQ导出与生成路径核对。当前八条放置覆盖生命和flags：零生命风车5部件保持Stand和动画分组，死亡树2部件固定Death末帧，活树2部件保持Stand，并核对各父实体active。夹具只用于定向验证，不替代原地图展示。当前生成及原生检查通过，详见[场景说明](original-doodad-scene.md)；生成结果在 `tmp/docs-artifacts/warcraft-map-tests/life-fixture-79t499fs/result.json`，初版三条放置结果仍保留在 `life-fixture-00_e69ab/result.json`。原DLL生命执行结果为 `tmp/docs-artifacts/warcraft-map-tests/doodad-runtime/life-cpu.json`，REA证据为 `tmp/docs-artifacts/frost-original-doodads/doodad-life-*-rea.json` 与 `doodad-death-seek-rea.json`。
+生成器据源SLK类别处理生命：普通装饰物即使life=0仍保留Stand动画；有完整Death序列的死亡树木使用Death末帧。`python scripts/test-frost-doodad-life.py` 从Booty Bay原件派生测试地图，通过真实MPQ导出与生成路径核对。当前八条放置覆盖生命和flags：零生命风车5部件保持Stand和动画分组，死亡树2部件固定Death末帧，活树2部件保持Stand，并核对各父实体active。夹具只用于定向验证，不替代原地图展示。当前生成及原生检查通过，详见[场景说明](original-doodad-scene.md)；生成结果在 `tmp/docs-artifacts/warcraft-map-tests/life-fixture-79t499fs/result.json`，初版三条放置结果仍保留在 `life-fixture-00_e69ab/result.json`。原DLL生命执行结果为 `tmp/docs-artifacts/warcraft-map-tests/doodad-runtime/life-cpu.json`，REA证据为 `tmp/docs-artifacts/frost-original-doodads/doodad-life-*-rea.json` 与 `doodad-death-seek-rea.json`。
+
+### 命名死亡动画边界
+
+`0x6f6f1f50` 顺序遍历模型序列，跳过空名称，经Storm Ordinal_509比较完整名称（长度上限0x7fffffff），取第一个忽略大小写的匹配。没有完整Death时返回0，不调用模型选择 `0x6f12fa70` 或定位 `0x6f12f500`；`0x6f7592a0` 的死亡状态3仍转为4，已有动画保持不变。源Stand路径 `0x6f6f20b0` 调用独立候选选择器 `0x6f6f19f0`，不能把死亡命名规则推广到Stand变体选择。
+
+`python scripts/probe-frost-rea-doodad-sequence-cpu.py` 对15组名称输入执行上述原机器码，分别检查首／末帧定位、循环标记输出及死亡状态转换，共75组通过，并对照生成器的选择与保持标记。覆盖 `Death Alternate`、`Death1`、`Undeath`、前后空白、大小写、重复名、空名和空表。模型元数据、Storm大小写比较及最终模型API使用桩；这是命名扫描／状态分支验证，不包含原版模型渲染和Stand随机调度。证据为 `tmp/docs-artifacts/warcraft-map-tests/doodad-runtime/sequence-cpu.json`；DLL摘要、依赖与更换版本约束同生命分支。
+
+生成器只在完整Death存在时固定末帧；缺失时保留预览的初始选择及网格动画分组／发射器播放。当前初始Stand选择仍待与源候选评分、权重和随机数路径对齐，不能将此修正写成完整动画一致。
 
 ### 放置标志分流
 

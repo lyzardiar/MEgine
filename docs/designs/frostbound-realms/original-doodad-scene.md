@@ -10,7 +10,7 @@ Author: MiYu。
 - 资源按地图、War3Patch、War3xLocal、War3x、war3 的顺序读取。模型路径及变体来自 `Doodads.slk`／`DestructableData.slk`。模型必须与已转换库的来源摘要一致；材质引用贴图直接按上述优先级重新解码，因此保留地图内同名贴图覆盖。源替换贴图与网格顶点色从 SLK 取得。
 - 复用 `asset-library/warcraft-iii/{game-ready,remaining-ready}`，核对目录、GLB、材质和状态轨道的转换摘要。为蒙皮网格加入源 MDX 节点与轨道，保留 billboard 数据。静止部件不加入动画更新；相同状态分组共享，12 Hz 采样帧不变时不重复发布命令，实体 ID 在运行时按名称解析一次。有变化的帧通过 `pushCommandsJson` 一次提交；旧 Host 沿用逐条路径，批次原生验收必须使用支持新接口的二进制。
 - 包含 PREM／PRE2／RIBB／LITE 的模型生成 `SampledEffect`，包括无普通网格的纯发射器模型。发射器沿用现有 viewer 采样器；其随机、发射及运动行为尚未证明与原版求解器一致。
-- 当前预览选择 Stand；只有 `DestructableData.slk` 中的可破坏物在 life=0 时使用 Death 末帧，普通装饰物忽略生命字节。放置按源模式值为0时的分流保存 `kind`：普通装饰或 flags&1 为 `decorative`，其余可破坏物在 flags&2 时为 `destructable`，否则为 `suppressed`。父实体仅在 `suppressed` 时 inactive；kind 描述创建路径，不表示碰撞／寻路已实现。完整源字节仍保留；依据见[原件说明](original-doodads-import.md#放置标志分流)。
+- 当前预览初始选择 Stand；只有 `DestructableData.slk` 中的可破坏物在 life=0 且存在完整名称 `Death` 时使用其末帧，名称忽略大小写并取第一个匹配；缺失时保持初始动画与播放状态。网格和发射器使用同一选择规则；普通装饰物忽略生命字节。放置按源模式值为0时的分流保存 `kind`：普通装饰或 flags&1 为 `decorative`，其余可破坏物在 flags&2 时为 `destructable`，否则为 `suppressed`。父实体仅在 `suppressed` 时 inactive；kind 描述创建路径，不表示碰撞／寻路已实现。完整源字节仍保留；依据见[原件说明](original-doodads-import.md#放置标志分流)。
 - 对象覆盖 W3B／W3D、地形装饰变形、模型粒子、无采样序列、无法追溯到原贴图的合成材质暂不支持，遇到时明确报错。未知或已改动模型不会被静默遗漏。
 - 生成要求新目录，成功后移动临时项目至目标目录。`doodad-placements.json` 保存放置映射；`doodad-scene-sources.json` 保存来源归档、模型／资源摘要、转换库摘要、脚本与 DLL 摘要、输出摘要及覆盖边界。
 
@@ -61,6 +61,8 @@ node scripts/test-frost-original-doodads.mjs --project tmp/docs-artifacts/testin
 生命分类与 Death 末帧、flags 分流已分别通过原 DLL 的1,024组限定模拟执行。当前八对象夹具通过生成完整性及原生状态验证：零生命普通风车组件与像素推进，死亡树固定末帧，Pause像素稳定；普通 flags=0、树 flags=1 的模型有像素贡献，树 flags=0 被父实体抑制，切换 active 后产生像素。临时相机／active 和 Stop 均恢复，控制台error为0，测试编辑器正常退出。夹具为定向状态测试移位，未重采样地面高度，不作为地图美术验收。证据为 `tmp/docs-artifacts/warcraft-map-tests/life-fixture-79t499fs/result.json` 和 `tmp/docs-artifacts/testing-batches/B001/doodad-state-1792725155040.json`。
 
 原版完整创建、模式初始化、随机 Stand 选择与完整动画调度仍待实际运行对照。原版同视角渲染、粒子求解器和逐像素一致性仍未验收；不得将以上原生检查写成完整1:1复刻完成。状态夹具可用 `python scripts/test-frost-doodad-life.py` 生成，再设置 `MENGINE_EDITOR_EXECUTABLE` 并运行 `node scripts/qa-frost-doodad-state.mjs <夹具project目录>`；该定向检查复用本批已有二进制。
+
+命名死亡动画边界由 `python scripts/probe-frost-rea-doodad-sequence-cpu.py` 的75组原DLL限定执行与生产选择函数对照验证，涵盖完整名、重复名、大小写、前后空白、前缀／后缀、缺失和空序列，以及首／末帧定位、循环输出和死亡状态3到4。证据为 `tmp/docs-artifacts/warcraft-map-tests/doodad-runtime/sequence-cpu.json`。模型元数据、字符串比较和选择／定位API使用桩，不是原版渲染验收。已有两图中Booty Bay没有零生命放置，Amazonia四个零生命放置均有完整Death，因此此修正不改变其生成行为，复用已有全图验收；缺失Death的原生展示仍待补。
 
 法线修复后的 Amazonia 已从原 `.w3x` 重新生成并完成 `--visual-only` 原生加载、全景及近景检查，2,452放置、6,842实体，控制台error为0，测试编辑器正常退出。项目位于 `tmp/docs-artifacts/warcraft-map-tests/amazonia-lighting/project/`，报告为 `tmp/docs-artifacts/testing-batches/B001/amazonia-lighting.json`；仍未取得原版同视角对照。
 

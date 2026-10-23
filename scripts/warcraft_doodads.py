@@ -13,6 +13,11 @@ def placement_kind(is_destructable, flags):
     return 'destructable' if flags & 2 else 'suppressed'
 
 
+def named_sequence_index(clips, name):
+    """Source 0x6f6f1f50 selects the first complete, case-insensitive name match."""
+    return next((i for i, clip in enumerate(clips) if clip['name'] and clip['name'].lower() == name.lower()), None)
+
+
 def parse_doodads(data):
     r = Reader(data, 'war3map.doo')
     if r.take(4) != b'W3do':

@@ -12,7 +12,7 @@ import struct
 import subprocess
 import tempfile
 from warcraft_map import load_map
-from warcraft_doodads import placement_kind
+from warcraft_doodads import placement_kind, named_sequence_index
 from warcraft_mpq import mpyq, read_archive
 
 terrain_builder = importlib.import_module('build-frost-original-terrain')
@@ -39,13 +39,14 @@ def model_path(row,variation):
     return path+(str(min(variation,count-1)) if count>1 else '')+'.mdx'
 
 
-def clip_index(clips,dead=False):
+def placement_clip(clips,dead=False):
     if not clips:raise ValueError('Source model has no sampled animation clips')
-    prefix='death' if dead else 'stand'
-    exact=next((i for i,c in enumerate(clips) if c['name'].lower()==prefix),None)
-    found=exact if exact is not None else next((i for i,c in enumerate(clips) if c['name'].lower().startswith(prefix)),None)
-    if found is None and dead:raise ValueError('Dead source placement has no death animation')
-    return found if found is not None else 0
+    death=named_sequence_index(clips,'death') if dead else None
+    if death is not None:return death,True
+    # A missing named sequence leaves the initial animation unchanged, including playback.
+    exact=named_sequence_index(clips,'stand')
+    found=exact if exact is not None else next((i for i,c in enumerate(clips) if c['name'].lower().startswith('stand')),None)
+    return (found if found is not None else 0),False
 
 
 def moving_clip(raw,clip):
@@ -206,7 +207,7 @@ def build(export,game,output,sampler,metadata_reader):
             if parent is not None:item['parent']=parent
             entities.append(item);return item['entity']
         for index,d in enumerate(data['doodads']['doodads']):
-            row=definitions[d['id']];model=assets.prepare(model_path(row,d['variation']));dead=d['id'] in destructables and d['life']==0;ci=clip_index(model['clips'],dead);clip=model['clips'][ci]
+            row=definitions[d['id']];model=assets.prepare(model_path(row,d['variation']));dead=d['id'] in destructables and d['life']==0;ci,held=placement_clip(model['clips'],dead);clip=model['clips'][ci]
             kind=placement_kind(d['id'] in destructables,d['flags'])
             name=f'Doodad-{index}-{d["id"]}-{d["editorId"]}';parent=entity(name,dict(Transform=placement_transform(d)),active=kind!='suppressed')
             tint=[float(row.get('color'+c,row.get(f'vert{c}{min(d["variation"],int(row["numVar"])-1)+1:02}',255)))/255 for c in 'RGB']
@@ -217,17 +218,17 @@ def build(export,game,output,sampler,metadata_reader):
                 elif not replacement.lower().endswith('.blp'):replacement+='.blp'
                 materials={str(t):assets.material(p['pack'],p['textureMaterials'].get(str(t),p['material']),replacement) for t in {s['texture'] for s in p['states'][ci]}}
                 states=[dict(color=[*(s['color'][i]*tint[i] for i in range(3)),s['color'][3]],material=materials[str(s['texture'])]) for s in p['states'][ci]]
-                frame=len(states)-1 if dead else 0;state=states[frame];part_name=name+'-part-'+str(pi)
+                frame=len(states)-1 if held else 0;state=states[frame];part_name=name+'-part-'+str(pi)
                 renderer=dict(mesh=p['mesh']+f'#pose={ci}:{frame}',material=state['material'])
                 block=dict(override_base_color=True,base_color=state['color'])
                 entity(part_name,dict(Transform=dict(position=[0,0,0]),MeshRenderer=renderer,MaterialPropertyBlock=block),parent,state['color'][3]>.001);part_names.append(part_name)
                 moving=p['moving'][ci];varying=any(s!=states[0] for s in states[1:])
-                if not dead and (moving or varying):
+                if not held and (moving or varying):
                     group=dict(mesh=p['mesh'],clip=ci,frames=len(states),duration=clip['duration'],loop=clip['loop'],moving=moving,states=states)
                     signature=sha(encode(group));groups.setdefault(signature,dict(group,names=[]))['names'].append(part_name)
             if model.get('effect'):
-                ei=clip_index(model['effectClips'],dead);effect_clip=model['effectClips'][ei]
-                entity(name+'-effect',dict(Transform=dict(position=[0,0,0]),SampledEffect=dict(effect=model['effect'],clip=ei,playing=not dead,looping=effect_clip['loop'],speed=1,time_seconds=effect_clip['duration'] if dead else 0)),parent)
+                ei,effect_held=placement_clip(model['effectClips'],dead);effect_clip=model['effectClips'][ei]
+                entity(name+'-effect',dict(Transform=dict(position=[0,0,0]),SampledEffect=dict(effect=model['effect'],clip=ei,playing=not effect_held,looping=effect_clip['loop'],speed=1,time_seconds=effect_clip['duration'] if effect_held else 0)),parent)
             placements.append(dict(index=index,name=name,source=d,kind=kind,model=model['source'],parts=part_names))
         (project/'Assets/Scenes/Main.mscene').write_bytes(encode(scene))
         script=Path(__file__).with_name('frost-original-doodads-client.js').read_text(encoding='utf-8')
