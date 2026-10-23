@@ -879,4 +879,14 @@ Game 的 rAF、运行时通知和请求定时器可以多次唤醒同一幅已�
 
 新增 viewportPendingPaint.test.mjs 执行实际 helper 和 paint 至世界读取处的代码，覆盖队列满、捕获、等待间隔/重试、定时器 ID 0，以及项目/会话/画面等失效或不应跳过的情况；明确断言等待期间世界读取为0、定时器到期恢复读取、新完成像素立即进入绘制。相关呈现、请求、重绘共20项最终通过；失败项仅定向重测8项，测试提取参数及既有请求键断言已与当前源码一致。TypeScript及diff检查通过。日志为 `tmp/docs-artifacts/editor-performance-risk/pending-game-paint-{tests,retest}.log`。
 
-本项减少不可能提交请求且画面未变时的内容校验，不宣称已测得实际唤醒占比或FPS收益。未进行原生构建或整图QA；与8421aa4合并到下一次相关原生验证，检查持续采样、背景窗口恢复、捕获后继续呈现、重试/饱和恢复、输入和窗口变化，以及直接实体修改。当前EXE仍不含这两项。
+本项减少不可能提交请求且画面未变时的内容校验，不宣称已测得实际唤醒占比或FPS收益。实现时未进行原生构建或整图QA；与8421aa4的后续合并验证见下节。
+
+## 第四十二阶段归属与等待路径的原生合并验证
+
+8421aa4与73b74de共用一次前端及原生Release构建，Rust耗时1分05秒，只有既有world_from_snapshot未使用告警。EXE SHA256 `4ee10a4afa086e07ec1865048c612334439b2ad2c064b47c7de2902f8c9d6d54`。执行 `node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile --viewport-transitions --effect-reload`，报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792780821762.json` 通过、0 error、正常退出；锁定的WebView缓存保留。
+
+Amazonia 7,410实体（含QA观察节点）、850×478原生画面，10秒无Agent轮询窗口保留最后240帧：呈现间隔均值18.8325ms、P95 28.1ms，53.0997次完成呈现/秒。前端准备均值2.0588ms/P95 2.5ms，完成回调0.5867ms/P95 0.8ms（含上传0.3538ms）；原生渲染12.9827ms/P95 22.2732ms，命令15.6604ms，完整请求21.2188ms，共享请求至事件18.5367ms，发布至WebView事件1.0538ms，模拟请求9.8946ms。前次独立采样完成回调2.0304ms，本次降低与减少世界校验一致；没有受控A/B或稳定60 FPS证据。QA启动期间有一次短REA查询，是否与采样重叠未确定，不能视为隔离性能基准。
+
+Scene/Game切换、选中相机预览、环绕镜头、Game截图960×900与1280×720、实体保持及Stop恢复通过；Scene截图已核对。37个原特效文件修改/恢复后图元778→68→778，恢复后暂停像素完全一致，场景实体未改动。构建/QA日志为 `tmp/docs-artifacts/editor-performance-risk/owner-pending-{editor-build,native-build,native-qa}.log`，指标汇总为同目录 `owner-pending-timing-summary.json`。
+
+阶段40/41的正常原生集成路径已验证。强制请求在途Stop/重启/换图/截图/UI命中竞态、脱离窗口、队列饱和/重试与隐藏窗口恢复、Edit父级/活动/隐藏变更及Undo、直接引用编辑、真实输入延迟仍待合并验证，不以单次采样宣布Amazonia性能问题全部解决。

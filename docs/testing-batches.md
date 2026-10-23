@@ -401,3 +401,15 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 快速检查：相关20项最终通过，其中失败项定向重测8项通过；TypeScript/diff通过。验证等待路径不读世界，到期/新帧恢复读取，浏览器动画与交互不被抑制。原始日志与边界见 performance-risk-todo 第四十一阶段。本轮没有原生构建、地图QA或独立微基准，不能报告实际FPS收益。
 
 待合并验证：与8421aa4共同构建后执行连续时序和视口切换QA；覆盖队列饱和/重试恢复、隐藏窗口的请求/捕获结束唤醒、实际输入/resize/环境热更新、直接引用编辑及新帧显示。现有全世界读取与归属拆分待测项继续保留。
+
+### B001-01 归属与等待路径合并验证结果
+
+8421aa4与73b74de已完成一次前端/原生构建，EXE `4ee10a4afa086e07ec1865048c612334439b2ad2c064b47c7de2902f8c9d6d54`。`node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile --viewport-transitions --effect-reload` 报告 `B001/map-session-1792780821762.json` 通过，0 error，正常退出；未重复全库测试或全量地图导入。
+
+连续呈现、Scene/Game与相机预览、环绕、960×900/1280×720截图、37个特效原件热更新及像素精确恢复、实体不变、Stop还原通过。850×478、7,410实体、末尾240帧为53.0997次完成呈现/秒，完成回调均值0.5867ms；独立采样不证明稳定60 FPS或受控提速。口径、日志与缓存保留原因见performance-risk-todo第四十二阶段。
+
+上两项的正常集成待测已完成；强制在途竞态、脱离窗口、饱和/重试/隐藏恢复、Edit状态变更及Undo、直接引用编辑和实际输入延迟继续待测，不将整个B001标记完成。
+
+### B001-03 等待大厅动态布局依据
+
+`probe-frost-rea-lobby.mjs` 增加TeamSetup工厂/构造/初始化、变更处理、PlayerSlot创建、分组布局和标题高度探针；共12组通过，原DLL哈希及未修改、输出完整性、MiscUI字体与PlayerSlot高度断言通过。字符串读取使用Rizin的显式UTF-8命令；前两次探针失败分别为自动编码判断和不支持的psz命令，最终日志 `tmp/docs-artifacts/war3-ui/lobby-source/team-probe-verified.log` 正常退出。仅静态依据与维护工具补充，不增加功能计数，不重复原生构建。完整队伍策略、槽位交互和大厅实际布局仍待实现/验证，见warcraft-ui-fidelity文档。

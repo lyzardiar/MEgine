@@ -93,4 +93,8 @@ FDF `.8 × .6` 映射到 `960 × 720`，每源单位 1200 像素，字体、按�
 
 `node scripts/probe-frost-rea-lobby.mjs` 通过固定REA 6.5.0与Rizin检查原Game.dll，SHA256 e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a。四组证据确认：注册表0x6fb690c4将GameChatroom（界面编号11）绑定工厂0x6f2a29c0；工厂创建544字节对象并调用0x6f2a77d0；构造函数安装虚表0x6f982f7c；其0xdc槽0x6f2bcd60绑定TeamSetup、聊天、地图详情、高级选项与开始／取消控件。原始报告写入 `tmp/docs-artifacts/war3-ui/lobby-source/`。工具源站与版本维护入口见 [REA说明](../../../third_party/rea/README-MENGINE.md)。
 
-初始化函数还读取FontHeights配置的ChatroomChatEditBox与ChatroomTextArea。保留的MiscUI.txt分别为0.015和0.011，对应960×720参考画布18px与13.2px；不能仅依FDF继承的字体高度生成聊天输入。原DLL静态证据不能替代原客户端文字栅格与实际交互验证。TeamSetup.fdf本身只有容器，玩家行顺序、行距、队伍策略与槽位状态须继续追踪动态代码；现有服务器的两人准备／英雄选择逻辑也不能直接视为原版等价。
+初始化函数还读取FontHeights配置的ChatroomChatEditBox与ChatroomTextArea。保留的MiscUI.txt分别为0.015和0.011，对应960×720参考画布18px与13.2px；不能仅依FDF继承的字体高度生成聊天输入。原DLL静态证据不能替代原客户端文字栅格与实际交互验证。
+
+TeamSetup.fdf只有容器，实际玩家行由动态代码建立。探针另覆盖8组TeamSetup证据：注册表0x6fb69124绑定工厂0x6f2a4520，分配404字节，构造0x6f2890a0安装主虚表0x6f979e74；初始化槽0x6f2910c0调用事件绑定0x6f29a860。变更处理0x6f296ce0调用0x6f29a520，按当前槽数和槽索引创建PlayerSlot，再调用0x6f2998f0排列。该排列函数的分组分支依次遍历0至12组，按槽记录的队伍字段筛选并保持槽索引顺序；12组使用COLON_OBSERVERS，其他组使用TEAM_FORMAT或地图队伍名称。完整地图强制队伍、可见性和不分组策略仍需追踪。
+
+组标题高度使用MiscUI的ChatroomHeaders 0.011加原DLL常量0x6f97b458（float约0.003），逻辑高度约0.014；PlayerSlot外层FDF高度0.025。在960×720参考画布分别约16.8px和30px。位置累加读取布局虚表0x1c的实际缩放高度；不能把所有行写成同一固定间距。探针验证原DLL摘要、输出完整性、上述代码标记及MiscUI/PlayerSlot指标，并记录源文件摘要。等待大厅布局尚未接入；现有服务器的两人准备／英雄选择逻辑不能视为原版槽位、队伍和观察者功能等价。
