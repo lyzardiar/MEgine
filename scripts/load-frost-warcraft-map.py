@@ -1,10 +1,11 @@
-"""Author: MiYu. Load a real .w3m/.w3x into a reproducible MEngine map test project."""
+"""Author: MiYu. Convert a real .w3m/.w3x and optionally register it in the game's map menu."""
 import argparse
 from datetime import datetime
 import importlib
 import json
 from pathlib import Path
 import re
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -16,7 +17,12 @@ def main():
     parser.add_argument('--output', type=Path, help='New folder containing source export and the Editor project')
     parser.add_argument('--animation-seed', type=int, default=1, help='Reproducible initial Stand choices')
     parser.add_argument('--base-project', type=Path, help='Reuse an existing terrain/doodad project from this map')
+    parser.add_argument('--game-project', type=Path, help='Install the converted map into this Frostbound game project')
+    parser.add_argument('--map-id', help='Unique lowercase package ID, required with --game-project')
+    parser.add_argument('--title', help='Map title in the game menu')
     args = parser.parse_args()
+    if args.game_project and (not args.map_id or not re.fullmatch(r'[a-z0-9][a-z0-9-]*', args.map_id)):
+        parser.error('--game-project requires a lowercase --map-id')
     source = args.map.resolve()
     if source.suffix.lower() not in ('.w3m', '.w3x') or not source.is_file():
         parser.error('Provide an existing .w3m or .w3x map file')
@@ -33,6 +39,8 @@ def main():
     result = importlib.import_module('build-frost-original-units').build(exported, base_project, args.game, project,
         ROOT/'tmp/warcraft-effects/farseer-bin/MdxExport.dll', ROOT/'tmp/warcraft-effects/node-metadata/NodeMetadata.dll')
     importlib.import_module('install-frost-original-pathing').install(exported, project)
+    if args.game_project:
+        subprocess.run(['node', str(ROOT/'scripts/install-frost-map-package.mjs'), str(project), args.map_id, args.title or source.stem, str(args.game_project.resolve())], check=True)
     entities = len(json.loads((project/'Assets/Scenes/Main.mscene').read_bytes())['world']['entities'])
     validation = 'qa-frost-original-map-composition.mjs' if (project/'doodad-placements.json').is_file() else 'qa-frost-original-units.mjs'
     print(json.dumps(dict(project=str(project), source=str(source), sourceSha256=data['source']['sha256'],

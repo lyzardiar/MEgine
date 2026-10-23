@@ -300,3 +300,5 @@ samples/frostbound-realms/Assets/CannonTower/** -text whitespace=cr-at-eol
 samples/frostbound-realms/cannon-tower*.json text eol=lf
 samples/frostbound-realms/Assets/Art/classic-cannon-tower*.png.meta text eol=lf
 samples/frostbound-realms/Assets/Licenses/Classic-Cannon-Tower.txt text eol=lf
+samples/frostbound-realms/Assets/Maps/*/** -text whitespace=cr-at-eol
+samples/frostbound-realms/Assets/Maps/*/Source/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof

@@ -1,0 +1,24 @@
+/* MENGINE_PARAMETERS
+{"textures": [{"name": "ground", "type": "color", "default": "Assets/Maps/amazonia/Textures/Ground.png"}]}
+*/
+// Author: MiYu. Keep ground filtering inside one source tile at every mip.
+fn source_ground_level(uv:vec2<f32>,level:f32) -> vec4<f32> {
+    let size=vec2<f32>(2496.0,2496.0);
+    let tile=floor(uv*size/64.0)*64.0;
+    let local=(uv*size-tile-vec2<f32>(0.5))*(64.0/63.0);
+    let margin=vec2<f32>(0.5*exp2(level));
+    let pixel=tile+clamp(local,margin,vec2<f32>(64.0)-margin);
+    return textureSampleLevel(mengine_custom_texture_0,material_sampler,pixel/size,level);
+}
+fn source_ground_sample(uv:vec2<f32>,lod:f32) -> vec4<f32> {
+    let level=clamp(lod,0.0,6.0);let lower=floor(level);let upper=min(lower+1.0,6.0);
+    let a=source_ground_level(uv,lower);
+    if level==lower {return a;}
+    return mix(a,source_ground_level(uv,upper),level-lower);
+}
+fn mengine_lit_surface_hook(surface:MEngineSurface,uv:vec2<f32>,world_position:vec3<f32>) -> MEngineSurface {
+    let pixel=uv*vec2<f32>(2496.0,2496.0)*(64.0/63.0);
+    let dx=dpdx(pixel);let dy=dpdy(pixel);
+    let lod=0.5*log2(max(max(dot(dx,dx),dot(dy,dy)),0.000001));
+    var s=surface;s.base_color=source_ground_sample(uv,lod).rgb;s.alpha=1.0;return s;
+}

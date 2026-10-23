@@ -1,0 +1,45 @@
+/* MENGINE_PARAMETERS
+{"parameters": [{"name": "water_time", "type": "vector4", "default": [0, 0, 0, 0]}], "textures": [{"name": "water", "type": "color", "default": "Assets/Maps/amazonia/Textures/Water.png"}, {"name": "water_depth", "type": "data", "default": "Assets/Maps/amazonia/Textures/WaterDepth.png"}]}
+*/
+// Author: MiYu. Repeat within one water frame, including bilinear taps across its edges.
+fn source_water_level(frame:u32,local:vec2<f32>,level:f32) -> vec4<f32> {
+    let n=i32(128u>>u32(level));let origin=vec2<i32>(i32(frame%8u),i32(frame/8u))*n;
+    if n==1 {return textureLoad(mengine_custom_texture_0,origin,i32(level));}
+    let pixel=local*f32(n)-vec2<f32>(0.5);let lo=vec2<i32>(floor(pixel));let f=fract(pixel);
+    let wrapped=((lo%vec2<i32>(n))+vec2<i32>(n))%vec2<i32>(n);
+    if all(wrapped+vec2<i32>(1)<vec2<i32>(n)) {
+        let uv=(vec2<f32>(origin+wrapped)+f+vec2<f32>(0.5))/vec2<f32>(textureDimensions(mengine_custom_texture_0,u32(level)));
+        return textureSampleLevel(mengine_custom_texture_0,material_sampler,uv,level);
+    }
+    let a=origin+wrapped;let b=origin+(wrapped+vec2<i32>(1))%vec2<i32>(n);
+    let sw=textureLoad(mengine_custom_texture_0,a,i32(level));let se=textureLoad(mengine_custom_texture_0,vec2<i32>(b.x,a.y),i32(level));
+    let nw=textureLoad(mengine_custom_texture_0,vec2<i32>(a.x,b.y),i32(level));let ne=textureLoad(mengine_custom_texture_0,b,i32(level));
+    return mix(mix(sw,se,f.x),mix(nw,ne,f.x),f.y);
+}
+fn source_water_sample(frame:u32,local:vec2<f32>,lod:f32) -> vec4<f32> {
+    let level=clamp(lod,0.0,7.0);let lower=floor(level);let a=source_water_level(frame,local,lower);
+    if level==lower {return a;}
+    return mix(a,source_water_level(frame,local,lower+1.0),level-lower);
+}
+// Author: MiYu. Source W3E water heights and Water.slk colors, frames and lattice.
+fn source_water_tint(cell:vec2<i32>) -> vec4<f32> {
+    let packed=vec4<u32>(textureLoad(mengine_custom_texture_1,clamp(cell,vec2<i32>(0),vec2<i32>(96,96)),0)*255.0+vec4<f32>(0.5));
+    let depth=clamp(bitcast<f32>(packed.r|(packed.g<<8u)|(packed.b<<16u)|(packed.a<<24u)),0.0,1.0);
+    if depth<=0.5 {return mix(vec4<f32>(1.0,1.0,1.0,0.0392156862745098),vec4<f32>(0.4588235294117647,0.4588235294117647,0.7843137254901961,0.8588235294117647),clamp((depth-0.078125)/0.421875,0.0,1.0));}
+    return mix(vec4<f32>(0.4588235294117647,0.4588235294117647,0.7843137254901961,0.8588235294117647),vec4<f32>(0.3764705882352941,0.3764705882352941,0.7529411764705882,0.9803921568627451),clamp((depth-0.5)/0.0625,0.0,1.0));
+}
+fn mengine_lit_surface_hook(surface: MEngineSurface, uv: vec2<f32>, world_position: vec3<f32>) -> MEngineSurface {
+    var s=surface;
+    let frame=u32(max(0.0,mengine_param_water_time().x))%45u;
+    let lattice=(vec2<f32>(world_position.x,-world_position.z)-vec2<f32>(-48.0,-48.0))/2.0;
+    let local=vec2<f32>(lattice.x,-lattice.y);
+    let dx=dpdx(lattice)*128.0;let dy=dpdy(lattice)*128.0;
+    let lod=0.5*log2(max(max(dot(dx,dx),dot(dy,dy)),0.000001));
+    let pixel=source_water_sample(frame,local,lod);
+    let grid=lattice*2.0;let cell=vec2<i32>(floor(grid));let f=fract(grid);
+    let sw=source_water_tint(cell);let nw=source_water_tint(cell+vec2<i32>(0,1));let ne=source_water_tint(cell+vec2<i32>(1,1));let se=source_water_tint(cell+vec2<i32>(1,0));
+    var tint=sw*(1.0-f.x-f.y)+se*f.x+nw*f.y;
+    if f.x+f.y>1.0 {tint=ne*(f.x+f.y-1.0)+nw*(1.0-f.x)+se*(1.0-f.y);}
+    s.base_color=pixel.rgb*pow(tint.rgb,vec3<f32>(2.2));s.alpha=pixel.a*tint.a;s.roughness=0.4;s.metallic=0.0;
+    return s;
+}

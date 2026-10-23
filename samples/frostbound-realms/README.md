@@ -14,7 +14,7 @@ MEngine 原生 3D RTS 游戏工程。围绕资源采集、建造、出兵、英�
 
 49 个经典角色条目与建筑共用源比例尺度；角色、坐骑和飞行单位保持原始体量，选中圈按原版对象字段确定大小。源数据、重生成命令及四族混合编队画面见 [单位与建筑的源模型比例](../../docs/designs/frostbound-realms/unit-proportions.md)。
 
-先在仓库根目录执行 `node scripts/build-frostbound.mjs`，生成被 Git 忽略的 `Assets/Scripts/Main.js`，再在 MEngine 编辑器打开本目录，切到 Game 后 Play。独立播放器构建入口（先完成 CLI 和 Release runtime 构建）：
+在 MEngine 编辑器打开本目录，切到 Game 后 Play。更新游戏脚本用 `node scripts/sync-frostbound-script.mjs`，它保留场景和美术资产；完整重生成用 `node scripts/build-frostbound.mjs`。独立播放器构建入口（先完成 CLI 和 Release runtime 构建）：
 
 ```powershell
 node scripts/build-frostbound.mjs
@@ -22,6 +22,8 @@ node packages/cli/dist/cli.js build samples/frostbound-realms --runtime target/r
 ```
 
 生成后运行 `Builds/windows-x64/Frostbound Realms.exe`。主菜单采用右侧悬链铁框、蓝底金字按钮、冰冠背景与浮雕标题。单人游戏 → 自定义游戏中选择地图、种族与英雄；载入游戏、地图编辑器、局域网、选项、制作人员和退出均有实际入口。选项保存音乐/音效音量与背景飘雪设置。保留 F1/F2/F3/F4/F8/F9 直接进入玩法的快捷键。
+
+同一工程的地图选择页已接入 `Assets/Maps/catalog.json`。点击“下一页”可选 Amazonia，使用 `.w3x` 自带缩略图，点击“加载地图”运行原尺寸地形、水面、装饰和单位动画。地图内可用 WASD／方向键移动视角、`+/-` 缩放、空格暂停、R 重载、Esc 返回选图，也有返回与重载按钮。返回后可继续启动原有遭遇战。Amazonia 当前为场景运行，完整出生、资源采集、寻路、AI 和 JASS 对局规则尚未接入；选图页明确显示该状态。导入、来源和更新流程见[游戏内地图包](../../docs/designs/frostbound-realms/original-map-import.md#游戏内地图包)。
 
 ## 玩法
 

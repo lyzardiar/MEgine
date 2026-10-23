@@ -1,0 +1,1 @@
+{"version":8,"name":"Original cliff CVdi","shader":"pbr","surface":"opaque","base_color":[1,1,1,1],"base_color_texture":"Assets/Maps/amazonia/Textures/Cliff0.png","roughness":1,"wrap_u":"clamp","wrap_v":"clamp"}

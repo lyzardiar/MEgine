@@ -148,3 +148,32 @@ python scripts/test-warcraft-map.py --maps 'E:/Program Files (x86)/dzclient/Game
 后续接入需同时处理任意地图尺寸、原版路径格、原点和轴向、地形网格与材质、玩家槽、资源与装饰、脚本开局、序列化及网络协议；使用本阶段原件和坐标作为验证依据，避免通过缩小地图获得表面兼容。
 
 原生地形消费入口已实现，见 [原版地形场景](original-terrain-scene.md)：保留地图尺寸、原版地表／悬崖／坡道／水面，生成独立 MEngine 项目；完整对局执行继续推进。
+
+## 游戏内地图包
+
+运行入口统一为 `samples/frostbound-realms` 工程。主菜单“单人游戏 → 自定义游戏 → 下一页 → Amazonia → 加载地图”切换到同工程的地图场景；返回按钮／Esc 回到原选图位置，重载按钮／R 建立全新的地图运行状态。WASD／方向键移动视角，`+/-` 缩放，空格暂停动画。原有地图的遭遇战、MOBA 等入口继续使用现有客户端。
+
+`Assets/Maps/catalog.json` 登记地图 ID、显示信息、能力状态、原地图摘要、场景、运行脚本和缩略图。Amazonia 的资源位于 `Assets/Maps/amazonia/`；场景已加入 `project.json` 的 `buildScenes`，所有模型、材质、着色器和脚本的项目资源引用均迁移到该命名空间。原地图文件与成员保留在 `Source/`，转换来源记录在 `Provenance/`，`manifest.json` 记录安装资产摘要及原始来源。缩略图来自同一 `.w3x` 的 `war3mapMap.blp`，原件、PNG 和摘要一起保存；没有内置图片的地图使用路径格概览。
+
+引擎切换场景后保留脚本 VM，通过 `onSceneLoaded` 通知游戏。`game/map-session.js` 据此创建地图脚本实例；每次重载重新创建动画时钟和 WPM 网格。返回主场景时重新建立客户端、实体缓存、UI 管理器及效果池。重复加载请求被合并，失败请求超时后释放重试入口。地图脚本按工厂隔离全局变量，共用游戏工程的引擎 API。
+
+现有转换结果可直接安装：
+
+```powershell
+node scripts/install-frost-map-package.mjs tmp/docs-artifacts/warcraft-map-tests/amazonia-complete-visuals/project amazonia Amazonia samples/frostbound-realms
+```
+
+已安装的 `amazonia` 不会被此命令覆盖。更新地图时使用新的版本 ID，例如 `amazonia-v2`，对照新包的 `manifest.json` 后调整目录中的可选项；重编脚本后重新进入 Play。不要修改源游戏目录。整个转换流程也可自动安装：
+
+```powershell
+python scripts/load-frost-warcraft-map.py 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Maps/FrozenThrone/(2)Amazonia.w3x' --game-project samples/frostbound-realms --map-id amazonia-v2 --title 'Amazonia v2'
+node scripts/sync-frostbound-script.mjs
+```
+
+安装器自动更新目录、构建场景和生成脚本；单独更改 `game/` 或目录条目时使用 `sync-frostbound-script.mjs`，无需重生成场景／美术。导入需要现有 Python 转换依赖；运行地图无需 REA 或源游戏安装目录。打包遵循项目 `buildScenes` 和 `assetMode=all`，本阶段未执行独立 Player 打包验收。
+
+当前能力是原地图场景运行：地形、水面、装饰、单位动画和基础 WPM 网格。完整对局仍需把主模拟的固定 32 格空间迁移到原地图坐标，并接入玩家起点、单位与资源、动态阻挡、移动／视野、保存／网络和 JASS。目录以 `runtime=warcraft-scene`、`gameplay=false` 登记，界面不提供无效的种族／英雄设置；这不作为 Amazonia 对局完成的结论。
+
+2026-10-23 定向验证：生成脚本的菜单点击、加载、返回、重载、暂停、旧玩法开局、失败重试、WPM 实例隔离和安装资产／原图摘要通过；安装器完整转换结果安装、缩略图来源、重复与非法 ID 拒绝通过。新构建 Editor 的原生菜单与地图切换通过，164 个装饰、327 个单位部件和 9 个水面实体同时推进；暂停像素一致，Stop 恢复主场景，重新 Play 返回标题，原有遭遇战可继续运行。
+
+首轮原生收尾的 `console.get_logs` 参数上限错误保留在 `tmp/docs-artifacts/testing-batches/B001/map-session-1792743004654.json`，不将整份报告标为成功。修正后仅补日志检查 `map-session-1792743134396.json`；缩略图和选项可见性调整后的界面与加载检查为 `map-session-1792743303829.json`，两次均 0 error。安装证据在 `package-install-1792743377028/verification.json`，截图与原始报告仅存本地。

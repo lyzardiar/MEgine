@@ -1,0 +1,1 @@
+{"version":8,"name":"Original map ground","shader":"custom","custom_shader":"Assets/Maps/amazonia/Shaders/Ground.mshader","surface":"opaque","base_color":[1,1,1,1],"roughness":1,"wrap_u":"clamp","wrap_v":"clamp"}

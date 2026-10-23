@@ -1,0 +1,1 @@
+{"version":8,"name":"Original water","shader":"custom","custom_shader":"Assets/Maps/amazonia/Shaders/Water.mshader","surface":"transparent","blend_mode":"alpha","base_color":[1,1,1,1],"roughness":0.4,"transparent_depth_write":false,"render_queue":3000}

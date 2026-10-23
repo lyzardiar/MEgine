@@ -5,7 +5,8 @@
   "language": "javascript",
   "mainScene": "Assets/Scenes/Main.mscene",
   "buildScenes": [
-    "Assets/Scenes/Main.mscene"
+    "Assets/Scenes/Main.mscene",
+    "Assets/Maps/amazonia/Scenes/Main.mscene"
   ],
   "startupScript": "Assets/Scripts/Main.js",
   "assetMode": "all"
