@@ -9,7 +9,8 @@ import {clientWorldFixture} from './frost-client-world-fixture.mjs';
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),out=path.join(repo,'tmp/docs-artifacts/testing-batches/B001');
 assert.ok(process.env.MENGINE_EDITOR_EXECUTABLE,'Set MENGINE_EDITOR_EXECUTABLE');
 const logsOnly=process.argv.includes('--logs-only');
-const profileOnly=process.argv.includes('--profile-only');
+const continuousProfile=process.argv.includes('--continuous-profile');
+const profileOnly=process.argv.includes('--profile-only')||continuousProfile;
 const editorFeedback=process.argv.includes('--editor-feedback');
 const returnOnly=process.argv.includes('--return-only');
 const cameraOnly=process.argv.includes('--camera-only');
@@ -78,6 +79,13 @@ try{
     report.camera={initial,afterMoveAndZoom:readCamera(s)};report.checks.push('Source logical camera projection, movement, zoom and 960x900 rendering');await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);
   }else if(profileOnly){
     await step(180);await execute('playback.pause');await sleep(1500);
+    if(continuousProfile){
+      await execute('profiler.clear');const started=performance.now();await sleep(10000);const elapsedMs=performance.now()-started;
+      const profiles=await query('profiler.get_samples',{source:'game',limit:480});
+      assert.ok(profiles.nativeProfileCount>=15,'Expected completed live viewport frames');assert.ok(profiles.returnedSamples>0,'Expected WebView paint samples');
+      report.continuousProfile={elapsedMs,...profiles};await execute('playback.pause');await capture('profile-view');await execute('playback.stop');
+      report.checks.push('10-second live Amazonia presentation and WebView sample window without Agent polling');
+    }else{
     const native=[];
     for(let i=0;i<100;i++){
       const p=(await query('profiler.get_samples',{source:'game',limit:1})).nativeLatest;
@@ -85,6 +93,7 @@ try{
       await sleep(20);
     }
     assert.ok(native.length>=15,'Expected fresh live native samples');report.liveProfiles=native;await execute('playback.pause');await capture('profile-view');await execute('playback.stop');report.checks.push('Live Amazonia native samples after animation warmup');
+    }
   }else if(!logsOnly){
   if(!returnOnly){
   const before=new Map(s.entities.map(e=>[e.name,JSON.stringify(e.components)]));await step(30);s=await snapshot();const changed=s.entities.filter(e=>JSON.stringify(e.components)!==before.get(e.name));

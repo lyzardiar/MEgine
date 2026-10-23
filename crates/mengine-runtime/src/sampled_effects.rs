@@ -14,7 +14,7 @@ type Stamp = (Option<SystemTime>, u64);
 struct CachedEffect { stamp: Stamp, asset: Result<SampledEffectAsset, String> }
 struct Playback { key: (String, i32, u32), elapsed: f32 }
 struct CachedModel { stamp: Stamp, attempted_at: Instant, source: Result<Arc<SharedGltfPoseSource>, String> }
-fn file_stamp(path: &Path) -> Stamp { std::fs::metadata(path).map(|m| (m.modified().ok(), m.len())).unwrap_or((None, 0)) }
+fn file_stamp(path: &Path) -> Stamp { mengine_platform::file_change_stamp(path).map(|m| (m.modified, m.length)).unwrap_or((None, 0)) }
 
 #[derive(Default)]
 pub struct SampledEffectWorld {
@@ -178,6 +178,31 @@ mod tests {
     use super::*;
     use mengine_core::generated::Transform;
     #[test]
+    #[ignore = "manual Amazonia sampled effect metadata comparison"]
+    fn benchmark_sampled_effect_file_checks() {
+        use std::hint::black_box;
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+        let mut world = World::new(); mengine_scene::load_scene(&root.join("Assets/Maps/amazonia/Scenes/Main.mscene"), &mut world).unwrap();
+        let paths: std::collections::BTreeSet<_> = world.entities_with_components(&["SampledEffect"]).map(|entity| root.join(&world.get_component::<SampledEffect>(entity).unwrap().effect)).collect();
+        assert!(!paths.is_empty());
+        let baseline = |path: &Path| { let m = std::fs::metadata(path).unwrap(); (m.modified().ok(), m.len()) };
+        for path in &paths { assert_eq!(file_stamp(path), baseline(path)); }
+        let mut runs = Vec::new();
+        for round in 0..11 {
+            let mut times = [0.; 2];
+            for current in if round % 2 == 0 { [false, true] } else { [true, false] } {
+                let started = Instant::now();
+                for _ in 0..20 { for path in &paths { black_box(if current { file_stamp(path) } else { baseline(path) }); } }
+                times[usize::from(current)] = started.elapsed().as_secs_f64() * 1000. / 20.;
+            }
+            if round >= 2 { runs.push(times); }
+        }
+        let mut before: Vec<_> = runs.iter().map(|r| r[0]).collect(); let mut after: Vec<_> = runs.iter().map(|r| r[1]).collect();
+        before.sort_by(f64::total_cmp); after.sort_by(f64::total_cmp);
+        println!("{}", serde_json::json!({"files":paths.len(),"runsMs":runs,"beforeMedianMs":before[4],"afterMedianMs":after[4],"scope":"shared effect metadata checks only; not frame time or FPS"}));
+    }
+
+    #[test]
     fn original_cloud_particles_apply_opacity_before_multiply_blending() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
         let asset = SampledEffectAsset::load(&root.join("Assets/DeathKnightEffects/Effects/DeathCoilSpecialArt.mfx")).unwrap();
@@ -269,12 +294,14 @@ mod tests {
         let mut effects=SampledEffectWorld::default();effects.set_project_root(Some(&root));
         let collect=|effects:&mut SampledEffectWorld|effects.collect(&world,&hierarchy,camera,0.,&mut FrameLighting::default());
         assert_eq!(collect(&mut effects).len(),2);assert_eq!(effects.players.len(),3);assert_eq!(effects.assets.len(),1);
+        let original = data.clone(); let modified = std::fs::metadata(&path).unwrap().modified().unwrap();
         data["clips"][0]["frames"][1]["particles"]=serde_json::json!([]);std::fs::write(&path,data.to_string()).unwrap();
+        std::fs::File::options().write(true).open(&path).unwrap().set_modified(modified).unwrap();
         assert!(collect(&mut effects).is_empty());assert!(effects.failures.is_empty());
         std::fs::write(&path,"invalid").unwrap();assert!(collect(&mut effects).is_empty());assert_eq!(effects.failures.len(),1);
         assert!(collect(&mut effects).is_empty());assert!(effects.failures.is_empty());
         std::fs::remove_file(&path).unwrap();assert!(collect(&mut effects).is_empty());assert_eq!(effects.failures.len(),1);
-        std::fs::write(&path,data.to_string()).unwrap();assert!(collect(&mut effects).is_empty());assert!(effects.failures.is_empty());
+        std::fs::write(&path,original.to_string()).unwrap();assert_eq!(collect(&mut effects).len(),2);assert!(effects.failures.is_empty());
         std::fs::remove_dir_all(root).unwrap();
     }
     #[test]

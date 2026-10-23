@@ -311,3 +311,11 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 快速检查：`node --test packages/editor/tests/workspaceSelectionSync.test.mjs packages/editor/tests/sceneSelectionRefresh.test.mjs` 10通过、0失败；`node node_modules/typescript/bin/tsc -b`在packages/editor通过，diff检查通过。三窗口并发发送、相反递送顺序、延迟重复消息均覆盖。Amazonia局部路径测量与口径见performance-risk-todo第三十二阶段，原始产物在`tmp/docs-artifacts/editor-performance-risk/selection-sync/`。没有完整前端/原生构建或全量QA，现有EXE不包含本项。
 
 待合并验证：新Editor中实际脱离Hierarchy/Inspector窗口并连续点击/多选/清空，三个窗口同时操作；内容编辑/撤销、同名场景重载、Play/Stop和重新打开面板；测量真实输入延迟及IPC。Agent selection.set单独执行不能代替UI薄消息路径验证。状态为实现及快速检查完成，原生集成待测。
+
+### B001-01 连续呈现基线与特效文件检查
+
+变更：`sampled_effects.rs`复用平台文件stamp接口，保留逐次收集的检查频率及mtime/长度失效；强化共享特效同mtime长度变更和删除恢复测试，增加手动37文件对照。`qa-frost-map-session.mjs`新增`--continuous-profile`，10秒内不轮询Agent。属于既有性能修复补充，不增加批次计数。
+
+快速检查：最终SampledEffect定向6通过、0失败、1手动忽略，手动CPU基准单独通过（37文件0.82789→0.15752ms）；JS语法和diff检查通过。复用原EXE执行一次连续采样，报告`B001/map-session-1792774425728.json`通过、0 error、正常退出。完成呈现约50.15次/秒仅是850×478旧EXE保留240帧的基线；详细采样范围与日志入口见performance-risk-todo第三十三阶段。
+
+待合并验证：与e46f049共同构建原生Editor，验证Amazonia特效动画／暂停／Stop恢复、特效文件修改/损坏/删除恢复及相同视口的连续呈现；已有跨窗口选择验收项一并执行。未执行全库测试、地图重导或原生重建，旧EXE不含两项优化。

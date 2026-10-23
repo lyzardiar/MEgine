@@ -2,7 +2,7 @@
 
 后续实现按[批次测试台账](testing-batches.md)执行：逐任务提交代码和资产，登记待测内容，默认累计3个功能／修复任务后合并验证。下文已完成阶段的历史测试结果保留；其中的全量命令不作为每次提交的必跑清单。
 
-2026-10-23：编辑器性能与验证已推进至第三十一阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询及原版地形分块。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-24：编辑器性能与验证已推进至第三十三阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 B001地图视觉修复补充：地表图集按64像素对齐、逐mip夹紧并限制至单图块1×1级；水面按128像素帧对齐、帧内循环过滤并限制至单帧1×1级，避免跨块／跨帧串色。Amazonia地表与水面图集基础像素量分别减少约11.4%／6%。原生地表六色与水面16组RGBA对照、实际地图动画／暂停／恢复通过。相同场景1280×720硬件timestamp对照中，地表GPU pass增加约0.02ms，水面增加约0.11ms；不能从贴图缩小推断FPS提升。复现入口与原始报告路径见[图集性能说明](designs/frostbound-realms/original-terrain-scene.md#同场景图集性能)，归入B001-01，不新开测试批次。
 
@@ -765,3 +765,15 @@ Edit模式的纯选择只发送节点ID、场景名及同步版本，接收端�
 实际Amazonia 7,409实体，使用App实际发送/接收函数与独立真实store，3组预热、8组测量、交替执行。完整消息平均6,551,058字节，薄消息110字节；发送路径23.4305→0.0693ms，接收路径53.9579→0.0223ms。测量包含Node模拟通道的structuredClone，不包含真实浏览器IPC、React呈现或原生渲染，也未计完整发送前的原选择刷新；不是整体FPS。脚本与样本位于`tmp/docs-artifacts/editor-performance-risk/selection-sync/`。
 
 定向10项通过，覆盖选择/多选/清空、无回声、脏状态保持、内容排队、场景/模式边界、三窗口并发完整同步与选择、延迟旧消息拒绝；TypeScript检查通过。独立审核发现的并发选择分歧已补排序及回归。未重建Editor或运行全库测试。待下次合并构建验证真实脱离Hierarchy/Inspector窗口、连续选择延迟、内容编辑/撤销和主窗口Play/Stop恢复。
+
+## 第三十三阶段连续呈现采样与特效文件检查
+
+`qa-frost-map-session.mjs --continuous-profile`在地图动画预热后继续运行，清空Profiler历史，10秒内不通过Agent轮询，结束时读取现有汇总和WebView样本。复用EXE `9cb87294569f0e5e8d71666f38583eb0df5e59185874fa9583a9ccacfb52a93a`，报告`tmp/docs-artifacts/testing-batches/B001/map-session-1792774425728.json`通过，0 error，进程正常退出，锁定WebView缓存保留。输入含7,409地图实体和1个QA观察节点。
+
+850×478原生Game视口在此窗口末尾保留240个完成帧，平均呈现间隔19.9388ms、P95 31.2ms，对应50.15次完成呈现/秒；这240帧约覆盖末尾4.8秒，不是整个10秒的完整帧历史，也不代表显示器扫描输出或新模拟帧率。原生渲染平均14.465ms、完整请求27.481ms、模拟请求12.729ms；管线有重叠，不能相加。38个WebView采样段平均绘制3.157ms。最新原生帧的特效阶段约1.980ms、对象材质2.956ms、层级变换2.048ms，单帧阶段值只用于定位下一处检查。
+
+作者地图108个SampledEffect实例共用37份文件。特效文件检查改用已有`mengine_platform::file_change_stamp`：Windows普通文件直接查询属性，目录／重解析点／异常路径沿用metadata回退；其他平台沿用metadata。仍然每次收集检查一次共享文件，下一帧可见修改，保留mtime和长度失效、缺失/错误去重、项目切换和模型加载失败后的重试语义。
+
+同进程交替旧metadata与平台接口，2组预热、9组测量，每组20轮、每轮37文件，逐文件结果相等；中位数0.82789→0.15752ms，减少约81.0%，每轮约省0.670ms。仅文件检查CPU基准，不是整个特效阶段或原生FPS提升证明。`cargo test -p mengine-runtime --release --lib sampled_effects::tests -- --test-threads=1`最终6通过、0失败、1手动基准忽略；共享特效回归补充同mtime长度变化及恢复后的粒子重新输出。单独运行`benchmark_sampled_effect_file_checks -- --ignored --nocapture --test-threads=1`通过。原始日志`sampled-effect-stamp-tests-final.log`、`sampled-effect-stamp-benchmark.log`及`continuous-profile.log`在`tmp/docs-artifacts/editor-performance-risk/`。
+
+未重建原生Editor；上述连续采样是本项优化前的基线。待与跨窗口选择同步共同构建，验证原地图特效、暂停／Stop恢复、实际文件热更新和相同视口的连续呈现，不将旧EXE结果作为新实现的原生验收。
