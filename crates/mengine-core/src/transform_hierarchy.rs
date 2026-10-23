@@ -82,24 +82,66 @@ impl ResolvedNode {
     };
 }
 
+// MiYu: full dense worlds index entity slots directly; sparse requests retain bounded hash storage.
+#[derive(Clone, Debug)]
+enum HierarchyNodes {
+    Dense(Vec<Option<(u32, ResolvedNode)>>),
+    Sparse(HashMap<Entity, ResolvedNode>),
+}
+
+impl Default for HierarchyNodes {
+    fn default() -> Self { Self::Sparse(HashMap::new()) }
+}
+
+impl HierarchyNodes {
+    fn with_capacity(capacity: usize) -> Self { Self::Sparse(HashMap::with_capacity(capacity)) }
+
+    fn get(&self, entity: &Entity) -> Option<&ResolvedNode> {
+        match self {
+            Self::Dense(nodes) => nodes.get(entity.index as usize)?.as_ref().filter(|(generation, _)| *generation == entity.generation).map(|(_, node)| node),
+            Self::Sparse(nodes) => nodes.get(entity),
+        }
+    }
+
+    fn insert(&mut self, entity: Entity, node: ResolvedNode) {
+        match self {
+            Self::Dense(nodes) => nodes[entity.index as usize] = Some((entity.generation, node)),
+            Self::Sparse(nodes) => { nodes.insert(entity, node); }
+        }
+    }
+
+    #[cfg(test)]
+    fn len(&self) -> usize { match self { Self::Dense(nodes) => nodes.iter().filter(|node| node.is_some()).count(), Self::Sparse(nodes) => nodes.len() } }
+    #[cfg(test)]
+    fn capacity(&self) -> usize { match self { Self::Dense(nodes) => nodes.capacity(), Self::Sparse(nodes) => nodes.capacity() } }
+    #[cfg(test)]
+    fn contains_key(&self, entity: &Entity) -> bool { self.get(entity).is_some() }
+}
+
 /// Immutable per-frame hierarchy cache shared by render, physics, audio, and tooling systems.
 #[derive(Clone, Debug, Default)]
 pub struct TransformHierarchy {
-    nodes: HashMap<Entity, ResolvedNode>,
+    nodes: HierarchyNodes,
 }
 
 impl TransformHierarchy {
     /// MiYu: Inactive records need no own transform; referenced ancestors are still resolved.
     pub fn build(world: &World) -> Self {
-        // MiYu: reserve for active requests before resolving ancestors, preserving world traversal order.
-        let entities: Vec<_> = world.iter_entities().filter(|entity| world.entity_active(*entity)).collect();
-        Self::build_for_entities(world, entities)
+        let mut slots = 0;
+        let entities: Vec<_> = world.iter_entities().filter(|entity| {
+            slots = slots.max(entity.index as usize + 1);
+            world.entity_active(*entity)
+        }).collect();
+        // Include inactive ancestors in the slot bound without allocating for sparse high-index worlds.
+        let mut nodes = if slots <= entities.len().saturating_mul(2) { HierarchyNodes::Dense(vec![None; slots]) } else { HierarchyNodes::with_capacity(entities.len()) };
+        for entity in entities { resolve_node(world, entity, &mut nodes); }
+        Self { nodes }
     }
 
     /// Resolves the requested entities and their ancestors without traversing unrelated branches.
     pub fn build_for_entities(world: &World, entities: impl IntoIterator<Item = Entity>) -> Self {
         let entities = entities.into_iter();
-        let mut nodes = HashMap::with_capacity(entities.size_hint().0);
+        let mut nodes = HierarchyNodes::with_capacity(entities.size_hint().0);
         for entity in entities { resolve_node(world, entity, &mut nodes); }
         Self { nodes }
     }
@@ -131,7 +173,7 @@ impl TransformHierarchy {
     }
 }
 
-fn resolve_node(world: &World, entity: Entity, nodes: &mut HashMap<Entity, ResolvedNode>) -> ResolvedNode {
+fn resolve_node(world: &World, entity: Entity, nodes: &mut HierarchyNodes) -> ResolvedNode {
     if let Some(node) = nodes.get(&entity) { return *node; }
     if !world.is_alive(entity) {
         return ResolvedNode::INVALID;
@@ -357,3 +399,7 @@ mod tests {
 #[cfg(test)]
 #[path = "transform_hierarchy_capacity_tests.rs"]
 mod capacity_tests;
+
+#[cfg(test)]
+#[path = "transform_hierarchy_storage_tests.rs"]
+mod storage_tests;

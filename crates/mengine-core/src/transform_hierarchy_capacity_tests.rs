@@ -3,7 +3,7 @@ use super::*;
 use std::{hint::black_box, time::Instant};
 
 fn incremental(world: &World) -> TransformHierarchy {
-    let mut nodes = HashMap::new();
+    let mut nodes = HierarchyNodes::default();
     for entity in world.iter_entities().filter(|entity| world.entity_active(*entity)) { resolve_node(world, entity, &mut nodes); }
     TransformHierarchy { nodes }
 }
@@ -39,6 +39,7 @@ fn capacity_planning_keeps_sparse_requests_and_inactive_ancestors() {
 #[ignore = "manual authored scene hierarchy allocation comparison"]
 fn benchmark_hierarchy_capacity() {
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    let reserved = |world: &World| TransformHierarchy::build_for_entities(world, world.iter_entities().filter(|entity| world.entity_active(*entity)).collect::<Vec<_>>());
     let mut reports = Vec::new();
     for scene in ["Assets/Maps/amazonia/Scenes/Main.mscene", "Assets/Scenes/Main.mscene"] {
         let value: serde_json::Value = serde_json::from_slice(&std::fs::read(root.join(scene)).unwrap()).unwrap();
@@ -50,13 +51,13 @@ fn benchmark_hierarchy_capacity() {
             world.set_editor_state(entity, source.sibling_index, source.active);
         }
         for source in &snapshot.entities { if let Some(parent) = source.parent { world.set_parent(ids[&source.entity], Some(ids[&parent])); } }
-        let expected = incremental(&world); let actual = TransformHierarchy::build(&world);
+        let expected = incremental(&world); let actual = reserved(&world);
         assert_equal(&world, &expected, &actual);
         let mut samples = [Vec::new(), Vec::new()];
         for group in 0..11 {
             for index in if group % 2 == 0 { [0, 1] } else { [1, 0] } {
                 let started = Instant::now();
-                for _ in 0..30 { black_box(if index == 0 { incremental(&world) } else { TransformHierarchy::build(&world) }); }
+                for _ in 0..30 { black_box(if index == 0 { incremental(&world) } else { reserved(&world) }); }
                 if group >= 2 { samples[index].push(started.elapsed().as_secs_f64() * 1000. / 30.); }
             }
         }
