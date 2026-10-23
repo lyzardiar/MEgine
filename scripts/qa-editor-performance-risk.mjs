@@ -78,7 +78,7 @@ try{
   console.log('START isolated native editor performance QA',root);
   for(let attempt=0;;attempt++){
     try{await query('project.state');break;}
-    catch(error){if(attempt>=20||!/Workspace services are not ready|BridgeConnectionError|request timed out/.test(error.message))throw error;await sleep(500);}
+    catch(error){if(attempt>=20||!((error.name==='BridgeConnectionError'&&!error.foregroundConflict)||/Workspace services are not ready|request timed out/.test(error.message)))throw error;await sleep(500);}
   }
   await execute('project.open',{root:sample});
   const initial=await snapshot();

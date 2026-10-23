@@ -176,33 +176,40 @@ impl RuntimeMeshCache {
     }
 
     fn prepare_billboards(&mut self, camera: FrameCamera, objects: &mut [RenderObject], checks: &mut FrameSourceChecks) {
-        let Some(root) = self.project_root.as_deref() else { return; };
+        let Some(root) = self.project_root.clone() else { return; };
         let poll = self.last_poll.is_none_or(|last| last.elapsed() >= Duration::from_millis(250));
-        let mut checked_assets = HashMap::new();
-        for object in objects {
+        // Borrow unchanged ordinary keys; apply camera-specific replacements after the scan.
+        let mut checked_assets = HashMap::new(); let mut ordinary_keys = HashSet::new(); let mut replacements = Vec::new();
+        for (index, object) in objects.iter().enumerate() {
             let key = object.mesh_key.trim();
-            let Some((asset,_,_,_)) = parse_gltf_pose_sample(key) else { continue; };
-            if poll || !self.poses.contains_key(asset) {
-                let ready = if let Some(ready) = checked_assets.get(asset) { *ready } else {
-                    let ready = if checks.prepared.contains(asset) { true } else if let Some(path) = resolve_project_asset_path(root,asset) {
-                        if checks.validate_cached_source(asset, &path, self.poses.get(asset), &mut self.profile) { true } else {
-                            let stamp = checks.stamp(asset, &path, &mut self.profile);
-                            forget_pose_attempts(&mut self.attempted, &self.billboard_views, asset);
-                            self.poses.remove(asset);
-                            match load_pose_source(&path, root, &mut self.profile) { Ok(source) => { self.poses.insert(asset.into(),(stamp,source)); true }, Err(_) => false }
-                        }
-                    } else { false };
-                    if ready { checks.prepared.insert(asset.to_owned()); }
-                    checked_assets.insert(asset.to_owned(),ready); ready
-                };
-                if !ready { continue; }
-            }
-            if !self.poses[asset].1.has_mesh_billboards() { continue; }
+            if ordinary_keys.contains(key) { continue; }
+            if !self.prepare_billboard_source(&root, key, poll, &mut checked_assets, checks) { ordinary_keys.insert(key); continue; }
             let Some(view) = billboard_camera(camera,object) else { continue; };
             let rendered = billboard_key(key,view);
             self.billboard_views.entry(rendered.clone()).or_insert_with(|| (key.into(),view));
-            object.mesh_key=rendered;
+            replacements.push((index, rendered));
         }
+        for (index, key) in replacements { objects[index].mesh_key = key; }
+    }
+
+    fn prepare_billboard_source(&mut self, root: &Path, key: &str, poll: bool, checked_assets: &mut HashMap<String, bool>, checks: &mut FrameSourceChecks) -> bool {
+        let Some((asset,_,_,_)) = parse_gltf_pose_sample(key) else { return false; };
+        if poll || !self.poses.contains_key(asset) {
+            let ready = if let Some(ready) = checked_assets.get(asset) { *ready } else {
+                let ready = if checks.prepared.contains(asset) { true } else if let Some(path) = resolve_project_asset_path(root,asset) {
+                    if checks.validate_cached_source(asset, &path, self.poses.get(asset), &mut self.profile) { true } else {
+                        let stamp = checks.stamp(asset, &path, &mut self.profile);
+                        forget_pose_attempts(&mut self.attempted, &self.billboard_views, asset);
+                        self.poses.remove(asset);
+                        match load_pose_source(&path, root, &mut self.profile) { Ok(source) => { self.poses.insert(asset.into(),(stamp,source)); true }, Err(_) => false }
+                    }
+                } else { false };
+                if ready { checks.prepared.insert(asset.to_owned()); }
+                checked_assets.insert(asset.to_owned(),ready); ready
+            };
+            if !ready { return false; }
+        }
+        self.poses[asset].1.has_mesh_billboards()
     }
 
     pub fn sync(
@@ -637,3 +644,7 @@ mod source_validation_tests;
 #[cfg(test)]
 #[path = "mesh_sync_dedup_tests.rs"]
 mod sync_dedup_tests;
+
+#[cfg(test)]
+#[path = "mesh_billboard_prepare_tests.rs"]
+mod billboard_prepare_tests;

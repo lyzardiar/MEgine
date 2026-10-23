@@ -2,7 +2,7 @@
 
 后续实现按[批次测试台账](testing-batches.md)执行：逐任务提交代码和资产，登记待测内容，默认累计3个功能／修复任务后合并验证。下文已完成阶段的历史测试结果保留；其中的全量命令不作为每次提交的必跑清单。
 
-2026-10-24：编辑器性能与验证已推进至第五十三阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-24：编辑器性能与验证已推进至第五十四阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 B001地图视觉修复补充：地表图集按64像素对齐、逐mip夹紧并限制至单图块1×1级；水面按128像素帧对齐、帧内循环过滤并限制至单帧1×1级，避免跨块／跨帧串色。Amazonia地表与水面图集基础像素量分别减少约11.4%／6%。原生地表六色与水面16组RGBA对照、实际地图动画／暂停／恢复通过。相同场景1280×720硬件timestamp对照中，地表GPU pass增加约0.02ms，水面增加约0.11ms；不能从贴图缩小推断FPS提升。复现入口与原始报告路径见[图集性能说明](designs/frostbound-realms/original-terrain-scene.md#同场景图集性能)，归入B001-01，不新开测试批次。
 
@@ -1048,3 +1048,26 @@ Amazonia作者场景包含2,747个活动网格对象、246个不同网格键，�
 Amazonia此局部路径减少约71.08%，菜单约4.26%；不代表整个RuntimeMeshCache.sync、内存总量或实际FPS收益。复现：`cargo test -p mengine-runtime --release --lib benchmark_warm_mesh_key_dedup -- --ignored --nocapture --test-threads=1`。完整样本、源场景SHA256和日志保存在 `tmp/docs-artifacts/editor-performance-risk/mesh-key-dedup-{summary.json,tests.log,benchmark.log}`；测试参考实现固定于0a7f7d2。
 
 本轮未重建原生Editor、运行完整地图QA或全库测试。与第五十二阶段材质优化合并进入下一相关原生批次：连续Amazonia性能、Game／Scene／多相机预览、动画与billboard、资源热更新及删除恢复、换图／Stop和缓存淘汰。当前EXE仍为3371f8fc，不能用于证明本阶段已通过原生验收。
+
+
+## 第五十四阶段同视图普通姿势键复用判定
+
+prepare_billboards在一个视图内借用无需billboard的源键，重复对象直接跳过姿势解析和源检查；需要相机朝向的对象仍逐个计算模型变换与相机专属键。替换键收集后在同次调用末尾写回，借用期间原对象字符串不变；主视图和各预览视图使用独立集合，源验证继续共享本帧FrameSourceChecks。集合不跨帧，原有文件轮询／失败恢复保持生效。
+
+19项网格定向测试通过（3项手动基准默认忽略），局部基准1项通过。新增对照固定0076a12的完整prepare_billboards，验证重复键、不同姿势、平移共享、旋转／缩放分离、零尺度、空白与非法键、两个相机，以及源buffer修改／删除／恢复和移除billboard标记；输出键、相机变换、缓存状态、源检查与文件检查次数一致。复现：`cargo test -p mengine-runtime --release --lib meshes:: -- --test-threads=1`。
+
+实际作者场景、预热2组后交替9组×100次，在不触发文件轮询的暖源状态测量prepare_billboards；对象克隆不计时，GPU同步和IPC不包含。Amazonia 2,747对象／198来源／23个billboard，中位0.351219→0.144535ms，减少58.85%；主菜单219对象／154来源／0个billboard，0.023742→0.036900ms，增加约0.013ms。主菜单重复较少，集合检查成本超过复用收益；保留这一小场景代价，不宣称全部场景均提速或整体FPS收益。
+
+复现：`cargo test -p mengine-runtime --release --lib benchmark_billboard_source_decisions -- --ignored --nocapture --test-threads=1`。证据为 `tmp/docs-artifacts/editor-performance-risk/billboard-source-{mesh-tests.log,benchmark-final.log,summary.json}`，包含完整样本及源场景摘要。与第五十二、五十三阶段共用本次原生构建，实际运行结果登记于测试批次台账。
+
+
+### 第五十二至五十四阶段原生合并结果
+
+共用Release构建1分14秒，EXE SHA256 `c49946ba87fdad37899dfeb3feb7607f7f72944c16a1c79cce7aebc022d896aa`，仅既有world_from_snapshot未使用告警。`qa-frost-map-session.mjs --continuous-profile --transport-profile --simulation-profile --viewport-transitions --runtime-edits` 报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792790439071.json` 通过：Game／Scene／相机预览、轨道、两种分辨率、Inspector修改保留及恢复、三层动画和时钟、Stop还原，0 error、正常退出；Game截图已目视核对。
+
+7,410实体／850×478，末尾240次呈现平均54.1908次/秒，间隔18.4533ms／P95 27.3ms，原生渲染11.4695ms，世界同步1.2987ms；240个不同模拟版本的计时完整。此前独立运行54.4452次/秒、原生渲染12.4069ms，本次不能据此宣称整体FPS提升或稳定60 FPS。主线程前端准备平均0.3183ms、完成0.6242ms，请求15.8663ms；后续应继续检查呈现间隔和传输／调度，保留实际呈现口径。
+
+最新单帧Mesh objects and materials 2.0312ms、TransformHierarchy.build 1.5367ms、RuntimeMeshCache.sync self 0.6108ms、GPU map wait 1.3768ms仅作定位依据，不是阶段平均。构建、地图日志和原生摘要在 `tmp/docs-artifacts/editor-performance-risk/render-cache-{native-build.log,map-qa.log,native-summary.json}`。资源专项结果与剩余验收边界记录于测试批次台账。
+
+
+同EXE资源专项 `render-cache-resources-final.json` 通过：改名／撤销重做／持久恢复、资产监听增改删、Play生命周期及暂停像素稳定、五种材质／shader／纹理／glTF资源热更新和精确像素恢复；0 error、正常退出。初次连接失败及QA异常类型识别修正见批次台账。原资源摘要保持不变；截图已目视核对。父级Undo、失活复活、强制竞态、独立窗口、资源删除恢复和缓存总内存等专项继续待测。

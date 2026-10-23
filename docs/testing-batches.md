@@ -532,3 +532,24 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 快速检查：18项网格测试通过，固定0a7f7d2旧实现的局部对照基准1项通过。实际Amazonia作者网格列表的非轮询热缓存遍历中位0.460216→0.133081ms，菜单0.039481→0.037798ms；缓存状态一致。此数据不包含billboard准备、源加载、GPU上传和IPC，不能推算实际FPS。完整口径及本地产物见performance-risk-todo第五十三阶段。
 
 待合并验证：与第五十二阶段普通材质复用共用下一相关原生构建，覆盖连续Amazonia性能、Game／Scene／多相机预览、姿势及billboard、资源热更新／删除恢复、缓存淘汰和地图切换／Stop。当前EXE3371f8fc不含这两阶段代码；未重复前端构建、全库测试或完整地图QA。既有材质专项、父级／Undo、竞态、脱离窗口与真实操作延迟待测保持开放。
+
+
+### B001-01 同视图普通姿势键复用判定
+
+变更：mengine-runtime/meshes.rs及mesh_billboard_prepare_tests.rs。每个视图借用不需要billboard的键并复用判定，真正需要相机朝向的对象仍逐个计算变换；写回延后到同次调用末尾，保留各视图源检查与文件轮询。属于现有性能任务补充，不新增计数。
+
+快速检查：19项网格测试及1项固定旧实现对照基准通过。Amazonia局部暖源准备0.351219→0.144535ms，菜单0.023742→0.036900ms；后者增加约0.013ms，结果与取舍见performance-risk-todo第五十四阶段。
+
+本次合并验收范围：第五十二阶段普通材质及颜色覆盖、第五十三阶段网格去重、本阶段billboard准备，共用一次原生Release构建，检查连续Amazonia、Game／Scene／预览与动画、编辑恢复及资源热更新。结果下附；未列出的专项保持待测。
+
+
+### B001-01 三项渲染优化的原生集成
+
+普通材质／颜色覆盖、同步入口去重和同视图普通姿势键判定共用一次Release构建（1分14秒），EXE `c49946ba87fdad37899dfeb3feb7607f7f72944c16a1c79cce7aebc022d896aa`。报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792790439071.json` 通过，0 error、正常退出；真实Game／Scene／多相机预览、轨道和分辨率、Inspector修改与恢复、三层动画／模拟时钟、Stop恢复均通过，运行截图已检查。
+
+连续Amazonia 7,410实体／850×478，末尾240次呈现54.1908次/秒，平均18.4533ms／P95 27.3ms，原生渲染11.4695ms，世界同步1.2987ms。240个模拟版本计时完整。与此前54.4452次/秒为独立运行，不作整体FPS提升结论；完整口径与本地产物见performance-risk-todo第五十四阶段。
+
+
+同一EXE执行 `node scripts/qa-editor-performance-risk.mjs`，最终报告 `tmp/docs-artifacts/editor-performance-risk/render-cache-resources-final.json` 通过，0 error、正常退出。覆盖改名／Undo／Redo、持久恢复点、原生资产监听新增／修改／删除、Play暂停／恢复／逐步／Stop、稳定世界与像素；Ground.mmat、ClassicGround.mshader、UI图标、队伍颜色纹理、TownHall动画glTF均热更新可见并精确恢复原像素，原项目文件摘要不变。截图已目视检查。上述普通材质／shader／纹理／模型热更新正常路径关闭待测；父级变更与Undo、失活复活、强制竞态、独立窗口、资源删除恢复、完整项目切换、缓存总内存及真实操作延迟仍未完成。
+
+首次资源报告 `render-cache-native.json` 在启动连接阶段失败，未执行业务检查；QA脚本改为按error.name识别BridgeConnectionError，并保留前台冲突直接失败。脚本语法检查通过，再使用同一EXE重跑上述资源专项成功；失败报告和日志render-cache-resources-qa.log保留。首次／重测原生进程均正常退出，仍被WebView锁定的临时缓存保留。原始截图／JSON／日志均在tmp/docs-artifacts下，未纳入提交。
