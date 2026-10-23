@@ -5,11 +5,18 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {clientWorldFixture} from './frost-client-world-fixture.mjs';
+import {attachUnitInitialization} from './frost-unit-initialization-package.mjs';
 const root=fileURLToPath(new URL('../samples/frostbound-realms/',import.meta.url));
 assert.ok(process.argv[2],'Usage: node scripts/test-frost-map-import.mjs <runtime-converter-receipt>');
 const entry=JSON.parse(fs.readFileSync(process.argv[2],'utf8')),read=file=>JSON.parse(fs.readFileSync(path.join(root,file),'utf8'));
 assert.ok(!read('Assets/Maps/catalog.json').maps.some(map=>map.id===entry.id),'Use a map absent from the installed catalog');
 const content={...entry,scriptSource:fs.readFileSync(path.join(root,entry.script),'utf8')},requests=[],imports=[];let world,cancels=0;
+const unitInitialization=process.argv.includes('--unit-initialization');
+if(unitInitialization){
+  const out=fileURLToPath(new URL('../tmp/docs-artifacts/frost-original-maps/',import.meta.url));fs.mkdirSync(out,{recursive:true});const fixture=fs.mkdtempSync(path.join(out,'unit-import-')),relative='Assets/Maps/'+entry.id,manifest=read(relative+'/manifest.json');
+  fs.mkdirSync(path.join(fixture,relative,'Source'),{recursive:true});fs.mkdirSync(path.join(fixture,relative,'Scripts'));fs.copyFileSync(path.join(root,relative,'Source/war3map.j'),path.join(fixture,relative,'Source/war3map.j'));fs.writeFileSync(path.join(fixture,entry.script),content.scriptSource);
+  attachUnitInitialization(fixture,relative,[{path:entry.script}],manifest.source.members['war3map.j'].sha256);content.scriptSource=fs.readFileSync(path.join(fixture,entry.script),'utf8');
+}
 const engine={network:{poll:()=>[],close(){},send(){}},storage:{load:()=>null,save(){}},playAudio(){},assets:{sampleNodes:()=>[]},loadScene:file=>requests.push(file),importContent:(...args)=>imports.push(args),cancelContentImport:()=>cancels++};
 const context=vm.createContext({engine});
 function scene(file){world=clientWorldFixture(read(file).world);Object.assign(engine,world.engine);engine.pushCommandsJson=json=>{for(const c of JSON.parse(json))engine.pushCommandJson(JSON.stringify(c));return true;};engine.scene={path:file};context.onSceneLoaded?.(engine.scene);}
@@ -34,6 +41,7 @@ assert.equal(engine.scene.path,'Assets/Scenes/Main.mscene');assert.equal(world.v
 assert.equal(world.entity('mapOpen label').components.Text.text,'正在加载地图…');assert.match(world.entity('Map description').components.Text.text,/正在加载地图/);
 assert.equal(world.entity('Map name').components.Text.text,entry.title);
 tick();assert.equal(engine.scene.path,entry.scene,JSON.stringify(context.FrostMapSession.status())+' requests='+imports.length);assert.equal(context.FrostMapSession.status().map,entry.id);assert.ok(world.snapshot.entities.some(e=>e.name.startsWith('Unit-')));
+if(unitInitialization){const initialized=context.FrostMapSession.unitInitialization();assert.ok(initialized);if(entry.title==='(2)Amazonia'){assert.equal(initialized.status,'ready');assert.equal(initialized.units.length,96);assert.equal(initialized.triggers.length,26);}else if(entry.title==='(2)EchoIsles'){assert.equal(initialized.status,'unsupported');assert.match(initialized.error,/IssueImmediateOrder/);assert.equal(initialized.units.length,0);}else assert.fail('Choose the Amazonia or Echo Isles initialization fixture');}
 const first=context.FrostMapSession.status().pathing;tick({pressedKeys:['Escape']});tick();assert.equal(world.entity('Map name').components.Text.text,entry.title);
 click('mapStart box');tick();assert.equal(context.FrostMapSession.status().pathing.revision,0);assert.deepEqual(context.FrostMapSession.status().pathing.size,first.size);
 tick({pressedKeys:['Escape']});tick();click('mapOpen box');context.onContentImport({status:'complete',content:{...content,cached:true}});tick();assert.equal(context.FrostMapPackages.length,2,'cached imports replace the same entry');

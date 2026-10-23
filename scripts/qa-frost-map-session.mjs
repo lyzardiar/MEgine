@@ -27,6 +27,7 @@ const editorFeedback=process.argv.includes('--editor-feedback');
 const returnOnly=process.argv.includes('--return-only');
 const cameraOnly=process.argv.includes('--camera-only');
 const hierarchyOnly=process.argv.includes('--hierarchy-only');
+const unitInitializationOnly=process.argv.includes('--unit-initialization-only');
 const hierarchyInteractions=process.argv.includes('--hierarchy-interactions');
 const label='map-session-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
@@ -156,7 +157,12 @@ try{
   let s=await snapshot();assert.equal(telemetry(s).mode,'custom');assert.equal(s.entities.find(e=>e.name==='Map name').components.Text.text,'Amazonia');assert.equal(s.entities.find(e=>e.name==='Map preview backing').components.Image.sprite,'Assets/Maps/amazonia/Textures/MapPreview.png');for(const name of ['map2 box','map3 box','faction box','heroChoice box','Hero preview','Map tile 0'])assert.equal(clientWorldFixture(s).visible(name),false,name);await capture('selection');
   await click('mapStart box');s=await waitMap('amazonia');assert.deepEqual(status(s).pathing.size,[384,384]);assert.equal(status(s).pathing.revision,0);assert.ok(s.entities.some(e=>e.name.startsWith('Doodad-'))&&s.entities.some(e=>e.name.startsWith('Unit-')));report.map=status(s);report.entities=s.entities.length;
   if(editorFeedback)await checkHierarchyFocus(s);
-  if(hierarchyOnly){
+  if(unitInitializationOnly){
+    const expected={status:'ready',units:96,triggers:26};assert.deepEqual(status(s).initialization,expected);
+    await step(3);assert.deepEqual(status(await snapshot()).initialization,expected);await click('Map session restart');s=await waitMap('amazonia');assert.deepEqual(status(s).initialization,expected);
+    await click('Map session return');assert.equal(status(await snapshot()).initialization,null);await click('mapStart box');s=await waitMap('amazonia');assert.deepEqual(status(s).initialization,expected);
+    await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);report.checks.push('Original CreateAllUnits: 96 units, 26 trigger registrations, reload/reentry, return clearing and Stop restoration');
+  }else if(hierarchyOnly){
     await checkHierarchyPresentation(s);assert.deepEqual((await snapshot()).entities,s.entities,'folding does not mutate scene content');await checkHierarchyFocus(s);
     await click('Map session return');await click('mapStart box');s=await waitMap('amazonia');await checkHierarchyPresentation(s);
     await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);report.checks.push('Hierarchy interaction after map reload and Stop restoration');

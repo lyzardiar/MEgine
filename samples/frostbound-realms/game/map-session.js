@@ -27,8 +27,8 @@ var FrostMapSession=(()=>{
       try {
         const entry={...event.content};
         if(!/^[a-z0-9][a-z0-9-]*$/.test(entry.id)||entry.runtime!=='warcraft-scene'||entry.gameplay!==false||typeof entry.title!=='string'||typeof entry.description!=='string'||!Array.isArray(entry.preview)||entry.preview.length!==256||entry.preview.some(v=>![0,1,2].includes(v))||typeof entry.scriptSource!=='string')throw Error('地图转换结果无效');
-        // Only the local converter's generated runtime is evaluated; map JASS is retained as source data.
-        entry.create=new Function(entry.scriptSource+'\nreturn {tick:onTick,pathing:originalMapPathing,camera:typeof originalMapCamera==="undefined"?null:originalMapCamera};');delete entry.scriptSource;
+        // The local converter supplies JavaScript; original JASS runs through the bounded native whitelist.
+        entry.create=new Function(entry.scriptSource+'\nreturn {tick:onTick,pathing:originalMapPathing,initialization:typeof originalUnitInitializationSource==="undefined"?null:FrostWarcraftUnitInitialization.initialize(originalUnitInitializationSource),camera:typeof originalMapCamera==="undefined"?null:originalMapCamera};');delete entry.scriptSource;
         const index=FrostMapPackages.findIndex(map=>map.id===entry.id);
         if(index<0)FrostMapPackages.push(entry);else FrostMapPackages[index]=entry;
         importMessage=entry.cached?'正在加载缓存地图…':'转换完成，正在加载地图…';
@@ -77,7 +77,7 @@ var FrostMapSession=(()=>{
     const text=notice||(active.title+' · '+(paused?'已暂停':'场景运行')+' | 点击 Game 后 WASD / 方向键移动 · +/- 缩放 · 空格暂停\n对局规则尚未接入');
     if(statusLabel&&statusLabel.components.Text.text!==text){statusLabel.components.Text={...statusLabel.components.Text,text};write(statusLabel.entity,'Text',statusLabel.components.Text);}
   }
-  return {start,back,reload,tick,sceneLoaded,importFile,cancelImport,contentImported,importStatus:()=>({busy:importing,loading:!!pending,message:importMessage,progress:pending?{value:null,label:'正在进入地图…'}:cancelRequested&&importing?{value:null,label:'正在取消地图导入…'}:progress,visible:importing||!!pending}),status:()=>({map:active?.id||null,scene:engine.scene?.path||null,pending:pending?.scene||null,importing,importMessage,elapsed,paused,pathing:runtime?.pathing?{size:[...runtime.pathing.size],revision:runtime.pathing.revision,sourceSha256:runtime.pathing.sourceSha256}:null})};
+  return {unitInitialization:()=>runtime?.initialization||null,start,back,reload,tick,sceneLoaded,importFile,cancelImport,contentImported,importStatus:()=>({busy:importing,loading:!!pending,message:importMessage,progress:pending?{value:null,label:'正在进入地图…'}:cancelRequested&&importing?{value:null,label:'正在取消地图导入…'}:progress,visible:importing||!!pending}),status:()=>({map:active?.id||null,scene:engine.scene?.path||null,pending:pending?.scene||null,importing,importMessage,elapsed,paused,initialization:runtime?.initialization?{status:runtime.initialization.status,units:runtime.initialization.units.length,triggers:runtime.initialization.triggers.length,error:runtime.initialization.error}:null,pathing:runtime?.pathing?{size:[...runtime.pathing.size],revision:runtime.pathing.revision,sourceSha256:runtime.pathing.sourceSha256}:null})};
 })();
 function onContentImport(event){FrostMapSession.contentImported(event);}
 function onSceneLoaded(scene){FrostMapSession.sceneLoaded(scene);}

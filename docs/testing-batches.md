@@ -565,3 +565,18 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 原生定向报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792791223023.json` 通过，0 error、正常退出。EXE SHA256 `46eecf10edec16a1fa35e82ee3ff675d18626f7383fd66a1f26d2e1d825d1887`；覆盖连续Amazonia、Scene／Game／相机预览／轨道、分辨率、Stop还原，截图已检查。7,410实体，末尾240次呈现55.0269次/秒，平均18.1729ms／P95 27.0ms；239个模拟版本计时完整。请求间隔18.1778ms、相对上一完成平均2.0226ms，仅与上一独立运行作观察对照，不宣称稳定FPS提升。完整口径和本地产物见performance-risk-todo第五十五阶段。
 
 资源热更新和Inspector修改复用上批结果；本次没有新增这些路径的验收结论。真实操作延迟、强制竞态、独立窗口、父级Undo／激活等既有待测项保持开放。
+
+
+### B001-01 原脚本 CreateAllUnits 初始化
+
+变更：新增 game/warcraft-jass.js、warcraft-unit-initialization.js，map-session 工厂建立独立单位／触发器状态；地图安装器、既有包升级器、缓存身份及生成脚本保留来源与模块摘要。Amazonia 数据由原 CreateAllUnits 执行产生，96 单位／26 触发器登记；未驱动视觉实体，也未执行完整启动、掉落、战斗、AI 或对局。
+
+快速检查：JASS 类型／求值／指令／深度／数组／文本边界、源 SHA 与幂等打包、旧脚本边界、菜单重载隔离及两图动态导入通过。Amazonia 初始化通过；Echo Isles 的 IssueImmediateOrder 明确 unsupported，空状态、场景仍可加载。原脚本的 Unit 编号按放置序号核对，ItemTable 编号按共享表核对。首次测试将放置序号误写为 creationNumber 导致断言失败，修正后独立二进制对照通过，失败日志保留。REA 探针仅验证 native 名称，不作为执行语义证明。
+
+命令：node scripts/test-frost-jass.mjs；node scripts/test-frost-unit-initialization-package.mjs；node scripts/test-frost-map-session.mjs；node scripts/test-frost-map-import.mjs <Amazonia或EchoIsles的entry.json> --unit-initialization。日志位于 tmp/docs-artifacts/frost-original-maps/unit-init-{jass,package,session,dynamic-amazonia,dynamic-echo}.log。只验证本次初始化范围，无全库／全地图遍历或性能重跑；原生定向验收复用当前 Editor。
+
+待测／未实现：完整启动与 common.j／Blizzard.j、单位状态与视觉实体关联、原客户端 native 语义对照、事件实际触发、战斗／移动／AI、跨地图存档及联网；独立 Player 分发继续待验收。现有 editor 性能专项的真实输入延迟、强制竞态、独立窗口、父级 Undo／激活待测项不受本项结论替代。本项属于原地图接入补充，不新增批次计数。
+
+原生定向命令 `node scripts/qa-frost-map-session.mjs --unit-initialization-only` 通过，报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792792615135.json`：96 单位／26 触发器登记、连续帧、重载、返回清空、重新进入及 Stop 恢复通过，0 error，进程正常退出。复用 EXE SHA256 `46eecf10edec16a1fa35e82ee3ff675d18626f7383fd66a1f26d2e1d825d1887`，未重新构建；启动脚本摘要 `03a809825e618507fd470bddf1e747a9162990b819ce62507203889a1df5fe99`。WebView 锁缓存保留。此结果证明 MEngine 内执行本入口，不表示原 Warcraft 完整对局兼容或新增性能收益。
+
+维护链补充：refresh-frost-map-camera.py 验证并保留 JASS 数据段，镜头控制器更新仍拒绝未知边界。包测试包含真实 Amazonia 脚本尾部分离与无损拼接、非法尾部拒绝；实际已安装地图升级器重复执行三个输出文件摘要一致。Python AST、修改的 JS 工具语法及 git diff --check 通过。

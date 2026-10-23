@@ -4615,8 +4615,8 @@
     {
       "path": "Assets/Maps/amazonia/Scripts/Main.js",
       "sourceSha256": "a2aad0824c4f9fde43b53b7c7b103436d18c47e086c89dcf9fb756c689278d38",
-      "sha256": "7710df46bd038e6a75df342bff062b6c754866e42ee5defb32d7bc8b5921fe1c",
-      "bytes": 1090348
+      "sha256": "4009bf60685dfa68f2e726c8b502fbbe5eaf326b79ca188f8ddad86f34d6c38f",
+      "bytes": 1141181
     },
     {
       "path": "Assets/Maps/amazonia/Shaders/Ground.mshader",
@@ -4671,6 +4671,14 @@
       "sourceSha256": "a70af97e50fe6ad8ab0eafd6798b845e9ebda14a78545373d7aa1cfbcdd423db",
       "sha256": "a70af97e50fe6ad8ab0eafd6798b845e9ebda14a78545373d7aa1cfbcdd423db",
       "bytes": 14701
+    },
+    {
+      "path": "Assets/Maps/amazonia/Source/war3map.j",
+      "storage": "local",
+      "sourcePath": "source/war3map.j",
+      "sourceSha256": "01ac6ca37873461f490e8db4b5798fceaf60b94f50b0db3cd2349d9eb0e5d407",
+      "sha256": "01ac6ca37873461f490e8db4b5798fceaf60b94f50b0db3cd2349d9eb0e5d407",
+      "bytes": 48130
     }
   ],
   "previewSource": {
@@ -4770,6 +4778,17 @@
         "topInset": 0.02,
         "anchors": "0x6f34a737-0x6f34a78c"
       }
+    }
+  },
+  "unitInitialization": {
+    "entry": "CreateAllUnits",
+    "source": "Assets/Maps/amazonia/Source/war3map.j",
+    "sourceSha256": "01ac6ca37873461f490e8db4b5798fceaf60b94f50b0db3cd2349d9eb0e5d407",
+    "execution": "bounded-jass",
+    "fullMapScript": false,
+    "implementation": {
+      "samples/frostbound-realms/game/warcraft-jass.js": "ed22c5c9daf74eaa39ecfb249f4d27671b2d26aac549d80f09e10dfa358e2de7",
+      "samples/frostbound-realms/game/warcraft-unit-initialization.js": "565dfec4aa9b258375d17b13e092aca6e434265329556e53f5d7634b86aecd34"
     }
   }
 }

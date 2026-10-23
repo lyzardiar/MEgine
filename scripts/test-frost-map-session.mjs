@@ -25,13 +25,14 @@ assert.equal(world.entity('mapStart label').components.Text.text,'加载地图')
 assert.equal(world.entity('Map preview backing').components.Image.sprite,pack.previewImage);
 for(const name of ['map2 box','map3 box','faction box','heroChoice box','Hero preview','Map tile 0'])assert.equal(world.visible(name),false,name);
 click('mapStart box');tick();assert.equal(context.FrostMapSession.status().map,pack.id);
+const initialized=context.FrostMapSession.unitInitialization();assert.equal(initialized.status,'ready');assert.equal(initialized.units.length,96);assert.equal(initialized.triggers.length,26);initialized.units[0].resourceAmount=1;
 assert.equal(engine.scene.path,pack.scene);assert.equal(world.snapshot.entities.length,read(pack.scene).world.entities.length);
 for(let i=0;i<30;i++)tick();const animated=structuredClone(world.snapshot.entities),elapsed=context.FrostMapSession.status().elapsed;
 assert.ok(elapsed>0);assert.deepEqual(Array.from(context.FrostMapSession.status().pathing.size),[384,384]);
 key('Space');const frozen=structuredClone(world.snapshot.entities);for(let i=0;i<5;i++)tick();assert.deepEqual(world.snapshot.entities,frozen);assert.equal(context.FrostMapSession.status().elapsed,elapsed);
-key('KeyR');assert.equal(context.FrostMapSession.status().elapsed,0);tick();assert.equal(context.FrostMapSession.status().paused,false);
+key('KeyR');assert.equal(context.FrostMapSession.unitInitialization().units[0].resourceAmount,12500);assert.notEqual(context.FrostMapSession.unitInitialization(),initialized);assert.equal(context.FrostMapSession.status().elapsed,0);tick();assert.equal(context.FrostMapSession.status().paused,false);
 const before=world.entity('Camera').components.Transform.position[0];tick({keys:['KeyD']});assert.ok(world.entity('Camera').components.Transform.position[0]>before);
-key('Escape');tick();assert.equal(engine.scene.path,main);assert.equal(telemetry().mode,'custom');assert.equal(world.entity('Map name').components.Text.text,'Amazonia');
+key('Escape');tick();assert.equal(engine.scene.path,main);assert.equal(context.FrostMapSession.unitInitialization(),null);assert.equal(telemetry().mode,'custom');assert.equal(world.entity('Map name').components.Text.text,'Amazonia');
 // Stale IDs or cached commands fail the fixture immediately when switching worlds.
 click('mapStart box');tick();key('Escape');tick();click('map4 box');click('map0 box');click('mapStart box');tick();assert.equal(telemetry().mode,'playing');
 // Failed scene requests must leave the old menu usable and allow retry.

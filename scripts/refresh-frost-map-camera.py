@@ -10,6 +10,16 @@ from warcraft_camera import camera_config, camera_transform, camera_script, came
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def split_unit_initialization(script):
+    marker = '\n/* Frost unit initialization source */\nvar originalUnitInitializationSource='
+    start = script.find(marker)
+    if start < 0: return script, ''
+    encoded = script[start+len(marker):]
+    source, end = json.JSONDecoder().raw_decode(encoded)
+    if source is not None and not isinstance(source, str) or encoded[end:].strip() != ';': raise ValueError('Unrecognized unit initialization boundary')
+    return script[:start], script[start:]
+
+
 def upgrade(project, identifier, game):
     package = project/'Assets/Maps'/identifier
     package.resolve().relative_to((project/'Assets/Maps').resolve())
@@ -18,7 +28,7 @@ def upgrade(project, identifier, game):
     data, _ = load_map(original)
     if data['source']['sha256'] != manifest['source']['sha256']: raise ValueError('Changed preserved map')
     script_path, scene_path = package/'Scripts/Main.js', package/'Scenes/Main.mscene'
-    script = script_path.read_bytes().decode('utf-8')
+    script, initialization = split_unit_initialization(script_path.read_bytes().decode('utf-8'))
     marker = 'var originalCameraConfig='
     if marker in script:
         start = script.index(marker)
@@ -36,7 +46,7 @@ def upgrade(project, identifier, game):
     camera['Transform'] = camera_transform(config)
     camera['Camera3D'].update(projection='perspective', fov_y_degrees=camera_vertical_fov(config['presets'][0]['fov']), near=config['near'], far=config['far'])
     scene_path.write_text(json.dumps(scene,ensure_ascii=False,indent=2)+'\n',encoding='utf-8',newline='\n')
-    script_path.write_text(script+camera_script(config),encoding='utf-8',newline='\n')
+    script_path.write_text(script+camera_script(config)+initialization,encoding='utf-8',newline='\n')
     source_path = package/'Source/UI/MiscData.txt'; source_path.parent.mkdir(parents=True,exist_ok=True); source_path.write_bytes(misc)
     digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
     manifest['camera'] = dict(source=str(source_path.relative_to(project)).replace('\\','/'), archive=archive_name, sha256=digest(source_path), config={k:v for k,v in config.items() if k!='terrain'},

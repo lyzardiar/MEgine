@@ -4,7 +4,7 @@ Author: MiYu。
 
 `scripts/import-frost-original-map.py` 从本机原版 `.w3m` / `.w3x` 生成可验证的 `map.json`，保留源地图、提取成员和 SHA-256。输入地图只读；输出要求新目录，完整写入临时目录后再发布。默认产物位于 `tmp/docs-artifacts/frost-original-maps/<地图文件名>/`。
 
-导入器提供离线格式读取。`coverage.runtimePlayable` 为 `false`：现有 Frostbound 模拟仍使用 32×32 地形、双队状态和 160 单位上限；地形已有独立原生场景，完整原地图尚未接入遭遇战、寻路、存档或联机。装饰与单位／物品放置记录已解码，对象覆盖和 JASS 保留原件，尚未执行。导入结果尚未加入现有地图菜单。
+导入器提供离线格式读取，游戏菜单可加载安装后的原地图场景。`coverage.runtimePlayable` 为 `false`：现有 Frostbound 模拟仍使用 32×32 地形、双队状态和 160 单位上限，完整原地图尚未接入遭遇战、寻路、存档或联机。装饰与单位／物品放置记录已解码，对象覆盖和 JASS 保留原件；地图实例支持下述 `CreateAllUnits` 初始化子集，尚不代表完整对局。
 
 ## 支持的布局
 
@@ -195,7 +195,7 @@ python scripts/prepare-frost-map-import.py
 
 作业、失败日志和临时验证输出位于 `tmp/docs-artifacts/`。成功后清理本次独占创建的 `source-map/`、`doodad-project/`、`converted/` 和 `stage/`，保留 `result.json`、`converter.log`、`progress.json` 与文件选择记录；失败作业保留诊断内容。跨盘发布先复制到目标盘的 `.import-*` 临时目录，中途取消可能留下目录，停止导入后可按实际路径清理。持久资源缓存与成功地图包不随作业清理，转换不修改源游戏目录。
 
-文件选择没有地图名称白名单。解析器仍对未支持的格式、对象覆盖、随机放置和模型特性明确报错；加密／保护地图或自定义脚本并非都能运行。JASS 只作为来源数据保留，当前仅执行转换器生成的场景脚本。完整对局、独立 Player 分发环境与非 Windows 文件框继续待验收。
+文件选择没有地图名称白名单。解析器仍对未支持的格式、对象覆盖、随机放置和模型特性明确报错；加密／保护地图或自定义脚本并非都能运行。转换器生成的场景脚本负责画面与控制，原始 JASS 通过下述受限初始化入口建立独立状态。完整对局、独立 Player 分发环境与非 Windows 文件框继续待验收。
 
 2026-10-23 定向验证：真实生成脚本的打开按钮、长时间转换状态、取消／迟到回调、Esc、失败重试、动态加入地图、返回与缓存去重通过；Rust 内容导入 3 个用例及脚本桥接 1 个用例通过。新增夹具首次因 UI 80ms 刷新时机、PowerShell 扩展路径格式失败，修正夹具后复测通过。原生报告 `tmp/docs-artifacts/testing-batches/B001/arbitrary-map-1792745402307.json`：文件框启动／取消、工程外中文路径的 Echo Isles 冷转换、转换期间菜单操作、同次 Play 加载 7,221 实体、返回选图及第二次缓存加载全部通过，0 error。原生自动化通过同一引擎 API 提交文件路径，未自动操作文件框内的选择／确认控件；截图已检查。测试编辑器正常退出，WebView 锁缓存保留。
 
@@ -236,3 +236,20 @@ python scripts/prepare-frost-map-import.py
 `projectionAspect`表示普通游戏源逻辑区域比例，与Game窗口像素长宽比独立。当前引擎使用自身Game渲染区域显示；原版HUD区域裁剪、宽屏拉伸、电影模式和隐藏UI重新布局尚未完成逐像素对照，不把数学投影验证当作完整画面还原。原菜单背景使用其独立模型相机，不套用地图世界区域比例。JASS/完整对局语义仍保持既有待实现范围。
 
 来源维护：`node scripts/probe-frost-rea-camera.mjs`复核六组字段、矩阵、逻辑坐标、锚点与根布局证据，保留Game.dll SHA256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`及未修改证明。`python scripts/probe-frost-camera-binary.py --dependencies <已安装pefile和unicorn的目录>`运行原矩阵指令的30个隔离CPU用例，仅外部sqrt/tan由Python提供，采用浮点误差比较；它不启动原游戏。工具及源站见[REA维护说明](../../../third_party/rea/README-MENGINE.md)。manifest.camera.projectionSource保留二进制摘要、函数、锚点和探针路径；原始报告统一在`tmp/docs-artifacts/war3-ui/camera-source/`。
+
+
+## 原脚本单位初始化
+
+`game/warcraft-jass.js` 解析原 JASS，`game/warcraft-unit-initialization.js` 以显式 native 绑定执行 `CreateAllUnits`。支持 typed locals／globals、数组、函数、分支、循环与整数／单精度表达式；调用仅能进入已解析函数和绑定表，原 JASS 不作为 JavaScript 执行。源文本上限 8 MiB、250,000 token、解析嵌套 128、表达式求值嵌套 256、函数深度 128、每次执行 100,000 指令、数组索引 0–8191、拼接字符串 1 Mi 字符。这里只覆盖已实现的类型与语法，尚无完整 common.j 类型继承、native／type 声明或完整 JASS 兼容性。
+
+绑定包含 Player、ConvertPlayerColor、CreateUnit、SetResourceAmount、SetUnitState、SetUnitAcquireRange、SetUnitColor、CreateTrigger、TriggerRegisterUnitEvent、TriggerAddAction。每次进入／重载地图创建独立的单位和触发器集合；返回菜单清除引用。`FrostMapSession.unitInitialization()` 提供完整状态，`status().initialization` 只输出状态、数量和错误，避免每帧序列化单位清单。未设置的对象属性保持未设置；解析／执行失败时返回 unsupported 和空集合，不发布部分结果。非 UTF-8 或超过大小上限的 JASS 仍保留原件，场景可加载，单位初始化标记 unsupported。
+
+Amazonia 的原 `war3map.j` SHA256 为 `01ac6ca37873461f490e8db4b5798fceaf60b94f50b0db3cd2349d9eb0e5d407`，入口执行 1,800 个解释器指令，建立 96 个单位、26 个触发器。测试独立解码 Units.doo，对照类型／玩家／位置／方向／金矿资源及掉落绑定；UnitXXXXXX_DropItems 对应放置序号，ItemTableXXXXXX_DropItems 对应共享掉落表编号。触发器仅登记事件与函数名，尚未执行回调。Echo Isles 的 IssueImmediateOrder 未绑定，初始化明确返回 unsupported，场景导入与重载仍通过。
+
+当前状态集合尚未驱动已渲染的单位实体，也不执行 main、InitBlizzard、MeleeStartingUnits、MeleeStartingAI、战斗、掉落、胜负、寻路或网络同步。`capabilities.jass=false` 和 `gameplay=false` 表示这些完整能力未就绪；`manifest.unitInitialization` 单独记录部分入口能力、原件摘要及两个运行模块摘要。
+
+新导入地图自动附加原脚本数据；现有已登记地图使用 `node scripts/attach-frost-unit-initialization.mjs samples/frostbound-realms amazonia` 更新，仅修改地图运行脚本、清单和主脚本，保留模型／地形及来源字节。工具检查来源摘要，重复执行文件内容一致；缓存身份包含打包器及两个初始化模块，版本变化创建新地图包。旧缓存没有此入口时仍按场景加载。镜头更新器先验证并分离原脚本数据段，更新控制器后逐字节保留该段；未知尾部继续拒绝。
+
+REA 复核命令为 `node scripts/probe-frost-rea-map-formats.mjs --unit-init`，固定 Game.dll SHA256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。结果仅证明 native 名称字符串存在，不证明其实现语义或原客户端运行一致。REA 6.5.0 源站为 https://github.com/morluto/rea，固定版本及更新方法见[维护说明](../../../third_party/rea/README-MENGINE.md)。证据位于 `tmp/docs-artifacts/frost-original-maps/unit-init-evidence/`。
+
+定向检查：`node scripts/test-frost-jass.mjs`、`node scripts/test-frost-unit-initialization-package.mjs`、`node scripts/test-frost-map-session.mjs` 通过；`node scripts/test-frost-map-import.mjs <已导入地图的entry.json> --unit-initialization` 对 Amazonia 和 Echo Isles 均通过。覆盖类型／资源边界、源数据不执行为 JS、摘要拒绝、幂等打包、编码／大小回退、生成脚本边界兼容、菜单与动态导入、重载隔离及失败不遗留部分单位；原生结果和待测范围见[批次台账](../../testing-batches.md)。

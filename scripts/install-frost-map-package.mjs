@@ -7,6 +7,7 @@ import {execFileSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {composeGameModules,gameScriptPrefix,readMapPackages} from './frost-script-bundle.mjs';
+import {attachUnitInitialization} from './frost-unit-initialization-package.mjs';
 import {prepareSharedMapAssets,rewriteGlb} from './frost-shared-map-assets.mjs';
 
 const gameSource=fileURLToPath(new URL('../samples/frostbound-realms/',import.meta.url));
@@ -70,9 +71,10 @@ export function installMapPackage(source,project,id,title,{register=true,sharedR
   const preview=Array.from({length:256},(_,i)=>{const x=Math.min(grid.size[0]-1,Math.floor((i%16+.5)*grid.size[0]/16)),y=Math.min(grid.size[1]-1,Math.floor((15-Math.floor(i/16)+.5)*grid.size[1]/16));return grid.getCell(x,y)&2?1:0;});
   const entry={id,title,description:'Warcraft III 原地图\n地形、水面、装饰与单位动画\n场景运行；对局规则接入中',runtime:'warcraft-scene',gameplay:false,scene:relative+'/Scenes/Main.mscene',script:relative+'/Scripts/Main.js',sourceSha256:map.source.sha256,preview};
   if(previewSource)entry.previewImage=relative+'/Textures/MapPreview.png';
+  const unitInitialization=attachUnitInitialization(project,relative,records,map.source.members['war3map.j']?.sha256);
   const maps=[...catalog,entry],script=register?prefix+composeGameModules(gameSource,project,maps):null;if(script)new vm.Script(script,{filename:mainFile});
   const installer={path:'scripts/install-frost-map-package.mjs',sha256:hash(fs.readFileSync(fileURLToPath(import.meta.url))),previewExporterSha256:hash(fs.readFileSync(fileURLToPath(new URL('./export-frost-map-preview.py',import.meta.url))))};
-  const provenance={version:1,id,source:map.source,installedSource:relative+'/Source/original'+path.extname(map.source.preservedArchive),sourceInfo:map.info,installer,previewSource,conversion:{coordinateScale:terrain.coordinateScale,axes:terrain.axes},capabilities:{terrain:true,doodads:true,units:true,animation:true,basePathing:true,gameplay:false,jass:false},assets:records};
+  const provenance={version:1,id,unitInitialization,source:map.source,installedSource:relative+'/Source/original'+path.extname(map.source.preservedArchive),sourceInfo:map.info,installer,previewSource,conversion:{coordinateScale:terrain.coordinateScale,axes:terrain.axes},capabilities:{terrain:true,doodads:true,units:true,animation:true,basePathing:true,gameplay:false,jass:false},assets:records};
   if(shared){provenance.sharedAssetsVersion=1;installer.sharedAssetsSha256=hash(fs.readFileSync(fileURLToPath(new URL('./frost-shared-map-assets.mjs',import.meta.url))));}
   write(path.join(output,'manifest.json'),json(provenance));
   write(path.join(output,'entry.json'),json(entry));
