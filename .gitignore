@@ -66,3 +66,9 @@ packages/editor/src-tauri/build-sdk/*
 !/docs/designs/unity-demos/isometric-native-colliders.json
 !/docs/images/**/
 !/docs/images/**
+
+# Content-addressed maps imported from the game file picker are local cache.
+/samples/frostbound-realms/Assets/Maps/user-v*/
+/samples/frostbound-realms/Assets/Maps/user-v*.meta
+/samples/frostbound-realms/Assets/Maps/.import-*/
+/samples/frostbound-realms/Assets/Maps/.import-*.meta

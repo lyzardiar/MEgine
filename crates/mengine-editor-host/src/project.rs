@@ -2976,6 +2976,8 @@ interface EngineApi {
   pushCommandJson(json: string): void;
   loadScene(scene: string | number): boolean;
   reloadScene(): boolean;
+  importContent(importer: string, path?: string | null): boolean;
+  cancelContentImport(): boolean;
   instantiatePrefab(path: string, parent?: number | string): boolean;
   setAnimatorParameter(entity: number | string, name: string, value: boolean | number): boolean;
   setAnimatorTrigger(entity: number | string, name: string): boolean;
@@ -3021,6 +3023,7 @@ interface EngineTimelineSignalInfo {
 declare const engine: EngineApi;
 declare function onTick(dt: number, frame: number): void;
 declare function onSceneLoaded(scene: EngineSceneInfo): void;
+declare function onContentImport(event: { status: string; message?: string; content?: unknown }): void;
 declare function onCollisionEnter(event: PhysicsCollisionInfo): void;
 declare function onCollisionExit(event: PhysicsCollisionInfo): void;
 declare function onTriggerEnter(event: PhysicsCollisionInfo): void;

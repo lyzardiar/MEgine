@@ -33,7 +33,7 @@ function addControls(scene,project,title){
   }
   const status=clone('mapBack label');status.RectTransform=rect(190,-318,830,60);status.Text={...status.Text,text:title+' · 场景运行',font_size:18};entity('Map session status',status,root);
 }
-export function installMapPackage(source,project,id,title){
+export function installMapPackage(source,project,id,title,{register=true}={}){
   source=path.resolve(source);project=path.resolve(project);
   if(!/^[a-z0-9][a-z0-9-]*$/.test(id))throw Error('Map ID must use lowercase letters, digits and hyphens');
   const catalog=readMapPackages(project),relative='Assets/Maps/'+id,output=path.join(project,relative);
@@ -64,17 +64,16 @@ export function installMapPackage(source,project,id,title){
   const preview=Array.from({length:256},(_,i)=>{const x=Math.min(grid.size[0]-1,Math.floor((i%16+.5)*grid.size[0]/16)),y=Math.min(grid.size[1]-1,Math.floor((15-Math.floor(i/16)+.5)*grid.size[1]/16));return grid.getCell(x,y)&2?1:0;});
   const entry={id,title,description:'Warcraft III 原地图\n地形、水面、装饰与单位动画\n场景运行；对局规则接入中',runtime:'warcraft-scene',gameplay:false,scene:relative+'/Scenes/Main.mscene',script:relative+'/Scripts/Main.js',sourceSha256:map.source.sha256,preview};
   if(previewSource)entry.previewImage=relative+'/Textures/MapPreview.png';
-  const maps=[...catalog,entry],script=prefix+composeGameModules(gameSource,project,maps);new vm.Script(script,{filename:mainFile});
+  const maps=[...catalog,entry],script=register?prefix+composeGameModules(gameSource,project,maps):null;if(script)new vm.Script(script,{filename:mainFile});
   const installer={path:'scripts/install-frost-map-package.mjs',sha256:hash(fs.readFileSync(fileURLToPath(import.meta.url))),previewExporterSha256:hash(fs.readFileSync(fileURLToPath(new URL('./export-frost-map-preview.py',import.meta.url))))};
   const provenance={version:1,id,source:map.source,installedSource:relative+'/Source/original'+path.extname(map.source.preservedArchive),sourceInfo:map.info,installer,previewSource,conversion:{coordinateScale:terrain.coordinateScale,axes:terrain.axes},capabilities:{terrain:true,doodads:true,units:true,animation:true,basePathing:true,gameplay:false,jass:false},assets:records};
   write(path.join(output,'manifest.json'),json(provenance));
-  config.buildScenes=[...new Set([...(config.buildScenes||[config.mainScene]),entry.scene])];
-  write(path.join(project,'Assets/Maps/catalog.json'),json({version:1,maps}));
-  write(path.join(project,'project.json'),json(config));write(mainFile,script);
-  return {id,scene:entry.scene,files:records.length,bytes:records.reduce((n,r)=>n+r.bytes,0),sourceSha256:entry.sourceSha256,gameplay:false};
+  write(path.join(output,'entry.json'),json(entry));
+  if(register){config.buildScenes=[...new Set([...(config.buildScenes||[config.mainScene]),entry.scene])];write(path.join(project,'Assets/Maps/catalog.json'),json({version:1,maps}));write(path.join(project,'project.json'),json(config));write(mainFile,script);}
+  return {...entry,files:records.length,bytes:records.reduce((n,r)=>n+r.bytes,0)};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
-  const [source,id,title,project=gameSource]=process.argv.slice(2);
+  const [source,id,title,project=gameSource]=process.argv.slice(2).filter(arg=>arg!=='--runtime');
   if(!source||!id||!title)throw Error('Usage: node scripts/install-frost-map-package.mjs <converted-project> <id> <title> [game-project]');
-  console.log(JSON.stringify(installMapPackage(source,project,id,title)));
+  console.log(JSON.stringify(installMapPackage(source,project,id,title,{register:!process.argv.includes('--runtime')})));
 }

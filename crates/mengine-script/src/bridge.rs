@@ -68,6 +68,8 @@ pub enum ScriptRuntimeRequest {
     LoadSceneByIndex(usize),
     LoadScene(String),
     ReloadScene,
+    ImportContent { importer: String, path: Option<String> },
+    CancelContentImport,
     InstantiatePrefab {
         path: String,
         parent: Option<u64>,
@@ -317,6 +319,9 @@ impl ScriptHost {
 
     pub fn take_runtime_requests(&mut self) -> Vec<ScriptRuntimeRequest> { std::mem::take(&mut *self.requests.borrow_mut()) }
 
+    /// MiYu: converters publish progress and one terminal receipt on the script's owning thread.
+    pub fn notify_content_import(&mut self, event: &JsonValue) -> Result<(), ScriptError> { self.eval(&format!("if (typeof onContentImport === 'function') {{ onContentImport({event}); }}")) }
+
     pub fn notify_scene_loaded(
         &mut self,
         name: &str,
@@ -513,6 +518,8 @@ fn runtime_request(operation: &str, args: &[JsonValue]) -> Option<ScriptRuntimeR
         "loadScene" if arg(0).is_number() => LoadSceneByIndex(usize::try_from(entity()?).ok()?),
         "loadScene" => LoadScene(text(0)?),
         "reloadScene" => ReloadScene,
+        "importContent" => ImportContent { importer: text(0)?, path: if arg(1).is_null() { None } else { Some(text(1)?) } },
+        "cancelContentImport" => CancelContentImport,
         "instantiatePrefab" => InstantiatePrefab { path: text(0)?, parent: if args.len() < 2 { None } else { Some(entity_id(arg(1))?) } },
         "setAnimatorParameter" => { let value = arg(2); if !value.is_boolean() && !value.is_number() { return None; } SetAnimatorParameter { entity: entity()?, name: text(1)?, value: value.clone() } },
         "setAnimatorTrigger" => SetAnimatorParameter { entity: entity()?, name: text(1)?, value: JsonValue::Bool(true) },
@@ -847,6 +854,16 @@ mod tests {
             "#,
         )
         .unwrap();
+    }
+
+    #[test]
+    fn scripts_request_content_import_and_receive_result() {
+        let _guard = request_test_guard();
+        let mut host = ScriptHost::new().unwrap();
+        host.eval(r#"var imported=null; function onContentImport(event){imported=event;} engine.importContent('warcraft-map'); engine.importContent('warcraft-map','G:/地图/任意.w3x'); engine.cancelContentImport();"#).unwrap();
+        assert_eq!(host.take_runtime_requests(), vec![ScriptRuntimeRequest::ImportContent { importer: "warcraft-map".into(), path: None }, ScriptRuntimeRequest::ImportContent { importer: "warcraft-map".into(), path: Some("G:/地图/任意.w3x".into()) }, ScriptRuntimeRequest::CancelContentImport]);
+        host.notify_content_import(&serde_json::json!({"status":"complete","content":{"title":"任意地图"}})).unwrap();
+        host.eval("if(imported.status!=='complete'||imported.content.title!=='任意地图')throw Error('import callback');").unwrap();
     }
 
     #[test]

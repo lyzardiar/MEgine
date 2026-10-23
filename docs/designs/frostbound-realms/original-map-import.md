@@ -177,3 +177,24 @@ node scripts/sync-frostbound-script.mjs
 2026-10-23 定向验证：生成脚本的菜单点击、加载、返回、重载、暂停、旧玩法开局、失败重试、WPM 实例隔离和安装资产／原图摘要通过；安装器完整转换结果安装、缩略图来源、重复与非法 ID 拒绝通过。新构建 Editor 的原生菜单与地图切换通过，164 个装饰、327 个单位部件和 9 个水面实体同时推进；暂停像素一致，Stop 恢复主场景，重新 Play 返回标题，原有遭遇战可继续运行。
 
 首轮原生收尾的 `console.get_logs` 参数上限错误保留在 `tmp/docs-artifacts/testing-batches/B001/map-session-1792743004654.json`，不将整份报告标为成功。修正后仅补日志检查 `map-session-1792743134396.json`；缩略图和选项可见性调整后的界面与加载检查为 `map-session-1792743303829.json`，两次均 0 error。安装证据在 `package-install-1792743377028/verification.json`，截图与原始报告仅存本地。
+
+
+## 游戏内打开地图文件
+
+进入“单人游戏 → 自定义游戏 → 打开地图文件”，在 Windows 文件选择框中选择任意目录的 `.w3m` 或 `.w3x`。后台转换完成后，在同一次 Play 中加载地图；转换期间仍能切换列表、取消导入或返回。取消后的迟到结果不会加载场景，Stop／退出会等待本次转换进程树结束。当前打开的地图加入本次运行的选图列表；重新启动游戏后，再次打开原文件即可复用缓存。
+
+`project.json.contentImporters.warcraft-map` 配置转换程序、支持扩展名、文件框初始目录、魔兽资源目录和作业目录。样例使用给定的 `E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne`；迁移机器时修改其中 `args` 的 `--game` 参数和 `initialDirectory`。完整场景生成器保留此配置。首次转换需要 Python（现有 NumPy／Pillow 依赖）、Node.js、.NET 10 及原版 MPQ；缺少本地模型转换器时先执行：
+
+```powershell
+python scripts/prepare-frost-map-import.py
+```
+
+准备工具使用 [W3ModelViewer](https://github.com/Darithos/W3ModelViewer) 固定提交 `4fe46a0772520fc7b55078bf32cda1237d1b5f2e`，复用 `convert-warcraft-assets.py` 的下载、来源摘要和构建逻辑。运行时入口为 `scripts/runtime-import-frost-map.py`，通用引擎 API 是 `engine.importContent(importer, path?)`、`engine.cancelContentImport()` 和 `onContentImport(event)`；不传路径时显示文件选择框。转换程序从项目配置读取，不接受游戏脚本指定任意命令。回调只登记生成脚本工厂，实际地图实例在 `onSceneLoaded` 后创建。
+
+缓存位于 `Assets/Maps/user-v1-<原文件SHA256>/`，未登记到固定 catalog，也不修改应用 Main.js 或项目构建列表。引擎只为验证过的本次导入结果登记场景。原图、源成员、转换来源和安装摘要保留在 `Source/`、`Provenance/` 与 `manifest.json`；命中缓存时校验原件和资产摘要。转换先写作业目录，成功后完整发布缓存；失败不发布半成品。缓存被修改或缺失时报告具体文件，不覆盖现有内容。转换算法有不兼容更新时递增运行时入口的 `VERSION`，按新命名空间重建。用户地图缓存不提交 Git。
+
+作业、失败日志和临时验证输出位于 `tmp/docs-artifacts/`。跨盘作业发布时会先复制到目标盘的 `.import-*` 临时目录；中途取消可能留下该目录，停止导入后可按实际路径清理。缓存与原地图文件独立，转换不修改源游戏目录。
+
+文件选择没有地图名称白名单。解析器仍对未支持的格式、对象覆盖、随机放置和模型特性明确报错；加密／保护地图或自定义脚本并非都能运行。JASS 只作为来源数据保留，当前仅执行转换器生成的场景脚本。完整对局、独立 Player 分发环境与非 Windows 文件框继续待验收。
+
+2026-10-23 定向验证：真实生成脚本的打开按钮、长时间转换状态、取消／迟到回调、Esc、失败重试、动态加入地图、返回与缓存去重通过；Rust 内容导入 3 个用例及脚本桥接 1 个用例通过。新增夹具首次因 UI 80ms 刷新时机、PowerShell 扩展路径格式失败，修正夹具后复测通过。原生报告 `tmp/docs-artifacts/testing-batches/B001/arbitrary-map-1792745402307.json`：文件框启动／取消、工程外中文路径的 Echo Isles 冷转换、转换期间菜单操作、同次 Play 加载 7,221 实体、返回选图及第二次缓存加载全部通过，0 error。原生自动化通过同一引擎 API 提交文件路径，未自动操作文件框内的选择／确认控件；截图已检查。测试编辑器正常退出，WebView 锁缓存保留。

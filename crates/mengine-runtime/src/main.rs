@@ -121,6 +121,7 @@ struct App {
     renderer: Option<Renderer>,
     world: World,
     script: Option<ScriptHost>,
+    content_imports: mengine_runtime::content_import::ContentImports,
     script_input: ScriptInput,
     input: InputState,
     last: Instant,
@@ -190,6 +191,7 @@ impl App {
             args.packaged,
         );
         Self {
+            content_imports: mengine_runtime::content_import::ContentImports::new(args.project_root.clone()),
             args,
             window: None,
             renderer: None,
@@ -289,6 +291,7 @@ impl App {
     }
 
     fn apply_runtime_request(&mut self, request: ScriptRuntimeRequest) {
+        if self.content_imports.apply(&request) { return; }
         let Some(selector) = (mengine_runtime::script_requests::ScriptRequestContext {
             world: &mut self.world, project_root: self.args.project_root.as_deref(),
             animations: &mut self.animations, timelines: &mut self.timelines, audio: &mut self.audio,
@@ -1590,6 +1593,7 @@ function onTick(dt, frame) {
                 self.script_input.pointer = self.cursor;
                 self.script_input.viewport = self.ui_viewport_size();
                 let runtime_requests = if let Some(script) = self.script.as_mut() {
+                    if let Err(error) = self.content_imports.update(script, &mut self.scenes) { log::error!("content import callback failed: {error}"); }
                     if let Err(error) = script.sync_world(&self.world) { log::error!("script snapshot failed: {error}"); }
                     if let Err(error) = script.set_input(&self.script_input) {
                         log::error!("script input failed: {error}");

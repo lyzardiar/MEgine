@@ -9,5 +9,22 @@
     "Assets/Maps/amazonia/Scenes/Main.mscene"
   ],
   "startupScript": "Assets/Scripts/Main.js",
-  "assetMode": "all"
+  "assetMode": "all",
+  "contentImporters": {
+    "warcraft-map": {
+      "program": "python",
+      "args": [
+        "../../scripts/runtime-import-frost-map.py",
+        "--game",
+        "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne"
+      ],
+      "extensions": [
+        "w3m",
+        "w3x"
+      ],
+      "title": "选择 Warcraft III 地图",
+      "initialDirectory": "E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Maps",
+      "workDirectory": "../../tmp/docs-artifacts/frost-map-imports"
+    }
+  }
 }

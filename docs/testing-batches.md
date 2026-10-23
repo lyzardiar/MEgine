@@ -137,3 +137,18 @@ cargo build -p mengine-editor-tauri --release --features custom-protocol
 - B001-03：frame_compiler 10通过、4手动基准忽略；共享祖先基准单独1通过，4,096候选在1／16／64层与原函数结果逐项相同。深层共享链耗时下降，浅层增加约0.02ms；同批Frostbound真实编辑、undo／redo、持久恢复、资产监听、Play／Pause／Step／Stop及热更新检查通过。
 
 SDK与原生EXE只为本批统一构建一次，版本摘要见 `sdk-binaries.json`；EXE SHA-256 为 `cd7954d86ce37b651cc8c09b7a44d5364951523d600a4479911d925f7ad27820`。所有测试编辑器正常退出，部分WebView缓存锁保留；主样例源文件保持不变。已通过项目不重复执行，接下来仅补 B001-01 剩余原版对照，失败时再重测修复影响范围。本批尚未全部结算。
+
+
+### B001-01 任意地图文件入口
+
+变更：runtime 内容导入任务／脚本 API／Editor Play 与 Player 接口，`game/{client,map-session}.js`、MapSelection prefab／Main 场景与脚本、项目导入器配置，`runtime-import-frost-map.py`、`prepare-frost-map-import.py`、包安装器运行时模式及两项定向 QA。游戏文件选择框选择任意路径的 `.w3m/.w3x`，后台转换、取消、失败提示、摘要缓存与同次 Play 切换；此为同一地图接入任务补充，B001 保持 3/3。
+
+快速检查：Rust 内容导入 3 通过（成功／失败／Drop 子进程清理、取消后迟到结果、路径约束），脚本桥接 1 通过；生成脚本任意地图菜单测试通过。Echo Isles 原文件 SHA256 为 `081cf08ec48ace39670cc786a896ee1ede6c5bab0bab3f9fe3232160d1b5bf9a`，未加入 catalog，冷转换与缓存摘要检查通过。夹具首轮的 UI 刷新间隔／PowerShell 扩展路径错误保留在日志；修正后只复测本项。
+
+本任务一次 Editor 构建：`arbitrary-map-build.log`，EXE SHA256 `604ac3e46f7eb559cf310568da80a311c2fac69429bedf9c84c78176e3670fcf`；原生报告 `arbitrary-map-1792745402307.json` 全部通过、0 error，7,221 个场景实体。验证文件框启动／取消；实际选择路径由 QA 注入同一 API，未自动点击文件框内部。冷转换期间菜单响应、无 Play 重启的场景切换、返回和缓存复用、Stop 恢复均通过。源码 Main SHA256 `d0b682f32a7bbd990b4bcd419b6f201d134b78de6bd92161b1912dff1b25e7a5`。所有原始输出在 `tmp/docs-artifacts/testing-batches/B001/`。
+
+复验命令：`cargo test -p mengine-runtime --lib content_import::tests -- --test-threads=1`、`cargo test -p mengine-script --lib scripts_request_content_import_and_receive_result -- --test-threads=1`；先用 `runtime-import-frost-map.py --project samples/frostbound-realms --source <map> --result <tmp/result.json>` 转换 catalog 外地图，再运行 `node scripts/test-frost-map-import.mjs <tmp/result.json>`；设置 `MENGINE_EDITOR_EXECUTABLE` 后运行 `node scripts/qa-frost-map-import.mjs <map.w3x>`。
+
+待测：文件框内人工选中文件并确认、跨盘作业发布／取消残留清理、新机器转换器准备及独立 Player 分发。完整地图格式／JASS／对局兼容性仍属 B001-01 未完成项；本次不重复其他玩法、全库回归或性能基准，不据此宣称完整 War3 地图兼容。
+
+补充缓存完整性检查：`python scripts/test-frost-map-cache.py` 4 通过，覆盖有效缓存、原图被修改、资产被修改／缺失和跨包路径拒绝；最终 Echo Isles 缓存摘要复验通过。证据 `B001/map-cache-tests.log` 与 `B001/arbitrary-echo/final-cache-result.json`。

@@ -4,6 +4,8 @@
   const api = {
     scene: null,
     quit: () => request('quit', '[]'),
+    importContent: (importer, path = null) => request('importContent', JSON.stringify([String(importer), path === null ? null : String(path)])),
+    cancelContentImport: () => request('cancelContentImport', '[]'),
     assets: Object.freeze({
       sampleNodes(reference, options = {}) { const r = JSON.parse(assetNodes(String(reference), JSON.stringify(options))); if (!r.ok) throw new Error(r.error); return r.value; },
     }),

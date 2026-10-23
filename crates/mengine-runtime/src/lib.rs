@@ -3,6 +3,7 @@
 pub mod animation;
 pub mod audio;
 pub mod build_manifest;
+pub mod content_import;
 pub mod effekseer;
 pub mod fonts;
 pub mod frame_compiler;

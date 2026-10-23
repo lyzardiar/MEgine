@@ -2,14 +2,42 @@
 var FrostMapSession=(()=>{
   const main='Assets/Scenes/Main.mscene',buttons=JSON.parse(JSON.stringify(FrostButtons));
   let active=null,runtime=null,pending=null,selected=0,loaded=false,elapsed=0,camera=null,statusLabel=null,paused=false,notice='';
+  let importing=false,importMessage='',cancelRequested=false;
+  function importFile(path=null){
+    if(importing||pending||active)return false;
+    importing=true;cancelRequested=false;importMessage='请选择 .w3m / .w3x 地图文件';
+    engine.importContent('warcraft-map',path);return true;
+  }
+  function cancelImport(){if(importing){cancelRequested=true;importMessage='正在取消地图导入…';engine.cancelContentImport();}}
+  function contentImported(event){
+    if(!importing)return;
+    if(['complete','failed','cancelled'].includes(event.status))importing=false;
+    if(cancelRequested){if(!importing)importMessage='已取消地图导入';return;}
+    if(event.status==='choosing')importMessage='请选择 .w3m / .w3x 地图文件';
+    else if(event.status==='importing')importMessage='正在转换 '+event.file+'\n首次加载需要转换资源，请稍候。可随时取消。';
+    else if(event.status==='cancelled')importMessage='已取消地图选择';
+    else if(event.status==='failed')importMessage='地图导入失败：'+event.message;
+    else if(event.status==='complete'){
+      try {
+        const entry={...event.content};
+        if(!/^[a-z0-9][a-z0-9-]*$/.test(entry.id)||entry.runtime!=='warcraft-scene'||entry.gameplay!==false||typeof entry.title!=='string'||typeof entry.description!=='string'||!Array.isArray(entry.preview)||entry.preview.length!==256||entry.preview.some(v=>![0,1,2].includes(v))||typeof entry.scriptSource!=='string')throw Error('地图转换结果无效');
+        // Only the local converter's generated runtime is evaluated; map JASS is retained as source data.
+        entry.create=new Function(entry.scriptSource+'\nreturn {tick:onTick,pathing:originalMapPathing};');delete entry.scriptSource;
+        const index=FrostMapPackages.findIndex(map=>map.id===entry.id);
+        if(index<0)FrostMapPackages.push(entry);else FrostMapPackages[index]=entry;
+        importMessage=entry.cached?'正在加载缓存地图…':'转换完成，正在加载地图…';
+        const choice=FrostClient.refreshMaps(entry.id);start(entry.id,choice);
+      }catch(error){importMessage='地图导入失败：'+error.message;}
+    }
+  }
   function request(scene,id){if(pending)return false;pending={scene,id,seconds:0};engine.loadScene(scene);return true;}
-  function start(id,index){const entry=FrostMapPackages.find(map=>map.id===id);if(!entry)return false;selected=index;return request(entry.scene,id);}
+  function start(id,index){const entry=FrostMapPackages.find(map=>map.id===id);if(!entry||importing)return false;selected=index;return request(entry.scene,id);}
   function back(){return request(main,null);}
   function reload(){return active?request(active.scene,active.id):false;}
   function sceneLoaded(scene){
     const entry=FrostMapPackages.find(map=>map.scene===scene.path),returning=loaded;
     if(scene.path!==main&&!entry)throw Error('Unregistered game map: '+scene.path);
-    pending=null;active=entry||null;elapsed=0;camera=null;statusLabel=null;paused=false;notice='';
+    pending=null;active=entry||null;elapsed=0;camera=null;statusLabel=null;paused=false;notice='';importMessage='';
     if(entry){runtime=entry.create();FrostClient=null;}
     else {runtime=null;FrostButtons=JSON.parse(JSON.stringify(buttons));FrostClient=createFrostClient();if(returning)FrostClient.openMaps(selected);}
     loaded=true;
@@ -38,7 +66,8 @@ var FrostMapSession=(()=>{
     const text=notice||(active.title+' · '+(paused?'已暂停':'场景运行')+' | WASD / 方向键移动 · +/- 缩放 · 空格暂停\n对局规则尚未接入');
     if(statusLabel&&statusLabel.components.Text.text!==text){statusLabel.components.Text={...statusLabel.components.Text,text};write(statusLabel.entity,'Text',statusLabel.components.Text);}
   }
-  return {start,back,reload,tick,sceneLoaded,status:()=>({map:active?.id||null,scene:engine.scene?.path||null,pending:pending?.scene||null,elapsed,paused,pathing:runtime?.pathing?{size:[...runtime.pathing.size],revision:runtime.pathing.revision,sourceSha256:runtime.pathing.sourceSha256}:null})};
+  return {start,back,reload,tick,sceneLoaded,importFile,cancelImport,contentImported,importStatus:()=>({busy:importing,message:importMessage}),status:()=>({map:active?.id||null,scene:engine.scene?.path||null,pending:pending?.scene||null,importing,importMessage,elapsed,paused,pathing:runtime?.pathing?{size:[...runtime.pathing.size],revision:runtime.pathing.revision,sourceSha256:runtime.pathing.sourceSha256}:null})};
 })();
+function onContentImport(event){FrostMapSession.contentImported(event);}
 function onSceneLoaded(scene){FrostMapSession.sceneLoaded(scene);}
 function onTick(dt){FrostMapSession.tick(dt);}

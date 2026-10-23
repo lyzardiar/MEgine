@@ -285,6 +285,7 @@ struct PlaySession {
     script: ScriptHost,
     initial: WorldSnapshot,
     initial_scene: LoadedScene,
+    content_imports: mengine_runtime::content_import::ContentImports,
     root: Option<PathBuf>,
     scenes: SceneManager,
     animations: AnimationRuntime,
@@ -309,7 +310,7 @@ impl PlaySession {
         script.sync_world(&world).map_err(|error| error.to_string())?;
         script.eval(source).map_err(|error| error.to_string())?;
         script.notify_scene_loaded(&initial_scene.name, &initial_scene.path.to_string_lossy().replace('\\', "/"), initial_scene.build_index, initial_scene.build_scene_count).map_err(|error| error.to_string())?;
-        Ok(Self { quit_requested: false, world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new(), snapshot_stream: PlaySnapshotStream::default() })
+        Ok(Self { quit_requested: false, content_imports: mengine_runtime::content_import::ContentImports::new(project.root.clone()), world, script, initial, initial_scene, animations: AnimationRuntime::new(project.root.clone()), timelines: TimelineRuntime::new(project.root.clone()), audio: AudioRuntime::new(project.root.clone()), root: project.root, scenes, physics2d: PhysicsWorld2D::new(), physics3d: PhysicsWorld::new(), step_ms: 0.0, step_stages: Vec::new(), snapshot_stream: PlaySnapshotStream::default() })
     }
 
     fn step(&mut self, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<SharedWorldSnapshot, String> {
@@ -333,6 +334,7 @@ impl PlaySession {
         world.time.elapsed = elapsed;
         world.time.delta = dt;
         stage("Reconcile");
+        self.content_imports.update(&mut self.script, &mut self.scenes)?;
         self.script.set_input(&input).map_err(|error| error.to_string())?;
         stage("Input");
         // Bound substeps so Agent stepping and realtime Play use the same collision solver.
@@ -364,6 +366,7 @@ impl PlaySession {
         stage("Animation, timeline and audio");
         let script_profile = self.script.tick_profiled(world, dt).map_err(|error| error.to_string())?;
         for request in self.script.take_runtime_requests() {
+            if self.content_imports.apply(&request) { continue; }
             if request == mengine_script::ScriptRuntimeRequest::Quit { self.quit_requested = true; break; }
             let Some(selector) = (ScriptRequestContext { world, project_root: self.root.as_deref(), animations: &mut self.animations, timelines: &mut self.timelines, audio: &mut self.audio }).apply(request) else { continue; };
             let loaded = if selector == SceneSelector::Reload && self.scenes.current() == Some(self.initial_scene.path.as_path()) {

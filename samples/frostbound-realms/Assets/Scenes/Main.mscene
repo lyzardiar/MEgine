@@ -161752,6 +161752,197 @@
             "receive_shadows": false
           }
         }
+      },
+      {
+        "entity": 90798,
+        "name": "UI Control mapOpen",
+        "parent": 89670,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -273,
+              188
+            ],
+            "size_delta": [
+              360,
+              38
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/MapSelection.prefab",
+            "instance": "63313134-40ed-55da-a96a-1437489e79f4",
+            "node": "5350da67-0d29-5521-aabc-02ab198789c2",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 90799,
+        "name": "mapOpen border",
+        "parent": 90798,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              4,
+              4
+            ]
+          },
+          "Image": {
+            "color": [
+              0.035,
+              0.043,
+              0.057,
+              1
+            ],
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/MapSelection.prefab",
+            "instance": "63313134-40ed-55da-a96a-1437489e79f4",
+            "node": "6ef470da-3e90-5d95-adee-f8d467ced70e",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 90800,
+        "name": "mapOpen box",
+        "parent": 90798,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Image": {
+            "material": "Assets/Materials/ClassicButton.mmat",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/MapSelection.prefab",
+            "instance": "63313134-40ed-55da-a96a-1437489e79f4",
+            "node": "c800f8f5-6966-5fb5-aa42-17fe787dbb7b",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 90801,
+        "name": "mapOpen label",
+        "parent": 90798,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              -12,
+              0
+            ]
+          },
+          "Text": {
+            "text": "打开地图文件…",
+            "font": "Assets/Fonts/NotoSansSC.ttf",
+            "font_size": 20,
+            "color": [
+              0.92,
+              0.79,
+              0.45,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/MapSelection.prefab",
+            "instance": "63313134-40ed-55da-a96a-1437489e79f4",
+            "node": "b1c659ca-63db-55f4-a60f-92d8c1b1d452",
+            "root": false
+          }
+        }
       }
     ],
     "frame": 0,

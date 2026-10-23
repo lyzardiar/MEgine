@@ -58,6 +58,9 @@ impl SceneManager {
         &self.build_scenes
     }
 
+    /// MiYu: only validated converter receipts may extend a packaged player's scene allowlist.
+    pub fn register_imported(&mut self, path: PathBuf) { if !self.build_scenes.contains(&path) { self.build_scenes.push(path); } }
+
     pub fn current(&self) -> Option<&Path> {
         self.current.as_deref()
     }
