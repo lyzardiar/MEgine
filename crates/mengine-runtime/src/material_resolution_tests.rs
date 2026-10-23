@@ -166,3 +166,131 @@ fn benchmark_material_extraction_breakdown() {
     }
     println!("MATERIAL_EXTRACTION_BREAKDOWN={}", serde_json::json!(reports));
 }
+
+// Previous production resolver from 9d3e983, used only as the independent benchmark reference.
+impl RuntimeMaterialCache {
+    pub(crate) fn resolve_without_render_cache(&mut self, key: &str) -> Option<RenderMaterial> {
+        let normalized = key.trim();
+        if !is_material_path(normalized) {
+            return None;
+        }
+        match self.resolve_shared_asset(normalized) {
+            Ok(material) => {
+                let mut render = render_material_from_asset(&material);
+                if material.shader == MaterialShader::Custom {
+                    match self.load_custom_shader(&material.custom_shader) {
+                        Ok(shader) => {
+                            match shader.surface_validation.get_or_init(|| validate_surface_shader_hook(&shader.source)).clone().and_then(|_| {
+                                resolve_surface_shader_material_with_schema(
+                                    &material,
+                                    &shader.schema,
+                                    Arc::clone(&shader.parameter_bindings),
+                                    Arc::clone(&shader.texture_names),
+                                )
+                            }) {
+                                Ok(bindings) => {
+                                    self.clear_failure(normalized);
+                                    self.clear_failure(&material.custom_shader);
+                                    render.surface_shader = Arc::clone(&shader.source);
+                                    render.surface_keywords = bindings.keywords;
+                                    render.custom_parameters = bindings.parameters;
+                                    render.custom_parameter_bindings = bindings.parameter_bindings;
+                                    render.custom_textures = bindings.textures;
+                                    render.custom_texture_names = bindings.texture_names;
+                                    render.custom_texture_srgb = bindings.texture_srgb;
+                                }
+                                Err(error) => {
+                                    self.clear_failure(&material.custom_shader);
+                                    if self.record_failure(normalized, &error) {
+                                        log::warn!(
+                                        "material '{}' has invalid bindings for custom shader '{}': {}",
+                                        normalized,
+                                        material.custom_shader,
+                                        error
+                                    );
+                                    }
+                                    render = RenderMaterial::error();
+                                }
+                            }
+                        }
+                        Err(error) => {
+                            self.clear_failure(normalized);
+                            if self.record_failure(&material.custom_shader, &error) {
+                                log::warn!(
+                                    "custom shader '{}' could not be loaded: {}",
+                                    material.custom_shader,
+                                    error
+                                );
+                            }
+                            render = RenderMaterial::error();
+                        }
+                    }
+                } else {
+                    self.clear_failure(normalized);
+                }
+                Some(render)
+            }
+            Err(error) => {
+                if self.record_failure(normalized, &error) {
+                    log::warn!("material '{}' could not be loaded: {}", normalized, error);
+                }
+                Some(RenderMaterial::error())
+            }
+        }
+    }
+
+}
+
+
+#[test]
+fn prepared_materials_share_payloads_and_detach_edits_across_frames() {
+    let fixture = Fixture::new(); fixture.write("Base.mmat", r#"{"version":10,"base_color":[1,0,0,1],"base_color_texture":"Assets/Color.png"}"#);
+    let mut cache = RuntimeMaterialCache::new(Some(fixture.0.clone()));
+    let first = cache.resolve_shared("Assets/Base.mmat").unwrap();
+    let next = cache.resolve_shared(" Assets/Base.mmat ").unwrap(); assert!(std::ptr::eq(&*first, &*next));
+    expire(&mut cache); assert!(std::ptr::eq(&*first, &*cache.resolve_shared("Assets/Base.mmat").unwrap()));
+    let mut edited = first.clone(); edited.base_color = [0.0, 1.0, 0.0, 1.0]; edited.base_color_texture.clear();
+    let mut owned = cache.resolve("Assets/Base.mmat").unwrap(); owned.base_color_texture.clear();
+    assert_eq!(next.base_color, [1.0, 0.0, 0.0, 1.0]); assert_eq!(cache.resolve_shared("Assets/Base.mmat").unwrap().base_color_texture, "Assets/Color.png");
+    assert_eq!(cache.render_materials.len(), 1);
+    assert_eq!(format!("{:?}", *next), format!("{:?}", cache.resolve_without_render_cache("Assets/Base.mmat").unwrap()));
+    let other = Fixture::new(); other.write("Base.mmat", r#"{"version":10,"base_color":[0,0,1,1]}"#);
+    assert_eq!(RuntimeMaterialCache::new(Some(other.0.clone())).resolve_shared("Assets/Base.mmat").unwrap().base_color, [0.0, 0.0, 1.0, 1.0]);
+}
+
+#[test]
+fn prepared_materials_keep_polling_alias_invalidation_and_failure_recovery() {
+    let fixture = Fixture::new(); fixture.write("Base.mmat", r#"{"version":10,"base_color":[1,0,0,1]}"#);
+    let mut cache = RuntimeMaterialCache::new(Some(fixture.0.clone())); let first = cache.resolve_shared("Assets/Base.mmat").unwrap();
+    fixture.write("Base.mmat", r#"{"version":10,"base_color":[0,1,0,1],"roughness":0.2}"#);
+    std::fs::File::options().write(true).open(fixture.0.join("Assets/Base.mmat")).unwrap().set_modified(SystemTime::now() + Duration::from_secs(2)).unwrap();
+    for entry in cache.materials.values_mut() { entry.checked_at = Instant::now(); }
+    assert!(std::ptr::eq(&*first, &*cache.resolve_shared("Assets/Base.mmat").unwrap()));
+    expire(&mut cache); let changed = cache.resolve_shared("Assets/Base.mmat").unwrap(); assert_eq!(changed.base_color, [0.0, 1.0, 0.0, 1.0]); assert_eq!(first.base_color, [1.0, 0.0, 0.0, 1.0]);
+    cache.invalidate(" Assets\\Base.mmat "); let reloaded = cache.resolve_shared("Assets/Base.mmat").unwrap(); assert!(!std::ptr::eq(&*changed, &*reloaded));
+    fixture.write("Base.mmat", "invalid material"); cache.invalidate("Assets/Base.mmat"); assert!(cache.resolve_shared("Assets/Base.mmat").unwrap().is_error); assert!(cache.render_materials.is_empty()); assert_eq!(cache.diagnostics().len(), 1);
+    std::fs::remove_file(fixture.0.join("Assets/Base.mmat")).unwrap(); expire(&mut cache); assert!(cache.resolve_shared("Assets/Base.mmat").unwrap().is_error);
+    fixture.write("Base.mmat", r#"{"version":10,"base_color":[0,0,1,1]}"#); expire(&mut cache);
+    assert_eq!(cache.resolve_shared("Assets/Base.mmat").unwrap().base_color, [0.0, 0.0, 1.0, 1.0]); assert!(cache.diagnostics().is_empty());
+    assert!(cache.resolve_shared("../Base.mmat").unwrap().is_error); assert!(cache.resolve_shared("default").is_none());
+}
+
+#[test]
+fn prepared_materials_keep_instance_parent_updates_and_shader_transitions() {
+    let fixture = Fixture::new(); fixture.write("Base.mmat", r#"{"version":10,"base_color":[1,0,0,1]}"#);
+    fixture.write("A.minst", r#"{"version":2,"parent":"Assets/Base.mmat","overrides":{"roughness":0.2}}"#);
+    fixture.write("B.minst", r#"{"version":2,"parent":"Assets/A.minst","overrides":{"metallic":0.5}}"#);
+    let mut cache = RuntimeMaterialCache::new(Some(fixture.0.clone())); let previous = cache.resolve_shared("Assets/B.minst").unwrap();
+    cache.resolve_shared("Assets/Base.mmat").unwrap(); assert_eq!(cache.render_materials.len(), 1);
+    fixture.write("Base.mmat", r#"{"version":10,"base_color":[0,1,0,1]}"#); cache.invalidate("Assets/Base.mmat");
+    let changed = cache.resolve_shared("Assets/B.minst").unwrap(); assert_eq!(changed.base_color, [0.0, 1.0, 0.0, 1.0]); assert_eq!(changed.roughness, 0.2); assert_eq!(changed.metallic, 0.5); assert_eq!(previous.base_color, [1.0, 0.0, 0.0, 1.0]);
+    cache.resolve_shared("Assets/Base.mmat").unwrap();
+    let shader = "fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, position: vec3<f32>, normal: vec3<f32>) -> vec4<f32> { return color; }";
+    fixture.write("Test.mshader", shader); fixture.write("Base.mmat", r#"{"version":10,"shader":"custom","custom_shader":"Assets/Test.mshader"}"#);
+    std::fs::File::options().write(true).open(fixture.0.join("Assets/Base.mmat")).unwrap().set_modified(SystemTime::now() + Duration::from_secs(3)).unwrap(); expire(&mut cache);
+    let custom = cache.resolve_shared("Assets/Base.mmat").unwrap(); assert_eq!(custom.surface_shader.trim_end(), shader); assert!(cache.render_materials.is_empty());
+    fixture.write("Test.mshader", "invalid shader"); cache.invalidate("Assets/Test.mshader"); assert!(cache.resolve_shared("Assets/Base.mmat").unwrap().is_error); assert!(!cache.diagnostics().is_empty());
+    let recovered = format!("{shader}\n// updated source"); fixture.write("Test.mshader", &recovered); cache.invalidate("Assets/Test.mshader");
+    assert_eq!(cache.resolve_shared("Assets/Base.mmat").unwrap().surface_shader.trim_end(), recovered); assert!(cache.diagnostics().is_empty()); assert_eq!(custom.surface_shader.trim_end(), shader);
+    fixture.write("Base.mmat", r#"{"version":10,"base_color":[0,0,1,1]}"#); cache.invalidate("Assets/Base.mmat"); assert_eq!(cache.resolve_shared("Assets/Base.mmat").unwrap().base_color, [0.0, 0.0, 1.0, 1.0]); assert_eq!(cache.render_materials.len(), 1);
+}

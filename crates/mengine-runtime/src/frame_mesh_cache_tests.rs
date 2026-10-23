@@ -592,3 +592,89 @@ fn benchmark_shared_render_materials() {
         println!("SHARED_RENDER_MATERIAL {}", serde_json::json!({"scene":scene,"objects":current.len(),"uniqueMaterials":unique_materials,"ownedObjectBytes":std::mem::size_of::<OwnedMaterialObject>(),"sharedObjectBytes":std::mem::size_of::<RenderObject>(),"materialBytes":std::mem::size_of::<RenderMaterial>(),"samples":samples,"iterations":20,"warmups":2,"scope":"Previous production extraction with inline owned materials versus shared per-extraction materials; excludes renderer and IPC"}));
     }
 }
+
+// Previous production extraction from 9d3e983 paired with the unchanged material resolver.
+fn uncached_render_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>, mut entities: Option<&mut Vec<Entity>>) -> Vec<RenderObject> {
+    let mut root_filter = RenderRootFilter::new(root);
+    // Compact borrowed inputs size the large owned RenderObject buffer once, without copying materials during growth.
+    let inputs: Vec<_> = world.entities_with_components(&["MeshRenderer"]).filter_map(|entity| {
+        let transform = hierarchy.get_ref(entity)?;
+        if !root_filter.contains(world, entity) { return None; }
+        Some((entity, transform, world.get_component::<MeshRenderer>(entity)?))
+    }).collect();
+    let mut out = Vec::with_capacity(inputs.len());
+    // MiYu: resolve a shared authored material once per extraction; each object's overrides stay private.
+    let mut resolved_materials = HashMap::<&str, SharedRenderMaterial>::new();
+    let mut tinted_materials = HashMap::<(&str, [u32; 4]), SharedRenderMaterial>::new();
+    for (entity, transform, mesh) in inputs {
+        let block = world.get_component::<MaterialPropertyBlock>(entity);
+        let material = if let Some(pbr) = world.get_component::<PbrMaterial>(entity) {
+            let mut material = render_material_from_component(pbr);
+            if let Some(block) = block { apply_material_property_block_in_place(&mut material, block); }
+            material.into()
+        } else {
+            let base = resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve_without_render_cache(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material)).into());
+            match block {
+                None => base.clone(),
+                Some(block) if material_block_is_tint_only(block) => {
+                    if !block.override_base_color { base.clone() }
+                    else { tinted_materials.entry((&mesh.material, block.base_color.map(f32::to_bits))).or_insert_with(|| {
+                        let mut material = base.clone(); apply_material_property_block_in_place(&mut material, block); material
+                    }).clone() }
+                }
+                Some(block) => { let mut material = base.clone(); apply_material_property_block_in_place(&mut material, block); material }
+            }
+        };
+        if let Some(entities) = entities.as_deref_mut() { entities.push(entity); }
+        out.push(RenderObject {
+            mesh_key: mesh.mesh.trim().replace('\\', "/"),
+            model: transform.matrix,
+            cast_shadows: mesh.cast_shadows,
+            receive_shadows: mesh.receive_shadows,
+            material,
+        });
+    }
+    out
+}
+
+#[test]
+#[ignore = "manual prepared material comparison on authored Amazonia and menu scenes"]
+fn benchmark_prepared_render_materials() {
+    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    for scene in ["Assets/Maps/amazonia/Scenes/Main.mscene", "Assets/Scenes/Main.mscene"] {
+        let mut world = World::new(); mengine_scene::load_scene(&root.join(scene), &mut world).unwrap();
+        let hierarchy = TransformHierarchy::build(&world); let mut old_cache = RuntimeMaterialCache::new(Some(root.clone())); let mut cache = RuntimeMaterialCache::new(Some(root.clone()));
+        let previous = uncached_render_objects(&world, &hierarchy, &mut old_cache, None, None); let current = collect_objects(&world, &hierarchy, &mut cache); assert_objects_equal(&previous, &current);
+        let mut samples = [Vec::new(), Vec::new()];
+        for run in 0..11 {
+            for mode in [run % 2, 1 - run % 2] {
+                let started = Instant::now();
+                for _ in 0..20 { black_box(if mode == 0 { uncached_render_objects(&world, &hierarchy, &mut old_cache, None, None) } else { collect_objects(&world, &hierarchy, &mut cache) }); }
+                if run >= 2 { samples[mode].push(started.elapsed().as_secs_f64() * 1000.0 / 20.0); }
+            }
+        }
+        assert_objects_equal(&uncached_render_objects(&world, &hierarchy, &mut old_cache, None, None), &collect_objects(&world, &hierarchy, &mut cache));
+        println!("PREPARED_RENDER_MATERIAL {}", serde_json::json!({"scene":scene,"objects":current.len(),"samples":samples,"iterations":20,"warmups":2,"scope":"Previous production extraction versus prepared built-in materials; both use normal source polling; excludes renderer and IPC"}));
+    }
+}
+
+
+#[test]
+fn tint_payloads_share_only_equal_sanitized_colors_and_preserve_signed_zero() {
+    let root = std::env::temp_dir().join(format!("mengine-tint-payloads-{}", uuid::Uuid::new_v4())); std::fs::create_dir_all(root.join("Assets")).unwrap();
+    std::fs::write(root.join("Assets/White.mmat"), r#"{"version":10,"base_color":[1,1,1,1]}"#).unwrap();
+    std::fs::write(root.join("Assets/Other.mmat"), r#"{"version":10,"base_color":[1,1,1,1],"roughness":0.2}"#).unwrap();
+    let mut world = World::new(); let colors = [[1.0; 4], [1.0; 4], [f32::NAN, 2.0, f32::INFINITY, 1.0], [-1.0, 0.5, 1.0, 1.0], [-2.0, 0.5, 1.0, 1.0], [-0.0, 0.5, 1.0, 1.0], [1.0; 4], [-1.0, 0.5, 1.0, 1.0]];
+    let ids: Vec<_> = colors.iter().enumerate().map(|(index, color)| {
+        let entity = world.spawn_empty(); world.insert_component(entity, Transform::default()); world.insert_component(entity, MeshRenderer { mesh: "cube".into(), material: if index == 7 { "Assets/Other.mmat" } else { "Assets/White.mmat" }.into(), ..Default::default() });
+        if index != 0 { world.insert_component(entity, MaterialPropertyBlock { override_base_color: true, base_color: *color, override_metallic: index == 6, metallic: 0.7, ..Default::default() }); }
+        entity
+    }).collect();
+    let hierarchy = TransformHierarchy::build(&world); let mut cache = RuntimeMaterialCache::new(Some(root.clone())); let objects = collect_objects(&world, &hierarchy, &mut cache);
+    assert_objects_equal(&objects, &uncached_render_objects(&world, &hierarchy, &mut cache, None, None));
+    assert!(std::ptr::eq(&*objects[0].material, &*objects[1].material)); assert!(std::ptr::eq(&*objects[0].material, &*objects[2].material)); assert!(std::ptr::eq(&*objects[3].material, &*objects[4].material));
+    assert!(!std::ptr::eq(&*objects[3].material, &*objects[5].material)); assert_eq!(objects[5].material.base_color[0].to_bits(), (-0.0f32).to_bits()); assert_eq!(objects[3].material.base_color[0].to_bits(), 0.0f32.to_bits());
+    assert_eq!(objects[6].material.metallic, 0.7); assert!(!std::ptr::eq(&*objects[3].material, &*objects[7].material)); assert_eq!(objects[7].material.roughness, 0.2);
+    world.get_component_mut::<MaterialPropertyBlock>(ids[1]).unwrap().base_color = [0.0; 4]; let next = collect_objects(&world, &hierarchy, &mut cache); assert_eq!(next[1].material.base_color, [0.0; 4]); assert_eq!(objects[1].material.base_color, [1.0; 4]);
+    drop(cache); std::fs::remove_dir_all(root).unwrap();
+}

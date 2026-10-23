@@ -12,7 +12,7 @@ use mengine_core::surface_shader::{
 use mengine_rhi::{
     validate_surface_shader_hook, validate_ui_shader_hook, MaterialBlendMode, MaterialFilter,
     MaterialWrap, RenderMaterial, SurfaceShaderParameterBinding, UiBlendMode, UiPrimitive,
-    UiRenderMaterial,
+    UiRenderMaterial, SharedRenderMaterial,
 };
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -78,6 +78,9 @@ struct CachedMaterialInstance {
     result: Result<Arc<MaterialInstanceAsset>, String>,
 }
 
+// MiYu: prepared built-in payloads follow immutable source identity, while source polling stays authoritative.
+struct CachedRenderMaterial { source: Arc<MaterialAsset>, render: SharedRenderMaterial }
+
 #[derive(Default)]
 pub struct RuntimeMaterialCache {
     project_root: Option<PathBuf>,
@@ -85,6 +88,7 @@ pub struct RuntimeMaterialCache {
     instances: HashMap<PathBuf, CachedMaterialInstance>,
     surface_shaders: HashMap<PathBuf, CachedSurfaceShader>,
     active_failures: HashMap<String, String>,
+    render_materials: HashMap<String, CachedRenderMaterial>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -101,16 +105,29 @@ impl RuntimeMaterialCache {
             instances: HashMap::new(),
             surface_shaders: HashMap::new(),
             active_failures: HashMap::new(),
+            render_materials: HashMap::new(),
         }
     }
 
     pub fn resolve(&mut self, key: &str) -> Option<RenderMaterial> {
+        self.resolve_shared(key).map(|material| (*material).clone())
+    }
+
+    pub fn resolve_shared(&mut self, key: &str) -> Option<SharedRenderMaterial> {
         let normalized = key.trim();
         if !is_material_path(normalized) {
             return None;
         }
         match self.resolve_shared_asset(normalized) {
             Ok(material) => {
+                if material.shader != MaterialShader::Custom && !normalized.rsplit('.').next().is_some_and(|extension| extension.eq_ignore_ascii_case("minst")) {
+                    self.clear_failure(normalized);
+                    if let Some(cached) = self.render_materials.get(normalized).filter(|cached| Arc::ptr_eq(&cached.source, &material)) { return Some(cached.render.clone()); }
+                    let render: SharedRenderMaterial = render_material_from_asset(&material).into();
+                    self.render_materials.insert(normalized.to_owned(), CachedRenderMaterial { source: material, render: render.clone() });
+                    return Some(render);
+                }
+                self.render_materials.remove(normalized);
                 let mut render = render_material_from_asset(&material);
                 if material.shader == MaterialShader::Custom {
                     match self.load_custom_shader(&material.custom_shader) {
@@ -163,13 +180,14 @@ impl RuntimeMaterialCache {
                 } else {
                     self.clear_failure(normalized);
                 }
-                Some(render)
+                Some(render.into())
             }
             Err(error) => {
+                self.render_materials.remove(normalized);
                 if self.record_failure(normalized, &error) {
                     log::warn!("material '{}' could not be loaded: {}", normalized, error);
                 }
-                Some(RenderMaterial::error())
+                Some(RenderMaterial::error().into())
             }
         }
     }
@@ -284,6 +302,7 @@ impl RuntimeMaterialCache {
 
     pub fn invalidate(&mut self, key: &str) {
         self.clear_failure(key.trim());
+        self.render_materials.remove(key.trim());
         let Some(root) = self.project_root.as_deref() else {
             return;
         };
@@ -917,7 +936,7 @@ fn normalize_property_block_texture_path(path: &str) -> Result<String, String> {
     Ok(normalized)
 }
 
-fn sanitize_color4(color: [f32; 4]) -> [f32; 4] {
+pub(crate) fn sanitize_color4(color: [f32; 4]) -> [f32; 4] {
     color.map(|value| finite_or(value, 1.0).clamp(0.0, 1.0))
 }
 

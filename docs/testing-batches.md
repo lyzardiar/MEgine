@@ -512,3 +512,14 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 `node scripts/qa-frost-warcraft-ui.mjs --lobby-only` 最终报告 `tmp/docs-artifacts/war3-ui/native-1792788057530.json` 通过，0 error、正常退出。真实DOM文本代理、Enter→原生脚本→TCP回显、两人大厅开始通过；4张截图覆盖草稿与消息、1280×720及960×900，已目视检查。此前失败报告7194319、7666811、7734988、7788538、7872551、7952363（文件名前缀native-179278）保留在war3-ui目录，原因与边界见warcraft-ui-fidelity。最终测试使用实时Play保持心跳，未延长产品超时。锁定WebView缓存保留，原始报告／截图不提交。
 
 待测／待实现：中文IME实机、emoji字形回退、独立Player文本输入、旧原生QA大厅入口迁移、完整规则套件；原版12槽／队伍／观察者、种族颜色让步菜单、滚动条／斜杠命令、动态地图详情与逐像素对照。其余界面和编辑器性能待测保持开放。
+
+
+### B001-01 普通材质复用与颜色覆盖去重
+
+变更：mengine-runtime的materials/frame_compiler及两组对应测试。普通源材质按不可变来源身份复用渲染载荷；同色覆盖直接复用、其他颜色在帧内按载荷身份去重。保留文件轮询、自定义shader与实例解析、旧帧隔离和可编辑resolve API。属于既有性能任务补充，不新增计数。
+
+快速检查：材质19项、网格提取8项通过，固定9d3e983旧实现的局部对照基准1项通过。Amazonia提取1.008140→0.788635ms，菜单0.176265→0.153020ms，输出相等；不等同整帧提升。过程与本地产物见performance-risk-todo第五十二阶段。首次新增shader测试断言修正末尾换行，错误过滤名未计作测试通过。
+
+待合并验证：下一相关原生构建执行Game/Scene／相机预览、连续性能、材质及纹理／shader热更新、普通材质与自定义材质互换、属性覆盖编辑及旧帧隔离；覆盖资源删除恢复和项目切换，测量缓存保留内存。当前EXE3371f8fc仍为上一原生批次，未重跑前端构建、完整地图QA或全库测试。既有父级／Undo、竞态、脱离窗口与真实输入延迟待测保持开放。
+
+原生集成检查 `cargo check -p mengine-editor-tauri --release --features custom-protocol` 通过，耗时13.34秒，仅既有world_from_snapshot未使用告警；日志 `tmp/docs-artifacts/editor-performance-risk/prepared-material-integration-check.log`。该检查不生成本次可验收的Editor EXE。

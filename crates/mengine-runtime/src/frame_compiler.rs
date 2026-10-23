@@ -3,7 +3,7 @@
 
 use crate::fonts::{FontLoadFailure, RuntimeFontCache};
 use crate::lighting2d::apply_2d_lighting;
-use crate::materials::{apply_material_property_block_in_place, resolve_ui_materials, RuntimeMaterialCache};
+use crate::materials::{apply_material_property_block_in_place, resolve_ui_materials, sanitize_color4, RuntimeMaterialCache};
 #[cfg(test)]
 use crate::materials::apply_material_property_block;
 use crate::particles::ParticleWorld;
@@ -570,7 +570,8 @@ fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials
     let mut out = Vec::with_capacity(inputs.len());
     // MiYu: resolve a shared authored material once per extraction; each object's overrides stay private.
     let mut resolved_materials = HashMap::<&str, SharedRenderMaterial>::new();
-    let mut tinted_materials = HashMap::<(&str, [u32; 4]), SharedRenderMaterial>::new();
+    // Base payloads stay alive throughout extraction; pointer keys avoid hashing the material path again.
+    let mut tinted_materials = HashMap::<(*const RenderMaterial, [u32; 4]), SharedRenderMaterial>::new();
     for (entity, transform, mesh) in inputs {
         let block = world.get_component::<MaterialPropertyBlock>(entity);
         let material = if let Some(pbr) = world.get_component::<PbrMaterial>(entity) {
@@ -578,14 +579,18 @@ fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials
             if let Some(block) = block { apply_material_property_block_in_place(&mut material, block); }
             material.into()
         } else {
-            let base = resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material)).into());
+            let base = resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve_shared(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material).into()));
             match block {
                 None => base.clone(),
                 Some(block) if material_block_is_tint_only(block) => {
                     if !block.override_base_color { base.clone() }
-                    else { tinted_materials.entry((&mesh.material, block.base_color.map(f32::to_bits))).or_insert_with(|| {
-                        let mut material = base.clone(); apply_material_property_block_in_place(&mut material, block); material
-                    }).clone() }
+                    else {
+                        let color = sanitize_color4(block.base_color); let bits = color.map(f32::to_bits);
+                        if bits == base.base_color.map(f32::to_bits) { base.clone() }
+                        else { tinted_materials.entry((&**base as *const RenderMaterial, bits)).or_insert_with(|| {
+                            let mut material = base.clone(); material.base_color = color; material
+                        }).clone() }
+                    }
                 }
                 Some(block) => { let mut material = base.clone(); apply_material_property_block_in_place(&mut material, block); material }
             }
