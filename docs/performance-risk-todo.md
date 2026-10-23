@@ -843,3 +843,16 @@ Game 返回帧在同一同步回调中取得一次新鲜运行时快照，复用
 定向测试 29 通过、0 失败，覆盖生产完成回调、过期项目/请求/呈现顺序、面板/尺寸/显示器/会话/编辑实体变化，保留世界的深层编辑、直接别名、重启以及诊断字段边界。nativePlayOwnership 中两处完整快照断言按既有 96cb4ea 的模拟时钟契约校正：保留会话 ID，仍无可复用 revision。TypeScript 检查通过。原始结果位于 `tmp/docs-artifacts/editor-performance-risk/` 的 `native-timing-{query-tests.log,editor-build.log,native-build.log,map-qa.log,summary.json}` 和 `game-completion-tests.log`。
 
 待下一批相关原生构建验证新增前端时序、Game/Scene 切换、分辨率变化、运行地图切换与 Stop 后旧帧拒绝；复用相同视口采样并单列前端阶段，不能把减少读取次数当作已证明的整图提速。本轮未再次构建原生 Editor、重导地图或运行全库回归。
+
+
+## 第三十九阶段 Scene 完成校验与前端分段原生采样
+
+Scene 主视图和选中相机预览的完成回调也复用一次新鲜运行时快照，将有效帧的读取次数分别由两次减为一次。先拒绝项目/票据/呈现顺序失效，再核对当前会话、实体来源、Scene 相机/隐藏节点/尺寸，或预览相机/选中节点/输出显示配置。没有跨回调缓存；拒绝帧继续释放共享缓冲区。
+
+`viewportSceneCompletion.test.mjs`执行生产回调，覆盖两个路径各 11 组输入：有效帧、旧项目/票据/序列、切换面板/会话/编辑实体，以及 Scene 尺寸/环绕相机/隐藏节点/2D 切换，预览选中节点/相机参数/分辨率/显示器变化。与 Game 完成回调共 2 个测试通过、0 失败；前端 TypeScript/Vite 构建通过。与 507c149 共用一次 Rust Release 构建（1分07秒），EXE SHA256 `1f0c9f8f44581de0cd3a1654cde768c216ad7e84e0f620f514200d8408dea4d6`；只有既有 world_from_snapshot 未使用警告。
+
+本 EXE 的 10 秒不轮询采样保留末尾 240 帧：850×478、7,410 实体，完成呈现间隔均值 19.8754ms、P95 30.3ms，50.313 次完成呈现/秒。原生渲染均值 13.1495ms、命令 15.8056ms、完整请求 23.1696ms；新前端准备均值 1.8363ms/P95 2.4ms，完成回调均值 2.0304ms/P95 2.5ms（包含 0.3563ms 上传），共享请求 19.2713ms，发布至 WebView 事件 1.7116ms。两段前端工作解释了大部分共享请求以外的差额；下一步应定位运行时快照内容校验与完成归属检查之间的职责边界，同时保留直接引用编辑的检测。当前没有受控 A/B，也没有稳定 60 FPS 证据。
+
+采样所在报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792779146027.json` 在所有时序断言通过后，因 QA 在暂停模式调用仅允许编辑模式的 view.set_scene_visibility 而失败，不能标记整个报告通过。脚本调整为暂停模式下合法的视口操作，并增加 `--viewport-transitions-only` 单独重测失败阶段，未重复构建或采样。重测报告 `map-session-1792779242868.json` 通过、0 error、正常退出：Scene/Game 切换、选中相机预览、环绕相机后的像素变化、Game 导出尺寸 960×900、回到 1280×720，地图实体保持一致，Stop 恢复作者实体。Scene 原生历史有 14 帧；截图已核对右下角相机预览及地图显示。两个进程均正常退出，锁定 WebView 缓存保留。
+
+本地证据在 `tmp/docs-artifacts/editor-performance-risk/` 的 `scene-completion-tests.log`、`completion-{editor-build.log,native-build.log,native-qa.log,transitions-qa.log,timing-summary.json}`。关闭第三十八阶段 Game 分段采样及常规 Scene/Game/相机预览/分辨率切换待测；强制请求在途的竞态、编辑模式隐藏节点/父级/活动修改与 Undo、实际交互延迟仍待相关批次。单元回调拒绝测试不等于这些原生时序场景已验收。

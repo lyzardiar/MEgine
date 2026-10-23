@@ -1597,8 +1597,8 @@ export function Viewport(props: {
       : null;
     const sceneRequest = nativeSceneRequestRef.current;
     syncRequestOwner(sceneRequest, JSON.stringify([p.tab, p.playing, p.runtimeSessionId, nativeSceneIdentity?.key]));
-    const currentSceneRequestKey = () => {
-      const current = currentViewportProps(), live = liveCam.current, bounds = canvas.getBoundingClientRect();
+    const currentSceneRequestKey = (current: ReturnType<typeof currentViewportProps>) => {
+      const live = liveCam.current, bounds = canvas.getBoundingClientRect();
       if (current.tab !== 'scene' || scene2DRef.current) return null;
       return nativeSceneFrameRequestIdentity({ eye: orbitEye(live.pivot, live.yaw, live.pitch, live.distance), target: live.pivot, fovYDeg: 60, projection: 'perspective' }, { w: Math.max(1, Math.floor(bounds.width)), h: Math.max(1, Math.floor(bounds.height)) }, window.devicePixelRatio || 1, current.sceneHiddenIds ?? [], MAX_NATIVE_SCENE_VIEW_DIMENSION).key;
     };
@@ -1632,7 +1632,9 @@ export function Viewport(props: {
           hiddenEntityIds: p.sceneHiddenIds ?? [],
         },
       }).then((buffer) => {
-        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || currentSceneRequestKey() !== nativeSceneIdentity?.key || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
+        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket)) { releaseNativeViewportFrame(buffer); return; }
+        const current = currentViewportProps();
+        if (currentSceneRequestKey(current) !== nativeSceneIdentity?.key || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), current)) { releaseNativeViewportFrame(buffer); return; }
         const result = uploadNativeViewportFrame(buffer, nativeSceneFrameRef.current?.image);
         recordOwnedNativeViewportProfile('scene', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
         const image = result.image;
@@ -1708,8 +1710,10 @@ export function Viewport(props: {
           hiddenEntityIds: [],
         },
       }).then((buffer) => {
-        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) { releaseNativeViewportFrame(buffer); return; }
-        const current = currentViewportProps(), camera = current.selected != null ? gameCameraForEntity(current.entities, current.selected) : null;
+        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket)) { releaseNativeViewportFrame(buffer); return; }
+        const current = currentViewportProps();
+        if (!nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), current)) { releaseNativeViewportFrame(buffer); return; }
+        const camera = current.selected != null ? gameCameraForEntity(current.entities, current.selected) : null;
         if (current.tab !== 'scene' || !camera || JSON.stringify([camera, current.gameResolution, current.gameDisplay]) !== cameraPreviewKey) { releaseNativeViewportFrame(buffer); return; }
         const { image } = uploadNativeViewportFrame(buffer, nativeCameraPreviewFrameRef.current?.image);
         const firstFrame = nativeCameraPreviewFrameRef.current == null;

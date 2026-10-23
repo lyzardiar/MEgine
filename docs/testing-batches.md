@@ -372,3 +372,14 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 最终快速检查：agentProfilerTimings、viewportGameCompletion、nativePlayOwnership、nativeViewportFrame 共 29 通过、0 失败；TypeScript、JS 语法及 diff 检查通过。未重复原生构建、地图全量导入或全库回归。
 
 待合并验证：下一次相关原生构建运行 `node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile`，验证 frontendPrepareMs/frontendCompleteMs 字段及相同视口的实际耗时；增加请求进行中 Game/Scene 切换、调整分辨率、重载地图、Stop 后过期帧拒绝。既有父级/活动状态编辑与 Undo 的 Scene 原生待测项继续保留。状态：实现及快速检查完成，最终 Game 优化的原生验证待批次执行。
+
+
+### B001-01 Scene 完成校验与视口合并验证
+
+变更：Viewport 的 Scene 和相机预览完成回调只读一次当前运行时快照；新增 viewportSceneCompletion 定向检查。map-session QA 增加 --viewport-transitions 和 --viewport-transitions-only，支持合并采样后验证及只重跑切换阶段。属于编辑器性能补充，不新增功能计数。
+
+快速检查：Scene/预览共 22 组输入加 Game 回调，共 2 个测试通过、0 失败；前端 TypeScript/Vite 构建及 JS/diff 检查通过。与 507c149 一次原生构建，EXE `1f0c9f8f44581de0cd3a1654cde768c216ad7e84e0f620f514200d8408dea4d6`。连续时序报告 `B001/map-session-1792779146027.json` 的时序断言通过（240帧、50.313 次完成呈现/秒，前端准备 1.8363ms、完成 2.0304ms），随后 QA 模式错误导致整份报告失败，详细口径见 performance-risk-todo 第三十九阶段。
+
+修正 QA 后只执行 `node scripts/qa-frost-map-session.mjs --viewport-transitions-only`，报告 `B001/map-session-1792779242868.json` 通过、0 error、正常退出；实际 Scene/Game/选中相机预览、环绕相机、Game 分辨率切换、实体不变与 Stop 恢复通过。已核对 Scene 截图。没有重复性能采样、原生构建或全库回归。
+
+待测：强制请求在途的面板/地图切换与 Stop 竞态，编辑模式隐藏节点、父级/活动状态编辑与 Undo，真实交互延迟与持续帧率。保留这些风险，不以回调测试或独立单次 50.313 次/秒宣布整体性能达标。
