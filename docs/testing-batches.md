@@ -332,3 +332,12 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 `node scripts/qa-frost-map-session.mjs --continuous-profile --effect-reload`报告`B001/map-session-1792776070367.json`通过：原脚本连续运行10秒、37份原特效文件修改后可见像素及图元变化、恢复后暂停像素精确还原且场景实体不变。两个报告均0 error、进程正常退出，锁定WebView缓存保留。连续呈现保留240帧，48.475次/秒，完整采样口径见performance-risk-todo第三十四阶段；本次没有证明整体FPS提升。
 
 以上关闭三十二、三十三阶段已列出的常规脱离窗口选择/编辑/发起窗口Undo、同名重载/Play/Stop/重开面板、原生特效修改/恢复及连续采样待测。三窗口同时并发、真实输入延迟与IPC成本、独立Ping滚动、自动恢复计时、原生特效损坏/删除恢复、跨平台仍保留待测；不是跨窗口全局Undo或全地图不卡顿保证。B001整体保持未结算，其余既有功能待测不因本项通过关闭。
+
+
+### B001-01 层级结果表预留容量
+
+变更：`crates/mengine-core/src/transform_hierarchy.rs`完整构建按活动请求收集ID，子集构建按迭代器容量下界预留HashMap；新增`transform_hierarchy_capacity_tests.rs`。保留解析顺序和每帧重建，减少数千条变换结果逐级扩容搬运。归属既有编辑器性能补充，不另增功能计数。
+
+快速检查：`cargo test -p mengine-core --release --lib transform_hierarchy -- --test-threads=1` 7通过、0失败、1手动基准忽略；单独执行`benchmark_hierarchy_capacity -- --ignored --nocapture --test-threads=1`通过。真实Amazonia和主菜单旧/新输出逐项一致，构建CPU中位分别1.11017→0.97115ms、0.18387→0.15269ms。采样口径与本地证据见performance-risk-todo第三十五阶段；diff检查通过。
+
+待合并验证：下次相关原生构建后验证Scene/Game加载、父级/活动状态编辑及Undo、Play/Stop、Amazonia连续呈现；目标是结果一致与实际帧耗时，不能以局部CPU基准宣布整体不卡顿。未执行全库测试、原生重建、全地图遍历或重复已通过的多窗口/特效QA。现有c90e966 EXE不包含本项。

@@ -90,11 +90,16 @@ pub struct TransformHierarchy {
 
 impl TransformHierarchy {
     /// MiYu: Inactive records need no own transform; referenced ancestors are still resolved.
-    pub fn build(world: &World) -> Self { Self::build_for_entities(world, world.iter_entities().filter(|entity| world.entity_active(*entity))) }
+    pub fn build(world: &World) -> Self {
+        // MiYu: reserve for active requests before resolving ancestors, preserving world traversal order.
+        let entities: Vec<_> = world.iter_entities().filter(|entity| world.entity_active(*entity)).collect();
+        Self::build_for_entities(world, entities)
+    }
 
     /// Resolves the requested entities and their ancestors without traversing unrelated branches.
     pub fn build_for_entities(world: &World, entities: impl IntoIterator<Item = Entity>) -> Self {
-        let mut nodes = HashMap::new();
+        let entities = entities.into_iter();
+        let mut nodes = HashMap::with_capacity(entities.size_hint().0);
         for entity in entities { resolve_node(world, entity, &mut nodes); }
         Self { nodes }
     }
@@ -348,3 +353,7 @@ mod tests {
         assert!(hierarchy.get(group).is_none());
     }
 }
+
+#[cfg(test)]
+#[path = "transform_hierarchy_capacity_tests.rs"]
+mod capacity_tests;
