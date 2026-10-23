@@ -31,6 +31,8 @@ click('mapOpen box');context.onContentImport({status:'failed',message:'不支持
 click('mapOpen box');tick({pressedKeys:['Escape']});assert.equal(cancels,2);context.onContentImport({status:'cancelled'});tick();
 context.FrostClient.openMaps();tick({},.1);click('mapOpen box');context.onContentImport({status:'complete',content});tick();
 assert.equal(engine.scene.path,'Assets/Scenes/Main.mscene');assert.equal(world.visible('Map loading back'),true);assert.match(world.entity('Map loading status').components.Text.text,/正在进入地图/);
+assert.equal(world.entity('mapOpen label').components.Text.text,'正在加载地图…');assert.match(world.entity('Map description').components.Text.text,/正在加载地图/);
+assert.equal(world.entity('Map name').components.Text.text,entry.title);
 tick();assert.equal(engine.scene.path,entry.scene,JSON.stringify(context.FrostMapSession.status())+' requests='+imports.length);assert.equal(context.FrostMapSession.status().map,entry.id);assert.ok(world.snapshot.entities.some(e=>e.name.startsWith('Unit-')));
 const first=context.FrostMapSession.status().pathing;tick({pressedKeys:['Escape']});tick();assert.equal(world.entity('Map name').components.Text.text,entry.title);
 click('mapStart box');tick();assert.equal(context.FrostMapSession.status().pathing.revision,0);assert.deepEqual(context.FrostMapSession.status().pathing.size,first.size);

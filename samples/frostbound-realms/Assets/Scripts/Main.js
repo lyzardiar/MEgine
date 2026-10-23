@@ -5548,7 +5548,7 @@ function createFrostClient(){
   const menuMaps=[['冬落盆地','skirmish','2 人遭遇战\n采集资源，建立基地。\n消灭敌方主基地获得胜利。'],['远古遗迹','moba','Dota · 双方阵营 / 三路\n选择英雄，购买装备。\n摧毁对方的远古要塞。'],['蜿蜒守望','td','塔防 · 12 波进攻\n建造与升级防御塔。\n守住路线终点。'],['破碎盟约','rpg','战役 · 4 阶段任务\n探索北境，收集遗物。\n击败寒霜领主。'],['冬落围城','skirmish','2 人攻城战\n突破山口与城墙。\n攻占敌方城堡。']];
   function presetMap(key){return typeof FrostMapCatalog!=='undefined'&&FrostMapCatalog[key]?S.clone(FrostMapCatalog[key]):key==='siege'?S.siegeMap():S.defaultMap(key);}
   for(const pack of typeof FrostMapPackages==='undefined'?[]:FrostMapPackages)menuMaps.push([pack.title,'package',pack.description,pack]);
-  function refreshMaps(id){menuMaps.splice(5);for(const pack of FrostMapPackages)menuMaps.push([pack.title,'package',pack.description,pack]);mapChoice=Math.max(0,menuMaps.findIndex(map=>map[3]?.id===id));return mapChoice;}
+  function refreshMaps(id){menuMaps.splice(5);for(const pack of FrostMapPackages)menuMaps.push([pack.title,'package',pack.description,pack]);mapChoice=Math.max(0,menuMaps.findIndex(map=>map[3]?.id===id));renderAt=0;return mapChoice;}
   function menuMap(){return menuMaps[mapChoice][3]||presetMap(mapChoice===4?'siege':menuMaps[mapChoice][1]);}
   function openMaps(index=0){if(!initialized)init();mode='custom';mapChoice=S.clamp(index,0,menuMaps.length-1);}
   function applySettings(){for(const n of soundNames){const a=authored[n].AudioSource;set(n,'AudioSource',{...a,volume:a.volume*(a.looped?settings.music:settings.sfx)});}}
@@ -5996,6 +5996,10 @@ if(editorPage===10){if(editMap.mode!=='td')return;const route=editMap.tdPath,poi
   function renderMapLoading(){
     const loading=FrostMapSession.importStatus(),loadingVisible=mode==='custom'&&loading.visible;
     for(const name of ['Map loading back','Map loading fill','Map loading status'])show(name,loadingVisible);
+    if(mode==='custom'){
+      label('mapOpen label',loading.loading?'正在加载地图…':loading.busy?'取消地图导入':'打开地图文件…');
+      label('Map description',loading.message||menuMaps[mapChoice][2]);
+    }
     if(loadingVisible){
       const p=loading.progress,r=authored['Map loading fill'].RectTransform,width=r.size_delta[0],determinate=Number.isFinite(p?.value),fill=determinate?p.value:.22,offset=determinate?0:(.5-.5*Math.cos(time*3))*(1-fill);
       set('Map loading fill','RectTransform',{...r,size_delta:[width*fill,r.size_delta[1]],anchored_position:[r.anchored_position[0]+width*(offset-(1-fill)/2),r.anchored_position[1]]});

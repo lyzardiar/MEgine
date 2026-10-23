@@ -210,6 +210,8 @@ python scripts/prepare-frost-map-import.py
 
 此功能的源码、Prefab、主场景和生成脚本一起维护。进度转发需要重新构建 Editor／Player；原生界面与冷缓存／热缓存完整链路验收登记在 B001-01，旧 EXE 不作为新功能通过证据。
 
+2026-10-23 已用新 Editor 完成冷转换与缓存加载的进度转发、菜单响应、进入前截图、切图及返回检查；修正状态文字和选中地图信息的刷新时机后，仅复验缓存路径。最终原生报告 `tmp/docs-artifacts/testing-batches/B001/arbitrary-map-1792757510780.json` 通过，7,221实体、0 error。完整冷流程与版本摘要见测试台账；独立Player和不同窗口尺寸仍待验收。
+
 ## 跨地图资源缓存
 
 `warcraft_resource_cache.py` 为运行时导入提供持久缓存，默认目录 `G:/work/github/MEgine/tmp/warcraft-resource-cache/v1/`，可通过转换脚本的 `--cache-root` 指定。`files/` 记录档案／工具摘要，依据绝对路径、文件标识、大小与时间戳复用摘要；文件状态变化后重算。`members/` 以 MPQ reader 版本、源档案摘要和规范化成员路径索引 `blobs/`，包含不存在成员的查询结果；命中后直接读取已解包的原始字节。每次查找仍遵守地图 → Patch → Local → Expansion → Base，地图内覆盖资源不会被公共同名文件替换。缺失或损坏的 blob 作为错误处理，不能继续退到下层档案。

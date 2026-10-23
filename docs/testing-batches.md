@@ -173,3 +173,7 @@ SDK与原生EXE只为本批统一构建一次，版本摘要见 `sdk-binaries.js
 本次快速检查：`cargo test -p mengine-runtime --lib content_import::tests -- --test-threads=1` 4 通过，包含真实子进程进度转发、取消与迟到结果、异常快照；`python scripts/test-frost-map-cache.py` 7 通过，包含数量回调、原子快照和节流；Python 语法检查通过。`node scripts/test-frost-map-import.mjs tmp/docs-artifacts/testing-batches/B001/shared-maps/echo-final/result.json` 与 `node scripts/test-frost-map-session.mjs` 通过，覆盖真实生成脚本／UI实体、进度不随时间虚增、进入提示先于场景请求、失败重试、取消收起、预装与动态地图入口。Rust日志为 `tmp/docs-artifacts/testing-batches/B001/map-progress/runtime-tests.log`。
 
 待批次验证：在同一次集成 Editor／Player 构建上运行 `qa-frost-map-import.mjs <map.w3x>`，观察冷转换各阶段及数量、热缓存校验、取消／失败恢复、预装地图直接进入和不同窗口尺寸的进度条布局。验收须确认界面在同步场景加载前已实际呈现，并记录首次资源绘制期间的停顿；脚本夹具不能替代该原生验收。本次不执行全量地图转换、Editor发布构建、无关玩法或已通过批次项目回归。
+
+2026-10-23 原生补验：一次集成 Editor 构建，EXE SHA256 `03e55ada83c9a26a2c194bc84ec529c01d82260ea86d7c3bfa3fa5357318ff7c`。`arbitrary-map-1792757158153.json` 通过：原版 Echo Isles 冷转换／缓存导入、转换期间菜单响应、进入前实际截图、7,221实体和0 error。冷流程收取62条进度事件，含2,491装饰、97单位和496资源校验；此处数量包含起点记录。截图发现进入时按钮、说明和选中地图信息更新未与加载条同步，已让状态文字每次轻量更新、目录替换只强制一次菜单刷新。最终 `arbitrary-map-1792757510780.json` 仅复测缓存进入，地图标题、按钮、说明、加载条与场景请求一致，返回收起，0 error；没有重复冷转换或重建。中间视觉检查记录 `arbitrary-map-1792757417165.json` 保留。
+
+QA增加 `--cache-project <前次隔离项目>`，校验源地图和共享文件摘要后复用已完成地图包；进度采样、截图、两份JSON、构建和日志均在 `tmp/docs-artifacts/testing-batches/B001/`，构建日志在 `map-progress/native-build.log`。两个复验进程正常退出，WebView锁缓存保留。不同窗口尺寸、独立Player以及同步场景阶段的持续响应仍待测，B001未结算。
