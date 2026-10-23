@@ -47,7 +47,8 @@ function projectIntegrity(directory){
   assert.equal(entities.length,receipt.entities);assert.equal(byId.size,entities.length);assert.equal(byName.size,entities.length);assert.equal(placements.length,receipt.placements);
   const source=JSON.parse(fs.readFileSync(path.join(terrain.sourceExport,'map.json'),'utf8'));
   assert.equal(receipt.mapSha256,source.source.sha256);assert.deepEqual(placements.map(p=>p.source),source.doodads.doodads);
-  for(const placement of placements){
+  for(const [index,placement] of placements.entries()){
+    assert.equal(placement.index,index,'Placement provenance retains source order');
     const entity=byName.get(placement.name),d=placement.source,t=entity.components.Transform;
     assert.deepEqual(t.position,[d.location[0]/128,d.location[2]/128,-d.location[1]/128]);assert.deepEqual(t.scale,[d.scale[0],d.scale[2],d.scale[1]]);
     assert.ok(t.rotation.every((v,i)=>Math.abs(v-[0,Math.sin(d.angle/2),0,Math.cos(d.angle/2)][i])<1e-12));

@@ -64,6 +64,9 @@ script=(project/'Assets/Scripts/Main.js').read_text(encoding='utf-8')
 groups=json.loads(script.split('var originalDoodadGroups=',1)[1].split(';\n',1)[0])
 assert any(name in g['names'] for g in groups for name in placements[0]['parts']),'Ordinary life=0 must retain Stand animation'
 assert not any(name in g['names'] for g in groups for name in placements[1]['parts']),'Initially dead tree must remain at Death end'
+actors=json.loads(script.split('var originalDoodadActors=',1)[1].split(';\n',1)[0])
+scheduled={name for g in groups for name in g['names']}|{name for a in actors for name in a['parts']}
+assert not any(name in scheduled for p in placements if p['kind']=='suppressed' or p['animation']['held'] for name in p['parts'])
 result=dict(sourceMapSha256=data['source']['sha256'],project=str(project),checked=checked,passed=True)
 (output/'result.json').write_text(json.dumps(result,indent=2),encoding='utf-8')
 print(json.dumps(result))

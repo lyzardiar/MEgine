@@ -56,7 +56,15 @@ REA 的 `node scripts/probe-frost-rea-doodads.mjs --life` 对同一固定 Game.d
 
 `python scripts/probe-frost-rea-doodad-stand-cpu.py` 执行原标签注册、候选评分、rarity转换、权重累积及随机范围机器码，与生产函数对照：64标签、265组选择、60组权重／范围、17组rarity通过；种子0／1／127／0xffffffff各64次输出与本机MSVCR120.dll一致。Storm分词、字典存取、模型元数据、pow及rand输入使用桩，本机C运行库另记录摘要。证据 `tmp/docs-artifacts/warcraft-map-tests/doodad-runtime/stand-cpu.json` 及 `tmp/docs-artifacts/frost-original-doodads/rea-stand-summary.json`。
 
-生成器从保留MDX读取rarity，以独立的MSVCR120随机流选择初始Stand，默认种子1；地图入口和生成器均支持 `--animation-seed`，收据记录种子与各放置的最终clip。网格和发射器使用一次选择，不重复消耗随机数。独立预览的调用顺序不等于原游戏共享随机流，原版种子／其他调用者／创建顺序和结束后重选仍待接入。源序列与采样序列的顺序必须一致，原版完整渲染和调度仍未验收。
+生成器从保留MDX读取rarity，以独立的MSVCR120随机流选择初始Stand，默认种子1；地图入口和生成器均支持 `--animation-seed`，收据记录种子与各放置的初始clip。网格和发射器使用一次选择，不重复消耗随机数；结束时继续该流重选。独立预览的调用顺序不等于原游戏共享随机流，原版种子／其他调用者／创建顺序仍待接入。源序列与采样序列的顺序必须一致，原版完整渲染和调度仍未验收。
+
+### 结束回调与时钟
+
+`node scripts/probe-frost-rea-doodads.mjs --cycle` 保存3组固定DLL证据。`0x6f74e930` 通过单精度dt乘1000再 `cvttss2si` 得到整数毫秒；`0x6f751840` 在序列存在且特殊模式查询为0时注册结束回调并推进模型。`0x6f75c030` 经模型API将 `0x6f75e840` 和实体地址注册至renderer；`0x6f77a1e0` 在 `+0x54 & 0x20` 时清位并跳过delta。正向时钟由 `0x6f77ba30` 判断 `elapsed >= duration`，循环与非循环均能回调。`0x6f75e840` 转发owner的状态回调并增加结束计数；`0x6f7592a0` 状态1重选Stand并seek0。实际seek `0x6f77a370` 设置上述跳步位，因此越界时间被丢弃，下一次推进也不累加。
+
+`python scripts/probe-frost-rea-doodad-cycle-cpu.py` 执行真实renderer时钟、边界、回调、Stand状态分派与seek，100ms循环和60ms非循环两条序列共28步通过，覆盖边界前／恰好边界、零步和500ms越界。选择结果、模型select API和speed setter使用桩，选择权重沿用上节独立验证。Unicorn使用正常x87/MXCSR配置，使源浮点转换辅助正常执行。证据为 `tmp/docs-artifacts/warcraft-map-tests/doodad-runtime/cycle-cpu.json` 与 `tmp/docs-artifacts/frost-original-doodads/rea-cycle-summary.json`。
+
+客户端使用源SEQS整数长度，正向速度1下按以上行为推进；多候选对象保留独立时钟，共享候选网格／状态，单候选动态组共享时钟。发射器关闭自主推进并随同一时钟更新；固定Death和suppressed不参与。验证限定在此Stand路径，不覆盖隐藏／离屏门控、特殊状态队列、原游戏共享RNG顺序或原版粒子求解器。
 
 ### 放置标志分流
 

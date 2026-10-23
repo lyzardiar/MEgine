@@ -92,7 +92,7 @@ def mdx_sequence_rarities(raw):
             for start in range(offset, offset + size, 132):
                 begin, end = struct.unpack_from('<II', raw, start + 80)
                 if end > begin:
-                    result.append(dict(name=raw[start:start+80].split(b'\0')[0].decode('utf-8'),rarity=struct.unpack_from('<f',raw,start+96)[0]))
+                    result.append(dict(name=raw[start:start+80].split(b'\0')[0].decode('utf-8'),rarity=struct.unpack_from('<f',raw,start+96)[0],durationMs=end-begin))
         offset += size
     return result
 

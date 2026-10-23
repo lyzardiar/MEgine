@@ -12,7 +12,7 @@ import struct
 import subprocess
 import tempfile
 from warcraft_map import load_map
-from warcraft_doodads import placement_kind, named_sequence_index, stand_sequence_index, MsvcRandom, mdx_sequence_rarities
+from warcraft_doodads import placement_kind, named_sequence_index, stand_sequence_index, stand_sequence_candidates, sequence_weight, MsvcRandom, mdx_sequence_rarities
 from warcraft_mpq import mpyq, read_archive
 
 terrain_builder = importlib.import_module('build-frost-original-terrain')
@@ -164,9 +164,10 @@ class SceneAssets:
             if not result['clips']:result['clips']=result['effectClips']
         if not result['parts'] and not result.get('effect'):raise ValueError('No native representation for source: '+path)
         source_clips=mdx_sequence_rarities(raw)
-        if not source_clips and len(result['clips'])==1:source_clips=[dict(name=result['clips'][0]['name'],rarity=0)]
+        if not source_clips and len(result['clips'])==1:source_clips=[dict(name=result['clips'][0]['name'],rarity=0,durationMs=round(result['clips'][0]['duration']*1000))]
         if [c['name'] for c in source_clips]!=[c['name'] for c in result['clips']]:raise ValueError('Sampled/source sequence order differs: '+path)
-        result['clips']=[dict(clip,rarity=source['rarity']) for clip,source in zip(result['clips'],source_clips)]
+        result['clips']=[dict(clip,rarity=source['rarity'],durationMs=source['durationMs']) for clip,source in zip(result['clips'],source_clips)]
+        result['choices']=[[index,sequence_weight(result['clips'][index]['rarity'])] for index in stand_sequence_candidates(result['clips'])]
         if result.get('effect') and [c['name'] for c in result['effectClips']]!=[c['name'] for c in result['clips']]:raise ValueError('Mesh/effect sequence order differs: '+path)
         self.records.append(dict(source=path,sha256=sha(raw),parts=len(result['parts']),effect=result.get('effect'),clips=result['clips']))
         self.prepared[normalized]=result
@@ -206,41 +207,70 @@ def build(export,game,output,sampler,metadata_reader,animation_seed=1):
         definitions=rows(read('Doodads/Doodads.slk'));destructables=rows(read('Units/DestructableData.slk'));definitions.update(destructables)
         assets=SceneAssets(project,read,sampler,metadata_reader)
         scene=json.loads((project/'Assets/Scenes/Main.mscene').read_bytes());entities=scene['world']['entities'];groups={};placements=[];animation_rand=MsvcRandom(animation_seed)
-        def entity(name,components,parent=None,active=True):
-            item=dict(entity=len(entities)+1,name=name,active=active,components=components)
-            if parent is not None:item['parent']=parent
-            entities.append(item);return item['entity']
-        for index,d in enumerate(data['doodads']['doodads']):
-            row=definitions[d['id']];model=assets.prepare(model_path(row,d['variation']));dead=d['id'] in destructables and d['life']==0;ci,held=placement_clip(model['clips'],dead,animation_rand);clip=model['clips'][ci]
-            kind=placement_kind(d['id'] in destructables,d['flags'])
-            name=f'Doodad-{index}-{d["id"]}-{d["editorId"]}';parent=entity(name,dict(Transform=placement_transform(d)),active=kind!='suppressed')
-            tint=[float(row.get('color'+c,row.get(f'vert{c}{min(d["variation"],int(row["numVar"])-1)+1:02}',255)))/255 for c in 'RGB']
-            part_names=[]
-            for pi,p in enumerate(model['parts']):
+        bindings={};definitions_cache={};animation_definitions=[];actors=[]
+        def binding(model,row,tint,ci):
+            identity=(model['source'],row.get('texID'),row.get('texFile'),tuple(tint),ci)
+            if identity in bindings:return bindings[identity]
+            clip=model['clips'][ci];parts=[]
+            for p in model['parts']:
                 replacement=row.get('texFile') if row.get('texID','0')==str(p['replaceableId']) else None
                 if replacement in ('_','-',None,''):replacement=None
                 elif not replacement.lower().endswith('.blp'):replacement+='.blp'
                 materials={str(t):assets.material(p['pack'],p['textureMaterials'].get(str(t),p['material']),replacement) for t in {s['texture'] for s in p['states'][ci]}}
                 states=[dict(color=[*(s['color'][i]*tint[i] for i in range(3)),s['color'][3]],material=materials[str(s['texture'])]) for s in p['states'][ci]]
+                parts.append(dict(mesh=p['mesh'],clip=ci,frames=len(states),duration=clip['duration'],loop=clip['loop'],moving=p['moving'][ci],states=states,durationMs=clip['durationMs'],restartOnEnd=True))
+            effect=None
+            if model.get('effect'):effect=dict(effect=model['effect'],clip=ci,playing=False,looping=False,speed=1,time_seconds=0)
+            result=dict(durationMs=clip['durationMs'],parts=parts,effect=effect)
+            bindings[identity]=result;return result
+        def entity(name,components,parent=None,active=True):
+            item=dict(entity=len(entities)+1,name=name,active=active,components=components)
+            if parent is not None:item['parent']=parent
+            entities.append(item);return item['entity']
+        for index,d in enumerate(data['doodads']['doodads']):
+            row=definitions[d['id']];model=assets.prepare(model_path(row,d['variation']));dead=d['id'] in destructables and d['life']==0
+            kind=placement_kind(d['id'] in destructables,d['flags'])
+            ci,held=placement_clip(model['clips'],dead,animation_rand if kind!='suppressed' else MsvcRandom());clip=model['clips'][ci]
+            name=f'Doodad-{index}-{d["id"]}-{d["editorId"]}';parent=entity(name,dict(Transform=placement_transform(d)),active=kind!='suppressed')
+            tint=[float(row.get('color'+c,row.get(f'vert{c}{min(d["variation"],int(row["numVar"])-1)+1:02}',255)))/255 for c in 'RGB']
+            selected=binding(model,row,tint,ci);scheduled=not held and kind!='suppressed' and len(model['choices'])>1
+            part_names=[]
+            for pi,p in enumerate(selected['parts']):
+                states=p['states']
                 frame=len(states)-1 if held else 0;state=states[frame];part_name=name+'-part-'+str(pi)
                 renderer=dict(mesh=p['mesh']+f'#pose={ci}:{frame}',material=state['material'])
                 block=dict(override_base_color=True,base_color=state['color'])
                 entity(part_name,dict(Transform=dict(position=[0,0,0]),MeshRenderer=renderer,MaterialPropertyBlock=block),parent,state['color'][3]>.001);part_names.append(part_name)
-                moving=p['moving'][ci];varying=any(s!=states[0] for s in states[1:])
-                if not held and (moving or varying):
-                    group=dict(mesh=p['mesh'],clip=ci,frames=len(states),duration=clip['duration'],loop=clip['loop'],moving=moving,states=states)
+                moving=p['moving'];varying=any(s!=states[0] for s in states[1:])
+                if not held and not scheduled and kind!='suppressed' and (moving or varying):
+                    group=p
                     signature=sha(encode(group));groups.setdefault(signature,dict(group,names=[]))['names'].append(part_name)
             if model.get('effect'):
-                effect_clip=model['effectClips'][ci]
-                entity(name+'-effect',dict(Transform=dict(position=[0,0,0]),SampledEffect=dict(effect=model['effect'],clip=ci,playing=not held,looping=effect_clip['loop'],speed=1,time_seconds=effect_clip['duration'] if held else 0)),parent)
+                effect_clip=model['effectClips'][ci];effect=dict(selected['effect'],time_seconds=effect_clip['duration'] if held else 0)
+                entity(name+'-effect',dict(Transform=dict(position=[0,0,0]),SampledEffect=effect),parent)
+                if not held and not scheduled and kind!='suppressed':
+                    group=dict(effect=effect,clip=ci,frames=effect_clip['frameCount'],duration=effect_clip['duration'],durationMs=clip['durationMs'],restartOnEnd=True)
+                    signature=sha(encode(group));groups.setdefault(signature,dict(group,names=[]))['names'].append(name+'-effect')
+            if scheduled:
+                identity=(model['source'],row.get('texID'),row.get('texFile'),tuple(tint))
+                if identity not in definitions_cache:
+                    variants=[None]*len(model['clips'])
+                    for variant in {0,ci,*(candidate for candidate,_ in model['choices'])}:variants[variant]=binding(model,row,tint,variant)
+                    definitions_cache[identity]=len(animation_definitions);animation_definitions.append(dict(clips=variants,choices=model['choices']))
+                actors.append(dict(definition=definitions_cache[identity],clip=ci,parts=part_names,effect=name+'-effect' if model.get('effect') else None))
             placements.append(dict(index=index,name=name,source=d,kind=kind,model=model['source'],parts=part_names,animation=dict(clip=ci,held=held)))
         (project/'Assets/Scenes/Main.mscene').write_bytes(encode(scene))
         script=Path(__file__).with_name('frost-original-doodads-client.js').read_text(encoding='utf-8')
-        with (project/'Assets/Scripts/Main.js').open('a',encoding='utf-8',newline='\n') as stream:stream.write('\nvar originalDoodadGroups='+json.dumps(list(groups.values()),separators=(',',':'))+';\n'+script)
+        with (project/'Assets/Scripts/Main.js').open('a',encoding='utf-8',newline='\n') as stream:
+            stream.write('\nvar originalDoodadGroups='+json.dumps(list(groups.values()),separators=(',',':'))+';\n')
+            stream.write('var originalDoodadDefinitions='+json.dumps(animation_definitions,separators=(',',':'))+';\nvar originalDoodadActors='+json.dumps(actors,separators=(',',':'))+';\nvar originalDoodadRandomState='+str(animation_rand.state)+';\n'+script)
         (project/'doodad-placements.json').write_bytes(encode(placements))
         tools=[Path(__file__),Path(__file__).with_name('warcraft_doodads.py'),Path(__file__).with_name('frost-original-doodads-client.js'),Path(nodes.__file__),Path(converter.__file__),ROOT/'scripts/warcraft-node-metadata/Program.cs',ROOT/'scripts/warcraft-assets/Program.cs',*binaries]
         result=dict(mapSha256=sha(raw),placements=len(placements),entities=len(entities),animatedGroups=len(groups),animatedParts=sum(len(g['names']) for g in groups.values()),models=assets.records,sources=list(source_records.values()),sourceCollections=assets.collection_hashes,tools=[dict(path=str(p),sha256=sha(p.read_bytes())) for p in tools],upstream=dict(repository=converter.UPSTREAM,commit=converter.COMMIT),coverage=dict(models=True,sampledAnimation=True,sampledEmitters=True,gameplay=False,originalRuntimeParity=False),limitations=['Sampled viewer particles and ribbons are not verified against the original game solver','Placement dispatch assumes source runtime mode zero; complete creation, collision, pathing and random animation scheduling remain unverified','Object overrides, terrain doodad deformation and model particles are rejected'])
         result['animationSeed']=animation_seed&0xffffffff
+        result['scheduledActors']=len(actors);result['animationDefinitions']=len(animation_definitions)
+        result['animatedParts']=sum(len(g['names']) for g in groups.values() if not g.get('effect'))+sum(len(a['parts']) for a in actors)
+        result['animatedEffects']=sum(len(g['names']) for g in groups.values() if g.get('effect'))+sum(bool(a['effect']) for a in actors)
         terrain_receipt=json.loads((project/'terrain-sources.json').read_bytes());terrain_receipt['entities']=len(entities);terrain_receipt['coverage']['doodads']=True;(project/'terrain-sources.json').write_bytes(encode(terrain_receipt))
         result['generatedFiles']=[dict(path=p.relative_to(project).as_posix(),bytes=p.stat().st_size,sha256=sha(p.read_bytes())) for p in sorted(project.rglob('*')) if p.is_file() and 'SourceAssets' not in p.relative_to(project).parts]
         (project/'doodad-scene-sources.json').write_bytes(encode(result))
