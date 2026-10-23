@@ -121,3 +121,6 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 ## 等待大厅界面依据
 
 `node scripts/probe-frost-rea-lobby.mjs` 核对Warcraft GameChatroom注册、工厂、构造与初始化，以及聊天字体的MiscUI覆盖；四组探针保存二进制摘要和未修改证明。原FDF／MiscUI、源档案、维护命令与未完成范围见 [界面还原说明](../../docs/designs/frostbound-realms/warcraft-ui-fidelity.md#等待大厅原始定义与运行时依据)。上游仍为本页记录的morluto/rea固定版本，不自动升级工具或Rizin。
+
+
+原地图相机：`node scripts/probe-frost-rea-camera.mjs`复核原FOV字段、投影矩阵、GameUI逻辑坐标与普通游戏WorldFrame布局；`scripts/probe-frost-camera-binary.py`执行30个原矩阵CPU用例。普通游戏源FOV与引擎垂直角的换算、地图增量更新命令和电影模式等待验边界见[原地图镜头维护说明](../../docs/designs/frostbound-realms/original-map-import.md#原地图运行镜头)。探针固定二进制摘要，更新Game.dll时需重新定位并复核，不自动接受新版本地址。

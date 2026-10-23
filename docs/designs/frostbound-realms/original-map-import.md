@@ -229,6 +229,10 @@ python scripts/prepare-frost-map-import.py
 
 地形转换器从原安装包的 `UI/MiscData.txt` 读取Camera/CameraRates，按原六档AOA、Distance、Rotation、NearZ、FarZ和移动速度生成透视镜头。使用地图玩家出生点与cameraBounds确定初始目标/可移动范围，目标高度跟随原地形。Amazonia起始俯角56度、距离1650/128；按Game后用WASD/方向键移动、+/-或PageUp/PageDown切换档位、中键拖动。空格暂停地图动画期间仍可移动镜头。任意地图转换缓存指纹包含相机工具，更新后会重新生成地图包，公共资源继续走共享缓存。
 
-维护入口：`scripts/warcraft_camera.py`、`scripts/frost-original-camera-client.js`；既有未升级地图包可用 `python scripts/refresh-frost-map-camera.py samples/frostbound-realms amazonia` 单独升级，脚本核验保留地图摘要并拒绝重复追加控制器。Amazonia保留 `Assets/Maps/amazonia/Source/UI/MiscData.txt` 原件，manifest.camera记录来源War3Patch.mpq、文件摘要与工具摘要；后续修改工具应更新相应收据/地图包。
+维护入口：`scripts/warcraft_camera.py`、`scripts/frost-original-camera-client.js`；既有地图包可用 `python scripts/refresh-frost-map-camera.py samples/frostbound-realms amazonia` 单独升级，脚本核验保留地图摘要并替换已识别的末尾控制器，重复运行保持文件内容一致；未知脚本边界拒绝更新。Amazonia保留 `Assets/Maps/amazonia/Source/UI/MiscData.txt` 原件，manifest.camera记录来源War3Patch.mpq、文件摘要与工具摘要；后续修改工具应更新相应收据/地图包。
 
-当前将原FOV数值作为引擎垂直FOV，原客户端投影换算尚未核对，因此斜视镜头与控制可用不等于逐像素构图已还原。JASS/完整对局语义仍保持既有待实现范围。
+原版普通游戏投影已通过固定摘要Game.dll追踪：SetCameraField的FOV字段先由度转弧度；`0x6f190210`从逻辑布局矩形计算比例，再交给`0x6f0d31d0`。垂直角为 `sourceFov / sqrt(1 + aspect²)`，没有atan换算。GameUI根布局由`0x6f0ca2a0`将单位矩形映射为0.8×0.6；WorldFrame在`0x6f34a737–0x6f34a78c`按左下+0.13、右上−0.02锚定，得到0.8×0.45、aspect=16/9。原FOV=70对应垂直角约34.3183度。源FOV仍原样保留，转换只作用于引擎Camera3D。
+
+`projectionAspect`表示普通游戏源逻辑区域比例，与Game窗口像素长宽比独立。当前引擎使用自身Game渲染区域显示；原版HUD区域裁剪、宽屏拉伸、电影模式和隐藏UI重新布局尚未完成逐像素对照，不把数学投影验证当作完整画面还原。原菜单背景使用其独立模型相机，不套用地图世界区域比例。JASS/完整对局语义仍保持既有待实现范围。
+
+来源维护：`node scripts/probe-frost-rea-camera.mjs`复核六组字段、矩阵、逻辑坐标、锚点与根布局证据，保留Game.dll SHA256 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`及未修改证明。`python scripts/probe-frost-camera-binary.py --dependencies <已安装pefile和unicorn的目录>`运行原矩阵指令的30个隔离CPU用例，仅外部sqrt/tan由Python提供，采用浮点误差比较；它不启动原游戏。工具及源站见[REA维护说明](../../../third_party/rea/README-MENGINE.md)。manifest.camera.projectionSource保留二进制摘要、函数、锚点和探针路径；原始报告统一在`tmp/docs-artifacts/war3-ui/camera-source/`。

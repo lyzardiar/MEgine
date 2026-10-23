@@ -4,6 +4,14 @@ import json
 import math
 from pathlib import Path
 
+PROJECTION_CONVENTION = 'Game.dll 0x6f0d31d0: verticalFov = sourceFov / sqrt(1 + aspect * aspect); aspect is the source logical projection rectangle width/height'
+PROJECTION_SOURCE = dict(binary='Game.dll', sha256='e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a', function='0x6f0d31d0', probe='scripts/probe-frost-rea-camera.mjs', layout=dict(rootSize=[.8,.6], bottomInset=.13, topInset=.02, anchors='0x6f34a737-0x6f34a78c'))
+
+
+def camera_vertical_fov(source_fov, aspect=16/9):
+    if not math.isfinite(aspect) or aspect <= 0: raise ValueError('Invalid camera aspect')
+    return source_fov / math.sqrt(1+aspect*aspect)
+
 
 def camera_config(data, misc):
     ini = configparser.ConfigParser(strict=False, inline_comment_prefixes=('//',), interpolation=None)
@@ -23,7 +31,7 @@ def camera_config(data, misc):
     target = [max(bounds[0], min(bounds[1], start[0]/128)), max(bounds[2], min(bounds[3], -start[1]/128))]
     presets = [dict(pitch=math.radians(angle-360), distance=distance/128, fov=fov) for angle, distance, fov in zip(angles, distances, fovs)]
     if not presets or any(not 0 < p['distance'] or not 0 < p['fov'] < 180 for p in presets): raise ValueError('Invalid source camera defaults')
-    return dict(version=1, bounds=bounds, target=target, yaw=math.radians(90-values('Rotation')[0]), presets=presets, near=values('NearZ')[0]/128, far=values('FarZ')[0]/128, speed=float(ini['CameraRates']['Forward'])/128,
+    return dict(version=2, projectionAspect=16/9, bounds=bounds, target=target, yaw=math.radians(90-values('Rotation')[0]), presets=presets, near=values('NearZ')[0]/128, far=values('FarZ')[0]/128, speed=float(ini['CameraRates']['Forward'])/128,
                 terrain=dict(size=[width,height], origin=[ox/128,-oy/128], heights=[(c[0]-8192)/512+(c[4]&15)-2 for c in terrain['corners']]))
 
 

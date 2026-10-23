@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image
 from warcraft_mpq import mpyq, read_archive
 from warcraft_terrain import ground_layers, ground_normals, placed_template, terrain_layout
-from warcraft_camera import camera_config, camera_transform, camera_script
+from warcraft_camera import camera_config, camera_transform, camera_script, camera_vertical_fov, PROJECTION_CONVENTION, PROJECTION_SOURCE
 
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE = ROOT / 'samples/frostbound-realms'
@@ -205,7 +205,7 @@ def build(export, game, output, chunk_size=32, resource_cache=None):
             return entities[-1]['entity']
 
         camera = camera_config(map_data, read('UI/MiscData.txt'))
-        entity('Camera', dict(Transform=camera_transform(camera), Camera3D=dict(primary=True, projection='perspective', fov_y_degrees=camera['presets'][0]['fov'], near=camera['near'], far=camera['far'])))
+        entity('Camera', dict(Transform=camera_transform(camera), Camera3D=dict(primary=True, projection='perspective', fov_y_degrees=camera_vertical_fov(camera['presets'][0]['fov']), near=camera['near'], far=camera['far'])))
         entity('Sun', dict(Transform=dict(rotation=[-.4,-.2,0,.894427]), DirectionalLight=dict(intensity=2.2,color=[1,1,1,1],cast_shadows=True)))
         water_names = []
         for (x,y,kind,material), batch in sorted(batches.items()):
@@ -235,7 +235,7 @@ def build(export, game, output, chunk_size=32, resource_cache=None):
                        rampEntrances=len(layout['rampEntrances']), waterTiles=water_count, entities=len(entities), atlasTiles=len(tiles), groundAtlas=dict(tileSize=64,maxMip=6,size=list(atlas.size),sampling='per-tile-clamped-trilinear'), meshes=mesh_records,
                        waterAtlas=dict(frameSize=size,maxMip=int(math.log2(size)),size=list(water_atlas.size),frames=len(water_frames),sampling='per-frame-repeat-trilinear'),
                        sources=list(sources.values()), templateSha256=sha(patches_path.read_bytes()), templateCatalogSha256=sha((SAMPLE/'Assets/WarcraftIII/classic-cliff-catalog.json').read_bytes()),
-                       camera=dict(source='UI/MiscData.txt',config={key:value for key,value in camera.items() if key!='terrain'}, projectionConvention='Source FOV applied as engine vertical FOV; original projection convention remains to be measured'), cameraTools=[dict(path=p.name,sha256=sha(p.read_bytes())) for p in [ROOT/'scripts/warcraft_camera.py',ROOT/'scripts/frost-original-camera-client.js']],
+                       camera=dict(source='UI/MiscData.txt',config={key:value for key,value in camera.items() if key!='terrain'}, projectionConvention=PROJECTION_CONVENTION, projectionSource=PROJECTION_SOURCE), cameraTools=[dict(path=p.name,sha256=sha(p.read_bytes())) for p in [ROOT/'scripts/warcraft_camera.py',ROOT/'scripts/frost-original-camera-client.js']],
                        compilerSha256=sha(Path(__file__).read_bytes()), layoutSha256=sha((ROOT/'scripts/warcraft_terrain.py').read_bytes()), converterSha256=sha((ROOT/'scripts/convert-warcraft-assets.py').read_bytes()),
                        coverage=dict(terrainScene=True, gameplay=False, doodads=False, units=False, shorelineModels=False, originalRuntimeVisualParity=False))
         write_json(temporary/'terrain-sources.json',receipt)

@@ -12,6 +12,7 @@ const logsOnly=process.argv.includes('--logs-only');
 const profileOnly=process.argv.includes('--profile-only');
 const editorFeedback=process.argv.includes('--editor-feedback');
 const returnOnly=process.argv.includes('--return-only');
+const cameraOnly=process.argv.includes('--camera-only');
 const label='map-session-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
 fs.cpSync(source,sample,{recursive:true,filter:file=>!['SourceAssets','.mengine','Builds'].includes(path.basename(file))});
@@ -47,7 +48,14 @@ try{
   let s=await snapshot();assert.equal(telemetry(s).mode,'custom');assert.equal(s.entities.find(e=>e.name==='Map name').components.Text.text,'Amazonia');assert.equal(s.entities.find(e=>e.name==='Map preview backing').components.Image.sprite,'Assets/Maps/amazonia/Textures/MapPreview.png');for(const name of ['map2 box','map3 box','faction box','heroChoice box','Hero preview','Map tile 0'])assert.equal(clientWorldFixture(s).visible(name),false,name);await capture('selection');
   await click('mapStart box');s=await waitMap('amazonia');assert.deepEqual(status(s).pathing.size,[384,384]);assert.equal(status(s).pathing.revision,0);assert.ok(s.entities.some(e=>e.name.startsWith('Doodad-'))&&s.entities.some(e=>e.name.startsWith('Unit-')));report.map=status(s);report.entities=s.entities.length;
   if(editorFeedback)await checkHierarchyFocus(s);
-  if(profileOnly){
+  if(cameraOnly){
+    const readCamera=world=>world.entities.find(e=>e.name==='Camera').components;
+    const expectedFov=70/Math.sqrt(1+(16/9)**2),initial=readCamera(s);assert.ok(Math.abs(initial.Camera3D.fov_y_degrees-expectedFov)<1e-5);assert.equal(initial.Camera3D.projection,'perspective');
+    await capture('camera-wide');await key('KeyD');s=await snapshot();assert.ok(readCamera(s).Transform.position[0]>initial.Transform.position[0]);
+    await key('Equal');s=await snapshot();assert.ok(readCamera(s).Transform.rotation[0]>initial.Transform.rotation[0]);assert.ok(Math.abs(readCamera(s).Camera3D.fov_y_degrees-expectedFov)<1e-5);
+    await execute('view.set_game_resolution',{resolution:{width:960,height:900}});await input({viewport:[960,900]});s=await snapshot();assert.ok(Math.abs(readCamera(s).Camera3D.fov_y_degrees-expectedFov)<1e-5);await capture('camera-tall');
+    report.camera={initial,afterMoveAndZoom:readCamera(s)};report.checks.push('Source logical camera projection, movement, zoom and 960x900 rendering');await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);
+  }else if(profileOnly){
     await step(180);await execute('playback.pause');await sleep(1500);
     const native=[];
     for(let i=0;i<100;i++){

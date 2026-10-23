@@ -281,3 +281,14 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 快速检查：`node --test packages/editor/tests/hierarchyRefresh.test.mjs packages/editor/tests/sceneSelectionRefresh.test.mjs` 5通过；`node --test --test-name-pattern='expand all follows' packages/editor/tests/nativePlayOwnership.test.mjs` 1通过。hierarchyRefresh补充Ping/左右键后仅重测该项通过。`node node_modules/typescript/bin/tsc -b` 在packages/editor通过，独立只读审核通过。实际Amazonia输入的局部快照/树构建对照均值14.649→0.742ms；口径及证据见performance-risk-todo第三十阶段。无全库测试、原生构建或重复地图QA。
 
 待合并验证：原生Hierarchy展开/折叠/搜索、Ping定位并滚动到隐藏后代、双击/空格聚焦、地图切换后Play展开全部、独立Hierarchy窗口、自动恢复定时与内容编辑/撤销。下次相关前端/原生合并构建运行这些路径；当前已生成EXE仍为dd883f6版本，不能作为本项集成通过证据。
+
+
+### B001-01 原版普通游戏相机投影
+
+变更：warcraft_camera.py按原Game.dll的角度归一化和普通游戏逻辑区域16/9生成垂直角；保留原FOV=70，Camera3D约34.3183度。Amazonia场景/脚本、任意地图地形转换和来源收据同步，更新器可替换已有末尾控制器且重复执行字节稳定。源逻辑比例不随窗口像素尺寸变化。新增REA六组探针和原矩阵CPU探针；本项是既有地图镜头补充，B001计数不增加。
+
+快速检查：REA字段/矩阵/调用/逻辑坐标/锚点/root六组通过，Game.dll摘要一致且未修改；原矩阵30个隔离CPU用例通过。test-frost-original-camera.mjs与test-frost-map-session.mjs通过，覆盖角度、控制、缩放窗口不改变源逻辑投影、切图/返回和资产摘要。增量更新连续执行文件摘要不变；相关Python编译、JS语法和diff检查通过。没有全库回归、全地图转换或原生重建。
+
+复用EXE SHA256 `4ca390526edd5f48329efd990b9667850ddb170a70ac66385c947fc67b5131d3`执行`qa-frost-map-session.mjs --camera-only`，报告`tmp/docs-artifacts/testing-batches/B001/map-session-1792772651285.json`通过。验证源投影、WASD移动、档位缩放、1280×720/960×900渲染和Stop恢复；0 error，正常退出，两张镜头截图已目视检查，锁定WebView缓存保留。原始来源/CPU/运行日志在`tmp/docs-artifacts/war3-ui/camera-source/`。
+
+待批次：原HUD区域裁剪/宽屏显示与原客户端逐像素对照、电影/隐藏UI后续重定位，以及上一项层级独立刷新在新Editor构建中的集成验证。该EXE不包含9b39d0f层级优化，本次数据驱动镜头检查不能代替该项验收；Amazonia持续性能与编辑器操作延迟仍按性能todo待测。
