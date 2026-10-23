@@ -127,6 +127,24 @@ def terrain_layout(terrain, catalog, cliff_rows):
                 rampEntrances=[list(cell) for cell in sorted(entrances)], raisedCorners=sorted(raised))
 
 
+def ground_normals(terrain, layout):
+    """Smooth rendered ground faces only; cliff level jumps are not ground slopes."""
+    width, height = terrain['vertexSize']
+    heights = layout['surfaceHeights']
+    normals = [[0.0, 0.0, 0.0] for _ in heights]
+    for cell in layout['ground']:
+        ids = cell['corners']
+        points = [(i % width, heights[i], -(i // width)) for i in ids]
+        for a, b, c in [(0, 3, 1), (1, 3, 2)]:
+            u = [points[b][k]-points[a][k] for k in range(3)]
+            v = [points[c][k]-points[a][k] for k in range(3)]
+            normal = [u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0]]
+            for corner in (a, b, c):
+                for k in range(3):
+                    normals[ids[corner]][k] += normal[k]
+    return [[v/math.sqrt(sum(c*c for c in normal)) for v in normal] if any(normal) else [0, 1, 0] for normal in normals]
+
+
 def interpolate_height(terrain, heights, x, y):
     width, height = terrain['vertexSize']
     x, y = min(max(x, 0), width-1), min(max(y, 0), height-1)

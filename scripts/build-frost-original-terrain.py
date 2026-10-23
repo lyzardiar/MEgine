@@ -13,7 +13,7 @@ import tempfile
 import numpy as np
 from PIL import Image
 from warcraft_mpq import mpyq, read_archive
-from warcraft_terrain import ground_layers, placed_template, terrain_layout
+from warcraft_terrain import ground_layers, ground_normals, placed_template, terrain_layout
 
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE = ROOT / 'samples/frostbound-realms'
@@ -151,13 +151,7 @@ def build(export, game, output, chunk_size=32):
         width, height = terrain['vertexSize']
         ox, oy = terrain['origin']
         heights = layout['surfaceHeights']
-        normals = []
-        for y in range(height):
-            for x in range(width):
-                dx = heights[y*width+max(0,x-1)]-heights[y*width+min(width-1,x+1)]
-                dy = heights[max(0,y-1)*width+x]-heights[min(height-1,y+1)*width+x]
-                length = math.sqrt(dx*dx+dy*dy+4)
-                normals.append([dx/length, 2/length, -dy/length])
+        normals = ground_normals(terrain, layout)
         for cell in layout['ground']:
             ids = cell['corners']
             points = [[ox/128+i%width, heights[i], -oy/128-i//width] for i in ids]

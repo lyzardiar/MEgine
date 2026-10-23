@@ -10,7 +10,7 @@ from pathlib import Path
 import unittest
 import numpy as np
 from PIL import Image
-from warcraft_terrain import ground_layers, interpolate_height, placed_template, terrain_layout
+from warcraft_terrain import ground_layers, ground_normals, interpolate_height, placed_template, terrain_layout
 
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE = ROOT/'samples/frostbound-realms'
@@ -26,6 +26,24 @@ def fixture():
 
 
 class TerrainTests(unittest.TestCase):
+    def test_ground_lighting_does_not_cross_cliff_steps(self):
+        t=fixture()
+        for y in range(6):
+            for x in range(3,6):t['corners'][y*6+x][4]=3
+        layout=terrain_layout(t,CATALOG,ROWS)
+        normals=ground_normals(t,layout)
+        self.assertTrue(layout['cliffs'])
+        for cell in layout['ground']:
+            for corner in cell['corners']:self.assertEqual(normals[corner],[0,1,0])
+
+    def test_ground_lighting_preserves_continuous_relief(self):
+        t=fixture()
+        for y in range(6):
+            for x in range(6):t['corners'][y*6+x][0]+=x*128+y*64
+        normals=ground_normals(t,terrain_layout(t,CATALOG,ROWS))
+        expected=np.array([-.25,1,.125]);expected/=np.linalg.norm(expected)
+        for normal in normals:np.testing.assert_allclose(normal,expected,atol=1e-7)
+
     def test_blp_jpeg_alpha_and_independent_source_pixels(self):
         base=ROOT/'asset-library/warcraft-iii/game-ready'
         relative=Path('TerrainArt/LordaeronSummer/Lords_Grass')

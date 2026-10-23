@@ -24,6 +24,18 @@ MDX 工具沿用 [Darithos/W3ModelViewer](https://github.com/Darithos/W3ModelVie
 
 ## 生成与批次验证
 
+直接读取游戏目录中的真实地图，生成可在 Editor 打开的测试项目：
+
+```powershell
+python scripts/load-frost-warcraft-map.py 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Maps/(2)BootyBay.w3m'
+```
+
+入口支持经典 `.w3m/.w3x`，输出默认位于 `tmp/docs-artifacts/warcraft-map-tests/<地图名-时间>/`。`source-map/` 保存原地图及成员摘要，`project/project.json` 是编辑器打开入口；可通过 `--output <新目录>` 固定输出位置。地图资源覆盖、未支持对象和转换依赖沿用本文生成器约束。输入原件只读，现有输出不会覆盖；失败产物保留用于诊断，再次执行需使用新目录。
+
+针对画面修改可执行 `node scripts/qa-frost-original-doodads.mjs <project目录> --visual-only`。设置 `MENGINE_EDITOR_EXECUTABLE` 指向现有原生编辑器，设置独立的 `MENGINE_DOODAD_LABEL` 保存报告。该模式只加载、截取全景及树木／水岸近景、检查控制台并退出，跳过动画／性能完整回归；截图须人工查看，不等于原版画面验收。
+
+2026-10-23 直接加载 `(2)BootyBay.w3m` 的原生检查通过，源 SHA-256 为 `3180a12a1df1cbacc3c11da9260e35fff2a3fe53314f63155e5f0735b2408b9e`。地面法线按实际地面三角形共享累积，悬崖高差不参与平坦地面的坡度计算。修复前1,519块平坦地面受到跨悬崖法线影响，修复后树下平地的方块明暗边界消失。52个网格的位置、UV、索引与旧项目逐项相同，非地面法线保持不变；两个定向用例验证平坦台地和连续斜坡。测试项目在 `tmp/docs-artifacts/warcraft-map-tests/booty-bay-lighting/project/`；截图与报告为 B001 下的 `booty-bay-lighting-*`。原版 World Editor 已启动，但窗口捕获超时，尚无原版同视角对照。
+
 ```powershell
 python scripts/build-frost-original-doodads.py tmp/docs-artifacts/frost-original-doodads/exported/booty-bay --output tmp/docs-artifacts/frost-original-doodad-scene/booty-bay
 node scripts/test-frost-original-doodads.mjs --callback-smoke
