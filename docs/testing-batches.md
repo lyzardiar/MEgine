@@ -350,3 +350,12 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 快速检查：层级定向7通过、1手动忽略；mesh_cache_tests 6通过、7手动忽略，均0失败；新手动基准单独通过。Amazonia2,747对象的有效临时输入字节351,616→65,928，完整输出相等。CPU样本有场景差异，不作为稳定提速结论。证据与口径见performance-risk-todo第三十六阶段；diff检查通过。
 
 待合并验证：与2e8c4be共同构建后核对Scene/Game、父级/活动状态编辑、Undo、Play/Stop、原地图连续呈现。未执行全库回归、原生重建、重复多窗口/特效QA；现有Editor EXE不包含这两项。既有材质热更新定向测试通过不替代新EXE的运行验收。
+
+
+### B001-01 对象材质覆盖就地更新
+
+变更：materials.rs增加内部就地覆盖入口，既有按值API调用同一实现；frame_compiler直接更新其私有材质。新增benchmark_material_override_moves比较等价值传递／就地提取，保留完整输出核对。属于既有编辑器性能补充，不另增功能计数。
+
+快速检查：属性覆盖边界1通过，mesh_cache_tests 6通过、8手动忽略，均0失败；新手动基准单独通过。Amazonia2,747对象中位1.62840→1.58706ms，主菜单219对象0.22755→0.20856ms；CPU局部口径见performance-risk-todo第三十七阶段。diff检查通过。
+
+待合并验证：与2e8c4be和3fd5b17共用一次原生构建，验证Amazonia加载、动画连续呈现、暂停特效修改/恢复与Stop。父级/活动状态编辑、Undo以及相关Scene视图仍按已有条目保留待测；不重跑不相关窗口同步或全库回归。

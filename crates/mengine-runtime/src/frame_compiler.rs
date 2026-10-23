@@ -3,7 +3,9 @@
 
 use crate::fonts::{FontLoadFailure, RuntimeFontCache};
 use crate::lighting2d::apply_2d_lighting;
-use crate::materials::{apply_material_property_block, resolve_ui_materials, RuntimeMaterialCache};
+use crate::materials::{apply_material_property_block_in_place, resolve_ui_materials, RuntimeMaterialCache};
+#[cfg(test)]
+use crate::materials::apply_material_property_block;
 use crate::particles::ParticleWorld;
 use crate::sorting::{sort_world_primitives, SortingLayers};
 use crate::sprites::collect_world_primitives_with_materials;
@@ -576,7 +578,7 @@ fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials
                 resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material))).clone()
             });
         if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
-            material = apply_material_property_block(material, block);
+            apply_material_property_block_in_place(&mut material, block);
         }
         if let Some(entities) = entities.as_deref_mut() { entities.push(entity); }
         out.push(RenderObject {

@@ -445,3 +445,62 @@ fn aggregate_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materia
     }
     out
 }
+
+#[test]
+#[ignore = "manual in-place material override extraction comparison"]
+fn benchmark_material_override_moves() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms");
+    let mut reports = Vec::new();
+    for scene in ["Assets/Maps/amazonia/Scenes/Main.mscene", "Assets/Scenes/Main.mscene"] {
+        let mut world = World::new(); mengine_scene::load_scene(&root.join(scene), &mut world).unwrap();
+        let hierarchy = TransformHierarchy::build(&world);
+        let mut cache = RuntimeMaterialCache::new(Some(root.clone()));
+        let expected = value_override_mesh_objects(&world, &hierarchy, &mut cache, None, None);
+        assert_objects_equal(&expected, &collect_objects(&world, &hierarchy, &mut cache));
+        let mut samples = [Vec::new(), Vec::new()];
+        for group in 0..11 {
+            for index in if group % 2 == 0 { [0, 1] } else { [1, 0] } {
+                let started = Instant::now();
+                for _ in 0..20 { black_box(if index == 0 { value_override_mesh_objects(&world, &hierarchy, &mut cache, None, None) } else { collect_objects(&world, &hierarchy, &mut cache) }); }
+                if group >= 2 { samples[index].push(started.elapsed().as_secs_f64() * 1000. / 20.); }
+            }
+        }
+        let raw = samples.clone(); for values in &mut samples { values.sort_by(f64::total_cmp); }
+        assert_objects_equal(&expected, &collect_objects(&world, &hierarchy, &mut cache));
+        reports.push(serde_json::json!({"scene":scene,"objects":expected.len(),"value_ms":samples[0][4],"in_place_ms":samples[1][4],"samples_ms":raw,"iterations_per_sample":20,"equal":true,"render_material_bytes":std::mem::size_of::<RenderMaterial>()}));
+    }
+    println!("MATERIAL_OVERRIDE_MOVES={}", serde_json::json!(reports));
+}
+
+fn value_override_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>, mut entities: Option<&mut Vec<Entity>>) -> Vec<RenderObject> {
+    let mut root_filter = RenderRootFilter::new(root);
+    // Compact borrowed inputs size the large owned RenderObject buffer once, without copying materials during growth.
+    let inputs: Vec<_> = world.entities_with_components(&["MeshRenderer"]).filter_map(|entity| {
+        let transform = hierarchy.get_ref(entity)?;
+        if !root_filter.contains(world, entity) { return None; }
+        Some((entity, transform, world.get_component::<MeshRenderer>(entity)?))
+    }).collect();
+    let mut out = Vec::with_capacity(inputs.len());
+    // MiYu: resolve a shared authored material once per extraction; each object's overrides stay private.
+    let mut resolved_materials = HashMap::<&str, RenderMaterial>::new();
+    for (entity, transform, mesh) in inputs {
+        let mut material = world
+            .get_component::<PbrMaterial>(entity)
+            .map(render_material_from_component)
+            .unwrap_or_else(|| {
+                resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material))).clone()
+            });
+        if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
+            material = apply_material_property_block(material, block);
+        }
+        if let Some(entities) = entities.as_deref_mut() { entities.push(entity); }
+        out.push(RenderObject {
+            mesh_key: mesh.mesh.trim().replace('\\', "/"),
+            model: transform.matrix,
+            cast_shadows: mesh.cast_shadows,
+            receive_shadows: mesh.receive_shadows,
+            material,
+        });
+    }
+    out
+}

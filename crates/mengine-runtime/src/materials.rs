@@ -726,10 +726,13 @@ pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
     }
 }
 
-pub fn apply_material_property_block(
-    mut material: RenderMaterial,
-    block: &MaterialPropertyBlock,
-) -> RenderMaterial {
+pub fn apply_material_property_block(mut material: RenderMaterial, block: &MaterialPropertyBlock) -> RenderMaterial {
+    apply_material_property_block_in_place(&mut material, block);
+    material
+}
+
+// MiYu: mutate the caller-owned material without passing its full fixed-size payload by value.
+pub(crate) fn apply_material_property_block_in_place(material: &mut RenderMaterial, block: &MaterialPropertyBlock) {
     if block.override_base_color {
         material.base_color = sanitize_color4(block.base_color);
     }
@@ -755,7 +758,6 @@ pub fn apply_material_property_block(
         material.emissive_strength = finite_or(block.emissive_strength, 1.0).max(0.0);
     }
     apply_custom_property_block(block, &mut material.custom_parameters, &material.custom_parameter_bindings, &mut material.custom_textures, &material.custom_texture_names);
-    material
 }
 
 

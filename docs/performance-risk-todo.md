@@ -2,7 +2,7 @@
 
 后续实现按[批次测试台账](testing-batches.md)执行：逐任务提交代码和资产，登记待测内容，默认累计3个功能／修复任务后合并验证。下文已完成阶段的历史测试结果保留；其中的全量命令不作为每次提交的必跑清单。
 
-2026-10-24：编辑器性能与验证已推进至第三十六阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-24：编辑器性能与验证已推进至第三十七阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 B001地图视觉修复补充：地表图集按64像素对齐、逐mip夹紧并限制至单图块1×1级；水面按128像素帧对齐、帧内循环过滤并限制至单帧1×1级，避免跨块／跨帧串色。Amazonia地表与水面图集基础像素量分别减少约11.4%／6%。原生地表六色与水面16组RGBA对照、实际地图动画／暂停／恢复通过。相同场景1280×720硬件timestamp对照中，地表GPU pass增加约0.02ms，水面增加约0.11ms；不能从贴图缩小推断FPS提升。复现入口与原始报告路径见[图集性能说明](designs/frostbound-realms/original-terrain-scene.md#同场景图集性能)，归入B001-01，不新开测试批次。
 
@@ -814,3 +814,12 @@ TransformHierarchy提供只读get_ref入口，既有get仍返回独立值。网�
 定向`cargo test -p mengine-core --release --lib transform_hierarchy -- --test-threads=1` 7通过、1手动忽略；`cargo test -p mengine-runtime --release --lib frame_compiler::mesh_cache_tests -- --test-threads=1` 6通过、7手动忽略，均0失败。单独`benchmark_mesh_transform_borrows -- --ignored --nocapture --test-threads=1`通过。覆盖失活/循环/旧generation、父级变换、共享视图独立性、根过滤边界和材质覆盖/热更新。原始日志在`tmp/docs-artifacts/editor-performance-risk/borrowed-transform-{core-tests.log,mesh-tests.log,mesh-benchmark.log}`，输入摘要及样本在`borrowed-transform-summary.json`。
 
 现有分项测量也确认Amazonia非轮询材质解析约0.139ms、完整提取约2.250ms，不能将所有开销归于材质加载。此分项记录为独立CPU采样，见`material-breakdown-current.log`，不是原生整帧归因。下一轮原生合并构建需验证第三十五／三十六阶段对Scene/Game和编辑操作的实际影响；本轮未重建Editor或全图回归，整体性能风险仍开放。
+
+
+## 第三十七阶段对象材质覆盖就地更新
+
+网格提取对各对象自己的RenderMaterial调用就地覆盖入口，不再通过该调用的参数／返回值传递完整结构；已有按值API保留，所有入口共用同一覆盖实现。类型大小为704字节，材质源、共享缓存和其他对象不会被修改；数值清理、范围限制、自定义参数／纹理以及原材质管线状态语义保持不变。
+
+真实Amazonia 2,747对象与主菜单219对象，在同进程交替测量等价的按值和就地覆盖提取路径，2组预热、9组有效样本、每组20次。完整RenderObject输出相等；中位分别1.62840→1.58706ms、0.22755→0.20856ms。该小幅局部CPU差异不含真实IPC或原生呈现，不能直接换算FPS或保证每次提取都同幅提速。输入摘要与完整样本见`tmp/docs-artifacts/editor-performance-risk/inplace-material-summary.json`。
+
+属性覆盖边界测试1通过，mesh_cache_tests 6通过、8手动基准忽略，均0失败；单独benchmark_material_override_moves通过。原始日志`inplace-material-{property-tests.log,mesh-tests.log,benchmark.log}`位于同一临时目录。正在与第三十五、三十六阶段合并构建原生Editor，原生集成结论待补充。
