@@ -553,3 +553,15 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 同一EXE执行 `node scripts/qa-editor-performance-risk.mjs`，最终报告 `tmp/docs-artifacts/editor-performance-risk/render-cache-resources-final.json` 通过，0 error、正常退出。覆盖改名／Undo／Redo、持久恢复点、原生资产监听新增／修改／删除、Play暂停／恢复／逐步／Stop、稳定世界与像素；Ground.mmat、ClassicGround.mshader、UI图标、队伍颜色纹理、TownHall动画glTF均热更新可见并精确恢复原像素，原项目文件摘要不变。截图已目视检查。上述普通材质／shader／纹理／模型热更新正常路径关闭待测；父级变更与Undo、失活复活、强制竞态、独立窗口、资源删除恢复、完整项目切换、缓存总内存及真实操作延迟仍未完成。
 
 首次资源报告 `render-cache-native.json` 在启动连接阶段失败，未执行业务检查；QA脚本改为按error.name识别BridgeConnectionError，并保留前台冲突直接失败。脚本语法检查通过，再使用同一EXE重跑上述资源专项成功；失败报告和日志render-cache-resources-qa.log保留。首次／重测原生进程均正常退出，仍被WebView锁定的临时缓存保留。原始截图／JSON／日志均在tmp/docs-artifacts下，未纳入提交。
+
+
+### B001-01 原生视口按实际提交节拍续帧
+
+变更：nativeViewportRequests、Viewport及Game／Scene调度测试。接受ticket后才推进lastRequestAt，重复／满容量请求不延后截止时间；Game到期完成立即续帧，重复请求等待完成或新版本通知，保留重试间隔、所有权、并发上限与截图排空。
+
+快速检查：56项请求／Game／Scene调度测试通过，前端及原生Release构建通过（1分07秒）。已有测试环境与当前视口归属接口同步，首次失败和修复后的日志保留；测试初始可变容量设置改为构造时配置，未修改产品容量。此处实时计时风险需要定向原生验收，范围限定为连续Amazonia、Scene／Game／相机预览／分辨率与Stop；不重复上一批已通过的资源热更新等专项。
+
+
+原生定向报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792791223023.json` 通过，0 error、正常退出。EXE SHA256 `46eecf10edec16a1fa35e82ee3ff675d18626f7383fd66a1f26d2e1d825d1887`；覆盖连续Amazonia、Scene／Game／相机预览／轨道、分辨率、Stop还原，截图已检查。7,410实体，末尾240次呈现55.0269次/秒，平均18.1729ms／P95 27.0ms；239个模拟版本计时完整。请求间隔18.1778ms、相对上一完成平均2.0226ms，仅与上一独立运行作观察对照，不宣称稳定FPS提升。完整口径和本地产物见performance-risk-todo第五十五阶段。
+
+资源热更新和Inspector修改复用上批结果；本次没有新增这些路径的验收结论。真实操作延迟、强制竞态、独立窗口、父级Undo／激活等既有待测项保持开放。

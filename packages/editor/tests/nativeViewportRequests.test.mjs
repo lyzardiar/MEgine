@@ -15,6 +15,15 @@ function deferredRequest(state, key, publish = true) {
   return { ticket, finish };
 }
 
+test('only an accepted request advances the pacing timestamp', () => {
+  const state = createNativeViewportRequestState();
+  const first = beginNativeViewportRequest(state, 'revision:1', 100); assert.ok(first);
+  assert.equal(beginNativeViewportRequest(state, 'revision:1', 120), null); assert.equal(state.lastRequestAt, 100);
+  assert.ok(beginNativeViewportRequest(state, 'revision:2', 121));
+  assert.equal(beginNativeViewportRequest(state, 'revision:3', 140), null); assert.equal(state.lastRequestAt, 121);
+  finishNativeViewportRequest(state, first); assert.ok(beginNativeViewportRequest(state, 'revision:3', 141)); assert.equal(state.lastRequestAt, 141);
+});
+
 test('two requests retain independent slots, deduplicate revisions and publish monotonically', async () => {
   const state = createNativeViewportRequestState();
   const first = deferredRequest(state, 'session:7:revision:1');

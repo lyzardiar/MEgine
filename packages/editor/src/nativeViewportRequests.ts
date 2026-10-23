@@ -17,10 +17,10 @@ export function synchronizeNativeViewportRequestOwner(state: NativeViewportReque
   if (state.resumeTimer != null) clearTimeout(state.resumeTimer);
   state.resumeTimer = null; state.lastRequestAt = -Infinity; state.retryAt = 0; state.reportedError = false;
 }
-export function beginNativeViewportRequest(state: NativeViewportRequestState, key: string): NativeViewportRequestTicket | null {
+export function beginNativeViewportRequest(state: NativeViewportRequestState, key: string, requestedAt = performance.now()): NativeViewportRequestTicket | null {
   if (state.full || [...state.pending.values()].some(ticket => ticket.generation === state.generation && ticket.key === key)) return null;
   const ticket = { sequence: ++state.nextSequence, generation: state.generation, key, ready: Promise.resolve() };
-  state.pending.set(ticket.sequence, ticket);
+  state.pending.set(ticket.sequence, ticket); state.lastRequestAt = requestedAt;
   return ticket;
 }
 export function nativeViewportRequestCanPublish(state: NativeViewportRequestState, ticket: NativeViewportRequestTicket): boolean {

@@ -2,7 +2,7 @@
 
 后续实现按[批次测试台账](testing-batches.md)执行：逐任务提交代码和资产，登记待测内容，默认累计3个功能／修复任务后合并验证。下文已完成阶段的历史测试结果保留；其中的全量命令不作为每次提交的必跑清单。
 
-2026-10-24：编辑器性能与验证已推进至第五十四阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
+2026-10-24：编辑器性能与验证已推进至第五十五阶段，覆盖资源索引、撤销／恢复、脚本桥、ECS查询、空间索引、视口回读、网格／材质／纹理处理、UI遍历与图元存储、按需上传软裁剪数据、密集UI批次构建、固定负载采样、Play特效时钟、截图原生世界复用、字体缓存直接追加、Windows材质／纹理文件检查、共享模型源校验、层级变换构建、嵌套UI布局测量复用、稀疏物理候选查询、原版地形分块及编辑器层级／选择同步。保留 Rust + TypeScript + Tauri 技术栈。下列基准来自 Frostbound 3,812 实体场景或注明的压力数据，不能换算成实际游戏 FPS。
 
 B001地图视觉修复补充：地表图集按64像素对齐、逐mip夹紧并限制至单图块1×1级；水面按128像素帧对齐、帧内循环过滤并限制至单帧1×1级，避免跨块／跨帧串色。Amazonia地表与水面图集基础像素量分别减少约11.4%／6%。原生地表六色与水面16组RGBA对照、实际地图动画／暂停／恢复通过。相同场景1280×720硬件timestamp对照中，地表GPU pass增加约0.02ms，水面增加约0.11ms；不能从贴图缩小推断FPS提升。复现入口与原始报告路径见[图集性能说明](designs/frostbound-realms/original-terrain-scene.md#同场景图集性能)，归入B001-01，不新开测试批次。
 
@@ -1071,3 +1071,19 @@ prepare_billboards在一个视图内借用无需billboard的源键，重复对�
 
 
 同EXE资源专项 `render-cache-resources-final.json` 通过：改名／撤销重做／持久恢复、资产监听增改删、Play生命周期及暂停像素稳定、五种材质／shader／纹理／glTF资源热更新和精确像素恢复；0 error、正常退出。初次连接失败及QA异常类型识别修正见批次台账。原资源摘要保持不变；截图已目视核对。父级Undo、失活复活、强制竞态、独立窗口、资源删除恢复和缓存总内存等专项继续待测。
+
+
+## 第五十五阶段按实际接受的请求推进视口节拍
+
+上一原生报告1792790439071的240帧中，请求起点相邻间隔平均18.4276ms；由完成时间减去transportMs还原起点，相对上一帧完成平均间隔2.5707ms（含20次重叠提交）。这些数据用于定位调度，不把全部等待归因于同一个定时器。代码确认Game、Scene和相机预览在beginNativeViewportRequest判定重复之前就更新lastRequestAt，未提交的请求也会推迟后续截止时间。
+
+现在由beginNativeViewportRequest在真正接受ticket时记录调用者的请求起点；容量满或重复键保持原时间戳。到期的Game完成回调直接进入下一次paint，未到期或处于原生busy／会话重试期则按剩余时间唤醒。已到期的重复请求不再建立短周期轮询，等待原请求完成或新世界通知。保留60Hz最小提交间隔、双在途容量、单相机预览容量、generation／世界归属校验、截图排空及失败重试。
+
+56项定向测试通过，涵盖Game／Scene完成节拍、重复与容量限制、到期立即提交、无rAF／整数定时器、busy恢复、乱序完成、项目／会话／分辨率切换、截图与卸载。新增测试确认拒绝重复键不延后新版本提交、等待期间不产生短周期timer、到期提交不增加零延时task。旧测试环境补齐当前视口归属与准备计时接口，Scene绘制判断提取范围限定为Scene逻辑；未修改产品归属规则。复现：`node --test packages/editor/tests/nativeViewportRequests.test.mjs packages/editor/tests/nativeGameCompletionScheduling.test.mjs packages/editor/tests/nativeSceneCompletionScheduling.test.mjs`。
+
+前端构建通过，原生Release构建1分07秒通过，仅既有world_from_snapshot未使用告警。由于修改影响真实WebView计时与呈现，本轮定向运行连续Amazonia和Scene／Game／预览／Stop验收；未重复上一批资源热更新、全库测试或地图全量遍历。结果记录于测试批次台账，初次测试环境缺失的失败日志与最终56项通过日志均保留在 `tmp/docs-artifacts/editor-performance-risk/native-pacing-*`。
+
+
+原生报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792791223023.json` 通过，EXE SHA256 `46eecf10edec16a1fa35e82ee3ff675d18626f7383fd66a1f26d2e1d825d1887`。连续Amazonia、Game／Scene／相机预览／轨道、分辨率、Stop还原通过，0 error、正常退出；Game截图已目视核对。7,410实体，末尾240次呈现平均55.0269次/秒，间隔18.1729ms／P95 27.0ms；原生渲染11.4975ms，世界同步1.2744ms，239个不同模拟版本计时完整。
+
+请求起点相邻间隔平均18.1778ms，相对上一帧完成平均间隔2.0226ms。此前独立运行分别为54.1908次/秒、18.4276ms和2.5707ms；两次单独运行不能证明稳定提速或60 FPS。确定性测试证明请求被拒绝时不再推迟截止时间，到期完成不再依赖额外timer；原生验收证明正常集成路径可用。摘要为 `tmp/docs-artifacts/editor-performance-risk/native-pacing-summary.json`，原始构建与QA日志使用同前缀。此轮未重复资源热更新、Inspector编辑和全库测试，上一批相关结果保留；真实操作延迟、强制在途竞态和脱离窗口等专项保持待测。

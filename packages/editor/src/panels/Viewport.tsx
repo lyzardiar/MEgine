@@ -1502,11 +1502,10 @@ export function Viewport(props: {
       request.resumeTimer = null;
       const generation = request.generation;
       const requestKey = gameRequestKey;
-      request.lastRequestAt = now;
       // Fixed-pixel Canvas layouts depend on the selected resolution, even in a small panel.
       const fixedPixelCanvas = p.entities.some(entity => entity.components.Canvas && (entity.components.Canvas as Record<string, unknown>).render_mode !== 'WorldSpace' && (entity.components.CanvasScaler as Record<string, unknown> | undefined)?.ui_scale_mode !== 'ScaleWithScreenSize' && (p.activeInHierarchy?.(entity.entity) ?? true));
       const { width: nativeWidth, height: nativeHeight } = nativeGamePreviewSize(p.gameResolution?.width ?? vp.w * dpr, p.gameResolution?.height ?? vp.h * dpr, vp.w * dpr, vp.h * dpr, fixedPixelCanvas);
-      const ticket = beginNativeViewportRequest(request, JSON.stringify([gameRequestKey, nativeWorld.requestKey(), p.simulationTime]));
+      const ticket = beginNativeViewportRequest(request, JSON.stringify([gameRequestKey, nativeWorld.requestKey(), p.simulationTime]), now);
       if (ticket) ticket.ready = requestWorldFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight })
         .then((buffer) => {
           const completionStartedAt = performance.now();
@@ -1547,19 +1546,23 @@ export function Viewport(props: {
         .finally(() => {
           finishNativeViewportRequest(request, ticket);
           if (request.generation !== generation || request.reportedError || request.captures > 0 || propsRef.current.tab !== 'game') return;
-          if (!propsRef.current.playing && performance.now() >= request.retryAt) { paint(); return; }
+          const delay = Math.max(0, request.retryAt - performance.now(), propsRef.current.playing ? 1000 / 60 - (performance.now() - request.lastRequestAt) : 0);
+          if (delay === 0) { paint(); return; }
           if (request.resumeTimer != null) return;
           request.resumeTimer = window.setTimeout(() => {
             request.resumeTimer = null;
             if (request.generation === generation && propsRef.current.tab === 'game') paint();
-          }, Math.max(0, Math.ceil(request.retryAt - performance.now()), Math.ceil(1000 / 60 - (performance.now() - request.lastRequestAt))));
+          }, Math.ceil(delay));
         });
     }
 
     const scheduleRequest = (request: ReturnType<typeof createNativeViewportRequestState>, repaint: () => void) => {
       if (request.full || request.captures > 0 || request.resumeTimer != null || request.reportedError || !request.inFlight && request.retryAt <= performance.now()) return;
+      const now = performance.now(), delay = Math.max(request.retryAt - now, 1000 / 60 - (now - request.lastRequestAt));
+      // Once due, a pending duplicate waits for completion or a new world notification.
+      if (delay <= 0) return;
       const generation = request.generation;
-      request.resumeTimer = window.setTimeout(() => { request.resumeTimer = null; if (request.generation === generation && !request.reportedError) repaint(); }, Math.max(1, Math.ceil(request.retryAt - performance.now()), Math.ceil(1000 / 60 - (performance.now() - request.lastRequestAt))));
+      request.resumeTimer = window.setTimeout(() => { request.resumeTimer = null; if (request.generation === generation && !request.reportedError) repaint(); }, Math.ceil(delay));
     };
     if (isGame && p.playing && '__TAURI_INTERNALS__' in window) scheduleRequest(nativeGameRequestRef.current, () => paint());
 
@@ -1645,8 +1648,7 @@ export function Viewport(props: {
       request.resumeTimer = null;
       const generation = request.generation;
       const requestedSceneCamera = structuredClone(cam);
-      request.lastRequestAt = now;
-      const ticket = beginNativeViewportRequest(request, JSON.stringify([nativeSceneIdentity?.key, nativeWorld.requestKey(), p.simulationTime]));
+      const ticket = beginNativeViewportRequest(request, JSON.stringify([nativeSceneIdentity?.key, nativeWorld.requestKey(), p.simulationTime]), now);
       if (ticket) ticket.ready = requestWorldFrame('render_native_scene_view', {
         request: {
           width: nativeSceneIdentity!.width,
@@ -1711,13 +1713,12 @@ export function Viewport(props: {
     ) {
       const request = nativeCameraPreviewRequestRef.current;
       const generation = request.generation;
-      request.lastRequestAt = now;
       const aspect = p.gameResolution
         ? p.gameResolution.width / Math.max(1, p.gameResolution.height)
         : 16 / 9;
       const previewWidth = 320;
       const previewHeight = Math.max(120, Math.round(previewWidth / Math.max(0.5, Math.min(2.5, aspect))));
-      const ticket = beginNativeViewportRequest(request, cameraPreviewKey!);
+      const ticket = beginNativeViewportRequest(request, cameraPreviewKey!, now);
       if (ticket) ticket.ready = requestWorldFrame('render_native_scene_view', {
         request: {
           width: previewWidth,
