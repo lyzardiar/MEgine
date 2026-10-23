@@ -910,3 +910,15 @@ createPlayWorldSync的原生基线共享已认证的不可变数组；普通capt
 局部对照通过Vite分别加载提交c694440与当前生产模块，真实native runtime/store接收模拟空增量；使用Amazonia作者场景7,409实体，两组预热、九组交替采样，每组100帧。每100帧长度7,409的实体数组slice次数300→0，前端处理每帧采样中位0.543986→0.209788ms；最终完整实体内容一致、版本与时钟推进断言通过。该结果覆盖空增量路径的前端处理，不含真实模拟/IPC/绘制，也未测得实际空增量占比、浏览器GC或FPS改善。源场景摘要、逐组数据及脚本在 `tmp/docs-artifacts/editor-performance-risk/clock-play-arrays-{summary.json,benchmark.mjs,benchmark.log}`，测试日志为同目录 `clock-play-arrays-{tests,integration-tests,typescript}.log`。
 
 本项与c694440共享增量序列化合并进行下一次相关原生验证，当前EXE仍不包含两项。需要确认持续呈现与时钟推进、动画/水面变化、Inspector直接修改、Stop/重启/换图和跨窗口版本传播；既有强制竞态及真实输入延迟待测项保持未完成。
+
+## 第四十五阶段共享增量与空帧索引原生验证
+
+c694440、8679fcb共用一次前端/原生Release构建，Rust耗时1分09秒，仅既有world_from_snapshot未使用告警。EXE SHA256 `ff659f5a318a9c15e2ddc9b3abec8b26631da5c245a55a69180f861cf4a1e281`。map-session QA新增 `--runtime-edits` 与 `--runtime-edits-only`，通过真实Inspector输入修改暂停运行世界，再推进原生模拟并检查值保留、三层动画/时钟和恢复。
+
+合并执行 `node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile --viewport-transitions --effect-reload --runtime-edits`。报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792782700435.json` 的连续采样、37份特效热更新/精确像素恢复、Scene/Game/相机预览/环绕及960×900和1280×720切换均通过。随后新增QA用值不符合Inspector的0.1步长，命令被stepMismatch拒绝，整份报告为失败。修正为原高度精确符合步长的静态节点，修改0→3.2；未修改产品输入约束。
+
+同EXE只重跑 `node scripts/qa-frost-map-session.mjs --runtime-edits-only`，报告 `B001/map-session-1792782801041.json` 通过：Doodad-7-LRrk-1219在30个原生模拟步后保留高度3.2，3,603个装饰物、442个单位、9个水面节点组件推进，地图时钟0.016667→0.516667；高度恢复0后再推进2步仍正确，Stop恢复作者场景。两次进程均正常退出、控制台error为0；WebView锁缓存保留。没有重复构建、连续采样或已通过的视口/特效检查；Scene预览截图已核对。
+
+本次10秒无Agent轮询采样保留末尾240帧，7,410实体、850×478：完成呈现间隔均值19.0871ms/P95 29ms，52.3915次完成呈现/秒；原生渲染12.8643ms/P95 22.0056ms，命令15.5247ms，完整请求21.3817ms，世界同步1.9938ms；前端准备1.9921ms/P95 2.3ms，完成0.5979ms/P95 0.8ms，上传0.3592ms；模拟2.2117ms，模拟请求9.6704ms。前次独立采样53.0997次/秒、模拟请求9.8946ms；这些结果不证明整体稳定提速或60 FPS，也不能将局部复制基准的差额直接当作真实帧收益。
+
+构建与运行日志 `tmp/docs-artifacts/editor-performance-risk/shared-clock-{editor-build,native-build,native-qa,runtime-edits-qa}.log`，指标汇总 `shared-clock-timing-summary.json`。阶段43/44的正常传输、时钟/动画、真实Inspector修改和Stop恢复已有原生证据；强制在途Stop/重启/换图/截图/UI命中竞态、脱离窗口、隐藏/重试恢复、Edit父级/活动/隐藏及Undo、真实输入延迟继续待测。模拟请求与原生模拟之间的差额仍需分解，不能直接归因于IPC。

@@ -429,3 +429,9 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 快速检查：playWorldSync/nativePlayOwnership共32项通过，Play增量与nativeViewportFrame相关17项检查通过，TypeScript与diff通过。实际7,409实体配合模拟空增量，100帧整表slice300→0，前端采样中位0.543986→0.209788ms；非原生FPS结论。范围与临时证据见performance-risk-todo第四十四阶段。
 
 待合并验证：与c694440共同构建后核对连续模拟/动画/水面、帧版本与时钟、Inspector直接修改完整上传、Stop/重启/换图、跨窗口版本传播。当前EXE不含本项，本轮未重建Editor或重复地图QA；真实空增量分布和输入延迟尚未测量。
+
+### B001-01 共享增量与空帧索引集成结果
+
+c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3abec8b26631da5c245a55a69180f861cf4a1e281`。QA新增真实Inspector运行中修改检查及独立重测入口。`B001/map-session-1792782700435.json` 连续时序、特效修改/精确恢复、Scene/Game/相机预览/环绕和分辨率切换通过，新增Inspector测试的步长输入不合法使整份报告失败；修正测试后只跑 `--runtime-edits-only`，`B001/map-session-1792782801041.json` 通过，0 error、正常退出。
+
+真实Inspector高度0→3.2经30个模拟步仍保留，三层动画和地图时钟推进；恢复0经后续模拟保持，Stop还原作者场景。完整采样52.3915次呈现/秒、模拟请求9.6704ms，未证明整体稳定提速。详细范围、失败原因及日志见performance-risk-todo第四十五阶段。仅关闭阶段43/44上述正常集成待测；强制在途竞态、脱离窗口、隐藏/重试、Edit状态及Undo、真实输入延迟继续待测。

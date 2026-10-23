@@ -17,6 +17,9 @@ assert.ok(!viewportTransitions||continuousProfile||viewportTransitionsOnly,'--vi
 assert.ok(!transportProfile||continuousProfile,'--transport-profile requires --continuous-profile');
 if(transportProfile)process.env.MENGINE_NATIVE_VIEWPORT_TRANSPORT_TRACE='1';
 const effectReload=process.argv.includes('--effect-reload');
+const runtimeEditsOnly=process.argv.includes('--runtime-edits-only');
+const runtimeEdits=process.argv.includes('--runtime-edits')||runtimeEditsOnly;
+assert.ok(!runtimeEdits||continuousProfile||runtimeEditsOnly,'--runtime-edits requires --continuous-profile');
 const profileOnly=process.argv.includes('--profile-only')||continuousProfile;
 const editorFeedback=process.argv.includes('--editor-feedback');
 const returnOnly=process.argv.includes('--return-only');
@@ -55,6 +58,27 @@ async function checkViewportTransitions(){
   assert.deepEqual((await snapshot()).entities,before.entities,'Viewport navigation preserves paused map entities');
   report.viewportTransitions={sceneHashes:[first,moved],sceneProfiles:profiles.nativeProfileCount,gameSize:[960,900]};
   report.checks.push('Paused Amazonia Scene/Game transitions, selected camera preview, orbit changes, exact Game resize and unchanged entities');
+}
+async function checkRuntimeEdits(){
+  const before=await snapshot(),target=before.entities.find(e=>e.name.startsWith('Doodad-')&&e.parent==null&&e.components.Transform&&Math.abs(e.components.Transform.position[1]*10-Math.round(e.components.Transform.position[1]*10))<1e-6);assert.ok(target,'Static authored doodad root with an exact Inspector step value');
+  const original=target.components.Transform.position[1],edited=original+3.2;
+  await execute('selection.set',{ids:[target.entity]});await execute('panel.focus',{kind:'inspector'});
+  async function setHeight(value){
+    const deadline=Date.now()+20000;let page,item;
+    for(;;){page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});item=page.elements.find(e=>e.name==='Transform Position Y');if(item)break;assert.ok(Date.now()<deadline,'Inspector Transform Position Y input');await sleep(150);}
+    await execute('window.ui_set_value',{windowLabel:'main',selector:item.selector,expectedSnapshotRevision:page.snapshotRevision,value:String(value)});
+    assert.ok(Math.abs((await snapshot()).entities.find(e=>e.entity===target.entity).components.Transform.position[1]-value)<1e-5,'Inspector writes the live editable world');
+  }
+  await setHeight(edited);await step(30);const changed=await snapshot();
+  assert.ok(Math.abs(changed.entities.find(e=>e.entity===target.entity).components.Transform.position[1]-edited)<1e-5,'Native simulation retains the uploaded Inspector edit');
+  const originals=new Map(before.entities.map(e=>[e.entity,JSON.stringify(e.components)])),layers={doodads:0,units:0,water:0};
+  for(const entity of changed.entities)if(entity.entity!==target.entity&&JSON.stringify(entity.components)!==originals.get(entity.entity))for(const [key,prefix]of [['doodads','Doodad-'],['units','Unit-'],['water','Water-']])if(entity.name.startsWith(prefix))layers[key]++;
+  for(const [layer,count]of Object.entries(layers))assert.ok(count>0,layer+' advances after explicit world upload');
+  assert.ok(status(changed).elapsed>status(before).elapsed,'Map clock advances after the edit');
+  await execute('panel.focus',{kind:'game'});await capture('runtime-edited');
+  await setHeight(original);await step(2);const restored=await snapshot();assert.ok(Math.abs(restored.entities.find(e=>e.entity===target.entity).components.Transform.position[1]-original)<1e-5,'Restored Inspector value reaches native simulation');
+  report.runtimeEdits={entity:target.entity,name:target.name,original,edited,layers,elapsedBefore:status(before).elapsed,elapsedAfter:status(changed).elapsed};
+  report.checks.push('Actual paused Inspector edits persist through native steps, three animation layers and clock advance, and restored values survive subsequent steps');
 }
 async function checkEffectReload(){
   // Move the original camera from the empty start clearing to the authored fire props.
@@ -124,6 +148,9 @@ try{
     await key('Equal');s=await snapshot();assert.ok(readCamera(s).Transform.rotation[0]>initial.Transform.rotation[0]);assert.ok(Math.abs(readCamera(s).Camera3D.fov_y_degrees-expectedFov)<1e-5);
     await execute('view.set_game_resolution',{resolution:{width:960,height:900}});await input({viewport:[960,900]});s=await snapshot();assert.ok(Math.abs(readCamera(s).Camera3D.fov_y_degrees-expectedFov)<1e-5);await capture('camera-tall');
     report.camera={initial,afterMoveAndZoom:readCamera(s)};report.checks.push('Source logical camera projection, movement, zoom and 960x900 rendering');await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);
+  }else if(runtimeEditsOnly){
+    await checkRuntimeEdits();await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities,'Stop restores authored entities after runtime Inspector edits');
+    report.checks.push('Stop restoration after runtime Inspector edits');
   }else if(viewportTransitionsOnly){
     await checkViewportTransitions();await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities,'Stop restores the authored scene after viewport transitions');
     report.checks.push('Stop restoration after Scene/Game and resolution transitions');
@@ -135,7 +162,7 @@ try{
       assert.ok(profiles.nativeProfileCount>=15,'Expected completed live viewport frames');assert.ok(profiles.returnedSamples>0,'Expected WebView paint samples');
       if(transportProfile)assert.ok(profiles.nativeTimings?.filter(p=>Number.isFinite(p.sharedTransport?.publicationReadyToEventMs)).length>=15,'Expected correlated native publication-to-WebView timings');
       if(transportProfile)assert.ok(profiles.nativeTimings?.filter(p=>Number.isFinite(p.frontendPrepareMs)&&p.frontendPrepareMs>=0&&Number.isFinite(p.frontendCompleteMs)&&p.frontendCompleteMs>=0).length>=15,'Expected split frontend preparation and completion timings');
-      report.continuousProfile={elapsedMs,...profiles};await execute('playback.pause');await capture('profile-view');if(effectReload)await checkEffectReload();if(viewportTransitions)await checkViewportTransitions();await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities,'Stop restores the authored scene after profiling');
+      report.continuousProfile={elapsedMs,...profiles};await execute('playback.pause');await capture('profile-view');if(effectReload)await checkEffectReload();if(viewportTransitions)await checkViewportTransitions();if(runtimeEdits)await checkRuntimeEdits();await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities,'Stop restores the authored scene after profiling');
       report.checks.push('10-second live Amazonia presentation and WebView sample window without Agent polling, followed by Stop restoration');
     }else{
     const native=[];
