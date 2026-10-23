@@ -421,3 +421,11 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 快速检查：play_runtime最终25项通过/4项手动忽略，新增测试ID映射断言修正后仅重跑失败项；定向序列化基准1项通过，Tauri release接口编译检查通过。Amazonia前64/全7,409实体的局部序列化耗时与边界见performance-risk-todo第四十三阶段。未重建EXE、运行原生地图QA或全库回归。
 
 待合并验证：下一相关原生构建执行 `node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile --viewport-transitions --effect-reload`，核对共享响应的实际连续模拟/呈现与模拟请求耗时；追加直接编辑触发reset、Stop/重启/换图/退出时共享响应归属。当前EXE尚未包含本项，原有强制竞态与交互延迟待测继续保留。
+
+### B001-01 空增量实体索引复用
+
+变更：playWorldSync的空patch复用冻结实体数组、原生基线按需复制；store的认证私有空增量保留可编辑数组。新增基线写时复制、连续空帧时钟/颜色、后续修改隔离、重复ID和异步曝光编辑检查。属于现有性能补充，不新增功能计数。
+
+快速检查：playWorldSync/nativePlayOwnership共32项通过，Play增量与nativeViewportFrame相关17项检查通过，TypeScript与diff通过。实际7,409实体配合模拟空增量，100帧整表slice300→0，前端采样中位0.543986→0.209788ms；非原生FPS结论。范围与临时证据见performance-risk-todo第四十四阶段。
+
+待合并验证：与c694440共同构建后核对连续模拟/动画/水面、帧版本与时钟、Inspector直接修改完整上传、Stop/重启/换图、跨窗口版本传播。当前EXE不含本项，本轮未重建Editor或重复地图QA；真实空增量分布和输入延迟尚未测量。

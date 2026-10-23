@@ -237,7 +237,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       };
       if (changes && playEntities) {
         // MiYu: an unexposed array keeps unchanged editable records private across certified deltas.
-        playEntities = playEntities.slice();
+        if (changes.length) playEntities = playEntities.slice();
         privateRecords = playEntities.length - changes.length;
         for (const index of changes) playEntities[index] = editableRecord(owned.entities[index], index);
       } else playEntities = owned.entities.map(editableRecord);

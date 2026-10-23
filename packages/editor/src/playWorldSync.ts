@@ -148,7 +148,7 @@ export function retainPlayWorldPatch(previous: RetainedPlayWorld, patch: WorldSn
     if (index === undefined) throw new Error('Invalid Play snapshot entity order');
     return index;
   });
-  const changed = retainPlayWorld(patch, previous), entities = previous.entities.slice();
+  const changed = retainPlayWorld(patch, previous), entities = positions.length ? previous.entities.slice() : previous.entities;
   for (let i = 0; i < positions.length; i++) entities[positions[i]] = changed.entities[i];
   const owned = Object.freeze({ ...changed, entities: Object.freeze(entities) as EntityRec[] });
   retainedWorlds.add(owned);
@@ -163,18 +163,21 @@ export function createPlayWorldSync(copies?: PrivatePlayCopies) {
   let baseline: [Entities, Color] | null = null;
   let serialized: string | undefined;
   let retainedEntities: Entities = null;
+  let sharedBaseline = false;
   const fullCapture = (entities: Entities, color: Color) => {
     retainedEntities = null;
+    sharedBaseline = false;
     serialized = JSON.stringify([entities, color]);
     baseline = JSON.parse(serialized) as [Entities, Color];
     if (Array.isArray(baseline[0])) for (const entity of baseline[0]) freezeJson(entity);
   };
   return {
-    reset() { baseline = null; serialized = undefined; retainedEntities = null; },
+    reset() { baseline = null; serialized = undefined; retainedEntities = null; sharedBaseline = false; },
     /** Only a factory-owned immutable world can bypass comparison with editable data. */
     captureRetained(world: RetainedPlayWorld) {
       if (!retainedWorlds.has(world)) throw new Error('Play baseline must be an owned world');
-      baseline = [world.entities.slice(), world.clearColor];
+      baseline = [world.entities, world.clearColor];
+      sharedBaseline = true;
       retainedEntities = world.entities;
       serialized = undefined;
     },
@@ -199,6 +202,8 @@ export function createPlayWorldSync(copies?: PrivatePlayCopies) {
       for (let i = 0; i < entities.length; i++) if (!equalJson(entities[i], baseline[0][i])) changed.push(i);
       const colorChanged = !equalJson(color, baseline[1]);
       if (changed.some(i => !plainJson(entities[i])) || colorChanged && !plainJson(color)) { fullCapture(entities, color); return; }
+      // MiYu: retained arrays are immutable; ordinary captures copy their index only when a record changes.
+      if (changed.length && sharedBaseline) { baseline[0] = baseline[0].slice(); sharedBaseline = false; }
       for (const i of changed) baseline[0][i] = freezeJson(JSON.parse(JSON.stringify(entities[i])));
       if (colorChanged) baseline[1] = JSON.parse(JSON.stringify(color));
       if (changed.length || colorChanged) serialized = undefined;

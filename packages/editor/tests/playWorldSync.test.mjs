@@ -272,3 +272,48 @@ test('retained root certification keeps every nested value frozen without certif
     assert.equal(first.entities[0].components.Custom.__proto__.value, 7); assert.equal(second.entities[0].components.Custom.__proto__.value, 10);
   } finally { await server.close(); }
 });
+
+
+test('clock-only native patches share immutable entity indices while keeping fresh metadata and later changes isolated', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  try {
+    const { retainPlayWorld, retainPlayWorldPatch, retainedPlayWorldChanges } = await server.ssrLoadModule('/src/playWorldSync.ts');
+    const initial = retainPlayWorld({ entities: [{ entity: 1, components: { Custom: { value: 7 } } }], clearColor: [0, 0, 0, 1], frame: 0, simFrame: 0 });
+    let current = initial;
+    for (let frame = 1; frame <= 4; frame++) {
+      const previous = current;
+      current = retainPlayWorldPatch(previous, { entities: [], clearColor: [frame / 10, 0, 0, 1], frame, simFrame: frame, simulationTime: frame / 60, selected: 1 });
+      assert.notEqual(current, previous); assert.equal(current.entities, initial.entities);
+      assert.equal(current.frame, frame); assert.equal(current.simulationTime, frame / 60); assert.equal(current.clearColor[0], frame / 10);
+      assert.deepEqual(retainedPlayWorldChanges(previous, current), []); assert.ok(Object.isFrozen(current.entities));
+    }
+    const changed = retainPlayWorldPatch(current, { entities: [{ entity: 1, name: 'Changed', components: { Custom: { value: 8 } } }], clearColor: current.clearColor, frame: 5, simFrame: 5 });
+    assert.notEqual(changed.entities, current.entities); assert.deepEqual(retainedPlayWorldChanges(current, changed), [0]);
+    assert.equal(changed.entities[0].components.Custom.value, 8); assert.equal(initial.entities[0].components.Custom.value, 7);
+    assert.equal(initial.frame, 0); assert.equal(initial.clearColor[0], 0);
+    const duplicate = retainPlayWorld({ ...initial, entities: [initial.entities[0], initial.entities[0]] });
+    assert.throws(() => retainPlayWorldPatch(duplicate, { ...initial, entities: [] }), /entity order/);
+  } finally { await server.close(); }
+});
+
+test('retained comparison baselines copy on record changes after unchanged and color-only captures', async () => {
+  const server = await createServer({ root: fileURLToPath(new URL('..', import.meta.url)), server: { middlewareMode: true }, appType: 'custom', logLevel: 'silent' });
+  try {
+    const { retainPlayWorld, createPlayWorldSync } = await server.ssrLoadModule('/src/playWorldSync.ts');
+    const initial = retainPlayWorld({ entities: [{ entity: 1, components: { Custom: { values: [7] } } }], clearColor: [0, 0, 0, 1], frame: 0, simFrame: 0 });
+    const sync = createPlayWorldSync(), editable = structuredClone(initial.entities), color = [...initial.clearColor];
+    sync.captureRetained(initial); const first = sync.viewportSnapshot(); first.entities.length = 0;
+    assert.equal(sync.viewportSnapshot().entities.length, 1);
+    sync.capture(editable, color); color[0] = .5; sync.capture(editable, color);
+    editable[0].components.Custom.values[0] = 8; assert.equal(sync.presentationMatches(editable, color), false);
+    sync.capture(editable, color); const changed = sync.viewportSnapshot();
+    assert.equal(changed.entities[0].components.Custom.values[0], 8); assert.equal(changed.clearColor[0], .5);
+    assert.equal(initial.entities[0].components.Custom.values[0], 7); assert.equal(initial.clearColor[0], 0);
+    editable[0].components.Custom.values[0] = 9; sync.capture(editable, color);
+    assert.equal(changed.entities[0].components.Custom.values[0], 8); assert.ok(sync.presentationMatches(editable, color));
+    sync.captureRetained(initial); editable[0].components.Custom = { toJSON() { return { values: [10] }; } }; sync.capture(editable, color);
+    assert.deepEqual(sync.viewportSnapshot().entities[0].components.Custom.values, [10]);
+    assert.equal(initial.entities[0].components.Custom.values[0], 7);
+    sync.reset(); sync.capture(editable, color); assert.ok(sync.matches(editable, color));
+  } finally { await server.close(); }
+});

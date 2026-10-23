@@ -326,3 +326,30 @@ test('expand all follows the active native world after a runtime map switch',asy
   const world=store.presentationSnapshot().entities;store.collapseAll();assert.deepEqual(store.hierarchyPresentation(world).map(row=>row.entity.entity),[101]);
   store.expandAll();assert.deepEqual(store.hierarchyPresentation(world).map(row=>row.entity.entity),[101,102]);store.stop();
 }));
+
+
+test('clock-only store publications keep current revisions and detect aliases acquired during pending empty replies', async () => fixture(async ({ mockIPC, runtime, createEditorStore }) => {
+  const store = createEditorStore(); let revision = 0, upload, release, defer = false;
+  mockIPC((cmd, args) => {
+    if (cmd === 'start_editor_play') return { sessionId: 94, snapshot: host([entity(1), entity(2)]) };
+    if (cmd === 'step_editor_play') {
+      upload = args.snapshot;
+      const result = { snapshot: host(upload?.entities ?? [], revision + 1), reset: !!upload, entityOrder: upload?.entities.map(e => e.entity), baseRevision: revision, revision: ++revision };
+      return defer ? new Promise(resolve => { release = () => resolve(result); }) : result;
+    }
+  });
+  store.setPlayRuntime(runtime); store.play(); await store.waitForPlayRuntime(); store.pause();
+  const first = store.playRenderSnapshot();
+  for (let frame = 1; frame <= 4; frame++) {
+    store.step(.1); await store.waitForPlayRuntime(); const current = store.playRenderSnapshot();
+    assert.equal(upload, undefined); assert.equal(current.entities, first.entities);
+    assert.equal(current.nativeWorldReference.revision, frame); assert.equal(current.simulationTime, frame / 10);
+  }
+  defer = true; store.step(.1); const alias = store.getTransform(1); alias.position[0] = 42;
+  release(); await store.waitForPlayRuntime(); assert.equal(store.nativePlaySessionId, undefined);
+  defer = false; store.step(.1); await store.waitForPlayRuntime();
+  assert.equal(upload.entities[0].components.Transform.position[0], 42);
+  const edited = store.playRenderSnapshot(); assert.equal(edited.nativeWorldReference.revision, 6); assert.notEqual(edited.entities, first.entities);
+  alias.position[0] = 99; assert.equal(edited.entities[0].components.Transform.position[0], 42); assert.equal(first.entities[0].components.Transform.position[0], 0);
+  store.stop(); assert.equal(store.playRenderSnapshot(), null);
+}));

@@ -900,3 +900,13 @@ PlaySnapshotStream已有不可变Arc实体和原生历史快照；此前生成�
 手动定向基准 `cargo test -p mengine-editor-host --release --lib benchmark_shared_snapshot_update_serialization -- --ignored --nocapture --test-threads=1` 通过。使用当前Amazonia作者场景，比较独占转换加JSON序列化与共享JSON序列化，两组预热、九组交替采样、每组20次；前64实体中位0.052035→0.015535ms，全7,409实体17.62375→5.479445ms。两个数据量用于控制负载，不是实际运行帧的变更实体分布，不包含模拟、IPC、绘制，也不能作为每帧节省或FPS收益。完整JSON等价断言通过；历史与流继续保留原Arc实体，未测量进程峰值内存。
 
 证据为 `tmp/docs-artifacts/editor-performance-risk/shared-play-update-{tests,retest,benchmark,integration-check}.log` 与 `shared-play-update-summary.json`（含源场景SHA256）。本轮只编译接口和执行定向检查，未重建Editor EXE或重复地图QA；下一相关原生批次需验证新Tauri传输、持续模拟/呈现、显式编辑reset、Stop/换图/退出和实际模拟请求耗时。当前已生成EXE仍为第四十二阶段版本，不包含本项。
+
+## 第四十四阶段空增量复用实体索引
+
+原生增量没有实体变更时，retainPlayWorldPatch复用前一帧已冻结的实体数组，仍创建新的世界元数据并更新版本、时钟、颜色和选中信息。store只在私有数组与曝光版本仍匹配且变更索引为空时保留可编辑数组；外部取得引用、直接编辑或有实体变更时继续原有校验和复制路径。没有以数组不变推断世界版本不变。
+
+createPlayWorldSync的原生基线共享已认证的不可变数组；普通capture在首次实体变化时复制索引，随后更新自己的基线。仅时钟或颜色变化不复制实体表，viewportSnapshot仍向调用方返回独立索引。三个新增检查覆盖连续空增量的新元数据、后续实体变更/重复ID拒绝、普通capture的写时复制与toJSON回退、异步返回期间新暴露引用的修改及下一次完整上传。playWorldSync与nativePlayOwnership共32项通过；Play增量和原生帧参数相关17项检查通过，TypeScript检查通过。
+
+局部对照通过Vite分别加载提交c694440与当前生产模块，真实native runtime/store接收模拟空增量；使用Amazonia作者场景7,409实体，两组预热、九组交替采样，每组100帧。每100帧长度7,409的实体数组slice次数300→0，前端处理每帧采样中位0.543986→0.209788ms；最终完整实体内容一致、版本与时钟推进断言通过。该结果覆盖空增量路径的前端处理，不含真实模拟/IPC/绘制，也未测得实际空增量占比、浏览器GC或FPS改善。源场景摘要、逐组数据及脚本在 `tmp/docs-artifacts/editor-performance-risk/clock-play-arrays-{summary.json,benchmark.mjs,benchmark.log}`，测试日志为同目录 `clock-play-arrays-{tests,integration-tests,typescript}.log`。
+
+本项与c694440共享增量序列化合并进行下一次相关原生验证，当前EXE仍不包含两项。需要确认持续呈现与时钟推进、动画/水面变化、Inspector直接修改、Stop/重启/换图和跨窗口版本传播；既有强制竞态及真实输入延迟待测项保持未完成。
