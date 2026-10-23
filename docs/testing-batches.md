@@ -272,3 +272,12 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 快速检查：Inspector顺序、App异步聚焦与sceneNavigation共11项通过；新增authoredPresentation 1项与nativePlayOwnership中hierarchy定向1项通过；相机脚本、map-session功能/资产摘要检查通过，4个相关Python文件编译通过。没有全库回归或全地图重导。性能复制环节数据与边界见performance-risk-todo第二十九阶段。
 
 原生前端与Release构建通过（既有world_from_snapshot未使用告警），EXE SHA256 `4ca390526edd5f48329efd990b9667850ddb170a70ac66385c947fc67b5131d3`。`qa-frost-map-session.mjs --editor-feedback` 的报告 `B001/map-session-1792770198151.json` 已验证运行地图搜索、真实双击/空格聚焦两个不同根节点、三层动画、暂停像素稳定、镜头移动及重新加载；后段再次进入地图时QA观察实体尚未更新，故该整份报告标记失败。统一等待地图状态就绪后，复用同EXE仅补测 `--return-only`，`B001/map-session-1792770298806.json` 通过返回/重入/键盘返回/既有skirmish/Stop还原，0 error。两个原生进程均正常退出；WebView锁缓存保留。运行截图已目视核对斜视构图。构建与原生日志位于 `tmp/docs-artifacts/war3-ui/editor-issues-*`。待后续批次：编辑器持续操作延迟/完整性能基准、原客户端FOV与构图对照、边缘滚屏和完整对局控制；不得把当前定向检查等同完整Warcraft运行兼容。
+
+
+### B001-01 层级展开与场景刷新分离
+
+变更：App新增独立层级呈现刷新，Hierarchy工具栏/右键/箭头/键盘展开与折叠不再走完整场景刷新；普通选择不重建树，Ping和选中后代显式刷新祖先展开；Play展开全部使用当前运行世界ID。代码路径为App.tsx、panels/Hierarchy.tsx、store.ts，测试为hierarchyRefresh.test.mjs及nativePlayOwnership.test.mjs。属于B001-01性能补充，不另增批次计数。
+
+快速检查：`node --test packages/editor/tests/hierarchyRefresh.test.mjs packages/editor/tests/sceneSelectionRefresh.test.mjs` 5通过；`node --test --test-name-pattern='expand all follows' packages/editor/tests/nativePlayOwnership.test.mjs` 1通过。hierarchyRefresh补充Ping/左右键后仅重测该项通过。`node node_modules/typescript/bin/tsc -b` 在packages/editor通过，独立只读审核通过。实际Amazonia输入的局部快照/树构建对照均值14.649→0.742ms；口径及证据见performance-risk-todo第三十阶段。无全库测试、原生构建或重复地图QA。
+
+待合并验证：原生Hierarchy展开/折叠/搜索、Ping定位并滚动到隐藏后代、双击/空格聚焦、地图切换后Play展开全部、独立Hierarchy窗口、自动恢复定时与内容编辑/撤销。下次相关前端/原生合并构建运行这些路径；当前已生成EXE仍为dd883f6版本，不能作为本项集成通过证据。

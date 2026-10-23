@@ -739,3 +739,12 @@ Amazonia 固定输入7,409实体、场景5,429,683字节；实际 store 的普�
 `node --test packages/editor/tests/authoredPresentation.test.mjs` 通过，执行实际App表达式与store，覆盖普通编辑不复制、两类预览保留原始值、退出预览和Play运行值。另有独立只读复核确认Timeline不修改传入快照。原生构建及节点/镜头集成证据见 `docs/testing-batches.md` 本阶段条目。
 
 实时Amazonia稀疏原生样本中来源校验和frame compile仍占主要CPU开销。采样由最新帧查询去重得到，不覆盖全部渲染帧，不将调用数总和或截图间隔当成持续帧率。后续优化需同时记录脚本、WebView呈现/输入延迟和native整帧，保持热更新与来源身份校验语义。
+
+
+## 第三十阶段层级展开状态独立刷新
+
+Hierarchy 的展开/折叠仅更新层级面板的呈现计数，不再请求场景快照、脏状态检查、自动恢复计时或跨窗场景广播。普通Edit选择复用树结构，实体内容、展开状态或完整场景刷新变化时才重建。Ping与选中折叠后代仍显式展开祖先；面板左右键、全局左右导航、工具栏和右键菜单均使用该路径。Play的“展开全部”读取当前运行世界，兼容地图切换后的运行实体ID。
+
+Amazonia同一7409实体输入，4次预热、8次测量，展开与折叠交替，前后测量顺序轮换，并逐行比较实体ID/深度/展开/子节点标志。Node中“场景快照+树构建”均值14.649ms，复用快照后仅树构建0.742ms；临时堆增长均值14,191,779→3,599,298字节。此局部诊断不含React绘制、脏检查、同步与GPU，不代表整体FPS。原始脚本/报告：`tmp/docs-artifacts/testing-batches/B001/hierarchy-fold-cost.{mjs,json}`。
+
+定向检查6项通过（hierarchyRefresh、sceneSelectionRefresh及nativePlayOwnership的expand-all场景），覆盖树memo、内容更新、祖先展开/Ping、左右导航、预览/选择批处理、远程面板选择语义及运行ID重映射；TypeScript项目检查通过。独立只读复核确认创建/复制/父级变更/加载/撤销和跨窗同步仍有完整刷新来源。未重建原生Editor、未重复地图QA；下一次合并构建验证实际折叠滚动、搜索/双击、脱离窗口与运行地图切换。

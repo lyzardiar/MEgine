@@ -87,6 +87,7 @@ export function Hierarchy(props: {
   onPendingRenameConsumed: () => void;
   onRefresh: () => void;
   onSelectionChange: () => void;
+  onHierarchyChange: () => void;
   onLog: (msg: string) => void;
   onFrame: () => void;
   onInstantiatePrefab?: (path: string, parent: number | null) => void;
@@ -220,15 +221,16 @@ export function Hierarchy(props: {
   useEffect(() => subscribePing((e) => {
     if (e.kind !== 'entity') return;
     props.store.revealEntity(e.id);
+    props.onHierarchyChange();
     pendingScroll.current = { id: e.id, focus: false };
     props.onSelectionChange();
     setPingId(e.id);
     window.setTimeout(() => setPingId((cur) => cur === e.id ? null : cur), 900);
-  }), [props.store, props.onSelectionChange]);
+  }), [props.store, props.onSelectionChange, props.onHierarchyChange]);
   useEffect(() => {
     const selected = props.store.selected;
     if (selected != null && !props.filter.trim()) {
-      if (props.store.revealEntityAncestors(selected)) props.onSelectionChange();
+      if (props.store.revealEntityAncestors(selected)) props.onHierarchyChange();
       scrollRowRef.current(selected);
     }
   }, [props.store.selected]);
@@ -329,10 +331,10 @@ export function Hierarchy(props: {
         return;
       case 'expandAll':
         s.expandAll();
-        break;
+        props.onHierarchyChange(); return;
       case 'collapseAll':
         s.collapseAll();
-        break;
+        props.onHierarchyChange(); return;
     }
     props.onRefresh();
   };
@@ -586,7 +588,7 @@ export function Hierarchy(props: {
           aria-label="Collapse all hierarchy nodes"
           onClick={() => {
             props.store.collapseAll();
-            props.onRefresh();
+            props.onHierarchyChange();
           }}
         >
           <FoldVertical size={14} />
@@ -598,7 +600,7 @@ export function Hierarchy(props: {
           aria-label="Expand all hierarchy nodes"
           onClick={() => {
             props.store.expandAll();
-            props.onRefresh();
+            props.onHierarchyChange();
           }}
         >
           <UnfoldVertical size={14} />
@@ -810,7 +812,7 @@ export function Hierarchy(props: {
                   event.preventDefault();
                   if (n.hasChildren && !n.expanded && !props.filter.trim()) {
                     props.store.expand(id);
-                    props.onRefresh();
+                    props.onHierarchyChange();
                   } else {
                     const index = indicesById.get(id) ?? 0;
                     const child = filtered[index + 1];
@@ -820,7 +822,7 @@ export function Hierarchy(props: {
                   event.preventDefault();
                   if (n.hasChildren && n.expanded && !props.filter.trim()) {
                     props.store.collapse(id);
-                    props.onRefresh();
+                    props.onHierarchyChange();
                   } else if (n.entity.parent != null) {
                     scrollRow(n.entity.parent, true);
                   }
@@ -847,7 +849,7 @@ export function Hierarchy(props: {
                   e.stopPropagation();
                   if (n.hasChildren) {
                     props.store.toggleExpand(id);
-                    props.onRefresh();
+                    props.onHierarchyChange();
                   }
                 }}
               >

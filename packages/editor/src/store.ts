@@ -1305,7 +1305,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       expanded.delete(id);
     },
     expandAll() {
-      for (const e of editEntities) expanded.add(e.entity);
+      for (const e of list()) expanded.add(e.entity);
     },
     collapseAll() {
       expanded.clear();

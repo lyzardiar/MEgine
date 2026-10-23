@@ -277,6 +277,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const [hierFilter, setHierFilter] = useState('');
   const [pendingRenameId, setPendingRenameId] = useState<number | null>(null);
   const [treeTick, setTreeTick] = useState(0);
+  const [hierarchyTick, setHierarchyTick] = useState(0);
   const [, setCameraTick] = useState(0);
   const [sceneTick, setSceneTick] = useState(0);
   const [sceneName, setSceneName] = useState<string | null>(null);
@@ -805,6 +806,9 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     if (publish) broadcastScene();
   };
   refreshRef.current = refresh;
+
+  // MiYu: folding changes panel presentation without republishing or copying the scene.
+  const refreshHierarchy = () => setHierarchyTick(tick => tick + 1);
 
   // MiYu: Scene selection changes keep the displayed world and its content-derived panel data.
   const refreshSelection = () => {
@@ -2877,12 +2881,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
         store.navigateHorizontal(-1);
+        refreshHierarchy();
         refreshSelection();
         return;
       }
       if (e.key === 'ArrowRight') {
         e.preventDefault();
         store.navigateHorizontal(1);
+        refreshHierarchy();
         refreshSelection();
         return;
       }
@@ -2904,7 +2910,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     return () => window.removeEventListener('keydown', onKey);
   }, [store]);
 
-  const treeNodes = useMemo(() => store.hierarchyPresentation(snap.entities), [store, snap, treeTick]);
+  const treeNodes = useMemo(() => store.hierarchyPresentation(snap.entities), [store, snap.entities, treeTick, hierarchyTick]);
   const snapshotWorldTransforms = useMemo(() => buildWorldTransforms(mode === 'edit' ? snap.entities : []), [mode, snap.entities]);
   const sceneHiddenIds = store.sceneHiddenIds;
   const sceneViewportVisible = visiblePanels.has('scene');
@@ -3016,6 +3022,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
               onFilter={setHierFilter}
               onPendingRenameConsumed={() => setPendingRenameId(null)}
               onSelectionChange={refreshSelection}
+              onHierarchyChange={refreshHierarchy}
               onRefresh={refresh}
               onLog={log}
               onFrame={() => frameSelectionRef.current()}

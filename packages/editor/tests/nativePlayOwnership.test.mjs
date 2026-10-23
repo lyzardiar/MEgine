@@ -317,3 +317,12 @@ test('sparse store updates preserve immutable frames and detect newly exposed al
   const current = store.playViewportSnapshot(); current.entities.reverse();
   assert.equal(store.nativePlaySessionId, undefined); store.stop();
 }));
+
+// Remapped runtime IDs must be expanded independently of the authored scene.
+test('expand all follows the active native world after a runtime map switch',async()=>fixture(async({mockIPC,runtime,createEditorStore})=>{
+  const store=createEditorStore();
+  mockIPC(cmd=>cmd==='start_editor_play'?{sessionId:93,snapshot:host([entity(101,'MapRoot'),{...entity(102,'MapChild'),parent:101}])}:undefined);
+  store.setPlayRuntime(runtime);store.play();await store.waitForPlayRuntime();store.pause();
+  const world=store.presentationSnapshot().entities;store.collapseAll();assert.deepEqual(store.hierarchyPresentation(world).map(row=>row.entity.entity),[101]);
+  store.expandAll();assert.deepEqual(store.hierarchyPresentation(world).map(row=>row.entity.entity),[101,102]);store.stop();
+}));
