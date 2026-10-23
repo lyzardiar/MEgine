@@ -7,9 +7,11 @@ export const WARCRAFT_UI_ADDITIONS=[
   ['realm','menu',true],['replay','single',true],['customCampaign','single',true],['profile','single',true],
   ['optionsGameplay','options',false],['optionsVideo','options',false],['optionsSound','options',false],['optionsCancel','options',false],
   ['pauseToggle','pause',false],['pauseOptions','pause',false],['pauseHelp','pause',false],['pauseTips','pause',false],
-  ['hudAllies','toolbar',true],['hudChat','toolbar',true]
+  ['hudAllies','toolbar',true],['hudChat','toolbar',true],
+  ['lanCreate','lan',false],['lanLoad','lan',true],['lanJoin','lan',false],['lanCancel','lan',false],['lanRefresh','lan',false],['lanAddress','lan',false],['lanPrevious','lan',false],['lanNext','lan',false]
 ];
 export function configureWarcraftButtons(buttons,manifest){
+  for(const b of buttons)if(['netBrowse','netAddress','roomRefresh'].includes(b.id))b.hidden=true;
   for(const id of ['editor','hudHero','menuSnow','musicVolume','sfxVolume']){const b=buttons.find(b=>b.id===id);if(b)b.hidden=true;}
   for(const id of ['multiplayer','rpg']){const b=buttons.find(b=>b.id===id);if(b)b.disabled=true;}
   for(const [id,group,disabled] of WARCRAFT_UI_ADDITIONS){const b=buttons.find(b=>b.id===id);if(b)Object.assign(b,{group,disabled});else buttons.push({id,group,disabled,x:0,y:0,w:1,h:1});}

@@ -13,7 +13,7 @@ from warcraft_mpq import mpyq, read_archive
 
 ROOT = Path(__file__).resolve().parents[1]
 ARCHIVES = ['War3Patch.mpq', 'War3xLocal.mpq', 'War3x.mpq', 'war3.mpq']
-SCREENS = ['Glue/MainMenu', 'Glue/SinglePlayerMenu', 'Glue/Skirmish', 'Glue/OptionsMenu', 'Glue/DialogWar3', 'Glue/MapInfoPane', 'Glue/MapListBox', 'Glue/PlayerSlot', 'UI/EscMenuMainPanel', 'UI/EscMenuOptionsPanel', 'UI/ConsoleUI', 'UI/ResourceBar', 'UI/UpperButtonBar', 'UI/InfoPanelUnitDetail']
+SCREENS = ['Glue/MainMenu', 'Glue/SinglePlayerMenu', 'Glue/Skirmish', 'Glue/OptionsMenu', 'Glue/LocalMultiplayerJoin', 'Glue/DialogWar3', 'Glue/MapInfoPane', 'Glue/MapListBox', 'Glue/PlayerSlot', 'UI/EscMenuMainPanel', 'UI/EscMenuOptionsPanel', 'UI/ConsoleUI', 'UI/ResourceBar', 'UI/UpperButtonBar', 'UI/InfoPanelUnitDetail']
 TEXTURES = ['GlueScreen-Button1-Border', 'GlueScreen-Button1-SmallBorder', 'GlueScreen-Button1-BackdropBackground', 'GlueScreen-Button1-BackdropBackground-Disabled', 'GlueScreen-Button1-BackdropBorder', 'GlueScreen-Button1-BackdropBorder-Down', 'GlueScreen-Button1-BackdropBorder-Disabled', 'GlueScreen-Button1-BackdropBorder-DisabledDown', 'GlueScreen-Button-KeyboardHighlight']
 EDGE_SLICES = ['L', 'R', 'T', 'B', 'UL', 'UR', 'BL', 'BR']
 BUTTON_STATES = {'Normal': ('', ''), 'Down': ('', '-Down'), 'Disabled': ('-Disabled', '-Disabled'), 'DisabledDown': ('-Disabled', '-DisabledDown')}
@@ -247,6 +247,7 @@ def run(game, output, button_sizes=None):
                 control_images[name] = derived_image(name, checkbox_image(decoded[background], decoded[check_key] if checked else None), [background] + ([check_key] if checked else []), state=state, checked=checked)
         control_images['StandardPopupMenu-256x64'] = backdrop('StandardPopupMenu-256x64', 'GlueScreen-Button1-BackdropBackground', 'GlueScreen-Button1-BorderedBackdropBorder', (256, 64), sliced=True)
         control_images['OptionsPopup-Base-Mirrored'] = derived_image('OptionsPopup-Base-Mirrored', decoded['GlueScreen-Button1-Border'].transpose(Image.Transpose.FLIP_LEFT_RIGHT), ['GlueScreen-Button1-Border'], transform='BackdropMirrored: horizontal reflection')
+        control_images['LAN-SmallButtonBase-Mirrored'] = derived_image('LAN-SmallButtonBase-Mirrored', decoded['GlueScreen-Button1-SmallBorder'].transpose(Image.Transpose.FLIP_LEFT_RIGHT), ['GlueScreen-Button1-SmallBorder'], transform='BackdropMirrored: horizontal reflection')
         control_images['StandardEditBox-96x48'] = backdrop('StandardEditBox-96x48', 'bnet-inputbox-back', 'bnet-inputbox-border', (96, 48), 24, 64, 5, True)
         slider_frames = {}
         for name in re.findall(r'Frame\s+"SLIDER"\s+"([^"]+)"', options):

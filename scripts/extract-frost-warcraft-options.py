@@ -137,9 +137,11 @@ def place(size, anchors, lookup):
     return result
 
 
-def extract(project):
+def extract(project, screen='OptionsMenu', panels=None, visible_types=None, containers=()):
+    panels = PANELS if panels is None else panels
+    visible_types = VISIBLE if visible_types is None else visible_types
     base = 'SourceAssets/WarcraftUI/UI/FrameDef/'
-    paths = [base+'Glue/StandardTemplates.fdf', base+'Glue/OptionsMenu.fdf', base+'GlobalStrings.fdf', 'Assets/Fonts/Warcraft-Master.ttf']
+    paths = [base+'Glue/StandardTemplates.fdf', base+'Glue/'+screen+'.fdf', base+'GlobalStrings.fdf', 'Assets/Fonts/Warcraft-Master.ttf']
     data = {name:(project/name).read_bytes() for name in paths}
     standard, options = [parse_frames(data[name].decode('utf-8-sig'), name) for name in paths[:2]]
     dictionary = strings(data[paths[2]].decode('utf-8-sig'))
@@ -220,9 +222,11 @@ def extract(project):
         if name in stack:
             raise ValueError('Cyclic SetPoint: ' + name)
         node = option_nodes[name]; props = effective(node)
-        if name == 'OptionsMenu' and 'SetAllPoints' in props:
+        if name == screen and 'SetAllPoints' in props:
             value = [0, 0, 960, 720]
         elif 'SetAllPoints' in props:
+            value = resolve(node.parent.name, stack+(name,))
+        elif node.parent and first(effective(node.parent), 'ButtonText') == [node.name] and 'SetPoint' not in props:
             value = resolve(node.parent.name, stack+(name,))
         else:
             size, _ = measure(node)
@@ -231,13 +235,13 @@ def extract(project):
         return value
 
     pages = {}
-    for page, panel in PANELS.items():
+    for page, panel in panels.items():
         records = []
 
         def visible(node):
             if node.type == 'MENU':
                 return
-            if node.type in VISIBLE:
+            if node.type in visible_types or node.name in containers:
                 yield node
             for child in node.children:
                 yield from visible(child)
@@ -250,6 +254,9 @@ def extract(project):
                 anchors = [dict(point=a[0], relative=a[1], relativePoint=a[2], offset=a[3:]) for a in props.get('SetPoint', [])]
                 record = dict(name=node.name, type=node.type, text=text, textKey=key, fontSize=style[1]*SCALE if style else None, color=first(props,'FontColor'), rect=[round(box[0]+box[2]/2-480,6),round(box[1]+box[3]/2-360,6),round(box[2],6),round(box[3],6)], template=node.template, templateChain=chains[id(node)], anchors=anchors, source=dict(path=node.source,line=node.line), measurement=measurement, fontSource=font_source, parent=node.parent.name)
                 record['alignment'] = dict(horizontal=first(props,'FontJustificationH',[None])[0],vertical=first(props,'FontJustificationV',[None])[0])
+                if screen != 'OptionsMenu':
+                    record['backdrop'] = dict(background=first(props,'BackdropBackground',[None])[0], mirrored='BackdropMirrored' in props)
+                    record['shortcut'] = first(props,'ControlShortcutKey',[None])[0]
                 if node.type == 'SLIDER':
                     record['range'] = [first(props,'SliderMinValue')[0],first(props,'SliderMaxValue')[0]]
                     record['step'] = first(props,'SliderStepSize')[0]; record['initialValue'] = first(props,'SliderInitialValue')[0]

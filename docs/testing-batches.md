@@ -209,3 +209,16 @@ QA增加 `--cache-project <前次隔离项目>`，校验源地图和共享文件
 复用现有EXE `03e55ada83c9a26a2c194bc84ec529c01d82260ea86d7c3bfa3fa5357318ff7c`，没有重建。`MENGINE_MAP_PROFILE_FRAMES=12 node scripts/qa-frost-original-map-composition.mjs tmp/docs-artifacts/warcraft-map-tests/amazonia-complete-visuals/project` 通过：7403实体，Scene/Game、三层动画、12次固定Game像素一致、Stop完整恢复、确定性重启，0 error。报告 `B001/original-map-composition-1792762023404.json`，统计 `B001/draw-bindings-native-summary.json`；首次Scene参数错误记录保留于 `original-map-composition-1792761964519.json`。两次测试进程均正常退出，锁定WebView缓存保留。
 
 该EXE在第二十六阶段提交之后构建；已通过的同EXE菜单／选项报告复用为嵌入视图证据。完整性能口径见 `docs/performance-risk-todo.md`：固定截图样本不代表实时FPS，也未新增原生前后提速结论。仍待独立Player分发、原客户端完整视觉和JASS／对局兼容性，B001保持3/3未结算，不重新运行已通过的02／03。
+
+
+### B001-01 原版局域网浏览页
+
+变更：LAN FDF保留／布局提取／prefab恢复脚本、NetworkDialog prefab、Main场景／脚本和client浏览流程。25个源节点（含4个按钮文字定义），51个源成员、171个文件摘要；4252个既有场景ID保留，当前4308实体。原输入框与镜像按钮底座、房间刷新／选择／翻页、玩家名持久化与握手、满员禁入、断线／地址／取消恢复；多人存档装载禁用。为同一界面接入补充，B001仍3/3未结算。
+
+快速检查：`extract-frost-warcraft-options.py --self-test` 6通过；`test-frost-warcraft-lan.mjs` 通过，覆盖两个比例、21个独立源框几何、全部布局输入摘要、玩家名输入保护、选择／翻页／满员禁入、刷新、创建返回、迟到事件取消和断线。源资源171项摘要与既有实体ID检查通过，相关JS语法／差异检查通过。生成选项页只更新提取器摘要，88节点内容保持一致。
+
+原生定向验证：复用EXE SHA256 `03e55ada83c9a26a2c194bc84ec529c01d82260ea86d7c3bfa3fa5357318ff7c`，未构建引擎或执行全库／玩法回归。`qa-frost-warcraft-ui.mjs --lan-only` 最终报告 `tmp/docs-artifacts/war3-ui/native-1792763499711.json`，3张截图、0 error，真实TCP浏览和加入通过。QA隔离副本仅覆盖随机TCP端口，记录源／实际脚本摘要；960×900截图设置真实游戏渲染分辨率，检查了页首和底部按钮完整可见。测试进程正常退出，WebView锁定缓存保留。
+
+最初原生截图暴露文字裁剪及颜色标记显示问题；修复后定向复看。`native-1792763270883.json`、`native-1792763397275.json` 保留为过程证据；后者仅改变输入尺寸的竖屏截图不作为分辨率验收依据。日志为 `lan-client-test.log`、`lan-import.log`、`lan-native-resolution.log`，均位于同一临时目录。
+
+待批次：原客户端逐像素与原动态列表／滚动条／缩略图／高级选项对照，中文IME实机输入、Tab焦点、多人创建／等待房间源布局、原LAN发现协议。原旧 `qa-frost-menu-network.mjs` 及 `qa-frostbound.mjs` 菜单分支仍使用旧按钮路径和坐标，应更新后再纳入两端完整对局验收；本轮独立LAN入口已覆盖当前菜单真实浏览／加入，不据此宣称原版所有界面或Warcraft网络兼容。

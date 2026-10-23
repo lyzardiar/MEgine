@@ -152765,7 +152765,7 @@
         "entity": 90658,
         "name": "UI NetworkDialog / Presentation",
         "parent": 90657,
-        "siblingIndex": 0,
+        "siblingIndex": 1,
         "active": true,
         "tag": "Untagged",
         "layer": 0,
@@ -153024,7 +153024,7 @@
         "entity": 90663,
         "name": "UI NetworkDialog / Controls",
         "parent": 90657,
-        "siblingIndex": 1,
+        "siblingIndex": 2,
         "active": true,
         "tag": "Untagged",
         "layer": 0,
@@ -154706,18 +154706,18 @@
               0.5
             ],
             "anchored_position": [
-              0,
-              -143
+              -226.5,
+              -148.775
             ],
             "size_delta": [
-              870,
-              30
+              432,
+              32
             ]
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "b06cbe6e-7a35-57d5-adfb-b9c2cd4cd217",
+            "node": "40cd7819-a638-51bc-ac99-d2cba0a1c961",
             "root": false
           }
         }
@@ -154749,23 +154749,14 @@
               0
             ],
             "size_delta": [
-              4,
-              4
+              0,
+              0
             ]
-          },
-          "Image": {
-            "color": [
-              0.035,
-              0.043,
-              0.057,
-              1
-            ],
-            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "22187b34-d70c-50c1-a1d5-faac66743f6f",
+            "node": "c05db4f5-2778-588b-a240-424af03c93c5",
             "root": false
           }
         }
@@ -154802,31 +154793,18 @@
             ]
           },
           "Image": {
-            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
             "color": [
               1,
-              1,
-              1,
-              1
+              0.82,
+              0.07,
+              0.12
             ],
-            "raycast_target": false,
-            "image_type": "Sliced",
-            "border": [
-              19,
-              19,
-              19,
-              19
-            ],
-            "source_size": [
-              256,
-              64
-            ],
-            "pixels_per_unit_multiplier": 1
+            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "7ea541c7-2200-52e2-a044-d7336e7c5a84",
+            "node": "c79671e5-860d-5241-aca8-f14d48f7fa00",
             "root": false
           }
         }
@@ -154865,23 +154843,36 @@
           "Text": {
             "text": "",
             "font": "Assets/Fonts/Warcraft-Master.ttf",
-            "font_size": 20,
+            "font_size": 15.6,
             "color": [
-              0.92,
-              0.79,
-              0.45,
+              0.99,
+              0.827,
+              0.0705,
               1
             ],
-            "alignment": "Center",
+            "alignment": "Left",
             "vertical_align": "Middle",
-            "horizontal_overflow": "Overflow",
+            "horizontal_overflow": "Truncate",
             "vertical_overflow": "Overflow",
             "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "01930449-a8aa-5349-a499-9cb48cdb90a6",
+            "node": "fa0d1c16-d6b5-5cc5-a6e4-96920c1cdd2c",
             "root": false
           }
         }
@@ -154909,18 +154900,18 @@
               0.5
             ],
             "anchored_position": [
-              0,
-              -108
+              -226.5,
+              -114.775
             ],
             "size_delta": [
-              870,
-              30
+              432,
+              32
             ]
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "d645a95d-ee64-5840-a386-1e44ce04e842",
+            "node": "2b5c0154-4add-5f94-a192-d0ef96959005",
             "root": false
           }
         }
@@ -154952,23 +154943,14 @@
               0
             ],
             "size_delta": [
-              4,
-              4
+              0,
+              0
             ]
-          },
-          "Image": {
-            "color": [
-              0.035,
-              0.043,
-              0.057,
-              1
-            ],
-            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "5d2474fd-3b57-57fb-a879-55bcce41807b",
+            "node": "d7f9cf13-b004-5fc1-a008-070bf02f2f4b",
             "root": false
           }
         }
@@ -155005,31 +154987,18 @@
             ]
           },
           "Image": {
-            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
             "color": [
               1,
-              1,
-              1,
-              1
+              0.82,
+              0.07,
+              0.12
             ],
-            "raycast_target": false,
-            "image_type": "Sliced",
-            "border": [
-              19,
-              19,
-              19,
-              19
-            ],
-            "source_size": [
-              256,
-              64
-            ],
-            "pixels_per_unit_multiplier": 1
+            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "89373342-4ecb-5d4b-a83e-a1a8342b1f41",
+            "node": "5da650c4-86f1-5bbd-aeea-d57c586e098c",
             "root": false
           }
         }
@@ -155068,23 +155037,36 @@
           "Text": {
             "text": "",
             "font": "Assets/Fonts/Warcraft-Master.ttf",
-            "font_size": 20,
+            "font_size": 15.6,
             "color": [
-              0.92,
-              0.79,
-              0.45,
+              0.99,
+              0.827,
+              0.0705,
               1
             ],
-            "alignment": "Center",
+            "alignment": "Left",
             "vertical_align": "Middle",
-            "horizontal_overflow": "Overflow",
+            "horizontal_overflow": "Truncate",
             "vertical_overflow": "Overflow",
             "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "40f431fb-1a71-5e25-a33e-614e970c7bbe",
+            "node": "9eb540d6-f6bd-5207-a420-0c54ab33e050",
             "root": false
           }
         }
@@ -155112,18 +155094,18 @@
               0.5
             ],
             "anchored_position": [
-              0,
-              -73
+              -226.5,
+              -80.775
             ],
             "size_delta": [
-              870,
-              30
+              432,
+              32
             ]
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "41b3255e-5c68-501b-abc0-168a9258f049",
+            "node": "6a512069-1a36-59ae-a0dd-ad70b26c13e5",
             "root": false
           }
         }
@@ -155155,23 +155137,14 @@
               0
             ],
             "size_delta": [
-              4,
-              4
+              0,
+              0
             ]
-          },
-          "Image": {
-            "color": [
-              0.035,
-              0.043,
-              0.057,
-              1
-            ],
-            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "9e470a0c-47b2-58d2-ab33-a060b88b56b7",
+            "node": "5e79d91e-19cf-58c1-a82a-f3af769a0b89",
             "root": false
           }
         }
@@ -155208,31 +155181,18 @@
             ]
           },
           "Image": {
-            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
             "color": [
               1,
-              1,
-              1,
-              1
+              0.82,
+              0.07,
+              0.12
             ],
-            "raycast_target": false,
-            "image_type": "Sliced",
-            "border": [
-              19,
-              19,
-              19,
-              19
-            ],
-            "source_size": [
-              256,
-              64
-            ],
-            "pixels_per_unit_multiplier": 1
+            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "e97a23d2-7468-59b0-a568-a0f1fa83e380",
+            "node": "fd1a15f5-1698-5081-a00e-bb5c7783b5c8",
             "root": false
           }
         }
@@ -155271,23 +155231,36 @@
           "Text": {
             "text": "",
             "font": "Assets/Fonts/Warcraft-Master.ttf",
-            "font_size": 20,
+            "font_size": 15.6,
             "color": [
-              0.92,
-              0.79,
-              0.45,
+              0.99,
+              0.827,
+              0.0705,
               1
             ],
-            "alignment": "Center",
+            "alignment": "Left",
             "vertical_align": "Middle",
-            "horizontal_overflow": "Overflow",
+            "horizontal_overflow": "Truncate",
             "vertical_overflow": "Overflow",
             "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "c0b97b36-e6ac-5ea5-ac6a-6765aad208f9",
+            "node": "b81b7529-498b-55ac-a638-89e876d0ee61",
             "root": false
           }
         }
@@ -155315,18 +155288,18 @@
               0.5
             ],
             "anchored_position": [
-              0,
-              -38
+              -226.5,
+              -46.775000000000006
             ],
             "size_delta": [
-              870,
-              30
+              432,
+              32
             ]
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "be00d257-1c9f-54a4-aa21-0046611c3f80",
+            "node": "ad131de1-5349-5b16-a1b0-e0a2e10d7291",
             "root": false
           }
         }
@@ -155358,23 +155331,14 @@
               0
             ],
             "size_delta": [
-              4,
-              4
+              0,
+              0
             ]
-          },
-          "Image": {
-            "color": [
-              0.035,
-              0.043,
-              0.057,
-              1
-            ],
-            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "03373379-443f-5fca-aa6a-f8f20fffb30d",
+            "node": "ba93b30b-657b-500b-a203-3f81d85a6099",
             "root": false
           }
         }
@@ -155411,31 +155375,18 @@
             ]
           },
           "Image": {
-            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
             "color": [
               1,
-              1,
-              1,
-              1
+              0.82,
+              0.07,
+              0.12
             ],
-            "raycast_target": false,
-            "image_type": "Sliced",
-            "border": [
-              19,
-              19,
-              19,
-              19
-            ],
-            "source_size": [
-              256,
-              64
-            ],
-            "pixels_per_unit_multiplier": 1
+            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "4edb6fa5-f760-59ae-aeb3-5efaaca85853",
+            "node": "e7ccdb6e-016b-5f7b-a9fe-71f47ef57835",
             "root": false
           }
         }
@@ -155474,23 +155425,36 @@
           "Text": {
             "text": "",
             "font": "Assets/Fonts/Warcraft-Master.ttf",
-            "font_size": 20,
+            "font_size": 15.6,
             "color": [
-              0.92,
-              0.79,
-              0.45,
+              0.99,
+              0.827,
+              0.0705,
               1
             ],
-            "alignment": "Center",
+            "alignment": "Left",
             "vertical_align": "Middle",
-            "horizontal_overflow": "Overflow",
+            "horizontal_overflow": "Truncate",
             "vertical_overflow": "Overflow",
             "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "20b43e50-d7e0-5bfe-aff3-bfb7caba441f",
+            "node": "43bad2e3-909d-568c-aa46-159c3b85881a",
             "root": false
           }
         }
@@ -155518,18 +155482,18 @@
               0.5
             ],
             "anchored_position": [
-              0,
-              -3
+              -226.5,
+              -12.775000000000006
             ],
             "size_delta": [
-              870,
-              30
+              432,
+              32
             ]
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "67e364ea-5ca2-5a6f-a058-4b06cfd53c3f",
+            "node": "bec6e31b-2ac4-5b4f-a1e9-1d5d540dacf7",
             "root": false
           }
         }
@@ -155561,23 +155525,14 @@
               0
             ],
             "size_delta": [
-              4,
-              4
+              0,
+              0
             ]
-          },
-          "Image": {
-            "color": [
-              0.035,
-              0.043,
-              0.057,
-              1
-            ],
-            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "eecedefa-282b-5123-a111-02120fb7f1f9",
+            "node": "817fb908-d1ed-5a8a-a483-aff79a0bd384",
             "root": false
           }
         }
@@ -155614,31 +155569,18 @@
             ]
           },
           "Image": {
-            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
             "color": [
               1,
-              1,
-              1,
-              1
+              0.82,
+              0.07,
+              0.12
             ],
-            "raycast_target": false,
-            "image_type": "Sliced",
-            "border": [
-              19,
-              19,
-              19,
-              19
-            ],
-            "source_size": [
-              256,
-              64
-            ],
-            "pixels_per_unit_multiplier": 1
+            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "1306fee6-9f91-56b3-adcd-6b31fb6db0d6",
+            "node": "2c71fdd9-09e9-5c4f-affd-9bfaa9f4bfd1",
             "root": false
           }
         }
@@ -155677,23 +155619,36 @@
           "Text": {
             "text": "",
             "font": "Assets/Fonts/Warcraft-Master.ttf",
-            "font_size": 20,
+            "font_size": 15.6,
             "color": [
-              0.92,
-              0.79,
-              0.45,
+              0.99,
+              0.827,
+              0.0705,
               1
             ],
-            "alignment": "Center",
+            "alignment": "Left",
             "vertical_align": "Middle",
-            "horizontal_overflow": "Overflow",
+            "horizontal_overflow": "Truncate",
             "vertical_overflow": "Overflow",
             "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "795f7206-47d3-5596-ae07-11b3f4ebb622",
+            "node": "c6c184cd-6a43-5751-af24-82e563fe40fb",
             "root": false
           }
         }
@@ -155721,18 +155676,18 @@
               0.5
             ],
             "anchored_position": [
-              0,
-              32
+              -226.5,
+              21.224999999999994
             ],
             "size_delta": [
-              870,
-              30
+              432,
+              32
             ]
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "04d8cc1c-194d-5b3d-a1e4-b34d8725ae30",
+            "node": "83488885-7361-5f75-a937-2cfbe1123d87",
             "root": false
           }
         }
@@ -155764,23 +155719,14 @@
               0
             ],
             "size_delta": [
-              4,
-              4
+              0,
+              0
             ]
-          },
-          "Image": {
-            "color": [
-              0.035,
-              0.043,
-              0.057,
-              1
-            ],
-            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "3870f44b-358f-5bc2-af1b-f8d4c1533560",
+            "node": "426202f7-49a8-55da-aa3c-75686e76c5d1",
             "root": false
           }
         }
@@ -155817,31 +155763,18 @@
             ]
           },
           "Image": {
-            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
             "color": [
               1,
-              1,
-              1,
-              1
+              0.82,
+              0.07,
+              0.12
             ],
-            "raycast_target": false,
-            "image_type": "Sliced",
-            "border": [
-              19,
-              19,
-              19,
-              19
-            ],
-            "source_size": [
-              256,
-              64
-            ],
-            "pixels_per_unit_multiplier": 1
+            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "220431b0-24a5-57a3-a4dc-4ed1cf6a20d1",
+            "node": "30fb56ed-edb7-57fe-a813-bd09fbdc7b26",
             "root": false
           }
         }
@@ -155880,23 +155813,36 @@
           "Text": {
             "text": "",
             "font": "Assets/Fonts/Warcraft-Master.ttf",
-            "font_size": 20,
+            "font_size": 15.6,
             "color": [
-              0.92,
-              0.79,
-              0.45,
+              0.99,
+              0.827,
+              0.0705,
               1
             ],
-            "alignment": "Center",
+            "alignment": "Left",
             "vertical_align": "Middle",
-            "horizontal_overflow": "Overflow",
+            "horizontal_overflow": "Truncate",
             "vertical_overflow": "Overflow",
             "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "b8246afa-020d-5706-a282-da9cb5ebd73e",
+            "node": "2e08ceb9-a0b0-5dfa-a7f5-e128a3cabf90",
             "root": false
           }
         }
@@ -155924,18 +155870,18 @@
               0.5
             ],
             "anchored_position": [
-              0,
-              67
+              -226.5,
+              55.224999999999994
             ],
             "size_delta": [
-              870,
-              30
+              432,
+              32
             ]
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "8a718778-9b89-58dd-ab4e-712a22ca59a1",
+            "node": "6a9460a2-4e04-5a1c-ab6d-0e3e9d967c0d",
             "root": false
           }
         }
@@ -155967,23 +155913,14 @@
               0
             ],
             "size_delta": [
-              4,
-              4
+              0,
+              0
             ]
-          },
-          "Image": {
-            "color": [
-              0.035,
-              0.043,
-              0.057,
-              1
-            ],
-            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "4f3bbc82-ab76-587f-afff-16f31f2dcb10",
+            "node": "a442f213-cb77-552e-abb7-7713aafd0307",
             "root": false
           }
         }
@@ -156020,31 +155957,18 @@
             ]
           },
           "Image": {
-            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
             "color": [
               1,
-              1,
-              1,
-              1
+              0.82,
+              0.07,
+              0.12
             ],
-            "raycast_target": false,
-            "image_type": "Sliced",
-            "border": [
-              19,
-              19,
-              19,
-              19
-            ],
-            "source_size": [
-              256,
-              64
-            ],
-            "pixels_per_unit_multiplier": 1
+            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "45623880-07b7-523d-a7a7-6b662433c9a6",
+            "node": "fddee050-a728-54b5-a24c-87d222741ee2",
             "root": false
           }
         }
@@ -156083,23 +156007,36 @@
           "Text": {
             "text": "",
             "font": "Assets/Fonts/Warcraft-Master.ttf",
-            "font_size": 20,
+            "font_size": 15.6,
             "color": [
-              0.92,
-              0.79,
-              0.45,
+              0.99,
+              0.827,
+              0.0705,
               1
             ],
-            "alignment": "Center",
+            "alignment": "Left",
             "vertical_align": "Middle",
-            "horizontal_overflow": "Overflow",
+            "horizontal_overflow": "Truncate",
             "vertical_overflow": "Overflow",
             "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "7dfe0a6b-f7c6-5f5e-a8af-21385b2e2aae",
+            "node": "c6e34e00-5e9d-572b-a87d-547e38a057c6",
             "root": false
           }
         }
@@ -156127,18 +156064,18 @@
               0.5
             ],
             "anchored_position": [
-              0,
-              102
+              -226.5,
+              89.225
             ],
             "size_delta": [
-              870,
-              30
+              432,
+              32
             ]
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "2051110b-7703-54c4-a118-2e3ab5775258",
+            "node": "c9d38382-8082-5d2c-a7ed-c00b1f6290ed",
             "root": false
           }
         }
@@ -156170,23 +156107,14 @@
               0
             ],
             "size_delta": [
-              4,
-              4
+              0,
+              0
             ]
-          },
-          "Image": {
-            "color": [
-              0.035,
-              0.043,
-              0.057,
-              1
-            ],
-            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "91d17a82-2904-5793-a5d2-9ef3cb4ef2a2",
+            "node": "3fc6e695-bd36-5c8e-affb-4233d7adac6d",
             "root": false
           }
         }
@@ -156223,31 +156151,18 @@
             ]
           },
           "Image": {
-            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
             "color": [
               1,
-              1,
-              1,
-              1
+              0.82,
+              0.07,
+              0.12
             ],
-            "raycast_target": false,
-            "image_type": "Sliced",
-            "border": [
-              19,
-              19,
-              19,
-              19
-            ],
-            "source_size": [
-              256,
-              64
-            ],
-            "pixels_per_unit_multiplier": 1
+            "raycast_target": false
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "64f843e0-b3e9-5352-a324-91234bc5e37a",
+            "node": "062c4ee8-faea-5c4f-ad57-a0199caa01de",
             "root": false
           }
         }
@@ -156286,23 +156201,36 @@
           "Text": {
             "text": "",
             "font": "Assets/Fonts/Warcraft-Master.ttf",
-            "font_size": 20,
+            "font_size": 15.6,
             "color": [
-              0.92,
-              0.79,
-              0.45,
+              0.99,
+              0.827,
+              0.0705,
               1
             ],
-            "alignment": "Center",
+            "alignment": "Left",
             "vertical_align": "Middle",
-            "horizontal_overflow": "Overflow",
+            "horizontal_overflow": "Truncate",
             "vertical_overflow": "Overflow",
             "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
           },
           "__MEnginePrefab": {
             "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
             "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
-            "node": "c9ba4b44-f80e-5a77-ac02-4a3e124ef779",
+            "node": "323447a3-7ab7-50ba-a478-3db45a091edc",
             "root": false
           }
         }
@@ -180334,6 +180262,3014 @@
             "source": "Assets/Prefabs/UI/Options.prefab",
             "instance": "d5376a9e-02d7-59b2-aef7-ad121fbea304",
             "node": "4fb2aa13-fbcd-56b2-a637-daba23f87b9d",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91238,
+        "name": "Warcraft LAN Browser",
+        "parent": 90657,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "db3a44be-66f9-5cfa-a834-bcc85df11b06",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91239,
+        "name": "Warcraft LAN GameListTitle",
+        "parent": 91238,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -403.5,
+              -304.192187
+            ],
+            "size_delta": [
+              90,
+              18.015625
+            ]
+          },
+          "Text": {
+            "text": "局域网游戏",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 18,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "fd05b005-49fc-5040-a7a2-91df00a5fa4d",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91240,
+        "name": "Warcraft LAN PlayerNameLabel",
+        "parent": 91238,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -417.3125,
+              -263.379687
+            ],
+            "size_delta": [
+              62.375,
+              15.609375
+            ]
+          },
+          "Text": {
+            "text": "玩家名字",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "c1255142-b9fb-5b9e-a893-ad6d6efd42e0",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91241,
+        "name": "Warcraft LAN PlayerNameEditBox",
+        "parent": 91238,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -226.5,
+              -230.375
+            ],
+            "size_delta": [
+              444,
+              48
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardEditBox-96x48.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              24,
+              24,
+              24,
+              24
+            ],
+            "source_size": [
+              96,
+              48
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "57b85508-f460-5805-a6ed-7f53fa0fad2d",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91242,
+        "name": "Warcraft LAN Player input",
+        "parent": 91241,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              -21.6,
+              -12
+            ]
+          },
+          "InputField": {
+            "text": "玩家",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "character_limit": 20,
+            "multiline": false,
+            "interactable": true,
+            "background_color": [
+              0,
+              0,
+              0,
+              0
+            ],
+            "text_color": [
+              1,
+              1,
+              1,
+              1
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "394f6b2a-41f0-5b9f-a064-034759f5525f",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91243,
+        "name": "Warcraft LAN GameListLabel",
+        "parent": 91238,
+        "siblingIndex": 3,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -425.109375,
+              -174.570312
+            ],
+            "size_delta": [
+              46.78125,
+              15.609375
+            ]
+          },
+          "Text": {
+            "text": "游戏：",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "f788f29d-31bc-5012-a2c0-5747fc27a8ac",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91244,
+        "name": "Warcraft LAN GameListContainer",
+        "parent": 91238,
+        "siblingIndex": 4,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -226.5,
+              -1.775
+            ],
+            "size_delta": [
+              444,
+              330
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "a09f1f10-ba59-5a40-ab69-6a9927d69ab2",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91245,
+        "name": "Warcraft LAN MapInfoPaneContainer",
+        "parent": 91238,
+        "siblingIndex": 5,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              263.25,
+              -181.125
+            ],
+            "size_delta": [
+              326.25,
+              267.75
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "0a0cb7b4-c809-5850-a8d1-66ad2b2862a0",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91246,
+        "name": "Warcraft LAN GameCreatorLabel",
+        "parent": 91238,
+        "siblingIndex": 6,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              263.25,
+              -33.445312
+            ],
+            "size_delta": [
+              326.25,
+              15.609375
+            ]
+          },
+          "Text": {
+            "text": "游戏创建者：",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "f8674544-223a-5152-a1c0-0550ab7ef05f",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91247,
+        "name": "Warcraft LAN GameCreatorValue",
+        "parent": 91238,
+        "siblingIndex": 7,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              263.25,
+              -33.445312
+            ],
+            "size_delta": [
+              326.25,
+              15.609375
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "2d9fbbf3-fcae-5ba0-a919-ff532a3053d6",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91248,
+        "name": "Warcraft LAN GameSpeedLabel",
+        "parent": 91238,
+        "siblingIndex": 8,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              263.25,
+              -15.435938
+            ],
+            "size_delta": [
+              326.25,
+              15.609375
+            ]
+          },
+          "Text": {
+            "text": "游戏速度：",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "2efbae0d-e64f-5b26-a0fc-246ee845b5b3",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91249,
+        "name": "Warcraft LAN GameSpeedValue",
+        "parent": 91238,
+        "siblingIndex": 9,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              263.25,
+              -15.435938
+            ],
+            "size_delta": [
+              326.25,
+              15.609375
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Right",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "ee03eac0-09cb-516d-a908-561a3ab9e2c2",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91250,
+        "name": "Warcraft LAN AdvancedOptionsContainer",
+        "parent": 91238,
+        "siblingIndex": 10,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              263.25,
+              84.76875
+            ],
+            "size_delta": [
+              326.25,
+              150
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "79dd987e-21e2-5837-a4d3-60222ab6b85e",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91251,
+        "name": "Warcraft LAN CustomCreateTitle",
+        "parent": 91238,
+        "siblingIndex": 11,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -394.5,
+              234.007812
+            ],
+            "size_delta": [
+              108,
+              18.015625
+            ]
+          },
+          "Text": {
+            "text": "多人模式设置",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 18,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "90e31145-d46f-525f-a2f0-c13afb0e466e",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91252,
+        "name": "Warcraft LAN CustomCreateInfo",
+        "parent": 91238,
+        "siblingIndex": 12,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -253.578125,
+              253.070312
+            ],
+            "size_delta": [
+              389.84375,
+              15.609375
+            ]
+          },
+          "Text": {
+            "text": "如要设置一个自定义游戏，那么请点击下面的一个按钮。",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Overflow",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "2e4f32aa-4a7b-51f9-af0d-b6b74419d4d8",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91253,
+        "name": "Warcraft LAN CreateBackdrop",
+        "parent": 91238,
+        "siblingIndex": 13,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -38.4,
+              306
+            ],
+            "size_delta": [
+              307.2,
+              76.8
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/LAN-SmallButtonBase-Mirrored.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "9363c0db-8355-50d3-ae63-a14f30745397",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91254,
+        "name": "UI Control lanCreate",
+        "parent": 91238,
+        "siblingIndex": 14,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -100.8,
+              306
+            ],
+            "size_delta": [
+              153.6,
+              37.2
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "8f69c483-f963-5ddd-afd6-d32ac1bef14c",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91255,
+        "name": "lanCreate border",
+        "parent": 91254,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "f60f16f2-c279-5241-a410-61966b639ee3",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91256,
+        "name": "lanCreate box",
+        "parent": 91254,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              19,
+              19,
+              19,
+              19
+            ],
+            "source_size": [
+              256,
+              64
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "a119a625-96be-5767-a0f4-c709418f9130",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91257,
+        "name": "lanCreate label",
+        "parent": 91254,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              -12,
+              0
+            ]
+          },
+          "Text": {
+            "text": "创建游戏(C)",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "cc745745-93d3-59c4-aea3-e6d6340f1f08",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91258,
+        "name": "Warcraft LAN LoadBackdrop",
+        "parent": 91238,
+        "siblingIndex": 15,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -228.6,
+              306
+            ],
+            "size_delta": [
+              307.2,
+              76.8
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/LAN-SmallButtonBase-Mirrored.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "76dcc3a1-d206-5935-a997-84f5c696af27",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91259,
+        "name": "UI Control lanLoad",
+        "parent": 91238,
+        "siblingIndex": 16,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -291,
+              306
+            ],
+            "size_delta": [
+              153.6,
+              37.2
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "11aa98a1-21a0-5e6d-a8ec-27f26503e598",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91260,
+        "name": "lanLoad border",
+        "parent": 91259,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "486054d3-3fd9-59ec-a403-418968becc6e",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91261,
+        "name": "lanLoad box",
+        "parent": 91259,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              19,
+              19,
+              19,
+              19
+            ],
+            "source_size": [
+              256,
+              64
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "03a5067b-bf50-5c17-abb8-bc23355f8729",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91262,
+        "name": "lanLoad label",
+        "parent": 91259,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              -12,
+              0
+            ]
+          },
+          "Text": {
+            "text": "装载游戏(L)",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "f4e8fb25-0623-53aa-a49b-cf1c79817e21",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91263,
+        "name": "Warcraft LAN JoinBackdrop",
+        "parent": 91238,
+        "siblingIndex": 17,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              318.75,
+              249.15
+            ],
+            "size_delta": [
+              288,
+              76.8
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/GlueScreen-Button1-Border.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "0ee188c8-354a-5c08-a0c4-a828595de1bc",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91264,
+        "name": "UI Control lanJoin",
+        "parent": 91238,
+        "siblingIndex": 18,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              347.55,
+              249.15
+            ],
+            "size_delta": [
+              201.6,
+              37.2
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "e65cb626-7700-5842-ae2c-dd3a65d2a88a",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91265,
+        "name": "lanJoin border",
+        "parent": 91264,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "0bd7ff38-5960-586c-a3f0-6f99d85cc994",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91266,
+        "name": "lanJoin box",
+        "parent": 91264,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              19,
+              19,
+              19,
+              19
+            ],
+            "source_size": [
+              256,
+              64
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "779359e2-b3c1-553a-aff6-053cff34124d",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91267,
+        "name": "lanJoin label",
+        "parent": 91264,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              -12,
+              0
+            ]
+          },
+          "Text": {
+            "text": "加入游戏(J)",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "e262b49c-a3e3-538e-a253-8868ec86f0ce",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91268,
+        "name": "Warcraft LAN CancelBackdrop",
+        "parent": 91238,
+        "siblingIndex": 19,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              318.75,
+              307.95
+            ],
+            "size_delta": [
+              288,
+              76.8
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/GlueScreen-Button1-Border.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "e78b6a54-2e20-5890-a2c7-dbcf1ab943f8",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91269,
+        "name": "UI Control lanCancel",
+        "parent": 91238,
+        "siblingIndex": 20,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              347.55,
+              307.95
+            ],
+            "size_delta": [
+              201.6,
+              37.2
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "a8f5a900-950c-5de2-af2d-3a68493514a8",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91270,
+        "name": "lanCancel border",
+        "parent": 91269,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "2a5c8dc6-6dfa-5a75-adc5-9e1c01acd14f",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91271,
+        "name": "lanCancel box",
+        "parent": 91269,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              19,
+              19,
+              19,
+              19
+            ],
+            "source_size": [
+              256,
+              64
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "3f493cc4-a74b-5b7b-aa8d-c937b183b66f",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91272,
+        "name": "lanCancel label",
+        "parent": 91269,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              -12,
+              0
+            ]
+          },
+          "Text": {
+            "text": "取消(A)",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "481a35d6-a9a9-5f4f-aeae-a88e0619ba3a",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91273,
+        "name": "Warcraft LAN List background",
+        "parent": 91238,
+        "siblingIndex": 21,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -226.5,
+              -1.775
+            ],
+            "size_delta": [
+              444,
+              330
+            ]
+          },
+          "Image": {
+            "color": [
+              0,
+              0,
+              0,
+              0.55
+            ],
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "06cc3e3a-4ae3-567c-a981-cd484a51036a",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91274,
+        "name": "Warcraft LAN Empty list",
+        "parent": 91238,
+        "siblingIndex": 22,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -226.5,
+              -1.775
+            ],
+            "size_delta": [
+              424,
+              80
+            ]
+          },
+          "Text": {
+            "text": "正在连接…",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "e1de07d8-f556-5fc1-a9c5-1c8db2410ea6",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91275,
+        "name": "UI Control lanPrevious",
+        "parent": 91238,
+        "siblingIndex": 23,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -346.5,
+              145.225
+            ],
+            "size_delta": [
+              100,
+              28
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "51af0ad2-a41c-502e-a531-eee34f06ba9e",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91276,
+        "name": "lanPrevious border",
+        "parent": 91275,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "0bac1a17-5704-5ac4-adb2-53dcca7079a9",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91277,
+        "name": "lanPrevious box",
+        "parent": 91275,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              19,
+              19,
+              19,
+              19
+            ],
+            "source_size": [
+              256,
+              64
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "f5cae412-8dd1-59f7-a31a-5db04588d58e",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91278,
+        "name": "lanPrevious label",
+        "parent": 91275,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              -12,
+              0
+            ]
+          },
+          "Text": {
+            "text": "上一页",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "31be2cbf-5164-55c2-a1f4-5c345d205688",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91279,
+        "name": "UI Control lanNext",
+        "parent": 91238,
+        "siblingIndex": 24,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -106.5,
+              145.225
+            ],
+            "size_delta": [
+              100,
+              28
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "8b87d82b-38eb-59a6-adec-ac08c48259dc",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91280,
+        "name": "lanNext border",
+        "parent": 91279,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "f285012c-7867-5217-a0a0-320efb9a1832",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91281,
+        "name": "lanNext box",
+        "parent": 91279,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              19,
+              19,
+              19,
+              19
+            ],
+            "source_size": [
+              256,
+              64
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "d00aeda4-ff7b-5c9e-acf0-afd999330ce8",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91282,
+        "name": "lanNext label",
+        "parent": 91279,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              -12,
+              0
+            ]
+          },
+          "Text": {
+            "text": "下一页",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "fd587ea4-3c5c-5a32-aa94-fc45c4b3fbf0",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91283,
+        "name": "UI Control lanRefresh",
+        "parent": 91238,
+        "siblingIndex": 25,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -346.5,
+              190
+            ],
+            "size_delta": [
+              160,
+              30
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "862d9817-900d-5abc-a72f-439e21012697",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91284,
+        "name": "lanRefresh border",
+        "parent": 91283,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "9bc58d35-397f-5c49-a30b-2638ce12672a",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91285,
+        "name": "lanRefresh box",
+        "parent": 91283,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              19,
+              19,
+              19,
+              19
+            ],
+            "source_size": [
+              256,
+              64
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "58f63bd9-c665-5956-af1f-321fe53c2d09",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91286,
+        "name": "lanRefresh label",
+        "parent": 91283,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              -12,
+              0
+            ]
+          },
+          "Text": {
+            "text": "刷新列表(F5)",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "90c3253b-eb86-54df-a6c5-1246dae6e73f",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91287,
+        "name": "UI Control lanAddress",
+        "parent": 91238,
+        "siblingIndex": 26,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              -106.5,
+              190
+            ],
+            "size_delta": [
+              160,
+              30
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "3bf50a25-fb39-5e6b-ad7d-062dac614cd8",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91288,
+        "name": "lanAddress border",
+        "parent": 91287,
+        "siblingIndex": 0,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "0187c718-380a-5ca7-adc1-96c93a6caeab",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91289,
+        "name": "lanAddress box",
+        "parent": 91287,
+        "siblingIndex": 1,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              0,
+              0
+            ]
+          },
+          "Image": {
+            "sprite": "Assets/WarcraftUI/Textures/StandardButton-Normal-256x64.png",
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "raycast_target": false,
+            "image_type": "Sliced",
+            "border": [
+              19,
+              19,
+              19,
+              19
+            ],
+            "source_size": [
+              256,
+              64
+            ],
+            "pixels_per_unit_multiplier": 1
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "1eda0607-549a-5cc2-a7f1-66f6768f00a0",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91290,
+        "name": "lanAddress label",
+        "parent": 91287,
+        "siblingIndex": 2,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0,
+              0
+            ],
+            "anchor_max": [
+              1,
+              1
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              0,
+              0
+            ],
+            "size_delta": [
+              -12,
+              0
+            ]
+          },
+          "Text": {
+            "text": "服务器地址",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              0.99,
+              0.827,
+              0.0705,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "Shadow": {
+            "effect_color": [
+              0,
+              0,
+              0,
+              0.9
+            ],
+            "effect_distance": [
+              1.2,
+              1.2
+            ],
+            "use_graphic_alpha": true
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "868a20fb-7403-54cb-ab02-e0e7791bf94c",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91291,
+        "name": "Warcraft LAN Server status",
+        "parent": 91238,
+        "siblingIndex": 27,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              263.25,
+              188
+            ],
+            "size_delta": [
+              326.25,
+              44
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 13.2,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "95902ff6-cb64-5a26-aaaf-159e214ee50d",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91292,
+        "name": "Warcraft LAN Map title",
+        "parent": 91238,
+        "siblingIndex": 28,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              263.25,
+              -301
+            ],
+            "size_delta": [
+              326.25,
+              28
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 18,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Center",
+            "vertical_align": "Middle",
+            "horizontal_overflow": "Truncate",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "819a2813-e419-577c-ad15-002cfbf2529a",
+            "root": false
+          }
+        }
+      },
+      {
+        "entity": 91293,
+        "name": "Warcraft LAN Map information",
+        "parent": 91238,
+        "siblingIndex": 29,
+        "active": true,
+        "tag": "Untagged",
+        "layer": 0,
+        "components": {
+          "RectTransform": {
+            "anchor_min": [
+              0.5,
+              0.5
+            ],
+            "anchor_max": [
+              0.5,
+              0.5
+            ],
+            "pivot": [
+              0.5,
+              0.5
+            ],
+            "anchored_position": [
+              263.25,
+              -147.125
+            ],
+            "size_delta": [
+              314.25,
+              187.75
+            ]
+          },
+          "Text": {
+            "text": "",
+            "font": "Assets/Fonts/Warcraft-Master.ttf",
+            "font_size": 15.6,
+            "color": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "alignment": "Left",
+            "vertical_align": "Top",
+            "horizontal_overflow": "Wrap",
+            "vertical_overflow": "Overflow",
+            "raycast_target": false
+          },
+          "__MEnginePrefab": {
+            "source": "Assets/Prefabs/UI/NetworkDialog.prefab",
+            "instance": "a8b5d1e4-668c-5d0f-a193-3ba3322acc72",
+            "node": "777e0251-53c0-5849-a424-23770a31cd78",
             "root": false
           }
         }

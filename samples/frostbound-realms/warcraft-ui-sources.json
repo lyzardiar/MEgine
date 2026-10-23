@@ -9,7 +9,7 @@
   ],
   "gameDllSha256": "e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a",
   "generator": "scripts/import-frost-warcraft-ui.py",
-  "generatorSha256": "b74a6fcb800707f2a217b264563ff87a058bbf5814d81b826a15194f5a9c9438",
+  "generatorSha256": "7e0c6ce8af387b3ff2f6f5cdf5b902a7d3f2e307413b7208a1fec0827cfd8f74",
   "sourceCoordinateSize": [
     0.8,
     0.6
@@ -327,6 +327,13 @@
       "sha256": "9fbd1b7013d0d33b22989cdf89034b7361bdae08dcffb584a062cefd9d27fe85",
       "bytes": 27371,
       "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf"
+    },
+    {
+      "path": "UI/FrameDef/Glue/LocalMultiplayerJoin.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "7484806498906d9405bce1f2101bb4ddff3f72ff69c10aed060470eec773d5e9",
+      "bytes": 6196,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerJoin.fdf"
     },
     {
       "path": "UI/FrameDef/Glue/DialogWar3.fdf",
@@ -864,6 +871,21 @@
           {
             "path": "UI/Widgets/Glues/GlueScreen-Button1-Border.blp",
             "sha256": "5fb1d807e94e84dfdbbbab232980e7ef120451d09dc6e72b09f2ce2eeccf228a"
+          }
+        ],
+        "transform": "BackdropMirrored: horizontal reflection"
+      },
+      "LAN-SmallButtonBase-Mirrored": {
+        "path": "Assets/WarcraftUI/Textures/LAN-SmallButtonBase-Mirrored.png",
+        "size": [
+          512,
+          128
+        ],
+        "sha256": "49d5023ba2635e2705041928c386971babde06fcce1a64f7630956045d977a51",
+        "sources": [
+          {
+            "path": "UI/Widgets/Glues/GlueScreen-Button1-SmallBorder.blp",
+            "sha256": "a59a29081fd15fa5a55d6939a8e90460266f59bbb4f075936e1e612f863abcf1"
           }
         ],
         "transform": "BackdropMirrored: horizontal reflection"
@@ -1920,6 +1942,11 @@
       "bytes": 27371
     },
     {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerJoin.fdf",
+      "sha256": "7484806498906d9405bce1f2101bb4ddff3f72ff69c10aed060470eec773d5e9",
+      "bytes": 6196
+    },
+    {
       "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/DialogWar3.fdf",
       "sha256": "b036b6b6ec2e02bafc0ce0a1ca6c128234abb269813ff016d3647c27b96ef452",
       "bytes": 3166
@@ -2722,6 +2749,16 @@
     {
       "path": "Assets/WarcraftUI/Textures/OptionsPopup-Base-Mirrored.png.meta",
       "sha256": "77fcc4b3966661057be53b407b13903b92e8c7105bf4503e36c680d11faf3240",
+      "bytes": 100
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/LAN-SmallButtonBase-Mirrored.png",
+      "sha256": "49d5023ba2635e2705041928c386971babde06fcce1a64f7630956045d977a51",
+      "bytes": 38093
+    },
+    {
+      "path": "Assets/WarcraftUI/Textures/LAN-SmallButtonBase-Mirrored.png.meta",
+      "sha256": "1930e20ec8118e5e3563bcd2120c2202ece3ddd40f65e413056ec91a2aa0df85",
       "bytes": 100
     },
     {

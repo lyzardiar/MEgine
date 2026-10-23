@@ -11,7 +11,7 @@
   ],
   "scale": 1200,
   "generator": "scripts/extract-frost-warcraft-options.py",
-  "generatorSha256": "f59d32878d689f724dc7bba1f8043ae8f07c541f14054d83763ffd04c7f21182",
+  "generatorSha256": "281834489ca3fb53e69e5245a0b1db32f460e44e4f6008fb55c0feb7d385720f",
   "sources": [
     {
       "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/StandardTemplates.fdf",
