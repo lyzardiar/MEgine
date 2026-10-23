@@ -7,15 +7,15 @@ use parking_lot::Mutex;
 use std::{collections::HashMap, ops::Deref, path::{Path, PathBuf}, sync::{Arc, OnceLock, Weak}, time::SystemTime};
 
 #[derive(Clone, PartialEq)]
-pub(super) struct DependencyStamp { pub path: PathBuf, request: PathBuf, pub(super) bytes: u64, modified: SystemTime }
+pub(super) struct DependencyStamp { pub path: PathBuf, request: PathBuf, device_path: Option<PathBuf>, pub(super) bytes: u64, modified: SystemTime }
 impl DependencyStamp {
     pub(super) fn read(request: &Path) -> Result<Self, AssetError> {
-        let (path, metadata) = file_metadata::canonical_file_metadata(request)?;
+        let (path, metadata, device_path) = file_metadata::canonical_file_metadata(request)?;
         if !metadata.is_file() { return Err(AssetError::Gltf("pose dependency is not a file".into())); }
-        Ok(Self { path, request: request.into(), bytes: metadata.len(), modified: metadata.modified()? })
+        Ok(Self { path, request: request.into(), device_path, bytes: metadata.len(), modified: metadata.modified()? })
     }
-    pub(super) fn is_current(&self) -> bool { Self::read(&self.request).is_ok_and(|stamp| stamp == *self) }
-    fn is_current_at(&self, request: &Path) -> bool { Self::read(request).is_ok_and(|stamp| stamp.path == self.path && stamp.bytes == self.bytes && stamp.modified == self.modified) }
+    pub(super) fn is_current(&self) -> bool { self.is_current_at(&self.request) }
+    fn is_current_at(&self, request: &Path) -> bool { file_metadata::matches_file_metadata(request, &self.path, self.device_path.as_deref(), self.bytes, self.modified) }
 }
 
 /// Validated source version; cameras and sampled poses remain owned by each caller.
@@ -167,5 +167,8 @@ mod tests {
         assert!(source.is_current()); assert!(source.validate_at(&requested).is_none());
         assert_eq!(source.sample_nodes(0, 6, 12, None).unwrap()[0].matrix.w_axis.x, 0.5);
         assert_eq!(pool.load(&requested, &fixture.0).unwrap().source.sample_nodes(0, 6, 12, None).unwrap()[0].matrix.w_axis.x, 4.);
+        // The recorded canonical spelling itself may later become a junction to another identity.
+        std::fs::rename(fixture.root(), fixture.0.join("original")).unwrap(); link(&alternate, &fixture.root());
+        assert!(!source.is_current()); assert!(source.validate_at(&fixture.path()).is_none());
     }
 }

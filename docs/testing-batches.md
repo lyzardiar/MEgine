@@ -222,3 +222,12 @@ QA增加 `--cache-project <前次隔离项目>`，校验源地图和共享文件
 最初原生截图暴露文字裁剪及颜色标记显示问题；修复后定向复看。`native-1792763270883.json`、`native-1792763397275.json` 保留为过程证据；后者仅改变输入尺寸的竖屏截图不作为分辨率验收依据。日志为 `lan-client-test.log`、`lan-import.log`、`lan-native-resolution.log`，均位于同一临时目录。
 
 待批次：原客户端逐像素与原动态列表／滚动条／缩略图／高级选项对照，中文IME实机输入、Tab焦点、多人创建／等待房间源布局、原LAN发现协议。原旧 `qa-frost-menu-network.mjs` 及 `qa-frostbound.mjs` 菜单分支仍使用旧按钮路径和坐标，应更新后再纳入两端完整对局验收；本轮独立LAN入口已覆盖当前菜单真实浏览／加入，不据此宣称原版所有界面或Warcraft网络兼容。
+
+
+### B001-01 来源校验设备路径优化
+
+变更：`mengine-assets/src/gltf_pose/{file_metadata,shared}.rs`。共享来源加载时仅在DOS／标准卷设备路径的卷内组件完全一致时记录规范化NT路径；顺序查询混合名称、挂载目录前缀差异及未知设备保留DOS回退。匹配绝对DOS组件的后续轮询由同一新文件handle验证设备路径和metadata；别名／UNC及不支持设备路径时继续原DOS校验。无跨帧结果缓存、不改变轮询间隔与新姿态即时检查。属于大图性能补充，B001仍3/3未结算。
+
+快速检查：shared收尾复验9通过、0失败、1项手动基准忽略，包含混合名称拒绝；Runtime来源校验3通过、旧手动基准1忽略。新增用例覆盖canonical目录被替换成junction、文件名大小写改名、硬链接别名和设备信息缺失回退。263文件同进程交替基准由13.26196ms降至9.34456ms（29.54%），只代表来源校验CPU／文件系统开销；细节见性能todo第二十七阶段。没有Editor构建、全库测试、全量地图转换或重复原生UI验收。
+
+待批次：下次相关SDK／Editor构建后，在同一集成版本验证原地图Scene／Game／RawImage、主文件与依赖热更新、目录重新指向、Play暂停／Stop恢复，记录同输入原生来源校验和整帧指标；当前EXE仍是此前版本，不能用其截图证明本项已集成。UNC／网络盘、实际卷挂载变化及非Windows回退路径仍待对应环境验证。证据均在 `tmp/docs-artifacts/editor-performance-risk/metadata-*`，不提交原始产物。

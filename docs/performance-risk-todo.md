@@ -682,3 +682,27 @@ cargo test -p mengine-rhi --release --lib benchmark_reused_draw_bindings -- --ig
 固定Game采样取后10帧中位数：截图总耗时29.672ms；来源校验10.177ms、网格缓存同步12.443ms、对象／材质提取3.920ms、Frame compile7.085ms、世界通道编码2.493ms。来源校验是网格同步子节点，对象提取是Frame compile子节点，不能相加为独立总成本。10帧均包含来源校验；截图间隔触发文件轮询，不能换算成实时FPS。2746个可见提交物体、0次mesh上传，汇总 `B001/draw-bindings-native-summary.json`。本次没有新旧EXE同输入对照，不声称原生提速。
 
 下一步先细分来源路径身份／依赖检查与对象材质开销。原图4745个MeshRenderer有339种key、4719个PropertyBlock；所有key已使用正斜杠且无首尾空白，现有owned String输出仍需复制。未据总提取耗时直接增加字符串缓存；继续保留热更新、路径身份、实体generation、层级与相机专属billboard行为。
+
+
+## 第二十七阶段来源校验的设备路径
+
+原版Amazonia作者场景的263个动画GLB均没有外部buffer／image依赖，263次请求对应263个不同文件。依赖合并不能减少该输入的文件查询。分段计时确认Windows规范化DOS路径查询是主要成本之一；本阶段保留路径规范化，每次轮询重新打开文件，从同一handle核对最终设备路径、文件类型、长度和mtime。
+
+来源加载时记录规范化DOS路径及可用的规范化NT设备路径。只有两个名称的卷内目录／文件组件完全一致且设备为标准HarddiskVolume数字名称时才保留设备身份；顺序查询期间改名造成的混合名称、挂载目录／SUBST路径前缀差异及未知设备命名均回退DOS校验。请求绝对DOS组件与记录路径一致时使用设备路径，省去每次查询盘符映射；盘符前缀按Rust的Windows路径规则比较，分隔符和verbatim前缀兼容。不同文件名大小写、父目录遍历、别名和UNC请求走原规范化DOS路径检查；缺少设备路径、设备查询不支持或失败时保留回退。未缓存文件handle、当前metadata或验证结果，不改变250ms轮询、新姿态立即校验、项目切换或显式失效规则。首次加载多一次设备路径查询，记录随共享来源释放。
+
+Windows API依据：[GetFinalPathNameByHandleW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfinalpathnamebyhandlew) 的规范化路径与VOLUME_NAME_NT语义。生产校验始终使用规范化文件名；设备路径包含卷设备和最终文件路径。mtime与长度仍是既有内容失效规则，不新增内容hash保证。
+
+同进程交替执行旧DOS校验、设备路径校验和独立分段计时，2组预热、9组测量，每组5轮、每轮263文件，逐项比较路径／长度／mtime。旧路径13.26196ms，设备路径9.34456ms，减少29.54%。分段中DOS路径5.92442ms、设备路径2.40018ms、打开5.05948ms、metadata0.69820ms、关闭1.71416ms；分段计时执行了两种路径查询，不能与未插桩整轮结果相加比较。该结果仅为本机NTFS文件来源校验，不是整帧、持续FPS或原生Editor提速证明。
+
+快速检查覆盖共享来源并发复用、外部依赖修改／删除／恢复、项目边界、主文件替换、目录alias重新指向、已记录canonical目录本身被替换为junction、硬链接别名、文件名大小写、盘符／UNC筛选、长路径和错误回退。收尾定向复验9项通过、0失败、1项手动基准忽略，包含顺序查询混合名称拒绝及挂载目录／未知设备回退。收尾修改只约束加载时记录设备身份的条件，已测轮询路径保持不变；不重复性能基准。Runtime的3项来源验证用例通过，覆盖250ms缓存周期、新姿态立即检查、main／buffer热更新、移除恢复和render-only兼容。无全库测试或Editor重建。
+
+复现命令：
+
+```powershell
+cargo test -p mengine-assets --release --lib gltf_pose::shared -- --test-threads=1
+$env:MENGINE_METADATA_PROJECT = '<保留的原地图工程目录>'
+cargo test -p mengine-assets --release --lib benchmark_dependency_metadata_steps -- --ignored --nocapture --test-threads=1
+cargo test -p mengine-runtime --release --lib source_validation_tests -- --test-threads=1
+```
+
+原始证据：`tmp/docs-artifacts/editor-performance-risk/metadata-{final-tests,identity-tests,dos-prefix-test,identity-benchmark,runtime-tests}.log`、`metadata-identity-summary.json` 与 `source-validation-inputs.json`。之前的路径查询分解实验保留在同目录。待下次相关SDK／Editor集成构建验证实际地图Scene／Game／嵌入视图、热更新与Stop恢复；UNC／网络盘／挂载卷和Linux／macOS实际文件系统尚未实测。
