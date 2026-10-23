@@ -8,6 +8,7 @@ export const WARCRAFT_UI_ADDITIONS=[
   ['optionsGameplay','options',false],['optionsVideo','options',false],['optionsSound','options',false],['optionsCancel','options',false],
   ['pauseToggle','pause',false],['pauseOptions','pause',false],['pauseHelp','pause',false],['pauseTips','pause',false],
   ['hudAllies','toolbar',true],['hudChat','toolbar',true],
+  ['createStart','network',false],['createCancel','network',false],['createOptions','network',true],
   ['lanCreate','lan',false],['lanLoad','lan',true],['lanJoin','lan',false],['lanCancel','lan',false],['lanRefresh','lan',false],['lanAddress','lan',false],['lanPrevious','lan',false],['lanNext','lan',false]
 ];
 export function configureWarcraftButtons(buttons,manifest){

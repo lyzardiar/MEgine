@@ -13,7 +13,7 @@ from warcraft_mpq import mpyq, read_archive
 
 ROOT = Path(__file__).resolve().parents[1]
 ARCHIVES = ['War3Patch.mpq', 'War3xLocal.mpq', 'War3x.mpq', 'war3.mpq']
-SCREENS = ['Glue/MainMenu', 'Glue/SinglePlayerMenu', 'Glue/Skirmish', 'Glue/OptionsMenu', 'Glue/LocalMultiplayerJoin', 'Glue/DialogWar3', 'Glue/MapInfoPane', 'Glue/MapListBox', 'Glue/PlayerSlot', 'UI/EscMenuMainPanel', 'UI/EscMenuOptionsPanel', 'UI/ConsoleUI', 'UI/ResourceBar', 'UI/UpperButtonBar', 'UI/InfoPanelUnitDetail']
+SCREENS = ['Glue/MainMenu', 'Glue/SinglePlayerMenu', 'Glue/Skirmish', 'Glue/OptionsMenu', 'Glue/LocalMultiplayerJoin', 'Glue/LocalMultiplayerCreate', 'Glue/DialogWar3', 'Glue/MapInfoPane', 'Glue/MapListBox', 'Glue/PlayerSlot', 'UI/EscMenuMainPanel', 'UI/EscMenuOptionsPanel', 'UI/ConsoleUI', 'UI/ResourceBar', 'UI/UpperButtonBar', 'UI/InfoPanelUnitDetail']
 TEXTURES = ['GlueScreen-Button1-Border', 'GlueScreen-Button1-SmallBorder', 'GlueScreen-Button1-BackdropBackground', 'GlueScreen-Button1-BackdropBackground-Disabled', 'GlueScreen-Button1-BackdropBorder', 'GlueScreen-Button1-BackdropBorder-Down', 'GlueScreen-Button1-BackdropBorder-Disabled', 'GlueScreen-Button1-BackdropBorder-DisabledDown', 'GlueScreen-Button-KeyboardHighlight']
 EDGE_SLICES = ['L', 'R', 'T', 'B', 'UL', 'UR', 'BL', 'BR']
 BUTTON_STATES = {'Normal': ('', ''), 'Down': ('', '-Down'), 'Disabled': ('-Disabled', '-Disabled'), 'DisabledDown': ('-Disabled', '-DisabledDown')}
@@ -207,6 +207,8 @@ def run(game, output, button_sizes=None):
         asset('Assets/Fonts/Warcraft-Master.ttf', read(font), 'font')
         for name, source in [(name, 'UI/Widgets/Glues/' + name + '.blp') for name in TEXTURES] + [('ButtonMouseHighlight', 'UI/Widgets/BattleNet/bnet-button01-highlight-mouse.blp')]:
             texture(name, source)
+        texture('bnet-slider-bar3', 'UI/Widgets/BattleNet/bnet-slider-bar3.blp')
+        texture('GlueScreen-Button1-LargeBorderSingle', 'UI/Widgets/Glues/GlueScreen-Button1-LargeBorderSingle.blp')
         for size in dict.fromkeys([(215, 37), (256, 64)] + list(button_sizes or [])):
             for state, (background_suffix, edge_suffix) in BUTTON_STATES.items():
                 background = 'GlueScreen-Button1-BackdropBackground' + background_suffix

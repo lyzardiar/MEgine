@@ -231,3 +231,14 @@ QA增加 `--cache-project <前次隔离项目>`，校验源地图和共享文件
 快速检查：shared收尾复验9通过、0失败、1项手动基准忽略，包含混合名称拒绝；Runtime来源校验3通过、旧手动基准1忽略。新增用例覆盖canonical目录被替换成junction、文件名大小写改名、硬链接别名和设备信息缺失回退。263文件同进程交替基准由13.26196ms降至9.34456ms（29.54%），只代表来源校验CPU／文件系统开销；细节见性能todo第二十七阶段。没有Editor构建、全库测试、全量地图转换或重复原生UI验收。
 
 待批次：下次相关SDK／Editor构建后，在同一集成版本验证原地图Scene／Game／RawImage、主文件与依赖热更新、目录重新指向、Play暂停／Stop恢复，记录同输入原生来源校验和整帧指标；当前EXE仍是此前版本，不能用其截图证明本项已集成。UNC／网络盘、实际卷挂载变化及非Windows回退路径仍待对应环境验证。证据均在 `tmp/docs-artifacts/editor-performance-risk/metadata-*`，不提交原始产物。
+
+
+### B001-01 原版创建游戏页
+
+变更：LocalMultiplayerCreate源FDF／两张BLP及PNG、创建页布局提取／恢复脚本、NetworkDialog prefab、Main场景／脚本和client选图流程。21个源节点、54个公共UI源成员、178个文件摘要；保留4308个既有实体ID，当前4340实体。选择地图后按创建才发出请求，取消返回浏览，断线回到选图；固定速度与高级选项禁用。界面补充，B001保持3/3未结算。
+
+快速检查：`test-frost-warcraft-create.mjs` 与LAN入口集成检查通过；来源摘要、布局、两个长宽比、点击／键盘、创建载荷、断线／返回和禁用控件均覆盖；相关JS语法、差异与资源摘要通过。原生只执行 `qa-frost-warcraft-ui.mjs --create-only`，复用EXE SHA256 `03e55ada83c9a26a2c194bc84ec529c01d82260ea86d7c3bfa3fa5357318ff7c`，没有引擎构建、全库或全地图回归。
+
+最终 `tmp/docs-artifacts/war3-ui/native-1792765684295.json`：实际TCP创建moba房间、1280×720与960×900两张截图、0 error，正常退出；WebView锁定缓存保留。首次QA误读room.mode字段的报告1792765608846保留，已改为检查服务端实际room.map.mode后复验。原生源脚本SHA256为13f7744feaf7d6b3c449b6c1ca4f2e786021166660072af6591a6a78eff9ecd7，隔离副本仅修改随机TCP端口。
+
+待批次：原目录／地图列表行与缩略图、源地图动态详情、等待大厅玩家槽、原速度／高级选项运行语义和原客户端逐像素／焦点对照；旧双客户端QA需从直接点击地图创建改为选择后点击createStart，再纳入完整对局验证。当前EXE不含第二十七阶段来源校验优化，本次UI检查不能作为该性能项集成证据。

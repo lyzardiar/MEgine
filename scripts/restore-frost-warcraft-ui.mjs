@@ -6,6 +6,7 @@ import {WARCRAFT_UI_FONT as font,WARCRAFT_UI_GOLD as gold} from './frost-warcraf
 import {syncFrostUI} from './sync-frost-ui.mjs';
 import {restoreWarcraftOptions} from './restore-frost-warcraft-options.mjs';
 import {restoreWarcraftLan} from './restore-frost-warcraft-lan.mjs';
+import {restoreWarcraftCreate} from './restore-frost-warcraft-create.mjs';
 
 const project=path.resolve(process.argv[2]??'samples/frostbound-realms'),folder=path.join(project,'Assets/Prefabs/UI');
 const prefabs=Object.fromEntries(UI_SCREENS.map(([key])=>[key,JSON.parse(fs.readFileSync(path.join(folder,key+'.prefab'),'utf8'))]));
@@ -79,6 +80,7 @@ control('Options','optionsCancel','取消(A)',346.8,294.6,201.6,37.2,true);
 for(const n of ['Options heading','Warcraft option availability',...['menuSnow','musicVolume','sfxVolume'].flatMap(id=>[' border',' box',' label'].map(s=>id+s))])clear(n);
 restoreWarcraftOptions(prefabs.Options);
 restoreWarcraftLan(prefabs.NetworkDialog);
+restoreWarcraftCreate(prefabs.NetworkDialog);
 
 // Skirmish.fdf containers: list upper left, team setup lower left, information upper right.
 for(const name of ['Front backing','Front frame','Map list backing','Map list frame','Map preview frame'])clear(name);

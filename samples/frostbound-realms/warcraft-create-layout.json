@@ -1,0 +1,1109 @@
+{
+  "schemaVersion": 1,
+  "referenceCanvas": [
+    960,
+    720
+  ],
+  "coordinateSystem": "center origin; +x right; +y down; rect=[centerX,centerY,width,height]",
+  "sourceCoordinateSize": [
+    0.8,
+    0.6
+  ],
+  "scale": 1200,
+  "generator": "scripts/extract-frost-warcraft-create.py",
+  "generatorSha256": "ac77db0d1f8150a5d10ae61057ac5db009b6b816c494f2931333da091c20277f",
+  "sources": [
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/StandardTemplates.fdf",
+      "sha256": "5abcba7ab502e5bb5f703eb6e6428aa557f675a4e626049b56fbf256c0c3d73a"
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+      "sha256": "bda5d5e61571692c041bda88ef351ba5cdc32de89a0277a4530cd13501b1d6ea"
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/GlobalStrings.fdf",
+      "sha256": "8f15e34c8b05a915daa4c3f55c5e00b5eaae6f5a792992a88056ab09bd9552d7"
+    },
+    {
+      "path": "Assets/Fonts/Warcraft-Master.ttf",
+      "sha256": "da03874db48b05256fe961f56783f388bd37617eaf1791981fcfb3bbcd73aafb"
+    },
+    {
+      "path": "../../scripts/extract-frost-warcraft-options.py",
+      "sha256": "281834489ca3fb53e69e5245a0b1db32f460e44e4f6008fb55c0feb7d385720f"
+    }
+  ],
+  "textMetrics": {
+    "engine": "Pillow 12.2.0",
+    "font": "Assets/Fonts/Warcraft-Master.ttf",
+    "supersampling": 64,
+    "autoWidth": "getlength",
+    "autoHeight": "(ascent + descent) * line count"
+  },
+  "pages": {
+    "create": [
+      {
+        "name": "GameSettingsTitle",
+        "type": "TEXT",
+        "text": "创建游戏设定",
+        "textKey": "CREATE_GAME_SETTINGS",
+        "fontSize": 18.0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -394.5,
+          -304.192187,
+          108.0,
+          18.015625
+        ],
+        "template": "StandardTitleTextTemplate",
+        "templateChain": [
+          "StandardTitleTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "LocalMultiplayerCreate",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.02625,
+              -0.039
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 20
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "GameSettingsTitle",
+          "nominalFontHeight": 18.0,
+          "ascent": 15.484375,
+          "descent": 2.53125,
+          "lines": 1
+        },
+        "fontSource": "GameSettingsTitle",
+        "parent": "GameSettingsPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": []
+      },
+      {
+        "name": "GameSpeedLabel",
+        "type": "TEXT",
+        "text": "游戏速度：",
+        "textKey": "COLON_GAME_SPEED",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -409.515625,
+          -267.879687,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "GameSettingsTitle",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.01625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 25
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "GameSpeedLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "GameSpeedLabel",
+        "parent": "GameSettingsPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": []
+      },
+      {
+        "name": "GameSpeedSliderBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -294.9,
+          -239.675,
+          307.2,
+          38.4
+        ],
+        "template": null,
+        "templateChain": [],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "GameSpeedLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.001
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 30
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "GameSettingsPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": "UI\\Widgets\\BattleNet\\bnet-slider-bar3.blp",
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "GameSpeedSlider",
+        "type": "SLIDER",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -296.4,
+          -239.315,
+          284.7,
+          38.4
+        ],
+        "template": null,
+        "templateChain": [],
+        "anchors": [
+          {
+            "point": "CENTER",
+            "relative": "GameSpeedSliderBackdrop",
+            "relativePoint": "CENTER",
+            "offset": [
+              -0.00125,
+              -0.0003
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 37
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "GameSpeedSliderBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "range": [
+          0.0,
+          2.0
+        ],
+        "step": 1.0,
+        "initialValue": 2.0
+      },
+      {
+        "name": "GameSpeedValue",
+        "type": "TEXT",
+        "text": "",
+        "textKey": null,
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -136.05,
+          -239.315,
+          0.0,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "GameSpeedSlider",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.015,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 68
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "GameSpeedValue",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "GameSpeedValue",
+        "parent": "GameSettingsPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": [
+          "GameSpeedSlider"
+        ]
+      },
+      {
+        "name": "MapListLabel",
+        "type": "TEXT",
+        "text": "选择地图：",
+        "textKey": "COLON_SELECT_MAP",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -409.515625,
+          -196.770312,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "GameSpeedLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.04625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 72
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "MapListLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "MapListLabel",
+        "parent": "GameSettingsPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": []
+      },
+      {
+        "name": "MapListContainer",
+        "type": "FRAME",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -223.5,
+          -13.765625,
+          450.0,
+          348.0
+        ],
+        "template": null,
+        "templateChain": [],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "MapListLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.001
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 77
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "GameSettingsPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "MapInfoPaneContainer",
+        "type": "FRAME",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          263.25,
+          -121.125,
+          326.25,
+          387.75
+        ],
+        "template": null,
+        "templateChain": [],
+        "anchors": [
+          {
+            "point": "TOP",
+            "relative": "LocalMultiplayerCreate",
+            "relativePoint": "TOPRIGHT",
+            "offset": [
+              -0.180625,
+              -0.0375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 91
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "MapInfoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "MapInfoBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          260.4,
+          134.4,
+          307.2,
+          76.8
+        ],
+        "template": "StandardMenuSingleLargeButtonBaseBackdrop",
+        "templateChain": [
+          "StandardMenuSingleLargeButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPRIGHT",
+            "relative": "LocalMultiplayerCreate",
+            "relativePoint": "TOPRIGHT",
+            "offset": [
+              -0.055,
+              -0.38
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 97
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "MapInfoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": "UI\\Widgets\\Glues\\GlueScreen-Button1-LargeBorderSingle.blp",
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "MapInfoButton",
+        "type": "GLUETEXTBUTTON",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          263.4,
+          133.35,
+          224.4,
+          37.2
+        ],
+        "template": "StandardButtonTemplate",
+        "templateChain": [
+          "StandardButtonTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPRIGHT",
+            "relative": "MapInfoBackdrop",
+            "relativePoint": "TOPRIGHT",
+            "offset": [
+              -0.032,
+              -0.015625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 100
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "MapInfoBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": "O"
+      },
+      {
+        "name": "MapInfoButtonText",
+        "type": "TEXT",
+        "text": "高级选项(|CffffffffO|R)",
+        "textKey": "KEY_ADVANCED_OPTIONS",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          263.4,
+          133.35,
+          224.4,
+          37.2
+        ],
+        "template": "StandardButtonTextTemplate",
+        "templateChain": [
+          "StandardButtonTextTemplate"
+        ],
+        "anchors": [],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 107
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "MapInfoButtonText",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "MapInfoButtonText",
+        "parent": "MapInfoButton",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": []
+      },
+      {
+        "name": "AdvancedOptionsPaneContainer",
+        "type": "FRAME",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          263.25,
+          -121.125,
+          326.25,
+          387.75
+        ],
+        "template": null,
+        "templateChain": [],
+        "anchors": [
+          {
+            "point": "TOP",
+            "relative": "LocalMultiplayerCreate",
+            "relativePoint": "TOPRIGHT",
+            "offset": [
+              -0.180625,
+              -0.0375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 115
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "AdvancedOptionsPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "AdvancedOptionsBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          260.4,
+          134.4,
+          307.2,
+          76.8
+        ],
+        "template": "StandardMenuSingleLargeButtonBaseBackdrop",
+        "templateChain": [
+          "StandardMenuSingleLargeButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPRIGHT",
+            "relative": "LocalMultiplayerCreate",
+            "relativePoint": "TOPRIGHT",
+            "offset": [
+              -0.055,
+              -0.38
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 121
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "AdvancedOptionsPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": "UI\\Widgets\\Glues\\GlueScreen-Button1-LargeBorderSingle.blp",
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "AdvancedOptionsButton",
+        "type": "GLUETEXTBUTTON",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          263.4,
+          133.35,
+          224.4,
+          37.2
+        ],
+        "template": "StandardButtonTemplate",
+        "templateChain": [
+          "StandardButtonTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPRIGHT",
+            "relative": "AdvancedOptionsBackdrop",
+            "relativePoint": "TOPRIGHT",
+            "offset": [
+              -0.032,
+              -0.015625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 124
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "AdvancedOptionsBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": "M"
+      },
+      {
+        "name": "AdvancedOptionsButtonText",
+        "type": "TEXT",
+        "text": "地图信息(|CffffffffM|R)",
+        "textKey": "KEY_MAP_INFO",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          263.4,
+          133.35,
+          224.4,
+          37.2
+        ],
+        "template": "StandardButtonTextTemplate",
+        "templateChain": [
+          "StandardButtonTextTemplate"
+        ],
+        "anchors": [],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 131
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "AdvancedOptionsButtonText",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "AdvancedOptionsButtonText",
+        "parent": "AdvancedOptionsButton",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": []
+      },
+      {
+        "name": "PlayBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          318.75,
+          249.15,
+          288.0,
+          76.8
+        ],
+        "template": "StandardMenuButtonBaseBackdrop",
+        "templateChain": [
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPRIGHT",
+            "relative": "LocalMultiplayerCreate",
+            "relativePoint": "BOTTOMRIGHT",
+            "offset": [
+              -0.014375,
+              0.124375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 144
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "LocalMultiplayerCreate",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": "UI\\Widgets\\Glues\\GlueScreen-Button1-Border.blp",
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "PlayButton",
+        "type": "GLUETEXTBUTTON",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          347.55,
+          249.15,
+          201.6,
+          37.2
+        ],
+        "template": "StandardButtonTemplate",
+        "templateChain": [
+          "StandardButtonTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPRIGHT",
+            "relative": "PlayBackdrop",
+            "relativePoint": "TOPRIGHT",
+            "offset": [
+              -0.012,
+              -0.0165
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 148
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "PlayBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": "C"
+      },
+      {
+        "name": "PlayButtonText",
+        "type": "TEXT",
+        "text": "创建游戏(|CffffffffC|R)",
+        "textKey": "KEY_CREATE_GAME",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          347.55,
+          249.15,
+          201.6,
+          37.2
+        ],
+        "template": "StandardButtonTextTemplate",
+        "templateChain": [
+          "StandardButtonTextTemplate"
+        ],
+        "anchors": [],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 156
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "PlayButtonText",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "PlayButtonText",
+        "parent": "PlayButton",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": []
+      },
+      {
+        "name": "CancelBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          318.75,
+          307.95,
+          288.0,
+          76.8
+        ],
+        "template": "StandardMenuButtonBaseBackdrop",
+        "templateChain": [
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPRIGHT",
+            "relative": "PlayBackdrop",
+            "relativePoint": "BOTTOMRIGHT",
+            "offset": [
+              0.0,
+              0.015
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 162
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "LocalMultiplayerCreate",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": "UI\\Widgets\\Glues\\GlueScreen-Button1-Border.blp",
+          "mirrored": false
+        },
+        "shortcut": null
+      },
+      {
+        "name": "CancelButton",
+        "type": "GLUETEXTBUTTON",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          347.55,
+          307.95,
+          201.6,
+          37.2
+        ],
+        "template": "StandardButtonTemplate",
+        "templateChain": [
+          "StandardButtonTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPRIGHT",
+            "relative": "CancelBackdrop",
+            "relativePoint": "TOPRIGHT",
+            "offset": [
+              -0.012,
+              -0.0165
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 166
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "LocalMultiplayerCreate",
+        "parent": "CancelBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": "A"
+      },
+      {
+        "name": "CancelButtonText",
+        "type": "TEXT",
+        "text": "取消(|CffffffffA|R)",
+        "textKey": "KEY_CANCEL",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          347.55,
+          307.95,
+          201.6,
+          37.2
+        ],
+        "template": "StandardButtonTextTemplate",
+        "templateChain": [
+          "StandardButtonTextTemplate"
+        ],
+        "anchors": [],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf",
+          "line": 173
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "CancelButtonText",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "CancelButtonText",
+        "parent": "CancelButton",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "backdrop": {
+          "background": null,
+          "mirrored": false
+        },
+        "shortcut": null,
+        "associatedControls": []
+      }
+    ]
+  },
+  "unresolved": [],
+  "limitations": [
+    "Unspecified text dimensions use Pillow metrics from the preserved MasterFont TTF at the inherited FDF font size; Warcraft native font rasterization, glyph spacing, baseline and line-box rules have not been measured.",
+    "SetPoint offsets and explicit dimensions are evaluated directly without layout adjustments; text measurement differences propagate through dependent anchors.",
+    "Map rows and map summary are supplied by the runtime; the source containers do not define their internal arrangement.",
+    "The current server uses a fixed simulation speed. The source slider and advanced options are disabled until supported by the network simulation."
+  ]
+}
