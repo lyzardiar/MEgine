@@ -26,6 +26,44 @@ fn assert_objects_equal(left: &[RenderObject], right: &[RenderObject]) {
 }
 
 #[test]
+#[ignore = "manual large-map material extraction stage profile"]
+fn benchmark_large_map_material_steps() {
+    let root = std::path::PathBuf::from(std::env::var_os("MENGINE_MATERIAL_PROJECT").expect("Set MENGINE_MATERIAL_PROJECT to a preserved map project"));
+    let mut world = World::new(); mengine_scene::load_scene(&root.join("Assets/Scenes/Main.mscene"), &mut world).unwrap();
+    let hierarchy = TransformHierarchy::build(&world);
+    let mut materials = RuntimeMaterialCache::new(Some(root.clone()));
+    let expected = collect_objects(&world, &hierarchy, &mut materials);
+    let mut samples = vec![Vec::new(); 7];
+    for run in 0..11 {
+        let mut times = [0.; 7];
+        for index in if run % 2 == 0 { [0, 1] } else { [1, 0] } {
+            let total = Instant::now();
+            for _ in 0..5 {
+                if index == 0 { black_box(collect_objects(&world, &hierarchy, &mut materials)); continue; }
+                let start = Instant::now();
+                let inputs: Vec<_> = world.entities_with_components(&["MeshRenderer"]).filter_map(|entity| Some((hierarchy.get(entity)?, world.get_component::<MeshRenderer>(entity)?, world.get_component::<PbrMaterial>(entity), world.get_component::<MaterialPropertyBlock>(entity)))).collect();
+                times[2] += start.elapsed().as_secs_f64();
+                let start = Instant::now(); let mut resolved = HashMap::<&str, RenderMaterial>::new();
+                let values: Vec<_> = inputs.iter().map(|(_, mesh, pbr, _)| pbr.map(render_material_from_component).unwrap_or_else(|| resolved.entry(&mesh.material).or_insert_with(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material))).clone())).collect();
+                times[3] += start.elapsed().as_secs_f64();
+                let start = Instant::now();
+                let values: Vec<_> = values.into_iter().zip(&inputs).map(|(material, (_, _, _, block))| if let Some(block) = block { apply_material_property_block(material, block) } else { material }).collect();
+                times[4] += start.elapsed().as_secs_f64();
+                let start = Instant::now();
+                let out: Vec<_> = values.into_iter().zip(&inputs).map(|(material, (transform, mesh, _, _))| RenderObject { mesh_key: mesh.mesh.trim().replace('\\', "/"), model: transform.matrix, cast_shadows: mesh.cast_shadows, receive_shadows: mesh.receive_shadows, material }).collect();
+                times[5] += start.elapsed().as_secs_f64();
+                if run == 0 { assert_objects_equal(&out, &expected); }
+                let start = Instant::now(); drop(black_box(out)); drop(resolved); drop(inputs); times[6] += start.elapsed().as_secs_f64();
+            }
+            times[index] = total.elapsed().as_secs_f64();
+        }
+        if run > 1 { for (samples, value) in samples.iter_mut().zip(times) { samples.push(value * 1000. / 5.); } }
+    }
+    for sample in &mut samples { sample.sort_by(f64::total_cmp); }
+    println!("MATERIAL_STAGES={}", serde_json::json!({"project":root,"objects":expected.len(),"samples":9,"iterations_per_sample":5,"baseline_ms":samples[0][4],"batched_profile_ms":samples[1][4],"lookup_ms":samples[2][4],"material_ms":samples[3][4],"overrides_ms":samples[4][4],"objects_ms":samples[5][4],"drop_ms":samples[6][4]}));
+}
+
+#[test]
 fn shared_material_extraction_keeps_overrides_private_and_refreshes_next_frame() {
     let root = std::env::temp_dir().join(format!("mengine-frame-materials-{}", uuid::Uuid::new_v4()));
     std::fs::create_dir_all(root.join("Assets")).unwrap();
@@ -294,4 +332,56 @@ fn benchmark_transform_hierarchy_build() {
         }
     }
     println!("TRANSFORM_HIERARCHY_BENCHMARK={}", serde_json::json!(reports));
+}
+
+// Reference extraction retains the existing growable output allocation.
+fn growable_output_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>, mut entities: Option<&mut Vec<Entity>>) -> Vec<RenderObject> {
+    let mut out = Vec::new();
+    let mut root_filter = RenderRootFilter::new(root);
+    // MiYu: resolve a shared authored material once per extraction; each object's overrides stay private.
+    let mut resolved_materials = HashMap::<&str, RenderMaterial>::new();
+    for entity in world.entities_with_components(&["MeshRenderer"]) {
+        // MiYu: resolve eligibility before reading pooled renderer components.
+        let Some(transform) = hierarchy.get(entity) else { continue; };
+        if !root_filter.contains(world, entity) { continue; }
+        if let Some(mesh) = world.get_component::<MeshRenderer>(entity) {
+            let mut material = world
+                .get_component::<PbrMaterial>(entity)
+                .map(render_material_from_component)
+                .unwrap_or_else(|| {
+                    resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material))).clone()
+                });
+            if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
+                material = apply_material_property_block(material, block);
+            }
+            if let Some(entities) = entities.as_deref_mut() { entities.push(entity); }
+            out.push(RenderObject {
+                mesh_key: mesh.mesh.trim().replace('\\', "/"),
+                model: transform.matrix,
+                cast_shadows: mesh.cast_shadows,
+                receive_shadows: mesh.receive_shadows,
+                material,
+            });
+        }
+    }
+    out
+}
+
+
+#[test]
+#[ignore = "manual original-map output allocation comparison"]
+fn benchmark_mesh_output_allocation() {
+    let root = std::path::PathBuf::from(std::env::var_os("MENGINE_MATERIAL_PROJECT").expect("Set MENGINE_MATERIAL_PROJECT to a preserved map project"));
+    let mut world = World::new(); mengine_scene::load_scene(&root.join("Assets/Scenes/Main.mscene"), &mut world).unwrap();
+    let hierarchy = TransformHierarchy::build(&world); let mut materials = RuntimeMaterialCache::new(Some(root.clone()));
+    let expected = growable_output_objects(&world, &hierarchy, &mut materials, None, None);
+    let reserved = collect_objects(&world, &hierarchy, &mut materials); assert_objects_equal(&expected, &reserved);
+    let mut samples = [Vec::new(), Vec::new()];
+    for run in 0..11 { for index in if run % 2 == 0 { [0, 1] } else { [1, 0] } {
+        let start = Instant::now();
+        for _ in 0..20 { black_box(if index == 0 { growable_output_objects(&world, &hierarchy, &mut materials, None, None) } else { collect_objects(&world, &hierarchy, &mut materials) }); }
+        if run > 1 { samples[index].push(start.elapsed().as_secs_f64() * 1000. / 20.); }
+    }}
+    for sample in &mut samples { sample.sort_by(f64::total_cmp); }
+    println!("MESH_OUTPUT_ALLOCATION={}", serde_json::json!({"project":root,"objects":expected.len(),"baseline_capacity":expected.capacity(),"reserved_capacity":reserved.capacity(),"object_bytes":std::mem::size_of::<RenderObject>(),"samples":9,"iterations_per_sample":20,"baseline_ms":samples[0][4],"reserved_ms":samples[1][4],"all_samples":samples}));
 }

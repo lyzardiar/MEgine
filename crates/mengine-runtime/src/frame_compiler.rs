@@ -558,33 +558,34 @@ fn collect_view_objects(world: &World, hierarchy: &TransformHierarchy, materials
 }
 
 fn collect_mesh_objects(world: &World, hierarchy: &TransformHierarchy, materials: &mut RuntimeMaterialCache, root: Option<Entity>, mut entities: Option<&mut Vec<Entity>>) -> Vec<RenderObject> {
-    let mut out = Vec::new();
     let mut root_filter = RenderRootFilter::new(root);
+    // Compact borrowed inputs size the large owned RenderObject buffer once, without copying materials during growth.
+    let inputs: Vec<_> = world.entities_with_components(&["MeshRenderer"]).filter_map(|entity| {
+        let transform = hierarchy.get(entity)?;
+        if !root_filter.contains(world, entity) { return None; }
+        Some((entity, transform, world.get_component::<MeshRenderer>(entity)?))
+    }).collect();
+    let mut out = Vec::with_capacity(inputs.len());
     // MiYu: resolve a shared authored material once per extraction; each object's overrides stay private.
     let mut resolved_materials = HashMap::<&str, RenderMaterial>::new();
-    for entity in world.entities_with_components(&["MeshRenderer"]) {
-        // MiYu: resolve eligibility before reading pooled renderer components.
-        let Some(transform) = hierarchy.get(entity) else { continue; };
-        if !root_filter.contains(world, entity) { continue; }
-        if let Some(mesh) = world.get_component::<MeshRenderer>(entity) {
-            let mut material = world
-                .get_component::<PbrMaterial>(entity)
-                .map(render_material_from_component)
-                .unwrap_or_else(|| {
-                    resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material))).clone()
-                });
-            if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
-                material = apply_material_property_block(material, block);
-            }
-            if let Some(entities) = entities.as_deref_mut() { entities.push(entity); }
-            out.push(RenderObject {
-                mesh_key: mesh.mesh.trim().replace('\\', "/"),
-                model: transform.matrix,
-                cast_shadows: mesh.cast_shadows,
-                receive_shadows: mesh.receive_shadows,
-                material,
+    for (entity, transform, mesh) in inputs {
+        let mut material = world
+            .get_component::<PbrMaterial>(entity)
+            .map(render_material_from_component)
+            .unwrap_or_else(|| {
+                resolved_materials.entry(&mesh.material).or_insert_with(|| materials.resolve(&mesh.material).unwrap_or_else(|| material_preset(&mesh.material))).clone()
             });
+        if let Some(block) = world.get_component::<MaterialPropertyBlock>(entity) {
+            material = apply_material_property_block(material, block);
         }
+        if let Some(entities) = entities.as_deref_mut() { entities.push(entity); }
+        out.push(RenderObject {
+            mesh_key: mesh.mesh.trim().replace('\\', "/"),
+            model: transform.matrix,
+            cast_shadows: mesh.cast_shadows,
+            receive_shadows: mesh.receive_shadows,
+            material,
+        });
     }
     out
 }

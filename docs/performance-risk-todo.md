@@ -706,3 +706,16 @@ cargo test -p mengine-runtime --release --lib source_validation_tests -- --test-
 ```
 
 原始证据：`tmp/docs-artifacts/editor-performance-risk/metadata-{final-tests,identity-tests,dos-prefix-test,identity-benchmark,runtime-tests}.log`、`metadata-identity-summary.json` 与 `source-validation-inputs.json`。之前的路径查询分解实验保留在同目录。待下次相关SDK／Editor集成构建验证实际地图Scene／Game／嵌入视图、热更新与Stop恢复；UNC／网络盘／挂载卷和Linux／macOS实际文件系统尚未实测。
+
+
+## 第二十八阶段网格对象输出分配
+
+原版Amazonia作者场景输出2747个对象。分阶段诊断中，组件／层级查找约1.043ms、材质构造与复制约1.026ms、属性覆盖约0.251ms、对象组装约0.832ms；分阶段流程额外创建中间数组，不能作为原生帧成本。对应4719个属性块均无自定义参数／纹理覆盖，未据此增加跨帧属性缓存。
+
+`collect_mesh_objects` 在当前不可变World／Hierarchy中先收集通过活动状态、根节点和类型检查的紧凑借用输入，一次分配最终RenderObject数组。避免每轮逐渐扩容搬移大型对象；材质仍按本次提取解析一次，再为每个对象独立应用覆盖。实体顺序、项目／文件热更新、根节点筛选、相机专属修改与失败材质处理保持原规则，不延长任何输入的生命周期。
+
+同进程交替旧输出分配与新实现，2组预热、9组测量，每组20轮。最终基准3.353525ms降至2.515425ms，减少24.99%；逐对象比较网格key、model、投影阴影标志和全部材质字段一致。RenderObject为800字节，最终输出容量4096降至2747，输出数组占用减少1,079,200字节；该数字不包含新增借用输入数组，也不是进程峰值内存。输入哈希与完整样本见 `tmp/docs-artifacts/editor-performance-risk/mesh-output-summary.json`。
+
+`cargo test -p mengine-runtime --release --lib frame_compiler -- --test-threads=1`：10通过、0失败、6项手动基准忽略。覆盖材质热更新／私有属性覆盖、池激活／父变换／实体slot复用、根深度／循环、多视图对象私有性、主相机和UI-only帧、视图背景策略。无全库测试。手动诊断入口为benchmark_large_map_material_steps；对照为benchmark_mesh_output_allocation，均需设置MENGINE_MATERIAL_PROJECT到保留地图工程。
+
+待与第二十七阶段合并构建原生Editor，验证同输入地图Scene／Game、嵌入视图与Play／Stop恢复。上述CPU基准不是整体帧耗时或持续FPS证明。原始日志为material-stages.log、mesh-output-tests.log、mesh-output-allocation-final.log，仅保留在临时目录。
