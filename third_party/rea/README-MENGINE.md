@@ -114,3 +114,5 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 攻城坦克的普通／升级形态、弹幕研究、原模型、头像与攻击特效保存在独立来源收据中。`node scripts/probe-frost-rea-siege-engine.mjs` 复核 Aroc、Acha、rtma 的原DLL身份和分发路径；离线重建、原生资产预览及后续玩法接入边界见 [攻城坦克维护说明](../../docs/designs/frostbound-realms/siege-engine.md)。
 
 乌云武器分类：`scripts/import-frost-cloud-weapons.py` 从保留的UnitWeapons.slk与固定摘要Game.dll生成25个单位／50个武器槽、50项目标token及来源收据；`scripts/probe-frost-rea-cloud-targets-cpu.py` 将原DLL的340组门控结果与当前模拟逐项对照，并核验全部保留武器槽。`python scripts/test-frost-cloud-weapons-source.py` 检查摘要、精确重建和变更输入拒绝。版本更新时重新运行14组REA通道探针，核对类型转换器、目标token表和门控地址；来源及原版实际运行边界见 [狮鹫笼维护说明](../../docs/designs/frostbound-realms/human-aviary.md)。
+
+原版地图：`node scripts/probe-frost-rea-map-formats.mjs` 核对 W3E／WPM／W3I 加载引用。`python scripts/import-frost-original-map.py <地图路径>` 保留原始尺寸、路径、玩家信息、源件及摘要；支持版本、独立格式源站、重建验证和运行时接入边界见 [原版地图维护说明](../../docs/designs/frostbound-realms/original-map-import.md)。
