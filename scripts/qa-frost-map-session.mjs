@@ -28,6 +28,7 @@ const returnOnly=process.argv.includes('--return-only');
 const cameraOnly=process.argv.includes('--camera-only');
 const hierarchyOnly=process.argv.includes('--hierarchy-only');
 const unitInitializationOnly=process.argv.includes('--unit-initialization-only');
+const unitSelectionOnly=process.argv.includes('--unit-selection-only');
 const hierarchyInteractions=process.argv.includes('--hierarchy-interactions');
 const label='map-session-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
@@ -157,7 +158,22 @@ try{
   let s=await snapshot();assert.equal(telemetry(s).mode,'custom');assert.equal(s.entities.find(e=>e.name==='Map name').components.Text.text,'Amazonia');assert.equal(s.entities.find(e=>e.name==='Map preview backing').components.Image.sprite,'Assets/Maps/amazonia/Textures/MapPreview.png');for(const name of ['map2 box','map3 box','faction box','heroChoice box','Hero preview','Map tile 0'])assert.equal(clientWorldFixture(s).visible(name),false,name);await capture('selection');
   await click('mapStart box');s=await waitMap('amazonia');assert.deepEqual(status(s).pathing.size,[384,384]);assert.equal(status(s).pathing.revision,0);assert.ok(s.entities.some(e=>e.name.startsWith('Doodad-'))&&s.entities.some(e=>e.name.startsWith('Unit-')));report.map=status(s);report.entities=s.entities.length;
   if(editorFeedback)await checkHierarchyFocus(s);
-  if(unitInitializationOnly){
+  if(unitSelectionOnly){
+    assert.deepEqual(status(s).unitBindings,{status:'ready',count:96,selected:null});
+    await execute('playback.input',{keys:['KeyD','KeyW'],buttons:[],viewport:[1280,720]});await step(10);await input({});
+    function projectUnit(world,viewport){
+      const camera=world.entities.find(e=>e.name==='Camera').components,t=camera.Transform,unit=world.entities.find(e=>e.name==='Unit-45-ngol-3'),p=unit.components.Transform.position,[x,y,z,w]=t.rotation.map((v,i)=>i===3?v:-v),v=p.map((n,i)=>n-t.position[i]);
+      const local=[(1-2*(y*y+z*z))*v[0]+2*(x*y-z*w)*v[1]+2*(x*z+y*w)*v[2],2*(x*y+z*w)*v[0]+(1-2*(x*x+z*z))*v[1]+2*(y*z-x*w)*v[2],2*(x*z-y*w)*v[0]+2*(y*z+x*w)*v[1]+(1-2*(x*x+y*y))*v[2]],tangent=Math.tan(camera.Camera3D.fov_y_degrees*Math.PI/360);
+      assert.ok(local[2]<0);return {unit,pointer:[viewport[0]/2+local[0]/(-local[2]*tangent)*viewport[1]/2,viewport[1]/2-local[1]/(-local[2]*tangent)*viewport[1]/2]};
+    }
+    for(const viewport of [[1280,720],[960,900]]){
+      await execute('view.set_game_resolution',{resolution:{width:viewport[0],height:viewport[1]}});s=await snapshot();const target=projectUnit(s,viewport);await input({pointer:target.pointer,buttons:[0],viewport});await input({pointer:target.pointer,viewport});s=await snapshot();
+      const circle=s.entities.find(e=>e.name==='Map unit selection'),label=s.entities.find(e=>e.name==='Map session status').components.Text.text;assert.ok(status(s).unitBindings.selected);assert.equal(circle.active,true);assert.ok(Math.abs(circle.components.Transform.position[0]-target.unit.components.Transform.position[0])<1e-5);assert.ok(Math.abs(circle.components.Transform.position[2]-target.unit.components.Transform.position[2])<1e-5);assert.equal(circle.components.Transform.scale[0],360/128);assert.deepEqual(circle.components.MaterialPropertyBlock.base_color,[1,1,0,1]);assert.match(label,/金矿/);assert.match(label,/12500/);await capture('unit-selection-'+viewport.join('x'));
+      report.checks.push('Native source gold-mine picking and selection circle at '+viewport.join('x'));
+    }
+    await execute('view.set_game_resolution',{resolution:{width:1280,height:720}});await input({pointer:[20,680],buttons:[0]});await input({pointer:[20,680]});s=await snapshot();assert.equal(status(s).unitBindings.selected,null);assert.equal(s.entities.find(e=>e.name==='Map unit selection').active,false);
+    await click('Map session restart');s=await waitMap('amazonia');assert.deepEqual(status(s).unitBindings,{status:'ready',count:96,selected:null});await click('Map session return');assert.equal(status(await snapshot()).unitBindings,null);await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);report.checks.push('Empty-world selection clears; map reload/return/Stop release unit bindings');
+  }else if(unitInitializationOnly){
     const expected={status:'ready',units:96,triggers:26};assert.deepEqual(status(s).initialization,expected);
     await step(3);assert.deepEqual(status(await snapshot()).initialization,expected);await click('Map session restart');s=await waitMap('amazonia');assert.deepEqual(status(s).initialization,expected);
     await click('Map session return');assert.equal(status(await snapshot()).initialization,null);await click('mapStart box');s=await waitMap('amazonia');assert.deepEqual(status(s).initialization,expected);

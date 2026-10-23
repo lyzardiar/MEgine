@@ -28,7 +28,7 @@ var FrostMapSession=(()=>{
         const entry={...event.content};
         if(!/^[a-z0-9][a-z0-9-]*$/.test(entry.id)||entry.runtime!=='warcraft-scene'||entry.gameplay!==false||typeof entry.title!=='string'||typeof entry.description!=='string'||!Array.isArray(entry.preview)||entry.preview.length!==256||entry.preview.some(v=>![0,1,2].includes(v))||typeof entry.scriptSource!=='string')throw Error('地图转换结果无效');
         // The local converter supplies JavaScript; original JASS runs through the bounded native whitelist.
-        entry.create=new Function(entry.scriptSource+'\nreturn {tick:onTick,pathing:originalMapPathing,initialization:typeof originalUnitInitializationSource==="undefined"?null:FrostWarcraftUnitInitialization.initialize(originalUnitInitializationSource),camera:typeof originalMapCamera==="undefined"?null:originalMapCamera};');delete entry.scriptSource;
+        entry.create=new Function(entry.scriptSource+'\nreturn {tick:onTick,pathing:originalMapPathing,unitData:typeof originalUnitBindings==="undefined"?null:originalUnitBindings,initialization:typeof originalUnitInitializationSource==="undefined"?null:FrostWarcraftUnitInitialization.initialize(originalUnitInitializationSource),camera:typeof originalMapCamera==="undefined"?null:originalMapCamera};');delete entry.scriptSource;
         const index=FrostMapPackages.findIndex(map=>map.id===entry.id);
         if(index<0)FrostMapPackages.push(entry);else FrostMapPackages[index]=entry;
         importMessage=entry.cached?'正在加载缓存地图…':'转换完成，正在加载地图…';
@@ -44,7 +44,7 @@ var FrostMapSession=(()=>{
     const entry=FrostMapPackages.find(map=>map.scene===scene.path),returning=loaded;
     if(scene.path!==main&&!entry)throw Error('Unregistered game map: '+scene.path);
     pending=null;progress=null;active=entry||null;elapsed=0;camera=null;statusLabel=null;paused=false;notice='';importMessage='';
-    if(entry){runtime=entry.create();FrostClient=null;}
+    if(entry){runtime=entry.create();runtime.units=FrostWarcraftMapUnits.create(runtime.initialization,runtime.unitData);FrostClient=null;}
     else {runtime=null;FrostButtons=JSON.parse(JSON.stringify(buttons));FrostClient=createFrostClient();if(returning)FrostClient.openMaps(selected);}
     loaded=true;
   }
@@ -63,6 +63,7 @@ var FrostMapSession=(()=>{
     if(pressed.includes('KeyR')||click&&x>=-425&&x<=-245&&y>=-340&&y<=-296){reload();return;}
     if(pressed.includes('Space'))paused=!paused;
     if(!paused){runtime.tick(dt);elapsed+=Math.max(0,dt);}else runtime.camera?.tick(dt);
+    runtime.units?.tick(input);
     if(!camera){const found=engine.findEntitiesByName(['Camera','Map session status']);camera=found.find(e=>e.name==='Camera');statusLabel=found.find(e=>e.name==='Map session status');}
     if(camera&&!runtime.camera){
       const c=camera.components,t=c.Transform,projection=c.Camera3D,speed=Math.max(1,projection.orthographic_size)*Math.min(.2,Math.max(0,dt)),p=[...t.position];
@@ -74,10 +75,11 @@ var FrostMapSession=(()=>{
       const zoom=(keys.includes('Equal')||keys.includes('NumpadAdd')?-1:0)+(keys.includes('Minus')||keys.includes('NumpadSubtract')?1:0);
       if(zoom){c.Camera3D={...projection,orthographic_size:Math.max(4,Math.min(Math.max(hiX-loX,hiZ-loZ),projection.orthographic_size+zoom*speed))};write(camera.entity,'Camera3D',c.Camera3D);}
     }
-    const text=notice||(active.title+' · '+(paused?'已暂停':'场景运行')+' | 点击 Game 后 WASD / 方向键移动 · +/- 缩放 · 空格暂停\n对局规则尚未接入');
+    const unit=runtime.units?.selected(),details=unit?unit.name+' · 生命 '+unit.states.LIFE+'/'+unit.states.MAX_LIFE+(unit.states.MAX_MANA?' · 魔法 '+unit.states.MANA+'/'+unit.states.MAX_MANA:'')+(unit.resourceAmount!==null?' · 黄金 '+unit.resourceAmount:''):'对局规则尚未接入';
+    const text=notice||(active.title+' · '+(paused?'已暂停':'场景运行')+' | 点击 Game 后 WASD / 方向键移动 · +/- 缩放 · 空格暂停\n'+details);
     if(statusLabel&&statusLabel.components.Text.text!==text){statusLabel.components.Text={...statusLabel.components.Text,text};write(statusLabel.entity,'Text',statusLabel.components.Text);}
   }
-  return {unitInitialization:()=>runtime?.initialization||null,start,back,reload,tick,sceneLoaded,importFile,cancelImport,contentImported,importStatus:()=>({busy:importing,loading:!!pending,message:importMessage,progress:pending?{value:null,label:'正在进入地图…'}:cancelRequested&&importing?{value:null,label:'正在取消地图导入…'}:progress,visible:importing||!!pending}),status:()=>({map:active?.id||null,scene:engine.scene?.path||null,pending:pending?.scene||null,importing,importMessage,elapsed,paused,initialization:runtime?.initialization?{status:runtime.initialization.status,units:runtime.initialization.units.length,triggers:runtime.initialization.triggers.length,error:runtime.initialization.error}:null,pathing:runtime?.pathing?{size:[...runtime.pathing.size],revision:runtime.pathing.revision,sourceSha256:runtime.pathing.sourceSha256}:null})};
+  return {unitInitialization:()=>runtime?.initialization||null,start,back,reload,tick,sceneLoaded,importFile,cancelImport,contentImported,importStatus:()=>({busy:importing,loading:!!pending,message:importMessage,progress:pending?{value:null,label:'正在进入地图…'}:cancelRequested&&importing?{value:null,label:'正在取消地图导入…'}:progress,visible:importing||!!pending}),status:()=>({map:active?.id||null,scene:engine.scene?.path||null,pending:pending?.scene||null,importing,importMessage,elapsed,paused,unitBindings:runtime?.units?{status:runtime.units.status,count:runtime.units.count,selected:runtime.units.selected()?.id||null,error:runtime.units.error}:null,initialization:runtime?.initialization?{status:runtime.initialization.status,units:runtime.initialization.units.length,triggers:runtime.initialization.triggers.length,error:runtime.initialization.error}:null,pathing:runtime?.pathing?{size:[...runtime.pathing.size],revision:runtime.pathing.revision,sourceSha256:runtime.pathing.sourceSha256}:null})};
 })();
 function onContentImport(event){FrostMapSession.contentImported(event);}
 function onSceneLoaded(scene){FrostMapSession.sceneLoaded(scene);}

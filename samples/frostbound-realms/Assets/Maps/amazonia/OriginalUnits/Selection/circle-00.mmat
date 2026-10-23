@@ -1,0 +1,1 @@
+{"version":8,"name":"Warcraft selection 00","shader":"unlit","surface":"transparent","blend_mode":"alpha","base_color":[1,1,1,1],"base_color_texture":"Assets/Maps/amazonia/OriginalUnits/Selection/circle-00.png","double_sided":true,"transparent_depth_write":false,"render_queue":3000,"wrap_u":"clamp","wrap_v":"clamp"}

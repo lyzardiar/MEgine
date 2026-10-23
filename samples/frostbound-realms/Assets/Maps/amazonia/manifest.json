@@ -4609,14 +4609,14 @@
     {
       "path": "Assets/Maps/amazonia/Scenes/Main.mscene",
       "sourceSha256": "9b78e84725d0634395789e58947b86fb2a58fa5c54d21ab7ba75e62244d5283c",
-      "sha256": "d9ab92e5a555e3582faef32b7cd74c8f56486e65be36004e9b222ef902a2d131",
-      "bytes": 5429696
+      "sha256": "40744836f96f5c160a48983ddc31514fe325f4cb872ac16ccd2e71b75abe2ac7",
+      "bytes": 5430563
     },
     {
       "path": "Assets/Maps/amazonia/Scripts/Main.js",
       "sourceSha256": "a2aad0824c4f9fde43b53b7c7b103436d18c47e086c89dcf9fb756c689278d38",
-      "sha256": "4009bf60685dfa68f2e726c8b502fbbe5eaf326b79ca188f8ddad86f34d6c38f",
-      "bytes": 1141181
+      "sha256": "bc3e374aa9ac5087cec21ec1db65d136a79c93db300880569eecf4fc4ad04056",
+      "bytes": 1183159
     },
     {
       "path": "Assets/Maps/amazonia/Shaders/Ground.mshader",
@@ -4679,6 +4679,630 @@
       "sourceSha256": "01ac6ca37873461f490e8db4b5798fceaf60b94f50b0db3cd2349d9eb0e5d407",
       "sha256": "01ac6ca37873461f490e8db4b5798fceaf60b94f50b0db3cd2349d9eb0e5d407",
       "bytes": 48130
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/circle-00.mmat",
+      "storage": "local",
+      "sha256": "b66203fc23de5d2feadd2c59730662f0955e620183c3865c46e43da2758ab245",
+      "bytes": 318
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/circle-00.png",
+      "storage": "local",
+      "sha256": "f176b4f157443ffc4ff586e609bbc699cef490693b93ab9177d24f2470ce1084",
+      "bytes": 4450
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/circle-01.mmat",
+      "storage": "local",
+      "sha256": "4aee85c3c92a184d5950ca5e3502049b58be66535389d91337adf20fc7d4453b",
+      "bytes": 318
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/circle-01.png",
+      "storage": "local",
+      "sha256": "66498af382f892bd1f90c40881cfe7fe4ee8cbeebb0f9ee347916c24830410c7",
+      "bytes": 4005
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/circle-02.mmat",
+      "storage": "local",
+      "sha256": "25b46d8ea5205411a1899f5d9c00c27eb92bcb46a6f5e9857f63b35949da71b2",
+      "bytes": 318
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/circle-02.png",
+      "storage": "local",
+      "sha256": "ae8a351b0ad1d124b6e4424303ebb6494cdd9081890668b99bf6713d3ff27349",
+      "bytes": 3291
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/circle.glb",
+      "storage": "local",
+      "sha256": "9974549a73bd6ff970820562f1f47aa0d094ec16761a79372eb3e242f628c60b",
+      "bytes": 956
+    },
+    {
+      "path": "Assets/Maps/amazonia/Data/OriginalUnitBindings.json",
+      "storage": "local",
+      "sha256": "08537a0b537e7fba4803f9380027420da77a997cc39333ac9743606258df7eb0",
+      "bytes": 42318
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-0.glb",
+      "storage": "local",
+      "sha256": "1690e1ae9a08e7cb11ba7ebd748378884d243f11c657802a6d6de722e878faf6",
+      "bytes": 2360
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-1.glb",
+      "storage": "local",
+      "sha256": "d761790ffd133bba99009543c353529edfe471e170f2ce3ce1a1e7fb139eca50",
+      "bytes": 2144
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-10.glb",
+      "storage": "local",
+      "sha256": "bf8cf49c92cb1e61628b92d030ce66c9b88e3d98ef26f4ef5bb64961c2ea31f0",
+      "bytes": 2140
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-11.glb",
+      "storage": "local",
+      "sha256": "24a141e4624944390a21583276f25306e115ff3523177d0800c268ebd1b07331",
+      "bytes": 5164
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-12.glb",
+      "storage": "local",
+      "sha256": "7ef391ca9e18514723bdf615ffbbb30635880c58be62a90491ae4d37b4b37b95",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-13.glb",
+      "storage": "local",
+      "sha256": "2812fb1f1a6abe7e6cb95499fd6634dad5fe1813e064896303d52b3b2dd95415",
+      "bytes": 1272
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-14.glb",
+      "storage": "local",
+      "sha256": "8be6c13ff0ebba038eff1175323bd0b3500dfe4262575ba8abd6b90b2466b1c1",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-15.glb",
+      "storage": "local",
+      "sha256": "b4a6c7cea212e0e639276b01dc9b4858cf22c1010ce5efc0f522e83a888e3690",
+      "bytes": 1708
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-16.glb",
+      "storage": "local",
+      "sha256": "91a321ad01cb299f5754e15086e36250b9c90cc5d53d3b078b99a812b827b2c4",
+      "bytes": 5164
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-17.glb",
+      "storage": "local",
+      "sha256": "61e8e1f7b0e799300c80117111e2c476e59651b4344770126b30f351b3074d9d",
+      "bytes": 5596
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-18.glb",
+      "storage": "local",
+      "sha256": "9be52c0719d4c4b042d2579e957d035f5d3f9772fb1e645743a3c2eb0dd158a3",
+      "bytes": 3644
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-2.glb",
+      "storage": "local",
+      "sha256": "b9de06b116b67d46b129d7cd76e0f965e357119d6821ffedb3811220fe24f8d4",
+      "bytes": 3000
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-20.glb",
+      "storage": "local",
+      "sha256": "ff4f3fbc06c3c683737649fb5e5e05dd4f5759f7e4f7313dea621737cc6ede1b",
+      "bytes": 7536
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-21.glb",
+      "storage": "local",
+      "sha256": "57027c82d43d79ab4c9d03fb0a35b9d0a35a0b78fc9cdee3fb0d45adb57c74c0",
+      "bytes": 1488
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-22.glb",
+      "storage": "local",
+      "sha256": "fe74227b93f43f7654966e8ae9147809537d71f62380bec9936dd83db47d82de",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-23.glb",
+      "storage": "local",
+      "sha256": "d3fde3a482b0497d68305da6ffa899177a3720adb90d8ba80399e73544116172",
+      "bytes": 2144
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-24.glb",
+      "storage": "local",
+      "sha256": "4ca576b625251880c315f10b510a7cbc5171957249fdcb14dd5266316bddf23c",
+      "bytes": 2140
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-25.glb",
+      "storage": "local",
+      "sha256": "1232831a69dc21f631d0bfe384344aa4868d4d63036c0089cd78026029d95881",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-26.glb",
+      "storage": "local",
+      "sha256": "477f5a85c4da8ca88a9e2bcd3e183b1f00f59d2ce3860f4f3d3e54031f923fee",
+      "bytes": 1276
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-27.glb",
+      "storage": "local",
+      "sha256": "2e84495e7ea5c0d31d0fb31630a224e01a0849a114d41fe535a3c9b0acb84451",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-28.glb",
+      "storage": "local",
+      "sha256": "579a64b46ce71dcc24e89f2018e7005f3a8e97f1eef7c0e7a97e6512282afe61",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-29.glb",
+      "storage": "local",
+      "sha256": "6ea151ff9e8c7b642220e54f90b62caa0d9bc9bfa4d3bfd6e0a90ef3d54d0d70",
+      "bytes": 3220
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-3.glb",
+      "storage": "local",
+      "sha256": "5200d6703b7af512e0a539f1264d0352584c8cb423b8f996cc8ade9e18b026d3",
+      "bytes": 5172
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-30.glb",
+      "storage": "local",
+      "sha256": "aa7944e546c7f1c90d10919f7a1dce6c2f55c8e0f7587de6cb26c5e759d724c5",
+      "bytes": 1708
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-31.glb",
+      "storage": "local",
+      "sha256": "6e2f3518dfe6f8d5e71ed965d322da478e4d36e6cb2358bec3acfe05b1fa8d25",
+      "bytes": 3652
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-32.glb",
+      "storage": "local",
+      "sha256": "cf74166e2833a9be93f22799c2f54bfe0cb8fb57d003c0f40ad798f44eb315bf",
+      "bytes": 5600
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-33.glb",
+      "storage": "local",
+      "sha256": "9e8497a602342a5a7e0c2edf4c66c94afccddd23173b50b6d1c6c6515efd2b9e",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-34.glb",
+      "storage": "local",
+      "sha256": "d4bbc65e333cb188ed8c0cba194b600c092b4a33a4354843d2110a36a0811bab",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-35.glb",
+      "storage": "local",
+      "sha256": "2c75f0d509b743a96798877e1d805355fbce5ad385d6141fa32188f639f767c6",
+      "bytes": 1708
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-36.glb",
+      "storage": "local",
+      "sha256": "0db7465745af00b795af124bdfbb7684d070f67bfd4fc7f5f5931a2249bba545",
+      "bytes": 2144
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-37.glb",
+      "storage": "local",
+      "sha256": "3880ace1959baf92a243123dfd0caa493bd1db0cbc0be0281bb4b0142ff2ec6b",
+      "bytes": 1276
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-38.glb",
+      "storage": "local",
+      "sha256": "8beaa477a0f80ff3188153fc5a0b2c5d051757f5657366c87480d1bc97332c21",
+      "bytes": 1708
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-39.glb",
+      "storage": "local",
+      "sha256": "49d187c754dcec930034e8dd3793a0e855faf79c3330255860e1e0487ba9e389",
+      "bytes": 1276
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-4.glb",
+      "storage": "local",
+      "sha256": "84d27ff02ef489dda4ffaa1387b1747ba622b7ce9fc1349f6350cbf22b3f4c67",
+      "bytes": 1928
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-40.glb",
+      "storage": "local",
+      "sha256": "687f84abcef5c85bcad6216de60892c0e60ea80b0d296e021f40a5e064bf6e32",
+      "bytes": 2144
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-41.glb",
+      "storage": "local",
+      "sha256": "9946ae94633aaf28dc48fe7a176cad54af28c0991cbafd72ea6139367aeda9ab",
+      "bytes": 2360
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-42.glb",
+      "storage": "local",
+      "sha256": "984f2b35531a116f2b9b14452483e1a83a127a1ad35dbd0a38db96a25ee2b56a",
+      "bytes": 1280
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-43.glb",
+      "storage": "local",
+      "sha256": "db7b2d3fa9f2c53dbd3fc2c5efd5bfa47694f861fbf7196a0b7ea892e3066d5a",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-45.glb",
+      "storage": "local",
+      "sha256": "c0b0fa2edffeff91623747d6a3496cd8d06b283aa7b0da6854341e443e9b29b9",
+      "bytes": 4732
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-46.glb",
+      "storage": "local",
+      "sha256": "d37025595ae80c2437f196d5eeaa971f9042e4ac5873801cc8e6b46d99d7c561",
+      "bytes": 1488
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-47.glb",
+      "storage": "local",
+      "sha256": "9a190ab8633c041b4377acfa19f2c119f679265b792c6f047e464f1a74badd5b",
+      "bytes": 1916
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-48.glb",
+      "storage": "local",
+      "sha256": "3726dd6b2820a3d5b0a9f0b6abc072070804dd1145bf090d9d0a4901eec5d0af",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-49.glb",
+      "storage": "local",
+      "sha256": "e25a1eeb8a2f877dc72538d855d2e6e94058cf6e28e7c1a4e98773aac7883454",
+      "bytes": 3220
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-5.glb",
+      "storage": "local",
+      "sha256": "23d4d30c11667428d0afc629977c1d47440cc860e0020237cf859876e5a0a1f2",
+      "bytes": 2140
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-50.glb",
+      "storage": "local",
+      "sha256": "32469b9f9e512e634a43d716de591ac146cfb40fb5b49a54003064148c88156b",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-51.glb",
+      "storage": "local",
+      "sha256": "7a13474bc9c9c5717e7b414bf51506fa182531a6c7bf8c3cdbbcf638809dc187",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-52.glb",
+      "storage": "local",
+      "sha256": "60c23daff77b0094c8ea4babfe4b64c49d6f065bf20a45d64eb74ebc6baae639",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-53.glb",
+      "storage": "local",
+      "sha256": "dc7707fae66814fb1b236fc4c4d86cad589c6cff7185bc17a2557a787d1c43ad",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-54.glb",
+      "storage": "local",
+      "sha256": "72224abf846ef678c2dbaa788d3910f483bd84b7fe103c7ee2f67eaa960b86eb",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-55.glb",
+      "storage": "local",
+      "sha256": "86aa889562dfd0b3990f82c31e10e5fdd4719ebfdc20f5371367d92da20d26f0",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-56.glb",
+      "storage": "local",
+      "sha256": "ca88ee8ed4ecc8af7afc9bfa03f03eef9160539b5f65373db5f4ffe914c75cac",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-57.glb",
+      "storage": "local",
+      "sha256": "1e02e2b280589c3cf4c40a31f91efa93d2afc1a34604f60f5e261acb4bd4c9a1",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-58.glb",
+      "storage": "local",
+      "sha256": "8c81f8449ecd0f9c306fdaa3007a75b32a5de895b0d1475626132ea78e200252",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-59.glb",
+      "storage": "local",
+      "sha256": "543d09d4c098ceb4d2a3a0116e2c38553aae11e6bba4835321ca791c09d3e52f",
+      "bytes": 1260
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-6.glb",
+      "storage": "local",
+      "sha256": "b840dff89ec43ce5655d0a43cbba8c214ee461c91fed4baa5de0cf4b70976a1f",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-60.glb",
+      "storage": "local",
+      "sha256": "2eb1dc69c36c2dbdd6e4b85986ebdc71babe8db0cd5ca733778cd821a3284226",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-61.glb",
+      "storage": "local",
+      "sha256": "282c3f7ea0bc59777ca783f33b175df9a65a8a6b286b21af6d02bd404f8050f0",
+      "bytes": 3652
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-62.glb",
+      "storage": "local",
+      "sha256": "2d82e06b20796248c6ae119798908d06c98330f6162d9f95a29c2ef0a7d244d0",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-63.glb",
+      "storage": "local",
+      "sha256": "a86f1196f3283002c963b22995e1209da7634bfb4eeb1bca895452473c8d79b5",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-64.glb",
+      "storage": "local",
+      "sha256": "89888730aaed8487e284d4fd74b450e83cd2876b661e2048d0753509893a4a78",
+      "bytes": 2144
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-65.glb",
+      "storage": "local",
+      "sha256": "d3054ca6df1a8fef458e1b3a24cf5a3d5e8c858cac1b5521496b2443334bf229",
+      "bytes": 1276
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-66.glb",
+      "storage": "local",
+      "sha256": "1afe894a62c94dee05fc65394e4861b3729205927f14f0d49559d620e8ea5cbe",
+      "bytes": 2360
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-67.glb",
+      "storage": "local",
+      "sha256": "b6ca25954e124a68e6750e588dfa6084ee3cbcb0174a95da6ec57c78ea3d1ef0",
+      "bytes": 2144
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-68.glb",
+      "storage": "local",
+      "sha256": "317a7f91cdc3dc0c2cb9634816776f43ce32a65c9cbc81b92d267302ef749284",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-69.glb",
+      "storage": "local",
+      "sha256": "31a5525ce91612a0d2975e277fdd3e716ee2a802943dbfbcd55709d5ce7eadad",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-7.glb",
+      "storage": "local",
+      "sha256": "58a2771283f390f3afb0195cf3860cfa5d2a137c7941a40e0dcb9dfa3800a0ee",
+      "bytes": 2144
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-70.glb",
+      "storage": "local",
+      "sha256": "46d81238bbac34af440082eb5dfe4add6024938b6581fd43e971c1a4632d976a",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-71.glb",
+      "storage": "local",
+      "sha256": "2bf1f2ebd8de3b9981d42425252e9637a5a4dbfd0c7324f3926f1c2b6432b764",
+      "bytes": 1272
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-72.glb",
+      "storage": "local",
+      "sha256": "baebf03985847f9e6d558b7d0d056c2bed5b383f317b29679ec9492a13eba9fe",
+      "bytes": 2140
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-73.glb",
+      "storage": "local",
+      "sha256": "0850f2736d8e640a91edbe9365a9177ed22d65ca3b4b12e823cda35c9b944178",
+      "bytes": 4740
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-74.glb",
+      "storage": "local",
+      "sha256": "cc77213ff284895f1844be41967b36a76de8ea316f4eb84c67988fedd7ce980d",
+      "bytes": 4732
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-75.glb",
+      "storage": "local",
+      "sha256": "a74bdfc3761bde33c33219fa51c9ae2e58c66e460dcd5637f3ffbc06b6b33a84",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-76.glb",
+      "storage": "local",
+      "sha256": "5b841eedbdab2dfc72a64c3282ca307555dea6b3c3d7d061636b3e92b0abf741",
+      "bytes": 3220
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-77.glb",
+      "storage": "local",
+      "sha256": "7b0d710d254f3973c9fa84934ab3c4c1f9c6462941018b704cb0a144f479ffac",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-78.glb",
+      "storage": "local",
+      "sha256": "d2248c382b282d9ed52865ff93f9ab7480597842f8eb3357e4800d9a00ddacc5",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-79.glb",
+      "storage": "local",
+      "sha256": "f6aa2f4a4dd76fd4c20baed791f8b6a2416783d2aaa1858129efb83badc35087",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-8.glb",
+      "storage": "local",
+      "sha256": "b969906249b19f11f78a521c17dc8b243fe075a87c27e779ab595d94dee3f31a",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-80.glb",
+      "storage": "local",
+      "sha256": "5c6d8848e5183dd6f5d7f5834d1823a2cd9fe43515510be5cf6421501d53bd92",
+      "bytes": 1276
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-81.glb",
+      "storage": "local",
+      "sha256": "4fce825c9fa9ff1952d9caab590f630c0ac388d77166897d02fcf1e46625c690",
+      "bytes": 1928
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-82.glb",
+      "storage": "local",
+      "sha256": "510d4d583b86196523e77626b0114787b7e4d1b60d5e648c9c25dfe9d8815142",
+      "bytes": 2144
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-83.glb",
+      "storage": "local",
+      "sha256": "8cd6b6a3994d788b061467b87e45bcffa0a9dd0c1164c4a9b0d81132f3a2eb81",
+      "bytes": 1384
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-84.glb",
+      "storage": "local",
+      "sha256": "536f51cf2ab436481b15e83756510c70e2ea2b18bebb8d0426b6156fe55c3c5c",
+      "bytes": 1276
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-85.glb",
+      "storage": "local",
+      "sha256": "7a47302aa10deeed35e47478c03805adcd28f91e3f0c0287b95d73e1ba03d8b9",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-86.glb",
+      "storage": "local",
+      "sha256": "25f429719dd8194bdb2e8f7f850b62dc108eef43e88bf96c25c20cc9e3be3fb3",
+      "bytes": 1276
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-87.glb",
+      "storage": "local",
+      "sha256": "91c8ff4670a8bfda3524bffff0dbf964725ef61fbd70c132ef47144634070be2",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-88.glb",
+      "storage": "local",
+      "sha256": "6a8160b77f2862e95e8179e238443db39208eb9d30ecdef7cbd30f053791bee3",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-89.glb",
+      "storage": "local",
+      "sha256": "756dabf357d70a06e3dfa9a26ffff7ea4ba40876eba4ac7ade736be035a2b9c8",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-9.glb",
+      "storage": "local",
+      "sha256": "915953873b2341983a3ac2cf0277184c11af12730c158201fe4f0fb52cc05312",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-90.glb",
+      "storage": "local",
+      "sha256": "7232bb3bf75731c2985fd9fd8375e27877f537929b5215c1c6fbad3ae6e9a58a",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-91.glb",
+      "storage": "local",
+      "sha256": "c69bfda87327ef32c83ce190257784abc54cfb590707abab972997bfb3339486",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-92.glb",
+      "storage": "local",
+      "sha256": "9bc80f3ccb2e8e1de280fd3648cb9e6d4c99599c20e54e281d84e5db736371c3",
+      "bytes": 1924
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-93.glb",
+      "storage": "local",
+      "sha256": "f55e30dbba06805f97c81eaf5969f5a5cc98eb169aae940b989fe51936163870",
+      "bytes": 2144
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-94.glb",
+      "storage": "local",
+      "sha256": "dd08daaf02e8667193fff345706d6ef6887044234e90b2a53177d97aca433d69",
+      "bytes": 1276
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-95.glb",
+      "storage": "local",
+      "sha256": "cc8952d9bc37b16ebc7ee87411cd8e28350335e118fc87cb7db5133dd93971cc",
+      "bytes": 3656
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-96.glb",
+      "storage": "local",
+      "sha256": "983946d2b392244c12816fc1b4fcfc4baa4b6c62d8a5a03f1c84a09d01c97828",
+      "bytes": 1492
+    },
+    {
+      "path": "Assets/Maps/amazonia/OriginalUnits/Selection/ground-97.glb",
+      "storage": "local",
+      "sha256": "1293ea43788b719439d6d83c5a44c8b71588601ebdcf58f2a43fc0ebe2c570d2",
+      "bytes": 1492
     }
   ],
   "previewSource": {
@@ -4788,7 +5412,16 @@
     "fullMapScript": false,
     "implementation": {
       "samples/frostbound-realms/game/warcraft-jass.js": "ed22c5c9daf74eaa39ecfb249f4d27671b2d26aac549d80f09e10dfa358e2de7",
-      "samples/frostbound-realms/game/warcraft-unit-initialization.js": "565dfec4aa9b258375d17b13e092aca6e434265329556e53f5d7634b86aecd34"
+      "samples/frostbound-realms/game/warcraft-unit-initialization.js": "565dfec4aa9b258375d17b13e092aca6e434265329556e53f5d7634b86aecd34",
+      "samples/frostbound-realms/game/warcraft-map-units.js": "57d9efc0a7582db7cee73ccd711238d7debae2c513bfdda32bbe0eb82945de80"
     }
+  },
+  "unitBindings": {
+    "sourceSha256": "fa958c9535743716914e6e1a8abcc48fe3a376c4f81e172c374a83e9b3b329c6",
+    "placements": 96,
+    "definitions": 37,
+    "data": "Assets/Maps/amazonia/Data/OriginalUnitBindings.json",
+    "generator": "scripts/warcraft_unit_bindings.py",
+    "generatorSha256": "ccd487b0d85321004e44c1f30166ed33d80b4328954037476d5148bb081b6605"
   }
 }

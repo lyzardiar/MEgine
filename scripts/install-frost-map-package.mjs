@@ -72,9 +72,11 @@ export function installMapPackage(source,project,id,title,{register=true,sharedR
   const entry={id,title,description:'Warcraft III 原地图\n地形、水面、装饰与单位动画\n场景运行；对局规则接入中',runtime:'warcraft-scene',gameplay:false,scene:relative+'/Scenes/Main.mscene',script:relative+'/Scripts/Main.js',sourceSha256:map.source.sha256,preview};
   if(previewSource)entry.previewImage=relative+'/Textures/MapPreview.png';
   const unitInitialization=attachUnitInitialization(project,relative,records,map.source.members['war3map.j']?.sha256);
+  const bindingsFile=path.join(output,'Data/OriginalUnitBindings.json'),bindings=fs.existsSync(bindingsFile)?read(bindingsFile):null;
   const maps=[...catalog,entry],script=register?prefix+composeGameModules(gameSource,project,maps):null;if(script)new vm.Script(script,{filename:mainFile});
   const installer={path:'scripts/install-frost-map-package.mjs',sha256:hash(fs.readFileSync(fileURLToPath(import.meta.url))),previewExporterSha256:hash(fs.readFileSync(fileURLToPath(new URL('./export-frost-map-preview.py',import.meta.url))))};
   const provenance={version:1,id,unitInitialization,source:map.source,installedSource:relative+'/Source/original'+path.extname(map.source.preservedArchive),sourceInfo:map.info,installer,previewSource,conversion:{coordinateScale:terrain.coordinateScale,axes:terrain.axes},capabilities:{terrain:true,doodads:true,units:true,animation:true,basePathing:true,gameplay:false,jass:false},assets:records};
+  if(bindings)provenance.unitBindings={sourceSha256:bindings.sourceSha256,placements:bindings.placements.length,definitions:Object.keys(bindings.definitions).length,data:relative+'/Data/OriginalUnitBindings.json',generator:'scripts/warcraft_unit_bindings.py',generatorSha256:hash(fs.readFileSync(fileURLToPath(new URL('./warcraft_unit_bindings.py',import.meta.url))))};
   if(shared){provenance.sharedAssetsVersion=1;installer.sharedAssetsSha256=hash(fs.readFileSync(fileURLToPath(new URL('./frost-shared-map-assets.mjs',import.meta.url))));}
   write(path.join(output,'manifest.json'),json(provenance));
   write(path.join(output,'entry.json'),json(entry));

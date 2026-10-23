@@ -199106,6 +199106,44 @@
             "raycast_target": false
           }
         }
+      },
+      {
+        "entity": 7410,
+        "name": "Map unit selection",
+        "active": false,
+        "components": {
+          "Transform": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0,
+              1
+            ],
+            "scale": [
+              1,
+              1,
+              1
+            ]
+          },
+          "MeshRenderer": {
+            "mesh": "Assets/Maps/amazonia/OriginalUnits/Selection/circle.glb",
+            "material": "Assets/Maps/amazonia/OriginalUnits/Selection/circle-00.mmat"
+          },
+          "MaterialPropertyBlock": {
+            "override_base_color": true,
+            "base_color": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        }
       }
     ],
     "clear_color": [

@@ -16,7 +16,14 @@ def split_unit_initialization(script):
     if start < 0: return script, ''
     encoded = script[start+len(marker):]
     source, end = json.JSONDecoder().raw_decode(encoded)
-    if source is not None and not isinstance(source, str) or encoded[end:].strip() != ';': raise ValueError('Unrecognized unit initialization boundary')
+    rest=encoded[end:].strip()
+    if source is not None and not isinstance(source, str) or not rest.startswith(';'): raise ValueError('Unrecognized unit initialization boundary')
+    rest=rest[1:].strip()
+    if rest:
+        prefix='var originalUnitBindings='
+        if not rest.startswith(prefix): raise ValueError('Unrecognized unit initialization boundary')
+        bindings, end=json.JSONDecoder().raw_decode(rest[len(prefix):])
+        if not isinstance(bindings,dict) or rest[len(prefix)+end:].strip()!=';': raise ValueError('Unrecognized unit binding boundary')
     return script[:start], script[start:]
 
 

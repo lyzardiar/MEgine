@@ -246,10 +246,27 @@ python scripts/prepare-frost-map-import.py
 
 Amazonia 的原 `war3map.j` SHA256 为 `01ac6ca37873461f490e8db4b5798fceaf60b94f50b0db3cd2349d9eb0e5d407`，入口执行 1,800 个解释器指令，建立 96 个单位、26 个触发器。测试独立解码 Units.doo，对照类型／玩家／位置／方向／金矿资源及掉落绑定；UnitXXXXXX_DropItems 对应放置序号，ItemTableXXXXXX_DropItems 对应共享掉落表编号。触发器仅登记事件与函数名，尚未执行回调。Echo Isles 的 IssueImmediateOrder 未绑定，初始化明确返回 unsupported，场景导入与重载仍通过。
 
-当前状态集合尚未驱动已渲染的单位实体，也不执行 main、InitBlizzard、MeleeStartingUnits、MeleeStartingAI、战斗、掉落、胜负、寻路或网络同步。`capabilities.jass=false` 和 `gameplay=false` 表示这些完整能力未就绪；`manifest.unitInitialization` 单独记录部分入口能力、原件摘要及两个运行模块摘要。
+已通过来源放置匹配驱动单位视觉根节点的位置与朝向，并提供单选反馈；不执行 main、InitBlizzard、MeleeStartingUnits、MeleeStartingAI、战斗、掉落、胜负、寻路或网络同步。`capabilities.jass=false` 和 `gameplay=false` 表示这些完整能力未就绪；`manifest.unitInitialization` 单独记录部分入口能力、原件摘要及运行模块摘要。
 
-新导入地图自动附加原脚本数据；现有已登记地图使用 `node scripts/attach-frost-unit-initialization.mjs samples/frostbound-realms amazonia` 更新，仅修改地图运行脚本、清单和主脚本，保留模型／地形及来源字节。工具检查来源摘要，重复执行文件内容一致；缓存身份包含打包器及两个初始化模块，版本变化创建新地图包。旧缓存没有此入口时仍按场景加载。镜头更新器先验证并分离原脚本数据段，更新控制器后逐字节保留该段；未知尾部继续拒绝。
+新导入地图自动附加原脚本数据；现有已登记地图使用 `node scripts/attach-frost-unit-initialization.mjs samples/frostbound-realms amazonia` 更新，仅修改地图运行脚本、清单和主脚本，保留模型／地形及来源字节。工具检查来源摘要，重复执行文件内容一致；缓存身份包含打包器及初始化／绑定模块，版本变化创建新地图包。旧缓存没有此入口时仍按场景加载。镜头更新器先验证并分离原脚本数据段，更新控制器后逐字节保留该段；未知尾部继续拒绝。
 
 REA 复核命令为 `node scripts/probe-frost-rea-map-formats.mjs --unit-init`，固定 Game.dll SHA256 为 `e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a`。结果仅证明 native 名称字符串存在，不证明其实现语义或原客户端运行一致。REA 6.5.0 源站为 https://github.com/morluto/rea，固定版本及更新方法见[维护说明](../../../third_party/rea/README-MENGINE.md)。证据位于 `tmp/docs-artifacts/frost-original-maps/unit-init-evidence/`。
 
 定向检查：`node scripts/test-frost-jass.mjs`、`node scripts/test-frost-unit-initialization-package.mjs`、`node scripts/test-frost-map-session.mjs` 通过；`node scripts/test-frost-map-import.mjs <已导入地图的entry.json> --unit-initialization` 对 Amazonia 和 Echo Isles 均通过。覆盖类型／资源边界、源数据不执行为 JS、摘要拒绝、幂等打包、编码／大小回退、生成脚本边界兼容、菜单与动态导入、重载隔离及失败不遗留部分单位；原生结果和待测范围见[批次台账](../../testing-batches.md)。
+
+
+## 原地图单位视觉绑定与选择
+
+`game/warcraft-map-units.js` 将原 JASS 初始化结果与 Units.doo 放置记录匹配，以类型、玩家、源 XY 和朝向唯一确定视觉根节点。放置序号与 creationNumber 分别保留；全部匹配成功后才公开绑定。Amazonia 96 个单位全部接入，37 种定义来自 UnitUI、UnitBalance、UnitData、各族 UnitStrings 和原模型 MODL 包围盒。单位原脚本 XY／朝向写入根节点，保留已有高度与缩放；生命／魔法默认值采用源表，JASS 显式设置优先。初始化不支持的地图、旧地图包不启用选择绑定。
+
+点击使用当前透视相机射线与单位模型包围盒求交，仅点击时批量查询相机和单位根节点，不读取全场景快照；空闲 600 帧检查没有新增查询或写入。当前实现支持单选、空白取消、原始名称／生命／魔法／金矿资源显示，并在重载、返回和 Stop 时释放状态。不是精确模型轮廓拾取；地形／装饰遮挡、单位移动／攻击、框选、多选、联盟关系及完整命令 HUD 仍待实现。当前颜色按本地玩家、玩家15中立及其他玩家分类。
+
+选择圈纹理、尺寸分档、ScaleFactor、友军／中立／敌军颜色取自原 `UI/MiscData.txt` 和 `ReplaceableTextures/Selection/SelectionCircle*.blp`。BLP1 调色板纹理按独立 mip alpha 平面解码，支持 0／1／4／8 位 alpha，不采用调色板保留字节。此次仅重导入三张选择圈纹理；其他旧转换资产的重新导入另行安排。
+
+初始放置的贴地网格从已校验摘要的地形 Ground GLB 三角形裁切，保留三角形边界、高度插值与原圈 UV，避免平面圈沉入起伏地形。Amazonia 96 个初始放置均生成贴地网格，三张纹理／材质和全部选择网格合计 227,656 字节。仅在选择改变时切换一个渲染实体，不进行每帧地形投射。单位离开初始 XY 后使用平面圈；移动后的动态投射、悬崖、水面、可行走装饰及地形编辑后的贴地更新仍待实现。
+
+维护入口：`node scripts/attach-frost-unit-bindings.mjs samples/frostbound-realms amazonia`。升级器核验保留地图、现有场景和使用的地形网格摘要，原模型／表与已安装视觉来源保持一致；更新选择资产、绑定数据、场景中一个非激活选择实体、运行脚本及 manifest。`OriginalUnitBindings.json` 保存源归档／成员／工具／地形摘要；`manifest.unitBindings` 保存数量和生成器摘要。新地图导入和共享资源安装均带入这些数据；缓存身份包含生成器、贴地裁切器和运行模块。重复升级 108 个输出文件字节一致。旧包可先继续加载，再按需升级。
+
+REA 6.5.0 源站 https://github.com/morluto/rea；`node scripts/probe-frost-rea-map-formats.mjs --unit-selection` 对固定 Game.dll 摘要执行名称查询，证据在 `tmp/docs-artifacts/frost-original-maps/unit-selection-evidence/`。该查询只证明名称存在，不证明原客户端拾取或选择圈投射语义。版本与更新方法见[REA维护说明](../../../third_party/rea/README-MENGINE.md)。
+
+验证：源定义／坐标／地形裁切 5 项、BLP alpha 5 项、96 单位绑定脚本、数据打包边界及菜单会话检查通过。原生单位选择专项报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792795243536.json` 通过，0 error、正常退出；1280×720 与 960×900 截图人工核对金矿完整贴地选择圈，清除／重载／返回／Stop 恢复通过。复用 EXE `7e8e4e9b2f32cec3c8a75342ba0bf5932d2c7a12856bd778718cd670ee87f93a`。高窗口中的现有状态条位置仍需按原版 HUD 布局修正；该结果不表示完整 War3 界面／对局兼容，不包含新增 FPS 或内存结论。

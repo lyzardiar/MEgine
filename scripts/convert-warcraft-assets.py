@@ -32,6 +32,24 @@ def sha(data):
 
 def decode_texture(raw):
     """MiYu: BLP1 JPEG stores BGRA planes; CMYK conversion would discard alpha."""
+    if raw[:4] == b'BLP1' and len(raw) >= 8 and struct.unpack_from('<I', raw, 4)[0] == 1:
+        if len(raw) < 1180: raise ValueError('Truncated BLP1 palette')
+        alpha_depth,width,height,encoding = struct.unpack_from('<4I', raw, 8)
+        pixels=width*height
+        if alpha_depth not in (0,1,4,8) or encoding not in (4,5): raise ValueError('Unsupported BLP1 palette encoding')
+        if not width or not height or width>16384 or height>16384 or pixels>64*1024*1024: raise ValueError('Invalid BLP1 palette dimensions')
+        offset,size=struct.unpack_from('<I',raw,28)[0],struct.unpack_from('<I',raw,92)[0];alpha_bytes=(pixels*alpha_depth+7)//8
+        if offset<1180 or size<pixels+alpha_bytes or offset+size>len(raw): raise ValueError('Truncated BLP1 palette mip')
+        palette=np.frombuffer(raw,dtype=np.uint8,count=1024,offset=156).reshape(256,4)
+        indices=np.frombuffer(raw,dtype=np.uint8,count=pixels,offset=offset);rgba=np.empty((pixels,4),dtype=np.uint8);rgba[:,:3]=palette[indices][:,[2,1,0]]
+        # BLP1 paletted mipmaps store alpha after the indices; the palette's fourth byte is reserved.
+        packed=np.frombuffer(raw,dtype=np.uint8,count=alpha_bytes,offset=offset+pixels)
+        if alpha_depth==0: rgba[:,3]=255
+        elif alpha_depth==8: rgba[:,3]=packed
+        elif alpha_depth==1: rgba[:,3]=np.unpackbits(packed,bitorder='little')[:pixels]*255
+        else:
+            positions=np.arange(pixels);rgba[:,3]=((packed[positions//2]>>((positions%2)*4))&15)*17
+        return Image.fromarray(rgba.reshape(height,width,4))
     if raw[:4] == b'BLP1' and struct.unpack_from('<I', raw, 4)[0] == 0:
         header_size = struct.unpack_from('<I', raw, 156)[0]
         offset, size = struct.unpack_from('<I', raw, 28)[0], struct.unpack_from('<I', raw, 92)[0]

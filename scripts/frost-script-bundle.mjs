@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {WARCRAFT_OPTION_BINDINGS} from './frost-warcraft-options.mjs';
-export const gameModules=['warcraft-jass','warcraft-unit-initialization','night-elf-ai-source','night-elf-ai','demon-hunter','keeper','priestess','warden','blood-mage','archmage','paladin','lich','dreadlord','crypt-lord','death-knight','mountain-king','blademaster','farseer','tauren','shadowhunter','moba-objectives','simulation','terrain','visuals','effects','effect-pool','hud','ui-manager','portrait-camera','warcraft-options','client','map-session'];
+export const gameModules=['warcraft-jass','warcraft-unit-initialization','warcraft-map-units','night-elf-ai-source','night-elf-ai','demon-hunter','keeper','priestess','warden','blood-mage','archmage','paladin','lich','dreadlord','crypt-lord','death-knight','mountain-king','blademaster','farseer','tauren','shadowhunter','moba-objectives','simulation','terrain','visuals','effects','effect-pool','hud','ui-manager','portrait-camera','warcraft-options','client','map-session'];
 export function readMapPackages(project){
   const file=path.join(project,'Assets/Maps/catalog.json');
   if(!fs.existsSync(file))return [];
@@ -18,7 +18,7 @@ export function readMapPackages(project){
   return catalog.maps;
 }
 export function composeGameModules(source,project,entries=readMapPackages(project)){
-  const packages=entries.map(entry=>'{...'+JSON.stringify(entry)+',create:function(){\n'+fs.readFileSync(path.join(project,entry.script),'utf8')+'\nreturn {tick:onTick,pathing:originalMapPathing,initialization:typeof originalUnitInitializationSource==="undefined"?null:FrostWarcraftUnitInitialization.initialize(originalUnitInitializationSource),camera:typeof originalMapCamera==="undefined"?null:originalMapCamera};\n}}');
+  const packages=entries.map(entry=>'{...'+JSON.stringify(entry)+',create:function(){\n'+fs.readFileSync(path.join(project,entry.script),'utf8')+'\nreturn {tick:onTick,pathing:originalMapPathing,unitData:typeof originalUnitBindings==="undefined"?null:originalUnitBindings,initialization:typeof originalUnitInitializationSource==="undefined"?null:FrostWarcraftUnitInitialization.initialize(originalUnitInitializationSource),camera:typeof originalMapCamera==="undefined"?null:originalMapCamera};\n}}');
   const menu=JSON.parse(fs.readFileSync(path.join(source,'warcraft-menu-background.json'),'utf8'));
   const lobby=JSON.parse(fs.readFileSync(path.join(source,'warcraft-lobby-layout.json'),'utf8'));
   const {pages}=JSON.parse(fs.readFileSync(path.join(source,'warcraft-options-layout.json'),'utf8'));

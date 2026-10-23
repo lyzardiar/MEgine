@@ -12,6 +12,7 @@ import tempfile
 from warcraft_map import load_map
 from warcraft_doodads import MsvcRandom
 from warcraft_mpq import mpyq, read_archive
+from warcraft_unit_bindings import build_bindings, add_selection_entity
 
 shared=importlib.import_module('build-frost-original-doodads')
 ROOT=shared.ROOT
@@ -126,6 +127,8 @@ def build(export, base_project, game, output, sampler, metadata_reader, resource
                 groups.setdefault(shared.sha(shared.encode(group)),dict(group,names=[]))['names'].append(name+'-effect')
             placements.append(dict(index=index,source=unit,kind='unit-visual',rendered=True,name=name,parts=names,effect=effect_path,appearance=info,animation=dict(clip=ci)))
         if progress:progress(len(placements),len(data['units']['units']))
+        ground_meshes=[(r['path'],(base_project/r['path']).read_bytes()) for r in base_receipt['meshes'] if Path(r['path']).name.startswith('Ground-')]
+        bindings=build_bindings(data,read,project,resource_cache=resource_cache,ground_meshes=ground_meshes);add_selection_entity(scene,bindings)
         (project/'Assets/Scenes/Main.mscene').write_bytes(shared.encode(scene));(project/'unit-placements.json').write_bytes(shared.encode(placements))
         script_path=project/'Assets/Scripts/Main.js';script=script_path.read_text(encoding='utf-8');packed=json.dumps(list(groups.values()),separators=(',',':'))
         if 'var originalDoodadGroups=' in script:script+='\noriginalDoodadGroups=originalDoodadGroups.concat('+packed+');\n'

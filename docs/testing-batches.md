@@ -590,3 +590,16 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 
 
 Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用警告。EXE SHA256 `7e8e4e9b2f32cec3c8a75342ba0bf5932d2c7a12856bd778718cd670ee87f93a`。原生报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792794409250.json` 确认大入口脚本能进入 Play、进行地图交互并 Stop 恢复，0 error、进程正常退出；该报告的选择圈组件断言不代替视觉验收，后续贴图修复与截图结论另记。源码 LF 规范化发生在构建后，未改变 Rust 语义。没有重跑完整编辑器回归或帧率基准。
+
+
+### B001 原地图单位绑定、选择反馈与贴图透明度
+
+变更：warcraft-map-units.js、map-session.js、单位绑定导出／升级／地形裁切工具、单位导入／打包／缓存链、BLP1 解码器、Amazonia 绑定数据及选择资产。96 个单位连接原脚本状态和实际视觉根节点，按当前透视相机点击包围盒，显示源名称／生命／魔法／金矿资源；三张原圈纹理修正 mip alpha，初始放置使用由地形三角形裁切的选择网格。原场景只新增一个非激活实体。
+
+快速检查：test-frost-map-units.mjs 通过（96 绑定、64位实体、斜视／方形点击、源尺寸颜色、Inspector 位移和失活、清除／重载／原子失败、600空闲帧无查询写入）；test-warcraft-unit-bindings.py 5 项通过；test-warcraft-texture-alpha.py 5 项通过；test-frost-unit-initialization-package.mjs 与 test-frost-map-session.mjs 通过。贴地新增案例验证裁切面积、UV、平面高度插值、空区域和 GLB 读取。108 个输出幂等，96 贴地网格来自9个 Ground GLB，全部选择资产 227,656 字节。Python AST／JS 语法／差异检查通过。首次 0/-0 测试期望纠正，失败日志保留。
+
+定向原生命令：`node scripts/qa-frost-map-session.mjs --unit-selection-only`，MENGINE_EDITOR_EXECUTABLE 指向当前 release EXE。报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792795243536.json` 通过，0 error、正常退出；1280×720 和 960×900 选择金矿、源尺寸／中立黄／12500黄金、空白清除、重载／返回／Stop 恢复。两张截图已人工查看，完整贴地圈可见。EXE SHA256 `7e8e4e9b2f32cec3c8a75342ba0bf5932d2c7a12856bd778718cd670ee87f93a`，本次没有再构建。此前 1792794409250 仅状态通过但圈不可见，1792794698569 alpha 修复后仍局部沉入地面；均保留作诊断，不计为最终视觉验收。
+
+证据：tmp/docs-artifacts/frost-original-maps/unit-bindings-*，最终 ground-native.log、ground-checks.json、ground-package.log；REA unit-selection-evidence 只提供名称证据。未重跑整库、全地图或 FPS 基准。本项为原地图接入补充，不另增批次数。
+
+待测／未实现：移动单位的动态贴地、悬崖／水面／可行走装饰、地形编辑、原客户端精确拾取与遮挡、框选多选、原联盟语义、完整HUD与高窗口状态条布局、完整原图启动／移动战斗AI。共享资源新地图完整转换及其他 BLP 资产迁移待相关批次验证。现有编辑器实际输入延迟、强制竞态、独立窗口、父级 Undo／激活、缓存内存待测项继续保留；本次不替代这些结果。
