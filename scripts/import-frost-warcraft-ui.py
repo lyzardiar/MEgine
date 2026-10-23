@@ -111,6 +111,36 @@ def skin_values(text, race):
     return {**sections.get('Default', {}), **sections.get(race, {})}
 
 
+def fdf_frame(text, name):
+    text = re.sub(r'/\*.*?\*/|//[^\n]*', '', text, flags=re.S)
+    match = re.search(r'Frame\s+"[^"]+"\s+"' + re.escape(name) + r'"[^{}]*\{', text)
+    if not match:
+        raise ValueError('Missing FDF frame: ' + name)
+    depth = 1
+    for token in re.finditer(r'"[^"]*"|[{}]', text[match.end():]):
+        value = token.group()
+        depth += (value == '{') - (value == '}')
+        if depth == 0:
+            return text[match.end():match.end()+token.start()]
+    raise ValueError('Unclosed FDF frame: ' + name)
+
+
+def fdf_number(frame, key):
+    match = re.search(r'^\s*' + re.escape(key) + r'\s+(-?\d+(?:\.\d+)?),', frame, re.M)
+    if not match:
+        raise ValueError('Missing FDF number: ' + key)
+    return float(match.group(1))
+
+
+def checkbox_image(background, check=None):
+    result = background.convert('RGBA').copy()
+    if check is not None:
+        if result.size != check.size:
+            raise ValueError('Checkbox background and check dimensions differ')
+        result.alpha_composite(check.convert('RGBA'))
+    return result
+
+
 def run(game, output, button_sizes=None):
     archives = [(name, mpyq.MPQArchive(str(game / name), listfile=False)) for name in ARCHIVES]
     files, sources, textures, decoded, buttons = {}, {}, {}, {}, {}
@@ -154,12 +184,15 @@ def run(game, output, button_sizes=None):
         asset(target, stream.getvalue(), 'texture'); textures[name] = dict(path=target, source=source, size=list(image.size))
         decoded[name] = image
 
-    def backdrop(name, background, edge, size, corner=19, tile=38, inset=5, sliced=False):
-        image = render_backdrop(decoded[background], decoded[edge], size, corner, tile, inset)
+    def derived_image(name, image, source_keys, **metadata):
         stream = io.BytesIO(); image.save(stream, format='PNG')
         target = 'Assets/WarcraftUI/Textures/' + name + '.png'
         asset(target, stream.getvalue(), 'texture')
-        info = dict(path=target, size=list(size), sha256=digest(stream.getvalue()), rasterCorner=corner, rasterTile=tile, rasterInset=inset, sources=[dict(path=textures[key]['source'], sha256=sources[textures[key]['source'].lower()]['sha256']) for key in (background, edge)])
+        return dict(path=target, size=list(image.size), sha256=digest(stream.getvalue()), sources=[dict(path=textures[key]['source'], sha256=sources[textures[key]['source'].lower()]['sha256']) for key in source_keys], **metadata)
+
+    def backdrop(name, background, edge, size, corner=19, tile=38, inset=5, sliced=False):
+        image = render_backdrop(decoded[background], decoded[edge], size, corner, tile, inset)
+        info = derived_image(name, image, (background, edge), rasterCorner=corner, rasterTile=tile, rasterInset=inset)
         if sliced:
             info['sprite'] = dict(border=[corner]*4, source_size=list(size), pixels_per_unit=1, image_type='Sliced', centerBehavior='Stretch; original FDF tiles the background and edges')
         return info
@@ -193,7 +226,41 @@ def run(game, output, button_sizes=None):
             esc_images[name] = backdrop(name, 'Human-EscMenuButton'+suffix+'Background', 'Human-EscMenuButton'+suffix+'Border', (256, 64), 15, 307, 6, True)
             esc_images[name]['state'] = state
         esc_images['EscPanel-Normal-346x461'] = backdrop('EscPanel-Normal-346x461', 'Human-EscMenuBackground', 'Human-EscMenuBorder', (346, 461), 58, 307, 12, True)
+        standard = read('UI/FrameDef/Glue/StandardTemplates.fdf').decode('utf-8-sig')
+        options = read('UI/FrameDef/Glue/OptionsMenu.fdf').decode('utf-8-sig')
+        frame_names = ['StandardSliderTemplate', 'StandardCheckBoxTemplate', 'StandardPopupMenuTemplate', 'StandardPopupMenuMenuTemplate', 'StandardPopupMenuTitleTemplate', 'StandardPopupMenuArrowTemplate', 'StandardBorderedButtonBackdropTemplate', 'StandardEditBoxTemplate', 'StandardEditBoxBackdropTemplate']
+        frames = {name:fdf_frame(standard, name) for name in frame_names}
+        for source in sorted(set(re.findall(r'"([^"\n]+\.blp)"', '\n'.join(frames.values()), re.I))):
+            name = source.replace('\\', '/').split('/')[-1][:-4]
+            if name not in textures:
+                texture(name, source)
+        slider, check, popup = frames['StandardSliderTemplate'], frames['StandardCheckBoxTemplate'], frames['StandardPopupMenuTemplate']
+        control_images = {}
+        for size in [(256, 32), (344, 19)]:
+            name = f'StandardSlider-{size[0]}x{size[1]}'
+            control_images[name] = backdrop(name, 'GlueScreen-Slider-BackdropBackground', 'GlueScreen-Slider-BackdropBorder', size, 10, 16, 5, size == (256, 32))
+        for state, suffix in [('Normal', ''), ('Pressed', 'Pressed'), ('Disabled', 'Disabled')]:
+            background = 'GlueScreen-Checkbox-Background' + suffix
+            for checked in (False, True):
+                check_key = 'GlueScreen-Checkbox-Check' + ('Disabled' if state == 'Disabled' else '')
+                name = 'StandardCheckbox-' + state + ('-Checked' if checked else '-Unchecked')
+                control_images[name] = derived_image(name, checkbox_image(decoded[background], decoded[check_key] if checked else None), [background] + ([check_key] if checked else []), state=state, checked=checked)
+        control_images['StandardPopupMenu-256x64'] = backdrop('StandardPopupMenu-256x64', 'GlueScreen-Button1-BackdropBackground', 'GlueScreen-Button1-BorderedBackdropBorder', (256, 64), sliced=True)
+        control_images['OptionsPopup-Base-Mirrored'] = derived_image('OptionsPopup-Base-Mirrored', decoded['GlueScreen-Button1-Border'].transpose(Image.Transpose.FLIP_LEFT_RIGHT), ['GlueScreen-Button1-Border'], transform='BackdropMirrored: horizontal reflection')
+        control_images['StandardEditBox-96x48'] = backdrop('StandardEditBox-96x48', 'bnet-inputbox-back', 'bnet-inputbox-border', (96, 48), 24, 64, 5, True)
+        slider_frames = {}
+        for name in re.findall(r'Frame\s+"SLIDER"\s+"([^"]+)"', options):
+            frame = fdf_frame(options, name)
+            slider_frames[name] = {key:fdf_number(frame, key) for key in ['Width', 'SliderMinValue', 'SliderMaxValue', 'SliderInitialValue', 'SliderStepSize']}
+        option_popup = fdf_frame(options, 'OptionsPopupMenuTemplate')
+        controls = dict(definition='UI/FrameDef/Glue/StandardTemplates.fdf', optionsDefinition='UI/FrameDef/Glue/OptionsMenu.fdf', referenceCanvas=[960,720], images=control_images)
+        controls['slider'] = dict(height=fdf_number(slider, 'Height'), thumbSize=[fdf_number(fdf_frame(slider, 'StandardThumbButtonTemplate'), k) for k in ('Width','Height')], cornerSize=fdf_number(slider, 'BackdropCornerSize'), backgroundInsets=[.004]*4, backgroundSize=None, backgroundSizeNote='Not specified by FDF; source background is a uniform 16x16 texture', edgeSlices=[dict(name=name, rect=[i*16,0,16,16], uv=[i/8,0,(i+1)/8,1], clockwiseDegrees=90 if name in ('T','B') else 0) for i,name in enumerate(EDGE_SLICES)], thumb=dict(normal=textures['SinglePlayerSkirmish-ScrollBarKnob']['path'], disabled=textures['SinglePlayerSkirmish-ScrollBarKnobDisabled']['path'], uv=[0,0,1,1]), controls=slider_frames)
+        controls['checkbox'] = dict(size=[fdf_number(check,k) for k in ('Width','Height')], uv=[0,0,1,1], highlightMode='BLEND', states={state:{str(checked).lower():control_images['StandardCheckbox-'+state+('-Checked' if checked else '-Unchecked')]['path'] for checked in (False,True)} for state in ('Normal','Pressed','Disabled')})
+        controls['popup'] = dict(size=[fdf_number(popup,k) for k in ('Width','Height')], optionsSize=[fdf_number(option_popup,k) for k in ('Width','Height')], buttonInset=fdf_number(popup,'PopupButtonInset'), arrowSize=[fdf_number(frames['StandardPopupMenuArrowTemplate'],k) for k in ('Width','Height')], arrow=dict(path=textures['GlueScreen-Pulldown-Arrow']['path'],uv=[0,0,1,1]), titleFontSize=.011, titleOffset=[.01,0], menuItemHeight=fdf_number(frames['StandardPopupMenuMenuTemplate'],'MenuItemHeight'), menuBorder=fdf_number(frames['StandardPopupMenuMenuTemplate'],'MenuBorder'), menuHeight=fdf_number(frames['StandardPopupMenuMenuTemplate'],'Height'), optionsBaseSize=[.256,.053], optionsBaseMirrored=True, controlNormal=buttons['StandardButton-Normal-256x64']['path'], controlDisabled=buttons['StandardButton-Disabled-256x64']['path'])
+        controls['editbox'] = dict(definition='StandardEditBoxTemplate', width=fdf_number(fdf_frame(options,'GamePortEditBox'),'Width'), height=fdf_number(frames['StandardEditBoxTemplate'],'Height'), cornerSize=fdf_number(frames['StandardEditBoxBackdropTemplate'],'BackdropCornerSize'), rasterCornerBeforeFit=38, rasterCornerAfterFit=24, cornerFit='Corner reduced to half the 48-pixel target height', backgroundInsets=[.004]*4, backgroundSize=None, backgroundSizeNote='Not specified by FDF; source background is a uniform 64x64 texture', image=control_images['StandardEditBox-96x48']['path'], edgeSlices=[dict(name=name,rect=[i*64,0,64,64],uv=[i/8,0,(i+1)/8,1],clockwiseDegrees=90 if name in ('T','B') else 0) for i,name in enumerate(EDGE_SLICES)])
+        controls['gammaNotch'] = dict(definition='GammaNotch', size=[fdf_number(fdf_frame(options,'GammaNotch'),key) for key in ('Width','Height')], path=textures['GlueScreen-Pulldown-Arrow']['path'], uv=[0,0,1,1])
         manifest = dict(author='MiYu', game=str(game.resolve()), precedence=ARCHIVES, gameDllSha256=digest((game/'Game.dll').read_bytes()), generator='scripts/import-frost-warcraft-ui.py', generatorSha256=digest(Path(__file__).read_bytes()), sourceCoordinateSize=[.8,.6], font=dict(path='Assets/Fonts/Warcraft-Master.ttf',source=font), textures=textures, sources=list(sources.values()))
+        manifest['optionControls'] = controls
         manifest['buttonBackdrops'] = dict(definition='UI/FrameDef/Glue/StandardTemplates.fdf', referenceCanvas=[960, 720], standardSize=[.179, .031], cornerSize=.016, backgroundSize=.032, backgroundInsets=[.004]*4, rasterCorner=19, rasterTile=38, rasterInset=5, edgeSlices=[dict(name=name, rect=[i*32, 0, 32, 32], clockwiseDegrees=90 if name in ('T', 'B') else 0) for i, name in enumerate(EDGE_SLICES)], images=buttons)
         manifest['escBackdrops'] = dict(race='Human', skinSource='UI/war3skins.txt', resolvedSkin={key:human[key] for key in esc_keys}, buttonDefinition='UI/FrameDef/UI/EscMenuTemplates.fdf', panelDefinition='UI/FrameDef/UI/EscMenuMainPanel.fdf', referenceCanvas=[960,720], buttonCornerSize=.0125, panelCornerSize=.048, backgroundSize=.256, buttonBackgroundInsets=[.005]*4, panelBackgroundInsets=[.01]*4, images=esc_images)
         for relative, data in files.items():

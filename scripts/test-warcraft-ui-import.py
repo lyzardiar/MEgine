@@ -83,5 +83,31 @@ class SkinTests(unittest.TestCase):
         self.assertEqual(values, {'A': 'human', 'B': 'base'})
 
 
+class OptionControlTests(unittest.TestCase):
+    def test_frame_parser_keeps_nested_frames_and_ignores_comments(self):
+        text = '// Frame "FRAME" "Slider" { bad }\nFrame "SLIDER" "Slider" INHERITS WITHCHILDREN "Base" {\n Height 0.016,\n Text "{literal}",\n /* } */ Frame "BUTTON" "Thumb" {\n Width 0.016,\n }\n}\nFrame "FRAME" "Next" {}'
+        frame = ui.fdf_frame(text, 'Slider')
+        self.assertEqual(ui.fdf_number(frame, 'Height'), .016)
+        self.assertEqual(ui.fdf_number(ui.fdf_frame(frame, 'Thumb'), 'Width'), .016)
+        self.assertNotIn('Next', frame)
+        with self.assertRaises(ValueError):
+            ui.fdf_frame(text, 'Missing')
+        with self.assertRaises(ValueError):
+            ui.fdf_frame('Frame "FRAME" "Bad" {', 'Bad')
+        with self.assertRaises(ValueError):
+            ui.fdf_number(frame, 'Missing')
+
+    def test_checkbox_blends_only_check_overlay(self):
+        background = Image.new('RGBA', (2, 2), (10, 20, 30, 255))
+        check = Image.new('RGBA', (2, 2)); check.putpixel((1, 1), (255, 255, 0, 255))
+        self.assertEqual(ui.checkbox_image(background).tobytes(), background.tobytes())
+        result = ui.checkbox_image(background, check)
+        self.assertEqual(result.getpixel((0, 0)), (10, 20, 30, 255))
+        self.assertEqual(result.getpixel((1, 1)), (255, 255, 0, 255))
+        self.assertEqual(background.getpixel((1, 1)), (10, 20, 30, 255))
+        with self.assertRaises(ValueError):
+            ui.checkbox_image(background, Image.new('RGBA', (3, 3)))
+
+
 if __name__ == '__main__':
     unittest.main()

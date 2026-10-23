@@ -1,0 +1,4562 @@
+{
+  "schemaVersion": 1,
+  "referenceCanvas": [
+    960,
+    720
+  ],
+  "coordinateSystem": "center origin; +x right; +y down; rect=[centerX,centerY,width,height]",
+  "sourceCoordinateSize": [
+    0.8,
+    0.6
+  ],
+  "scale": 1200,
+  "generator": "scripts/extract-frost-warcraft-options.py",
+  "generatorSha256": "f59d32878d689f724dc7bba1f8043ae8f07c541f14054d83763ffd04c7f21182",
+  "sources": [
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/StandardTemplates.fdf",
+      "sha256": "5abcba7ab502e5bb5f703eb6e6428aa557f675a4e626049b56fbf256c0c3d73a"
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+      "sha256": "9fbd1b7013d0d33b22989cdf89034b7361bdae08dcffb584a062cefd9d27fe85"
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/GlobalStrings.fdf",
+      "sha256": "8f15e34c8b05a915daa4c3f55c5e00b5eaae6f5a792992a88056ab09bd9552d7"
+    },
+    {
+      "path": "Assets/Fonts/Warcraft-Master.ttf",
+      "sha256": "da03874db48b05256fe961f56783f388bd37617eaf1791981fcfb3bbcd73aafb"
+    }
+  ],
+  "textMetrics": {
+    "engine": "Pillow 12.2.0",
+    "font": "Assets/Fonts/Warcraft-Master.ttf",
+    "supersampling": 64,
+    "autoWidth": "getlength",
+    "autoHeight": "(ascent + descent) * line count"
+  },
+  "pages": {
+    "gameplay": [
+      {
+        "name": "GameplayOptionsTitle",
+        "type": "TEXT",
+        "text": "游戏性设置",
+        "textKey": "GAMEPLAY_OPTIONS",
+        "fontSize": 18.0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -405.0,
+          -248.992188,
+          90.0,
+          18.015625
+        ],
+        "template": "StandardTitleTextTemplate",
+        "templateChain": [
+          "StandardTitleTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "OptionsMenu",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.025,
+              -0.085
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 102
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "GameplayOptionsTitle",
+          "nominalFontHeight": 18.0,
+          "ascent": 15.484375,
+          "descent": 2.53125,
+          "lines": 1
+        },
+        "fontSource": "GameplayOptionsTitle",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "MouseScrollLabel",
+        "type": "TEXT",
+        "text": "鼠标滚动：",
+        "textKey": "COLON_MOUSE_SCROLL",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -411.015625,
+          -220.179688,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "GameplayOptionsTitle",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.01
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 108
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "MouseScrollLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "MouseScrollLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "MouseScrollSlowLabel",
+        "type": "TEXT",
+        "text": "慢",
+        "textKey": "SLOW",
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -430.203125,
+          -198.570312,
+          15.59375,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "MouseScrollLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.01,
+              -0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 113
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "MouseScrollSlowLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "MouseScrollSlowLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "MouseScrollSlider",
+        "type": "SLIDER",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -238.20625,
+          -198.570312,
+          344.4,
+          19.2
+        ],
+        "template": "StandardSliderTemplate",
+        "templateChain": [
+          "StandardSliderTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "MouseScrollSlowLabel",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 119
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "range": [
+          0.0,
+          100.0
+        ],
+        "step": 1.0,
+        "initialValue": 0.0
+      },
+      {
+        "name": "MouseScrollFastLabel",
+        "type": "TEXT",
+        "text": "快",
+        "textKey": "FAST",
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -46.209375,
+          -198.570312,
+          15.59375,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "MouseScrollSlider",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 129
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "MouseScrollFastLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "MouseScrollFastLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "MouseScrollSlider"
+        ]
+      },
+      {
+        "name": "MouseScrollDisableCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          -164.365625,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "MouseScrollSlowLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              -0.01,
+              -0.01
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 135
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "MouseScrollDisableLabel",
+        "type": "TEXT",
+        "text": "取消鼠标滚动",
+        "textKey": "GAMEPLAY_MOUSE_SCROLL_DISABLE",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -362.41875,
+          -164.365625,
+          93.5625,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "MouseScrollDisableCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 139
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "MouseScrollDisableLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "MouseScrollDisableLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "MouseScrollDisableCheckBox"
+        ]
+      },
+      {
+        "name": "KeyScrollLabel",
+        "type": "TEXT",
+        "text": "键盘滚动：",
+        "textKey": "COLON_KEYBOARD_SCROLL",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -411.015625,
+          -132.570312,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "MouseScrollLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.06
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 144
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "KeyScrollLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "KeyScrollLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "KeyScrollSlowLabel",
+        "type": "TEXT",
+        "text": "慢",
+        "textKey": "SLOW",
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -430.203125,
+          -110.960938,
+          15.59375,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "KeyScrollLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.01,
+              -0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 149
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "KeyScrollSlowLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "KeyScrollSlowLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "KeyScrollSlider",
+        "type": "SLIDER",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -238.20625,
+          -110.960938,
+          344.4,
+          19.2
+        ],
+        "template": "StandardSliderTemplate",
+        "templateChain": [
+          "StandardSliderTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "KeyScrollSlowLabel",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 155
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "range": [
+          0.0,
+          100.0
+        ],
+        "step": 1.0,
+        "initialValue": 0.0
+      },
+      {
+        "name": "KeyScrollFastLabel",
+        "type": "TEXT",
+        "text": "快",
+        "textKey": "FAST",
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -46.209375,
+          -110.960938,
+          15.59375,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "KeyScrollSlider",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 165
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "KeyScrollFastLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "KeyScrollFastLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "KeyScrollSlider"
+        ]
+      },
+      {
+        "name": "TooltipsCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          -74.365625,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "KeyScrollLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.03
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 171
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "TooltipsLabel",
+        "type": "TEXT",
+        "text": "高级工具提示",
+        "textKey": "ENHANCED_TOOLTIPS",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -362.41875,
+          -74.365625,
+          93.5625,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "TooltipsCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 175
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "TooltipsLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "TooltipsLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "TooltipsCheckBox"
+        ]
+      },
+      {
+        "name": "SubgroupCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          -39.565625,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "TooltipsCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 180
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "SubgroupLabel",
+        "type": "TEXT",
+        "text": "子组顺序修改键",
+        "textKey": "SUBGROUP_MODIFIER",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -354.621875,
+          -39.565625,
+          109.15625,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "SubgroupCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 184
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "SubgroupLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "SubgroupLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "SubgroupCheckBox"
+        ]
+      },
+      {
+        "name": "FormationToggleCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          -4.765625,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "SubgroupCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 189
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "FormationToggleLabel",
+        "type": "TEXT",
+        "text": "启动队形移动开关",
+        "textKey": "FORMATION_TOGGLE",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -346.825,
+          -4.765625,
+          124.75,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "FormationToggleCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 193
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "FormationToggleLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "FormationToggleLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "FormationToggleCheckBox"
+        ]
+      },
+      {
+        "name": "CustomKeysCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          30.034375,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "FormationToggleCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 198
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "CustomKeysLabel",
+        "type": "TEXT",
+        "text": "自定义快捷键",
+        "textKey": "CUSTOM_KEYS",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -362.41875,
+          30.034375,
+          93.5625,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "CustomKeysCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 202
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "CustomKeysLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "CustomKeysLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "CustomKeysCheckBox"
+        ]
+      },
+      {
+        "name": "HealthBarsCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          64.834375,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "CustomKeysCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 207
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "HealthBarsLabel",
+        "type": "TEXT",
+        "text": "是否始终显示生命值条",
+        "textKey": "HEALTH_BARS",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -331.23125,
+          64.834375,
+          155.9375,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "HealthBarsCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 211
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "HealthBarsLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "HealthBarsLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "HealthBarsCheckBox"
+        ]
+      },
+      {
+        "name": "AutosaveReplayCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          99.634375,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "HealthBarsCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 216
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "AutosaveReplayLabel",
+        "type": "TEXT",
+        "text": "是否自动保存回放",
+        "textKey": "AUTOSAVE_REPLAY",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -346.825,
+          99.634375,
+          124.75,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "AutosaveReplayCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 220
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "AutosaveReplayLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "AutosaveReplayLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "AutosaveReplayCheckBox"
+        ]
+      },
+      {
+        "name": "GamePortLabel",
+        "type": "TEXT",
+        "text": "游戏端口：",
+        "textKey": "COLON_GAMEPORT",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -411.015625,
+          145.839063,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "AutosaveReplayCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.02
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 235
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "GamePortLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "GamePortLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "AutosaveReplayCheckBox"
+        ]
+      },
+      {
+        "name": "GamePortEditBox",
+        "type": "GLUEEDITBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -291.78125,
+          145.839063,
+          96.0,
+          48.0
+        ],
+        "template": "StandardEditBoxTemplate",
+        "templateChain": [
+          "StandardEditBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "GamePortLabel",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.026875,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 240
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "ChatSupportLabel",
+        "type": "TEXT",
+        "text": "聊天支持：",
+        "textKey": "COLON_CHAT_SUPPORT",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -411.015625,
+          206.448438,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "GamePortLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.0375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 245
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "ChatSupportLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "ChatSupportLabel",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "ChatSupportBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -206.43125,
+          206.448438,
+          307.2,
+          63.6
+        ],
+        "template": "OptionsPopupMenuBackdropTemplate",
+        "templateChain": [
+          "OptionsPopupMenuBackdropTemplate",
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "ChatSupportLabel",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 250
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "GameplayPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "ChatSupportMenu",
+        "type": "GLUEPOPUPMENU",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -239.13125,
+          205.248438,
+          213.0,
+          30.0
+        ],
+        "template": "OptionsPopupMenuTemplate",
+        "templateChain": [
+          "OptionsPopupMenuTemplate",
+          "StandardPopupMenuTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ChatSupportBackdrop",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.012,
+              -0.013
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 253
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "StandardPopupMenuTitleTemplate",
+        "parent": "ChatSupportBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "menuItems": [],
+        "menuItemsSource": "Runtime supplied; no MenuItem entries in FDF"
+      }
+    ],
+    "video": [
+      {
+        "name": "VideoOptionsTitle",
+        "type": "TEXT",
+        "text": "图像选项",
+        "textKey": "VIDEO_OPTIONS",
+        "fontSize": 18.0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -414.0,
+          -248.992188,
+          72.0,
+          18.015625
+        ],
+        "template": "StandardTitleTextTemplate",
+        "templateChain": [
+          "StandardTitleTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "OptionsMenu",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.025,
+              -0.085
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 272
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "VideoOptionsTitle",
+          "nominalFontHeight": 18.0,
+          "ascent": 15.484375,
+          "descent": 2.53125,
+          "lines": 1
+        },
+        "fontSource": "VideoOptionsTitle",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "GammaLabel",
+        "type": "TEXT",
+        "text": "亮度：",
+        "textKey": "COLON_GAMMA",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -426.609375,
+          -226.179688,
+          46.78125,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "VideoOptionsTitle",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 278
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "GammaLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "GammaLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "GammaDarkLabel",
+        "type": "TEXT",
+        "text": "黑暗的",
+        "textKey": "DARK",
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -418.209375,
+          -204.570312,
+          46.78125,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "GammaLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.007,
+              -0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 283
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "GammaDarkLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "GammaDarkLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "GammaSlider",
+        "type": "SLIDER",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -214.21875,
+          -204.570312,
+          344.4,
+          19.2
+        ],
+        "template": "StandardSliderTemplate",
+        "templateChain": [
+          "StandardSliderTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "GammaDarkLabel",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.007,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 289
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "range": [
+          0.0,
+          100.0
+        ],
+        "step": 1.0,
+        "initialValue": 0.0
+      },
+      {
+        "name": "GammaNotch",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -310.21875,
+          -224.370313,
+          8.4,
+          8.4
+        ],
+        "template": null,
+        "templateChain": [],
+        "anchors": [
+          {
+            "point": "BOTTOMLEFT",
+            "relative": "GammaSlider",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.06,
+              0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 299
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "GammaNotchLabel",
+        "type": "TEXT",
+        "text": "1.0",
+        "textKey": null,
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -289.542187,
+          -224.370313,
+          23.953125,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "GammaNotch",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.00375,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 306
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "GammaNotchLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "GammaNotchLabel",
+        "parent": "GammaNotch",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "GammaBrightLabel",
+        "type": "TEXT",
+        "text": "明亮",
+        "textKey": "BRIGHT",
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -18.025,
+          -204.570312,
+          31.1875,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "GammaSlider",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.007,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 313
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "GammaBrightLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "GammaBrightLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "GammaSlider"
+        ]
+      },
+      {
+        "name": "ResolutionLabel",
+        "type": "TEXT",
+        "text": "解析度：",
+        "textKey": "COLON_RESOLUTION",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -418.8125,
+          -162.570312,
+          62.375,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "GammaLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.04
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 320
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "ResolutionLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "ResolutionLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "ModelDetailLabel",
+        "type": "TEXT",
+        "text": "模型细节：",
+        "textKey": "COLON_MODEL_DETAIL",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -411.015625,
+          -115.460938,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ResolutionLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.02625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 325
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "ModelDetailLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "ModelDetailLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "AnimQualityLabel",
+        "type": "TEXT",
+        "text": "动画质量：",
+        "textKey": "COLON_ANIM_QUALITY",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -411.015625,
+          -68.351562,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ModelDetailLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.02625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 330
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "AnimQualityLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "AnimQualityLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "TextureQualityLabel",
+        "type": "TEXT",
+        "text": "纹理质量：",
+        "textKey": "COLON_TEXTURE_QUALITY",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -411.015625,
+          -21.242188,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "AnimQualityLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.02625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 335
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "TextureQualityLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "TextureQualityLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "ParticlesLabel",
+        "type": "TEXT",
+        "text": "粒子效果：",
+        "textKey": "COLON_PARTICLES",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -411.015625,
+          25.867188,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "TextureQualityLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.02625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 340
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "ParticlesLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "ParticlesLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "LightsLabel",
+        "type": "TEXT",
+        "text": "光线：",
+        "textKey": "COLON_LIGHTS",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -426.609375,
+          72.976562,
+          46.78125,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ParticlesLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.02625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 345
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "LightsLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "LightsLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "ShadowsLabel",
+        "type": "TEXT",
+        "text": "单位阴影：",
+        "textKey": "COLON_SHADOWS",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -411.015625,
+          120.085938,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "LightsLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.02625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 350
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "ShadowsLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "ShadowsLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "OcclusionLabel",
+        "type": "TEXT",
+        "text": "闭塞：",
+        "textKey": "COLON_OCCLUSION",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -426.609375,
+          167.195312,
+          46.78125,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ShadowsLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.02625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 355
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "OcclusionLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "OcclusionLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "SpellFilterLabel",
+        "type": "TEXT",
+        "text": "魔法效果：",
+        "textKey": "COLON_SPELL_FILTER",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -411.015625,
+          214.304688,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "OcclusionLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.02625
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 360
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "SpellFilterLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "SpellFilterLabel",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "ResolutionBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -153.025,
+          -161.070312,
+          307.2,
+          63.6
+        ],
+        "template": "OptionsPopupMenuBackdropTemplate",
+        "templateChain": [
+          "OptionsPopupMenuBackdropTemplate",
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "ResolutionLabel",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.0675,
+              -0.00125
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 366
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "ResolutionMenu",
+        "type": "POPUPMENU",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -185.725,
+          -162.270313,
+          213.0,
+          30.0
+        ],
+        "template": "OptionsPopupMenuTemplate",
+        "templateChain": [
+          "OptionsPopupMenuTemplate",
+          "StandardPopupMenuTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ResolutionBackdrop",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.012,
+              -0.013
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 369
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "StandardPopupMenuTitleTemplate",
+        "parent": "ResolutionBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "menuItems": [],
+        "menuItemsSource": "Runtime supplied; no MenuItem entries in FDF"
+      },
+      {
+        "name": "ModelDetailBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -153.025,
+          -113.970313,
+          307.2,
+          63.6
+        ],
+        "template": "OptionsPopupMenuBackdropTemplate",
+        "templateChain": [
+          "OptionsPopupMenuBackdropTemplate",
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ResolutionBackdrop",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              0.01375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 378
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "ModelDetailMenu",
+        "type": "POPUPMENU",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -185.725,
+          -115.170313,
+          213.0,
+          30.0
+        ],
+        "template": "OptionsPopupMenuTemplate",
+        "templateChain": [
+          "OptionsPopupMenuTemplate",
+          "StandardPopupMenuTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ModelDetailBackdrop",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.012,
+              -0.013
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 381
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "StandardPopupMenuTitleTemplate",
+        "parent": "ModelDetailBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "menuItems": [
+          {
+            "textKey": "LOW",
+            "text": "低",
+            "value": -2.0
+          },
+          {
+            "textKey": "MEDIUM",
+            "text": "中",
+            "value": -2.0
+          },
+          {
+            "textKey": "HIGH",
+            "text": "高",
+            "value": -2.0
+          }
+        ],
+        "menuItemsSource": "FDF"
+      },
+      {
+        "name": "AnimQualityBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -153.025,
+          -66.870313,
+          307.2,
+          63.6
+        ],
+        "template": "OptionsPopupMenuBackdropTemplate",
+        "templateChain": [
+          "OptionsPopupMenuBackdropTemplate",
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ModelDetailBackdrop",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              0.01375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 393
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "AnimQualityMenu",
+        "type": "POPUPMENU",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -185.725,
+          -68.070312,
+          213.0,
+          30.0
+        ],
+        "template": "OptionsPopupMenuTemplate",
+        "templateChain": [
+          "OptionsPopupMenuTemplate",
+          "StandardPopupMenuTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "AnimQualityBackdrop",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.012,
+              -0.013
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 396
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "StandardPopupMenuTitleTemplate",
+        "parent": "AnimQualityBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "menuItems": [
+          {
+            "textKey": "LOW",
+            "text": "低",
+            "value": -2.0
+          },
+          {
+            "textKey": "MEDIUM",
+            "text": "中",
+            "value": -2.0
+          },
+          {
+            "textKey": "HIGH",
+            "text": "高",
+            "value": -2.0
+          }
+        ],
+        "menuItemsSource": "FDF"
+      },
+      {
+        "name": "TextureQualityBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -153.025,
+          -19.770312,
+          307.2,
+          63.6
+        ],
+        "template": "OptionsPopupMenuBackdropTemplate",
+        "templateChain": [
+          "OptionsPopupMenuBackdropTemplate",
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "AnimQualityBackdrop",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              0.01375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 408
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "TextureQualityMenu",
+        "type": "POPUPMENU",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -185.725,
+          -20.970312,
+          213.0,
+          30.0
+        ],
+        "template": "OptionsPopupMenuTemplate",
+        "templateChain": [
+          "OptionsPopupMenuTemplate",
+          "StandardPopupMenuTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "TextureQualityBackdrop",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.012,
+              -0.013
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 411
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "StandardPopupMenuTitleTemplate",
+        "parent": "TextureQualityBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "menuItems": [
+          {
+            "textKey": "LOW",
+            "text": "低",
+            "value": -2.0
+          },
+          {
+            "textKey": "MEDIUM",
+            "text": "中",
+            "value": -2.0
+          },
+          {
+            "textKey": "HIGH",
+            "text": "高",
+            "value": -2.0
+          }
+        ],
+        "menuItemsSource": "FDF"
+      },
+      {
+        "name": "ParticlesBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -153.025,
+          27.329688,
+          307.2,
+          63.6
+        ],
+        "template": "OptionsPopupMenuBackdropTemplate",
+        "templateChain": [
+          "OptionsPopupMenuBackdropTemplate",
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "TextureQualityBackdrop",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              0.01375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 423
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "ParticlesMenu",
+        "type": "POPUPMENU",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -185.725,
+          26.129688,
+          213.0,
+          30.0
+        ],
+        "template": "OptionsPopupMenuTemplate",
+        "templateChain": [
+          "OptionsPopupMenuTemplate",
+          "StandardPopupMenuTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ParticlesBackdrop",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.012,
+              -0.013
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 426
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "StandardPopupMenuTitleTemplate",
+        "parent": "ParticlesBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "menuItems": [
+          {
+            "textKey": "LOW",
+            "text": "低",
+            "value": -2.0
+          },
+          {
+            "textKey": "MEDIUM",
+            "text": "中",
+            "value": -2.0
+          },
+          {
+            "textKey": "HIGH",
+            "text": "高",
+            "value": -2.0
+          }
+        ],
+        "menuItemsSource": "FDF"
+      },
+      {
+        "name": "LightsBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -153.025,
+          74.429688,
+          307.2,
+          63.6
+        ],
+        "template": "OptionsPopupMenuBackdropTemplate",
+        "templateChain": [
+          "OptionsPopupMenuBackdropTemplate",
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ParticlesBackdrop",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              0.01375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 438
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "LightsMenu",
+        "type": "POPUPMENU",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -185.725,
+          73.229688,
+          213.0,
+          30.0
+        ],
+        "template": "OptionsPopupMenuTemplate",
+        "templateChain": [
+          "OptionsPopupMenuTemplate",
+          "StandardPopupMenuTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "LightsBackdrop",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.012,
+              -0.013
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 441
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "StandardPopupMenuTitleTemplate",
+        "parent": "LightsBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "menuItems": [
+          {
+            "textKey": "LOW",
+            "text": "低",
+            "value": -2.0
+          },
+          {
+            "textKey": "MEDIUM",
+            "text": "中",
+            "value": -2.0
+          },
+          {
+            "textKey": "HIGH",
+            "text": "高",
+            "value": -2.0
+          }
+        ],
+        "menuItemsSource": "FDF"
+      },
+      {
+        "name": "ShadowsBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -153.025,
+          121.529688,
+          307.2,
+          63.6
+        ],
+        "template": "OptionsPopupMenuBackdropTemplate",
+        "templateChain": [
+          "OptionsPopupMenuBackdropTemplate",
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "LightsBackdrop",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              0.01375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 453
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "ShadowsMenu",
+        "type": "POPUPMENU",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -185.725,
+          120.329688,
+          213.0,
+          30.0
+        ],
+        "template": "OptionsPopupMenuTemplate",
+        "templateChain": [
+          "OptionsPopupMenuTemplate",
+          "StandardPopupMenuTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ShadowsBackdrop",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.012,
+              -0.013
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 456
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "StandardPopupMenuTitleTemplate",
+        "parent": "ShadowsBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "menuItems": [
+          {
+            "textKey": "OFF",
+            "text": "关",
+            "value": -2.0
+          },
+          {
+            "textKey": "ON",
+            "text": "开",
+            "value": -2.0
+          }
+        ],
+        "menuItemsSource": "FDF"
+      },
+      {
+        "name": "OcclusionBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -153.025,
+          168.629688,
+          307.2,
+          63.6
+        ],
+        "template": "OptionsPopupMenuBackdropTemplate",
+        "templateChain": [
+          "OptionsPopupMenuBackdropTemplate",
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ShadowsBackdrop",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              0.01375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 467
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "OcclusionMenu",
+        "type": "POPUPMENU",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -185.725,
+          167.429688,
+          213.0,
+          30.0
+        ],
+        "template": "OptionsPopupMenuTemplate",
+        "templateChain": [
+          "OptionsPopupMenuTemplate",
+          "StandardPopupMenuTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "OcclusionBackdrop",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.012,
+              -0.013
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 470
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "StandardPopupMenuTitleTemplate",
+        "parent": "OcclusionBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "menuItems": [
+          {
+            "textKey": "OFF",
+            "text": "关",
+            "value": -2.0
+          },
+          {
+            "textKey": "ON",
+            "text": "开",
+            "value": -2.0
+          }
+        ],
+        "menuItemsSource": "FDF"
+      },
+      {
+        "name": "SpellFilterBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -153.025,
+          215.729688,
+          307.2,
+          63.6
+        ],
+        "template": "OptionsPopupMenuBackdropTemplate",
+        "templateChain": [
+          "OptionsPopupMenuBackdropTemplate",
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "OcclusionBackdrop",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              0.01375
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 482
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "VideoPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "SpellFilterMenu",
+        "type": "GLUEPOPUPMENU",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -185.725,
+          214.529688,
+          213.0,
+          30.0
+        ],
+        "template": "OptionsPopupMenuTemplate",
+        "templateChain": [
+          "OptionsPopupMenuTemplate",
+          "StandardPopupMenuTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "SpellFilterBackdrop",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.012,
+              -0.013
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 485
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "StandardPopupMenuTitleTemplate",
+        "parent": "SpellFilterBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "menuItems": [
+          {
+            "textKey": "LOW",
+            "text": "低",
+            "value": -2.0
+          },
+          {
+            "textKey": "MEDIUM",
+            "text": "中",
+            "value": -2.0
+          },
+          {
+            "textKey": "HIGH",
+            "text": "高",
+            "value": -2.0
+          }
+        ],
+        "menuItemsSource": "FDF"
+      }
+    ],
+    "sound": [
+      {
+        "name": "SoundOptionsTitle",
+        "type": "TEXT",
+        "text": "声音选项",
+        "textKey": "SOUND_OPTIONS",
+        "fontSize": 18.0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -414.0,
+          -248.992188,
+          72.0,
+          18.015625
+        ],
+        "template": "StandardTitleTextTemplate",
+        "templateChain": [
+          "StandardTitleTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "OptionsMenu",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.025,
+              -0.085
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 507
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "SoundOptionsTitle",
+          "nominalFontHeight": 18.0,
+          "ascent": 15.484375,
+          "descent": 2.53125,
+          "lines": 1
+        },
+        "fontSource": "SoundOptionsTitle",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": []
+      },
+      {
+        "name": "SoundCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          -213.584375,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "SoundOptionsTitle",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.01
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 514
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "SoundVolumeLabel",
+        "type": "TEXT",
+        "text": "声效音量：",
+        "textKey": "COLON_SOUND_EFFECTS_VOLUME",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -370.215625,
+          -213.584375,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "SoundCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 518
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "SoundVolumeLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "SoundVolumeLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "SoundCheckBox"
+        ]
+      },
+      {
+        "name": "SoundVolumeLowLabel",
+        "type": "TEXT",
+        "text": "低",
+        "textKey": "LOW",
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -436.203125,
+          -184.179688,
+          15.59375,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "SoundCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.005,
+              -0.006
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 523
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "SoundVolumeLowLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "SoundVolumeLowLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "SoundCheckBox"
+        ]
+      },
+      {
+        "name": "SoundVolumeSlider",
+        "type": "SLIDER",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -244.20625,
+          -184.179688,
+          344.4,
+          19.2
+        ],
+        "template": "StandardSliderTemplate",
+        "templateChain": [
+          "StandardSliderTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "SoundVolumeLowLabel",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 529
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "range": [
+          0.0,
+          100.0
+        ],
+        "step": 1.0,
+        "initialValue": 0.0
+      },
+      {
+        "name": "SoundVolumeHighLabel",
+        "type": "TEXT",
+        "text": "高",
+        "textKey": "HIGH",
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -52.209375,
+          -184.179688,
+          15.59375,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "SoundVolumeSlider",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 539
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "SoundVolumeHighLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "SoundVolumeHighLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "SoundVolumeSlider"
+        ]
+      },
+      {
+        "name": "MusicCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          -136.784375,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "SoundCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.04
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 545
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "MusicVolumeLabel",
+        "type": "TEXT",
+        "text": "音乐音量：",
+        "textKey": "COLON_MUSIC_VOLUME",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -370.215625,
+          -136.784375,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "MusicCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 549
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "MusicVolumeLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "MusicVolumeLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "MusicCheckBox"
+        ]
+      },
+      {
+        "name": "MusicVolumeLowLabel",
+        "type": "TEXT",
+        "text": "低",
+        "textKey": "LOW",
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -436.203125,
+          -107.379687,
+          15.59375,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "MusicCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.005,
+              -0.006
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 554
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "MusicVolumeLowLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "MusicVolumeLowLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "MusicCheckBox"
+        ]
+      },
+      {
+        "name": "MusicVolumeSlider",
+        "type": "SLIDER",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -244.20625,
+          -107.379687,
+          344.4,
+          19.2
+        ],
+        "template": "StandardSliderTemplate",
+        "templateChain": [
+          "StandardSliderTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "MusicVolumeLowLabel",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 560
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "range": [
+          0.0,
+          100.0
+        ],
+        "step": 1.0,
+        "initialValue": 0.0
+      },
+      {
+        "name": "MusicVolumeHighLabel",
+        "type": "TEXT",
+        "text": "高",
+        "textKey": "HIGH",
+        "fontSize": 15.6,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rect": [
+          -52.209375,
+          -107.379687,
+          15.59375,
+          15.609375
+        ],
+        "template": "StandardLabelTextTemplate",
+        "templateChain": [
+          "StandardLabelTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "MusicVolumeSlider",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 570
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "MusicVolumeHighLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "MusicVolumeHighLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYLEFT",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "MusicVolumeSlider"
+        ]
+      },
+      {
+        "name": "AmbientCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          -47.984375,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "MusicCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.05
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 576
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "AmbientLabel",
+        "type": "TEXT",
+        "text": "环绕音响",
+        "textKey": "AMBIENT_SOUNDS",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -378.0125,
+          -47.984375,
+          62.375,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "AmbientCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 580
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "AmbientLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "AmbientLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "AmbientCheckBox"
+        ]
+      },
+      {
+        "name": "MovementCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          -13.184375,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "AmbientCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 585
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "MovementLabel",
+        "type": "TEXT",
+        "text": "移动声音",
+        "textKey": "MOVEMENT_SOUNDS",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -378.0125,
+          -13.184375,
+          62.375,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "MovementCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 589
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "MovementLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "MovementLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "MovementCheckBox"
+        ]
+      },
+      {
+        "name": "SubtitlesCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          21.615625,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "MovementCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.005
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 594
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "SubtitlesLabel",
+        "type": "TEXT",
+        "text": "字幕",
+        "textKey": "SUBTITLES",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -393.60625,
+          21.615625,
+          31.1875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "SubtitlesCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 598
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "SubtitlesLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "SubtitlesLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "SubtitlesCheckBox"
+        ]
+      },
+      {
+        "name": "UnitCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -201.3,
+          -47.984375,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "AmbientCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.17125,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 603
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "UnitLabel",
+        "type": "TEXT",
+        "text": "单位回应",
+        "textKey": "UNIT_SOUNDS",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -143.7125,
+          -47.984375,
+          62.375,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "UnitCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 607
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "UnitLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "UnitLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "UnitCheckBox"
+        ]
+      },
+      {
+        "name": "ProviderLabel",
+        "type": "TEXT",
+        "text": "声音驱动：",
+        "textKey": "COLON_SOUND_PROVIDER",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -411.015625,
+          79.820313,
+          77.96875,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "SubtitlesCheckBox",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.03
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 613
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "ProviderLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "ProviderLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "SubtitlesCheckBox"
+        ]
+      },
+      {
+        "name": "ProviderBackdrop",
+        "type": "BACKDROP",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -176.43125,
+          79.820313,
+          307.2,
+          63.6
+        ],
+        "template": "OptionsPopupMenuBackdropTemplate",
+        "templateChain": [
+          "OptionsPopupMenuBackdropTemplate",
+          "StandardMenuButtonBaseBackdrop"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "ProviderLabel",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.035,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 618
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "ProviderMenu",
+        "type": "POPUPMENU",
+        "text": "",
+        "textKey": null,
+        "fontSize": 13.2,
+        "color": null,
+        "rect": [
+          -209.13125,
+          78.620313,
+          213.0,
+          30.0
+        ],
+        "template": "OptionsPopupMenuTemplate",
+        "templateChain": [
+          "OptionsPopupMenuTemplate",
+          "StandardPopupMenuTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ProviderBackdrop",
+            "relativePoint": "TOPLEFT",
+            "offset": [
+              0.012,
+              -0.013
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 621
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "StandardPopupMenuTitleTemplate",
+        "parent": "ProviderBackdrop",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        },
+        "menuItems": [],
+        "menuItemsSource": "Runtime supplied; no MenuItem entries in FDF"
+      },
+      {
+        "name": "EnviroCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -435.6,
+          138.025,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "TOPLEFT",
+            "relative": "ProviderLabel",
+            "relativePoint": "BOTTOMLEFT",
+            "offset": [
+              0.0,
+              -0.03
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 630
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "EnviroLabel",
+        "type": "TEXT",
+        "text": "环境效果",
+        "textKey": "ENVIRONMENTAL_EFFECTS",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -378.0125,
+          138.025,
+          62.375,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "EnviroCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 634
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "EnviroLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "EnviroLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "EnviroCheckBox"
+        ]
+      },
+      {
+        "name": "PositionalCheckBox",
+        "type": "GLUECHECKBOX",
+        "text": "",
+        "textKey": null,
+        "fontSize": 18.0,
+        "color": null,
+        "rect": [
+          -190.8,
+          138.025,
+          28.8,
+          28.8
+        ],
+        "template": "StandardCheckBoxTemplate",
+        "templateChain": [
+          "StandardCheckBoxTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "EnviroCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.18,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 639
+        },
+        "measurement": {
+          "width": "FDF Width",
+          "height": "FDF Height"
+        },
+        "fontSource": "OptionsMenu",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": null,
+          "vertical": null
+        }
+      },
+      {
+        "name": "PositionalLabel",
+        "type": "TEXT",
+        "text": "3D音效",
+        "textKey": "POSITIONAL_AUDIO",
+        "fontSize": 15.6,
+        "color": [
+          0.99,
+          0.827,
+          0.0705,
+          1.0
+        ],
+        "rect": [
+          -140.821875,
+          138.025,
+          47.15625,
+          15.609375
+        ],
+        "template": "StandardInfoTextTemplate",
+        "templateChain": [
+          "StandardInfoTextTemplate"
+        ],
+        "anchors": [
+          {
+            "point": "LEFT",
+            "relative": "PositionalCheckBox",
+            "relativePoint": "RIGHT",
+            "offset": [
+              0.01,
+              0.0
+            ]
+          }
+        ],
+        "source": {
+          "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/OptionsMenu.fdf",
+          "line": 643
+        },
+        "measurement": {
+          "width": "Pillow getlength at 64x template font size",
+          "height": "Pillow (ascent + descent) per line at 64x template font size",
+          "fontSource": "PositionalLabel",
+          "nominalFontHeight": 15.6,
+          "ascent": 13.421875,
+          "descent": 2.1875,
+          "lines": 1
+        },
+        "fontSource": "PositionalLabel",
+        "parent": "SoundPanel",
+        "alignment": {
+          "horizontal": "JUSTIFYCENTER",
+          "vertical": "JUSTIFYMIDDLE"
+        },
+        "associatedControls": [
+          "PositionalCheckBox"
+        ]
+      }
+    ]
+  },
+  "unresolved": [],
+  "limitations": [
+    "Unspecified text dimensions use Pillow metrics from the preserved MasterFont TTF at the inherited FDF font size; Warcraft native font rasterization, glyph spacing, baseline and line-box rules have not been measured.",
+    "SetPoint offsets and explicit dimensions are evaluated directly without layout adjustments; text measurement differences propagate through dependent anchors.",
+    "Only explicitly declared panel controls are emitted; inherited control internals and popup MENU frames are not separate visible records.",
+    "Dynamic dropdown selections and runtime-populated item lists are not present in FDF and remain empty; no resolution/provider choices are invented.",
+    "Null color means no FontColor on the frame/template chain; it is not an inferred native default."
+  ]
+}

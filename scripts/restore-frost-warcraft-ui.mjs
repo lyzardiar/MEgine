@@ -4,6 +4,7 @@ import path from 'node:path';
 import {stableUiId,fullStretchRect,UI_SCREENS} from './frost-ui-prefabs.mjs';
 import {WARCRAFT_UI_FONT as font,WARCRAFT_UI_GOLD as gold} from './frost-warcraft-ui.mjs';
 import {syncFrostUI} from './sync-frost-ui.mjs';
+import {restoreWarcraftOptions} from './restore-frost-warcraft-options.mjs';
 
 const project=path.resolve(process.argv[2]??'samples/frostbound-realms'),folder=path.join(project,'Assets/Prefabs/UI');
 const prefabs=Object.fromEntries(UI_SCREENS.map(([key])=>[key,JSON.parse(fs.readFileSync(path.join(folder,key+'.prefab'),'utf8'))]));
@@ -72,11 +73,10 @@ text('SinglePlayer','Warcraft profile name','玩家',263,-236,192,48,24,[1,1,1,1
 for(const n of ['editor border','editor box','editor label'])clear(n);
 
 for(const [i,[id,title]] of [['optionsGameplay','游戏性(G)'],['optionsVideo','图像(V)'],['optionsSound','声音(S)']].entries())control('Options',id,title,340.2,-188.85+i*70.8,214.8,37.2,true);
-control('Options','optionsBack','确定(O)',346.8,294.6,201.6,37.2,true);
-place('Options heading',-180,-246,540,32);label('Options heading','声音设置');
-control('Options','musicVolume','音乐音量',-180,-130,390,37.2);control('Options','sfxVolume','音效音量',-180,-70,390,37.2);
-for(const n of ['menuSnow border','menuSnow box','menuSnow label'])clear(n);
-text('Options','Warcraft option availability','',-180,-170,510,56,15.6,[1,1,1,1]);
+control('Options','optionsBack','确定(O)',346.8,232.8,201.6,37.2,true);
+control('Options','optionsCancel','取消(A)',346.8,294.6,201.6,37.2,true);
+for(const n of ['Options heading','Warcraft option availability',...['menuSnow','musicVolume','sfxVolume'].flatMap(id=>[' border',' box',' label'].map(s=>id+s))])clear(n);
+restoreWarcraftOptions(prefabs.Options);
 
 // Skirmish.fdf containers: list upper left, team setup lower left, information upper right.
 for(const name of ['Front backing','Front frame','Map list backing','Map list frame','Map preview frame'])clear(name);
