@@ -48,7 +48,7 @@ import {
   type MenuItemContext,
 } from '../editorWindow';
 import { filterHierarchyCreateItems } from '../hierarchyCreateMenu';
-import { filterHierarchyTree, hierarchyEntityMatches } from '../hierarchySearch';
+import { searchHierarchyTree } from '../hierarchySearch';
 import { readPrefabLink } from '../prefabAsset';
 import { HIERARCHY_ROW_HEIGHT, hierarchyWindow, hierarchyScrollTo } from '../hierarchyWindow';
 
@@ -178,7 +178,7 @@ export function Hierarchy(props: {
     const q = props.filter.trim();
     if (!q) return { nodes: props.nodes, matches: new Set<number>() };
     const source = props.store.hierarchySearchSource();
-    return { nodes: filterHierarchyTree(source, q), matches: new Set(source.filter((entity) => hierarchyEntityMatches(entity, q)).map((entity) => entity.entity)) };
+    return searchHierarchyTree(source, q);
   }, [props.nodes, props.filter, props.store]);
   const filtered = search.nodes, matchingIds = search.matches;
   const indicesById = useMemo(() => new Map(filtered.map((node, index) => [node.entity.entity, index])), [filtered]);

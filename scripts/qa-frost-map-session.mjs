@@ -13,6 +13,7 @@ const profileOnly=process.argv.includes('--profile-only');
 const editorFeedback=process.argv.includes('--editor-feedback');
 const returnOnly=process.argv.includes('--return-only');
 const cameraOnly=process.argv.includes('--camera-only');
+const hierarchyOnly=process.argv.includes('--hierarchy-only');
 const label='map-session-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
 fs.cpSync(source,sample,{recursive:true,filter:file=>!['SourceAssets','.mengine','Builds'].includes(path.basename(file))});
@@ -41,6 +42,22 @@ async function checkHierarchyFocus(s){
   assert.notDeepEqual(a.pivot,b.pivot);for(const [camera,entity] of [[a,first],[b,second]])assert.ok(Math.hypot(...camera.pivot.map((v,i)=>v-entity.components.Transform.position[i]))<10,entity.name+' frame target');
   report.focus={doubleClick:{entity:first.name,camera:a},space:{entity:second.name,camera:b}};report.checks.push('Hierarchy runtime search, native double click and Space frame distinct map roots');delete report.lastUi;await execute('panel.focus',{kind:'game'});
 }
+async function checkHierarchyPresentation(s){
+  const root=s.entities.find(e=>e.name.startsWith('Doodad-')&&s.entities.some(child=>child.parent===e.entity)),child=s.entities.find(e=>e.parent===root?.entity);assert.ok(root&&child);
+  await execute('panel.focus',{kind:'hierarchy'});
+  const ui=()=>query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});
+  async function element(name){for(let attempt=0;attempt<20;attempt++){const snapshot=await ui(),item=snapshot.elements.find(e=>e.name===name);if(item)return {snapshot,item};await sleep(100);}throw Error('Hierarchy item missing: '+name);}
+  async function button(name){const {snapshot,item}=await element(name);await execute('window.ui_click',{windowLabel:'main',selector:item.selector,expectedSnapshotRevision:snapshot.snapshotRevision});}
+  const search=await element('Search hierarchy');await execute('window.ui_set_value',{windowLabel:'main',selector:search.item.selector,expectedSnapshotRevision:search.snapshot.snapshotRevision,value:''});
+  await execute('selection.set',{ids:[root.entity]});await element(root.name);
+  await button('Collapse all hierarchy nodes');await element('Expand '+root.name);
+  await button('Expand all hierarchy nodes');await element('Collapse '+root.name);
+  await button('Collapse all hierarchy nodes');await execute('selection.reveal',{id:child.entity});await element(child.name);await element('Collapse '+root.name);
+  await execute('selection.set',{ids:[root.entity]});const item=await element(root.name);
+  await execute('window.ui_press_key',{windowLabel:'main',selector:item.item.selector,expectedSnapshotRevision:item.snapshot.snapshotRevision,key:'ArrowLeft'});await element('Expand '+root.name);
+  const folded=await element(root.name);await execute('window.ui_press_key',{windowLabel:'main',selector:folded.item.selector,expectedSnapshotRevision:folded.snapshot.snapshotRevision,key:'ArrowRight'});await element('Collapse '+root.name);
+  report.checks.push('Native hierarchy collapse/expand, hidden descendant reveal, scrolling and left/right keys for runtime root '+root.entity);
+}
 try{
   for(let i=0;;i++)try{await query('project.state');break;}catch(e){if(i===20||!/BridgeConnectionError|request timed out|not ready/.test(e.message))throw e;await sleep(500);}
   await execute('project.open',{root:sample});const authored=await snapshot();await execute('panel.focus',{kind:'game'});await execute('playback.play',{paused:true});await step(2);
@@ -48,7 +65,11 @@ try{
   let s=await snapshot();assert.equal(telemetry(s).mode,'custom');assert.equal(s.entities.find(e=>e.name==='Map name').components.Text.text,'Amazonia');assert.equal(s.entities.find(e=>e.name==='Map preview backing').components.Image.sprite,'Assets/Maps/amazonia/Textures/MapPreview.png');for(const name of ['map2 box','map3 box','faction box','heroChoice box','Hero preview','Map tile 0'])assert.equal(clientWorldFixture(s).visible(name),false,name);await capture('selection');
   await click('mapStart box');s=await waitMap('amazonia');assert.deepEqual(status(s).pathing.size,[384,384]);assert.equal(status(s).pathing.revision,0);assert.ok(s.entities.some(e=>e.name.startsWith('Doodad-'))&&s.entities.some(e=>e.name.startsWith('Unit-')));report.map=status(s);report.entities=s.entities.length;
   if(editorFeedback)await checkHierarchyFocus(s);
-  if(cameraOnly){
+  if(hierarchyOnly){
+    await checkHierarchyPresentation(s);assert.deepEqual((await snapshot()).entities,s.entities,'folding does not mutate scene content');await checkHierarchyFocus(s);
+    await click('Map session return');await click('mapStart box');s=await waitMap('amazonia');await checkHierarchyPresentation(s);
+    await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);report.checks.push('Hierarchy interaction after map reload and Stop restoration');
+  }else if(cameraOnly){
     const readCamera=world=>world.entities.find(e=>e.name==='Camera').components;
     const expectedFov=70/Math.sqrt(1+(16/9)**2),initial=readCamera(s);assert.ok(Math.abs(initial.Camera3D.fov_y_degrees-expectedFov)<1e-5);assert.equal(initial.Camera3D.projection,'perspective');
     await capture('camera-wide');await key('KeyD');s=await snapshot();assert.ok(readCamera(s).Transform.position[0]>initial.Transform.position[0]);

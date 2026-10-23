@@ -1,3 +1,4 @@
+// Author: MiYu. Compile hierarchy queries once and share matching rows with their ancestor context.
 import type { EntityRec, TreeNode } from './store';
 
 type SearchToken = {
@@ -23,8 +24,10 @@ export function hierarchySearchTokens(query: string): SearchToken[] {
 
 /** Compact fuzzy match: substring first, then ordered-character match. */
 export function fuzzyHierarchyMatch(value: string, query: string): boolean {
-  const haystack = normalize(value);
-  const needle = normalize(query);
+  return fuzzyNormalizedMatch(normalize(value), normalize(query));
+}
+
+function fuzzyNormalizedMatch(haystack: string, needle: string): boolean {
   if (!needle) return true;
   if (haystack.includes(needle)) return true;
   let cursor = 0;
@@ -36,7 +39,10 @@ export function fuzzyHierarchyMatch(value: string, query: string): boolean {
 }
 
 export function hierarchyEntityMatches(entity: EntityRec, query: string): boolean {
-  const tokens = hierarchySearchTokens(query);
+  return entityMatchesTokens(entity, hierarchySearchTokens(query));
+}
+
+function entityMatchesTokens(entity: EntityRec, tokens: readonly SearchToken[]): boolean {
   if (!tokens.length) return true;
   const name = entity.name ?? `Entity ${entity.entity}`;
   const componentTypes = Object.keys(entity.components).filter((type) => !type.startsWith('__'));
@@ -45,24 +51,29 @@ export function hierarchyEntityMatches(entity: EntityRec, query: string): boolea
   const layerText = String(entity.layer);
   const allText = `${name} ${typeText} ${tagText} ${layerText}`;
   return tokens.every((token) => {
-    if (token.field === 'type') return fuzzyHierarchyMatch(typeText, token.value);
-    if (token.field === 'tag') return fuzzyHierarchyMatch(tagText, token.value);
-    if (token.field === 'layer') return fuzzyHierarchyMatch(layerText, token.value);
-    return fuzzyHierarchyMatch(allText, token.value);
+    if (token.field === 'type') return fuzzyNormalizedMatch(normalize(typeText), token.value);
+    if (token.field === 'tag') return fuzzyNormalizedMatch(normalize(tagText), token.value);
+    if (token.field === 'layer') return fuzzyNormalizedMatch(normalize(layerText), token.value);
+    return fuzzyNormalizedMatch(normalize(allText), token.value);
   });
 }
 
 /** Returns matching rows plus their ancestor path, independent of collapsed state. */
 export function filterHierarchyTree(entities: readonly EntityRec[], query: string): TreeNode[] {
-  if (!query.trim()) return [];
+  return searchHierarchyTree(entities, query).nodes;
+}
+
+export function searchHierarchyTree(entities: readonly EntityRec[], query: string): { nodes: TreeNode[]; matches: Set<number> } {
+  const matches = new Set<number>();
+  if (!query.trim()) return { nodes: [], matches };
+  const tokens = hierarchySearchTokens(query);
   const byId = new Map(entities.map((entity) => [entity.entity, entity]));
   const included = new Set<number>();
   for (const entity of entities) {
-    if (!hierarchyEntityMatches(entity, query)) continue;
+    if (!entityMatchesTokens(entity, tokens)) continue;
+    matches.add(entity.entity);
     let current: EntityRec | undefined = entity;
-    const guard = new Set<number>();
-    while (current && !guard.has(current.entity)) {
-      guard.add(current.entity);
+    while (current && !included.has(current.entity)) {
       included.add(current.entity);
       current = current.parent == null ? undefined : byId.get(current.parent);
     }
@@ -89,5 +100,5 @@ export function filterHierarchyTree(entities: readonly EntityRec[], query: strin
     }
   };
   walk(null, 0);
-  return result;
+  return { nodes: result, matches };
 }

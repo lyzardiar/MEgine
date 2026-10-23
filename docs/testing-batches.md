@@ -292,3 +292,14 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 复用EXE SHA256 `4ca390526edd5f48329efd990b9667850ddb170a70ac66385c947fc67b5131d3`执行`qa-frost-map-session.mjs --camera-only`，报告`tmp/docs-artifacts/testing-batches/B001/map-session-1792772651285.json`通过。验证源投影、WASD移动、档位缩放、1280×720/960×900渲染和Stop恢复；0 error，正常退出，两张镜头截图已目视检查，锁定WebView缓存保留。原始来源/CPU/运行日志在`tmp/docs-artifacts/war3-ui/camera-source/`。
 
 待批次：原HUD区域裁剪/宽屏显示与原客户端逐像素对照、电影/隐藏UI后续重定位，以及上一项层级独立刷新在新Editor构建中的集成验证。该EXE不包含9b39d0f层级优化，本次数据驱动镜头检查不能代替该项验收；Amazonia持续性能与编辑器操作延迟仍按性能todo待测。
+
+
+### B001-01 层级搜索与刷新原生合并验证
+
+变更：hierarchySearch.ts一次解析查询并合并命中/祖先结果，Hierarchy复用同一匹配结果；测试补充共享祖先、命中标记、原地元数据更新、缺失父节点/循环与空查询边界。qa-frost-map-session.mjs增加--hierarchy-only，只验证相关层级操作。属于B001-01编辑器性能补充，不增加任务计数。
+
+快速检查：hierarchySearch和hierarchyRefresh共5项通过；实际Amazonia四组查询的新旧完整结果一致，局部合计均值28.6767→11.6985ms，口径见performance-risk-todo第三十一阶段。TypeScript/Vite构建通过，diff/JS语法检查通过，没有全库回归或地图重导。
+
+与9b39d0f层级独立刷新共用一次原生构建，cargo release耗时1分08秒，仅既有world_from_snapshot未使用警告。EXE SHA256 `9cb87294569f0e5e8d71666f38583eb0df5e59185874fa9583a9ccacfb52a93a`。`qa-frost-map-session.mjs --hierarchy-only`报告`tmp/docs-artifacts/testing-batches/B001/map-session-1792773300710.json`通过，0 error，进程正常退出。覆盖真实按钮展开/折叠、selection.reveal后代定位、左右键、运行地图搜索、双击/空格聚焦不同根节点、重载地图后再次操作与Stop恢复；折叠操作前后实体内容一致。WebView锁缓存保留，构建/运行日志位于`tmp/docs-artifacts/editor-performance-risk/hierarchy-search/`。
+
+此EXE已包含第三十、三十一阶段；关闭两项常规主窗口层级集成待测。脱离Hierarchy窗口同步、独立Ping事件滚动、自动恢复计时/内容撤销，以及持续操作延迟/实际FPS仍待对应场景，不能把局部搜索提速当成整图卡顿已解决。
