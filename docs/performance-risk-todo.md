@@ -856,3 +856,16 @@ Scene 主视图和选中相机预览的完成回调也复用一次新鲜运行�
 采样所在报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792779146027.json` 在所有时序断言通过后，因 QA 在暂停模式调用仅允许编辑模式的 view.set_scene_visibility 而失败，不能标记整个报告通过。脚本调整为暂停模式下合法的视口操作，并增加 `--viewport-transitions-only` 单独重测失败阶段，未重复构建或采样。重测报告 `map-session-1792779242868.json` 通过、0 error、正常退出：Scene/Game 切换、选中相机预览、环绕相机后的像素变化、Game 导出尺寸 960×900、回到 1280×720，地图实体保持一致，Stop 恢复作者实体。Scene 原生历史有 14 帧；截图已核对右下角相机预览及地图显示。两个进程均正常退出，锁定 WebView 缓存保留。
 
 本地证据在 `tmp/docs-artifacts/editor-performance-risk/` 的 `scene-completion-tests.log`、`completion-{editor-build.log,native-build.log,native-qa.log,transitions-qa.log,timing-summary.json}`。关闭第三十八阶段 Game 分段采样及常规 Scene/Game/相机预览/分辨率切换待测；强制请求在途的竞态、编辑模式隐藏节点/父级/活动修改与 Undo、实际交互延迟仍待相关批次。单元回调拒绝测试不等于这些原生时序场景已验收。
+
+
+## 第四十阶段运行时归属与世界内容校验分离
+
+App 为 Viewport 提供实时 readRuntimeSessionId，直接读取当前 store.playSessionId。Game/Scene 返回帧、显式 Game 截图返回、旧请求异常归属以及 UI 命中结果验证，只读取当前会话归属；原生会话存在时不调用 playRenderSnapshot，不比较世界内容或复制实体。每次使用时重新读取，未引入跨帧缓存。相机小预览仍读取当前世界来校验相机组件，新渲染请求和模拟步仍沿用完整内容校验，直接引用编辑继续触发快照上传。
+
+没有会话时仍读取当前实体来源；实时读取到的 undefined 覆盖可能滞后的 React 会话属性，确保 Stop 和尚未完成的重启拒绝旧帧。无新回调的嵌入调用方保留原行为。数值 0 是有效会话，脱离窗口使用 store 中实时接收的远程会话 ID；没有将会话 ID 当作世界 revision，也没有改变同会话内帧序列发布规则。
+
+新增 viewportOwnership.test.mjs，执行从 App/Viewport 源码提取的实际接线与读取函数，结合真实 store、native runtime 和模拟 IPC 验证：会话 0、UI 命中复用不读取世界、直接编辑仍上传、滞后 React 属性下 Stop、等待启动、重启、远程会话替换，以及无原生会话/旧调用方回退。更新 Game/Scene 完成回调检查，已有相机预览内容检查保留。相关 16 个定向测试通过；最终细化回退后重测 3 个回调/生命周期测试，接线检查补充后再次单测通过。TypeScript 检查通过。
+
+实际 Amazonia 7,409 实体、固定同一暂停世界，Node/Vite SSR 同进程对比旧 currentViewportProps 与新归属读取；2组预热、9组交替测量、每组100次，两个路径的归属判断一致。实体仍私有时单次 CPU 中位 0.001330ms 与低于0.001ms；通过公共接口暴露数组后为 2.801755ms 与低于0.001ms。后者测量了必须防范直接引用修改的情况，不代表所有实际帧都处于该状态，也不能换算原生 FPS。额外断言直接编辑仍产生完整上传、Stop 拒绝旧会话。数据 SHA256 和原始值见 `tmp/docs-artifacts/editor-performance-risk/viewport-owner-benchmark.json`，脚本与日志位于同目录。
+
+本轮未重建原生 Editor、运行地图 QA 或全库回归。当前 EXE 仍为第三十九阶段 `1f0c9f8f44581de0cd3a1654cde768c216ad7e84e0f620f514200d8408dea4d6`，不含本项。下一批在新 EXE 测量 frontendCompleteMs，并覆盖返回帧/截图/UI命中过程中 Stop/重启/切换地图、脱离窗口、直接编辑与相机预览；既有原生强制竞态及编辑/Undo待测项继续保留。日志为 `viewport-owner-{tests,final-tests,wiring-tests,benchmark}.log`，均在临时证据目录。

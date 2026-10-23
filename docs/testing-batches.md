@@ -383,3 +383,12 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 修正 QA 后只执行 `node scripts/qa-frost-map-session.mjs --viewport-transitions-only`，报告 `B001/map-session-1792779242868.json` 通过、0 error、正常退出；实际 Scene/Game/选中相机预览、环绕相机、Game 分辨率切换、实体不变与 Stop 恢复通过。已核对 Scene 截图。没有重复性能采样、原生构建或全库回归。
 
 待测：强制请求在途的面板/地图切换与 Stop 竞态，编辑模式隐藏节点、父级/活动状态编辑与 Undo，真实交互延迟与持续帧率。保留这些风险，不以回调测试或独立单次 50.313 次/秒宣布整体性能达标。
+
+
+### B001-01 运行时归属读取与内容校验分离
+
+变更：App 提供实时会话读取；Viewport 的 Game/Scene 返回帧、截图返回、UI命中与异常归属改用轻量归属读取。新请求的数据校验、相机预览的数据校验不变。新增 viewportOwnership 集成测试，更新 Game/Scene 回调测试。属于现有性能优化补充，不新增功能计数。
+
+快速检查：16个相关定向测试通过；最终回退调整及实际 App 接线补充分别重测相关3项/1项通过，TypeScript与diff检查通过。真实7,409实体局部对照覆盖私有世界和公共数组暴露两种状态；暴露状态旧归属检查2.801755ms，新路径低于0.001ms，正确性断言通过。完整口径及本地证据见 performance-risk-todo 第四十阶段，不能当作原生提速或FPS验收。
+
+待合并验证：下次相关原生构建后执行 `node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile --viewport-transitions`，核对 frontendCompleteMs；追加请求在途 Stop/重启/切换地图、截图返回与 UI 命中拒绝旧会话、脱离窗口新会话、直接实体编辑和相机预览。当前 EXE 不包含本项，本轮没有原生构建/QA或全库回归。

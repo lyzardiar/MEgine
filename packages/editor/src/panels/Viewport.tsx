@@ -621,6 +621,7 @@ export function Viewport(props: {
   entities: Ent[];
   nativeSessionId?: number;
   runtimeSessionId?: number;
+  readRuntimeSessionId?: () => number | undefined;
   simulationRequestMs?: number;
   subscribeRuntimeFrames?: (listener: () => void) => () => void;
   runtimeSnapshot?: () => { entities: Ent[]; clearColor: [number, number, number, number]; simulationTime?: number; nativeSessionId?: number; nativeWorldReference?: NativeViewportWorldReference<Ent>; runtimeSessionId?: number; simulationRequestMs?: number } | null;
@@ -873,13 +874,20 @@ export function Viewport(props: {
     };
   };
 
+  // MiYu: session ownership needs no world-content certification; render requests still read verified data.
+  const currentViewportOwner = () => {
+    const p = propsRef.current;
+    if (!p.readRuntimeSessionId) return currentViewportProps();
+    const runtimeSessionId = p.readRuntimeSessionId();
+    return { entities: runtimeSessionId != null ? p.entities : currentViewportProps().entities, runtimeSessionId };
+  };
   const currentUiItems = () => {
     const world = uiFrameWorldRef.current;
-    return world && nativeViewportFrameWorldCurrent(world, currentViewportProps()) ? uiItemsRef.current : [];
+    return world && nativeViewportFrameWorldCurrent(world, currentViewportOwner()) ? uiItemsRef.current : [];
   };
   const currentUiEntities = () => {
     const world = uiFrameWorldRef.current;
-    return world && nativeViewportFrameWorldCurrent(world, currentViewportProps()) ? world.entities : [];
+    return world && nativeViewportFrameWorldCurrent(world, currentViewportOwner()) ? world.entities : [];
   };
 
   const closeGameInput = (focusCanvas = false) => {
@@ -994,8 +1002,8 @@ export function Viewport(props: {
         // Render the current world at the requested output size. The Game View's
         // display label and letterbox are editor chrome, not game pixels.
         const frame = await retryNativeViewportReadback(() => requestRevisionedNativeViewport({ width, height, ...world.worldArgs() }, world.snapshotArgs, args => invoke<{ pngBase64: string; profile: NativeViewportProfilePayload }>('render_native_game_view', args)), NATIVE_CAPTURE_READY_TIMEOUT_MS);
-        const current = currentViewportProps();
-        if (projectAssetSessionGeneration() !== projectGeneration || nativeGameRequestRef.current.generation !== generation || !nativeViewportFrameWorldCurrent(world.frameWorld(), current) || captureKey !== JSON.stringify([current.gameResolution, current.gameDisplay, current.timelineCameraPreview])) return null;
+        const current = propsRef.current;
+        if (projectAssetSessionGeneration() !== projectGeneration || nativeGameRequestRef.current.generation !== generation || !nativeViewportFrameWorldCurrent(world.frameWorld(), currentViewportOwner()) || captureKey !== JSON.stringify([current.gameResolution, current.gameDisplay, current.timelineCameraPreview])) return null;
         let dataUrl = `data:image/png;base64,${frame.pngBase64}`;
         if (format === 'image/jpeg') {
           const image = await decodeNativeFrame(frame.pngBase64);
@@ -1482,9 +1490,8 @@ export function Viewport(props: {
         .then((buffer) => {
           const completionStartedAt = performance.now();
           if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket)) { releaseNativeViewportFrame(buffer); return; }
-          // MiYu: one fresh snapshot owns all checks in this synchronous completion callback.
-          const current = currentViewportProps();
-          if (current.tab !== 'game' || currentGameRequestKey(current) !== requestKey || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), current)) { releaseNativeViewportFrame(buffer); return; }
+          const current = propsRef.current;
+          if (current.tab !== 'game' || currentGameRequestKey(current) !== requestKey || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) { releaseNativeViewportFrame(buffer); return; }
           const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
           recordOwnedNativeViewportProfile('game', { ...result.profile, updateMode: p.playing ? 'live' : gameRequestInterval ? 'edit-poll' : 'edit-change', pollIntervalMs: p.playing ? undefined : 300, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now, frontendPrepareMs: requestPreparedAt - now, frontendCompleteMs: performance.now() - completionStartedAt });
           const image = result.image;
@@ -1509,7 +1516,7 @@ export function Viewport(props: {
           if (firstFrame) window.setTimeout(paint, 0);
         })
         .catch((error) => {
-          if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
+          if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) return;
           if (nativeViewportReadbackBusy(error) || nativeViewportSessionExpired(error)) { request.retryAt = performance.now() + 16; return; }
           if (!request.reportedError) {
             console.warn('Native Game View rendering is unavailable', error);
@@ -1633,8 +1640,8 @@ export function Viewport(props: {
         },
       }).then((buffer) => {
         if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket)) { releaseNativeViewportFrame(buffer); return; }
-        const current = currentViewportProps();
-        if (currentSceneRequestKey(current) !== nativeSceneIdentity?.key || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), current)) { releaseNativeViewportFrame(buffer); return; }
+        const current = propsRef.current;
+        if (currentSceneRequestKey(current) !== nativeSceneIdentity?.key || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) { releaseNativeViewportFrame(buffer); return; }
         const result = uploadNativeViewportFrame(buffer, nativeSceneFrameRef.current?.image);
         recordOwnedNativeViewportProfile('scene', { ...result.profile, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, transportMs: performance.now() - now });
         const image = result.image;
@@ -1653,7 +1660,7 @@ export function Viewport(props: {
         if (firstFrame) paint();
         if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
-        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
+        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) return;
         if (nativeViewportReadbackBusy(error) || nativeViewportSessionExpired(error)) { request.retryAt = performance.now() + 16; return; }
         if (!request.reportedError) {
           console.warn('Native Scene View rendering is unavailable', error);
@@ -1728,7 +1735,7 @@ export function Viewport(props: {
         if (firstFrame || performance.now() - lastProfilerFrameRef.current > 100) paint();
         if (firstFrame) window.setTimeout(paint, 0);
       }).catch((error) => {
-        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportProps())) return;
+        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) return;
         if (nativeViewportReadbackBusy(error) || nativeViewportSessionExpired(error)) { request.lastRequestAt = -Infinity; request.retryAt = performance.now() + 16; return; }
         if (!request.reportedError) {
           console.warn('Native Camera Preview rendering is unavailable', error);
