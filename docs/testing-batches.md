@@ -464,3 +464,12 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 快速检查：相关6项最终通过，TypeScript/diff通过；两次初始失败分别修正getter逗号和测试API名，已只重测失败项。Amazonia 7,409实体模拟空增量局部对照，菜单可编辑行读取2,577→0，准备耗时中位1.052660→0.010140ms，HTML/实体内容相同。完整口径及临时证据见performance-risk-todo第四十八阶段。
 
 待合并验证：下一相关前端/原生构建复用map-session --continuous-profile --transport-profile --simulation-profile --runtime-edits，确认prepareMs/acceptMs及输入表现；增加关闭/展开菜单、Ctrl+A、空/折叠层级、换图后的菜单状态。当前aa67609c EXE尚不含本项，本轮未重复原生构建、地图QA或整库测试。原有特殊材质和生命周期风险继续待测。
+
+
+### B001-01 稳定结构的原生世界同步
+
+变更：mengine-scene/snapshot_world在源ID顺序及父级稳定时，仅应用变化记录和元数据；保留完整结构更新入口处理增删/重排/父级及引用变化。新增snapshot_world_stability_tests保存6370937完整实现用于结果/局部性能对照。属于现有编辑器性能补充，不增加功能计数。
+
+快速检查：既有5项、新增等价1项、Play运行时集成26项通过；手动基准1项通过，4项其他手动基准忽略。初次对照的本地槽位差异与基准的部分Transform字段假设已修正，仅定向重测。Amazonia时钟/64 Transform局部同步中位0.675540→0.144000ms、0.864505→0.358015ms；每份mirror多保留约116 KiB顺序表。详细口径和证据见performance-risk-todo第四十九阶段。
+
+待合并验证：与6370937菜单修复共用下一次前端/原生构建及map-session连续simulation-profile、viewport-transitions、runtime-edits；核对worldSyncMs、prepareMs、真实动画/编辑/镜头、Stop/重启/换图，补重排和父级修改。当前EXE不含两项，本轮未重建原生Editor、运行地图QA或全库测试。原有特殊材质与交互/生命周期待测不关闭。

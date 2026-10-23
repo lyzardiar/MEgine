@@ -8,6 +8,7 @@ pub struct SharedSnapshotWorld {
     world: World,
     entities: HashMap<u64, Entity>,
     previous: HashMap<u64, Arc<EntitySnapshot>>,
+    order: Vec<(u64, Entity)>,
 }
 
 impl SharedSnapshotWorld {
@@ -23,6 +24,19 @@ impl SharedSnapshotWorld {
 
     /// Preserve surviving handles and apply only changed records or invalidated entity references.
     pub fn update(&mut self, snapshot: &SharedWorldSnapshot) {
+        let stable = snapshot.entities.len() == self.order.len() && snapshot.entities.iter().zip(&self.order).all(|(record, (id, _))| record.entity == *id && self.previous.get(id).is_some_and(|previous| previous.parent == record.parent));
+        if stable {
+            for index in 0..self.order.len() {
+                let (id, entity) = self.order[index]; let record = &snapshot.entities[index];
+                if Arc::ptr_eq(&self.previous[&id], record) { continue; }
+                let parent = record.parent.and_then(|id| self.entities.get(&id)).copied();
+                if self.world.get_component::<mengine_core::Parent>(entity).map(|value| value.entity) != parent { self.world.set_parent(entity, parent); }
+                self.apply_record(entity, record);
+                self.previous.insert(id, Arc::clone(record));
+            }
+            self.apply_metadata(snapshot);
+            return;
+        }
         let incoming: HashSet<_> = snapshot.entities.iter().map(|entity| entity.entity).collect();
         let mut changed_ids: HashSet<_> = incoming.iter().filter(|id| !self.entities.contains_key(id)).copied().collect();
         let mut removed = Vec::new();
@@ -33,10 +47,10 @@ impl SharedSnapshotWorld {
         if !removed.is_empty() { self.world.despawn_many(removed); }
         let mut hierarchy_changed = !changed_ids.is_empty() || snapshot.entities.iter().any(|record| self.previous.get(&record.entity).is_none_or(|previous| previous.parent != record.parent));
         for record in &snapshot.entities { self.entities.entry(record.entity).or_insert_with(|| self.world.spawn_empty()); }
-        let mut order: Vec<_> = snapshot.entities.iter().map(|record| self.entities[&record.entity]).collect();
-        if order.len() != incoming.len() { let mut seen = HashSet::new(); order.retain(|entity| seen.insert(*entity)); }
-        if !self.world.iter_entities().eq(order.iter().copied()) {
-            assert!(self.world.set_entity_iteration_order(&order));
+        let mut order: Vec<_> = snapshot.entities.iter().map(|record| (record.entity, self.entities[&record.entity])).collect();
+        if order.len() != incoming.len() { let mut seen = HashSet::new(); order.retain(|(id, _)| seen.insert(*id)); }
+        if !self.world.iter_entities().eq(order.iter().map(|(_, entity)| *entity)) {
+            assert!(self.world.set_entity_iteration_order(&order.iter().map(|(_, entity)| *entity).collect::<Vec<_>>()));
             hierarchy_changed = true;
         }
         for record in &snapshot.entities {
@@ -47,25 +61,34 @@ impl SharedSnapshotWorld {
             if self.world.get_component::<mengine_core::Parent>(entity).map(|value| value.entity) != parent { self.world.set_parent(entity, parent); }
             let references_changed = !changed_ids.is_empty() && crate::entity_reference::scene_reference_mapping_changed(&record.components, &changed_ids);
             if !references_changed && same { continue; }
-            let old: Vec<_> = self.world.serialized_components(entity).into_iter().flat_map(|values| values.keys().cloned()).collect();
-            for name in old { if !matches!(name.as_str(), "Parent" | "Children") { self.world.remove_component_by_name(entity, &name); } }
-            if let Some(name) = &record.name { self.world.set_component_value(entity, "Name", serde_json::json!({"value":name})); }
-            crate::scene_file::apply_snapshot_entity(&mut self.world, record, &self.entities, false);
+            self.apply_record(entity, record);
         }
         if hierarchy_changed {
             let mut children = HashMap::<Entity, Vec<Entity>>::new();
-            for entity in &order {
+            for (_, entity) in &order {
                 if let Some(parent) = self.world.get_component::<mengine_core::Parent>(*entity) { children.entry(parent.entity).or_default().push(*entity); }
             }
-            for entity in order {
+            for &(_, entity) in &order {
                 let expected = children.remove(&entity).unwrap_or_default();
                 let current = self.world.get_component::<mengine_core::Children>(entity);
                 if expected.is_empty() { if current.is_some() { self.world.remove_component_by_name(entity, "Children"); } }
                 else if current.is_none_or(|value| value.entities != expected) { self.world.insert_component(entity, mengine_core::Children { entities: expected }); }
             }
         }
+        self.order = order;
         self.previous.clear();
         self.previous.extend(snapshot.entities.iter().map(|record| (record.entity, Arc::clone(record))));
+        self.apply_metadata(snapshot);
+    }
+
+    fn apply_record(&mut self, entity: Entity, record: &EntitySnapshot) {
+        let old: Vec<_> = self.world.serialized_components(entity).into_iter().flat_map(|values| values.keys().cloned()).collect();
+        for name in old { if !matches!(name.as_str(), "Parent" | "Children") { self.world.remove_component_by_name(entity, &name); } }
+        if let Some(name) = &record.name { self.world.set_component_value(entity, "Name", serde_json::json!({"value":name})); }
+        crate::scene_file::apply_snapshot_entity(&mut self.world, record, &self.entities, false);
+    }
+
+    fn apply_metadata(&mut self, snapshot: &SharedWorldSnapshot) {
         self.world.time.clear_color = glam::Vec4::from_array(snapshot.clear_color);
         self.world.time.frame = snapshot.frame;
         self.world.time.sim_frame = snapshot.sim_frame;
@@ -229,3 +252,7 @@ mod tests {
     }
 
 }
+
+#[cfg(test)]
+#[path = "snapshot_world_stability_tests.rs"]
+mod stability_tests;
