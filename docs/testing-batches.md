@@ -258,3 +258,8 @@ QA增加 `--cache-project <前次隔离项目>`，校验源地图和共享文件
 0b9c6f4与30eb1a2共用一次原生构建，EXE `544fb7fc2ee301653197ab39153814e0d83f168d8f5432c96a23e402ecf243fa`。`MENGINE_MAP_PROFILE_FRAMES=12 node scripts/qa-frost-original-map-composition.mjs tmp/docs-artifacts/warcraft-map-tests/amazonia-complete-visuals/project` 与 `node scripts/qa-frost-warcraft-ui.mjs --main-only` 通过，原地图Scene／Game、动画／暂停／Stop恢复／确定性重启、主菜单嵌入视图均覆盖。两份报告0 error、正常退出；输入与旧固定画面像素摘要一致。
 
 原生报告 `B001/original-map-composition-1792767053644.json`、`war3-ui/native-1792767119833.json`。固定Game后10帧总耗时中位27.7694ms、来源校验8.30915ms、对象／材质3.80875ms；历史同输入样本仅供对照，非严格交替EXE基准或实时FPS。原始日志与汇总入口见性能todo。本次关闭这两项的常规原生集成待测；真实编辑器主文件／外部依赖热更新、目录重定向与跨平台边界仍待专门场景验证，底层定向测试保持已有通过结果。B001仍3/3未结算，不重复02／03或完整玩法回归。
+
+
+### B001-01 等待大厅来源准备
+
+UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原件，58源成员／182文件摘要全部核对。REA lobby脚本四组注册／工厂／构造／初始化探针通过，确认聊天字体存在MiscUI运行时覆盖。仅源证据与维护入口补充，不计新功能，不重跑已有UI截图，也不宣称大厅已还原。待接入原大厅布局／玩家槽／聊天／配置覆盖，并核对原运行时行排列和队伍语义；验证入口与边界见warcraft-ui-fidelity文档。

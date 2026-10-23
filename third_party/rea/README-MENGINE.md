@@ -116,3 +116,8 @@ Warcraft 工人武器维护入口：`node scripts/probe-frost-rea-rewards.mjs --
 乌云武器分类：`scripts/import-frost-cloud-weapons.py` 从保留的UnitWeapons.slk与固定摘要Game.dll生成25个单位／50个武器槽、50项目标token及来源收据；`scripts/probe-frost-rea-cloud-targets-cpu.py` 将原DLL的340组门控结果与当前模拟逐项对照，并核验全部保留武器槽。`python scripts/test-frost-cloud-weapons-source.py` 检查摘要、精确重建和变更输入拒绝。版本更新时重新运行14组REA通道探针，核对类型转换器、目标token表和门控地址；来源及原版实际运行边界见 [狮鹫笼维护说明](../../docs/designs/frostbound-realms/human-aviary.md)。
 
 原版地图：`node scripts/probe-frost-rea-map-formats.mjs` 核对 W3E／WPM／W3I 加载引用。`python scripts/import-frost-original-map.py <地图路径>` 保留原始尺寸、路径、玩家信息、源件及摘要；支持版本、独立格式源站、重建验证和运行时接入边界见 [原版地图维护说明](../../docs/designs/frostbound-realms/original-map-import.md)。
+
+
+## 等待大厅界面依据
+
+`node scripts/probe-frost-rea-lobby.mjs` 核对Warcraft GameChatroom注册、工厂、构造与初始化，以及聊天字体的MiscUI覆盖；四组探针保存二进制摘要和未修改证明。原FDF／MiscUI、源档案、维护命令与未完成范围见 [界面还原说明](../../docs/designs/frostbound-realms/warcraft-ui-fidelity.md#等待大厅原始定义与运行时依据)。上游仍为本页记录的morluto/rea固定版本，不自动升级工具或Rizin。

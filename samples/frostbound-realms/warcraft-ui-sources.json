@@ -9,7 +9,7 @@
   ],
   "gameDllSha256": "e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a",
   "generator": "scripts/import-frost-warcraft-ui.py",
-  "generatorSha256": "09cdccacab61d18156ee31879d685c73673eab7d87c2d3c3a12175abda440617",
+  "generatorSha256": "68e81e346b0f751eb373948804717fbc92b26bda6811ebba60ff2cabbbf2aebc",
   "sourceCoordinateSize": [
     0.8,
     0.6
@@ -359,6 +359,27 @@
       "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/LocalMultiplayerCreate.fdf"
     },
     {
+      "path": "UI/FrameDef/Glue/GameChatroom.fdf",
+      "archive": "War3xLocal.mpq",
+      "sha256": "7e804da84514766625f0f36898dedf21e30ed899a793907a208d3e465521a3fd",
+      "bytes": 3520,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf"
+    },
+    {
+      "path": "UI/FrameDef/Glue/TeamSetup.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "8ab42f846c0a7524999a448c2add238f1f72932378b562cb01c2d1da6fb28cc2",
+      "bytes": 443,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/TeamSetup.fdf"
+    },
+    {
+      "path": "UI/FrameDef/Glue/AdvancedOptionsDisplay.fdf",
+      "archive": "War3Patch.mpq",
+      "sha256": "f4f68a31f52ad17fd050215df9b0f74ef663115962e52066b8daf23a8ca1bd8a",
+      "bytes": 4253,
+      "preserved": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/AdvancedOptionsDisplay.fdf"
+    },
+    {
       "path": "UI/FrameDef/Glue/DialogWar3.fdf",
       "archive": "War3Patch.mpq",
       "sha256": "b036b6b6ec2e02bafc0ce0a1ca6c128234abb269813ff016d3647c27b96ef452",
@@ -455,6 +476,13 @@
       "sha256": "434929fc86e4f519afa9dcd028d05b86b75199c76d7ed8d103b3a573e898c533",
       "bytes": 378235,
       "preserved": "SourceAssets/WarcraftUI/UI/WorldEditStrings.txt"
+    },
+    {
+      "path": "UI/MiscUI.txt",
+      "archive": "War3Patch.mpq",
+      "sha256": "d9ed958d99793d9cf54b85bc234dff6bbde7ed2bc4686e2d61642ebc24696f3b",
+      "bytes": 6348,
+      "preserved": "SourceAssets/WarcraftUI/UI/MiscUI.txt"
     },
     {
       "path": "UI/FrameDef/GlobalStrings.fdf",
@@ -1989,6 +2017,21 @@
       "bytes": 6443
     },
     {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/GameChatroom.fdf",
+      "sha256": "7e804da84514766625f0f36898dedf21e30ed899a793907a208d3e465521a3fd",
+      "bytes": 3520
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/TeamSetup.fdf",
+      "sha256": "8ab42f846c0a7524999a448c2add238f1f72932378b562cb01c2d1da6fb28cc2",
+      "bytes": 443
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/AdvancedOptionsDisplay.fdf",
+      "sha256": "f4f68a31f52ad17fd050215df9b0f74ef663115962e52066b8daf23a8ca1bd8a",
+      "bytes": 4253
+    },
+    {
       "path": "SourceAssets/WarcraftUI/UI/FrameDef/Glue/DialogWar3.fdf",
       "sha256": "b036b6b6ec2e02bafc0ce0a1ca6c128234abb269813ff016d3647c27b96ef452",
       "bytes": 3166
@@ -2057,6 +2100,11 @@
       "path": "SourceAssets/WarcraftUI/UI/WorldEditStrings.txt",
       "sha256": "434929fc86e4f519afa9dcd028d05b86b75199c76d7ed8d103b3a573e898c533",
       "bytes": 378235
+    },
+    {
+      "path": "SourceAssets/WarcraftUI/UI/MiscUI.txt",
+      "sha256": "d9ed958d99793d9cf54b85bc234dff6bbde7ed2bc4686e2d61642ebc24696f3b",
+      "bytes": 6348
     },
     {
       "path": "SourceAssets/WarcraftUI/UI/FrameDef/GlobalStrings.fdf",

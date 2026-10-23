@@ -85,3 +85,12 @@ FDF `.8 × .6` 映射到 `960 × 720`，每源单位 1200 像素，字体、按�
 局域网浏览页的创建入口打开此页。现有三种联网地图先选择、显示名称和描述，再按创建按钮或C／Enter发出创建请求；上下键切换，取消／A／Escape返回浏览，断线回到选图页。等待房间保留现有联机功能。服务器当前为固定速度，速度条和高级选项禁用；联网仍使用现有地图协议，单人任意w3x／w3m导入流程保持原入口。原版目录、地图缩略图、动态详情与等待大厅还需还原。
 
 定向检查：`node scripts/test-frost-warcraft-create.mjs` 覆盖来源摘要、源布局、两个长宽比的选图／快捷键、选择不发送创建、创建载荷、禁用选项、断线与取消；LAN入口集成检查通过。全部4308个既有场景实体ID保留，现有4340实体。`qa-frost-warcraft-ui.mjs --create-only` 复用现有EXE，实际TCP创建moba房间，1280×720与960×900截图通过、0 error、进程正常退出。最终报告 `tmp/docs-artifacts/war3-ui/native-1792765684295.json`；此前报告1792765608846因QA误读服务端room.mode字段失败，最终检查使用实际room.map.mode。原始产物不纳入提交；测试不能证明未完成的逐像素／全部界面等价。
+
+
+## 等待大厅原始定义与运行时依据
+
+等待大厅对应GameChatroom。原件已加入UI导入收据：GameChatroom.fdf来自War3xLocal.mpq，TeamSetup.fdf、AdvancedOptionsDisplay.fdf与UI/MiscUI.txt来自War3Patch.mpq；PlayerSlot.fdf已随公共UI保留。当前收据58个源成员、182个文件摘要。该来源补充不改变当前大厅界面，原版布局与交互仍待接入。
+
+`node scripts/probe-frost-rea-lobby.mjs` 通过固定REA 6.5.0与Rizin检查原Game.dll，SHA256 e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a。四组证据确认：注册表0x6fb690c4将GameChatroom（界面编号11）绑定工厂0x6f2a29c0；工厂创建544字节对象并调用0x6f2a77d0；构造函数安装虚表0x6f982f7c；其0xdc槽0x6f2bcd60绑定TeamSetup、聊天、地图详情、高级选项与开始／取消控件。原始报告写入 `tmp/docs-artifacts/war3-ui/lobby-source/`。工具源站与版本维护入口见 [REA说明](../../../third_party/rea/README-MENGINE.md)。
+
+初始化函数还读取FontHeights配置的ChatroomChatEditBox与ChatroomTextArea。保留的MiscUI.txt分别为0.015和0.011，对应960×720参考画布18px与13.2px；不能仅依FDF继承的字体高度生成聊天输入。原DLL静态证据不能替代原客户端文字栅格与实际交互验证。TeamSetup.fdf本身只有容器，玩家行顺序、行距、队伍策略与槽位状态须继续追踪动态代码；现有服务器的两人准备／英雄选择逻辑也不能直接视为原版等价。
