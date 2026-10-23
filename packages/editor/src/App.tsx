@@ -1517,7 +1517,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           setSpriteAtlasPath(message.spriteAtlasPath ?? null);
         }
         if ('timelineAssetPath' in message) setTimelineAssetPath(message.timelineAssetPath ?? null);
-        setSnap(store.snapshot());
+        setSnap(store.presentationSnapshot());
         setMode(store.mode);
         setGizmo(store.gizmo);
         setSelected(store.selected);

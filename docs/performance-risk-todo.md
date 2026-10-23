@@ -1158,3 +1158,14 @@ Play模拟、Game和连续Scene请求按60Hz固定时间轴推进截止时刻。
 31项相关检查通过：新会话测试3项；复用本次同步／快照／Play世界检查28项通过结果。覆盖独立Store加载、运行改动、实体重排、删除／替换、选择、镜头、Stop作者实体恢复、提交时钟和原生revision；初次新测试对Stop后镜头／选择也应回退的假设不符合既有语义，已修正并仅重跑3项新测试。TypeScript检查通过。没有运行全库、前端打包或原生构建。
 
 命令：node --test packages/editor/tests/sessionSceneSerialization.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs packages/editor/tests/presentationSnapshot.test.mjs packages/editor/tests/playWorldSync.test.mjs；pnpm --filter @mengine/editor exec tsc --noEmit。原始结果与基准输入SHA在tmp/docs-artifacts/editor-performance-risk/session-serialization-{tests.log,tests-final.log,types.log,benchmark.json,benchmark.mjs}。局部测量不包含BroadcastChannel复制、接收端JSON解析／世界重建或真实输入延迟，不作为FPS结论。接收端仍全量处理；原生双窗口长期运行、接收端增量复用及总内存待后续相关批次。
+
+
+## 第六十阶段独立窗口运行副本复用
+
+远端Play／Pause场景继续完整解析、迁移和规范化，通过已有Play世界比较基线保留未变化的冻结实体。私有作者镜像与运行副本分别按冻结实体身份复用；已通过Inspector、层级或公开引用暴露的运行副本在下一条权威消息中重新生成，防止本地修改污染后续消息。进入编辑状态的加载清除作者副本缓存。原生运行消息与本地原生结果共用不可变发布入口，保留session／revision／模拟时钟配对。App接收消息后发布presentationSnapshot，避免再深拷贝整个世界。作者镜像和运行数据仍相互独立，Stop后的编辑接口继续可写。
+
+定向36项检查通过：远端稳定记录、变更／重排／删除／实体ID复用、直接引用和Inspector修改、旧帧不可变、Stop后编辑、旧版场景迁移、原生会话切换及缺失revision；真实App消息处理函数在独立Store之间同步，验证面板收到冻结记录、旧消息丢弃及停止后编辑。TypeScript检查通过。测试命令：node --test packages/editor/tests/remoteRuntimeReuse.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs packages/editor/tests/presentationSnapshot.test.mjs packages/editor/tests/sessionSceneSerialization.test.mjs packages/editor/tests/playWorldSync.test.mjs。35项首次通过后新增App覆盖并强化冻结记录断言，仅用test-name-pattern运行新增／受影响的2项，均通过；去重36项。
+
+Node局部基准以同进程加载提交51890a5的原Store和当前Store，读取同一作者Amazonia地图7,410实体。预热2轮、9组交替×6次；两侧解析结果和作者指纹一致。接收加载本身26.6516→14.0709ms；包含实际接收端的指纹计算和面板快照68.4152→38.1849ms。只改一个Transform时完整接收链路69.2313→38.2900ms；全部7,403个Transform变化时93.0478→82.9847ms。稳定输入下7,410个冻结实体身份复用。仍有全量JSON.parse、规范化和作者指纹遍历；不宣称无分配、恒定时间、进程内存下降或FPS改善。
+
+本次没有前端／原生打包或真实多窗口QA，现有EXE不含本项。与第五十九阶段累计两项，后续相关任务合并验收。证据：tmp/docs-artifacts/editor-performance-risk/remote-runtime-reuse-{tests.log,app-tests.log,types.log,benchmark.mjs,benchmark.json,benchmark-final.log}；基准保留输入SHA及原始分组。后续重点是作者指纹成本、接收消息增量化和原生跨窗口交互延迟／竞态／总内存。

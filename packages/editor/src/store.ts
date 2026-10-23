@@ -2,7 +2,7 @@
 import type { PlayStepTiming } from './playStepTiming';
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, retainedNativePlayWorld, type PlayInput, type PlayRuntimeDriver, type PlayRuntimeWorld } from './playRuntime';
-import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord, retainedPlayWorldChanges } from './playWorldSync';
+import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord, retainedPlayWorldChanges, retainPlayWorld } from './playWorldSync';
 import { normalizeEntity, type EntityRec } from './entityRecord';
 import { createSessionSceneSerializer } from './sessionSceneSerialization';
 export type { EntityRec } from './entityRecord';
@@ -223,8 +223,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   let ownedPlayWorld: ReturnType<typeof retainedNativePlayWorld>;
   const exposePlayEntities = () => { privatePlayEntities = null; if (playEntities) for (const entity of playEntities) exposePlayRecord(entity); };
   const playWorldSync = createPlayWorldSync({ owns: entities => entities === privatePlayEntities && privatePlayEntities != null, unchanged: (entity, baseline) => !exposedPlayRecords.has(entity) && editableNativeRecords.get(baseline as EntityRec) === entity, comparisonIndices: (entities, retained) => entities === privatePlayEntities && playExposureVersion === privatePlayExposureVersion && retained === ownedPlayWorld?.entities ? privatePlayComparisonIndices : undefined, expose: exposePlayEntities });
-  const acceptRuntimeWorld = (result: PlayRuntimeWorld) => {
-    const owned = retainedNativePlayWorld(result);
+  const acceptRuntimeWorld = (result: PlayRuntimeWorld, owned = retainedNativePlayWorld(result)) => {
     const changes = owned && ownedPlayWorld && privatePlayEntities === playEntities && privatePlayEntities != null && privatePlayComparisonIndices.length === 0 && playExposureVersion === privatePlayExposureVersion ? retainedPlayWorldChanges(ownedPlayWorld, owned) : undefined;
     ownedPlayWorld = owned;
     if (owned) {
@@ -947,11 +946,14 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     return changed;
   };
 
+  // Runtime messages keep private author mirrors separate from exposed Play copies.
+  let remoteAuthorCopies = new WeakMap<EntityRec, EntityRec>();
   const applySceneJson = (
     json: string,
     targetMode: EditorMode,
     recordUndo: boolean,
     applyScenePreferences = true,
+    retainRemoteRuntime = false,
   ) => {
     const data = migrateSceneDocument(JSON.parse(json)) as {
       world?: {
@@ -976,8 +978,9 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     }
     behaviourRunner.unmount();
     const ents = (data.world?.entities ?? data.entities ?? []) as EntityRec[];
-    privatePlayEntities = null; ownedPlayWorld = undefined;
-    editEntities = ents.map((e, i) =>
+    if (!retainRemoteRuntime) { privatePlayEntities = null; ownedPlayWorld = undefined; }
+    if (!retainRemoteRuntime || mode === 'edit') remoteAuthorCopies = new WeakMap();
+    const loadedEntities = ents.map((e, i) =>
       normalizeEntity({
         ...e,
         components: withAllEntityReferenceMetadata(e.components ?? {}),
@@ -985,8 +988,20 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
         active: e.active ?? true,
       }),
     );
-    nextId = Math.max(1, ...editEntities.map((e) => e.entity + 1), 1);
     clearColor = data.world?.clearColor ?? clearColor;
+    let retained: ReturnType<typeof retainPlayWorld> | undefined;
+    if (retainRemoteRuntime) {
+      playWorldSync.capture(loadedEntities, clearColor);
+      retained = retainPlayWorld({ ...playWorldSync.viewportSnapshot()!, frame: data.world?.frame ?? frame, simFrame: data.world?.frame ?? frame, simulationTime: data.world?.simulationTime ?? 0, selected: null }, ownedPlayWorld);
+      editEntities = retained.entities.map(entity => {
+        let editable = remoteAuthorCopies.get(entity);
+        if (!editable) { editable = cloneRetainedPlayRecord(entity); remoteAuthorCopies.set(entity, editable); }
+        const playCopy = editableNativeRecords.get(entity);
+        if (playCopy && exposedPlayRecords.has(playCopy)) editableNativeRecords.delete(entity);
+        return editable;
+      });
+    } else editEntities = loadedEntities;
+    nextId = Math.max(1, ...editEntities.map((e) => e.entity + 1), 1);
     if (applyScenePreferences) {
       if (data.sceneCamera) sceneCamera = data.sceneCamera;
       gameResolution = Object.prototype.hasOwnProperty.call(data, 'gameResolution')
@@ -1012,7 +1027,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const visited = new Set<number>();
       while (parent != null && !visited.has(parent)) { visited.add(parent); expanded.add(parent); parent = loadedById.get(parent)?.parent ?? null; }
     }
-    playEntities = targetMode === 'edit' ? null : structuredClone(editEntities);
+    if (!retainRemoteRuntime) playEntities = targetMode === 'edit' ? null : structuredClone(editEntities);
     mode = targetMode;
     playClearColor = targetMode === 'edit' ? null : clearColor;
     frame = data.world?.frame ?? frame;
@@ -1024,6 +1039,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     gestureUndoState = null;
     gestureUndoToken = null;
     gestureHistoryCheckpoint = null;
+    return retained;
   };
 
   return {
@@ -2914,10 +2930,13 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       return true;
     },
     loadRemoteSceneJson(json: string, remoteMode: EditorMode, nativeSessionId?: number, nativeRevision?: number) {
-      applySceneJson(json, remoteMode, false);
+      const retained = applySceneJson(json, remoteMode, false, true, remoteMode !== 'edit');
       remotePlaySessionId = nativeSessionId;
-      playWorldRevision = nativeRevision; playWorldSessionId = nativeSessionId; playWorldSimulationTime = playSpin;
-      playWorldSync.capture(playEntities, playClearColor ?? clearColor);
+      if (retained) acceptRuntimeWorld({ ...retained, nativeSessionId, nativeRevision }, retained);
+      else {
+        playWorldRevision = nativeRevision; playWorldSessionId = nativeSessionId; playWorldSimulationTime = playSpin;
+        playWorldSync.capture(playEntities, playClearColor ?? clearColor);
+      }
     },
   };
 }

@@ -104,3 +104,19 @@ test('simultaneous thin selections converge across three windows and ignore dela
  third.store.selectMany([2],'replace');third.refreshSelection();const newer=third.sent.shift();assert.ok(newer.revision>messages[0].revision);
  for(const host of [main,detached,third]){host.receive({data:newer});for(const message of messages)host.receive({data:message});assert.deepEqual(host.store.selectedIds,[2]);}
 }));
+
+
+test('runtime content publishes retained panel records and keeps earlier windows immutable',async()=>withPair((main,detached,third)=>{
+ const json=main.store.saveSessionSceneJson('Map');main.store.loadRemoteSceneJson(json,'play',41,0);
+ main.broadcastScene(true);const initial=main.sent.shift();detached.receive({data:initial});third.receive({data:initial});
+ const first=detached.snapshot;assert.equal(Object.isFrozen(first.entities[0]),true);assert.equal(detached.store.nativePlayRevision,0);
+ main.broadcastScene(true);const clock=main.sent.shift();detached.receive({data:clock});
+ assert.equal(detached.snapshot.entities[0],first.entities[0]);assert.equal(detached.snapshot.entities[1],first.entities[1]);
+ main.store.setComponent(2,'Text',{text:'runtime change'});main.broadcastScene(true);const changed=main.sent.shift();
+ detached.receive({data:changed});third.receive({data:changed});
+ assert.equal(detached.snapshot.entities[1].components.Text.text,'runtime change');assert.equal(third.snapshot.entities[1].components.Text.text,'runtime change');
+ assert.equal(first.entities[1].components.Text.text,'original');assert.equal(detached.store.nativePlaySessionId,undefined);
+ detached.receive({data:initial});assert.equal(detached.snapshot.entities[1].components.Text.text,'runtime change');
+ main.store.stop();main.broadcastScene(true);main.deliver(detached);assert.equal(detached.store.mode,'edit');
+ detached.store.setComponent(2,'Text',{text:'editable after Stop'});assert.equal(detached.store.entitySnapshot(2).components.Text.text,'editable after Stop');
+}));
