@@ -23,14 +23,21 @@ pub struct PlayProject {
 /// MiYu: fresh frame metadata and changed payloads; entity order is sent on structural changes or resets.
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct PlayWorldUpdate {
+pub struct PlayWorldUpdate<S = WorldSnapshot> {
     pub quit_requested: bool,
-    pub snapshot: WorldSnapshot,
+    pub snapshot: S,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub entity_order: Option<Vec<u64>>,
     pub base_revision: u64,
     pub revision: u64,
     pub reset: bool,
+}
+
+impl PlayWorldUpdate<SharedWorldSnapshot> {
+    /// Keep independently editable results available to host callers; IPC serializes shared records directly.
+    pub fn into_owned(self) -> PlayWorldUpdate {
+        PlayWorldUpdate { snapshot: self.snapshot.into_owned(), quit_requested: self.quit_requested, entity_order: self.entity_order, base_revision: self.base_revision, revision: self.revision, reset: self.reset }
+    }
 }
 
 #[derive(Default)]
@@ -40,7 +47,7 @@ struct PlaySnapshotStream {
 }
 
 impl PlaySnapshotStream {
-    fn update(&mut self, mut snapshot: SharedWorldSnapshot, reset: bool) -> PlayWorldUpdate {
+    fn update(&mut self, mut snapshot: SharedWorldSnapshot, reset: bool) -> PlayWorldUpdate<SharedWorldSnapshot> {
         let base_revision = self.revision;
         self.revision += 1;
         let current = std::mem::take(&mut snapshot.entities);
@@ -55,7 +62,7 @@ impl PlaySnapshotStream {
         };
         self.entities = current;
         snapshot.entities = changed;
-        PlayWorldUpdate { snapshot: snapshot.into_owned(), entity_order, base_revision, revision: self.revision, reset, quit_requested: false }
+        PlayWorldUpdate { snapshot, entity_order, base_revision, revision: self.revision, reset, quit_requested: false }
     }
 }
 
@@ -81,7 +88,7 @@ impl PlayRenderHistory {
 enum Request {
     Start { generation: u64, source: String, snapshot: WorldSnapshot, project: PlayProject, reply: Sender<Result<WorldSnapshot, String>> },
     Step { generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<WorldSnapshot, String>> },
-    StepUpdate { generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<PlayWorldUpdate, String>> },
+    StepUpdate { generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32, reply: Sender<Result<PlayWorldUpdate<SharedWorldSnapshot>, String>> },
     RenderSnapshot { generation: u64, revision: Option<u64>, reply: Sender<Result<PlayRenderSnapshot, String>> },
     Stop { generation: u64 },
     #[cfg(test)]
@@ -199,6 +206,11 @@ impl EditorPlayRuntime {
 
     /// Revisioned IPC stream; explicit editor edits force a complete response.
     pub fn advance_update(&self, generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<PlayWorldUpdate, String> {
+        self.advance_shared_update(generation, snapshot, input, dt).map(PlayWorldUpdate::into_owned)
+    }
+
+    /// MiYu: retain immutable delta payloads through IPC serialization without cloning their component trees.
+    pub fn advance_shared_update(&self, generation: u64, snapshot: Option<WorldSnapshot>, input: ScriptInput, dt: f32) -> Result<PlayWorldUpdate<SharedWorldSnapshot>, String> {
         if !dt.is_finite() || dt <= 0.0 || dt > 1.0 { return Err("Play step delta must be in (0, 1]".into()); }
         let (reply, result) = mpsc::channel();
         self.sender.send(Request::StepUpdate { generation, snapshot, input, dt, reply }).map_err(|error| error.to_string())?;
@@ -717,6 +729,77 @@ mod tests {
     }
 
     #[test]
+    fn shared_snapshot_updates_keep_payload_identity_and_owned_wire_format() {
+        let mut world = World::new(); let entity = world.spawn_empty();
+        world.set_component_value(entity, "Custom", serde_json::json!({"text":"共享数据", "nested":[{"value":7}]}));
+        let mut cache = WorldSnapshotCache::default(); let mut stream = PlaySnapshotStream::default();
+        let initial = cache.capture(&world); let record = initial.entities[0].clone();
+        let mut first = stream.update(initial, false); first.quit_requested = true;
+        assert!(Arc::ptr_eq(&record, &first.snapshot.entities[0]));
+        let wire = serde_json::to_value(&first).unwrap();
+        world.set_component_value(entity, "Custom", serde_json::json!({"text":"next", "nested":[{"value":9}]}));
+        let current = cache.capture(&world); let next_record = current.entities[0].clone();
+        let second = stream.update(current, false);
+        assert!(Arc::ptr_eq(&next_record, &second.snapshot.entities[0]));
+        assert!(!Arc::ptr_eq(&record, &second.snapshot.entities[0]));
+        assert_eq!(serde_json::to_value(&first).unwrap(), wire);
+        assert_eq!(serde_json::to_value(&second).unwrap(), serde_json::to_value(second.into_owned()).unwrap());
+        let mut owned = first.into_owned();
+        assert_eq!(serde_json::to_value(&owned).unwrap(), wire);
+        owned.snapshot.entities[0].components.get_mut("Custom").unwrap()["nested"][0]["value"] = serde_json::json!(42);
+        assert_eq!(record.components["Custom"]["nested"][0]["value"], 7);
+        assert_eq!(next_record.components["Custom"]["nested"][0]["value"], 9);
+    }
+
+    #[test]
+    fn shared_runtime_updates_survive_stop_and_keep_explicit_reset_semantics() {
+        let runtime = EditorPlayRuntime::default(); let id = runtime.begin();
+        let initial: WorldSnapshot = serde_json::from_value(serde_json::json!({"entities":[{"entity":1,"components":{"Custom":{"value":4}}}]})).unwrap();
+        let mut initial = runtime.start(id, "".into(), initial, PlayProject::default()).unwrap();
+        let first = runtime.advance_shared_update(id, None, ScriptInput::default(), 0.01).unwrap();
+        let wire = serde_json::to_value(&first).unwrap();
+        let second = runtime.advance_shared_update(id, None, ScriptInput::default(), 0.01).unwrap();
+        assert!(second.snapshot.entities.is_empty()); assert!(second.entity_order.is_none());
+        initial.entities[0].name = Some("Edited".into());
+        let expected_order = initial.entities.iter().map(|entity| entity.entity).collect::<Vec<_>>();
+        let reset = runtime.advance_shared_update(id, Some(initial), ScriptInput::default(), 0.01).unwrap();
+        assert!(reset.reset); assert_eq!(reset.entity_order, Some(expected_order));
+        assert_eq!(reset.snapshot.entities[0].name.as_deref(), Some("Edited"));
+        runtime.stop();
+        assert_eq!(serde_json::to_value(&first).unwrap(), wire);
+        assert!(runtime.advance_shared_update(id, None, ScriptInput::default(), 0.01).is_err());
+        assert!(runtime.advance_shared_update(id, None, ScriptInput::default(), f32::NAN).is_err());
+    }
+
+    #[test]
+    #[ignore = "manual Amazonia payload construction and serialization comparison; excludes simulation and IPC"]
+    fn benchmark_shared_snapshot_update_serialization() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../samples/frostbound-realms/Assets/Maps/amazonia/Scenes/Main.mscene");
+        let scene: serde_json::Value = serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
+        let source: WorldSnapshot = serde_json::from_value(scene["world"].clone()).unwrap();
+        let shared = SharedWorldSnapshot { entities: source.entities.into_iter().map(Arc::new).collect(), frame: source.frame, sim_frame: source.sim_frame, elapsed: source.elapsed, clear_color: source.clear_color, selected: source.selected };
+        for count in [64.min(shared.entities.len()), shared.entities.len()] {
+            let mut payload = shared.clone(); payload.entities.truncate(count);
+            let update = || PlayWorldUpdate { snapshot: payload.clone(), entity_order: None, base_revision: 1, revision: 2, reset: false, quit_requested: false };
+            assert_eq!(serde_json::to_value(update()).unwrap(), serde_json::to_value(update().into_owned()).unwrap());
+            let mut rows = Vec::new(); let iterations = 20;
+            for sample in 0..11 {
+                let mut times = [0.0; 2];
+                for mode in [sample % 2, 1 - sample % 2] {
+                    let started = Instant::now();
+                    for _ in 0..iterations {
+                        let bytes = if mode == 0 { serde_json::to_vec(&update().into_owned()).unwrap() } else { serde_json::to_vec(&update()).unwrap() };
+                        std::hint::black_box(bytes);
+                    }
+                    times[mode] = started.elapsed().as_secs_f64() * 1000.0 / iterations as f64;
+                }
+                if sample >= 2 { rows.push(times); }
+            }
+            println!("SHARED_PLAY_UPDATE {}", serde_json::json!({"entities":count,"iterations":iterations,"warmups":2,"samples":rows,"scope":"Authored Amazonia first-N payloads, owned conversion plus JSON serialization versus shared JSON serialization; excludes simulation, IPC and rendering"}));
+        }
+    }
+
+    #[test]
     fn snapshot_stream_reconstructs_mutations_removal_reuse_and_editor_reset() {
         let mut world = World::new();
         let first = world.spawn_empty();
@@ -737,7 +820,7 @@ mod tests {
             }
             if step == 3 { world.despawn(first); world.spawn_empty(); }
             let expected = WorldSnapshot::from_world(&world);
-            let update = stream.update(cache.capture(&world), step == 4);
+            let update = stream.update(cache.capture(&world), step == 4).into_owned();
             assert_eq!((update.base_revision, update.revision), (step, step + 1));
             if step == 1 { assert!(update.snapshot.entities.is_empty()); }
             if step == 4 { assert_eq!(update.snapshot, expected); reconstructed.clear(); }

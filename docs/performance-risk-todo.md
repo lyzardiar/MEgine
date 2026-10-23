@@ -890,3 +890,13 @@ Amazonia 7,410实体（含QA观察节点）、850×478原生画面，10秒无Age
 Scene/Game切换、选中相机预览、环绕镜头、Game截图960×900与1280×720、实体保持及Stop恢复通过；Scene截图已核对。37个原特效文件修改/恢复后图元778→68→778，恢复后暂停像素完全一致，场景实体未改动。构建/QA日志为 `tmp/docs-artifacts/editor-performance-risk/owner-pending-{editor-build,native-build,native-qa}.log`，指标汇总为同目录 `owner-pending-timing-summary.json`。
 
 阶段40/41的正常原生集成路径已验证。强制请求在途Stop/重启/换图/截图/UI命中竞态、脱离窗口、队列饱和/重试与隐藏窗口恢复、Edit父级/活动/隐藏变更及Undo、直接引用编辑、真实输入延迟仍待合并验证，不以单次采样宣布Amazonia性能问题全部解决。
+
+## 第四十三阶段模拟增量直接序列化共享实体
+
+PlaySnapshotStream已有不可变Arc实体和原生历史快照；此前生成增量后调用into_owned，将仍被流与历史引用的所有变更实体及组件树再次深拷贝。现在增量保持SharedWorldSnapshot直到Tauri响应序列化。PlayWorldUpdate增加默认WorldSnapshot的泛型，原advance_update仍返回独立可修改数据，新advance_shared_update供step_editor_play使用。JSON字段、版本/重置/退出标志及会话前后校验保持一致；旧API的独占转换移到接收端，需要可修改结果的调用方仍承担该拷贝。
+
+新增检查证明共享结果保持原实体指针，后续修改/Stop不会改变已返回的帧，新旧结构序列化JSON一致，转成独占结果后修改不会污染原实体；实际worker验证空增量、显式编辑完整reset及过期会话。play_runtime相关最终25项通过，4个手动基准忽略；初次24通过/1失败是新增测试写死输入ID，改为使用运行时映射后的ID后仅重测该项通过。`cargo check -p mengine-editor-tauri --release --features custom-protocol` 通过，仅既有world_from_snapshot未使用警告。
+
+手动定向基准 `cargo test -p mengine-editor-host --release --lib benchmark_shared_snapshot_update_serialization -- --ignored --nocapture --test-threads=1` 通过。使用当前Amazonia作者场景，比较独占转换加JSON序列化与共享JSON序列化，两组预热、九组交替采样、每组20次；前64实体中位0.052035→0.015535ms，全7,409实体17.62375→5.479445ms。两个数据量用于控制负载，不是实际运行帧的变更实体分布，不包含模拟、IPC、绘制，也不能作为每帧节省或FPS收益。完整JSON等价断言通过；历史与流继续保留原Arc实体，未测量进程峰值内存。
+
+证据为 `tmp/docs-artifacts/editor-performance-risk/shared-play-update-{tests,retest,benchmark,integration-check}.log` 与 `shared-play-update-summary.json`（含源场景SHA256）。本轮只编译接口和执行定向检查，未重建Editor EXE或重复地图QA；下一相关原生批次需验证新Tauri传输、持续模拟/呈现、显式编辑reset、Stop/换图/退出和实际模拟请求耗时。当前已生成EXE仍为第四十二阶段版本，不包含本项。

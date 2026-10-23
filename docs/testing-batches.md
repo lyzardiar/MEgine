@@ -413,3 +413,11 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 ### B001-03 等待大厅动态布局依据
 
 `probe-frost-rea-lobby.mjs` 增加TeamSetup工厂/构造/初始化、变更处理、PlayerSlot创建、分组布局和标题高度探针；共12组通过，原DLL哈希及未修改、输出完整性、MiscUI字体与PlayerSlot高度断言通过。字符串读取使用Rizin的显式UTF-8命令；前两次探针失败分别为自动编码判断和不支持的psz命令，最终日志 `tmp/docs-artifacts/war3-ui/lobby-source/team-probe-verified.log` 正常退出。仅静态依据与维护工具补充，不增加功能计数，不重复原生构建。完整队伍策略、槽位交互和大厅实际布局仍待实现/验证，见warcraft-ui-fidelity文档。
+
+### B001-01 模拟增量共享序列化
+
+变更：mengine-editor-host的PlaySnapshotStream/PlayWorldUpdate保留共享实体，新增advance_shared_update；Tauri step_editor_play调用共享入口。既有advance_update保留独占数据接口，JSON格式不变。属于现有编辑器性能补充，不新增功能计数。
+
+快速检查：play_runtime最终25项通过/4项手动忽略，新增测试ID映射断言修正后仅重跑失败项；定向序列化基准1项通过，Tauri release接口编译检查通过。Amazonia前64/全7,409实体的局部序列化耗时与边界见performance-risk-todo第四十三阶段。未重建EXE、运行原生地图QA或全库回归。
+
+待合并验证：下一相关原生构建执行 `node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile --viewport-transitions --effect-reload`，核对共享响应的实际连续模拟/呈现与模拟请求耗时；追加直接编辑触发reset、Stop/重启/换图/退出时共享响应归属。当前EXE尚未包含本项，原有强制竞态与交互延迟待测继续保留。
