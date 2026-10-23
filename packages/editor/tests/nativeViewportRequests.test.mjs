@@ -109,7 +109,7 @@ test('only typed readback saturation is transient and preview capacity remains o
 
 test('viewport publishes and hit tests the owned frame, and rejects stale selection before preview upload', () => {
   const source = readFileSync(new URL('../src/panels/Viewport.tsx', import.meta.url), 'utf8');
-  for (const marker of ['currentGameRequestKey() !== requestKey', 'currentSceneRequestKey() !== nativeSceneIdentity?.key', '!== cameraPreviewKey']) {
+  for (const marker of ['currentGameRequestKey(current) !== requestKey', 'currentSceneRequestKey(current) !== nativeSceneIdentity?.key', '!== cameraPreviewKey']) {
     const at = source.indexOf(marker); assert.ok(at > 0);
     const upload = source.indexOf('uploadNativeViewportFrame(buffer', at);
     assert.ok(upload > at); assert.match(source.slice(at, upload), /releaseNativeViewportFrame\(buffer\)/);

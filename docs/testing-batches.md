@@ -392,3 +392,12 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 快速检查：16个相关定向测试通过；最终回退调整及实际 App 接线补充分别重测相关3项/1项通过，TypeScript与diff检查通过。真实7,409实体局部对照覆盖私有世界和公共数组暴露两种状态；暴露状态旧归属检查2.801755ms，新路径低于0.001ms，正确性断言通过。完整口径及本地证据见 performance-risk-todo 第四十阶段，不能当作原生提速或FPS验收。
 
 待合并验证：下次相关原生构建后执行 `node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile --viewport-transitions`，核对 frontendCompleteMs；追加请求在途 Stop/重启/切换地图、截图返回与 UI 命中拒绝旧会话、脱离窗口新会话、直接实体编辑和相机预览。当前 EXE 不包含本项，本轮没有原生构建/QA或全库回归。
+
+
+### B001-01 等待原生请求的 Game 重复唤醒
+
+变更：Viewport 在满足请求/调度均无法推进且原生 Game 画面完全未变时，提前跳过世界内容校验；共用画面失效状态生成逻辑。新增 viewportPendingPaint 生产路径检查，并将 nativeViewportRequests 的旧请求键断言同步到当前参数签名。属于现有性能优化补充，不新增功能计数。
+
+快速检查：相关20项最终通过，其中失败项定向重测8项通过；TypeScript/diff通过。验证等待路径不读世界，到期/新帧恢复读取，浏览器动画与交互不被抑制。原始日志与边界见 performance-risk-todo 第四十一阶段。本轮没有原生构建、地图QA或独立微基准，不能报告实际FPS收益。
+
+待合并验证：与8421aa4共同构建后执行连续时序和视口切换QA；覆盖队列饱和/重试恢复、隐藏窗口的请求/捕获结束唤醒、实际输入/resize/环境热更新、直接引用编辑及新帧显示。现有全世界读取与归属拆分待测项继续保留。

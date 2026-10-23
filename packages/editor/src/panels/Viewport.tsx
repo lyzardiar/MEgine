@@ -1379,6 +1379,22 @@ export function Viewport(props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const currentNativeGamePaintState = (canvas: HTMLCanvasElement, presentationKey: string, vp: ReturnType<typeof letterbox>, dpr: number, playing: boolean): NativeGamePaintState => {
+    const frame = nativeGameFrameRef.current;
+    return { frame, surface: canvas, key: JSON.stringify([presentationKey, vp.x, vp.y, vp.w, vp.h, dpr, uiHoverRef.current, uiPressRef.current, environmentPreviewRevision()]), epoch: scenePaintEpochRef.current, browserRendering: frame == null || nativeGameRequestRef.current.reportedError || nativePresentationRef.current(frame.world).hasSpine || playing && nativePresentationRef.current(frame.world).requiresBrowserSnapshot };
+  };
+  // MiYu: unchanged pixels need no world read while both submission and new wakeup scheduling are blocked.
+  const pendingNativeGamePaintUnchanged = (canvas: HTMLCanvasElement, rect: DOMRect, now: number, projectGeneration: number) => {
+    const p = propsRef.current, request = nativeGameRequestRef.current, frame = nativeGameFrameRef.current;
+    if (p.tab !== 'game' || !p.playing || !('__TAURI_INTERNALS__' in window) || request.reportedError || !frame) return false;
+    if (!request.full && request.captures === 0 && !(request.resumeTimer != null && (now < request.retryAt || now - request.lastRequestAt < 1000 / 60))) return false;
+    const sessionId = p.readRuntimeSessionId?.();
+    if (sessionId == null || frame.world.runtimeSessionId !== sessionId || request.owner !== sessionId) return false;
+    const dpr = window.devicePixelRatio || 1, vp = letterbox(Math.max(1, Math.floor(rect.width)), Math.max(1, Math.floor(rect.height)), p.gameResolution);
+    const presentationKey = JSON.stringify([p.gameResolution, p.gameDisplay, p.timelineCameraPreview]);
+    const compatibilityKey = JSON.stringify([p.tab, p.playing, sessionId, presentationKey, vp.w, vp.h, dpr]);
+    return request.compatibilityKey === `${projectGeneration}:${compatibilityKey}` && nativeGamePaintUnchanged(previousGamePaintRef.current, currentNativeGamePaintState(canvas, presentationKey, vp, dpr, true));
+  };
   const paint = (animationFrame = false, completedSceneFrame = false, resumeSceneRequest = false, captureSceneFrame = false) => {
     const paintStartedAt = performance.now();
     if (animationFrame) lastAnimationFrameAtRef.current = paintStartedAt;
@@ -1400,6 +1416,7 @@ export function Viewport(props: {
     const skipUnchangedScenePaint = (animationFrame || resumeSceneRequest) && nativeScene3D && !browserAnimation && pendingNativeScenePaintUnchanged(previousScenePaintRef.current, scenePaintState);
     previousScenePaintRef.current = scenePaintState;
     const projectGeneration = projectAssetSessionGeneration();
+    if (pendingNativeGamePaintUnchanged(canvas, rect, now, projectGeneration)) return;
     const requestedProps = currentViewportProps();
     let p = requestedProps;
     const worldKey = JSON.stringify([requestedProps.tab, requestedProps.clearColor, requestedProps.simulationTime]);
@@ -1545,8 +1562,7 @@ export function Viewport(props: {
     // Native Game requests continue even when the displayed canvas needs no new pixels.
     let nativeGamePaint = false;
     if (isGame) {
-      const frame = nativeGameFrameRef.current;
-      const gamePaintState = { frame, surface: canvas, key: JSON.stringify([presentationKey, vp.x, vp.y, vp.w, vp.h, dpr, uiHoverRef.current, uiPressRef.current, environmentPreviewRevision()]), epoch: scenePaintEpochRef.current, browserRendering: frame == null || nativeGameRequestRef.current.reportedError || nativePresentationRef.current(frame.world).hasSpine || !!p.playing && nativePresentationRef.current(frame.world).requiresBrowserSnapshot };
+      const gamePaintState = currentNativeGamePaintState(canvas, presentationKey, vp, dpr, !!p.playing);
       if (nativeGamePaintUnchanged(previousGamePaintRef.current, gamePaintState)) return;
       previousGamePaintRef.current = gamePaintState;
       nativeGamePaint = !gamePaintState.browserRendering;

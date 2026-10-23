@@ -869,3 +869,14 @@ App 为 Viewport 提供实时 readRuntimeSessionId，直接读取当前 store.pl
 实际 Amazonia 7,409 实体、固定同一暂停世界，Node/Vite SSR 同进程对比旧 currentViewportProps 与新归属读取；2组预热、9组交替测量、每组100次，两个路径的归属判断一致。实体仍私有时单次 CPU 中位 0.001330ms 与低于0.001ms；通过公共接口暴露数组后为 2.801755ms 与低于0.001ms。后者测量了必须防范直接引用修改的情况，不代表所有实际帧都处于该状态，也不能换算原生 FPS。额外断言直接编辑仍产生完整上传、Stop 拒绝旧会话。数据 SHA256 和原始值见 `tmp/docs-artifacts/editor-performance-risk/viewport-owner-benchmark.json`，脚本与日志位于同目录。
 
 本轮未重建原生 Editor、运行地图 QA 或全库回归。当前 EXE 仍为第三十九阶段 `1f0c9f8f44581de0cd3a1654cde768c216ad7e84e0f620f514200d8408dea4d6`，不含本项。下一批在新 EXE 测量 frontendCompleteMs，并覆盖返回帧/截图/UI命中过程中 Stop/重启/切换地图、脱离窗口、直接编辑与相机预览；既有原生强制竞态及编辑/Undo待测项继续保留。日志为 `viewport-owner-{tests,final-tests,wiring-tests,benchmark}.log`，均在临时证据目录。
+
+
+## 第四十一阶段等待请求期间跳过无效 Game 世界校验
+
+Game 的 rAF、运行时通知和请求定时器可以多次唤醒同一幅已显示画面。Viewport 在世界内容读取之前增加轻量判断：仅原生 Play 会话、已显示帧及项目/请求所有者匹配、呈现配置/尺寸/像素比/交互状态/环境版本/失效版本均未改变、且无需浏览器动画或交互绘制时，才可能提前返回。还必须满足请求队列已满、正在捕获，或已有恢复定时器且尚未到请求/重试时刻；这些状态下原有逻辑本来也不会提交请求或安排新的唤醒。未改动调度器、请求容量和重试时序。
+
+共享 currentNativeGamePaintState 生成原有与提前判断的画面状态，避免两套失效规则。新完成帧、会话/项目/窗口/分辨率/显示器/相机预览/hover/press/资源环境变更都会继续完整路径；Spine 和需浏览器绘制的交互 UI 不提前返回。没有定时器或已到请求时刻也继续读取当前世界，以保留直接修改检测和新请求准备。捕获/请求完成后的原有恢复逻辑保持不变。
+
+新增 viewportPendingPaint.test.mjs 执行实际 helper 和 paint 至世界读取处的代码，覆盖队列满、捕获、等待间隔/重试、定时器 ID 0，以及项目/会话/画面等失效或不应跳过的情况；明确断言等待期间世界读取为0、定时器到期恢复读取、新完成像素立即进入绘制。相关呈现、请求、重绘共20项最终通过；失败项仅定向重测8项，测试提取参数及既有请求键断言已与当前源码一致。TypeScript及diff检查通过。日志为 `tmp/docs-artifacts/editor-performance-risk/pending-game-paint-{tests,retest}.log`。
+
+本项减少不可能提交请求且画面未变时的内容校验，不宣称已测得实际唤醒占比或FPS收益。未进行原生构建或整图QA；与8421aa4合并到下一次相关原生验证，检查持续采样、背景窗口恢复、捕获后继续呈现、重试/饱和恢复、输入和窗口变化，以及直接实体修改。当前EXE仍不含这两项。
