@@ -11,7 +11,7 @@ Author: MiYu。
 - 从保留地图原件重新解析几何，并核对地图摘要。自定义成员优先于 `War3Patch.mpq`、`War3xLocal.mpq`、`War3x.mpq`、`war3.mpq`。成员路径限制在项目的来源目录内。
 - `Terrain.slk`、`CliffTypes.slk` 和 `Water.slk` 决定地表、崖壁、腐地及水面资源。相关原件、所属归档、字节数和摘要写入生成项目的 `SourceAssets/`、`terrain-sources.json`。
 - 复用已有 253 个 `ClassicCliffs` 模板，核对模板包、目录及实际 MDX 来源摘要。普通悬崖使用 SW/NW/NE/SE 高度模式和源变体；双格过渡模型占用的两个格均移出普通地面。坡道入口的低角点提升半个源层级，过渡模型沿原始起伏场放置。
-- 地表按四角材质优先级、原始变体及透明掩码合成图集，并保留边缘填充。BLP1 JPEG 使用既有转换器的 BGRA 平面解码，保留透明通道；与已有独立 C# 解码图逐分量误差不超过 1/255。
+- 地表按四角材质优先级、原始变体及透明掩码合成64×64图块。图块边界按64像素对齐，0至6级mip保持独立；地表Shader按屏幕导数选级，在每级内夹紧至本图块的半像素边界，再做两级插值。大于6的LOD使用本图块平均值，避免采到整张图集更低级mip中的其他图块。BLP1 JPEG 使用既有转换器的 BGRA 平面解码，保留透明通道；与已有独立 C# 解码图逐分量误差不超过 1/255。
 - 地面、崖壁、水面分别按区块和材质合并 GLB。网格保留原始顶点、UV、索引及坐标；不会为每个地形格创建实体。
 - 地面法线只累积实际地面三角形，在共享格点平滑；悬崖两侧独立台地保持平面光照，连续起伏和坡道保留真实坡度。
 - 水面采用源 W3E 水位、`Water.slk` 高度偏移、帧序列、速率、重复格数和浅／深水颜色。顶点深度以 float32 位模式存入 data 纹理；Shader 先计算四个顶点颜色，再按源三角形插值。脚本仅在动画帧变化时发布材质参数，并通过名称获取真实运行时实体 ID。
@@ -48,3 +48,20 @@ Booty Bay 包含 15,999 个普通地面格、2,413 个悬崖实例（其中 20 �
 分块性能、采样口径和限制见[性能 TODO 第二十三阶段](../../performance-risk-todo.md)。原版地形之外，后续还需完成资源／装饰及单位布置、地图玩家槽、实际地图寻路和脚本执行，再接入默认遭遇战、存档与网络协议。
 
 最终可打开项目：`tmp/docs-artifacts/frost-original-terrain/camera-fit/booty-bay/`、`camera-fit/amazonia/`。原生报告、截图、几何报告和分块对照位于同一任务目录。默认相机适配这两种地图比例，Amazonia近景选用地图内部崖壁。
+
+### 地表缩小采样隔离
+
+引擎 `create_material_texture_rgba8` 为整张贴图生成mip。地表每图块的采样必须约束到自己的区域；生成器通过64像素对齐、每级夹紧和LOD上限实现隔离，保留PBR光照和区块合并。网格UV仅用于编码图块与局部坐标，Shader恢复每格64像素的导数。该约束修正引擎图集采样，不作为原DLL地表光照或纹理过滤参数的复刻证明。
+
+`test-frost-terrain-atlas.py` 生成六色、3×2图块的原生夹具；`qa-frost-terrain-atlas.mjs <fixture> <terrain-project>` 检查LOD 0／2.5／3／4／5.5／6／8。所有图块的测试区域与其LOD0中心基准逐通道相同；基准包含原生环境光输出。对照路径复现图块串色，最大通道差为201／205。报告 `tmp/docs-artifacts/testing-batches/B001/terrain-atlas-1792729576774.json` 复用 `terrain-atlas-1792729481847.json` 的九张GPU截图，未重复采集已通过输入；夹具为 `tmp/docs-artifacts/warcraft-map-tests/atlas-fixture-3nb2ye_b/`。
+
+Amazonia 更新项目为 `tmp/docs-artifacts/warcraft-map-tests/amazonia-atlas/project/`，只含地形。26个网格的位置／法线／索引和1,502块基础图像逐项相同，UV与材质按新采样布局生成；图集2652²→2496²，基础像素量减少约11.4%。原生全景、近景、重开像素重现、Stop恢复和0 error通过，测试Editor正常退出，复用本批EXE。未重新运行装饰、单位或全库测试，也没有整帧加速结论；每级夹紧的额外Shader成本仍需同场景性能采样，水面动画图集继续沿用其已有采样路径。
+
+```powershell
+python scripts/test-frost-terrain-atlas.py
+python scripts/test-frost-terrain-atlas.py --compare-map <旧地形或装饰项目> <新地形项目>
+$env:MENGINE_EDITOR_EXECUTABLE=(Resolve-Path target/release/mengine-editor-tauri.exe).Path
+node scripts/qa-frost-terrain-atlas.mjs <六色夹具目录> <新地形项目>
+```
+
+仅重算截图断言或继续实际地图验收时，可传 `--atlas-report <原GPU报告>`；工具核对夹具路径、地表Shader和EXE摘要及九张输入，再复用原截图。首次运行的夹具缺少MaterialPropertyBlock、绝对零通道断言未计环境光，以及只运行地图时未聚焦Game面板的问题均保留在本地失败报告中；已修正测试入口与断言。

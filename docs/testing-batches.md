@@ -35,6 +35,8 @@ Author: MiYu。2026-10-23起执行，规则入口为[AGENTS.md](../AGENTS.md)。
 
 复用本批EXE，没有全图生成、整库测试或构建；无整图性能改善结论。B001-01继续保留原版共享RNG初始化／调用顺序、隐藏／离屏更新、特殊状态队列、完整创建／模式、缺失Death原生展示、粒子求解器和同视角画面待测项。按[场景说明](designs/frostbound-realms/original-doodad-scene.md#stand结束重选验证)复现本补充；后续只验证上述剩余项与新增修复影响范围。
 
+B001-01 地表图集采样补充：`build-frost-original-terrain.py` 生成64像素对齐图集和逐级边界约束Shader，防止缩小时混入其他地表图块；原地图位置／法线／索引、纹理层和基础像素不变。`test-frost-terrain-atlas.py` 与 `qa-frost-terrain-atlas.mjs` 的六色GPU对照通过：7种LOD下区域与各自中心基准最大差0，整图mip对照在LOD3／6的最大差201／205。Amazonia 26网格／1,502图块对比、原生远近景、重开／恢复与0 error通过，EXE复用，图集基础像素量减少约11.4%，未宣称整帧提速。证据 `B001/terrain-atlas-1792729576774.json`，GPU截图复用 `terrain-atlas-1792729481847.json`；测试入口修正前的失败记录均保留。新项目 `tmp/docs-artifacts/warcraft-map-tests/amazonia-atlas/project/`；其余既有完整装饰项目保留原版本。此为B001-01修复，不增加3/3计数，不重跑全库／全地图或构建。待补新Shader同场景性能对照、水面图集采样及原版同视角验收；具体命令见[地表采样说明](designs/frostbound-realms/original-terrain-scene.md#地表缩小采样隔离)。
+
 ### B001-02 执行命令
 
 ```powershell

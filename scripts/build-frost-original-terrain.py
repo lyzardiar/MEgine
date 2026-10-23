@@ -116,11 +116,12 @@ def build(export, game, output, chunk_size=32):
             tiles.append(composite)
         cell['atlasTile'] = tile_lookup[key]
     atlas_columns = max(1, math.ceil(math.sqrt(len(tiles))))
-    if atlas_columns*68 > 8192:
+    if atlas_columns*64 > 8192:
         raise ValueError('Terrain atlas exceeds native texture limit; multiple atlas pages required')
-    atlas = Image.new('RGBA', (atlas_columns*68, math.ceil(len(tiles)/atlas_columns)*68))
+    # Power-of-two tile boundaries remain separate through mip 6; the shader clamps each sampled level.
+    atlas = Image.new('RGBA', (atlas_columns*64, math.ceil(len(tiles)/atlas_columns)*64))
     for index, tile in enumerate(tiles):
-        atlas.paste(padded(tile), (index % atlas_columns*68, index // atlas_columns*68))
+        atlas.paste(tile, (index % atlas_columns*64, index // atlas_columns*64))
 
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix='.original-terrain-', dir=output.parent))
@@ -131,7 +132,9 @@ def build(export, game, output, chunk_size=32):
             image.save(target)
         ground_material = 'Assets/Materials/Ground.mmat'
         save_image('Assets/Textures/Ground.png', atlas)
-        write_json(temporary / ground_material, dict(version=8, name='Original map ground', shader='pbr', surface='opaque', base_color=[1,1,1,1], base_color_texture='Assets/Textures/Ground.png', roughness=1, wrap_u='clamp', wrap_v='clamp'))
+        (temporary/'Assets/Shaders').mkdir()
+        (temporary/'Assets/Shaders/Ground.mshader').write_text(ground_shader(atlas.size),encoding='utf-8')
+        write_json(temporary / ground_material, dict(version=8, name='Original map ground', shader='custom', custom_shader='Assets/Shaders/Ground.mshader', surface='opaque', base_color=[1,1,1,1], roughness=1, wrap_u='clamp', wrap_v='clamp'))
         for index, row in enumerate(cliff_rows):
             image = converter.decode_texture(read(row['texDir']+'/'+row['texFile']+'.blp'))
             relative = f'Assets/Textures/Cliff{index}.png'
@@ -156,8 +159,8 @@ def build(export, game, output, chunk_size=32):
             ids = cell['corners']
             points = [[ox/128+i%width, heights[i], -oy/128-i//width] for i in ids]
             tile = cell['atlasTile']
-            tx, ty = tile%atlas_columns*68+2, tile//atlas_columns*68+2
-            uvs = [[(tx+u*64)/atlas.width, (ty+v*64)/atlas.height] for u,v in [(0,1),(0,0),(1,0),(1,1)]]
+            tx, ty = tile%atlas_columns*64+.5, tile//atlas_columns*64+.5
+            uvs = [[(tx+u*63)/atlas.width, (ty+v*63)/atlas.height] for u,v in [(0,1),(0,0),(1,0),(1,1)]]
             append('Ground', cell['cell'], ground_material, points, [normals[i] for i in ids], uvs, [0,3,1,1,3,2])
         for placement in layout['cliffs']:
             template = patches[placement['template']]
@@ -174,7 +177,6 @@ def build(export, game, output, chunk_size=32):
             water_atlas.paste(padded(frame), ((i%8)*(size+4), (i//8)*(size+4)))
         save_image('Assets/Textures/Water.png', water_atlas)
         shader = water_shader(water_row, size, water_atlas.size, [ox/128, oy/128], [width,height])
-        (temporary / 'Assets/Shaders').mkdir()
         (temporary / 'Assets/Shaders/Water.mshader').write_text(shader, encoding='utf-8')
         write_json(temporary / 'Assets/Materials/Water.mmat', dict(version=8, name='Original water', shader='custom', custom_shader='Assets/Shaders/Water.mshader', surface='transparent', blend_mode='alpha', base_color=[1,1,1,1], roughness=0.4, transparent_depth_write=False, render_queue=3000))
         water_heights = [((c[1]&0x3fff)-8192)/512+float(water_row['height']) for c in terrain['corners']]
@@ -224,7 +226,7 @@ def build(export, game, output, chunk_size=32):
             target.write_bytes(raw)
         receipt = dict(mapSha256=data['source']['sha256'], terrainTiles=terrain['tileSize'], coordinateScale=1/128, axes=['X','Z','-Y'], chunkSize=chunk_size,
                        sourceExport=str(exported), groundTiles=len(layout['ground']), cliffInstances=len(layout['cliffs']), rampTransitions=sum('Trans' in p['model'] for p in layout['cliffs']),
-                       rampEntrances=len(layout['rampEntrances']), waterTiles=water_count, entities=len(entities), atlasTiles=len(tiles), meshes=mesh_records,
+                       rampEntrances=len(layout['rampEntrances']), waterTiles=water_count, entities=len(entities), atlasTiles=len(tiles), groundAtlas=dict(tileSize=64,maxMip=6,size=list(atlas.size),sampling='per-tile-clamped-trilinear'), meshes=mesh_records,
                        sources=list(sources.values()), templateSha256=sha(patches_path.read_bytes()), templateCatalogSha256=sha((SAMPLE/'Assets/WarcraftIII/classic-cliff-catalog.json').read_bytes()),
                        compilerSha256=sha(Path(__file__).read_bytes()), layoutSha256=sha((ROOT/'scripts/warcraft_terrain.py').read_bytes()), converterSha256=sha((ROOT/'scripts/convert-warcraft-assets.py').read_bytes()),
                        coverage=dict(terrainScene=True, gameplay=False, doodads=False, units=False, shorelineModels=False, originalRuntimeVisualParity=False))
@@ -238,6 +240,31 @@ def build(export, game, output, chunk_size=32):
         if temporary.exists():
             temporary.resolve().relative_to(output.parent)
             shutil.rmtree(temporary)
+
+
+def ground_shader(atlas_size):
+    return '/* MENGINE_PARAMETERS\n'+json.dumps(dict(textures=[dict(name='ground',type='color',default='Assets/Textures/Ground.png')]))+'\n*/\n'+f'''// Author: MiYu. Keep ground filtering inside one source tile at every mip.
+fn source_ground_level(uv:vec2<f32>,level:f32) -> vec4<f32> {{
+    let size=vec2<f32>({float(atlas_size[0])},{float(atlas_size[1])});
+    let tile=floor(uv*size/64.0)*64.0;
+    let local=(uv*size-tile-vec2<f32>(0.5))*(64.0/63.0);
+    let margin=vec2<f32>(0.5*exp2(level));
+    let pixel=tile+clamp(local,margin,vec2<f32>(64.0)-margin);
+    return textureSampleLevel(mengine_custom_texture_0,material_sampler,pixel/size,level);
+}}
+fn source_ground_sample(uv:vec2<f32>,lod:f32) -> vec4<f32> {{
+    let level=clamp(lod,0.0,6.0);let lower=floor(level);let upper=min(lower+1.0,6.0);
+    let a=source_ground_level(uv,lower);
+    if level==lower {{return a;}}
+    return mix(a,source_ground_level(uv,upper),level-lower);
+}}
+fn mengine_lit_surface_hook(surface:MEngineSurface,uv:vec2<f32>,world_position:vec3<f32>) -> MEngineSurface {{
+    let pixel=uv*vec2<f32>({float(atlas_size[0])},{float(atlas_size[1])})*(64.0/63.0);
+    let dx=dpdx(pixel);let dy=dpdy(pixel);
+    let lod=0.5*log2(max(max(dot(dx,dx),dot(dy,dy)),0.000001));
+    var s=surface;s.base_color=source_ground_sample(uv,lod).rgb;s.alpha=1.0;return s;
+}}
+'''
 
 
 def water_shader(row, size, atlas_size, origin, vertex_size):
