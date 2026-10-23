@@ -341,7 +341,7 @@ export function MenuBar(props: {
               <button
                 type="button"
                 role="menuitem"
-                disabled={props.store.getVisibleFlat().length === 0}
+                disabled={!props.store.hasVisibleHierarchyRows}
                 onClick={() => { props.onSelectAll(); setOpen(null); }}
               >
                 Select All <span className="hint">Ctrl+A</span>

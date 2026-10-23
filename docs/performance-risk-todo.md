@@ -953,3 +953,14 @@ PlayWorldUpdate增加可选timing：请求进入模拟线程的排队时间、�
 7,410实体、850×478、末尾240次呈现：51.6562次/秒，平均间隔19.35875ms/P95 31.9ms，渲染12.7287ms、命令15.4554ms、世界同步2.0398ms。225个去重模拟版本的平均耗时：准备1.7884ms、invoke 7.8738ms、增量应用0.5347ms、编辑器接收0.8098ms、总计11.0116ms；原生排队0.01135ms、模拟2.21565ms、worker 2.40051ms、命令2.45863ms。invoke减命令为5.41515ms，范围包含编码/序列化、投递、解码与WebView回调等待；证据支持继续分解该范围及前端准备，不能直接归因于传输或模拟队列。两种平均请求值口径不同：呈现样本可引用重复模拟版本，模拟分解先按会话/版本去重。
 
 这是独立运行采样，不证明材质共享带来整体FPS改善或已达60 FPS。原始日志为 `tmp/docs-artifacts/editor-performance-risk/play-timing-{check,typescript,tests,viewport-tests,native-tests,native-retest,editor-build,native-build,native-qa}.log`，`play-timing-summary.json`保存二进制摘要和指标。阶段46的正常地图/视口/编辑/特效路径已集成；原生材质预览、材质/纹理/着色器真实热更新和特殊透明/自定义材质的专项覆盖继续待测，既有强制在途竞态/脱离窗口/Edit状态及Undo/真实输入延迟仍未完成。
+
+
+## 第四十八阶段菜单可用性查询保留运行世界归属
+
+MenuBar为所有菜单渲染下拉内容，关闭时由CSS隐藏；“全选”的disabled曾调用getVisibleFlat，构建/排序整棵可见树并向调用方暴露可编辑节点。即使菜单未展开，普通面板刷新也会使这些记录进入后续逐节点内容比较，并阻止相关私有数组快速路径。现在store提供hasVisibleHierarchyRows，只读判断当前世界是否存在根节点；可见层级必从根开始，因此空场景/仅有无根循环与普通层级保持原可用性。实际全选仍使用既有selectAllVisible，折叠/展开和可编辑引用行为不变。
+
+新测试使用真实MenuBar的React服务端渲染，禁止渲染时调用可编辑行查询，覆盖空场景、无根循环、折叠/展开全选、Edit/Play切换、连续原生空增量及显式getTransform引用编辑仍完整上传。菜单与键盘相关最终6项通过，TypeScript与diff检查通过。首次检查修正新增getter缺少逗号；随后修正测试调用为实际API selectAllVisible，仅重跑失败测试通过。没有修改世界比较/失效规则。
+
+对照b449992与当前生产MenuBar/store，使用Amazonia 7,409实体及模拟空增量，两组预热、九组交替采样、每组20次；每次包含关闭MenuBar渲染、store模拟步和一次render snapshot读取。首次菜单读取可编辑行2,577→0，菜单HTML及最终实体内容相同；模拟前准备中位1.052660→0.010140ms，整个局部前端循环3.499855→0.790790ms。基准包含SSR与模拟回复，不代表原生FPS；真实动态增量和浏览器绘制尚待验证。原始脚本/逐组数据/场景SHA256位于tmp/docs-artifacts/editor-performance-risk/menu-read-{benchmark.mjs,benchmark.log,summary.json}，测试/编译日志同前缀。
+
+本项仅做定向检查，未重建Editor或重复原生QA；当前aa67609c版本不包含本修复。下一相关批次合并验证菜单关闭/展开、Ctrl+A与空场景/折叠层级、实时地图切换，以及连续simulation-profile中的prepareMs/acceptMs与实际交互。此前特殊材质、强制竞态/跨窗口/EditUndo/真实延迟待测项继续保留。

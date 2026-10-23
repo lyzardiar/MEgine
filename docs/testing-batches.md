@@ -455,3 +455,12 @@ c694440与8679fcb完成一次前端/原生构建，EXE `ff659f5a318a9c15e2ddc9b3
 与c12e856共用一次前端/原生构建，EXE aa67609c2f6c6b2b3cd975d0cbb54b797793cebfbf1d3b282f61a68c81c4686b。命令 `node scripts/qa-frost-map-session.mjs --continuous-profile --transport-profile --simulation-profile --viewport-transitions --effect-reload --runtime-edits` 的B001/map-session-1792784239971.json通过，0 error、正常退出。225个去重模拟样本完整，Scene/Game/相机预览、分辨率、Inspector编辑/动画推进、特效修改和精确恢复、Stop还原通过。正常材质共享地图路径已集成，未执行全库测试或全量地图导入。
 
 最新呈现51.6562次/秒，独立运行不证明整体提速；模拟请求去重平均11.0116ms，原生排队0.01135ms，invoke减命令5.41515ms（含编码/投递/解码/回调等待）。继续分解前端准备和该剩余范围。待测保留原生材质/纹理/着色器专项热更新、材质预览及特殊透明/自定义材质；强制在途竞态、脱离窗口、隐藏/重试、Edit状态/Undo和真实输入延迟不关闭。Profiler新增表格尚未单独目视验收，真实采样传递已由原生QA验证。
+
+
+### B001-01 菜单只读可用性查询
+
+变更：store.hasVisibleHierarchyRows只读检查根节点，MenuBar“全选”disabled使用该查询；避免关闭的菜单构造整棵可见树并暴露运行世界的可编辑记录。实际全选逻辑不变。新增menuReadOwnership真实React渲染与native driver/store测试。属于现有编辑器性能补充，不增加功能计数。
+
+快速检查：相关6项最终通过，TypeScript/diff通过；两次初始失败分别修正getter逗号和测试API名，已只重测失败项。Amazonia 7,409实体模拟空增量局部对照，菜单可编辑行读取2,577→0，准备耗时中位1.052660→0.010140ms，HTML/实体内容相同。完整口径及临时证据见performance-risk-todo第四十八阶段。
+
+待合并验证：下一相关前端/原生构建复用map-session --continuous-profile --transport-profile --simulation-profile --runtime-edits，确认prepareMs/acceptMs及输入表现；增加关闭/展开菜单、Ctrl+A、空/折叠层级、换图后的菜单状态。当前aa67609c EXE尚不含本项，本轮未重复原生构建、地图QA或整库测试。原有特殊材质和生命周期风险继续待测。

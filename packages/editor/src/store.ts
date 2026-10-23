@@ -1180,6 +1180,8 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     timelineParticlePreviews() {
       return mode === 'edit' ? timelinePreview?.particles ?? [] : [];
     },
+    /** A visible hierarchy always starts at a root; availability checks need no mutable rows. */
+    get hasVisibleHierarchyRows() { return list().some(entity => entity.parent == null); },
     getVisibleFlat,
     /** Authoring uses live scene rows; Play displays the panel world without exposing editable records. */
     hierarchyPresentation(entities: WorldSnapshotView['entities']) { return mode === 'edit' ? getVisibleFlat() : buildVisibleFlat(entities.map(entity => isRetainedPlayRecord(entity) ? entity as EntityRec : normalizeEntity(entity)), false); },
