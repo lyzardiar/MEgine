@@ -5256,7 +5256,8 @@ class AgentBridge {
           modifiers,
         ),
       };
-      return this.finishAsyncCommand(result, options, windowLabel);
+      // MiYu: the target window's UI handler owns refresh and publication, including detached edits.
+      return this.finishAsyncCommand(result, options, windowLabel, 'observe');
     }
     const handler = WRITE_COMMANDS[commandId];
     if (!handler) {
@@ -5707,12 +5708,13 @@ class AgentBridge {
     result: CommandResult,
     options: { screenshot?: boolean; expectedSceneRevision?: number },
     wholeWindow: boolean | string = false,
-    refreshScene = true,
+    refreshScene: boolean | 'observe' = true,
   ): Promise<CommandResult> {
-    // MiYu: queued input does not change the scene; captures still refresh presentation and revision.
-    if (refreshScene || options.screenshot) this.refreshProvider?.();
+    // MiYu: UI actions observe their handlers' changes without republishing the main window's world.
+    const refreshPresentation = refreshScene === true || (refreshScene === false && options.screenshot);
+    if (refreshPresentation) this.refreshProvider?.();
     if (this.store && this.editorBootReady) {
-      if (refreshScene || options.screenshot) this.observe(true);
+      if (refreshPresentation || refreshScene === 'observe') this.observe(true);
       result.sceneRevision = this.sceneChanges.revision;
     } else {
       this.observeProject();

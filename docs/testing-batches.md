@@ -319,3 +319,16 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 快速检查：最终SampledEffect定向6通过、0失败、1手动忽略，手动CPU基准单独通过（37文件0.82789→0.15752ms）；JS语法和diff检查通过。复用原EXE执行一次连续采样，报告`B001/map-session-1792774425728.json`通过、0 error、正常退出。完成呈现约50.15次/秒仅是850×478旧EXE保留240帧的基线；详细采样范围与日志入口见performance-risk-todo第三十三阶段。
 
 待合并验证：与e46f049共同构建原生Editor，验证Amazonia特效动画／暂停／Stop恢复、特效文件修改/损坏/删除恢复及相同视口的连续呈现；已有跨窗口选择验收项一并执行。未执行全库测试、地图重导或原生重建，旧EXE不含两项优化。
+
+
+### B001-01 脱离窗口操作与选择／特效原生合并验证
+
+变更：AgentBridge的window.ui_*只观察目标窗口已处理的状态，避免主窗重复发布旧世界；新增agentWindowUiOwnership.test.mjs和qa-editor-selection-sync.mjs。map-session QA增加--effect-reload，在连续采样后通过游戏输入移至原火焰区域，验证真实文件修改与恢复。属于既有编辑器性能补充，不增加批次计数。
+
+快速检查：窗口操作归属与playback输入成本共2项通过；JS语法及diff检查通过。与e46f049、44cde9a合并构建前端和原生Editor，最终EXE `40f8e9048c975dcc6273b99e0dee3765aa51471f29af1aff71e2e230acad9710`；只因集成发现的Agent广播问题补做相关增量构建及失败路径重测，没有全库回归或地图重导。
+
+`node scripts/qa-editor-selection-sync.mjs`报告`B001/selection-sync-1792775727537.json`通过：主窗到脱离Inspector、三窗口顺序选择/多选/清空与键盘导航、内容/脏状态保持、脱离编辑及发起窗口Undo、同名重载、Play/Step/Stop恢复与面板重开。QA在隔离副本中使用空启动脚本测试编辑状态恢复，不作为完整游戏脚本兼容验收。
+
+`node scripts/qa-frost-map-session.mjs --continuous-profile --effect-reload`报告`B001/map-session-1792776070367.json`通过：原脚本连续运行10秒、37份原特效文件修改后可见像素及图元变化、恢复后暂停像素精确还原且场景实体不变。两个报告均0 error、进程正常退出，锁定WebView缓存保留。连续呈现保留240帧，48.475次/秒，完整采样口径见performance-risk-todo第三十四阶段；本次没有证明整体FPS提升。
+
+以上关闭三十二、三十三阶段已列出的常规脱离窗口选择/编辑/发起窗口Undo、同名重载/Play/Stop/重开面板、原生特效修改/恢复及连续采样待测。三窗口同时并发、真实输入延迟与IPC成本、独立Ping滚动、自动恢复计时、原生特效损坏/删除恢复、跨平台仍保留待测；不是跨窗口全局Undo或全地图不卡顿保证。B001整体保持未结算，其余既有功能待测不因本项通过关闭。

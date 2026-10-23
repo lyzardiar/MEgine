@@ -777,3 +777,18 @@ Edit模式的纯选择只发送节点ID、场景名及同步版本，接收端�
 同进程交替旧metadata与平台接口，2组预热、9组测量，每组20轮、每轮37文件，逐文件结果相等；中位数0.82789→0.15752ms，减少约81.0%，每轮约省0.670ms。仅文件检查CPU基准，不是整个特效阶段或原生FPS提升证明。`cargo test -p mengine-runtime --release --lib sampled_effects::tests -- --test-threads=1`最终6通过、0失败、1手动基准忽略；共享特效回归补充同mtime长度变化及恢复后的粒子重新输出。单独运行`benchmark_sampled_effect_file_checks -- --ignored --nocapture --test-threads=1`通过。原始日志`sampled-effect-stamp-tests-final.log`、`sampled-effect-stamp-benchmark.log`及`continuous-profile.log`在`tmp/docs-artifacts/editor-performance-risk/`。
 
 未重建原生Editor；上述连续采样是本项优化前的基线。待与跨窗口选择同步共同构建，验证原地图特效、暂停／Stop恢复、实际文件热更新和相同视口的连续呈现，不将旧EXE结果作为新实现的原生验收。
+
+
+## 第三十四阶段脱离窗口操作归属与原生集成
+
+Agent的window.ui_*命令由目标窗口处理刷新和发布；主窗口只观察结果，不再额外广播自身场景。该边界保留脱离Inspector的内容编辑及其Undo记录，同时避免纯选择命令触发完整场景同步。返回的sceneRevision是主窗口当时已观察到的版本，不是跨窗同步完成确认；原生QA等待实际选中节点和Inspector值。playback.input既有截图刷新行为保持不变。
+
+`agentWindowUiOwnership.test.mjs`与`agentPlaybackCost.test.mjs`共2项通过；前端构建及Rust Release增量构建通过，仅既有world_from_snapshot未使用警告。第三十二、三十三阶段与此修复共用最终EXE SHA256 `40f8e9048c975dcc6273b99e0dee3765aa51471f29af1aff71e2e230acad9710`。独立只读复核通过。
+
+`qa-editor-selection-sync.mjs`在独立Amazonia副本的7,409实体上通过四组真实UI交互：主Hierarchy到脱离Inspector，三窗口顺序单选/多选/清空及主窗键盘选择，脱离Inspector编辑和原编辑窗口Undo，同名重载、Play/Step/Stop与面板重新打开。选择保持内容和脏状态；Undo验证限于发起编辑的窗口，没有实现跨窗口全局Undo。报告`tmp/docs-artifacts/testing-batches/B001/selection-sync-1792775727537.json`通过，0 error、正常退出。
+
+`qa-frost-map-session.mjs --continuous-profile --effect-reload`使用原地图脚本和独立资产副本。连续采样后暂停，使用游戏输入移到原火焰装饰物区域，再清空37份特效文件的帧粒子/四边形/光源；首次观察即发现像素变化且图元778→68，恢复文件后首次观察即逐像素还原、图元恢复778，场景实体未改变。文件恢复放在finally中，读取真实原生截图并限定等待时间。报告`tmp/docs-artifacts/testing-batches/B001/map-session-1792776070367.json`通过，0 error、正常退出。两项原生QA的锁定WebView缓存保留；原始构建和运行日志在`tmp/docs-artifacts/editor-performance-risk/`。
+
+850×478连续采样10秒、7,410实体（含1个QA观察节点），末尾240个完成帧约覆盖4.95秒，平均间隔20.6292ms、P95 31.2ms、48.475次完成呈现/秒；原生渲染13.5149ms、完整请求26.1867ms、模拟请求11.9971ms，39个WebView采样段平均绘制3.0685ms。各阶段重叠，不能相加。与旧EXE分次采样的50.15次/秒相比，本次没有证明整体呈现率提升；局部文件检查和选择路径节省仍以此前定向测量为准。该数据不是显示器FPS、新模拟帧率或完整10秒原生帧历史。
+
+常规脱离窗口选择/编辑/原窗口Undo与特效修改/恢复集成已验证。原生三窗口同时操作、真实连续输入延迟、独立Ping滚动、自动恢复计时、原生特效损坏/删除恢复和跨平台仍待后续场景；损坏/删除恢复已有Rust定向测试，不能替代原生验收。Amazonia持续性能风险保持开放。

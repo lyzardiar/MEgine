@@ -10,6 +10,7 @@ const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'
 assert.ok(process.env.MENGINE_EDITOR_EXECUTABLE,'Set MENGINE_EDITOR_EXECUTABLE');
 const logsOnly=process.argv.includes('--logs-only');
 const continuousProfile=process.argv.includes('--continuous-profile');
+const effectReload=process.argv.includes('--effect-reload');
 const profileOnly=process.argv.includes('--profile-only')||continuousProfile;
 const editorFeedback=process.argv.includes('--editor-feedback');
 const returnOnly=process.argv.includes('--return-only');
@@ -33,6 +34,30 @@ async function waitMap(map){let s=await snapshot();for(let i=0;status(s).map!==m
 async function key(key){await input({keys:[key]});await input({});await step();}
 async function click(name){const s=await snapshot(),pointer=clientWorldFixture(s).canvasPoint(name,[1280,720],false);await input({pointer,buttons:[0]});await input({pointer});await step();}
 async function capture(name){const deadline=Date.now()+30000;for(;;)try{const shot=await query('view.screenshot',{target:'game',maxSize:1280,includeNativeProfile:true});if(name)fs.writeFileSync(path.join(out,label+'-'+name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));report.frames.push(shot.nativeProfile);return shot.dataUrl;}catch(e){if(Date.now()>=deadline||!/NOT_READY|canvas is not available yet/.test(e.message))throw e;await sleep(500);}}
+async function checkEffectReload(){
+  // Move the original camera from the empty start clearing to the authored fire props.
+  await input({keys:['KeyA']});await step(45);await input({});
+  await input({keys:['KeyS']});await step(40);await input({});
+  const world=await snapshot(),keys=[...new Set(world.entities.map(e=>e.components.SampledEffect?.effect).filter(Boolean))],saved=[];
+  for(const key of keys){const file=path.resolve(sample,key),relative=path.relative(sample,file);assert.ok(!relative.startsWith('..')&&!path.isAbsolute(relative));saved.push({file,bytes:fs.readFileSync(file)});}
+  assert.ok(saved.length);const before=await capture('effects-before'),beforeCount=report.frames.at(-1).counts.uiPrimitives;
+  async function waitFrame(name,predicate){
+    const started=Date.now(),attempts=[];
+    for(;;){
+      const pixels=await capture(),count=report.frames.at(-1).counts.uiPrimitives;attempts.push({elapsedMs:Date.now()-started,count,pixelHash:hash(pixels)});
+      if(predicate(pixels,count)){fs.writeFileSync(path.join(out,label+'-'+name+'.png'),Buffer.from(pixels.split(',')[1],'base64'));return {count,attempts};}
+      assert.ok(Date.now()-started<10000,name+' observable frame: '+JSON.stringify(attempts));await sleep(300);
+    }
+  }
+  try{
+    for(const {file,bytes} of saved){const asset=JSON.parse(bytes.toString('utf8'));for(const clip of asset.clips)for(const frame of clip.frames){frame.particles=[];frame.quads=[];frame.lights=[];}fs.writeFileSync(file,JSON.stringify(asset));}
+    const changed=await waitFrame('effects-edited',(pixels,count)=>pixels!==before&&count<beforeCount);
+    report.effectReload={files:saved.length,beforeCount,afterCount:changed.count,changedAttempts:changed.attempts};
+  }finally{for(const {file,bytes} of saved)fs.writeFileSync(file,bytes);}
+  report.effectReload.restoredAttempts=(await waitFrame('effects-restored',(pixels,count)=>pixels===before&&count===beforeCount)).attempts;
+  assert.deepEqual((await snapshot()).entities,world.entities,'Asset reload does not edit scene entities');
+  report.checks.push('Original effect files hot reload and restore exact paused pixels without changing scene data');
+}
 async function checkHierarchyFocus(s){
   const candidates=s.entities.filter(e=>e.name.startsWith('Doodad-')&&e.components.Transform&&!e.components.MeshRenderer);
   const first=candidates[0],second=candidates.find(e=>Math.hypot(...e.components.Transform.position.map((v,i)=>v-first.components.Transform.position[i]))>20);assert.ok(first&&second);
@@ -83,7 +108,7 @@ try{
       await execute('profiler.clear');const started=performance.now();await sleep(10000);const elapsedMs=performance.now()-started;
       const profiles=await query('profiler.get_samples',{source:'game',limit:480});
       assert.ok(profiles.nativeProfileCount>=15,'Expected completed live viewport frames');assert.ok(profiles.returnedSamples>0,'Expected WebView paint samples');
-      report.continuousProfile={elapsedMs,...profiles};await execute('playback.pause');await capture('profile-view');await execute('playback.stop');
+      report.continuousProfile={elapsedMs,...profiles};await execute('playback.pause');await capture('profile-view');if(effectReload)await checkEffectReload();await execute('playback.stop');
       report.checks.push('10-second live Amazonia presentation and WebView sample window without Agent polling');
     }else{
     const native=[];
