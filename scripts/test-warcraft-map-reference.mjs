@@ -34,7 +34,7 @@ function load(name){
   new Function('require','module','exports',compiled)(relative=>load(path.posix.normalize(path.posix.join(path.posix.dirname(name),relative))+'.ts'),module,module.exports);
   return module.exports;
 }
-const formats={terrain:'w3e',pathing:'wpm',info:'w3i'};
+const formats={terrain:'w3e',pathing:'wpm',info:'w3i',doodads:'doo'};
 for(const kind of Object.values(formats))await fetchModule(`src/parsers/w3x/${kind}/file.ts`);
 const plain=value=>ArrayBuffer.isView(value)?Array.from(value):Array.isArray(value)?value.map(plain):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([k,v])=>[k,plain(v)])):value;
 function compareFields(ours,theirs,aliases={}){
@@ -43,9 +43,10 @@ function compareFields(ours,theirs,aliases={}){
 for(const directory of inputs){
   const folder=path.resolve(directory),map=JSON.parse(fs.readFileSync(path.join(folder,'map.json'),'utf8')),readers={};
   for(const [name,kind] of Object.entries(formats)){
+    if(name==='doodads'&&!map.doodads)continue;
     const receipt=map.source.members['war3map.'+kind],raw=fs.readFileSync(path.join(folder,receipt.preservedFile));
     assert.equal(digest(raw),receipt.sha256,'Preserved member digest');
-    const Reader=load(`src/parsers/w3x/${kind}/file.ts`).default,reader=new Reader();reader.load(new Uint8Array(raw));readers[name]=reader;
+    const Reader=load(`src/parsers/w3x/${kind}/file.ts`).default,reader=new Reader();reader.load(new Uint8Array(raw),127);readers[name]=reader;
   }
   const t=map.terrain,reference=readers.terrain;
   compareFields({version:t.version,tileset:t.tileset,haveCustomTileset:t.customTileset,groundTilesets:t.groundTilesets,cliffTilesets:t.cliffTilesets,mapSize:t.vertexSize,centerOffset:t.origin},reference);
@@ -57,14 +58,27 @@ for(const directory of inputs){
   }
   compareFields({version:map.pathing.version,size:map.pathing.size,pathing:map.pathing.cells},readers.pathing);
   const info=map.info,ref=readers.info,complex=['players','forces','upgradeAvailability','techAvailability','randomUnitTables','randomItemTables'];
-  compareFields(Object.fromEntries(Object.entries(info).filter(([key])=>!complex.includes(key))),ref);
+  // Weather is a four-byte identifier; compare its bits across signed/unsigned readers.
+  compareFields(Object.fromEntries(Object.entries(info).filter(([key])=>!complex.includes(key))),{...ref,globalWeather:ref.globalWeather>>>0});
   for(const key of complex){
     if(!Object.hasOwn(info,key))continue;
     const actual=ref[{upgradeAvailability:'upgradeAvailabilityChanges',techAvailability:'techAvailabilityChanges'}[key]||key];
     assert.equal(info[key].length,actual.length,key+' length');
     info[key].forEach((value,index)=>compareFields(key==='randomItemTables'?{...value,sets:value.sets.map(items=>({items}))}:value,actual[index],{fixedStartPosition:'isFixedStartPosition',playerMask:'playerMasks',level:'levelAffected'}));
   }
-  reports.push({name:map.name,sourceSha256:map.source.sha256,corners:t.corners.length,pathingCells:map.pathing.cells.length,infoVersion:info.version,players:info.players.length});
-  console.log(`PASS pinned reference: ${map.name}, ${t.corners.length} corners, ${map.pathing.cells.length} pathing bytes, W3I ${info.version}`);
+  if(map.doodads){
+    const d=map.doodads,ref=readers.doodads;
+    assert.equal(d.version,ref.version);
+    assert.equal(d.subversion,new DataView(ref.u1.buffer,ref.u1.byteOffset,4).getInt32(0,true));
+    assert.equal(d.terrainVersion,new DataView(ref.u2.buffer,ref.u2.byteOffset,4).getUint32(0,true));
+    assert.equal(d.doodads.length,ref.doodads.length);
+    d.doodads.forEach((entry,index)=>compareFields({...entry,...(entry.itemSets?{itemSets:entry.itemSets.map(items=>({items}))}:{})},ref.doodads[index]));
+    assert.equal(d.terrainDoodads.length,ref.terrainDoodads.length);
+    d.terrainDoodads.forEach((entry,index)=>compareFields(entry,ref.terrainDoodads[index],{unknown:'u1'}));
+    const receipt=map.source.members['war3map.doo'];
+    assert.deepEqual(Buffer.from(ref.save(127)),fs.readFileSync(path.join(folder,receipt.preservedFile)),'Independent DOO byte reconstruction');
+  }
+  reports.push({name:map.name,sourceSha256:map.source.sha256,corners:t.corners.length,pathingCells:map.pathing.cells.length,infoVersion:info.version,players:info.players.length,doodadVersion:map.doodads?.version,doodads:map.doodads?.doodads.length,terrainDoodads:map.doodads?.terrainDoodads.length});
+  console.log(`PASS pinned reference: ${map.name}, ${t.corners.length} corners, ${map.pathing.cells.length} pathing bytes, W3I ${info.version}, ${map.doodads?.doodads.length??0} doodads`);
 }
 fs.writeFileSync(path.join(output,'report.json'),JSON.stringify({reference:base,typescript:ts.version,modules:[...sources].map(([name,source])=>({name,sha256:digest(source)})),maps:reports},null,2)+'\n');

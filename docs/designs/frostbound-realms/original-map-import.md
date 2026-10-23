@@ -4,7 +4,7 @@ Author: MiYu。
 
 `scripts/import-frost-original-map.py` 从本机原版 `.w3m` / `.w3x` 生成可验证的 `map.json`，保留源地图、提取成员和 SHA-256。输入地图只读；输出要求新目录，完整写入临时目录后再发布。默认产物位于 `tmp/docs-artifacts/frost-original-maps/<地图文件名>/`。
 
-该阶段完成离线格式读取。`coverage.runtimePlayable` 为 `false`：现有 Frostbound 模拟仍使用 32×32 地形、双队状态和 160 单位上限；导入结果尚未接入遭遇战、寻路、渲染、存档或联机。装饰、单位和 JASS 保留原件，尚未执行或解释。不会将导入结果加入现有地图菜单。
+导入器提供离线格式读取。`coverage.runtimePlayable` 为 `false`：现有 Frostbound 模拟仍使用 32×32 地形、双队状态和 160 单位上限；地形已有独立原生场景，完整原地图尚未接入遭遇战、寻路、存档或联机。装饰放置记录已解码，单位、对象覆盖和 JASS 保留原件，尚未执行。导入结果尚未加入现有地图菜单。
 
 ## 支持的布局
 
@@ -15,6 +15,7 @@ Author: MiYu。
 | WPM 0 | 原始尺寸和全部路径字节，包括当前未解释的位；每个地形格对应 4×4 路径格 |
 | W3I 18/25 | 地图信息、相机边界、可玩范围、玩家槽和起点、势力、科技及升级限制、随机单位／物品表、资料片环境参数 |
 | WTS | UTF-8／BOM、多行文本、记录间和记录头注释；保留 `TRIGSTR` 原字段并提供字符串表 |
+| DOO 7/8 | `war3map.doo` 中的对象ID、变体、位置、角度、缩放、状态、生命比例、掉落集合、编辑器ID及地形装饰，详见[装饰数据说明](original-doodads-import.md) |
 
 `map.json` 使用 `schema=mengine.warcraft-map`、`schemaVersion=1`。`terrain.corners` 按源文件行序排列，每项为 `[i16地面高度,u16水位,u8纹理标志,u8变体,u8悬崖层级]`，包括保留位。`terrain.vertexSize` 是顶点数，`tileSize` 为顶点数减一。`pathing.cells[y*width+x]` 保存源字节。
 
@@ -40,7 +41,7 @@ node scripts/test-warcraft-map-reference.mjs tmp/docs-artifacts/frost-original-m
 python scripts/test-warcraft-map.py --maps 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Maps'
 ```
 
-独立参考检查需要网络及编辑器的 TypeScript 开发依赖。它下载固定提交下的 18 个解析模块到临时证据目录，记录每个模块的摘要，再执行原 TypeScript 读取器，逐字段比较导出内容。参考源码不会成为游戏运行时依赖。
+独立参考检查需要网络及编辑器的 TypeScript 开发依赖。它下载固定提交下的 23 个解析模块到临时证据目录，记录每个模块的摘要，再执行原 TypeScript 读取器，逐字段比较导出内容。参考源码不会成为游戏运行时依赖。
 
 2026-10-23 验证：
 
