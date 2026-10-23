@@ -12,6 +12,7 @@ import struct
 import subprocess
 import tempfile
 from warcraft_map import load_map
+from warcraft_doodads import placement_kind
 from warcraft_mpq import mpyq, read_archive
 
 terrain_builder = importlib.import_module('build-frost-original-terrain')
@@ -206,7 +207,8 @@ def build(export,game,output,sampler,metadata_reader):
             entities.append(item);return item['entity']
         for index,d in enumerate(data['doodads']['doodads']):
             row=definitions[d['id']];model=assets.prepare(model_path(row,d['variation']));dead=d['id'] in destructables and d['life']==0;ci=clip_index(model['clips'],dead);clip=model['clips'][ci]
-            name=f'Doodad-{index}-{d["id"]}-{d["editorId"]}';parent=entity(name,dict(Transform=placement_transform(d)),active=bool(d['flags']&2))
+            kind=placement_kind(d['id'] in destructables,d['flags'])
+            name=f'Doodad-{index}-{d["id"]}-{d["editorId"]}';parent=entity(name,dict(Transform=placement_transform(d)),active=kind!='suppressed')
             tint=[float(row.get('color'+c,row.get(f'vert{c}{min(d["variation"],int(row["numVar"])-1)+1:02}',255)))/255 for c in 'RGB']
             part_names=[]
             for pi,p in enumerate(model['parts']):
@@ -226,13 +228,13 @@ def build(export,game,output,sampler,metadata_reader):
             if model.get('effect'):
                 ei=clip_index(model['effectClips'],dead);effect_clip=model['effectClips'][ei]
                 entity(name+'-effect',dict(Transform=dict(position=[0,0,0]),SampledEffect=dict(effect=model['effect'],clip=ei,playing=not dead,looping=effect_clip['loop'],speed=1,time_seconds=effect_clip['duration'] if dead else 0)),parent)
-            placements.append(dict(index=index,name=name,source=d,model=model['source'],parts=part_names))
+            placements.append(dict(index=index,name=name,source=d,kind=kind,model=model['source'],parts=part_names))
         (project/'Assets/Scenes/Main.mscene').write_bytes(encode(scene))
         script=Path(__file__).with_name('frost-original-doodads-client.js').read_text(encoding='utf-8')
         with (project/'Assets/Scripts/Main.js').open('a',encoding='utf-8',newline='\n') as stream:stream.write('\nvar originalDoodadGroups='+json.dumps(list(groups.values()),separators=(',',':'))+';\n'+script)
         (project/'doodad-placements.json').write_bytes(encode(placements))
-        tools=[Path(__file__),Path(__file__).with_name('frost-original-doodads-client.js'),Path(nodes.__file__),Path(converter.__file__),ROOT/'scripts/warcraft-node-metadata/Program.cs',ROOT/'scripts/warcraft-assets/Program.cs',*binaries]
-        result=dict(mapSha256=sha(raw),placements=len(placements),entities=len(entities),animatedGroups=len(groups),animatedParts=sum(len(g['names']) for g in groups.values()),models=assets.records,sources=list(source_records.values()),sourceCollections=assets.collection_hashes,tools=[dict(path=str(p),sha256=sha(p.read_bytes())) for p in tools],upstream=dict(repository=converter.UPSTREAM,commit=converter.COMMIT),coverage=dict(models=True,sampledAnimation=True,sampledEmitters=True,gameplay=False,originalRuntimeParity=False),limitations=['Sampled viewer particles and ribbons are not verified against the original game solver','Source placement flags and stand/death scheduling require native and original-game comparison','Object overrides, terrain doodad deformation and model particles are rejected'])
+        tools=[Path(__file__),Path(__file__).with_name('warcraft_doodads.py'),Path(__file__).with_name('frost-original-doodads-client.js'),Path(nodes.__file__),Path(converter.__file__),ROOT/'scripts/warcraft-node-metadata/Program.cs',ROOT/'scripts/warcraft-assets/Program.cs',*binaries]
+        result=dict(mapSha256=sha(raw),placements=len(placements),entities=len(entities),animatedGroups=len(groups),animatedParts=sum(len(g['names']) for g in groups.values()),models=assets.records,sources=list(source_records.values()),sourceCollections=assets.collection_hashes,tools=[dict(path=str(p),sha256=sha(p.read_bytes())) for p in tools],upstream=dict(repository=converter.UPSTREAM,commit=converter.COMMIT),coverage=dict(models=True,sampledAnimation=True,sampledEmitters=True,gameplay=False,originalRuntimeParity=False),limitations=['Sampled viewer particles and ribbons are not verified against the original game solver','Placement dispatch assumes source runtime mode zero; complete creation, collision, pathing and random animation scheduling remain unverified','Object overrides, terrain doodad deformation and model particles are rejected'])
         terrain_receipt=json.loads((project/'terrain-sources.json').read_bytes());terrain_receipt['entities']=len(entities);terrain_receipt['coverage']['doodads']=True;(project/'terrain-sources.json').write_bytes(encode(terrain_receipt))
         result['generatedFiles']=[dict(path=p.relative_to(project).as_posix(),bytes=p.stat().st_size,sha256=sha(p.read_bytes())) for p in sorted(project.rglob('*')) if p.is_file() and 'SourceAssets' not in p.relative_to(project).parts]
         (project/'doodad-scene-sources.json').write_bytes(encode(result))

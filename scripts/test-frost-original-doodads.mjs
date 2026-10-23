@@ -50,7 +50,9 @@ function projectIntegrity(directory){
   for(const placement of placements){
     const entity=byName.get(placement.name),d=placement.source,t=entity.components.Transform;
     assert.deepEqual(t.position,[d.location[0]/128,d.location[2]/128,-d.location[1]/128]);assert.deepEqual(t.scale,[d.scale[0],d.scale[2],d.scale[1]]);
-    assert.ok(t.rotation.every((v,i)=>Math.abs(v-[0,Math.sin(d.angle/2),0,Math.cos(d.angle/2)][i])<1e-12));assert.equal(entity.active,Boolean(d.flags&2));
+    assert.ok(t.rotation.every((v,i)=>Math.abs(v-[0,Math.sin(d.angle/2),0,Math.cos(d.angle/2)][i])<1e-12));
+    if(placement.kind!==undefined){assert.ok(['decorative','destructable','suppressed'].includes(placement.kind));assert.equal(entity.active,placement.kind!=='suppressed');}
+    else assert.equal(entity.active,Boolean(d.flags&2)); // Archived projects retain their original generator contract.
     for(const name of placement.parts)assert.equal(byName.get(name).parent,entity.entity,name);
     assert.ok(placement.parts.length||byName.has(placement.name+'-effect'),'Every source placement has a native representation');
   }

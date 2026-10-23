@@ -13,7 +13,7 @@ Author: MiYu。
 - 未知主版本、错误标识、负数／越界计数、任意字段截断、非有限坐标及额外尾部均拒绝。严格读取不会静默删掉无法解释的记录。
 - `war3mapUnits.doo`是另一种记录布局，仅保留原件。对象覆盖`war3map.w3b/.w3d`也保留原件并标记`preserved-unparsed`；后续场景消费必须先处理实际存在的覆盖，不能只使用默认SLK。
 
-当前读取器是原版放置数据消费基础。[装饰场景生成器](original-doodad-scene.md)已将源模型、采样动画与发射器加入独立地形项目，等待 B001 批次运行验证。可破坏物交互、砍伐、碰撞、掉落、保存及联机仍需接入，不把读取通过等同于原版运行一致。
+当前读取器是原版放置数据消费基础。[装饰场景生成器](original-doodad-scene.md)已将源模型、采样动画与发射器加入独立地形项目，B001 两图生成与 MEngine 原生检查通过，原版行为及画面对照仍待补齐。可破坏物交互、砍伐、碰撞、掉落、保存及联机仍需接入，不把读取通过等同于原版运行一致。
 
 ## 来源与验证
 
@@ -38,7 +38,15 @@ REA 的 `node scripts/probe-frost-rea-doodads.mjs --life` 对同一固定 Game.d
 
 `python scripts/probe-frost-rea-doodad-life-cpu.py` 在 Unicorn 中执行以上原始机器码，1,024组输入通过：两种对象类别、初始生命0／100、全部256种生命字节。它执行实际状态和命名动画分支；外部模型元数据、路径／注册／纹理更新和Stand变体选择使用桩，不启动原游戏。故只证明该分支，不能证明flags可见性、随机动画调度或渲染一致。依赖沿用 `tmp/docs-artifacts/frost-siege-engine/dependencies` 中的 pefile／unicorn；更换DLL必须重新定位地址及核验摘要。
 
-生成器据源SLK类别处理生命：普通装饰物即使life=0仍保留Stand动画；死亡树木使用Death末帧。`python scripts/test-frost-doodad-life.py` 从Booty Bay原件派生3条放置的测试地图，通过真实MPQ导出与生成路径核对：零生命风车5部件保持Stand和动画分组，死亡树2部件固定Death末帧，活树2部件保持Stand。夹具只用于定向验证，不替代原地图展示。已通过的结果在 `tmp/docs-artifacts/warcraft-map-tests/life-fixture-00_e69ab/result.json`；原DLL执行结果为 `doodad-runtime/life-cpu.json`，REA证据为 `tmp/docs-artifacts/frost-original-doodads/doodad-life-*-rea.json` 与 `doodad-death-seek-rea.json`。
+生成器据源SLK类别处理生命：普通装饰物即使life=0仍保留Stand动画；死亡树木使用Death末帧。`python scripts/test-frost-doodad-life.py` 从Booty Bay原件派生测试地图，通过真实MPQ导出与生成路径核对。当前八条放置覆盖生命和flags：零生命风车5部件保持Stand和动画分组，死亡树2部件固定Death末帧，活树2部件保持Stand，并核对各父实体active。夹具只用于定向验证，不替代原地图展示。当前生成及原生检查通过，详见[场景说明](original-doodad-scene.md)；生成结果在 `tmp/docs-artifacts/warcraft-map-tests/life-fixture-79t499fs/result.json`，初版三条放置结果仍保留在 `life-fixture-00_e69ab/result.json`。原DLL生命执行结果为 `tmp/docs-artifacts/warcraft-map-tests/doodad-runtime/life-cpu.json`，REA证据为 `tmp/docs-artifacts/frost-original-doodads/doodad-life-*-rea.json` 与 `doodad-death-seek-rea.json`。
+
+### 放置标志分流
+
+`node scripts/probe-frost-rea-doodads.mjs --flags` 对上述固定Game.dll提供两组证据。入口 `0x6f751980` 通过 `0x6f6d5790` 查询源类型表：非可破坏物返回普通模型路径；全局 `0x6fbed448` 非0时也返回该路径。模式为0的可破坏物先检查flags&1，为真走普通路径；否则flags&2为真时经 `0x6f7518a0` 调用 owner+0x110 的创建回调，两位均无时不创建。回调封装把flags&4传入heightOverride。写回 `0x6f75b6f6` 根据区域判定 `0x6f72d8e0`、虚函数+0x4c和实例+0x84的值8分别生成这三位；flags不是统一可见性掩码。
+
+`python scripts/probe-frost-rea-doodad-flags-cpu.py` 执行原分流和回调封装机器码，模式0／1、两种类别、全部256种flags共1,024组通过。源表membership、角度转换和最终创建回调使用桩；回调只记录参数。模式0结果与生产 `placement_kind` 一致，模式1均返回普通路径，heightOverride保留值4对应位，原DLL摘要不变。证据位于 `tmp/docs-artifacts/warcraft-map-tests/doodad-runtime/flags-cpu.json` 及 `tmp/docs-artifacts/frost-original-doodads/{rea-flags-summary.json,doodad-flags-*-rea.json}`。依赖和更换DLL约束同生命分支。
+
+生成器以模式0消费类别和flags，保存 `decorative`／`destructable`／`suppressed`；仅最后一种父实体设为inactive。类别只描述预览创建路径，不代表完整原版创建、模式初始化、碰撞、寻路或交互已经执行。八对象夹具与MEngine原生像素验证覆盖此消费路径，完整原版运行仍待对照。
 
 ```powershell
 python scripts/test-warcraft-doodads.py --maps 'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Maps'
@@ -48,4 +56,4 @@ node scripts/probe-frost-rea-doodads.mjs
 
 重新运行[地图导出及独立格式检查](original-map-import.md)可得到包含装饰记录的新输出；已有输出目录保留，必须选择新目录。证据目录为`tmp/docs-artifacts/frost-original-doodads/`，包含`corpus.json`、`rea-summary.json`、`reference-check-report.json`及`exported/`。合成样例由`test-warcraft-doodads.py`中的`fixture(8)`写入地图测试MPQ，再通过正常导入器导出。
 
-后续消费使用[装饰场景生成器](original-doodad-scene.md)。Booty Bay所需模型在既有本地转换库均有条目；Amazonia的`BubbleGeyserSteam`和`BubbleGeyser`属于纯粒子模型，使用发射器路径，完整地图生成与原生运行留待批次验证。两图均没有W3B/W3D覆盖成员；含覆盖的其他地图需先实现覆盖解析。
+后续消费使用[装饰场景生成器](original-doodad-scene.md)。Booty Bay所需模型在既有本地转换库均有条目；Amazonia的`BubbleGeyserSteam`和`BubbleGeyser`属于纯粒子模型，使用发射器路径；两图完整生成与MEngine原生检查已通过，原版粒子求解器仍待对照。两图均没有W3B/W3D覆盖成员；含覆盖的其他地图需先实现覆盖解析。

@@ -11,8 +11,12 @@ const {Client}=require('@modelcontextprotocol/client'),{StdioClientTransport}=re
 const binary=process.argv.slice(2).find(arg=>!arg.startsWith('--'))||'E:/Program Files (x86)/dzclient/Game/Warcraft III Frozen Throne/Game.dll',expected='e04d1716603c075eb0c8e1e21cf1093a664adc5249efab396bfa08d7b09d0c3a';
 const digest=raw=>createHash('sha256').update(raw).digest('hex'),out=path.join(root,'tmp/docs-artifacts/frost-original-doodads');
 assert.equal(digest(fs.readFileSync(binary)),expected,'Version-specific addresses require this original Game.dll');
-const lifeOnly=process.argv.includes('--life');
-const probes=lifeOnly?[
+const lifeOnly=process.argv.includes('--life'),flagsOnly=process.argv.includes('--flags');
+assert.ok(!(lifeOnly&&flagsOnly),'Select one probe group');
+const probes=flagsOnly?[
+ ['doodad-flags-dispatch','af @ 0x6f751980;pdf @ 0x6f751980;af @ 0x6f7518a0;pdf @ 0x6f7518a0',['0x6f6d5790','0x6fbed448','test  al, 1','test  al, 2','shr   eax, 2','0x110']],
+ ['doodad-flags-write','pd 29 @ 0x6f75b6f6',['0x6f72d8e0','0x4c','or    bl, 2','or    bl, 4','0x6f04dfa0']],
+]:lifeOnly?[
  ['doodad-life-read','pd 14 @ 0x6f7569be;pd 17 @ 0x6f7571c0;pd 14 @ 0x6f74eaa0',['0x6f04d3b0','0x6f75c5f0','0x14']],
  ['doodad-life-state','af @ 0x6f75c5f0;pdf @ 0x6f75c5f0;af @ 0x6f7592a0;pdf @ 0x6f7592a0',['0x87','0x14c','0x150','str.death','0x6f6f1f50']],
  ['doodad-death-seek','af @ 0x6f6f1f50;pdf @ 0x6f6f1f50',['Ordinal_509','0x6f12fa70','0x6f12f500','cmovne']],
@@ -36,5 +40,6 @@ try{
   reports.push({name,evidenceId:evidence.evidence_id,stdoutSha256:digest(r.stdout),markers});
   console.log('PASS REA original doodads '+name);
  }
- fs.writeFileSync(path.join(out,lifeOnly?'rea-life-summary.json':'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations:lifeOnly?['Source life and named-sequence branch evidence; pair with probe-frost-rea-doodad-life-cpu.py for bounded execution.','Flags visibility, Stand random variants, original rendering and complete runtime scheduling remain unverified.']:['Static references locate extensions and source tables; they do not establish DOO field layouts or loader semantics.','Placement decoding is independently cross-checked; original runtime instantiation, animation, drops and pathing remain unverified.']},null,2)+'\n');
+ const limitations=flagsOnly?['Source dispatch and flags serialization only; pair with probe-frost-rea-doodad-flags-cpu.py for bounded execution.','Complete object creation, collisions, pathing and live original rendering remain unverified.']:lifeOnly?['Source life and named-sequence branch evidence; pair with probe-frost-rea-doodad-life-cpu.py for bounded execution.','Flags visibility, Stand random variants, original rendering and complete runtime scheduling remain unverified.']:['Static references locate extensions and source tables; they do not establish DOO field layouts or loader semantics.','Placement decoding is independently cross-checked; original runtime instantiation, animation, drops and pathing remain unverified.'];
+ fs.writeFileSync(path.join(out,flagsOnly?'rea-flags-summary.json':lifeOnly?'rea-life-summary.json':'rea-summary.json'),JSON.stringify({binarySha256:expected,reaSource:'https://github.com/morluto/rea',reaVersion:'6.5.0',probes:reports,originalRuntimeVerified:false,limitations},null,2)+'\n');
 }finally{await client.close();}

@@ -1,4 +1,4 @@
-"""Author: MiYu. Generate a source-derived fixture through the real map importer and verify life-dependent clips."""
+"""Author: MiYu. Generate a source-derived fixture and verify life-dependent clips and flags dispatch."""
 import argparse
 import copy
 import importlib
@@ -30,8 +30,13 @@ for archive_name in ['War3Patch.mpq','War3xLocal.mpq','War3x.mpq','war3.mpq']:
     finally:archive.file.close()
 else:raise FileNotFoundError('Original Doodads.slk')
 windmill=next(d for d in original['doodads'] if 'WindMill' in definitions.get(d['id'],{}).get('file',''))
-original['doodads']=[copy.deepcopy(d) for d in [windmill,tree,tree]]
-for index,d in enumerate(original['doodads']):d.update(life=100 if index==2 else 0,flags=2,editorId=index)
+cases=[(windmill,0,2,'stand','decorative'),(tree,0,2,'death','destructable'),(tree,100,2,'stand','destructable'),
+       (windmill,0,0,'stand','decorative'),(tree,100,1,'stand','decorative'),(tree,100,0,'stand','suppressed'),
+       (tree,100,4,'stand','suppressed'),(windmill,255,1,'stand','decorative')]
+original['doodads']=[]
+for index,(source,life,flags,clip,kind) in enumerate(cases):
+    d=copy.deepcopy(source);x,y,z=windmill['location']
+    d.update(life=life,flags=flags,editorId=index,location=[x+index%4*640,y+index//4*640,z]);original['doodads'].append(d)
 original['terrainDoodads']=[]
 members['war3map.doo']=encode_doodads(original)
 fixture=output/'life-fixture.w3m';fixture.write_bytes(build_archive(members))
@@ -44,7 +49,9 @@ placements=json.loads((project/'doodad-placements.json').read_bytes())
 entities={e['name']:e for e in json.loads((project/'Assets/Scenes/Main.mscene').read_bytes())['world']['entities']}
 models={m['source']:m for m in receipt['models']}
 checked=[]
-for placement,expected in zip(placements,['stand','death','stand']):
+for placement,(_,life,flags,expected,kind) in zip(placements,cases):
+    assert placement['kind']==kind
+    assert entities[placement['name']]['active']==(kind!='suppressed')
     clips=models[placement['model']]['clips']
     for name in placement['parts']:
         pose=entities[name]['components']['MeshRenderer']['mesh'].split('#pose=')[1]
@@ -52,7 +59,7 @@ for placement,expected in zip(placements,['stand','death','stand']):
         assert clips[clip]['name'].lower()==expected,(name,clips[clip]['name'],expected)
         # Source sampling includes both endpoints: frameCount is the terminal sample index.
         assert frame==(clips[clip]['frameCount'] if expected=='death' else 0)
-    checked.append(dict(id=placement['source']['id'],life=placement['source']['life'],clip=expected,parts=len(placement['parts'])))
+    checked.append(dict(name=placement['name'],id=placement['source']['id'],life=life,flags=flags,kind=kind,clip=expected,parts=len(placement['parts'])))
 script=(project/'Assets/Scripts/Main.js').read_text(encoding='utf-8')
 groups=json.loads(script.split('var originalDoodadGroups=',1)[1].split(';\n',1)[0])
 assert any(name in g['names'] for g in groups for name in placements[0]['parts']),'Ordinary life=0 must retain Stand animation'

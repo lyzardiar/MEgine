@@ -6,6 +6,13 @@ import struct
 from warcraft_map import Reader
 
 
+def placement_kind(is_destructable, flags):
+    """Source 0x6f751980 dispatch with the runtime mode flag clear; flags are not a visibility mask."""
+    if not is_destructable or flags & 1:
+        return 'decorative'
+    return 'destructable' if flags & 2 else 'suppressed'
+
+
 def parse_doodads(data):
     r = Reader(data, 'war3map.doo')
     if r.take(4) != b'W3do':
