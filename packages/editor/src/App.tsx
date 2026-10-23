@@ -195,6 +195,7 @@ function sameAssetPath(left: string | null, right: string): boolean {
 type WorkspaceSyncMessage =
   | { type: 'request-scene'; sender: string }
   | { type: 'scene-camera'; sender: string; sceneName: string | null; camera: SceneCamera }
+  | { type: 'scene-selection'; sender: string; sceneName: string | null; stateId: string; revision: number; selectedIds: number[] }
   | { type: 'play-input'; sender: string; sessionId: number; input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'viewport' | 'buttons'>> }
   | { type: 'scene-library-changed'; sender: string }
   | { type: 'request-timeline-preview'; sender: string }
@@ -228,6 +229,7 @@ type WorkspaceSyncMessage =
     }
   | {
       type: 'scene-state';
+      stateId: string;
       sender: string;
       timestamp: number;
       mode: EditorMode;
@@ -448,8 +450,11 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   useEffect(() => undoService.subscribe(() => setUndoRevision(undoService.revision)), [undoService]);
   const syncTimer = useRef<number | null>(null);
+  const sceneSyncId = useRef<string | null>(null);
+  const sceneSyncSequence = useRef(0);
+  const selectionSyncOrder = useRef({ revision: 0, sender: '' });
   const applyingRemote = useRef(false);
-  const lastRemoteTimestamp = useRef(0);
+  const lastSceneTimestamp = useRef(0);
   const syncReady = useRef(!props.detachedPanel);
   sceneNameRef.current = sceneName;
   unsavedChangesRef.current = hasUnsavedChanges;
@@ -756,10 +761,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     const send = () => {
       syncTimer.current = null;
       if (!immediate && !props.detachedPanel && ![...remoteDirtyPeers.current.values()].some(peer => peer.timestamp >= Date.now() - 5_000)) return;
+      // MiYu: Order local and remote publications together so every window accepts the same state.
+      lastSceneTimestamp.current = Math.max(Date.now(), lastSceneTimestamp.current + 1);
+      sceneSyncId.current = `${syncSender.current}:${++sceneSyncSequence.current}`;
+      selectionSyncOrder.current = { revision: 0, sender: '' };
       channel.postMessage({
         type: 'scene-state',
+        stateId: sceneSyncId.current,
         sender: syncSender.current,
-        timestamp: Date.now(),
+        timestamp: lastSceneTimestamp.current,
         sceneName: sceneNameRef.current,
         mode: store.mode,
         sceneJson: store.saveSessionSceneJson(sceneNameRef.current ?? 'Untitled'),
@@ -779,6 +789,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       return;
     }
     if (syncTimer.current == null) syncTimer.current = window.setTimeout(send, 33);
+  };
+
+  const broadcastSelection = () => {
+    const channel = syncChannel.current;
+    if (!channel || !syncReady.current || applyingRemote.current || !booted.current) return;
+    if (syncTimer.current != null) return; // The pending content publication includes the latest selection.
+    if (!sceneSyncId.current) { broadcastScene(); return; }
+    if (!props.detachedPanel && ![...remoteDirtyPeers.current.values()].some(peer => peer.timestamp >= Date.now() - 5_000)) return;
+    selectionSyncOrder.current = { revision: selectionSyncOrder.current.revision + 1, sender: syncSender.current };
+    channel.postMessage({ type: 'scene-selection', sender: syncSender.current, sceneName: sceneNameRef.current, stateId: sceneSyncId.current, revision: selectionSyncOrder.current.revision, selectedIds: store.selectedIds } satisfies WorkspaceSyncMessage);
   };
 
   const updateSceneDirty = () => {
@@ -811,14 +831,14 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
   const refreshHierarchy = () => setHierarchyTick(tick => tick + 1);
 
   // MiYu: Scene selection changes keep the displayed world and its content-derived panel data.
-  const refreshSelection = () => {
-    if (store.mode !== 'edit') { refresh(); return; }
+  const refreshSelection = (publish = true) => {
+    if (store.mode !== 'edit') { refresh(publish); return; }
     const selected = store.selected, selectedIds = store.selectedIds;
     setSnap(previous => ({ ...previous, selected, selectedIds }));
     setSelected(selected);
     setSelectedIds(selectedIds);
     if (!props.detachedPanel) agentBridge.observeSelection();
-    broadcastScene();
+    if (publish) broadcastSelection();
   };
 
   const publishSceneCamera = (partial: Partial<SceneCamera>) => {
@@ -1271,6 +1291,16 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         if (message.sceneName === sceneNameRef.current) { store.setSceneCamera(message.camera); setCameraTick(tick => tick + 1); }
         return;
       }
+      if (message.type === 'scene-selection') {
+        if (syncReady.current && syncTimer.current == null && sceneSyncId.current && store.mode === 'edit' && message.stateId === sceneSyncId.current && message.sceneName === sceneNameRef.current) {
+          const order = selectionSyncOrder.current;
+          if (message.revision < order.revision || (message.revision === order.revision && message.sender <= order.sender)) return;
+          selectionSyncOrder.current = { revision: message.revision, sender: message.sender };
+          store.selectMany(message.selectedIds, 'replace');
+          refreshSelection(false);
+        }
+        return;
+      }
       if (message.type === 'play-input') {
         if (!props.detachedPanel && message.sessionId === store.playSessionId) store.setPlayInput(message.input);
         return;
@@ -1445,12 +1475,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
           });
         return;
       }
-      if (message.type !== 'scene-state' || message.timestamp < lastRemoteTimestamp.current) return;
+      if (message.type !== 'scene-state' || message.timestamp < lastSceneTimestamp.current) return;
+      if (message.timestamp === lastSceneTimestamp.current && (message.stateId ?? '') <= (sceneSyncId.current ?? '')) return;
       try {
         applyingRemote.current = true;
         syncReady.current = true;
-        lastRemoteTimestamp.current = message.timestamp;
+        lastSceneTimestamp.current = message.timestamp;
         store.loadRemoteSceneJson(message.sceneJson, message.mode, message.playSessionId, message.playRevision);
+        sceneSyncId.current = message.stateId ?? null;
+        selectionSyncOrder.current = { revision: 0, sender: '' };
         store.selectMany(message.selectedIds, 'replace');
         store.setSceneInteractionState(
           message.sceneHiddenIds ?? [],

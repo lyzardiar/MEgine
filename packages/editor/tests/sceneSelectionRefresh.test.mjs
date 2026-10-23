@@ -16,7 +16,7 @@ const refreshNode = find(syntax, node => ts.isVariableDeclaration(node) && node.
 assert.ok(refreshNode?.initializer);
 const callback = name => find(syntax, node => ts.isJsxAttribute(node) && node.name.getText(syntax) === name).initializer.expression.getText(syntax);
 const compile = code => ts.transpileModule(code, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
-const makeHandlers = vm.runInNewContext(compile(`env => { const {store,props,setSnap,setSelected,setSelectedIds,agentBridge,broadcastScene,refresh,combineMarqueeSelection}=env; const refreshSelection=${refreshNode.initializer.getText(syntax)}; return {refreshSelection,onPick:${callback('onPick')},onMarqueeSelect:${callback('onMarqueeSelect')}};`));
+const makeHandlers = vm.runInNewContext(compile(`env => { const {store,props,setSnap,setSelected,setSelectedIds,agentBridge,broadcastSelection,refresh,combineMarqueeSelection}=env; const refreshSelection=${refreshNode.initializer.getText(syntax)}; return {refreshSelection,onPick:${callback('onPick')},onMarqueeSelect:${callback('onMarqueeSelect')}};`));
 const bridgeSyntax = ts.createSourceFile('AgentBridge.ts', bridge, ts.ScriptTarget.Latest, true);
 const observer = find(bridgeSyntax, node => ts.isMethodDeclaration(node) && node.name.getText(bridgeSyntax) === 'observeSelection');
 const comparator = find(bridgeSyntax, node => ts.isFunctionDeclaration(node) && node.name?.text === 'sameNumberArray');
@@ -34,7 +34,7 @@ function fixture(store, detachedPanel) {
   store.select(null);
   const events=[], updates=[], observed=new observerClass(); let snapshot=store.presentationSnapshot(),selected=null,ids=[],broadcasts=0,full=0;
   Object.assign(observed,{store,observedState:{mode:'edit',sceneName:'Test',dirty:false,selectedIds:[],panelSignature:'panel',viewSignature:'view'},appendEvent:(type,data)=>events.push({type,data}),recordMenuEvent:()=>events.push({type:'menu'}),observe:()=>{full++;}});
-  const handlers=makeHandlers({store,props:{detachedPanel},setSnap:update=>updates.push(update),setSelected:value=>{selected=value;},setSelectedIds:value=>{ids=value;},agentBridge:observed,broadcastScene:()=>{broadcasts++;},refresh:()=>{full++;},combineMarqueeSelection});
+  const handlers=makeHandlers({store,props:{detachedPanel},setSnap:update=>updates.push(update),setSelected:value=>{selected=value;},setSelectedIds:value=>{ids=value;},agentBridge:observed,broadcastSelection:()=>{broadcasts++;},refresh:()=>{full++;},combineMarqueeSelection});
   return {...handlers,events,observed,updates,get snapshot(){return snapshot;},get selected(){return selected;},get ids(){return ids;},get broadcasts(){return broadcasts;},get full(){return full;},flush(){for(const update of updates.splice(0))snapshot=typeof update==='function'?update(snapshot):update;return snapshot;}};
 }
 

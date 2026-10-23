@@ -303,3 +303,11 @@ UI导入器增加GameChatroom、TeamSetup、AdvancedOptionsDisplay与MiscUI原�
 与9b39d0f层级独立刷新共用一次原生构建，cargo release耗时1分08秒，仅既有world_from_snapshot未使用警告。EXE SHA256 `9cb87294569f0e5e8d71666f38583eb0df5e59185874fa9583a9ccacfb52a93a`。`qa-frost-map-session.mjs --hierarchy-only`报告`tmp/docs-artifacts/testing-batches/B001/map-session-1792773300710.json`通过，0 error，进程正常退出。覆盖真实按钮展开/折叠、selection.reveal后代定位、左右键、运行地图搜索、双击/空格聚焦不同根节点、重载地图后再次操作与Stop恢复；折叠操作前后实体内容一致。WebView锁缓存保留，构建/运行日志位于`tmp/docs-artifacts/editor-performance-risk/hierarchy-search/`。
 
 此EXE已包含第三十、三十一阶段；关闭两项常规主窗口层级集成待测。脱离Hierarchy窗口同步、独立Ping事件滚动、自动恢复计时/内容撤销，以及持续操作延迟/实际FPS仍待对应场景，不能把局部搜索提速当成整图卡顿已解决。
+
+### B001-01 编辑选择跨窗口薄消息
+
+变更：App.tsx的Edit选择发送节点ID和同步版本，接收端复用已有实体快照；完整场景与选择分别统一排序，内容排队、场景替换和Play/Pause保留同步边界。新增workspaceSelectionSync.test.mjs，更新sceneSelectionRefresh.test.mjs。属于现有编辑器性能修复补充，不新增批次计数。
+
+快速检查：`node --test packages/editor/tests/workspaceSelectionSync.test.mjs packages/editor/tests/sceneSelectionRefresh.test.mjs` 10通过、0失败；`node node_modules/typescript/bin/tsc -b`在packages/editor通过，diff检查通过。三窗口并发发送、相反递送顺序、延迟重复消息均覆盖。Amazonia局部路径测量与口径见performance-risk-todo第三十二阶段，原始产物在`tmp/docs-artifacts/editor-performance-risk/selection-sync/`。没有完整前端/原生构建或全量QA，现有EXE不包含本项。
+
+待合并验证：新Editor中实际脱离Hierarchy/Inspector窗口并连续点击/多选/清空，三个窗口同时操作；内容编辑/撤销、同名场景重载、Play/Stop和重新打开面板；测量真实输入延迟及IPC。Agent selection.set单独执行不能代替UI薄消息路径验证。状态为实现及快速检查完成，原生集成待测。
