@@ -679,6 +679,7 @@ fn resolve_surface_shader_textures_with_schema(
 
 pub fn render_material_from_asset(material: &MaterialAsset) -> RenderMaterial {
     RenderMaterial {
+        particle: None,
         base_color: material.base_color,
         metallic: material.metallic,
         roughness: material.roughness,

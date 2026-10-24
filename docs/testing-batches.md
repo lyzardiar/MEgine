@@ -855,3 +855,12 @@ Viewport的原生帧拥有固定实体记录，worldTransform已有父变换身�
 真实原生模型热更新复现中，模型从视口外移入后画面正确，但鼠标选取区域仍以Transform原点为中心。导入网格现在按可见三角形的投影边界确定选取中心；通过空间视锥的网格不再因为原点在相机后面而跳过选取准备。原生延迟选取和浏览器预览使用同一边界语义。
 
 变更math3d.ts、Viewport.tsx及nativeSceneMeshSelection.test.mjs；新增scripts/qa-viewport-spatial-picking.mjs，覆盖资源热替换、父节点位移和原点位于相机后的实际Scene画布选取，失败画面与诊断写入tmp/docs-artifacts/testing-batches/B001。12项相关投影／选取缓存测试通过，日志editor-performance-risk/offset-mesh-picking-tests.log；原生修复验证待构建。此项属于第七十九至八十一阶段集成发现的修复，仅重测受影响选取及本批尚未执行范围。
+
+
+### Unitypackage 导入批次：任务 2/3，粒子运行时与世界空间渲染
+
+新增版本化 `.mparticle`、ParticleEmitter3D.definition、确定性模拟和世界空间 Mesh/Billboard/Stretch 绘制，旧粒子保持原路径。源 Hermite 曲线、Burst、CustomData、局部/世界空间、完整层级矩阵和序列帧进入模拟。Unity 模式按 20ms 固定步长处理，CustomData 使用前一步年龄；粒子颜色按 Unity Color32/Linear 规则转换。Mesh 读取 sharedMesh 原始几何，保留所有 primitive，修正 X、UV V 和顶点色量化。Billboard Euler、旋转方向、Stretch U 轴及端点锚定来自现有 Editor 的 BakeMesh 数据。
+
+VFX 适配器以共享 WGSL 和参数数据实现本包启用的主纹理、遮罩、扰动、副贴图和溶解；保留各纹理采样、CustomData 通道、HDR、Alpha、双面、Less 深度与关闭深度写入。透明排序读取源 sortingFudge，材质共享独立于单个发射器重播的时钟；定义和网格修改会刷新缓存。非层级缩放模式和未覆盖的启用模块明确诊断，未知 Shader/关键字标为近似。
+
+必要检查：粒子运行时 13/13、资产解析 3/3、WGSL/GPU 2/2 通过。GPU 实测覆盖顶点色×粒子色、Alpha、CustomData、透明排序偏移及普通网格深度遮挡；运行时覆盖首帧 seek、停止/重播、父级非激活、变换、曲线、生命周期、多个 primitive 与 UV。真实技能已生成生命周期帧，最终视觉与桌面交互在第 3 项后统一验证。证据写入 `tmp/docs-artifacts/unitypackage/`。

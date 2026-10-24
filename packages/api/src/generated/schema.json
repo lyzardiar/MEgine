@@ -1981,6 +1981,9 @@
         },
         "type": "array"
       },
+      "definition": {
+        "type": "string"
+      },
       "direction": {
         "items": {
           "type": "number"
@@ -2055,6 +2058,7 @@
       }
     },
     "required": [
+      "definition",
       "playing",
       "looping",
       "duration",

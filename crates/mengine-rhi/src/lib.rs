@@ -4,6 +4,8 @@ mod ibl;
 mod gpu_profiler;
 mod mesh;
 mod post_process;
+mod particle_render;
+pub use particle_render::{ParticleGeometry, ParticleVertex, ParticleRenderData, PARTICLE_PARAMETER_COUNT};
 mod readback;
 mod render_graph;
 mod renderer;

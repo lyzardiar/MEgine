@@ -234,6 +234,7 @@ impl RuntimeMeshCache {
         let mut frame_keys = HashSet::new();
         let mut checked_poses = HashSet::new();
         for object in objects {
+            if object.material.particle.is_some() { continue; }
             let key = object.mesh_key.trim();
             // Main and embedded views share GPU keys; parse and touch usage once per frame.
             if !frame_keys.insert(key) { continue; }

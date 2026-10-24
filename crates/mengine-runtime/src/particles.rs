@@ -233,15 +233,17 @@ impl Emitter<'_> {
 
 #[derive(Default)]
 pub struct ParticleWorld {
+    pub imported: crate::imported_particle_world::ImportedParticleWorld,
     pub sampled_effects: crate::sampled_effects::SampledEffectWorld,
     emitters: HashMap<Entity, EmitterState>,
     skip_step_once: HashSet<Entity>,
 }
 
 impl ParticleWorld {
-    pub fn restart(&mut self) { self.emitters.clear(); self.skip_step_once.clear(); self.sampled_effects.restart(); }
+    pub fn restart(&mut self) { self.emitters.clear(); self.skip_step_once.clear(); self.sampled_effects.restart(); self.imported.restart(); }
 
     pub fn reset_entity(&mut self, entity: Entity) {
+        self.imported.reset_entity(entity);
         self.sampled_effects.reset_entity(entity);
         self.emitters.remove(&entity);
         self.skip_step_once.remove(&entity);
@@ -258,6 +260,7 @@ impl ParticleWorld {
         let emitter = if let Some(component) = world.get_component::<ParticleEmitter2D>(entity) {
             Emitter::Two(component)
         } else if let Some(component) = world.get_component::<ParticleEmitter3D>(entity) {
+            if !component.definition.is_empty() { self.imported.seek_entity(entity, time); return true; }
             Emitter::Three(component)
         } else {
             return false;
@@ -327,6 +330,7 @@ impl ParticleWorld {
             {
                 Emitter::Two(component)
             } else if let Some(component) = world.get_component::<ParticleEmitter3D>(entity) {
+                if !component.definition.is_empty() { continue; }
                 Emitter::Three(component)
             } else {
                 continue;
