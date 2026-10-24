@@ -1875,9 +1875,11 @@ export function Viewport(props: {
       }
     }
 
+    const selSet = isGame ? new Set<number>() : new Set(p.selectedIds?.length ? p.selectedIds : p.selected != null ? [p.selected] : []);
+    const nativeSceneBrowser = nativeSceneFrame?.meshPickToken ? displayedPresentation?.sceneBrowserFrame(selSet, p.selected) : undefined;
     const transformSource = nativeGameReady && !(displayedPresentation?.hasSpine ?? p.entities.some(entity => entity.components.SpineSkeleton)) ? [] : p.entities;
-    const worldTransforms = transformSource.length && displayedPresentation ? displayedPresentation.worldTransforms() : editScene && sceneTransformsRef.current?.source === transformSource ? sceneTransformsRef.current.transforms : buildWorldTransforms(transformSource);
-    sceneTransformsRef.current = editScene ? { source: transformSource, transforms: worldTransforms } : null;
+    const worldTransforms = nativeSceneBrowser?.transforms ?? (transformSource.length && displayedPresentation ? displayedPresentation.worldTransforms() : editScene && sceneTransformsRef.current?.source === transformSource ? sceneTransformsRef.current.transforms : buildWorldTransforms(transformSource));
+    sceneTransformsRef.current = editScene && !nativeSceneBrowser ? { source: transformSource, transforms: worldTransforms } : null;
     const lights2D = prepareLight2DLights((nativeGameReady ? [] : p.entities).flatMap<Light2DInstance>((entity) => {
       if (displayedPresentation && !entity.components.Light2D) return [];
       if (!isActive(entity.entity)) return [];
@@ -1889,11 +1891,6 @@ export function Viewport(props: {
         component,
       }];
     }));
-    // Game 视图不显示编辑器选中态（只能 Hierarchy / Scene 点选）
-    const selSet = isGame
-      ? new Set<number>()
-      : new Set(p.selectedIds?.length ? p.selectedIds : p.selected != null ? [p.selected] : []);
-
     // Simulate first, then place every emitter into the same world draw list as
     // SpriteRenderer/Line2D/Spine. This avoids the old "all particles on top"
     // behavior and keeps transparent order identical to the native player.
@@ -2049,7 +2046,7 @@ export function Viewport(props: {
 
     const projectEntityCenter = createProjection(cam, vp);
     // Native startup keeps UI responsive without loading a second copy of the 3D scene in the browser.
-    const worldEntries = nativeGamePending ? [] : displayedPresentation ? (nativeSceneFrame?.meshPickToken ? displayedPresentation.sceneBrowserEntries(selSet) : displayedPresentation.worldEntries(nativeGameReady)) : p.entities.flatMap((e, hierarchyOrder) => {
+    const worldEntries = nativeGamePending ? [] : nativeSceneBrowser ? nativeSceneBrowser.entries : displayedPresentation ? displayedPresentation.worldEntries(nativeGameReady) : p.entities.flatMap((e, hierarchyOrder) => {
       if ((nativeGameReady && !e.components.SpineSkeleton) || !isActive(e.entity)) return [];
       const t = resolvedTransform(worldTransforms, e.entity);
       return t ? [{ e, t, hierarchyOrder }] : [];

@@ -1289,3 +1289,13 @@ DotA Scene覆盖305次实际绘制的CPU分段加权均值为请求派发0.440ms
 B001/map-session-1792840827243.json通过7434实体的三窗口重开／修订追赶、Pause／Step／快捷键、Stop、undo／redo及停靠，0控制台错误、正常退出。既有固定等待及内存采样后，额外323ms出现18个新Game样本。Scene57.47／Game55.89FPS，前次55.78／56.69；原生渲染均值8.530／10.059ms，浏览器paint桶均值5.777／2.116ms。Scene覆盖298次绘制、CPU世界准备4.042ms、UI 1.082ms；Game覆盖272次绘制。六段覆盖／加权／合计断言通过。进程树PrivateBytes为5207.35／6910.75／7973.09／6404.84MiB（detach前／三窗口／重载／Stop停靠），结束仍高于起点，长期驻留待查；Scene图像已检查。
 
 最终三项QA均正常退出，用户编辑器未关闭，EPERM的WebView缓存保留。日志paint-batch-*、分段校验脚本assert-paint-batch-profile.py及摘要paint-batch-profile-*.json均在tmp/docs-artifacts/editor-performance-risk，B001报告及截图仅在tmp/docs-artifacts/testing-batches。复现沿用qa-viewport-spatial-picking --opacity-cases --pose-cases、qa-frost-map-import的实际DotA缓存／profile／pick／project-reopen参数（另加--profiler-ui）、qa-frost-map-session --detached-profile-only；不重复无关转换和资产全检。本编辑器批次验证完成，下一批0/3。下一重点为浏览器世界准备及UI，稳定60FPS、长期驻留、LOD、姿态聚焦范围、alpha选取及完整JASS／War3保真继续待办。
+
+### 第一百零七阶段／编辑器新批次任务1/3：Scene按需解析变换父链
+
+变更packages/editor/src/worldTransform.ts、nativeViewportPresentation.ts、panels/Viewport.tsx及相关测试。显示帧具备原生meshPickToken时，浏览器解析其选取／辅助图形／粒子／灯光及选择操作所需节点和父链，跳过无浏览器用途的普通网格叶节点。混合MeshRenderer的Light2D仍提供照明变换；不活动的选中节点和未包含在多选集合中的主节点仍保留操作柄变换。选区与主节点变化重建本帧的局部结果，保留旧帧的固定数据。辅助覆盖层复用当前局部结果。完整变换入口始终提供完整Map，局部Map不写入可变编辑缓存；无token、浏览器与Game路径保留完整语义。深层父链及循环层级按完整作者遍历顺序解析，以保留现有循环处理结果。
+
+定向检查：新增7项局部变换检查、已有32项变换／呈现／多选操作检查通过，TypeScript通过。覆盖只访问所需祖先、混合Light2D及渲染组件、不活动选择／主节点、完整调用不受局部结果污染、父变换／激活／重排／移除、旧帧恢复、循环与重复ID、5000层父链、100轮确定性拓扑修订及生产Viewport的token／无token／Game分支。日志sparse-scene-{tests,final-tests,typecheck}.log位于tmp/docs-artifacts/editor-performance-risk。
+
+实际DotA作者场景微基准使用0a60b6f前后实现、14437实体及49个裸路径GLB预览，保留原有fragment边界回退。解析节点14437→5377，5371个浏览器条目、边界、辅助覆盖层及保留节点的完整变换值一致。12轮交替，排除2轮预热，10组各24帧：相同固定帧均值0.265521→0.229528ms；新修订每轮在计时外创建新的实体数组及每帧一个新特效记录，准备均值3.301939→2.586000ms。计时包含派生层级／TRS、浏览器条目、保守边界及辅助覆盖层，不含完整Canvas／UI绘制、原生渲染、模拟或IPC；不能外推实际FPS。复现脚本sparse-scene-bench.mjs、日志sparse-scene-benchmark.log、包含场景及相关源码摘要的sparse-scene-benchmark-summary.json仅保留于tmp/docs-artifacts/editor-performance-risk。
+
+状态：已实现，当前编辑器批次1/3；待另外两项独立任务后统一原生构建，复验DotA的父链／选取／主节点与多选操作、辅助图形、透明切换、无token回退、资源热更及多窗口，并对比paintStages.world和持续FPS。最近真实运行结果仍为9c251d1的DotA Scene51.70／Game59.93FPS，稳定满帧与完整War3保真继续待办。

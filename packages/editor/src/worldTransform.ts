@@ -91,7 +91,7 @@ export function buildWorldTransforms(
 /** Only fixed owned frame records may enter this reader; mutable editing uses buildWorldTransforms. */
 export function createOwnedWorldTransformReader() {
   const cache: OwnedTransformCache = new WeakMap();
-  return (entities: readonly WorldTransformEntity[]) => resolveWorldTransforms(entities, undefined, cache);
+  return (entities: readonly WorldTransformEntity[], roots?: Iterable<number>) => resolveWorldTransforms(entities, roots, cache);
 }
 
 function resolveWorldTransforms(entities: readonly WorldTransformEntity[], roots?: Iterable<number>, cache?: OwnedTransformCache): Map<number, ResolvedWorldTransform> {
@@ -113,12 +113,13 @@ function resolveWorldTransforms(entities: readonly WorldTransformEntity[], roots
     return byId.get(id);
   };
   const resolved = new Map<number, ResolvedWorldTransform>();
-  let cyclic = false;
+  let requiresFullOrder = false;
 
-  const resolve = (id: number): ResolvedWorldTransform => {
+  const resolve = (id: number, depth = 0): ResolvedWorldTransform => {
     const existing = resolved.get(id);
-    if (existing === INVALID) { cyclic = true; return INVALID; }
+    if (existing === INVALID) { requiresFullOrder = true; return INVALID; }
     if (existing) return existing;
+    if (roots && cache && depth >= 256) { requiresFullOrder = true; return INVALID; }
     const entity = findEntity(id);
     if (!entity) return INVALID;
     // Reserve traversal order and mark the active recursion path in the result itself.
@@ -126,8 +127,8 @@ function resolveWorldTransforms(entities: readonly WorldTransformEntity[], roots
     const parentId = entity.parent ?? null;
     const parent = parentId == null
       ? cache ? ROOT : { active: true, hasTransform: false, transform: IDENTITY }
-      : resolve(parentId);
-    const previous = cyclic ? undefined : cache?.get(entity);
+      : resolve(parentId, depth + 1);
+    const previous = requiresFullOrder ? undefined : cache?.get(entity);
     if (previous?.parent === parent) { resolved.set(id, previous.value); return previous.value; }
     const local = normalizeTransform(entity.components.Transform);
     const value: ResolvedWorldTransform = {
@@ -136,12 +137,14 @@ function resolveWorldTransforms(entities: readonly WorldTransformEntity[], roots
       transform: local ? compose(parent.transform, local) : parent.transform,
     };
     resolved.set(id, value);
-    if (!cyclic) cache?.set(entity, { parent, value });
+    if (!requiresFullOrder) cache?.set(entity, { parent, value });
     return value;
   };
 
   if (roots) { for (const id of roots) resolve(id); }
   else { for (const entity of entities) resolve(entity.entity); }
+  // Deep and cyclic hierarchies retain the full resolver's author order and bounded sparse recursion.
+  if (roots && cache && requiresFullOrder) return resolveWorldTransforms(entities);
   return resolved;
 }
 

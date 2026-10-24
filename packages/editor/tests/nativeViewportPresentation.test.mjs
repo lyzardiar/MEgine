@@ -236,13 +236,13 @@ test('native mesh tokens leave browser helpers, selected colliders and mixed ren
 
 test('actual Viewport uses filtered browser entries only when the displayed native frame owns mesh picking', () => {
   const source = readFileSync(new URL('../src/panels/Viewport.tsx', import.meta.url), 'utf8'), ast = ts.createSourceFile('Viewport.tsx', source, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TSX);
-  let expression;
-  function visit(node) { if (ts.isVariableDeclaration(node) && node.name.getText(ast) === 'worldEntries') expression = node.initializer.getText(ast); ts.forEachChild(node, visit); }
-  visit(ast); assert.ok(expression);
-  const run = new Function('env', ts.transpileModule('const {nativeGamePending,displayedPresentation,nativeSceneFrame,selSet,nativeGameReady,p,isActive,worldTransforms,resolvedTransform}=env; return ' + expression, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText);
+  const expressions = {};
+  function visit(node) { if (ts.isVariableDeclaration(node) && ['nativeSceneBrowser', 'worldEntries'].includes(node.name.getText(ast))) expressions[node.name.getText(ast)] = node.initializer.getText(ast); ts.forEachChild(node, visit); }
+  visit(ast); assert.ok(expressions.nativeSceneBrowser && expressions.worldEntries);
+  const run = new Function('env', ts.transpileModule('const {nativeGamePending,displayedPresentation,nativeSceneFrame,selSet,nativeGameReady,p,isActive,worldTransforms,resolvedTransform}=env; const nativeSceneBrowser = ' + expressions.nativeSceneBrowser + '; return ' + expressions.worldEntries, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText);
   const live = props(), read = createNativeViewportPresentationReader(), presentation = read(createNativeViewportWorldArgs(live).frameWorld()), selected = new Set([2]);
-  const env = { nativeGamePending: false, displayedPresentation: presentation, nativeSceneFrame: { meshPickToken: 'frame:1' }, selSet: selected, nativeGameReady: false };
-  assert.equal(run(env), presentation.sceneBrowserEntries(selected));
+  const env = { nativeGamePending: false, displayedPresentation: presentation, nativeSceneFrame: { meshPickToken: 'frame:1' }, selSet: selected, nativeGameReady: false, p: { selected: 2 } };
+  assert.equal(run(env), presentation.sceneBrowserFrame(selected, 2).entries);
   env.nativeSceneFrame = { meshPickToken: null }; assert.equal(run(env), presentation.worldEntries());
   env.nativeSceneFrame = null; env.nativeGameReady = true; assert.equal(run(env), presentation.worldEntries(true));
   env.nativeGamePending = true; assert.deepEqual(run(env), []);
