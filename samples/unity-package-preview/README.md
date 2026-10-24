@@ -7,7 +7,7 @@ Open `project.json` in MEngine Desktop. This sample provides a neutral 3D camera
 3. Double-click an imported prefab in the Project panel to instantiate it. Move the prefab to the origin and save the scene when you want to retain the preview setup.
 4. Enter Play mode and focus the Game panel. **Space** plays or stops emission; **X** stops and clears particles; **R** restarts the imported particle systems. **Left/Right** orbit, **Up/Down** raise or lower the camera, **W/S** zoom, **Home** resets the camera, and **B** switches between dark, gray, and light backgrounds.
 
-Playback applies to `ParticleEmitter3D` components with a native `.mparticle` definition. Restart clears the emitter for a frame, then creates a fresh simulation. The HUD reports playback time and imported emitter count. The empty scene intentionally contains no proprietary effects, fog, or post-processing.
+Playback applies to `ParticleEmitter3D` components with a native `.mparticle` definition. The sample publishes absolute playback seconds each tick; restart resets that time to zero and increments the playback generation, so rendering and hidden-window capture reproduce a fresh simulation. Resuming a stopped effect also increments its generation. A negative Playback Time selects the automatic runtime clock. The HUD reports playback time and imported emitter count. The empty scene intentionally contains no proprietary effects, fog, or post-processing.
 
 Double-click a `.mparticle` asset to edit its JSON parameters. Save checks JSON structure and rejects concurrent file changes; the runtime reloads changed definitions, and **R** starts a fresh preview. The Particle System **Definition** field accepts these assets.
 

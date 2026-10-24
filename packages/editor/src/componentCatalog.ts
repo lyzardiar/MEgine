@@ -1017,6 +1017,8 @@ export function createTrailRenderer2D(): Record<string, unknown> {
 export function createParticleEmitter3D(): Record<string, unknown> {
   return {
     definition: '',
+    playback_time: -1,
+    playback_generation: 0,
     playing: true,
     looping: true,
     duration: 5,

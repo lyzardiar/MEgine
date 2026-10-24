@@ -8,6 +8,7 @@ mod play_runtime;
 mod session;
 mod undo;
 mod viewport;
+mod viewport_effect_clock;
 mod scene_snapshot_world;
 pub use scene_snapshot_world::SceneSnapshotWorld;
 

@@ -29,3 +29,17 @@ Unitypackage 同任务收尾补充：导入器 1.3.0 将原始资产移至工程
 `samples/unity-package-preview` 提供中性 3D 场景、HUD、播放/停止/重播、相机环绕/缩放及背景切换。`prepare-preview.mjs` 将已有导入复制到忽略的 LocalPreview 工程，保留独立源资产目录；专有特效不入 Git。增加 native QA 脚本与 GPU 截图示例，所有产物写入 tmp/docs-artifacts。
 
 快速检查：前端 production build、Tauri cargo check 通过；导入模型与 Player 依赖检查 7/7 通过。三项任务已齐，统一原生验证正在执行：真实指定路径的分析/导入、刷新后复导、Prefab 实例化、播放与 X/R、相机、JSON 参数保存/非法拒绝、保存重开和控制台检查。GPU/Unity 同条件对照另行记录；不将成功播放计为视觉还原通过。
+
+### Unitypackage 导入批次：集成验证结论
+
+实现范围为提交 9349e60、f1fb4aa、dcf9bd1、4ecf99b 及本次同任务收尾。导入器 1.4.0 按 Shader 和 6 个项目 HLSL 的原始字节签名选择适配器，相同内容更换 GUID 仍复用；修改或缺失任一已核验源码则降为近似。原包及 5 个变体均完成真实导入和无转换器重复导入校验，证据为 `tmp/docs-artifacts/unity-import-shader-signature/verification.json`。包外 URP 版本保持未核验，适配基线为本地参考工程 14.0.11。
+
+收尾修复非循环连续发射在 duration 终点多生粒子、预览首次绘制丢失已推进时间及 HUD 根布局。预览脚本显式传递采样时间与重播代次，隐藏窗口或跳过中间显示帧也能清空和重播；世界空间粒子重播后重新捕获出生变换；残余步已显示粒子的出生矩阵保留至完整步提交，覆盖暂停父移动、倒退及 rate/Burst 混合发射。定向检查通过：导入 24、粒子定义 3、导入粒子运行时 17、视口时钟 2、粒子 GPU 2、前端导入及依赖 7；常规材质 13、Prefab 2、旧粒子 6、普通排序及材质管线状态各 1 通过。前端 production build、sample 实际 TypeScript 消费编译通过。原始日志保存在 `tmp/docs-artifacts/unitypackage/`。
+
+最终 Windows 原生报告 `tmp/docs-artifacts/unity-import/native-1792812257761/report.json` 通过：真实指定包的路径分析/导入、资产刷新后复导、错误指纹和过期工程拒绝、定义资产引用、JSON 非法拒写/合法保存、Prefab 实例化、相机和背景、停止/重播及保存关闭重开。原生 readback 的首次播放对象数 40、清空 0、重播 38、3 秒结束 0；Shader 拒绝 0，Console 错误 0。截图中效果可见、HUD 无重叠。自有测试实例隐藏且正常退出，原用户 Editor 保持运行。系统文件选择器未执行；路径输入入口实际执行。
+
+本次原生编译和链接完成，最终复制到被运行进程占用的 target/debug EXE 时失败；已从新链接的 deps 产物复制到独立 `tmp/docs-artifacts/unitypackage/native-bin-verified/mengine-editor-tauri.exe` 并完成上述 QA，SHA256 为 `7a37c652041512872de1ba5fe04516e3b18098fb618a0e8b2e7ef0d641e6a31a`。修复版播放复测报告为 `tmp/docs-artifacts/unity-import/native-1792812650675/report.json`，首次播放/清空/重播/结束对象数仍为 40/0/38/0，保存重开通过，错误 0；导入和 UI 检查复用前述完整报告。残余步出生回归证据为 `tmp/docs-artifacts/unitypackage/residual-birth-verification.md`。这是开发构建验收，正式 SDK/安装包的转换器资源分发尚未验收。
+
+结果分列：**导入成功、播放通过、视觉对照待验收**。结构为 53 资源、15 Prefab 节点、11 粒子系统、4 模型和 9 运行材质，运行依赖已解析。相同相机、背景、Linear 处理及材质动画时间下，Unity 和 MEngine 均采样 0.1/0.3/0.6/1/1.5/3 秒；MEngine 绘制数为 13/17/19/28/10/0。0.6 秒所有粒子系统计数与 Unity 一致，精确寿命端点采用明确浮点容差；部分帧仍有粒子分布、环形纹理和消散外观差异，不能判为视觉还原通过。无雾、无曝光后处理；不保证与 Unity 相同随机序列。对照位于 `tmp/docs-artifacts/unitypackage/unity-reference/`、`mengine-reference-complete/`，逐系统计数位于 `particle-count-comparison.tsv`。
+
+可直接打开 `samples/unity-package-preview/LocalPreview/project.json` 实验本次导入；其中专有美术资产和 SourceAssets 仅保留本地。长期维护的空 sample、导入工具及说明纳入提交。本批集成执行完成，剩余视觉差异和正式分发验收保持待测，不计作通过。

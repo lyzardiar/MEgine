@@ -1,5 +1,6 @@
 // Author: MiYu. Synchronize borrowed resources from every viewport render target.
 use anyhow::{Context, Result};
+use crate::viewport_effect_clock::ImportedParticleClock;
 use glam::Vec3;
 use mengine_assets::MaterialAsset;
 use mengine_core::generated::{
@@ -279,6 +280,8 @@ pub struct EditorViewportRenderer {
     trails: TrailWorld,
     effekseer: Option<EffekseerWorld>,
     last_effect_frame: Instant,
+    imported_particle_clock: ImportedParticleClock,
+    play_session: Option<u64>,
     preview_restart: u64,
     sorting_layers: SortingLayers,
     resource_sampler: ResourceSampler,
@@ -324,6 +327,8 @@ impl EditorViewportRenderer {
                 .map_err(|error| log::warn!("Effekseer viewport runtime is unavailable: {error}"))
                 .ok(),
             last_effect_frame: Instant::now(),
+            imported_particle_clock: ImportedParticleClock::default(),
+            play_session: None,
             preview_restart: 0,
             sorting_layers,
             resource_sampler: ResourceSampler::new(project_root.clone()),
@@ -338,6 +343,8 @@ impl EditorViewportRenderer {
 
     /// Bind profiling to the project session that supplied this render request.
     pub fn with_resource_generation(&mut self, generation: u64) -> &mut Self { self.resource_generation = generation; self }
+
+    pub fn with_play_session(&mut self, session: Option<u64>) -> &mut Self { self.play_session = session; self }
 
     pub fn with_gpu_timings(&mut self, enabled: bool) -> &mut Self { self.renderer.set_gpu_timings(enabled); self }
 
@@ -608,6 +615,9 @@ impl EditorViewportRenderer {
             .as_secs_f32()
             .min(0.25);
         self.last_effect_frame = now;
+        let (particle_delta, restart_particles) = self.imported_particle_clock.sample(self.play_session, world.time.elapsed);
+        if restart_particles { self.particles.imported.restart(); }
+        self.particles.imported.set_frame_delta(particle_delta);
         let stage_started = Instant::now();
         if let Some(effekseer) = self.effekseer.as_mut() {
             for failure in

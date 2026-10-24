@@ -96,7 +96,11 @@ fn gradient_keys(v: &Value) -> Vec<Value> {
 fn gradient(v: &Value) -> Value {
     json!({"mode":match v["minMaxState"].as_u64().unwrap_or(0){1=>"gradient",2=>"two_colors",3=>"two_gradients",_=>"color"},"color":color(&v["maxColor"]),"color_min":color(&v["minColor"]),"keys":gradient_keys(&v["maxGradient"]),"keys_min":gradient_keys(&v["minGradient"])})
 }
-pub(crate) fn material(v: &Value, paths: &BTreeMap<String, String>) -> Value {
+pub(crate) fn material(
+    v: &Value,
+    paths: &BTreeMap<String, String>,
+    verification: &crate::shader::Verification,
+) -> Value {
     let properties = &v["m_SavedProperties"];
     let mut floats = serde_json::Map::new();
     let mut colors = serde_json::Map::new();
@@ -124,7 +128,7 @@ pub(crate) fn material(v: &Value, paths: &BTreeMap<String, String>) -> Value {
             }
         }
     }
-    json!({"shader":if v["m_Shader"]["guid"]=="f31c201e480f44f9a78911601ee5cab2"{"VFX/EffectURP_V2_3D"}else{"unsupported"},"floats":floats,"colors":colors,"textures":textures,"source_shader":v["m_Shader"],"keywords":material_keywords(v)})
+    json!({"shader":verification.adapter,"shader_verification":verification,"floats":floats,"colors":colors,"textures":textures,"source_shader":v["m_Shader"],"keywords":material_keywords(v)})
 }
 pub(crate) fn definition(
     name: &str,

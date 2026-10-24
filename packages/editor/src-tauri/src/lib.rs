@@ -4446,6 +4446,7 @@ async fn render_native_game_view(
             .as_mut()
             .expect("viewport renderer initialized above")
             .with_resource_generation(resource_generation)
+            .with_play_session(play_session_id)
             .with_gpu_timings(native_gpu_timings::enabled(GpuTimingSource::Game))
             .render_game(world, width, height)
             .map_err(|error| error.to_string())?;
@@ -4539,6 +4540,7 @@ async fn render_native_scene_view(
             .as_mut()
             .expect("Scene viewport renderer initialized above")
             .with_resource_generation(resource_generation)
+            .with_play_session(play_session_id)
             .with_gpu_timings(native_gpu_timings::enabled(GpuTimingSource::Scene));
         let mut frame = if request.camera_entity.is_some() {
             viewport.render_camera(

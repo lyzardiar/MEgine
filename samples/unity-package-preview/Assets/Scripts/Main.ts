@@ -2,8 +2,8 @@
 type PreviewEntity = EngineApi['snapshot']['entities'][number];
 let playing = true;
 let elapsed = 0;
+let generation = 0;
 let hudClock = 0;
-let replayTicks = 0;
 let yaw = 0;
 let elevation = 0.2;
 let distance = 8;
@@ -19,8 +19,8 @@ function emitters(): PreviewEntity[] {
 }
 
 function setPlaying(value: boolean): void {
+  if (value && !playing) generation++;
   playing = value;
-  for (const entity of emitters()) write(entity, 'ParticleEmitter3D', { ...entity.components.ParticleEmitter3D, playing: value });
   hudClock = 1;
 }
 
@@ -39,16 +39,15 @@ function updateBackground(): void {
 }
 
 function onSceneLoaded(): void {
-  playing = true; elapsed = 0; hudClock = 1; replayTicks = 0; yaw = 0; elevation = 0.2; distance = 8; background = 0;
+  playing = true; elapsed = 0; generation = 0; hudClock = 1; yaw = 0; elevation = 0.2; distance = 8; background = 0;
   updateCamera(); updateBackground();
 }
 
 function onTick(dt: number): void {
   const keys = engine.input.keys, pressed = engine.input.pressedKeys;
-  if (replayTicks > 0 && --replayTicks === 0) setPlaying(true);
-  if (pressed.includes('Space')) { replayTicks = 0; setPlaying(!playing); }
-  if (pressed.includes('KeyX')) { replayTicks = 0; setPlaying(false); elapsed = 0; }
-  if (pressed.includes('KeyR')) { setPlaying(false); elapsed = 0; replayTicks = 2; }
+  if (pressed.includes('Space')) setPlaying(!playing);
+  if (pressed.includes('KeyX')) { setPlaying(false); elapsed = 0; }
+  if (pressed.includes('KeyR')) { elapsed = 0; generation++; playing = true; hudClock = 1; }
   if (pressed.includes('KeyB')) { background = (background + 1) % backgrounds.length; updateBackground(); }
   const orbit = Number(keys.includes('ArrowRight')) - Number(keys.includes('ArrowLeft'));
   const rise = Number(keys.includes('ArrowUp')) - Number(keys.includes('ArrowDown'));
@@ -61,6 +60,7 @@ function onTick(dt: number): void {
     updateCamera();
   }
   if (playing) elapsed += dt;
+  for (const entity of emitters()) write(entity, 'ParticleEmitter3D', { ...entity.components.ParticleEmitter3D, playing, playback_time: elapsed, playback_generation: generation });
   hudClock += dt;
   if (hudClock >= 0.1) {
     hudClock = 0;

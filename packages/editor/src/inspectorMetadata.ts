@@ -749,6 +749,8 @@ export const BUILTIN_INSPECTOR_FIELDS: Readonly<
   },
   ParticleEmitter3D: {
     definition: { kind: 'project-asset', assetKinds: ['particle'], referenceType: 'Native Particle Definition', allowNone: true, noneValue: '' },
+    playback_time: { label: 'Playback Time (-1 = Auto)', min: -1, step: 0.01 },
+    playback_generation: { label: 'Playback Generation', min: 0, step: 1 },
     duration: { min: 0, step: 0.1 },
     start_delay: { min: 0, step: 0.1 },
     rate_over_time: { min: 0, step: 1 },

@@ -4,6 +4,12 @@
 
 源资产保存在 `SourceAssets/UnityPackages/`，运行资产保存在 `Assets/Imported/`。Unity GUID/fileID 是来源身份，独立 MEngine meta 是运行资产身份。manifest 保存来源、转换器版本和源/产物哈希。重复导入只复用完整且未修改的结果；冲突要求另选工程目录或明确处理本地资产，导入器不会覆盖用户文件。
 
+## 跨包 Shader 复用
+
+不同包的相同适配器在同一渲染器中共享 WGSL 模块，并按混合、深度比较、深度写入和剔除状态缓存 GPU 管线。颜色、纹理、UV 和 CustomData 等参数分别绑定，不为每个材质数值生成 Shader。Shader/HLSL 原文件仍随各包独立归档，模型和纹理也不做跨包内容去重。
+
+导入器 1.4.0 用已核验 Shader 及其 6 个项目 HLSL 依赖的原始字节 SHA256 识别适配器；同内容不同 GUID 可以复用，同 GUID 但内容变化或依赖缺失则报告近似并使用预览材质。源签名及外部依赖写入材质转换结果。URP 库以参考工程 14.0.11 为适配基线，包未携带的 URP 库不视为已验证，其他版本不保证等价。这是已知 Shader 的专用适配，不是通用 HLSL 编译器。
+
 ## 预览 sample
 
 打开 `samples/unity-package-preview/project.json`，导入后双击 Prefab 实例化，再按 Play。Space 播放/停止，X 停止并清空，R 重播，方向键环绕/抬高视角，W/S 缩放，Home 复位，B 切换背景。HUD 显示时间及导入粒子数。保存场景即可保留实例。
@@ -15,6 +21,8 @@ node samples/unity-package-preview/prepare-preview.mjs <导入结果所在工程
 ```
 
 打开生成的 `samples/unity-package-preview/LocalPreview/project.json` 即可预览。生成器拒绝覆盖已有目录。LocalPreview、原包和导入美术资源均被 Git 忽略；仓库只保存空预览场景、控制脚本及有许可证的 HUD 字体。
+
+sample 用 `playback_time` 明确指定导入粒子的采样秒数，用 `playback_generation` 标记重播，因此暂停、批量步进和隐藏窗口不需要绘制中间帧来传递重播状态。普通导入组件的 `playback_time` 默认 -1，使用自动播放时钟；这两个字段不改变无定义引用的旧粒子。
 
 ## 当前兼容范围
 

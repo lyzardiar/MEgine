@@ -31,6 +31,7 @@ function append(node, parent, sibling, depth = 0) {
   const components = structuredClone(node.components ?? {});
   for (const key of Object.keys(components)) if (!['Transform', 'ParticleEmitter3D'].includes(key)) throw new Error(`Preview generator only supports native particle prefab components: ${key}`);
   if (components.ParticleEmitter3D) {
+    components.ParticleEmitter3D = { playback_time: -1, playback_generation: 0, ...components.ParticleEmitter3D };
     particles++;
     if (!existsSync(inside(source, components.ParticleEmitter3D.definition))) throw new Error('Particle definition is missing from the imported project');
   }
