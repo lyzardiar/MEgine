@@ -1519,3 +1519,7 @@ Game在Play期间最多两次延后过期请求，让新世界进入请求槽位
 真实GPU复现确认opaque和镂空保留片元错误写出半透明alpha，Multiply混合也会降低不透明背景alpha。RHI现在让opaque／通过裁剪的片元写alpha1，透明材质保留输出透明度，Multiply使用源覆盖alpha。RGB与阴影裁剪、绑定布局和深度策略保持既有规则。
 
 16种真实GPU清屏／混合组合全部通过，原有8处错误被定向测试捕获；另uniform与shader检查3项通过。当前新批次1/3，立即复现已有DotA原始alpha及Scene路径异常，不据GPU小夹具推断真实地图已经满帧；完整记录和证据见testing-batches.md及material-alpha-*日志。
+
+第九十二阶段定向生产验证通过：原生构建完成，实际DotA报告arbitrary-map-1792819809985为14437实体、0error、正常退出。Game原始RGBA的921600像素全部不透明，Scene进入按需准备；浏览器drawItems1为选中Camera辅助条目，原生仍提交5342个对象，图像正常。
+
+5秒样本全图Scene41.71FPS／paint10.41ms，上一样本31.63／15.87ms；Game59.08FPS。单组顺序对照不作稳定60FPS保证。Scene原生render均值22.40ms，最新编译7.492／backend11.468／资源同步1.165ms，是后续重点。3次全图点击均选中对象，UI动作及selection RPC往返约150～171ms，物理输入延迟仍待验收。当前新批次1/3，详见testing-batches.md。

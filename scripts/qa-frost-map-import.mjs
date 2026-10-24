@@ -11,6 +11,7 @@ assert.ok(process.env.MENGINE_EDITOR_EXECUTABLE,'Set MENGINE_EDITOR_EXECUTABLE')
 const sourceMap=process.argv[2];assert.ok(sourceMap,'Provide a .w3m/.w3x not installed in the catalog');
 const cacheProject=process.argv.includes('--cache-project')?path.resolve(process.argv[process.argv.indexOf('--cache-project')+1]):null;
 const profileMap=process.argv.includes('--profile-map');
+const pickMap=process.argv.includes('--pick-map');
 let expectedMapTitle='任意岛屿';
 const label='arbitrary-map-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
@@ -55,6 +56,17 @@ async function profileImportedMap(){
   }
   await execute('panel.focus',{kind:'game'});
   report.checks.push('Imported map advances continuously in Game and Scene with five-second profiler windows without Agent polling; native timing buffer is limited to the most recent 240 samples');
+}
+async function checkMapPicking(){
+  await execute('panel.focus',{kind:'scene'});await execute('view.set_camera',{pivot:[0,0,0],yaw:25,pitch:50,distance:150});await query('view.screenshot',{target:'scene',maxSize:1280});await sleep(1000);
+  const previous=(await query('selection.get')).selectedIds;report.mapPicking={note:'UI action and selection RPC round-trip; excludes fixture warmup and is not physical input latency',actions:[]};
+  for(let i=0;i<3;i++){
+    await execute('selection.set',{ids:[]});await sleep(100);
+    const page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000}),canvas=page.elements.find(e=>e.name==='Scene viewport');assert.ok(canvas);
+    const started=performance.now();await execute('window.ui_drag_by',{windowLabel:'main',selector:canvas.selector,deltaX:1,deltaY:0,button:'left',expectedSnapshotRevision:page.snapshotRevision});const selected=(await query('selection.get')).selectedIds;
+    report.mapPicking.actions.push({elapsedMs:performance.now()-started,selected});assert.ok(selected.length>0,'A whole-map Scene center click selects an imported object');
+  }
+  await execute('selection.set',{ids:previous});await execute('panel.focus',{kind:'game'});report.checks.push('Three whole-map Scene clicks select imported objects; action and selection RPC timings retained');
 }
 function checkImportedScene(world,receipt){
   assert.equal(receipt.sourceSha256,hash(fs.readFileSync(sourceMap)));
@@ -103,7 +115,7 @@ try{
   }else await key('F8');
   // One input tick keeps even a fast cache hit observable before the scene request is consumed.
   const pointer=clientWorldFixture(await snapshot()).canvasPoint('mapOpen box',[1280,720],false);await input({pointer,buttons:[0]});await execute('playback.input',{keys:[],buttons:[],viewport:[1280,720]});
-  const cachedScene=await waitForMap(true);report.entities=cachedScene.entities.length;const cached=receipts().find(r=>r.cached===true);assert.ok(cached);checkImportedScene(cachedScene,cached);await capture('cache-loaded');if(profileMap)await profileImportedMap();await key('Escape');assert.equal(telemetry(await snapshot()).qaImport.cached,true);assert.equal(clientWorldFixture(await snapshot()).visible('Map loading back'),false);
+  const cachedScene=await waitForMap(true);report.entities=cachedScene.entities.length;const cached=receipts().find(r=>r.cached===true);assert.ok(cached);checkImportedScene(cachedScene,cached);await capture('cache-loaded');if(profileMap)await profileImportedMap();if(pickMap)await checkMapPicking();await key('Escape');assert.equal(telemetry(await snapshot()).qaImport.cached,true);assert.equal(clientWorldFixture(await snapshot()).visible('Map loading back'),false);
   report.checks.push('Verified cache import without Play restart; loading bar and labels precede scene replacement; return clears the bar');
   await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);report.errors=(await query('console.get_logs',{limit:300})).filter(e=>e.level==='error');assert.equal(report.errors.length,0,JSON.stringify(report.errors));report.passed=true;
   console.log(JSON.stringify({passed:true,label,entities:report.entities,checks:report.checks}));

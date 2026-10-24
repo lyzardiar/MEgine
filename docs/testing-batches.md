@@ -1046,3 +1046,15 @@ RHI不透明材质忽略最终颜色的透明度写入：镂空仍按原始alpha
 GPU测试1/1、uniform角色测试1/1及forward shader检查2/2通过，日志tmp/docs-artifacts/editor-performance-risk/material-alpha-before-test.log、material-alpha-after-test.log、material-alpha-uniform-test.log、material-alpha-shader-tests.log。此项尚未证明实际DotA全部半透明像素均源于这两处错误。
 
 当前新批次1/3。因已有实际DotA alpha异常及不透明省略无法触发的复现，按已知故障例外立即构建该RHI修复，并只检查同一地图的原始PNG alpha、Scene路径、持续采样和实际大地图对象点击，不重复已通过的全批选取、Spine或地图转换。其余集成按三项合并。
+
+### 第九十二阶段已知故障定向验证
+
+096b624已推送；隔离cb40895只在上一集成d8c45ee上接入本项renderer差异，原生Release构建通过。前端资源与上一集成一致，未重复构建。固定EXE为tmp/docs-artifacts/editor-performance-risk/build-096b624/mengine-editor-tauri.exe，SHA256 a4fa72fe3e1126f897e00d53fc999af9970ab65f4179f009c29d392c1c226d66。
+
+实际DotA报告B001/arbitrary-map-1792819809985.json通过、14437实体、0控制台error、正常退出，缓存进入2.313秒。Game原始PNG921600像素全部alpha255；此前相同场景有211379个非不透明像素。Scene浏览器drawItems由10723变为选中Camera辅助条目1，原生仍有5376个渲染对象、5342个可见／提交对象，图像确认地图与模型正常呈现。不透明按需准备现在实际覆盖该地图。
+
+同一路径5秒样本：Game最近240个原生间隔约59.08FPS、paint3.11ms；全图Scene208个间隔均值23.974ms／41.71FPS、P95 42.5ms、paint10.41ms。上一生产样本31.63FPS／paint15.87ms；这是一次顺序本地对照，保留缓存和系统负载波动限制，不代表稳定60FPS。Scene原生render均值22.40ms，最新callTree场景编译7.492ms、backend11.468ms、资源同步1.165ms，后续优化继续以原生与浏览器剩余成本为依据。
+
+QA新增--pick-map：全图Scene清空选择后连续3次中心点击均选中导入实体4294981705，UI动作与selection RPC往返171.32／153.04／149.72ms。统计从动作命令前到selection返回，未包含预热、截图和selector查询；不作为物理输入或纯JS处理时间。该检查直接覆盖实际大地图延后命中路径，未重跑无关导入、完整选取或Spine测试。
+
+本项定向故障验证完成，当前批次仍1/3。多窗口最新RHI版本、长期内存、物理输入延迟、LOD和完整JASS玩法仍待后续验证或实现。原始图像／JSON／日志仅在tmp/docs-artifacts，QA退出后保留被WebView占用的缓存，未关闭用户编辑器。
