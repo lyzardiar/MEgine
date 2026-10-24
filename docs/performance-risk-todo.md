@@ -1638,3 +1638,14 @@ B001/map-session-1792831470405.json通过7434实体、多窗口重开／版本�
 
 
 第一百零一阶段补充：通过独立渲染阶段包装传递实例索引，保留材质辅助函数可用的VsOut结构、位置构造参数与成员；自动避开辅助函数、类型和私有变量的同名符号。构造函数及命名兼容回归通过，12阶段96帧uniform／数组完整像素对照仍一致。日志indexed-objects-constructor-before.log和indexed-objects-constructors-after.log。该补充属于同一功能，批次计数不增加。
+
+
+### 第一百零二阶段／新批次任务2/3：相邻兼容网格实例绘制
+
+对象参数数组启用后，批量主绘制列表仅合并相邻、对象槽连续且pipeline／纹理绑定／顶点和索引缓冲及索引数量完全一致的项，每个实例仍读取自己的模型与材质参数。原有排序和阴影路径保留；含粒子的列表与不满足批量条件的列表沿用原编码路径。首次提交也执行合并列表，随后可复用bundle。缓存匹配包含实例数量，准入及总预算仍按逻辑对象数计算（最多4项／32768对象），避免少量合并命令扩大留存范围。Profiler新增worldMeshDrawCalls与worldInstancedObjects，统计本次提交各主世界pass的网格命令及多实例组内对象，包含嵌套视图，不包含阴影或粒子调用。
+
+定向GPU对照11阶段44帧的完整RGBA一致：128个兼容对象为1次调用；阴影独占对象造成参数槽间隔时保持2段绘制；覆盖纹理／网格／错误pipeline边界、顺序变化、透明重叠、深度相同的遮挡、alpha裁剪、容量增长及实例范围缩短。单独验证缓存按8192实例的4项计为32768，而非4条命令。既有bundle资源替换检查及对象数组／uniform的shader和96帧GPU对照通过；editor-host Release库检查通过。
+
+从实际DotA作者场景提取5376活动网格的网格／材质路径源序，得到187类、4705连续组。输入及源文件SHA256保存在tmp/docs-artifacts/editor-performance-risk/dota-adjacent-draw-groups.receipt.json；基准用代理立方体和颜色替换组内真实几何、纹理及材质，不代表真实地图完整渲染。两个独立renderer交替12轮、排除2轮预热，每模式10组4帧，每个测量帧均命中自己的缓存且完整128×128回读像素一致。调用5376→4705；世界编码CPU均值1.238800→1.223598ms，提交CPU4.193785→4.181793ms，提交加回读4.921560→4.885898ms。完整时间变化很小，本项不据此宣称真实FPS提高。
+
+命令：设置MENGINE_DRAW_GROUPS为上述txt后运行cargo test -p mengine-rhi --release --lib benchmark_adjacent_instancing -- --ignored --nocapture。日志adjacent-instancing-{gpu-final,cache-test,host-check,dota-groups-final-benchmark}.log及adjacent-instancing-dota-groups-final-summary.json；构造兼容回归为indexed-objects-constructors-after.log。当前504b42c（含3af8e85补充）及本项为2/3；第三项后统一原生构建，验证真实DotA／多窗口的调用数与持续FPS、材质热更、透明／阴影／姿态选取、Stop和重开。真实场景最新仍为4bca411的Scene46.69／Game59.90FPS，稳定满帧、LOD与完整JASS继续待办。

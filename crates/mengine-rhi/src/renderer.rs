@@ -26,6 +26,9 @@ mod world_bundles;
 #[path = "object_indexing.rs"]
 mod object_indexing;
 #[cfg(test)]
+#[path = "adjacent_instancing_tests.rs"]
+mod adjacent_instancing_tests;
+#[cfg(test)]
 thread_local! { static UNIFORM_OBJECT_REFERENCE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) }; }
 use world_bundles::{WorldBindings, WorldBundleCache, WorldDraw};
 
@@ -434,6 +437,8 @@ pub struct OffscreenReadbackProfile {
 /// CPU wall time inside submission APIs, including driver/backpressure waits; not GPU execution time.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct FrameSubmissionProfile {
+    pub world_mesh_draw_calls: usize,
+    pub world_instanced_objects: usize,
     #[cfg(test)]
     pub world_bundle_builds: usize,
     #[cfg(test)]
@@ -711,6 +716,8 @@ pub struct Renderer {
     world_bundles: WorldBundleCache,
     #[cfg(test)]
     disable_world_bundles: bool,
+    #[cfg(test)]
+    disable_world_instancing: bool,
     particle_renderer: crate::particle_render::ParticleRenderer,
     #[cfg(test)]
     repeat_draw_bindings: bool,
@@ -1365,6 +1372,8 @@ impl Renderer {
             #[cfg(test)]
             disable_world_bundles: false,
             #[cfg(test)]
+            disable_world_instancing: false,
+            #[cfg(test)]
             repeat_draw_bindings: false,
             #[cfg(test)]
             repeat_material_preparation: false,
@@ -1776,14 +1785,21 @@ impl Renderer {
             };
             // MiYu: particles retain their own encoder; all mesh draws keep their exact sorted order.
             let bundle_eligible = use_world_bundles && WorldBundleCache::accepts_count(draw_order.len()) && !draw_order.iter().any(|&index| objects[index].material.particle.is_some());
-            let world_draws: Vec<_> = if bundle_eligible { draw_order.iter().filter_map(|&index| {
+            let mut world_draws: Vec<_> = if bundle_eligible { draw_order.iter().filter_map(|&index| {
                 let mesh = self.meshes.get(&objects[index].mesh_key)?;
                 if mesh.index_count == 0 { return None; }
                 let material = &prepared_materials[material_slots[uniform_slots[index]]]; let key = material.pipeline;
                 let pipeline = if material.use_error_pipeline { self.error_material_pipelines.get(&error_material_pipeline_key(key)) }
                     else { self.material_pipelines.get(&key).or_else(|| self.material_pipelines.get(&MaterialPipelineKey { shader_fingerprint: 0, ..key })) }.expect("world material pipeline prepared before render pass");
-                Some(WorldDraw { pipeline, textures: self.material_texture_sets.get(&material.textures).expect("world texture set prepared before render pass"), vertices: &mesh.vertex_buffer, indices: &mesh.index_buffer, count: mesh.index_count, object_index: uniform_slots[index] as u32 })
+                Some(WorldDraw { pipeline, textures: self.material_texture_sets.get(&material.textures).expect("world texture set prepared before render pass"), vertices: &mesh.vertex_buffer, indices: &mesh.index_buffer, count: mesh.index_count, object_index: uniform_slots[index] as u32, instances: 1 })
             }).collect() } else { Vec::new() };
+            #[cfg(test)]
+            let instance_meshes = self.indexed_objects && !self.disable_world_instancing;
+            #[cfg(not(test))]
+            let instance_meshes = self.indexed_objects;
+            if instance_meshes { world_bundles::coalesce(&mut world_draws); }
+            self.submission_profile.world_mesh_draw_calls += world_draws.len();
+            self.submission_profile.world_instanced_objects += world_draws.iter().filter(|draw| draw.instances > 1).map(|draw| draw.instances as usize).sum::<usize>();
             let bundle = if use_world_bundles { self.world_bundles.prepare(&self.device, self.sample_count, WorldBindings { globals: &self.bind_group, shadows: &self.shadow_sample_bind_group, environment: environment_bind_group, indexed_objects: self.indexed_objects, object_stride: self.object_stride }, &world_draws) } else { None };
             #[cfg(test)]
             if let Some((_, reused)) = &bundle { if *reused { self.submission_profile.world_bundle_hits += 1; } else { self.submission_profile.world_bundle_builds += 1; } }
@@ -1844,6 +1860,7 @@ impl Renderer {
 
             // MiYu: all forward/error pipelines share pipeline_layout; bindings live only in this pass.
             if let Some((bundle, _)) = bundle { pass.execute_bundles(std::iter::once(bundle)); }
+            else if !world_draws.is_empty() { world_bundles::draw(&mut pass, WorldBindings { globals: &self.bind_group, shadows: &self.shadow_sample_bind_group, environment: environment_bind_group, indexed_objects: self.indexed_objects, object_stride: self.object_stride }, &world_draws); }
             else {
             let (mut bound_pipeline, mut bound_textures, mut bound_mesh) = (None, None, None);
             let mut shared_bindings_set = false;
@@ -1895,6 +1912,7 @@ impl Renderer {
                 }
                 let instance = if self.indexed_objects { uniform_slots[index] as u32 } else { 0 };
                 pass.draw_indexed(0..mesh.index_count, 0, instance..instance + 1);
+                self.submission_profile.world_mesh_draw_calls += 1;
             }
             }
         }
