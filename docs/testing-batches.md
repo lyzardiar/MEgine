@@ -1022,3 +1022,17 @@ layoutUiScene3D每次调用只生成一次屏幕布局，按当前Canvas所属�
 变更uiLayout及uiMultiCanvasLayout测试。7项多Canvas／大场景定向检查、TypeScript通过，覆盖共享提供的布局仅访问一次、WorldSpace与禁用根、指定相机、遮罩、嵌套Canvas、未知所属条目及动态输入。4Canvas／1204实体，3组交替先后的局部样本，每组8次预热及35次测量，Scene UI布局均值8.881→4.976ms；三组P95为12.362／11.956／10.127→7.860／5.794／6.733ms。完整输出和校验和一致，另16组输入变更逐项与旧实现相同。证据tmp/docs-artifacts/editor-performance-risk/multi-canvas-layout-*，只证明该布局路径的成本，不等同于DotA或整帧FPS。
 
 本批28c3aa0、62f620c及本项达到3/3，开始统一隔离生产构建与相关原生集成。需验证原始帧opacity标记、透明回退、延后命中与模型热更新／父变换／偏心网格、Spine、多窗口、Canvas与截图，并复测DotA全图持续帧率及点击耗时；复用不受影响的地图转换和层级验证。
+
+### 第八十九至九十一阶段合并验证
+
+实现28c3aa0、62f620c、631bc90已提交推送。143项相关前端定向检查通过，隔离d8c45ee只接入本批5份生产文件差异，前端与Tauri Release构建通过；此前1项实际Rust opacity函数测试通过。固定EXE为tmp/docs-artifacts/editor-performance-risk/build-631bc90/mengine-editor-tauri.exe，SHA256 f08cacc4058596f5f1eb1d605d5714e13ae455c4fd64fb41f59578e78fdfaa5b，不包含共享工作区并行Unity导入改动。
+
+同一EXE四份报告均通过、0控制台error、正常退出。B001/spatial-picking-1792818795004.json覆盖模型热替换、父变换、原点在相机后的可见网格，以及alpha1→0→1切换后选取。真实Scene原生帧有4／3／3个样本，浏览器drawItems分别0／1／0，证明不透明省略与透明即时路径实际触发。--opacity-cases记录自动化UI动作及selection查询的往返耗时，成功动作约72～113ms；含UI与IPC，不等同于纯浏览器事件或物理输入延迟，初次资源热替换时存在重试，不能宣称首次点击无等待。
+
+B001/spatial-picking-1792819157144.json由--spine-only创建独立官方Spineboy资产夹具，3张间隔350ms的动画帧各不相同，playing=false后画面相同，通过普通对象点击及恢复选择后仍完全相同。浏览器drawItems0、spineSkeletons1，确认不透明Scene的动画覆盖及延后命中不会重复推进；只验证该行为，不代表Spine所有附件的视觉还原验收。
+
+B001/map-session-1792819200641.json通过多窗口Scene／Game、Game重开与版本追赶、截图、Pause／Step／快捷键、Stop、undo／redo及回停靠。采样前额外等待324ms有19个当前Game原生帧，起点仍在已有固定启动等候及内存采样之后。5秒样本Scene51.57／Game55.44FPS、浏览器paint7.77／2.22ms；Scene drawItems707，未触发整幅不透明省略。
+
+B001/arbitrary-map-1792818854152.json通过实际DotA14437实体缓存与5秒持续采样，缓存进入2.288秒。Game59.85FPS／paint2.94ms；全图Scene31.63FPS／paint15.87ms、drawItems10723。该Scene仍有非完全不透明的原生像素，保持完整浏览器路径，本批不透明优化未覆盖它，不能用单次顺序样本的FPS变化证明该分支收益。Game原始PNG921600像素中211379个alpha<255；下一步需要核对原生材质输出和混合，不能直接将这些像素标为不透明来启用省略。
+
+本批功能集成完成；仍未达到DotA全图或多窗口稳定60FPS。真实大地图首次点击、物理输入延迟、长时间内存和完整视觉还原仍待验收。临时产物留在tmp/docs-artifacts；QA编辑器正常退出，WebView缓存EPERM保留，用户编辑器未关闭。脚本新增检查仅属于本批验证，不另计任务。

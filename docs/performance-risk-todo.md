@@ -1507,3 +1507,9 @@ Game在Play期间最多两次延后过期请求，让新世界进入请求槽位
 每次layoutUiScene3D调用按当前Canvas所属关系共享一份屏幕布局，不跨帧缓存，保留文字／层级／激活／相机／选择变化和嵌套遮罩。7项多Canvas与大场景检查、TypeScript通过；4Canvas／1204实体的3组局部样本均值8.881→4.976ms，完整输出一致，另16组动态修改与旧实现逐项一致。
 
 当前新批次3/3，开始隔离构建和原生验证。局部数据不直接外推DotA或整帧FPS，证据tmp/docs-artifacts/editor-performance-risk/multi-canvas-layout-*，完整范围见testing-batches.md。
+
+### 第八十九至九十一阶段集成与透明度后续
+
+143项定向检查、隔离前端和Tauri生产构建通过；同一EXE的不透明／透明切换、模型选取与热替换、Spine动画／停止／命中重放、多窗口重开／版本追赶／Pause／Step／Stop／undo／redo及DotA持续采样均通过，0error、正常退出。证据B001/spatial-picking-1792818795004、1792819157144、map-session-1792819200641、arbitrary-map-1792818854152，EXE指纹及完整范围见testing-batches.md。
+
+多窗口Scene51.57／Game55.44FPS、paint7.77／2.22ms；DotA Game59.85FPS／paint2.94ms，全图Scene31.63FPS／paint15.87ms。真实地图Scene的drawItems仍10723，原生像素含alpha<255，未进入本批不透明省略，不能归因FPS变化。Game原始PNG中211379／921600像素alpha<255，下一步核对材质输出／混合，保证透明语义后再减少重复绘制。首次大地图点击和真实输入延迟仍未验收；本批小夹具UI动作往返不作为物理延迟结论。
