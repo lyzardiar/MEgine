@@ -1303,3 +1303,12 @@ Viewport在所有真正完成的绘制结束时记录浏览器paint耗时，包�
 局部CPU对照基线1c4badf，沿第六十八阶段相同7,410实体输入、6次预热、9组交替各8次接收链路：仅时钟1.16806→1.16780ms、单Transform1.12293→1.00653ms、全部7,403个Transform68.57100→56.92978ms。最终完整快照与指纹一致；仅时钟无收益，密集变化减少重复复制。另测直接对远端Store执行Stop，排除加载准备、9组交替中位数0.0101→18.5888ms，说明复制成本移到返回编辑的边界。普通主窗口原生Stop保留原作者数组，独立窗口收到edit检查点仍走完整加载，不能把该直接Store测试套用于所有Stop操作。脚本、输入SHA、原始样本为同目录remote-author-benchmark及remote-author-stop-benchmark的mjs/json/log；没有进程内存或真实FPS结论。
 
 本项为当前批次第3/3项，提交后与第六十八／六十九阶段合并构建并执行原生多窗口专项。QA新增Stop后实体ID分配及undo／redo／恢复检查，保留前端paint样本、原生请求与每帧实体数。真实隐藏／不可选UI、长时内存、输入延迟和强制原生竞态仍保留专项；结果另记。
+
+
+本批合并原生验证通过：4ce6f62、1c4badf、e910ddc；前端构建3.08秒、Release构建1分04秒，仅已有world_from_snapshot告警。`qa-frost-map-session.mjs --detached-only` 报告 `tmp/docs-artifacts/testing-batches/B001/map-session-1792804951765.json` 为passed、0 error、正常退出，EXE SHA256为 `6af47b8deffce238c92d201470c2ee4e515d2a78c29a8d596a0319b198a6a849`。Inspector双向运行编辑及3步原生保留、Play中新Game、三窗口暂停／单步、快捷键、地图重载及Inspector重开、Stop完整作者集合和dirty恢复、停止后编辑／还原、新实体ID及undo／redo全部通过。Scene／Game截图已目视查看，WebView隔离缓存因EPERM保留，发现文件已清理。
+
+7,411实体、5秒窗口：Scene120个间隔，24.0058次呈现/秒、P95为59.7ms，平均请求17.34ms、原生渲染11.62ms；Game99个间隔，19.8731次呈现/秒、P95为68.2ms，请求20.16ms、原生渲染13.74ms。Scene121个成功profile无完整回退、记录81次延期；Game100个profile无回退，所有profile实体数量检查通过。相较上一独立运行17.71／18.51次呈现每秒有所提高，但不是严格A/B、单项收益或长期稳定结论。
+
+前端Scene18个聚合样本共194次paint，按sampleCount加权7.5619ms，单次峰值12.6ms；Game17个样本共101次paint，加权1.8960ms，峰值2.3ms。前端聚合窗口与原生profile边界不完全相同，不可直接相减推算重复帧数；浏览器paint间隔也不是原生呈现FPS。代码中Scene延期／错误完成仍调用paint(false,true)，目前未启用其未变化绘制跳过；这是下一步值得定向复现的重复绘制路径。Game约50.3ms呈现间隔与20.2ms请求差距仍需实际调度证据，不能归因给仅1.9ms的Canvas同步绘制。
+
+进程树privateBytes：分离前4,732,862,464、三窗口6,765,031,424、重载6,355,042,304、Stop并停靠6,098,382,848；工作集求和2,955,288,576／4,781,658,112／4,383,244,288／3,541,188,608字节，可能重复计共享页。未证明长期内存改善或无泄漏。Inspector自动化写入至主窗口观察417.60ms，包含调用／快照／轮询，不是硬件输入显示延迟。汇总为 `tmp/docs-artifacts/editor-performance-risk/remote-author-native-summary.json`，构建／QA日志为remote-author-*-build.log和remote-author-native-qa.log。正常集成完成；隐藏／不可选真实UI、长时性能、输入延迟及强制原生竞态继续待专项。

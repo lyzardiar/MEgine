@@ -736,3 +736,8 @@ Scene17.71／Game18.51次呈现每秒，Scene1/89完整回退、72次已记录�
 变更：store远端加载和回到Edit边界、remoteRuntimeReuse测试、qa-frost-map-session的Stop后创建／undo／redo检查。作者镜像复用冻结数据，可编辑运行副本独立；主窗口原作者及撤销保持不变。31项测试、TypeScript及QA语法通过；密集变更收益和直接Store Stop复制成本见performance-risk-todo第七十阶段。
 
 累计4ce6f62、1c4badf及本项，提交后合并一次前端与原生Release构建，执行 `node scripts/qa-frost-map-session.mjs --detached-only`。覆盖运行编辑保留、窗口重开／地图重载、Pause／Step、Stop作者恢复及后续编辑／ID分配／undo／redo；采集前端paint与原生呈现／回退。节点展开和隐藏列表已做定向Store检查，其真实UI交互继续保留专项，尚不声明本批已覆盖。原生结果待补记。
+
+
+本批正常集成已通过：报告 `B001/map-session-1792804951765.json`，0 error、正常退出；前端和Release各构建一次，EXE `6af47b8deffce238c92d201470c2ee4e515d2a78c29a8d596a0319b198a6a849`。三窗口编辑／播放／重载／Stop／作者dirty恢复、新实体ID与undo／redo通过，前端paint样本有效，全部成功profile实体数一致；截图已目视核对。剩余隐藏／不可选UI、长期性能与内存、实际输入显示延迟和强制竞态不计为完成。
+
+Scene24.01／Game19.87次呈现每秒；Scene0/121完整回退、81次已记录延期，Game0/100回退。前端paint加权平均7.56／1.90ms；短时进程内存已采样。指标口径及限制见performance-risk-todo第七十阶段和remote-author-native-summary.json。下一批0/3，不重复本批正常集成范围；优先复现Scene延期完成后的旧图像重复绘制，并继续定位Game请求间等待。
