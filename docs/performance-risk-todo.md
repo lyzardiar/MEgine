@@ -1475,3 +1475,9 @@ Scene连续旋转期间13帧，隐藏页签原生／浏览器均0，切回30帧�
 Game在Play期间最多两次延后过期请求，让新世界进入请求槽位，减少旧地图快照的准备和上传；持续过期保留精确快照回退，暂停、截图和失效所有权保持原有一致性。成功发布重置预算，Profiler增加延后次数。54项请求／传输／Game调度定向检查、TypeScript通过，证据tmp/docs-artifacts/editor-performance-risk/game-revision-*。
 
 当前批次2/3；实际首帧等待、原生版本追赶、截图一致性及多窗口帧率待第三项后合并验证。该项针对已确认的过期回退路径，不作为首次renderer初始化和所有窗口停顿均已解决的结论，详见testing-batches.md。
+
+### 第八十八阶段：视口绘制条目收集减少临时分配
+
+可见实体直接写入同一数组，MeshRenderer不再读取多余灯光名称和碰撞体字段；排序、独立特效与网格选取规则保留。4项实际代码块定向检查及TypeScript通过。10723候选的3组局部样本准备加排序均值2.537→1.665ms，完整输出一致，详见testing-batches.md及tmp/docs-artifacts/editor-performance-risk/draw-preparation-*。
+
+当前批次3/3，统一原生构建与多窗口／选取／DotA持续场景验证开始。此优化减少CPU准备和短期分配，尚不作为全图Scene或多窗口稳定60FPS结论。

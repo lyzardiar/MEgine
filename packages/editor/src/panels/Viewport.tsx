@@ -2034,105 +2034,7 @@ export function Viewport(props: {
     });
     spatialIndexRef.current.update(worldEntries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : entityBoundsRef.current(e.components, t, !!displayedPresentation)), !!displayedPresentation);
     const spatialCandidates = spatialIndexRef.current.query(viewportPlanes(cam, vp.w / Math.max(1, vp.h)));
-    const drawn = (isGame && !gameCamera ? [] : spatialCandidates
-      .flatMap((index) => {
-        const { e, t, hierarchyOrder } = worldEntries[index];
-        const pr = projectEntityCenter(t.position as Vec3);
-        // Keep cameras/lights even if origin is barely off-screen — frustum/rays may still show
-        const camComp = e.components.Camera3D ?? e.components.Camera2D;
-        const isLight =
-          !!e.components.DirectionalLight ||
-          !!e.components.PointLight ||
-          !!e.components.SpotLight ||
-          !!e.components.Light2D ||
-          (e.name ?? '').toLowerCase().includes('light');
-        const hasCollider =
-          !!e.components.BoxCollider3D ||
-          !!e.components.SphereCollider3D ||
-          !!e.components.BoxCollider2D ||
-          !!e.components.CircleCollider2D ||
-          !!e.components.PolygonCollider2D ||
-          !!e.components.EdgeCollider2D ||
-          !!e.components.TargetJoint2D;
-        const entries: Array<{
-          e: Ent;
-          t: TransformData;
-          pr: { x: number; y: number; depth: number } | null;
-          depth: number;
-          hierarchyOrder: number;
-          sortingOrder: number | null;
-          sortingLayerOrder: number | null;
-          editorGizmo: boolean;
-          renderKind: 'entity' | 'trail' | 'particle' | 'spine';
-        }> = [];
-        if (!nativeGameReady && (pr || camComp || isLight || hasCollider || e.components.Tilemap || e.components.MeshRenderer)) {
-          const renderer2D = (e.components.Tilemap
-            ?? e.components.Line2D
-            ?? e.components.AnimatedSprite2D
-            ?? e.components.SpriteRenderer) as Record<string, unknown> | undefined;
-          const sorting = renderer2D ? component2DSortingSettings(renderer2D) : null;
-          entries.push({
-            e,
-            t,
-            pr,
-            depth: pr?.depth ?? 0,
-            hierarchyOrder: hierarchyOrder * 4,
-            sortingOrder: sorting?.order ?? null,
-            sortingLayerOrder: sorting ? getSortingLayerRank(sorting.layer) : null,
-            editorGizmo: !isGame && !renderer2D && !e.components.MeshRenderer && (!!camComp || isLight),
-            renderKind: 'entity',
-          });
-        }
-        const trail = trailDrawByEntity.get(e.entity);
-        if (trail) {
-          const sorting = component2DSortingSettings(trail.component);
-          entries.push({
-            e,
-            t,
-            pr,
-            depth: pr?.depth ?? 0,
-            hierarchyOrder: hierarchyOrder * 4 + 1,
-            sortingOrder: sorting.order,
-            sortingLayerOrder: getSortingLayerRank(sorting.layer),
-            editorGizmo: false,
-            renderKind: 'trail',
-          });
-        }
-        const particle = particleDrawByEntity.get(e.entity);
-        if (particle) {
-          const sorting = particle.twoDimensional
-            ? component2DSortingSettings(particle.component)
-            : null;
-          entries.push({
-            e,
-            t,
-            pr,
-            depth: pr?.depth ?? 0,
-            hierarchyOrder: hierarchyOrder * 4 + 2,
-            sortingOrder: sorting?.order ?? null,
-            sortingLayerOrder: sorting ? getSortingLayerRank(sorting.layer) : null,
-            editorGizmo: false,
-            renderKind: 'particle',
-          });
-        }
-        const spine = e.components.SpineSkeleton as Record<string, unknown> | undefined;
-        if (spine && pr) {
-          const sorting = component2DSortingSettings(spine);
-          entries.push({
-            e,
-            t,
-            pr,
-            depth: pr.depth,
-            hierarchyOrder: hierarchyOrder * 4 + 3,
-            sortingOrder: sorting.order,
-            sortingLayerOrder: getSortingLayerRank(sorting.layer),
-            editorGizmo: false,
-            renderKind: 'spine',
-          });
-        }
-        return entries;
-      })
-      .filter(Boolean)) as Array<{
+    const drawn: Array<{
       e: Ent;
       t: TransformData;
       pr: { x: number; y: number; depth: number } | null;
@@ -2142,7 +2044,92 @@ export function Viewport(props: {
       sortingLayerOrder: number | null;
       editorGizmo: boolean;
       renderKind: 'entity' | 'trail' | 'particle' | 'spine';
-    }>;
+    }> = [];
+    if (!isGame || gameCamera) for (const index of spatialCandidates) {
+      const { e, t, hierarchyOrder } = worldEntries[index];
+      const pr = projectEntityCenter(t.position as Vec3);
+      // Keep cameras/lights even if origin is barely off-screen — frustum/rays may still show
+      const camComp = e.components.Camera3D ?? e.components.Camera2D;
+      const isLight = !e.components.MeshRenderer && (
+        !!e.components.DirectionalLight ||
+        !!e.components.PointLight ||
+        !!e.components.SpotLight ||
+        !!e.components.Light2D ||
+        (e.name ?? '').toLowerCase().includes('light'));
+      const hasCollider = !pr && !e.components.MeshRenderer && (
+        !!e.components.BoxCollider3D ||
+        !!e.components.SphereCollider3D ||
+        !!e.components.BoxCollider2D ||
+        !!e.components.CircleCollider2D ||
+        !!e.components.PolygonCollider2D ||
+        !!e.components.EdgeCollider2D ||
+        !!e.components.TargetJoint2D);
+      if (!nativeGameReady && (pr || camComp || isLight || hasCollider || e.components.Tilemap || e.components.MeshRenderer)) {
+        const renderer2D = (e.components.Tilemap
+          ?? e.components.Line2D
+          ?? e.components.AnimatedSprite2D
+          ?? e.components.SpriteRenderer) as Record<string, unknown> | undefined;
+        const sorting = renderer2D ? component2DSortingSettings(renderer2D) : null;
+        drawn.push({
+          e,
+          t,
+          pr,
+          depth: pr?.depth ?? 0,
+          hierarchyOrder: hierarchyOrder * 4,
+          sortingOrder: sorting?.order ?? null,
+          sortingLayerOrder: sorting ? getSortingLayerRank(sorting.layer) : null,
+          editorGizmo: !isGame && !renderer2D && !e.components.MeshRenderer && (!!camComp || isLight),
+          renderKind: 'entity',
+        });
+      }
+      const trail = trailDrawByEntity.get(e.entity);
+      if (trail) {
+        const sorting = component2DSortingSettings(trail.component);
+        drawn.push({
+          e,
+          t,
+          pr,
+          depth: pr?.depth ?? 0,
+          hierarchyOrder: hierarchyOrder * 4 + 1,
+          sortingOrder: sorting.order,
+          sortingLayerOrder: getSortingLayerRank(sorting.layer),
+          editorGizmo: false,
+          renderKind: 'trail',
+        });
+      }
+      const particle = particleDrawByEntity.get(e.entity);
+      if (particle) {
+        const sorting = particle.twoDimensional
+          ? component2DSortingSettings(particle.component)
+          : null;
+        drawn.push({
+          e,
+          t,
+          pr,
+          depth: pr?.depth ?? 0,
+          hierarchyOrder: hierarchyOrder * 4 + 2,
+          sortingOrder: sorting?.order ?? null,
+          sortingLayerOrder: sorting ? getSortingLayerRank(sorting.layer) : null,
+          editorGizmo: false,
+          renderKind: 'particle',
+        });
+      }
+      const spine = e.components.SpineSkeleton as Record<string, unknown> | undefined;
+      if (spine && pr) {
+        const sorting = component2DSortingSettings(spine);
+        drawn.push({
+          e,
+          t,
+          pr,
+          depth: pr.depth,
+          hierarchyOrder: hierarchyOrder * 4 + 3,
+          sortingOrder: sorting.order,
+          sortingLayerOrder: getSortingLayerRank(sorting.layer),
+          editorGizmo: false,
+          renderKind: 'spine',
+        });
+      }
+    }
     drawn.sort(compareWorldDrawOrder);
 
     for (const { e, t, pr, renderKind } of nativeGameReady ? [] : drawn) {

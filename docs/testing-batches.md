@@ -974,3 +974,11 @@ Game复用Scene的运行版本过期策略：Play期间前两次过期请求释�
 变更Viewport、nativeGameCompletionScheduling及nativeViewportRequests测试。54项定向请求／传输／Game调度检查与TypeScript通过，覆盖瞬时／持续过期、暂停、截图冻结、失效所有权、并发容量、乱序完成、原生错误与精确快照。测试夹具补齐当前可见性上下文，Scene所有权断言同步当前presentation key及相机分支。日志tmp/docs-artifacts/editor-performance-risk/game-revision-tests.log和game-revision-types.log。
 
 当前45c5372及本项为2/3。原生构建及多窗口Play／Pause／Step／Stop、重开、原生版本追赶和截图一致性待第三项后合并验证；尚无本项原生帧率或启动延迟结论。持续失配仍可能上传完整地图，保留快照回退是有界重试的保底行为。
+
+### 第八十八阶段／新批次任务3/3：视口绘制条目直接收集
+
+可见实体直接写入绘制条目数组，避免每个候选创建临时数组再flatMap合并及冗余filter。MeshRenderer实体跳过不影响其可见性／编辑器标记的灯光名称和碰撞体分类；保留投影、3D／2D／编辑器排序、特效独立条目和偏心网格选取候选。
+
+变更Viewport及viewportDrawPreparation测试。4项实际代码块定向检查与TypeScript通过，覆盖投影外原点的网格、相机／灯光／碰撞体／Tilemap、不同图层的trail／particle／Spine、缺少Game相机及原生Game覆盖。10723候选、10745条目的3组交替先后局部样本，每组40次预热与160次测量，包含排序的准备均值2.537→1.665ms；三组P95为3.053／2.833／3.335→2.107／1.895／2.370ms。旧新实际代码结果逐项一致，所有样本校验和相同。日志和脚本位于tmp/docs-artifacts/editor-performance-risk/draw-preparation-*；局部收益不直接代表整个视口FPS。
+
+本批45c5372、dbd6726及本项达到3/3，统一隔离生产构建及原生验证。范围合并为多窗口重开与版本追赶、Play／Pause／Step／Stop、原生截图、偏心网格／父变换／资源热替换选取，并复测实际DotA全图Scene持续采样。复用已经通过且不受改动影响的导入、地图菜单和层级功能结果。
