@@ -235,3 +235,32 @@ test('immediate publications cancel pending work and reset the normal send inter
  main.advance(10);main.broadcastScene();main.advance(22);assert.equal(main.sent.length,1);main.advance(1);assert.equal(main.sent.length,2);
  main.sent.length=0;main.advance(100);main.broadcastScene();main.advance(0);assert.equal(main.sent.length,1,'a completed world after a long gap sends without another 33 ms');
 }));
+
+test('running detached viewports receive each completed simulation frame without the authoring cap',async()=>withPair((main,detached)=>{
+ const document=JSON.parse(main.store.saveSessionSceneJson('Map'));
+ for(const panel of ['game','scene']){
+  main.env.remoteDirtyPeers.current.set('viewport',{timestamp:1000,panel});
+  main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,0);main.broadcastScene(true);main.deliver(detached);
+  for(let revision=1;revision<=60;revision++){
+   main.advance(16);document.world.frame=revision;main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,revision);main.broadcastScene();main.advance(0);
+  }
+  assert.equal(main.sent.length,60,panel+' receives one coalesced world per completed frame');
+  main.deliver(detached);assert.equal(detached.store.nativePlayRevision,60);assert.equal(detached.store.playRenderSnapshot().frame,60);
+  main.advance(200);assert.equal(main.sent.length,0,'no timer publishes without a new completion');
+ }
+}));
+
+test('viewport cadence remains coalesced and returns to authoring on Pause or stale peers',async()=>withPair((main,detached)=>{
+ const document=JSON.parse(main.store.saveSessionSceneJson('Map'));
+ main.env.remoteDirtyPeers.current.set('viewport',{timestamp:1000,panel:'game'});
+ main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,0);main.broadcastScene(true);main.deliver(detached);
+ for(let revision=1;revision<=15;revision++){
+  main.advance(1);document.world.frame=revision;main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,revision);main.broadcastScene();
+ }
+ assert.equal(main.sent.length,0);main.advance(1);assert.equal(main.sent.length,1);main.deliver(detached);assert.equal(detached.store.nativePlayRevision,15,'one pending timer serializes the newest world');
+ for(const mode of ['pause','play']){
+  if(mode==='play')main.env.remoteDirtyPeers.current.set('viewport',{timestamp:-5000,panel:'game'});
+  main.store.loadRemoteSceneJson(JSON.stringify(document),mode,41,15);main.broadcastScene(true);main.deliver(detached);
+  main.advance(1);main.broadcastScene();main.advance(31);assert.equal(main.sent.length,0);main.advance(1);assert.equal(main.sent.length,1);main.deliver(detached);
+ }
+}));

@@ -831,3 +831,12 @@ Viewport的原生帧拥有固定实体记录，worldTransform已有父变换身�
 相关7项空间检查与TypeScript通过，包含固定输入重复读取、移动后的新变换、模型边界替换、旧帧读取、非法变换和编辑态原地修改。局部4746网格／200变化变换、30帧预热＋120帧测量，仅world AABB转换平均1.054→0.380ms，P95 2.573→0.439ms，结果校验和一致。脚本／摘要在tmp/docs-artifacts/editor-performance-risk/spatial-owned-bounds-bench.mjs和spatial-owned-bounds-summary.json。此样本不代表完整渲染或FPS；没有重复原生构建。
 
 变更：viewportSpatial、Viewport及viewportSpatial.test。当前2/3，待第三项后与第七十九阶段统一验证Scene动画与相机交互、父节点移动、资源热加载、选择／框选、显隐和Stop／地图切换；观察实际paint与呈现间隔，不把待测项写成通过。
+
+
+### 第八十一阶段／新批次任务3/3：独立运行视口发布节奏
+
+主窗口运行时，存在心跳有效的独立Scene或Game接收窗口，常规世界发布最短间隔改为16ms，与60Hz模拟完成节奏匹配；发布仍由完成通知触发，只保留一个计时器并在发送时读取最新世界。编辑／暂停、普通属性窗口及失效视口保持33ms合并。立即同步、选择顺序、会话／版本验证及接收端10Hz属性刷新边界保持不变，不增加空闲轮询。
+
+19项实际App同步处理器与Store测试、TypeScript通过：16ms模拟输入960ms内向活跃视口发送60个世界，停止完成通知后不继续发送；1ms密集通知合并为一个最新版本，暂停及视口心跳失效恢复33ms。日志tmp/docs-artifacts/editor-performance-risk/viewport-cadence-tests.log和viewport-cadence-types.log。该检查证明调度上限解除，不保证实际FPS；更频繁的增量收发可能增加主线程负载，须用原生采样判断。
+
+累计99498c9、76c5e1e及本项达到3/3，开始合并构建与原生验证。主工作区另有并发Unity包／粒子改动，本批复用干净验证worktree，仅构建本批已提交版本。合并检查多窗口Play／Pause／Step／Stop、Inspector编辑与重开、Scene选择／旋转／尺寸／隐藏、模型热加载及运行世界一致性，报告FPS和浏览器paint，逐项保留未覆盖范围。

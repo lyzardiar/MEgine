@@ -797,8 +797,10 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       send();
       return;
     }
-    // MiYu: completed worlds share the send interval instead of adding a fresh delay after every publication.
-    if (syncTimer.current == null) syncTimer.current = window.setTimeout(send, lastSceneBroadcastAt.current == null ? 33 : Math.max(0, Math.ceil(33 - (performance.now() - lastSceneBroadcastAt.current))));
+    // Running detached viewports consume completed frames at the simulation cadence; authoring stays coalesced.
+    const liveViewport = !props.detachedPanel && store.mode === 'play' && [...remoteDirtyPeers.current.values()].some(peer => peer.timestamp >= Date.now() - 5_000 && (peer.panel === 'scene' || peer.panel === 'game'));
+    const interval = liveViewport ? 16 : 33;
+    if (syncTimer.current == null) syncTimer.current = window.setTimeout(send, lastSceneBroadcastAt.current == null ? interval : Math.max(0, Math.ceil(interval - (performance.now() - lastSceneBroadcastAt.current))));
   };
 
   const broadcastSelection = () => {
@@ -2812,7 +2814,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       store.tick(Math.min((now - lastTick) / 1000, 0.25));
       lastTick = now;
       // Viewports read completed Play frames directly. Inspector and hierarchy refresh
-      // at 10 Hz; detached windows receive completed frames through the 33 ms broadcast.
+      // at 10 Hz; detached viewports receive coalesced completed frames at the simulation cadence.
       void store.waitForPlayRuntime().then(() => {
         if (disposed || generation !== store.playGeneration) return;
         if (!disposed && !props.detachedPanel) broadcastScene();
