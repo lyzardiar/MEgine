@@ -1362,3 +1362,12 @@ B001/map-session-1792845027720的7434实体三窗口重开／修订追赶、Paus
 6项定向检查和TypeScript通过，含60次完全相同投影仅1次GPU命令计划、60次目标合成；覆盖上述输入变化、输出resize、空裁剪多边形、无版本源、不同窗口和context恢复。该命令计数通过WebGL测试替身验证，不是实际GPU像素或性能测量。日志cached-ui-projection-{tests,typecheck}.log位于tmp/docs-artifacts/editor-performance-risk。
 
 本项为批次2/3，第三项后合并原生验证实际Canvas画面、相机旋转／resize／DPR、UI文字与资源刷新、选择和多窗口，并对比paintStages.ui。需要确认真实运行的GPU投影路径及收益，不能据命令计数声明已改善DotA UI或FPS。
+
+
+### 第一百一十二阶段／编辑器批次任务3/3：Stop释放原生Play世界镜像
+
+变更crates/mengine-editor-host/src/play_runtime.rs。Stop和新会话递增版本后，释放Game／Scene／相机预览中较早会话的空闲镜像；忙碌镜像通过持有其Arc的回收线程等锁释放后清理，不阻塞新会话初始化。锁获取后再比较版本，保留已被新渲染替换的镜像；迟到的旧Stop不触发回收。现有绘制中源记录持续有效，旧帧结果仍按原会话规则拒绝，CPU与GPU渲染资源的其他缓存未改变。
+
+新最小复现先失败：Stop和脚本worker屏障后发布历史为空，镜像仍有1个实体／保留源记录。修复后3项新增及26项既有运行时检查通过，4项原有性能基准按ignored保留未执行。新增覆盖三份空闲镜像和弱引用释放、绘制中Stop／不等待重启、旧Stop、锁释放竞争与较新镜像保护；已有阻塞绘制、独立视图、修订过期、脚本／物理和作者快照检查一并通过。日志play-mirror-release-{before,final-tests}.log位于tmp/docs-artifacts/editor-performance-risk。测试证明记录与镜像释放，不代表进程PrivateBytes／长期驻留问题已全部解决。
+
+110、111、112达3/3。接下来统一前端与带custom-protocol的Tauri Release，检查真实GPU Canvas投影与像素、相机／resize／资源刷新、实际DotA和多窗口重开／Stop／快速重启，比较UI分段及进程树内存。对照最近2573607的DotA Scene57.25FPS、UI2.518ms；多窗口Stop停靠6520.68MiB仍高于起点5138.23MiB。未执行的原生验收保持待测。

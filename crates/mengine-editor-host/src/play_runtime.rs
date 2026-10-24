@@ -108,7 +108,7 @@ enum Request {
     Barrier { entered: Sender<()>, resume: mpsc::Receiver<()> },
 }
 
-type PlayRenderWorld = std::sync::Mutex<(u64, mengine_scene::SharedSnapshotWorld)>;
+type PlayRenderWorld = Arc<std::sync::Mutex<(u64, mengine_scene::SharedSnapshotWorld)>>;
 /// The script VM stays on one worker thread; viewport mirrors only consume published snapshots.
 pub struct EditorPlayRuntime { sender: Sender<Request>, generation: Arc<AtomicU64>, render_world: PlayRenderWorld, scene_render_world: PlayRenderWorld, preview_render_world: PlayRenderWorld, render_history: Arc<parking_lot::Mutex<Option<(u64, PlayRenderHistory)>>> }
 
@@ -192,8 +192,25 @@ impl EditorPlayRuntime {
 
     pub fn begin(&self) -> u64 {
         let generation = self.generation.fetch_add(1, Ordering::SeqCst) + 1;
+        self.release_expired_render_worlds(generation);
         let _ = self.sender.send(Request::Stop { generation });
         generation
+    }
+
+    fn release_expired_render_worlds(&self, generation: u64) {
+        let mut pending = Vec::new();
+        for slot in [&self.render_world, &self.scene_render_world, &self.preview_render_world] {
+            let mut mirror = match slot.try_lock() { Ok(mirror) => mirror, Err(std::sync::TryLockError::Poisoned(error)) => error.into_inner(), Err(std::sync::TryLockError::WouldBlock) => { pending.push(Arc::clone(slot)); continue; } };
+            if mirror.0 != 0 && mirror.0 < generation { *mirror = Default::default(); }
+        }
+        if !pending.is_empty() {
+            if let Err(error) = std::thread::Builder::new().name("mengine-play-release".into()).spawn(move || {
+                for slot in pending {
+                    let mut mirror = slot.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+                    if mirror.0 != 0 && mirror.0 < generation { *mirror = Default::default(); }
+                }
+            }) { log::warn!("Could not schedule expired Play mirror release: {error}"); }
+        }
     }
 
     pub fn start(&self, generation: u64, source: String, snapshot: WorldSnapshot, project: PlayProject) -> Result<WorldSnapshot, String> {
@@ -217,6 +234,7 @@ impl EditorPlayRuntime {
 
     pub fn stop_session(&self, generation: u64) {
         if self.generation.compare_exchange(generation, generation + 1, Ordering::SeqCst, Ordering::SeqCst).is_ok() {
+            self.release_expired_render_worlds(generation + 1);
             let _ = self.sender.send(Request::Stop { generation: generation + 1 });
         }
     }
@@ -435,6 +453,60 @@ impl PlaySession {
 mod tests {
     use super::*;
     use mengine_core::snapshot::WorldSnapshotCache;
+
+    #[test]
+    fn stopped_play_releases_idle_viewport_mirrors_and_owned_source_records() {
+        let runtime = EditorPlayRuntime::default(); let id = runtime.begin();
+        let mut world = World::new(); let entity = world.spawn_empty(); world.insert_component(entity, mengine_core::generated::Name { value: "old viewport payload".repeat(2048) });
+        runtime.start(id, String::new(), WorldSnapshot::from_world(&world), PlayProject::default()).unwrap();
+        let weak = { let history = runtime.render_history.lock(); Arc::downgrade(&history.as_ref().unwrap().1.checkpoints[0].1.entities[0]) };
+        for mirror in [&runtime.render_world, &runtime.scene_render_world, &runtime.preview_render_world] {
+            assert_eq!(runtime.render_revision_from_world(id, Some(0), mirror, |world, _| { assert_eq!(world.iter_entities().count(), 1); Err::<EditorViewportFrame, _>("prepared".into()) }).err().unwrap(), "prepared");
+        }
+        runtime.stop_session(id);
+        let (entered, ready) = mpsc::channel(); let (release, resume) = mpsc::channel();
+        runtime.sender.send(Request::Barrier { entered, resume }).unwrap(); ready.recv_timeout(Duration::from_secs(3)).unwrap(); release.send(()).unwrap();
+        assert!(runtime.render_history.lock().is_none());
+        for mirror in [&runtime.render_world, &runtime.scene_render_world, &runtime.preview_render_world] { assert_eq!(mirror.lock().unwrap().1.world().iter_entities().count(), 0); }
+        assert!(weak.upgrade().is_none(), "stopped source records must leave all three viewport mirrors");
+    }
+
+    #[test]
+    fn stop_releases_busy_mirror_after_render_without_blocking_restart_or_clearing_new_mirrors() {
+        let runtime = Arc::new(EditorPlayRuntime::default()); let id = runtime.begin();
+        let mut world = World::new(); world.spawn_empty(); runtime.start(id, String::new(), WorldSnapshot::from_world(&world), PlayProject::default()).unwrap();
+        let weak = { let history = runtime.render_history.lock(); Arc::downgrade(&history.as_ref().unwrap().1.checkpoints[0].1.entities[0]) };
+        let (entered, ready) = mpsc::channel(); let (release, resume) = mpsc::channel(); let renderer = runtime.clone();
+        let rendering = std::thread::spawn(move || renderer.render_scene_revision_with_snapshot(id, Some(0), move |world, _| { assert_eq!(world.iter_entities().count(), 1); entered.send(()).unwrap(); resume.recv_timeout(Duration::from_secs(5)).unwrap(); Err("old frame".into()) }));
+        ready.recv_timeout(Duration::from_secs(3)).unwrap(); runtime.stop_session(id); let next = runtime.begin();
+        runtime.start(next, String::new(), WorldSnapshot::from_world(&world), PlayProject::default()).unwrap();
+        assert!(weak.upgrade().is_some(), "in-flight render retains its own source until it returns");
+        assert_eq!(runtime.render_revision(next, Some(0), |_| Err("new Game mirror".into())).err().unwrap(), "new Game mirror");
+        runtime.stop_session(id); assert_eq!(runtime.render_world.lock().unwrap().0, next, "late Stop cannot release the new session");
+        release.send(()).unwrap(); assert_eq!(rendering.join().unwrap().err().unwrap(), "Play session expired");
+        let deadline = Instant::now() + Duration::from_secs(3);
+        while weak.upgrade().is_some() { assert!(Instant::now() < deadline, "busy old mirror must be released after its renderer returns"); std::thread::sleep(Duration::from_millis(1)); }
+        assert_eq!(runtime.scene_render_world.lock().unwrap().1.world().iter_entities().count(), 0);
+        assert_eq!(runtime.render_world.lock().unwrap().1.world().iter_entities().count(), 1); assert!(weak.upgrade().is_none());
+    }
+
+    #[test]
+    fn deferred_retirement_handles_unlock_races_and_preserves_a_newer_mirror() {
+        let runtime = EditorPlayRuntime::default(); let id = runtime.begin();
+        let mut world = World::new(); world.spawn_empty(); runtime.start(id, String::new(), WorldSnapshot::from_world(&world), PlayProject::default()).unwrap();
+        assert_eq!(runtime.render_revision(id, Some(0), |_| Err("prepared".into())).err().unwrap(), "prepared");
+        let held = runtime.render_world.lock().unwrap(); runtime.stop_session(id); drop(held);
+        let wait = |slot: &PlayRenderWorld| { let deadline = Instant::now() + Duration::from_secs(3); while Arc::strong_count(slot) > 1 { assert!(Instant::now() < deadline); std::thread::sleep(Duration::from_millis(1)); } };
+        wait(&runtime.render_world); assert_eq!(runtime.render_world.lock().unwrap().1.world().iter_entities().count(), 0);
+        let next = runtime.begin(); runtime.start(next, String::new(), WorldSnapshot::from_world(&world), PlayProject::default()).unwrap();
+        assert_eq!(runtime.render_scene_revision_with_snapshot(next, Some(0), |_, _| Err("prepared".into())).err().unwrap(), "prepared");
+        let mut held = runtime.scene_render_world.lock().unwrap(); runtime.stop_session(next);
+        let newer = runtime.begin(); runtime.start(newer, String::new(), WorldSnapshot::from_world(&world), PlayProject::default()).unwrap();
+        // A newer renderer can acquire the mirror before a scheduled retirement worker.
+        let snapshot = runtime.render_history.lock().as_ref().unwrap().1.snapshot(0).unwrap().0;
+        held.0 = newer; held.1.update(&snapshot); drop(held); wait(&runtime.scene_render_world);
+        let mirror = runtime.scene_render_world.lock().unwrap(); assert_eq!(mirror.0, newer); assert_eq!(mirror.1.world().iter_entities().count(), 1);
+    }
 
     #[test]
     fn retained_revisions_render_while_the_script_worker_is_blocked_and_a_step_is_pending() {
