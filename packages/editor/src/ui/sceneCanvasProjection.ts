@@ -1,7 +1,7 @@
 // Author: MiYu. Project a raster Canvas through one GPU draw with perspective-correct texture coordinates.
 import type { SceneCanvasSurface } from './uiLayout';
 
-type Projector = { canvas: HTMLCanvasElement; gl: WebGLRenderingContext; program: WebGLProgram; buffer: WebGLBuffer; texture: WebGLTexture; position: number; uv: number; maxTextureSize: number; maxSurfaceSize: number; image?: HTMLCanvasElement; revision?: number };
+type Projector = { canvas: HTMLCanvasElement; gl: WebGLRenderingContext; program: WebGLProgram; buffer: WebGLBuffer; texture: WebGLTexture; position: number; uv: number; maxTextureSize: number; maxSurfaceSize: number; image?: HTMLCanvasElement; revision?: number; imageWidth?: number; imageHeight?: number; vertices?: Float32Array };
 const projectors = new WeakMap<HTMLCanvasElement, Projector | null>();
 
 function createProjector(destination: HTMLCanvasElement): Projector | null {
@@ -40,25 +40,31 @@ export function projectSceneCanvasTexture(ctx: CanvasRenderingContext2D, surface
   if (!projector || projector.gl.isContextLost()) return false;
   const { canvas, gl, program, buffer, texture, position, uv } = projector;
   if (Math.max(image.width, image.height) > projector.maxTextureSize || Math.max(ctx.canvas.width, ctx.canvas.height) > projector.maxSurfaceSize) return false;
+  const resized = canvas.width !== ctx.canvas.width || canvas.height !== ctx.canvas.height;
   if (canvas.width !== ctx.canvas.width) canvas.width = ctx.canvas.width;
   if (canvas.height !== ctx.canvas.height) canvas.height = ctx.canvas.height;
-  gl.viewport(0, 0, canvas.width, canvas.height); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.useProgram(program); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texture);
-  if (projector.image !== image || revision == null || projector.revision !== revision) {
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    projector.image = image; projector.revision = revision;
-  }
+  const upload = projector.image !== image || revision == null || projector.revision !== revision || projector.imageWidth !== image.width || projector.imageHeight !== image.height;
   const transform = ctx.getTransform(), vertices = new Float32Array(surface.pixels.length * 5);
   for (let index = 0; index < surface.pixels.length; index++) {
     const point = surface.corners[index], pixel = surface.pixels[index], w = 1 / surface.inverseW[index];
     const x = transform.a * point.x + transform.c * point.y + transform.e, y = transform.b * point.x + transform.d * point.y + transform.f;
     vertices.set([(x / canvas.width * 2 - 1) * w, (1 - y / canvas.height * 2) * w, w, (pixel.x - surface.bounds.x) / surface.bounds.w, (pixel.y - surface.bounds.y) / surface.bounds.h], index * 5);
   }
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STREAM_DRAW);
-  gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 20, 0);
-  gl.enableVertexAttribArray(uv); gl.vertexAttribPointer(uv, 2, gl.FLOAT, false, 20, 12);
-  gl.drawArrays(gl.TRIANGLE_FAN, 0, surface.pixels.length);
+  const previousVertices = projector.vertices;
+  if (resized || upload || previousVertices?.length !== vertices.length || vertices.some((value, index) => value !== previousVertices?.[index])) {
+    gl.viewport(0, 0, canvas.width, canvas.height); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(program); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, texture);
+    if (upload) {
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      projector.image = image; projector.revision = revision; projector.imageWidth = image.width; projector.imageHeight = image.height;
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer); gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STREAM_DRAW);
+    gl.enableVertexAttribArray(position); gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 20, 0);
+    gl.enableVertexAttribArray(uv); gl.vertexAttribPointer(uv, 2, gl.FLOAT, false, 20, 12);
+    gl.drawArrays(gl.TRIANGLE_FAN, 0, surface.pixels.length);
+    projector.vertices = vertices;
+  }
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(canvas, 0, 0); ctx.restore();
   return true;
 }

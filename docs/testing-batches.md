@@ -1353,3 +1353,12 @@ B001/map-session-1792845027720的7434实体三窗口重开／修订追赶、Paus
 实际DotA作者场景14437实体、7个UI相关记录，独立读取器12轮交替／排除2轮预热、10组各120帧：仅无关特效记录变化的拓扑读取0.213044→0.064036ms；同时替换相机与UI文字记录0.222220→0.066373ms。成员、顺序及当前记录所有权一致。计时只含子集拓扑读取，不含构造呈现记录、激活判断、完整UI布局／绘制、原生、模拟和IPC，不代表UI整段或FPS。日志owned-ui-topology-{tests,typecheck,benchmark}.log、复现owned-ui-topology-bench.mjs及摘要位于tmp/docs-artifacts/editor-performance-risk。
 
 本项为新批次1/3，原生集成及实际UI收益待三项后合并验证；后续覆盖UI／相机／祖先变化、编辑原地修改、场景切换及多窗口。最近已验收的实际DotA Scene仍为2573607的57.25FPS／UI2.518ms，稳定60与长期驻留继续待办。
+
+
+### 第一百一十一阶段／编辑器批次任务2/3：复用未变化的Canvas投影像素
+
+变更packages/editor/src/ui/sceneCanvasProjection.ts及sceneCanvasProjection.test.mjs。每个目标Canvas的独立WebGL投影器保留上一份实际上传的Float32顶点；纹理来源／显式版本／尺寸、投影顶点和输出尺寸全部相同时复用已保留的绘制缓冲，避免重复clear、顶点上传和drawArrays。仍逐帧在调用者当前裁剪／合成状态下合成，并保留外部选择描边。相机／DPR／目标变换、裁剪多边形／UV／源范围、源尺寸／版本／身份变化重绘；输出resize即使归一化顶点相同也重绘；无版本的源继续每次上传及绘制，context loss／GPU容量及CPU回退语义保留。每个目标最多保留一份顶点数组，窗口之间不共享画面。
+
+6项定向检查和TypeScript通过，含60次完全相同投影仅1次GPU命令计划、60次目标合成；覆盖上述输入变化、输出resize、空裁剪多边形、无版本源、不同窗口和context恢复。该命令计数通过WebGL测试替身验证，不是实际GPU像素或性能测量。日志cached-ui-projection-{tests,typecheck}.log位于tmp/docs-artifacts/editor-performance-risk。
+
+本项为批次2/3，第三项后合并原生验证实际Canvas画面、相机旋转／resize／DPR、UI文字与资源刷新、选择和多窗口，并对比paintStages.ui。需要确认真实运行的GPU投影路径及收益，不能据命令计数声明已改善DotA UI或FPS。
