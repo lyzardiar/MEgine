@@ -2356,6 +2356,21 @@ export function layoutUiScene3D(
   let layoutScale = 1;
   let depthBase = 0;
   let surface: SceneCanvasSurface | undefined;
+  let canvasItems: Map<number, UiDrawItem[]> | undefined;
+  const readCanvasItems = (canvasId: number) => {
+    if (!canvasItems) {
+      canvasItems = new Map();
+      const items = overlayLayout?.items ?? layoutUiOverlay(entities, pixelRoot, selectedIds, undefined, cam, null, textMeasurement);
+      for (const item of items) {
+        const root = canvasLayoutRootForEntity(byId, item.entity);
+        if (!root) continue;
+        let group = canvasItems.get(root.entity);
+        if (!group) { group = []; canvasItems.set(root.entity, group); }
+        group.push(item);
+      }
+    }
+    return canvasItems.get(canvasId) ?? [];
+  };
 
   for (const canvas of canvases) {
     const inheritedCanvas = outermostCanvas(byId, canvas);
@@ -2384,15 +2399,7 @@ export function layoutUiScene3D(
         )
       : (px: number, py: number) => uiPixelToWorld(px, py, cw, ch);
 
-    const laid = (overlayLayout?.items ?? layoutUiOverlay(
-      entities,
-      pixelRoot,
-      selectedIds,
-      undefined,
-      cam,
-      null,
-      textMeasurement,
-    )).filter((item) => canvasLayoutRootForEntity(byId, item.entity)?.entity === canvas.entity);
+    const laid = readCanvasItems(canvas.entity);
 
     const canvasMaskSources = new Set(laid.filter(item => item.role === 'canvas').map(item => item.entity));
     if (canvases.length === 1 && mode === 'ScreenSpaceOverlay' && !entities.some(entity => (entity.components.Canvas as { render_mode?: string } | undefined)?.render_mode === 'WorldSpace') && !laid.some(item => item.spine || item.effekseer || item.dropdown?.expanded || item.maskStack?.some(id => canvasMaskSources.has(id)))) {

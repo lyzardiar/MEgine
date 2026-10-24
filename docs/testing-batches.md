@@ -1014,3 +1014,11 @@ Spine在不透明Scene的可见覆盖层推进动画，命中重放跳过Spine�
 变更Viewport、nativeSceneHitCollection及现有绘制／命中测试。23项针对性检查、TypeScript通过：整批准备在点击前为0、同一所有者只准备一次、替换及失败后重试、独立画布状态恢复、UI／Gizmo优先、等距顺序、不可选对象、旧帧相机／尺寸、模型加载／热替换、镜像与近裁剪，以及Spine推进一致性。日志tmp/docs-artifacts/editor-performance-risk/deferred-scene-hits-tests.log与deferred-scene-hits-types.log。
 
 当前28c3aa0及本项为2/3。生产原生构建与不透明／透明Scene、空节点／模型／碰撞体点击、资源热更新、首次点击耗时、Spine、截图、多窗口及实际DotA持续帧率待第三项合并。首次普通对象点击承担此前每帧准备的工作，实际输入延迟尚未验证；不将定向算法检查或候选减少直接作为原生性能验收。
+
+### 第九十一阶段／新批次任务3/3：多Canvas Scene共享布局与所属索引
+
+layoutUiScene3D每次调用只生成一次屏幕布局，按当前Canvas所属关系分组，避免每个Canvas重新布局全体UI并遍历全部结果。分组在第一个需要屏幕布局的Canvas上延迟建立，WorldSpace／禁用根不触发布局；跨调用不复用，文字、父子关系、激活、相机、视口及选择变化均由本次输入决定。保持各Canvas内条目顺序、遮罩与嵌套根规则。
+
+变更uiLayout及uiMultiCanvasLayout测试。7项多Canvas／大场景定向检查、TypeScript通过，覆盖共享提供的布局仅访问一次、WorldSpace与禁用根、指定相机、遮罩、嵌套Canvas、未知所属条目及动态输入。4Canvas／1204实体，3组交替先后的局部样本，每组8次预热及35次测量，Scene UI布局均值8.881→4.976ms；三组P95为12.362／11.956／10.127→7.860／5.794／6.733ms。完整输出和校验和一致，另16组输入变更逐项与旧实现相同。证据tmp/docs-artifacts/editor-performance-risk/multi-canvas-layout-*，只证明该布局路径的成本，不等同于DotA或整帧FPS。
+
+本批28c3aa0、62f620c及本项达到3/3，开始统一隔离生产构建与相关原生集成。需验证原始帧opacity标记、透明回退、延后命中与模型热更新／父变换／偏心网格、Spine、多窗口、Canvas与截图，并复测DotA全图持续帧率及点击耗时；复用不受影响的地图转换和层级验证。

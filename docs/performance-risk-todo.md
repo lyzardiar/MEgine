@@ -1501,3 +1501,9 @@ Game在Play期间最多两次延后过期请求，让新世界进入请求槽位
 不透明原生Scene只逐帧准备选中辅助条目，整幅浏览器世界命中候选在普通对象点击时按该显示帧生成并缓存。UI／Gizmo优先与等距命中顺序保留，独立画布复用既有命中算法；Spine的可见动画每帧只推进一次，点击重放不推进。透明、浏览器及Game路径维持即时绘制。
 
 23项绘制／几何／帧所有权／Spine定向检查和TypeScript通过。当前新批次2/3，原生FPS、首次点击、热更新、透明场景及多窗口待第三项合并验证，证据tmp/docs-artifacts/editor-performance-risk/deferred-scene-hits-*。浏览器drawItems现在只统计该帧实际准备的辅助条目，场景总数和真实提交数量继续使用原生counts；完整记录见testing-batches.md。
+
+### 第九十一阶段：多Canvas Scene布局只计算一次
+
+每次layoutUiScene3D调用按当前Canvas所属关系共享一份屏幕布局，不跨帧缓存，保留文字／层级／激活／相机／选择变化和嵌套遮罩。7项多Canvas与大场景检查、TypeScript通过；4Canvas／1204实体的3组局部样本均值8.881→4.976ms，完整输出一致，另16组动态修改与旧实现逐项一致。
+
+当前新批次3/3，开始隔离构建和原生验证。局部数据不直接外推DotA或整帧FPS，证据tmp/docs-artifacts/editor-performance-risk/multi-canvas-layout-*，完整范围见testing-batches.md。
