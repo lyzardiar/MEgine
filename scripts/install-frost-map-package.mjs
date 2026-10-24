@@ -41,7 +41,8 @@ export function installMapPackage(source,project,id,title,{register=true,sharedR
   const exported=path.resolve(terrain.sourceExport),map=read(path.join(exported,'map.json')),archive=fs.readFileSync(path.join(exported,map.source.preservedArchive));
   if(hash(archive)!==terrain.mapSha256||map.source.sha256!==terrain.mapSha256||pathing.sourceSha256!==terrain.mapSha256||receipt.mapSha256!==undefined&&receipt.mapSha256!==terrain.mapSha256)throw Error('Map source SHA mismatch');
   const originalScript=fs.readFileSync(path.join(source,'Assets/Scripts/Main.js'),'utf8');
-  if(!originalScript.includes('var originalMapPathing=')||!originalScript.includes('originalDoodadActors')||!originalScript.includes('Assets/OriginalUnits/'))throw Error('Expected combined terrain/doodad/unit/pathing runtime');
+  const unitReceipt=read(path.join(source,'unit-scene-sources.json'));
+  if(!originalScript.includes('var originalMapPathing=')||!originalScript.includes('originalDoodadActors')||unitReceipt.mapSha256!==map.source.sha256||!Number.isInteger(unitReceipt.placements)||unitReceipt.placements<0)throw Error('Expected combined terrain/doodad/unit/pathing runtime');
   const config=read(path.join(project,'project.json')),mainFile=path.join(project,config.startupScript);
   if(config.mainScene!=='Assets/Scenes/Main.mscene'||config.startupScript!=='Assets/Scripts/Main.js')throw Error('Expected Frostbound game project');
   const prefix=gameScriptPrefix(gameSource,fs.readFileSync(mainFile,'utf8')),rewrite=text=>text.replaceAll('Assets/',relative+'/');
@@ -72,12 +73,13 @@ export function installMapPackage(source,project,id,title,{register=true,sharedR
   if(previewSource)for(const name of ['MapPreview.png',previewSource.member]){const bytes=fs.readFileSync(path.join(output,'Textures',name));records.push({path:relative+'/Textures/'+name,storage:'local',sourcePath:previewSource.member,sourceSha256:previewSource.sourceSha256,sha256:hash(bytes),bytes:bytes.length});}
   const preview=Array.from({length:256},(_,i)=>{const x=Math.min(grid.size[0]-1,Math.floor((i%16+.5)*grid.size[0]/16)),y=Math.min(grid.size[1]-1,Math.floor((15-Math.floor(i/16)+.5)*grid.size[1]/16));return grid.getCell(x,y)&2?1:0;});
   const entry={id,title,description:'Warcraft III 原地图\n地形、水面、装饰与单位动画\n场景运行；对局规则接入中',runtime:'warcraft-scene',gameplay:false,scene:relative+'/Scenes/Main.mscene',script:relative+'/Scripts/Main.js',sourceSha256:map.source.sha256,preview};
+  if(!map.units)entry.description='Warcraft III 原地图\n地形、水面与装饰\n无编辑器单位放置；脚本生成单位与对局规则待接入';
   if(previewSource)entry.previewImage=relative+'/Textures/MapPreview.png';
   const unitInitialization=attachUnitInitialization(project,relative,records,map.source.members['war3map.j']?.sha256);
   const bindingsFile=path.join(output,'Data/OriginalUnitBindings.json'),bindings=fs.existsSync(bindingsFile)?read(bindingsFile):null;
   const maps=[...catalog,entry],script=register?prefix+composeGameModules(gameSource,project,maps):null;if(script)new vm.Script(script,{filename:mainFile});
   const installer={path:'scripts/install-frost-map-package.mjs',sha256:hash(fs.readFileSync(fileURLToPath(import.meta.url))),previewExporterSha256:hash(fs.readFileSync(fileURLToPath(new URL('./export-frost-map-preview.py',import.meta.url))))};
-  const provenance={version:1,id,unitInitialization,source:map.source,installedSource:relative+'/Source/original'+path.extname(map.source.preservedArchive),sourceInfo:map.info,installer,previewSource,conversion:{coordinateScale:terrain.coordinateScale,axes:terrain.axes},capabilities:{terrain:true,doodads:true,units:true,animation:true,basePathing:true,gameplay:false,jass:false},assets:records};
+  const provenance={version:1,id,unitInitialization,source:map.source,installedSource:relative+'/Source/original'+path.extname(map.source.preservedArchive),sourceInfo:map.info,diagnostics:map.diagnostics||[],installer,previewSource,conversion:{coordinateScale:terrain.coordinateScale,axes:terrain.axes},capabilities:{terrain:true,doodads:true,units:unitReceipt.placements>0,animation:true,basePathing:true,gameplay:false,jass:false},assets:records};
   if(bindings)provenance.unitBindings={sourceSha256:bindings.sourceSha256,placements:bindings.placements.length,definitions:Object.keys(bindings.definitions).length,data:relative+'/Data/OriginalUnitBindings.json',generator:'scripts/warcraft_unit_bindings.py',generatorSha256:hash(fs.readFileSync(fileURLToPath(new URL('./warcraft_unit_bindings.py',import.meta.url))))};
   if(shared){provenance.sharedAssetsVersion=1;installer.sharedAssetsSha256=hash(fs.readFileSync(fileURLToPath(new URL('./frost-shared-map-assets.mjs',import.meta.url))));}
   write(path.join(output,'manifest.json'),json(provenance));

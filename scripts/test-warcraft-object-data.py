@@ -3,11 +3,11 @@ import copy
 import struct
 import unittest
 from unittest.mock import patch
-from warcraft_object_data import parse_objects, unit_tables
+from warcraft_object_data import parse_objects, unit_tables, doodad_tables
 from warcraft_unit_bindings import ini
 
 
-def objects(original=(), custom=(), version=1):
+def objects(original=(), custom=(), version=1, levels=None):
     result = struct.pack('<i', version)
     for table in [original, custom]:
         result += struct.pack('<i', len(table))
@@ -15,18 +15,32 @@ def objects(original=(), custom=(), version=1):
             result += base.encode() + target.encode() + struct.pack('<i', len(changes))
             for field, kind, value in changes:
                 result += field.encode() + struct.pack('<i', kind)
+                if levels is not None: result += struct.pack('<2i', *levels.get(field, (0, 0)))
                 result += struct.pack('<i', value) if kind == 0 else struct.pack('<f', value) if kind in (1, 2) else value.encode() + b'\0'
                 result += b'last'
     return result
 
 
 class ObjectDataTests(unittest.TestCase):
+    def test_doodad_variations_and_destructable_inheritance(self):
+        tables = {'Doodads':{'AOob':{'file':'old.mdl','numVar':'3','vertR01':'255','vertR02':'255'}},'DestructableData':{'ATtr':{'file':'tree.mdl','colorR':'255'}},'DoodadMetaData':{'dfil':{'field':'file','repeat':'0'},'dvr1':{'field':'vertR','repeat':'10'}},'DestructableMetaData':{'bvcr':{'field':'colorR'}}}
+        members = {'war3map.w3b':objects(custom=[('ATtr','B001',[('bvcr',0,190)])]),'war3map.w3d':objects(custom=[('AOob','D001',[('dfil',3,'custom.mdx'),('dvr1',0,100),('xxxx',0,8)])],levels={'dvr1':(2,0)})}
+        with patch('warcraft_object_data.rows', side_effect=lambda key:copy.deepcopy(tables[key])):
+            result=doodad_tables(lambda path:path.split('/')[-1][:-4],members,{})
+        self.assertEqual(result['destructables']['B001']['colorR'],'190')
+        self.assertEqual(result['definitions']['D001']['file'],'custom.mdx')
+        self.assertEqual(result['definitions']['D001']['vertR01'],'255')
+        self.assertEqual(result['definitions']['D001']['vertR02'],'100')
+        self.assertEqual(result['overrides'][-1]['preserved'],['xxxx'])
+        with self.assertRaises(ValueError):parse_objects(members['war3map.w3d'][:-1],'doodad',extended=True)
+
     def test_source_profile_accepts_unassigned_item_description_lines(self):
         profile = ini(b'[item]\nName=Medusa Pebble\nPurchase Medusa Pebble\nTip=Purchase\n')
         self.assertEqual(profile['item']['Name'], 'Medusa Pebble')
         self.assertEqual(profile['item']['Tip'], 'Purchase')
 
     def test_versions_types_and_source_markers(self):
+        self.assertEqual(parse_objects(objects(custom=[('hfoo','H001',[('unam',3,'')])]), 'unit')[0]['changes'], [('unam','')])
         for version in [1, 2]:
             raw = objects(custom=[('hfoo','H001',[('uhpm',0,300),('usca',1,1.5),('umvh',2,35.0),('unam',3,'名字')])],version=version)
             row = parse_objects(raw, 'unit')[0]

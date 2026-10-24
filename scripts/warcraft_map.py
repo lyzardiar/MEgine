@@ -129,7 +129,7 @@ def pathing_at(terrain, pathing, world_x, world_y):
     return pathing['cells'][y * width + x] if 0 <= x < width and 0 <= y < height else None
 
 
-def parse_info(data):
+def parse_info(data, allow_missing_editor_tables=False):
     r = Reader(data, 'war3map.w3i')
     version = r.integer()
     if version not in (18, 25):
@@ -151,6 +151,12 @@ def parse_info(data):
         result.update(useTerrainFog=r.integer(), fogHeight=r.values('2f'), fogDensity=r.values('f')[0], fogColor=list(r.take(4)), globalWeather=r.unsigned(), soundEnvironment=r.text(), lightEnvironmentTileset=r.code(1), waterVertexColor=list(r.take(4)))
     result['players'] = [dict(id=r.integer(), type=r.integer(), race=r.integer(), fixedStartPosition=r.integer(), name=r.text(), startLocation=r.values('2f'), allyLowPriorities=r.unsigned(), allyHighPriorities=r.unsigned()) for _ in range(r.count(33))]
     result['forces'] = [dict(flags=r.unsigned(), playerMask=r.unsigned(), name=r.text()) for _ in range(r.count(9))]
+    if allow_missing_editor_tables and data[r.offset:] in (b'', b'\xff'):
+        # Some distributed maps omit the editor-only tail. Keep its absence explicit.
+        result.update(upgradeAvailability=[], techAvailability=[], randomUnitTables=[], omittedEditorTables=True, editorTableTail=data[r.offset:].hex())
+        if version == 25:
+            result['randomItemTables'] = []
+        return result
     result['upgradeAvailability'] = [dict(playerFlags=r.unsigned(), id=r.code(), level=r.integer(), availability=r.integer()) for _ in range(r.count(16))]
     result['techAvailability'] = [dict(playerFlags=r.unsigned(), id=r.code()) for _ in range(r.count(8))]
     result['randomUnitTables'] = []
@@ -203,7 +209,14 @@ def load_map(source):
             members[name] = read_archive(archive, name)
         except FileNotFoundError:
             pass
-    terrain, info, pathing = parse_terrain(members['war3map.w3e']), parse_info(members['war3map.w3i']), parse_pathing(members['war3map.wpm'])
+    script_path = 'war3map.j'
+    if script_path not in members:
+        try:
+            members[script_path] = read_archive(archive, 'Scripts\\war3map.j')
+            script_path = 'Scripts/war3map.j'
+        except FileNotFoundError:
+            pass
+    terrain, info, pathing = parse_terrain(members['war3map.w3e']), parse_info(members['war3map.w3i'], allow_missing_editor_tables=True), parse_pathing(members['war3map.wpm'])
     if pathing['size'] != [n * 4 for n in terrain['tileSize']]:
         raise ValueError('WPM dimensions must be four cells per W3E tile on both axes')
     from warcraft_doodads import parse_doodads
@@ -211,6 +224,8 @@ def load_map(source):
     from warcraft_units import parse_units
     units = parse_units(members['war3mapUnits.doo']) if 'war3mapUnits.doo' in members else None
     diagnostics = []
+    if info.get('omittedEditorTables'):
+        diagnostics.append(dict(file='war3map.w3i', severity='warning', message='Map info ends after forces; upgrade, technology and random editor tables are absent', action='Preserve source bytes; import available geometry and player metadata only'))
     try:
         strings = parse_strings(members.get('war3map.wts', b''))
     except (ValueError, UnicodeDecodeError) as error:
@@ -219,9 +234,9 @@ def load_map(source):
     sha = lambda data: hashlib.sha256(data).hexdigest()
     result = dict(schema='mengine.warcraft-map', schemaVersion=1, name=resolve_string(info['name'], strings),
                   source=dict(path=str(source.resolve()), sha256=sha(raw), bytes=len(raw), mpqOffset=offset,
-                              members={name: dict(sha256=sha(data), bytes=len(data)) for name, data in members.items()}),
+                              members={name: dict(sha256=sha(data), bytes=len(data), archivePath=script_path if name == 'war3map.j' else name) for name, data in members.items()}),
                   terrain=terrain, pathing=pathing, info=info, strings=strings, doodads=doodads, units=units, diagnostics=diagnostics,
-                  coverage=dict(terrain='decoded', pathing='decoded', info='decoded', strings='preserved-unparsed' if diagnostics else 'decoded' if 'war3map.wts' in members else 'absent',
+                  coverage=dict(terrain='decoded', pathing='decoded', info='decoded-with-omitted-editor-tables' if info.get('omittedEditorTables') else 'decoded', strings='preserved-unparsed' if any(d['file'] == 'war3map.wts' for d in diagnostics) else 'decoded' if 'war3map.wts' in members else 'absent',
                                 doodads='decoded' if doodads is not None else 'absent',
                                 destructibleOverrides='preserved-unparsed' if 'war3map.w3b' in members else 'absent',
                                 doodadOverrides='preserved-unparsed' if 'war3map.w3d' in members else 'absent',

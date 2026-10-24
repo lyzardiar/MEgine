@@ -109,6 +109,31 @@ class MapTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 parse(raw + b'\0')
 
+    def test_explicit_omitted_editor_tables_and_nested_script_source(self):
+        raw, members = map_fixture()
+        info = members['war3map.w3i']
+        end = info.index(text('Force')) + len(text('Force'))
+        for tail in [b'', b'\xff']:
+            omitted = info[:end] + tail
+            with self.assertRaises(ValueError): parse_info(omitted)
+            decoded = parse_info(omitted, allow_missing_editor_tables=True)
+            self.assertTrue(decoded['omittedEditorTables'])
+            self.assertEqual(decoded['editorTableTail'], tail.hex())
+            self.assertEqual(decoded['forces'][0]['playerMask'], 129)
+            self.assertEqual(decoded['randomItemTables'], [])
+        for tail in [b'\0', b'\xff\xff', b'\0\0\0']:
+            with self.assertRaises(ValueError): parse_info(info[:end]+tail, allow_missing_editor_tables=True)
+        members['war3map.w3i'] = info[:end] + b'\xff'
+        members['Scripts\\war3map.j'] = members.pop('war3map.j')
+        with tempfile.TemporaryDirectory() as folder:
+            source = Path(folder) / 'optimized.w3x'
+            source.write_bytes(build_archive(members))
+            data, actual = load_map(source)
+            self.assertEqual(data['coverage']['info'], 'decoded-with-omitted-editor-tables')
+            self.assertEqual(data['coverage']['strings'], 'decoded')
+            self.assertEqual(data['source']['members']['war3map.j']['archivePath'], 'Scripts/war3map.j')
+            self.assertEqual(actual['war3map.j'], members['Scripts\\war3map.j'])
+
     def test_reject_versions_counts_dimensions_and_nonfinite(self):
         for parse, raw, offset in [(parse_terrain, terrain_fixture(), 4), (parse_pathing, pathing_fixture(), 4), (parse_info, info_fixture(25), 0)]:
             with self.assertRaisesRegex(ValueError, 'unsupported version'):

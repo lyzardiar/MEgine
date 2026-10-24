@@ -1,4 +1,4 @@
-"""Author: MiYu. Resolve classic unit/item overrides into source tables for map visuals and selection.
+"""Author: MiYu. Resolve classic object overrides into source tables for map visuals and selection.
 
 Binary layout follows the pinned Warcraft map format reference in third_party/warcraft-map-format.
 Fields outside the loaded source tables remain preserved in the original archive.
@@ -10,7 +10,7 @@ from warcraft_map import Reader, resolve_string
 rows = importlib.import_module('import-frost-wisp-rules').rows
 
 
-def parse_objects(raw, name):
+def parse_objects(raw, name, extended=False):
     r = Reader(raw, name)
     version = r.integer()
     if version not in (1, 2):
@@ -23,18 +23,47 @@ def parse_objects(raw, name):
                 target = base
             elif target == '\0' * 4:
                 r.fail('custom object has an empty ID')
-            changes, end_markers = [], []
-            for _ in range(r.count(16)):
+            changes, end_markers, levels = [], [], []
+            for _ in range(r.count(21 if extended else 13)):
                 field, kind = r.code(), r.integer()
+                levels.append(r.values('2i') if extended else [0, 0])
                 if kind == 0: value = r.integer()
                 elif kind in (1, 2): value = r.values('f')[0]
                 elif kind == 3: value = r.text()
                 else: r.fail('unsupported object value type ' + str(kind))
                 end_markers.append(r.code())
                 changes.append((field, value))
-            result.append(dict(base=base, id=target, custom=custom, changes=changes, endMarkers=end_markers))
+            result.append(dict(base=base, id=target, custom=custom, changes=changes, endMarkers=end_markers, levels=levels))
     r.finish()
     return result
+
+
+def doodad_tables(read, members, strings):
+    definitions = rows(read('Doodads/Doodads.slk'))
+    destructables = rows(read('Units/DestructableData.slk'))
+    records = []
+    for file, table, metadata_path in [('war3map.w3b', destructables, 'Units/DestructableMetaData.slk'), ('war3map.w3d', definitions, 'Doodads/DoodadMetaData.slk')]:
+        if file not in members: continue
+        metadata = rows(read(metadata_path))
+        for obj in parse_objects(members[file], file, extended=file.endswith('.w3d')):
+            base, target = obj['base'], obj['id']
+            if base not in table: raise ValueError('Missing base object ' + base + ' for ' + target)
+            if obj['custom']:
+                if target in table: raise ValueError('Duplicate custom object ' + target)
+                table[target] = copy.deepcopy(table[base])
+            applied, preserved = [], []
+            for (field, value), (level, pointer) in zip(obj['changes'], obj['levels']):
+                meta = metadata.get(field, {})
+                key = meta.get('field')
+                if key and pointer == 0:
+                    if int(meta.get('repeat', '0')):
+                        if level < 1: raise ValueError('Invalid doodad variation for ' + field)
+                        key += f'{level:02}'
+                    table[target][key] = resolve_string(str(value), strings); applied.append(field)
+                else: preserved.append(field)
+            records.append(dict(source=file, base=base, id=target, applied=applied, preserved=preserved))
+    definitions.update(destructables)
+    return dict(definitions=definitions, destructables=destructables, overrides=records)
 
 
 def unit_tables(read, members, strings):

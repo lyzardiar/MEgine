@@ -64,7 +64,8 @@ def build(export, base_project, game, output, sampler, metadata_reader, resource
     raw=original.read_bytes()
     if shared.sha(raw)!=source['source']['sha256']:raise ValueError('Changed source map')
     data,members=load_map(original)
-    if data['units'] is None:raise ValueError('Map has no editor unit placements')
+    has_editor_placements=data['units'] is not None
+    if not has_editor_placements:data['units']=dict(units=[])
     base_receipt=json.loads((base_project/'terrain-sources.json').read_bytes())
     if base_receipt['mapSha256']!=data['source']['sha256']:raise ValueError('Base project belongs to another map')
     if (base_project/'unit-placements.json').exists():raise ValueError('Base project already contains unit placements')
@@ -134,7 +135,7 @@ def build(export, base_project, game, output, sampler, metadata_reader, resource
         receipt=dict(mapSha256=data['source']['sha256'],placements=len(placements),rendered=sum(p['rendered'] for p in placements),addedEntities=len(entities)-first,groups=len(groups),sources=list(records.values()),models=assets.records,sourceCollections=assets.collection_hashes,
             baseProject=str(base_project),baseSceneSha256=shared.sha((base_project/'Assets/Scenes/Main.mscene').read_bytes()),baseScriptSha256=shared.sha((base_project/'Assets/Scripts/Main.js').read_bytes()),
             tools=[dict(path=str(p),sha256=shared.sha(p.read_bytes())) for p in [Path(__file__),Path(shared.__file__),ROOT/'scripts/warcraft_units.py',ROOT/'scripts/frost-original-doodads-client.js',sampler,metadata_reader,sampler.with_name('Wc3ModelViewer.Core.dll'),metadata_reader.with_name('Wc3ModelViewer.Core.dll')]],
-            objectOverrides=definitions['overrides'],coverage=dict(editorPlacements=True,sourceModels=True,sampledStand=True,unitItemObjectData=True,gameplay=False,originalRuntimeParity=False),limitations=['Editor Z and source movement height are used; runtime terrain placement and JASS execution are pending','Stand preview uses source sampled clip loops; unit animation orders and random scheduling are pending','Object fields outside visual and selection tables, abilities and full gameplay remain preserved but unexecuted; random placements require resolution','Source shadows, collision, pathing, drops and runtime creation are pending'])
+            objectOverrides=definitions['overrides'],coverage=dict(editorPlacements=has_editor_placements,sourceModels=True,sampledStand=True,unitItemObjectData=True,gameplay=False,originalRuntimeParity=False),limitations=['Editor Z and source movement height are used; runtime terrain placement and JASS execution are pending','Stand preview uses source sampled clip loops; unit animation orders and random scheduling are pending','Object fields outside visual and selection tables, abilities and full gameplay remain preserved but unexecuted; random placements require resolution','Source shadows, collision, pathing, drops and runtime creation are pending']+([] if has_editor_placements else ['Map has no editor unit placements; script-created units require supported JASS initialization and source definitions']))
         receipt['generatedFiles']=[dict(path=p.relative_to(project).as_posix(),sha256=shared.sha(p.read_bytes())) for p in sorted((project/'Assets/OriginalUnits').rglob('*')) if p.is_file()]
         (project/'unit-scene-sources.json').write_bytes(shared.encode(receipt));os.rename(project,output);return receipt
     finally:

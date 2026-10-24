@@ -88,7 +88,7 @@ def build_bindings(data, source_read, project, prefix='Assets/OriginalUnits/Sele
         a,r,g,b=map(int,misc['Color'+key].split(','));colors[key.lower()]=[r/255,g/255,b/255,a/255]
     players=sorted((p for p in (data.get('info') or {}).get('players',[]) if p['type']==1),key=lambda p:p['id'])
     tools=[dict(path='scripts/'+p.name,sha256=sha(p.read_bytes())) for p in [Path(__file__),Path(converter.__file__),Path(__file__).with_name('warcraft_selection_ground.py')]]
-    result=dict(version=1,mapSha256=data['source']['sha256'],sourceSha256=data['source']['members']['war3mapUnits.doo']['sha256'],placements=placements,definitions=definitions,localPlayer=players[0]['id'] if players else 0,selection=dict(mesh=mesh,scaleFactor=float(misc['ScaleFactor']),sizes=sizes,colors=colors),sources=list(sources.values()),tools=tools)
+    result=dict(version=1,mapSha256=data['source']['sha256'],sourceSha256=data['source']['members'].get('war3mapUnits.doo',{}).get('sha256'),placements=placements,definitions=definitions,localPlayer=players[0]['id'] if players else 0,selection=dict(mesh=mesh,scaleFactor=float(misc['ScaleFactor']),sizes=sizes,colors=colors),sources=list(sources.values()),tools=tools)
     if object_definitions is not None: result['objectOverrides'] = object_definitions['overrides']
     result['selection']['groundSources']=ground_sources
     write('Assets/Data/OriginalUnitBindings.json',encode(result));return result

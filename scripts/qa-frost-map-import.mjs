@@ -10,12 +10,14 @@ const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'
 assert.ok(process.env.MENGINE_EDITOR_EXECUTABLE,'Set MENGINE_EDITOR_EXECUTABLE');
 const sourceMap=process.argv[2];assert.ok(sourceMap,'Provide a .w3m/.w3x not installed in the catalog');
 const cacheProject=process.argv.includes('--cache-project')?path.resolve(process.argv[process.argv.indexOf('--cache-project')+1]):null;
+let expectedMapTitle='任意岛屿';
 const label='arbitrary-map-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
 fs.cpSync(source,sample,{recursive:true,filter:file=>!['SourceAssets','.mengine','Builds'].includes(path.basename(file))&&!path.basename(file).startsWith('user-v')&&!path.basename(file).startsWith('.import-')});
 if(cacheProject){
   const sha=hash(fs.readFileSync(sourceMap)),directory=path.join(cacheProject,'Assets/Maps');
-  const id=fs.readdirSync(directory).find(name=>name.startsWith('user-v2-')&&JSON.parse(fs.readFileSync(path.join(directory,name,'entry.json'),'utf8')).sourceSha256===sha);assert.ok(id,'No matching completed map cache');
+  const id=fs.readdirSync(directory).filter(name=>name.startsWith('user-v2-')&&JSON.parse(fs.readFileSync(path.join(directory,name,'entry.json'),'utf8')).sourceSha256===sha).sort((a,b)=>fs.statSync(path.join(directory,b,'entry.json')).mtimeMs-fs.statSync(path.join(directory,a,'entry.json')).mtimeMs)[0];assert.ok(id,'No matching completed map cache');
+  expectedMapTitle=JSON.parse(fs.readFileSync(path.join(directory,id,'entry.json'),'utf8')).title;
   fs.cpSync(path.join(directory,id),path.join(sample,'Assets/Maps',id),{recursive:true});
   const manifest=JSON.parse(fs.readFileSync(path.join(directory,id,'manifest.json'),'utf8'));
   for(const record of manifest.assets.filter(r=>r.storage==='shared')){const input=path.resolve(cacheProject,record.path),target=path.resolve(sample,record.path);assert.ok(input.startsWith(path.join(cacheProject,'Assets','WarcraftShared')+path.sep)&&target.startsWith(path.join(sample,'Assets','WarcraftShared')+path.sep));assert.equal(hash(fs.readFileSync(input)),record.sha256);fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(input,target);}
@@ -38,6 +40,14 @@ async function key(key){await input({keys:[key]});await input({});await step(6);
 async function click(name){const pointer=clientWorldFixture(await snapshot()).canvasPoint(name,[1280,720],false);await input({pointer,buttons:[0]});await input({pointer});await step(6);}
 async function until(predicate,seconds=120){const start=Date.now();for(;;){await step();const s=await snapshot();if(await predicate(s))return s;if(Date.now()-start>seconds*1000)throw Error('Native import timed out');await sleep(300);}}
 async function capture(name){for(let i=0;;i++)try{const shot=await query('view.screenshot',{target:'game',maxSize:1280,includeNativeProfile:true});fs.writeFileSync(path.join(out,label+'-'+name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));report.frames.push({name,profile:shot.nativeProfile});return;}catch(error){if(i>20||!/NOT_READY|canvas is not available yet/.test(error.message))throw error;await sleep(500);}}
+function checkImportedScene(world,receipt){
+  assert.equal(receipt.sourceSha256,hash(fs.readFileSync(sourceMap)));
+  const manifest=JSON.parse(fs.readFileSync(path.join(sample,'Assets/Maps',receipt.id,'manifest.json'),'utf8'));
+  assert.ok(world.entities.some(e=>e.components.Camera3D)&&world.entities.some(e=>e.components.MeshRenderer));
+  if(manifest.capabilities.units)assert.ok(world.entities.some(e=>e.name.startsWith('Unit-')));
+  else assert.equal(manifest.unitBindings?.placements,0,'maps without editor units retain an explicit empty placement receipt');
+  report.sourceCapabilities=manifest.capabilities;report.sourceDiagnostics=manifest.diagnostics??[];report.map=receipt.id;
+}
 async function waitForMap(cached){
   const start=Date.now();let capturedProgress=false,capturedEntering=false;
   const loaded=await until(async s=>{
@@ -47,7 +57,7 @@ async function waitForMap(cached){
     if(t.qaMap.pending){
       assert.equal(world.visible('Map loading back'),true);assert.match(world.entity('Map loading status').components.Text.text,/正在进入地图/);
       assert.equal(world.entity('mapOpen label').components.Text.text,'正在加载地图…');assert.match(world.entity('Map description').components.Text.text,/正在加载.*地图/);
-      assert.equal(world.entity('Map name').components.Text.text,'任意岛屿');assert.equal(world.entity('mapStart label').components.Text.text,'加载地图');
+      assert.equal(world.entity('Map name').components.Text.text,expectedMapTitle);assert.equal(world.entity('mapStart label').components.Text.text,'加载地图');
       report[cached?'cacheEvents':'coldEvents']=t.qaProgress;await capture(cached?'cache-entering':'cold-entering');capturedEntering=true;
     }else if(t.qaLoading.progress?.value>0&&!capturedProgress){
       assert.equal(world.visible('Map loading fill'),true);assert.equal(world.entity('Map loading fill').components.RectTransform.size_delta[0],world.entity('Map loading back').components.RectTransform.size_delta[0]*t.qaLoading.progress.value);
@@ -70,14 +80,14 @@ try{
   // Input remains live while the converter is processing the file.
   await click('map4 box');assert.equal((await snapshot()).entities.find(e=>e.name==='Map name').components.Text.text,'冬落围城');
   let s=await waitForMap(false);
-  report.entities=s.entities.length;assert.ok(s.entities.some(e=>e.name.startsWith('Doodad-'))&&s.entities.some(e=>e.name.startsWith('Unit-')));await capture('loaded');
-  const cold=receipts().find(r=>r.cached===false);assert.ok(cold);assert.equal(cold.sourceSha256,hash(fs.readFileSync(sourceMap)));assert.ok(!JSON.parse(fs.readFileSync(path.join(sample,'Assets/Maps/catalog.json'),'utf8')).maps.some(m=>m.id===cold.id));report.map=cold.id;
-  await key('Escape');s=await snapshot();assert.equal(s.entities.find(e=>e.name==='Map name').components.Text.text,'任意岛屿');assert.equal(telemetry(s).qaImport.cached,false);
+  report.entities=s.entities.length;await capture('loaded');
+  const cold=receipts().find(r=>r.cached===false);assert.ok(cold);checkImportedScene(s,cold);assert.ok(!JSON.parse(fs.readFileSync(path.join(sample,'Assets/Maps/catalog.json'),'utf8')).maps.some(m=>m.id===cold.id));
+  await key('Escape');s=await snapshot();assert.equal(s.entities.find(e=>e.name==='Map name').components.Text.text,expectedMapTitle);assert.equal(telemetry(s).qaImport.cached,false);
   report.checks.push('Native file-picker cancellation, cold conversion and responsive menu');
   }else await key('F8');
   // One input tick keeps even a fast cache hit observable before the scene request is consumed.
   const pointer=clientWorldFixture(await snapshot()).canvasPoint('mapOpen box',[1280,720],false);await input({pointer,buttons:[0]});await execute('playback.input',{keys:[],buttons:[],viewport:[1280,720]});
-  const cachedScene=await waitForMap(true);report.entities=cachedScene.entities.length;assert.ok(receipts().some(r=>r.cached===true));await key('Escape');assert.equal(telemetry(await snapshot()).qaImport.cached,true);assert.equal(clientWorldFixture(await snapshot()).visible('Map loading back'),false);
+  const cachedScene=await waitForMap(true);report.entities=cachedScene.entities.length;const cached=receipts().find(r=>r.cached===true);assert.ok(cached);checkImportedScene(cachedScene,cached);await capture('cache-loaded');await key('Escape');assert.equal(telemetry(await snapshot()).qaImport.cached,true);assert.equal(clientWorldFixture(await snapshot()).visible('Map loading back'),false);
   report.checks.push('Verified cache import without Play restart; loading bar and labels precede scene replacement; return clears the bar');
   await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);report.errors=(await query('console.get_logs',{limit:300})).filter(e=>e.level==='error');assert.equal(report.errors.length,0,JSON.stringify(report.errors));report.passed=true;
   console.log(JSON.stringify({passed:true,label,entities:report.entities,checks:report.checks}));

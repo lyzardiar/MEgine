@@ -30,6 +30,20 @@ def fixture(version):
 
 
 class DoodadTests(unittest.TestCase):
+    def test_missing_model_variation_uses_source_base_model(self):
+        resolve=importlib.import_module('build-frost-original-doodads').resolve_model_path
+        row=dict(file='custom.mdl',numVar='3')
+        seen=[]
+        def read(path):
+            seen.append(path)
+            if path!='custom.mdx':raise FileNotFoundError(path)
+            return b'MDLX'
+        self.assertEqual(resolve(row,2,read),'custom.mdx')
+        self.assertEqual(seen,['custom2.mdx','custom.mdx'])
+        self.assertEqual(resolve(row,2,lambda path:b'MDLX'),'custom2.mdx')
+        def corrupt(path):raise ValueError('corrupt MPQ')
+        with self.assertRaisesRegex(ValueError,'corrupt MPQ'):resolve(row,2,corrupt)
+
     def test_versions_and_exact_fields(self):
         for version in (7,8):
             raw=fixture(version);data=parse_doodads(raw);d=data['doodads'][0]

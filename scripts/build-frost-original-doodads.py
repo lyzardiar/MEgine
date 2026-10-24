@@ -14,6 +14,7 @@ import tempfile
 from warcraft_map import load_map
 from warcraft_doodads import placement_kind, named_sequence_index, stand_sequence_index, stand_sequence_candidates, sequence_weight, MsvcRandom, mdx_sequence_rarities
 from warcraft_mpq import mpyq, read_archive, read_asset_source
+from warcraft_object_data import doodad_tables
 
 terrain_builder = importlib.import_module('build-frost-original-terrain')
 converter = importlib.import_module('convert-warcraft-assets')
@@ -37,6 +38,17 @@ def model_path(row,variation):
     count=int(row['numVar'])
     if variation<0 or count<1:raise ValueError('Invalid source model variation')
     return path+(str(min(variation,count-1)) if count>1 else '')+'.mdx'
+
+
+def resolve_model_path(row,variation,read):
+    path=model_path(row,variation)
+    try:read(path)
+    except FileNotFoundError:
+        fallback=model_path(dict(row,numVar='1'),0)
+        if fallback==path:raise
+        read(fallback)
+        return fallback
+    return path
 
 
 def placement_clip(clips,dead=False,rand=None):
@@ -208,7 +220,6 @@ def build(export,game,output,sampler,metadata_reader,animation_seed=1,resource_c
     data,members=load_map(original)
     if data['doodads'] is None:raise ValueError('Map has no doodad placements')
     if data['doodads']['terrainDoodads']:raise ValueError('Terrain doodad deformation requires a dedicated placement pass')
-    if any(name in members for name in ['war3map.w3b','war3map.w3d']):raise ValueError('Map object overrides must be resolved before scene generation')
     output.parent.mkdir(parents=True,exist_ok=True);work=Path(tempfile.mkdtemp(prefix='.doodad-scene-',dir=output.parent));archives=[]
     try:
         project=work/'project';terrain_builder.build(export,game,project,resource_cache=resource_cache)
@@ -223,7 +234,7 @@ def build(export,game,output,sampler,metadata_reader,animation_seed=1,resource_c
             destination=project/'SourceAssets'/resolved;destination.parent.mkdir(parents=True,exist_ok=True);destination.write_bytes(value)
             source_records[normalized]=dict(path=resolved,archive=archive_name,sha256=sha(value),bytes=len(value));source_cache[normalized]=value
             return value
-        definitions=rows(read('Doodads/Doodads.slk'));destructables=rows(read('Units/DestructableData.slk'));definitions.update(destructables)
+        object_tables=doodad_tables(read,members,data['strings']);definitions=object_tables['definitions'];destructables=object_tables['destructables']
         assets=SceneAssets(project,read,sampler,metadata_reader,resource_cache=resource_cache)
         scene=json.loads((project/'Assets/Scenes/Main.mscene').read_bytes());entities=scene['world']['entities'];groups={};placements=[];animation_rand=MsvcRandom(animation_seed)
         bindings={};definitions_cache={};animation_definitions=[];actors=[]
@@ -248,7 +259,7 @@ def build(export,game,output,sampler,metadata_reader,animation_seed=1,resource_c
             entities.append(item);return item['entity']
         for index,d in enumerate(data['doodads']['doodads']):
             if progress:progress(index,len(data['doodads']['doodads']))
-            row=definitions[d['id']];model=assets.prepare(model_path(row,d['variation']));dead=d['id'] in destructables and d['life']==0
+            row=definitions[d['id']];model=assets.prepare(resolve_model_path(row,d['variation'],read));dead=d['id'] in destructables and d['life']==0
             kind=placement_kind(d['id'] in destructables,d['flags'])
             ci,held=placement_clip(model['clips'],dead,animation_rand if kind!='suppressed' else MsvcRandom());clip=model['clips'][ci]
             name=f'Doodad-{index}-{d["id"]}-{d["editorId"]}';parent=entity(name,dict(Transform=placement_transform(d)),active=kind!='suppressed')
@@ -287,7 +298,7 @@ def build(export,game,output,sampler,metadata_reader,animation_seed=1,resource_c
         (project/'doodad-placements.json').write_bytes(encode(placements))
         tools=[Path(__file__),Path(__file__).with_name('warcraft_doodads.py'),Path(__file__).with_name('frost-original-doodads-client.js'),Path(nodes.__file__),Path(converter.__file__),ROOT/'scripts/warcraft-node-metadata/Program.cs',ROOT/'scripts/warcraft-assets/Program.cs',*binaries]
         if progress:progress(len(placements),len(data['doodads']['doodads']))
-        result=dict(mapSha256=sha(raw),placements=len(placements),entities=len(entities),animatedGroups=len(groups),animatedParts=sum(len(g['names']) for g in groups.values()),models=assets.records,sources=list(source_records.values()),sourceCollections=assets.collection_hashes,tools=[dict(path=str(p),sha256=sha(p.read_bytes())) for p in tools],upstream=dict(repository=converter.UPSTREAM,commit=converter.COMMIT),coverage=dict(models=True,sampledAnimation=True,sampledEmitters=True,gameplay=False,originalRuntimeParity=False),limitations=['Sampled viewer particles and ribbons are not verified against the original game solver','Placement dispatch assumes source runtime mode zero; complete creation, collision, pathing and random animation scheduling remain unverified','Object overrides, terrain doodad deformation and model particles are rejected'])
+        result=dict(mapSha256=sha(raw),placements=len(placements),entities=len(entities),animatedGroups=len(groups),animatedParts=sum(len(g['names']) for g in groups.values()),models=assets.records,sources=list(source_records.values()),sourceCollections=assets.collection_hashes,objectOverrides=object_tables['overrides'],tools=[dict(path=str(p),sha256=sha(p.read_bytes())) for p in tools],upstream=dict(repository=converter.UPSTREAM,commit=converter.COMMIT),coverage=dict(models=True,sampledAnimation=True,sampledEmitters=True,gameplay=False,originalRuntimeParity=False),limitations=['Sampled viewer particles and ribbons are not verified against the original game solver','Placement dispatch assumes source runtime mode zero; complete creation, collision, pathing and random animation scheduling remain unverified','Object fields outside source visual tables remain unexecuted; terrain doodad deformation and model particles are rejected'])
         result['animationSeed']=animation_seed&0xffffffff
         result['scheduledActors']=len(actors);result['animationDefinitions']=len(animation_definitions)
         result['animatedParts']=sum(len(g['names']) for g in groups.values() if not g.get('effect'))+sum(len(a['parts']) for a in actors)
