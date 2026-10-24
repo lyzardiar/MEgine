@@ -29,29 +29,40 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
     type Entry = { e: E; t: NonNullable<ReturnType<typeof resolvedTransform>>; hierarchyOrder: number };
     let entries: Entry[] | undefined;
     let spineEntries: typeof entries, overlayEntries: typeof entries;
-    let sceneFrame: { transforms: ReturnType<typeof buildWorldTransforms>; entries: Entry[] } | undefined;
+    let sceneFrame: { transforms: ReturnType<typeof buildWorldTransforms>; entries: Entry[]; hitEntries(): Entry[] } | undefined;
     let sceneSelection: ReadonlySet<number> | undefined;
     let scenePrimary: number | null | undefined;
+    let sceneDeferred = false;
     let cameraInput: readonly unknown[] | undefined, camera: ResolvedGameCamera | null = null;
     const collectEntries = (include: (entity: E) => boolean = () => true, nodes?: ReturnType<typeof buildWorldTransforms>) => world.entities.flatMap((e, hierarchyOrder) => {
       if (!include(e) || !active(e.entity)) return [];
       const t = resolvedTransform(nodes ?? (transforms ??= readTransforms(world.entities)), e.entity);
       return t ? [{ e, t, hierarchyOrder }] : [];
     });
-    const sceneBrowserFrame = (selected: ReadonlySet<number>, primary: number | null = null) => {
-      if (!sceneFrame || !Object.is(scenePrimary, primary) || selected.size !== sceneSelection!.size || [...selected].some(id => !sceneSelection!.has(id))) {
+    const sceneBrowserFrame = (selected: ReadonlySet<number>, primary: number | null = null, deferHits = false) => {
+      if (!sceneFrame || sceneDeferred !== deferHits || !Object.is(scenePrimary, primary) || selected.size !== sceneSelection!.size || [...selected].some(id => !sceneSelection!.has(id))) {
+        const selection = new Set(selected);
+        const includeBrowser = (e: E, isSelected = selection.has(e.entity)) => { const c = e.components; return isSelected || !c.MeshRenderer || !!(c.Camera2D || c.Camera3D || c.SpineSkeleton || c.ParticleEmitter2D || c.ParticleEmitter3D || c.TrailRenderer2D); };
+        const resolveEntries = (values: Array<{ e: E; hierarchyOrder: number }>, nodes: ReturnType<typeof buildWorldTransforms>) => values.flatMap(({ e, hierarchyOrder }) => { const t = resolvedTransform(nodes, e.entity); return t ? [{ e, t, hierarchyOrder }] : []; });
         const candidates: Array<{ e: E; hierarchyOrder: number }> = [], roots: number[] = [];
         for (let hierarchyOrder = 0; hierarchyOrder < world.entities.length; hierarchyOrder++) {
-          const e = world.entities[hierarchyOrder], c = e.components, isSelected = selected.has(e.entity);
-          const include = isSelected || !c.MeshRenderer || !!(c.Camera2D || c.Camera3D || c.SpineSkeleton || c.ParticleEmitter2D || c.ParticleEmitter3D || c.TrailRenderer2D);
-          const isActive = (include || !!c.Light2D) && active(e.entity);
+          const e = world.entities[hierarchyOrder], c = e.components, isSelected = selection.has(e.entity), include = deferHits ? isSelected : includeBrowser(e, isSelected);
+          const needed = deferHits ? isSelected || !!(c.Camera2D || c.Camera3D || c.SpineSkeleton || c.ParticleEmitter2D || c.ParticleEmitter3D || c.TrailRenderer2D || c.Light2D || !c.MeshRenderer && (c.PointLight || c.SpotLight || c.DirectionalLight)) : include || !!c.Light2D;
+          const isActive = needed && active(e.entity);
           if (include && isActive) candidates.push({ e, hierarchyOrder });
           // Lighting can use a mesh-bearing Light2D; inactive selections still need Transform handles.
           if (isActive || isSelected || e.entity === primary) roots.push(e.entity);
         }
         const nodes = transforms ?? readTransforms(world.entities, roots);
-        const browserEntries = candidates.flatMap(({ e, hierarchyOrder }) => { const t = resolvedTransform(nodes, e.entity); return t ? [{ e, t, hierarchyOrder }] : []; });
-        sceneFrame = { transforms: nodes, entries: browserEntries }; sceneSelection = new Set(selected); scenePrimary = primary;
+        const browserEntries = resolveEntries(candidates, nodes);
+        let hitRows = deferHits ? undefined : browserEntries;
+        const hitEntries = () => {
+          if (hitRows) return hitRows;
+          const candidates = world.entities.flatMap((e, hierarchyOrder) => includeBrowser(e) && active(e.entity) ? [{ e, hierarchyOrder }] : []);
+          const hitNodes = transforms ?? readTransforms(world.entities, candidates.map(({ e }) => e.entity));
+          return hitRows = resolveEntries(candidates, hitNodes);
+        };
+        sceneFrame = { transforms: nodes, entries: browserEntries, hitEntries }; sceneSelection = selection; scenePrimary = primary; sceneDeferred = deferHits;
       }
       return sceneFrame;
     };

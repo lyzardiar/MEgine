@@ -1876,7 +1876,7 @@ export function Viewport(props: {
     }
 
     const selSet = isGame ? new Set<number>() : new Set(p.selectedIds?.length ? p.selectedIds : p.selected != null ? [p.selected] : []);
-    const nativeSceneBrowser = nativeSceneFrame?.meshPickToken ? displayedPresentation?.sceneBrowserFrame(selSet, p.selected) : undefined;
+    const nativeSceneBrowser = nativeSceneFrame?.meshPickToken ? displayedPresentation?.sceneBrowserFrame(selSet, p.selected, nativeSceneFrame.opaquePixels === true) : undefined;
     const transformSource = nativeGameReady && !(displayedPresentation?.hasSpine ?? p.entities.some(entity => entity.components.SpineSkeleton)) ? [] : p.entities;
     const worldTransforms = nativeSceneBrowser?.transforms ?? (transformSource.length && displayedPresentation ? displayedPresentation.worldTransforms() : editScene && sceneTransformsRef.current?.source === transformSource ? sceneTransformsRef.current.transforms : buildWorldTransforms(transformSource));
     sceneTransformsRef.current = editScene && !nativeSceneBrowser ? { source: transformSource, transforms: worldTransforms } : null;
@@ -2051,9 +2051,10 @@ export function Viewport(props: {
       const t = resolvedTransform(worldTransforms, e.entity);
       return t ? [{ e, t, hierarchyOrder }] : [];
     });
-    const spatialBounds = worldEntries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : entityBoundsRef.current(e.components, t, !!displayedPresentation));
+    const readSpatialBounds = (entries = worldEntries) => entries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : entityBoundsRef.current(e.components, t, !!displayedPresentation));
+    const spatialBounds = readSpatialBounds();
     const spatialCandidates = createViewportSpatialFrame(spatialIndexRef.current, spatialBounds, viewportPlanes(cam, vp.w / Math.max(1, vp.h)), !!displayedPresentation);
-    const prepareDrawn = (candidates = spatialCandidates()) => {
+    const prepareDrawn = (candidates = spatialCandidates(), entries = worldEntries) => {
     const drawn: Array<{
       e: Ent;
       t: TransformData;
@@ -2066,7 +2067,7 @@ export function Viewport(props: {
       renderKind: 'entity' | 'trail' | 'particle' | 'spine';
     }> = [];
     if (!isGame || gameCamera) for (const index of candidates) {
-      const { e, t, hierarchyOrder } = worldEntries[index];
+      const { e, t, hierarchyOrder } = entries[index];
       const pr = projectEntityCenter(t.position as Vec3);
       // Keep cameras/lights even if origin is barely off-screen — frustum/rays may still show
       const camComp = e.components.Camera3D ?? e.components.Camera2D;
@@ -2156,6 +2157,15 @@ export function Viewport(props: {
     const deferSceneHits = nativeSceneFrame?.opaquePixels === true;
     const drawn = prepareDrawn(deferSceneHits ? worldEntries.reduce<number[]>((indices, { e }, index) => { if (selSet.has(e.entity)) indices.push(index); return indices; }, []) : spatialCandidates());
     const worldStageAt = performance.now();
+
+    let deferredDrawn: typeof drawn | undefined;
+    const prepareDeferredDrawn = () => {
+      if (deferredDrawn) return deferredDrawn;
+      const entries = nativeSceneBrowser?.hitEntries();
+      if (!entries || entries === worldEntries) return deferredDrawn = prepareDrawn();
+      const candidates = createViewportSpatialFrame(spatialIndexRef.current, readSpatialBounds(entries), viewportPlanes(cam, vp.w / Math.max(1, vp.h)), !!displayedPresentation)();
+      return deferredDrawn = prepareDrawn(candidates, entries);
+    };
 
     const drawWorld = (ctx: CanvasRenderingContext2D, items: typeof drawn, hits: HitCandidate[], hitOnly = false) => {
     for (const { e, t, pr, renderKind } of nativeGameReady ? [] : items) {
@@ -2676,7 +2686,7 @@ export function Viewport(props: {
         if (!context) return [];
         const hits: HitCandidate[] = [];
         context.save(); context.setTransform(dpr, 0, 0, dpr, 0, 0);
-        try { drawWorld(context, prepareDrawn(), hits, true); }
+        try { drawWorld(context, prepareDeferredDrawn(), hits, true); }
         finally { context.restore(); }
         cached = hits;
         return hits;

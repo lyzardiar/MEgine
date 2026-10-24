@@ -8,10 +8,10 @@ const source=readFileSync(new URL('../src/panels/Viewport.tsx',import.meta.url),
 const compile=code=>ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText;
 const begin=source.indexOf('    if (deferSceneHits) {'),end=source.indexOf('    // The web renderer owns',begin);
 assert.ok(begin>0&&end>begin);
-const register=new Function('env',compile('const {deferSceneHits,deferredSceneHitsRef,hitCanvasRef,document,dpr,prepareDrawn,drawWorld,ctx,drawn,hitsRef}=env;'+source.slice(begin,end)));
+const register=new Function('env',compile('const {deferSceneHits,deferredSceneHitsRef,hitCanvasRef,document,dpr,prepareDeferredDrawn,drawWorld,ctx,drawn,hitsRef}=env;'+source.slice(begin,end)));
 function fixture(){
   const calls=[],hitsRef={current:[]},context={save:()=>calls.push('save'),setTransform:()=>calls.push('transform'),restore:()=>calls.push('restore')};
-  const env={deferSceneHits:true,deferredSceneHitsRef:{current:null},hitCanvasRef:{current:null},document:{createElement:()=>{calls.push('canvas');return {width:300,height:150,getContext:()=>context};}},dpr:2,prepareDrawn:()=>{calls.push('prepare');return [{id:2},{id:1}];},drawWorld:(ctx,rows,hits,hitOnly)=>{calls.push({ctx,rows,hitOnly});hits.push(...rows);},ctx:{visible:true},drawn:[{id:9}],hitsRef};
+  const env={deferSceneHits:true,deferredSceneHitsRef:{current:null},hitCanvasRef:{current:null},document:{createElement:()=>{calls.push('canvas');return {width:300,height:150,getContext:()=>context};}},dpr:2,prepareDeferredDrawn:()=>{calls.push('prepare');return [{id:2},{id:1}];},drawWorld:(ctx,rows,hits,hitOnly)=>{calls.push({ctx,rows,hitOnly});hits.push(...rows);},ctx:{visible:true},drawn:[{id:9}],hitsRef};
   register(env);return{env,calls,context};
 }
 
@@ -20,7 +20,7 @@ test('opaque Scene paints defer whole-world preparation and each displayed owner
   const read=f.env.deferredSceneHitsRef.current,hits=read();assert.deepEqual(hits,[{id:2},{id:1}]);assert.equal(read(),hits);
   assert.equal(f.calls.filter(c=>c==='prepare').length,1);assert.equal(f.calls.filter(c=>c==='canvas').length,1);assert.equal(f.env.hitCanvasRef.current.width,1);assert.equal(f.env.hitCanvasRef.current.height,1);
   const call=f.calls.find(c=>typeof c==='object');assert.equal(call.ctx,f.context);assert.equal(call.hitOnly,true);assert.deepEqual(f.env.hitsRef.current,[]);
-  f.env.prepareDrawn=()=>[{id:3}];register(f.env);assert.deepEqual(f.env.deferredSceneHitsRef.current(),[{id:3}]);assert.equal(read(),hits);assert.equal(f.calls.filter(c=>c==='canvas').length,1);
+  f.env.prepareDeferredDrawn=()=>[{id:3}];register(f.env);assert.deepEqual(f.env.deferredSceneHitsRef.current(),[{id:3}]);assert.equal(read(),hits);assert.equal(f.calls.filter(c=>c==='canvas').length,1);
 });
 
 test('failed hit preparation restores the isolated context and retries instead of caching partial hits',()=>{

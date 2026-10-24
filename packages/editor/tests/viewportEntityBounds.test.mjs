@@ -53,7 +53,7 @@ test('helpers and complex renderers remain unbounded even when they also carry a
 
 test('actual Viewport eagerly prepares conservative bounds and passes frame ownership to lazy culling', () => {
   const source=readFileSync(new URL('../src/panels/Viewport.tsx',import.meta.url),'utf8');
-  const lines=source.split('\n').filter(line=>line.includes('const spatialBounds = worldEntries.map(')||line.includes('const spatialCandidates = createViewportSpatialFrame('));assert.equal(lines.length,2);
+  const lines=source.split('\n').filter(line=>line.includes('const readSpatialBounds =')||line.includes('const spatialBounds = readSpatialBounds(')||line.includes('const spatialCandidates = createViewportSpatialFrame('));assert.equal(lines.length,3);
   const submit=new Function('worldEntries','selSet','trailDrawByEntity','particleDrawByEntity','entityBoundsRef','displayedPresentation','spatialIndexRef','createViewportSpatialFrame','viewportPlanes','cam','vp',lines.join('\n'));
   const worldEntries=[1,2,3,4].map(entity=>({e:{entity,components:{MeshRenderer:{}}},t:transform(entity)}));
   for(const owned of [undefined,{}]){

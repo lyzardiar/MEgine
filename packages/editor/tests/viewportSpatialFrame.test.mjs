@@ -40,14 +40,33 @@ test('actual opaque Scene prepares only selected helpers without spatial queries
 });
 
 test('actual deferred draw preparation requests the displayed spatial candidates on its first ordinary hit',()=>{
-  const source=readFileSync(new URL('../src/panels/Viewport.tsx',import.meta.url),'utf8'),start=source.indexOf('    const prepareDrawn = (candidates = spatialCandidates())'),end=source.indexOf('    const drawWorld =',start);
+  const source=readFileSync(new URL('../src/panels/Viewport.tsx',import.meta.url),'utf8'),start=source.indexOf('    const prepareDrawn = (candidates = spatialCandidates()'),end=source.indexOf('    const drawWorld =',start);
   assert.ok(start>0&&end>start);
-  const code='const {spatialCandidates,worldEntries,isGame,gameCamera,nativeGameReady,projectEntityCenter,trailDrawByEntity,particleDrawByEntity,component2DSortingSettings,getSortingLayerRank,compareWorldDrawOrder,nativeSceneFrame,selSet}=env;'+source.slice(start,end)+'return {drawn,prepareDrawn};';
+  const code='const {spatialCandidates,worldEntries,isGame,gameCamera,nativeGameReady,projectEntityCenter,trailDrawByEntity,particleDrawByEntity,component2DSortingSettings,getSortingLayerRank,compareWorldDrawOrder,nativeSceneFrame,selSet,nativeSceneBrowser}=env;'+source.slice(start,end)+'return {drawn,prepareDrawn,prepareDeferredDrawn};';
   const prepare=new Function('env',ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText);
   const index=createViewportSpatialIndex();let updates=0,queries=0;
   const candidates=createViewportSpatialFrame({update:(...args)=>{updates++;index.update(...args);},query:(...args)=>{queries++;return index.query(...args);}},[box(0),null],viewportPlanes(camera(0),1),true);
   const worldEntries=[{e:{entity:1,components:{MeshRenderer:{}}},t:{position:[0,0,0],scale:[1,1,1]},hierarchyOrder:0},{e:{entity:2,components:{Camera3D:{}}},t:{position:[0,0,0],scale:[1,1,1]},hierarchyOrder:1}];
   const result=prepare({spatialCandidates:candidates,worldEntries,isGame:false,gameCamera:{},nativeGameReady:false,projectEntityCenter:()=>({x:10,y:10,depth:1}),trailDrawByEntity:new Map(),particleDrawByEntity:new Map(),component2DSortingSettings,getSortingLayerRank:()=>0,compareWorldDrawOrder,nativeSceneFrame:{opaquePixels:true},selSet:new Set([2])});
   assert.deepEqual(result.drawn.map(d=>d.e.entity),[2]);assert.equal(queries,0);
-  assert.deepEqual(result.prepareDrawn().map(d=>d.e.entity),[1,2]);result.prepareDrawn();assert.equal(updates,1);assert.equal(queries,1);
+  assert.deepEqual(result.prepareDeferredDrawn().map(d=>d.e.entity),[1,2]);result.prepareDeferredDrawn();assert.equal(updates,1);assert.equal(queries,1);
+});
+
+test('production deferred token preparation preserves exact frustum candidates, order and old frame ownership',()=>{
+  const source=readFileSync(new URL('../src/panels/Viewport.tsx',import.meta.url),'utf8'),start=source.indexOf('    const prepareDrawn = (candidates = spatialCandidates()'),end=source.indexOf('    const drawWorld =',start);
+  const fields='spatialCandidates,worldEntries,isGame,gameCamera,nativeGameReady,projectEntityCenter,trailDrawByEntity,particleDrawByEntity,component2DSortingSettings,getSortingLayerRank,compareWorldDrawOrder,nativeSceneFrame,selSet,nativeSceneBrowser,readSpatialBounds,createViewportSpatialFrame,spatialIndexRef,viewportPlanes,cam,vp,displayedPresentation';
+  const make=new Function('env',ts.transpileModule('const {'+fields+'}=env;'+source.slice(start,end)+'return {drawn,prepareDeferredDrawn};',{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText);
+  const entries=offset=>[{entity:1,components:{MeshRenderer:{}}},{entity:2,components:{}},{entity:3,components:{SpriteRenderer:{}}},{entity:4,components:{Camera3D:{}}}].map((e,i)=>({e,t:{position:[offset+(i===2?100:0),0,0],scale:[1,1,1]},hierarchyOrder:i}));
+  const selected=new Set([1]),bounds=rows=>rows.map(({e,t})=>e.entity===3?box(t.position[0]):null),shared=createViewportSpatialIndex();let updates=0,queries=0,hitReads=0,boundReads=0;
+  const wrapped={update:(...args)=>{updates++;shared.update(...args);},query:(...args)=>{queries++;return shared.query(...args);}};
+  const prepare=(rows,x,deferred)=>{
+    const cam=camera(x),vp={w:600,h:600},index=deferred?wrapped:createViewportSpatialIndex(),all=createViewportSpatialFrame(index,bounds(rows),viewportPlanes(cam,1),true);
+    return make({spatialCandidates:all,worldEntries:deferred?[rows[0]]:rows,isGame:false,gameCamera:{},nativeGameReady:false,projectEntityCenter:position=>({x:300+(position[0]-x)*10,y:300,depth:5}),trailDrawByEntity:new Map(),particleDrawByEntity:new Map(),component2DSortingSettings,getSortingLayerRank:()=>0,compareWorldDrawOrder,nativeSceneFrame:{opaquePixels:true},selSet:selected,nativeSceneBrowser:deferred?{hitEntries:()=>{hitReads++;return rows;}}:undefined,readSpatialBounds:rows=>{boundReads++;return bounds(rows);},createViewportSpatialFrame,spatialIndexRef:{current:index},viewportPlanes,cam,vp,displayedPresentation:{}});
+  };
+  const oldRows=entries(0),older=prepare(oldRows,0,true),newRows=entries(100),newer=prepare(newRows,100,true);
+  assert.equal(updates,0);assert.equal(queries,0);assert.equal(hitReads,0);assert.equal(boundReads,0);
+  assert.deepEqual(older.drawn.map(row=>row.e.entity),[1]);
+  const expectedNew=prepare(newRows,100,false).prepareDeferredDrawn(),newHits=newer.prepareDeferredDrawn();assert.deepEqual(newHits,expectedNew);assert.equal(updates,1);assert.equal(queries,1);
+  const expectedOld=prepare(oldRows,0,false).prepareDeferredDrawn(),oldHits=older.prepareDeferredDrawn();assert.deepEqual(oldHits,expectedOld);assert.deepEqual(oldHits.map(row=>row.e.entity),[1,2,4],'off-frustum Sprite is excluded and Camera helper remains in author order');
+  assert.equal(older.prepareDeferredDrawn(),oldHits);assert.equal(newer.prepareDeferredDrawn(),newHits);assert.equal(updates,2);assert.equal(queries,2);assert.equal(hitReads,2);assert.equal(boundReads,2);
 });

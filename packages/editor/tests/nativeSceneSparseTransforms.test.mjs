@@ -83,7 +83,7 @@ test('production token frames share sparse entries and transforms while fallback
   const assignment = source.split('\n').find(line => line.trimStart().startsWith('sceneTransformsRef.current = editScene')); assert.ok(assignment);
   const run = new Function('env', ts.transpileModule('const {nativeGamePending,nativeGameReady,nativeSceneFrame,displayedPresentation,selSet,p,editScene,sceneTransformsRef,buildWorldTransforms,resolvedTransform,isActive}=env;' + ['nativeSceneBrowser', 'transformSource', 'worldTransforms'].map(name => 'const ' + name + '=' + expressions[name] + ';').join('') + assignment + 'const worldEntries=' + expressions.worldEntries + ';return {nativeSceneBrowser,worldTransforms,worldEntries};', { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText);
   const entities = [node(1), node(2, mesh), node(3, mesh)], p = createNativeViewportPresentationReader()(world(entities)); let fullCalls = 0;
-  const env = { nativeGamePending: false, nativeGameReady: false, nativeSceneFrame: { meshPickToken: 'exact frame' }, displayedPresentation: { ...p, worldTransforms() { fullCalls++; return p.worldTransforms(); } }, selSet: new Set(), p: { selected: 2, entities }, editScene: true, sceneTransformsRef: { current: null }, buildWorldTransforms, resolvedTransform, isActive: p.active };
+  const env = { nativeGamePending: false, nativeGameReady: false, nativeSceneFrame: { meshPickToken: 'exact frame', opaquePixels: true }, displayedPresentation: { ...p, worldTransforms() { fullCalls++; return p.worldTransforms(); } }, selSet: new Set(), p: { selected: 2, entities }, editScene: true, sceneTransformsRef: { current: null }, buildWorldTransforms, resolvedTransform, isActive: p.active };
   const token = run(env); assert.equal(fullCalls, 0); assert.equal(token.worldTransforms.has(3), false); assert.equal(token.worldTransforms.has(2), true); assert.equal(token.worldEntries, token.nativeSceneBrowser.entries); assert.equal(env.sceneTransformsRef.current, null);
   env.nativeSceneFrame = null; const fallback = run(env); assert.equal(fullCalls, 1); assert.equal(fallback.worldTransforms.size, 3); assert.equal(fallback.worldEntries, p.worldEntries()); assert.equal(env.sceneTransformsRef.current.transforms, fallback.worldTransforms);
   env.nativeGameReady = true; env.editScene = false; const game = run(env); assert.equal(game.worldTransforms.size, 0); assert.deepEqual(game.worldEntries, []);
@@ -94,9 +94,12 @@ test('sparse frame revisions and older snapshots match complete hierarchy values
   let entities = Array.from({ length: 75 }, (_, i) => node(i + 1, i % 3 ? mesh : {}, { parent: i ? random(i + 1) || null : null }));
   const read = createNativeViewportPresentationReader(), older = [];
   const verify = frame => {
-    const selected = new Set([random(80), random(80)]), p = read(frame), sparse = p.sceneBrowserFrame(selected, random(80)), full = buildWorldTransforms(frame.entities);
+    const selected = new Set([random(80), random(80)]), p = read(frame), primary = random(80), sparse = p.sceneBrowserFrame(selected, primary), full = buildWorldTransforms(frame.entities);
     for (const [id, value] of sparse.transforms) assert.deepEqual(value, full.get(id));
     for (const entry of sparse.entries) { assert.equal(entry.e, frame.entities[entry.hierarchyOrder]); assert.deepEqual(entry.t, resolvedTransform(full, entry.e.entity)); }
+    const deferred = p.sceneBrowserFrame(selected, primary, true);
+    for (const [id, value] of deferred.transforms) assert.deepEqual(value, full.get(id));
+    assert.deepEqual(deferred.hitEntries(), sparse.entries, 'deferred hits preserve the complete browser candidate records');
     assert.deepEqual([...p.worldTransforms()], [...full], 'requesting a full map after a partial frame resolves every node');
   };
   for (let revision = 0; revision < 100; revision++) {
@@ -107,4 +110,41 @@ test('sparse frame revisions and older snapshots match complete hierarchy values
     const current = world(entities); verify(current);
     if (revision % 7 === 0) { verify(older[random(older.length)]); verify(current); }
   }
+});
+
+test('opaque Scene keeps immediate states and selection handles while ordinary helper transforms wait for a hit', () => {
+  const reads = new Map(), ordinary = (entity, components = {}) => ({ entity, components: { ...components, get Transform() { reads.set(entity, (reads.get(entity) ?? 0) + 1); return transform(entity); } } });
+  const entities = [node(1, mesh), node(2, { Camera3D: {} }), ordinary(3), ordinary(4, { SpriteRenderer: {} }), node(5, mesh, { parent: 1 }), node(6, mesh, { active: false }), node(7, { ...mesh, Light2D: {} }), node(8, { ...mesh, ParticleEmitter3D: {} }), node(9, { TrailRenderer2D: {} }), node(10, { SpineSkeleton: {} }), node(11, { DirectionalLight: {} }), ordinary(12, { SampledEffect: {} }), node(13, mesh)];
+  const p = createNativeViewportPresentationReader()(world(entities)), selection = new Set([5]), opaque = p.sceneBrowserFrame(selection, 6, true);
+  assert.deepEqual(opaque.entries.map(e => e.e.entity), [5]); assert.equal(reads.size, 0);
+  for (const id of [1, 2, 5, 6, 7, 8, 9, 10, 11]) assert.ok(opaque.transforms.has(id), 'immediate state, lighting, overlay or selected ancestor ' + id);
+  for (const id of [3, 4, 12, 13]) assert.equal(opaque.transforms.has(id), false);
+  assert.deepEqual(p.sceneOverlayEntries().map(e => e.e.entity), [2, 10, 11]); assert.equal(reads.size, 0);
+  selection.add(13); const changed = p.sceneBrowserFrame(selection, 6, true); assert.deepEqual(changed.entries.map(e => e.e.entity), [5, 13]);
+  const hits = opaque.hitEntries(); assert.ok(hits.some(e => e.e.entity === 3)); assert.ok(hits.some(e => e.e.entity === 4)); assert.ok(hits.some(e => e.e.entity === 12));
+  assert.ok(!hits.some(e => e.e.entity === 13), 'a later caller mutation must not change the older displayed selection');
+  for (const id of [3, 4, 12]) assert.equal(reads.get(id), 1);
+  assert.equal(opaque.hitEntries(), hits); assert.equal(opaque.transforms.has(3), false, 'late hit resolution does not mutate the immediate map');
+  const expected = createNativeViewportPresentationReader()(world(entities)).sceneBrowserFrame(new Set([5]), 6).entries;
+  assert.deepEqual(hits, expected);
+});
+
+test('opaque to transparent transitions and older late hits retain their own source hierarchy and candidate order', () => {
+  const parent = node(1, mesh), child = node(2, { SpriteRenderer: {} }, { parent: 1 }), entities = [parent, child, node(3, { Camera2D: {} })], read = createNativeViewportPresentationReader(), old = read(world(entities)).sceneBrowserFrame(new Set(), null, true);
+  assert.equal(old.transforms.has(2), false); assert.deepEqual(old.entries, []);
+  const newer = world([entities[2], node(1, { ...mesh, Transform: transform(30) }), child]), p = read(newer), next = p.sceneBrowserFrame(new Set(), null, true), transparent = p.sceneBrowserFrame(new Set(), null, false);
+  assert.notEqual(next, transparent); assert.equal(transparent.hitEntries(), transparent.entries);
+  assert.equal(transparent.entries.find(e => e.e.entity === 2).t.position[0], 32);
+  const earlierHits = old.hitEntries(); assert.equal(earlierHits.find(e => e.e.entity === 2).t.position[0], 3);
+  assert.deepEqual(earlierHits.map(e => e.hierarchyOrder), [1, 2]); assert.equal(next.hitEntries().find(e => e.e.entity === 2).t.position[0], 32);
+  const restored = p.sceneBrowserFrame(new Set(), null, true); assert.deepEqual(restored.entries, []); assert.deepEqual(restored.hitEntries(), transparent.entries);
+});
+
+test('late token-owned bounds do not observe model preview versions for native-owned mesh geometry', async () => {
+  const { createViewportEntityBoundsReader } = await server.ssrLoadModule('/src/viewportEntityBounds.ts'); let previewReads = 0;
+  const selected = new Set([1]), entities = [node(1, mesh), ...['Camera2D', 'Camera3D', 'SpineSkeleton', 'ParticleEmitter2D', 'ParticleEmitter3D', 'TrailRenderer2D'].map((key, i) => node(i + 2, { MeshRenderer: { mesh: 'hot.glb' }, [key]: {} })), node(9, { SpriteRenderer: { size: [2, 4], pivot: [.5, .5] } })];
+  const p = createNativeViewportPresentationReader()(world(entities)), frame = p.sceneBrowserFrame(selected, 1, true), read = createViewportEntityBoundsReader(() => { previewReads++; throw Error('Native mesh assets must not be read by deferred browser bounds'); });
+  const collect = rows => rows.map(({ e, t }) => selected.has(e.entity) ? null : read(e.components, t, true));
+  assert.deepEqual(collect(frame.entries), [null]); const deferred = collect(frame.hitEntries());
+  assert.equal(previewReads, 0); assert.equal(deferred.length, 8); assert.deepEqual(deferred.at(-1), { min: [8, -2, 0], max: [10, 2, 0] });
 });
