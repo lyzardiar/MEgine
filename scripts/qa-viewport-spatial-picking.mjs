@@ -11,6 +11,7 @@ const label='spatial-picking-'+Date.now(),root=path.join(out,'native-qa',label),
 const opacityCases=process.argv.includes('--opacity-cases');
 const spineOnly=process.argv.includes('--spine-only');
 const poseCases=process.argv.includes('--pose-cases');
+const playFilterCases=process.argv.includes('--play-filter-cases');
 configureNativeQa(root);
 for(const folder of ['Assets/Scenes','Assets/Scripts','Assets/Models'])fs.mkdirSync(path.join(project,folder),{recursive:true});
 const write=(name,value)=>fs.writeFileSync(path.join(project,name),JSON.stringify(value));
@@ -37,6 +38,7 @@ function mesh(offset,zOffset=0){
 }
 write('Assets/Models/pick.gltf',mesh(0));
 if(opacityCases){const scene=JSON.parse(fs.readFileSync(path.join(project,'Assets/Scenes/Main.mscene'),'utf8'));scene.world.entities.push({entity:6,name:'QA browser helper',components:{Transform:transform([-1.5,1,0])}});write('Assets/Scenes/Main.mscene',scene);}
+if(playFilterCases){assert.ok(poseCases,'--play-filter-cases requires --pose-cases');const scene=JSON.parse(fs.readFileSync(path.join(project,'Assets/Scenes/Main.mscene'),'utf8'));scene.world.entities.push({entity:7,name:'QA game camera',components:{Transform:transform([0,0,5]),Camera3D:{primary:true,fov:60,near:.1,far:100}}});write('Assets/Scenes/Main.mscene',scene);}
 Object.assign(process.env,{MENGINE_AGENT_EDITOR_MODE:'auto-background',MENGINE_EDITOR_CONFIG_DIR:path.join(root,'config'),WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS:'--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows'});fs.mkdirSync(process.env.MENGINE_EDITOR_CONFIG_DIR,{recursive:true});
 const {bridgeQuery:query,bridgeExecute,closeBridgeConnection}=await import('../packages/agent/mcp/server.mjs');
 const execute=async(name,args={})=>{const result=await bridgeExecute(name,args,{requestId:crypto.randomUUID(),timeoutMs:120000});assert.ok(result.ok,JSON.stringify(result));return result.result;};
@@ -65,6 +67,27 @@ async function checkOpacity(alpha){
   for(;;){await pixels();await sleep(250);profile=await query('profiler.get_samples',{source:'scene',limit:24});const count=profile.summary.latest?.drawItems;if(profile.nativeProfileCount>0&&count!=null&&(alpha===1?count===0:count>0))break;assert.ok(Date.now()<deadline,'Scene opacity selects the expected browser path: '+JSON.stringify({alpha,drawItems:count,nativeFrames:profile.nativeProfileCount}));}
   (report.opacityProfiles??=[]).push({alpha,nativeFrames:profile.nativeProfileCount,drawItems:profile.summary.latest.drawItems});
   await pixels(alpha===1?'opaque':'transparent');
+}
+async function checkPlayFilters(parent,child,behind){
+  await execute('component.set',{entity:parent.entity,type:'Transform',value:transform([-10,0,0])});
+  await execute('component.set',{entity:child.entity,type:'Transform',value:transform([10,0,0])});
+  await execute('component.set',{entity:child.entity,type:'MeshRenderer',value:{mesh:'cube',material:'default'}});
+  await execute('view.set_camera',{pivot:[0,0,0],yaw:0,pitch:0,distance:5});
+  await execute('playback.play',{paused:true});await execute('playback.step',{steps:2});await execute('panel.focus',{kind:'scene'});
+  const gamePixels=async()=>{await execute('panel.focus',{kind:'game'});await sleep(250);const shot=await query('view.screenshot',{target:'game',maxSize:1280});await execute('panel.focus',{kind:'scene'});await sleep(250);return hash(Buffer.from(shot.dataUrl.split(',')[1],'base64'));};
+  await execute('selection.set',{ids:[]});const game=await gamePixels();
+  report.playFilters=[];
+  for(const id of [child.entity,parent.entity]){
+    await pickCenter(child.entity);await execute('selection.set',{ids:[]});const shown=await pixels();
+    await execute('playback.stop');await execute('view.set_scene_visibility',{id,visible:false});await execute('playback.play',{paused:true});await execute('playback.step',{steps:2});await execute('panel.focus',{kind:'scene'});
+    await pickCenter(behind.entity);await execute('selection.set',{ids:[]});const hidden=await pixels('play-hidden-'+id);assert.notEqual(hidden,shown);assert.equal(await gamePixels(),game,'Scene hiding preserves Game pixels');
+    await execute('playback.stop');await execute('view.set_scene_visibility',{id,visible:true});await execute('playback.play',{paused:true});await execute('playback.step',{steps:2});await execute('panel.focus',{kind:'scene'});
+    await pickCenter(child.entity);await execute('selection.set',{ids:[]});assert.equal(await pixels('play-restored-'+id),shown,'Restored source ID and complete Scene pixels');
+    report.playFilters.push({id,shown,hidden});
+  }
+  await execute('playback.stop');await execute('component.set',{entity:parent.entity,type:'Transform',value:{...transform([10,0,0]),scale:[-1,1,1]}});
+  await execute('playback.play',{paused:true});await execute('playback.step',{steps:2});await pickCenter(child.entity);await pixels('play-restarted-mirrored-parent');await execute('playback.stop');
+  report.checks.push('Scene visibility configured between Play sessions hides/restores child and parent branches with exact restored pixels and source-ID picking, preserves Game pixels, and picks after a mirrored parent edit followed by Play restart');
 }
 try{
   for(let i=0;;i++)try{await query('project.state');break;}catch(error){if(i===20||!/BridgeConnectionError|request timed out|not ready/.test(error.message))throw error;await sleep(500);}
@@ -101,7 +124,8 @@ try{
     const helper=original.find(e=>e.name==='QA browser helper');assert.ok(helper);await execute('view.set_camera',{pivot:helper.components.Transform.position,yaw:0,pitch:0,distance:5});await pickCenter(helper.entity);await pixels('browser-helper-picked');
     report.checks.push('Opaque Scene resolves and selects an ordinary empty browser helper on the first deferred hit query');
   }
+  if(playFilterCases)await checkPlayFilters(parent,child,original.find(e=>e.name==='QA mesh behind'));
   }
   report.errors=(await query('console.get_logs',{limit:100})).filter(e=>e.level==='error');assert.equal(report.errors.length,0,JSON.stringify(report.errors));await execute('scene.save');report.passed=true;
 }catch(error){report.error=error.stack;process.exitCode=1;console.error(error.stack);try{await pixels('failure');report.scene=await query('scene.snapshot');report.logs=await query('console.get_logs',{limit:100});report.ui=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});}catch(diagnosticError){report.diagnosticError=diagnosticError.message;}}
-finally{closeBridgeConnection();try{report.cleanup=await closeNativeQa(root);}catch(error){report.cleanupError=error.message;report.passed=false;process.exitCode=1;}fs.writeFileSync(path.join(out,label+'.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({label,passed:report.passed,checks:report.checks,normalExit:report.cleanup?.normalExit,error:report.error,cleanupError:report.cleanupError}));}
+finally{try{await execute('playback.stop');await execute('scene.save');}catch(error){report.cleanupPreparationError=error.message;}closeBridgeConnection();try{report.cleanup=await closeNativeQa(root);}catch(error){report.cleanupError=error.message;report.passed=false;process.exitCode=1;}fs.writeFileSync(path.join(out,label+'.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({label,passed:report.passed,checks:report.checks,normalExit:report.cleanup?.normalExit,error:report.error,cleanupError:report.cleanupError}));}
