@@ -1292,3 +1292,14 @@ Viewport在所有真正完成的绘制结束时记录浏览器paint耗时，包�
 19项不同定向用例最终通过：editorProfiler的16项与新增viewportPaintProfiling的3项；TypeScript及QA语法通过。新增测试提取实际Viewport的提前返回、时钟及记录语句，验证无rAF的Scene完成绘制、未变化帧跳过、Game交互与动画只记录一次、原唤醒时钟不随新测量推进、无尺寸和切换视口的首帧重置，并通过真实采样器聚合。首轮17通过／1失败暴露空桶重新显示时计时未重置，修复后18通过；补充来源切换后仅重跑受影响3项通过。日志为 `tmp/docs-artifacts/editor-performance-risk/paint-coverage-tests.log`、`paint-coverage-final-tests.log`、`paint-coverage-source-tests.log` 和对应types日志。
 
 当前新批次第2/3项，未构建或原生复测；尚无新的前端耗时数值或FPS结论。第三项完成后合并观察后台Scene、Game的新帧呈现与前端paint样本，结合实际请求起点／完成间隔继续定位等待；保留长期、真实输入延迟、内存和强制原生竞态专项。
+
+
+### 第七十阶段：远端作者副本延迟可编辑化
+
+远端Play／Pause文档的作者镜像直接保留已认证的不可变实体记录；可编辑运行副本仍独立保留，运行编辑及外部暴露不会修改作者镜像或旧帧。仅在本地Stop或运行错误退回Edit时，将仍引用远端镜像的作者数组复制为可编辑数据。主窗口原生所有者接收运行编辑时继续恢复已有作者数组／颜色／ID及撤销记录；收到edit检查点仍走正常场景加载。移除每条运行消息为作者镜像建立第二份可编辑记录的弱缓存。
+
+31项相关测试、TypeScript及QA语法通过，覆盖remoteRuntimeReuse、sessionSceneReception、workspaceSelectionSync。新增确认保存读取作者内容、Stop丢弃本地运行修改、最新远端作者可编辑且支持undo／redo、旧帧保持冻结，以及原生运行失败后作者数据仍可修改和撤销。证据为 `tmp/docs-artifacts/editor-performance-risk/remote-author-tests.log` 和 `remote-author-types.log`。
+
+局部CPU对照基线1c4badf，沿第六十八阶段相同7,410实体输入、6次预热、9组交替各8次接收链路：仅时钟1.16806→1.16780ms、单Transform1.12293→1.00653ms、全部7,403个Transform68.57100→56.92978ms。最终完整快照与指纹一致；仅时钟无收益，密集变化减少重复复制。另测直接对远端Store执行Stop，排除加载准备、9组交替中位数0.0101→18.5888ms，说明复制成本移到返回编辑的边界。普通主窗口原生Stop保留原作者数组，独立窗口收到edit检查点仍走完整加载，不能把该直接Store测试套用于所有Stop操作。脚本、输入SHA、原始样本为同目录remote-author-benchmark及remote-author-stop-benchmark的mjs/json/log；没有进程内存或真实FPS结论。
+
+本项为当前批次第3/3项，提交后与第六十八／六十九阶段合并构建并执行原生多窗口专项。QA新增Stop后实体ID分配及undo／redo／恢复检查，保留前端paint样本、原生请求与每帧实体数。真实隐藏／不可选UI、长时内存、输入延迟和强制原生竞态仍保留专项；结果另记。

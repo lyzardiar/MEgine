@@ -212,6 +212,9 @@ async function checkDetachedRuntime(authored){
   const deadline=Date.now()+30000;for(;;){const e=await query('entity.get',{id:authorTarget.entity});if(Math.abs(e.components.Transform.position[1]-authorEdited)<1e-5)break;assert.ok(Date.now()<deadline,'Authoring remains editable after Stop');await sleep(150);}
   assert.equal((await query('editor.state')).dirty,true,'Detached authoring edit marks main scene dirty');
   await execute('component.set',{entity:authorTarget.entity,type:'Transform',value:authorTarget.components.Transform});await field(authorTarget.components.Transform.position[1]);assert.deepEqual((await snapshot()).entities,authored.entities);assert.equal((await query('editor.state')).dirty,false,'Restoring authored content clears dirty state');
+  await execute('entity.create',{name:'QA author allocation after Stop'});const created=(await snapshot()).entities.find(e=>e.name==='QA author allocation after Stop');assert.ok(created);assert.ok(created.entity>Math.max(...authored.entities.map(e=>e.entity)));
+  await execute('history.undo');assert.deepEqual((await snapshot()).entities,authored.entities);await execute('history.redo');assert.ok((await snapshot()).entities.some(e=>e.entity===created.entity));await execute('history.undo');assert.deepEqual((await snapshot()).entities,authored.entities);assert.equal((await query('editor.state')).dirty,false);
+  report.checks.push('Stop authoring allocates a new entity ID and supports undo/redo without changing retained author content');
   report.windows=await query('window.list');for(const kind of ['game','scene','inspector'])await execute('panel.dock',{kind});
   sampleMemory('after-stop-and-dock');
   report.checks.push('Detached authoring edit/restore after Stop; auxiliary panels dock normally');

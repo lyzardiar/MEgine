@@ -729,3 +729,10 @@ Scene17.71／Game18.51次呈现每秒，Scene1/89完整回退、72次已记录�
 变更：Viewport、editorProfiler采样器、viewportPaintProfiling测试及qa-frost-map-session。记录所有实际完成的绘制，跳过无变化帧，测量与唤醒时钟分离；隐藏／切换来源重置测量窗口。原生专项报告保留前端汇总和样本，避免只凭原生请求耗时推断前端瓶颈。
 
 快速检查：19项不同用例最终通过，TypeScript及QA语法通过；首轮边界失败、修复及受影响复查见performance-risk-todo第六十九阶段。当前2/3，原生待合并。下一次验证检查后台Scene／Game均有前端样本、正常绘制和新帧呈现，分别报告paint耗时与native呈现间隔；同时覆盖第六十八阶段场景加载／选择／隐藏／新节点ID。此项改善观测完整性，不作为帧率提升。
+
+
+### 新批次任务3/3：远端作者副本延迟可编辑化
+
+变更：store远端加载和回到Edit边界、remoteRuntimeReuse测试、qa-frost-map-session的Stop后创建／undo／redo检查。作者镜像复用冻结数据，可编辑运行副本独立；主窗口原作者及撤销保持不变。31项测试、TypeScript及QA语法通过；密集变更收益和直接Store Stop复制成本见performance-risk-todo第七十阶段。
+
+累计4ce6f62、1c4badf及本项，提交后合并一次前端与原生Release构建，执行 `node scripts/qa-frost-map-session.mjs --detached-only`。覆盖运行编辑保留、窗口重开／地图重载、Pause／Step、Stop作者恢复及后续编辑／ID分配／undo／redo；采集前端paint与原生呈现／回退。节点展开和隐藏列表已做定向Store检查，其真实UI交互继续保留专项，尚不声明本批已覆盖。原生结果待补记。

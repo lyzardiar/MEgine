@@ -132,3 +132,24 @@ test('scene interaction synchronization filters stale IDs and clears either or b
  store.setSceneInteractionState([2,99],[]);assert.deepEqual(store.sceneHiddenIds,[2]);assert.deepEqual(store.sceneUnpickableIds,[]);
  store.setSceneInteractionState([],[]);assert.deepEqual(store.sceneHiddenIds,[]);assert.deepEqual(store.sceneUnpickableIds,[]);
 }));
+
+
+test('remote authoring materializes on Stop with mutable editing and undo while retained frames stay frozen',async()=>withStore(createEditorStore=>{
+ const store=createEditorStore(),doc=document();store.loadRemoteSceneJson(JSON.stringify(doc),'pause',41,1);const first=store.playRenderSnapshot();
+ store.setComponent(2,'Text',{text:'runtime edit'});assert.equal(JSON.parse(store.saveSceneJson()).world.entities[1].components.Text.text,'child');
+ doc.world.entities[1].components.Text.text='latest remote';store.loadRemoteSceneJson(JSON.stringify(doc),'play',41,2);const latest=store.playRenderSnapshot();store.setComponent(2,'Text',{text:'discard at Stop'});
+ store.stop();assert.equal(store.entitySnapshot(2).components.Text.text,'latest remote');assert.equal(store.entitySnapshot(1).name,'Root');
+ store.rename(1,'Edit after Stop');assert.equal(store.undo(),true);assert.equal(store.entitySnapshot(1).name,'Root');assert.equal(store.redo(),true);assert.equal(store.entitySnapshot(1).name,'Edit after Stop');
+ store.setComponent(2,'Text',{text:'saved author'});assert.equal(JSON.parse(store.saveSceneJson()).world.entities[1].components.Text.text,'saved author');
+ assert.equal(first.entities[1].components.Text.text,'child');assert.equal(latest.entities[1].components.Text.text,'latest remote');assert.equal(latest.entities[0].name,'Root');assert.equal(Object.isFrozen(latest.entities[0].components.Custom.values),true);
+ store.play();store.stop();store.rename(1,'Editable again');assert.equal(store.entitySnapshot(1).name,'Editable again');
+}));
+
+test('runtime failure returns a remote author mirror to writable Edit state',async()=>withStore(async createEditorStore=>{
+ const store=createEditorStore();store.loadRemoteSceneJson(JSON.stringify(document()),'pause',41,1);const retained=store.playRenderSnapshot(),errors=[];
+ store.setPlayRuntime({sessionId:41,retainsWorld:true,start:async()=>null,step:async()=>{throw Error('runtime failure fixture');},stop(){},onError:error=>errors.push(error.message)});
+ store.setComponent(2,'Text',{text:'runtime only'});store.step(.1);await assert.rejects(store.waitForPlayRuntime(),/runtime failure fixture/);
+ assert.equal(store.mode,'edit');assert.deepEqual(errors,['runtime failure fixture']);assert.equal(store.entitySnapshot(2).components.Text.text,'child');
+ store.setComponent(1,'Custom',{values:[9]});store.rename(2,'After error');assert.equal(store.entitySnapshot(1).components.Custom.values[0],9);assert.equal(store.undo(),true);assert.equal(store.entitySnapshot(2).name,'Child');
+ assert.deepEqual(retained.entities[0].components.Custom.values,[1,2]);assert.equal(retained.entities[1].components.Text.text,'child');store.stop();
+}));

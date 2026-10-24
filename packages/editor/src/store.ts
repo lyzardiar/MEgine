@@ -283,11 +283,18 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     return playEntities ? { entities: playEntities, frame, simFrame: frame, simulationTime: playSpin, clearColor: playClearColor ?? clearColor, selected: primarySelected(), get nativeSessionId() { return nativePlaySessionId(); }, get nativeWorldReference() { return nativeWorldReference(); }, runtimeSessionId: playRuntime?.sessionId ?? remotePlaySessionId ?? undefined, simulationRequestMs: playStepRequestMs, simulationTiming: playStepTiming?.sessionId === playRuntime?.sessionId ? playStepTiming : undefined } : null;
   };
 
+  // MiYu: the remote author mirror becomes writable only when returning to Edit.
+  const materializeRemoteAuthoring = () => {
+    if (editEntities === remoteAuthorFingerprintEntities) editEntities = structuredClone(editEntities);
+    remoteAuthorFingerprintEntities = null;
+  };
+
   const trackPlayOperation = (operation: Promise<void>, generation: number) => {
     playBusy = true;
     playPending = operation.catch((error) => {
       if (generation !== playGeneration) return;
       playError = error;
+      materializeRemoteAuthoring();
       mode = 'edit';
       behaviourRunner.unmount();
       playEntities = null;
@@ -299,7 +306,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
   };
 
   const stopPlay = () => {
-    remoteAuthorFingerprintEntities = null;
+    materializeRemoteAuthoring();
     remotePlayNeedsUpload = false;
     playGeneration++;
     playRuntime?.stop();
@@ -954,8 +961,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     return changed;
   };
 
-  // Runtime messages keep private author mirrors separate from exposed Play copies.
-  let remoteAuthorCopies = new WeakMap<EntityRec, EntityRec>();
+  // Runtime documents reuse certified normalized records independently of editable Play copies.
   let remoteSessionEntities = new WeakMap<EntityRec, { index: number | undefined; entity: EntityRec }>(), remoteSessionSchema = '';
   const applySceneJson = (
     json: string | SessionSceneDocument,
@@ -990,7 +996,6 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     behaviourRunner.unmount();
     const ents = (data.world?.entities ?? data.entities ?? []) as EntityRec[];
     if (!retainRemoteRuntime) { privatePlayEntities = null; ownedPlayWorld = undefined; remoteAuthorFingerprintEntities = null; }
-    if (!retainRemoteRuntime || mode === 'edit') remoteAuthorCopies = new WeakMap();
     if (sessionData) {
       const schema = JSON.stringify(listBehaviours().map(entry => [entry.type, entry.fields.filter(field => field.serialize && field.type === 'entity').map(field => field.key)]));
       if (schema !== remoteSessionSchema) { remoteSessionEntities = new WeakMap(); remoteSessionSchema = schema; }
@@ -1016,13 +1021,12 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       const world = sessionData ? { entities: loadedEntities, clearColor } : playWorldSync.viewportSnapshot()!;
       retained = retainPlayWorld({ ...world, frame: data.world?.frame ?? frame, simFrame: data.world?.frame ?? frame, simulationTime: data.world?.simulationTime ?? 0, selected: null }, ownedPlayWorld);
       remoteAuthorFingerprintEntities = retained.entities;
-      editEntities = retained.entities.map(entity => {
-        let editable = remoteAuthorCopies.get(entity);
-        if (!editable) { editable = cloneRetainedPlayRecord(entity); remoteAuthorCopies.set(entity, editable); }
+      // MiYu: remote authoring remains immutable during Play; only returning to Edit needs an editable copy.
+      editEntities = retained.entities;
+      for (const entity of retained.entities) {
         const playCopy = editableNativeRecords.get(entity);
         if (playCopy && exposedPlayRecords.has(playCopy)) editableNativeRecords.delete(entity);
-        return editable;
-      });
+      }
     } else editEntities = loadedEntities;
     // MiYu: share the loaded ID index across allocation, selection and fold restoration.
     const loadedEntityIds = editEntities.map(entity => entity.entity), loadedIds = new Set(loadedEntityIds);
