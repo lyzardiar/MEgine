@@ -1703,3 +1703,13 @@ cargo test -p mengine-runtime --release --lib ui::traversal -- --nocapture --tes
 benchmark_ui_traversal_cache生产UI收集对照通过：同进程交替原即时索引／缓存索引，2组预热、9组计量，每组25次，全字段输出一致。保留项目原始Main.mscene的4374实体，中位数0.611588→0.495004ms；2002实体布局夹具3.893012→3.495920ms，逐次编辑RectTransform的夹具2.931876→2.904528ms。布局夹具收益小且有波动，不据此推广实际地图或FPS收益。节点记录容量分别393216／98304／98304字节，不含HashMap和子列表分配，不是进程驻留测量。该基准使用原始保存场景和默认文字解析，不包含脚本运行、GPU或IPC，实际DotA运行时14437实体的结论以批次报告为准。日志ui-index-tests.log、ui-index-benchmark.log及提取JSON在tmp/docs-artifacts/editor-performance-risk。手动命令cargo test -p mengine-runtime --release --lib benchmark_ui_traversal_cache -- --ignored --nocapture --test-threads=1，MENGINE_UI_PROJECT指向上述保留项目。
 
 131、132、133达到3/3。提交后统一原生Release验证共享像素／透明切换／空间选取、实际DotA加载与相机预览／关闭重开、Amazonia多窗口与Stop重启、五轮等时驻留和Profiler。前端src／public／依赖自ee33d5f未变，复用已验收dist，index摘要09c50720c810ad6530184bca07599d10be10a182c145dedc606a32d786ebee8a已核对；本次不重复前端构建。独立运行器补做受接口影响的编译检查。当前仅实现与定向验证完成，完整批次结果待记录，稳定60、长期驻留、LOD及完整War3目标继续进行中。
+
+### 第一百三十一至一百三十三阶段合并原生结论
+
+统一847e5af custom-protocol Release，独立运行器Release编译检查7.81秒通过、原生构建80秒通过；复用未改动且摘要一致的前端。冻结程序在tmp/docs-artifacts/editor-performance-risk/build-847e5af，SHA256为181640b6b685b129b006f0520751d0e6114109b9fb08f4c8c86e9a4895cd335a。五份功能报告均通过：resource-poll-1792885073288的4组资源热更新／10次像素转换、spatial-picking-1792885086972的7项空间／姿态／透明与跨Play隐藏恢复、arbitrary-map-1792885123045的实际DotA、map-session-1792885194376的多窗口／Stop重启及5轮驻留、profiler-bundles-1792885485430。五个自有测试进程正常退出，发现文件移除。运行时目录存在的权限残留只保留在tmp；用户编辑器64664保持运行。各报告记录的console错误为0；DotA错误断言仍位于关闭重开之前，重开图像另行检查，不扩写错误覆盖范围。
+
+DotA14437实体，缓存进入2.357秒；Scene59.58／Game59.63FPS，原生平均14.756／9.584ms，p95呈现间隔23.4／25.2ms。上一批59.74／60.01FPS、14.664／11.526ms、24.6／20.3ms；本次Game原生平均耗时下降，Scene未下降，帧率和p95没有一致改善。相同5376对象，Scene5342可见／4675调用、Game116可见／99调用，未做LOD削减。Scene／Game前端world准备1.613／1.310ms；最新单帧RGBA行转换0.1353／0.1553ms、UI收集0.0012／0.3048ms，仅是单个样本，不能代替阶段分布或据此归因各项收益。多窗口7434实体，Scene59.66／Game56.39FPS，原生7.821／8.344ms、p95间隔21.3／29.2ms；上一批59.35／56.58FPS、8.096／9.984ms、22.4／27.0ms。虽然原生平均成本下降，多窗口Game仍未满帧，p95反而增加，稳定60继续未达标，不以CPU微基准替代呈现结果。
+
+多窗口流程291.07秒，5轮均运行15秒、Stop后空闲20秒。20份版本2样本核对同根PID／创建时间、子进程身份、唯一PID及私有字节求和，五个等时空闲点均7进程。根进程私有内存4648.6914／4767.2031／4738.7227／4751.8789／4741.7422MiB，首末增加93.0508MiB、后三轮增加3.0195MiB；进程树5222.3359／5302.0039／5287.6484／5287.6523／5302.0352MiB，首末增加79.6992MiB、后三轮增加14.3867MiB。有限流程中后段呈平台附近波动，不能作为小时级稳定或所有保留风险均解决的依据，也不把跨运行字节差异归因于本批缓存。CPU像素池最多16MiB闲置容量及UI索引的逻辑持有规则仍是明确取舍。
+
+已查看绿色Shader夹具、DotA Game、重开后的War3菜单及第五轮Amazonia Game图像。10次资源像素转换另以PNG摘要核对；assert-ranges-hierarchy-batch.py验证本次DotA与多窗口的全部采样、分段及绘制计数，summarize-readback-ui-batch.py验证五份报告、冻结程序、正常退出、20份内存身份／求和及五轮时间。证据readback-ui-batch-*.log／json、ui-index-runtime-check.log与对应PNG均在tmp/docs-artifacts，程序收据在build-847e5af。该批功能与上述驻留范围验证完成，下一批0/3。后续继续定位呈现间隔尖峰与多窗口稳定60，长期驻留、LOD及完整JASS／War3对局保真仍未完成。
