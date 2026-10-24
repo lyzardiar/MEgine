@@ -17,3 +17,6 @@
 VFX 适配器以共享 WGSL 和参数数据实现本包启用的主纹理、遮罩、扰动、副贴图和溶解；保留各纹理采样、CustomData 通道、HDR、Alpha、双面、Less 深度与关闭深度写入。透明排序读取源 sortingFudge，材质共享独立于单个发射器重播的时钟；定义和网格修改会刷新缓存。非层级缩放模式和未覆盖的启用模块明确诊断，未知 Shader/关键字标为近似。
 
 必要检查：粒子运行时 13/13、资产解析 3/3、WGSL/GPU 2/2 通过。GPU 实测覆盖顶点色×粒子色、Alpha、CustomData、透明排序偏移及普通网格深度遮挡；运行时覆盖首帧 seek、停止/重播、父级非激活、变换、曲线、生命周期、多个 primitive 与 UV。真实技能已生成生命周期帧，最终视觉与桌面交互在第 3 项后统一验证。证据写入 `tmp/docs-artifacts/unitypackage/`。
+
+
+Unitypackage 同任务收尾补充：导入器 1.3.0 将原始资产移至工程级 `SourceAssets/UnityPackages/`，暂存目录也置于 Assets 外，采用两目录发布与本次文件回滚。所有运行资产生成独立 MEngine JSON meta，纳入 manifest；20 项导入测试通过。真实注册表连续重建两次，49 个原生 GUID 与 Unity GUID 无重叠，sidecar 字节不变，再次导入复用成功；清单为 runtime 97 项及 source 163 项。证据 `tmp/docs-artifacts/unity-import-v1-3-metadata/`。材质顶点流按实际序列解码并校验，不匹配的 CustomData 排布阻断。寿命精确端点浮点残留补充测试 1/1 通过；未知 Shader 显示紫色棋盘预览。以上均为前两任务补充，不增加批次计数。

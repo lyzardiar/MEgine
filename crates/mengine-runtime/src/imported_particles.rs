@@ -100,7 +100,7 @@ impl ImportedParticleSimulation {
     fn step(&mut self, d: &ParticleDefinition, start: f32, end: f32, parent: Mat4) {
         let dt = (end - start).max(0.0);
         for particle in &mut self.particles { integrate(particle, d, dt); }
-        self.particles.retain(|p| p.age < p.lifetime);
+        self.particles.retain(particle_alive);
         let emission_start = start.max(self.delay);
         let emission_end = if d.looping { end } else { end.min(self.delay + d.duration) };
         if emission_end > emission_start && d.duration > 0.0 {
@@ -154,7 +154,7 @@ impl ImportedParticleSimulation {
         let direction_rotation = if d.shape.align_to_direction { Quat::from_rotation_arc(Vec3::Z, direction.normalize_or_zero()) } else { Quat::IDENTITY };
         let mut particle = SimParticle { position: if world { parent.transform_point3(position) } else { position }, velocity: if world { parent.transform_vector3(direction * speed) } else { direction * speed }, rotation, size, color: d.start_color.evaluate(phase, random[4]), age: 0.0, custom_age: 0.0, lifetime, random, birth_transform: parent, direction_rotation };
         integrate(&mut particle, d, elapsed);
-        if particle.age < particle.lifetime { self.particles.push(particle); }
+        if particle_alive(&particle) { self.particles.push(particle); }
     }
 
     fn output(&self, d: &ParticleDefinition, parent: Mat4, camera: ParticleCameraBasis) -> Vec<ImportedParticle> {
@@ -205,6 +205,10 @@ impl ImportedParticleSimulation {
             ImportedParticle { transform, position, velocity, color, custom_data1: custom(&d.custom_data1), custom_data2: custom(&d.custom_data2), uv_transform: sample_uv(d.texture_sheet.as_ref(), age, p.random[7]), normalized_age: age }
         }).collect()
     }
+}
+
+fn particle_alive(p: &SimParticle) -> bool {
+    p.lifetime - p.age > p.lifetime * (8.0 * f32::EPSILON)
 }
 
 fn integrate(p: &mut SimParticle, d: &ParticleDefinition, dt: f32) {
@@ -432,5 +436,17 @@ mod tests {
         assert!((transform.x_axis.truncate() - Vec3::Y * 4.0).length() < 1e-5);
         assert!((transform.y_axis.length() - 1.5).abs() < 1e-5);
         assert!((transform.transform_point3(Vec3::new(-0.5, 0.0, 0.0)) - p[0].position).length() < 1e-5);
+    }
+    #[test]
+    fn lifetime_endpoint_does_not_retain_particle_to_roundoff() {
+        let mut d = burst_definition();
+        d.start_lifetime = ParticleCurve::constant(1.0);
+        for space in ["engine", "unity"] {
+            d.coordinate_space = space.into();
+            let mut sim = ImportedParticleSimulation::default();
+            assert_eq!(sim.sample(&d, 0.9999, true, Mat4::IDENTITY, ParticleCameraBasis::default()).len(), 3);
+            assert!(sim.sample(&d, 1.0, true, Mat4::IDENTITY, ParticleCameraBasis::default()).is_empty());
+            assert!(ImportedParticleSimulation::default().sample(&d, 1.0, true, Mat4::IDENTITY, ParticleCameraBasis::default()).is_empty());
+        }
     }
 }

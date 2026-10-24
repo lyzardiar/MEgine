@@ -163,6 +163,14 @@ pub(crate) fn definition(
     out["coordinate_space"] = json!("unity");
     out["scaling_mode"] = json!("hierarchy");
     out["renderer"]["mesh_basis"] = json!("unity_shared_mesh_fbx2gltf");
+    if let Some(streams) = vertex_streams(r) {
+        out["renderer"]["source_vertex_streams"] = json!(streams);
+        out["renderer"]["vertex_stream_layout"] = json!(if streams == [0, 1, 3, 4, 5, 34, 38] {
+            "position_normal_color_uv_uv2_custom1_xyzw_custom2_xyzw"
+        } else {
+            "position_normal_color_uv"
+        });
+    }
     let size = &p["SizeModule"];
     if enabled(size) {
         let x = curve(&size["curve"]);
@@ -341,7 +349,31 @@ fn curve_is_nonzero(curve: &Value) -> bool {
         }
     }
 }
-pub(crate) fn renderer_diagnostics(renderer: &Value, blockers: &mut Vec<String>, path: &str) {
+fn vertex_streams(renderer: &Value) -> Option<Vec<u8>> {
+    let encoded = renderer["m_VertexStreams"].as_str()?;
+    if encoded.len() % 2 != 0 || !encoded.is_ascii() {
+        return None;
+    }
+    (0..encoded.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&encoded[i..i + 2], 16).ok())
+        .collect()
+}
+pub(crate) fn renderer_diagnostics(
+    renderer: &Value,
+    requires_custom_data: bool,
+    blockers: &mut Vec<String>,
+    path: &str,
+) {
+    let streams = vertex_streams(renderer);
+    let full = streams.as_deref() == Some(&[0, 1, 3, 4, 5, 34, 38]);
+    let basic = streams.as_deref() == Some(&[0, 1, 3, 4]);
+    if (!full && !basic)
+        || (requires_custom_data
+            && (!full || number(&renderer["m_UseCustomVertexStreams"], 0.) == 0.))
+    {
+        blockers.push(format!("{path}: particle vertex streams do not match validated Position/Normal/Color/UV or UV2+Custom1XYZW+Custom2XYZW packing"));
+    }
     if ![0, 1, 4].contains(&renderer["m_RenderMode"].as_u64().unwrap_or(0)) {
         blockers.push(format!(
             "{path}: particle renderer mode {} is unsupported",
@@ -379,6 +411,11 @@ fn material_keywords(material: &Value) -> Vec<String> {
             .collect()
     }
 }
+pub(crate) fn material_uses_custom_data(material: &Value) -> bool {
+    material_keywords(material)
+        .iter()
+        .any(|k| k == "_CustomData_ON")
+}
 pub(crate) fn material_diagnostics(material: &Value, warnings: &mut Vec<String>, path: &str) {
     let supported = [
         "_CustomData_ON",
@@ -401,6 +438,30 @@ pub(crate) fn material_diagnostics(material: &Value, warnings: &mut Vec<String>,
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn custom_vertex_stream_packing_is_decoded_and_validated() {
+        let good = json!({"m_UseCustomVertexStreams":1,"m_VertexStreams":"00010304052226"});
+        let mut blockers = vec![];
+        renderer_diagnostics(&good, true, &mut blockers, "sample");
+        assert!(blockers.is_empty());
+        assert_eq!(vertex_streams(&good).unwrap(), vec![0, 1, 3, 4, 5, 34, 38]);
+        let mut blockers = vec![];
+        renderer_diagnostics(
+            &json!({"m_UseCustomVertexStreams":1,"m_VertexStreams":"000103042226"}),
+            true,
+            &mut blockers,
+            "sample",
+        );
+        assert_eq!(blockers.len(), 1);
+        let mut blockers = vec![];
+        renderer_diagnostics(
+            &json!({"m_VertexStreams":"00010304"}),
+            true,
+            &mut blockers,
+            "sample",
+        );
+        assert_eq!(blockers.len(), 1);
+    }
     #[test]
     fn unsupported_enabled_modules_and_shapes_block_import() {
         for input in [

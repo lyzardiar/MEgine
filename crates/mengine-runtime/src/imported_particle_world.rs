@@ -75,7 +75,8 @@ impl ImportedParticleWorld {
             if let Some(seconds) = emitter.seek.take() { emitter.seconds=seconds; } else if delta.is_finite() && delta > 0. { emitter.seconds += delta.min(0.25); }
             live.insert(entity);
             let particles = emitter.simulation.sample(definition,emitter.seconds,true,if definition.coordinate_space=="unity" {transform.matrix*Mat4::from_scale(Vec3::new(1.,1.,-1.))} else {transform.matrix},basis);
-            let features = ["_CustomData_ON","_MASK_ON","_NOISE_ON","_DISSOLVE_SOFT","_Sub_ON"].iter().enumerate().fold(0,|bits,(index,key)|bits | if definition.material.keywords.iter().any(|k|k==key) {1<<index} else {0});
+            let mut features = ["_CustomData_ON","_MASK_ON","_NOISE_ON","_DISSOLVE_SOFT","_Sub_ON"].iter().enumerate().fold(0,|bits,(index,key)|bits | if definition.material.keywords.iter().any(|k|k==key) {1<<index} else {0});
+            if definition.material.shader!="VFX/EffectURP_V2_3D" && !definition.material.shader.is_empty() {features=1<<5;}
             for particle in particles {
                 let data = ParticleRenderData { geometry: asset.geometry.clone(), color: particle.color, custom1: particle.custom_data1, custom2: particle.custom_data2, uv_transform: particle.uv_transform, parameters: asset.parameters.clone(), seconds: self.shader_seconds, features, sorting_position:transform.position.to_array(), sorting_fudge:definition.renderer.sorting_fudge,
                     source_blend: value(&definition.material,"_BlendModeSrc",5.) as u32, destination_blend: value(&definition.material,"_BlendModeDst",10.) as u32, depth_compare: value(&definition.material,"_ZTest",2.) as u32, cull: value(&definition.material,"_CullMode",0.) as u32, depth_write: asset.material.depth_write };
