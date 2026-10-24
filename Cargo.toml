@@ -14,6 +14,7 @@ members = [
     "crates/mengine-audio",
     "crates/mengine-physics",
     "crates/mengine-effekseer",
+    "crates/mengine-unity-import",
     "packages/editor/src-tauri",
 ]
 default-members = [
