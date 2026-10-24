@@ -1439,3 +1439,9 @@ Scene连续旋转期间13帧，隐藏页签原生／浏览器均0，切回30帧�
 固定显示帧的激活索引按实体顺序／ID／parent／active复用，组件动画不再重复建立全场景索引。父子关系、启用状态或实体集合变化会重新解析；作者态可变查询保留原实现。旧帧持有独立的精简层级记录，原生delta、重排、缺失父节点、循环和旧帧回读由17项定向检查覆盖，TypeScript通过。
 
 7434实体、每帧200变换更新的3组局部样本，显示数据准备均值2.242→1.403ms，校验和一致；不代表整个Scene或原生FPS。实现位于hierarchyActivation／nativeViewportPresentation，证据tmp/docs-artifacts/editor-performance-risk/owned-activation-*。本批1/3，原生动画、层级显隐、地图切换及多窗口帧率待累计三项合并验证；完整记录见testing-batches.md。
+
+### 第八十四阶段：显示帧包围盒来源复用
+
+固定components记录的组件分类和局部范围复用，模型预览身份逐次检查以响应资源热更新；作者态可变数据继续直接计算。相关代码拆入viewportEntityBounds，Viewport保留原有选中／粒子／轨迹的保守规则。6项定向检查及TypeScript通过。
+
+7434实体、每帧200模型组件／变换变化的3组局部样本，包围盒准备均值1.401→0.687ms、校验和一致；不作为FPS结论。证据tmp/docs-artifacts/editor-performance-risk/entity-bounds-*。本批2/3，模型热更新、地图动画、多窗口和实际Scene paint待三项后统一验证，详见testing-batches.md。

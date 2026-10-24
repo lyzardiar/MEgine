@@ -898,3 +898,13 @@ Unitypackage 同任务收尾补充：导入器 1.3.0 将原始资产移至工程
 `samples/unity-package-preview` 提供中性 3D 场景、HUD、播放/停止/重播、相机环绕/缩放及背景切换。`prepare-preview.mjs` 将已有导入复制到忽略的 LocalPreview 工程，保留独立源资产目录；专有特效不入 Git。增加 native QA 脚本与 GPU 截图示例，所有产物写入 tmp/docs-artifacts。
 
 快速检查：前端 production build、Tauri cargo check 通过；导入模型与 Player 依赖检查 7/7 通过。三项任务已齐，统一原生验证正在执行：真实指定路径的分析/导入、刷新后复导、Prefab 实例化、播放与 X/R、相机、JSON 参数保存/非法拒绝、保存重开和控制台检查。GPU/Unity 同条件对照另行记录；不将成功播放计为视觉还原通过。
+
+### 第八十四阶段／新批次任务2/3：显示帧包围盒来源复用
+
+Viewport的包围盒准备提取到viewportEntityBounds：固定显示帧按components对象身份复用组件分类、模型路径判断及精灵局部范围，避免每帧对所有实体重复检查22种保守组件。模型预览仍每次读取，模型到达、热替换、卸载或路径变化立即重新选择局部范围；世界变换变化使用现有world AABB失效规则。作者态可变数据直接重新分类和计算。选中实体、粒子与轨迹继续保守纳入，不改变八叉树查询或模拟。
+
+变更packages/editor/src/viewportEntityBounds.ts、panels/Viewport.tsx及tests/viewportEntityBounds.test.mjs。6项定向测试与TypeScript通过，覆盖模型加载／替换／卸载、非法几何、父变换、精灵偏心／负缩放、编辑态原地修改、全部22种保守组件，以及实际Viewport提交空间索引时的选择与显示帧边界。日志tmp/docs-artifacts/editor-performance-risk/entity-bounds-tests.log、entity-bounds-types.log。
+
+7434实体（4746模型、354精灵、100灯光）、每帧200模型组件／变换变化，3组交替先后顺序、30帧预热＋120帧测量，包围盒准备均值1.401→0.687ms；结果校验和一致。三组P95分别2.325／2.218／1.398→0.793／0.915／0.774ms。仅为局部准备计时，不代表整个Scene帧率；脚本／摘要entity-bounds-bench.mjs／json留在上述本地目录。
+
+本批累计e1ac036及本项为2/3，原生构建和集成继续合并到第三项后。待测同一集成版本上的模型热更新选取、父变换、Scene隐藏／恢复、Amazonia与DotA持续动画、地图切换、多窗口以及Stop恢复；不追加整库测试。
