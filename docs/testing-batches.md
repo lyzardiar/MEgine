@@ -1058,3 +1058,11 @@ GPU测试1/1、uniform角色测试1/1及forward shader检查2/2通过，日志tm
 QA新增--pick-map：全图Scene清空选择后连续3次中心点击均选中导入实体4294981705，UI动作与selection RPC往返171.32／153.04／149.72ms。统计从动作命令前到selection返回，未包含预热、截图和selector查询；不作为物理输入或纯JS处理时间。该检查直接覆盖实际大地图延后命中路径，未重跑无关导入、完整选取或Spine测试。
 
 本项定向故障验证完成，当前批次仍1/3。多窗口最新RHI版本、长期内存、物理输入延迟、LOD和完整JASS玩法仍待后续验证或实现。原始图像／JSON／日志仅在tmp/docs-artifacts，QA退出后保留被WebView占用的缓存，未关闭用户编辑器。
+
+### 第九十三阶段／新批次任务2/3：同次提交共享材质准备
+
+RHI按本次提交中SharedRenderMaterial的源身份准备一次材质，未共享源直接准备；每个对象继续使用独立uniform槽位，阴影、粒子和世界绘制通过映射取得对应材质。复用只存在于一次提交内，源Arc在该期间保持存活，纹理上传、shader变化及写时复制的对象覆盖在下一次提交重新准备。
+
+变更renderer及material_submission_tests。3项真实GPU定向检查通过，覆盖共享绑定、资源刷新及新增64对象／8源的逐像素对照：共享准备64→8、单对象写时复制后9、独立材质64；开启阴影并校验纹理缺失后上传。最终生产cargo check -p mengine-rhi --release --lib通过。手动局部GPU基准4096对象／128源，12轮交替先后、排除2轮预热，每模式10组且每组4帧，96帧像素完全一致；材质准备CPU均值1.014100→0.084892ms、中位1.018150→0.084050ms、P95 1.119000→0.101900ms。只衡量该准备阶段，不作为真实地图FPS。
+
+日志tmp/docs-artifacts/editor-performance-risk/shared-material-preparation-{tests,bench,final-check}.log、shared-material-bindings-tests.log及shared-material-resources-tests.log。当前096b624与本项为2/3；下一项独立性能任务完成后统一原生构建与实际DotA／多窗口验证，真实地图材质数量、帧率和完整集成尚待确认。

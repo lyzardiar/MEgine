@@ -1523,3 +1523,9 @@ Game在Play期间最多两次延后过期请求，让新世界进入请求槽位
 第九十二阶段定向生产验证通过：原生构建完成，实际DotA报告arbitrary-map-1792819809985为14437实体、0error、正常退出。Game原始RGBA的921600像素全部不透明，Scene进入按需准备；浏览器drawItems1为选中Camera辅助条目，原生仍提交5342个对象，图像正常。
 
 5秒样本全图Scene41.71FPS／paint10.41ms，上一样本31.63／15.87ms；Game59.08FPS。单组顺序对照不作稳定60FPS保证。Scene原生render均值22.40ms，最新编译7.492／backend11.468／资源同步1.165ms，是后续重点。3次全图点击均选中对象，UI动作及selection RPC往返约150～171ms，物理输入延迟仍待验收。当前新批次1/3，详见testing-batches.md。
+
+### 第九十三阶段：共享材质按次提交准备一次
+
+RHI通过共享材质源身份复用一次提交内的材质准备，各对象变换和uniform仍独立，阴影／粒子／世界使用相同映射。未共享源跳过索引，提交之间重新准备以保持纹理刷新、shader及单对象写时复制覆盖。
+
+3项真实GPU定向检查、最终生产cargo check通过。4096对象／128源交替基准，96帧像素一致；材质准备CPU均值1.014100→0.084892ms、P95 1.119000→0.101900ms，不能外推真实地图FPS。当前批次2/3，实际DotA及多窗口待第三项统一集成；证据shared-material-preparation-*、shared-material-bindings-tests.log及shared-material-resources-tests.log，完整范围见testing-batches.md。

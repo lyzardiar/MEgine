@@ -1,6 +1,57 @@
 // Author: MiYu. Validate material preparation across passes and measure actual submission CPU work.
 use super::*;
 
+#[test]
+fn shared_material_preparation_preserves_pass_pixels_private_overrides_and_texture_refresh() {
+    let mut renderer=pollster::block_on(Renderer::new_headless(PhysicalSize::new(128,128))).unwrap();renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    renderer.meshes.insert("alternate-cube".into(),MeshGpu::unit_cube(&renderer.device));
+    renderer.upload_material_texture_rgba8("binding-red",1,1,&[255,20,10,255],true).unwrap();renderer.upload_material_texture_rgba8("binding-blue",1,1,&[10,20,255,255],true).unwrap();
+    let mut objects=binding_test_objects(64,true);let palette:Vec<_>=objects[..8].iter().map(|object|object.material.clone()).collect();
+    for(index,object)in objects.iter_mut().enumerate(){object.material=palette[index%8].clone();}
+    let camera=FrameCamera{view:Mat4::IDENTITY,proj:Mat4::IDENTITY,position:Vec3::Z};let mut lighting=FrameLighting::default();lighting.environment.background_enabled=false;lighting.environment.tone_mapping=false;
+    lighting.directional=Some(DirectionalLightData{direction:-Vec3::Z,color:[1.;3],intensity:1.,cast_shadows:true,shadow_strength:1.,shadow_bias:0.001,shadow_normal_bias:0.001,shadow_distance:10.});
+    let target=renderer.create_offscreen_target(PhysicalSize::new(128,128));
+    let compare=|renderer:&mut Renderer,objects:&[RenderObject],expected:usize|{
+        let mut reference=None;
+        for repeat in [true,false] {
+            renderer.repeat_material_preparation=repeat;
+            renderer.submit_frame_to(&RenderFrame{clear:ClearColor{r:0.,g:0.,b:0.,a:1.},camera,objects,lighting:&lighting,ui:None,scene_views:&[]},RenderTarget::Offscreen(&target)).unwrap();
+            assert_eq!(renderer.submission_profile().material_preparations,if repeat{64}else{expected});assert!(renderer.spatial_culling_stats().shadow_visible>0);
+            let pixels=renderer.read_offscreen_rgba8(&target).unwrap();if let Some(reference)=&reference{assert_eq!(&pixels,reference);}else{reference=Some(pixels);}
+        }
+        reference.unwrap()
+    };
+    let missing=compare(&mut renderer,&objects,8);
+    renderer.upload_material_texture_rgba8("missing-binding-texture",1,1,&[20,255,10,255],true).unwrap();let ready=compare(&mut renderer,&objects,8);assert_ne!(ready,missing);
+    let original=objects[8].material.base_color;objects[0].material.base_color=[0.1,0.2,0.3,1.];assert_eq!(objects[8].material.base_color,original);assert_eq!(palette[0].base_color,original);
+    assert_ne!(compare(&mut renderer,&objects,9),ready);compare(&mut renderer,&binding_test_objects(64,true),64);assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+}
+
+#[test]
+#[ignore = "manual shared-material preparation CPU profile"]
+fn benchmark_shared_material_preparation() {
+    let mut renderer=pollster::block_on(Renderer::new_headless(PhysicalSize::new(128,128))).unwrap();renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+    renderer.meshes.insert("alternate-cube".into(),MeshGpu::unit_cube(&renderer.device));
+    for(key,pixel)in [("binding-red",[255,20,10,255]),("binding-blue",[10,20,255,255]),("missing-binding-texture",[20,255,10,255])]{renderer.upload_material_texture_rgba8(key,1,1,&pixel,true).unwrap();}
+    let mut objects=binding_test_objects(4096,true);let palette:Vec<_>=objects[..128].iter().map(|object|object.material.clone()).collect();for(index,object)in objects.iter_mut().enumerate(){object.material=palette[index%128].clone();}
+    let camera=FrameCamera{view:Mat4::IDENTITY,proj:Mat4::IDENTITY,position:Vec3::Z};let mut lighting=FrameLighting::default();lighting.environment.background_enabled=false;lighting.environment.tone_mapping=false;lighting.directional=None;
+    let target=renderer.create_offscreen_target(PhysicalSize::new(128,128));let frame=RenderFrame{clear:ClearColor{r:0.,g:0.,b:0.,a:1.},camera,objects:&objects,lighting:&lighting,ui:None,scene_views:&[]};
+    let mut samples=[Vec::new(),Vec::new()];let mut reference=None;
+    for round in 0..12 {
+        for mode in if round%2==0{[0,1]}else{[1,0]} {
+            renderer.repeat_material_preparation=mode==0;let mut elapsed=0.;
+            for _ in 0..4 {
+                renderer.submit_frame_to(&frame,RenderTarget::Offscreen(&target)).unwrap();let profile=renderer.submission_profile();elapsed+=profile.material_prepare_ms;assert_eq!(profile.material_preparations,if mode==0{4096}else{128});
+                let pixels=renderer.read_offscreen_rgba8(&target).unwrap();if let Some(reference)=&reference{assert_eq!(&pixels,reference);}else{reference=Some(pixels);}
+            }
+            if round>=2{samples[mode].push(elapsed/4.);}
+        }
+    }
+    let summary=|mut samples:Vec<f64>|{let mean=samples.iter().sum::<f64>()/samples.len()as f64;samples.sort_by(f64::total_cmp);[mean,samples[samples.len()/2],samples[samples.len()*95/100]]};
+    let before=summary(samples[0].clone());let after=summary(samples[1].clone());println!("SHARED_MATERIAL_PREPARATION objects=4096 sources=128 samples=10 framesPerSample=4 before_mean_ms={:.6} before_median_ms={:.6} before_p95_ms={:.6} after_mean_ms={:.6} after_median_ms={:.6} after_p95_ms={:.6}",before[0],before[1],before[2],after[0],after[1],after[2]);
+    assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+}
+
 fn binding_test_objects(count: usize, mixed: bool) -> Vec<RenderObject> {
     let side = (count as f32).sqrt().ceil() as usize;
     (0..count).map(|index| {

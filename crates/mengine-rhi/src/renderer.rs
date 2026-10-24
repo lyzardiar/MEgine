@@ -426,6 +426,8 @@ pub struct OffscreenReadbackProfile {
 /// CPU wall time inside submission APIs, including driver/backpressure waits; not GPU execution time.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct FrameSubmissionProfile {
+    #[cfg(test)]
+    pub material_preparations: usize,
     pub target_prepare_ms: f64,
     pub camera_uniform_ms: f64,
     pub culling_ms: f64,
@@ -695,6 +697,8 @@ pub struct Renderer {
     particle_renderer: crate::particle_render::ParticleRenderer,
     #[cfg(test)]
     repeat_draw_bindings: bool,
+    #[cfg(test)]
+    repeat_material_preparation: bool,
     pub device: wgpu::Device,
     pub queue: wgpu::Queue,
     surface: Option<wgpu::Surface<'static>>,
@@ -1334,6 +1338,8 @@ impl Renderer {
         Ok(Self {
             #[cfg(test)]
             repeat_draw_bindings: false,
+            #[cfg(test)]
+            repeat_material_preparation: false,
             device,
             queue,
             surface,
@@ -1619,10 +1625,23 @@ impl Renderer {
         self.submission_profile.ui_preparation.accumulate(self.ui.prepare_profile());
         self.submission_profile.ui_prepare_ms += ui_prepare_started.elapsed().as_secs_f64() * 1000.0;
         let material_started = Instant::now();
-        let mut prepared_materials = Vec::with_capacity(submitted.len());
+        #[cfg(test)]
+        let reuse_materials = !self.repeat_material_preparation;
+        #[cfg(not(test))]
+        let reuse_materials = true;
+        // MiYu: source Arcs live for this submission; each object's uniform slot stays independent.
+        let mut shared_materials = HashMap::<*const RenderMaterial, usize>::new();
+        let mut material_slots = Vec::with_capacity(submitted.len());
+        let mut unique_materials = Vec::new();
         for &index in &submitted {
-            prepared_materials.push(self.prepare_object_material(&objects[index].material));
+            let material: &RenderMaterial = &objects[index].material;
+            let slot = if reuse_materials && Arc::strong_count(&objects[index].material.0) > 1 { *shared_materials.entry(material as *const RenderMaterial).or_insert_with(|| { let slot = unique_materials.len(); unique_materials.push(material); slot }) }
+                else { let slot = unique_materials.len(); unique_materials.push(material); slot };
+            material_slots.push(slot);
         }
+        #[cfg(test)]
+        { self.submission_profile.material_preparations += unique_materials.len(); }
+        let prepared_materials: Vec<_> = unique_materials.into_iter().map(|material| self.prepare_object_material(material)).collect();
         self.prune_material_pipeline_cache();
         self.particle_renderer.prepare(&self.device, &self.queue, camera, objects);
         self.submission_profile.material_prepare_ms += material_started.elapsed().as_secs_f64() * 1000.0;
@@ -1699,7 +1718,7 @@ impl Renderer {
                     &self.shadow_pass_bind_group,
                     &[(uniform_slots[index] as u64 * self.object_stride) as u32],
                 );
-                let material = &prepared_materials[uniform_slots[index]];
+                let material = &prepared_materials[material_slots[uniform_slots[index]]];
                 let texture_set = self
                     .material_texture_sets
                     .get(&material.textures)
@@ -1784,7 +1803,7 @@ impl Renderer {
             for index in draw_order {
                 let object = &objects[index];
                 if let Some(particle) = object.material.particle.as_deref() {
-                    let material = &prepared_materials[uniform_slots[index]];
+                    let material = &prepared_materials[material_slots[uniform_slots[index]]];
                     if let Some(textures) = self.material_texture_sets.get(&material.textures) { self.particle_renderer.draw(&mut pass, index, particle, textures); }
                     bound_pipeline = None; bound_textures = None; bound_mesh = None; shared_bindings_set = false;
                     continue;
@@ -1793,7 +1812,7 @@ impl Renderer {
                     continue;
                 };
                 if mesh.index_count == 0 { continue; }
-                let material = &prepared_materials[uniform_slots[index]];
+                let material = &prepared_materials[material_slots[uniform_slots[index]]];
                 let pipeline_key = material.pipeline;
                 let pipeline = if material.use_error_pipeline {
                     self.error_material_pipelines
