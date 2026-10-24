@@ -4,19 +4,28 @@ use std::borrow::Cow;
 #[derive(Clone, Copy)]
 pub(super) enum Pass { Forward, Shadow }
 
+fn unique_name(source: &str, prefix: &str) -> String {
+    let mut name = prefix.to_owned(); let mut suffix = 0;
+    while source.contains(&name) { suffix += 1; name = format!("{prefix}_{suffix}"); } name
+}
+
 pub(super) fn shader(source: &str, indexed: bool, pass: Pass) -> Cow<'_, str> {
     if !indexed { return Cow::Borrowed(source); }
-    let mut source = source.replacen("@group(0) @binding(1) var<uniform> object: ObjectUniforms;", "@group(0) @binding(1) var<storage, read> mengine_objects: array<ObjectUniforms>;\nvar<private> object: ObjectUniforms;", 1);
+    let table = unique_name(source, "mengine_objects");
+    let mut source = source.replacen("@group(0) @binding(1) var<uniform> object: ObjectUniforms;", &format!("@group(0) @binding(1) var<storage, read> {table}: array<ObjectUniforms>;\nvar<private> object: ObjectUniforms;"), 1);
     if matches!(pass, Pass::Shadow) {
         source = source.replacen("    @location(0) uv: vec2<f32>,", "    @location(0) uv: vec2<f32>,\n    @location(1) @interpolate(flat) object_index: u32,", 1);
         source = source.replacen("fn vs_shadow(v: VsIn)", "fn vs_shadow(v: VsIn, @builtin(instance_index) object_index: u32)", 1);
-        source = source.replacen("    var output: ShadowOut;", "    var output: ShadowOut;\n    object = mengine_objects[object_index];\n    output.object_index = object_index;", 1);
-        source = source.replacen("fn fs_shadow(input: ShadowOut) {", "fn fs_shadow(input: ShadowOut) {\n    object = mengine_objects[input.object_index];", 1);
+        source = source.replacen("    var output: ShadowOut;", &format!("    var output: ShadowOut;\n    object = {table}[object_index];\n    output.object_index = object_index;"), 1);
+        source = source.replacen("fn fs_shadow(input: ShadowOut) {", &format!("fn fs_shadow(input: ShadowOut) {{\n    object = {table}[input.object_index];"), 1);
     } else {
-        source = source.replacen("    @location(2) @interpolate(perspective, centroid) uv: vec2<f32>,", "    @location(2) @interpolate(perspective, centroid) uv: vec2<f32>,\n    @location(3) @interpolate(flat) object_index: u32,", 1);
-        source = source.replacen("fn vs_main(v: VsIn)", "fn vs_main(v: VsIn, @builtin(instance_index) object_index: u32)", 1);
-        source = source.replacen("    var o: VsOut;", "    var o: VsOut;\n    object = mengine_objects[object_index];\n    o.object_index = object_index;", 1);
-        source = source.replacen("fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) vec4<f32> {", "fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) vec4<f32> {\n    object = mengine_objects[i.object_index];", 1);
+        let varyings = unique_name(&source, "MEngineObjectVaryings");
+        let vertex = unique_name(&source, "mengine_object_vertex"); let fragment = unique_name(&source, "mengine_object_fragment");
+        // Material helpers retain VsOut and its constructors; stage wrappers own the extra flat index.
+        source = source.replacen("struct VsOut {", &format!("struct {varyings} {{\n    @builtin(position) clip: vec4<f32>,\n    @location(0) @interpolate(perspective, centroid) world_position: vec3<f32>,\n    @location(1) @interpolate(perspective, centroid) world_normal: vec3<f32>,\n    @location(2) @interpolate(perspective, centroid) uv: vec2<f32>,\n    @location(3) @interpolate(flat) object_index: u32,\n}};\n\nstruct VsOut {{"), 1);
+        source = source.replacen("@vertex\nfn vs_main(v: VsIn) -> VsOut", &format!("fn {vertex}(v: VsIn) -> VsOut"), 1);
+        source = source.replacen("@fragment\nfn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) vec4<f32>", &format!("fn {fragment}(i: VsOut, front_facing: bool) -> vec4<f32>"), 1);
+        source.push_str(&format!("\n@vertex\nfn vs_main(v: VsIn, @builtin(instance_index) object_index: u32) -> {varyings} {{\n    object = {table}[object_index];\n    let base = {vertex}(v);\n    return {varyings}(base.clip, base.world_position, base.world_normal, base.uv, object_index);\n}}\n\n@fragment\nfn fs_main(i: {varyings}, @builtin(front_facing) front_facing: bool) -> @location(0) vec4<f32> {{\n    object = {table}[i.object_index];\n    return {fragment}(VsOut(i.clip, i.world_position, i.world_normal, i.uv), front_facing);\n}}\n"));
     }
     Cow::Owned(source)
 }
@@ -118,12 +127,12 @@ mod tests {
     #[test]
     fn indexed_object_shader_layout_and_stage_ownership_validate() {
         let hook = "fn mengine_surface_hook(color: vec4<f32>, uv: vec2<f32>, position: vec3<f32>, normal: vec3<f32>) -> vec4<f32> { if object.custom_parameters[0].x > 0.5 { return color * textureSample(base_color_texture, material_sampler, uv); } return color; }";
-        let custom = compose_surface_shader(&format!("{hook} fn vs_shadow() -> f32 {{ return 0.; }} fn mesh_preview() -> VsOut {{ var o: VsOut; return o; }}"), None).unwrap();
+        let custom = compose_surface_shader(&format!("{hook} fn vs_shadow() -> f32 {{ return 0.; }} fn mesh_preview() -> VsOut {{ var o: VsOut; return o; }} fn mesh_constructor() -> VsOut {{ return VsOut(vec4<f32>(0.), vec3<f32>(0.), vec3<f32>(0.), vec2<f32>(0.)); }} var<private> mengine_objects: f32; struct MEngineObjectVaryings {{ value: f32, }} fn mengine_object_vertex() -> f32 {{ return 0.; }} fn mengine_object_fragment() -> f32 {{ return 0.; }}"), None).unwrap();
         for (original, pass) in [(FORWARD_WGSL, Pass::Forward), (SHADOW_WGSL, Pass::Shadow), (custom.as_str(), Pass::Forward)] {
             assert_eq!(shader(original, false, pass), original);
             let source = shader(original, true, pass); assert!(source.contains("var<storage, read> mengine_objects"));
             assert!(source.contains("@builtin(instance_index) object_index")); assert!(source.contains("@interpolate(flat) object_index"));
-            assert_eq!(source.matches("object = mengine_objects[object_index];").count(), 1);
+            assert_eq!(source.matches("    object = ").count(), 2);
             let module = naga::front::wgsl::parse_str(&source).expect("indexed shader parses");
             naga::valid::Validator::new(naga::valid::ValidationFlags::all(), naga::valid::Capabilities::all()).validate(&module).unwrap();
             let object = module.types.iter().find(|(_, ty)| ty.name.as_deref() == Some("ObjectUniforms")).unwrap().1;

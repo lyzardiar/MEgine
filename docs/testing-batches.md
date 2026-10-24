@@ -1198,3 +1198,6 @@ B001/map-session-1792831470405.json通过7434实体、多窗口重开／版本�
 4096混合材质绘制、缓存bundle的12轮交替对照，排除2轮预热，10组各4帧；每帧128×128完整回读像素相同。世界编码CPU均值1.962848→1.694805ms，提交CPU3.194753→2.838718ms，提交加GPU回读5.135708→4.810100ms；不含IPC和游戏逻辑，不直接外推真实地图FPS。原始日志及摘要为tmp/docs-artifacts/editor-performance-risk/indexed-objects-{final-tests,gpu-final,material-tests,embedded-view-test,picking-test,benchmark,host-check}.log和indexed-objects-benchmark-summary.json。
 
 当前新批次1/3。第三项后统一构建并验证实际DotA／多窗口持续FPS、indexedObjectSlots、材质／shader热更新、姿态选取／阴影与Stop／重开；本次没有重跑完整原生QA。最新已验证实际全图Scene仍为4bca411的46.69FPS、Game59.90FPS，完整JASS／War3保真、稳定60FPS、长期驻留和LOD继续待办。
+
+
+第一百零一阶段补充：通过独立渲染阶段包装传递实例索引，保留材质辅助函数可用的VsOut结构、位置构造参数与成员；自动避开辅助函数、类型和私有变量的同名符号。构造函数及命名兼容回归通过，12阶段96帧uniform／数组完整像素对照仍一致。日志indexed-objects-constructor-before.log和indexed-objects-constructors-after.log。该补充属于同一功能，批次计数不增加。
