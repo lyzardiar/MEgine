@@ -270,6 +270,23 @@ mod tests {
         mirror.update_owned(WorldSnapshot::default()); assert_eq!(mirror.world.iter_entities().count(), 0);
     }
 
+    #[test]
+    fn hierarchy_frames_follow_mirrored_pose_records_and_real_transform_changes() {
+        use mengine_core::{generated::MeshRenderer, transform_hierarchy::TransformHierarchyCache};
+        let mut source = World::new(); let ids: Vec<_> = (0..512).map(|_| source.spawn_empty()).collect();
+        for &entity in &ids { source.insert_component(entity, Transform::default()); source.insert_component(entity, MeshRenderer::default()); if entity != ids[0] { source.set_parent(entity, Some(ids[0])); } }
+        let child = ids[1]; let mut mirror = SharedSnapshotWorld::default(); mirror.update_owned(WorldSnapshot::from_world(&source)); let native = mirror.entities[&child.to_u64()];
+        let mut cache = TransformHierarchyCache::default(); let first = cache.build(mirror.world());
+        for frame in 0..8 {
+            source.get_component_mut::<MeshRenderer>(child).unwrap().mesh = format!("pose-{frame}"); mirror.update_owned(WorldSnapshot::from_world(&source));
+            let current = cache.build(mirror.world()); assert!(std::ptr::eq(first.get_ref(native).unwrap(), current.get_ref(native).unwrap()), "unchanged mirrored Transform values share the immutable hierarchy");
+        }
+        source.get_component_mut::<Transform>(child).unwrap().position[0] = 7.; mirror.update_owned(WorldSnapshot::from_world(&source));
+        let current = cache.build(mirror.world()); assert_eq!(current.get(native).unwrap().position.x, 7.); assert_eq!(first.get(native).unwrap().position.x, 0.);
+        assert!(!std::ptr::eq(first.get_ref(native).unwrap(), current.get_ref(native).unwrap()));
+        let expected = mengine_core::TransformHierarchy::build(mirror.world()); for entity in mirror.world().iter_entities() { assert_eq!(current.get(entity), expected.get(entity)); }
+    }
+
 }
 
 #[cfg(test)]

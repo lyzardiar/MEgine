@@ -94,7 +94,7 @@ impl TransformHierarchyCache {
         self.entries.resize_with(slots, || None);
         if self.entries.capacity() > slots.saturating_mul(2) { self.entries.shrink_to_fit(); }
         let mut nodes = HierarchyNodes::Dense(vec![None; slots]);
-        for entity in entities { self.resolve(world, entity, &mut nodes); }
+        for entity in entities { self.resolve(world, entity, &mut nodes, false); }
         TransformHierarchy { nodes: Arc::new(nodes) }
     }
 

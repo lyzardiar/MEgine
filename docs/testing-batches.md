@@ -1449,3 +1449,11 @@ B001/map-session-1792852382058的7项多窗口／Stop后重启检查通过，Sce
 本轮发现旧内存采样的PID父链可混入PID复用前的系统进程：DotA报告中csrss45480／winlogon20360于10月23日创建，却沿已复用的父PID32984进入10月24日的QA进程树。原始数字保留，但本批不用于驻留比较；采用旧采样器的历史数据也需按新口径复测。sample-native-qa-memory.ps1改为校验根与每级父子创建时间，并在读取内存后再次核对进程身份，输出samplingSchemaVersion=2及创建时间；只统计可验证的存活父链，孤儿进程排除，working set仍可能重复计算共享页。5个定向场景通过，覆盖父PID复用、逆序清单、根身份失效和CIM时间精度；现有64664的只读实机采样仅包含编辑器与6个WebView进程。没有重跑已通过的地图／多窗口流程，新口径的Stop与长期驻留比较保留待测。
 
 本批功能与连续帧采样范围完成，新独立任务计数0/3；内存比较仍在待测队列。复现日志ranges-hierarchy-batch-*及memory-identity-*均位于tmp/docs-artifacts/editor-performance-risk。下一步继续定位实际分段失效与网格源校验尖峰、Game层级变化及Scene整帧成本；稳定60FPS、长期驻留、LOD、姿态聚焦／alpha选取、完整JASS／DotA玩法及War3保真尚未完成。
+
+第一百一十五阶段补充：致密世界的局部层级更新使用紧凑父子索引，只重新解析数值变化节点及其活动后代；原生版本变化但Transform位模式及Parent未变时继续共享只读结果。逐项检查全部存活实体的顺序、代次、活动状态和稳定版本。父级／活动／代次／顺序／世界变化、自定义Any、稀疏槽、小于256实体或变化范围超过ceil(实体数/8)时保留完整解析。局部变化导致的大子树回退可继续复用已验证的拓扑与子树规模，结构变化清理索引；空世界释放索引。仍需扫描输入，真实数值变化时复制只读节点表，不宣称总复杂度降为仅与变化量相关。变更core的hierarchy cache及两个增量实现／检查文件，Scene的snapshot_world增加实际消费者检查，既有基准只适配解析器的retained参数。
+
+17项core层级检查及1项真实SharedSnapshotWorld消费检查通过，普通检查忽略5项手动基准；新增基准另行执行通过。覆盖64轮局部／父子重叠更新、移除／恢复Transform、无效浮点、旧帧独立、失活／环／代次／顺序／世界切换、自定义动态投影、大子树与多个小分支合计越限、重复大子树更新不重建拓扑，以及镜像只改网格姿态仍共享结果、真实Transform变化正确更新。镜像apply_record会重新安装变化实体的组件，因此其未变化Transform也可能提升版本；本项在消费端核对实际原生值，不改变镜像写入或普通实体版本语义。
+
+以缓存DotA的14437实体地图Scenes/Main.mscene为输入，固定f68f6ce入口对照、独立预热缓存、9组每组40帧，计时外逐项核对完整结果。旧／新CPU中位数：无变化0.039442／0.046270ms，64个Transform只变版本1.005273／0.050630ms，单节点数值变化0.967712／0.486862ms，小分支0.945395／0.467913ms，大分支1.157375／1.165285ms，密集更新2.078507／1.959693ms。单节点及小分支含预热各440次使用增量解析；大分支和密集更新均走完整路径。该固定地图输入不是持续播放FPS或GPU测量，密集路径的样本差不外推收益。命令：设置MENGINE_HIERARCHY_PROJECT及MENGINE_HIERARCHY_SCENE后运行cargo test -p mengine-core --release benchmark_sparse_hierarchy_frames -- --ignored --nocapture；日志sparse-hierarchy-{tests,map-benchmark,mirror-test}.log与输入／源码摘要在tmp/docs-artifacts/editor-performance-risk。
+
+本补充同属115，不新增独立任务，计数仍0/3。实际Game／Scene、多窗口、相机／父子活动切换与动画热更的原生集成随下一批合并；最近完整原生结果仍为5e507b6的DotA58.02／59.98FPS，未把该结果归给补充实现。新口径内存驻留比较继续待测。
