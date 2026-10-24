@@ -822,3 +822,12 @@ Scene前端每帧计算对象包围盒并更新viewportSpatial；此前任一包
 6项定向测试和TypeScript通过：动态包围盒、跨区移动、未知／已知切换、重排、增删、聚集、原地修改、空场景与线性穷举结果一致，所有索引恰好出现一次；同时检查小幅动画不会为了重新建树反复读取静态边界。局部7400项／300动画索引、30帧预热＋120帧测量，索引更新加查询平均3.282→1.837ms，P95 5.006→2.219ms。该结果仅为本地空间索引样本，不能作为真实Scene帧率提升；脚本和汇总在tmp/docs-artifacts/editor-performance-risk/spatial-animation-bench.mjs、spatial-incremental-summary.json，测试与类型检查日志同目录。
 
 本项代码与测试为packages/editor/src/viewportSpatial.ts及tests/viewportSpatial.test.mjs。当前1/3，待累计3项后统一构建和原生采样：覆盖Amazonia与DotA的持续动画、Scene移动／旋转、选择和框选、显隐、资源热加载、地图切换；检查拾取不漏项、Scene paint及呈现间隔。当前不重跑全库／原生QA，不将局部计时写成稳定满帧。
+
+
+### 第八十阶段／新批次任务2/3：已显示帧世界包围盒复用
+
+Viewport的原生帧拥有固定实体记录，worldTransform已有父变换身份缓存。空间剔除现在进一步按固定世界变换与模型局部边界身份复用world AABB；模型加载／热替换、动画网格切换、父变换变化分别使用新边界或新变换重新计算。缓存为WeakMap，不按实体ID跨项目复用；编辑态可变浏览器数据继续直接计算。未加载模型的立方体局部边界作为固定对象复用，仍在实际模型到达时失效；选择、粒子与轨迹保守不剔除规则保持不变。
+
+相关7项空间检查与TypeScript通过，包含固定输入重复读取、移动后的新变换、模型边界替换、旧帧读取、非法变换和编辑态原地修改。局部4746网格／200变化变换、30帧预热＋120帧测量，仅world AABB转换平均1.054→0.380ms，P95 2.573→0.439ms，结果校验和一致。脚本／摘要在tmp/docs-artifacts/editor-performance-risk/spatial-owned-bounds-bench.mjs和spatial-owned-bounds-summary.json。此样本不代表完整渲染或FPS；没有重复原生构建。
+
+变更：viewportSpatial、Viewport及viewportSpatial.test。当前2/3，待第三项后与第七十九阶段统一验证Scene动画与相机交互、父节点移动、资源热加载、选择／框选、显隐和Stop／地图切换；观察实际paint与呈现间隔，不把待测项写成通过。

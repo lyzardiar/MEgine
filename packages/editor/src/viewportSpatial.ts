@@ -26,6 +26,17 @@ export function transformBounds(bounds: Bounds, transform: { position: number[];
   const max = center.map((value, axis) => value + transform.position[axis] + extent[axis]) as Vec3;
   return min.every(Number.isFinite) && max.every(Number.isFinite) ? { min, max } : null;
 }
+/** Owned frame transforms and model bounds are immutable; editable data must use transformBounds. */
+export function createOwnedTransformBoundsReader(): typeof transformBounds {
+  const cache = new WeakMap<Parameters<typeof transformBounds>[1], { local: Bounds; world: Bounds | null }>();
+  return (local, transform) => {
+    const previous = cache.get(transform);
+    if (previous?.local === local) return previous.world;
+    const world = transformBounds(local, transform);
+    cache.set(transform, { local, world });
+    return world;
+  };
+}
 export function viewportPlanes(camera: Camera, aspect: number): Plane[] {
   const { forward, right, up } = lookBasis(camera.eye, camera.target, camera.up);
   const plane = (normal: Vec3, offset: number) => ({ normal, distance: offset - dot(normal, camera.eye) });

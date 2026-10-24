@@ -1,9 +1,22 @@
 // Author: MiYu. Compare browser octree visibility to exhaustive conservative bounds checks.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {boundsVisible, createViewportSpatialIndex, viewportPlanes, transformBounds} from '../src/viewportSpatial.ts';
+import {boundsVisible, createViewportSpatialIndex, createOwnedTransformBoundsReader, viewportPlanes, transformBounds} from '../src/viewportSpatial.ts';
 import {project, quatRotateVec} from '../src/math3d.ts';
 const box = (x, y, z) => ({min:[x-.1,y-.1,z-.1],max:[x+.1,y+.1,z+.1]});
+
+test('owned bounds reuse follows fixed world transforms and replaced model geometry without retaining old results', () => {
+  const read=createOwnedTransformBoundsReader(),local=box(0,0,0);
+  const transform={position:[1,2,3],scale:[-2,3,1],rotation:[0,0,0,1]};
+  for(const value of [local.min,local.max,local,...Object.values(transform),transform])Object.freeze(value);
+  const first=read(local,transform);assert.deepEqual(first,transformBounds(local,transform));
+  for(let i=0;i<100;i++)assert.equal(read(local,transform),first);
+  const moved={...transform,position:[10,2,3]},second=read(local,moved);assert.notEqual(second,first);assert.deepEqual(second,transformBounds(local,moved));
+  const loadedMesh=box(20,0,0),loaded=read(loadedMesh,transform);assert.notEqual(loaded,first);assert.deepEqual(loaded,transformBounds(loadedMesh,transform));
+  assert.deepEqual(read(local,transform),first,'older displayed geometry may still request its own bounds');
+  const invalid={...transform,scale:[NaN,1,1]};assert.equal(read(local,invalid),null);assert.equal(read(local,invalid),null);
+  const editable={...transform,position:[0,0,0]};const before=transformBounds(local,editable);editable.position[0]=30;assert.notDeepEqual(transformBounds(local,editable),before,'mutable edit path computes current values');
+});
 test('perspective and orthographic octree queries match linear checks across motion/removal', () => {
   const index = createViewportSpatialIndex();
   let entries = Array.from({length:10000},(_,i)=>box(i%100-50,Math.floor(i/100)-50,0));

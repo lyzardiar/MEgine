@@ -54,7 +54,7 @@ import {
   scale as vscale,
 } from '../math3d';
 import { clearModelPreview, modelPreview, type PreviewMesh } from '../modelPreview';
-import { createViewportSpatialIndex, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
+import { createViewportSpatialIndex, createOwnedTransformBoundsReader, pointBounds, transformBounds, viewportPlanes, type Bounds } from '../viewportSpatial';
 import { projectAssetSessionGeneration } from '../projectAssets';
 import { beginNativeViewportRequest, nativeViewportRequestDelay, captureLatestNativeViewportFrames, createNativeViewportRequestState, deferNativeViewportRevision, finishNativeViewportRequest, nativeViewportReadbackBusy, nativeViewportRevisionDeferred, nativeViewportSessionExpired, nativeViewportRequestCanPublish, retryNativeViewportReadback, synchronizeNativeViewportRequestOwner, waitNativeViewportRequests } from '../nativeViewportRequests';
 import { createNativeViewportWorldArgs, nativeGameFrameMatchesRequest, nativeGameRequestInterval, nativeGamePreviewSize, nativeSceneWorldReference, nativeViewportFrameWorldCurrent, uploadNativeViewportFrame, type NativeViewportFrameWorld, type NativeViewportWorldReference } from '../nativeViewportFrame';
@@ -516,7 +516,8 @@ type Ent = {
 };
 
 const previewBounds = new WeakMap<PreviewMesh, Bounds | null>();
-function browserEntityBounds(entity: Ent, transform: TransformData): Bounds | null {
+const cubePreviewBounds: Bounds = { min: [-0.5, -0.5, -0.5], max: [0.5, 0.5, 0.5] };
+function browserEntityBounds(entity: Ent, transform: TransformData, readBounds = transformBounds): Bounds | null {
   const components = entity.components;
   // Helpers, complex batches and sampled effects retain their existing visibility and picking.
   if (['Camera3D', 'Camera2D', 'DirectionalLight', 'PointLight', 'SpotLight', 'Light2D', 'RectTransform', 'Tilemap', 'Line2D', 'SpriteBatch2D', 'SpineSkeleton', 'ParticleEmitter2D', 'ParticleEmitter3D', 'TrailRenderer2D', 'SampledEffect', 'BoxCollider3D', 'SphereCollider3D', 'BoxCollider2D', 'CircleCollider2D', 'PolygonCollider2D', 'EdgeCollider2D', 'TargetJoint2D'].some((key) => components[key])) return null;
@@ -528,7 +529,7 @@ function browserEntityBounds(entity: Ent, transform: TransformData): Bounds | nu
     if (preview) {
       if (!previewBounds.has(preview)) previewBounds.set(preview, pointBounds(preview.positions));
       local = previewBounds.get(preview) ?? null;
-    } else local = { min: [-0.5, -0.5, -0.5], max: [0.5, 0.5, 0.5] };
+    } else local = cubePreviewBounds;
   } else {
     const sprite = (components.AnimatedSprite2D ?? components.SpriteRenderer) as { size?: number[]; pivot?: number[] } | undefined;
     if (sprite) {
@@ -539,7 +540,7 @@ function browserEntityBounds(entity: Ent, transform: TransformData): Bounds | nu
       local = { min: [-radius[0], -radius[1], 0], max: [radius[0], radius[1], 0] };
     }
   }
-  return local ? transformBounds(local, transform) : null;
+  return local ? readBounds(local, transform) : null;
 }
 
 type TilemapTool = 'paint' | 'erase' | 'box' | 'fill' | 'picker';
@@ -725,6 +726,7 @@ export function Viewport(props: {
   const panelVisibleRef = useRef(panelVisible);
   panelVisibleRef.current = panelVisible;
   const spatialIndexRef = useRef(createViewportSpatialIndex());
+  const ownedBoundsRef = useRef(createOwnedTransformBoundsReader());
   const nativeGpuTimingRevisionRef = useRef(0);
   const nativeGameFrameRef = useRef<{
     image: HTMLImageElement | HTMLCanvasElement;
@@ -2050,7 +2052,7 @@ export function Viewport(props: {
       const t = resolvedTransform(worldTransforms, e.entity);
       return t ? [{ e, t, hierarchyOrder }] : [];
     });
-    spatialIndexRef.current.update(worldEntries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : browserEntityBounds(e, t)));
+    spatialIndexRef.current.update(worldEntries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : browserEntityBounds(e, t, displayedPresentation ? ownedBoundsRef.current : transformBounds)));
     const spatialCandidates = spatialIndexRef.current.query(viewportPlanes(cam, vp.w / Math.max(1, vp.h)));
     const drawn = (isGame && !gameCamera ? [] : spatialCandidates
       .flatMap((index) => {
