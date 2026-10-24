@@ -748,3 +748,10 @@ Scene24.01／Game19.87次呈现每秒；Scene0/121完整回退、81次已记录�
 变更：Viewport完成绘制判断及nativeSceneCompletionScheduling测试。延期／未产生新图像的完成回调可跳过Canvas重画，请求调度、新图像和交互变化继续执行，截图与编辑动画保持绘制。实际判断先复现失败后修复；相关38项和TypeScript通过，证据见performance-risk-todo第七十一阶段。
 
 状态：实现完成，待累计3项后合并原生构建。采集前端paint、原生成功帧和延期次数，验证隐藏Scene持续呈现、相机／选择／截图及Pause／Step／Stop；不以旧采样推算FPS，不重复无关资产与全库检查。
+
+
+### 新批次任务2/3：跨窗口发送间隔复用
+
+变更：App的broadcastScene计时及workspaceSelectionSync测试。常规发布等待上次发送后的剩余33ms，保持单计时器／最新世界合并；立即同步取消待发送并重置间隔。实际处理器复现由960ms内19次恢复为29次，17项同步测试和TypeScript通过，日志见performance-risk-todo第七十二阶段。
+
+状态：当前2/3，原生待合并。下一项完成后验证三窗口Play／Pause／Step／Stop、检查点与重开、Inspector编辑和最新原生版本；比较Game呈现及消息处理负载，合并第七十一阶段Scene绘制／延期与截图检查。发送次数是确定性调度测试，暂不宣称真实FPS提高。

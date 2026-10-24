@@ -25,7 +25,7 @@ async function withPair(run){
     const host=(sender,detachedPanel)=>{
       const store=createEditorStore();store.loadSceneJson(JSON.stringify({version:1,name:'Map',world:{entities:[{entity:1,name:'Root',components:{}},{entity:2,name:'Child',parent:1,components:{Text:{text:'original'}}}]}}));
       const sent=[],timers=new Map();let timerId=0,snapshot=store.presentationSnapshot(),observations=0,fullRefreshes=0,now=0,publications=0;
-      const env={Date:{now:()=>1000},applyPlaybackAction,log(){},setViewTab(){},store,props:{detachedPanel},syncSender:ref(sender),syncChannel:ref({postMessage:message=>sent.push(structuredClone(message))}),syncReady:ref(true),applyingRemote:ref(false),booted:ref(true),syncTimer:ref(null),sceneSyncId:ref(null),sceneSyncSequence:ref(0),selectionSyncOrder:ref({revision:0,sender:''}),sceneNameRef:ref('Map'),lastSceneTimestamp:ref(0),remoteDirtyPeers:ref(new Map([['peer',{timestamp:Date.now()}]])),logsRef:ref([]),sceneDirtyRef:ref(false),resourceDocumentPathsRef:ref({}),localTimelinePreview:ref(null),remoteTimelinePreview:ref(null),remoteSceneFingerprint:ref(''),remoteSceneDirty:ref(false),savedSceneFingerprint:ref(store.sceneContentFingerprint()),logEnd:ref(0),
+      const env={Date:{now:()=>1000},performance:{now:()=>now},applyPlaybackAction,log(){},setViewTab(){},store,props:{detachedPanel},syncSender:ref(sender),syncChannel:ref({postMessage:message=>sent.push(structuredClone(message))}),syncReady:ref(true),applyingRemote:ref(false),booted:ref(true),syncTimer:ref(null),lastSceneBroadcastAt:ref(null),sceneSyncId:ref(null),sceneSyncSequence:ref(0),selectionSyncOrder:ref({revision:0,sender:''}),sceneNameRef:ref('Map'),lastSceneTimestamp:ref(0),remoteDirtyPeers:ref(new Map([['peer',{timestamp:Date.now()}]])),logsRef:ref([]),sceneDirtyRef:ref(false),resourceDocumentPathsRef:ref({}),localTimelinePreview:ref(null),remoteTimelinePreview:ref(null),remoteSceneFingerprint:ref(''),remoteSceneDirty:ref(false),savedSceneFingerprint:ref(store.sceneContentFingerprint()),logEnd:ref(0),
         setSnap:value=>{publications++;snapshot=typeof value==='function'?value(snapshot):value;},setSelected:()=>{},setSelectedIds:()=>{},setSceneDirty:()=>{},setSceneName:()=>{},setMode:()=>{},setGizmo:()=>{},setGameResolution:()=>{},setGameDisplay:()=>{},setLogs:()=>{},setTreeTick:()=>{},
         agentBridge:{observeSelection:()=>observations++},refresh:()=>fullRefreshes++,logService:{syncConsoleLines:()=>{},getEntries:()=>[]},formatConsoleLog:value=>value,
         window:{setTimeout:(fn,delay=0)=>{const id=++timerId;timers.set(id,{fn,at:now+delay});return id;},clearTimeout:id=>timers.delete(id)},console:{error:(...args)=>assert.fail(args.join(' '))}};
@@ -217,4 +217,21 @@ test('main owner still compares author content on incoming edits and adopts expl
  assert.equal(calls,1);assert.equal(main.env.sceneDirtyRef.current,true);assert.equal(main.env.savedSceneFingerprint.current,saved);
  detached.env.sceneDirtyRef.current=false;detached.broadcastScene(true);detached.deliver(main);
  assert.equal(calls,2);assert.equal(main.env.sceneDirtyRef.current,false);assert.equal(main.env.savedSceneFingerprint.current,fingerprint());
+}));
+
+
+test('runtime publications wait only the remaining 33 ms and serialize the newest completed world',async()=>withPair((main,detached)=>{
+ const document=JSON.parse(main.store.saveSessionSceneJson('Map'));main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,0);main.broadcastScene(true);main.deliver(detached);
+ for(let revision=1;revision<=60;revision++){
+  main.advance(16);document.world.frame=revision;main.store.loadRemoteSceneJson(JSON.stringify(document),'play',41,revision);main.broadcastScene();
+ }
+ assert.equal(main.sent.length,29,'completed worlds sustain the send cadence instead of adding a fresh delay');
+ main.advance(30);assert.equal(main.sent.length,30);main.deliver(detached);assert.equal(detached.store.nativePlayRevision,60);assert.equal(detached.store.playRenderSnapshot().frame,60);
+ main.advance(200);assert.equal(main.sent.length,0,'no redundant publications without a new completed world');
+}));
+
+test('immediate publications cancel pending work and reset the normal send interval',async()=>withPair(main=>{
+ main.broadcastScene(true);main.sent.length=0;main.advance(10);main.broadcastScene();main.advance(10);main.broadcastScene(true);assert.equal(main.sent.length,1);
+ main.advance(10);main.broadcastScene();main.advance(22);assert.equal(main.sent.length,1);main.advance(1);assert.equal(main.sent.length,2);
+ main.sent.length=0;main.advance(100);main.broadcastScene();main.advance(0);assert.equal(main.sent.length,1,'a completed world after a long gap sends without another 33 ms');
 }));

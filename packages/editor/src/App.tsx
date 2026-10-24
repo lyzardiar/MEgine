@@ -457,6 +457,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
 
   useEffect(() => undoService.subscribe(() => setUndoRevision(undoService.revision)), [undoService]);
   const syncTimer = useRef<number | null>(null);
+  const lastSceneBroadcastAt = useRef<number | null>(null);
   const sceneSyncId = useRef<string | null>(null);
   const sceneSyncSequence = useRef(0);
   const selectionSyncOrder = useRef({ revision: 0, sender: '' });
@@ -768,6 +769,7 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
     const send = () => {
       syncTimer.current = null;
       if (!immediate && !props.detachedPanel && ![...remoteDirtyPeers.current.values()].some(peer => peer.timestamp >= Date.now() - 5_000)) return;
+      lastSceneBroadcastAt.current = performance.now();
       // MiYu: Order local and remote publications together so every window accepts the same state.
       lastSceneTimestamp.current = Math.max(Date.now(), lastSceneTimestamp.current + 1);
       sceneSyncId.current = `${syncSender.current}:${++sceneSyncSequence.current}`;
@@ -795,7 +797,8 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
       send();
       return;
     }
-    if (syncTimer.current == null) syncTimer.current = window.setTimeout(send, 33);
+    // MiYu: completed worlds share the send interval instead of adding a fresh delay after every publication.
+    if (syncTimer.current == null) syncTimer.current = window.setTimeout(send, lastSceneBroadcastAt.current == null ? 33 : Math.max(0, Math.ceil(33 - (performance.now() - lastSceneBroadcastAt.current))));
   };
 
   const broadcastSelection = () => {

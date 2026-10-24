@@ -1321,3 +1321,12 @@ Viewport在所有真正完成的绘制结束时记录浏览器paint耗时，包�
 38项定向检查和TypeScript通过，覆盖nativeSceneCompletionScheduling、viewportPaintProfiling及nativeSceneFrame。新增实际生产判断复现先失败（预期跳过但得到paint），修复后通过；验证新世界通知未替换显示图像时跳过、真实新图像刷新、截图、尺寸／DPI／交互／预览变化、编辑动画和首次图像前相机移动。已有调度检查继续覆盖隐藏窗口重试、两次延期后回退、暂停／截图、所有者切换及采样。原测试夹具补充第六十九阶段的独立测量时钟，不改变生产调度。证据为 `tmp/docs-artifacts/editor-performance-risk/completion-repaint-repro.log`、`completion-repaint-tests.log`、`completion-repaint-types.log`。
 
 当前新批次第1/3项，未构建或原生复测。上批Scene平均paint7.56ms、81次延期只用于定位，此处不据此推算节省总时长或FPS。合并验证应同时记录前端paint与原生成功帧／延期，检查背景Scene持续推进、相机／选择／截图、Pause／Step／Stop，按实际采样判断收益；Game请求间等待仍开放。
+
+
+### 第七十二阶段：跨窗口发送复用剩余时间间隔
+
+App完成运行帧后触发broadcastScene；此前每次发送后，下一次完成通知都会另起33ms计时，发送周期包含等待下一帧的时间。现在以performance.now记录上次实际发送开始，只等待常规33ms间隔的剩余部分；期间仍只保留一个计时器，执行时序列化最新Store。没有新通知时不持续发送，无接收窗口时仍跳过；立即同步取消待发送任务、立即发布并重置间隔。消息排序时间戳、增量基线及选择同步协议不变。
+
+实际App发送／接收处理器与Store的定向复现：每16ms完成一帧，960ms内原逻辑发送19次，新逻辑29次；990ms内完成30次常规发布并接收最后第60帧，之后无新帧不再发送。另验立即同步在待发送期间插入、后续满33ms才发送、长空档后无需额外33ms等待。17项workspaceSelectionSync测试与TypeScript通过。证据为 `tmp/docs-artifacts/editor-performance-risk/broadcast-cadence-repro.log`（旧逻辑预期失败）、`broadcast-cadence-tests.log`、`broadcast-cadence-types.log`。
+
+当前新批次第2/3项，未原生构建或实测FPS。改动恢复既定发送节拍，也可能增加接收端每秒处理的消息，需在合并验证同时观察Game呈现、Scene延期、前端paint及进程内存。常规发送仍受33ms间隔约束；这不是独立Game达到60FPS的实现或保证，后续需按实际负载继续优化运行数据传递。
