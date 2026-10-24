@@ -9,6 +9,8 @@ use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime};
 use std::sync::Arc;
+#[path = "mesh_source_poll.rs"]
+mod source_poll;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct MeshLoadFailure {
@@ -88,6 +90,8 @@ fn discard_failed_mesh(renderer: &mut Renderer, key: &str, usage: &mut HashMap<S
 
 #[derive(Default)]
 pub struct RuntimeMeshCache {
+    #[cfg(test)]
+    sequential_source_checks: bool,
     project_root: Option<PathBuf>,
     attempted: HashMap<String, FileStamp>,
     last_poll: Option<Instant>,
@@ -109,6 +113,8 @@ impl RuntimeMeshCache {
 
     pub fn new(project_root: Option<PathBuf>) -> Self {
         Self {
+            #[cfg(test)]
+            sequential_source_checks: false,
             project_root,
             attempted: HashMap::new(),
             last_poll: None,
@@ -173,6 +179,7 @@ impl RuntimeMeshCache {
     pub fn sync_frame(&mut self, renderer: &mut Renderer, frame: &mut CompiledFrame) -> Vec<MeshLoadFailure> {
         self.profile = MeshSyncProfile::default();
         let mut checks = FrameSourceChecks::default();
+        self.validate_polled_sources(frame.objects.iter().chain(frame.scene_views.iter().flat_map(|view| &view.objects)), &mut checks);
         self.prepare_billboards(frame.camera,&mut frame.objects,&mut checks);
         for view in &mut frame.scene_views { self.prepare_billboards(view.camera,&mut view.objects,&mut checks); }
         self.sync_objects(renderer,frame.objects.iter().chain(frame.scene_views.iter().flat_map(|v| &v.objects)), &mut checks)
@@ -221,7 +228,9 @@ impl RuntimeMeshCache {
         objects: &[RenderObject],
     ) -> Vec<MeshLoadFailure> {
         self.profile = MeshSyncProfile::default();
-        self.sync_objects(renderer,objects.iter(), &mut FrameSourceChecks::default())
+        let mut checks = FrameSourceChecks::default();
+        self.validate_polled_sources(objects.iter(), &mut checks);
+        self.sync_objects(renderer,objects.iter(), &mut checks)
     }
 
     fn sync_objects<'a>(&mut self, renderer: &mut Renderer, objects: impl IntoIterator<Item = &'a RenderObject>, checks: &mut FrameSourceChecks) -> Vec<MeshLoadFailure> {
@@ -652,3 +661,7 @@ mod sync_dedup_tests;
 #[cfg(test)]
 #[path = "mesh_billboard_prepare_tests.rs"]
 mod billboard_prepare_tests;
+
+#[cfg(test)]
+#[path = "mesh_parallel_validation_tests.rs"]
+mod parallel_validation_tests;

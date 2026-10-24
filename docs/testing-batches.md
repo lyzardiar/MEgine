@@ -1541,3 +1541,13 @@ V8与QuickJS各7项定向检查通过，普通入口各忽略1项手动基准；
 版本2短期内存：DotA进程树私有内存关闭前6409.36MiB、关闭工程2293.11MiB、重开2833.03MiB，均7进程；多窗口起点5265.91MiB／7进程、三面板6874.74MiB／10进程、地图重载7682.64MiB／10进程、Stop停靠6218.13MiB／7进程、第二次Stop6122.23MiB／7进程（约5.98GiB）。多窗口根进程从4396.14到5184.49MiB，仍高于起点；上批两次Stop为6382.27MiB，但不同运行的短样本不能独立归因或证明长期回收。旧PID-only结果不参与比较，共享working set不当作独占字节，孤儿进程不在采样范围。
 
 本批功能／连续帧和版本2短流程验收完成，下一批独立计数0/3。已检查隐藏恢复、负缩放、实际Scene／Game、相机预览、Profiler和多窗口重启图像；119／120／121无后续产品代码变化，复用其定向结果。冻结程序、收据、原始日志、PNG／JSON均在tmp/docs-artifacts；docs只保留结论。后续继续来源校验尖峰、多窗口整帧与长期驻留，稳定60、LOD、姿态聚焦／alpha选取及完整JASS／War3保真保持待办。
+
+### 第一百二十二阶段／编辑器新批次任务1/3：并行轮询网格来源
+
+变更runtime的meshes.rs，新增mesh_source_poll.rs和mesh_parallel_validation_tests.rs。轮询帧中至少32个被引用的已缓存姿态来源，通过既有JobSystem拆为最多4个校验任务；每个任务串行检查本段文件，全部完成后把有效stamp和prepared状态交给既有单次sync检查表。main和嵌入视图共用结果。Shared与render-only来源继续调用原validate_at，保留请求路径身份、主文件及外部依赖的修改检测；无效来源进入原串行加载、错误和恢复路径。250ms轮询条件、小列表、冷加载和非轮询帧新姿态检测保持原规则，不增加依赖或跨帧校验缓存。source_check_ms记录批次实际墙钟时间，source_checks记录检查来源次数，无效来源可能再次进入串行检查。
+
+20项相关网格检查通过，普通入口忽略4项手动基准；新增手动基准另行执行通过。新增GPU对照用64个来源（各半Shared／render-only），main与嵌入视图有重叠及独立来源，9阶段共18个主视图完整RGBA与原顺序校验一致；同步比较失败列表、attempted、来源集合、采样顶点、上传／淘汰与缓存字节。覆盖正常轮询、不轮询、外部buffer修改、主文件删除恢复、buffer删除恢复及非轮询帧请求新姿态；完成任务后Weak来源引用可释放。其他兼容检查覆盖billboard相机、轮询／热更新、路径和既有资源恢复。命令：cargo test -p mengine-runtime --release --lib meshes:: -- --nocapture --test-threads=1。日志parallel-source-compatibility-tests.log在tmp/docs-artifacts/editor-performance-risk；初版单来源类型检查的日志另行保留。
+
+CPU对照使用已保留的196份DotA自包含GLB文件清单，5376条循环引用、预热后9组交错样本，每组20次。测量当前生产billboard预备路径，包含新增并行预检的对象扫描／去重、stamp表、共同的对象复制及相机key改写；对照只跳过预检，保留原顺序validate_at路径。旧／新每次中位数9.122745／6.088905ms，196个校验stamp与5376个最终mesh key逐项一致。不是实际地图帧率、GPU或进程内存测量，没有重跑全量资产遍历。命令：设置MENGINE_METADATA_PATHS为metadata-probe-paths.txt、MENGINE_METADATA_PROJECT为对应保留工程，运行cargo test -p mengine-runtime --release --lib benchmark_parallel_source_validation -- --ignored --nocapture；最终日志parallel-source-benchmark.log。仅比较底层校验调用的早期原型日志不用于此生产预备路径结论。
+
+当前新批次1/3。第三项后统一custom-protocol Release验证实际DotA／Amazonia及多窗口来源校验尖峰、整帧间隔、模型与外部buffer热更新、选取／相机／预览、Stop／重开及版本2驻留采样；当前原生验收程序仍13ef6a4，本项尚未证明实际满帧改善。JobSystem为既有全局执行器，最多4个任务指每次sync批次，不是全进程线程上限；后续原生验收需关注多窗口并发下的开销。长期内存、LOD及完整War3目标保持待办。
