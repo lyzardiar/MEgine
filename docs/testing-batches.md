@@ -668,3 +668,11 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 快速检查完成：19项相关测试、TypeScript检查通过；7,410实体Amazonia载荷重建与完整JSON逐项相等。命令为 `node --test packages/editor/tests/sessionSceneDelta.test.mjs packages/editor/tests/sessionSceneSerialization.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs` 和 `pnpm --dir packages/editor exec tsc --noEmit -p tsconfig.json`。最后新增的自定义序列化用例用 `--test-name-pattern="custom serialization"` 单独执行，未重复前18项。证据和载荷数字见performance-risk-todo第六十二阶段及tmp/docs-artifacts/editor-performance-risk/session-delta-*。
 
 状态：实现完成，原生集成待本批累计3项后合并执行。合并构建后运行 `node scripts/qa-frost-map-session.mjs --detached-only`，检查三窗口呈现、双向Inspector修改与原生步骤、Pause／Step、主窗口播放归属、地图重载／窗口重开、Stop与停止后编辑。补测正在运行时新窗口加入及缺基线补齐，采样Game／Scene呈现间隔、worldRevision／回退情况和输入延迟。风险：漏收或乱序恢复、检查点竞争、密集变化载荷略增，接收端完整解析仍可能主导卡顿。本次没有新的原生FPS结论。
+
+### 下一批任务2/3：增量消息解析与规范化复用
+
+变更：`sessionSceneSerialization.ts`、`store.ts`、`playWorldSync.ts`、`App.tsx` 和新增 `sessionSceneReception.test.mjs`。当前版本的已认证实体解析结果与规范化记录跨帧复用；脚本实体引用字段变化及位置默认索引正确失效。可编辑对象与冻结消息隔离，旧版迁移和完整JSON兼容。
+
+快速检查完成：46项相关测试最终通过，初次两项夹具错误修正后定向复查；TypeScript通过。命令：`node --test packages/editor/tests/sessionSceneReception.test.mjs packages/editor/tests/sessionSceneDelta.test.mjs packages/editor/tests/workspaceSelectionSync.test.mjs packages/editor/tests/remoteRuntimeReuse.test.mjs packages/editor/tests/playWorldSync.test.mjs`；两项补测用 `--test-name-pattern="runtime store|behavior entity"`，追加版本断言用 `--test-name-pattern="runtime store"`。局部Amazonia CPU对照及证据见performance-risk-todo第六十三阶段。
+
+状态：实现完成，与任务1合并待原生验证；当前累计2/3，本次未构建Release或重复原生QA。合并覆盖任务1场景，追加相机聚焦／操控、运行组件编辑后后续帧不回退、行为字段更新、窗口关闭重开与地图往返后的总内存观察。确认视口版本引用与显示帧一致；局部CPU下降不替代真实多窗口帧率和输入延迟验收。

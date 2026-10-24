@@ -1203,3 +1203,15 @@ Node局部基准以同进程加载提交51890a5的原Store和当前Store，读�
 同一作者Amazonia场景7,410实体的载荷检查逐条重建并对比完整JSON，均相等。仅场景字段按UTF-8 JSON编码计数：完整检查点3,679,246字节（完整JSON消息3,613,615）；仅时钟404字节（完整消息3,613,634）；一个Transform870字节（完整消息3,613,638）；全部7,403个Transform变化3,701,125字节（完整消息3,638,909）。这不是BroadcastChannel实际传输字节、CPU基准或原生FPS；完整和密集变化约增加1.7%至1.8%的编码载荷。输入SHA及明细见 `tmp/docs-artifacts/editor-performance-risk/session-delta-payload.json`。
 
 接收端仍重建完整JSON并沿既有解析／规范化路径加载。原生 `PlayRenderHistory` 只保留3版，版本过期会走 `requestRevisionedNativeViewport` 的完整snapshot回退；这是已确认的代码机制，本次没有请求级证据证明上一批Game缺少worldRevision全部由此造成。多窗口约5 FPS问题仍开放，下一批需要复测呈现、版本回退、输入延迟和总内存；本阶段不扩大历史保留容量。
+
+### 第六十三阶段：增量消息的解析与规范化复用
+
+接收器为当前版本场景保留冻结的实体解析结果，只解析变化的实体JSON；不再拼接并解析完整场景字符串。Store仅对接收器认证的文档启用规范化缓存，未变化的实体直接沿用不可变运行记录。行为脚本实体引用字段签名变化时缓存失效；缺少siblingIndex的实体按当前位置规范化，重排后不会沿用旧索引。普通JSON、旧版本场景、外部对象及自定义序列化／解析继续走完整加载和迁移。
+
+解析结果、规范化记录和可编辑作者／运行对象保持隔离；场景相机和清屏色复制后进入可修改状态。已有视口帧保留原生版本与时间，后续增量不会修改旧帧。实体记录保留函数从retainPlayWorld提取复用，原有快照语义不变。
+
+定向检查46项最终通过：首次44通过、2处测试夹具错误（聚焦接口名称、加载了不同脚本注册实例），修正后仅重跑两项通过；随后对运行加载用例补充旧／新原生版本断言，单独复查通过。TypeScript检查通过。范围包括共享运行记录、增量协议、实际App多窗口消息处理、旧运行编辑隔离，以及新增解析复用、字段签名变化、聚焦、拓扑／空场景、Stop、迁移、外部修改和解析异常不推进基线。证据位于 `tmp/docs-artifacts/editor-performance-risk/session-reception-tests.log`、`session-reception-recheck.log`、`session-reception-owner-recheck.log` 和 `session-reception-types.log`。
+
+局部CPU对照基线0752409，使用同一作者Amazonia7,410实体，经发送端Store迁移为真实会话版本3；双方解码、远端加载、指纹和面板快照纳入计时，4次预热、9组交替×6次，最终状态与指纹相等。组均值的中位数：仅时钟20.06675→5.30240ms；一个Transform19.86245→5.12345ms；全部7,403个Transform100.04758→90.16325ms。源文件为版本1，直接发送该旧版文档会进入兼容加载路径，相关诊断保存在session-reception-legacy-diagnostic.json，不作为当前会话链路结果。正式脚本／输入SHA／原始样本为 `tmp/docs-artifacts/editor-performance-risk/session-reception-benchmark.{mjs,json,log}`。
+
+接收器额外保留解析后的冻结树，Store弱缓存规范化记录；这是CPU和内存之间的取舍，尚未测量进程总内存或长期回收。没有新的原生FPS结论。正常运行、窗口重开、换图、Stop、输入延迟、原生版本回退与总内存继续纳入当前批次集成验证。

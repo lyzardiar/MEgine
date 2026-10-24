@@ -1,8 +1,25 @@
 // Author: MiYu. Reuse immutable runtime entity JSON in compact cross-window scene messages.
 import { isRetainedPlayRecord } from './playWorldSync.ts';
 import type { EntityRec } from './entityRecord.ts';
+import { CURRENT_SCENE_VERSION } from './sceneMigration.ts';
 
 type SessionDocument = { world: { entities: readonly EntityRec[]; [key: string]: unknown }; [key: string]: unknown };
+export type SessionSceneDocument = SessionDocument;
+const parsedDocuments = new WeakSet<object>();
+const parse = JSON.parse;
+export const isSessionSceneDocument = (value: unknown): value is SessionSceneDocument => value !== null && typeof value === 'object' && parsedDocuments.has(value);
+export const canReuseSessionSceneParsing = () => ordinarySerialization() && JSON.parse === parse && Object.freeze === freeze && Object.isFrozen === isFrozen && nativeParsing;
+const values = Object.values, freeze = Object.freeze, isFrozen = Object.isFrozen;
+const nativeParsing = [parse, values, freeze, isFrozen].every(fn => Function.prototype.toString.call(fn).includes('[native code]'));
+
+// Each input tree comes from JSON.parse; previously frozen entity trees are already owned.
+function freezeSessionJson<T>(value: T): T {
+  if (value !== null && typeof value === 'object' && !isFrozen(value)) {
+    for (const child of values(value)) freezeSessionJson(child);
+    freeze(value);
+  }
+  return value;
+}
 const stringify = JSON.stringify, descriptor = Object.getOwnPropertyDescriptor, prototype = Object.getPrototypeOf;
 const nativeSerialization = [stringify, descriptor, prototype].every(fn => Function.prototype.toString.call(fn).includes('[native code]'));
 const ordinarySerialization = () => nativeSerialization && JSON.stringify === stringify && Object.getOwnPropertyDescriptor === descriptor && Object.getPrototypeOf === prototype && prototype(Array.prototype) === Object.prototype && !descriptor(Object.prototype, 'toJSON') && !descriptor(Array.prototype, 'toJSON');
@@ -54,9 +71,10 @@ export function createSessionScenePublisher() {
 
 /** MiYu: keep one transport baseline, independent of editable store objects. Missing bases request a checkpoint. */
 export function createSessionSceneReceiver() {
-  let state: string | null = null, previous: string[] = [], resyncPending = false;
+  type Fragment = { json: string; entity?: EntityRec };
+  let state: string | null = null, previous: Fragment[] = [], resyncPending = false;
   const reset = () => { state = null; previous = []; resyncPending = false; };
-  return { reset, requestCheckpoint() { if (resyncPending) return false; resyncPending = true; return true; }, read(message: { sceneJson?: string; sceneDelta?: SessionSceneDelta }, stateId: string): string | undefined {
+  const receive = (message: { sceneJson?: string; sceneDelta?: SessionSceneDelta }, stateId: string, structured: boolean): string | SessionSceneDocument | undefined => {
     if (message.sceneJson !== undefined) { reset(); return message.sceneJson; }
     const delta = message.sceneDelta;
     if (!delta) throw new Error('Missing scene delta');
@@ -66,11 +84,23 @@ export function createSessionSceneReceiver() {
     const indices = new Set<number>();
     for (const [index, json] of delta.changed) {
       if (!Number.isSafeInteger(index) || index < 0 || index >= delta.length || indices.has(index) || typeof json !== 'string') throw new Error('Invalid scene delta entity');
-      indices.add(index); next[index] = json;
+      indices.add(index); next[index] = previous[index]?.json === json ? previous[index] : { json };
     }
     for (let index = 0; index < delta.length; index++) if (next[index] === undefined) throw new Error('Incomplete scene delta');
-    const json = sceneFromFragments(delta.header, next);
+    let result: string | SessionSceneDocument;
+    const header = structured && canReuseSessionSceneParsing() ? parse(delta.header) as SessionDocument : undefined;
+    if (header?.version === CURRENT_SCENE_VERSION) {
+      for (let index = 0; index < next.length; index++) if (!next[index].entity) next[index] = { json: next[index].json, entity: freezeSessionJson(parse(next[index].json) as EntityRec) };
+      header.world.entities = next.map(fragment => fragment.entity!);
+      result = freezeSessionJson(header); parsedDocuments.add(result);
+    } else result = sceneFromFragments(delta.header, next.map(fragment => fragment.json));
     previous = next; state = stateId; resyncPending = false;
-    return json;
-  } };
+    return result;
+  };
+  return {
+    reset,
+    requestCheckpoint() { if (resyncPending) return false; resyncPending = true; return true; },
+    read(message: { sceneJson?: string; sceneDelta?: SessionSceneDelta }, stateId: string) { return receive(message, stateId, false) as string | undefined; },
+    readDocument(message: { sceneJson?: string; sceneDelta?: SessionSceneDelta }, stateId: string) { return receive(message, stateId, true); },
+  };
 }

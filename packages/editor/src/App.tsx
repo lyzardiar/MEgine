@@ -1493,15 +1493,15 @@ export function App(props: { detachedPanel?: PanelKind | null } = {}) {
         return;
       }
       try {
-        const sceneJson = sessionSceneReceiver.current.read(message, message.stateId);
-        if (sceneJson === undefined) {
+        const sceneData = sessionSceneReceiver.current.readDocument(message, message.stateId);
+        if (sceneData === undefined) {
           if (sessionSceneReceiver.current.requestCheckpoint()) channel.postMessage({ type: 'request-scene', sender: syncSender.current } satisfies WorkspaceSyncMessage);
           return;
         }
         applyingRemote.current = true;
         syncReady.current = true;
         lastSceneTimestamp.current = message.timestamp;
-        store.loadRemoteSceneJson(sceneJson, message.mode, message.playSessionId, message.playRevision);
+        store.loadRemoteSceneJson(sceneData, message.mode, message.playSessionId, message.playRevision);
         sceneSyncId.current = message.stateId ?? null;
         selectionSyncOrder.current = { revision: 0, sender: '' };
         store.selectMany(message.selectedIds, 'replace');

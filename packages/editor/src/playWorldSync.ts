@@ -110,9 +110,14 @@ function freezeJson<T>(value: T): T {
   return value;
 }
 
+/** Own one normalized JSON record; certified immutable roots keep their identity. */
+export function retainPlayRecord(entity: WorldSnapshotView['entities'][number]): EntityRec {
+  return isRetainedPlayRecord(entity) ? entity as EntityRec : freezeJson(JSON.parse(JSON.stringify(normalizeEntity(entity))) as EntityRec);
+}
+
 /** Own native JSON data once; unchanged immutable records and colors retain their identity. */
 export function retainPlayWorld(world: WorldSnapshotView, previous?: RetainedPlayWorld): RetainedPlayWorld {
-  const entities = world.entities.map(entity => isRetainedPlayRecord(entity) ? entity as EntityRec : freezeJson(JSON.parse(JSON.stringify(normalizeEntity(entity))) as EntityRec));
+  const entities = world.entities.map(retainPlayRecord);
   const color = JSON.parse(JSON.stringify(world.clearColor)) as WorldSnapshotView['clearColor'];
   const clearColor = previous && equalJson(color, previous.clearColor) ? previous.clearColor : freezeJson(color);
   const { entities: inputEntities, clearColor: inputColor, ...metadata } = world;

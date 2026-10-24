@@ -2,13 +2,14 @@
 import type { PlayStepTiming } from './playStepTiming';
 import type { WorldCommand, WorldSnapshotView } from '@mengine/api';
 import { emptyPlayInput, retainedNativePlayWorld, type PlayInput, type PlayRuntimeDriver, type PlayRuntimeWorld } from './playRuntime';
-import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord, retainedPlayWorldChanges, retainPlayWorld } from './playWorldSync';
+import { cloneRetainedPlayRecord, createPlayWorldSync, isRetainedPlayRecord, retainedPlayWorldChanges, retainPlayRecord, retainPlayWorld } from './playWorldSync';
 import { normalizeEntity, type EntityRec } from './entityRecord';
-import { createSessionSceneSerializer, createSessionScenePublisher, type SessionSceneMessage } from './sessionSceneSerialization';
+import { createSessionSceneSerializer, createSessionScenePublisher, isSessionSceneDocument, canReuseSessionSceneParsing, type SessionSceneDocument, type SessionSceneMessage } from './sessionSceneSerialization';
 export type { EntityRec } from './entityRecord';
 import {
   createBehaviourRunner,
   getBehaviour,
+  listBehaviours,
   invokeBehaviourMethodEdit,
   type TransformData,
 } from '@mengine/behaviour';
@@ -955,14 +956,16 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
 
   // Runtime messages keep private author mirrors separate from exposed Play copies.
   let remoteAuthorCopies = new WeakMap<EntityRec, EntityRec>();
+  let remoteSessionEntities = new WeakMap<EntityRec, { index: number | undefined; entity: EntityRec }>(), remoteSessionSchema = '';
   const applySceneJson = (
-    json: string,
+    json: string | SessionSceneDocument,
     targetMode: EditorMode,
     recordUndo: boolean,
     applyScenePreferences = true,
     retainRemoteRuntime = false,
   ) => {
-    const data = migrateSceneDocument(JSON.parse(json)) as {
+    const sessionData = retainRemoteRuntime && isSessionSceneDocument(json) && canReuseSessionSceneParsing();
+    const data = migrateSceneDocument(typeof json === 'string' ? JSON.parse(json) : sessionData ? json : JSON.parse(JSON.stringify(json))) as {
       world?: {
         entities?: EntityRec[];
         clearColor?: [number, number, number, number];
@@ -988,19 +991,30 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     const ents = (data.world?.entities ?? data.entities ?? []) as EntityRec[];
     if (!retainRemoteRuntime) { privatePlayEntities = null; ownedPlayWorld = undefined; remoteAuthorFingerprintEntities = null; }
     if (!retainRemoteRuntime || mode === 'edit') remoteAuthorCopies = new WeakMap();
-    const loadedEntities = ents.map((e, i) =>
-      normalizeEntity({
+    if (sessionData) {
+      const schema = JSON.stringify(listBehaviours().map(entry => [entry.type, entry.fields.filter(field => field.serialize && field.type === 'entity').map(field => field.key)]));
+      if (schema !== remoteSessionSchema) { remoteSessionEntities = new WeakMap(); remoteSessionSchema = schema; }
+    } else { remoteSessionEntities = new WeakMap(); remoteSessionSchema = ''; }
+    const loadedEntities = ents.map((e, i) => {
+      const index = e.siblingIndex == null ? i : undefined, cached = sessionData ? remoteSessionEntities.get(e) : undefined;
+      if (cached && cached.index === index) return cached.entity;
+      const normalized = normalizeEntity({
         ...e,
         components: withAllEntityReferenceMetadata(e.components ?? {}),
         siblingIndex: e.siblingIndex ?? i,
         active: e.active ?? true,
-      }),
-    );
-    clearColor = data.world?.clearColor ?? clearColor;
+      });
+      if (!sessionData) return normalized;
+      const entity = retainPlayRecord(normalized);
+      remoteSessionEntities.set(e, { index, entity });
+      return entity;
+    });
+    clearColor = sessionData && data.world?.clearColor != null ? structuredClone(data.world.clearColor) : data.world?.clearColor ?? clearColor;
     let retained: ReturnType<typeof retainPlayWorld> | undefined;
     if (retainRemoteRuntime) {
-      playWorldSync.capture(loadedEntities, clearColor);
-      retained = retainPlayWorld({ ...playWorldSync.viewportSnapshot()!, frame: data.world?.frame ?? frame, simFrame: data.world?.frame ?? frame, simulationTime: data.world?.simulationTime ?? 0, selected: null }, ownedPlayWorld);
+      if (!sessionData) playWorldSync.capture(loadedEntities, clearColor);
+      const world = sessionData ? { entities: loadedEntities, clearColor } : playWorldSync.viewportSnapshot()!;
+      retained = retainPlayWorld({ ...world, frame: data.world?.frame ?? frame, simFrame: data.world?.frame ?? frame, simulationTime: data.world?.simulationTime ?? 0, selected: null }, ownedPlayWorld);
       remoteAuthorFingerprintEntities = retained.entities;
       editEntities = retained.entities.map(entity => {
         let editable = remoteAuthorCopies.get(entity);
@@ -1012,7 +1026,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     } else editEntities = loadedEntities;
     nextId = Math.max(1, ...editEntities.map((e) => e.entity + 1), 1);
     if (applyScenePreferences) {
-      if (data.sceneCamera) sceneCamera = data.sceneCamera;
+      if (data.sceneCamera) sceneCamera = sessionData ? structuredClone(data.sceneCamera) : data.sceneCamera;
       gameResolution = Object.prototype.hasOwnProperty.call(data, 'gameResolution')
         ? normalizeGameResolution(data.gameResolution)
         : legacyGameResolution(data.gameAspect, data.gameOrientation);
@@ -2946,7 +2960,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       applySceneJson(json, 'edit', true, false);
       return true;
     },
-    loadRemoteSceneJson(json: string, remoteMode: EditorMode, nativeSessionId?: number, nativeRevision?: number) {
+    loadRemoteSceneJson(json: string | SessionSceneDocument, remoteMode: EditorMode, nativeSessionId?: number, nativeRevision?: number) {
       const authoring = remoteMode !== 'edit' && mode !== 'edit' && playRuntime != null ? { entities: editEntities, clearColor, nextId, fingerprintEntities: remoteAuthorFingerprintEntities } : null;
       const retained = applySceneJson(json, remoteMode, false, true, remoteMode !== 'edit');
       remotePlayEditVersion++;
