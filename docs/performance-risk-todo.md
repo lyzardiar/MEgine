@@ -1513,3 +1513,9 @@ Game在Play期间最多两次延后过期请求，让新世界进入请求槽位
 143项定向检查、隔离前端和Tauri生产构建通过；同一EXE的不透明／透明切换、模型选取与热替换、Spine动画／停止／命中重放、多窗口重开／版本追赶／Pause／Step／Stop／undo／redo及DotA持续采样均通过，0error、正常退出。证据B001/spatial-picking-1792818795004、1792819157144、map-session-1792819200641、arbitrary-map-1792818854152，EXE指纹及完整范围见testing-batches.md。
 
 多窗口Scene51.57／Game55.44FPS、paint7.77／2.22ms；DotA Game59.85FPS／paint2.94ms，全图Scene31.63FPS／paint15.87ms。真实地图Scene的drawItems仍10723，原生像素含alpha<255，未进入本批不透明省略，不能归因FPS变化。Game原始PNG中211379／921600像素alpha<255，下一步核对材质输出／混合，保证透明语义后再减少重复绘制。首次大地图点击和真实输入延迟仍未验收；本批小夹具UI动作往返不作为物理延迟结论。
+
+### 第九十二阶段：修复材质覆盖alpha
+
+真实GPU复现确认opaque和镂空保留片元错误写出半透明alpha，Multiply混合也会降低不透明背景alpha。RHI现在让opaque／通过裁剪的片元写alpha1，透明材质保留输出透明度，Multiply使用源覆盖alpha。RGB与阴影裁剪、绑定布局和深度策略保持既有规则。
+
+16种真实GPU清屏／混合组合全部通过，原有8处错误被定向测试捕获；另uniform与shader检查3项通过。当前新批次1/3，立即复现已有DotA原始alpha及Scene路径异常，不据GPU小夹具推断真实地图已经满帧；完整记录和证据见testing-batches.md及material-alpha-*日志。

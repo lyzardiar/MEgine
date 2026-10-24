@@ -2803,7 +2803,7 @@ fn make_object_uniforms(object: &RenderObject) -> ObjectUniforms {
             material.clearcoat.clamp(0.0, 1.0),
             material.clearcoat_roughness.clamp(0.04, 1.0),
             dielectric_f0_from_ior(material.ior),
-            0.0,
+            if material.transparent { 0.0 } else { 1.0 },
         ],
         shadow_params: [
             if object.receive_shadows { 1.0 } else { 0.0 },
@@ -3200,7 +3200,7 @@ fn material_blend_state(blend: MaterialPipelineBlend) -> wgpu::BlendState {
         MaterialPipelineBlend::Multiply => wgpu::BlendState {
             color: component(wgpu::BlendFactor::Dst, wgpu::BlendFactor::Zero),
             alpha: component(
-                wgpu::BlendFactor::SrcAlpha,
+                wgpu::BlendFactor::One,
                 wgpu::BlendFactor::OneMinusSrcAlpha,
             ),
         },
@@ -4066,10 +4066,11 @@ fn mengine_lit_surface_hook(
 // MENGINE_SURFACE_HOOK_END
 
 fn material_output(color: vec3<f32>, alpha: f32) -> vec4<f32> {
+    let coverage_alpha = select(alpha, 1.0, object.layer_params.w > 0.5);
     if object.map_params.w > 0.5 && object.map_params.w < 1.5 {
-        return vec4<f32>(color * alpha, alpha);
+        return vec4<f32>(color * coverage_alpha, coverage_alpha);
     }
-    return vec4<f32>(color, alpha);
+    return vec4<f32>(color, coverage_alpha);
 }
 
 @fragment
@@ -4207,6 +4208,35 @@ fn fs_main(i: VsOut, @builtin(front_facing) front_facing: bool) -> @location(0) 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn material_alpha_preserves_opaque_coverage_and_transparent_clear() {
+        let mut renderer = pollster::block_on(Renderer::new_headless(PhysicalSize::new(32,32))).expect("GPU for material alpha acceptance");
+        renderer.device.push_error_scope(wgpu::ErrorFilter::Validation);
+        let target = renderer.create_offscreen_target(PhysicalSize::new(32,32));
+        let vertices = [[-0.8,-0.8,0.5],[0.8,-0.8,0.5],[-0.8,0.8,0.5],[0.8,0.8,0.5]].map(|position| Vertex { position, normal:[0.,0.,1.], uv:[0.5,0.5] });
+        renderer.upload_gltf_static_profiled("alpha-coverage", &vertices, &[0,1,2,2,1,3]);
+        let camera = FrameCamera { view:Mat4::IDENTITY, proj:Mat4::IDENTITY, position:Vec3::Z };
+        let mut lighting = FrameLighting::default(); lighting.environment.background_enabled = false; lighting.environment.tone_mapping = false;
+        let cases = [("opaque-unlit",false,true,MaterialBlendMode::Alpha,0.),("opaque-lit",false,false,MaterialBlendMode::Alpha,0.),("cutout-keep",false,true,MaterialBlendMode::Alpha,0.25),("cutout-reject",false,true,MaterialBlendMode::Alpha,0.75),("alpha",true,true,MaterialBlendMode::Alpha,0.),("premultiplied",true,true,MaterialBlendMode::Premultiplied,0.),("additive",true,true,MaterialBlendMode::Additive,0.),("multiply",true,true,MaterialBlendMode::Multiply,0.)];
+        let mut failures = Vec::new();
+        for clear_alpha in [0.,1.] {
+            for (name,transparent,unlit,blend_mode,alpha_cutoff) in cases {
+                let material = RenderMaterial { transparent,unlit,blend_mode,alpha_cutoff,double_sided:true,base_color:[0.8,0.4,0.2,0.5],..Default::default() };
+                let object = RenderObject { mesh_key:"alpha-coverage".into(),model:Mat4::IDENTITY,material:material.into(),cast_shadows:false,receive_shadows:false };
+                let clear = ClearColor { r:0.,g:0.,b:0.,a:clear_alpha };
+                renderer.submit_frame_to(&RenderFrame { clear,camera,objects:&[object],lighting:&lighting,ui:None,scene_views:&[] },RenderTarget::Offscreen(&target)).unwrap();
+                let pixels = renderer.read_offscreen_rgba8(&target).unwrap();
+                let actual = pixels[(16*32+16)*4+3];
+                let expected = if alpha_cutoff > 0.5 { (clear_alpha*255.).round() as u8 } else if !transparent || clear_alpha == 1. { 255 } else { 128 };
+                println!("{name} clear={clear_alpha} alpha={actual} expected={expected}");
+                if actual.abs_diff(expected) > 1 { failures.push((name,clear_alpha,actual,expected)); }
+                assert_eq!(pixels[3],(clear_alpha*255.).round() as u8,"uncovered pixels retain clear alpha");
+            }
+        }
+        assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
+        assert!(failures.is_empty(),"material coverage errors: {failures:?}");
+    }
 
     #[test]
     fn recycled_vertices_preserve_submitted_pixels_and_isolate_live_scene_meshes() {
@@ -4953,7 +4983,7 @@ mod tests {
             [1.5, 0.65, std::f32::consts::FRAC_PI_2, 0.0]
         );
         let layers = make_object_uniforms(&object).layer_params;
-        assert_eq!([layers[0], layers[1], layers[3]], [0.8, 0.18, 0.0]);
+        assert_eq!([layers[0], layers[1], layers[3]], [0.8, 0.18, 1.0]);
         assert!((layers[2] - 0.020_059_312).abs() < 0.000_001);
         assert!((dielectric_f0_from_ior(f32::NAN) - 0.04).abs() < 0.000_001);
         assert_eq!(make_object_uniforms(&object).shadow_params, [0.0; 4]);

@@ -1036,3 +1036,13 @@ B001/map-session-1792819200641.json通过多窗口Scene／Game、Game重开与�
 B001/arbitrary-map-1792818854152.json通过实际DotA14437实体缓存与5秒持续采样，缓存进入2.288秒。Game59.85FPS／paint2.94ms；全图Scene31.63FPS／paint15.87ms、drawItems10723。该Scene仍有非完全不透明的原生像素，保持完整浏览器路径，本批不透明优化未覆盖它，不能用单次顺序样本的FPS变化证明该分支收益。Game原始PNG921600像素中211379个alpha<255；下一步需要核对原生材质输出和混合，不能直接将这些像素标为不透明来启用省略。
 
 本批功能集成完成；仍未达到DotA全图或多窗口稳定60FPS。真实大地图首次点击、物理输入延迟、长时间内存和完整视觉还原仍待验收。临时产物留在tmp/docs-artifacts；QA编辑器正常退出，WebView缓存EPERM保留，用户编辑器未关闭。脚本新增检查仅属于本批验证，不另计任务。
+
+### 第九十二阶段／新批次任务1/3：材质覆盖alpha与Multiply混合
+
+RHI不透明材质忽略最终颜色的透明度写入：镂空仍按原始alpha裁剪，通过裁剪的片元写alpha1。透明材质继续保留shader输出alpha；预乘、普通透明及加法混合维持原规则。Multiply的alpha采用源覆盖公式，避免半透明源叠在不透明背景时降低背景alpha。复用对象uniform的保留分量传递覆盖规则，不改变绑定布局、阴影裁剪、RGB乘法公式或深度策略。
+
+新增真实GPU单测覆盖透明／不透明清屏下的opaque-lit、opaque-unlit、镂空保留／丢弃、Alpha、Premultiplied、Additive、Multiply共16种情况，并检查未覆盖区域alpha。修复前实际输出存在8处错误：opaque和保留的镂空alpha128；Multiply在透明背景为64、不透明背景为191。修复后16种输出全部符合覆盖规则，GPU验证错误为0；透明清屏及实际透明源仍为0／128，不会将所有图像强制不透明。
+
+GPU测试1/1、uniform角色测试1/1及forward shader检查2/2通过，日志tmp/docs-artifacts/editor-performance-risk/material-alpha-before-test.log、material-alpha-after-test.log、material-alpha-uniform-test.log、material-alpha-shader-tests.log。此项尚未证明实际DotA全部半透明像素均源于这两处错误。
+
+当前新批次1/3。因已有实际DotA alpha异常及不透明省略无法触发的复现，按已知故障例外立即构建该RHI修复，并只检查同一地图的原始PNG alpha、Scene路径、持续采样和实际大地图对象点击，不重复已通过的全批选取、Spine或地图转换。其余集成按三项合并。
