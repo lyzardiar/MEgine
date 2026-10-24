@@ -15,7 +15,7 @@ sha = lambda raw: hashlib.sha256(raw).hexdigest()
 
 
 def ini(raw):
-    result = configparser.ConfigParser(strict=False, interpolation=None, inline_comment_prefixes=('//',))
+    result = configparser.ConfigParser(strict=False, interpolation=None, inline_comment_prefixes=('//',), allow_no_value=True)
     result.optionxform = str
     result.read_string(raw.decode('utf-8-sig'))
     return result
@@ -36,18 +36,20 @@ def model_bounds(raw):
     raise ValueError('Missing source model bounds')
 
 
-def build_bindings(data, source_read, project, prefix='Assets/OriginalUnits/Selection/', resource_cache=None, ground_meshes=()):
-    sources = {}
+def build_bindings(data, source_read, project, prefix='Assets/OriginalUnits/Selection/', resource_cache=None, ground_meshes=(), definitions=None):
+    sources = {}; object_definitions = definitions
     def read(name):
         raw = source_read(name); sources[name] = dict(path=name,sha256=sha(raw),bytes=len(raw)); return raw
-    ui = rows(read('Units/UnitUI.slk')); balance = rows(read('Units/UnitBalance.slk')); movement = rows(read('Units/UnitData.slk'))
+    ui = definitions['ui'] if definitions else rows(read('Units/UnitUI.slk')); balance = definitions['balance'] if definitions else rows(read('Units/UnitBalance.slk')); movement = definitions['movement'] if definitions else rows(read('Units/UnitData.slk'))
     placements = [dict(index=i,creationNumber=u['creationNumber'],typeId=u['id'],player=u['player'],sourcePosition=u['location'][:2],facing=u['angle']*180/math.pi,name=f'Unit-{i}-{u["id"]}-{u["creationNumber"]}') for i,u in enumerate(data['units']['units']) if u['id'] != 'sloc']
-    kinds = {p['typeId'] for p in placements}; names = {}
-    for race in ['Neutral','Human','Orc','Undead','NightElf','Campaign']:
+    kinds = {p['typeId'] for p in placements}; names = {kind:name for kind,name in (definitions or {}).get('names',{}).items() if kind in kinds}
+    aliases = (definitions or {}).get('aliases',{})
+    for race in ['Neutral','Human','Orc','Undead','NightElf','Campaign','Item']:
         if kinds <= names.keys(): break
-        strings = ini(read('Units/'+race+'UnitStrings.txt'))
+        strings = ini(read('Units/'+race+('Strings.txt' if race == 'Item' else 'UnitStrings.txt')))
         for kind in kinds-names.keys():
-            if strings.has_option(kind,'Name'): names[kind] = strings[kind]['Name'].strip('"')
+            source_kind = aliases.get(kind,kind)
+            if strings.has_option(source_kind,'Name'): names[kind] = strings[source_kind]['Name'].strip('"')
     if not kinds <= names.keys(): raise ValueError('Missing source unit display names')
     def number(row,key,default=0):
         value = row.get(key,'-').strip(); result = default if value in ('','-','_') else float(value)
@@ -87,6 +89,7 @@ def build_bindings(data, source_read, project, prefix='Assets/OriginalUnits/Sele
     players=sorted((p for p in (data.get('info') or {}).get('players',[]) if p['type']==1),key=lambda p:p['id'])
     tools=[dict(path='scripts/'+p.name,sha256=sha(p.read_bytes())) for p in [Path(__file__),Path(converter.__file__),Path(__file__).with_name('warcraft_selection_ground.py')]]
     result=dict(version=1,mapSha256=data['source']['sha256'],sourceSha256=data['source']['members']['war3mapUnits.doo']['sha256'],placements=placements,definitions=definitions,localPlayer=players[0]['id'] if players else 0,selection=dict(mesh=mesh,scaleFactor=float(misc['ScaleFactor']),sizes=sizes,colors=colors),sources=list(sources.values()),tools=tools)
+    if object_definitions is not None: result['objectOverrides'] = object_definitions['overrides']
     result['selection']['groundSources']=ground_sources
     write('Assets/Data/OriginalUnitBindings.json',encode(result));return result
 

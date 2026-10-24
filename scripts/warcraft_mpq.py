@@ -11,6 +11,22 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'third_party/mpyq')
 import mpyq
 
 
+def read_asset_source(archives, relative, resource_cache=None, archive_ids=None):
+    """Resolve texture aliases within each archive before falling back to lower-priority archives."""
+    candidates = [relative]
+    suffix = Path(relative).suffix.lower()
+    if suffix in ('.tga', '.blp'):
+        candidates.append(relative[:-4] + ('.blp' if suffix == '.tga' else '.tga'))
+    for name, archive in archives:
+        for candidate in candidates:
+            try:
+                value = resource_cache.member(archive, candidate, archive_ids[name]) if resource_cache else read_archive(archive, candidate.replace('/', '\\'))
+            except FileNotFoundError:
+                continue
+            return name, candidate, value
+    raise FileNotFoundError(' / '.join(candidates))
+
+
 def explode(data, expected):
     binary = Path(os.environ.get('MENGINE_BLAST_EXECUTABLE', Path(__file__).resolve().parents[1] / 'tmp/warcraft-compression/blast.exe'))
     if not binary.is_file():

@@ -13,6 +13,7 @@ from warcraft_map import load_map
 from warcraft_doodads import MsvcRandom
 from warcraft_mpq import mpyq, read_archive
 from warcraft_unit_bindings import build_bindings, add_selection_entity
+from warcraft_object_data import unit_tables
 
 shared=importlib.import_module('build-frost-original-doodads')
 ROOT=shared.ROOT
@@ -64,7 +65,6 @@ def build(export, base_project, game, output, sampler, metadata_reader, resource
     if shared.sha(raw)!=source['source']['sha256']:raise ValueError('Changed source map')
     data,members=load_map(original)
     if data['units'] is None:raise ValueError('Map has no editor unit placements')
-    if any(name in members for name in ['war3map.w3u','war3map.w3t','war3map.w3a']):raise ValueError('Resolve source object overrides before unit scene generation')
     base_receipt=json.loads((base_project/'terrain-sources.json').read_bytes())
     if base_receipt['mapSha256']!=data['source']['sha256']:raise ValueError('Base project belongs to another map')
     if (base_project/'unit-placements.json').exists():raise ValueError('Base project already contains unit placements')
@@ -80,13 +80,10 @@ def build(export, base_project, game, output, sampler, metadata_reader, resource
         def read(path):
             relative=shared.converter.relative(path).as_posix();key=relative.lower()
             if key in cache:return cache[key]
-            for name,archive in archives:
-                try:value=resource_cache.member(archive,relative,archive_ids[name]) if resource_cache else read_archive(archive,relative.replace('/','\\'))
-                except FileNotFoundError:continue
-                target=project/'SourceAssets'/relative;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(value)
-                records[key]=dict(path=relative,archive=name,sha256=shared.sha(value),bytes=len(value));cache[key]=value;return value
-            raise FileNotFoundError(relative)
-        ui=shared.rows(read('Units/UnitUI.slk'));stats=shared.rows(read('Units/UnitData.slk'))
+            name,resolved,value=shared.read_asset_source(archives,relative,resource_cache,archive_ids)
+            target=project/'SourceAssets'/resolved;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(value)
+            records[key]=dict(path=resolved,archive=name,sha256=shared.sha(value),bytes=len(value));cache[key]=value;return value
+        definitions=unit_tables(read,members,data.get('strings',{}));ui=definitions['ui'];stats=definitions['movement']
         assets=UnitSceneAssets(project,read,sampler,metadata_reader,PREFIX,resource_cache=resource_cache)
         scene=json.loads((project/'Assets/Scenes/Main.mscene').read_bytes());entities=scene['world']['entities'];first=len(entities);groups={};placements=[];rng=MsvcRandom()
         next_id=max(e['entity'] for e in entities)+1
@@ -128,7 +125,7 @@ def build(export, base_project, game, output, sampler, metadata_reader, resource
             placements.append(dict(index=index,source=unit,kind='unit-visual',rendered=True,name=name,parts=names,effect=effect_path,appearance=info,animation=dict(clip=ci)))
         if progress:progress(len(placements),len(data['units']['units']))
         ground_meshes=[(r['path'],(base_project/r['path']).read_bytes()) for r in base_receipt['meshes'] if Path(r['path']).name.startswith('Ground-')]
-        bindings=build_bindings(data,read,project,resource_cache=resource_cache,ground_meshes=ground_meshes);add_selection_entity(scene,bindings)
+        bindings=build_bindings(data,read,project,resource_cache=resource_cache,ground_meshes=ground_meshes,definitions=definitions);add_selection_entity(scene,bindings)
         (project/'Assets/Scenes/Main.mscene').write_bytes(shared.encode(scene));(project/'unit-placements.json').write_bytes(shared.encode(placements))
         script_path=project/'Assets/Scripts/Main.js';script=script_path.read_text(encoding='utf-8');packed=json.dumps(list(groups.values()),separators=(',',':'))
         if 'var originalDoodadGroups=' in script:script+='\noriginalDoodadGroups=originalDoodadGroups.concat('+packed+');\n'
@@ -137,7 +134,7 @@ def build(export, base_project, game, output, sampler, metadata_reader, resource
         receipt=dict(mapSha256=data['source']['sha256'],placements=len(placements),rendered=sum(p['rendered'] for p in placements),addedEntities=len(entities)-first,groups=len(groups),sources=list(records.values()),models=assets.records,sourceCollections=assets.collection_hashes,
             baseProject=str(base_project),baseSceneSha256=shared.sha((base_project/'Assets/Scenes/Main.mscene').read_bytes()),baseScriptSha256=shared.sha((base_project/'Assets/Scripts/Main.js').read_bytes()),
             tools=[dict(path=str(p),sha256=shared.sha(p.read_bytes())) for p in [Path(__file__),Path(shared.__file__),ROOT/'scripts/warcraft_units.py',ROOT/'scripts/frost-original-doodads-client.js',sampler,metadata_reader,sampler.with_name('Wc3ModelViewer.Core.dll'),metadata_reader.with_name('Wc3ModelViewer.Core.dll')]],
-            coverage=dict(editorPlacements=True,sourceModels=True,sampledStand=True,gameplay=False,originalRuntimeParity=False),limitations=['Editor Z and source movement height are used; runtime terrain placement and JASS execution are pending','Stand preview uses source sampled clip loops; unit animation orders and random scheduling are pending','Object overrides, random placements and item visuals require resolution before rendering','Source shadows, collision, pathing, drops and runtime creation are pending'])
+            objectOverrides=definitions['overrides'],coverage=dict(editorPlacements=True,sourceModels=True,sampledStand=True,unitItemObjectData=True,gameplay=False,originalRuntimeParity=False),limitations=['Editor Z and source movement height are used; runtime terrain placement and JASS execution are pending','Stand preview uses source sampled clip loops; unit animation orders and random scheduling are pending','Object fields outside visual and selection tables, abilities and full gameplay remain preserved but unexecuted; random placements require resolution','Source shadows, collision, pathing, drops and runtime creation are pending'])
         receipt['generatedFiles']=[dict(path=p.relative_to(project).as_posix(),sha256=shared.sha(p.read_bytes())) for p in sorted((project/'Assets/OriginalUnits').rglob('*')) if p.is_file()]
         (project/'unit-scene-sources.json').write_bytes(shared.encode(receipt));os.rename(project,output);return receipt
     finally:

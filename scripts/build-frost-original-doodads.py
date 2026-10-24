@@ -13,7 +13,7 @@ import subprocess
 import tempfile
 from warcraft_map import load_map
 from warcraft_doodads import placement_kind, named_sequence_index, stand_sequence_index, stand_sequence_candidates, sequence_weight, MsvcRandom, mdx_sequence_rarities
-from warcraft_mpq import mpyq, read_archive
+from warcraft_mpq import mpyq, read_archive, read_asset_source
 
 terrain_builder = importlib.import_module('build-frost-original-terrain')
 converter = importlib.import_module('convert-warcraft-assets')
@@ -219,13 +219,10 @@ def build(export,game,output,sampler,metadata_reader,animation_seed=1,resource_c
         def read(path):
             relative=converter.relative(path).as_posix();normalized=relative.lower()
             if normalized in source_cache:return source_cache[normalized]
-            for archive_name,archive in archives:
-                try:value=resource_cache.member(archive,relative,archive_ids[archive_name]) if resource_cache else read_archive(archive,relative.replace('/','\\'))
-                except FileNotFoundError:continue
-                destination=project/'SourceAssets'/relative;destination.parent.mkdir(parents=True,exist_ok=True);destination.write_bytes(value)
-                source_records[normalized]=dict(path=relative,archive=archive_name,sha256=sha(value),bytes=len(value));source_cache[normalized]=value
-                return value
-            raise FileNotFoundError(relative)
+            archive_name,resolved,value=read_asset_source(archives,relative,resource_cache,archive_ids)
+            destination=project/'SourceAssets'/resolved;destination.parent.mkdir(parents=True,exist_ok=True);destination.write_bytes(value)
+            source_records[normalized]=dict(path=resolved,archive=archive_name,sha256=sha(value),bytes=len(value));source_cache[normalized]=value
+            return value
         definitions=rows(read('Doodads/Doodads.slk'));destructables=rows(read('Units/DestructableData.slk'));definitions.update(destructables)
         assets=SceneAssets(project,read,sampler,metadata_reader,resource_cache=resource_cache)
         scene=json.loads((project/'Assets/Scenes/Main.mscene').read_bytes());entities=scene['world']['entities'];groups={};placements=[];animation_rand=MsvcRandom(animation_seed)
@@ -237,7 +234,7 @@ def build(export,game,output,sampler,metadata_reader,animation_seed=1,resource_c
             for p in model['parts']:
                 replacement=row.get('texFile') if row.get('texID','0')==str(p['replaceableId']) else None
                 if replacement in ('_','-',None,''):replacement=None
-                elif not replacement.lower().endswith('.blp'):replacement+='.blp'
+                elif not Path(replacement).suffix:replacement+='.blp'
                 materials={str(t):assets.material(p['pack'],p['textureMaterials'].get(str(t),p['material']),replacement) for t in {s['texture'] for s in p['states'][ci]}}
                 states=[dict(color=[*(s['color'][i]*tint[i] for i in range(3)),s['color'][3]],material=materials[str(s['texture'])]) for s in p['states'][ci]]
                 parts.append(dict(mesh=p['mesh'],clip=ci,frames=len(states),duration=clip['duration'],loop=clip['loop'],moving=p['moving'][ci],states=states,durationMs=clip['durationMs'],restartOnEnd=True))
