@@ -1477,3 +1477,13 @@ B001/map-session-1792852382058的7项多窗口／Stop后重启检查通过，Sce
 独立Chrome夹具执行生产准备／光栅代码及实际AMD RX6800XT／ANGLE D3D11 WebGL。50次缓存与强制重新光栅化的完整RGBA对照通过，逐项核对命中几何和实际选取；包含相机、resize、选择、文字、分辨率、250ms刷新、资源清理和近面裁切。最初41个UI未变的播放帧只准备一次覆盖层、上传一次纹理并执行一次GPU投影，画面仍每帧合成；全部50个状态共9次GPU投影／7次上传，强制重新光栅化参考为50／50。该夹具不是完整编辑器地图、CPU耗时或FPS测量。截图已检查，报告、PNG、源码摘要及复现脚本保存在tmp/docs-artifacts/editor-performance-risk/play-scene-ui-gpu-1792859134602及verify-play-scene-ui-gpu.mjs；两次早期夹具路由／比较元数据诊断保留原始失败证据。
 
 本项修复播放路径的缓存缺口，作为独立任务117；当前116、117为2/3。第三项后统一正确Release，测量实际DotA的Scene UI／paint／原生连续帧及Game、多窗口，并复验按钮变化／自定义动画／遮罩、resize／旋转／选择、Pause／Step／Stop／重开；与115稀疏补充、116组件增量及版本2驻留采样一起集成。本次未重跑完整地图QA、Tauri构建或全量资产；最新完整原生结果仍为5e507b6，尚不能证明本项提高地图FPS。
+
+### 第一百一十八阶段／编辑器新批次任务3/3：相邻帧节点查询结果复用
+
+变更mengine-script的asset_nodes.rs及新增asset_nodes_cache_tests.rs。连续帧查询同一来源、姿态、采样率及完整options时复用已序列化结果；每次请求仍规范化项目和文件路径，每帧首次使用来源仍验证main／buffer依赖，失效时移除来源及全部结果后重新加载。相机与attachmentsOnly参与原有精确键，不复用不同请求；项目切换清空缓存。未在相邻帧使用的结果于第二次begin_frame清理，仍受每来源128条／512KiB结果字符串及既有来源数量／文件字节预算约束。返回值仍独立复制，未取消VM解析或文件检查。
+
+V8与QuickJS各7项定向检查通过，普通入口各忽略1项手动基准；基准另行执行通过。覆盖连续40帧复用、闲置释放、epoch回绕、main／外部buffer修改及删除恢复、项目切换、同帧主文件删除仍拒绝、姿态／采样率／相机／options隔离、条目数及大于512KiB结果不入缓存；既有ScriptHost计数、路径边界及API封装继续通过。命令：cargo test -p mengine-script --release --lib asset_nodes -- --nocapture，另以--no-default-features --features quickjs-runtime执行同一筛选；手动入口benchmark_adjacent_node_query_results -- --ignored --nocapture。日志node-result-cache-{tests,quickjs-tests,benchmark}.log在tmp/docs-artifacts/editor-performance-risk。
+
+基准使用Frostbound两份human模型目录的7个不同模型首部件，包含建筑、狮鹫／龙鹰及肖像；独立预热缓存、48帧、9组交错CPU样本，完整输出逐项相等。对照保留b14cc1d每帧清空结果的策略，其余查询路径相同。旧／新每帧查询CPU中位数：姿态不变0.925219／0.855321ms，两个渲染帧共用姿态0.969825／0.916344ms，姿态持续变化0.898900／0.905762ms，相机持续变化0.839429／0.842096ms。前两项48帧的采样／序列化从336次降为0／168次，后两项仍336次；持续变化的增加分别为0.006863／0.002667ms。含路径与依赖校验和缓存维护，不含VM、脚本玩法、渲染或FPS。早期仅建筑部件的输入及修正对照清空策略前的诊断日志独立保留，不作为最终结果。
+
+116、117、118达到3/3，开始同版本Release合并验证，115稀疏层级补充一并纳入。待实际DotA的UI／paint／原生连续帧、Game、多窗口、动态UI与空间选取、Pause／Step／Stop／项目重开及版本2内存采样；本项CPU结果不代替地图或长期驻留验收。

@@ -12,22 +12,22 @@ pub struct AssetNodeProfile { pub query_ms: f64, pub queries: u32, pub load_ms: 
 mod tests {
     use std::time::SystemTime;
     use super::*;
-    struct Fixture { directory: PathBuf, root: PathBuf }
+    pub(super) struct Fixture { directory: PathBuf, pub(super) root: PathBuf }
     impl Fixture {
-        fn new(offset: f32) -> Self {
+        pub(super) fn new(offset: f32) -> Self {
             let directory=std::env::temp_dir().join(format!("mengine-node-query-{}-{}",std::process::id(),SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos()));
             let root=directory.join("project");std::fs::create_dir_all(root.join("Assets")).unwrap();
             let value=serde_json::json!({"asset":{"version":"2.0"},"buffers":[{"uri":"pose%20data.bin","byteLength":32}],"bufferViews":[{"buffer":0,"byteOffset":0,"byteLength":8},{"buffer":0,"byteOffset":8,"byteLength":24}],"accessors":[{"bufferView":0,"componentType":5126,"count":2,"type":"SCALAR","min":[0],"max":[1]},{"bufferView":1,"componentType":5126,"count":2,"type":"VEC3"}],"nodes":[{"name":"ref","children":[1],"extras":{"mengineBillboard":{"flags":8}}},{"name":"ref","translation":[2,0,0]}],"animations":[{"name":"move","samplers":[{"input":0,"output":1}],"channels":[{"sampler":0,"target":{"node":0,"path":"translation"}}],"extras":{"menginePlayback":{"durationSeconds":1,"loop":false}}}]});
             std::fs::write(root.join("Assets/actor.gltf"),value.to_string()).unwrap();
             let fixture=Self {directory,root};fixture.buffer(offset,false);fixture
         }
-        fn buffer(&self, offset: f32, padding: bool) {
+        pub(super) fn buffer(&self, offset: f32, padding: bool) {
             let mut values=vec![0f32,1.0,0.0,0.0,0.0,offset,0.0,0.0];if padding {values.push(0.0);}
             let bytes=values.iter().flat_map(|v|v.to_le_bytes()).collect::<Vec<_>>();std::fs::write(self.root.join("Assets/pose data.bin"),bytes).unwrap();
         }
     }
     impl Drop for Fixture {fn drop(&mut self) {let _=std::fs::remove_dir_all(&self.directory);}}
-    fn nodes(cache: &mut AssetNodeCache, reference: &str, options: &str) -> serde_json::Value {
+    pub(super) fn nodes(cache: &mut AssetNodeCache, reference: &str, options: &str) -> serde_json::Value {
         let value:serde_json::Value=serde_json::from_str(&cache.query(reference,options)).unwrap();assert_eq!(value["ok"],true,"{value}");value["value"].clone()
     }
     #[test]
@@ -54,13 +54,14 @@ mod tests {
         cache.begin_frame();assert_eq!(cache.profile.queries,0);assert_eq!(cache.profile.query_ms,0.);
         assert_eq!(nodes(&mut cache,reference,"{}"),first);
         let invalid:serde_json::Value=serde_json::from_str(&cache.query("invalid","{}")).unwrap();assert_eq!(invalid["ok"],false);
-        assert_eq!((cache.profile.queries,cache.profile.loads,cache.profile.samples,cache.profile.serializations),(2,0,1,1));
+        assert_eq!((cache.profile.queries,cache.profile.loads,cache.profile.samples,cache.profile.serializations),(2,0,0,0));
         let mut host=crate::ScriptHost::new().unwrap();host.set_project_root(fixture.root.clone());
         host.eval("function onTick() { engine.assets.sampleNodes('Assets/actor.gltf#pose=0:15@30');engine.assets.sampleNodes('Assets/actor.gltf#pose=0:15@30'); }").unwrap();
         let mut world=mengine_core::World::new();
-        for expected_reuses in [1,0] {
+        for (index,expected_reuses) in [1,0].into_iter().enumerate() {
             let tick=host.tick_profiled(&mut world,0.).unwrap();let profile=tick.asset_nodes;
-            assert_eq!((profile.queries,profile.loads,profile.samples,profile.serializations),(2,0,1,1));
+            let samples=u32::from(index==0);
+            assert_eq!((profile.queries,profile.loads,profile.samples,profile.serializations),(2,0,samples,samples));
             assert_eq!(profile.reuses,expected_reuses);assert!(tick.callback_ms>=profile.query_ms);
         }
     }
@@ -76,7 +77,9 @@ mod tests {
         host.eval("var rejected=false;try{engine.assets.sampleNodes('Assets/actor.gltf#pose=0:0')}catch(e){rejected=String(e).includes('outside the project')}if(!rejected)throw Error('outside dependency accepted');").unwrap();
     }
 }
-struct Source { pose: Arc<SharedGltfPoseSource>, checked: u64, used: u64, results: HashMap<String,String> }
+// Only results queried in consecutive frames survive; dependency validation precedes every frame's lookup.
+struct CachedResult { value: String, frame: u64 }
+struct Source { pose: Arc<SharedGltfPoseSource>, checked: u64, used: u64, results: HashMap<String,CachedResult> }
 #[derive(Default)]
 pub(crate) struct AssetNodeCache { root: Option<PathBuf>, sources: HashMap<PathBuf,Source>, epoch: u64, serial: u64, pub(crate) profile: AssetNodeProfile }
 #[derive(Deserialize,Default)]
@@ -88,7 +91,7 @@ struct Camera { model: [f32;16], look: [f32;3], up: [f32;3] }
 
 impl AssetNodeCache {
     pub(crate) fn set_root(&mut self, root: PathBuf) {self.root=Some(root);self.sources.clear();}
-    pub(crate) fn begin_frame(&mut self) {self.profile=AssetNodeProfile::default();self.epoch=self.epoch.wrapping_add(1);for source in self.sources.values_mut() {source.results.clear();}}
+    pub(crate) fn begin_frame(&mut self) {self.profile=AssetNodeProfile::default();self.epoch=self.epoch.wrapping_add(1);for source in self.sources.values_mut() {source.results.retain(|_,result|self.epoch.wrapping_sub(result.frame)<=1);}}
     pub(crate) fn query(&mut self, reference: &str, options: &str) -> String {
         let started=Instant::now();
         let value=match self.sample(reference,options) {Ok(value)=>value,Err(error)=>serde_json::json!({"ok":false,"error":error}).to_string()};
@@ -124,7 +127,7 @@ impl AssetNodeCache {
         }
         let source=self.sources.get_mut(&path).unwrap();source.used=self.serial;
         let key=format!("{clip}:{frame}@{rate}|{options}");
-        if let Some(value)=source.results.get(&key) {return Ok(value.clone());}
+        if let Some(result)=source.results.get_mut(&key) {result.frame=self.epoch;return Ok(result.value.clone());}
         let started=Instant::now();
         let sampled=source.pose.sample_nodes(clip,frame,rate,camera).map_err(|e|e.to_string());
         self.profile.sample_ms+=started.elapsed().as_secs_f64()*1000.;self.profile.samples+=1;
@@ -132,7 +135,11 @@ impl AssetNodeCache {
         let started=Instant::now();
         let value=serde_json::json!({"ok":true,"value":poses.iter().filter(|n|!options_value.attachments_only || n.attachment.is_some()).map(|n|serde_json::json!({"index":n.index,"name":n.name,"position":n.matrix.w_axis.truncate().to_array(),"matrix":n.matrix.to_cols_array(),"attachment":n.attachment.as_ref().map(|a|serde_json::json!({"id":a.id,"path":a.path,"visibility":a.visibility}))})).collect::<Vec<_>>()}).to_string();
         self.profile.serialize_ms+=started.elapsed().as_secs_f64()*1000.;self.profile.serializations+=1;
-        if source.results.len()<128 && source.results.values().map(|v|v.len()).sum::<usize>()+value.len()<=512*1024 {source.results.insert(key,value.clone());}
+        if source.results.len()<128 && source.results.values().map(|result|result.value.len()).sum::<usize>()+value.len()<=512*1024 {source.results.insert(key,CachedResult {value:value.clone(),frame:self.epoch});}
         Ok(value)
     }
 }
+
+#[cfg(test)]
+#[path = "asset_nodes_cache_tests.rs"]
+mod cache_tests;
