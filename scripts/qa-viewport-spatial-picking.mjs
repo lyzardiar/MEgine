@@ -19,7 +19,7 @@ fs.writeFileSync(path.join(project,'Assets/Scripts/Main.js'),'function onTick() 
 const transform=position=>({position,rotation:[0,0,0,1],scale:[1,1,1]});
 const spine={skeleton:'Assets/Spine/spineboy/spineboy-pro.json',atlas:'Assets/Spine/spineboy/spineboy-pma.atlas',animation:'run',skin:'default',loop_animation:true,playing:true,time_scale:1,scale:.7,color:[1,1,1,1],premultiplied_alpha:true,sorting_layer:'default',sorting_order:0};
 if(spineOnly){const folder='Assets/Spine/spineboy';fs.mkdirSync(path.join(project,folder),{recursive:true});for(const file of ['spineboy-pro.json','spineboy-pma.atlas','spineboy-pma.png','LICENSE.txt'])fs.copyFileSync(path.join(repo,'samples/spine-showcase',folder,file),path.join(project,folder,file));}
-write('Assets/Scenes/Main.mscene',{version:1,name:'Main',world:{entities:[{entity:1,name:'Parent',components:{Transform:transform([10,0,0])}},{entity:2,name:'Pickable mesh',parent:1,components:{Transform:transform([0,0,0]),MeshRenderer:{mesh:poseCases?'Assets/Models/pick.gltf#pose=0:0@30':'Assets/Models/pick.gltf',material:'default'}}},...(poseCases?[{entity:5,name:'QA mesh behind',components:{Transform:transform([0,0,-2]),MeshRenderer:{mesh:'cube',material:'default'}}}]:[]),...(opacityCases?[{entity:3,name:'QA opacity environment',components:{EnvironmentLight:{background_enabled:false}}}]:[]),...(spineOnly?[{entity:4,name:'QA animated Spine',components:{Transform:transform([-1,-1,0]),SpineSkeleton:spine}}]:[])]}});
+write('Assets/Scenes/Main.mscene',{version:1,name:'Main',world:{entities:[{entity:1,name:'Parent',components:{Transform:transform([10,0,0])}},{entity:2,name:'Pickable mesh',parent:1,components:{Transform:transform([0,0,0]),MeshRenderer:{mesh:poseCases?'Assets/Models/pick.gltf#pose=0:0@30':'Assets/Models/pick.gltf',material:'default'}}},...(poseCases?[{entity:5,name:'QA mesh behind',components:{Transform:transform([0,0,-2]),MeshRenderer:{mesh:'cube',material:'default'}}}]:[]),...(opacityCases||spineOnly?[{entity:3,name:'QA opacity environment',components:{EnvironmentLight:{background_enabled:false}}}]:[]),...(spineOnly?[{entity:4,name:'QA animated Spine',components:{Transform:transform([-1,-1,0]),SpineSkeleton:spine}}]:[])]}});
 function mesh(offset,zOffset=0){
   const positions=Array.from({length:8},(_,i)=>[(i&1?.5:-.5)+offset,i&2?.5:-.5,(i&4?.5:-.5)+zOffset]).flat();
   const indices=[0,2,1,1,2,3,4,5,6,5,7,6,0,1,4,1,5,4,2,6,3,3,6,7,0,4,2,2,4,6,1,3,5,3,7,5];
@@ -72,12 +72,13 @@ try{
   const original=(await query('scene.snapshot')).entities,parent=original.find(e=>e.name==='Parent'),child=original.find(e=>e.name==='Pickable mesh');assert.ok(parent&&child);
   await execute('view.set_camera',{pivot:[0,0,0],yaw:0,pitch:0,distance:5});await sleep(600);const before=await pixels('before');
   if(spineOnly){
+    await checkOpacity(1);
     const entity=original.find(e=>e.name==='QA animated Spine');assert.ok(entity);await sleep(2000);const hashes=[];
     for(let i=0;i<3;i++){hashes.push(await pixels('spine-running-'+i));await sleep(350);}assert.equal(new Set(hashes).size,3,'Spine Scene overlay advances on each wall-clock interval');
     await execute('component.set',{entity:entity.entity,type:'SpineSkeleton',value:{...spine,playing:false}});await sleep(500);const paused=await pixels('spine-paused');await sleep(500);assert.equal(await pixels(),paused,'Stopped Spine does not advance during paints');
     const page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000}),canvas=page.elements.find(e=>e.name==='Scene viewport');assert.ok(canvas);
     await execute('window.ui_drag_by',{windowLabel:'main',selector:canvas.selector,deltaX:1,deltaY:0,button:'left',expectedSnapshotRevision:page.snapshotRevision});await execute('selection.set',{ids:[]});assert.equal(await pixels('spine-after-pick'),paused,'Hit replay does not advance or paint over the stopped Spine');
-    report.spineHashes=hashes;report.spineProfile=await query('profiler.get_samples',{source:'scene',limit:24});assert.equal(report.spineProfile.summary.latest.spineSkeletons,1);assert.equal(report.spineProfile.summary.latest.drawItems,0,'Spine exercised the opaque deferred path');report.checks.push('Opaque Scene Spine animates visibly, freezes when stopped, and remains frozen through deferred hit replay');
+    await checkOpacity(1);report.spineHashes=hashes;report.spineProfile=await query('profiler.get_samples',{source:'scene',limit:24});assert.equal(report.spineProfile.summary.latest.spineSkeletons,1);assert.equal(report.spineProfile.summary.latest.drawItems,0,'Spine exercised the opaque deferred path');report.checks.push('Opaque Scene Spine animates visibly, freezes when stopped, and remains frozen through deferred hit replay');
   }else{
   write('Assets/Models/pick.gltf',mesh(-10));await pickCenter(child.entity);await execute('selection.set',{ids:[]});assert.notEqual(await pixels('mesh-reloaded'),before);assert.deepEqual((await query('scene.snapshot')).entities,original);
   report.checks.push('Model hot reload moves geometry into the view without changing entity transforms; native pixels and canvas picking both follow new bounds');
@@ -96,6 +97,10 @@ try{
     report.checks.push('Posed references follow animated root geometry; locked front mesh permits selecting the mesh behind it');
   }
   if(opacityCases){await checkOpacity(1);await pickCenter(child.entity);await checkOpacity(0);await pickCenter(child.entity);await checkOpacity(1);await pickCenter(child.entity);report.checks.push('Opaque Scene frames defer world hits; transparent frames retain immediate drawing; both paths and their transitions pick the current native mesh');}
+  if(opacityCases){
+    const helper=original.find(e=>e.name==='QA browser helper');assert.ok(helper);await execute('view.set_camera',{pivot:helper.components.Transform.position,yaw:0,pitch:0,distance:5});await pickCenter(helper.entity);await pixels('browser-helper-picked');
+    report.checks.push('Opaque Scene resolves and selects an ordinary empty browser helper on the first deferred hit query');
+  }
   }
   report.errors=(await query('console.get_logs',{limit:100})).filter(e=>e.level==='error');assert.equal(report.errors.length,0,JSON.stringify(report.errors));await execute('scene.save');report.passed=true;
 }catch(error){report.error=error.stack;process.exitCode=1;console.error(error.stack);try{await pixels('failure');report.scene=await query('scene.snapshot');report.logs=await query('console.get_logs',{limit:100});report.ui=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});}catch(diagnosticError){report.diagnosticError=diagnosticError.message;}}

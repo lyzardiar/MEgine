@@ -1327,3 +1327,20 @@ B001/map-session-1792840827243.json通过7434实体的三窗口重开／修订�
 实际DotA作者场景14437实体、7个UI相关实体，120次模拟60Hz无关特效修订，UI子集数组120→1份；按生产250ms条件的布局缓存重建120→8次。子集值／当前记录所有权及完整屏幕／世界UI布局一致。该计数并非CPU或FPS测量，含UI／相机记录变化的帧仍会重建。脚本owned-scene-ui-counts.mjs、摘要json和日志位于tmp/docs-artifacts/editor-performance-risk。
 
 107（含补充）、108、109现达3/3。接下来统一前端及Tauri Release构建，复验实际DotA的原生选取、首次延迟命中、透明／姿态／资源热更、Game含控件／Spine、项目重开与多窗口；采样paintStages.world／ui、持续FPS和内存。复用未受影响的导入转换与全量资产检查；未完成集成前不将上述源代码检查写成实际运行验收。
+
+
+### 第一百零七至一百零九阶段合并原生验证
+
+3580fb8（含58457db补充）、ad7641c、2573607已提交推送。合并61项变换／呈现／延迟命中／UI定向检查通过。前端Vite构建3.13秒；最终命令cargo build -p mengine-editor-tauri --release --features custom-protocol构建1分09秒通过，仅已有world_from_snapshot未使用警告。固定程序tmp/docs-artifacts/editor-performance-risk/build-2573607/mengine-editor-tauri.exe，SHA256为650705e7406fc04321cd04523cf70a5163d182100b7ea4d30fa942e095127204；receipt.json记录源码、前端摘要与完整构建命令。
+
+首轮构建遗漏custom-protocol，QA spatial-picking-1792844280020停在前端就绪前，没有执行测试；验证所属命令行与固定程序后停止该测试脚本、正常关闭其后台编辑器，进程及discovery随后消失。该构建与收据保留为initial-no-custom-protocol*，未作为验收程序。最终空间QA spatial-picking-1792844562501的6项热更／父变换／原点在相机后／姿态与锁定／透明切换／空节点选取通过，透明1→0→1对应浏览器drawItems 0→1→0。空辅助节点首次动作即选中，UI动作及选择RPC往返64.683ms，不是物理输入延迟。
+
+Spine首轮spatial-picking-1792844589849图像动画／暂停／点击保持静止通过，但未固定背景的不透明分支计数断言为1而非0，未记为通过；正常关闭等待超时后确认进程与discovery已退出。夹具明确禁用环境背景、设置alpha1并等待分支计数，保留drawItems=0与spineSkeletons=1断言。最终spatial-picking-1792844902432通过：3张运行动画图像不同，暂停与延迟点击后的图像相同。图像已检查。
+
+实际DotA_v6.83d.w3x的B001/arbitrary-map-1792844935595匹配缓存加载14437实体，2.679秒；进度、选取、返回、Stop、关闭重开通过。Game59.66／Scene57.25FPS，前次59.93／51.70；Scene最近240间隔均值17.466ms、P95 28.7ms，原生渲染均值16.345ms（前次16.453）。浏览器paint桶均值8.354→5.999ms，覆盖334次绘制的加权均值5.991ms。CPU分段世界准备4.826→2.293ms、UI 2.380→2.518ms；UI实际运行未改善，继续定位。其他段为请求0.470、世界合成0.630、操作0.060、最终合成0.021ms。Scene仍5376总对象／5342可见／4675网格调用／153材质来源及解析，未减少几何或新增LOD。短窗口有改善，不能严格归因单项或宣称稳定60FPS。
+
+DotA 3次地图动作与选取RPC为192.734／174.690／164.702ms；并未证明首次物理点击延迟改善。进程树PrivateBytes关闭前／欢迎页／重开6737.58／2371.95／3323.42MiB。0控制台错误断言在关闭重开之前。Game／Scene及Profiler CPU页图像已检查；CPU页是暂停后最近桶，与连续运行均值区分。
+
+B001/map-session-1792845027720的7434实体三窗口重开／修订追赶、Pause／Step／快捷键、Stop、作者编辑undo／redo及停靠通过。Scene58.09／Game55.64FPS，前次57.47／55.89；原生渲染均值8.513／10.241ms，浏览器paint桶均值3.851／1.967ms。Scene世界准备4.042→2.092ms、UI 1.082→1.093ms，覆盖288次绘制；Game覆盖282次。CPU六段覆盖、逐桶合计及加权汇总断言通过。进程树PrivateBytes为5138.23／6854.73／7950.76／6520.68MiB（detach前／三窗口／重载／Stop停靠），Stop后仍高于起点，长期驻留未解决；Scene图像已检查。
+
+最终4项QA均0控制台错误、正常退出，用户编辑器64664保持运行；WebView EPERM缓存保留。构建与QA日志owned-ui-batch-*、分段校验assert-owned-ui-batch-profile.py、运行摘要owned-ui-batch-runtime-summary.json均在tmp/docs-artifacts/editor-performance-risk，B001报告及截图只在tmp/docs-artifacts/testing-batches。复现使用同一固定程序依次执行qa-viewport-spatial-picking --opacity-cases --pose-cases及--spine-only、qa-frost-map-import实际DotA缓存／profile／pick／project-reopen／profiler-ui、qa-frost-map-session --detached-profile-only。未重复不受影响的转换和全资产检查。本批验收完成，下一批0/3；继续定位UI及原生整帧成本，稳定满帧、长期驻留、LOD、姿态聚焦范围、alpha选取、完整JASS／DotA玩法与War3保真仍待完成。

@@ -1712,3 +1712,10 @@ DotA关闭前／欢迎页／重开PrivateBytes为6779.38／2508.22／3518.96MiB�
 ### 第一百零九阶段：复用未变化的Scene UI输入与画布
 
 固定显示记录的UI子集按记录身份及顺序复用；场景Canvas像素缓存依据该子集，避免无关世界修订触发栅格重建。UI／父节点／相机／层级／画布范围、资源事件与250ms刷新继续失效，投影／选择／标签仍逐帧执行。18项定向检查和TypeScript通过；实际DotA的7个UI相关实体模拟120次无关更新，数组120→1、布局缓存失效120→8，完整布局一致。这是计数验证，不是CPU或FPS结果。证据owned-scene-ui-*及细节见testing-batches.md。107–109批次达到3/3，开始统一原生构建与实际DotA／多窗口验收。
+
+
+### 第一百零七至一百零九阶段原生结论
+
+2573607固定原生程序（650705e7406fc04321cd04523cf70a5163d182100b7ea4d30fa942e095127204）的最终空间选取6项、Spine、实际DotA关闭重开及多窗口QA通过；构建参数、初轮启动和Spine夹具断言失败及复验范围见testing-batches.md。61项合并定向检查通过。DotA Scene51.70→57.25FPS，Game59.66FPS；Scene浏览器paint均值8.354→5.999ms、世界准备4.826→2.293ms，UI 2.380→2.518ms未改善，原生渲染均值16.345ms。仍5376对象／5342可见／4675调用，无LOD删减；短窗口不能证明稳定60或单项因果。
+
+多窗口Scene58.09／Game55.64FPS，paint3.851／1.967ms；Scene世界准备2.092ms、UI1.093ms。关闭仍释放资源，DotA PrivateBytes 6737.58→2371.95→3323.42MiB；多窗口Stop停靠6520.68MiB仍高于起点5138.23MiB。完整证据与计时口径见tmp/docs-artifacts/editor-performance-risk/owned-ui-batch-*及testing-batches.md。本批完成、下一批0/3；后续优先UI扫描／绘制与原生整帧瓶颈，并继续长期驻留、LOD、姿态聚焦／alpha选取与JASS／War3保真。所有最终QA正常退出，用户编辑器保留。
