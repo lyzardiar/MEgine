@@ -4,6 +4,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
 import {configureNativeQa,closeNativeQa} from './frost-native-qa-runtime.mjs';
 import {clientWorldFixture} from './frost-client-world-fixture.mjs';
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),out=path.join(repo,'tmp/docs-artifacts/testing-batches/B001');
@@ -12,6 +13,7 @@ const sourceMap=process.argv[2];assert.ok(sourceMap,'Provide a .w3m/.w3x not ins
 const cacheProject=process.argv.includes('--cache-project')?path.resolve(process.argv[process.argv.indexOf('--cache-project')+1]):null;
 const profileMap=process.argv.includes('--profile-map');
 const pickMap=process.argv.includes('--pick-map');
+const projectReopen=process.argv.includes('--project-reopen');
 let expectedMapTitle='任意岛屿';
 const label='arbitrary-map-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
@@ -68,6 +70,17 @@ async function checkMapPicking(){
   }
   await execute('selection.set',{ids:previous});await execute('panel.focus',{kind:'game'});report.checks.push('Three whole-map Scene clicks select imported objects; action and selection RPC timings retained');
 }
+async function checkProjectReopen(authored){
+  const memory=stage=>{
+    const owner=JSON.parse(fs.readFileSync(process.env.MENGINE_AGENT_BRIDGE_FILE,'utf8'));assert.equal(owner.background,true);assert.ok(Number.isSafeInteger(owner.pid));
+    const sample=JSON.parse(execFileSync('pwsh.exe',['-NoProfile','-File',path.join(repo,'scripts/sample-native-qa-memory.ps1'),'-EditorPid',String(owner.pid),'-ExpectedExecutable',process.env.MENGINE_EDITOR_EXECUTABLE],{encoding:'utf8',windowsHide:true,timeout:20000}));
+    (report.projectMemory??=[]).push({stage,...sample});
+  };
+  memory('before-close');await execute('project.close',{discardDirty:true});await sleep(3000);assert.equal((await query('project.state')).phase,'welcome');memory('closed');
+  await execute('project.open',{root:sample});assert.deepEqual((await snapshot()).entities,authored.entities);
+  await execute('panel.focus',{kind:'game'});await capture('project-reopened');memory('reopened');
+  report.checks.push('Project close returns to welcome; same project reopens with original entities and fresh native Game pixels; process-tree memory sampled');
+}
 function checkImportedScene(world,receipt){
   assert.equal(receipt.sourceSha256,hash(fs.readFileSync(sourceMap)));
   const manifest=JSON.parse(fs.readFileSync(path.join(sample,'Assets/Maps',receipt.id,'manifest.json'),'utf8'));
@@ -117,7 +130,7 @@ try{
   const pointer=clientWorldFixture(await snapshot()).canvasPoint('mapOpen box',[1280,720],false);await input({pointer,buttons:[0]});await execute('playback.input',{keys:[],buttons:[],viewport:[1280,720]});
   const cachedScene=await waitForMap(true);report.entities=cachedScene.entities.length;const cached=receipts().find(r=>r.cached===true);assert.ok(cached);checkImportedScene(cachedScene,cached);await capture('cache-loaded');if(profileMap)await profileImportedMap();if(pickMap)await checkMapPicking();await key('Escape');assert.equal(telemetry(await snapshot()).qaImport.cached,true);assert.equal(clientWorldFixture(await snapshot()).visible('Map loading back'),false);
   report.checks.push('Verified cache import without Play restart; loading bar and labels precede scene replacement; return clears the bar');
-  await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);report.errors=(await query('console.get_logs',{limit:300})).filter(e=>e.level==='error');assert.equal(report.errors.length,0,JSON.stringify(report.errors));report.passed=true;
+  await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);report.errors=(await query('console.get_logs',{limit:300})).filter(e=>e.level==='error');assert.equal(report.errors.length,0,JSON.stringify(report.errors));if(projectReopen)await checkProjectReopen(authored);report.passed=true;
   console.log(JSON.stringify({passed:true,label,entities:report.entities,checks:report.checks}));
 }catch(error){report.error=error.stack;process.exitCode=1;console.error(error.stack);}
 finally{try{await execute('playback.stop');await execute('scene.open',{name:'Main',discardDirty:true});}catch{}closeBridgeConnection();try{report.cleanup=await closeNativeQa(root);}catch(error){report.cleanupError=error.message;process.exitCode=1;}fs.writeFileSync(path.join(out,label+'.json'),JSON.stringify(report,null,2));}

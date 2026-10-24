@@ -24,6 +24,7 @@ use tauri::{path::BaseDirectory, Emitter, Manager, State};
 mod agent_bridge;
 mod native_viewport_transport;
 mod native_scene_picking;
+mod native_viewport_lifetime;
 mod native_gpu_timings;
 use native_gpu_timings::{get_native_gpu_timings, set_native_gpu_timings, GpuTimingSource};
 mod play_compiler;
@@ -60,6 +61,18 @@ static EFFEKSEER_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer
     OnceLock::new();
 static MATERIAL_VIEWPORT_RENDERER: OnceLock<Mutex<Option<EditorViewportRenderer>>> =
     OnceLock::new();
+
+fn release_project_viewports() {
+    native_viewport_lifetime::reset(|| {
+        for slot in [&VIEWPORT_RENDERER, &SCENE_VIEWPORT_RENDERER, &CAMERA_PREVIEW_RENDERER, &EFFEKSEER_VIEWPORT_RENDERER, &MATERIAL_VIEWPORT_RENDERER] {
+            if let Some(slot) = slot.get() { slot.lock().take(); }
+        }
+        for slot in [&GAME_SNAPSHOT_WORLD, &SCENE_SNAPSHOT_WORLD, &CAMERA_PREVIEW_SNAPSHOT_WORLD, &FILTERED_PLAY_SCENE_WORLD] {
+            if let Some(slot) = slot.get() { *slot.lock() = Default::default(); }
+        }
+        native_scene_picking::clear();
+    });
+}
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -4253,7 +4266,7 @@ fn close_project(
         .map_err(|error| format!("could not discard scene recovery before closing: {error}"))?;
     let session = project.take().ok_or_else(|| no_project().message)?;
     state.play_runtime.stop();
-    native_scene_picking::clear();
+    release_project_viewports();
     drop(session);
     mengine_editor_host::invalidate_resource_samples();
     Ok(CloseProjectResult { closed_windows })
@@ -4424,7 +4437,7 @@ async fn render_native_game_view(
     if scene_world_key.as_ref().is_some_and(|key| key.is_empty() || key.len() > 128) { return Err("Invalid Game viewport revision key".into()); }
     if scene_world_key.is_some() && play_session_id.is_some() { return Err("Edit and Play viewport references cannot be combined".into()); }
     if play_session_id.is_some_and(|id| id != state.play_runtime.generation()) { return Err("Play session expired".into()); }
-    let (project_root, snapshot, resource_generation, runtime_generation) = {
+    let (project_root, snapshot, resource_generation, runtime_generation, viewport_generation) = {
         let project = state.project.lock();
         let session = project
             .as_ref()
@@ -4434,12 +4447,14 @@ async fn render_native_game_view(
             snapshot.or_else(|| (play_session_id.is_none() && scene_world_key.is_none()).then(|| WorldSnapshot::from_world(session.active_world()))),
             mengine_editor_host::resource_sample_generation(),
             state.play_runtime.generation(),
+            native_viewport_lifetime::current(),
         )
     };
     let retained_key = scene_world_key.map(|key| serde_json::to_string(&(project_root.clone(), window.label(), key))).transpose().map_err(|error| format!("{error:#}"))?;
     let runtime = state.play_runtime.clone();
     let queued = Instant::now();
     let frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
+        let _project_lease = native_viewport_lifetime::enter(viewport_generation)?;
         let worker_queue_ms = queued.elapsed().as_secs_f64() * 1000.0;
         let render = move |world: &mengine_core::World| -> Result<mengine_editor_host::EditorViewportSubmission, String> {
         let viewport = VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
@@ -4507,7 +4522,7 @@ async fn render_native_scene_view(
     if scene_world_key.as_ref().is_some_and(|key| key.is_empty() || key.len() > 128) { return Err("Invalid Scene viewport revision key".into()); }
     if scene_world_key.is_some() && play_session_id.is_some() { return Err("Scene and Play viewport references cannot be combined".into()); }
     if play_session_id.is_some_and(|id| id != state.play_runtime.generation()) { return Err("Play session expired".into()); }
-    let (project_root, snapshot, resource_generation, runtime_generation) = {
+    let (project_root, snapshot, resource_generation, runtime_generation, viewport_generation) = {
         let project = state.project.lock();
         let session = project
             .as_ref()
@@ -4517,6 +4532,7 @@ async fn render_native_scene_view(
             snapshot.or_else(|| (play_session_id.is_none() && scene_world_key.is_none()).then(|| WorldSnapshot::from_world(session.active_world()))),
             mengine_editor_host::resource_sample_generation(),
             state.play_runtime.generation(),
+            native_viewport_lifetime::current(),
         )
     };
     let retained_key = scene_world_key.map(|key| serde_json::to_string(&(project_root.clone(), window.label(), key, if request.camera_entity.is_none() { request.hidden_entity_ids.clone() } else { Vec::new() }))).transpose().map_err(|error| format!("{error:#}"))?;
@@ -4528,6 +4544,7 @@ async fn render_native_scene_view(
     let runtime = state.play_runtime.clone();
     let queued = Instant::now();
     let mut frame = tauri::async_runtime::spawn_blocking(move || -> Result<EditorViewportFrame, String> {
+        let _project_lease = native_viewport_lifetime::enter(viewport_generation)?;
         let worker_queue_ms = queued.elapsed().as_secs_f64() * 1000.0;
         let render = move |world: &mengine_core::World, source: Option<&mengine_core::snapshot::SharedWorldSnapshot>| -> Result<mengine_editor_host::EditorViewportSubmission, String> {
         let mut filtered_world = (request.camera_entity.is_none() && !request.hidden_entity_ids.is_empty()).then(|| FILTERED_PLAY_SCENE_WORLD.get_or_init(|| Mutex::new(mengine_editor_host::SceneSnapshotWorld::default())).lock());
@@ -4637,7 +4654,7 @@ async fn render_native_scene_view(
     .await
     .map_err(|error| format!("Scene viewport worker failed: {error}"))??;
     if state.play_runtime.generation() != runtime_generation { return Err("Viewport session expired".into()); }
-    let mesh_pick_token = native_scene_picking::publish(picking_owner, frame.mesh_picking.take());
+    let mesh_pick_token = { let _project_lease = native_viewport_lifetime::enter(viewport_generation)?; native_scene_picking::publish(picking_owner, frame.mesh_picking.take()) };
     native_viewport_response(frame, raw.unwrap_or(false), "Scene viewport", shared_request, shared_buffer_reuse.unwrap_or(false), !camera_preview, window, started, mesh_pick_token).await
 }
 
@@ -4646,13 +4663,14 @@ async fn render_effekseer_preview(
     request: EffekseerPreviewRequest,
     state: State<'_, AppState>,
 ) -> Result<NativeViewportFrame, String> {
-    let (project_root, resource_generation) = state
+    let (project_root, resource_generation, viewport_generation) = state
         .project
         .lock()
         .as_ref()
-        .map(|session| (session.project_root().to_owned(), mengine_editor_host::resource_sample_generation()))
+        .map(|session| (session.project_root().to_owned(), mengine_editor_host::resource_sample_generation(), native_viewport_lifetime::current()))
         .ok_or_else(|| "no MEngine project is open".to_string())?;
     tauri::async_runtime::spawn_blocking(move || {
+        let _project_lease = native_viewport_lifetime::enter(viewport_generation)?;
         let viewport = EFFEKSEER_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
         let mut viewport = viewport.lock();
         if viewport
@@ -4698,13 +4716,14 @@ async fn render_material_preview(
     request: MaterialPreviewRequest,
     state: State<'_, AppState>,
 ) -> Result<NativeViewportFrame, String> {
-    let (project_root, resource_generation) = state
+    let (project_root, resource_generation, viewport_generation) = state
         .project
         .lock()
         .as_ref()
-        .map(|session| (session.project_root().to_owned(), mengine_editor_host::resource_sample_generation()))
+        .map(|session| (session.project_root().to_owned(), mengine_editor_host::resource_sample_generation(), native_viewport_lifetime::current()))
         .ok_or_else(|| "no MEngine project is open".to_string())?;
     tauri::async_runtime::spawn_blocking(move || {
+        let _project_lease = native_viewport_lifetime::enter(viewport_generation)?;
         let viewport = MATERIAL_VIEWPORT_RENDERER.get_or_init(|| Mutex::new(None));
         let mut viewport = viewport.lock();
         if viewport
