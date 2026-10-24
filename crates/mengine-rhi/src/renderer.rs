@@ -578,6 +578,10 @@ mod material_submission_tests;
 #[path = "material_texture_lifetime_tests.rs"]
 mod material_texture_lifetime_tests;
 
+#[cfg(test)]
+#[path = "material_bundle_retirement_tests.rs"]
+mod material_bundle_retirement_tests;
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 struct MaterialTextureSetKey {
     base_color: String,
@@ -2274,6 +2278,12 @@ impl Renderer {
         }
     }
 
+    // Cached commands carry exact bindings and become unreachable when this table is rebuilt.
+    fn invalidate_material_texture_sets(&mut self) {
+        self.material_texture_sets.clear();
+        self.world_bundles.clear();
+    }
+
     fn ensure_material_texture_set(&mut self, key: &MaterialTextureSetKey) {
         if self.material_texture_sets.contains_key(key) {
             return;
@@ -2517,7 +2527,7 @@ impl Renderer {
         } else {
             self.material_data_textures.insert(key.to_owned(), texture);
         }
-        self.material_texture_sets.clear();
+        self.invalidate_material_texture_sets();
         Ok(())
     }
 
@@ -2525,7 +2535,7 @@ impl Renderer {
         let removed = self.material_color_textures.remove(key).is_some()
             | self.material_data_textures.remove(key).is_some();
         if removed {
-            self.material_texture_sets.clear();
+            self.invalidate_material_texture_sets();
         }
         removed
     }
@@ -2537,7 +2547,7 @@ impl Renderer {
             self.material_data_textures.remove(key).is_some()
         };
         if removed {
-            self.material_texture_sets.clear();
+            self.invalidate_material_texture_sets();
         }
         removed
     }

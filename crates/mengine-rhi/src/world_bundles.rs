@@ -83,6 +83,8 @@ pub(super) struct WorldChunk { pub range: std::ops::Range<usize>, pub bundle: Op
 impl WorldBundleCache {
     pub fn accepts_count(count: usize) -> bool { (MIN_DRAWS..=MAX_DRAWS).contains(&count) }
 
+    pub fn clear(&mut self) { self.entries.clear(); }
+
     #[cfg(test)]
     pub fn counts(&self) -> (usize, usize) { (self.entries.len(), self.entries.iter().map(|entry| entry.objects).sum()) }
 

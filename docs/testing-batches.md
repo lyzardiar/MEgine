@@ -1597,3 +1597,14 @@ DotA14437实体，缓存进入3.312秒，上次同流程2.334秒，本次没有�
 原生map-session-1792872217387报告通过，10项功能记录包含分离Game重开／追帧、三面板帧、暂停／单步、快捷键、Stop完整作者世界恢复、作者编辑／undo／redo及4次再次Play；错误日志0，进程42340正常退出。冻结程序build-task125/mengine-editor-tauri.exe的SHA256为44e1bd85f13fed4934f786da74e64db07904b68e2f140b46ff370247f9419b37。已核对Scene及第三轮Game真实图像，用户编辑器64664保持运行。临时QA runtime目录存在权限残留，原始报告及目录留在tmp，程序退出与发现文件移除均已确认。
 
 版本2的14份私有内存采样均核对相同根进程PID／创建时间、各子进程创建先后和求和；三个等时空闲点均7进程，每轮实际运行15秒、Stop后空闲20秒。根进程4551.2383／4665.3125／4691.3594MiB，首末仍增加140.1211MiB；进程树5143.8359／5195.3594／5229.0547MiB，首末增加85.2188MiB。此前036f284记录分别增长522.3008／568.0938MiB，但两次运行的私有字节不可直接用于单项因果归因；本次仍未达到长期稳定验收。三面板时6580.5664MiB、重载7499.9375MiB、Stop停靠5885.7930MiB、第二次Stop5855.6680MiB均为本次进程树。material-texture-native-summary.json保留程序摘要、身份核对、功能结果、各阶段及周期；本轮修复完成并登记新批次1/3，剩余驻留增长及稳定60继续跟进。
+
+
+### 第一百二十六阶段／编辑器新批次任务2/3：材质绑定失效时退役渲染包
+
+变更RHI的renderer.rs／world_bundles.rs，新增material_bundle_retirement_tests.rs。材质纹理成功上传、移除或移除变体时，统一清空材质绑定表和它对应的渲染包。缓存命中要求精确GPU绑定句柄相等；原绑定表清空后，旧包已无法再命中，及时退役可释放其资源所有权。普通帧继续复用现有包，非法上传及移除不存在键保留缓存。已提交命令通过既有core跟踪器持有资源并按原提交生命周期完成。
+
+1项新增GPU回归、125阶段2项GPU生命周期兼容及既有完整RGBA兼容均通过。新增回归在修复前失败：热替换后保留2份材质GPU分配，实际只需要1份；修复后替换、移除变体及移除全部均在0个额外视口帧时释放旧资源，实际命中包、非法上传／空移除保留、红蓝替换及重新加载完整像素相等均已检查。125回归继续覆盖尚未等待GPU的提交退役、4轮分配归零、克隆及跨线程最终释放；完整RGBA回归覆盖动态相机／uniform、网格、纹理、环境与粒子。命令：cargo test -p mengine-rhi --release --lib，分别筛选material_changes_release_obsolete_bundle_textures_before_another_frame、material_texture_lifetime、cached_world_bundles_preserve_dynamic_pixels_and_resource_replacements；日志material-bundle-retirement-{before,after,lifetime-compatibility,pixel-compatibility}.log均在tmp/docs-artifacts/editor-performance-risk。
+
+对同一保留Amazonia工程做修复前后各8轮单视口对照，每轮60个VM步、Stop屏障、121个作者场景帧及20秒空闲，两个独立进程均完成。125版本第2到第8轮私有内存净变化0.5078MiB、范围2052.3906–2068.3477MiB，表明该短负载主要在第二轮预热到平台；它不能证明真实多窗口长期稳定。126版本8轮GPU保留空间均640MiB，125版本为首轮640、后7轮896MiB；两侧每轮活跃材质均31份／67.25MiB、GPU分配项均2132。第2–8轮进程私有均值2059.2160→1798.3488MiB，减少260.8672MiB；新范围1791.4414–1802.8047MiB、首末变化6.0195MiB。该结果是带临时allocator只读诊断的独立进程／单Renderer对照，未覆盖WebView、IPC、多窗口或真实编辑器FPS；不能写成实际编辑器总内存下降260MiB。native-eight-cycle-residency{,-summary}、native-eight-cycle-retirement-after.log及material-bundle-retirement-probe-summary.json保留明细，临时诊断接口已移除。
+
+本轮实现及针对性检查完成，当前125、126为2/3。第三项提交后合并构建同一原生版本，检查实际DotA／Amazonia、Scene／Game／相机预览、热更新、隐藏恢复、Stop／再次Play、关闭工程与多窗口长驻留；剩余完整JASS、War3保真、LOD及稳定60继续待办。
