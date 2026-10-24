@@ -1807,6 +1807,7 @@ export function Viewport(props: {
     }
     nativeSceneMeshHitRef.current.beginFrame(nativeSceneFrame, vp);
     nativeScenePickRef.current = nativeSceneFrame?.meshPickToken ? { meshPickToken: nativeSceneFrame.meshPickToken, viewport: { ...vp }, world: nativeSceneFrame.world } : null;
+    const requestStageAt = performance.now();
     const displayedWorld = isGame ? nativeGameFrameRef.current?.world : nativeSceneFrame?.world;
     const browserWorld = displayedWorld ?? (editScene ? nativeWorld.frameWorld() : undefined);
     const displayedPresentation = browserWorld ? nativePresentationRef.current(browserWorld) : undefined;
@@ -2157,6 +2158,7 @@ export function Viewport(props: {
     };
     const deferSceneHits = nativeSceneFrame?.opaquePixels === true;
     const drawn = prepareDrawn(deferSceneHits ? worldEntries.reduce<number[]>((indices, { e }, index) => { if (selSet.has(e.entity)) indices.push(index); return indices; }, []) : spatialCandidates());
+    const worldStageAt = performance.now();
 
     const drawWorld = (ctx: CanvasRenderingContext2D, items: typeof drawn, hits: HitCandidate[], hitOnly = false) => {
     for (const { e, t, pr, renderKind } of nativeGameReady ? [] : items) {
@@ -2787,6 +2789,7 @@ export function Viewport(props: {
       }
     }
 
+    const worldDrawStageAt = performance.now();
     if (!isGame) {
       for (const { e, t, renderKind } of drawn) {
         if (renderKind !== 'entity') continue;
@@ -2992,6 +2995,7 @@ export function Viewport(props: {
     }
 
     // UI Canvas — Game: screen overlay; Scene: world XY plane (zoomable)
+    const gizmoStageAt = performance.now();
     {
       const textMeasurement = canvasUiTextLayoutMeasurement(ctx);
       if (isGame) {
@@ -3371,6 +3375,7 @@ export function Viewport(props: {
       }
     }
 
+    const uiStageAt = performance.now();
     if (!isGame && scene2DRef.current) {
       drawSmartGuides(ctx, smartGuidesRef.current);
     }
@@ -3480,12 +3485,14 @@ export function Viewport(props: {
 
     ctx.restore();
     // MiYu: completion and interaction paints contribute CPU work even without animation callbacks.
+    const paintFinishedAt = performance.now();
     lastMeasuredPaintRef.current = { source: p.tab, at: now };
     recordViewportProfilerFrame({
       source: p.tab,
       timestamp: now,
       frameIntervalMs,
-      paintMs: performance.now() - paintStartedAt,
+      paintMs: paintFinishedAt - paintStartedAt,
+      paintStages: { request: requestStageAt - paintStartedAt, world: worldStageAt - requestStageAt, worldDraw: worldDrawStageAt - worldStageAt, gizmos: gizmoStageAt - worldDrawStageAt, ui: uiStageAt - gizmoStageAt, composition: paintFinishedAt - uiStageAt },
       entities: p.entities.length,
       drawItems: drawn.length,
       uiPrimitives: profilerUiPrimitives,

@@ -1,3 +1,4 @@
+// Author: MiYu. Present native frame data beside bounded WebView CPU paint buckets.
 import { playStepTimingStages } from '../playStepTiming';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
@@ -16,6 +17,7 @@ import {
   readEditorProfilerSamples,
   subscribeEditorProfiler,
   summarizeEditorProfilerSamples,
+  VIEWPORT_PAINT_STAGE_LABELS,
   type EditorProfilerSample,
   type EditorProfilerFrame,
   type EditorProfilerSource,
@@ -758,6 +760,13 @@ export function Profiler() {
           </div>
           </>}
 
+          {module === 'cpu' && latest?.paintStages && <section className="profiler-detail-section" aria-label="WebView paint CPU stages">
+            <h3>WebView Paint CPU · {formatMs(latest.paintMs)}</h3>
+            <table><thead><tr><th>Stage</th><th>Mean</th><th>Peak</th><th>Paints</th></tr></thead><tbody>
+              {(Object.keys(VIEWPORT_PAINT_STAGE_LABELS) as Array<keyof typeof VIEWPORT_PAINT_STAGE_LABELS>).map(key => { const stage = latest.paintStages?.[key]; return <tr key={key}><td>{VIEWPORT_PAINT_STAGE_LABELS[key]}</td><td>{stage ? formatMs(stage.averageMs) : '—'}</td><td>{stage ? formatMs(stage.maxMs) : '—'}</td><td>{stage ? formatCount(stage.sampleCount) : '—'}</td></tr>; })}
+            </tbody></table>
+            <p>Selected WebView sampling bucket. CPU scopes cover completed canvas paints; request-only wakeups, asynchronous native rendering and compositor presentation are excluded. This bucket can span multiple native frames.</p>
+          </section>}
           {module === 'cpu' && latestNative && <section className="profiler-detail-section" aria-label="Viewport request latency">
             <h3>Viewport Request · {latestNative.transportMs != null ? formatMs(latestNative.transportMs) : '—'}</h3>
             <table><thead><tr><th>Stage</th><th>Wall time</th></tr></thead><tbody>

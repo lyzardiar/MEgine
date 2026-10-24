@@ -1674,3 +1674,9 @@ DotA关闭前／欢迎页／同路径重开的进程树PrivateBytes为6699.93／
 显示帧有原生meshPickToken时，浏览器条目仅保留非网格、选中节点和相机／Spine／粒子／拖尾混合节点；普通未选中网格的选择由原生显示帧处理，省去重复边界与后备命中准备。覆盖层直接收集辅助节点。保留实体作者顺序、旧帧父变换、选中碰撞体／操作柄、无token回退和Game路径；原生场景对象与LOD未改变。
 
 23项presentation／空间帧／边界、4项延迟命中／Spine检查及TypeScript通过。实际DotA作者场景的浏览器活动Transform条目10746→5371，源代码准备微基准相同固定帧0.366857→0.118327ms、新原生修订3.814223→3.238983ms；均非整帧或GPU测量，不据此宣称FPS提高。证据与范围见testing-batches.md同阶段记录及tmp/docs-artifacts/editor-performance-risk/native-scene-browser-entries-*。本项为新批次1/3，实际原生／多窗口验收按批次进行，Scene稳定60FPS仍待完成。
+
+### 第一百零五阶段：浏览器视口CPU分段采样
+
+原生DotA Scene的浏览器paint均值9.382ms尚未有细分证据。现对完成的Canvas绘制记录世界读取／请求派发、世界准备、世界合成、选择／操作柄、UI布局绘制和最终合成六个不重叠CPU范围；按现有250ms窗口汇总均值／峰值／覆盖次数，并通过Profiler CPU页及profiler.get的paintStages提供。窗口间及历史读取保留独立统计，长窗口按实际覆盖次数加权，缺失分段不计零。分段不包含请求后跳过绘制的唤醒、异步原生执行或图像上传回调，不作为整线程／整帧或GPU耗时。
+
+新增6项分段、已有16项Profiler及55项视口相关检查通过，TypeScript通过；详细范围与本地证据见testing-batches.md同阶段记录。当前批次2/3，实际CPU分段、界面显示与第一百零四阶段的DotA／多窗口收益在第三项后统一原生验收。没有据此宣称新FPS，稳定60FPS、长期驻留、LOD及完整JASS／War3保真继续待办。

@@ -1253,3 +1253,13 @@ B001/map-session-1792838172058.json的7434实体多窗口重开／版本追赶�
 源代码微基准包含派生TRS、条目、保守边界及辅助覆盖层准备，12轮交替／2轮预热／10组各24帧，前后保留条目／边界／覆盖层一致。相同固定帧均值0.366857→0.118327ms；每帧推进固定实体记录的原生修订时3.814223→3.238983ms。使用真实DotA作者场景、49个裸路径GLB预览及原有fragment回退，不包含Canvas完整绘制、原生渲染、IPC或模拟；不能外推FPS。日志native-scene-browser-entries-{tests,hit-tests,typecheck,benchmark}.log、摘要benchmark-summary.json及本地复现脚本均位于tmp/docs-artifacts/editor-performance-risk。
 
 状态：已实现，定向检查通过，当前编辑器新批次1/3；待另外两项提交后统一原生构建，验证真实DotA的Scene连续选择／双击／锁定、碰撞体与辅助图形、透明和无token回退、多窗口持续FPS与Stop／重开。实际运行帧率仍以61990bf的Game60.05／Scene46.56FPS为最近验证结果。
+
+### 第一百零五阶段／编辑器新批次任务2/3：浏览器视口CPU分段采样
+
+变更packages/editor/src/editorProfiler.ts、panels/Viewport.tsx、panels/Profiler.tsx及viewportPaintStages.test.mjs。实际完成的Canvas绘制增加六个不重叠CPU范围：世界读取与请求派发、世界准备、世界合成、选择与操作柄、UI布局绘制、最终合成。六段合计为当前paintMs；异步原生渲染、图像上传回调及仅派发请求后跳过绘制的唤醒不纳入这些范围，不能将它们当作完整WebView线程占用或GPU时间。
+
+沿用250ms采样及每来源480项历史上限；每段记录均值、峰值和实际覆盖的绘制次数。跨多个采样桶的分段汇总按覆盖次数加权，旧版本或缺失分段保持缺失，不填零。跨窗口消息只接收六个固定名称及有效数值，读历史时复制嵌套统计，发送者和读取者后续修改不污染留存。Profiler的CPU页显示所选浏览器采样桶的分段表，并说明其可能跨多个原生帧。现有profiler.get响应的samples、summary会携带paintStages。
+
+快速检查：新增6项分段检查通过，覆盖生产表达式的非重叠范围与合计、实际代码位置、加权统计／峰值／浮点均值上界、缺失与非法输入、跨窗口所有权和历史清空；已有16项Profiler检查及55项Scene调度／原生呈现／空间帧／延迟命中检查通过，TypeScript检查通过。日志paint-stages-{tests,final-tests,scheduling-tests,typecheck}.log位于tmp/docs-artifacts/editor-performance-risk。此次没有重新构建原生程序或报告新FPS。
+
+状态：已实现，当前编辑器批次2677114及本项为2/3。第三项后统一原生构建，检查真实DotA与多窗口的paintStages覆盖／加权汇总、CPU页实际显示、六段合计与paint总耗时，并与原生请求／模拟／呈现时间分开分析；合并第一百零四阶段的选择与辅助图形回归。实际Scene／Game性能仍以61990bf的最近原生结果为准。

@@ -24,6 +24,47 @@ export function editorProfilerUiRefreshDelay(
 
 export type EditorProfilerSource = 'scene' | 'game';
 
+export const VIEWPORT_PAINT_STAGE_LABELS = { request: 'World read and requests', world: 'World preparation', worldDraw: 'World composition', gizmos: 'Selection and gizmos', ui: 'UI layout and draw', composition: 'Final composition' } as const;
+type ViewportPaintStage = keyof typeof VIEWPORT_PAINT_STAGE_LABELS;
+const paintStageKeys = Object.keys(VIEWPORT_PAINT_STAGE_LABELS) as ViewportPaintStage[];
+export type ViewportPaintStages = Partial<Record<ViewportPaintStage, number>>;
+export type ViewportPaintStageSamples = Partial<Record<ViewportPaintStage, { averageMs: number; maxMs: number; sampleCount: number }>>;
+type PaintStageTotals = Partial<Record<ViewportPaintStage, { totalMs: number; maxMs: number; sampleCount: number }>>;
+
+function normalizePaintStages(value: unknown): ViewportPaintStages | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const result: ViewportPaintStages = {};
+  for (const key of paintStageKeys) {
+    const ms = (value as ViewportPaintStages)[key];
+    if (typeof ms === 'number' && Number.isFinite(ms) && ms >= 0) result[key] = ms;
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
+function normalizePaintStageSamples(value: unknown): ViewportPaintStageSamples | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const result: ViewportPaintStageSamples = {};
+  for (const key of paintStageKeys) {
+    const stage = (value as ViewportPaintStageSamples)[key];
+    if (stage && typeof stage.averageMs === 'number' && Number.isFinite(stage.averageMs) && stage.averageMs >= 0 && typeof stage.maxMs === 'number' && Number.isFinite(stage.maxMs) && stage.maxMs >= stage.averageMs && Number.isSafeInteger(stage.sampleCount) && stage.sampleCount > 0) result[key] = { averageMs: stage.averageMs, maxMs: stage.maxMs, sampleCount: stage.sampleCount };
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
+function accumulatePaintStage(totals: PaintStageTotals, key: ViewportPaintStage, ms: number, peak = ms, count = 1): void {
+  const stage = totals[key] ??= { totalMs: 0, maxMs: 0, sampleCount: 0 };
+  stage.totalMs += ms * count; stage.maxMs = Math.max(stage.maxMs, peak); stage.sampleCount += count;
+}
+
+function paintStageSamples(totals: PaintStageTotals): ViewportPaintStageSamples | undefined {
+  const result: ViewportPaintStageSamples = {};
+  for (const key of paintStageKeys) {
+    const stage = totals[key];
+    if (stage?.sampleCount) result[key] = { averageMs: Math.min(stage.maxMs, stage.totalMs / stage.sampleCount), maxMs: stage.maxMs, sampleCount: stage.sampleCount };
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
 export type NativeGpuTimingSettings = { game: boolean; scene: boolean; revision: number };
 
 /** MiYu: delayed initial reads and other windows must not roll recording controls backward. */
@@ -154,6 +195,8 @@ export type ViewportProfilerFrame = {
   timestamp: number;
   frameIntervalMs: number;
   paintMs: number;
+  /** Disjoint CPU scopes for completed canvas paints; excludes skipped request-only wakeups and asynchronous native work. */
+  paintStages?: ViewportPaintStages;
   entities: number;
   drawItems: number;
   uiPrimitives: number;
@@ -163,12 +206,13 @@ export type ViewportProfilerFrame = {
   viewportPixels: number;
 };
 
-export type EditorProfilerSample = Omit<ViewportProfilerFrame, 'frameIntervalMs' | 'paintMs'> & {
+export type EditorProfilerSample = Omit<ViewportProfilerFrame, 'frameIntervalMs' | 'paintMs' | 'paintStages'> & {
   sampleCount: number;
   frameMs: number;
   frameMaxMs: number;
   paintMs: number;
   paintMaxMs: number;
+  paintStages?: ViewportPaintStageSamples;
 };
 
 export type EditorProfilerFrame = {
@@ -191,6 +235,7 @@ type ProfilerBucket = {
   frameMaxMs: number;
   paintTotalMs: number;
   paintMaxMs: number;
+  paintStageTotals: PaintStageTotals;
   latest: ViewportProfilerFrame;
 };
 
@@ -203,6 +248,7 @@ export type EditorProfilerSummary = {
   averagePaintMs: number;
   p95PaintMs: number;
   peakPaintMs: number;
+  paintStages?: ViewportPaintStageSamples;
 };
 
 function finiteNonNegative(value: number): number {
@@ -216,11 +262,13 @@ function finiteCount(value: number): number {
 function normalizeFrame(frame: ViewportProfilerFrame): ViewportProfilerFrame | null {
   if (frame.source !== 'scene' && frame.source !== 'game') return null;
   if (!Number.isFinite(frame.timestamp)) return null;
+  const paintStages = normalizePaintStages(frame.paintStages);
   return {
     source: frame.source,
     timestamp: frame.timestamp,
     frameIntervalMs: finiteNonNegative(frame.frameIntervalMs),
     paintMs: finiteNonNegative(frame.paintMs),
+    ...(paintStages ? { paintStages } : {}),
     entities: finiteCount(frame.entities),
     drawItems: finiteCount(frame.drawItems),
     uiPrimitives: finiteCount(frame.uiPrimitives),
@@ -250,6 +298,7 @@ export function createEditorProfilerSampler(
         frameMaxMs: 0,
         paintTotalMs: 0,
         paintMaxMs: 0,
+        paintStageTotals: {},
         latest: frame,
       };
       buckets.set(frame.source, bucket);
@@ -263,6 +312,7 @@ export function createEditorProfilerSampler(
     }
     bucket.paintTotalMs += frame.paintMs;
     bucket.paintMaxMs = Math.max(bucket.paintMaxMs, frame.paintMs);
+    for (const key of paintStageKeys) if (frame.paintStages?.[key] != null) accumulatePaintStage(bucket.paintStageTotals, key, frame.paintStages[key]!);
     if (frame.timestamp - bucket.startedAt < interval) return null;
 
     const sample: EditorProfilerSample = {
@@ -273,6 +323,7 @@ export function createEditorProfilerSampler(
       frameMaxMs: bucket.frameMaxMs,
       paintMs: bucket.sampleCount > 0 ? bucket.paintTotalMs / bucket.sampleCount : 0,
       paintMaxMs: bucket.paintMaxMs,
+      ...(Object.keys(bucket.paintStageTotals).length ? { paintStages: paintStageSamples(bucket.paintStageTotals) } : {}),
       entities: frame.entities,
       drawItems: frame.drawItems,
       uiPrimitives: frame.uiPrimitives,
@@ -290,6 +341,7 @@ export function createEditorProfilerSampler(
       frameMaxMs: 0,
       paintTotalMs: 0,
       paintMaxMs: 0,
+      paintStageTotals: {},
       latest: frame,
     });
     return sample;
@@ -320,6 +372,11 @@ export function summarizeEditorProfilerSamples(
   }
   const frameValues = samples.map((sample) => sample.frameMs);
   const paintValues = samples.map((sample) => sample.paintMs);
+  const stageTotals: PaintStageTotals = {};
+  for (const sample of samples) for (const key of paintStageKeys) {
+    const stage = sample.paintStages?.[key];
+    if (stage) accumulatePaintStage(stageTotals, key, stage.averageMs, stage.maxMs, stage.sampleCount);
+  }
   return {
     latest: samples[samples.length - 1],
     samples: samples.length,
@@ -329,6 +386,7 @@ export function summarizeEditorProfilerSamples(
     averagePaintMs: paintValues.reduce((sum, value) => sum + value, 0) / paintValues.length,
     p95PaintMs: percentile(paintValues, 0.95),
     peakPaintMs: Math.max(...samples.map((sample) => sample.paintMaxMs)),
+    ...(Object.keys(stageTotals).length ? { paintStages: paintStageSamples(stageTotals) } : {}),
   };
 }
 
@@ -571,6 +629,7 @@ function profilerChannel(): BroadcastChannel | null {
       frameMaxMs: finiteNonNegative(numeric(candidate.frameMaxMs)),
       paintMs: finiteNonNegative(numeric(candidate.paintMs)),
       paintMaxMs: finiteNonNegative(numeric(candidate.paintMaxMs)),
+      ...(candidate.paintStages ? { paintStages: normalizePaintStageSamples(candidate.paintStages) } : {}),
       entities: normalizedFrame.entities,
       drawItems: normalizedFrame.drawItems,
       uiPrimitives: normalizedFrame.uiPrimitives,
@@ -629,7 +688,7 @@ export function readNativeViewportProfiles(
 export function readEditorProfilerSamples(
   source?: EditorProfilerSource,
 ): EditorProfilerSample[] {
-  return samples.filter((sample) => !source || sample.source === source).map((sample) => ({ ...sample }));
+  return samples.filter((sample) => !source || sample.source === source).map((sample) => ({ ...sample, ...(sample.paintStages ? { paintStages: normalizePaintStageSamples(sample.paintStages) } : {}) }));
 }
 
 export function clearEditorProfilerSamples(): void {
