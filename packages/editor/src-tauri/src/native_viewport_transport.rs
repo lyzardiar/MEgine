@@ -1,3 +1,4 @@
+// Author: MiYu. Recycle independent RGBA capacity after the final transport payload owner releases it.
 use std::sync::Arc;
 
 /// MiYu: bounded opt-in native timings correlated with the browser's shared-buffer request.
@@ -39,6 +40,8 @@ pub fn opaque_rgba_pixels(rgba: &[u8]) -> bool { !rgba.is_empty() && rgba.len() 
 
 /// MiYu: retain the renderer's RGBA allocation until writing the final transport buffer.
 pub struct FramePayload { header: [u8; 16], metadata: Vec<u8>, rgba: Vec<u8> }
+
+impl Drop for FramePayload { fn drop(&mut self) { mengine_rhi::recycle_readback_rgba(std::mem::take(&mut self.rgba)); } }
 
 impl FramePayload {
     pub fn new(width: u32, height: u32, metadata: Vec<u8>, rgba: Vec<u8>) -> Result<Self, String> {

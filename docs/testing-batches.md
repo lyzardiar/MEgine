@@ -1675,3 +1675,13 @@ DotA14437实体，缓存进入2.393秒；上次2.302秒，不据此宣称加载�
 多窗口完整流程291.92秒，5轮均运行15秒、Stop后空闲20秒。20份版本2样本核对同一根PID／创建时间、子进程创建时间、唯一PID及私有字节求和，五个等时空闲点均7进程。根私有内存4610.5703／4722.9453／4725.0664／4730.1250／4705.7891MiB，全程首末增加95.2188MiB，后三轮净减少19.2773MiB；进程树5196.7813／5264.0313／5282.2891／5276.9102／5276.5117MiB，首末增加79.7305MiB、后三轮减少5.7773MiB。表现为预热后平台趋势，仍不是小时级稳定或所有内存风险均解决的证据，不把跨次进程的字节变化归因于本批来源路径列表。
 
 已查看Shader绿色夹具、DotA Scene及相机预览、重开菜单、第五轮Amazonia Game图像；完整材质恢复图像另以10份PNG摘要逐项核对。summarize-phased-source-batch.py验证五份报告、冻结程序、正常退出、10次像素摘要、版本2身份／求和和5轮场景，产物phased-source-batch-runtime-summary.json及所有日志、JSON、PNG均保存在tmp/docs-artifacts。该批功能与上述驻留范围完成，下一批0/3；多窗口稳定60、长期驻留、LOD、姿态聚焦／alpha选取的完整验收及全量JASS／War3保真继续待办。
+
+### 第一百三十一阶段／编辑器新批次任务1/3：传输完成后回收CPU像素容量
+
+新增RHI的readback_cpu.rs，readback.rs提供finish_reusing_rgba；既有finish仍返回普通新分配Vec。EditorViewportSubmission选择复用路径，Tauri FramePayload最后一个Arc所有者释放时将独立RGBA Vec交还闲置池，消息复制和在途图像生命周期不变。进程级池最多保留3块、容量总计16MiB，取最小足够容量；返回时清除长度，后续完整覆盖像素，淘汰最早闲置块以适应尺寸变化。超大或空容量不缓存，淘汰分配在互斥锁外释放。该池可跨项目保留CPU容量，不持有项目、模型、纹理或GPU回读槽；因此最多增加16MiB闲置逻辑容量，不作为内存减少的结论。GPU等待、行对齐、通道转换、回读槽上限和旧API不变。
+
+cargo test -p mengine-rhi --release --lib readback -- --nocapture --test-threads=1为9通过、0失败、1手动基准忽略；新增GPU保留帧检查补充Renderer释放后GPU回读池Weak失效并单独复测通过。覆盖RGBA／sRGB／BGRA四格式、6种对齐与非对齐尺寸、2份不同颜色／alpha数据，共48组完整像素，保留帧、反序完成、重用其他容量、尺寸变化、映射错误、取消、GPU查询及Renderer生命周期。2项纯容量检查验证独占取出、最小足够匹配、3块／16MiB预算、超大拒绝与闲置淘汰。cargo test -p mengine-editor-tauri --release --features custom-protocol --lib native_viewport_transport::tests为9通过、0失败，覆盖共享／IPC原始字节、消费确认／发布返回、页对齐、尺寸变化、透明检查和池预算。相关日志cpu-readback-gpu-tests.log、cpu-readback-retained-test.log、cpu-readback-transport-tests.log均在tmp/docs-artifacts/editor-performance-risk；本项不重复整库或完整原生QA。
+
+真实GPU的benchmark_reusable_cpu_readback通过。每种RGBA／BGRA格式按920×518、1280×720、1920×1080三种尺寸比较原有新分配与生产复用API，同进程交替顺序、2组预热／9组计量，每组20帧，每帧完整像素核对。RGBA行转换中位数依次0.311705→0.096895、0.583455→0.172325、1.326065→0.389265ms；含GPU映射等待的finish依次0.548515→0.324630、0.945500→0.518805、2.000375→1.028000ms。BGRA行转换依次0.494625→0.198610、1.006660→0.387690、2.403340→0.977935ms，finish依次0.728025→0.425905、1.378035→0.731380、3.109990→1.646500ms。这里使用已写入纹理的实际GPU映射，不含场景绘制、模拟、IPC和实际地图FPS；不能将其换算成帧率改善。原始cpu-readback-benchmark.log／json保存全部样本。复现命令cargo test -p mengine-rhi --release --lib benchmark_reusable_cpu_readback -- --ignored --nocapture --test-threads=1。早期rgba-reuse-prototype.log只用驻留CPU数据，不作为GPU数据替代。
+
+当前新批次1/3，最近完整原生程序仍ee33d5f。第三项后统一验证实际DotA／Amazonia、多窗口两请求与相机预览、截图／过期请求、隐藏恢复／尺寸变化，以及Stop／工程切换后的版本2驻留。保留最多16MiB全局CPU容量的代价须与实际驻留一起检查；用户现有编辑器保持运行，实际多窗口满帧、长期驻留、LOD与完整War3保真继续待办。

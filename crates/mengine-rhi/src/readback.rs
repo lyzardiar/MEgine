@@ -3,6 +3,9 @@ use crate::gpu_profiler::{decode_timestamps, GpuFrameProfiler};
 use crate::{OffscreenReadbackProfile, RhiError};
 use std::sync::{mpsc, Arc, Mutex};
 use std::time::Instant;
+#[path = "readback_cpu.rs"]
+mod cpu;
+pub use cpu::recycle_readback_rgba;
 
 const MAX_READBACK_SLOTS: usize = 3;
 type MapResult = mpsc::Receiver<Result<(), wgpu::BufferAsyncError>>;
@@ -75,7 +78,12 @@ pub(crate) fn begin_readback(device: &wgpu::Device, queue: &wgpu::Queue, texture
 }
 
 impl OffscreenReadbackTicket {
-    pub fn finish(mut self) -> Result<(Vec<u8>, OffscreenReadbackProfile), RhiError> {
+    pub fn finish(self) -> Result<(Vec<u8>, OffscreenReadbackProfile), RhiError> { self.finish_pixels(false) }
+
+    /// Reuse returned CPU capacity; the final consumer may return its owned Vec with recycle_readback_rgba.
+    pub fn finish_reusing_rgba(self) -> Result<(Vec<u8>, OffscreenReadbackProfile), RhiError> { self.finish_pixels(true) }
+
+    fn finish_pixels(mut self, reuse: bool) -> Result<(Vec<u8>, OffscreenReadbackProfile), RhiError> {
         let started = Instant::now();
         let _ = self.device.poll(wgpu::Maintain::WaitForSubmissionIndex(self.submission.clone()));
         let mapped = self.mapped.recv().map_err(|error| RhiError::InvalidTarget(format!("readback callback failed: {error}"))).and_then(|result| result.map_err(|error| RhiError::InvalidTarget(format!("readback mapping failed: {error}"))));
@@ -89,7 +97,9 @@ impl OffscreenReadbackTicket {
         let started = Instant::now();
         let bytes = u64::from(self.padded_row_bytes) * u64::from(self.height);
         let mapped = self.buffer.slice(..bytes).get_mapped_range();
-        let mut rgba = Vec::with_capacity(self.row_bytes as usize * self.height as usize);
+        let required = self.row_bytes as usize * self.height as usize;
+        let mut rgba = if reuse { cpu::take_readback_rgba(required) } else { Vec::new() };
+        rgba.reserve(required);
         for row in mapped.chunks_exact(self.padded_row_bytes as usize) { rgba.extend_from_slice(&row[..self.row_bytes as usize]); }
         if self.bgra { for pixel in rgba.chunks_exact_mut(4) { pixel.swap(0, 2); } }
         drop(mapped);

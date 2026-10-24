@@ -70,7 +70,7 @@ impl EditorViewportSubmission {
         let pending_ms = self.submitted.elapsed().as_secs_f64() * 1000.0;
         self.frame.profile.call_tree.children.push(EditorViewportProfileNode { name: "Pending frame scheduling".into(), total_ms: pending_ms, self_ms: pending_ms, calls: 1, children: Vec::new() });
         if let Some(ticket) = self.readback.take() {
-            let (rgba, readback) = ticket.finish().context("could not read the editor viewport")?;
+            let (rgba, readback) = ticket.finish_reusing_rgba().context("could not read the editor viewport")?;
             self.frame.rgba = rgba;
             let children: Vec<_> = [
                 ("Readback buffer prepare", readback.buffer_prepare_ms), ("Readback copy submit", readback.copy_submit_ms), ("Readback GPU map wait", readback.gpu_wait_ms), ("Readback GPU query decode", readback.gpu_query_read_ms), ("Readback RGBA row pack", readback.rgba_pack_ms), ("Readback unmap", readback.unmap_ms),

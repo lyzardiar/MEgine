@@ -4547,7 +4547,7 @@ mod tests {
         assert!(pollster::block_on(renderer.device.pop_error_scope()).is_none());
     }
 
-    fn readback_fixture(renderer: &Renderer, width: u32, height: u32, format: wgpu::TextureFormat, seed: u8) -> (OffscreenRenderTarget, Vec<u8>) {
+    pub(super) fn readback_fixture(renderer: &Renderer, width: u32, height: u32, format: wgpu::TextureFormat, seed: u8) -> (OffscreenRenderTarget, Vec<u8>) {
         let size = PhysicalSize::new(width, height);
         let texture = renderer.device.create_texture(&wgpu::TextureDescriptor { label: Some("readback pixels"), size: wgpu::Extent3d { width, height, depth_or_array_layers: 1 }, mip_level_count: 1, sample_count: 1, dimension: wgpu::TextureDimension::D2, format, usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::COPY_DST, view_formats: &[] });
         let rgba = (0..height).flat_map(|y| (0..width).flat_map(move |x| [((x + u32::from(seed)) % 251) as u8, ((y * 17 + u32::from(seed)) % 251) as u8, ((x + y * 3) % 251) as u8, (100 + (x + y) % 156) as u8])).collect::<Vec<_>>();
@@ -5330,3 +5330,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "cpu_readback_tests.rs"]
+mod cpu_readback_tests;
