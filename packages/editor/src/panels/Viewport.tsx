@@ -1501,14 +1501,18 @@ export function Viewport(props: {
       const fixedPixelCanvas = p.entities.some(entity => entity.components.Canvas && (entity.components.Canvas as Record<string, unknown>).render_mode !== 'WorldSpace' && (entity.components.CanvasScaler as Record<string, unknown> | undefined)?.ui_scale_mode !== 'ScaleWithScreenSize' && (p.activeInHierarchy?.(entity.entity) ?? true));
       const { width: nativeWidth, height: nativeHeight } = nativeGamePreviewSize(p.gameResolution?.width ?? vp.w * dpr, p.gameResolution?.height ?? vp.h * dpr, vp.w * dpr, vp.h * dpr, fixedPixelCanvas);
       const ticket = beginNativeViewportRequest(request, JSON.stringify([gameRequestKey, nativeWorld.requestKey(), p.simulationTime]), now, p.playing ? gameRequestInterval : 0);
-      if (ticket) ticket.ready = requestWorldFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight })
+      if (ticket) ticket.ready = requestWorldFrame('render_native_game_view', { width: nativeWidth, height: nativeHeight }, () => {
+        if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) return true;
+        return propsRef.current.readPlaybackMode?.() === 'play' && deferNativeViewportRevision(request, ticket);
+      })
         .then((buffer) => {
           const completionStartedAt = performance.now();
           if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket)) { releaseNativeViewportFrame(buffer); return; }
           const current = propsRef.current;
           if (current.tab !== 'game' || currentGameRequestKey(current) !== requestKey || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) { releaseNativeViewportFrame(buffer); return; }
           const result = uploadNativeViewportFrame(buffer, nativeGameFrameRef.current?.image);
-          recordOwnedNativeViewportProfile('game', { ...result.profile, updateMode: p.playing ? 'live' : gameRequestInterval ? 'edit-poll' : 'edit-change', pollIntervalMs: p.playing ? undefined : 300, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, simulationTiming: p.simulationTiming, transportMs: performance.now() - now, frontendPrepareMs: requestPreparedAt - now, frontendCompleteMs: performance.now() - completionStartedAt });
+          recordOwnedNativeViewportProfile('game', { ...result.profile, deferredRevisionRetries: request.deferredRevisionRetries, updateMode: p.playing ? 'live' : gameRequestInterval ? 'edit-poll' : 'edit-change', pollIntervalMs: p.playing ? undefined : 300, renderSize: [result.width, result.height], simulationRequestMs: p.simulationRequestMs, simulationTiming: p.simulationTiming, transportMs: performance.now() - now, frontendPrepareMs: requestPreparedAt - now, frontendCompleteMs: performance.now() - completionStartedAt });
+          request.deferredRevisionRetries = 0;
           const image = result.image;
           const firstFrame = nativeGameFrameRef.current == null;
           nativeGameFrameRef.current = {
@@ -1532,6 +1536,7 @@ export function Viewport(props: {
         })
         .catch((error) => {
           if (projectAssetSessionGeneration() !== projectGeneration || !nativeViewportRequestCanPublish(request, ticket) || !nativeViewportFrameWorldCurrent(nativeWorld.frameWorld(), currentViewportOwner())) return;
+          if (nativeViewportRevisionDeferred(error)) { request.retryAt = performance.now() + 16; return; }
           if (nativeViewportReadbackBusy(error) || nativeViewportSessionExpired(error)) { request.retryAt = performance.now() + 16; return; }
           if (!request.reportedError) {
             console.warn('Native Game View rendering is unavailable', error);

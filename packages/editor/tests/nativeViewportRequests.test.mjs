@@ -131,12 +131,12 @@ test('only typed readback saturation is transient and preview capacity remains o
 
 test('viewport publishes and hit tests the owned frame, and rejects stale selection before preview upload', () => {
   const source = readFileSync(new URL('../src/panels/Viewport.tsx', import.meta.url), 'utf8');
-  for (const marker of ['currentGameRequestKey(current) !== requestKey', 'currentSceneRequestKey(current) !== nativeSceneIdentity?.key', '!== cameraPreviewKey']) {
+  for (const marker of ['currentGameRequestKey(current) !== requestKey', 'currentScenePresentationKey(current) !== nativeSceneIdentity?.presentationKey', '!== cameraPreviewKey']) {
     const at = source.indexOf(marker); assert.ok(at > 0);
     const upload = source.indexOf('uploadNativeViewportFrame(buffer', at);
     assert.ok(upload > at); assert.match(source.slice(at, upload), /releaseNativeViewportFrame\(buffer\)/);
   }
-  assert.match(source, /if \(nativeSceneFrame\) cam = nativeSceneFrame.camera;/);
+  assert.match(source, /if \(nativeSceneFrame\) \{\s*cam = nativeSceneFrame.camera;/);
   assert.match(source, /nativeSceneMeshHitRef.current.beginFrame\(nativeSceneFrame, vp\);/);
   assert.match(source, /const displayedWorld = isGame \? nativeGameFrameRef.current\?\.world : nativeSceneFrame\?\.world;/);
   assert.match(source, /projectAssetSessionGeneration\(\) !== projectGeneration/);

@@ -5,6 +5,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import ts from '../node_modules/typescript/lib/typescript.js';
 import { nativeGameFrameMatchesRequest, nativeGameRequestInterval } from '../src/nativeViewportFrame.ts';
+import { requestRevisionedNativeViewport } from '../src/nativeViewportTransport.ts';
 
 const source = readFileSync(new URL('../src/panels/Viewport.tsx', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
 const helpers = ts.transpileModule((readFileSync(new URL('../src/frameCadence.ts', import.meta.url), 'utf8')+'\n'+readFileSync(new URL('../src/nativeViewportRequests.ts', import.meta.url), 'utf8').replace(/^import .*$/gm, '')).replaceAll('export ', ''), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
@@ -23,20 +24,21 @@ function fixture(duration, timerDelay = 0, integerTimers = false, revision, capa
   let now = 0, serial = 0, active = 0, maxActive = 0, released = 0;
   const tasks = new Map(), starts = [], uploaded = [];
   const propsRef = { current: { tab: 'game', playing: true, runtimeSessionId: 1, revision, entities: [], clearColor: [0, 0, 0, 1], simulationTime: 0, gameResolution: { width: 1280, height: 720 } } };
+  propsRef.current.mode = 'play'; propsRef.current.readPlaybackMode = () => propsRef.current.mode;
   const nativeGameRequestRef = { current: null }, nativeGameFrameRef = { current: null }, lastProfilerFrameRef = { current: 1 };
   const setTimeout = (callback, delay) => { const id = ++serial; tasks.set(id, { callback, at: now + (integerTimers ? Math.trunc(delay) : delay) + (delay === 0 ? timerDelay : wakeDelay) }); return id; };
   const env = { window: { __TAURI_INTERNALS__: {}, setTimeout, clearTimeout: id => tasks.delete(id) }, performance: { now: () => now }, propsRef, nativeGameRequestRef, nativeGameFrameRef, lastProfilerFrameRef, vp: { w: 640, h: 360 }, dpr: 1, nativeGpuTimingRevisionRef: { current: 0 }, nativeGameRequestInterval, nativeGameFrameMatchesRequest, nativeGamePreviewSize: () => ({ width: 1280, height: 720 }), currentViewportOwner: () => propsRef.current, currentViewportProps: () => propsRef.current, nativeViewportFrameWorldCurrent: (world, props) => world.runtimeSessionId === props.runtimeSessionId, releaseNativeViewportFrame: () => released++, uploadNativeViewportFrame: buffer => { uploaded.push(buffer); return { profile: { counts: {}, worldRevision: buffer.revision }, image: {}, width: 1280, height: 720 }; }, recordNativeViewportProfile() {}, console: { warn() {} }, raf: 0, cancelAnimationFrame() {} };
-  Object.assign(env, { clearTimeout: env.window.clearTimeout, setTimeout, projectGeneration: 0, projectAssetSessionGeneration: () => 0, canvas: { getBoundingClientRect: () => ({ width: env.vp.w, height: env.vp.h }) }, letterbox: () => env.vp, recordOwnedNativeViewportProfile() {} });
+  Object.assign(env, { panelVisibleRef: {current:true}, clearTimeout: env.window.clearTimeout, setTimeout, projectGeneration: 0, projectAssetSessionGeneration: () => 0, canvas: { getBoundingClientRect: () => ({ width: env.vp.w, height: env.vp.h }) }, letterbox: () => env.vp, recordOwnedNativeViewportProfile() {} });
   Object.defineProperty(env.window, 'devicePixelRatio', { get: () => env.dpr });
   const context = vm.createContext(env); vm.runInContext(helpers, context);
   nativeGameRequestRef.current = vm.runInContext(`createNativeViewportRequestState(${capacity})`, context);
   const request = vm.runInContext(requestBlock, context);
   const paint = () => {
     const p = { ...propsRef.current };
-    Object.assign(env, { requestedProps: p, requestPreparedAt: now, isGame: p.tab === 'game', p, now, presentationKey: JSON.stringify([p.gameResolution, p.gameDisplay, p.timelineCameraPreview]), nativeWorld: { requestKey: () => `${p.runtimeSessionId}:${p.revision ?? (p.playing ? now : 'edit')}`, frameWorld: () => ({ entities: p.entities, sourceEntities: p.entities, runtimeSessionId: p.runtimeSessionId, clearColor: p.clearColor, simulationTime: p.simulationTime }), worldArgs: () => ({ playSessionId: p.runtimeSessionId, playRevision: p.revision }) }, requestWorldFrame: () => {
+    Object.assign(env, { requestedProps: p, requestPreparedAt: now, isGame: p.tab === 'game', p, now, presentationKey: JSON.stringify([p.gameResolution, p.gameDisplay, p.timelineCameraPreview]), nativeWorld: { requestKey: () => `${p.runtimeSessionId}:${p.revision ?? (p.playing ? now : 'edit')}`, frameWorld: () => ({ entities: p.entities, sourceEntities: p.entities, runtimeSessionId: p.runtimeSessionId, clearColor: p.clearColor, simulationTime: p.simulationTime }), worldArgs: () => ({ playSessionId: p.runtimeSessionId, playRevision: p.revision }) }, requestWorldFrame: (_command, _args, deferExpired) => requestRevisionedNativeViewport({playSessionId:p.runtimeSessionId,playRevision:p.revision??now}, () => { env.snapshotFallbacks=(env.snapshotFallbacks??0)+1; return {snapshot:{entities:p.entities,simulationTime:p.simulationTime}}; }, args => {
       starts.push(now); const submission = starts.length; maxActive = Math.max(maxActive, ++active);
-      return new Promise((resolve, reject) => { const id = ++serial; tasks.set(id, { at: now + (typeof duration === 'function' ? duration(starts.length) : duration), callback: () => { active--; env.fail ? reject(env.error ?? Error('render failed')) : resolve({ submission, runtimeSessionId: p.runtimeSessionId, revision: p.revision }); } }); });
-    } });
+      return new Promise((resolve, reject) => { const id = ++serial; tasks.set(id, { at: now + (typeof duration === 'function' ? duration(starts.length) : duration), callback: () => { active--; env.expireRevision&&args.snapshot==null ? reject(Error('Play viewport revision expired')) : env.fail ? reject(env.error ?? Error('render failed')) : resolve({ submission, runtimeSessionId: p.runtimeSessionId, revision: p.revision, snapshot:args.snapshot }); } }); });
+    }, undefined, deferExpired) });
     request(p, now, env.nativeWorld, env.presentationKey, env.requestWorldFrame);
   };
   env.paint = paint;
@@ -60,6 +62,33 @@ function fixture(duration, timerDelay = 0, integerTimers = false, revision, capa
   paint();
   return { propsRef, env, starts, uploaded, nativeGameRequestRef, nativeGameFrameRef, dispose, paint, advance, notify: () => notify?.(), get pendingTasks() { return tasks.size; }, get maxActive() { return maxActive; }, get released() { return released; } };
 }
+
+test('live Game expiry requests a newer revision without serializing its obsolete snapshot', async () => {
+  const f=fixture(5,0,false,0),profiles=[];f.env.expireRevision=true;f.env.recordOwnedNativeViewportProfile=(_,profile)=>profiles.push(profile);
+  await f.advance(6,false);assert.equal(f.nativeGameRequestRef.current.deferredRevisionRetries,1);assert.equal(f.env.snapshotFallbacks,undefined);assert.equal(f.nativeGameRequestRef.current.reportedError,false);
+  f.env.expireRevision=false;f.propsRef.current.revision=1;await f.advance(35,false);
+  assert.deepEqual(f.uploaded.map(buffer=>buffer.revision),[1]);assert.equal(profiles[0].deferredRevisionRetries,1);assert.equal(f.nativeGameRequestRef.current.deferredRevisionRetries,0);assert.equal(f.env.snapshotFallbacks,undefined);f.dispose();
+});
+
+test('persistent Game expiry keeps exact fallback after two deferred requests', async () => {
+  const f=fixture(5,0,false,0),profiles=[];f.env.expireRevision=true;f.env.recordOwnedNativeViewportProfile=(_,profile)=>profiles.push(profile);
+  await f.advance(60,false);assert.equal(f.env.snapshotFallbacks,1);assert.equal(f.uploaded.length,1);assert.equal(f.uploaded[0].snapshot.entities,f.propsRef.current.entities);assert.equal(profiles[0].deferredRevisionRetries,2);assert.equal(f.nativeGameRequestRef.current.deferredRevisionRetries,0);assert.equal(f.nativeGameRequestRef.current.reportedError,false);assert.equal(f.maxActive,1);f.dispose();
+});
+
+test('paused Game and a pending capture keep immediate exact fallback', async () => {
+  for(const capture of [false,true]){
+    const f=fixture(5,0,false,0);f.env.expireRevision=true;
+    if(capture)f.nativeGameRequestRef.current.captures=1;else f.propsRef.current.mode='paused';
+    await f.advance(11,false);assert.equal(f.env.snapshotFallbacks,1);assert.equal(f.uploaded.length,1);assert.equal(f.nativeGameRequestRef.current.deferredRevisionRetries,0);assert.equal(f.nativeGameRequestRef.current.reportedError,false);f.dispose();
+  }
+});
+
+test('expired obsolete Game ownership never builds a snapshot or retries the old session', async () => {
+  for(const invalidate of [f=>f.nativeGameRequestRef.current.generation++,f=>f.propsRef.current.runtimeSessionId++,f=>f.env.projectAssetSessionGeneration=()=>1]){
+    const f=fixture(5,0,false,0);f.env.expireRevision=true;invalidate(f);await f.advance(6,false);
+    assert.equal(f.env.snapshotFallbacks,undefined);assert.equal(f.uploaded.length,0);assert.equal(f.nativeGameRequestRef.current.deferredRevisionRetries,0);assert.equal(f.nativeGameRequestRef.current.reportedError,false);f.dispose();
+  }
+});
 
 test('slow native Game requests continue on completion without waiting for animation', async () => {
   const f = fixture(24); await f.advance(95);
