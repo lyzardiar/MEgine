@@ -8,11 +8,11 @@ import {compareWorldDrawOrder,component2DSortingSettings} from '../src/worldDraw
 const source=readFileSync(new URL('../src/panels/Viewport.tsx',import.meta.url),'utf8');
 const start=source.indexOf('    const drawn:'),end=source.indexOf('    drawn.sort(compareWorldDrawOrder);',start);
 assert.ok(start>0&&end>start);
-const code='const {worldEntries,spatialCandidates,isGame,gameCamera,nativeGameReady,projectEntityCenter,trailDrawByEntity,particleDrawByEntity,component2DSortingSettings,getSortingLayerRank,compareWorldDrawOrder}=env;'+source.slice(start,end)+'drawn.sort(compareWorldDrawOrder); return drawn;';
+const code='const {candidates,worldEntries,spatialCandidates,isGame,gameCamera,nativeGameReady,projectEntityCenter,trailDrawByEntity,particleDrawByEntity,component2DSortingSettings,getSortingLayerRank,compareWorldDrawOrder}=env;'+source.slice(start,end)+'drawn.sort(compareWorldDrawOrder); return drawn;';
 const prepare=new Function('env',ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022}}).outputText);
 const entry=(entity,components,visible=true,name='')=>({e:{entity,components,name},t:{position:[visible?entity:-1,0,entity],scale:[1,1,1]},hierarchyOrder:entity});
 function run(worldEntries,options={}){
-  return prepare({worldEntries,spatialCandidates:worldEntries.map((_,i)=>i),isGame:false,gameCamera:{},nativeGameReady:false,projectEntityCenter:([x,y,depth])=>x<0?null:{x,y,depth},trailDrawByEntity:new Map(),particleDrawByEntity:new Map(),component2DSortingSettings,getSortingLayerRank:layer=>layer==='front'?1:0,compareWorldDrawOrder,...options});
+  return prepare({candidates:worldEntries.map((_,i)=>i),worldEntries,spatialCandidates:worldEntries.map((_,i)=>i),isGame:false,gameCamera:{},nativeGameReady:false,projectEntityCenter:([x,y,depth])=>x<0?null:{x,y,depth},trailDrawByEntity:new Map(),particleDrawByEntity:new Map(),component2DSortingSettings,getSortingLayerRank:layer=>layer==='front'?1:0,compareWorldDrawOrder,...options});
 }
 
 test('Scene retains off-origin meshes, camera, named lights, colliders and tiles in world draw order',()=>{

@@ -12,15 +12,15 @@ const begin = source.indexOf('      // Project selection geometry on demand'), e
 const pickBegin = source.indexOf('  const hitTest ='), pickEnd = source.indexOf('  const syncCamToStore', pickBegin);
 assert.ok(begin > 0 && end > begin && pickBegin > 0 && pickEnd > pickBegin);
 const compile = code => ts.transpileModule(code, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
-const register = vm.runInNewContext(compile(`(function(env) { const {nativeSceneFrame,mesh,t,half,rot,selected,ctx,cam,vp,nativeSceneMeshHitRef,modelPreview,drawTriangleMesh,drawSolidCube,hitsRef}=env; for(const e of env.entities) { ${source.slice(begin, end)} } })`));
-const picker = vm.runInNewContext(compile(`(function(env,x,y) { const {usingRectGizmoRef,rectGizmoHitsRef,gizmoHitsRef,hitTestRectGizmo,hitTestTransformGizmo,propsRef,hitTestUiSelect,uiItemsRef,scene2DRef,canvasWorkspaceActiveRef,hitsRef}=env; ${source.slice(pickBegin, pickEnd)} return hitTest(x,y); })`));
+const register = vm.runInNewContext(compile(`(function(env) { const {nativeSceneFrame,mesh,t,half,rot,selected,ctx,cam,vp,nativeSceneMeshHitRef,modelPreview,drawTriangleMesh,drawSolidCube,hitsRef}=env; const hits=hitsRef.current; for(const e of env.entities) { ${source.slice(begin, end)} } })`));
+const picker = vm.runInNewContext(compile(`(function(env,x,y) { const {usingRectGizmoRef,rectGizmoHitsRef,gizmoHitsRef,hitTestRectGizmo,hitTestTransformGizmo,propsRef,hitTestUiSelect,uiItemsRef,scene2DRef,canvasWorkspaceActiveRef,hitsRef,deferredSceneHitsRef}=env; ${source.slice(pickBegin, pickEnd)} return hitTest(x,y); })`));
 const mesh = { positions: [[-1,-1,0],[1,-1,0],[0,1,0]], indices: [0,1,2] };
 const camera = () => ({ eye: [0,2,8], target: [0,0,0], fovYDeg: 60 });
 const viewport = () => ({ x: 0, y: 0, w: 800, h: 600 });
 const ctx = new Proxy({}, { get() { throw Error('Native mesh selection must not rasterize'); } });
 function fixture() {
   let projections = 0, previews = 0;
-  const env = { nativeSceneFrame: { image: {} }, mesh: { mesh: 'Assets/Model.glb' }, t: { position: [0,0,0], scale: [1,1,1] }, half: [.5,.5,.5], rot: undefined, selected: false, ctx, cam: camera(), vp: viewport(), nativeSceneMeshHitRef: { current: createNativeSceneMeshHitCache() }, modelPreview: () => { previews++; return mesh; }, drawTriangleMesh: (...args) => { projections++; return drawTriangleMesh(...args); }, drawSolidCube: (...args) => { projections++; return drawSolidCube(...args); }, hitsRef: { current: [] }, entities: [{ entity: 4294967297 }], usingRectGizmoRef: { current: false }, rectGizmoHitsRef: { current: [] }, gizmoHitsRef: { current: [] }, hitTestRectGizmo: () => null, hitTestTransformGizmo: () => null, propsRef: { current: { tab: 'scene' } }, hitTestUiSelect: () => null, uiItemsRef: { current: [] }, scene2DRef: { current: false }, canvasWorkspaceActiveRef: { current: false } };
+  const env = { deferredSceneHitsRef:{current:null}, nativeSceneFrame: { image: {} }, mesh: { mesh: 'Assets/Model.glb' }, t: { position: [0,0,0], scale: [1,1,1] }, half: [.5,.5,.5], rot: undefined, selected: false, ctx, cam: camera(), vp: viewport(), nativeSceneMeshHitRef: { current: createNativeSceneMeshHitCache() }, modelPreview: () => { previews++; return mesh; }, drawTriangleMesh: (...args) => { projections++; return drawTriangleMesh(...args); }, drawSolidCube: (...args) => { projections++; return drawSolidCube(...args); }, hitsRef: { current: [] }, entities: [{ entity: 4294967297 }], usingRectGizmoRef: { current: false }, rectGizmoHitsRef: { current: [] }, gizmoHitsRef: { current: [] }, hitTestRectGizmo: () => null, hitTestTransformGizmo: () => null, propsRef: { current: { tab: 'scene' } }, hitTestUiSelect: () => null, uiItemsRef: { current: [] }, scene2DRef: { current: false }, canvasWorkspaceActiveRef: { current: false } };
   const show = () => { env.hitsRef.current = []; env.nativeSceneMeshHitRef.current.beginFrame(env.nativeSceneFrame, env.vp); register(env); };
   const region = () => drawTriangleMesh(ctx, env.cam, env.vp, env.t.position, env.t.scale, mesh.positions, mesh.indices, false, env.rot, undefined, true);
   return { env, show, region, pick: (x,y) => picker(env,x,y), get projections() { return projections; }, get previews() { return previews; } };
@@ -57,4 +57,13 @@ test('loaded mesh previews replace fallback geometry and clipped deferred candid
   assert.equal(f.pick(fallback.x,fallback.y).r,fallback.r);
   f.env.modelPreview=()=>mesh; f.show(); const loaded=f.region(); assert.equal(f.pick(loaded.x,loaded.y).r,loaded.r);
   f.env.cam={...camera(),eye:[0,0,-10],target:[0,0,-20]}; f.env.nativeSceneFrame={image:{}}; f.show(); assert.equal(f.pick(400,300),null);
+});
+
+test('gizmo and UI clicks avoid full Scene hit preparation and lazy world ties precede visible overlay hits',()=>{
+  const f=fixture();f.show();const region=f.region();let reads=0;
+  f.env.deferredSceneHitsRef.current=()=>{reads++;return [{kind:'object',id:9,...region}];};
+  f.env.hitTestTransformGizmo=()=>({axis:'x'});assert.equal(f.pick(region.x,region.y).kind,'gizmo');assert.equal(reads,0);
+  f.env.hitTestTransformGizmo=()=>null;f.env.hitTestUiSelect=()=>({entity:2});assert.equal(f.pick(region.x,region.y).id,2);assert.equal(reads,0);
+  f.env.hitTestUiSelect=()=>null;assert.equal(f.pick(region.x,region.y).id,9);assert.equal(reads,1);
+  f.env.propsRef.current.isPickable=id=>id!==9;assert.equal(f.pick(region.x,region.y).id,4294967297);
 });

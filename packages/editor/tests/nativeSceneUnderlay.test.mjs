@@ -11,7 +11,7 @@ assert.ok(begin>0&&end>begin);
 const background=new Function('env',compile('const {nativeSceneFrame,ctx,vp,cam,p,isGame,gameCamera,environment,scene2DActive,drawEnvironmentBackground,drawGroundGrid}=env;'+source.slice(begin,end)));
 const dotBegin=source.indexOf('        if (isGame || !pr) continue;'),dotEnd=source.indexOf('      const half: Vec3',dotBegin);
 assert.ok(dotBegin>0&&dotEnd>dotBegin);
-const dots=new Function('env',compile('const {nativeSceneFrame,ctx,hitsRef,isGame,pr,selected}=env; for(const e of env.entities){'+source.slice(dotBegin,dotEnd).replace(/\n      \}\s*$/,'')+'}'));
+const dots=new Function('env',compile('const {nativeSceneFrame,ctx,hitsRef,isGame,pr,selected}=env; const hits=hitsRef.current; for(const e of env.entities){'+source.slice(dotBegin,dotEnd).replace(/\n      \}\s*$/,'')+'}'));
 
 test('opaque Scene images skip covered environment and grid while transparent and legacy frames keep them',()=>{
   for(const frame of [{image:{},opaquePixels:true},{image:{},opaquePixels:false},{image:{}},null]){

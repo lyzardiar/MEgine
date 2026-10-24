@@ -734,6 +734,8 @@ export function Viewport(props: {
   } | null>(null);
   const nativeCameraPreviewRequestRef = useRef(createNativeViewportRequestState(1));
   const hitsRef = useRef<HitCandidate[]>([]);
+  const deferredSceneHitsRef = useRef<(() => HitCandidate[]) | null>(null);
+  const hitCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const gizmoHitsRef = useRef<GizmoHit[]>([]);
   const rectGizmoHitsRef = useRef<RectGizmoHit[]>([]);
   const linePointHitsRef = useRef<LinePointHit[]>([]);
@@ -1453,6 +1455,7 @@ export function Viewport(props: {
     let profilerUiBatches = 0;
     const clearViewport = () => {
       hitsRef.current = [];
+      deferredSceneHitsRef.current = null;
       linePointHitsRef.current = [];
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(0, 0, pw, ph);
@@ -2038,6 +2041,7 @@ export function Viewport(props: {
     });
     spatialIndexRef.current.update(worldEntries.map(({ e, t }) => selSet.has(e.entity) || trailDrawByEntity.has(e.entity) || particleDrawByEntity.has(e.entity) ? null : entityBoundsRef.current(e.components, t, !!displayedPresentation)), !!displayedPresentation);
     const spatialCandidates = spatialIndexRef.current.query(viewportPlanes(cam, vp.w / Math.max(1, vp.h)));
+    const prepareDrawn = (candidates = spatialCandidates) => {
     const drawn: Array<{
       e: Ent;
       t: TransformData;
@@ -2049,7 +2053,7 @@ export function Viewport(props: {
       editorGizmo: boolean;
       renderKind: 'entity' | 'trail' | 'particle' | 'spine';
     }> = [];
-    if (!isGame || gameCamera) for (const index of spatialCandidates) {
+    if (!isGame || gameCamera) for (const index of candidates) {
       const { e, t, hierarchyOrder } = worldEntries[index];
       const pr = projectEntityCenter(t.position as Vec3);
       // Keep cameras/lights even if origin is barely off-screen — frustum/rays may still show
@@ -2135,8 +2139,13 @@ export function Viewport(props: {
       }
     }
     drawn.sort(compareWorldDrawOrder);
+      return drawn;
+    };
+    const deferSceneHits = nativeSceneFrame?.opaquePixels === true;
+    const drawn = prepareDrawn(deferSceneHits ? spatialCandidates.filter(index => selSet.has(worldEntries[index].e.entity)) : spatialCandidates);
 
-    for (const { e, t, pr, renderKind } of nativeGameReady ? [] : drawn) {
+    const drawWorld = (ctx: CanvasRenderingContext2D, items: typeof drawn, hits: HitCandidate[], hitOnly = false) => {
+    for (const { e, t, pr, renderKind } of nativeGameReady ? [] : items) {
       if (renderKind === 'trail') {
         const trailDraw = trailDrawByEntity.get(e.entity);
         if (!trailDraw) continue;
@@ -2186,7 +2195,7 @@ export function Viewport(props: {
                 false,
                 false,
               );
-          if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+          if (hit) hits.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
         }
         ctx.restore();
         continue;
@@ -2250,6 +2259,7 @@ export function Viewport(props: {
       }
 
       if (renderKind === 'spine') {
+        if (hitOnly) continue;
         const component = e.components.SpineSkeleton as Record<string, unknown> | undefined;
         if (!component || !pr) continue;
         // The native Game frame is composited later. Draw Spine after that
@@ -2311,7 +2321,7 @@ export function Viewport(props: {
       if (cam2DComp && !isGame) {
         try {
           const hit = drawCamera2DGizmo(ctx, cam, vp, t, cam2DComp, vp.w / Math.max(1, vp.h), selected);
-          if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+          if (hit) hits.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
         } catch (err) {
           console.error('drawCamera2DGizmo', err);
         }
@@ -2321,7 +2331,7 @@ export function Viewport(props: {
       if (camComp && !isGame) {
         try {
           const hit = drawCameraGizmo(ctx, cam, vp, t, camComp, selected);
-          if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+          if (hit) hits.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
         } catch (err) {
           console.error('drawCameraGizmo', err);
         }
@@ -2354,7 +2364,7 @@ export function Viewport(props: {
                   selected,
                 )
               : drawDirectionalLightGizmo(ctx, cam, vp, t, selected);
-          if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+          if (hit) hits.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
         } catch (err) {
           console.error('drawDirectionalLightGizmo', err);
         }
@@ -2447,7 +2457,7 @@ export function Viewport(props: {
               anchor,
               imageReady ? getSpriteSourceRect(tileSprite, imageReady) : null,
             );
-            if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+            if (hit) hits.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
           });
           if (data.cells.length > 0 || isGame) continue;
         }
@@ -2484,7 +2494,7 @@ export function Viewport(props: {
             selected,
             t.rotation as [number, number, number, number] | undefined,
           );
-          if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+          if (hit) hits.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
           continue;
         }
         const batch = e.components.SpriteBatch2D as { sprite?: string; size?: number[]; color?: number[]; instances?: number[][]; colors?: number[][]; sorting_layer?: string } | undefined;
@@ -2500,7 +2510,7 @@ export function Viewport(props: {
             const instanceColor = batch.colors?.[index];
             const color = modulateLight2DColor(instanceColor?.length === 4 && instanceColor.every(Number.isFinite) ? instanceColor : batch.color ?? [1, 1, 1, 1], position, batch.sorting_layer ?? 'default', lights2D);
             const hit = drawWorldSprite(ctx, cam, vp, position, half, color, selected, rot, ready, false, false, [0.5, 0.5], ready ? getSpriteSourceRect(sprite, ready) : null);
-            if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+            if (hit) hits.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
           }
           continue;
         }
@@ -2573,7 +2583,7 @@ export function Viewport(props: {
             pivot,
             imageReady ? getSpriteSourceRect(sprite, imageReady) : null,
           );
-          if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+          if (hit) hits.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
           continue;
         }
         if (isGame || !pr) continue;
@@ -2583,7 +2593,7 @@ export function Viewport(props: {
           ctx.arc(pr.x, pr.y, 4, 0, Math.PI * 2);
           ctx.fill();
         }
-        hitsRef.current.push({ kind: 'object', id: e.entity, x: pr.x, y: pr.y, r: 10 });
+        hits.push({ kind: 'object', id: e.entity, x: pr.x, y: pr.y, r: 10 });
         continue;
       }
 
@@ -2593,7 +2603,7 @@ export function Viewport(props: {
       if (nativeSceneFrame?.image) {
         const meshPath = String((mesh as Record<string, unknown>).mesh ?? 'cube');
         const imported = /\.(?:gltf|glb)$/i.test(meshPath) ? modelPreview(meshPath) : null;
-        hitsRef.current.push({ kind: 'native-mesh', id: e.entity, resolve: () => nativeSceneMeshHitRef.current.read(e.entity, imported, () => imported
+        hits.push({ kind: 'native-mesh', id: e.entity, resolve: () => nativeSceneMeshHitRef.current.read(e.entity, imported, () => imported
           ? drawTriangleMesh(ctx, cam, vp, t.position as Vec3, t.scale as Vec3, imported.positions, imported.indices, selected, rot, undefined, true)
           : drawSolidCube(ctx, cam, vp, t.position as Vec3, half, selected, rot, undefined, true)) });
         continue;
@@ -2639,8 +2649,25 @@ export function Viewport(props: {
             rot,
             materialAppearance,
           );
-      if (hit) hitsRef.current.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
+      if (hit) hits.push({ kind: 'object', id: e.entity, x: hit.x, y: hit.y, r: hit.r });
     }
+    };
+    if (deferSceneHits) {
+      let cached: HitCandidate[] | undefined;
+      deferredSceneHitsRef.current = () => {
+        if (cached) return cached;
+        const surface = hitCanvasRef.current ??= document.createElement('canvas');
+        if (surface.width !== 1 || surface.height !== 1) { surface.width = 1; surface.height = 1; }
+        const context = surface.getContext('2d');
+        if (!context) return [];
+        const hits: HitCandidate[] = [];
+        context.save(); context.setTransform(dpr, 0, 0, dpr, 0, 0);
+        try { drawWorld(context, prepareDrawn(), hits, true); }
+        finally { context.restore(); }
+        cached = hits;
+        return hits;
+      };
+    } else { deferredSceneHitsRef.current = null; drawWorld(ctx, drawn, hitsRef.current); }
 
     // The web renderer owns the complete 2D authoring path (including live
     // particles and trails). Native Scene frames are composited only in 3D.
@@ -2738,7 +2765,7 @@ export function Viewport(props: {
               screenX: screen.x,
               screenY: screen.y,
               pixelsPerWorldUnit,
-              deltaSeconds: 0,
+              deltaSeconds: deferSceneHits ? simulationDelta : 0,
             });
           }
         }
@@ -3519,7 +3546,8 @@ export function Viewport(props: {
     }
 
     let best: { h: Hit; d: number } | null = null;
-    for (const candidate of hitsRef.current) {
+    const candidates = deferredSceneHitsRef.current ? [...deferredSceneHitsRef.current(), ...hitsRef.current] : hitsRef.current;
+    for (const candidate of candidates) {
       if (candidate.kind === 'gizmo') continue;
       if (propsRef.current.isPickable?.(candidate.id) === false) continue;
       let h: Extract<Hit, { kind: 'object' }>;
