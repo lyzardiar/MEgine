@@ -1243,3 +1243,13 @@ B001/arbitrary-map-1792838084538.json以实际DotA_v6.83d.w3x匹配缓存进入1
 B001/map-session-1792838172058.json的7434实体多窗口重开／版本追赶、Pause／Step／快捷键、Stop、编辑undo／redo及停靠通过，0控制台错误、正常退出。既有固定等待及内存采样后，额外319ms出现16个新Game样本。Scene／Game最近240间隔55.78／56.69FPS、原生渲染均值8.471／9.895ms、浏览器paint均值6.686／2.113ms；仍未稳定满帧。进程树PrivateBytes为5189.99／6971.92／8044.71／6453.90MiB（detach前／三窗口／重载／Stop停靠），结束仍高于起点，长期驻留待查。Scene图像已检查。三项QA正常退出，WebView的EPERM缓存保留，用户编辑器未关闭。
 
 原始构建及QA日志在tmp/docs-artifacts/editor-performance-risk/indexed-batch-*，实际地图计数摘要为indexed-batch-runtime-metrics.json；上述B001报告、截图只在tmp/docs-artifacts/testing-batches。未重复不受影响的转换、层级及Spine检查。本编辑器批次验证完成，下一批从0/3累计。待办继续包含Scene／多窗口稳定60FPS、前端与请求调度、长期驻留、LOD、姿态选择框／聚焦范围、纹理alpha选取、完整JASS／DotA对局及War3保真。
+
+### 第一百零四阶段／编辑器新批次任务1/3：Scene浏览器跳过原生已处理网格
+
+变更packages/editor/src/nativeViewportPresentation.ts、panels/Viewport.tsx及定向测试。仅当实际显示的原生Scene图像附带meshPickToken时，普通未选中网格不进入浏览器世界条目、边界和后备命中准备。保留空节点、相机、灯光、选中节点、Spine和混合粒子／拖尾组件；选中网格继续提供碰撞体／操作柄。覆盖层直接收集所需条目，避免重新构造完整网格列表。无token、浏览器渲染及Game路径仍沿原流程；后台原生对象、可见几何、绘制顺序、选取token和LOD规则未改变。条目仍引用显示帧的固定实体与父变换，选区缓存仅保留当前集合。
+
+快速检查：presentation、空间帧及边界23项、延迟命中与Spine推进4项检查通过，TypeScript检查通过。覆盖选区原地修改／顺序变化、旧帧恢复、新帧父变换与active、混合组件、token缺失回退及生产Viewport选择分支。实际DotA作者场景的14437实体中，浏览器有Transform的活动条目10746→5371，排除5375个未选中普通网格；这不是原生可见对象数或LOD删减。
+
+源代码微基准包含派生TRS、条目、保守边界及辅助覆盖层准备，12轮交替／2轮预热／10组各24帧，前后保留条目／边界／覆盖层一致。相同固定帧均值0.366857→0.118327ms；每帧推进固定实体记录的原生修订时3.814223→3.238983ms。使用真实DotA作者场景、49个裸路径GLB预览及原有fragment回退，不包含Canvas完整绘制、原生渲染、IPC或模拟；不能外推FPS。日志native-scene-browser-entries-{tests,hit-tests,typecheck,benchmark}.log、摘要benchmark-summary.json及本地复现脚本均位于tmp/docs-artifacts/editor-performance-risk。
+
+状态：已实现，定向检查通过，当前编辑器新批次1/3；待另外两项提交后统一原生构建，验证真实DotA的Scene连续选择／双击／锁定、碰撞体与辅助图形、透明和无token回退、多窗口持续FPS与Stop／重开。实际运行帧率仍以61990bf的Game60.05／Scene46.56FPS为最近验证结果。

@@ -27,10 +27,11 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
     let transforms: ReturnType<typeof buildWorldTransforms> | undefined;
     let uiEntities: E[] | undefined;
     let entries: Array<{ e: E; t: NonNullable<ReturnType<typeof resolvedTransform>>; hierarchyOrder: number }> | undefined;
-    let spineEntries: typeof entries, overlayEntries: typeof entries;
+    let spineEntries: typeof entries, overlayEntries: typeof entries, sceneBrowserEntries: typeof entries;
+    let sceneSelection: ReadonlySet<number> | undefined;
     let cameraInput: readonly unknown[] | undefined, camera: ResolvedGameCamera | null = null;
-    const collectEntries = (spineOnly: boolean) => world.entities.flatMap((e, hierarchyOrder) => {
-      if (spineOnly && !e.components.SpineSkeleton || !active(e.entity)) return [];
+    const collectEntries = (include: (entity: E) => boolean = () => true) => world.entities.flatMap((e, hierarchyOrder) => {
+      if (!include(e) || !active(e.entity)) return [];
       const t = resolvedTransform(transforms ??= readTransforms(world.entities), e.entity);
       return t ? [{ e, t, hierarchyOrder }] : [];
     });
@@ -40,12 +41,23 @@ export function createNativeViewportPresentationReader<E extends Entity>() {
       requiresBrowserSnapshot: requiresBrowserViewportSnapshot(world.entities),
       worldTransforms() { return transforms ??= readTransforms(world.entities); },
       worldEntries(spineOnly = false) {
-        return spineOnly ? spineEntries ??= collectEntries(true) : entries ??= collectEntries(false);
+        return spineOnly ? spineEntries ??= collectEntries(e => !!e.components.SpineSkeleton) : entries ??= collectEntries();
+      },
+      /** Native tokens own ordinary mesh hits; browser helpers and selected collider/gizmo entries still participate. */
+      sceneBrowserEntries(selected: ReadonlySet<number>) {
+        if (!sceneSelection || selected.size !== sceneSelection.size || [...selected].some(id => !sceneSelection!.has(id))) {
+          sceneSelection = new Set(selected);
+          sceneBrowserEntries = collectEntries(e => {
+            const c = e.components;
+            return selected.has(e.entity) || !c.MeshRenderer || !!(c.Camera2D || c.Camera3D || c.SpineSkeleton || c.ParticleEmitter2D || c.ParticleEmitter3D || c.TrailRenderer2D);
+          });
+        }
+        return sceneBrowserEntries!;
       },
       sceneOverlayEntries() {
-        return overlayEntries ??= this.worldEntries().filter(({ e }) => {
+        return overlayEntries ??= collectEntries(e => {
           const c = e.components;
-          return c.Camera2D || c.Camera3D || c.SpineSkeleton || !c.MeshRenderer && (c.PointLight || c.SpotLight || c.Light2D || c.DirectionalLight);
+          return !!(c.Camera2D || c.Camera3D || c.SpineSkeleton || !c.MeshRenderer && (c.PointLight || c.SpotLight || c.Light2D || c.DirectionalLight));
         });
       },
       sceneUiEntities() { return uiEntities ??= readSceneUiEntities(world.entities); },

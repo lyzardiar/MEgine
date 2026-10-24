@@ -2048,7 +2048,7 @@ export function Viewport(props: {
 
     const projectEntityCenter = createProjection(cam, vp);
     // Native startup keeps UI responsive without loading a second copy of the 3D scene in the browser.
-    const worldEntries = nativeGamePending ? [] : displayedPresentation ? displayedPresentation.worldEntries(nativeGameReady) : p.entities.flatMap((e, hierarchyOrder) => {
+    const worldEntries = nativeGamePending ? [] : displayedPresentation ? (nativeSceneFrame?.meshPickToken ? displayedPresentation.sceneBrowserEntries(selSet) : displayedPresentation.worldEntries(nativeGameReady)) : p.entities.flatMap((e, hierarchyOrder) => {
       if ((nativeGameReady && !e.components.SpineSkeleton) || !isActive(e.entity)) return [];
       const t = resolvedTransform(worldTransforms, e.entity);
       return t ? [{ e, t, hierarchyOrder }] : [];

@@ -210,3 +210,40 @@ test('owned render entries keep hierarchy order and sparse Scene overlays across
   assert.equal(next.worldEntries(true)[0].t.position[0], 70); assert.equal(first.worldEntries(true)[0].t.position[0], 5);
   assert.equal(entries.find(({ e }) => e.entity === 6).t.position[0], 7);
 });
+
+test('native mesh tokens leave browser helpers, selected colliders and mixed renderers in authored order', () => {
+  const make = (entity, components = {}, extra = {}) => ({ entity, components: { Transform: transform(entity), ...components }, ...extra });
+  const mesh = { MeshRenderer: { mesh: 'live.glb#pose=0' } };
+  const live = { entities: [make(1), make(2, mesh, { parent: 1 }), make(3, { ...mesh, BoxCollider3D: {} }), make(4, { ...mesh, Camera3D: {} }), make(5, { ...mesh, Camera2D: {} }), make(6, { ...mesh, SpineSkeleton: {} }), make(7, { ...mesh, ParticleEmitter2D: {} }), make(8, { ...mesh, ParticleEmitter3D: {} }), make(9, { ...mesh, TrailRenderer2D: {} }), make(10, { ...mesh, PointLight: {} }), make(11, { PointLight: {} }), make(12, {}, { active: false }), make(13, { Camera3D: {} }, { parent: 12 }), make(14, { SpriteRenderer: {} }), make(15, { Tilemap: {} }), make(16, { Line2D: {} }), make(17, { RectTransform: {} })], clearColor: [0, 0, 0, 1], simulationTime: 0 };
+  const read = createNativeViewportPresentationReader(), firstWorld = createNativeViewportWorldArgs(live).frameWorld(), first = read(firstWorld), selected = new Set([3, 12]);
+  const entries = first.sceneBrowserEntries(selected);
+  assert.deepEqual(entries.map(({ e, hierarchyOrder }) => [e.entity, hierarchyOrder]), [[1, 0], [3, 2], [4, 3], [5, 4], [6, 5], [7, 6], [8, 7], [9, 8], [11, 10], [14, 13], [15, 14], [16, 15], [17, 16]]);
+  for (const entry of entries) assert.equal(entry.e, firstWorld.entities[entry.hierarchyOrder]);
+  assert.equal(first.sceneBrowserEntries(new Set([12, 3])), entries, 'selection order does not rebuild fixed entries');
+  assert.ok(first.worldEntries().some(({ e }) => e.entity === 2), 'frames without native mesh tokens retain every mesh');
+  assert.deepEqual(first.worldEntries(true).map(({ e }) => e.entity), [6], 'native Game Spine path is unchanged');
+  selected.clear(); selected.add(2);
+  const changed = first.sceneBrowserEntries(selected);
+  assert.notEqual(changed, entries); assert.ok(changed.some(({ e }) => e.entity === 2)); assert.ok(!changed.some(({ e }) => e.entity === 3));
+  assert.equal(changed.find(({ e }) => e.entity === 2).t.position[0], 3, 'retained parent transforms still resolve');
+  assert.ok(entries.some(({ e }) => e.entity === 3), 'selection changes leave older entry arrays intact');
+  live.entities[0].components.Transform.position[0] = 30; live.entities[0].active = false; live.entities[9].components.Camera3D = {};
+  const newer = read(createNativeViewportWorldArgs(live).frameWorld()).sceneBrowserEntries(selected);
+  assert.ok(!newer.some(({ e }) => e.entity === 2), 'new revisions observe parent activation');
+  assert.ok(newer.some(({ e }) => e.entity === 10), 'new mixed renderers return to browser processing');
+  assert.equal(read(firstWorld).sceneBrowserEntries(selected).find(({ e }) => e.entity === 2).t.position[0], 3, 'old displayed revisions retain their parent pose');
+});
+
+test('actual Viewport uses filtered browser entries only when the displayed native frame owns mesh picking', () => {
+  const source = readFileSync(new URL('../src/panels/Viewport.tsx', import.meta.url), 'utf8'), ast = ts.createSourceFile('Viewport.tsx', source, ts.ScriptTarget.ES2022, true, ts.ScriptKind.TSX);
+  let expression;
+  function visit(node) { if (ts.isVariableDeclaration(node) && node.name.getText(ast) === 'worldEntries') expression = node.initializer.getText(ast); ts.forEachChild(node, visit); }
+  visit(ast); assert.ok(expression);
+  const run = new Function('env', ts.transpileModule('const {nativeGamePending,displayedPresentation,nativeSceneFrame,selSet,nativeGameReady,p,isActive,worldTransforms,resolvedTransform}=env; return ' + expression, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText);
+  const live = props(), read = createNativeViewportPresentationReader(), presentation = read(createNativeViewportWorldArgs(live).frameWorld()), selected = new Set([2]);
+  const env = { nativeGamePending: false, displayedPresentation: presentation, nativeSceneFrame: { meshPickToken: 'frame:1' }, selSet: selected, nativeGameReady: false };
+  assert.equal(run(env), presentation.sceneBrowserEntries(selected));
+  env.nativeSceneFrame = { meshPickToken: null }; assert.equal(run(env), presentation.worldEntries());
+  env.nativeSceneFrame = null; env.nativeGameReady = true; assert.equal(run(env), presentation.worldEntries(true));
+  env.nativeGamePending = true; assert.deepEqual(run(env), []);
+});
