@@ -11,8 +11,8 @@ impl Fixture {
 }
 impl Drop for Fixture { fn drop(&mut self) { let _ = std::fs::remove_dir_all(&self.0); } }
 fn expire(cache: &mut RuntimeMaterialCache) {
-    for entry in cache.materials.values_mut() { entry.checked_at -= ASSET_CHECK_INTERVAL; }
-    for entry in cache.instances.values_mut() { entry.checked_at -= ASSET_CHECK_INTERVAL; }
+    for entry in cache.materials.values_mut() { entry.next_check_at -= ASSET_CHECK_INTERVAL; }
+    for entry in cache.instances.values_mut() { entry.next_check_at -= ASSET_CHECK_INTERVAL; }
 }
 
 #[test]
@@ -53,7 +53,7 @@ fn shared_sources_preserve_polling_invalidation_failure_and_recovery() {
     let old = cache.resolve_shared_asset("Assets/Base.mmat").unwrap();
     fixture.write("Base.mmat", r#"{"version":10,"base_color":[0,1,0,1],"roughness":0.2}"#);
     std::fs::File::options().write(true).open(fixture.0.join("Assets/Base.mmat")).unwrap().set_modified(SystemTime::now() + Duration::from_secs(2)).unwrap();
-    for entry in cache.materials.values_mut() { entry.checked_at = Instant::now(); }
+    for entry in cache.materials.values_mut() { entry.next_check_at = Instant::now() + ASSET_CHECK_INTERVAL; }
     assert!(Arc::ptr_eq(&old, &cache.resolve_shared_asset("Assets/Base.mmat").unwrap()));
     expire(&mut cache);
     assert_eq!(cache.resolve("Assets/A.minst").unwrap().base_color, [0.0, 1.0, 0.0, 1.0]);
@@ -101,9 +101,9 @@ fn benchmark_shared_material_sources() {
         let mut samples = Vec::new();
         for run in 0..11 {
             let now = Instant::now();
-            for c in cache.materials.values_mut() { c.checked_at = now; }
-            for c in cache.instances.values_mut() { c.checked_at = now; }
-            for c in cache.surface_shaders.values_mut() { c.checked_at = now; }
+            for c in cache.materials.values_mut() { c.next_check_at = now + ASSET_CHECK_INTERVAL; }
+            for c in cache.instances.values_mut() { c.next_check_at = now + ASSET_CHECK_INTERVAL; }
+            for c in cache.surface_shaders.values_mut() { c.next_check_at = now + ASSET_CHECK_INTERVAL; }
             let started = Instant::now();
             for _ in 0..80 { std::hint::black_box(collect_objects(&world, &hierarchy, &mut cache)); }
             if run > 1 { samples.push(started.elapsed().as_secs_f64() * 1000.0 / 80.0); }
@@ -143,10 +143,10 @@ fn benchmark_material_extraction_breakdown() {
                 for group in 0..11 {
                     let mut elapsed = 0.0;
                     for _ in 0..20 {
-                        let checked = Instant::now() - if polling { ASSET_CHECK_INTERVAL } else { Duration::ZERO };
-                        for entry in cache.materials.values_mut() { entry.checked_at = checked; }
-                        for entry in cache.instances.values_mut() { entry.checked_at = checked; }
-                        for entry in cache.surface_shaders.values_mut() { entry.checked_at = checked; }
+                        let deadline = Instant::now() + if polling { Duration::ZERO } else { ASSET_CHECK_INTERVAL };
+                        for entry in cache.materials.values_mut() { entry.next_check_at = deadline; }
+                        for entry in cache.instances.values_mut() { entry.next_check_at = deadline; }
+                        for entry in cache.surface_shaders.values_mut() { entry.next_check_at = deadline; }
                         let start = Instant::now();
                         match stage {
                             0 => { std::hint::black_box(collect_objects(&world, &hierarchy, &mut cache)); }
@@ -264,7 +264,7 @@ fn prepared_materials_keep_polling_alias_invalidation_and_failure_recovery() {
     let mut cache = RuntimeMaterialCache::new(Some(fixture.0.clone())); let first = cache.resolve_shared("Assets/Base.mmat").unwrap();
     fixture.write("Base.mmat", r#"{"version":10,"base_color":[0,1,0,1],"roughness":0.2}"#);
     std::fs::File::options().write(true).open(fixture.0.join("Assets/Base.mmat")).unwrap().set_modified(SystemTime::now() + Duration::from_secs(2)).unwrap();
-    for entry in cache.materials.values_mut() { entry.checked_at = Instant::now(); }
+    for entry in cache.materials.values_mut() { entry.next_check_at = Instant::now() + ASSET_CHECK_INTERVAL; }
     assert!(std::ptr::eq(&*first, &*cache.resolve_shared("Assets/Base.mmat").unwrap()));
     expire(&mut cache); let changed = cache.resolve_shared("Assets/Base.mmat").unwrap(); assert_eq!(changed.base_color, [0.0, 1.0, 0.0, 1.0]); assert_eq!(first.base_color, [1.0, 0.0, 0.0, 1.0]);
     cache.invalidate(" Assets\\Base.mmat "); let reloaded = cache.resolve_shared("Assets/Base.mmat").unwrap(); assert!(!std::ptr::eq(&*changed, &*reloaded));

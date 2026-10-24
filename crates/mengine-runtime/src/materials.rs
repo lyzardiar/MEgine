@@ -1,3 +1,4 @@
+// Author: MiYu. Resolve runtime materials with bounded source polling deadlines.
 use crate::textures::resolve_project_asset_path;
 use mengine_assets::{
     load_material_asset, load_material_instance_asset, load_surface_shader, MaterialAsset,
@@ -15,19 +16,39 @@ use mengine_rhi::{
     UiRenderMaterial, SharedRenderMaterial,
 };
 use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, OnceLock};
 use std::time::{Duration, Instant, SystemTime};
 
 const ASSET_CHECK_INTERVAL: Duration = Duration::from_millis(250);
 
+fn material_check_phase(path: &Path) -> Duration {
+    let mut hash = std::collections::hash_map::DefaultHasher::new(); path.hash(&mut hash);
+    Duration::from_nanos(hash.finish() % ASSET_CHECK_INTERVAL.as_nanos() as u64)
+}
+
+// Fixed path phases spread continuous polling while each completed read gets a deadline within 250 ms.
+fn next_material_check(epoch: Instant, phase: Duration, now: Instant) -> Instant {
+    let first = epoch + phase;
+    let Some(elapsed) = now.checked_duration_since(first) else { return first; };
+    let delay = ASSET_CHECK_INTERVAL - Duration::from_nanos((elapsed.as_nanos() % ASSET_CHECK_INTERVAL.as_nanos()) as u64);
+    let next = now + delay;
+    if next > now { next } else { now + ASSET_CHECK_INTERVAL }
+}
+
 #[cfg(test)]
 #[path = "material_resolution_tests.rs"]
 mod resolution_tests;
 
+#[cfg(test)]
+#[path = "material_poll_tests.rs"]
+mod poll_tests;
+
 #[derive(Clone)]
 struct CachedMaterial {
-    checked_at: Instant,
+    next_check_at: Instant,
+    check_phase: Duration,
     modified: Option<SystemTime>,
     result: Result<Arc<MaterialAsset>, String>,
 }
@@ -56,7 +77,8 @@ pub fn resolve_ui_materials(primitives: &mut [UiPrimitive], cache: &mut RuntimeM
 
 #[derive(Clone)]
 struct CachedSurfaceShader {
-    checked_at: Instant,
+    next_check_at: Instant,
+    check_phase: Duration,
     modified: Option<SystemTime>,
     result: Result<Arc<LoadedSurfaceShader>, String>,
 }
@@ -73,7 +95,8 @@ struct LoadedSurfaceShader {
 
 #[derive(Clone)]
 struct CachedMaterialInstance {
-    checked_at: Instant,
+    next_check_at: Instant,
+    check_phase: Duration,
     modified: Option<SystemTime>,
     result: Result<Arc<MaterialInstanceAsset>, String>,
 }
@@ -83,6 +106,11 @@ struct CachedRenderMaterial { source: Arc<MaterialAsset>, render: SharedRenderMa
 
 #[derive(Default)]
 pub struct RuntimeMaterialCache {
+    #[cfg(test)]
+    synchronized_asset_checks: bool,
+    #[cfg(test)]
+    asset_checks: usize,
+    poll_epoch: Option<Instant>,
     project_root: Option<PathBuf>,
     materials: HashMap<PathBuf, CachedMaterial>,
     instances: HashMap<PathBuf, CachedMaterialInstance>,
@@ -100,6 +128,11 @@ pub struct RuntimeMaterialDiagnostic {
 impl RuntimeMaterialCache {
     pub fn new(project_root: Option<PathBuf>) -> Self {
         Self {
+            #[cfg(test)]
+            synchronized_asset_checks: false,
+            #[cfg(test)]
+            asset_checks: 0,
+            poll_epoch: None,
             project_root,
             materials: HashMap::new(),
             instances: HashMap::new(),
@@ -384,8 +417,17 @@ impl RuntimeMaterialCache {
         Ok(resolved)
     }
 
+    fn next_asset_check(&self, phase: Duration, now: Instant) -> Instant {
+        #[cfg(test)]
+        if self.synchronized_asset_checks { return now + ASSET_CHECK_INTERVAL; }
+        next_material_check(self.poll_epoch.unwrap_or(now), phase, now)
+    }
+
     fn load(&mut self, path: &Path) -> Result<Arc<MaterialAsset>, String> {
-        if let Some(cached) = self.materials.get(path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
+        let now = Instant::now(); self.poll_epoch.get_or_insert(now);
+        if let Some(cached) = self.materials.get(path).filter(|cached| now < cached.next_check_at) { return cached.result.clone(); }
+        #[cfg(test)]
+        { self.asset_checks += 1; }
         let modified = mengine_platform::file_modified_time(path).ok();
         let reload = self
             .materials
@@ -396,9 +438,11 @@ impl RuntimeMaterialCache {
                 .map(Arc::new)
                 .map_err(|error| error.to_string());
             self.materials
-                .insert(path.to_path_buf(), CachedMaterial { checked_at: Instant::now(), modified, result });
+                .insert(path.to_path_buf(), CachedMaterial { next_check_at: Instant::now(), check_phase: material_check_phase(path), modified, result });
         }
-        self.materials.get_mut(path).expect("material cache inserted").checked_at = Instant::now();
+        let phase = self.materials.get(path).expect("material cache inserted").check_phase;
+        let next = self.next_asset_check(phase, Instant::now());
+        self.materials.get_mut(path).expect("material cache inserted").next_check_at = next;
         self.materials
             .get(path)
             .expect("material cache inserted")
@@ -407,7 +451,10 @@ impl RuntimeMaterialCache {
     }
 
     fn load_instance(&mut self, path: &Path) -> Result<Arc<MaterialInstanceAsset>, String> {
-        if let Some(cached) = self.instances.get(path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
+        let now = Instant::now(); self.poll_epoch.get_or_insert(now);
+        if let Some(cached) = self.instances.get(path).filter(|cached| now < cached.next_check_at) { return cached.result.clone(); }
+        #[cfg(test)]
+        { self.asset_checks += 1; }
         let modified = mengine_platform::file_modified_time(path).ok();
         let reload = self
             .instances
@@ -418,9 +465,11 @@ impl RuntimeMaterialCache {
                 .map(Arc::new)
                 .map_err(|error| error.to_string());
             self.instances
-                .insert(path.to_path_buf(), CachedMaterialInstance { checked_at: Instant::now(), modified, result });
+                .insert(path.to_path_buf(), CachedMaterialInstance { next_check_at: Instant::now(), check_phase: material_check_phase(path), modified, result });
         }
-        self.instances.get_mut(path).expect("material instance cache inserted").checked_at = Instant::now();
+        let phase = self.instances.get(path).expect("material instance cache inserted").check_phase;
+        let next = self.next_asset_check(phase, Instant::now());
+        self.instances.get_mut(path).expect("material instance cache inserted").next_check_at = next;
         self.instances
             .get(path)
             .expect("material instance cache inserted")
@@ -442,7 +491,10 @@ impl RuntimeMaterialCache {
             .ok_or_else(|| "runtime requires --project-root to resolve shaders".to_owned())?;
         let path = resolve_project_asset_path(root, normalized)
             .ok_or_else(|| "shader path must be project-relative without '..'".to_owned())?;
-        if let Some(cached) = self.surface_shaders.get(&path).filter(|cached| cached.checked_at.elapsed() < ASSET_CHECK_INTERVAL) { return cached.result.clone(); }
+        let now = Instant::now(); self.poll_epoch.get_or_insert(now);
+        if let Some(cached) = self.surface_shaders.get(&path).filter(|cached| now < cached.next_check_at) { return cached.result.clone(); }
+        #[cfg(test)]
+        { self.asset_checks += 1; }
         let modified = mengine_platform::file_modified_time(&path).ok();
         let reload = self
             .surface_shaders
@@ -464,9 +516,11 @@ impl RuntimeMaterialCache {
                     }))
                 });
             self.surface_shaders
-                .insert(path.clone(), CachedSurfaceShader { checked_at: Instant::now(), modified, result });
+                .insert(path.clone(), CachedSurfaceShader { next_check_at: Instant::now(), check_phase: material_check_phase(&path), modified, result });
         }
-        self.surface_shaders.get_mut(&path).expect("surface shader cache inserted").checked_at = Instant::now();
+        let phase = self.surface_shaders.get(&path).expect("surface shader cache inserted").check_phase;
+        let next = self.next_asset_check(phase, Instant::now());
+        self.surface_shaders.get_mut(&path).expect("surface shader cache inserted").next_check_at = next;
         self.surface_shaders
             .get(&path)
             .expect("surface shader cache inserted")
@@ -1325,9 +1379,9 @@ mod tests {
             r#"{"version":8,"name":"Base","shader":"custom","custom_shader":"Assets/Shaders/Rim.mshader","custom_parameters":{"rim_color":[1,0,0,1]},"base_color":[1,0,0,1],"roughness":0.8,"emissive_strength":4}"#,
         )
         .unwrap();
-        for cached in cache.materials.values_mut() { cached.checked_at = Instant::now(); }
+        for cached in cache.materials.values_mut() { cached.next_check_at = Instant::now() + ASSET_CHECK_INTERVAL; }
         assert_eq!(cache.resolve_asset("Assets/Materials/Ocean.minst").unwrap().emissive_strength, first.emissive_strength);
-        for cached in cache.materials.values_mut() { cached.checked_at -= ASSET_CHECK_INTERVAL; }
+        for cached in cache.materials.values_mut() { cached.next_check_at -= ASSET_CHECK_INTERVAL; }
         let reloaded = cache.resolve_asset("Assets/Materials/Ocean.minst").unwrap();
         assert_eq!(reloaded.emissive_strength, 4.0);
 

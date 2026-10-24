@@ -1634,3 +1634,14 @@ DotA14437实体，缓存进入2.302秒。Scene59.68／Game59.85FPS，原生平�
 同次进程树起点5134.6875MiB／7进程、三面板6754.5938MiB／10进程、重载7231.7422MiB／10进程、Stop停靠5847.2266MiB／7进程、第二次Stop6132.2305MiB／7进程。DotA关闭工程前6062.2500MiB、关闭1996.2148MiB、重开3291.9141MiB，均7进程；对应根进程4744.8477→711.0000→2060.6680MiB。working set不作为独占字节。summarize-bundle-consumer-batch.py核对四份报告、冻结程序、正常退出、版本2身份与求和及5轮场景，输出bundle-consumer-batch-runtime-summary.json；所有PNG／JSON／日志和脚本均保存在tmp/docs-artifacts。
 
 本批功能及上述驻留范围已验证，下一批独立计数0/3。125的活跃纹理泄漏修复、126单视口保留空间对照及127类型扫描微基准按各自证据保留，不扩写为实际多窗口内存或帧率的单项收益。长期驻留、稳定60、来源校验尖峰、LOD、姿态聚焦／alpha选取及完整JASS／War3保真继续待办。
+
+
+### 第一百二十八阶段／编辑器新批次任务1/3：按材质资源相位分散轮询
+
+变更runtime的materials.rs／material_resolution_tests.rs，新增material_poll_tests.rs。材质、材质实例和Surface Shader保存预计算检查截止时间，按路径散列确定250ms周期中的固定相位，检查完成后设置下一个相位截止时间。缓存命中仅比较当前时间与截止时间。首次加载、显式invalidate和长暂停后的过期检查沿用即时路径；相位只分散连续运行时的文件检查，原有修改时间／加载／错误去重与恢复规则保留。首次常规复查可早于250ms，随后按固定周期执行，避免随帧边界不断漂移；热更新仍在下一次到期访问处理。不同路径／继承父项分别保留来源和截止时间，未引入异步旧结果。
+
+22项材质相关检查通过，3个手动基准默认忽略。新增3项覆盖256个相位在60Hz／2秒内2048次检查、与集中轮询相同总数及单帧18对256的分布，长暂停全部到期、下一截止时间严格在未来且不超过250ms、4000组时钟边界，以及真实材质父项／实例／Shader失效、删除和恢复。已有反射、UI材质、循环／深度、继承与实例隔离及共享可编辑副本检查继续通过；测试直接设置私有截止时间以控制冷／热缓存。命令：cargo test -p mengine-runtime --release --lib materials:: -- --nocapture；日志material-phased-poll-tests.log在tmp/docs-artifacts/editor-performance-risk。
+
+针对保留Amazonia场景286条有效材质路径，3次独立进程、每次同进程交替比较原有按读取年龄检查与固定相位截止时间；60Hz共180帧，前30帧预热，150帧计量，真实文件查询，初末渲染材质载荷逐项相等且无诊断错误。命令：cargo test -p mengine-runtime --release --lib benchmark_phased_material_checks -- --ignored --nocapture --test-threads=1。三次统计的中位数：解析阶段p95 1.7487→0.6325ms、最大值2.3507→0.7739ms、单帧文件检查峰值180→33；平均耗时0.4397→0.5056ms，中位耗时0.2815→0.4932ms，计量窗口内总检查2772→2880。固定周期比受帧边界延后的年龄轮询略多检查，并将检查工作分散到普通帧；该取舍用于降低尖峰，不声称平均CPU或原生FPS已改善。数据、来源SHA及全部样本见material-phased-poll-benchmarks.json／material-phased-poll-summary.json。
+
+本轮实现／针对性检查完成，当前新批次1/3；最近完整原生验收仍为40be271的125–127批次。满3项后验证实际DotA／Amazonia的材质与Shader热更新／错误恢复、连续帧均值及p95、暂停／恢复与跨工程来源隔离。网格来源校验约3ms的独立轮询尖峰、实际多窗口满帧及长时间内存继续待办；不得把局部文件轮询结果写成其已解决。
