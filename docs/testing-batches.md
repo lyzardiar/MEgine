@@ -1074,3 +1074,15 @@ RHI在同一绘制列表再次出现时编译forward render bundle，后续精�
 变更renderer、world_bundles及material_submission_tests。新增真实GPU逐像素检查通过，覆盖opaque／透明／加法／镂空／自定义shader、相机和透明顺序、纹理缺失后上传／替换／删除、shader错误与恢复、网格buffer及index数量替换／删除、同句柄顶点更新、uniform扩容、视口尺寸、阴影、环境贴图替换／移除、粒子回退及空帧后的缓存释放。4096对象、12轮交替且排除2轮预热，每模式10组4帧，96帧像素一致；世界编码CPU均值3.097237→1.905038ms、中位3.104275→1.917550ms、P95 3.175600→1.972150ms。仅为局部CPU样本，真实地图FPS待验证。生产cargo check通过；日志tmp/docs-artifacts/editor-performance-risk/world-bundles-{tests,bench,check}.log。
 
 当前096b624、d2cbff9与本项达到3/3。统一隔离生产构建，合并验证实际DotA缓存进入、Game／全图Scene持续采样与选取，以及多窗口重开／Pause／Step／Stop／截图；复用不受影响的导入、层级和Spine证据。稳定60FPS、完整JASS玩法和LOD仍未完成，不将指令缓存描述为几何数量减少。
+
+### 第九十二至九十四阶段合并原生验证
+
+实现096b624、d2cbff9、ee9a120已提交推送。主工作区材质提交GPU模块4项通过、4项手动基准默认忽略；两份基准已分别手动通过。复用第九十二阶段16种alpha组合结果。隔离31903e3基于cb40895接入本批材质复用和forward bundle，world_bundles与主提交逐字一致；隔离基线没有并行粒子字段／renderer，因此不含对应guard和粒子测试块，主工作区GPU测试已覆盖该回退。原生Release构建通过，前端未改，复用上一验收产物。固定EXE为tmp/docs-artifacts/editor-performance-risk/build-ee9a120/mengine-editor-tauri.exe，SHA256 d69a43e064e10b299902c2e149d098c38d235ac45f5a4463428c76e78498baf0。此结论不代表包含并行Unity／粒子导入的整个共享HEAD原生构建验收。
+
+同一EXE的两份真实报告全部通过、0控制台error、QA正常退出。B001/arbitrary-map-1792824175375.json使用实际DotA_v6.83d.w3x匹配缓存，14437实体、缓存进入2.299秒，验证进度条、返回、Game／全图Scene连续采样及三次地图点击；均选中4294981705，UI动作及selection RPC往返169.87／144.44／138.73ms，不等于物理输入延迟。全图仍5376对象／5342提交，浏览器drawItems1为Camera辅助条目，Game和Scene图像已检查。
+
+DotA的5秒窗口，Game最近240间隔16.952ms／58.99FPS、paint3.09ms；Scene210间隔23.757ms／42.09FPS、P95 40.1ms、paint10.20ms。此前单次样本为59.08／41.71FPS、paint3.11／10.41ms，整帧差异很小，不能据此宣称明显或稳定FPS提升。最新单帧材质准备1.1415→0.1298ms、世界编码4.7619→4.2599ms、backend11.4682→10.2222ms；同时编译7.4921→8.9227ms、GPU回读等待3.4812→3.7021ms。这些是各自窗口最后一帧的分段值，不是阶段均值。Scene原生render窗口均值22.398→22.013ms；下一步仍需降低实际场景编译／绘制与回读成本。
+
+B001/map-session-1792824239313.json覆盖7434实体、多窗口Game重开与版本追赶、Scene／Game持续采样、Pause／Step／快捷键、两窗口截图、Stop、编辑及undo／redo／回停靠。采样前额外等待324ms有18个当前Game原生样本，起点在固定启动等候与内存采样之后。5秒窗口最近240间隔Scene54.44／Game55.59FPS、paint7.00／2.19ms；前一多窗口样本51.57／55.44FPS在alpha修复之前，不能单独归因为指令缓存。两窗口均未达到稳定60FPS。
+
+本批相关集成完成，未重跑无关导入／层级／Spine全套；LOD、完整JASS玩法、长期内存和物理输入延迟仍待后续工作。原始日志、报告与图像仅在tmp/docs-artifacts，QA编辑器正常退出，WebView的EPERM缓存保留，用户编辑器未关闭。
