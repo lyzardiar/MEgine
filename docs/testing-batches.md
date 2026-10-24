@@ -1233,3 +1233,13 @@ B001/map-session-1792831470405.json通过7434实体、多窗口重开／版本�
 4096绘制／128共享来源、两个独立renderer的12轮交替对照（2轮预热，10组各4帧）每个测量帧均命中自身bundle缓存，完整128×128像素一致。解析次数4096→128；材质准备CPU均值0.071653→0.085298ms，世界编码1.698693→1.246758ms，提交CPU2.860855→2.391148ms，提交加GPU回读4.845425→4.350050ms。该窗口包含新准备成本；不含IPC及游戏逻辑，不直接外推实际地图FPS。日志material-bindings-{gpu-final,existing-tests,host-check,benchmark}.log，摘要material-bindings-benchmark-summary.json，均在tmp/docs-artifacts/editor-performance-risk。
 
 本批504b42c（含3af8e85补充）、48f317e及本项达到3/3。接下来在当前整合分支统一构建前端与Tauri Release，执行姿态／锁定选取／资源热更／透明切换、实际DotA与多窗口持续采样、Stop和关闭重开。记录indexedObjectSlots、worldMeshDrawCalls、worldInstancedObjects、materialSources、materialBindingResolutions及真实FPS／进程树内存；复用不受影响的地图转换、层级和Spine检查。完整JASS、War3保真、LOD、长期驻留与稳定满帧仍待完成。
+
+### 第一百零一至一百零三阶段合并原生验证
+
+504b42c（含3af8e85）、48f317e、61990bf已提交推送。当前前端Vite构建3.11秒、Tauri Release构建1分19秒通过，只有已有world_from_snapshot未使用警告。固定程序为tmp/docs-artifacts/editor-performance-risk/build-61990bf/mengine-editor-tauri.exe，SHA256为8fe92e9b6f767c7d11b11a5992324693ff91635ddef00557bc090b93d10f6a1a。B001/spatial-picking-1792837996799.json的5项姿态／锁定选取、资源热更、父变换和透明切换检查通过，0控制台错误、正常退出。
+
+B001/arbitrary-map-1792838084538.json以实际DotA_v6.83d.w3x匹配缓存进入14437实体场景，耗时2.791秒，进度、返回、地图选取、Stop及同路径关闭重开通过。Scene对象槽5342、网格调用4675、多实例组内1123对象，材质来源及绑定解析均153；Game对象槽413、网格调用99、多实例组内28对象，来源及解析均33。三项优化已在实际地图生效，5376总对象保留。Game／Scene持续帧率60.05／46.56FPS；Scene原生渲染均值16.614ms，前次18.895ms，但Scene帧率与前次46.69FPS相近，不能宣称整帧提速或稳定60FPS。Scene浏览器paint均值9.382ms，仍需排查整帧调度与前端成本。3次UI动作与选取RPC往返182.24／127.82／129.96ms，不是物理输入延迟。进程树PrivateBytes关闭前／欢迎页／重开为6699.93／2651.41／3229.41MiB；短流程不能证明长期无泄漏。0控制台错误断言位于关闭重开之前。Game／Scene图像已检查。
+
+B001/map-session-1792838172058.json的7434实体多窗口重开／版本追赶、Pause／Step／快捷键、Stop、编辑undo／redo及停靠通过，0控制台错误、正常退出。既有固定等待及内存采样后，额外319ms出现16个新Game样本。Scene／Game最近240间隔55.78／56.69FPS、原生渲染均值8.471／9.895ms、浏览器paint均值6.686／2.113ms；仍未稳定满帧。进程树PrivateBytes为5189.99／6971.92／8044.71／6453.90MiB（detach前／三窗口／重载／Stop停靠），结束仍高于起点，长期驻留待查。Scene图像已检查。三项QA正常退出，WebView的EPERM缓存保留，用户编辑器未关闭。
+
+原始构建及QA日志在tmp/docs-artifacts/editor-performance-risk/indexed-batch-*，实际地图计数摘要为indexed-batch-runtime-metrics.json；上述B001报告、截图只在tmp/docs-artifacts/testing-batches。未重复不受影响的转换、层级及Spine检查。本编辑器批次验证完成，下一批从0/3累计。待办继续包含Scene／多窗口稳定60FPS、前端与请求调度、长期驻留、LOD、姿态选择框／聚焦范围、纹理alpha选取、完整JASS／DotA对局及War3保真。

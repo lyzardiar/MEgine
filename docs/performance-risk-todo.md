@@ -1660,3 +1660,11 @@ B001/map-session-1792831470405.json通过7434实体、多窗口重开／版本�
 4096绘制／128共享来源、两个独立renderer的12轮交替对照（2轮预热，10组各4帧）每个测量帧均命中自身bundle缓存，完整128×128像素一致。解析次数4096→128；材质准备CPU均值0.071653→0.085298ms，世界编码1.698693→1.246758ms，提交CPU2.860855→2.391148ms，提交加GPU回读4.845425→4.350050ms。该窗口包含新准备成本；不含IPC及游戏逻辑，不直接外推实际地图FPS。日志material-bindings-{gpu-final,existing-tests,host-check,benchmark}.log，摘要material-bindings-benchmark-summary.json，均在tmp/docs-artifacts/editor-performance-risk。
 
 本批504b42c（含3af8e85补充）、48f317e及本项达到3/3。接下来在当前整合分支统一构建前端与Tauri Release，执行姿态／锁定选取／资源热更／透明切换、实际DotA与多窗口持续采样、Stop和关闭重开。记录indexedObjectSlots、worldMeshDrawCalls、worldInstancedObjects、materialSources、materialBindingResolutions及真实FPS／进程树内存；复用不受影响的地图转换、层级和Spine检查。完整JASS、War3保真、LOD、长期驻留与稳定满帧仍待完成。
+
+### 第一百零一至一百零三阶段原生性能结论
+
+当前61990bf的前端／Tauri Release构建、姿态及资源热更5项QA、实际DotA和多窗口QA通过，详细命令与本地报告见testing-batches.md同阶段记录。实际DotA保留5376总对象，Scene可见5342，绘制调用降至4675，材质来源／绑定解析均153；Game可见116、提交对象槽413、绘制99、来源／解析均33。实例参数、相邻合并及按来源解析均已生效。
+
+实际DotA的Game60.05／Scene46.56FPS，Scene原生渲染均值18.895→16.614ms，整帧FPS与前次46.69相近，浏览器paint均值9.382ms。多窗口Scene55.78／Game56.69FPS，原生渲染均值8.471／9.895ms，paint6.686／2.113ms。下一步需沿请求、模拟、浏览器绘制和呈现链定位剩余成本，不能只以RHI小基准判断整帧收益。以上为短采样窗口，未证明稳定60FPS。
+
+DotA关闭前／欢迎页／同路径重开的进程树PrivateBytes为6699.93／2651.41／3229.41MiB，关闭释放仍有效；多窗口detach前／三窗口／重载／Stop停靠为5189.99／6971.92／8044.71／6453.90MiB。Stop后驻留及长期内存仍需独立排查。本编辑器批次结束，下一批0/3；LOD、姿态选择框／聚焦范围、alpha选取和完整JASS／War3保真继续待办。
