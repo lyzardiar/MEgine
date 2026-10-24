@@ -1655,3 +1655,13 @@ DotA14437实体，缓存进入2.302秒。Scene59.68／Game59.85FPS，原生平�
 手动benchmark_cached_mesh_key_traversal通过，同一生产函数仅在测试中切换提前命中分支，基线不执行新增查找，9组计量／2组预热，每组200帧且交替顺序。只预置合法类别的已尝试键和零字节使用记录，不加载地图几何。作者Amazonia2747对象／246键中位数0.136739→0.110548ms，作者场景219对象／156键0.038187→0.021282ms；保留实际DotA导入场景5376对象／177键0.176102→0.161644ms。不是实际Game运行、GPU或FPS测量，来源校验约3ms的尖峰仍待解决。cached-mesh-key-summary.json记录输入场景与源码SHA和全部样本，cached-mesh-key-benchmark.log保存原始结果。复现命令cargo test -p mengine-runtime --release --lib benchmark_cached_mesh_key_traversal -- --ignored --nocapture --test-threads=1；MENGINE_CACHED_KEY_PROJECT与MENGINE_CACHED_KEY_SCENE可指定保留项目及场景，本次DotA为arbitrary-map-1792808418421/sample下user-v2-4491bb39adc21485c832cb95648faf352261e2df0242862bc82a17830b60d001/Scenes/Main.mscene。
 
 当前128、129为2/3；第三项后统一原生验证实际地图连续帧、热更新／失效、多视图公告板、缓存预算／Stop重启，以及材质相位与此命中路径的集成。最近完整原生版本仍40be271，保持来源尖峰、多窗口稳定60、长时间驻留、LOD与完整War3保真待办。
+
+### 第一百三十阶段／编辑器新批次任务3/3：网格来源四组常规复查
+
+修改runtime的meshes.rs／mesh_source_poll.rs，新增mesh_source_poll_tests.rs。已缓存来源首次常规复查按加载后250ms到期，此后按路径散列分为四组固定相位；每次完成后设置未来不超过250ms的截止时间。大批检查仍使用最多4个既有JobSystem任务并同步等待。每250ms从当前对象更新请求路径列表，新加载来源补入列表；期间检查最近使用的来源，下一次更新移除未再使用的路径。列表只持有路径，不持有模型／GPU所有者，项目切换、显式失效和来源淘汰同步清理相关状态。失效来源先清除旧采样／相机键，再走既有加载和错误恢复。新姿态继续即时验证全部依赖，过期暂停恢复仍当帧检查全部到期来源，不延后以隐藏开销；路径身份和文件元数据查询规则不变。
+
+cargo test -p mengine-runtime --release --lib meshes:: -- --nocapture --test-threads=1最终24通过、0失败、6个手动基准忽略，日志phased-pose-source-compatibility-tests.log。新增检查覆盖4000组截止边界、四相位分配、主／嵌入视图9阶段完整RGBA、Shared／render-only来源、非全局轮询时的主文件变化与删除恢复、新姿态立即验证、全部过期来源、显式失效、项目切换、近期来源列表更新及Weak释放；既有缓存预算、外部缓冲、公告板、重复键与129相关网格边界继续通过。新增qa-runtime-resource-poll.mjs，node --check通过；该原生夹具将验证父材质／实例／自定义Shader编辑与恢复、父文件删除后恢复的真实像素，结果待本批执行。
+
+手动benchmark_phased_pose_source_checks使用保留DotA项目196份GLB／5376循环引用，三个独立进程、每个同进程交替比较原有集中轮询与四相位生产路径；60Hz共180帧、30帧预热、150帧计量，实际文件查询及公告板准备，所有准备键一致且无来源加载／重用。三次统计中位数：p95 4.0424→1.8615ms，平均0.939429→1.027189ms，单帧来源检查峰值196→52；最大值中位数17.2152→18.1641ms，未改善。集中轮询总检查为1764／1960／1960，四相位均1960；固定相位与受帧延迟影响的年龄轮询存在次数差异。平均增加约0.088ms，属于平滑常规尖峰的取舍，不能据此声称平均CPU、实际FPS或全部最大延迟已改善。原始三份phased-pose-source-benchmark-{1,2,3}.log、全部样本、源码和196份输入SHA记录在phased-pose-source-benchmarks.json／phased-pose-source-summary.json，均在tmp/docs-artifacts/editor-performance-risk。未编号单份benchmark.log为探索输入，不作为最终数据。命令cargo test -p mengine-runtime --release --lib benchmark_phased_pose_source_checks -- --ignored --nocapture --test-threads=1，MENGINE_METADATA_PROJECT／MENGINE_METADATA_PATHS使用既有保留项目与metadata-probe-paths.txt。
+
+128、129、130达到3/3，提交后统一构建custom-protocol Release并执行来源／材质热更新夹具、Scene空间选取与隐藏恢复、实际DotA加载／选取／关闭重开、多窗口／Stop重启及5轮驻留、Profiler界面。连续帧均值／p95及原生来源检查以该集成版本报告为准；五轮为有界流程，长期内存、稳定60、LOD与完整JASS／War3保真仍待完成。

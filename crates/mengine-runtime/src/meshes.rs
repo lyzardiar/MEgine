@@ -40,7 +40,7 @@ pub struct MeshSyncProfile { pub file_check_ms: f64, pub file_checks: u32, pub s
 
 // One validation snapshot per sync call, shared by its main camera and embedded views.
 #[derive(Default)]
-struct FrameSourceChecks { stamps: HashMap<String, FileStamp>, prepared: HashSet<String> }
+struct FrameSourceChecks { stamps: HashMap<String, FileStamp>, prepared: HashSet<String>, periodic_sources: bool }
 impl FrameSourceChecks {
     fn stamp(&mut self, asset: &str, path: &Path, profile: &mut MeshSyncProfile) -> FileStamp { *self.stamps.entry(asset.into()).or_insert_with(|| profile_file_stamp(path, profile)) }
     // Source validation supplies the main-file stamp belonging to the loaded version, including load-time races.
@@ -94,9 +94,14 @@ pub struct RuntimeMeshCache {
     sequential_source_checks: bool,
     #[cfg(test)]
     parse_cached_mesh_keys: bool,
+    #[cfg(test)]
+    grouped_source_checks: bool,
     project_root: Option<PathBuf>,
     attempted: HashMap<String, FileStamp>,
     last_poll: Option<Instant>,
+    pose_checks: HashMap<String, source_poll::PoseCheck>,
+    pose_check_epoch: Option<Instant>,
+    pose_poll_sources: Vec<(String, PathBuf)>,
     poses: HashMap<String, (FileStamp, CachedPoseSource)>,
     patches: HashMap<String, (FileStamp, MeshPatchSource)>,
     pose_usage: HashMap<String, PoseUsage>,
@@ -119,9 +124,14 @@ impl RuntimeMeshCache {
             sequential_source_checks: false,
             #[cfg(test)]
             parse_cached_mesh_keys: false,
+            #[cfg(test)]
+            grouped_source_checks: false,
             project_root,
             attempted: HashMap::new(),
             last_poll: None,
+            pose_checks: HashMap::new(),
+            pose_check_epoch: None,
+            pose_poll_sources: Vec::new(),
             poses: HashMap::new(),
             patches: HashMap::new(),
             pose_usage: HashMap::new(),
@@ -142,6 +152,8 @@ impl RuntimeMeshCache {
         self.project_root = project_root;
         self.attempted.clear();
         self.last_poll = None;
+        self.pose_checks.clear(); self.pose_check_epoch = None;
+        self.pose_poll_sources.clear();
         self.poses.clear();
         self.patches.clear();
         self.evicted.extend(self.pose_usage.keys().cloned());
@@ -156,6 +168,8 @@ impl RuntimeMeshCache {
         self.attempted.retain(|k, _| parse_mesh_patch_key(k).is_none_or(|p| p.0 != patch));
         self.attempted.remove(key.trim());
         self.poses.remove(key.split('#').next().unwrap_or(key).trim());
+        self.pose_checks.remove(key.split('#').next().unwrap_or(key).trim());
+        self.pose_poll_sources.retain(|(asset, _)| asset != key.split('#').next().unwrap_or(key).trim());
         let asset = key.split('#').next().unwrap_or(key).trim();
         self.attempted.retain(|k, _| parse_gltf_pose_sample(k).is_none_or(|p| p.0 != asset));
         let keys = self.billboard_views.iter().filter(|(_, (source, _))| parse_gltf_pose_sample(source).is_some_and(|p| p.0 == asset)).map(|(k,_)| k.clone()).collect::<Vec<_>>();
@@ -208,13 +222,14 @@ impl RuntimeMeshCache {
 
     fn prepare_billboard_source(&mut self, root: &Path, key: &str, poll: bool, checked_assets: &mut HashMap<String, bool>, checks: &mut FrameSourceChecks) -> bool {
         let Some((asset,_,_,_)) = parse_gltf_pose_sample(key) else { return false; };
-        if poll || !self.poses.contains_key(asset) {
+        if (poll && !checks.periodic_sources) || !self.poses.contains_key(asset) {
             let ready = if let Some(ready) = checked_assets.get(asset) { *ready } else {
                 let ready = if checks.prepared.contains(asset) { true } else if let Some(path) = resolve_project_asset_path(root,asset) {
                     if checks.validate_cached_source(asset, &path, self.poses.get(asset), &mut self.profile) { true } else {
                         let stamp = checks.stamp(asset, &path, &mut self.profile);
                         forget_pose_attempts(&mut self.attempted, &self.billboard_views, asset);
                         self.poses.remove(asset);
+                        self.pose_checks.remove(asset);
                         match load_pose_source(&path, root, &mut self.profile) { Ok(source) => { self.poses.insert(asset.into(),(stamp,source)); true }, Err(_) => false }
                     }
                 } else { false };
@@ -309,7 +324,7 @@ impl RuntimeMeshCache {
             if !lower.ends_with(".gltf") && !lower.ends_with(".glb") {
                 continue;
             }
-            if !poll && self.attempted.contains_key(key) { continue; }
+            if (!poll || pose.is_some() && checks.periodic_sources) && self.attempted.contains_key(key) { continue; }
             let Some(path) = resolve_project_asset_path(root, asset_key) else {
                 if should_attempt(&mut self.attempted, key, FileStamp::default()) {
                     failures.push(MeshLoadFailure {
@@ -323,6 +338,7 @@ impl RuntimeMeshCache {
             if let Some((asset, _, _, _)) = pose {
                 if !checks.prepared.contains(asset) && checked_poses.insert(asset) && !checks.validate_cached_source(asset, &path, self.poses.get(asset), &mut self.profile) {
                     self.poses.remove(asset);
+                    self.pose_checks.remove(asset);
                     forget_pose_attempts(&mut self.attempted, &self.billboard_views, asset);
                 }
             }
@@ -357,8 +373,11 @@ impl RuntimeMeshCache {
                 if let Some((asset,_)) = parse_mesh_patch_key(key) { patch_assets.insert(asset); }
             }
             self.poses.retain(|asset, _| pose_assets.contains(asset.as_str()));
+            self.pose_checks.retain(|asset, _| self.poses.contains_key(asset));
+            self.pose_poll_sources.retain(|(asset, _)| self.poses.contains_key(asset));
             self.patches.retain(|asset, _| patch_assets.contains(asset.as_str()));
         }
+        self.record_loaded_pose_checks(checks);
         failures
     }
 }
