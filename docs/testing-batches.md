@@ -932,3 +932,17 @@ Viewport的包围盒准备提取到viewportEntityBounds：固定显示帧按comp
 结果分列：**导入成功、播放通过、视觉对照待验收**。结构为 53 资源、15 Prefab 节点、11 粒子系统、4 模型和 9 运行材质，运行依赖已解析。相同相机、背景、Linear 处理及材质动画时间下，Unity 和 MEngine 均采样 0.1/0.3/0.6/1/1.5/3 秒；MEngine 绘制数为 13/17/19/28/10/0。0.6 秒所有粒子系统计数与 Unity 一致，精确寿命端点采用明确浮点容差；部分帧仍有粒子分布、环形纹理和消散外观差异，不能判为视觉还原通过。无雾、无曝光后处理；不保证与 Unity 相同随机序列。对照位于 `tmp/docs-artifacts/unitypackage/unity-reference/`、`mengine-reference-complete/`，逐系统计数位于 `particle-count-comparison.tsv`。
 
 可直接打开 `samples/unity-package-preview/LocalPreview/project.json` 实验本次导入；其中专有美术资产和 SourceAssets 仅保留本地。长期维护的空 sample、导入工具及说明纳入提交。本批集成执行完成，剩余视觉差异和正式分发验收保持待测，不计作通过。
+
+### 第八十三至八十五阶段集成结论
+
+实现e1ac036、e484572、2c0cae6已推送；固定层级激活、包围盒来源、空间索引／平面检查各自局部收益及必要检查见上述记录。隔离验证de5eacf只复制本批5份生产文件，前端／TypeScript与原生Release构建通过；EXE SHA256 2fc9a3fdda01da25a45725b67f65466171e8126c0e87cadcd0c03cc115f9e5bb。全部以下最终报告使用该生产版本，不包含临时诊断插桩或并发Unity导入变更。
+
+B001/spatial-picking-1792811986575.json通过、0error、正常退出：模型热替换、父节点移动、原点在相机后而网格可见时的真实画布选取。B001/map-session-1792812060449.json通过、0error、正常退出：持续相机变化16帧，隐藏Scene原生／浏览器均0，恢复37帧；实际分隔条尺寸变化、原始特效修改／恢复、父变换、步进／三层动画、层级选择／显隐／双击／Space、地图重载及Stop作者数据恢复通过。单Game10秒采样的最近240个原生间隔均值16.721ms（59.80FPS）、P95 26.5ms，浏览器平均paint2.07ms。
+
+多窗口初测1792812163907及1792812355572未通过：固定等待后独立Game没有新原生样本，浏览器回退仍绘制；不能计为通过。只读复核与定向诊断未确认生产根因，关闭缓冲池复用仍复现；诊断构建及失败记录保留在本地产物。QA现在清空重开前采样，等待当前地图的真实原生帧后再计时，最多30秒，并记录整个准备等待；失败时保留独立Game的语义状态与窗口截图。临时插桩已从隔离源码移除。
+
+最终B001/map-session-1792813730795.json功能整体通过、0error、正常退出，覆盖Inspector双向编辑、独立Game重开、版本追赶、Pause／Step／独立快捷键、Stop、undo／redo和回停靠。采样前准备等待16.812秒，因此独立窗口首帧停顿仍列待修，不能用这次功能通过认定启动性能正常。随后5秒样本Scene26.87／Game33.46FPS，平均间隔37.21／29.88ms，P95 116.0／72.5ms；浏览器平均paint13.52／2.85ms，原生render19.74／24.18ms。不同短时样本波动明显，本批仅确认局部准备成本减少，未证明整体稳定满帧或多窗口FPS提升。
+
+真实DotA_v6.83d.w3x的缓存菜单与持续运行报告B001/arbitrary-map-1792813844205.json通过、0error、正常退出，14437实体，缓存进入2.652秒。新--profile-map在Game／Scene分别预热1秒后记录5秒无Agent轮询窗口：Game最近240个原生间隔均值17.091ms（58.51FPS）、P95 23.7ms、浏览器paint3.13ms；Scene143个间隔均值34.757ms（28.77FPS）、P95 57.5ms、paint17.71ms。Scene为距离150的全图视角，含选中Camera的预览，浏览器drawItems10723；图像确认实际地图和原始模型呈现。此结果不代表完整JASS／DotA玩法已接入。
+
+本批必要功能集成完成。继续待办：独立Game重开后首帧约17秒等待的原生／共享交付阶段定位，多窗口持续帧率，DotA全图Scene绘制与相机预览成本，长期内存与真实输入延迟。QA窗口均正常退出，WebView缓存EPERM保留；用户编辑器未关闭。日志／图片／JSON位于tmp/docs-artifacts/editor-performance-risk/及testing-batches/B001，没有提交原始产物。

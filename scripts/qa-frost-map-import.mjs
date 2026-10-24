@@ -10,6 +10,7 @@ const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'
 assert.ok(process.env.MENGINE_EDITOR_EXECUTABLE,'Set MENGINE_EDITOR_EXECUTABLE');
 const sourceMap=process.argv[2];assert.ok(sourceMap,'Provide a .w3m/.w3x not installed in the catalog');
 const cacheProject=process.argv.includes('--cache-project')?path.resolve(process.argv[process.argv.indexOf('--cache-project')+1]):null;
+const profileMap=process.argv.includes('--profile-map');
 let expectedMapTitle='任意岛屿';
 const label='arbitrary-map-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
@@ -40,6 +41,21 @@ async function key(key){await input({keys:[key]});await input({});await step(6);
 async function click(name){const pointer=clientWorldFixture(await snapshot()).canvasPoint(name,[1280,720],false);await input({pointer,buttons:[0]});await input({pointer});await step(6);}
 async function until(predicate,seconds=120){const start=Date.now();for(;;){await step();const s=await snapshot();if(await predicate(s))return s;if(Date.now()-start>seconds*1000)throw Error('Native import timed out');await sleep(300);}}
 async function capture(name){for(let i=0;;i++)try{const shot=await query('view.screenshot',{target:'game',maxSize:1280,includeNativeProfile:true});fs.writeFileSync(path.join(out,label+'-'+name+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));report.frames.push({name,profile:shot.nativeProfile});return;}catch(error){if(i>20||!/NOT_READY|canvas is not available yet/.test(error.message))throw error;await sleep(500);}}
+async function profileImportedMap(){
+  report.liveProfiles={};
+  for(const source of ['game','scene']){
+    await execute('panel.focus',{kind:source});
+    if(source==='scene')await execute('view.set_camera',{pivot:[0,0,0],yaw:25,pitch:50,distance:150});
+    await execute('playback.pause');await sleep(1000);await execute('profiler.clear');
+    const started=performance.now();await sleep(5000);const elapsedMs=performance.now()-started;await execute('playback.pause');
+    const profile=await query('profiler.get_samples',{source,limit:240,includeNativeTimings:true});
+    assert.ok(profile.nativeProfileCount>=20,source+' must present fresh imported-map frames');
+    report.liveProfiles[source]={elapsedMs,...profile};
+    const shot=await query('view.screenshot',{target:source,maxSize:1280});fs.writeFileSync(path.join(out,label+'-live-'+source+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));
+  }
+  await execute('panel.focus',{kind:'game'});
+  report.checks.push('Imported map advances continuously in Game and Scene with five-second profiler windows without Agent polling; native timing buffer is limited to the most recent 240 samples');
+}
 function checkImportedScene(world,receipt){
   assert.equal(receipt.sourceSha256,hash(fs.readFileSync(sourceMap)));
   const manifest=JSON.parse(fs.readFileSync(path.join(sample,'Assets/Maps',receipt.id,'manifest.json'),'utf8'));
@@ -87,7 +103,7 @@ try{
   }else await key('F8');
   // One input tick keeps even a fast cache hit observable before the scene request is consumed.
   const pointer=clientWorldFixture(await snapshot()).canvasPoint('mapOpen box',[1280,720],false);await input({pointer,buttons:[0]});await execute('playback.input',{keys:[],buttons:[],viewport:[1280,720]});
-  const cachedScene=await waitForMap(true);report.entities=cachedScene.entities.length;const cached=receipts().find(r=>r.cached===true);assert.ok(cached);checkImportedScene(cachedScene,cached);await capture('cache-loaded');await key('Escape');assert.equal(telemetry(await snapshot()).qaImport.cached,true);assert.equal(clientWorldFixture(await snapshot()).visible('Map loading back'),false);
+  const cachedScene=await waitForMap(true);report.entities=cachedScene.entities.length;const cached=receipts().find(r=>r.cached===true);assert.ok(cached);checkImportedScene(cachedScene,cached);await capture('cache-loaded');if(profileMap)await profileImportedMap();await key('Escape');assert.equal(telemetry(await snapshot()).qaImport.cached,true);assert.equal(clientWorldFixture(await snapshot()).visible('Map loading back'),false);
   report.checks.push('Verified cache import without Play restart; loading bar and labels precede scene replacement; return clears the bar');
   await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);report.errors=(await query('console.get_logs',{limit:300})).filter(e=>e.level==='error');assert.equal(report.errors.length,0,JSON.stringify(report.errors));report.passed=true;
   console.log(JSON.stringify({passed:true,label,entities:report.entities,checks:report.checks}));
