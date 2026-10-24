@@ -263,7 +263,7 @@ function ProfileGraph(props: {
 
 function Metric(props: { label: string; value: string; hint?: string; warning?: boolean }) {
   return (
-    <div className={`profiler-metric${props.warning ? ' warning' : ''}`}>
+    <div className={`profiler-metric${props.warning ? ' warning' : ''}`} role="group" aria-label={`${props.label}: ${props.value}`}>
       <span>{props.label}</span>
       <strong>{props.value}</strong>
       {props.hint && <small>{props.hint}</small>}

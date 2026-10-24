@@ -1749,3 +1749,6 @@ DotA Scene57.25→58.58FPS、Game59.99FPS；浏览器paint5.999→5.633ms，UI2.
 ### 第一百一十三阶段：原生bundle构建与复用取证
 
 生产RHI／editor-host输出当前提交worldBundleBuilds／worldBundleHits，Profiler Overview及逐帧nativeTimings可读取；旧帧缺失显示—。18项前端检查、TypeScript和1项实际GPU集成检查通过，固定128对象的候选／构建／命中计数及完整RGBA一致。当前新批次1/3，详见testing-batches.md与world-bundle-profile-*。上一DotA单样本世界编码3.853ms缺少缓存命中证据，下一步先以最小实际地图诊断确定方向，常规多窗口和全批验收仍按三项合并。
+
+
+第一百一十三阶段即时证据：实际DotA 240个Scene完成帧中4帧复用、41帧构建、195帧两者为0；Game分别106／62／72。完整地图诊断在后续静态指标语义读取断言失败，原报告保持failed，仅保留此前已完成的采样。指标增加可读名称与数值后，128对象的小型原生界面复验通过，0错误、正常退出；没有重复地图采样。Scene UI2.160ms，前次2.141ms，未测出局部合成的实际改善，不以面积代替性能。完整取证／失败及重测范围见testing-batches.md、bundle-evidence-summary.json和bundle-readout-*。当前仍1/3，后续区分绑定与绘制列表失效原因，再改缓存粒度；稳定满帧与完整War3目标继续待办。

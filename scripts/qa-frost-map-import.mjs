@@ -15,6 +15,8 @@ const profileMap=process.argv.includes('--profile-map');
 const pickMap=process.argv.includes('--pick-map');
 const projectReopen=process.argv.includes('--project-reopen');
 const profilerUi=process.argv.includes('--profiler-ui');
+const bundleUi=process.argv.includes('--bundle-ui');
+assert.ok(!bundleUi||profilerUi,'--bundle-ui requires --profiler-ui');
 let expectedMapTitle='任意岛屿';
 const label='arbitrary-map-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
@@ -62,7 +64,13 @@ async function profileImportedMap(){
     let page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});
     const source=page.elements.find(e=>e.selector?.includes('profiler-source-tab-scene'));assert.ok(source,'Profiler Scene source tab');
     await execute('window.ui_click',{windowLabel:'main',selector:source.selector,expectedSnapshotRevision:page.snapshotRevision});await sleep(300);
-    page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});const cpu=page.elements.find(e=>e.name==='CPU'&&e.role==='tab');assert.ok(cpu,'Profiler CPU module tab');
+    page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});
+    if(bundleUi){
+      const overview=page.elements.find(e=>e.name==='Overview'&&e.role==='tab');assert.ok(overview,'Profiler Overview module tab');await execute('window.ui_click',{windowLabel:'main',selector:overview.selector,expectedSnapshotRevision:page.snapshotRevision});await sleep(300);
+      page=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});const labels=['World Bundle Builds','World Bundle Hits'];for(const label of labels)assert.ok(page.elements.some(e=>String(e.name).includes(label)),label+' is visible in the real Profiler');
+      const shot=await query('view.window_screenshot',{windowLabel:'main',maxSize:1920});fs.writeFileSync(path.join(out,label+'-profiler-bundles.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));report.profilerBundleUi={elements:page.elements.filter(e=>labels.some(label=>String(e.name).includes(label)))};
+    }
+    const cpu=page.elements.find(e=>e.name==='CPU'&&e.role==='tab');assert.ok(cpu,'Profiler CPU module tab');
     await execute('window.ui_click',{windowLabel:'main',selector:cpu.selector,expectedSnapshotRevision:page.snapshotRevision});await sleep(300);
     const shot=await query('view.window_screenshot',{windowLabel:'main',maxSize:1920});fs.writeFileSync(path.join(out,label+'-profiler-cpu.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));
     report.profilerCpuUi={source:'scene',snapshot:await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000})};

@@ -1404,3 +1404,12 @@ B001/map-session-1792846908698完成7434实体的原有六项：三窗口重开�
 18项前端Profiler检查及TypeScript通过。新增实际editor-host／RHI GPU集成检查用128个固定对象依次验证候选0／0、构建1／0、命中0／1，三个阶段完整RGBA一致，serde输出字段与提交统计对应；不是只在RHI cfg(test)中运行计数。日志world-bundle-profile-{tests,typecheck,host-test}.log位于tmp/docs-artifacts/editor-performance-risk。
 
 当前独立批次1/3，常规原生回归仍待三项合并。上一已验收实际DotA的单个最近样本世界编码3.853ms，但此前生产输出缺少bundle命中证据，无法判定缓存是否有效。为确定下一项优化方向，需要一次带计数的实际DotA最小诊断（统一正确Release后仅缓存进入／profile，不执行项目重开、多窗口或全资产覆盖）；属于继续定位必需的即时检查，结果单独登记，不将整个待测批次提前标绿。Canvas局部合成补充随同一程序观察，尚不代表完整原生回归。
+
+
+第一百一十三阶段即时定位：为确定后续缓存改进方向，构建bb11f29正确Release（前端3.19秒、原生1分22秒），固定程序build-bb11f29/mengine-editor-tauri.exe的SHA256为25064a2e16a35babfee7b4fd54f65c04a5aed5270b6a4e7d326189fc58233b8d。实际DotA缓存进入后的Game与Scene各取得240个连续完成帧，逐帧计数均为非负整数。Scene的(builds,hits)分布为(0,0)195帧、(1,0)41帧、(0,1)4帧；Game分别72／62／106帧。复用发生于Scene的4/240和Game的106/240帧；这是所有采样帧分布，不当作未知准入次数的命中率。
+
+B001/arbitrary-map-1792848530368整体报告保留失败：两个连续采样已完成，后续新增界面断言未能从语义快照读取静态指标卡片名称，未完成返回／Stop等后续断言。finally正常关闭所属编辑器，未把该诊断当作整份地图QA通过。完整采样单独保存在bundle-evidence-summary.json，显式记录overallReportPassed=false及采样范围。Scene短窗口56.91／Game59.55FPS、原生均值16.543／12.428ms；浏览器Scene paint5.796ms、UI2.160ms。前次UI2.141ms，此次没有测出局部合成补充的实际UI改善；不能将复制面积变化外推FPS，后续继续观察。
+
+指标卡片增加group语义和包含当前数值的可读名称。仅对该界面问题重建前端3.01秒／原生1分11秒，没有重复实际地图采样；build-bb11f29-readout的SHA256为395b10a824889502830cb2701852df5d229dde336eeb4968b1647050c4518a4f，收据另记录Profiler源文件及前端摘要。新增scripts/qa-profiler-bundles.mjs使用128个固定对象的小型独立工程，B001/profiler-bundles-1792849169077通过生产计数／逐帧响应和真实Profiler名称数值读取，界面显示World Bundle Builds: 0、World Bundle Hits: 1，截图已检查；0控制台错误、正常退出。--bundle-ui用于以后地图诊断时读取这两项，并要求--profiler-ui。日志bundle-{evidence,readout}-*与JSON／截图均在tmp/docs-artifacts，用户编辑器64664保持运行。
+
+后续先区分整份绘制列表、GPU资源句柄及共享绑定变化导致的失效，再决定分段复用方案。常规原生回归仍留待三项合并；本补充及界面修复同属113，独立任务计数仍1/3，未提前完成整个新批次。
