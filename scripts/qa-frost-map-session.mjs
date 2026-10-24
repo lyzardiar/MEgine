@@ -150,12 +150,12 @@ async function checkHierarchyPresentation(s){
   const byId=new Map(s.entities.map(e=>[e.entity,e]));let topRoot=root;while(topRoot.parent!=null)topRoot=byId.get(topRoot.parent);assert.ok(topRoot);
   await execute('panel.focus',{kind:'hierarchy'});
   const ui=()=>query('window.ui_snapshot',{windowLabel:'main',maxElements:5000});
-  async function element(name){for(let attempt=0;attempt<20;attempt++){const snapshot=await ui(),item=snapshot.elements.find(e=>e.name===name);if(item)return {snapshot,item};await sleep(100);}throw Error('Hierarchy item missing: '+name);}
+  async function element(name){for(let attempt=0;attempt<20;attempt++){const snapshot=await ui(),item=snapshot.elements.find(e=>e.name===name);if(item)return {snapshot,item};await sleep(100);}report.lastHierarchyUi=await ui();throw Error('Hierarchy item missing: '+name);}
   async function button(name){const {snapshot,item}=await element(name);await execute('window.ui_click',{windowLabel:'main',selector:item.selector,expectedSnapshotRevision:snapshot.snapshotRevision});}
   const search=await element('Search hierarchy');await execute('window.ui_set_value',{windowLabel:'main',selector:search.item.selector,expectedSnapshotRevision:search.snapshot.snapshotRevision,value:''});
   await execute('selection.set',{ids:[root.entity]});await element(root.name);
   await button('Collapse all hierarchy nodes');await element('Expand '+topRoot.name);
-  await button('Expand all hierarchy nodes');await execute('selection.reveal',{id:root.entity});await element('Collapse '+root.name);
+  await button('Expand all hierarchy nodes');await execute('selection.set',{ids:[]});await execute('selection.reveal',{id:root.entity});await element('Collapse '+root.name);
   await button('Collapse all hierarchy nodes');await execute('selection.reveal',{id:child.entity});await element(child.name);await element('Collapse '+root.name);
   await execute('selection.set',{ids:[root.entity]});const item=await element(root.name);
   await execute('window.ui_press_key',{windowLabel:'main',selector:item.item.selector,expectedSnapshotRevision:item.snapshot.snapshotRevision,key:'ArrowLeft'});await element('Expand '+root.name);
