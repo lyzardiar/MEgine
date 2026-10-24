@@ -100,7 +100,7 @@ test('evicted revision falls back to its owned snapshot and other errors propaga
   assert.equal(fallbacks,1);assert.equal(requests[1].args.snapshot,snapshot);
   assert.equal(requests[1].args.playSessionId,undefined);assert.equal(requests[1].args.playRevision,undefined);
   assert.deepEqual([requests[1].args.width,requests[1].args.height],[1920,1080]);
-  const profile=transport.nativeViewportWorldRequestProfile(bytes);assert.equal(profile.source,'play-revision');assert.equal(profile.revision,4);assert.equal(profile.sessionId,7);assert.equal(profile.fallback,'play-revision-expired');assert.equal(profile.attempts,2);assert.ok(profile.elapsedMs>=profile.expiredRequestMs+profile.snapshotPrepareMs);
+  const profile=transport.nativeViewportWorldRequestProfile(bytes);assert.equal(profile.source,'play-revision');assert.equal(profile.revision,4);assert.equal(profile.sessionId,7);assert.equal(profile.fallback,'play-revision-expired');assert.equal(profile.snapshotEntityCount,1);assert.equal(profile.attempts,2);assert.ok(profile.elapsedMs>=profile.expiredRequestMs+profile.snapshotPrepareMs);
   transport.releaseNativeViewportFrame(bytes);assert.equal(transport.nativeViewportWorldRequestProfile(bytes),undefined);assert.equal(profile.revision,4);
   error='Play session expired';await assert.rejects(transport.requestRevisionedNativeViewportFrame('game',{playSessionId:7,playRevision:4},fallback),/session expired/);
   assert.equal(fallbacks,1);

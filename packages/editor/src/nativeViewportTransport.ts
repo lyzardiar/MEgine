@@ -3,7 +3,11 @@ import { invoke } from '@tauri-apps/api/core';
 
 type NativeSharedTransportProfile = { uiQueueMs: number; setupMs: number; allocateMs: number; copyMs: number; bytes: number; publicationReadyEpochMs?: number; pooled?: boolean; poolHit?: boolean; bufferId?: number };
 export type SharedNativeViewportTransportProfile = NativeSharedTransportProfile & { requestId: string; receivedEpochMs: number; getBufferMs: number; requestElapsedMs: number; publicationReadyToEventMs?: number; releaseMs?: number };
-export type NativeViewportWorldRequestProfile = { source: 'snapshot' | 'play-revision' | 'play-latest' | 'scene-cache'; sessionId?: number; revision?: number; attempts: number; fallback?: 'play-revision-expired' | 'scene-revision-expired'; expiredRequestMs?: number; snapshotPrepareMs?: number; elapsedMs: number };
+export type NativeViewportWorldRequestProfile = { source: 'snapshot' | 'play-revision' | 'play-latest' | 'scene-cache'; sessionId?: number; revision?: number; snapshotEntityCount?: number; attempts: number; fallback?: 'play-revision-expired' | 'scene-revision-expired'; expiredRequestMs?: number; snapshotPrepareMs?: number; elapsedMs: number };
+function snapshotEntityCount(args: Record<string, unknown>): number | undefined {
+  const entities = (args.snapshot as { entities?: unknown } | undefined)?.entities;
+  return Array.isArray(entities) ? entities.length : undefined;
+}
 const worldRequestProfiles = new WeakMap<ArrayBuffer, NativeViewportWorldRequestProfile>();
 export function nativeViewportWorldRequestProfile(buffer: ArrayBuffer) { return worldRequestProfiles.get(buffer); }
 type SharedFrameEvent = { additionalData?: { nativeViewportRequest?: string; nativeViewportPooled?: boolean; nativeViewportLease?: string; nativeViewportTransport?: NativeSharedTransportProfile }; getBuffer(): ArrayBuffer };
@@ -130,7 +134,7 @@ export function requestNativeViewportFrame(command: string, args: Record<string,
 /** Only an evicted revision falls back to the same owned browser snapshot; other failures propagate. */
 export async function requestRevisionedNativeViewport<T>(args: Record<string, unknown>, snapshotFallback: () => Record<string, unknown>, request: (args: Record<string, unknown>) => Promise<T>, completed?: (result: T, profile: NativeViewportWorldRequestProfile) => void): Promise<T> {
   const started = performance.now();
-  const profile: NativeViewportWorldRequestProfile = { source: args.snapshot != null ? 'snapshot' : args.playRevision != null ? 'play-revision' : args.playSessionId != null ? 'play-latest' : 'scene-cache', sessionId: typeof args.playSessionId === 'number' ? args.playSessionId : undefined, revision: typeof args.playRevision === 'number' ? args.playRevision : undefined, attempts: 1, elapsedMs: 0 };
+  const profile: NativeViewportWorldRequestProfile = { source: args.snapshot != null ? 'snapshot' : args.playRevision != null ? 'play-revision' : args.playSessionId != null ? 'play-latest' : 'scene-cache', sessionId: typeof args.playSessionId === 'number' ? args.playSessionId : undefined, revision: typeof args.playRevision === 'number' ? args.playRevision : undefined, snapshotEntityCount: snapshotEntityCount(args), attempts: 1, elapsedMs: 0 };
   let result: T;
   try { result = await request(args); }
   catch (error) {
@@ -141,6 +145,7 @@ export async function requestRevisionedNativeViewport<T>(args: Record<string, un
     profile.expiredRequestMs = performance.now() - started;
     const preparing = performance.now(), snapshot = snapshotFallback();
     profile.snapshotPrepareMs = performance.now() - preparing;
+    profile.snapshotEntityCount = snapshotEntityCount(snapshot);
     profile.attempts = 2;
     const { playSessionId: _session, playRevision: _revision, ...view } = args;
     result = await request({ ...(sceneExpired ? args : view), ...snapshot });

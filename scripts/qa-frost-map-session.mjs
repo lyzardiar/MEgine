@@ -7,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {configureNativeQa,closeNativeQa} from './frost-native-qa-runtime.mjs';
 import {clientWorldFixture} from './frost-client-world-fixture.mjs';
+import {createHierarchyActiveLookup} from '../packages/editor/src/hierarchyActivation.ts';
 const repo=fileURLToPath(new URL('../',import.meta.url)),source=path.join(repo,'samples/frostbound-realms'),out=path.join(repo,'tmp/docs-artifacts/testing-batches/B001');
 assert.ok(process.env.MENGINE_EDITOR_EXECUTABLE,'Set MENGINE_EDITOR_EXECUTABLE');
 const logsOnly=process.argv.includes('--logs-only');
@@ -31,7 +32,8 @@ const hierarchyOnly=process.argv.includes('--hierarchy-only');
 const unitInitializationOnly=process.argv.includes('--unit-initialization-only');
 const unitSelectionOnly=process.argv.includes('--unit-selection-only');
 const detachedAuthoringOnly=process.argv.includes('--detached-authoring-only');
-const detachedOnly=process.argv.includes('--detached-only')||detachedAuthoringOnly;
+const detachedProfileOnly=process.argv.includes('--detached-profile-only');
+const detachedOnly=process.argv.includes('--detached-only')||detachedAuthoringOnly||detachedProfileOnly;
 const hierarchyInteractions=process.argv.includes('--hierarchy-interactions');
 const label='map-session-'+Date.now(),root=path.join(out,'native-qa',label),sample=path.join(root,'sample'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 configureNativeQa(root);
@@ -176,6 +178,7 @@ async function checkDetachedRuntime(authored){
   async function field(expected){const deadline=Date.now()+30000;for(;;){const page=await ui(),item=page.elements.find(e=>e.name==='Transform Position Y');report.detachedLastUi={snapshotRevision:page.snapshotRevision,elements:page.elements.filter(e=>e.name==='GameObject name'||String(e.name??'').includes('Position')||String(e.name??'').includes('Inspector'))};if(item&&(expected===undefined||Math.abs(Number(item.value)-expected)<1e-5))return {page,item};if(Date.now()>=deadline){report.failedEditorState=await query('editor.state');report.failedSelection=await query('selection.get');assert.fail('Detached Inspector height '+expected);}await sleep(150);}}
   async function mainHeight(expected){const deadline=Date.now()+30000;for(;;){const entity=await query('entity.get',{id:target.entity});if(Math.abs(entity.components.Transform.position[1]-expected)<1e-5)return;assert.ok(Date.now()<deadline,'Main received detached height '+expected);await sleep(150);}}
   if(!detachedAuthoringOnly){
+  if(!detachedProfileOnly){
   await field(original);const {page,item}=await field();
   const editStarted=performance.now();await execute('window.ui_set_value',{windowLabel:'panel-inspector',selector:item.selector,expectedSnapshotRevision:page.snapshotRevision,value:String(edited)});
   await mainHeight(edited);report.detachedEditObservedMs=performance.now()-editStarted;await step(3);await mainHeight(edited);await field(edited);
@@ -185,9 +188,11 @@ async function checkDetachedRuntime(authored){
   await execute('window.ui_set_value',{windowLabel:'main',selector:mainField.selector,expectedSnapshotRevision:mainPage.snapshotRevision,value:String(original)});await step(2);await mainHeight(original);
   await execute('panel.detach',{kind:'inspector'});await field(original);
   report.checks.push('Detached Inspector transform reaches main native simulation and persists after 3 steps; main component restore reaches detached Inspector');
+  }
   await execute('playback.play');await execute('panel.dock',{kind:'game'});await execute('panel.detach',{kind:'game'});await sleep(2500);sampleMemory('three-panels-live');await execute('profiler.clear');const started=performance.now();await sleep(5000);
   report.detachedProfiles={elapsedMs:performance.now()-started};
-  for(const source of ['scene','game']){const profiles=await query('profiler.get_samples',{source,limit:240,includeNativeTimings:true});assert.ok(profiles.nativeSummary?.intervals>5,source+' detached native presents');assert.equal(profiles.nativeLatest?.counts.entities,before.entities.length);assert.ok(profiles.nativeTimings?.every(frame=>frame.worldRequest&&frame.worldRequest.elapsedMs>=0),source+' request telemetry');report.detachedProfiles[source]={nativeSummary:profiles.nativeSummary,counts:profiles.nativeLatest.counts,worldRevision:profiles.nativeLatest.worldRevision,timings:profiles.nativeTimings};}
+  const active=createHierarchyActiveLookup(before.entities),activeEntities=before.entities.filter(entity=>active(entity.entity)).length;
+  for(const source of ['scene','game']){const profiles=await query('profiler.get_samples',{source,limit:240,includeNativeTimings:true}),request=profiles.nativeLatest?.worldRequest,filtered=source==='scene'&&(request?.source==='snapshot'||request?.fallback==='play-revision-expired');report.detachedProfiles[source]={nativeSummary:profiles.nativeSummary,counts:profiles.nativeLatest?.counts,worldRevision:profiles.nativeLatest?.worldRevision,worldRequest:request,expectedTotal:before.entities.length,initialActive:activeEntities,timings:profiles.nativeTimings};assert.ok(profiles.nativeSummary?.intervals>5,source+' detached native presents');if(filtered)assert.ok(Number.isSafeInteger(request.snapshotEntityCount)&&request.snapshotEntityCount>0&&request.snapshotEntityCount<=before.entities.length);assert.equal(profiles.nativeLatest?.counts.entities,filtered?request.snapshotEntityCount:before.entities.length);assert.ok(profiles.nativeTimings?.length&&profiles.nativeTimings.every(frame=>frame.worldRequest&&frame.worldRequest.elapsedMs>=0),source+' request telemetry');}
   report.checks.push('Game window reopens during Play and catches up with revisioned native frames');
   await execute('playback.pause');await sleep(300);const paused=await snapshot();await sleep(300);assert.deepEqual((await snapshot()).entities,paused.entities);await step(2);assert.ok((await snapshot()).simulationTime>paused.simulationTime);
   for(const windowLabel of ['panel-scene','panel-game']){const shot=await query('view.window_screenshot',{windowLabel,maxSize:1280});fs.writeFileSync(path.join(out,label+'-'+windowLabel+'.png'),Buffer.from(shot.dataUrl.split(',')[1],'base64'));}

@@ -1223,3 +1223,11 @@ Node局部基准以同进程加载提交51890a5的原Store和当前Store，读�
 18项传输／步骤观测定向检查通过，QA脚本语法检查通过。新增检查覆盖直接来源分类、Scene版本过期的准确分段时间、Play过期／buffer释放、失败的快照与渲染不记成功、Profiler字段隔离。证据为 `tmp/docs-artifacts/editor-performance-risk/world-request-tests.log`。
 
 当前三项合并原生验证：增量传输、增量解析／规范化复用、世界请求观测。`qa-frost-map-session.mjs --detached-only` 新增Play中新开Game窗口、完整请求timings、Inspector操作至主窗口观察耗时、四个阶段的编辑器及后代进程内存采样。操作耗时包含自动化调用和轮询，不等于硬件输入到显示延迟；工作集求和可能重复统计共享页，不能称为物理内存占用。合并构建及实际结果另记。
+
+合并原生结果：最终 `B001/map-session-1792802023180.json` 的 `--detached-profile-only` 通过，0 error、正常退出；真实Play中新开Game、三窗口呈现、Pause／Step、独立Game播放快捷键、地图重载与Inspector重开、Stop完整作者实体恢复、停止后作者编辑和窗口停靠通过。Scene／Game截图已目视核对。最终EXE SHA256为 `394881b6682ac01e6ee7f1d08807494da9b4ee8953cff3299f9e4929546b7d88`，Release构建1分04秒，仅既有world_from_snapshot告警。WebView隔离缓存因EPERM保留，发现文件已移除。
+
+5秒窗口、7,411实体：Scene48个间隔／10.2661次呈现每秒／P95为191.8ms，Game73个间隔／14.8504次呈现每秒／P95为136.7ms。Scene49个完整profile中13个版本过期回退，恰有13个缺少worldRevision；其余指定版本请求平均50.24ms，回退请求平均213.91ms（首次失败29.99ms、快照准备1.35ms）。Game74个profile全部使用指定版本，0回退、0缺版本，请求平均41.48ms。原生渲染均约15ms，多窗口仍不流畅，下一步处理Scene版本过期和请求等待；不得把单视口近60FPS套用到本结果。
+
+进程树privateBytes：分离前4,849,201,152；三窗口运行6,765,801,472；地图重载后6,554,947,584；Stop并停靠后5,665,640,448。对应工作集求和3,058,245,632／4,800,225,280／4,620,804,096／3,211,517,952字节。仅一次短时采样，包含引擎、WebView和资源缓存；不证明泄漏或长期稳定。汇总及完整timings在 `tmp/docs-artifacts/editor-performance-risk/world-request-native-summary.json` 与上述原生报告。
+
+前置运行 `1792801709656` 已通过独立Inspector编辑→主窗口→3个原生步骤及主窗口恢复→独立Inspector；其后Scene数量断言失败，整份报告不记通过。专项复查 `1792801839175` 确认了版本过期回退，但静态激活数量比实际帧多1，也未通过。Scene快照会过滤非激活实体，且激活状态随运行变化；worldRequest现记录实际上传实体数，最终验收按最新profile的请求类型检查实体数量；本次最新Scene／Game均为指定版本、数量7,411，回退样本尚未逐一记录对应的渲染实体数量。最后只复查受影响的性能及后续流程，未重复已经通过的Inspector编辑前置步骤。Inspector自动化调用至主窗口观察为443.11ms，仅首次运行的暂停状态样本，不是输入延迟分布。真实输入到显示延迟、强制原生竞态、长期／跨机器性能及行为字段热更新原生验收继续保留。

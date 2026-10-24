@@ -682,3 +682,7 @@ Release 构建通过，耗时1分06秒，仅既有 world_from_snapshot 未使用
 变更：nativeViewportTransport／nativeViewportFrame／editorProfiler，传输测试，以及qa-frost-map-session和sample-native-qa-memory.ps1。worldRequest明确指定版本、直接快照、过期回退、尝试次数和请求耗时。18项传输／步骤观测检查通过，QA语法通过。命令：`node --test packages/editor/tests/nativeViewportTransport.test.mjs packages/editor/tests/playStepTiming.test.mjs`。
 
 三项实现已累计，提交后合并执行前端及原生Release构建，再运行 `node scripts/qa-frost-map-session.mjs --detached-only`。验收覆盖三窗口编辑／播放／重载／Stop，Play中新窗口加入、请求版本／回退采样和进程树内存。脚本操作至主窗口观察时间仅作为自动化链路指标；真实输入到显示延迟、强制原生乱序和长期回收另保留。结果待补记。
+
+本批常规集成覆盖已完成，性能目标继续开放。0752409、a5b9c95及世界请求观测合并构建；18项观测测试通过，上传实体数补充断言单独复查通过。原生 `1792801709656` 的Inspector双向编辑及原生步骤保留通过，后续数量断言失败；`1792801839175` 同样在数量口径检查处失败，不能称为整份通过。修正为使用实际帧上传数量后，`node scripts/qa-frost-map-session.mjs --detached-profile-only` 报告 `1792802023180` 全部通过、0 error、正常退出，覆盖后续播放、重载、Stop和作者编辑；此模式保留菜单→地图初始化并跳过已通过的Inspector前置编辑。相机画面已截图核对，行为字段热更新仅定向测试覆盖，尚未原生验证。
+
+本次三窗口Scene10.27／Game14.85次呈现每秒，Scene13/49帧过期回退而Game0/74；最新profile的实体数与请求内容一致，回退历史尚未逐一比对渲染实体数量。短时内存采样完成，尚不代表长期回收验收。原始结果／图片仅在tmp/docs-artifacts，详细限制及EXE哈希见performance-risk-todo第六十四阶段。下一批应围绕Scene版本过期回退和实际请求等待优化；不重复本批已通过的无关范围。
