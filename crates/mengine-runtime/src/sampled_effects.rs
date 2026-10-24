@@ -4,11 +4,14 @@ use crate::textures::TextureLoadFailure;
 use glam::{Mat4, Vec3, Vec4};
 use mengine_assets::{effect_asset_path, EffectFrame, EffectMaterial, GltfBillboardCamera, SharedGltfPoseSource, SampledEffectAsset};
 use mengine_core::{generated::SampledEffect, Entity, TransformHierarchy, World};
-use mengine_rhi::{DirectionalLightData, FrameCamera, FrameLighting, PointLightData, UiBlendMode, UiPrimitive, UiShaderChannelData};
+use mengine_rhi::{DirectionalLightData, FrameCamera, FrameLighting, PointLightData, UiBatchKey, UiBlendMode, UiPrimitive, UiShaderChannelData};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime};
 use std::sync::Arc;
+
+#[cfg(test)]
+thread_local! { static REPEAT_DEFAULT_KEYS: std::cell::Cell<bool> = const { std::cell::Cell::new(false) }; }
 
 type Stamp = (Option<SystemTime>, u64);
 struct CachedEffect { stamp: Stamp, asset: Result<SampledEffectAsset, String> }
@@ -162,14 +165,16 @@ fn push_polygon(corners: [Vec3;4], color: [f32;4], uv: [f32;4], vertex_uv: Optio
     let clips = corners.map(|p| matrix * p.extend(1.));
     if clips.iter().any(|p| !p.is_finite()) || clips.iter().all(|p| p.w <= 0. || p.z < 0.) { return; }
     let center = clips.iter().copied().sum::<Vec4>() * 0.25;
-    let mut primitive = UiPrimitive::solid([0.,0.,1.,1.], color);
+    let key = UiBatchKey { canvas_group: None, material: "sampled-effect".into(), texture: material.texture.clone(), clip: None,
+        blend: match material.blend.as_str() { "additive" => UiBlendMode::Additive, "multiply" => UiBlendMode::Multiply, _ => UiBlendMode::Alpha }, shader_channels: Default::default(), depth_test: true, stencil: Default::default() };
+    #[cfg(test)]
+    let mut primitive = if REPEAT_DEFAULT_KEYS.with(|flag| flag.get()) { let mut primitive = UiPrimitive::solid([0.,0.,1.,1.], color); primitive.key = key; primitive } else { UiPrimitive::solid_with_key([0.,0.,1.,1.], color, key) };
+    #[cfg(not(test))]
+    let mut primitive = UiPrimitive::solid_with_key([0.,0.,1.,1.], color, key);
     primitive.clip_corners = Some(clips.map(|v| v.to_array())); primitive.uv = uv;
     if let Some(uv0) = vertex_uv { primitive.shader_channel_data = Some(Arc::new(UiShaderChannelData { uv0, ..UiShaderChannelData::default() })); }
-    primitive.key.texture = material.texture.clone(); primitive.key.material = "sampled-effect".into();
-    primitive.key.blend = match material.blend.as_str() { "additive" => UiBlendMode::Additive, "multiply" => UiBlendMode::Multiply, _ => UiBlendMode::Alpha };
     primitive.alpha_cutoff = material.alpha_cutoff;
     primitive.premultiply_rgb = primitive.key.blend == UiBlendMode::Multiply;
-    primitive.key.depth_test = true;
     output.push(WorldPrimitive { kind: WorldPrimitiveKind::ThreeD, sorting_layer: "default".into(), sorting_order: 0, depth: center.z / center.w.max(1e-6), world_position: None, primitive });
 }
 
@@ -177,6 +182,35 @@ fn push_polygon(corners: [Vec3;4], color: [f32;4], uv: [f32;4], vertex_uv: Optio
 mod tests {
     use super::*;
     use mengine_core::generated::Transform;
+
+    #[test]
+    #[ignore = "manual actual-map sampled effect collection CPU profile"]
+    fn benchmark_final_sampled_effect_keys() {
+        let root = PathBuf::from(std::env::var_os("MENGINE_MATERIAL_PROJECT").unwrap()); let scene = std::env::var_os("MENGINE_MATERIAL_SCENE").unwrap();
+        let mut world = World::new(); mengine_scene::load_scene(&root.join(scene), &mut world).unwrap();
+        let ids: Vec<_> = world.entities_with_components(&["SampledEffect"]).collect();
+        for entity in ids { world.get_component_mut::<SampledEffect>(entity).unwrap().time_seconds = 1.; }
+        let hierarchy = TransformHierarchy::build(&world); let position = Vec3::new(40.7, 114.9, 87.4);
+        let camera = FrameCamera { view: mengine_rhi::look_at(position, Vec3::ZERO, Vec3::Y), proj: mengine_rhi::perspective(45., 850. / 507., 0.1, 1000.), position };
+        let mut effects = SampledEffectWorld::default(); effects.set_project_root(Some(&root));
+        let mut reference = None; let mut samples = [Vec::new(), Vec::new()]; let mut primitives = 0;
+        for round in 0..12 {
+            for mode in if round % 2 == 0 { [0, 1] } else { [1, 0] } {
+                REPEAT_DEFAULT_KEYS.with(|flag| flag.set(mode == 0)); let mut elapsed = 0.;
+                for iteration in 0..20 {
+                    let mut lighting = FrameLighting::default(); let started = Instant::now();
+                    let output = effects.collect(&world, &hierarchy, camera, 0., &mut lighting); elapsed += started.elapsed().as_secs_f64() * 1000.;
+                    assert!(effects.failures.is_empty()); assert!(output.len() >= 1000); primitives = output.len();
+                    if iteration == 19 { let payload = format!("{output:?}{lighting:?}"); if let Some(reference) = &reference { assert_eq!(&payload, reference); } else { reference = Some(payload); } }
+                    std::hint::black_box(output);
+                }
+                if round >= 2 { samples[mode].push(elapsed / 20.); }
+            }
+        }
+        REPEAT_DEFAULT_KEYS.with(|flag| flag.set(false));
+        let summary = |mut v: Vec<f64>| { let mean = v.iter().sum::<f64>() / v.len() as f64; v.sort_by(f64::total_cmp); [mean, v[v.len() / 2], v[v.len() * 95 / 100]] };
+        println!("SAMPLED_EFFECT_KEYS primitives={primitives} samples=10 collectionsPerSample=20 before={:?} after={:?}", summary(samples[0].clone()), summary(samples[1].clone()));
+    }
     #[test]
     #[ignore = "manual Amazonia sampled effect metadata comparison"]
     fn benchmark_sampled_effect_file_checks() {

@@ -1108,3 +1108,11 @@ FrameMeshInputs由每个编辑器视口／独立运行器持有，使用World进
 局部Release基准使用实际DotA资源显式采样1秒后的2521图元，另测同一数据正序／倒序和4096多图层条目；12轮交替先后，排除2轮预热，每模式10组，每组20次排序，复制不计入计时。完整图元输出与旧排序一致。排序均值：实际DotA0.834955→0.173579ms，已排序0.020809→0.011823ms，倒序0.866816→0.145654ms，多图层5.280150→0.512108ms。只衡量排序CPU，不能外推实际FPS；日志tmp/docs-artifacts/editor-performance-risk/world-sort-{tests,bench,check}.log。
 
 当前50fc516及本项为2/3。第三项后统一生产构建并验证DotA／多窗口、透明特效与2D图层、模型／材质热更新、父变换、Stop／重开与场景切换；缓存驻留内存和真实FPS仍待确认。
+
+### 第九十七阶段／新批次任务3/3：特效图元直接使用最终批次键
+
+UiPrimitive提供solid_with_key，原solid继续使用原默认键。采样特效按最终材质、纹理、混合、深度与stencil信息构造图元，避免创建随后立即替换的默认资源名；颜色、UV、裁剪角点、模型粒子shader顶点数据、alpha裁剪和Multiply预乘规则保持原值。对照开关只存在于cfg(test)线程局部状态，不改变生产配置或协议。
+
+6项采样特效检查通过，覆盖原版Multiply透明度、模型粒子层／年龄／UV／缩放、暂停／seek／热更新／失活、共享资源独立播放、材质参数及相机变换。原solid默认UV检查通过。实际DotA资源显式采样1秒后2521图元，完整SampledEffectWorld.collect的12轮交替对照、排除2轮预热，每模式10组20次收集，每组末尾完整图元与灯光输出一致；均值1.197697→1.033828ms，中位1.196420→1.032380ms。只计CPU收集，包含资源检查，不含GPU／IPC，不直接外推FPS。日志tmp/docs-artifacts/editor-performance-risk/effect-keys-{tests,bench,rhi-test}.log。
+
+本批50fc516、0eb7a3a及本项达到3/3。统一构建当前分支前端与原生Release，验证实际DotA／多窗口持续采样、模型／材质热更新、Scene父变换与选取、Stop／重开／场景切换；复用不受影响的地图转换、层级和Spine结果。真实FPS与进程内存、稳定60FPS和LOD仍待确认。

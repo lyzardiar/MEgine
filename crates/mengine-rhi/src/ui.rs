@@ -273,6 +273,11 @@ pub struct UiPrimitive {
 
 impl UiPrimitive {
     pub fn solid(rect: [f32; 4], color: [f32; 4]) -> Self {
+        Self::solid_with_key(rect, color, UiBatchKey::default())
+    }
+
+    /// Build a quad with its final batch key without allocating temporary default resource names.
+    pub fn solid_with_key(rect: [f32; 4], color: [f32; 4], key: UiBatchKey) -> Self {
         Self {
             rect,
             color,
@@ -288,7 +293,7 @@ impl UiPrimitive {
             render_material: None,
             soft_clips: [None; 8],
             canvas_sorting_grid_size: None,
-            key: UiBatchKey::default(),
+            key,
         }
     }
 }
