@@ -1658,10 +1658,20 @@ DotA14437实体，缓存进入2.302秒。Scene59.68／Game59.85FPS，原生平�
 
 ### 第一百三十阶段／编辑器新批次任务3/3：网格来源四组常规复查
 
-修改runtime的meshes.rs／mesh_source_poll.rs，新增mesh_source_poll_tests.rs。已缓存来源首次常规复查按加载后250ms到期，此后按路径散列分为四组固定相位；每次完成后设置未来不超过250ms的截止时间。大批检查仍使用最多4个既有JobSystem任务并同步等待。每250ms从当前对象更新请求路径列表，新加载来源补入列表；期间检查最近使用的来源，下一次更新移除未再使用的路径。列表只持有路径，不持有模型／GPU所有者，项目切换、显式失效和来源淘汰同步清理相关状态。失效来源先清除旧采样／相机键，再走既有加载和错误恢复。新姿态继续即时验证全部依赖，过期暂停恢复仍当帧检查全部到期来源，不延后以隐藏开销；路径身份和文件元数据查询规则不变。
+修改runtime的meshes.rs／mesh_source_poll.rs，新增mesh_source_poll_tests.rs。已缓存来源在同步记录后设置首次250ms截止时间，此后按路径散列分为四组固定相位；每次完成后设置未来不超过250ms的截止时间。大批检查仍使用最多4个既有JobSystem任务并同步等待。每250ms从当前对象更新请求路径列表，新加载来源补入列表；期间检查最近使用的来源，下一次更新移除未再使用的路径。列表只持有路径，不持有模型／GPU所有者，项目切换、显式失效和来源淘汰同步清理相关状态。失效来源先清除旧采样／相机键，再走既有加载和错误恢复。新姿态继续即时验证全部依赖，过期暂停恢复仍当帧检查全部到期来源，不延后以隐藏开销；路径身份和文件元数据查询规则不变。
 
 cargo test -p mengine-runtime --release --lib meshes:: -- --nocapture --test-threads=1最终24通过、0失败、6个手动基准忽略，日志phased-pose-source-compatibility-tests.log。新增检查覆盖4000组截止边界、四相位分配、主／嵌入视图9阶段完整RGBA、Shared／render-only来源、非全局轮询时的主文件变化与删除恢复、新姿态立即验证、全部过期来源、显式失效、项目切换、近期来源列表更新及Weak释放；既有缓存预算、外部缓冲、公告板、重复键与129相关网格边界继续通过。新增qa-runtime-resource-poll.mjs，node --check通过；该原生夹具将验证父材质／实例／自定义Shader编辑与恢复、父文件删除后恢复的真实像素，结果待本批执行。
 
 手动benchmark_phased_pose_source_checks使用保留DotA项目196份GLB／5376循环引用，三个独立进程、每个同进程交替比较原有集中轮询与四相位生产路径；60Hz共180帧、30帧预热、150帧计量，实际文件查询及公告板准备，所有准备键一致且无来源加载／重用。三次统计中位数：p95 4.0424→1.8615ms，平均0.939429→1.027189ms，单帧来源检查峰值196→52；最大值中位数17.2152→18.1641ms，未改善。集中轮询总检查为1764／1960／1960，四相位均1960；固定相位与受帧延迟影响的年龄轮询存在次数差异。平均增加约0.088ms，属于平滑常规尖峰的取舍，不能据此声称平均CPU、实际FPS或全部最大延迟已改善。原始三份phased-pose-source-benchmark-{1,2,3}.log、全部样本、源码和196份输入SHA记录在phased-pose-source-benchmarks.json／phased-pose-source-summary.json，均在tmp/docs-artifacts/editor-performance-risk。未编号单份benchmark.log为探索输入，不作为最终数据。命令cargo test -p mengine-runtime --release --lib benchmark_phased_pose_source_checks -- --ignored --nocapture --test-threads=1，MENGINE_METADATA_PROJECT／MENGINE_METADATA_PATHS使用既有保留项目与metadata-probe-paths.txt。
 
 128、129、130达到3/3，提交后统一构建custom-protocol Release并执行来源／材质热更新夹具、Scene空间选取与隐藏恢复、实际DotA加载／选取／关闭重开、多窗口／Stop重启及5轮驻留、Profiler界面。连续帧均值／p95及原生来源检查以该集成版本报告为准；五轮为有界流程，长期内存、稳定60、LOD与完整JASS／War3保真仍待完成。
+
+### 第一百二十八至一百三十阶段合并原生结论
+
+统一ee33d5f前端与custom-protocol Release，Vite构建3.15秒、原生81秒；冻结程序SHA256为72423c5966ff911a2d578a228c12ae15696901a7d65b05a2e31c2fa593aeaa64，收据在build-ee33d5f。resource-poll-1792880316572的4组材质／实例／Shader／父项删除恢复与10次像素转换，spatial-picking-1792880330154的7项空间／姿态／透明切换／跨Play隐藏恢复，arbitrary-map-1792880366417的实际DotA，map-session-1792880437748的多窗口／Stop重启及5轮延伸，profiler-bundles-1792880729639共五份报告通过，五个自有测试进程均正常退出。首份资源报告1792880199838在完成4组像素检查后因console日志数量超过接口上限而失败；QA脚本已按上限300修正并推送db38930，仅重跑失败资源用例后继续未执行项，复用同一冻结程序。最终资源报告及其他错误断言均0；DotA错误断言仍在关闭重开前，重开图像另行核对。临时runtime权限残留仅保留在tmp，发现文件均已移除；用户编辑器64664保持运行。
+
+DotA14437实体，缓存进入2.393秒；上次2.302秒，不据此宣称加载改善。Scene59.74／Game60.01FPS，原生平均14.664／11.526ms，p95呈现间隔24.6／20.3ms；上一批为59.68／59.85FPS、14.618／11.322ms、24.1／21.9ms。Scene相同5376对象／5342可见／4675调用，Game5376对象／116可见／99调用，没有LOD削减。Scene前端world准备1.890ms、Game1.345ms；最新单个Scene来源校验36次／1.372ms，不代表完整分布或最坏值。多窗口7434实体，Scene59.35／Game56.58FPS，原生8.096／9.984ms，p95为22.4／27.0ms；上次59.41／55.97FPS、8.018／9.565ms、22.9／26.7ms。实际多窗口Game仍未满帧，平均原生渲染成本未见下降，微基准p95平滑不扩写为整体CPU／FPS收益；不同运行的变化不单独归因于某项修改。assert-ranges-hierarchy-batch.py核对本次DotA和多窗口的全部呈现计数、分段及加权样本，输出对应ranges-hierarchy-batch-profile-*。
+
+多窗口完整流程291.92秒，5轮均运行15秒、Stop后空闲20秒。20份版本2样本核对同一根PID／创建时间、子进程创建时间、唯一PID及私有字节求和，五个等时空闲点均7进程。根私有内存4610.5703／4722.9453／4725.0664／4730.1250／4705.7891MiB，全程首末增加95.2188MiB，后三轮净减少19.2773MiB；进程树5196.7813／5264.0313／5282.2891／5276.9102／5276.5117MiB，首末增加79.7305MiB、后三轮减少5.7773MiB。表现为预热后平台趋势，仍不是小时级稳定或所有内存风险均解决的证据，不把跨次进程的字节变化归因于本批来源路径列表。
+
+已查看Shader绿色夹具、DotA Scene及相机预览、重开菜单、第五轮Amazonia Game图像；完整材质恢复图像另以10份PNG摘要逐项核对。summarize-phased-source-batch.py验证五份报告、冻结程序、正常退出、10次像素摘要、版本2身份／求和和5轮场景，产物phased-source-batch-runtime-summary.json及所有日志、JSON、PNG均保存在tmp/docs-artifacts。该批功能与上述驻留范围完成，下一批0/3；多窗口稳定60、长期驻留、LOD、姿态聚焦／alpha选取的完整验收及全量JASS／War3保真继续待办。
