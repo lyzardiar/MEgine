@@ -876,3 +876,6 @@ VFX 适配器以共享 WGSL 和参数数据实现本包启用的主纹理、遮�
 原生选取报告B001/spatial-picking-1792810589579.json整体通过、0error、正常退出：模型热更新后画布选取、父节点移动后选取、物体原点位于相机后方但几何可见时的选取均通过。脚本保存自有临时场景后关闭，并在退出失败时将报告标记失败。测试窗口均独立，未关闭用户编辑器；WebView缓存EPERM按规则保留。
 
 本批未覆盖：长时间内存趋势、物理鼠标输入端到端延迟、DotA持续运行性能、3D精确框选及独立Player。已实现八叉树增量与世界边界缓存，未添加LOD；多窗口稳定60FPS和完整DotA脚本／玩法仍未完成。原始日志／图片留在tmp/docs-artifacts/editor-performance-risk/与testing-batches/B001。
+
+
+Unitypackage 同任务收尾补充：导入器 1.3.0 将原始资产移至工程级 `SourceAssets/UnityPackages/`，暂存目录也置于 Assets 外，采用两目录发布与本次文件回滚。所有运行资产生成独立 MEngine JSON meta，纳入 manifest；20 项导入测试通过。真实注册表连续重建两次，49 个原生 GUID 与 Unity GUID 无重叠，sidecar 字节不变，再次导入复用成功；清单为 runtime 97 项及 source 163 项。证据 `tmp/docs-artifacts/unity-import-v1-3-metadata/`。材质顶点流按实际序列解码并校验，不匹配的 CustomData 排布阻断。寿命精确端点浮点残留补充测试 1/1 通过；未知 Shader 显示紫色棋盘预览。以上均为前两任务补充，不增加批次计数。

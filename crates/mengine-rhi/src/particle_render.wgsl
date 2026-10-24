@@ -33,6 +33,7 @@ fn polar(uv:vec2<f32>)->vec2<f32> { let a=uv-vec2<f32>(0.5)+vec2<f32>(0.000001);
 fn st(uv:vec2<f32>,slot:u32)->vec2<f32> {return uv*u.parameters[116u+slot].xy+u.parameters[116u+slot].zw;}
 fn sample_uv(uv:vec2<f32>,slot:u32)->vec2<f32> {var value=uv;if u.parameters[100u+slot].x==3.0 {value.x=clamp(abs(value.x),0.0,1.0);}if u.parameters[100u+slot].y==3.0 {value.y=clamp(abs(value.y),0.0,1.0);}return vec2<f32>(value.x,1.0-value.y);}
 @fragment fn fs_main(v:Varying)->@location(0) vec4<f32> {
+    if feature(5u) {let cell=vec2<u32>(floor(fract(v.uv)*8.0));let checker=f32((cell.x+cell.y)%2u);return vec4<f32>(mix(vec3<f32>(0.1,0.0,0.1),vec3<f32>(1.0,0.0,1.0),checker),1.0);}
     let time=u.time_features.x%200000.0;
     var main_uv=v.uv;
     if p(4u)>0.5 {main_uv=rotate(main_uv,p(5u)+p(6u)*time);}

@@ -17,7 +17,7 @@ use std::{
 const MAX_FILE: u64 = 256 * 1024 * 1024;
 const MAX_TOTAL: u64 = 1024 * 1024 * 1024;
 const MAX_ENTRIES: usize = 100_000;
-pub const IMPORTER_VERSION: &str = "1.2.0";
+pub const IMPORTER_VERSION: &str = "1.3.0";
 pub const CONVERTER_ARCHIVE_SHA256: &str =
     "9ff30dc5839155aead31ddadce99884773f8bf81678f3ac9a97ca24f8d58d64c";
 const CONVERTER_EXE_SHA256: &str =
@@ -47,6 +47,7 @@ pub struct AnalysisReport {
 pub struct ImportResult {
     pub report: AnalysisReport,
     pub destination: String,
+    pub source_destination: String,
     pub prefab_paths: Vec<String>,
     pub manifest_path: String,
 }
@@ -267,6 +268,15 @@ fn package(package: &Path) -> Result<(AnalysisReport, Vec<Asset>)> {
         .flat_map(|d| d.value["m_Materials"].as_array().into_iter().flatten())
         .filter_map(|v| v["guid"].as_str().map(str::to_owned))
         .collect();
+    let mut custom_materials = BTreeSet::new();
+    for asset in assets.iter().filter(|a| a.summary.kind == "material") {
+        if documents(&asset.bytes)?
+            .iter()
+            .any(|d| d.class == 21 && particle::material_uses_custom_data(&d.value))
+        {
+            custom_materials.insert(asset.summary.guid.as_str());
+        }
+    }
     for a in &assets {
         match a.summary.kind.as_str() {
             "prefab" => {
@@ -293,6 +303,12 @@ fn package(package: &Path) -> Result<(AnalysisReport, Vec<Asset>)> {
                     if d.class == 199 {
                         particle::renderer_diagnostics(
                             &d.value,
+                            d.value["m_Materials"]
+                                .as_array()
+                                .into_iter()
+                                .flatten()
+                                .filter_map(|m| m["guid"].as_str())
+                                .any(|g| custom_materials.contains(g)),
                             &mut report.blockers,
                             &a.summary.path,
                         );
@@ -377,7 +393,8 @@ pub fn analyze(package_path: &Path) -> Result<AnalysisReport> {
 }
 
 /// The fingerprint is mandatory: analysis and import must consume identical package bytes.
-/// All outputs are staged beside the destination and published with one directory rename.
+/// Runtime and source trees are staged separately. Source publication is rolled back
+/// if runtime publication fails; existing trees are never overwritten or removed.
 pub fn import_package(
     package_path: &Path,
     project_root: &Path,
@@ -412,51 +429,114 @@ pub fn import_package(
         })
         .collect();
     let relative = format!("Assets/Imported/{}-{}", name, &report.fingerprint[..12]);
-    let destination = project_root.join(&relative);
-    let parent = destination.parent().unwrap();
-    for ancestor in parent.ancestors().take_while(|p| *p != project_root) {
-        if ancestor.exists() {
-            ensure_plain_path(ancestor)?;
-            ensure!(
-                ancestor.canonicalize()?.starts_with(&project_root),
-                "Import target escapes project through a link"
-            );
-        }
-    }
-    if destination.exists() {
-        return reuse_import(&destination, &relative, &report, &assets);
-    }
-    fs::create_dir_all(parent)?;
-    ensure!(
-        parent.canonicalize()?.starts_with(&project_root),
-        "Import target escapes project through a link"
+    let source_relative = format!(
+        "SourceAssets/UnityPackages/{}-{}",
+        name,
+        &report.fingerprint[..12]
     );
-    let stage = parent.join(format!(
-        ".import-{}-{}",
+    let destination = project_root.join(&relative);
+    let source_destination = project_root.join(&source_relative);
+    let parent = destination.parent().unwrap();
+    let source_parent = source_destination.parent().unwrap();
+    validate_parent_path(&project_root, parent)?;
+    validate_parent_path(&project_root, source_parent)?;
+    if destination.exists() {
+        return reuse_import(
+            &destination,
+            &relative,
+            &source_destination,
+            &source_relative,
+            &report,
+            &assets,
+        );
+    }
+    ensure!(
+        !source_destination.exists(),
+        "Source snapshot destination already exists without matching runtime import: {}",
+        source_destination.display()
+    );
+    fs::create_dir_all(parent)?;
+    fs::create_dir_all(source_parent)?;
+    validate_parent_path(&project_root, parent)?;
+    validate_parent_path(&project_root, source_parent)?;
+    let stage = project_root.join(format!(
+        ".unity-import-{}-{}",
         std::process::id(),
         &report.fingerprint[..12]
     ));
     fs::create_dir(&stage).context("Another import transaction is active")?;
-    let result =
-        import_staged(&assets, &report, &stage, &relative, converter).and_then(|prefab_paths| {
-            ensure_plain_path(parent)?;
-            ensure_plain_path(&stage)?;
-            ensure!(
-                parent.canonicalize()?.starts_with(&project_root),
-                "Import parent changed during conversion"
-            );
-            fs::rename(&stage, &destination).context("Publish staged import")?;
-            Ok(ImportResult {
-                report: report.clone(),
-                destination: destination.display().to_string(),
-                prefab_paths,
-                manifest_path: destination.join("manifest.json").display().to_string(),
-            })
-        });
+    let runtime_stage = stage.join("runtime");
+    let source_stage = stage.join("source");
+    let result = (|| {
+        fs::create_dir(&runtime_stage)?;
+        fs::create_dir(&source_stage)?;
+        import_staged(
+            &assets,
+            &report,
+            &runtime_stage,
+            &source_stage,
+            &relative,
+            &source_relative,
+            converter,
+        )
+    })()
+    .and_then(|prefab_paths| {
+        validate_parent_path(&project_root, parent)?;
+        validate_parent_path(&project_root, source_parent)?;
+        ensure_plain_path(&runtime_stage)?;
+        ensure_plain_path(&source_stage)?;
+        ensure!(
+            !destination.exists() && !source_destination.exists(),
+            "Import destination appeared during conversion"
+        );
+        publish_pair(
+            &runtime_stage,
+            &destination,
+            &source_stage,
+            &source_destination,
+        )?;
+        Ok(ImportResult {
+            report: report.clone(),
+            destination: destination.display().to_string(),
+            source_destination: source_destination.display().to_string(),
+            prefab_paths,
+            manifest_path: destination.join("manifest.json").display().to_string(),
+        })
+    });
     if stage.exists() {
         let _ = fs::remove_dir_all(&stage);
     }
     result
+}
+fn validate_parent_path(project_root: &Path, parent: &Path) -> Result<()> {
+    ensure!(
+        parent.starts_with(project_root),
+        "Import target is outside the project"
+    );
+    for ancestor in parent.ancestors().take_while(|p| *p != project_root) {
+        if ancestor.exists() {
+            ensure_plain_path(ancestor)?;
+            ensure!(
+                ancestor.canonicalize()?.starts_with(project_root),
+                "Import target escapes project through a link"
+            );
+        }
+    }
+    Ok(())
+}
+fn publish_pair(
+    runtime_stage: &Path,
+    destination: &Path,
+    source_stage: &Path,
+    source_destination: &Path,
+) -> Result<()> {
+    fs::rename(source_stage, source_destination).context("Publish original source snapshots")?;
+    if let Err(error) = fs::rename(runtime_stage, destination) {
+        fs::rename(source_destination,source_stage).with_context(||format!("Runtime publication failed ({error}); could not roll back newly published sources at {}",source_destination.display()))?;
+        return Err(error)
+            .context("Runtime publication failed; original source publication was rolled back");
+    }
+    Ok(())
 }
 fn ensure_plain_path(path: &Path) -> Result<()> {
     let metadata = fs::symlink_metadata(path)?;
@@ -479,10 +559,14 @@ fn ensure_plain_path(path: &Path) -> Result<()> {
 fn reuse_import(
     destination: &Path,
     relative: &str,
+    source_destination: &Path,
+    source_relative: &str,
     report: &AnalysisReport,
     assets: &[Asset],
 ) -> Result<ImportResult> {
     ensure_plain_path(destination)?;
+    ensure_plain_path(source_destination)
+        .context("Original source snapshot directory is missing or unsafe")?;
     let manifest_path = destination.join("manifest.json");
     ensure_plain_path(&manifest_path)?;
     let manifest: Value = serde_json::from_slice(&fs::read(&manifest_path)?)
@@ -516,9 +600,19 @@ fn reuse_import(
     collect_output_hashes(destination, destination, &mut actual)?;
     actual.retain(|v| v["path"] != "manifest.json");
     ensure!(&actual==recorded,"Existing import files were changed, added or removed; choose a new destination or restore the original files");
+    ensure!(
+        manifest["source_root"] == source_relative,
+        "Existing import source root does not match this project"
+    );
+    let mut actual_sources = Vec::new();
+    collect_output_hashes(source_destination, source_destination, &mut actual_sources)?;
+    ensure!(
+        manifest["source_outputs"] == serde_json::to_value(actual_sources)?,
+        "Original source snapshot files were changed, added or removed"
+    );
     // Compare snapshots against this source, independently of the editable manifest hashes.
     for asset in assets {
-        let source = destination.join("SourceAssets").join(&asset.summary.guid);
+        let source = source_destination.join(&asset.summary.guid);
         ensure!(
             fs::read(source.join("asset"))? == asset.bytes
                 && fs::read(source.join("asset.meta"))? == asset.meta
@@ -539,6 +633,7 @@ fn reuse_import(
     Ok(ImportResult {
         report: report.clone(),
         destination: destination.display().to_string(),
+        source_destination: source_destination.display().to_string(),
         prefab_paths,
         manifest_path: manifest_path.display().to_string(),
     })
@@ -551,17 +646,12 @@ fn import_staged(
     assets: &[Asset],
     report: &AnalysisReport,
     stage: &Path,
+    source_stage: &Path,
     relative: &str,
+    source_relative: &str,
     converter: Option<&Path>,
 ) -> Result<Vec<String>> {
-    for d in [
-        "SourceAssets",
-        "Textures",
-        "Meshes",
-        "Particles",
-        "Prefabs",
-        "Materials",
-    ] {
+    for d in ["Textures", "Meshes", "Particles", "Prefabs", "Materials"] {
         fs::create_dir(stage.join(d))?;
     }
     let paths: BTreeMap<String, String> = assets
@@ -592,7 +682,7 @@ fn import_staged(
         .map(|(path, v)| (path.clone(), v["srgb"].clone()))
         .collect();
     for asset in assets {
-        let source = stage.join("SourceAssets").join(&asset.summary.guid);
+        let source = source_stage.join(&asset.summary.guid);
         fs::create_dir(&source)?;
         fs::write(source.join("asset"), &asset.bytes)?;
         fs::write(source.join("asset.meta"), &asset.meta)?;
@@ -757,13 +847,44 @@ fn import_staged(
         prefab_paths.push(format!("{relative}/{path}"));
     }
     write_json(&stage.join("analysis.json"), report)?;
+    // The editor scans JSON reports too. Create every native sidecar before
+    // hashing, including the manifest sidecar, without hashing the manifest itself.
+    write_json(&stage.join("manifest.json"), &json!({}))?;
+    create_native_sidecars(stage)?;
     let mut outputs = Vec::new();
     collect_output_hashes(stage, stage, &mut outputs)?;
+    outputs.retain(|v| v["path"] != "manifest.json");
+    let mut source_outputs = Vec::new();
+    collect_output_hashes(source_stage, source_stage, &mut source_outputs)?;
     write_json(
         &stage.join("manifest.json"),
-        &json!({"version":1,"importer_version":IMPORTER_VERSION,"import_key":sha(format!("{}:{}",IMPORTER_VERSION,report.fingerprint).as_bytes()),"source_fingerprint":report.fingerprint,"assets":report.assets,"outputs":outputs,"prefabs":prefab_paths,"references":references,"meshes":mesh_details,"texture_srgb":srgb,"texture_import_settings":texture_import_settings,"converter":{"name":"FBX2glTF","version":"0.9.7-p1","archive_sha256":CONVERTER_ARCHIVE_SHA256,"executable_sha256":CONVERTER_EXE_SHA256},"coordinate_system":"Prefab transforms reflect Unity Z to engine; particle data retains explicit Unity basis; particle meshes use raw FBX2glTF geometry reflected on X, without source node transforms","warnings":report.warnings}),
+        &json!({"version":1,"importer_version":IMPORTER_VERSION,"import_key":sha(format!("{}:{}",IMPORTER_VERSION,report.fingerprint).as_bytes()),"source_fingerprint":report.fingerprint,"assets":report.assets,"outputs":outputs,"source_root":source_relative,"source_outputs":source_outputs,"prefabs":prefab_paths,"references":references,"meshes":mesh_details,"texture_srgb":srgb,"texture_import_settings":texture_import_settings,"converter":{"name":"FBX2glTF","version":"0.9.7-p1","archive_sha256":CONVERTER_ARCHIVE_SHA256,"executable_sha256":CONVERTER_EXE_SHA256},"coordinate_system":"Prefab transforms reflect Unity Z to engine; particle data retains explicit Unity basis; particle meshes use raw FBX2glTF geometry reflected on X, without source node transforms","warnings":report.warnings}),
     )?;
     Ok(prefab_paths)
+}
+fn runtime_asset_kind(path: &Path) -> Option<&'static str> {
+    match path.extension()?.to_str()? {
+        "png" => Some("texture"),
+        "glb" => Some("model"),
+        "mparticle" => Some("particle"),
+        "prefab" => Some("prefab"),
+        // Matches the editor project scanner's generic JSON classification.
+        "json" => Some("spine-json"),
+        _ => None,
+    }
+}
+fn create_native_sidecars(directory: &Path) -> Result<()> {
+    for entry in fs::read_dir(directory)? {
+        let entry = entry?;
+        let path = entry.path();
+        ensure_plain_path(&path)?;
+        if entry.file_type()?.is_dir() {
+            create_native_sidecars(&path)?;
+        } else if let Some(kind) = runtime_asset_kind(&path) {
+            mengine_assets::ensure_asset_sidecar(&path, kind).map_err(anyhow::Error::msg)?;
+        }
+    }
+    Ok(())
 }
 fn collect_output_hashes(root: &Path, directory: &Path, outputs: &mut Vec<Value>) -> Result<()> {
     let mut entries = fs::read_dir(directory)?.collect::<std::io::Result<Vec<_>>>()?;
@@ -1027,6 +1148,103 @@ mod tests {
         assert!(analyze(&p).unwrap_err().to_string().contains("Duplicate"));
     }
     #[test]
+    fn native_sidecars_survive_registry_refresh_for_every_generated_kind() {
+        let temp = tempfile::tempdir().unwrap();
+        let assets = [
+            ("texture.png", "texture"),
+            ("mesh.glb", "model"),
+            ("effect.mparticle", "particle"),
+            ("root.prefab", "prefab"),
+            ("material.json", "spine-json"),
+            ("analysis.json", "spine-json"),
+            ("manifest.json", "spine-json"),
+        ];
+        for (path, _) in assets {
+            fs::write(temp.path().join(path), b"{}").unwrap();
+        }
+        create_native_sidecars(temp.path()).unwrap();
+        let mut ids = BTreeSet::new();
+        let mut first_registry = mengine_assets::AssetRegistry::new(temp.path());
+        let mut second_registry = mengine_assets::AssetRegistry::new(temp.path());
+        for (path, kind) in assets {
+            let asset = temp.path().join(path);
+            let sidecar_path = mengine_assets::asset_sidecar_path(&asset);
+            let before = fs::read(&sidecar_path).unwrap();
+            let native = mengine_assets::read_asset_sidecar(&asset, kind).unwrap();
+            assert_eq!(native.importer, kind);
+            assert!(ids.insert(native.guid.0.to_string()));
+            assert_ne!(native.guid.0.simple().to_string(), GUID);
+            assert_eq!(
+                first_registry
+                    .register_persisted(path.into(), kind)
+                    .unwrap(),
+                native.guid
+            );
+            assert_eq!(
+                second_registry
+                    .register_persisted(path.into(), kind)
+                    .unwrap(),
+                native.guid
+            );
+            assert_eq!(fs::read(sidecar_path).unwrap(), before);
+        }
+    }
+    #[test]
+    fn reuse_after_editor_metadata_refresh_preserves_complete_inventory() {
+        let temp = tempfile::tempdir().unwrap();
+        let package = temp.path().join("p.unitypackage");
+        let mut png = std::io::Cursor::new(Vec::new());
+        image::RgbaImage::new(1, 1)
+            .write_to(&mut png, image::ImageFormat::Png)
+            .unwrap();
+        archive(
+            &package,
+            &[
+                (&format!("{GUID}/pathname"), b"Assets/texture.png"),
+                (
+                    &format!("{GUID}/asset.meta"),
+                    format!("fileFormatVersion: 2\nguid: {GUID}\nTextureImporter: {{}}\n")
+                        .as_bytes(),
+                ),
+                (&format!("{GUID}/asset"), png.get_ref()),
+            ],
+        );
+        let report = analyze(&package).unwrap();
+        let result = import_package(&package, temp.path(), &report.fingerprint, None).unwrap();
+        let root = Path::new(&result.destination);
+        let mut before = Vec::new();
+        collect_output_hashes(root, root, &mut before).unwrap();
+        let mut registry = mengine_assets::AssetRegistry::new(root);
+        let mut metadata_count = 0;
+        for output in &before {
+            let path = Path::new(output["path"].as_str().unwrap());
+            if let Some(kind) = runtime_asset_kind(path) {
+                let native = mengine_assets::read_asset_sidecar(&root.join(path), kind).unwrap();
+                assert_ne!(native.guid.0.simple().to_string(), GUID);
+                assert_eq!(
+                    registry.register_persisted(path.to_owned(), kind).unwrap(),
+                    native.guid
+                );
+                metadata_count += 1;
+            }
+        }
+        assert_eq!(metadata_count, 3);
+        let reused = import_package(&package, temp.path(), &report.fingerprint, None).unwrap();
+        assert_eq!(result.destination, reused.destination);
+        let mut after = Vec::new();
+        collect_output_hashes(root, root, &mut after).unwrap();
+        assert_eq!(before, after);
+        let original_meta = fs::read(
+            Path::new(&result.source_destination)
+                .join(GUID)
+                .join("asset.meta"),
+        )
+        .unwrap();
+        assert!(serde_json::from_slice::<Value>(&original_meta).is_err());
+        fs::write(root.join("manifest.json.meta"), b"modified metadata").unwrap();
+        assert!(import_package(&package, temp.path(), &report.fingerprint, None).is_err());
+    }
+    #[test]
     fn source_snapshot_commit_and_conflict_are_transactional() {
         let temp = tempfile::tempdir().unwrap();
         let p = temp.path().join("p.unitypackage");
@@ -1037,10 +1255,16 @@ mod tests {
         let reused = import_package(&p, temp.path(), &report.fingerprint, None).unwrap();
         assert_eq!(result.destination, reused.destination);
         assert_eq!(manifest_before, fs::read(&result.manifest_path).unwrap());
-        let source = Path::new(&result.destination)
-            .join("SourceAssets")
+        let source = Path::new(&result.source_destination)
             .join(GUID)
             .join("asset");
+        assert!(Path::new(&result.source_destination).starts_with(
+            temp.path()
+                .join("SourceAssets/UnityPackages")
+                .canonicalize()
+                .unwrap()
+        ));
+        assert!(!Path::new(&result.destination).join("SourceAssets").exists());
         assert_eq!(fs::read(&source).unwrap(), b"original bytes");
         fs::write(&source, b"user edit").unwrap();
         assert!(import_package(&p, temp.path(), &report.fingerprint, None).is_err());
@@ -1071,6 +1295,49 @@ mod tests {
         .is_err());
         let parent = temp.path().join("Assets/Imported");
         assert_eq!(fs::read_dir(parent).unwrap().count(), 0);
+        assert_eq!(
+            fs::read_dir(temp.path().join("SourceAssets/UnityPackages"))
+                .unwrap()
+                .count(),
+            0
+        );
+    }
+    #[test]
+    fn failed_runtime_publish_rolls_back_only_owned_source_tree() {
+        let temp = tempfile::tempdir().unwrap();
+        let source_stage = temp.path().join("source-stage");
+        let source_destination = temp.path().join("source-final");
+        fs::create_dir(&source_stage).unwrap();
+        fs::write(source_stage.join("asset.meta"), b"owned").unwrap();
+        let untouched = temp.path().join("user-original");
+        fs::create_dir(&untouched).unwrap();
+        fs::write(untouched.join("asset.meta"), b"user").unwrap();
+        let result = publish_pair(
+            &temp.path().join("missing-runtime-stage"),
+            &temp.path().join("runtime-final"),
+            &source_stage,
+            &source_destination,
+        );
+        assert!(result.is_err());
+        assert!(!source_destination.exists());
+        assert_eq!(fs::read(source_stage.join("asset.meta")).unwrap(), b"owned");
+        assert_eq!(fs::read(untouched.join("asset.meta")).unwrap(), b"user");
+    }
+    #[test]
+    fn reuse_requires_complete_external_source_inventory() {
+        let temp = tempfile::tempdir().unwrap();
+        let p = temp.path().join("p.unitypackage");
+        simple_package(&p, "Assets/source.txt");
+        let report = analyze(&p).unwrap();
+        let result = import_package(&p, temp.path(), &report.fingerprint, None).unwrap();
+        fs::remove_file(
+            Path::new(&result.source_destination)
+                .join(GUID)
+                .join("asset.meta"),
+        )
+        .unwrap();
+        assert!(import_package(&p, temp.path(), &report.fingerprint, None).is_err());
+        assert!(Path::new(&result.destination).is_dir());
     }
     #[test]
     fn reuse_rejects_missing_extra_and_stale_outputs() {

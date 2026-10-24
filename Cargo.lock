@@ -3484,6 +3484,7 @@ dependencies = [
  "anyhow",
  "flate2",
  "image",
+ "mengine-assets",
  "serde",
  "serde_json",
  "serde_yaml",
