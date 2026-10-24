@@ -147,6 +147,7 @@ struct App {
     textures: RuntimeTextureCache,
     fonts: RuntimeFontCache,
     ui_batch_order: mengine_rhi::UiBatchOrderCache,
+    ui_traversal: mengine_runtime::ui::UiTraversalCache,
     animations: AnimationRuntime,
     timelines: TimelineRuntime,
     audio: AudioRuntime,
@@ -223,6 +224,7 @@ impl App {
             textures,
             fonts,
             ui_batch_order: mengine_rhi::UiBatchOrderCache::default(),
+            ui_traversal: mengine_runtime::ui::UiTraversalCache::default(),
             mesh_inputs: FrameMeshInputs::default(),
             animations,
             timelines,
@@ -1669,6 +1671,7 @@ function onTick(dt, frame) {
                         textures: &mut self.textures,
                         fonts: &mut self.fonts,
                         ui_batch_order: Some(&mut self.ui_batch_order),
+                        ui_traversal: Some(&mut self.ui_traversal),
                     }
                     .compile(FrameCompileRequest {
                         world: &self.world,

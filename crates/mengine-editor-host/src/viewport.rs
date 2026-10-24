@@ -321,6 +321,7 @@ pub struct EditorViewportRenderer {
     textures: RuntimeTextureCache,
     fonts: RuntimeFontCache,
     ui_batch_order: mengine_rhi::UiBatchOrderCache,
+    ui_traversal: mengine_runtime::ui::UiTraversalCache,
     particles: ParticleWorld,
     trails: TrailWorld,
     effekseer: Option<EffekseerWorld>,
@@ -367,6 +368,7 @@ impl EditorViewportRenderer {
             textures: RuntimeTextureCache::new(Some(project_root.clone())),
             fonts: RuntimeFontCache::new(Some(project_root.clone())),
             ui_batch_order: mengine_rhi::UiBatchOrderCache::default(),
+            ui_traversal: mengine_runtime::ui::UiTraversalCache::default(),
             particles: ParticleWorld::default(),
             trails: TrailWorld::default(),
             effekseer: EffekseerWorld::new(Some(project_root.clone()))
@@ -723,6 +725,7 @@ impl EditorViewportRenderer {
             textures: &mut self.textures,
             fonts: &mut self.fonts,
             ui_batch_order: Some(&mut self.ui_batch_order),
+            ui_traversal: Some(&mut self.ui_traversal),
         }
         .compile(FrameCompileRequest {
             world,

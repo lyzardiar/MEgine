@@ -1693,3 +1693,13 @@ native_viewport_transport.rs每次读取16字节，用小端u128掩码同时检�
 cargo test -p mengine-editor-tauri --release --features custom-protocol --lib native_viewport_transport::tests -- --nocapture --test-threads=1为10通过、0失败、1手动基准忽略。覆盖16种切片偏移、1–70像素的所有block／tail位置、0–255全部alpha、RGB独立性、16MiB边界及原共享／IPC字节与消费确认。生产函数benchmark_opacity_blocks另行通过：同进程交替顺序，2组预热、9组计量，常规每组100次、首像素透明每组100000次，完整记录判定一致。全不透明920×518／1280×720／1920×1080／2048×2048的CPU中位数分别0.151429→0.039754、0.273657→0.083024、0.643312→0.215600、2.229768→0.801930ms。首像素透明约0.8→1.1ns，保留即时退出；末尾／中间透明另有原始样本。这是驻留CPU数据扫描，不含GPU、IPC或实际编辑器FPS，不能据此宣称满帧。
 
 证据opacity-transport-tests.log、opacity-benchmark.log／json及仅供探索的opacity-prototype.*均在tmp/docs-artifacts/editor-performance-risk。手动命令cargo test -p mengine-editor-tauri --release --features custom-protocol --lib benchmark_opacity_blocks -- --ignored --nocapture --test-threads=1。131、132为2/3，第三项后合并构建原生验证Scene透明切换／alpha选取／尺寸变化、Game及相机预览、实际地图与多窗口及Stop驻留；未执行本项完整原生QA，最近原生程序仍ee33d5f。
+
+### 第一百三十三阶段／编辑器新批次任务3/3：视口UI父子索引复用
+
+新增ui_traversal_cache.rs／ui_traversal_cache_tests.rs。EditorViewportRenderer与独立运行器各自持有UiTraversalCache，经FrameCompiler可选传入；公共UI收集接口仍可使用即时索引。每帧按世界原有迭代顺序比较实体与稳定revision，只对变动输入重读Parent／sibling／active，拓扑变化时重建并稳定排序。无稳定revision的自定义Any投影逐帧重读。索引只存实体ID、revision和父子／排序数据；矩形、字体、布局测量、控件与交互始终重新收集。无可绘制Canvas、关闭UI或替换World会释放旧索引；删除节点后，容量超过当前数量4倍且超过64时收缩。新增缓存不持有模型、纹理、GPU或World所有者。frame_mesh_cache_tests、texture_sync_tests和既有UI手动基准只适配可选参数；benchmark_frame_compile支持--uncached-ui-traversal对照。
+
+cargo test -p mengine-runtime --release --lib ui::traversal -- --nocapture --test-threads=1为10通过、0失败、5个手动基准忽略。每个变更阶段同时逐项比较完整父子索引与完整RuntimeUiFrame，覆盖视口尺寸／RectTransform变化、原始快照同级顺序、激活、重挂父级、直接Parent修改／移除／插入、祖先隐藏、实体槽复用、禁用Canvas／空World／换World、998节点删除与容量回收、极大父实体编号，以及通过AtomicBool切换的自定义Any父级投影。原有循环布局保护、宽度敏感文本、Mask／深度／顺序、Tab显示及布局子树测量兼容检查通过。
+
+benchmark_ui_traversal_cache生产UI收集对照通过：同进程交替原即时索引／缓存索引，2组预热、9组计量，每组25次，全字段输出一致。保留项目原始Main.mscene的4374实体，中位数0.611588→0.495004ms；2002实体布局夹具3.893012→3.495920ms，逐次编辑RectTransform的夹具2.931876→2.904528ms。布局夹具收益小且有波动，不据此推广实际地图或FPS收益。节点记录容量分别393216／98304／98304字节，不含HashMap和子列表分配，不是进程驻留测量。该基准使用原始保存场景和默认文字解析，不包含脚本运行、GPU或IPC，实际DotA运行时14437实体的结论以批次报告为准。日志ui-index-tests.log、ui-index-benchmark.log及提取JSON在tmp/docs-artifacts/editor-performance-risk。手动命令cargo test -p mengine-runtime --release --lib benchmark_ui_traversal_cache -- --ignored --nocapture --test-threads=1，MENGINE_UI_PROJECT指向上述保留项目。
+
+131、132、133达到3/3。提交后统一原生Release验证共享像素／透明切换／空间选取、实际DotA加载与相机预览／关闭重开、Amazonia多窗口与Stop重启、五轮等时驻留和Profiler。前端src／public／依赖自ee33d5f未变，复用已验收dist，index摘要09c50720c810ad6530184bca07599d10be10a182c145dedc606a32d786ebee8a已核对；本次不重复前端构建。独立运行器补做受接口影响的编译检查。当前仅实现与定向验证完成，完整批次结果待记录，稳定60、长期驻留、LOD及完整War3目标继续进行中。

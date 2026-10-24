@@ -19,6 +19,10 @@ use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
+#[path = "ui_traversal_cache.rs"]
+mod traversal_cache;
+pub use traversal_cache::UiTraversalCache;
+
 const TRANSPARENT_MESH_ALPHA_EPSILON: f32 = 1.0 / 255.0;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1127,7 +1131,7 @@ fn collect_ui_frame_internal(
     button_tints: Option<&HashMap<Entity, UiButtonTintTween>>,
     font_resolver: Option<&mut dyn UiFontResolver>,
 ) -> RuntimeUiFrame {
-    let mut frame = collect_ui_primitives(world, hierarchy, width, height, active_camera, sorting_layers, target_display, interaction, button_tints, font_resolver);
+    let mut frame = collect_ui_primitives(world, hierarchy, width, height, active_camera, sorting_layers, target_display, interaction, button_tints, font_resolver, None);
     frame.plan = UiBatchPlan::build(frame.plan.primitives);
     frame
 }
@@ -1145,6 +1149,7 @@ pub(crate) fn collect_ui_primitives(
     interaction: UiInteractionState,
     button_tints: Option<&HashMap<Entity, UiButtonTintTween>>,
     mut font_resolver: Option<&mut dyn UiFontResolver>,
+    mut traversal: Option<&mut UiTraversalCache>,
 ) -> RuntimeUiFrame {
     let root = UiRect {
         x: 0.0,
@@ -1242,8 +1247,11 @@ pub(crate) fn collect_ui_primitives(
         };
         let primitive_start = primitives.len();
         let control_start = controls.len();
+        if tree.is_none() {
+            tree = Some(match traversal.take() { Some(cache) => UiLayoutTree { children: std::borrow::Cow::Borrowed(cache.sync(world)), ..Default::default() }, None => index_ui_children(world) });
+        }
         walk(
-            tree.get_or_insert_with(|| index_ui_children(world)),
+            tree.as_ref().unwrap(),
             world,
             canvas_entity,
             canvas_entity,
@@ -1347,6 +1355,7 @@ pub(crate) fn collect_ui_primitives(
         }
     }
 
+    if tree.is_none() { if let Some(cache) = traversal { *cache = UiTraversalCache::default(); } }
     RuntimeUiFrame {
         plan: UiBatchPlan { primitives, batches: Vec::new() },
         world_primitives,
@@ -3392,10 +3401,10 @@ fn walk(
     primitives.extend(mask_pop);
 }
 
-// Child order and width-sensitive subtree measurements live for one UI collection only.
+// Child order may be borrowed from the viewport; width-sensitive measurements live for one collection only.
 #[derive(Default)]
-struct UiLayoutTree {
-    children: HashMap<Entity, Vec<Entity>>,
+struct UiLayoutTree<'a> {
+    children: std::borrow::Cow<'a, HashMap<Entity, Vec<Entity>>>,
     metrics: std::cell::RefCell<HashMap<(Entity, Option<u32>), LayoutChildMetrics>>,
     cyclic_layout: std::cell::Cell<bool>,
 }
@@ -3404,16 +3413,16 @@ struct UiLayoutTree {
 #[path = "ui_traversal_tests.rs"]
 mod traversal_tests;
 
-fn index_ui_children(world: &World) -> UiLayoutTree {
+fn index_ui_children(world: &World) -> UiLayoutTree<'static> {
     let mut children: HashMap<Entity, Vec<Entity>> = HashMap::new();
     for entity in world.iter_entities().filter(|entity| world.entity_active(*entity)) {
         if let Some(parent) = world.get_component::<Parent>(entity) { children.entry(parent.entity).or_default().push(entity); }
     }
     for siblings in children.values_mut() { siblings.sort_by_key(|entity| world.sibling_index(*entity)); }
-    UiLayoutTree { children, ..Default::default() }
+    UiLayoutTree { children: std::borrow::Cow::Owned(children), ..Default::default() }
 }
 
-fn children_of(tree: &UiLayoutTree, parent: Entity) -> &[Entity] { tree.children.get(&parent).map(Vec::as_slice).unwrap_or_default() }
+fn children_of<'a>(tree: &'a UiLayoutTree<'_>, parent: Entity) -> &'a [Entity] { tree.children.get(&parent).map(Vec::as_slice).unwrap_or_default() }
 
 // MiYu: layout children retain sibling order; reverse drawing changes traversal, not assigned rectangles.
 fn child_placements<'a>(children: &'a [Entity], layout_children: &'a [Entity], rects: &'a [UiRect], reverse: bool) -> impl Iterator<Item = (Entity, Option<UiRect>)> + 'a {

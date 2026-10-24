@@ -56,7 +56,7 @@ fn tab_selection_and_canvas_visibility_refresh_each_frame() {
     assert!(!collect_ui_frame(&world, 4096, 1024).plan.primitives.is_empty());
 }
 
-fn layout_fixture(count: usize, reverse: bool) -> World {
+pub(super) fn layout_fixture(count: usize, reverse: bool) -> World {
     let mut world = World::new();
     let canvas = world.spawn_empty(); world.insert_component(canvas, Canvas::default()); world.insert_component(canvas, GraphicRaycaster::default());
     world.insert_component(canvas, RectTransform { anchor_max: [1.0, 1.0], size_delta: [0.0, 0.0], ..Default::default() });
@@ -190,7 +190,7 @@ fn benchmark_ui_generation_and_batching() {
             let mut totals = [0.; 3];
             for _ in 0..8 {
                 let start = std::time::Instant::now();
-                let mut frame = collect_ui_primitives(&world, &hierarchy, 4096, 1024, None, None, 0, UiInteractionState::default(), None, None);
+                let mut frame = collect_ui_primitives(&world, &hierarchy, 4096, 1024, None, None, 0, UiInteractionState::default(), None, None, None);
                 let generation = start.elapsed().as_secs_f64() * 1000.;
                 count = frame.plan.primitives.len();
                 let start = std::time::Instant::now();
@@ -223,7 +223,7 @@ fn benchmark_ui_collection_breakdown() {
     let mut reports = Vec::new();
     for (name, world) in worlds {
         let hierarchy = TransformHierarchy::build(&world); let mut fonts = crate::fonts::RuntimeFontCache::new(Some(root.clone()));
-        let mut collect = || { fonts.begin_frame(); collect_ui_primitives(&world, &hierarchy, 850, 478, None, None, 0, UiInteractionState::default(), None, Some(&mut fonts)) };
+        let mut collect = || { fonts.begin_frame(); collect_ui_primitives(&world, &hierarchy, 850, 478, None, None, 0, UiInteractionState::default(), None, Some(&mut fonts), None) };
         let expected = collect(); let mut digest = Digest(std::hash::DefaultHasher::new()); write!(digest, "{expected:?}").unwrap();
         let mut samples = [Vec::new(), Vec::new()];
         for group in 0..11 {

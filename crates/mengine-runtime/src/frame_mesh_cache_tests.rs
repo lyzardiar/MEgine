@@ -251,7 +251,7 @@ fn compiled_views_match_with_main_camera_and_ui_only_frames() {
         world.insert_component(camera, Camera3D { primary, ..Default::default() });
         let hierarchy = TransformHierarchy::build(&world);
         for include_ui in [true, false] {
-            let frame = FrameCompiler { mesh_inputs: Some(&mut mesh_inputs), materials: &mut materials, textures: &mut textures, fonts: &mut fonts, particles: &mut particles, trails: &mut trails, ui_batch_order: None }.compile(FrameCompileRequest {
+            let frame = FrameCompiler { mesh_inputs: Some(&mut mesh_inputs), materials: &mut materials, textures: &mut textures, fonts: &mut fonts, particles: &mut particles, trails: &mut trails, ui_batch_order: None, ui_traversal: None }.compile(FrameCompileRequest {
                 world: &world, hierarchy: &hierarchy, viewport: [128, 128], scene_clear: Vec4::ZERO, camera_override: None, view_camera: None, include_ui, target_display: 0,
                 interaction: UiInteractionState::default(), button_tints: &HashMap::new(), focused_ui: None, sorting_layers: &SortingLayers::default(), delta_seconds: 0.0,
             });

@@ -1,5 +1,5 @@
 //! Shared CPU-side scene evaluation for every runtime render target.
-//! Author: MiYu. Share per-frame mesh extraction across main and embedded scene views.
+//! Author: MiYu. Reuse viewport UI child order and share per-frame mesh extraction across scene views.
 
 use crate::fonts::{FontLoadFailure, RuntimeFontCache};
 use crate::lighting2d::apply_2d_lighting;
@@ -117,6 +117,7 @@ pub struct FrameCompiler<'a> {
     pub textures: &'a mut RuntimeTextureCache,
     pub fonts: &'a mut RuntimeFontCache,
     pub ui_batch_order: Option<&'a mut mengine_rhi::UiBatchOrderCache>,
+    pub ui_traversal: Option<&'a mut crate::ui::UiTraversalCache>,
 }
 
 /// Owned frame packet shared by window, editor, and future offscreen submission paths.
@@ -209,8 +210,10 @@ impl FrameCompiler<'_> {
                 request.interaction,
                 Some(request.button_tints),
                 Some(self.fonts),
+                self.ui_traversal.as_deref_mut(),
             )
         } else {
+            if let Some(cache) = self.ui_traversal.as_deref_mut() { *cache = Default::default(); }
             RuntimeUiFrame::default()
         };
         let mut texture_failures = self
@@ -852,7 +855,7 @@ mod scene_view_tests {
         let mut materials = RuntimeMaterialCache::new(None);
         let mut particles = ParticleWorld::default(); let mut trails = TrailWorld::default();
         let mut textures = RuntimeTextureCache::new(None); let mut fonts = RuntimeFontCache::new(None);
-        let frame = FrameCompiler { mesh_inputs: None, materials:&mut materials, particles:&mut particles, trails:&mut trails, textures:&mut textures, fonts:&mut fonts, ui_batch_order:None }.compile(FrameCompileRequest {
+        let frame = FrameCompiler { mesh_inputs: None, materials:&mut materials, particles:&mut particles, trails:&mut trails, textures:&mut textures, fonts:&mut fonts, ui_batch_order:None, ui_traversal:None }.compile(FrameCompileRequest {
             world:&world, hierarchy:&TransformHierarchy::build(&world), viewport:[128,128], scene_clear:Vec4::ZERO,
             camera_override:None, view_camera:None, include_ui:true, target_display:0, interaction:UiInteractionState::default(),
             button_tints:&HashMap::new(), focused_ui:None, sorting_layers:&SortingLayers::default(), delta_seconds:0.0,
