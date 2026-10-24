@@ -120,7 +120,7 @@ assert.ok(paintStart > 0 && paintEnd > paintStart);
 const paintGate = compile(`(function(sc, rect) { ${source.slice(paintStart, paintEnd)} return skipUnchangedScenePaint ? undefined : 'paint'; })`);
 function paintFixture(playing, components = {}) {
   const frame = { camera: { eye: [3, 4, 7], target: [0, 0, 0] } }, sc = { yaw: 30 }, rect = { width: 800, height: 600 };
-  const env = { projectAssetSessionGeneration: () => 0, resumeSceneRequest: false, now: 10, lastViewportPaintRef: { current: 0 }, animationFrame: true, window: { __TAURI_INTERNALS__: {}, devicePixelRatio: 1 }, propsRef: { current: { tab: 'scene', playing, entities: [{ entity: 1, components }] } }, scene2DRef: { current: false }, nativeSceneFrameRef: { current: frame }, nativeCameraPreviewFrameRef: { current: null }, nativeSceneRequestRef: { current: { inFlight: false } }, scenePaintEpochRef: { current: 1 }, previousScenePaintRef: { current: null }, hoverGizmoRef: { current: null }, activeGizmoRef: { current: null }, uiHoverRef: { current: null }, uiPressRef: { current: null }, pendingNativeScenePaintUnchanged };
+  const env = { projectAssetSessionGeneration: () => 0, resumeSceneRequest: false, completedSceneFrame: false, captureSceneFrame: false, now: 10, lastViewportPaintRef: { current: 0 }, animationFrame: true, window: { __TAURI_INTERNALS__: {}, devicePixelRatio: 1 }, propsRef: { current: { tab: 'scene', playing, entities: [{ entity: 1, components }] } }, scene2DRef: { current: false }, nativeSceneFrameRef: { current: frame }, nativeCameraPreviewFrameRef: { current: null }, nativeSceneRequestRef: { current: { inFlight: false } }, scenePaintEpochRef: { current: 1 }, previousScenePaintRef: { current: null }, hoverGizmoRef: { current: null }, activeGizmoRef: { current: null }, uiHoverRef: { current: null }, uiPressRef: { current: null }, pendingNativeScenePaintUnchanged };
   const draw = vm.runInContext(paintGate, vm.createContext(env));
   assert.equal(draw(sc, rect), 'paint'); env.nativeSceneRequestRef.current.inFlight = true;
   return { env, sc, rect, draw: () => draw(sc, rect) };
@@ -164,9 +164,9 @@ test('visible authoring and interaction changes invalidate pending Scene paints'
 });
 const commitStart = source.indexOf('    if (skipUnchangedScenePaint && scenePaintState.frame'), commitEnd = source.indexOf('    const nativeSceneFrame = !isGame', commitStart);
 assert.ok(commitStart > 0 && commitEnd > commitStart);
-const commitPaint = vm.runInNewContext(compile(`(function(env) { const {skipUnchangedScenePaint,scenePaintState,nativeSceneFrameRef,nativeCameraPreviewFrameRef,lastViewportPaintRef,now,lastProfilerFrameRef,animationFrame,nativeScene3D,clearViewport}=env; ${source.slice(commitStart, commitEnd)} return 'paint'; })`));
+const commitPaint = vm.runInNewContext(compile(`(function(env) { const {skipUnchangedScenePaint,scenePaintState,nativeSceneFrameRef,nativeCameraPreviewFrameRef,lastViewportPaintRef,now,lastProfilerFrameRef,lastMeasuredPaintRef,p,animationFrame,nativeGamePaint,nativeScene3D,clearViewport}=env; ${source.slice(commitStart, commitEnd)} return 'paint'; })`));
 test('request-only animation paints preserve pixels and picking before clearing the viewport', () => {
-  const frame={}, preview={}, env={skipUnchangedScenePaint:true, scenePaintState:{frame,preview}, nativeSceneFrameRef:{current:frame}, nativeCameraPreviewFrameRef:{current:preview}, lastViewportPaintRef:{current:10}, now:20, lastProfilerFrameRef:{current:10}, animationFrame:true, nativeScene3D:true, clearViewport:()=>assert.fail('unchanged request must preserve pixels and picking')};
+  const frame={}, preview={}, env={skipUnchangedScenePaint:true, scenePaintState:{frame,preview}, nativeSceneFrameRef:{current:frame}, nativeCameraPreviewFrameRef:{current:preview}, lastViewportPaintRef:{current:10}, now:20, lastProfilerFrameRef:{current:10}, lastMeasuredPaintRef:{current:{source:'scene',at:10}}, p:{tab:'scene'}, nativeGamePaint:false, animationFrame:true, nativeScene3D:true, clearViewport:()=>assert.fail('unchanged request must preserve pixels and picking')};
   assert.equal(commitPaint(env),undefined); assert.equal(env.lastViewportPaintRef.current,10); assert.equal(env.lastProfilerFrameRef.current,10);
   let clears=0;env.clearViewport=()=>clears++;env.nativeSceneFrameRef.current={};assert.equal(commitPaint(env),'paint');assert.equal(clears,1);assert.equal(env.lastViewportPaintRef.current,20);
   assert.ok(source.includes('if (performance.now() - lastViewportPaintRef.current > 100) paint();'));
@@ -222,4 +222,22 @@ test('late WebView wakeups do not accumulate drift in live Scene scheduling', as
   const f=fixture(5,true,1.3);await f.advance(2000);assert.equal(f.starts.length,120);assert.equal(f.maxActive,1);
   for(let i=1;i<f.starts.length;i++){assert.ok(Math.abs(f.starts[i].at-i*1000/60)<2.31);assert.ok(f.starts[i].at-f.starts[i-1].at>=1000/120-1e-8);}
   f.dispose();
+});
+
+
+test('deferred completion paints skip unchanged pixels while fresh frames still compose',()=>{
+ const f=paintFixture(true);f.env.animationFrame=false;f.env.completedSceneFrame=true;
+ assert.equal(f.draw(),undefined,'a deferred request has no new image to compose');
+ f.env.propsRef.current.entities=[{entity:1,components:{}}];f.env.propsRef.current.simulationTime=2;
+ assert.equal(f.draw(),undefined,'a newer incoming world does not change the displayed old frame');
+ f.env.nativeSceneFrameRef.current={camera:f.env.nativeSceneFrameRef.current.camera};assert.equal(f.draw(),'paint');assert.equal(f.draw(),undefined);
+ f.env.captureSceneFrame=true;assert.equal(f.draw(),'paint','explicit captures always compose');
+});
+
+test('completion paint coalescing keeps presentation and interaction invalidations',()=>{
+ for(const change of [f=>f.rect.height++,f=>f.env.window.devicePixelRatio++,f=>f.env.scenePaintEpochRef.current++,f=>f.env.activeGizmoRef.current='x',f=>f.env.uiHoverRef.current=1,f=>f.env.uiPressRef.current=2,f=>f.env.nativeCameraPreviewFrameRef.current={},f=>f.env.nativeSceneFrameRef.current={camera:{eye:[9,8,7],target:[0,0,0]}}]){
+  const f=paintFixture(true);f.env.animationFrame=false;f.env.completedSceneFrame=true;assert.equal(f.draw(),undefined);change(f);assert.equal(f.draw(),'paint');
+ }
+ const animated=paintFixture(false,{ParticleEmitter3D:{}});animated.env.animationFrame=false;animated.env.completedSceneFrame=true;assert.equal(animated.draw(),'paint');
+ const fallback=paintFixture(true);fallback.env.animationFrame=false;fallback.env.completedSceneFrame=true;fallback.env.nativeSceneFrameRef.current=null;assert.equal(fallback.draw(),'paint');fallback.sc.yaw++;assert.equal(fallback.draw(),'paint');
 });

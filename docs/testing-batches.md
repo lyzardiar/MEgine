@@ -741,3 +741,10 @@ Scene17.71／Game18.51次呈现每秒，Scene1/89完整回退、72次已记录�
 本批正常集成已通过：报告 `B001/map-session-1792804951765.json`，0 error、正常退出；前端和Release各构建一次，EXE `6af47b8deffce238c92d201470c2ee4e515d2a78c29a8d596a0319b198a6a849`。三窗口编辑／播放／重载／Stop／作者dirty恢复、新实体ID与undo／redo通过，前端paint样本有效，全部成功profile实体数一致；截图已目视核对。剩余隐藏／不可选UI、长期性能与内存、实际输入显示延迟和强制竞态不计为完成。
 
 Scene24.01／Game19.87次呈现每秒；Scene0/121完整回退、81次已记录延期，Game0/100回退。前端paint加权平均7.56／1.90ms；短时进程内存已采样。指标口径及限制见performance-risk-todo第七十阶段和remote-author-native-summary.json。下一批0/3，不重复本批正常集成范围；优先复现Scene延期完成后的旧图像重复绘制，并继续定位Game请求间等待。
+
+
+### 新批次任务1/3：跳过Scene完成回调的未变化绘制
+
+变更：Viewport完成绘制判断及nativeSceneCompletionScheduling测试。延期／未产生新图像的完成回调可跳过Canvas重画，请求调度、新图像和交互变化继续执行，截图与编辑动画保持绘制。实际判断先复现失败后修复；相关38项和TypeScript通过，证据见performance-risk-todo第七十一阶段。
+
+状态：实现完成，待累计3项后合并原生构建。采集前端paint、原生成功帧和延期次数，验证隐藏Scene持续呈现、相机／选择／截图及Pause／Step／Stop；不以旧采样推算FPS，不重复无关资产与全库检查。

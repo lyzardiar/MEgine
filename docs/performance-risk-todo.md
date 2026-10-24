@@ -1312,3 +1312,12 @@ Viewport在所有真正完成的绘制结束时记录浏览器paint耗时，包�
 前端Scene18个聚合样本共194次paint，按sampleCount加权7.5619ms，单次峰值12.6ms；Game17个样本共101次paint，加权1.8960ms，峰值2.3ms。前端聚合窗口与原生profile边界不完全相同，不可直接相减推算重复帧数；浏览器paint间隔也不是原生呈现FPS。代码中Scene延期／错误完成仍调用paint(false,true)，目前未启用其未变化绘制跳过；这是下一步值得定向复现的重复绘制路径。Game约50.3ms呈现间隔与20.2ms请求差距仍需实际调度证据，不能归因给仅1.9ms的Canvas同步绘制。
 
 进程树privateBytes：分离前4,732,862,464、三窗口6,765,031,424、重载6,355,042,304、Stop并停靠6,098,382,848；工作集求和2,955,288,576／4,781,658,112／4,383,244,288／3,541,188,608字节，可能重复计共享页。未证明长期内存改善或无泄漏。Inspector自动化写入至主窗口观察417.60ms，包含调用／快照／轮询，不是硬件输入显示延迟。汇总为 `tmp/docs-artifacts/editor-performance-risk/remote-author-native-summary.json`，构建／QA日志为remote-author-*-build.log和remote-author-native-qa.log。正常集成完成；隐藏／不可选真实UI、长时性能、输入延迟及强制原生竞态继续待专项。
+
+
+### 第七十一阶段：跳过无新图像的Scene完成绘制
+
+实际Viewport判断的定向复现确认：延期请求完成后，paint(false,true)没有新原生图像仍进入完整Canvas绘制。完成回调现在同动画和重试唤醒一样，检查已显示帧、相机／尺寸／DPI、交互epoch、hover／press和相机预览是否改变；没有变化时在清空Canvas及命中区域前返回。原生请求调度仍先执行，重试／后台推进不因跳过像素重画停止。新图像或交互变化继续绘制，显式截图强制绕过此判断，编辑模式浏览器动画保留重画。
+
+38项定向检查和TypeScript通过，覆盖nativeSceneCompletionScheduling、viewportPaintProfiling及nativeSceneFrame。新增实际生产判断复现先失败（预期跳过但得到paint），修复后通过；验证新世界通知未替换显示图像时跳过、真实新图像刷新、截图、尺寸／DPI／交互／预览变化、编辑动画和首次图像前相机移动。已有调度检查继续覆盖隐藏窗口重试、两次延期后回退、暂停／截图、所有者切换及采样。原测试夹具补充第六十九阶段的独立测量时钟，不改变生产调度。证据为 `tmp/docs-artifacts/editor-performance-risk/completion-repaint-repro.log`、`completion-repaint-tests.log`、`completion-repaint-types.log`。
+
+当前新批次第1/3项，未构建或原生复测。上批Scene平均paint7.56ms、81次延期只用于定位，此处不据此推算节省总时长或FPS。合并验证应同时记录前端paint与原生成功帧／延期，检查背景Scene持续推进、相机／选择／截图、Pause／Step／Stop，按实际采样判断收益；Game请求间等待仍开放。

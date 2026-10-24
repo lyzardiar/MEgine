@@ -1420,7 +1420,7 @@ export function Viewport(props: {
     const editScene = nativeScene3D && !propsRef.current.playing;
     const scenePaintState = { key: JSON.stringify([nativeSceneFrameRef.current?.camera ?? sc, rect.width, rect.height, window.devicePixelRatio, hoverGizmoRef.current, activeGizmoRef.current, uiHoverRef.current, uiPressRef.current]), epoch: scenePaintEpochRef.current, frame: nativeSceneFrameRef.current, preview: nativeCameraPreviewFrameRef.current };
     const browserAnimation = editScene && propsRef.current.entities.some(entity => (entity.components.SpineSkeleton || entity.components.EffekseerEffect || entity.components.ParticleEmitter2D || entity.components.ParticleEmitter3D || entity.components.TrailRenderer2D || entity.components.AnimatedSprite2D) && (propsRef.current.activeInHierarchy?.(entity.entity) ?? entity.active !== false));
-    const skipUnchangedScenePaint = (animationFrame || resumeSceneRequest) && nativeScene3D && !browserAnimation && pendingNativeScenePaintUnchanged(previousScenePaintRef.current, scenePaintState);
+    const skipUnchangedScenePaint = (animationFrame || resumeSceneRequest || completedSceneFrame) && !captureSceneFrame && nativeScene3D && !browserAnimation && pendingNativeScenePaintUnchanged(previousScenePaintRef.current, scenePaintState);
     previousScenePaintRef.current = scenePaintState;
     const projectGeneration = projectAssetSessionGeneration();
     if (pendingNativeGamePaintUnchanged(canvas, rect, now, projectGeneration)) return;
