@@ -1,5 +1,6 @@
 // Author: MiYu. Reuse revisioned mesh inputs while polling authored materials and taking current hierarchy matrices.
 use super::*;
+use std::collections::hash_map::Entry;
 
 struct Source { key: String, base: SharedRenderMaterial, frame: u64 }
 struct CachedInput { revision: Option<u64>, frame: u64, source: Option<usize>, base: SharedRenderMaterial, object: RenderObject }
@@ -30,7 +31,8 @@ impl FrameMeshInputs {
         for entity in world.entities_with_components(&["MeshRenderer"]) {
             let Some(transform) = hierarchy.get_ref(entity) else { continue; };
             let revision = world.stable_entity_revision(entity);
-            if let Some(entry) = self.entries.get_mut(&entity).filter(|entry| revision.is_some() && entry.revision == revision) {
+            let entry = match self.entries.entry(entity) { Entry::Occupied(slot) if revision.is_some() && slot.get().revision == revision => {
+                let entry = slot.into_mut();
                 if let Some(index) = entry.source {
                     let base = refresh_source(&mut self.sources[index], self.frame, materials);
                     if !std::ptr::eq(&**base, &*entry.base) {
@@ -39,7 +41,8 @@ impl FrameMeshInputs {
                     }
                 }
                 entry.frame = self.frame;
-            } else {
+                entry
+            }, slot => {
                 let Some(mesh) = world.get_component::<MeshRenderer>(entity) else { continue; };
                 let block = world.get_component::<MaterialPropertyBlock>(entity);
                 let (source, base, material) = if let Some(pbr) = world.get_component::<PbrMaterial>(entity) {
@@ -54,13 +57,14 @@ impl FrameMeshInputs {
                     let base = refresh_source(&mut self.sources[index], self.frame, materials);
                     (Some(index), base.clone(), apply_block(base, block, &mut tinted))
                 };
-                self.entries.insert(entity, CachedInput { revision, frame: self.frame, source, base, object: RenderObject {
+                let input = CachedInput { revision, frame: self.frame, source, base, object: RenderObject {
                     mesh_key: mesh.mesh.trim().replace('\\', "/"), model: transform.matrix, cast_shadows: mesh.cast_shadows, receive_shadows: mesh.receive_shadows, material,
-                } });
+                } };
                 #[cfg(test)]
                 { self.rebuilt += 1; }
-            }
-            let entry = &self.entries[&entity]; let mut object = entry.object.clone(); object.model = transform.matrix; out.push(object);
+                match slot { Entry::Occupied(mut slot) => { slot.insert(input); slot.into_mut() }, Entry::Vacant(slot) => slot.insert(input) }
+            } };
+            let mut object = entry.object.clone(); object.model = transform.matrix; out.push(object);
             self.last_entities.push(entity);
             if let Some(entities) = entities.as_deref_mut() { entities.push(entity); }
         }
