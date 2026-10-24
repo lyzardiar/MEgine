@@ -200,7 +200,7 @@ type WorkspaceSyncMessage =
   | { type: 'playback-request'; sender: string; sceneName: string | null; mode: EditorMode; sessionId?: number; action: PlaybackAction }
   | { type: 'scene-camera'; sender: string; sceneName: string | null; camera: SceneCamera }
   | { type: 'scene-selection'; sender: string; sceneName: string | null; stateId: string; revision: number; selectedIds: number[] }
-  | { type: 'play-input'; sender: string; sessionId: number; input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'viewport' | 'buttons'>> }
+  | { type: 'play-input'; sender: string; sessionId: number; input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'pointerDelta' | 'pointerLocked' | 'wheelDelta' | 'viewport' | 'buttons'>> }
   | { type: 'scene-library-changed'; sender: string }
   | { type: 'request-timeline-preview'; sender: string }
   | { type: 'timeline-preview'; sender: string; preview: TimelineScenePreview | null }

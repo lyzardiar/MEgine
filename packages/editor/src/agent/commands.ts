@@ -1211,7 +1211,8 @@ export const WRITE_COMMANDS: Record<string, CommandHandler> = {
     const viewport = args.viewport as [number, number] | undefined;
     const pointerDelta = args.pointerDelta as [number, number] | undefined;
     const pointerLocked = args.pointerLocked as boolean | undefined;
-    ctx.store.setPlayInput({ keys, buttons, pointer, viewport, pointerDelta, pointerLocked });
+    const wheelDelta = args.wheelDelta as number | undefined;
+    ctx.store.setPlayInput({ keys, buttons, pointer, viewport, pointerDelta, pointerLocked, wheelDelta });
     return { ok: true, data: { mode: ctx.store.mode, queued: true } };
   },
   'playback.step': async (ctx, args) => {

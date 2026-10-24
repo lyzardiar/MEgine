@@ -1397,7 +1397,7 @@ function onTick(dt, frame) {
                         (position.x as f32 / 40.0, position.y as f32 / 40.0)
                     }
                 };
-                self.scroll_ui(delta_x, delta_y);
+                if !self.scroll_ui(delta_x, delta_y) { self.script_input.wheel_delta = (self.script_input.wheel_delta - delta_y).clamp(-100.0, 100.0); }
             }
             WindowEvent::MouseInput {
                 button: MouseButton::Left,

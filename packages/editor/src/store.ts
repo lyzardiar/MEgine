@@ -333,6 +333,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
     playInput.uiSubmits = [];
     playInput.pressedKeys = []; playInput.releasedKeys = [];
     playInput.pressedButtons = []; playInput.releasedButtons = []; playInput.pointerDelta = [0, 0];
+    playInput.wheelDelta = 0;
     const snapshot = playRuntime.retainsWorld && !remotePlayNeedsUpload && playWorldMatches() ? undefined : { entities: structuredClone(playEntities), frame, simFrame: frame, clearColor: (playClearColor ?? clearColor).slice() as WorldSnapshotView['clearColor'], selected: primarySelected() };
     const prepared = performance.now();
     const runtime = playRuntime;
@@ -1791,7 +1792,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       if (mode === 'edit' || !input || input.interactable === false || !activeInHierarchy(entity)) return;
       (playInput.uiSubmits ??= []).push({ entity, component: 'InputField', value });
     },
-    setPlayInput(input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'pointerDelta' | 'pointerLocked' | 'viewport' | 'buttons'>>) {
+    setPlayInput(input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'pointerDelta' | 'pointerLocked' | 'wheelDelta' | 'viewport' | 'buttons'>>) {
       if (mode === 'edit') return;
       for (const [field, pressed, released] of [['keys', 'pressedKeys', 'releasedKeys'], ['buttons', 'pressedButtons', 'releasedButtons']] as const) {
         const values = input[field];
@@ -1804,6 +1805,7 @@ export function createEditorStore(undoService: EditorUndoService = createEditorU
       }
       if (input.pointerDelta) playInput.pointerDelta = [0, 1].map(i => (playInput.pointerDelta?.[i] ?? 0) + input.pointerDelta![i]) as [number, number];
       if (input.pointerLocked !== undefined) playInput.pointerLocked = input.pointerLocked;
+      if (Number.isFinite(input.wheelDelta)) playInput.wheelDelta = Math.max(-100, Math.min(100, (playInput.wheelDelta ?? 0) + input.wheelDelta!));
       if (input.pointer) playInput.pointer = [...input.pointer];
       if (input.viewport) playInput.viewport = [...input.viewport];
     },

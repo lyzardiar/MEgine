@@ -19,8 +19,8 @@ test('bridge input avoids scene refresh while preserving edges, guards and reque
   bridge.connectRefresh(()=>{refreshes++;bridge.observe(false,store.snapshot());});bridge.observe(true);
   const snapshot=store.snapshot;store.snapshot=()=>{snapshots++;return snapshot();};
   const revision=bridge.sceneChanges.revision,sequence=bridge.events.currentSequence;
-  const first=await bridge.execute('playback.input',{keys:['KeyB'],buttons:[0],pointerDelta:[4,-2]});
-  await bridge.execute('playback.input',{pointerDelta:[3,1]});
+  const first=await bridge.execute('playback.input',{keys:['KeyB'],buttons:[0],pointerDelta:[4,-2],wheelDelta:-.25});
+  await bridge.execute('playback.input',{pointerDelta:[3,1],wheelDelta:-.75});
   const release=await bridge.execute('playback.input',{keys:[],buttons:[]});
   assert.deepEqual(first.data,{mode:'pause',queued:true});assert.equal(first.sceneRevision,revision);assert.equal(release.eventSequence,sequence);
   assert.equal(refreshes,0);assert.equal(snapshots,0);assert.equal(inputs.length,0);
@@ -28,7 +28,7 @@ test('bridge input avoids scene refresh while preserving edges, guards and reque
   assert.equal(stepped.data.frame,store.frame);assert.equal(stepped.data.frame,snapshot().frame);
   assert.equal(snapshots,1,'only the final refresh copies the scene; observation reuses its snapshot');
   assert.deepEqual(inputs[0].pressedKeys,['KeyB']);assert.deepEqual(inputs[0].releasedKeys,['KeyB']);
-  assert.deepEqual(inputs[0].pressedButtons,[0]);assert.deepEqual(inputs[0].releasedButtons,[0]);assert.deepEqual(inputs[0].pointerDelta,[7,-1]);
+  assert.deepEqual(inputs[0].pressedButtons,[0]);assert.deepEqual(inputs[0].releasedButtons,[0]);assert.deepEqual(inputs[0].pointerDelta,[7,-1]);assert.equal(inputs[0].wheelDelta,-1);assert.equal(inputs[1].wheelDelta,0);
   assert.deepEqual(inputs[1].pressedKeys,[]);assert.deepEqual(inputs[1].releasedKeys,[]);assert.deepEqual(inputs[1].pointerDelta,[0,0]);
   store.rename(store.snapshot().entities[0].entity,'Changed after observation');snapshots=0;
   await assert.rejects(()=>bridge.execute('playback.input',{keys:['KeyF']},{expectedSceneRevision:revision}),{code:'STALE_REVISION'});

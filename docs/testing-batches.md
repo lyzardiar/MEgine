@@ -765,3 +765,8 @@ Scene24.01／Game19.87次呈现每秒；Scene0/121完整回退、81次已记录�
 本批原生验证完成：e468673、5df28a8、c274d2e；Release构建1分26秒，EXE SHA256 1d22aaaa8cb680c5e02cb16014dd4f27ca4f72076ad66ef33823a2af25fa34d2。Scene专项报告B001/map-session-1792806256160.json通过：连续相机输入期间呈现14帧、分隔条尺寸拖动、隐藏900ms内0原生帧／0paint、恢复后33帧，Scene/Game切换、分辨率和Stop内容恢复通过。已目视检查Scene尺寸变化与旋转截图。
 
 多窗口报告B001/map-session-1792806323286.json通过，0error、正常退出，覆盖Inspector双向编辑、运行三步保留、重开／重载、Pause／Step、Stop作者数据／dirty／新ID／undo恢复。两个隔离WebView缓存因EPERM保留，发现文件已清理。5秒样本Scene22.17／Game27.70次呈现每秒、完整回退均0；前端paint加权17.08／2.05ms。该采样与独立地图转换复现并行，存在CPU争用，不能用于与上批做性能收益比较；后续性能专项应在无转换任务时采集。正常功能集成关闭，新批0/3。日志／报告／截图仅在tmp/docs-artifacts，长期流畅、真实输入延迟和完整地图功能仍待处理。
+
+
+### 新批次任务1/3：Game滚轮与原地图距离限制
+
+变更包括编辑器／ScriptInput／独立运行输入、原地图相机脚本及Amazonia资产。8项输入测试、相机脚本测试和TypeScript通过；合并执行Rust输入桥定向测试、Release构建及qa-frost-map-session --camera-only，覆盖canvas真实滚轮、上下界、停止后作者数据恢复与独立Game输入转发。当前1/3，原生待测。

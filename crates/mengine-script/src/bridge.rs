@@ -811,13 +811,15 @@ mod tests {
         input.key("KeyD".into(), true);
         input.key("KeyD".into(), true);
         input.pointer = [120.0, 60.0];
+        input.wheel_delta = -1.5;
         input.viewport = [800, 600];
         input.button(0, true);
         host.set_input(&input).unwrap();
-        host.eval("function onTick() { if (engine.snapshot.entities.length !== 0 || engine.input.keys[0] !== 'KeyD' || engine.input.pressedKeys.length !== 1 || engine.input.pressedButtons[0] !== 0 || engine.input.pointer[0] !== 120) throw new Error('frame input missing'); }").unwrap();
+        host.eval("function onTick() { if (engine.snapshot.entities.length !== 0 || engine.input.keys[0] !== 'KeyD' || engine.input.pressedKeys.length !== 1 || engine.input.pressedButtons[0] !== 0 || engine.input.pointer[0] !== 120 || engine.input.wheelDelta !== -1.5) throw new Error('frame input missing'); }").unwrap();
         host.tick(&mut world, 1.0 / 60.0).unwrap();
         input.finish_frame();
         assert_eq!(input.keys.len(), 1);
+        assert_eq!(input.wheel_delta, 0.0);
         assert!(input.pressed_keys.is_empty());
         input.release_all();
         assert!(input.keys.is_empty());

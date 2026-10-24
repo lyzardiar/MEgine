@@ -4615,8 +4615,8 @@
     {
       "path": "Assets/Maps/amazonia/Scripts/Main.js",
       "sourceSha256": "a2aad0824c4f9fde43b53b7c7b103436d18c47e086c89dcf9fb756c689278d38",
-      "sha256": "bc3e374aa9ac5087cec21ec1db65d136a79c93db300880569eecf4fc4ad04056",
-      "bytes": 1183159
+      "sha256": "36422313b63a812b981552677825958b36cc030b8928e4a9b85f70de69842258",
+      "bytes": 1183484
     },
     {
       "path": "Assets/Maps/amazonia/Shaders/Ground.mshader",
@@ -5376,7 +5376,7 @@
     "tools": [
       {
         "path": "scripts/refresh-frost-map-camera.py",
-        "sha256": "f5b5042bd1e17c62a35ee8b92728e990fe7154ee0ac53853b54eef2099fcbfdf"
+        "sha256": "962c0aedd9fdad00dfec4a5c4581acc009c3f0fe0eac827d5bd2fdb4bfd72996"
       },
       {
         "path": "scripts/warcraft_camera.py",
@@ -5384,7 +5384,7 @@
       },
       {
         "path": "scripts/frost-original-camera-client.js",
-        "sha256": "3966ee942cdccea4c9c3ea438e56f9b7f3027635cff80514fdf88caaf6c191a0"
+        "sha256": "acab55f006a793bc3f1d1f75923fb4b6b37e812bcd06af319a206dd5d81c61ed"
       }
     ],
     "projectionConvention": "Game.dll 0x6f0d31d0: verticalFov = sourceFov / sqrt(1 + aspect * aspect); aspect is the source logical projection rectangle width/height",

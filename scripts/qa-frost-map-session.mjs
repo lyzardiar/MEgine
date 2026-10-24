@@ -267,6 +267,12 @@ try{
     const expectedFov=70/Math.sqrt(1+(16/9)**2),initial=readCamera(s);assert.ok(Math.abs(initial.Camera3D.fov_y_degrees-expectedFov)<1e-5);assert.equal(initial.Camera3D.projection,'perspective');
     await capture('camera-wide');await key('KeyD');s=await snapshot();assert.ok(readCamera(s).Transform.position[0]>initial.Transform.position[0]);
     await key('Equal');s=await snapshot();assert.ok(readCamera(s).Transform.rotation[0]>initial.Transform.rotation[0]);assert.ok(Math.abs(readCamera(s).Camera3D.fov_y_degrees-expectedFov)<1e-5);
+    const wheelPage=await query('window.ui_snapshot',{windowLabel:'main',maxElements:5000}),gameCanvas=wheelPage.elements.find(e=>e.name==='Game viewport');assert.ok(gameCanvas);
+    const beforeWheel=structuredClone(readCamera(s).Transform);
+    await execute('window.ui_scroll',{windowLabel:'main',selector:gameCanvas.selector,expectedSnapshotRevision:wheelPage.snapshotRevision,deltaY:-100});await step();s=await snapshot();assert.notDeepEqual(readCamera(s).Transform,beforeWheel,'physical Game canvas wheel reaches the camera');
+    await input({wheelDelta:-100});const near=structuredClone(readCamera(await snapshot()).Transform);await input({wheelDelta:-100});assert.deepEqual(readCamera(await snapshot()).Transform,near,'minimum camera distance');
+    await input({wheelDelta:100});const far=structuredClone(readCamera(await snapshot()).Transform);await input({wheelDelta:100});assert.deepEqual(readCamera(await snapshot()).Transform,far,'maximum camera distance');assert.notDeepEqual(near,far);
+    report.checks.push('Game canvas wheel reaches native camera; source minimum/maximum distance and idle bounds hold');
     await execute('view.set_game_resolution',{resolution:{width:960,height:900}});await input({viewport:[960,900]});s=await snapshot();assert.ok(Math.abs(readCamera(s).Camera3D.fov_y_degrees-expectedFov)<1e-5);await capture('camera-tall');
     report.camera={initial,afterMoveAndZoom:readCamera(s)};report.checks.push('Source logical camera projection, movement, zoom and 960x900 rendering');await execute('playback.stop');assert.deepEqual((await snapshot()).entities,authored.entities);
   }else if(runtimeEditsOnly){

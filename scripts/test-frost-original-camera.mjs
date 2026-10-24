@@ -24,3 +24,13 @@ for(let i=0;i<1000;i++)tick({keys:['KeyD','KeyS']},.1);
 assert.equal(tick({keys:['KeyD','KeyS']},.1).length,0,'map target stops at bounds');assert.ok(previousTicks>1000);
 assert.equal(tick({keys:['KeyW']},0).length,0);assert.equal(tick({keys:['KeyW']},-1).length,0);
 console.log('PASS original source camera: angle/start, perspective, move, zoom, middle drag, bounds, runtime IDs, idle writes and pause');
+
+// Fractional touchpad deltas and wheel extremes remain inside the source preset range.
+let current=structuredClone(authored.components.Transform);
+const zoom=input=>{tick(input);if(commands.length)current=commands[0].value;return structuredClone(current);};
+const far=zoom({wheelDelta:100});assert.equal(tick({wheelDelta:100}).length,0);
+const near=zoom({wheelDelta:-100});assert.equal(tick({wheelDelta:-100}).length,0);assert.notDeepEqual(near,far);
+const half=zoom({wheelDelta:.5});assert.notDeepEqual(half,near);assert.notDeepEqual(half,far);
+for(const value of [NaN,Infinity,-Infinity])assert.equal(tick({wheelDelta:value}).length,0);
+assert.equal(tick().length,0,'wheel is consumed by the input frame, idle camera does not drift');
+console.log('PASS wheel camera: source min/max, fractional deltas, invalid input and idle');

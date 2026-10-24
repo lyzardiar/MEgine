@@ -10,7 +10,7 @@ export type PlayUiSubmit = { entity: number; component: 'InputField'; value: str
 export type PlayInput = {
   uiSubmits?: PlayUiSubmit[];
   keys: string[]; pressedKeys: string[]; releasedKeys: string[];
-  pointer: [number, number]; pointerDelta?: [number, number]; pointerLocked?: boolean; viewport: [number, number];
+  pointer: [number, number]; pointerDelta?: [number, number]; pointerLocked?: boolean; wheelDelta?: number; viewport: [number, number];
   buttons: number[]; pressedButtons: number[]; releasedButtons: number[];
 };
 

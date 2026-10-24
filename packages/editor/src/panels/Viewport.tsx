@@ -639,7 +639,7 @@ export function Viewport(props: {
   pivotMode: ToolPivotMode;
   handleOrientation: ToolHandleOrientation;
   playing: boolean;
-  onPlayInput?: (input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'pointerDelta' | 'pointerLocked' | 'viewport' | 'buttons'>>) => void;
+  onPlayInput?: (input: Partial<Pick<PlayInput, 'keys' | 'pointer' | 'pointerDelta' | 'pointerLocked' | 'wheelDelta' | 'viewport' | 'buttons'>>) => void;
   sceneCamera: SceneCamera;
   gameResolution: GameResolution | null;
   gameDisplay: number;
@@ -4725,6 +4725,9 @@ export function Viewport(props: {
           },
           ui.scroll.onValueChanged,
         );
+      } else if (propsRef.current.playing) {
+        ev.preventDefault();
+        propsRef.current.onPlayInput?.({ wheelDelta: ev.deltaY / (ev.deltaMode === 1 ? 3 : ev.deltaMode === 2 ? 1 / 3 : 100) });
       }
       return;
     }

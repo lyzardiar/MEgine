@@ -139,6 +139,7 @@ const playbackInputSchema = objectSchema({
     buttons: { type: 'array', maxItems: 3, uniqueItems: true, items: { type: 'integer', minimum: 0, maximum: 2 }, description: 'Held pointer buttons: 0 left, 1 middle, 2 right; [] releases all' },
     pointer: finiteTuple(2, 'Game content coordinates in pixels from the top-left'),
     pointerDelta: finiteTuple(2, 'Relative mouse motion accumulated for the next simulation frame'),
+    wheelDelta: { type: 'number', minimum: -100, maximum: 100, description: 'Wheel notches accumulated for the next frame; positive scrolls down, negative up' },
     pointerLocked: { type: 'boolean', description: 'Whether relative mouse capture is active' },
     viewport: { type: 'array', minItems: 2, maxItems: 2, items: { type: 'integer', minimum: 1, maximum: 16384 }, description: 'Width and height of the Game content in pixels' },
   });
